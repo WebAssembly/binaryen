@@ -245,6 +245,11 @@ public:
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicWake(AtomicWake* curr);
+  void visitSIMDExtract(SIMDExtract* curr);
+  void visitSIMDReplace(SIMDReplace* curr);
+  void visitSIMDShuffle(SIMDShuffle* curr);
+  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDShift(SIMDShift* curr);
   void visitBinary(Binary* curr);
   void visitUnary(Unary* curr);
   void visitSelect(Select* curr);
@@ -498,6 +503,7 @@ void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
 
 void FunctionValidator::visitLoad(Load* curr) {
   if (curr->isAtomic) shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
+  if (curr->type == v128) shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
@@ -510,9 +516,10 @@ void FunctionValidator::visitLoad(Load* curr) {
 
 void FunctionValidator::visitStore(Store* curr) {
   if (curr->isAtomic) shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
+  if (curr->valueType == v128) shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
-  validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
+  validateAlignment(curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
   shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
@@ -561,20 +568,77 @@ void FunctionValidator::visitAtomicWake(AtomicWake* curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->wakeCount->type, i32, curr, "AtomicWake wakeCount type must be i32");
 }
 
+void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
+  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "extract_lane must operate on a v128");
+  Type lane_t = none;
+  size_t lanes = 0;
+  switch (curr->op) {
+    case ExtractLaneSVecI8x16:
+    case ExtractLaneUVecI8x16: lane_t = i32; lanes = 16; break;
+    case ExtractLaneSVecI16x8:
+    case ExtractLaneUVecI16x8: lane_t = i32; lanes = 8; break;
+    case ExtractLaneVecI32x4: lane_t = i32; lanes = 4; break;
+    case ExtractLaneVecI64x2: lane_t = i64; lanes = 2; break;
+    case ExtractLaneVecF32x4: lane_t = f32; lanes = 4; break;
+    case ExtractLaneVecF64x2: lane_t = f64; lanes = 2; break;
+  }
+  shouldBeEqualOrFirstIsUnreachable(curr->type, lane_t, curr, "extract_lane must have same type as vector lane");
+  shouldBeTrue(curr->idx < lanes, curr, "invalid lane index");
+}
+
+void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
+  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "replace_lane must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "replace_lane must operate on a v128");
+  Type lane_t = none;
+  size_t lanes = 0;
+  switch (curr->op) {
+    case ReplaceLaneVecI8x16: lane_t = i32; lanes = 16; break;
+    case ReplaceLaneVecI16x8: lane_t = i32; lanes = 8; break;
+    case ReplaceLaneVecI32x4: lane_t = i32; lanes = 4; break;
+    case ReplaceLaneVecI64x2: lane_t = i64; lanes = 2; break;
+    case ReplaceLaneVecF32x4: lane_t = f32; lanes = 4; break;
+    case ReplaceLaneVecF64x2: lane_t = f64; lanes = 2; break;
+  }
+  shouldBeEqualOrFirstIsUnreachable(curr->value->type, lane_t, curr, "unexpected value type");
+  shouldBeTrue(curr->idx < lanes, curr, "invalid lane index");
+}
+
+void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
+  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "v128.shuffle must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(curr->left->type, v128, curr, "expected operand of type v128");
+  shouldBeEqualOrFirstIsUnreachable(curr->right->type, v128, curr, "expected operand of type v128");
+  for (uint8_t idx : curr->mask) {
+    shouldBeTrue(idx < 32, curr, "Invalid lane index in mask");
+  }
+}
+
+void FunctionValidator::visitSIMDBitselect(SIMDBitselect* curr) {
+  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "v128.bitselect must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(curr->left->type, v128, curr, "expected operand of type v128");
+  shouldBeEqualOrFirstIsUnreachable(curr->right->type, v128, curr, "expected operand of type v128");
+  shouldBeEqualOrFirstIsUnreachable(curr->cond->type, v128, curr, "expected operand of type v128");
+}
+
+void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
+  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "vector shift must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "expected operand of type v128");
+  shouldBeEqualOrFirstIsUnreachable(curr->shift->type, i32, curr, "expected shift amount to have type i32");
+}
+
 void FunctionValidator::validateMemBytes(uint8_t bytes, Type type, Expression* curr) {
-  switch (bytes) {
-    case 1:
-    case 2:
-    case 4: break;
-    case 8: {
-      // if we have a concrete type for the load, then we know the size of the mem operation and
-      // can validate it
-      if (type != unreachable) {
-        shouldBeEqual(getTypeSize(type), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
-      }
-      break;
-    }
-    default: info.fail("Memory operations must be 1,2,4, or 8 bytes", curr, getFunction());
+  switch (type) {
+    case i32: shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4, curr, "expected i32 operation to touch 1, 2, or 4 bytes"); break;
+    case i64: shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4 || bytes == 8, curr, "expected i64 operation to touch 1, 2, 4, or 8 bytes"); break;
+    case f32: shouldBeEqual(bytes, uint8_t(4), curr, "expected f32 operation to touch 4 bytes"); break;
+    case f64: shouldBeEqual(bytes, uint8_t(8), curr, "expected f64 operation to touch 8 bytes"); break;
+    case v128: shouldBeEqual(bytes, uint8_t(16), curr, "expected v128 operation to touch 16 bytes"); break;
+    case none: WASM_UNREACHABLE();
+    case unreachable: break;
   }
 }
 
@@ -669,6 +733,86 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case GtFloat64:
     case GeFloat64: {
       shouldBeEqualOrFirstIsUnreachable(curr->left->type, f64, curr, "f64 op");
+      break;
+    }
+    case EqVecI8x16:
+    case NeVecI8x16:
+    case LtSVecI8x16:
+    case LtUVecI8x16:
+    case LeSVecI8x16:
+    case LeUVecI8x16:
+    case GtSVecI8x16:
+    case GtUVecI8x16:
+    case GeSVecI8x16:
+    case GeUVecI8x16:
+    case EqVecI16x8:
+    case NeVecI16x8:
+    case LtSVecI16x8:
+    case LtUVecI16x8:
+    case LeSVecI16x8:
+    case LeUVecI16x8:
+    case GtSVecI16x8:
+    case GtUVecI16x8:
+    case GeSVecI16x8:
+    case GeUVecI16x8:
+    case EqVecI32x4:
+    case NeVecI32x4:
+    case LtSVecI32x4:
+    case LtUVecI32x4:
+    case LeSVecI32x4:
+    case LeUVecI32x4:
+    case GtSVecI32x4:
+    case GtUVecI32x4:
+    case GeSVecI32x4:
+    case GeUVecI32x4:
+    case EqVecF32x4:
+    case NeVecF32x4:
+    case LtVecF32x4:
+    case LeVecF32x4:
+    case GtVecF32x4:
+    case GeVecF32x4:
+    case EqVecF64x2:
+    case NeVecF64x2:
+    case LtVecF64x2:
+    case LeVecF64x2:
+    case GtVecF64x2:
+    case GeVecF64x2:
+    case AndVec128:
+    case OrVec128:
+    case XorVec128:
+    case AddVecI8x16:
+    case AddSatSVecI8x16:
+    case AddSatUVecI8x16:
+    case SubVecI8x16:
+    case SubSatSVecI8x16:
+    case SubSatUVecI8x16:
+    case MulVecI8x16:
+    case AddVecI16x8:
+    case AddSatSVecI16x8:
+    case AddSatUVecI16x8:
+    case SubVecI16x8:
+    case SubSatSVecI16x8:
+    case SubSatUVecI16x8:
+    case MulVecI16x8:
+    case AddVecI32x4:
+    case SubVecI32x4:
+    case MulVecI32x4:
+    case AddVecI64x2:
+    case SubVecI64x2:
+    case AddVecF32x4:
+    case SubVecF32x4:
+    case MulVecF32x4:
+    case DivVecF32x4:
+    case MinVecF32x4:
+    case MaxVecF32x4:
+    case AddVecF64x2:
+    case SubVecF64x2:
+    case MulVecF64x2:
+    case DivVecF64x2:
+    case MinVecF64x2:
+    case MaxVecF64x2:  {
+      shouldBeEqualOrFirstIsUnreachable(curr->left->type, v128, curr, "v128 op");
+      shouldBeEqualOrFirstIsUnreachable(curr->right->type, v128, curr, "v128 op");
       break;
     }
     case InvalidBinary: WASM_UNREACHABLE();
@@ -804,6 +948,57 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(curr->value->type, i64, curr, "reinterpret/i64 type must be correct");
       break;
     }
+    case SplatVecI8x16:
+    case SplatVecI16x8:
+    case SplatVecI32x4:
+      shouldBeEqual(curr->type, v128, curr, "expected splat to have v128 type");
+      shouldBeEqual(curr->value->type, i32, curr, "expected i32 splat value");
+      break;
+    case SplatVecI64x2:
+      shouldBeEqual(curr->type, v128, curr, "expected splat to have v128 type");
+      shouldBeEqual(curr->value->type, i64, curr, "expected i64 splat value");
+      break;
+    case SplatVecF32x4:
+      shouldBeEqual(curr->type, v128, curr, "expected splat to have v128 type");
+      shouldBeEqual(curr->value->type, f32, curr, "expected f32 splat value");
+      break;
+    case SplatVecF64x2:
+      shouldBeEqual(curr->type, v128, curr, "expected splat to have v128 type");
+      shouldBeEqual(curr->value->type, f64, curr, "expected i64 splat value");
+      break;
+    case NotVec128:
+    case NegVecI8x16:
+    case NegVecI16x8:
+    case NegVecI32x4:
+    case NegVecI64x2:
+    case AbsVecF32x4:
+    case NegVecF32x4:
+    case SqrtVecF32x4:
+    case AbsVecF64x2:
+    case NegVecF64x2:
+    case SqrtVecF64x2:
+    case TruncSatSVecF32x4ToVecI32x4:
+    case TruncSatUVecF32x4ToVecI32x4:
+    case TruncSatSVecF64x2ToVecI64x2:
+    case TruncSatUVecF64x2ToVecI64x2:
+    case ConvertSVecI32x4ToVecF32x4:
+    case ConvertUVecI32x4ToVecF32x4:
+    case ConvertSVecI64x2ToVecF64x2:
+    case ConvertUVecI64x2ToVecF64x2:
+      shouldBeEqual(curr->type, v128, curr, "expected v128 type");
+      shouldBeEqual(curr->value->type, v128, curr, "expected v128 operand");
+      break;
+    case AnyTrueVecI8x16:
+    case AllTrueVecI8x16:
+    case AnyTrueVecI16x8:
+    case AllTrueVecI16x8:
+    case AnyTrueVecI32x4:
+    case AllTrueVecI32x4:
+    case AnyTrueVecI64x2:
+    case AllTrueVecI64x2:
+      shouldBeEqual(curr->type, i32, curr, "expected boolean reduction to have i32 type");
+      shouldBeEqual(curr->value->type, v128, curr, "expected v128 operand");
+      break;
     case InvalidUnary: WASM_UNREACHABLE();
   }
 }
@@ -895,7 +1090,8 @@ void FunctionValidator::validateAlignment(size_t align, Type type, Index bytes,
     case 1:
     case 2:
     case 4:
-    case 8: break;
+    case 8:
+    case 16: break;
     default:{
       info.fail("bad alignment: " + std::to_string(align), curr, getFunction());
       break;
@@ -913,9 +1109,9 @@ void FunctionValidator::validateAlignment(size_t align, Type type, Index bytes,
       shouldBeTrue(align <= 8, curr, "alignment must not exceed natural");
       break;
     }
-    case v128: assert(false && "v128 not implemented yet");
-    case none:
-    case unreachable: {}
+    case v128:
+    case unreachable: break;
+    case none: WASM_UNREACHABLE();
   }
 }
 

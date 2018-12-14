@@ -839,7 +839,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // try to replace with a trivial value
     Const* c = builder->makeConst(Literal(int32_t(0)));
     if (tryToReplaceCurrent(c)) return true;
-    c->value = LiteralUtils::makeLiteralFromInt32(1, curr->type);
+    c->value = Literal::makeFromInt32(1, curr->type);
     c->type = curr->type;
     return tryToReplaceCurrent(c);
   }

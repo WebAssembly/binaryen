@@ -70,7 +70,20 @@ struct FeatureOptions : public Options {
              Options::Arguments::Zero,
              [this](Options *o, const std::string& arguments) {
                passOptions.features.setTruncSat(false);
-             });
+             })
+        .add("--enable-simd", "",
+             "Enable nontrapping float-to-int operations",
+             Options::Arguments::Zero,
+             [this](Options *o, const std::string& arguments) {
+               passOptions.features.setSIMD();
+             })
+        .add("--disable-simd", "",
+             "Disable nontrapping float-to-int operations",
+             Options::Arguments::Zero,
+             [this](Options *o, const std::string& arguments) {
+               passOptions.features.setSIMD(false);
+             })
+        ;
   }
 
   FeatureSet getFeatures() const {

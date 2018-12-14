@@ -172,7 +172,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 #endif
             start[i] = getUniqueValue();
           } else {
-            start[i] = getLiteralValue(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
+            start[i] = getLiteralValue(Literal::makeZero(func->getLocalType(i)));
           }
         }
       } else {
@@ -375,4 +375,3 @@ Pass *createRedundantSetEliminationPass() {
 }
 
 } // namespace wasm
-

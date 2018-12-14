@@ -461,7 +461,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
                 auto total = Bits::getEffectiveShifts(leftRight) + Bits::getEffectiveShifts(right);
                 if (total == Bits::getEffectiveShifts(total, right->type)) {
                   // no overflow, we can do this
-                  leftRight->value = LiteralUtils::makeLiteralFromInt32(total, right->type);
+                  leftRight->value = Literal::makeFromInt32(total, right->type);
                   return left;
                 } // TODO: handle overflows
               }
@@ -1096,7 +1096,7 @@ private:
     auto* right = binary->right->cast<Const>();
     if (isIntegerType(type)) {
       // operations on zero
-      if (right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+      if (right->value == Literal::makeFromInt32(0, type)) {
         if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
@@ -1152,7 +1152,7 @@ private:
     // as a NaN would skip the computation and just return the NaN,
     // and that is precisely what we do here. but, the same with -1
     // (change to a negation) would be incorrect for that reason.
-    if (right->value == LiteralUtils::makeLiteralFromInt32(1, type)) {
+    if (right->value == Literal::makeFromInt32(1, type)) {
       if (binary->op == Abstract::getBinary(type, Abstract::Mul) ||
           binary->op == Abstract::getBinary(type, Abstract::DivS) ||
           binary->op == Abstract::getBinary(type, Abstract::DivU)) {
@@ -1171,7 +1171,7 @@ private:
     auto* left = binary->left->cast<Const>();
     if (isIntegerType(type)) {
       // operations on zero
-      if (left->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+      if (left->value == Literal::makeFromInt32(0, type)) {
         if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
              binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
              binary->op == Abstract::getBinary(type, Abstract::ShrS)) &&

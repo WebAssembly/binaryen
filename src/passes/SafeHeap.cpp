@@ -109,7 +109,7 @@ struct SafeHeap : public Pass {
     instrumenter.add<AccessInstrumenter>();
     instrumenter.run();
     // add helper checking funcs and imports
-    addGlobals(module);
+    addGlobals(module, runner->options.features);
   }
 
   Name dynamicTopPtr, segfault, alignfault;
@@ -156,18 +156,22 @@ struct SafeHeap : public Pass {
     return align == bytes && shared && isIntegerType(type);
   }
 
-  void addGlobals(Module* module) {
+  void addGlobals(Module* module, FeatureSet features) {
     // load funcs
     Load load;
-    for (auto type : { i32, i64, f32, f64 }) {
+    for (auto type : { i32, i64, f32, f64, v128 }) {
+      if (type == v128 && !features.hasSIMD()) continue;
       load.type = type;
-      for (Index bytes : { 1, 2, 4, 8 }) {
+      for (Index bytes : { 1, 2, 4, 8, 16 }) {
         load.bytes = bytes;
-        if (bytes > getTypeSize(type)) continue;
+        if (bytes > getTypeSize(type) ||
+            (type == f32 && bytes != 4) ||
+            (type == f64 && bytes != 8) ||
+            (type == v128 && bytes != 16)) continue;
         for (auto signed_ : { true, false }) {
           load.signed_ = signed_;
           if (isFloatType(type) && signed_) continue;
-          for (Index align : { 1, 2, 4, 8 }) {
+          for (Index align : { 1, 2, 4, 8, 16 }) {
             load.align = align;
             if (align > bytes) continue;
             for (auto isAtomic : { true, false }) {
@@ -184,13 +188,17 @@ struct SafeHeap : public Pass {
     }
     // store funcs
     Store store;
-    for (auto valueType : { i32, i64, f32, f64 }) {
+    for (auto valueType : { i32, i64, f32, f64, v128 }) {
+      if (valueType == v128 && !features.hasSIMD()) continue;
       store.valueType = valueType;
       store.type = none;
-      for (Index bytes : { 1, 2, 4, 8 }) {
+      for (Index bytes : { 1, 2, 4, 8, 16 }) {
         store.bytes = bytes;
-        if (bytes > getTypeSize(valueType)) continue;
-        for (Index align : { 1, 2, 4, 8 }) {
+        if (bytes > getTypeSize(valueType) ||
+            (valueType == f32 && bytes != 4) ||
+            (valueType == f64 && bytes != 8) ||
+            (valueType == v128 && bytes != 16)) continue;
+        for (Index align : { 1, 2, 4, 8, 16 }) {
           store.align = align;
           if (align > bytes) continue;
           for (auto isAtomic : { true, false }) {

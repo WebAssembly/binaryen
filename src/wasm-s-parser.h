@@ -190,6 +190,11 @@ private:
   Expression* makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes, const char* extra);
   Expression* makeAtomicWait(Element& s, Type type);
   Expression* makeAtomicWake(Element& s);
+  Expression* makeSIMDExtract(Element& s, SIMDExtractOp op, size_t lanes);
+  Expression* makeSIMDReplace(Element& s, SIMDReplaceOp op, size_t lanes);
+  Expression* makeSIMDShuffle(Element& s);
+  Expression* makeSIMDBitselect(Element& s);
+  Expression* makeSIMDShift(Element& s, SIMDShiftOp);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);

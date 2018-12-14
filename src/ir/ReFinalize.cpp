@@ -137,6 +137,11 @@ void ReFinalize::visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDBitselect(SIMDBitselect* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
 void ReFinalize::visitConst(Const* curr) { curr->finalize(); }
 void ReFinalize::visitUnary(Unary* curr) { curr->finalize(); }
 void ReFinalize::visitBinary(Binary* curr) { curr->finalize(); }
@@ -195,4 +200,3 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
 }
 
 } // namespace wasm
-

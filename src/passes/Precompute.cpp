@@ -297,7 +297,7 @@ private:
           Literal curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
-              curr = LiteralUtils::makeLiteralZero(getFunction()->getLocalType(get->index));
+              curr = Literal::makeZero(getFunction()->getLocalType(get->index));
             } else {
               // it's a param, so it's hopeless
               value = Literal();

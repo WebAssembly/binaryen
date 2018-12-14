@@ -330,6 +330,7 @@ enum EncodedType {
   i64 = -0x2, // 0x7e
   f32 = -0x3, // 0x7d
   f64 = -0x4, // 0x7c
+  v128 = -0x5, // 0x7b
   // elem_type
   AnyFunc = -0x10, // 0x70
   // func_type form
@@ -549,6 +550,7 @@ enum ASTNodes {
   I64ExtendS32 = 0xc4,
 
   TruncSatPrefix = 0xfc,
+  SIMDPrefix = 0xfd,
   AtomicPrefix = 0xfe
 };
 
@@ -639,6 +641,149 @@ enum TruncSatOpcodes {
   I64UTruncSatF64 = 0x07,
 };
 
+enum SIMDOpcodes {
+  V128Load = 0x00,
+  V128Store = 0x01,
+  V128Const = 0x02,
+  V8x16Shuffle = 0x03,
+  I8x16Splat = 0x04,
+  I8x16ExtractLaneS = 0x05,
+  I8x16ExtractLaneU = 0x06,
+  I8x16ReplaceLane = 0x07,
+  I16x8Splat = 0x08,
+  I16x8ExtractLaneS = 0x09,
+  I16x8ExtractLaneU = 0x0a,
+  I16x8ReplaceLane = 0x0b,
+  I32x4Splat = 0x0c,
+  I32x4ExtractLane = 0x0d,
+  I32x4ReplaceLane = 0x0e,
+  I64x2Splat = 0x0f,
+  I64x2ExtractLane = 0x10,
+  I64x2ReplaceLane = 0x11,
+  F32x4Splat = 0x12,
+  F32x4ExtractLane = 0x13,
+  F32x4ReplaceLane = 0x14,
+  F64x2Splat = 0x15,
+  F64x2ExtractLane = 0x16,
+  F64x2ReplaceLane = 0x17,
+  I8x16Eq = 0x18,
+  I8x16Ne = 0x19,
+  I8x16LtS = 0x1a,
+  I8x16LtU = 0x1b,
+  I8x16GtS = 0x1c,
+  I8x16GtU = 0x1d,
+  I8x16LeS = 0x1e,
+  I8x16LeU = 0x1f,
+  I8x16GeS = 0x20,
+  I8x16GeU = 0x21,
+  I16x8Eq = 0x22,
+  I16x8Ne = 0x23,
+  I16x8LtS = 0x24,
+  I16x8LtU = 0x25,
+  I16x8GtS = 0x26,
+  I16x8GtU = 0x27,
+  I16x8LeS = 0x28,
+  I16x8LeU = 0x29,
+  I16x8GeS = 0x2a,
+  I16x8GeU = 0x2b,
+  I32x4Eq = 0x2c,
+  I32x4Ne = 0x2d,
+  I32x4LtS = 0x2e,
+  I32x4LtU = 0x2f,
+  I32x4GtS = 0x30,
+  I32x4GtU = 0x31,
+  I32x4LeS = 0x32,
+  I32x4LeU = 0x33,
+  I32x4GeS = 0x34,
+  I32x4GeU = 0x35,
+  F32x4Eq = 0x40,
+  F32x4Ne = 0x41,
+  F32x4Lt = 0x42,
+  F32x4Gt = 0x43,
+  F32x4Le = 0x44,
+  F32x4Ge = 0x45,
+  F64x2Eq = 0x46,
+  F64x2Ne = 0x47,
+  F64x2Lt = 0x48,
+  F64x2Gt = 0x49,
+  F64x2Le = 0x4a,
+  F64x2Ge = 0x4b,
+  V128Not = 0x4c,
+  V128And = 0x4d,
+  V128Or = 0x4e,
+  V128Xor = 0x4f,
+  V128Bitselect = 0x50,
+  I8x16Neg = 0x51,
+  I8x16AnyTrue = 0x52,
+  I8x16AllTrue = 0x53,
+  I8x16Shl = 0x54,
+  I8x16ShrS = 0x55,
+  I8x16ShrU = 0x56,
+  I8x16Add = 0x57,
+  I8x16AddSatS = 0x58,
+  I8x16AddSatU = 0x59,
+  I8x16Sub = 0x5a,
+  I8x16SubSatS = 0x5b,
+  I8x16SubSatU = 0x5c,
+  I8x16Mul = 0x5d,
+  I16x8Neg = 0x62,
+  I16x8AnyTrue = 0x63,
+  I16x8AllTrue = 0x64,
+  I16x8Shl = 0x65,
+  I16x8ShrS = 0x66,
+  I16x8ShrU = 0x67,
+  I16x8Add = 0x68,
+  I16x8AddSatS = 0x69,
+  I16x8AddSatU = 0x6a,
+  I16x8Sub = 0x6b,
+  I16x8SubSatS = 0x6c,
+  I16x8SubSatU = 0x6d,
+  I16x8Mul = 0x6e,
+  I32x4Neg = 0x73,
+  I32x4AnyTrue = 0x74,
+  I32x4AllTrue = 0x75,
+  I32x4Shl = 0x76,
+  I32x4ShrS = 0x77,
+  I32x4ShrU = 0x78,
+  I32x4Add = 0x79,
+  I32x4Sub = 0x7c,
+  I32x4Mul = 0x7f,
+  I64x2Neg = 0x84,
+  I64x2AnyTrue = 0x85,
+  I64x2AllTrue = 0x86,
+  I64x2Shl = 0x87,
+  I64x2ShrS = 0x88,
+  I64x2ShrU = 0x89,
+  I64x2Add = 0x8a,
+  I64x2Sub = 0x8d,
+  F32x4Abs = 0x95,
+  F32x4Neg = 0x96,
+  F32x4Sqrt = 0x97,
+  F32x4Add = 0x9a,
+  F32x4Sub = 0x9b,
+  F32x4Mul = 0x9c,
+  F32x4Div = 0x9d,
+  F32x4Min = 0x9e,
+  F32x4Max = 0x9f,
+  F64x2Abs = 0xa0,
+  F64x2Neg = 0xa1,
+  F64x2Sqrt = 0xa2,
+  F64x2Add = 0xa5,
+  F64x2Sub = 0xa6,
+  F64x2Mul = 0xa7,
+  F64x2Div = 0xa8,
+  F64x2Min = 0xa9,
+  F64x2Max = 0xaa,
+  I32x4TruncSatSF32x4 = 0xab,
+  I32x4TruncSatUF32x4 = 0xac,
+  I64x2TruncSatSF64x2 = 0xad,
+  I64x2TruncSatUF64x2 = 0xae,
+  F32x4ConvertSI32x4 = 0xaf,
+  F32x4ConvertUI32x4 = 0xb0,
+  F64x2ConvertSI64x2 = 0xb1,
+  F64x2ConvertUI64x2 = 0xb2
+};
+
 enum MemoryAccess {
   Offset = 0x10,     // bit 4
   Alignment = 0x80,  // bit 7
@@ -662,7 +807,7 @@ inline S32LEB binaryType(Type type) {
     case i64: ret = BinaryConsts::EncodedType::i64; break;
     case f32: ret = BinaryConsts::EncodedType::f32; break;
     case f64: ret = BinaryConsts::EncodedType::f64; break;
-    case v128: assert(false && "v128 not implemented yet");
+    case v128: ret = BinaryConsts::EncodedType::v128; break;
     case unreachable: WASM_UNREACHABLE();
   }
   return S32LEB(ret);
@@ -814,9 +959,11 @@ public:
   uint16_t getInt16();
   uint32_t getInt32();
   uint64_t getInt64();
+  uint8_t getLaneIdx(size_t lanes);
   // it is unsafe to return a float directly, due to ABI issues with the signalling bit
   Literal getFloat32Literal();
   Literal getFloat64Literal();
+  Literal getVec128Literal();
   uint32_t getU32LEB();
   uint64_t getU64LEB();
   int32_t getS32LEB();
@@ -948,6 +1095,7 @@ public:
   void readMemoryAccess(Address& alignment, Address& offset);
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
+  bool maybeVisitNontrappingTrunc(Expression*& out, uint32_t code);
   bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
   bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
   bool maybeVisitAtomicWait(Expression*& out, uint8_t code);
@@ -956,6 +1104,16 @@ public:
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);
   bool maybeVisitTruncSat(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDBinary(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDUnary(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDConst(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDStore(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDExtract(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDReplace(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDShuffle(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDBitselect(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   bool maybeVisitHost(Expression*& out, uint8_t code);

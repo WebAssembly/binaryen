@@ -135,6 +135,11 @@ public:
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicWake(AtomicWake* curr);
+  void visitSIMDExtract(SIMDExtract* curr);
+  void visitSIMDReplace(SIMDReplace* curr);
+  void visitSIMDShuffle(SIMDShuffle* curr);
+  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDShift(SIMDShift* curr);
   void visitConst(Const* curr);
   void visitUnary(Unary* curr);
   void visitBinary(Binary* curr);
@@ -634,7 +639,7 @@ void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
       }
       case f32: o << int8_t(BinaryConsts::F32LoadMem); break;
       case f64: o << int8_t(BinaryConsts::F64LoadMem); break;
-      case v128: assert(false && "v128 not implemented yet");
+      case v128: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Load); break;
       case unreachable: return; // the pointer is unreachable, so we are never reached; just don't emit a load
       case none: WASM_UNREACHABLE();
     }
@@ -701,7 +706,7 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
       }
       case f32: o << int8_t(BinaryConsts::F32StoreMem); break;
       case f64: o << int8_t(BinaryConsts::F64StoreMem); break;
-      case v128: assert(false && "v128 not implemented yet");
+      case v128: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Store); break;
       case none:
       case unreachable: WASM_UNREACHABLE();
     }
@@ -872,6 +877,84 @@ void StackWriter<Mode, Parent>::visitAtomicWake(AtomicWake* curr) {
 }
 
 template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDExtract(SIMDExtract* curr) {
+  visitChild(curr->vec);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case ExtractLaneSVecI8x16: o << U32LEB(BinaryConsts::I8x16ExtractLaneS); break;
+    case ExtractLaneUVecI8x16: o << U32LEB(BinaryConsts::I8x16ExtractLaneU); break;
+    case ExtractLaneSVecI16x8: o << U32LEB(BinaryConsts::I16x8ExtractLaneS); break;
+    case ExtractLaneUVecI16x8: o << U32LEB(BinaryConsts::I16x8ExtractLaneU); break;
+    case ExtractLaneVecI32x4: o << U32LEB(BinaryConsts::I32x4ExtractLane); break;
+    case ExtractLaneVecI64x2: o << U32LEB(BinaryConsts::I64x2ExtractLane); break;
+    case ExtractLaneVecF32x4: o << U32LEB(BinaryConsts::F32x4ExtractLane); break;
+    case ExtractLaneVecF64x2: o << U32LEB(BinaryConsts::F64x2ExtractLane); break;
+  }
+  o << uint8_t(curr->idx);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDReplace(SIMDReplace* curr) {
+  visitChild(curr->vec);
+  visitChild(curr->value);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case ReplaceLaneVecI8x16: o << U32LEB(BinaryConsts::I8x16ReplaceLane); break;
+    case ReplaceLaneVecI16x8: o << U32LEB(BinaryConsts::I16x8ReplaceLane); break;
+    case ReplaceLaneVecI32x4: o << U32LEB(BinaryConsts::I32x4ReplaceLane); break;
+    case ReplaceLaneVecI64x2: o << U32LEB(BinaryConsts::I64x2ReplaceLane); break;
+    case ReplaceLaneVecF32x4: o << U32LEB(BinaryConsts::F32x4ReplaceLane); break;
+    case ReplaceLaneVecF64x2: o << U32LEB(BinaryConsts::F64x2ReplaceLane); break;
+  }
+  assert(curr->idx < 16);
+  o << uint8_t(curr->idx);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDShuffle(SIMDShuffle* curr) {
+  visitChild(curr->left);
+  visitChild(curr->right);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V8x16Shuffle);
+  for (uint8_t m : curr->mask) {
+    o << m;
+  }
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDBitselect(SIMDBitselect* curr) {
+  visitChild(curr->left);
+  visitChild(curr->right);
+  visitChild(curr->cond);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Bitselect);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDShift(SIMDShift* curr) {
+  visitChild(curr->vec);
+  visitChild(curr->shift);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case ShlVecI8x16:  o << U32LEB(BinaryConsts::I8x16Shl); break;
+    case ShrSVecI8x16: o << U32LEB(BinaryConsts::I8x16ShrS); break;
+    case ShrUVecI8x16: o << U32LEB(BinaryConsts::I8x16ShrU); break;
+    case ShlVecI16x8:  o << U32LEB(BinaryConsts::I16x8Shl); break;
+    case ShrSVecI16x8: o << U32LEB(BinaryConsts::I16x8ShrS); break;
+    case ShrUVecI16x8: o << U32LEB(BinaryConsts::I16x8ShrU); break;
+    case ShlVecI32x4:  o << U32LEB(BinaryConsts::I32x4Shl); break;
+    case ShrSVecI32x4: o << U32LEB(BinaryConsts::I32x4ShrS); break;
+    case ShrUVecI32x4: o << U32LEB(BinaryConsts::I32x4ShrU); break;
+    case ShlVecI64x2:  o << U32LEB(BinaryConsts::I64x2Shl); break;
+    case ShrSVecI64x2: o << U32LEB(BinaryConsts::I64x2ShrS); break;
+    case ShrUVecI64x2: o << U32LEB(BinaryConsts::I64x2ShrU); break;
+  }
+}
+
+template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitConst(Const* curr) {
   if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
   if (justAddToStack(curr)) return;
@@ -892,9 +975,17 @@ void StackWriter<Mode, Parent>::visitConst(Const* curr) {
       o << int8_t(BinaryConsts::F64Const) << curr->value.reinterpreti64();
       break;
     }
-    case v128: assert(false && "v128 not implemented yet");
+    case v128: {
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Const);
+      std::array<uint8_t, 16> v = curr->value.getv128();
+      for (size_t i = 0; i < 16; ++i) {
+        o << uint8_t(v[i]);
+      }
+      break;
+    }
     case none:
-    case unreachable: WASM_UNREACHABLE();
+    case unreachable:
+      WASM_UNREACHABLE();
   }
   if (debug) std::cerr << "zz const node done.\n";
 }
@@ -969,6 +1060,39 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
     case TruncSatUFloat32ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64UTruncSatF32); break;
     case TruncSatSFloat64ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64STruncSatF64); break;
     case TruncSatUFloat64ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64UTruncSatF64); break;
+    case SplatVecI8x16:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Splat); break;
+    case SplatVecI16x8:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Splat); break;
+    case SplatVecI32x4:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Splat); break;
+    case SplatVecI64x2:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Splat); break;
+    case SplatVecF32x4:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Splat); break;
+    case SplatVecF64x2:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Splat); break;
+    case NotVec128:       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Not); break;
+    case NegVecI8x16:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Neg); break;
+    case AnyTrueVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AnyTrue); break;
+    case AllTrueVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AllTrue); break;
+    case NegVecI16x8:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Neg); break;
+    case AnyTrueVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AnyTrue); break;
+    case AllTrueVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AllTrue); break;
+    case NegVecI32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Neg); break;
+    case AnyTrueVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4AnyTrue); break;
+    case AllTrueVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4AllTrue); break;
+    case NegVecI64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Neg); break;
+    case AnyTrueVecI64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2AnyTrue); break;
+    case AllTrueVecI64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2AllTrue); break;
+    case AbsVecF32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Abs); break;
+    case NegVecF32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Neg); break;
+    case SqrtVecF32x4:    o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Sqrt); break;
+    case AbsVecF64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Abs); break;
+    case NegVecF64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Neg); break;
+    case SqrtVecF64x2:    o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Sqrt); break;
+    case TruncSatSVecF32x4ToVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4TruncSatSF32x4); break;
+    case TruncSatUVecF32x4ToVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4TruncSatUF32x4); break;
+    case TruncSatSVecF64x2ToVecI64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2TruncSatSF64x2); break;
+    case TruncSatUVecF64x2ToVecI64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2TruncSatUF64x2); break;
+    case ConvertSVecI32x4ToVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4ConvertSI32x4); break;
+    case ConvertUVecI32x4ToVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4ConvertUI32x4); break;
+    case ConvertSVecI64x2ToVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2ConvertSI64x2); break;
+    case ConvertUVecI64x2ToVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2ConvertUI64x2); break;
     case InvalidUnary: WASM_UNREACHABLE();
   }
 }
@@ -1063,6 +1187,85 @@ void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
     case LeFloat64:       o << int8_t(BinaryConsts::F64Le); break;
     case GtFloat64:       o << int8_t(BinaryConsts::F64Gt); break;
     case GeFloat64:       o << int8_t(BinaryConsts::F64Ge); break;
+
+    case EqVecI8x16:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Eq); break;
+    case NeVecI8x16:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Ne); break;
+    case LtSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LtS); break;
+    case LtUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LtU); break;
+    case GtSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GtS); break;
+    case GtUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GtU); break;
+    case LeSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LeS); break;
+    case LeUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LeU); break;
+    case GeSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GeS); break;
+    case GeUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GeU); break;
+    case EqVecI16x8:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Eq); break;
+    case NeVecI16x8:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Ne); break;
+    case LtSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LtS); break;
+    case LtUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LtU); break;
+    case GtSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GtS); break;
+    case GtUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GtU); break;
+    case LeSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LeS); break;
+    case LeUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LeU); break;
+    case GeSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GeS); break;
+    case GeUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GeU); break;
+    case EqVecI32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Eq); break;
+    case NeVecI32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Ne); break;
+    case LtSVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LtS); break;
+    case LtUVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LtU); break;
+    case GtSVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GtS); break;
+    case GtUVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GtU); break;
+    case LeSVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LeS); break;
+    case LeUVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LeU); break;
+    case GeSVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GeS); break;
+    case GeUVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GeU); break;
+    case EqVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Eq); break;
+    case NeVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ne); break;
+    case LtVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Lt); break;
+    case GtVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Gt); break;
+    case LeVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Le); break;
+    case GeVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ge); break;
+    case EqVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Eq); break;
+    case NeVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ne); break;
+    case LtVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Lt); break;
+    case GtVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Gt); break;
+    case LeVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Le); break;
+    case GeVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ge); break;
+    case AndVec128:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128And); break;
+    case OrVec128:    o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Or); break;
+    case XorVec128:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Xor); break;
+
+    case AddVecI8x16:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Add); break;
+    case AddSatSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AddSatS); break;
+    case AddSatUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AddSatU); break;
+    case SubVecI8x16:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Sub); break;
+    case SubSatSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16SubSatS); break;
+    case SubSatUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16SubSatU); break;
+    case MulVecI8x16:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Mul); break;
+    case AddVecI16x8:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Add); break;
+    case AddSatSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AddSatS); break;
+    case AddSatUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AddSatU); break;
+    case SubVecI16x8:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Sub); break;
+    case SubSatSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8SubSatS); break;
+    case SubSatUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8SubSatU); break;
+    case MulVecI16x8:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Mul); break;
+    case AddVecI32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Add); break;
+    case SubVecI32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Sub); break;
+    case MulVecI32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Mul); break;
+    case AddVecI64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Add); break;
+    case SubVecI64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Sub); break;
+
+    case AddVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Add); break;
+    case SubVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Sub); break;
+    case MulVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Mul); break;
+    case DivVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Div); break;
+    case MinVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Min); break;
+    case MaxVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Max); break;
+    case AddVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Add); break;
+    case SubVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Sub); break;
+    case MulVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Mul); break;
+    case DivVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Div); break;
+    case MinVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Min); break;
+    case MaxVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Max); break;
     case InvalidBinary: WASM_UNREACHABLE();
   }
 }

@@ -248,6 +248,37 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         PUSH(AtomicWake, wakeCount);
         break;
       }
+      case Expression::Id::SIMDExtractId: {
+        CHECK(SIMDExtract, op);
+        CHECK(SIMDExtract, idx);
+        PUSH(SIMDExtract, vec);
+        break;
+      }
+      case Expression::Id::SIMDReplaceId: {
+        CHECK(SIMDReplace, op);
+        CHECK(SIMDReplace, idx);
+        PUSH(SIMDReplace, vec);
+        PUSH(SIMDReplace, value);
+        break;
+      }
+      case Expression::Id::SIMDShuffleId: {
+        CHECK(SIMDShuffle, mask);
+        PUSH(SIMDShuffle, left);
+        PUSH(SIMDShuffle, right);
+        break;
+      }
+      case Expression::Id::SIMDBitselectId: {
+        PUSH(SIMDBitselect, left);
+        PUSH(SIMDBitselect, right);
+        PUSH(SIMDBitselect, cond);
+        break;
+      }
+      case Expression::Id::SIMDShiftId: {
+        CHECK(SIMDShift, op);
+        PUSH(SIMDShift, vec);
+        PUSH(SIMDShift, shift);
+        break;
+      }
       case Expression::Id::ConstId: {
         if (left->cast<Const>()->value != right->cast<Const>()->value) {
           return false;
@@ -496,15 +527,43 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         PUSH(AtomicWake, wakeCount);
         break;
       }
+      case Expression::Id::SIMDExtractId: {
+        HASH(SIMDExtract, op);
+        HASH(SIMDExtract, idx);
+        PUSH(SIMDExtract, vec);
+        break;
+      }
+      case Expression::Id::SIMDReplaceId: {
+        HASH(SIMDReplace, op);
+        HASH(SIMDReplace, idx);
+        PUSH(SIMDReplace, vec);
+        PUSH(SIMDReplace, value);
+        break;
+      }
+      case Expression::Id::SIMDShuffleId: {
+        for (size_t i = 0; i < 16; ++i) {
+          HASH(SIMDShuffle, mask[i]);
+        }
+        PUSH(SIMDShuffle, left);
+        PUSH(SIMDShuffle, right);
+        break;
+      }
+      case Expression::Id::SIMDBitselectId: {
+        PUSH(SIMDBitselect, left);
+        PUSH(SIMDBitselect, right);
+        PUSH(SIMDBitselect, cond);
+        break;
+      }
+      case Expression::Id::SIMDShiftId: {
+        HASH(SIMDShift, op);
+        PUSH(SIMDShift, vec);
+        PUSH(SIMDShift, shift);
+        break;
+      }
       case Expression::Id::ConstId: {
         auto* c = curr->cast<Const>();
         hash(c->type);
-        auto bits = c->value.getBits();
-        if (getTypeSize(c->type) == 4) {
-          hash(HashType(bits));
-        } else {
-          hash64(bits);
-        }
+        hash(std::hash<Literal>()(c->value));
         break;
       }
       case Expression::Id::UnaryId: {

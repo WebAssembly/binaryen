@@ -632,6 +632,11 @@ Type SExpressionWasmBuilder::stringToType(const char* str, bool allowError, bool
     if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) return f32;
     if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) return f64;
   }
+  if (str[0] == 'v') {
+    if (str[1] == '1' && str[2] == '2' && str[3] == '8' && (prefix || str[4] == 0)) {
+      return v128;
+    }
+  }
   if (allowError) return none;
   throw ParseException("invalid wasm type");
 }
@@ -859,8 +864,69 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
-  auto ret = parseConst(s[1]->str(), type, allocator);
-  if (!ret) throw ParseException("bad const");
+  if (type != v128) {
+    auto ret = parseConst(s[1]->str(), type, allocator);
+    if (!ret) throw ParseException("bad const");
+    return ret;
+  }
+
+  auto ret = allocator.alloc<Const>();
+  auto getLiteral = [](Expression* expr) {
+    if (expr == nullptr) {
+      throw ParseException("Could not parse v128 lane");
+    }
+    return expr->cast<Const>()->value;
+  };
+  Type lane_t = stringToType(s[1]->str());
+  size_t lanes = s.size() - 2;
+  switch (lanes) {
+    case 2: {
+      if (lane_t != i64 && lane_t != f64) {
+        throw ParseException("Unexpected v128 literal lane type");
+      }
+      std::array<Literal, 2> lanes;
+      for (size_t i = 0; i < 2; ++i) {
+        lanes[i] = getLiteral(parseConst(s[i+2]->str(), lane_t, allocator));
+      }
+      ret->value = Literal(lanes);
+      break;
+    }
+    case 4: {
+      if (lane_t != i32 && lane_t != f32) {
+        throw ParseException("Unexpected v128 literal lane type");
+      }
+      std::array<Literal, 4> lanes;
+      for (size_t i = 0; i < 4; ++i) {
+        lanes[i] = getLiteral(parseConst(s[i+2]->str(), lane_t, allocator));
+      }
+      ret->value = Literal(lanes);
+      break;
+    }
+    case 8: {
+      if (lane_t != i32) {
+        throw ParseException("Unexpected v128 literal lane type");
+      }
+      std::array<Literal, 8> lanes;
+      for (size_t i = 0; i < 8; ++i) {
+        lanes[i] = getLiteral(parseConst(s[i+2]->str(), lane_t, allocator));
+      }
+      ret->value = Literal(lanes);
+      break;
+    }
+    case 16: {
+      if (lane_t != i32) {
+        throw ParseException("Unexpected v128 literal lane type");
+      }
+      std::array<Literal, 16> lanes;
+      for (size_t i = 0; i < 16; ++i) {
+        lanes[i] = getLiteral(parseConst(s[i+2]->str(), lane_t, allocator));
+      }
+      ret->value = Literal(lanes);
+      break;
+    }
+    default: throw ParseException("Unexpected number of lanes in v128 literal");
+  }
+  ret->finalize();
   return ret;
 }
 
@@ -1007,6 +1073,63 @@ Expression* SExpressionWasmBuilder::makeAtomicWake(Element& s) {
   ret->type = i32;
   ret->ptr = parseExpression(s[1]);
   ret->wakeCount = parseExpression(s[2]);
+  ret->finalize();
+  return ret;
+}
+
+static uint8_t parseLaneIdx(const Element* s, size_t lanes) {
+  const char *str = s->c_str();
+  char *end;
+  auto n = static_cast<unsigned long long>(strtoll(str, &end, 10));
+  if (end == str || *end != '\0') throw ParseException("Expected lane index");
+  if (n > lanes) throw ParseException("lane index must be less than " + std::to_string(lanes));
+  return uint8_t(n);
+}
+
+Expression* SExpressionWasmBuilder::makeSIMDExtract(Element& s, SIMDExtractOp op, size_t lanes) {
+  auto ret = allocator.alloc<SIMDExtract>();
+  ret->op = op;
+  ret->idx = parseLaneIdx(s[1], lanes);
+  ret->vec = parseExpression(s[2]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeSIMDReplace(Element& s, SIMDReplaceOp op, size_t lanes) {
+  auto ret = allocator.alloc<SIMDReplace>();
+  ret->op = op;
+  ret->idx = parseLaneIdx(s[1], lanes);
+  ret->vec = parseExpression(s[2]);
+  ret->value = parseExpression(s[3]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeSIMDShuffle(Element& s) {
+  auto ret = allocator.alloc<SIMDShuffle>();
+  for (size_t i = 0; i < 16; ++i) {
+    ret->mask[i] = parseLaneIdx(s[i+1], 32);
+  }
+  ret->left = parseExpression(s[17]);
+  ret->right = parseExpression(s[18]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeSIMDBitselect(Element& s) {
+  auto ret = allocator.alloc<SIMDBitselect>();
+  ret->left = parseExpression(s[1]);
+  ret->right = parseExpression(s[2]);
+  ret->cond = parseExpression(s[3]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
+  auto ret = allocator.alloc<SIMDShift>();
+  ret->op = op;
+  ret->vec = parseExpression(s[1]);
+  ret->shift = parseExpression(s[2]);
   ret->finalize();
   return ret;
 }

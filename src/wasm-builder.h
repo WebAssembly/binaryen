@@ -293,6 +293,47 @@ public:
     ret->finalize();
     return ret;
   }
+  SIMDExtract* makeSIMDExtract(SIMDExtractOp op, Expression* vec, uint8_t idx) {
+    auto* ret = allocator.alloc<SIMDExtract>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->idx = idx;
+    ret->finalize();
+    return ret;
+  }
+  SIMDReplace* makeSIMDReplace(SIMDReplaceOp op, Expression* vec, uint8_t idx, Expression* value) {
+    auto* ret = allocator.alloc<SIMDReplace>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->idx = idx;
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  SIMDShuffle* makeSIMDShuffle(Expression* left, Expression* right, const std::array<uint8_t, 16>& mask) {
+    auto* ret = allocator.alloc<SIMDShuffle>();
+    ret->left = left;
+    ret->right = right;
+    ret->mask = mask;
+    ret->finalize();
+    return ret;
+  }
+  SIMDBitselect* makeSIMDBitselect(Expression* left, Expression* right, Expression* cond) {
+    auto* ret = allocator.alloc<SIMDBitselect>();
+    ret->left = left;
+    ret->right = right;
+    ret->cond = cond;
+    ret->finalize();
+    return ret;
+  }
+  SIMDShift* makeSIMDShift(SIMDShiftOp op, Expression* vec, Expression* shift) {
+    auto* ret = allocator.alloc<SIMDShift>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->shift = shift;
+    ret->finalize();
+    return ret;
+  }
   Const* makeConst(Literal value) {
     assert(isConcreteType(value.type));
     auto* ret = allocator.alloc<Const>();
@@ -474,7 +515,12 @@ public:
       case i64: value = Literal(int64_t(0)); break;
       case f32: value = Literal(float(0)); break;
       case f64: value = Literal(double(0)); break;
-      case v128: assert(false && "v128 not implemented yet");
+      case v128: {
+        std::array<uint8_t, 16> bytes;
+        bytes.fill(0);
+        value = Literal(bytes.data());
+        break;
+      }
       case none: return ExpressionManipulator::nop(curr);
       case unreachable: return ExpressionManipulator::convert<T, Unreachable>(curr);
     }

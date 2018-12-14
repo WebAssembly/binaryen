@@ -14,6 +14,8 @@ var module;
 
 // helpers
 
+var v128_bytes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+
 function assert(x) {
   if (!x) throw 'error!';
 }
@@ -32,6 +34,10 @@ function makeInt64(l, h) {
 
 function makeFloat64(x) {
   return module.f64.const(x);
+}
+
+function makeVec128(i8s) {
+  return module.v128.const(i8s)
 }
 
 function makeSomething() {
@@ -83,6 +89,11 @@ function test_ids() {
   console.log("BinaryenAtomicRMWId: " + Binaryen.AtomicRMWId);
   console.log("BinaryenAtomicWaitId: " + Binaryen.AtomicWaitId);
   console.log("BinaryenAtomicWakeId: " + Binaryen.AtomicWakeId);
+  console.log("BinaryenSIMDExtractId: " + Binaryen.SIMDExtractId);
+  console.log("BinaryenSIMDReplaceId: " + Binaryen.SIMDReplaceId);
+  console.log("BinaryenSIMDShuffleId: " + Binaryen.SIMDShuffleId);
+  console.log("BinaryenSIMDBitselectId: " + Binaryen.SIMDBitselectId);
+  console.log("BinaryenSIMDShiftId: " + Binaryen.SIMDShiftId);
 }
 
 function test_core() {
@@ -156,6 +167,39 @@ function test_core() {
     module.f32.demote(module.f64.const(-9005.841)),
     module.f32.reinterpret(module.i32.const(-10)),
     module.f64.reinterpret(module.i64.const(-22, -1)),
+    module.i8x16.splat(module.i32.const(42)),
+    module.i16x8.splat(module.i32.const(42)),
+    module.i32x4.splat(module.i32.const(42)),
+    module.i64x2.splat(module.i64.const(123, 456)),
+    module.f32x4.splat(module.f32.const(42.0)),
+    module.f64x2.splat(module.f64.const(42.0)),
+    module.v128.not(module.v128.const(v128_bytes)),
+    module.i8x16.neg(module.v128.const(v128_bytes)),
+    module.i8x16.any_true(module.v128.const(v128_bytes)),
+    module.i8x16.all_true(module.v128.const(v128_bytes)),
+    module.i16x8.neg(module.v128.const(v128_bytes)),
+    module.i16x8.any_true(module.v128.const(v128_bytes)),
+    module.i16x8.all_true(module.v128.const(v128_bytes)),
+    module.i32x4.neg(module.v128.const(v128_bytes)),
+    module.i32x4.any_true(module.v128.const(v128_bytes)),
+    module.i32x4.all_true(module.v128.const(v128_bytes)),
+    module.i64x2.neg(module.v128.const(v128_bytes)),
+    module.i64x2.any_true(module.v128.const(v128_bytes)),
+    module.i64x2.all_true(module.v128.const(v128_bytes)),
+    module.f32x4.abs(module.v128.const(v128_bytes)),
+    module.f32x4.neg(module.v128.const(v128_bytes)),
+    module.f32x4.sqrt(module.v128.const(v128_bytes)),
+    module.f64x2.abs(module.v128.const(v128_bytes)),
+    module.f64x2.neg(module.v128.const(v128_bytes)),
+    module.f64x2.sqrt(module.v128.const(v128_bytes)),
+    module.i32x4['trunc_s/f32x4:sat'](module.v128.const(v128_bytes)),
+    module.i32x4['trunc_u/f32x4:sat'](module.v128.const(v128_bytes)),
+    module.i64x2['trunc_s/f64x2:sat'](module.v128.const(v128_bytes)),
+    module.i64x2['trunc_u/f64x2:sat'](module.v128.const(v128_bytes)),
+    module.f32x4['convert_s/i32x4'](module.v128.const(v128_bytes)),
+    module.f32x4['convert_u/i32x4'](module.v128.const(v128_bytes)),
+    module.f64x2['convert_s/i64x2'](module.v128.const(v128_bytes)),
+    module.f64x2['convert_u/i64x2'](module.v128.const(v128_bytes)),
     // Binary
     module.i32.add(module.i32.const(-10), module.i32.const(-11)),
     module.f64.sub(module.f64.const(-9005.841), module.f64.const(-9007.333)),
@@ -189,6 +233,113 @@ function test_core() {
     module.f64.le(module.f64.const(-9005.841), module.f64.const(-9007.333)),
     module.f64.gt(module.f64.const(-9005.841), module.f64.const(-9007.333)),
     module.f32.ge(module.f32.const(-33.612), module.f32.const(-62.5)),
+    module.i8x16.eq(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.ne(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.lt_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.lt_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.gt_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.gt_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.le_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.le_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.ge_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.ge_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.eq(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.ne(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.lt_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.lt_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.gt_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.gt_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.le_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.le_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.ge_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.ge_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.eq(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.ne(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.lt_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.lt_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.gt_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.gt_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.le_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.le_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.ge_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.ge_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.eq(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.ne(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.lt(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.gt(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.le(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.ge(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.eq(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.ne(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.lt(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.gt(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.le(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.ge(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.v128.and(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.v128.or(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.v128.xor(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.add_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.add_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.sub_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.sub_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.add_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.add_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.sub_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.sub_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.div(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.min(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.max(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.div(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.min(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.max(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    // SIMD lane manipulation
+    module.i8x16.extract_lane_s(module.v128.const(v128_bytes), 1),
+    module.i8x16.extract_lane_u(module.v128.const(v128_bytes), 1),
+    module.i16x8.extract_lane_s(module.v128.const(v128_bytes), 1),
+    module.i16x8.extract_lane_u(module.v128.const(v128_bytes), 1),
+    module.i32x4.extract_lane(module.v128.const(v128_bytes), 1),
+    module.i64x2.extract_lane(module.v128.const(v128_bytes), 1),
+    module.f32x4.extract_lane(module.v128.const(v128_bytes), 1),
+    module.f64x2.extract_lane(module.v128.const(v128_bytes), 1),
+    module.i16x8.replace_lane(module.v128.const(v128_bytes), 1, module.i32.const(42)),
+    module.i8x16.replace_lane(module.v128.const(v128_bytes), 1, module.i32.const(42)),
+    module.i32x4.replace_lane(module.v128.const(v128_bytes), 1, module.i32.const(42)),
+    module.i64x2.replace_lane(module.v128.const(v128_bytes), 1, module.i64.const(42, 43)),
+    module.f32x4.replace_lane(module.v128.const(v128_bytes), 1, module.f32.const(42)),
+    module.f64x2.replace_lane(module.v128.const(v128_bytes), 1, module.f64.const(42)),
+    // // SIMD shift
+    module.i8x16.shl(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i8x16.shr_s(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i8x16.shr_u(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i16x8.shl(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i16x8.shr_s(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i16x8.shr_u(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i32x4.shl(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i32x4.shr_s(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i32x4.shr_u(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i64x2.shl(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i64x2.shr_s(module.v128.const(v128_bytes), module.i32.const(1)),
+    module.i64x2.shr_u(module.v128.const(v128_bytes), module.i32.const(1)),
+    // Other SIMD
+    module.v8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
+    module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // All the rest
     module.block('', []), // block with no name
     module.if(temp1, temp2, temp3),

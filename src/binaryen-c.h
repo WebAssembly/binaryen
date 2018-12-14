@@ -117,6 +117,11 @@ BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
 BinaryenExpressionId BinaryenAtomicRMWId(void);
 BinaryenExpressionId BinaryenAtomicWaitId(void);
 BinaryenExpressionId BinaryenAtomicWakeId(void);
+BinaryenExpressionId BinaryenSIMDExtractId(void);
+BinaryenExpressionId BinaryenSIMDReplaceId(void);
+BinaryenExpressionId BinaryenSIMDShuffleId(void);
+BinaryenExpressionId BinaryenSIMDBitselectId(void);
+BinaryenExpressionId BinaryenSIMDShiftId(void);
 
 // External kinds (call to get the value of each; you can cache them)
 
@@ -166,6 +171,7 @@ struct BinaryenLiteral {
     int64_t i64;
     float f32;
     double f64;
+    uint8_t v128[16];
   };
 };
 
@@ -173,6 +179,7 @@ struct BinaryenLiteral BinaryenLiteralInt32(int32_t x);
 struct BinaryenLiteral BinaryenLiteralInt64(int64_t x);
 struct BinaryenLiteral BinaryenLiteralFloat32(float x);
 struct BinaryenLiteral BinaryenLiteralFloat64(double x);
+struct BinaryenLiteral BinaryenLiteralVec128(const uint8_t x[16]);
 struct BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x);
 struct BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x);
 
@@ -332,6 +339,141 @@ BinaryenOp BinaryenTruncSatSFloat64ToInt32(void);
 BinaryenOp BinaryenTruncSatSFloat64ToInt64(void);
 BinaryenOp BinaryenTruncSatUFloat64ToInt32(void);
 BinaryenOp BinaryenTruncSatUFloat64ToInt64(void);
+BinaryenOp BinaryenSplatVecI8x16(void);
+BinaryenOp BinaryenExtractLaneSVecI8x16(void);
+BinaryenOp BinaryenExtractLaneUVecI8x16(void);
+BinaryenOp BinaryenReplaceLaneVecI8x16(void);
+BinaryenOp BinaryenSplatVecI16x8(void);
+BinaryenOp BinaryenExtractLaneSVecI16x8(void);
+BinaryenOp BinaryenExtractLaneUVecI16x8(void);
+BinaryenOp BinaryenReplaceLaneVecI16x8(void);
+BinaryenOp BinaryenSplatVecI32x4(void);
+BinaryenOp BinaryenExtractLaneVecI32x4(void);
+BinaryenOp BinaryenReplaceLaneVecI32x4(void);
+BinaryenOp BinaryenSplatVecI64x2(void);
+BinaryenOp BinaryenExtractLaneVecI64x2(void);
+BinaryenOp BinaryenReplaceLaneVecI64x2(void);
+BinaryenOp BinaryenSplatVecF32x4(void);
+BinaryenOp BinaryenExtractLaneVecF32x4(void);
+BinaryenOp BinaryenReplaceLaneVecF32x4(void);
+BinaryenOp BinaryenSplatVecF64x2(void);
+BinaryenOp BinaryenExtractLaneVecF64x2(void);
+BinaryenOp BinaryenReplaceLaneVecF64x2(void);
+BinaryenOp BinaryenEqVecI8x16(void);
+BinaryenOp BinaryenNeVecI8x16(void);
+BinaryenOp BinaryenLtSVecI8x16(void);
+BinaryenOp BinaryenLtUVecI8x16(void);
+BinaryenOp BinaryenGtSVecI8x16(void);
+BinaryenOp BinaryenGtUVecI8x16(void);
+BinaryenOp BinaryenLeSVecI8x16(void);
+BinaryenOp BinaryenLeUVecI8x16(void);
+BinaryenOp BinaryenGeSVecI8x16(void);
+BinaryenOp BinaryenGeUVecI8x16(void);
+BinaryenOp BinaryenEqVecI16x8(void);
+BinaryenOp BinaryenNeVecI16x8(void);
+BinaryenOp BinaryenLtSVecI16x8(void);
+BinaryenOp BinaryenLtUVecI16x8(void);
+BinaryenOp BinaryenGtSVecI16x8(void);
+BinaryenOp BinaryenGtUVecI16x8(void);
+BinaryenOp BinaryenLeSVecI16x8(void);
+BinaryenOp BinaryenLeUVecI16x8(void);
+BinaryenOp BinaryenGeSVecI16x8(void);
+BinaryenOp BinaryenGeUVecI16x8(void);
+BinaryenOp BinaryenEqVecI32x4(void);
+BinaryenOp BinaryenNeVecI32x4(void);
+BinaryenOp BinaryenLtSVecI32x4(void);
+BinaryenOp BinaryenLtUVecI32x4(void);
+BinaryenOp BinaryenGtSVecI32x4(void);
+BinaryenOp BinaryenGtUVecI32x4(void);
+BinaryenOp BinaryenLeSVecI32x4(void);
+BinaryenOp BinaryenLeUVecI32x4(void);
+BinaryenOp BinaryenGeSVecI32x4(void);
+BinaryenOp BinaryenGeUVecI32x4(void);
+BinaryenOp BinaryenEqVecF32x4(void);
+BinaryenOp BinaryenNeVecF32x4(void);
+BinaryenOp BinaryenLtVecF32x4(void);
+BinaryenOp BinaryenGtVecF32x4(void);
+BinaryenOp BinaryenLeVecF32x4(void);
+BinaryenOp BinaryenGeVecF32x4(void);
+BinaryenOp BinaryenEqVecF64x2(void);
+BinaryenOp BinaryenNeVecF64x2(void);
+BinaryenOp BinaryenLtVecF64x2(void);
+BinaryenOp BinaryenGtVecF64x2(void);
+BinaryenOp BinaryenLeVecF64x2(void);
+BinaryenOp BinaryenGeVecF64x2(void);
+BinaryenOp BinaryenNotVec128(void);
+BinaryenOp BinaryenAndVec128(void);
+BinaryenOp BinaryenOrVec128(void);
+BinaryenOp BinaryenXorVec128(void);
+BinaryenOp BinaryenNegVecI8x16(void);
+BinaryenOp BinaryenAnyTrueVecI8x16(void);
+BinaryenOp BinaryenAllTrueVecI8x16(void);
+BinaryenOp BinaryenShlVecI8x16(void);
+BinaryenOp BinaryenShrSVecI8x16(void);
+BinaryenOp BinaryenShrUVecI8x16(void);
+BinaryenOp BinaryenAddVecI8x16(void);
+BinaryenOp BinaryenAddSatSVecI8x16(void);
+BinaryenOp BinaryenAddSatUVecI8x16(void);
+BinaryenOp BinaryenSubVecI8x16(void);
+BinaryenOp BinaryenSubSatSVecI8x16(void);
+BinaryenOp BinaryenSubSatUVecI8x16(void);
+BinaryenOp BinaryenMulVecI8x16(void);
+BinaryenOp BinaryenNegVecI16x8(void);
+BinaryenOp BinaryenAnyTrueVecI16x8(void);
+BinaryenOp BinaryenAllTrueVecI16x8(void);
+BinaryenOp BinaryenShlVecI16x8(void);
+BinaryenOp BinaryenShrSVecI16x8(void);
+BinaryenOp BinaryenShrUVecI16x8(void);
+BinaryenOp BinaryenAddVecI16x8(void);
+BinaryenOp BinaryenAddSatSVecI16x8(void);
+BinaryenOp BinaryenAddSatUVecI16x8(void);
+BinaryenOp BinaryenSubVecI16x8(void);
+BinaryenOp BinaryenSubSatSVecI16x8(void);
+BinaryenOp BinaryenSubSatUVecI16x8(void);
+BinaryenOp BinaryenMulVecI16x8(void);
+BinaryenOp BinaryenNegVecI32x4(void);
+BinaryenOp BinaryenAnyTrueVecI32x4(void);
+BinaryenOp BinaryenAllTrueVecI32x4(void);
+BinaryenOp BinaryenShlVecI32x4(void);
+BinaryenOp BinaryenShrSVecI32x4(void);
+BinaryenOp BinaryenShrUVecI32x4(void);
+BinaryenOp BinaryenAddVecI32x4(void);
+BinaryenOp BinaryenSubVecI32x4(void);
+BinaryenOp BinaryenMulVecI32x4(void);
+BinaryenOp BinaryenNegVecI64x2(void);
+BinaryenOp BinaryenAnyTrueVecI64x2(void);
+BinaryenOp BinaryenAllTrueVecI64x2(void);
+BinaryenOp BinaryenShlVecI64x2(void);
+BinaryenOp BinaryenShrSVecI64x2(void);
+BinaryenOp BinaryenShrUVecI64x2(void);
+BinaryenOp BinaryenAddVecI64x2(void);
+BinaryenOp BinaryenSubVecI64x2(void);
+BinaryenOp BinaryenAbsVecF32x4(void);
+BinaryenOp BinaryenNegVecF32x4(void);
+BinaryenOp BinaryenSqrtVecF32x4(void);
+BinaryenOp BinaryenAddVecF32x4(void);
+BinaryenOp BinaryenSubVecF32x4(void);
+BinaryenOp BinaryenMulVecF32x4(void);
+BinaryenOp BinaryenDivVecF32x4(void);
+BinaryenOp BinaryenMinVecF32x4(void);
+BinaryenOp BinaryenMaxVecF32x4(void);
+BinaryenOp BinaryenAbsVecF64x2(void);
+BinaryenOp BinaryenNegVecF64x2(void);
+BinaryenOp BinaryenSqrtVecF64x2(void);
+BinaryenOp BinaryenAddVecF64x2(void);
+BinaryenOp BinaryenSubVecF64x2(void);
+BinaryenOp BinaryenMulVecF64x2(void);
+BinaryenOp BinaryenDivVecF64x2(void);
+BinaryenOp BinaryenMinVecF64x2(void);
+BinaryenOp BinaryenMaxVecF64x2(void);
+BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void);
+BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void);
+BinaryenOp BinaryenTruncSatSVecF64x2ToVecI64x2(void);
+BinaryenOp BinaryenTruncSatUVecF64x2ToVecI64x2(void);
+BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void);
+BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void);
+BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void);
+BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void);
 
 typedef void* BinaryenExpressionRef;
 
@@ -393,191 +535,138 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op,
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef replacement, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef wakeCount);
+BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx);
+BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx, BinaryenExpressionRef value);
+BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, const uint8_t mask[16]);
+BinaryenExpressionRef BinaryenSIMDBitselect(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenExpressionRef cond);
+BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, BinaryenExpressionRef shift);
 
-// Gets the id (kind) of the specified expression.
 BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
-// Gets the type of the specified expression.
 BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
-// Prints an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 
-// Gets the name of the specified `Block` expression. May be `NULL`.
 const char* BinaryenBlockGetName(BinaryenExpressionRef expr);
-// Gets the number of nested child expressions within the specified `Block` expression.
 BinaryenIndex BinaryenBlockGetNumChildren(BinaryenExpressionRef expr);
-// Gets the nested child expression at the specified index within the specified `Block` expression.
 BinaryenExpressionRef BinaryenBlockGetChild(BinaryenExpressionRef expr, BinaryenIndex index);
 
-// Gets the nested condition expression within the specified `If` expression.
 BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr);
-// Gets the nested ifTrue expression within the specified `If` expression.
 BinaryenExpressionRef BinaryenIfGetIfTrue(BinaryenExpressionRef expr);
-// Gets the nested ifFalse expression within the specified `If` expression.
 BinaryenExpressionRef BinaryenIfGetIfFalse(BinaryenExpressionRef expr);
 
-// Gets the name of the specified `Loop` expression. May be `NULL`.
 const char* BinaryenLoopGetName(BinaryenExpressionRef expr);
-// Gets the nested body expression within the specified `Loop` expression.
 BinaryenExpressionRef BinaryenLoopGetBody(BinaryenExpressionRef expr);
 
-// Gets the name of the specified `Break` expression. May be `NULL`.
 const char* BinaryenBreakGetName(BinaryenExpressionRef expr);
-// Gets the nested condition expression within the specified `Break` expression. Returns `NULL` if this is a `br` and not a `br_if`.
 BinaryenExpressionRef BinaryenBreakGetCondition(BinaryenExpressionRef expr);
-// Gets the nested value expression within the specified `Break` expression. May be `NULL`.
 BinaryenExpressionRef BinaryenBreakGetValue(BinaryenExpressionRef expr);
 
-// Gets the number of names within the specified `Switch` expression.
 BinaryenIndex BinaryenSwitchGetNumNames(BinaryenExpressionRef expr);
-// Gets the name at the specified index within the specified `Switch` expression.
 const char* BinaryenSwitchGetName(BinaryenExpressionRef expr, BinaryenIndex index);
-// Gets the default name of the specified `Switch` expression.
 const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr);
-// Gets the nested condition expression within the specified `Switch` expression.
 BinaryenExpressionRef BinaryenSwitchGetCondition(BinaryenExpressionRef expr);
-// Gets the nested value expression within the specifiedd `Switch` expression. May be `NULL`.
 BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr);
 
-// Gets the name of the target of the specified `Call` expression.
 const char* BinaryenCallGetTarget(BinaryenExpressionRef expr);
-// Gets the number of nested operand expressions within the specified `Call` expression.
 BinaryenIndex BinaryenCallGetNumOperands(BinaryenExpressionRef expr);
-// Gets the nested operand expression at the specified index within the specified `Call` expression.
 BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
 
-// Gets the nested target expression of the specified `CallIndirect` expression.
 BinaryenExpressionRef BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr);
-// Gets the number of nested operand expressions within the specified `CallIndirect` expression.
 BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr);
-// Gets the nested operand expression at the specified index within the specified `CallIndirect` expression.
 BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
 
-// Gets the index of the specified `GetLocal` expression.
 BinaryenIndex BinaryenGetLocalGetIndex(BinaryenExpressionRef expr);
 
-// Tests if the specified `SetLocal` expression performs a `tee_local` instead of a `set_local`.
 int BinaryenSetLocalIsTee(BinaryenExpressionRef expr);
-// Gets the index of the specified `SetLocal` expression.
 BinaryenIndex BinaryenSetLocalGetIndex(BinaryenExpressionRef expr);
-// Gets the nested value expression within the specified `SetLocal` expression.
 BinaryenExpressionRef BinaryenSetLocalGetValue(BinaryenExpressionRef expr);
 
-// Gets the name of the specified `GetGlobal` expression.
 const char* BinaryenGetGlobalGetName(BinaryenExpressionRef expr);
 
-// Gets the name of the specified `SetGlobal` expression.
 const char* BinaryenSetGlobalGetName(BinaryenExpressionRef expr);
-// Gets the nested value expression within the specified `SetLocal` expression.
 BinaryenExpressionRef BinaryenSetGlobalGetValue(BinaryenExpressionRef expr);
 
-// Gets the operator of the specified `Host` expression.
 BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr);
-// Gets the name operand of the specified `Host` expression. May be `NULL`.
 const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr);
-// Gets the number of nested operand expressions within the specified `Host` expression.
 BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr);
-// Gets the nested operand expression at the specified index within the specified `Host` expression.
 BinaryenExpressionRef BinaryenHostGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
 
-// Tests if the specified `Load` expression is atomic.
 int BinaryenLoadIsAtomic(BinaryenExpressionRef expr);
-// Tests if the specified `Load` expression is signed.
 int BinaryenLoadIsSigned(BinaryenExpressionRef expr);
-// Gets the offset of the specified `Load` expression.
 uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr);
-// Gets the byte size of the specified `Load` expression.
 uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr);
-// Gets the alignment of the specified `Load` expression.
 uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr);
-// Gets the nested pointer expression within the specified `Load` expression.
 BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr);
 
-// Tests if the specified `Store` expression is atomic.
 int BinaryenStoreIsAtomic(BinaryenExpressionRef expr);
-// Gets the byte size of the specified `Store` expression.
 uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr);
-// Gets the offset of the specified store expression.
 uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr);
-// Gets the alignment of the specified `Store` expression.
 uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr);
-// Gets the nested pointer expression within the specified `Store` expression.
 BinaryenExpressionRef BinaryenStoreGetPtr(BinaryenExpressionRef expr);
-// Gets the nested value expression within the specified `Store` expression.
 BinaryenExpressionRef BinaryenStoreGetValue(BinaryenExpressionRef expr);
 
-// Gets the 32-bit integer value of the specified `Const` expression.
 int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr);
-// Gets the 64-bit integer value of the specified `Const` expression.
 int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
-// Gets the low 32-bits of a 64-bit integer value of the specified `Const` expression. Useful where I64 returning exports are illegal, i.e. binaryen.js.
 int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
-// Gets the high 32-bits of a 64-bit integer value of the specified `Const` expression. Useful where I64 returning exports are illegal, i.e. binaryen.js.
 int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
-// Gets the 32-bit float value of the specified `Const` expression.
 float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
-// Gets the 64-bit float value of the specified `Const` expression.
 double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
 
-// Gets the operator of the specified `Unary` expression.
 BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr);
-// Gets the nested value expression within the specified `Unary` expression.
 BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr);
 
-// Gets the operator of the specified `Binary` expression.
 BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr);
-// Gets the nested left expression within the specified `Binary` expression.
 BinaryenExpressionRef BinaryenBinaryGetLeft(BinaryenExpressionRef expr);
-// Gets the nested right expression within the specified `Binary` expression.
 BinaryenExpressionRef BinaryenBinaryGetRight(BinaryenExpressionRef expr);
 
-// Gets the nested ifTrue expression within the specified `Select` expression.
 BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr);
-// Gets the nested ifFalse expression within the specified `Select` expression.
 BinaryenExpressionRef BinaryenSelectGetIfFalse(BinaryenExpressionRef expr);
-// Gets the nested condition expression within the specified `Select` expression.
 BinaryenExpressionRef BinaryenSelectGetCondition(BinaryenExpressionRef expr);
 
-// Gets the nested value expression within the specified `Drop` expression.
 BinaryenExpressionRef BinaryenDropGetValue(BinaryenExpressionRef expr);
 
-// Gets the nested value expression within the specified `Return` expression.
 BinaryenExpressionRef BinaryenReturnGetValue(BinaryenExpressionRef expr);
 
-// Gets the operator of the specified `AtomicRMW` expression.
 BinaryenOp BinaryenAtomicRMWGetOp(BinaryenExpressionRef expr);
-// Gets the byte size of the specified `AtomicRMW` expression.
 uint32_t BinaryenAtomicRMWGetBytes(BinaryenExpressionRef expr);
-// Gets the offset of the specified `AtomicRMW` expression.
 uint32_t BinaryenAtomicRMWGetOffset(BinaryenExpressionRef expr);
-// Gets the nested pointer expression within the specified `AtomicRMW` expression.
 BinaryenExpressionRef BinaryenAtomicRMWGetPtr(BinaryenExpressionRef expr);
-// Gets the nested value expression within the specified `AtomicRMW` expression.
 BinaryenExpressionRef BinaryenAtomicRMWGetValue(BinaryenExpressionRef expr);
 
-// Gets the byte size of the specified `AtomicCmpxchg` expression.
 uint32_t BinaryenAtomicCmpxchgGetBytes(BinaryenExpressionRef expr);
-// Gets the offset of the specified `AtomicCmpxchg` expression.
 uint32_t BinaryenAtomicCmpxchgGetOffset(BinaryenExpressionRef expr);
-// Gets the nested pointer expression within the specified `AtomicCmpxchg` expression.
 BinaryenExpressionRef BinaryenAtomicCmpxchgGetPtr(BinaryenExpressionRef expr);
-// Gets the nested expected value expression within the specified `AtomicCmpxchg` expression.
 BinaryenExpressionRef BinaryenAtomicCmpxchgGetExpected(BinaryenExpressionRef expr);
-// Gets the nested replacement value expression within the specified `AtomicCmpxchg` expression.
 BinaryenExpressionRef BinaryenAtomicCmpxchgGetReplacement(BinaryenExpressionRef expr);
 
-// Gets the nested pointer expression within the specified `AtomicWait` expression.
 BinaryenExpressionRef BinaryenAtomicWaitGetPtr(BinaryenExpressionRef expr);
-// Gets the nested expected value expression within the specified `AtomicWait` expression.
 BinaryenExpressionRef BinaryenAtomicWaitGetExpected(BinaryenExpressionRef expr);
-// Gets the nested timeout expression within the specified `AtomicWait` expression.
 BinaryenExpressionRef BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr);
-// Gets the expected type of the specified `AtomicWait` expression.
 BinaryenType BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr);
 
-// Gets the nested pointer expression within the specified `AtomicWake` expression.
 BinaryenExpressionRef BinaryenAtomicWakeGetPtr(BinaryenExpressionRef expr);
-// Gets the nested wake count expression within the specified `AtomicWake` expression.
 BinaryenExpressionRef BinaryenAtomicWakeGetWakeCount(BinaryenExpressionRef expr);
+
+BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr);
+uint8_t BinaryenSIMDExtractGetIdx(BinaryenExpressionRef expr);
+
+BinaryenOp BinaryenSIMDReplaceGetOp(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDReplaceGetVec(BinaryenExpressionRef expr);
+uint8_t BinaryenSIMDReplaceGetIdx(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDReplaceGetValue(BinaryenExpressionRef expr);
+
+BinaryenExpressionRef BinaryenSIMDShuffleGetLeft(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr);
+void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t *mask);
+
+BinaryenExpressionRef BinaryenSIMDBitselectGetLeft(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDBitselectGetRight(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDBitselectGetCond(BinaryenExpressionRef expr);
+
+BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDShiftGetShift(BinaryenExpressionRef expr);
+
 
 // Functions
 
