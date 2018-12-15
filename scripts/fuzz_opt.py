@@ -15,7 +15,6 @@ script covers different options being passed)
 '''
 
 import os
-import sys
 import difflib
 import subprocess
 import random
