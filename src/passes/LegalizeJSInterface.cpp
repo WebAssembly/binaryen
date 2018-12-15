@@ -22,6 +22,13 @@
 // stub methods added in this pass, that thunk i64s into i32, i32 and
 // vice versa as necessary.
 //
+// We can also legalize in a "minimal" way, that is, only JS-specific
+// components, that only JS will care about, such as dynCall methods
+// (wasm will never call them, as it can share the table directly). E.g.
+// is dynamic linking, where we can avoid legalizing wasm=>wasm calls
+// across modules, we still want to legalize dynCalls so JS can call into the
+// table even to a signature that is not legal.
+//
 // This pass also legalizes according to asm.js FFI rules, which
 // disallow f32s. TODO: an option to not do that, if it matters?
 //
@@ -40,68 +47,74 @@
 namespace wasm {
 
 struct LegalizeJSInterface : public Pass {
+  bool full;
+
+  LegalizeJSInterface(bool full) : full(full) {}
+
   void run(PassRunner* runner, Module* module) override {
     // for each illegal export, we must export a legalized stub instead
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
         auto* func = module->getFunction(ex->value);
-        if (isIllegal(func)) {
+        if (isIllegal(func) && isRelevant(ex.get(), func)) {
           auto legalName = makeLegalStub(func, module);
           ex->value = legalName;
         }
       }
     }
-    // Avoid iterator invalidation later.
-    std::vector<Function*> originalFunctions;
-    for (auto& func : module->functions) {
-      originalFunctions.push_back(func.get());
-    }
-    // for each illegal import, we must call a legalized stub instead
-    for (auto* im : originalFunctions) {
-      if (im->imported() && isIllegal(module->getFunctionType(im->type))) {
-        auto funcName = makeLegalStubForCalledImport(im, module);
-        illegalImportsToLegal[im->name] = funcName;
-        // we need to use the legalized version in the table, as the import from JS
-        // is legal for JS. Our stub makes it look like a native wasm function.
-        for (auto& segment : module->table.segments) {
-          for (auto& name : segment.data) {
-            if (name == im->name) {
-              name = funcName;
+    if (full) {
+      // Avoid iterator invalidation later.
+      std::vector<Function*> originalFunctions;
+      for (auto& func : module->functions) {
+        originalFunctions.push_back(func.get());
+      }
+      // for each illegal import, we must call a legalized stub instead
+      for (auto* im : originalFunctions) {
+        if (im->imported() && isIllegal(module->getFunctionType(im->type))) {
+          auto funcName = makeLegalStubForCalledImport(im, module);
+          illegalImportsToLegal[im->name] = funcName;
+          // we need to use the legalized version in the table, as the import from JS
+          // is legal for JS. Our stub makes it look like a native wasm function.
+          for (auto& segment : module->table.segments) {
+            for (auto& name : segment.data) {
+              if (name == im->name) {
+                name = funcName;
+              }
             }
           }
         }
       }
-    }
-    if (illegalImportsToLegal.size() > 0) {
-      for (auto& pair : illegalImportsToLegal) {
-        module->removeFunction(pair.first);
-      }
-
-      // fix up imports: call_import of an illegal must be turned to a call of a legal
-
-      struct FixImports : public WalkerPass<PostWalker<FixImports>> {
-        bool isFunctionParallel() override { return true; }
-
-        Pass* create() override { return new FixImports(illegalImportsToLegal); }
-
-        std::map<Name, Name>* illegalImportsToLegal;
-
-        FixImports(std::map<Name, Name>* illegalImportsToLegal) : illegalImportsToLegal(illegalImportsToLegal) {}
-
-        void visitCall(Call* curr) {
-          auto iter = illegalImportsToLegal->find(curr->target);
-          if (iter == illegalImportsToLegal->end()) return;
-
-          if (iter->second == getFunction()->name) return; // inside the stub function itself, is the one safe place to do the call
-          replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+      if (illegalImportsToLegal.size() > 0) {
+        for (auto& pair : illegalImportsToLegal) {
+          module->removeFunction(pair.first);
         }
-      };
 
-      PassRunner passRunner(module);
-      passRunner.setIsNested(true);
-      passRunner.add<FixImports>(&illegalImportsToLegal);
-      passRunner.run();
+        // fix up imports: call_import of an illegal must be turned to a call of a legal
+
+        struct FixImports : public WalkerPass<PostWalker<FixImports>> {
+          bool isFunctionParallel() override { return true; }
+
+          Pass* create() override { return new FixImports(illegalImportsToLegal); }
+
+          std::map<Name, Name>* illegalImportsToLegal;
+
+          FixImports(std::map<Name, Name>* illegalImportsToLegal) : illegalImportsToLegal(illegalImportsToLegal) {}
+
+          void visitCall(Call* curr) {
+            auto iter = illegalImportsToLegal->find(curr->target);
+            if (iter == illegalImportsToLegal->end()) return;
+
+            if (iter->second == getFunction()->name) return; // inside the stub function itself, is the one safe place to do the call
+            replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+          }
+        };
+
+        PassRunner passRunner(module);
+        passRunner.setIsNested(true);
+        passRunner.add<FixImports>(&illegalImportsToLegal);
+        passRunner.run();
+      }
     }
   }
 
@@ -118,6 +131,11 @@ private:
     return false;
   }
 
+  bool isRelevant(Export* ex, Function* func) {
+    if (full) return true;
+    // We are doing minimal legalization - just what JS needs.
+    return ex->name.startsWith("dynCall_");
+  }
 
   // JS calls the export, so it must call a legal stub that calls the actual wasm function
   Name makeLegalStub(Function* func, Module* module) {
@@ -256,7 +274,11 @@ private:
 };
 
 Pass *createLegalizeJSInterfacePass() {
-  return new LegalizeJSInterface();
+  return new LegalizeJSInterface(true);
+}
+
+Pass *createLegalizeJSInterfaceMinimallyPass() {
+  return new LegalizeJSInterface(false);
 }
 
 } // namespace wasm

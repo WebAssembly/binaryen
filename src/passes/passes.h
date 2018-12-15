@@ -42,6 +42,7 @@ Pass* createI64ToI32LoweringPass();
 Pass* createInliningPass();
 Pass* createInliningOptimizingPass();
 Pass* createLegalizeJSInterfacePass();
+Pass* createLegalizeJSInterfaceMinimallyPass();
 Pass* createLocalCSEPass();
 Pass* createLogExecutionPass();
 Pass* createInstrumentLocalsPass();

@@ -30,6 +30,7 @@
 #include "wasm-io.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
+#include "abi/js.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -83,7 +84,7 @@ int main(int argc, const char *argv[]) {
       .add("--input-source-map", "-ism", "Consume source map from the specified file",
            Options::Arguments::One,
            [&inputSourceMapFilename](Options *o, const std::string& argument) { inputSourceMapFilename = argument; })
-      .add("--no-legalize-javascript-ffi", "-nj", "Do not legalize (i64->i32, "
+      .add("--no-legalize-javascript-ffi", "-nj", "Do not fully legalize (i64->i32, "
            "f32->f64) the imports and exports for interfacing with JS",
            Options::Arguments::Zero,
            [&legalizeJavaScriptFFI](Options *o, const std::string& ) {
@@ -158,13 +159,13 @@ int main(int argc, const char *argv[]) {
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
-  if (legalizeJavaScriptFFI) {
-    PassRunner passRunner(&wasm);
-    passRunner.setDebug(options.debug);
-    passRunner.setDebugInfo(debugInfo);
-    passRunner.add("legalize-js-interface");
-    passRunner.run();
-  }
+  PassRunner passRunner(&wasm);
+  passRunner.setDebug(options.debug);
+  passRunner.setDebugInfo(debugInfo);
+  passRunner.add(ABI::getLegalizationPass(
+    legalizeJavaScriptFFI ? ABI::Full : ABI::Minimal
+  ));
+  passRunner.run();
 
   std::vector<Name> initializerFunctions;
 
