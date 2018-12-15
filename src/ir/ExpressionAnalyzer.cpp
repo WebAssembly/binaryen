@@ -19,6 +19,7 @@
 #include "ir/load-utils.h"
 
 namespace wasm {
+
 // Given a stack of expressions, checks if the topmost is used as a result.
 // For example, if the parent is a block and the node is before the last position,
 // it is not used.
@@ -616,4 +617,5 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
   }
   return digest;
 }
+
 } // namespace wasm
