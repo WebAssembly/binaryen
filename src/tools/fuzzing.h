@@ -1632,7 +1632,7 @@ private:
   }
 
   Expression* makeSIMDExtract(Type type) {
-    SIMDExtractOp op;
+    auto op = static_cast<SIMDExtractOp>(0);
     switch (type) {
       case i32: op = pick(ExtractLaneSVecI8x16, ExtractLaneUVecI8x16, ExtractLaneSVecI16x8, ExtractLaneUVecI16x8, ExtractLaneVecI32x4); break;
       case i64: op = ExtractLaneVecI64x2; break;
