@@ -247,7 +247,7 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
 
   void visitGetGlobal(GetGlobal* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
-      ensureFunctionImport(getModule(), STACK_SAVE, "i");
+      needStackSave = true;
       if (!builder) builder = make_unique<Builder>(*getModule());
       replaceCurrent(builder->makeCall(STACK_SAVE, {}, i32));
     }
@@ -255,11 +255,14 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
 
   void visitSetGlobal(SetGlobal* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
-      ensureFunctionImport(getModule(), STACK_RESTORE, "vi");
+      needStackRestore = true;
       if (!builder) builder = make_unique<Builder>(*getModule());
       replaceCurrent(builder->makeCall(STACK_RESTORE, {curr->value}, none));
     }
   }
+
+  bool needStackSave = false;
+  bool needStackRestore = false;
 
 private:
   std::unique_ptr<Builder> builder;
@@ -272,6 +275,12 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   // Replace all uses of stack pointer global
   RemoveStackPointer walker(stackPointer);
   walker.walkModule(&wasm);
+  if (walker.needStackSave) {
+    ensureFunctionImport(&wasm, STACK_SAVE, "i");
+  }
+  if (walker.needStackRestore) {
+    ensureFunctionImport(&wasm, STACK_RESTORE, "vi");
+  }
 
   // Finally remove the stack pointer global itself. This avoids importing
   // a mutable global.
