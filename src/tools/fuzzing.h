@@ -700,8 +700,6 @@ private:
   }
 
   Expression* _makeConcrete(Type type) {
-    using Self = TranslateToFuzzReader;
-    using MakeFn = Expression* (Self::*)(Type);
     auto choice = upTo(100);
     if (choice < 10) return makeConst(type);
     if (choice < 30) return makeSetLocal(type);
@@ -710,27 +708,26 @@ private:
     if (choice < 70) return makeIf(type);
     if (choice < 80) return makeLoop(type);
     if (choice < 90) return makeBreak(type);
-    auto options = FeatureOptions<MakeFn>()
+    using Self = TranslateToFuzzReader;
+    auto options = FeatureOptions<Expression* (Self::*)(Type)>()
                    .add(FeatureSet::MVP,
-                        static_cast<MakeFn>(&Self::makeBlock),
-                        static_cast<MakeFn>(&Self::makeIf),
-                        static_cast<MakeFn>(&Self::makeLoop),
-                        static_cast<MakeFn>(&Self::makeBreak),
-                        static_cast<MakeFn>(&Self::makeCall),
-                        static_cast<MakeFn>(&Self::makeCallIndirect),
-                        static_cast<MakeFn>(&Self::makeGetLocal),
-                        static_cast<MakeFn>(&Self::makeSetLocal),
-                        static_cast<MakeFn>(&Self::makeLoad),
-                        static_cast<MakeFn>(&Self::makeConst),
-                        static_cast<MakeFn>(&Self::makeUnary),
-                        static_cast<MakeFn>(&Self::makeBinary),
-                        static_cast<MakeFn>(&Self::makeSelect),
-                        static_cast<MakeFn>(&Self::makeGetGlobal))
-                   .add(FeatureSet::SIMD,
-                        static_cast<MakeFn>(&Self::makeSIMD));
+                        &Self::makeBlock,
+                        &Self::makeIf,
+                        &Self::makeLoop,
+                        &Self::makeBreak,
+                        &Self::makeCall,
+                        &Self::makeCallIndirect,
+                        &Self::makeGetLocal,
+                        &Self::makeSetLocal,
+                        &Self::makeLoad,
+                        &Self::makeConst,
+                        &Self::makeUnary,
+                        &Self::makeBinary,
+                        &Self::makeSelect,
+                        &Self::makeGetGlobal)
+                   .add(FeatureSet::SIMD, &Self::makeSIMD);
     if (type == i32 || type == i64) {
-      options.add(FeatureSet::Atomics,
-                  static_cast<MakeFn>(&Self::makeAtomic));
+      options.add(FeatureSet::Atomics, &Self::makeAtomic);
     }
     return (this->*pick(options))(type);
   }
@@ -889,16 +886,16 @@ private:
     }
   }
 
+  Expression* buildIf(const struct ThreeArgs& args) {
+    return builder.makeIf(args.a, args.b, args.c);
+  }
+
   Expression* makeIf(Type type) {
     auto* condition = makeCondition();
     hangStack.push_back(nullptr);
-    auto* ret = makeIf({ condition, makeMaybeBlock(type), makeMaybeBlock(type) });
+    auto* ret = buildIf({ condition, makeMaybeBlock(type), makeMaybeBlock(type) });
     hangStack.pop_back();
     return ret;
-  }
-
-  Expression* makeIf(const struct ThreeArgs& args) {
-    return builder.makeIf(args.a, args.b, args.c);
   }
 
   Expression* makeBreak(Type type) {
@@ -1339,7 +1336,7 @@ private:
     return ret;
   }
 
-  Expression* makeUnary(const UnaryArgs& args) {
+  Expression* buildUnary(const UnaryArgs& args) {
     return builder.makeUnary(args.a, args.b);
   }
 
@@ -1360,16 +1357,16 @@ private:
               .add(FeatureSet::MVP, EqZInt32, ClzInt32, CtzInt32, PopcntInt32)
               .add(FeatureSet::Atomics, ExtendS8Int32, ExtendS16Int32)
             );
-            return makeUnary({ op, make(i32) });
+            return buildUnary({ op, make(i32) });
           }
-          case i64: return makeUnary({ pick(EqZInt64, WrapInt64), make(i64) });
+          case i64: return buildUnary({ pick(EqZInt64, WrapInt64), make(i64) });
           case f32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
               .add(FeatureSet::MVP, TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32)
               .add(FeatureSet::TruncSat, TruncSatSFloat32ToInt32, TruncSatUFloat32ToInt32)
             );
-            return makeUnary({ op, make(f32) });
+            return buildUnary({ op, make(f32) });
           }
           case f64: {
             auto op = pick(
@@ -1377,11 +1374,11 @@ private:
               .add(FeatureSet::MVP, TruncSFloat64ToInt32, TruncUFloat64ToInt32)
               .add(FeatureSet::TruncSat, TruncSatSFloat64ToInt32, TruncSatUFloat64ToInt32)
             );
-            return makeUnary({ op, make(f64) });
+            return buildUnary({ op, make(f64) });
           }
           case v128: {
             assert(features.hasSIMD());
-            return makeUnary({ pick(AnyTrueVecI8x16, AllTrueVecI8x16, AnyTrueVecI16x8, AllTrueVecI16x8,
+            return buildUnary({ pick(AnyTrueVecI8x16, AllTrueVecI8x16, AnyTrueVecI16x8, AllTrueVecI16x8,
                                     AnyTrueVecI32x4, AllTrueVecI32x4, AnyTrueVecI64x2, AllTrueVecI64x2),
                                make(v128) });
           }
@@ -1398,16 +1395,16 @@ private:
               .add(FeatureSet::MVP, ClzInt64, CtzInt64, PopcntInt64)
               .add(FeatureSet::Atomics, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64)
             );
-            return makeUnary({ op, make(i64) });
+            return buildUnary({ op, make(i64) });
           }
-          case 1: return makeUnary({ pick(ExtendSInt32, ExtendUInt32), make(i32) });
+          case 1: return buildUnary({ pick(ExtendSInt32, ExtendUInt32), make(i32) });
           case 2: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
               .add(FeatureSet::MVP, TruncSFloat32ToInt64, TruncUFloat32ToInt64)
               .add(FeatureSet::TruncSat, TruncSatSFloat32ToInt64, TruncSatUFloat32ToInt64)
             );
-            return makeUnary({ op, make(f32) });
+            return buildUnary({ op, make(f32) });
           }
           case 3: {
             auto op = pick(
@@ -1415,37 +1412,37 @@ private:
               .add(FeatureSet::MVP, TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64)
               .add(FeatureSet::TruncSat, TruncSatSFloat64ToInt64, TruncSatUFloat64ToInt64)
             );
-            return makeUnary({ op, make(f64) });
+            return buildUnary({ op, make(f64) });
           }
         }
         WASM_UNREACHABLE();
       }
       case f32: {
         switch (upTo(4)) {
-          case 0: return makeDeNanOp(makeUnary({ pick(NegFloat32, AbsFloat32, CeilFloat32, FloorFloat32, TruncFloat32, NearestFloat32, SqrtFloat32), make(f32) }));
-          case 1: return makeDeNanOp(makeUnary({ pick(ConvertUInt32ToFloat32, ConvertSInt32ToFloat32, ReinterpretInt32), make(i32) }));
-          case 2: return makeDeNanOp(makeUnary({ pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32), make(i64) }));
-          case 3: return makeDeNanOp(makeUnary({ DemoteFloat64, make(f64) }));
+          case 0: return makeDeNanOp(buildUnary({ pick(NegFloat32, AbsFloat32, CeilFloat32, FloorFloat32, TruncFloat32, NearestFloat32, SqrtFloat32), make(f32) }));
+          case 1: return makeDeNanOp(buildUnary({ pick(ConvertUInt32ToFloat32, ConvertSInt32ToFloat32, ReinterpretInt32), make(i32) }));
+          case 2: return makeDeNanOp(buildUnary({ pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32), make(i64) }));
+          case 3: return makeDeNanOp(buildUnary({ DemoteFloat64, make(f64) }));
         }
         WASM_UNREACHABLE();
       }
       case f64: {
         switch (upTo(4)) {
-          case 0: return makeDeNanOp(makeUnary({ pick(NegFloat64, AbsFloat64, CeilFloat64, FloorFloat64, TruncFloat64, NearestFloat64, SqrtFloat64), make(f64) }));
-          case 1: return makeDeNanOp(makeUnary({ pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64), make(i32) }));
-          case 2: return makeDeNanOp(makeUnary({ pick(ConvertUInt64ToFloat64, ConvertSInt64ToFloat64, ReinterpretInt64), make(i64) }));
-          case 3: return makeDeNanOp(makeUnary({ PromoteFloat32, make(f32) }));
+          case 0: return makeDeNanOp(buildUnary({ pick(NegFloat64, AbsFloat64, CeilFloat64, FloorFloat64, TruncFloat64, NearestFloat64, SqrtFloat64), make(f64) }));
+          case 1: return makeDeNanOp(buildUnary({ pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64), make(i32) }));
+          case 2: return makeDeNanOp(buildUnary({ pick(ConvertUInt64ToFloat64, ConvertSInt64ToFloat64, ReinterpretInt64), make(i64) }));
+          case 3: return makeDeNanOp(buildUnary({ PromoteFloat32, make(f32) }));
         }
         WASM_UNREACHABLE();
       }
       case v128: {
         assert(features.hasSIMD());
         switch (upTo(5)) {
-          case 0: return makeUnary({ pick(SplatVecI8x16, SplatVecI16x8, SplatVecI32x4), make(i32) });
-          case 1: return makeUnary({ SplatVecI64x2, make(i64) });
-          case 2: return makeUnary({ SplatVecF32x4, make(f32) });
-          case 3: return makeUnary({ SplatVecF64x2, make(f64) });
-          case 4: return makeUnary({
+          case 0: return buildUnary({ pick(SplatVecI8x16, SplatVecI16x8, SplatVecI32x4), make(i32) });
+          case 1: return buildUnary({ SplatVecI64x2, make(i64) });
+          case 2: return buildUnary({ SplatVecF32x4, make(f32) });
+          case 3: return buildUnary({ SplatVecF64x2, make(f64) });
+          case 4: return buildUnary({
               pick(NotVec128, NegVecI8x16, NegVecI16x8, NegVecI32x4, NegVecI64x2,
                    AbsVecF32x4, NegVecF32x4, SqrtVecF32x4, AbsVecF64x2, NegVecF64x2, SqrtVecF64x2,
                    TruncSatSVecF32x4ToVecI32x4, TruncSatUVecF32x4ToVecI32x4, TruncSatSVecF64x2ToVecI64x2, TruncSatUVecF64x2ToVecI64x2,
@@ -1460,14 +1457,14 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* makeBinary(const BinaryArgs& args) {
+  Expression* buildBinary(const BinaryArgs& args) {
     return builder.makeBinary(args.a, args.b, args.c);
   }
 
   Expression* makeBinary(Type type) {
     if (type == unreachable) {
       if (auto* binary = makeBinary(getConcreteType())->dynCast<Binary>()) {
-        return makeDeNanOp(makeBinary({ binary->op, make(unreachable), make(unreachable) }));
+        return makeDeNanOp(buildBinary({ binary->op, make(unreachable), make(unreachable) }));
       }
       // give up
       return makeTrivial(type);
@@ -1475,25 +1472,25 @@ private:
     switch (type) {
       case i32: {
         switch (upTo(4)) {
-          case 0: return makeBinary({ pick(AddInt32, SubInt32, MulInt32, DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, EqInt32, NeInt32, LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32), make(i32), make(i32) });
-          case 1: return makeBinary({ pick(EqInt64, NeInt64, LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64), make(i64), make(i64) });
-          case 2: return makeBinary({ pick(EqFloat32, NeFloat32, LtFloat32, LeFloat32, GtFloat32, GeFloat32), make(f32), make(f32) });
-          case 3: return makeBinary({ pick(EqFloat64, NeFloat64, LtFloat64, LeFloat64, GtFloat64, GeFloat64), make(f64), make(f64) });
+          case 0: return buildBinary({ pick(AddInt32, SubInt32, MulInt32, DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, EqInt32, NeInt32, LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32), make(i32), make(i32) });
+          case 1: return buildBinary({ pick(EqInt64, NeInt64, LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64), make(i64), make(i64) });
+          case 2: return buildBinary({ pick(EqFloat32, NeFloat32, LtFloat32, LeFloat32, GtFloat32, GeFloat32), make(f32), make(f32) });
+          case 3: return buildBinary({ pick(EqFloat64, NeFloat64, LtFloat64, LeFloat64, GtFloat64, GeFloat64), make(f64), make(f64) });
         }
         WASM_UNREACHABLE();
       }
       case i64: {
-        return makeBinary({ pick(AddInt64, SubInt64, MulInt64, DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64), make(i64), make(i64) });
+        return buildBinary({ pick(AddInt64, SubInt64, MulInt64, DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64), make(i64), make(i64) });
       }
       case f32: {
-        return makeDeNanOp(makeBinary({ pick(AddFloat32, SubFloat32, MulFloat32, DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32), make(f32), make(f32) }));
+        return makeDeNanOp(buildBinary({ pick(AddFloat32, SubFloat32, MulFloat32, DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32), make(f32), make(f32) }));
       }
       case f64: {
-        return makeDeNanOp(makeBinary({ pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64) }));
+        return makeDeNanOp(buildBinary({ pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64) }));
       }
       case v128: {
         assert(features.hasSIMD());
-        return makeBinary({
+        return buildBinary({
             pick(EqVecI8x16, NeVecI8x16, LtSVecI8x16, LtUVecI8x16, GtSVecI8x16, GtUVecI8x16, LeSVecI8x16, LeUVecI8x16, GeSVecI8x16, GeUVecI8x16,
                  EqVecI16x8, NeVecI16x8, LtSVecI16x8, LtUVecI16x8, GtSVecI16x8, GtUVecI16x8, LeSVecI16x8, LeUVecI16x8, GeSVecI16x8, GeUVecI16x8,
                  EqVecI32x4, NeVecI32x4, LtSVecI32x4, LtUVecI32x4, GtSVecI32x4, GtUVecI32x4, LeSVecI32x4, LeUVecI32x4, GeSVecI32x4, GeUVecI32x4,
@@ -1510,12 +1507,12 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* makeSelect(const ThreeArgs& args) {
+  Expression* buildSelect(const ThreeArgs& args) {
     return builder.makeSelect(args.a, args.b, args.c);
   }
 
   Expression* makeSelect(Type type) {
-    return makeDeNanOp(makeSelect({ make(i32), make(type), make(type) }));
+    return makeDeNanOp(buildSelect({ make(i32), make(type), make(type) }));
   }
 
   Expression* makeSwitch(Type type) {
