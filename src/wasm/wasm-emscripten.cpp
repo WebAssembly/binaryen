@@ -275,10 +275,12 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   // Replace all uses of stack pointer global
   RemoveStackPointer walker(stackPointer);
   walker.walkModule(&wasm);
-  if (walker.needStackSave)
+  if (walker.needStackSave) {
     ensureFunctionImport(&wasm, STACK_SAVE, "i");
-  if (walker.needStackRestore)
+  }
+  if (walker.needStackRestore) {
     ensureFunctionImport(&wasm, STACK_RESTORE, "vi");
+  }
 
   // Finally remove the stack pointer global itself. This avoids importing
   // a mutable global.
