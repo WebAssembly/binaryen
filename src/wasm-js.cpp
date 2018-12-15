@@ -34,7 +34,9 @@ using namespace cashew;
 using namespace wasm;
 
 namespace wasm {
+
 int debug = 0;
+
 }
 
 // global singletons
