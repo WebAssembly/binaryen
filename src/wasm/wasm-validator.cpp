@@ -502,7 +502,10 @@ void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
 }
 
 void FunctionValidator::visitLoad(Load* curr) {
-  if (curr->isAtomic) shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
+  if (curr->isAtomic) {
+    shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
+    shouldBeTrue(curr->type == i32 || curr->type == i64 || curr->type == unreachable, curr, "Atomic load should be i32 or i64");
+  }
   if (curr->type == v128) shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
@@ -515,7 +518,10 @@ void FunctionValidator::visitLoad(Load* curr) {
 }
 
 void FunctionValidator::visitStore(Store* curr) {
-  if (curr->isAtomic) shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
+  if (curr->isAtomic) {
+    shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
+    shouldBeTrue(curr->valueType == i32 || curr->valueType == i64 || curr->valueType == unreachable, curr, "Atomic store should be i32 or i64");
+  }
   if (curr->valueType == v128) shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);

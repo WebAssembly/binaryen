@@ -589,7 +589,7 @@ public:
     return left.shuffleV8x16(right, curr->mask);
   }
   Flow visitSIMDBitselect(SIMDBitselect *curr) {
-    NOTE_ENTER("SIMDShuffle");
+    NOTE_ENTER("SIMDBitselect");
     Flow flow = this->visit(curr->left);
     if (flow.breaking()) return flow;
     Literal left = flow.value;

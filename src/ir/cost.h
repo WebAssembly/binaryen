@@ -184,7 +184,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case ConvertSVecI32x4ToVecF32x4:
       case ConvertUVecI32x4ToVecF32x4:
       case ConvertSVecI64x2ToVecF64x2:
-      case ConvertUVecI64x2ToVecF64x2: assert(false && "v128 not implemented yet");
+      case ConvertUVecI64x2ToVecF64x2: return 1;
       case InvalidUnary: WASM_UNREACHABLE();
     }
     return ret + visit(curr->value);
@@ -268,82 +268,82 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case NeFloat32:       ret = 1; break;
       case EqFloat64:       ret = 1; break;
       case NeFloat64:       ret = 1; break;
-      case EqVecI8x16:
-      case NeVecI8x16:
-      case LtSVecI8x16:
-      case LtUVecI8x16:
-      case LeSVecI8x16:
-      case LeUVecI8x16:
-      case GtSVecI8x16:
-      case GtUVecI8x16:
-      case GeSVecI8x16:
-      case GeUVecI8x16:
-      case EqVecI16x8:
-      case NeVecI16x8:
-      case LtSVecI16x8:
-      case LtUVecI16x8:
-      case LeSVecI16x8:
-      case LeUVecI16x8:
-      case GtSVecI16x8:
-      case GtUVecI16x8:
-      case GeSVecI16x8:
-      case GeUVecI16x8:
-      case EqVecI32x4:
-      case NeVecI32x4:
-      case LtSVecI32x4:
-      case LtUVecI32x4:
-      case LeSVecI32x4:
-      case LeUVecI32x4:
-      case GtSVecI32x4:
-      case GtUVecI32x4:
-      case GeSVecI32x4:
-      case GeUVecI32x4:
-      case EqVecF32x4:
-      case NeVecF32x4:
-      case LtVecF32x4:
-      case LeVecF32x4:
-      case GtVecF32x4:
-      case GeVecF32x4:
-      case EqVecF64x2:
-      case NeVecF64x2:
-      case LtVecF64x2:
-      case LeVecF64x2:
-      case GtVecF64x2:
-      case GeVecF64x2:
-      case AndVec128:
-      case OrVec128:
-      case XorVec128:
-      case AddVecI8x16:
-      case AddSatSVecI8x16:
-      case AddSatUVecI8x16:
-      case SubVecI8x16:
-      case SubSatSVecI8x16:
-      case SubSatUVecI8x16:
-      case MulVecI8x16:
-      case AddVecI16x8:
-      case AddSatSVecI16x8:
-      case AddSatUVecI16x8:
-      case SubVecI16x8:
-      case SubSatSVecI16x8:
-      case SubSatUVecI16x8:
-      case MulVecI16x8:
-      case AddVecI32x4:
-      case SubVecI32x4:
-      case MulVecI32x4:
-      case AddVecI64x2:
-      case SubVecI64x2:
-      case AddVecF32x4:
-      case SubVecF32x4:
-      case MulVecF32x4:
-      case DivVecF32x4:
-      case MinVecF32x4:
-      case MaxVecF32x4:
-      case AddVecF64x2:
-      case SubVecF64x2:
-      case MulVecF64x2:
-      case DivVecF64x2:
-      case MinVecF64x2:
-      case MaxVecF64x2: assert(false && "v128 not implemented yet");
+      case EqVecI8x16:      ret = 1; break;
+      case NeVecI8x16:      ret = 1; break;
+      case LtSVecI8x16:     ret = 1; break;
+      case LtUVecI8x16:     ret = 1; break;
+      case LeSVecI8x16:     ret = 1; break;
+      case LeUVecI8x16:     ret = 1; break;
+      case GtSVecI8x16:     ret = 1; break;
+      case GtUVecI8x16:     ret = 1; break;
+      case GeSVecI8x16:     ret = 1; break;
+      case GeUVecI8x16:     ret = 1; break;
+      case EqVecI16x8:      ret = 1; break;
+      case NeVecI16x8:      ret = 1; break;
+      case LtSVecI16x8:     ret = 1; break;
+      case LtUVecI16x8:     ret = 1; break;
+      case LeSVecI16x8:     ret = 1; break;
+      case LeUVecI16x8:     ret = 1; break;
+      case GtSVecI16x8:     ret = 1; break;
+      case GtUVecI16x8:     ret = 1; break;
+      case GeSVecI16x8:     ret = 1; break;
+      case GeUVecI16x8:     ret = 1; break;
+      case EqVecI32x4:      ret = 1; break;
+      case NeVecI32x4:      ret = 1; break;
+      case LtSVecI32x4:     ret = 1; break;
+      case LtUVecI32x4:     ret = 1; break;
+      case LeSVecI32x4:     ret = 1; break;
+      case LeUVecI32x4:     ret = 1; break;
+      case GtSVecI32x4:     ret = 1; break;
+      case GtUVecI32x4:     ret = 1; break;
+      case GeSVecI32x4:     ret = 1; break;
+      case GeUVecI32x4:     ret = 1; break;
+      case EqVecF32x4:      ret = 1; break;
+      case NeVecF32x4:      ret = 1; break;
+      case LtVecF32x4:      ret = 1; break;
+      case LeVecF32x4:      ret = 1; break;
+      case GtVecF32x4:      ret = 1; break;
+      case GeVecF32x4:      ret = 1; break;
+      case EqVecF64x2:      ret = 1; break;
+      case NeVecF64x2:      ret = 1; break;
+      case LtVecF64x2:      ret = 1; break;
+      case LeVecF64x2:      ret = 1; break;
+      case GtVecF64x2:      ret = 1; break;
+      case GeVecF64x2:      ret = 1; break;
+      case AndVec128:       ret = 1; break;
+      case OrVec128:        ret = 1; break;
+      case XorVec128:       ret = 1; break;
+      case AddVecI8x16:     ret = 1; break;
+      case AddSatSVecI8x16: ret = 1; break;
+      case AddSatUVecI8x16: ret = 1; break;
+      case SubVecI8x16:     ret = 1; break;
+      case SubSatSVecI8x16: ret = 1; break;
+      case SubSatUVecI8x16: ret = 1; break;
+      case MulVecI8x16:     ret = 2; break;
+      case AddVecI16x8:     ret = 1; break;
+      case AddSatSVecI16x8: ret = 1; break;
+      case AddSatUVecI16x8: ret = 1; break;
+      case SubVecI16x8:     ret = 1; break;
+      case SubSatSVecI16x8: ret = 1; break;
+      case SubSatUVecI16x8: ret = 1; break;
+      case MulVecI16x8:     ret = 2; break;
+      case AddVecI32x4:     ret = 1; break;
+      case SubVecI32x4:     ret = 1; break;
+      case MulVecI32x4:     ret = 2; break;
+      case AddVecI64x2:     ret = 1; break;
+      case SubVecI64x2:     ret = 1; break;
+      case AddVecF32x4:     ret = 1; break;
+      case SubVecF32x4:     ret = 1; break;
+      case MulVecF32x4:     ret = 2; break;
+      case DivVecF32x4:     ret = 3; break;
+      case MinVecF32x4:     ret = 1; break;
+      case MaxVecF32x4:     ret = 1; break;
+      case AddVecF64x2:     ret = 1; break;
+      case SubVecF64x2:     ret = 1; break;
+      case MulVecF64x2:     ret = 2; break;
+      case DivVecF64x2:     ret = 3; break;
+      case MinVecF64x2:     ret = 1; break;
+      case MaxVecF64x2:     ret = 1; break;
       case InvalidBinary: WASM_UNREACHABLE();
     }
     return ret + visit(curr->left) + visit(curr->right);

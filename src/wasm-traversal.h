@@ -591,27 +591,27 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::SIMDReplaceId: {
         self->pushTask(SubType::doVisitSIMDReplace, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDReplace>()->vec);
         self->pushTask(SubType::scan, &curr->cast<SIMDReplace>()->value);
+        self->pushTask(SubType::scan, &curr->cast<SIMDReplace>()->vec);
         break;
       }
       case Expression::Id::SIMDShuffleId: {
         self->pushTask(SubType::doVisitSIMDShuffle, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDShuffle>()->left);
         self->pushTask(SubType::scan, &curr->cast<SIMDShuffle>()->right);
+        self->pushTask(SubType::scan, &curr->cast<SIMDShuffle>()->left);
         break;
       }
       case Expression::Id::SIMDBitselectId: {
         self->pushTask(SubType::doVisitSIMDBitselect, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->left);
-        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->right);
         self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->cond);
+        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->right);
+        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->left);
         break;
       }
       case Expression::Id::SIMDShiftId: {
         self->pushTask(SubType::doVisitSIMDShift, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDShift>()->vec);
         self->pushTask(SubType::scan, &curr->cast<SIMDShift>()->shift);
+        self->pushTask(SubType::scan, &curr->cast<SIMDShift>()->vec);
         break;
       }
       case Expression::Id::ConstId: {
