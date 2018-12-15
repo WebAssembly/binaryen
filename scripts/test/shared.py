@@ -77,11 +77,11 @@ def parse_args(args):
       'positional_args', metavar='tests', nargs=argparse.REMAINDER,
       help='Names specific tests to run.')
 
-  return parser.parse_args(args)
+  return parser.parse_known_args(args)
 
 
-options = parse_args(sys.argv[1:])
-requested = options.positional_args
+options, _unknown_args = parse_args(sys.argv[1:])
+requested = options.positional_args + _unknown_args
 
 num_failures = 0
 warnings = []
@@ -105,6 +105,7 @@ if not options.binaryen_bin:
       options.binaryen_bin = os.environ.get('BINARYEN_ROOT')
   else:
     options.binaryen_bin = 'bin'
+options.binaryen_bin = os.path.expanduser(options.binaryen_bin)
 
 # ensure BINARYEN_ROOT is set up
 os.environ['BINARYEN_ROOT'] = os.path.dirname(os.path.abspath(

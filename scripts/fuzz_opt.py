@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 '''
 Runs random passes and options on random inputs, using wasm-opt.
 
@@ -20,6 +21,7 @@ import subprocess
 import random
 import shutil
 import time
+from test.shared import WASM_OPT, requested
 
 # parameters
 
@@ -110,14 +112,14 @@ def test_one(infile, opts):
 
   # fuzz vms
   # gather VM outputs on input file
-  run(['bin/wasm-opt', infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'])
+  run(WASM_OPT + [infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'])
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
   before = run_vms('a.')
   print('----------------')
   # gather VM outputs on processed file
-  run(['bin/wasm-opt', 'a.wasm', '-o', 'b.wasm'] + opts)
+  run(WASM_OPT + ['a.wasm', '-o', 'b.wasm'] + opts)
   wasm_size = os.stat('b.wasm').st_size
   bytes += wasm_size
   print('post js size:', os.stat('a.js').st_size, ' wasm size:', wasm_size)
@@ -126,7 +128,7 @@ def test_one(infile, opts):
   for i in range(len(before)):
     compare(before[i], after[i], 'comparing between builds at ' + str(i))
   # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
-  run(['bin/wasm-opt', 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts)
+  run(WASM_OPT + ['a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts)
 
   return bytes
 
@@ -198,14 +200,14 @@ def get_multiple_opt_choices():
 
 # main
 
-if len(sys.argv) >= 2:
+if len(requested) >= 2:
   print('checking given input')
-  if len(sys.argv) >= 3:
-    test_one(sys.argv[1], sys.argv[2:])
+  if len(requested) >= 3:
+    test_one(requested[1], requested[2:])
   else:
     for opts in opt_choices:
       print(opts)
-      test_one(sys.argv[1], opts)
+      test_one(requested[1], opts)
 else:
   print('checking infinite random inputs')
   random.seed(time.time())
