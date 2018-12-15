@@ -23,6 +23,8 @@
 #ifndef wasm_wasm_interpreter_h
 #define wasm_wasm_interpreter_h
 
+#define WASM_INTERPRETER_DEBUG
+
 #include <cmath>
 #include <limits.h>
 #include <sstream>
@@ -589,7 +591,7 @@ public:
     return left.shuffleV8x16(right, curr->mask);
   }
   Flow visitSIMDBitselect(SIMDBitselect *curr) {
-    NOTE_ENTER("SIMDShuffle");
+    NOTE_ENTER("SIMDBitselect");
     Flow flow = this->visit(curr->left);
     if (flow.breaking()) return flow;
     Literal left = flow.value;
