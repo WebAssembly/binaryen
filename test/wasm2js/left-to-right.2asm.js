@@ -1061,7 +1061,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $93() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $0 = 0, $0$hi = 0, $1 = 0, $1$hi = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, $0 = 0, $0$hi = 0, $1 = 0, $1$hi = 0;
   reset();
   i64toi32_i32$0 = i64_left() | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
@@ -1071,11 +1071,9 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $1 = i64toi32_i32$1;
   $1$hi = i64toi32_i32$0;
+  i64toi32_i32$4 = i64_bool() | 0;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$1 = $1$hi;
-  i64toi32_i32$0 = i64toi32_i32$1;
-  i64toi32_i32$0 = i64toi32_i32$1;
-  i64_bool() | 0;
   return get() | 0 | 0;
  }
  

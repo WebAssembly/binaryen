@@ -235,9 +235,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     setOutParam(curr, std::move(highBits));
   }
 
-  // If and Select have identical code
-  template<typename T>
-  void visitBranching(T* curr) {
+  void visitIf(If* curr) {
     if (!hasOutParam(curr->ifTrue)) return;
     assert(curr->ifFalse != nullptr && "Nullable ifFalse found");
     TempVar highBits = fetchOutParam(curr->ifTrue);
@@ -253,10 +251,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       builder->makeGetLocal(tmp, i32)
     );
     setOutParam(curr, std::move(highBits));
-  }
-
-  void visitIf(If* curr) {
-    visitBranching<If>(curr);
   }
 
   void visitLoop(Loop* curr) {
@@ -1526,7 +1520,36 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSelect(Select* curr) {
-    visitBranching<Select>(curr);
+    if (!hasOutParam(curr->ifTrue)) {
+      assert(!hasOutParam(curr->ifFalse));
+      return;
+    }
+    assert(hasOutParam(curr->ifFalse));
+    TempVar highBits = getTemp();
+    TempVar lowBits = getTemp();
+    TempVar cond = getTemp();
+    Block* result = builder->blockify(
+      builder->makeSetLocal(cond, curr->condition),
+      builder->makeSetLocal(
+        lowBits,
+        builder->makeSelect(
+          builder->makeGetLocal(cond, i32),
+          curr->ifTrue,
+          curr->ifFalse
+        )
+      ),
+      builder->makeSetLocal(
+        highBits,
+        builder->makeSelect(
+          builder->makeGetLocal(cond, i32),
+          builder->makeGetLocal(fetchOutParam(curr->ifTrue), i32),
+          builder->makeGetLocal(fetchOutParam(curr->ifFalse), i32)
+        )
+      ),
+      builder->makeGetLocal(lowBits, i32)
+    );
+    setOutParam(result, std::move(highBits));
+    replaceCurrent(result);
   }
 
   void visitDrop(Drop* curr) {
