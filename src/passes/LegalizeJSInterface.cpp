@@ -57,7 +57,7 @@ struct LegalizeJSInterface : public Pass {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
         auto* func = module->getFunction(ex->value);
-        if (isIllegal(func) && isRelevant(ex.get(), func)) {
+        if (isIllegal(func) && shouldBeLegalized(ex.get(), func)) {
           auto legalName = makeLegalStub(func, module);
           ex->value = legalName;
         }
@@ -131,7 +131,7 @@ private:
     return false;
   }
 
-  bool isRelevant(Export* ex, Function* func) {
+  bool shouldBeLegalized(Export* ex, Function* func) {
     if (full) return true;
     // We are doing minimal legalization - just what JS needs.
     return ex->name.startsWith("dynCall_");
