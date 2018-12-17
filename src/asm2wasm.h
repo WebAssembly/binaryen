@@ -1454,7 +1454,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // so that the output of the first pass is valid
   passRunner.add<FinalizeCalls>(this);
   passRunner.add(ABI::getLegalizationPass(
-    legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full : ABI::LegalizationLevel::Minimal
+    legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
+                          : ABI::LegalizationLevel::Minimal
   ));
   if (runOptimizationPasses) {
     // autodrop can add some garbage

@@ -163,7 +163,8 @@ int main(int argc, const char *argv[]) {
   passRunner.setDebug(options.debug);
   passRunner.setDebugInfo(debugInfo);
   passRunner.add(ABI::getLegalizationPass(
-    legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full : ABI::LegalizationLevel::Minimal
+    legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
+                          : ABI::LegalizationLevel::Minimal
   ));
   passRunner.run();
 
