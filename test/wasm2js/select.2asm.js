@@ -38,8 +38,8 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$0 = 0, i64toi32_i32$3 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   i64toi32_i32$0 = lhs$hi;
   i64toi32_i32$0 = rhs$hi;
-  i64toi32_i32$0 = lhs$hi;
   i64toi32_i32$4 = cond;
+  i64toi32_i32$0 = lhs$hi;
   i64toi32_i32$3 = (wasm2js_i32$0 = lhs, wasm2js_i32$1 = rhs, wasm2js_i32$2 = i64toi32_i32$4, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1);
   i64toi32_i32$2 = (wasm2js_i32$0 = i64toi32_i32$0, wasm2js_i32$1 = rhs$hi, wasm2js_i32$2 = i64toi32_i32$4, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1);
   i64toi32_i32$2 = i64toi32_i32$2;

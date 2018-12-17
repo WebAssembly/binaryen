@@ -1529,10 +1529,11 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     TempVar lowBits = getTemp();
     TempVar cond = getTemp();
     Block* result = builder->blockify(
+      builder->makeSetLocal(cond, curr->condition),
       builder->makeSetLocal(
         lowBits,
         builder->makeSelect(
-          builder->makeTeeLocal(cond, curr->condition),
+          builder->makeGetLocal(cond, i32),
           curr->ifTrue,
           curr->ifFalse
         )
