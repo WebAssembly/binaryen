@@ -30,10 +30,10 @@ using namespace std;
 namespace wasm {
 
 // Remove all possible manifestations of atexit, across asm2wasm and llvm wasm backend.
-static std::array<Name, 4> ATEXIT_NAMES = { "___cxa_atexit",
-                                            "__cxa_atexit",
-                                            "_atexit",
-                                            "atexit" };
+static std::array<Name, 4> ATEXIT_NAMES = {{ "___cxa_atexit",
+                                             "__cxa_atexit",
+                                             "_atexit",
+                                             "atexit" }};
 
 struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
   bool isFunctionParallel() override { return true; }
