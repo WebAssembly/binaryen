@@ -106,10 +106,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     } else if (auto* block = curr->dynCast<Block>()) {
       // any breaks flowing to here are unnecessary, as we get here anyhow
       auto name = block->name;
+      auto& list = block->list;
       if (name.is()) {
-        size_t size = flows.size();
-        size_t skip = 0;
-        for (size_t i = 0; i < size; i++) {
+        Index size = flows.size();
+        Index skip = 0;
+        for (Index i = 0; i < size; i++) {
           auto* flow = (*flows[i])->dynCast<Break>();
           if (flow && flow->name == name) {
             if (!flow->value) {
@@ -129,9 +130,20 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           flows.resize(size - skip);
         }
         // drop a nop at the end of a block, which prevents a value flowing
-        while (block->list.size() > 0 && block->list.back()->is<Nop>()) {
-          block->list.resize(block->list.size() - 1);
+        while (list.size() > 0 && list.back()->is<Nop>()) {
+          list.resize(list.size() - 1);
           self->anotherCycle = true;
+        }
+      }
+      // A value flowing is only valid if it is a value that the block actually
+      // flows out. If it is never reached, it does not flow out, and may be
+      // invalid to represent as such.
+      auto size = list.size();
+      for (Index i = 0; i < size; i++) {
+        if (i != size - 1 && list[i]->type == unreachable) {
+          // No value flows out of this block.
+          self->stopValueFlow();
+          break;
         }
       }
     } else if (curr->is<Nop>()) {
@@ -515,7 +527,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       super::doWalkFunction(func);
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be optimized
-      for (size_t i = 0; i < flows.size(); i++) {
+      for (Index i = 0; i < flows.size(); i++) {
         auto* flow = (*flows[i])->dynCast<Return>();
         if (!flow) continue;
         if (!flow->value) {

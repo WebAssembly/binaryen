@@ -2212,21 +2212,20 @@
  (func $refinalize-need-br-value (; 101 ;) (type $2) (result i32)
   (loop $label$3 (result i32)
    (block $label$6 (result i32)
-    (block $label$10 (result i32)
+    (block $label$10
      (unreachable)
-     (block $label$503 (result i32)
+     (block $label$503
       (br_if $label$3
        (block $label$530 (result i32)
-        (block
-         (unreachable)
-         (drop
-          (i32.const 0)
-         )
+        (br_if $label$503
+         (i32.const 0)
         )
         (i32.const 0)
        )
       )
-      (i32.const 127)
+      (return
+       (i32.const 127)
+      )
      )
     )
    )
@@ -2402,6 +2401,34 @@
     (get_local $x)
    )
    (i32.const 1)
+  )
+ )
+ (func $do-not-flow-values-through-unreachable-code (; 113 ;) (type $2) (result i32)
+  (block $block
+   (unreachable)
+   (if
+    (i32.const 0)
+    (block $A
+     (return
+      (i32.const 0)
+     )
+    )
+    (nop)
+   )
+  )
+ )
+ (func $do-not-flow-values-through-unreachable-code-b (; 114 ;) (type $2) (result i32)
+  (loop $loop-in
+   (unreachable)
+   (if
+    (i32.const 0)
+    (block $A
+     (return
+      (i32.const 0)
+     )
+    )
+    (nop)
+   )
   )
  )
 )
