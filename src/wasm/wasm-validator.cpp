@@ -590,7 +590,7 @@ void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
     case ExtractLaneVecF64x2: lane_t = f64; lanes = 2; break;
   }
   shouldBeEqualOrFirstIsUnreachable(curr->type, lane_t, curr, "extract_lane must have same type as vector lane");
-  shouldBeTrue(curr->idx < lanes, curr, "invalid lane index");
+  shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
 }
 
 void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
@@ -608,7 +608,7 @@ void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
     case ReplaceLaneVecF64x2: lane_t = f64; lanes = 2; break;
   }
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, lane_t, curr, "unexpected value type");
-  shouldBeTrue(curr->idx < lanes, curr, "invalid lane index");
+  shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
 }
 
 void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
@@ -616,8 +616,8 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "v128.shuffle must have type v128");
   shouldBeEqualOrFirstIsUnreachable(curr->left->type, v128, curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(curr->right->type, v128, curr, "expected operand of type v128");
-  for (uint8_t idx : curr->mask) {
-    shouldBeTrue(idx < 32, curr, "Invalid lane index in mask");
+  for (uint8_t index : curr->mask) {
+    shouldBeTrue(index < 32, curr, "Invalid lane index in mask");
   }
 }
 

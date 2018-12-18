@@ -685,12 +685,12 @@ export_function "_BinaryenAtomicWakeGetWakeCount"
 # 'SIMDExtract' expression operations
 export_function "_BinaryenSIMDExtractGetOp"
 export_function "_BinaryenSIMDExtractGetVec"
-export_function "_BinaryenSIMDExtractGetIdx"
+export_function "_BinaryenSIMDExtractGetIndex"
 
 # 'SIMDReplace' expression operations
 export_function "_BinaryenSIMDReplaceGetOp"
 export_function "_BinaryenSIMDReplaceGetVec"
-export_function "_BinaryenSIMDReplaceGetIdx"
+export_function "_BinaryenSIMDReplaceGetIndex"
 export_function "_BinaryenSIMDReplaceGetValue"
 
 # 'SIMDShuffle' expression operations

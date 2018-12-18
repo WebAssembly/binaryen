@@ -1643,37 +1643,37 @@ private:
       case unreachable: WASM_UNREACHABLE();
     }
     Expression* vec = make(v128);
-    uint8_t idx = 0;
+    uint8_t index = 0;
     switch (op) {
       case ExtractLaneSVecI8x16:
-      case ExtractLaneUVecI8x16: idx = upTo(16); break;
+      case ExtractLaneUVecI8x16: index = upTo(16); break;
       case ExtractLaneSVecI16x8:
-      case ExtractLaneUVecI16x8: idx = upTo(8); break;
+      case ExtractLaneUVecI16x8: index = upTo(8); break;
       case ExtractLaneVecI32x4:
-      case ExtractLaneVecF32x4: idx = upTo(4); break;
+      case ExtractLaneVecF32x4: index = upTo(4); break;
       case ExtractLaneVecI64x2:
-      case ExtractLaneVecF64x2: idx = upTo(2); break;
+      case ExtractLaneVecF64x2: index = upTo(2); break;
     }
-    return builder.makeSIMDExtract(op, vec, idx);
+    return builder.makeSIMDExtract(op, vec, index);
   }
 
   Expression* makeSIMDReplace() {
     SIMDReplaceOp op = pick(ReplaceLaneVecI8x16, ReplaceLaneVecI16x8, ReplaceLaneVecI32x4,
                             ReplaceLaneVecI64x2, ReplaceLaneVecF32x4, ReplaceLaneVecF64x2);
     Expression* vec = make(v128);
-    uint8_t idx;
+    uint8_t index;
     Type lane_t;
     switch (op) {
-      case ReplaceLaneVecI8x16: idx = upTo(16); lane_t = i32; break;
-      case ReplaceLaneVecI16x8: idx = upTo(8); lane_t = i32; break;
-      case ReplaceLaneVecI32x4: idx = upTo(4); lane_t = i32; break;
-      case ReplaceLaneVecI64x2: idx = upTo(2); lane_t = i64; break;
-      case ReplaceLaneVecF32x4: idx = upTo(4); lane_t = f32; break;
-      case ReplaceLaneVecF64x2: idx = upTo(2); lane_t = f64; break;
+      case ReplaceLaneVecI8x16: index = upTo(16); lane_t = i32; break;
+      case ReplaceLaneVecI16x8: index = upTo(8); lane_t = i32; break;
+      case ReplaceLaneVecI32x4: index = upTo(4); lane_t = i32; break;
+      case ReplaceLaneVecI64x2: index = upTo(2); lane_t = i64; break;
+      case ReplaceLaneVecF32x4: index = upTo(4); lane_t = f32; break;
+      case ReplaceLaneVecF64x2: index = upTo(2); lane_t = f64; break;
       default: WASM_UNREACHABLE();
     }
     Expression* value = make(lane_t);
-    return builder.makeSIMDReplace(op, vec, idx, value);
+    return builder.makeSIMDReplace(op, vec, index, value);
   }
 
   Expression* makeSIMDShuffle() {

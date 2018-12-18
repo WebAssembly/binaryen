@@ -891,7 +891,7 @@ void StackWriter<Mode, Parent>::visitSIMDExtract(SIMDExtract* curr) {
     case ExtractLaneVecF32x4: o << U32LEB(BinaryConsts::F32x4ExtractLane); break;
     case ExtractLaneVecF64x2: o << U32LEB(BinaryConsts::F64x2ExtractLane); break;
   }
-  o << uint8_t(curr->idx);
+  o << uint8_t(curr->index);
 }
 
 template<StackWriterMode Mode, typename Parent>
@@ -908,8 +908,8 @@ void StackWriter<Mode, Parent>::visitSIMDReplace(SIMDReplace* curr) {
     case ReplaceLaneVecF32x4: o << U32LEB(BinaryConsts::F32x4ReplaceLane); break;
     case ReplaceLaneVecF64x2: o << U32LEB(BinaryConsts::F64x2ReplaceLane); break;
   }
-  assert(curr->idx < 16);
-  o << uint8_t(curr->idx);
+  assert(curr->index < 16);
+  o << uint8_t(curr->index);
 }
 
 template<StackWriterMode Mode, typename Parent>

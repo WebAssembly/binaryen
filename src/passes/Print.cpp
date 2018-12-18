@@ -246,7 +246,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case ExtractLaneVecF32x4: o << "f32x4.extract_lane"; break;
       case ExtractLaneVecF64x2: o << "f64x2.extract_lane"; break;
     }
-    o << " " << int(curr->idx);
+    o << " " << int(curr->index);
   }
   void visitSIMDReplace(SIMDReplace* curr) {
     prepareColor(o);
@@ -258,7 +258,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case ReplaceLaneVecF32x4: o << "f32x4.replace_lane"; break;
       case ReplaceLaneVecF64x2: o << "f64x2.replace_lane"; break;
     }
-    o << " " << int(curr->idx);
+    o << " " << int(curr->index);
   }
   void visitSIMDShuffle(SIMDShuffle* curr) {
     prepareColor(o);
