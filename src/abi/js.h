@@ -23,13 +23,13 @@ namespace wasm {
 
 namespace ABI {
 
-enum LegalizationLevel {
+enum class LegalizationLevel {
   Full = 0,
   Minimal = 1
 };
 
 inline std::string getLegalizationPass(LegalizationLevel level) {
-  if (level == Full) {
+  if (level == LegalizationLevel::Full) {
     return "legalize-js-interface";
   } else {
     return "legalize-js-interface-minimally";
