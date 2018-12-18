@@ -2011,5 +2011,33 @@
       )
     )
   )
+  (func $do-not-flow-values-through-unreachable-code (result i32)
+   (block
+    (unreachable)
+    (block $A
+     (if
+      (i32.const 0)
+      (return
+       (i32.const 0) ;; seems to flow out, but we are in unreachable code, and do not actually reach anywhere
+      )
+      (br $A) ;; can be a nop
+     )
+    )
+   )
+  )
+  (func $do-not-flow-values-through-unreachable-code-b (result i32)
+   (loop
+    (unreachable)
+    (block $A
+     (if
+      (i32.const 0)
+      (return
+       (i32.const 0)
+      )
+      (br $A)
+     )
+    )
+   )
+  )
 )
 
