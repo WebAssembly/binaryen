@@ -115,10 +115,10 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
       return builder.makeAtomicWake(copy(curr->ptr), copy(curr->wakeCount), curr->offset);
     }
     Expression* visitSIMDExtract(SIMDExtract* curr) {
-      return builder.makeSIMDExtract(curr->op, copy(curr->vec), curr->idx);
+      return builder.makeSIMDExtract(curr->op, copy(curr->vec), curr->index);
     }
     Expression* visitSIMDReplace(SIMDReplace* curr) {
-      return builder.makeSIMDReplace(curr->op, copy(curr->vec), curr->idx, copy(curr->value));
+      return builder.makeSIMDReplace(curr->op, copy(curr->vec), curr->index, copy(curr->value));
     }
     Expression* visitSIMDShuffle(SIMDShuffle* curr) {
       return builder.makeSIMDShuffle(copy(curr->left), copy(curr->right), curr->mask);

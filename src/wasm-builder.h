@@ -293,19 +293,19 @@ public:
     ret->finalize();
     return ret;
   }
-  SIMDExtract* makeSIMDExtract(SIMDExtractOp op, Expression* vec, uint8_t idx) {
+  SIMDExtract* makeSIMDExtract(SIMDExtractOp op, Expression* vec, uint8_t index) {
     auto* ret = allocator.alloc<SIMDExtract>();
     ret->op = op;
     ret->vec = vec;
-    ret->idx = idx;
+    ret->index = index;
     ret->finalize();
     return ret;
   }
-  SIMDReplace* makeSIMDReplace(SIMDReplaceOp op, Expression* vec, uint8_t idx, Expression* value) {
+  SIMDReplace* makeSIMDReplace(SIMDReplaceOp op, Expression* vec, uint8_t index, Expression* value) {
     auto* ret = allocator.alloc<SIMDReplace>();
     ret->op = op;
     ret->vec = vec;
-    ret->idx = idx;
+    ret->index = index;
     ret->value = value;
     ret->finalize();
     return ret;

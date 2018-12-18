@@ -959,7 +959,7 @@ public:
   uint16_t getInt16();
   uint32_t getInt32();
   uint64_t getInt64();
-  uint8_t getLaneIdx(size_t lanes);
+  uint8_t getLaneIndex(size_t lanes);
   // it is unsafe to return a float directly, due to ABI issues with the signalling bit
   Literal getFloat32Literal();
   Literal getFloat64Literal();

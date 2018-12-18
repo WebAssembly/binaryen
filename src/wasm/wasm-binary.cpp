@@ -757,11 +757,11 @@ uint64_t WasmBinaryBuilder::getInt64() {
   return ret;
 }
 
-uint8_t WasmBinaryBuilder::getLaneIdx(size_t lanes) {
+uint8_t WasmBinaryBuilder::getLaneIndex(size_t lanes) {
   if (debug) std::cerr << "<==" << std::endl;
   auto ret = getInt8();
   if (ret >= lanes) throwError("Illegal lane index");
-  if (debug) std::cerr << "getLaneIdx(" << lanes << "): " << ret << " ==>" << std::endl;
+  if (debug) std::cerr << "getLaneIndex(" << lanes << "): " << ret << " ==>" << std::endl;
   return ret;
 }
 
@@ -2570,14 +2570,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDStore(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitSIMDExtract(Expression*& out, uint32_t code) {
   SIMDExtract* curr;
   switch (code) {
-    case BinaryConsts::I8x16ExtractLaneS: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneSVecI8x16; curr->idx = getLaneIdx(16); break;
-    case BinaryConsts::I8x16ExtractLaneU: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneUVecI8x16; curr->idx = getLaneIdx(16); break;
-    case BinaryConsts::I16x8ExtractLaneS: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneSVecI16x8; curr->idx = getLaneIdx(8); break;
-    case BinaryConsts::I16x8ExtractLaneU: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneUVecI16x8; curr->idx = getLaneIdx(8); break;
-    case BinaryConsts::I32x4ExtractLane: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneVecI32x4; curr->idx = getLaneIdx(4); break;
-    case BinaryConsts::I64x2ExtractLane: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneVecI64x2; curr->idx = getLaneIdx(2); break;
-    case BinaryConsts::F32x4ExtractLane: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneVecF32x4; curr->idx = getLaneIdx(4); break;
-    case BinaryConsts::F64x2ExtractLane: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneVecF64x2; curr->idx = getLaneIdx(2); break;
+    case BinaryConsts::I8x16ExtractLaneS: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneSVecI8x16; curr->index = getLaneIndex(16); break;
+    case BinaryConsts::I8x16ExtractLaneU: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneUVecI8x16; curr->index = getLaneIndex(16); break;
+    case BinaryConsts::I16x8ExtractLaneS: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneSVecI16x8; curr->index = getLaneIndex(8); break;
+    case BinaryConsts::I16x8ExtractLaneU: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneUVecI16x8; curr->index = getLaneIndex(8); break;
+    case BinaryConsts::I32x4ExtractLane: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneVecI32x4; curr->index = getLaneIndex(4); break;
+    case BinaryConsts::I64x2ExtractLane: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneVecI64x2; curr->index = getLaneIndex(2); break;
+    case BinaryConsts::F32x4ExtractLane: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneVecF32x4; curr->index = getLaneIndex(4); break;
+    case BinaryConsts::F64x2ExtractLane: curr = allocator.alloc<SIMDExtract>(); curr->op = ExtractLaneVecF64x2; curr->index = getLaneIndex(2); break;
     default: return false;
   }
   curr->vec = popNonVoidExpression();
@@ -2589,12 +2589,12 @@ bool WasmBinaryBuilder::maybeVisitSIMDExtract(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitSIMDReplace(Expression*& out, uint32_t code) {
   SIMDReplace* curr;
   switch (code) {
-    case BinaryConsts::I8x16ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecI8x16; curr->idx = getLaneIdx(16); break;
-    case BinaryConsts::I16x8ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecI16x8; curr->idx = getLaneIdx(8); break;
-    case BinaryConsts::I32x4ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecI32x4; curr->idx = getLaneIdx(4); break;
-    case BinaryConsts::I64x2ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecI64x2; curr->idx = getLaneIdx(2); break;
-    case BinaryConsts::F32x4ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecF32x4; curr->idx = getLaneIdx(4); break;
-    case BinaryConsts::F64x2ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecF64x2; curr->idx = getLaneIdx(2); break;
+    case BinaryConsts::I8x16ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecI8x16; curr->index = getLaneIndex(16); break;
+    case BinaryConsts::I16x8ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecI16x8; curr->index = getLaneIndex(8); break;
+    case BinaryConsts::I32x4ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecI32x4; curr->index = getLaneIndex(4); break;
+    case BinaryConsts::I64x2ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecI64x2; curr->index = getLaneIndex(2); break;
+    case BinaryConsts::F32x4ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecF32x4; curr->index = getLaneIndex(4); break;
+    case BinaryConsts::F64x2ReplaceLane: curr = allocator.alloc<SIMDReplace>(); curr->op = ReplaceLaneVecF64x2; curr->index = getLaneIndex(2); break;
     default: return false;
   }
   curr->value = popNonVoidExpression();
@@ -2610,7 +2610,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDShuffle(Expression*& out, uint32_t code) {
   }
   auto* curr = allocator.alloc<SIMDShuffle>();
   for (auto i = 0; i < 16; ++i) {
-    curr->mask[i] = getLaneIdx(32);
+    curr->mask[i] = getLaneIndex(32);
   }
   curr->right = popNonVoidExpression();
   curr->left = popNonVoidExpression();

@@ -39,13 +39,13 @@ template<typename LaneT, int Lanes>
 static void extractBytes(uint8_t (&dest)[16], const LaneArray<Lanes>& lanes) {
   std::array<uint8_t, 16> bytes;
   const size_t lane_width = 16 / Lanes;
-  for (size_t lane_idx = 0; lane_idx < Lanes; ++lane_idx) {
+  for (size_t lane_index = 0; lane_index < Lanes; ++lane_index) {
     uint8_t bits[16];
-    lanes[lane_idx].getBits(bits);
+    lanes[lane_index].getBits(bits);
     LaneT lane;
     memcpy(&lane, bits, sizeof(lane));
     for (size_t offset = 0; offset < lane_width; ++offset) {
-      bytes.at(lane_idx * lane_width + offset) = uint8_t(lane >> (8 * offset));
+      bytes.at(lane_index * lane_width + offset) = uint8_t(lane >> (8 * offset));
     }
   }
   memcpy(&dest, bytes.data(), sizeof(bytes));
@@ -924,12 +924,12 @@ static LaneArray<Lanes> getLanes(const Literal& val) {
   const size_t lane_width = 16 / Lanes;
   std::array<uint8_t, 16> bytes = val.getv128();
   LaneArray<Lanes> lanes;
-  for (size_t lane_idx = 0; lane_idx < Lanes; ++lane_idx) {
+  for (size_t lane_index = 0; lane_index < Lanes; ++lane_index) {
     LaneT lane(0);
     for (size_t offset = 0; offset < lane_width; ++offset) {
-      lane |= LaneT(bytes.at(lane_idx * lane_width + offset)) << LaneT(8 * offset);
+      lane |= LaneT(bytes.at(lane_index * lane_width + offset)) << LaneT(8 * offset);
     }
-    lanes.at(lane_idx) = Literal(lane);
+    lanes.at(lane_index) = Literal(lane);
   }
   return lanes;
 }
@@ -991,40 +991,40 @@ Literal Literal::splatI64x2() const { return splat<Type::i64, 2>(*this); }
 Literal Literal::splatF32x4() const { return splat<Type::f32, 4>(*this); }
 Literal Literal::splatF64x2() const { return splat<Type::f64, 2>(*this); }
 
-Literal Literal::extractLaneSI8x16(uint8_t idx) const { return getLanesSI8x16().at(idx); }
-Literal Literal::extractLaneUI8x16(uint8_t idx) const { return getLanesUI8x16().at(idx); }
-Literal Literal::extractLaneSI16x8(uint8_t idx) const { return getLanesSI16x8().at(idx); }
-Literal Literal::extractLaneUI16x8(uint8_t idx) const { return getLanesUI16x8().at(idx); }
-Literal Literal::extractLaneI32x4(uint8_t idx) const { return getLanesI32x4().at(idx); }
-Literal Literal::extractLaneI64x2(uint8_t idx) const { return getLanesI64x2().at(idx); }
-Literal Literal::extractLaneF32x4(uint8_t idx) const { return getLanesF32x4().at(idx); }
-Literal Literal::extractLaneF64x2(uint8_t idx) const { return getLanesF64x2().at(idx); }
+Literal Literal::extractLaneSI8x16(uint8_t index) const { return getLanesSI8x16().at(index); }
+Literal Literal::extractLaneUI8x16(uint8_t index) const { return getLanesUI8x16().at(index); }
+Literal Literal::extractLaneSI16x8(uint8_t index) const { return getLanesSI16x8().at(index); }
+Literal Literal::extractLaneUI16x8(uint8_t index) const { return getLanesUI16x8().at(index); }
+Literal Literal::extractLaneI32x4(uint8_t index) const { return getLanesI32x4().at(index); }
+Literal Literal::extractLaneI64x2(uint8_t index) const { return getLanesI64x2().at(index); }
+Literal Literal::extractLaneF32x4(uint8_t index) const { return getLanesF32x4().at(index); }
+Literal Literal::extractLaneF64x2(uint8_t index) const { return getLanesF64x2().at(index); }
 
 template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
-static Literal replace(const Literal& val, const Literal& other, uint8_t idx) {
+static Literal replace(const Literal& val, const Literal& other, uint8_t index) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
-  lanes.at(idx) = other;
+  lanes.at(index) = other;
   auto ret = Literal(lanes);
   return ret;
 }
 
-Literal Literal::replaceLaneI8x16(const Literal& other, uint8_t idx) const {
-  return replace<16, &Literal::getLanesUI8x16>(*this, other, idx);
+Literal Literal::replaceLaneI8x16(const Literal& other, uint8_t index) const {
+  return replace<16, &Literal::getLanesUI8x16>(*this, other, index);
 }
-Literal Literal::replaceLaneI16x8(const Literal& other, uint8_t idx) const {
-  return replace<8, &Literal::getLanesUI16x8>(*this, other, idx);
+Literal Literal::replaceLaneI16x8(const Literal& other, uint8_t index) const {
+  return replace<8, &Literal::getLanesUI16x8>(*this, other, index);
 }
-Literal Literal::replaceLaneI32x4(const Literal& other, uint8_t idx) const {
-  return replace<4, &Literal::getLanesI32x4>(*this, other, idx);
+Literal Literal::replaceLaneI32x4(const Literal& other, uint8_t index) const {
+  return replace<4, &Literal::getLanesI32x4>(*this, other, index);
 }
-Literal Literal::replaceLaneI64x2(const Literal& other, uint8_t idx) const {
-  return replace<2, &Literal::getLanesI64x2>(*this, other, idx);
+Literal Literal::replaceLaneI64x2(const Literal& other, uint8_t index) const {
+  return replace<2, &Literal::getLanesI64x2>(*this, other, index);
 }
-Literal Literal::replaceLaneF32x4(const Literal& other, uint8_t idx) const {
-  return replace<4, &Literal::getLanesF32x4>(*this, other, idx);
+Literal Literal::replaceLaneF32x4(const Literal& other, uint8_t index) const {
+  return replace<4, &Literal::getLanesF32x4>(*this, other, index);
 }
-Literal Literal::replaceLaneF64x2(const Literal& other, uint8_t idx) const {
-  return replace<2, &Literal::getLanesF64x2>(*this, other, idx);
+Literal Literal::replaceLaneF64x2(const Literal& other, uint8_t index) const {
+  return replace<2, &Literal::getLanesF64x2>(*this, other, index);
 }
 
 template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,

@@ -535,8 +535,8 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op,
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef replacement, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef wakeCount);
-BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx);
-BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx, BinaryenExpressionRef value);
+BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t index);
+BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t index, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, const uint8_t mask[16]);
 BinaryenExpressionRef BinaryenSIMDBitselect(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenExpressionRef cond);
 BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, BinaryenExpressionRef shift);
@@ -648,11 +648,11 @@ BinaryenExpressionRef BinaryenAtomicWakeGetWakeCount(BinaryenExpressionRef expr)
 
 BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr);
-uint8_t BinaryenSIMDExtractGetIdx(BinaryenExpressionRef expr);
+uint8_t BinaryenSIMDExtractGetIndex(BinaryenExpressionRef expr);
 
 BinaryenOp BinaryenSIMDReplaceGetOp(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDReplaceGetVec(BinaryenExpressionRef expr);
-uint8_t BinaryenSIMDReplaceGetIdx(BinaryenExpressionRef expr);
+uint8_t BinaryenSIMDReplaceGetIndex(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDReplaceGetValue(BinaryenExpressionRef expr);
 
 BinaryenExpressionRef BinaryenSIMDShuffleGetLeft(BinaryenExpressionRef expr);

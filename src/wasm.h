@@ -554,7 +554,7 @@ class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
 
   SIMDExtractOp op;
   Expression* vec;
-  uint8_t idx;
+  uint8_t index;
 
   void finalize();
 };
@@ -566,7 +566,7 @@ class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
 
   SIMDReplaceOp op;
   Expression* vec;
-  uint8_t idx;
+  uint8_t index;
   Expression* value;
 
   void finalize();

@@ -1245,14 +1245,14 @@ function wrapModule(module, self) {
     'splat': function(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI8x16'], value);
     },
-    'extract_lane_s': function(vec, idx) {
-      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneSVecI8x16'], vec, idx);
+    'extract_lane_s': function(vec, index) {
+      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneSVecI8x16'], vec, index);
     },
-    'extract_lane_u': function(vec, idx) {
-      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneUVecI8x16'], vec, idx);
+    'extract_lane_u': function(vec, index) {
+      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneUVecI8x16'], vec, index);
     },
-    'replace_lane': function(vec, idx, value) {
-      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI8x16'], vec, idx, value);
+    'replace_lane': function(vec, index, value) {
+      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI8x16'], vec, index, value);
     },
     'eq': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecI8x16'], left, right);
@@ -1329,14 +1329,14 @@ function wrapModule(module, self) {
     'splat': function(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI16x8'], value);
     },
-    'extract_lane_s': function(vec, idx) {
-      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneSVecI16x8'], vec, idx);
+    'extract_lane_s': function(vec, index) {
+      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneSVecI16x8'], vec, index);
     },
-    'extract_lane_u': function(vec, idx) {
-      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneUVecI16x8'], vec, idx);
+    'extract_lane_u': function(vec, index) {
+      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneUVecI16x8'], vec, index);
     },
-    'replace_lane': function(vec, idx, value) {
-      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI16x8'], vec, idx, value);
+    'replace_lane': function(vec, index, value) {
+      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI16x8'], vec, index, value);
     },
     'eq': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecI16x8'], left, right);
@@ -1413,11 +1413,11 @@ function wrapModule(module, self) {
     'splat': function(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI32x4'], value);
     },
-    'extract_lane': function(vec, idx) {
-      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecI32x4'], vec, idx);
+    'extract_lane': function(vec, index) {
+      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecI32x4'], vec, index);
     },
-    'replace_lane': function(vec, idx, value) {
-      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI32x4'], vec, idx, value);
+    'replace_lane': function(vec, index, value) {
+      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI32x4'], vec, index, value);
     },
     'eq': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecI32x4'], left, right);
@@ -1488,11 +1488,11 @@ function wrapModule(module, self) {
     'splat': function(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI64x2'], value);
     },
-    'extract_lane': function(vec, idx) {
-      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecI64x2'], vec, idx);
+    'extract_lane': function(vec, index) {
+      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecI64x2'], vec, index);
     },
-    'replace_lane': function(vec, idx, value) {
-      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI64x2'], vec, idx, value);
+    'replace_lane': function(vec, index, value) {
+      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI64x2'], vec, index, value);
     },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI64x2'], value);
@@ -1530,11 +1530,11 @@ function wrapModule(module, self) {
     'splat': function(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecF32x4'], value);
     },
-    'extract_lane': function(vec, idx) {
-      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecF32x4'], vec, idx);
+    'extract_lane': function(vec, index) {
+      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecF32x4'], vec, index);
     },
-    'replace_lane': function(vec, idx, value) {
-      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecF32x4'], vec, idx, value);
+    'replace_lane': function(vec, index, value) {
+      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecF32x4'], vec, index, value);
     },
     'eq': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecF32x4'], left, right);
@@ -1593,11 +1593,11 @@ function wrapModule(module, self) {
     'splat': function(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecF64x2'], value);
     },
-    'extract_lane': function(vec, idx) {
-      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecF64x2'], vec, idx);
+    'extract_lane': function(vec, index) {
+      return Module['_BinaryenSIMDExtract'](module, Module['ExtractLaneVecF64x2'], vec, index);
     },
-    'replace_lane': function(vec, idx, value) {
-      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecF64x2'], vec, idx, value);
+    'replace_lane': function(vec, index, value) {
+      return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecF64x2'], vec, index, value);
     },
     'eq': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['EqVecF64x2'], left, right);
@@ -2154,7 +2154,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'op': Module['_BinaryenSIMDExtractGetOp'](expr),
         'vec': Module['_BinaryenSIMDExtractGetVec'](expr),
-        'idx': Module['_BinaryenSIMDExtractGetIdx'](expr)
+        'index': Module['_BinaryenSIMDExtractGetIndex'](expr)
       };
     case Module['SIMDReplaceId']:
       return {
@@ -2162,7 +2162,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'op': Module['_BinaryenSIMDReplaceGetOp'](expr),
         'vec': Module['_BinaryenSIMDReplaceGetVec'](expr),
-        'idx': Module['_BinaryenSIMDReplaceGetIdx'](expr),
+        'index': Module['_BinaryenSIMDReplaceGetIndex'](expr),
         'value': Module['_BinaryenSIMDReplaceGetValue'](expr)
       };
     case Module['SIMDShuffleId']:

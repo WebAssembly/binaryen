@@ -1077,7 +1077,7 @@ Expression* SExpressionWasmBuilder::makeAtomicWake(Element& s) {
   return ret;
 }
 
-static uint8_t parseLaneIdx(const Element* s, size_t lanes) {
+static uint8_t parseLaneIndex(const Element* s, size_t lanes) {
   const char *str = s->c_str();
   char *end;
   auto n = static_cast<unsigned long long>(strtoll(str, &end, 10));
@@ -1089,7 +1089,7 @@ static uint8_t parseLaneIdx(const Element* s, size_t lanes) {
 Expression* SExpressionWasmBuilder::makeSIMDExtract(Element& s, SIMDExtractOp op, size_t lanes) {
   auto ret = allocator.alloc<SIMDExtract>();
   ret->op = op;
-  ret->idx = parseLaneIdx(s[1], lanes);
+  ret->index = parseLaneIndex(s[1], lanes);
   ret->vec = parseExpression(s[2]);
   ret->finalize();
   return ret;
@@ -1098,7 +1098,7 @@ Expression* SExpressionWasmBuilder::makeSIMDExtract(Element& s, SIMDExtractOp op
 Expression* SExpressionWasmBuilder::makeSIMDReplace(Element& s, SIMDReplaceOp op, size_t lanes) {
   auto ret = allocator.alloc<SIMDReplace>();
   ret->op = op;
-  ret->idx = parseLaneIdx(s[1], lanes);
+  ret->index = parseLaneIndex(s[1], lanes);
   ret->vec = parseExpression(s[2]);
   ret->value = parseExpression(s[3]);
   ret->finalize();
@@ -1108,7 +1108,7 @@ Expression* SExpressionWasmBuilder::makeSIMDReplace(Element& s, SIMDReplaceOp op
 Expression* SExpressionWasmBuilder::makeSIMDShuffle(Element& s) {
   auto ret = allocator.alloc<SIMDShuffle>();
   for (size_t i = 0; i < 16; ++i) {
-    ret->mask[i] = parseLaneIdx(s[i+1], 32);
+    ret->mask[i] = parseLaneIndex(s[i+1], 32);
   }
   ret->left = parseExpression(s[17]);
   ret->right = parseExpression(s[18]);

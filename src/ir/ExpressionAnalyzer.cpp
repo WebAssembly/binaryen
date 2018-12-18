@@ -251,13 +251,13 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       }
       case Expression::Id::SIMDExtractId: {
         CHECK(SIMDExtract, op);
-        CHECK(SIMDExtract, idx);
+        CHECK(SIMDExtract, index);
         PUSH(SIMDExtract, vec);
         break;
       }
       case Expression::Id::SIMDReplaceId: {
         CHECK(SIMDReplace, op);
-        CHECK(SIMDReplace, idx);
+        CHECK(SIMDReplace, index);
         PUSH(SIMDReplace, vec);
         PUSH(SIMDReplace, value);
         break;
@@ -530,13 +530,13 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       }
       case Expression::Id::SIMDExtractId: {
         HASH(SIMDExtract, op);
-        HASH(SIMDExtract, idx);
+        HASH(SIMDExtract, index);
         PUSH(SIMDExtract, vec);
         break;
       }
       case Expression::Id::SIMDReplaceId: {
         HASH(SIMDReplace, op);
-        HASH(SIMDReplace, idx);
+        HASH(SIMDReplace, index);
         PUSH(SIMDReplace, vec);
         PUSH(SIMDReplace, value);
         break;

@@ -1027,17 +1027,17 @@ BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpre
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx) {
-  auto* ret = Builder(*((Module*)module)).makeSIMDExtract(SIMDExtractOp(op), (Expression*) vec, idx);
+BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t index) {
+  auto* ret = Builder(*((Module*)module)).makeSIMDExtract(SIMDExtractOp(op), (Expression*) vec, index);
   if (tracing) {
-    traceExpression(ret, "BinaryenSIMDExtract", op, vec, int(idx));
+    traceExpression(ret, "BinaryenSIMDExtract", op, vec, int(index));
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx, BinaryenExpressionRef value) {
-  auto* ret = Builder(*((Module*)module)).makeSIMDReplace(SIMDReplaceOp(op), (Expression*) vec, idx, (Expression*)value);
+BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t index, BinaryenExpressionRef value) {
+  auto* ret = Builder(*((Module*)module)).makeSIMDReplace(SIMDReplaceOp(op), (Expression*) vec, index, (Expression*)value);
   if (tracing) {
-    traceExpression(ret, "BinaryenSIMDReplace", op, vec, int(idx), value);
+    traceExpression(ret, "BinaryenSIMDReplace", op, vec, int(index), value);
   }
   return static_cast<Expression*>(ret);
 }
@@ -1843,14 +1843,14 @@ BinaryenExpressionRef BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDExtract>());
   return static_cast<SIMDExtract*>(expression)->vec;
 }
-uint8_t BinaryenSIMDExtractGetIdx(BinaryenExpressionRef expr) {
+uint8_t BinaryenSIMDExtractGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSIMDExtractGetIdx(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenSIMDExtractGetIndex(expressions[" << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
   assert(expression->is<SIMDExtract>());
-  return static_cast<SIMDExtract*>(expression)->idx;
+  return static_cast<SIMDExtract*>(expression)->index;
 }
 // SIMDReplace
 BinaryenOp BinaryenSIMDReplaceGetOp(BinaryenExpressionRef expr) {
@@ -1871,14 +1871,14 @@ BinaryenExpressionRef BinaryenSIMDReplaceGetVec(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDReplace>());
   return static_cast<SIMDReplace*>(expression)->vec;
 }
-uint8_t BinaryenSIMDReplaceGetIdx(BinaryenExpressionRef expr) {
+uint8_t BinaryenSIMDReplaceGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSIMDReplaceGetIdx(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenSIMDReplaceGetIndex(expressions[" << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
   assert(expression->is<SIMDReplace>());
-  return static_cast<SIMDReplace*>(expression)->idx;
+  return static_cast<SIMDReplace*>(expression)->index;
 }
 BinaryenExpressionRef BinaryenSIMDReplaceGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
