@@ -29,6 +29,12 @@ using namespace std;
 
 namespace wasm {
 
+// Remove all possible manifestations of atexit, across asm2wasm and llvm wasm backend.
+static std::vector<Name> ATEXIT_NAMES = { "___cxa_atexit",
+                                          "__cxa_atexit",
+                                          "_atexit",
+                                          "atexit" };
+
 struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
   bool isFunctionParallel() override { return true; }
 
@@ -37,14 +43,8 @@ struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
   void visitCall(Call* curr) {
     auto* import = getModule()->getFunctionOrNull(curr->target);
     if (!import || !import->imported() || import->module != ENV) return;
-    // Remove all possible manifestations of atexit, across asm2wasm and llvm wasm backend.
-    for (auto* name : {
-      "___cxa_atexit",
-      "_atexit",
-      "__cxa_atexit",
-      "atexit",
-    }) {
-      if (strcmp(name, import->base.str) == 0) {
+    for (auto name : ATEXIT_NAMES) {
+      if (name == import->base) {
         replaceCurrent(
           Builder(*getModule()).replaceWithIdenticalType(curr)
         );
