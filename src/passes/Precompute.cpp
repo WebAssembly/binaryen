@@ -161,6 +161,10 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   void visitExpression(Expression* curr) {
     // TODO: if get_local, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
+    // Until engines implement v128.const and we have SIMD-aware optimizations
+    // that can break large v128.const instructions into smaller consts and
+    // splats, do not try to precompute v128 expressions.
+    if (curr->type == v128) return;
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
     if (flow.breaking()) {
