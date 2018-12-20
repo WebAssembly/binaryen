@@ -42,6 +42,7 @@
 #include <wasm-traversal.h>
 #include <pass.h>
 #include <ir/effects.h>
+#include <ir/cost.h>
 #include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
 
@@ -208,8 +209,14 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
-    // check what we care about TODO: use optimize/shrink levels?
-    return Measurer::measure(value) > 1;
+    auto& options = getPassRunner()->options;
+    if (options.shrinkLevel > 0 && Measurer::measure(value) > 1) {
+      return true;
+    }
+    if (options.shrinkLevel == 0 && CostAnalyzer(value).cost > 0) {
+      return true;
+    }
+    return false;
   }
 };
 
