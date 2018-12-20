@@ -306,4 +306,9 @@
     )
    )
   )
+  (func $no-simd-precompute (result v128)
+   (i32x4.splat
+    (i32.const 0)
+   )
+  )
 )
