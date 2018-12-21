@@ -210,9 +210,14 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       return false; // we can't combine things with side effects
     }
     auto& options = getPassRunner()->options;
-    if (options.shrinkLevel > 0 && Measurer::measure(value) > 1) {
+    // If the size is at least 3, then if we have two of them we have 6,
+    // and so adding one set+two gets and removing one of the items itself
+    // is not detrimental, and may be beneficial.
+    if (options.shrinkLevel > 0 && Measurer::measure(value) >= 3) {
       return true;
     }
+    // If we focus on speed, any reduction in cost is beneficial, as the
+    // cost of a get is essentially free.
     if (options.shrinkLevel == 0 && CostAnalyzer(value).cost > 0) {
       return true;
     }
