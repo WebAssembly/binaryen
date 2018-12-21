@@ -4,6 +4,7 @@
  (type $2 (func (result i64)))
  (type $3 (func (param i32)))
  (type $4 (func (param i32) (result i32)))
+ (global $glob (mut i32) (i32.const 1))
  (func $loop1 (; 0 ;) (type $0)
   (drop
    (i32.const 10)
@@ -671,6 +672,22 @@
    )
    (br_if $loop
     (i32.const 1)
+   )
+  )
+ )
+ (func $global (; 40 ;) (type $0)
+  (local $x i32)
+  (set_local $x
+   (get_global $glob)
+  )
+  (drop
+   (get_local $x)
+  )
+  (loop $loop
+   (nop)
+   (nop)
+   (br_if $loop
+    (get_local $x)
    )
   )
  )

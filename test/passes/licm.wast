@@ -1,4 +1,5 @@
 (module
+  (global $glob (mut i32) (i32.const 1))
   (func $loop1
     (loop $loop
       (drop (i32.const 10))
@@ -386,6 +387,14 @@
       (set_local $x (i32.const 0))
       (set_local $a (tee_local $b (i32.const 1)))
       (br_if $loop (i32.const 1))
+    )
+  )
+  (func $global
+    (local $x i32)
+    (loop $loop
+      (set_local $x (get_global $glob))
+      (drop (get_local $x))
+      (br_if $loop (get_local $x))
     )
   )
 )

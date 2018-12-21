@@ -1,5 +1,7 @@
 (module
  (type $0 (func (result i64)))
+ (type $1 (func))
+ (global $glob (mut i32) (i32.const 1))
  (func $i64-shifts (; 0 ;) (type $0) (result i64)
   (local $temp i64)
   (set_local $temp
@@ -18,5 +20,18 @@
    )
   )
   (get_local $temp)
+ )
+ (func $global (; 1 ;) (type $1)
+  (local $x i32)
+  (local $y i32)
+  (set_local $x
+   (get_global $glob)
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (set_local $y
+   (get_local $x)
+  )
  )
 )

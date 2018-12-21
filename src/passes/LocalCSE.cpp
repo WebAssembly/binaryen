@@ -42,6 +42,7 @@
 #include <wasm-traversal.h>
 #include <pass.h>
 #include <ir/effects.h>
+#include <ir/cost.h>
 #include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
 
@@ -208,8 +209,19 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
-    // check what we care about TODO: use optimize/shrink levels?
-    return Measurer::measure(value) > 1;
+    auto& options = getPassRunner()->options;
+    // If the size is at least 3, then if we have two of them we have 6,
+    // and so adding one set+two gets and removing one of the items itself
+    // is not detrimental, and may be beneficial.
+    if (options.shrinkLevel > 0 && Measurer::measure(value) >= 3) {
+      return true;
+    }
+    // If we focus on speed, any reduction in cost is beneficial, as the
+    // cost of a get is essentially free.
+    if (options.shrinkLevel == 0 && CostAnalyzer(value).cost > 0) {
+      return true;
+    }
+    return false;
   }
 };
 
