@@ -1,8 +1,11 @@
 (module
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$vj (func (param i64)))
+ (type $FUNCSIG$vf (func (param f32)))
+ (type $FUNCSIG$vd (func (param f64)))
  (type $FUNCSIG$v (func))
  (type $FUNCSIG$jddfiV (func (param f64 f64 f32 i32 v128) (result i64)))
  (type $FUNCSIG$viViVjV (func (param i32 v128 i32 v128 i64 v128)))
- (type $FUNCSIG$vd (func (param f64)))
  (type $FUNCSIG$VVVVVii (func (param v128 v128 v128 v128 i32 i32) (result v128)))
  (type $FUNCSIG$fddffj (func (param f64 f64 f32 f32 i64) (result f32)))
  (type $FUNCSIG$j (func (result i64)))
