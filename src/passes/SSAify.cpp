@@ -58,10 +58,11 @@ struct SSAify : public Pass {
   void runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
     func = func_;
+    LocalGraph graph(func);
     // create new local indexes, one for each set
     createNewIndexes();
     // we now know the sets for each get, and can compute get indexes and handle phis
-    computeGetsAndPhis();
+    computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
   }
@@ -73,8 +74,7 @@ struct SSAify : public Pass {
     }
   }
 
-  void computeGetsAndPhis() {
-    LocalGraph graph(func);
+  void computeGetsAndPhis(LocalGraph& graph) {
     for (auto& iter : graph.getSetses) {
       auto* get = iter.first;
       auto& sets = iter.second;
