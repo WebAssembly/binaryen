@@ -1069,6 +1069,9 @@ void FunctionValidator::visitFunction(Function* curr) {
     shouldBeTrue(ft->params == curr->params, curr->name, "function params must match its declared type");
     shouldBeTrue(ft->result == curr->result, curr->name, "function result must match its declared type");
   }
+  if (curr->imported()) {
+    shouldBeTrue(curr->type.is(), curr->name, "imported functions must have a function type");
+  }
 }
 
 static bool checkOffset(Expression* curr, Address add, Address max) {
