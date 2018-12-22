@@ -127,6 +127,10 @@ def test_one(infile, opts):
     compare(before[i], after[i], 'comparing between builds at ' + str(i))
   # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
   run(['bin/wasm-opt', 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts)
+  # check for determinism
+  run(['bin/wasm-opt', 'a.wasm', '-o', 'b.wasm'] + opts)
+  run(['bin/wasm-opt', 'a.wasm', '-o', 'c.wasm'] + opts)
+  assert open('b.wasm').read() == open('c.wasm').read()
 
   return bytes
 
