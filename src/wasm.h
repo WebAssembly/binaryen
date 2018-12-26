@@ -67,7 +67,11 @@ struct FeatureSet {
   void setSIMD(bool v = true) { set(SIMD, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
- private:
+  bool operator<=(const FeatureSet& other) {
+    return !(features & ~other.features);
+  }
+
+private:
   uint32_t features;
 };
 
