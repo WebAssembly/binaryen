@@ -25,8 +25,7 @@ namespace wasm {
 // Measure the execution cost of an AST. Very handwave-ey
 
 struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
-  CostAnalyzer(Expression *ast) {
-    assert(ast);
+  CostAnalyzer(Expression* ast) {
     cost = visit(ast);
   }
 
@@ -36,63 +35,63 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     return curr ? visit(curr) : 0;
   }
 
-  Index visitBlock(Block *curr) {
+  Index visitBlock(Block* curr) {
     Index ret = 0;
     for (auto* child : curr->list) ret += visit(child);
     return ret;
   }
-  Index visitIf(If *curr) {
+  Index visitIf(If* curr) {
     return 1 + visit(curr->condition) + std::max(visit(curr->ifTrue), maybeVisit(curr->ifFalse));
   }
-  Index visitLoop(Loop *curr) {
+  Index visitLoop(Loop* curr) {
     return 5 * visit(curr->body);
   }
-  Index visitBreak(Break *curr) {
+  Index visitBreak(Break* curr) {
     return 1 + maybeVisit(curr->value) + maybeVisit(curr->condition);
   }
-  Index visitSwitch(Switch *curr) {
+  Index visitSwitch(Switch* curr) {
     return 2 + visit(curr->condition) + maybeVisit(curr->value);
   }
-  Index visitCall(Call *curr) {
+  Index visitCall(Call* curr) {
     // XXX this does not take into account if the call is to an import, which
     //     may be costlier in general
     Index ret = 4;
     for (auto* child : curr->operands) ret += visit(child);
     return ret;
   }
-  Index visitCallIndirect(CallIndirect *curr) {
+  Index visitCallIndirect(CallIndirect* curr) {
     Index ret = 6 + visit(curr->target);
     for (auto* child : curr->operands) ret += visit(child);
     return ret;
   }
-  Index visitGetLocal(GetLocal *curr) {
+  Index visitGetLocal(GetLocal* curr) {
     return 0;
   }
-  Index visitSetLocal(SetLocal *curr) {
+  Index visitSetLocal(SetLocal* curr) {
     return 1;
   }
-  Index visitGetGlobal(GetGlobal *curr) {
+  Index visitGetGlobal(GetGlobal* curr) {
     return 1;
   }
-  Index visitSetGlobal(SetGlobal *curr) {
+  Index visitSetGlobal(SetGlobal* curr) {
     return 2;
   }
-  Index visitLoad(Load *curr) {
+  Index visitLoad(Load* curr) {
     return 1 + visit(curr->ptr) + 10 * curr->isAtomic;
   }
-  Index visitStore(Store *curr) {
+  Index visitStore(Store* curr) {
     return 2 + visit(curr->ptr) + visit(curr->value) + 10 * curr->isAtomic;
   }
-  Index visitAtomicRMW(AtomicRMW *curr) {
+  Index visitAtomicRMW(AtomicRMW* curr) {
     return 100;
   }
   Index visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     return 100;
   }
-  Index visitConst(Const *curr) {
+  Index visitConst(Const* curr) {
     return 1;
   }
-  Index visitUnary(Unary *curr) {
+  Index visitUnary(Unary* curr) {
     Index ret = 0;
     switch (curr->op) {
       case ClzInt32:
@@ -192,7 +191,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     }
     return ret + visit(curr->value);
   }
-  Index visitBinary(Binary *curr) {
+  Index visitBinary(Binary* curr) {
     Index ret = 0;
     switch (curr->op) {
       case AddInt32:        ret = 1; break;
@@ -351,22 +350,22 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     }
     return ret + visit(curr->left) + visit(curr->right);
   }
-  Index visitSelect(Select *curr) {
+  Index visitSelect(Select* curr) {
     return 2 + visit(curr->condition) + visit(curr->ifTrue) + visit(curr->ifFalse);
   }
-  Index visitDrop(Drop *curr) {
+  Index visitDrop(Drop* curr) {
     return visit(curr->value);
   }
-  Index visitReturn(Return *curr) {
+  Index visitReturn(Return* curr) {
     return maybeVisit(curr->value);
   }
-  Index visitHost(Host *curr) {
+  Index visitHost(Host* curr) {
     return 100;
   }
-  Index visitNop(Nop *curr) {
+  Index visitNop(Nop* curr) {
     return 0;
   }
-  Index visitUnreachable(Unreachable *curr) {
+  Index visitUnreachable(Unreachable* curr) {
     return 0;
   }
 };
