@@ -36,12 +36,12 @@ const char* printType(Type type) {
 
 unsigned getTypeSize(Type type) {
   switch (type) {
-    case Type::none: abort();
     case Type::i32: return 4;
     case Type::i64: return 8;
     case Type::f32: return 4;
     case Type::f64: return 8;
     case Type::v128: return 16;
+    case Type::none:
     case Type::unreachable: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
