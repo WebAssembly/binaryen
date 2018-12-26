@@ -24,9 +24,9 @@
 #include "wasm-validator.h"
 #include "ir/utils.h"
 #include "ir/branch-utils.h"
+#include "ir/features.h"
 #include "ir/module-utils.h"
 #include "support/colors.h"
-
 
 namespace wasm {
 
@@ -823,6 +823,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     }
     case InvalidBinary: WASM_UNREACHABLE();
   }
+  shouldBeTrue(Features::get(curr->op) <= info.features, curr, "all used features should be allowed");
 }
 
 void FunctionValidator::visitUnary(Unary* curr) {
@@ -897,7 +898,6 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case TruncSatSFloat32ToInt64:
     case TruncSatUFloat32ToInt32:
     case TruncSatUFloat32ToInt64: {
-      shouldBeTrue(info.features.hasTruncSat(), curr, "nontrapping float-to-int conversions are disabled");
       shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct");
       break;
     }
@@ -912,7 +912,6 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case TruncSatSFloat64ToInt64:
     case TruncSatUFloat64ToInt32:
     case TruncSatUFloat64ToInt64: {
-      shouldBeTrue(info.features.hasTruncSat(), curr, "nontrapping float-to-int conversions are disabled");
       shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct");
       break;
     }
@@ -1007,6 +1006,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
       break;
     case InvalidUnary: WASM_UNREACHABLE();
   }
+  shouldBeTrue(Features::get(curr->op) <= info.features, curr, "all used features should be allowed");
 }
 
 void FunctionValidator::visitSelect(Select* curr) {
