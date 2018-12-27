@@ -314,6 +314,7 @@ private:
       func->base = name;
       func->params.push_back(type);
       func->result = none;
+      func->type = ensureFunctionType(getSig(func), &wasm)->name;
       wasm.addFunction(func);
     }
   }

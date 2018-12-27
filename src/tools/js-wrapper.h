@@ -22,10 +22,15 @@
 namespace wasm {
 
 static std::string generateJSWrapper(Module& wasm) {
+  PassRunner runner(&wasm);
+  runner.add("legalize-js-interface");
+  runner.run();
+
   std::string ret;
   ret += "if (typeof console === 'undefined') {\n"
          "  console = { log: print };\n"
          "}\n"
+         "var tempRet0;\n"
          "var binary;\n"
          "if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {\n"
          "  var args = process.argv.slice(2);\n"
@@ -44,7 +49,18 @@ static std::string generateJSWrapper(Module& wasm) {
          "    binary = read(args[0], 'binary');\n"
          "  }\n"
          "}\n"
-         "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {});\n";
+         "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {\n"
+         "  'fuzzing-support': {\n"
+         "    'log-i32': function(x) { console.log('i32: ' + x) },\n"
+         "    'log-i64': function(x, y) { console.log('i64: ' + x + ', ' + y) },\n"
+         "    'log-f32': function(x) { console.log('f32: ' + x) },\n"
+         "    'log-f64': function(x) { console.log('f64: ' + x) }\n"
+         "  },\n"
+         "  'env': {\n"
+         "    'setTempRet0': function(x) { tempRet0 = x },\n"
+         "    'getTempRet0': function() { return tempRet0 },\n"
+         "  },\n"
+         "});\n";
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
     if (!func) continue; // something exported other than a function
