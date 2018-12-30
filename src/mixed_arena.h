@@ -19,12 +19,13 @@
 
 #include <atomic>
 #include <cassert>
-#include <cstdlib>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <type_traits>
 #include <vector>
+
+#include <stdlib.h>
 
 //
 // Arena allocation for mixed-type data.
