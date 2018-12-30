@@ -25,7 +25,7 @@
 #include <type_traits>
 #include <vector>
 
-#include <stdlib.h>
+#include <support/alloc.h>
 
 //
 // Arena allocation for mixed-type data.
@@ -121,7 +121,7 @@ struct MixedArena {
       // Allocate a new chunk.
       auto numChunks = (size + CHUNK_SIZE - 1) / CHUNK_SIZE;
       assert(size <= numChunks * CHUNK_SIZE);
-      auto* allocation = aligned_alloc(MAX_ALIGN, numChunks * CHUNK_SIZE);
+      auto* allocation = wasm::aligned_malloc(MAX_ALIGN, numChunks * CHUNK_SIZE);
       if (!allocation) abort();
       chunks.push_back(allocation);
       index = 0;
@@ -142,7 +142,7 @@ struct MixedArena {
 
   void clear() {
     for (auto* chunk : chunks) {
-      free(chunk);
+      wasm::aligned_free(chunk);
     }
     chunks.clear();
   }
