@@ -1085,7 +1085,7 @@ private:
     return ret;
   }
 
-  Load* makeNonAtomicLoad(Type type) {
+  Expression* makeNonAtomicLoad(Type type) {
     auto offset = logify(get());
     auto ptr = makePointer();
     switch (type) {
@@ -1115,6 +1115,9 @@ private:
         return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
       }
       case v128: {
+        if (!features.hasSIMD()) {
+          return makeTrivial(type);
+        }
         return builder.makeLoad(16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
       case none:
@@ -1128,24 +1131,27 @@ private:
     if (type != i32 && type != i64) return ret;
     if (!features.hasAtomics() || oneIn(2)) return ret;
     // make it atomic
+    auto* load = ret->cast<Load>();
     wasm.memory.shared = true;
-    ret->isAtomic = true;
-    ret->signed_ = false;
-    ret->align = ret->bytes;
-    return ret;
+    load->isAtomic = true;
+    load->signed_ = false;
+    load->align = load->bytes;
+    return load;
   }
 
-  Store* makeNonAtomicStore(Type type) {
+  Expression* makeNonAtomicStore(Type type) {
     if (type == unreachable) {
       // make a normal store, then make it unreachable
       auto* ret = makeNonAtomicStore(getConcreteType());
+      auto* store = ret->dynCast<Store>();
+      if (!store) return ret;
       switch (upTo(3)) {
-        case 0: ret->ptr = make(unreachable); break;
-        case 1: ret->value = make(unreachable); break;
-        case 2: ret->ptr = make(unreachable); ret->value = make(unreachable); break;
+        case 0: store->ptr = make(unreachable); break;
+        case 1: store->value = make(unreachable); break;
+        case 2: store->ptr = make(unreachable); store->value = make(unreachable); break;
       }
-      ret->finalize();
-      return ret;
+      store->finalize();
+      return store;
     }
     // the type is none or unreachable. we also need to pick the value
     // type.
@@ -1180,6 +1186,9 @@ private:
         return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
       }
       case v128: {
+        if (!features.hasSIMD()) {
+          return makeTrivial(type);
+        }
         return builder.makeStore(16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
       case none:
@@ -1188,15 +1197,17 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Store* makeStore(Type type) {
+  Expression* makeStore(Type type) {
     auto* ret = makeNonAtomicStore(type);
-    if (ret->value->type != i32 && ret->value->type != i64) return ret;
-    if (!features.hasAtomics() || oneIn(2)) return ret;
+    auto* store = ret->dynCast<Store>();
+    if (!store) return ret;
+    if (store->value->type != i32 && store->value->type != i64) return store;
+    if (!features.hasAtomics() || oneIn(2)) return store;
     // make it atomic
     wasm.memory.shared = true;
-    ret->isAtomic = true;
-    ret->align = ret->bytes;
-    return ret;
+    store->isAtomic = true;
+    store->align = store->bytes;
+    return store;
   }
 
   Literal makeLiteral(Type type) {
