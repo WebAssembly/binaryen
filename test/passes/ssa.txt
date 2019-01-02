@@ -746,9 +746,9 @@
   (local $6 i32)
   (local $7 i32)
   (local $8 i32)
-  (set_local $2
+  (set_local $3
    (tee_local $8
-    (tee_local $3
+    (tee_local $2
      (tee_local $7
       (i32.const 0)
      )
@@ -783,9 +783,9 @@
    )
    (br_if $label$1
     (i32.eqz
-     (tee_local $5
+     (tee_local $6
       (tee_local $8
-       (tee_local $6
+       (tee_local $5
         (tee_local $7
          (get_local $8)
         )
