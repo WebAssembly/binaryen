@@ -1143,17 +1143,15 @@ private:
     if (type == unreachable) {
       // make a normal store, then make it unreachable
       auto* ret = makeNonAtomicStore(getConcreteType());
-      if (auto* store = ret->dynCast<Store>()) {
-        switch (upTo(3)) {
-          case 0: store->ptr = make(unreachable); break;
-          case 1: store->value = make(unreachable); break;
-          case 2: store->ptr = make(unreachable); store->value = make(unreachable); break;
-        }
-        store->finalize();
-        return store;
-      } else {
-        return ret;
+      auto* store = ret->dynCast<Store>();
+      if (!store) return ret;
+      switch (upTo(3)) {
+        case 0: store->ptr = make(unreachable); break;
+        case 1: store->value = make(unreachable); break;
+        case 2: store->ptr = make(unreachable); store->value = make(unreachable); break;
       }
+      store->finalize();
+      return store;
     }
     // the type is none or unreachable. we also need to pick the value
     // type.
