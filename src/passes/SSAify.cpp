@@ -75,9 +75,9 @@ struct SSAify : public Pass {
   }
 
   void computeGetsAndPhis(LocalGraph& graph) {
-    for (auto& iter : graph.getSetses) {
-      auto* get = iter.first;
-      auto& sets = iter.second;
+    FindAll<GetLocal> gets(func->body);
+    for (auto* get : gets.list) {
+      auto& sets = graph.getSetses[get];
       if (sets.size() == 0) {
         continue; // unreachable, ignore
       }
