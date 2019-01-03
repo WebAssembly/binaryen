@@ -21,15 +21,21 @@ import random
 import shutil
 import time
 
+from test.shared import options
+
+
 # parameters
+
 
 LOG_LIMIT = 125
 INPUT_SIZE_LIMIT = 250 * 1024
 
 
+# utilities
+
+
 def in_bin(tool):
-  root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-  return os.path.join(root, 'bin', tool)
+  return os.path.join(options.binaryen_root, 'bin', tool)
 
 
 def random_size():
@@ -97,26 +103,27 @@ def test_one(infile, opts):
       out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
       return out
 
-    def run_debug_vm(cmd):
+    def run_vm(cmd):
       # ignore some vm assertions, if bugs have already been filed
-      known_bugs = [
+      known_issues = [
+        'local count too large',  # ignore this; can be caused by flatten, ssa, etc. passes
         'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-        'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
+        'liftoff-register.h, line 86\n', # https://bugs.chromium.org/p/v8/issues/detail?id=8632
       ]
       try:
         return run(cmd)
       except:
         output = run_unchecked(cmd)
-        for bug in known_bugs:
-          if bug in output:
+        for issue in known_issues:
+          if issue in output:
             return IGNORE
         raise
 
     results = []
     # append to this list to add results from VMs
-    results += [fix_output(run([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
-    results += [fix_output(run_debug_vm([os.path.expanduser('d8-debug'), '--wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
-    results += [fix_output(run_debug_vm([os.path.expanduser('d8-debug'), '--no-wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
+    results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
+    results += [fix_output(run_vm([os.path.expanduser('d8-debug'), '--wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
+    results += [fix_output(run_vm([os.path.expanduser('d8-debug'), '--no-wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
     # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
     # run(['../spec/interpreter/wasm', prefix + 'wasm'])
     # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', prefix + 'wasm', '-e', open(prefix + 'wat').read()]))]
