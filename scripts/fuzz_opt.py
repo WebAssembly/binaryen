@@ -235,15 +235,7 @@ def get_multiple_opt_choices():
 
 # main
 
-if len(sys.argv) >= 2:
-  print('checking given input')
-  if len(sys.argv) >= 3:
-    test_one(sys.argv[1], sys.argv[2:])
-  else:
-    for opts in opt_choices:
-      print(opts)
-      test_one(sys.argv[1], opts)
-else:
+if __name__ == '__main__':
   print('checking infinite random inputs')
   random.seed(time.time() * os.getpid())
   temp = 'input.dat'
