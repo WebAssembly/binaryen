@@ -26,6 +26,11 @@ import time
 LOG_LIMIT = 125
 INPUT_SIZE_LIMIT = 250 * 1024
 
+BINARYEN_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+
+
+def in_bin(tool):
+  return os.path.join(BINARYEN_ROOT, 'bin', tool)
 
 def random_size():
   return random.randint(1, INPUT_SIZE_LIMIT)
@@ -50,9 +55,13 @@ def randomize_pass_debug():
     del os.environ['BINARYEN_PASS_DEBUG']
 
 
+# Test outputs we want to ignore are marked this way.
+IGNORE = '[binaryen-fuzzer-ignore]'
+
+
 def test_one(infile, opts):
   def compare(x, y, comment):
-    if x != y:
+    if x != y and x != IGNORE and y != IGNORE:
       message = ''.join([a.rstrip() + '\n' for a in difflib.unified_diff(x.split('\n'), y.split('\n'), fromfile='expected', tofile='actual')])
       raise Exception(str(comment) + ": Expected to have '%s' == '%s', diff:\n\n%s" % (
         x, y,
@@ -88,9 +97,26 @@ def test_one(infile, opts):
       out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
       return out
 
+    def run_debug_vm(cmd):
+      # ignore some vm assertions, if bugs have already been filed
+      known_bugs = [
+        'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
+        'liftoff-register.h, line 86\n', # https://bugs.chromium.org/p/v8/issues/detail?id=8632
+      ]
+      try:
+        return run(cmd)
+      except:
+        output = run_unchecked(cmd)
+        for bug in known_bugs:
+          if bug in output:
+            return IGNORE
+        raise
+
     results = []
     # append to this list to add results from VMs
-    # results += [fix_output(run([os.path.expanduser('d8'), '--', prefix + 'js', prefix + 'wasm']))]
+    results += [fix_output(run([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
+    results += [fix_output(run_debug_vm([os.path.expanduser('d8-debug'), '--wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
+    results += [fix_output(run_debug_vm([os.path.expanduser('d8-debug'), '--no-wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
     # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
     # run(['../spec/interpreter/wasm', prefix + 'wasm'])
     # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', prefix + 'wasm', '-e', open(prefix + 'wat').read()]))]
@@ -110,14 +136,14 @@ def test_one(infile, opts):
 
   # fuzz vms
   # gather VM outputs on input file
-  run(['bin/wasm-opt', infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'])
+  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm', '--mvp-features'])
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
   before = run_vms('a.')
   print('----------------')
   # gather VM outputs on processed file
-  run(['bin/wasm-opt', 'a.wasm', '-o', 'b.wasm'] + opts)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts)
   wasm_size = os.stat('b.wasm').st_size
   bytes += wasm_size
   print('post js size:', os.stat('a.js').st_size, ' wasm size:', wasm_size)
@@ -126,10 +152,10 @@ def test_one(infile, opts):
   for i in range(len(before)):
     compare(before[i], after[i], 'comparing between builds at ' + str(i))
   # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
-  run(['bin/wasm-opt', 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts)
+  run([in_bin('wasm-opt'), 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts)
   # check for determinism
-  run(['bin/wasm-opt', 'a.wasm', '-o', 'b.wasm'] + opts)
-  run(['bin/wasm-opt', 'a.wasm', '-o', 'c.wasm'] + opts)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm'] + opts)
   assert open('b.wasm').read() == open('c.wasm').read()
 
   return bytes
@@ -212,7 +238,7 @@ if len(sys.argv) >= 2:
       test_one(sys.argv[1], opts)
 else:
   print('checking infinite random inputs')
-  random.seed(time.time())
+  random.seed(time.time() * os.getpid())
   temp = 'input.dat'
   counter = 0
   bytes = 0  # wasm bytes tested
