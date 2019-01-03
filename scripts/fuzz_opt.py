@@ -163,7 +163,7 @@ def test_one(infile, opts):
   # check for determinism
   run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts)
   run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm'] + opts)
-  assert open('b.wasm').read() == open('c.wasm').read()
+  assert open('b.wasm').read() == open('c.wasm').read(), 'output must be deterministic'
 
   return bytes
 
