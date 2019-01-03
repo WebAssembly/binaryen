@@ -26,11 +26,11 @@ import time
 LOG_LIMIT = 125
 INPUT_SIZE_LIMIT = 250 * 1024
 
-BINARYEN_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-
 
 def in_bin(tool):
-  return os.path.join(BINARYEN_ROOT, 'bin', tool)
+  root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+  return os.path.join(root, 'bin', tool)
+
 
 def random_size():
   return random.randint(1, INPUT_SIZE_LIMIT)
@@ -101,7 +101,7 @@ def test_one(infile, opts):
       # ignore some vm assertions, if bugs have already been filed
       known_bugs = [
         'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-        'liftoff-register.h, line 86\n', # https://bugs.chromium.org/p/v8/issues/detail?id=8632
+        'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
       ]
       try:
         return run(cmd)
