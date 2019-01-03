@@ -108,7 +108,7 @@ def test_one(infile, opts):
       known_issues = [
         'local count too large',  # ignore this; can be caused by flatten, ssa, etc. passes
         'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-        'liftoff-register.h, line 86\n', # https://bugs.chromium.org/p/v8/issues/detail?id=8632
+        'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
       ]
       try:
         return run(cmd)
