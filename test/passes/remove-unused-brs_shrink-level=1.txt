@@ -37,7 +37,7 @@
   (drop
    (if (result i32)
     (i32.const 1)
-    (i32.trunc_u/f64
+    (i32.trunc_f64_u
      (f64.const 12.34)
     )
     (i32.const 27)
@@ -188,12 +188,12 @@
      (br_if $A
       (i32.or
        (i32.eqz
-        (tee_local $0
+        (local.tee $0
          (i32.const 0)
         )
        )
        (i32.eq
-        (get_local $0)
+        (local.get $0)
         (i32.const 12)
        )
       )
@@ -221,14 +221,14 @@
     (block $y
      (br_if $A
       (i32.eqz
-       (tee_local $0
+       (local.tee $0
         (i32.const 0)
        )
       )
      )
      (br_if $B
       (i32.eq
-       (get_local $0)
+       (local.get $0)
        (i32.const 1025)
       )
      )

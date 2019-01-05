@@ -6,41 +6,41 @@
     (local $x i32)
     (local $y i32)
     (local $z i32)
-    (set_local $x
-      (get_local $x)
+    (local.set $x
+      (local.get $x)
     )
-    (set_local $y
-      (get_local $y)
+    (local.set $y
+      (local.get $y)
     )
-    (set_local $y
-      (get_local $y)
+    (local.set $y
+      (local.get $y)
     )
-    (set_local $z
-      (get_local $z)
+    (local.set $z
+      (local.get $z)
     )
-    (set_local $z
-      (get_local $z)
+    (local.set $z
+      (local.get $z)
     )
-    (set_local $z
-      (get_local $z)
+    (local.set $z
+      (local.get $z)
     )
-    (set_local $b
-      (get_local $b)
+    (local.set $b
+      (local.get $b)
     )
-    (set_local $b
-      (get_local $b)
+    (local.set $b
+      (local.get $b)
     )
-    (set_local $b
-      (get_local $b)
+    (local.set $b
+      (local.get $b)
     )
-    (set_local $b
-      (get_local $b)
+    (local.set $b
+      (local.get $b)
     )
-    (set_local $b
-      (get_local $b)
+    (local.set $b
+      (local.get $b)
     )
-    (set_local $b
-      (get_local $b)
+    (local.set $b
+      (local.get $b)
     )
   )
   (func $zero (type $1)
@@ -48,7 +48,7 @@
     (local $b i32)
     (local $c i32)
     (drop
-      (get_local $b)
+      (local.get $b)
     )
   )
   (func $null (type $1)

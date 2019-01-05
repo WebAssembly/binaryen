@@ -4,34 +4,34 @@
   (func $dummy)
 
   (func (export "eq_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.eq (get_local $0) (get_local $1)))
+    (i64.eq (local.get $0) (local.get $1)))
 
   (func (export "ne_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.ne (get_local $0) (get_local $1)))
+    (i64.ne (local.get $0) (local.get $1)))
 
   (func (export "ge_s_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.ge_s (get_local $0) (get_local $1)))
+    (i64.ge_s (local.get $0) (local.get $1)))
 
   (func (export "gt_s_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.gt_s (get_local $0) (get_local $1)))
+    (i64.gt_s (local.get $0) (local.get $1)))
 
   (func (export "le_s_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.le_s (get_local $0) (get_local $1)))
+    (i64.le_s (local.get $0) (local.get $1)))
 
   (func (export "lt_s_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.lt_s (get_local $0) (get_local $1)))
+    (i64.lt_s (local.get $0) (local.get $1)))
 
   (func (export "ge_u_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.ge_u (get_local $0) (get_local $1)))
+    (i64.ge_u (local.get $0) (local.get $1)))
 
   (func (export "gt_u_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.gt_u (get_local $0) (get_local $1)))
+    (i64.gt_u (local.get $0) (local.get $1)))
 
   (func (export "le_u_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.le_u (get_local $0) (get_local $1)))
+    (i64.le_u (local.get $0) (local.get $1)))
 
   (func (export "lt_u_i64") (param $0 i64) (param $1 i64) (result i32)
-    (i64.lt_u (get_local $0) (get_local $1)))
+    (i64.lt_u (local.get $0) (local.get $1)))
 )
 
 ;; TODO: change things so we can invoke with i64 args and automatically lower

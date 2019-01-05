@@ -1,7 +1,7 @@
 (module
   (type $ii (func (param i32 i32)))
   (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 1000 anyfunc))
+  (import "env" "table" (table 1000 funcref))
   (import "env" "some-func" (func $some-func))
   (import "env" "some-collide" (func $some-collide))
   (data (i32.const 100) "hello, A!\n")
@@ -22,9 +22,9 @@
       (i32.const 456)
       (i32.const 789)
     )
-    (drop (get_global $global-collide))
-    (drop (get_global $global-a))
-    (set_global $global-collide-mut (i32.const 1234))
+    (drop (global.get $global-collide))
+    (drop (global.get $global-a))
+    (global.set $global-collide-mut (i32.const 1234))
   )
   (func $willCollide
     (drop (i32.const 200))

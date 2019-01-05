@@ -10,7 +10,7 @@
  (import "env" "__udivti3" (func $__udivti3 (param i32 i64 i64 i64 i64)))
  (import "env" "__umodti3" (func $__umodti3 (param i32 i64 i64 i64 i64)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "add128" (func $add128))
  (export "sub128" (func $sub128))
@@ -41,35 +41,35 @@
  (func $add128 (; 8 ;) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
   (local $5 i64)
   (i64.store
-   (get_local $0)
-   (tee_local $5
+   (local.get $0)
+   (local.tee $5
     (i64.add
-     (get_local $1)
-     (get_local $3)
+     (local.get $1)
+     (local.get $3)
     )
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.add
     (i64.add
-     (get_local $2)
-     (get_local $4)
+     (local.get $2)
+     (local.get $4)
     )
     (select
      (i64.const 1)
-     (i64.extend_u/i32
+     (i64.extend_i32_u
       (i64.lt_u
-       (get_local $5)
-       (get_local $1)
+       (local.get $5)
+       (local.get $1)
       )
      )
      (i64.lt_u
-      (get_local $5)
-      (get_local $3)
+      (local.get $5)
+      (local.get $3)
      )
     )
    )
@@ -78,26 +78,26 @@
  )
  (func $sub128 (; 9 ;) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.sub
-    (get_local $1)
-    (get_local $3)
+    (local.get $1)
+    (local.get $3)
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.sub
     (i64.sub
-     (get_local $2)
-     (get_local $4)
+     (local.get $2)
+     (local.get $4)
     )
-    (i64.extend_u/i32
+    (i64.extend_i32_u
      (i64.lt_u
-      (get_local $1)
-      (get_local $3)
+      (local.get $1)
+      (local.get $3)
      )
     )
    )
@@ -108,7 +108,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -118,34 +118,34 @@
    )
   )
   (call $__multi3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (get_local $3)
-   (get_local $4)
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (local.get $3)
+   (local.get $4)
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $5)
+     (local.get $5)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.load
-    (get_local $5)
+    (local.get $5)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
   )
@@ -155,7 +155,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -165,34 +165,34 @@
    )
   )
   (call $__divti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (get_local $3)
-   (get_local $4)
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (local.get $3)
+   (local.get $4)
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $5)
+     (local.get $5)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.load
-    (get_local $5)
+    (local.get $5)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
   )
@@ -202,7 +202,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -212,34 +212,34 @@
    )
   )
   (call $__udivti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (get_local $3)
-   (get_local $4)
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (local.get $3)
+   (local.get $4)
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $5)
+     (local.get $5)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.load
-    (get_local $5)
+    (local.get $5)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
   )
@@ -249,7 +249,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -259,34 +259,34 @@
    )
   )
   (call $__modti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (get_local $3)
-   (get_local $4)
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (local.get $3)
+   (local.get $4)
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $5)
+     (local.get $5)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.load
-    (get_local $5)
+    (local.get $5)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
   )
@@ -296,7 +296,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -306,34 +306,34 @@
    )
   )
   (call $__umodti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (get_local $3)
-   (get_local $4)
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (local.get $3)
+   (local.get $4)
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $5)
+     (local.get $5)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.load
-    (get_local $5)
+    (local.get $5)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
   )
@@ -342,19 +342,19 @@
  (func $and128 (; 15 ;) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.and
-    (get_local $2)
-    (get_local $4)
+    (local.get $2)
+    (local.get $4)
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.and
-    (get_local $1)
-    (get_local $3)
+    (local.get $1)
+    (local.get $3)
    )
   )
   (return)
@@ -362,19 +362,19 @@
  (func $or128 (; 16 ;) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.or
-    (get_local $2)
-    (get_local $4)
+    (local.get $2)
+    (local.get $4)
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.or
-    (get_local $1)
-    (get_local $3)
+    (local.get $1)
+    (local.get $3)
    )
   )
   (return)
@@ -382,19 +382,19 @@
  (func $xor128 (; 17 ;) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.xor
-    (get_local $2)
-    (get_local $4)
+    (local.get $2)
+    (local.get $4)
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.xor
-    (get_local $1)
-    (get_local $3)
+    (local.get $1)
+    (local.get $3)
    )
   )
   (return)
@@ -403,7 +403,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -413,35 +413,35 @@
    )
   )
   (call $__ashlti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
-    (get_local $3)
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
+    (local.get $3)
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $5)
+     (local.get $5)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.load
-    (get_local $5)
+    (local.get $5)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
   )
@@ -451,7 +451,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -461,35 +461,35 @@
    )
   )
   (call $__lshrti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
-    (get_local $3)
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
+    (local.get $3)
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $5)
+     (local.get $5)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.load
-    (get_local $5)
+    (local.get $5)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
   )
@@ -499,7 +499,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -509,35 +509,35 @@
    )
   )
   (call $__ashrti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
-    (get_local $3)
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
+    (local.get $3)
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $5)
+     (local.get $5)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.load
-    (get_local $5)
+    (local.get $5)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
   )
@@ -546,25 +546,25 @@
  (func $clz128 (; 21 ;) (param $0 i32) (param $1 i64) (param $2 i64)
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.const 0)
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (select
     (i64.clz
-     (get_local $2)
+     (local.get $2)
     )
     (i64.add
      (i64.clz
-      (get_local $1)
+      (local.get $1)
      )
      (i64.const 64)
     )
     (i64.ne
-     (get_local $2)
+     (local.get $2)
      (i64.const 0)
     )
    )
@@ -574,25 +574,25 @@
  (func $clz128_zero_undef (; 22 ;) (param $0 i32) (param $1 i64) (param $2 i64)
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.const 0)
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (select
     (i64.clz
-     (get_local $2)
+     (local.get $2)
     )
     (i64.add
      (i64.clz
-      (get_local $1)
+      (local.get $1)
      )
      (i64.const 64)
     )
     (i64.ne
-     (get_local $2)
+     (local.get $2)
      (i64.const 0)
     )
    )
@@ -602,25 +602,25 @@
  (func $ctz128 (; 23 ;) (param $0 i32) (param $1 i64) (param $2 i64)
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.const 0)
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (select
     (i64.ctz
-     (get_local $1)
+     (local.get $1)
     )
     (i64.add
      (i64.ctz
-      (get_local $2)
+      (local.get $2)
      )
      (i64.const 64)
     )
     (i64.ne
-     (get_local $1)
+     (local.get $1)
      (i64.const 0)
     )
    )
@@ -630,25 +630,25 @@
  (func $ctz128_zero_undef (; 24 ;) (param $0 i32) (param $1 i64) (param $2 i64)
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.const 0)
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (select
     (i64.ctz
-     (get_local $1)
+     (local.get $1)
     )
     (i64.add
      (i64.ctz
-      (get_local $2)
+      (local.get $2)
      )
      (i64.const 64)
     )
     (i64.ne
-     (get_local $1)
+     (local.get $1)
      (i64.const 0)
     )
    )
@@ -658,19 +658,19 @@
  (func $popcnt128 (; 25 ;) (param $0 i32) (param $1 i64) (param $2 i64)
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.const 0)
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.add
     (i64.popcnt
-     (get_local $1)
+     (local.get $1)
     )
     (i64.popcnt
-     (get_local $2)
+     (local.get $2)
     )
    )
   )
@@ -680,8 +680,8 @@
   (return
    (i64.eqz
     (i64.or
-     (get_local $0)
-     (get_local $1)
+     (local.get $0)
+     (local.get $1)
     )
    )
   )
@@ -690,7 +690,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -701,36 +701,36 @@
   )
   (call $__ashlti3
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
-    (get_local $3)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
+    (local.get $3)
    )
   )
   (call $__lshrti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
     (i64.sub
      (i64.const 128)
-     (get_local $3)
+     (local.get $3)
     )
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.or
     (i64.load
      (i32.add
       (i32.add
-       (get_local $5)
+       (local.get $5)
        (i32.const 16)
       )
       (i32.const 8)
@@ -738,27 +738,27 @@
     )
     (i64.load
      (i32.add
-      (get_local $5)
+      (local.get $5)
       (i32.const 8)
      )
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.or
     (i64.load offset=16
-     (get_local $5)
+     (local.get $5)
     )
     (i64.load
-     (get_local $5)
+     (local.get $5)
     )
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 32)
    )
   )
@@ -768,7 +768,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -779,41 +779,41 @@
   )
   (call $__ashlti3
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
-    (tee_local $3
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
+    (local.tee $3
      (i64.and
-      (get_local $3)
+      (local.get $3)
       (i64.const 127)
      )
     )
    )
   )
   (call $__lshrti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
     (i64.sub
      (i64.const 128)
-     (get_local $3)
+     (local.get $3)
     )
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.or
     (i64.load
      (i32.add
       (i32.add
-       (get_local $5)
+       (local.get $5)
        (i32.const 16)
       )
       (i32.const 8)
@@ -821,27 +821,27 @@
     )
     (i64.load
      (i32.add
-      (get_local $5)
+      (local.get $5)
       (i32.const 8)
      )
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.or
     (i64.load offset=16
-     (get_local $5)
+     (local.get $5)
     )
     (i64.load
-     (get_local $5)
+     (local.get $5)
     )
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 32)
    )
   )
@@ -851,7 +851,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -862,36 +862,36 @@
   )
   (call $__lshrti3
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
-    (get_local $3)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
+    (local.get $3)
    )
   )
   (call $__ashlti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
     (i64.sub
      (i64.const 128)
-     (get_local $3)
+     (local.get $3)
     )
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.or
     (i64.load
      (i32.add
       (i32.add
-       (get_local $5)
+       (local.get $5)
        (i32.const 16)
       )
       (i32.const 8)
@@ -899,27 +899,27 @@
     )
     (i64.load
      (i32.add
-      (get_local $5)
+      (local.get $5)
       (i32.const 8)
      )
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.or
     (i64.load offset=16
-     (get_local $5)
+     (local.get $5)
     )
     (i64.load
-     (get_local $5)
+     (local.get $5)
     )
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 32)
    )
   )
@@ -929,7 +929,7 @@
   (local $5 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $5
+   (local.tee $5
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -940,41 +940,41 @@
   )
   (call $__lshrti3
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 16)
    )
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
-    (tee_local $3
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
+    (local.tee $3
      (i64.and
-      (get_local $3)
+      (local.get $3)
       (i64.const 127)
      )
     )
    )
   )
   (call $__ashlti3
-   (get_local $5)
-   (get_local $1)
-   (get_local $2)
-   (i32.wrap/i64
+   (local.get $5)
+   (local.get $1)
+   (local.get $2)
+   (i32.wrap_i64
     (i64.sub
      (i64.const 128)
-     (get_local $3)
+     (local.get $3)
     )
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.or
     (i64.load
      (i32.add
       (i32.add
-       (get_local $5)
+       (local.get $5)
        (i32.const 16)
       )
       (i32.const 8)
@@ -982,27 +982,27 @@
     )
     (i64.load
      (i32.add
-      (get_local $5)
+      (local.get $5)
       (i32.const 8)
      )
     )
    )
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.or
     (i64.load offset=16
-     (get_local $5)
+     (local.get $5)
     )
     (i64.load
-     (get_local $5)
+     (local.get $5)
     )
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $5)
+    (local.get $5)
     (i32.const 32)
    )
   )
@@ -1017,24 +1017,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 33 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

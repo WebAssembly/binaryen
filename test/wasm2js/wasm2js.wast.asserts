@@ -2,8 +2,8 @@
 
 (module
   (func (export "empty"))
-  (func (export "add") (param $x i32) (param $y i32) (result i32) (i32.add (get_local $x) (get_local $y)))
-  (func (export "div_s") (param $x i32) (param $y i32) (result i32) (i32.div_s (get_local $x) (get_local $y)))
+  (func (export "add") (param $x i32) (param $y i32) (result i32) (i32.add (local.get $x) (local.get $y)))
+  (func (export "div_s") (param $x i32) (param $y i32) (result i32) (i32.div_s (local.get $x) (local.get $y)))
 )
 
 (assert_return (invoke "empty"))

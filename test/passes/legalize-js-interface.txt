@@ -17,45 +17,45 @@
  )
  (func $legalstub$func (; 4 ;) (result i32)
   (local $0 i64)
-  (set_local $0
+  (local.set $0
    (call $func)
   )
   (call $setTempRet0
-   (i32.wrap/i64
+   (i32.wrap_i64
     (i64.shr_u
-     (get_local $0)
+     (local.get $0)
      (i64.const 32)
     )
    )
   )
-  (i32.wrap/i64
-   (get_local $0)
+  (i32.wrap_i64
+   (local.get $0)
   )
  )
  (func $legalstub$imported (; 5 ;) (result i32)
   (local $0 i64)
-  (set_local $0
+  (local.set $0
    (call $legalfunc$imported)
   )
   (call $setTempRet0
-   (i32.wrap/i64
+   (i32.wrap_i64
     (i64.shr_u
-     (get_local $0)
+     (local.get $0)
      (i64.const 32)
     )
    )
   )
-  (i32.wrap/i64
-   (get_local $0)
+  (i32.wrap_i64
+   (local.get $0)
   )
  )
  (func $legalfunc$imported (; 6 ;) (result i64)
   (i64.or
-   (i64.extend_u/i32
+   (i64.extend_i32_u
     (call $legalimport$imported)
    )
    (i64.shl
-    (i64.extend_u/i32
+    (i64.extend_i32_u
      (call $getTempRet0)
     )
     (i64.const 32)

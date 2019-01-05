@@ -122,7 +122,7 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
   registerPass("rereloop", "re-optimize control flow using the relooper algorithm", createReReloopPass);
-  registerPass("rse", "remove redundant set_locals", createRedundantSetEliminationPass);
+  registerPass("rse", "remove redundant local.sets", createRedundantSetEliminationPass);
   registerPass("safe-heap", "instrument loads and stores to check for invalid behavior", createSafeHeapPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
   registerPass("simplify-locals-nonesting", "miscellaneous locals-related optimizations (no nesting at all; preserves flatness)", createSimplifyLocalsNoNestingPass);
@@ -136,7 +136,7 @@ void PassRegistry::registerPasses() {
   registerPass("strip", "strip debug info (including the names section)", createStripPass);
   registerPass("trap-mode-clamp", "replace trapping operations with clamping semantics", createTrapModeClamp);
   registerPass("trap-mode-js", "replace trapping operations with js semantics", createTrapModeJS);
-  registerPass("untee", "removes tee_locals, replacing them with sets and gets", createUnteePass);
+  registerPass("untee", "removes local.tees, replacing them with sets and gets", createUnteePass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
 //  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }

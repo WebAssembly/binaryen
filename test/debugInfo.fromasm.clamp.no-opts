@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$vii (func (param i32 i32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (global $STACKTOP (mut i32) (i32.const 0))
@@ -13,36 +13,36 @@
  (export "nofile" (func $nofile))
  (func $add (; 0 ;) (param $x i32) (param $y i32) (result i32)
   ;;@ tests/hello_world.c:5:0
-  (set_local $x
-   (get_local $x)
+  (local.set $x
+   (local.get $x)
   )
   ;;@ tests/hello_world.c:6:0
-  (set_local $y
-   (get_local $y)
+  (local.set $y
+   (local.get $y)
   )
   ;;@ tests/other_file.cpp:314159:0
-  (set_local $x
-   (get_local $y)
+  (local.set $x
+   (local.get $y)
   )
   (return
    (i32.add
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
  )
  (func $ret (; 1 ;) (param $x i32) (result i32)
   ;;@ return.cpp:50:0
-  (set_local $x
+  (local.set $x
    (i32.shl
-    (get_local $x)
+    (local.get $x)
     (i32.const 1)
    )
   )
   ;;@ return.cpp:100:0
   (return
    (i32.add
-    (get_local $x)
+    (local.get $x)
     (i32.const 1)
    )
   )
@@ -50,41 +50,41 @@
  (func $i32s-rem (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
-    (get_local $1)
+    (local.get $1)
    )
    (i32.const 0)
    (i32.rem_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $opts (; 3 ;) (param $x i32) (param $y i32) (result i32)
   ;;@ even-opted.cpp:1:0
-  (set_local $x
+  (local.set $x
    (i32.add
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
   ;;@ even-opted.cpp:2:0
-  (set_local $y
+  (local.set $y
    (i32.shr_s
-    (get_local $y)
-    (get_local $x)
+    (local.get $y)
+    (local.get $x)
    )
   )
   ;;@ even-opted.cpp:3:0
-  (set_local $x
+  (local.set $x
    (call $i32s-rem
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
   (return
    (i32.add
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
  )
@@ -100,81 +100,81 @@
   (local $$exitcond i32)
   (local $label i32)
   (local $sp i32)
-  (set_local $sp
-   (get_global $STACKTOP)
+  (local.set $sp
+   (global.get $STACKTOP)
   )
   ;;@ fib.c:3:0
-  (set_local $$1
+  (local.set $$1
    (i32.gt_s
-    (get_local $$0)
+    (local.get $$0)
     (i32.const 0)
    )
   )
   (if
-   (get_local $$1)
+   (local.get $$1)
    (block
-    (set_local $$$01518
+    (local.set $$$01518
      (i32.const 0)
     )
-    (set_local $$$01617
+    (local.set $$$01617
      (i32.const 0)
     )
-    (set_local $$$019
+    (local.set $$$019
      (i32.const 1)
     )
    )
    (block
-    (set_local $$$0$lcssa
+    (local.set $$$0$lcssa
      (i32.const 1)
     )
     ;;@ fib.c:8:0
     (return
-     (get_local $$$0$lcssa)
+     (local.get $$$0$lcssa)
     )
    )
   )
   (loop $while-in
    (block $while-out
     ;;@ fib.c:4:0
-    (set_local $$2
+    (local.set $$2
      (i32.add
-      (get_local $$$019)
-      (get_local $$$01518)
+      (local.get $$$019)
+      (local.get $$$01518)
      )
     )
     ;;@ fib.c:3:0
-    (set_local $$3
+    (local.set $$3
      (i32.add
-      (get_local $$$01617)
+      (local.get $$$01617)
       (i32.const 1)
      )
     )
-    (set_local $$exitcond
+    (local.set $$exitcond
      (i32.eq
-      (get_local $$3)
-      (get_local $$0)
+      (local.get $$3)
+      (local.get $$0)
      )
     )
     (if
-     (get_local $$exitcond)
+     (local.get $$exitcond)
      (block
-      (set_local $$$0$lcssa
-       (get_local $$2)
+      (local.set $$$0$lcssa
+       (local.get $$2)
       )
       (br $while-out)
      )
      (block
-      (set_local $$$01518$phi
-       (get_local $$$019)
+      (local.set $$$01518$phi
+       (local.get $$$019)
       )
-      (set_local $$$01617
-       (get_local $$3)
+      (local.set $$$01617
+       (local.get $$3)
       )
-      (set_local $$$019
-       (get_local $$2)
+      (local.set $$$019
+       (local.get $$2)
       )
-      (set_local $$$01518
-       (get_local $$$01518$phi)
+      (local.set $$$01518
+       (local.get $$$01518$phi)
       )
      )
     )
@@ -183,7 +183,7 @@
   )
   ;;@ fib.c:8:0
   (return
-   (get_local $$$0$lcssa)
+   (local.get $$$0$lcssa)
   )
  )
  (func $switch_reach (; 5 ;) (param $$p i32) (result i32)
@@ -194,44 +194,44 @@
   (local $$switch$split2D i32)
   (local $label i32)
   (local $sp i32)
-  (set_local $sp
-   (get_global $STACKTOP)
+  (local.set $sp
+   (global.get $STACKTOP)
   )
-  (set_local $$magic
+  (local.set $$magic
    (i32.add
-    (get_local $$p)
+    (local.get $$p)
     (i32.const 52)
    )
   )
-  (set_local $$0
-   (get_local $$magic)
+  (local.set $$0
+   (local.get $$magic)
   )
-  (set_local $$switch$split2D
+  (local.set $$switch$split2D
    (i32.lt_s
-    (get_local $$0)
+    (local.get $$0)
     (i32.const 1369188723)
    )
   )
   (if
-   (get_local $$switch$split2D)
+   (local.get $$switch$split2D)
    (block $switch
     (block $switch-default
      (block $switch-case
       (br_table $switch-case $switch-default
        (i32.sub
-        (get_local $$0)
+        (local.get $$0)
         (i32.const -1108210269)
        )
       )
      )
      (block
-      (set_local $label
+      (local.set $label
        (i32.const 2)
       )
       (br $switch)
      )
     )
-    (set_local $$rc$0
+    (local.set $$rc$0
      (i32.const 0)
     )
    )
@@ -240,47 +240,47 @@
      (block $switch-case1
       (br_table $switch-case1 $switch-default2
        (i32.sub
-        (get_local $$0)
+        (local.get $$0)
         (i32.const 1369188723)
        )
       )
      )
      (block
-      (set_local $label
+      (local.set $label
        (i32.const 2)
       )
       (br $switch0)
      )
     )
-    (set_local $$rc$0
+    (local.set $$rc$0
      (i32.const 0)
     )
    )
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 2)
    )
    (block
-    (set_local $$call
+    (local.set $$call
      (call $switch_reach
-      (get_local $$p)
+      (local.get $$p)
      )
     )
-    (set_local $$rc$0
-     (get_local $$call)
+    (local.set $$rc$0
+     (local.get $$call)
     )
    )
   )
   (drop
    (call $switch_reach
-    (get_local $$p)
+    (local.get $$p)
    )
   )
   ;;@ /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0
   (return
-   (get_local $$rc$0)
+   (local.get $$rc$0)
   )
  )
  (func $nofile (; 6 ;)

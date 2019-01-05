@@ -1,7 +1,7 @@
 (module
   (export "yes" (func $yes))
   (export "no-loops-but-one-use-but-exported" (func $no-loops-but-one-use-but-exported))
-  (table 1 1 anyfunc)
+  (table 1 1 funcref)
   (elem (i32.const 0) $no-loops-but-one-use-but-tabled)
 
   (func $yes (result i32) ;; inlinable: small, lightweight, even with multi uses and a global use, ok when opt-level=3

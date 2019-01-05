@@ -2,7 +2,7 @@
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
  (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\b0\08\00\00")
  (data (i32.const 12) "9\05\00\00")
  (data (i32.const 28) "\01\00\00\00")
@@ -31,9 +31,9 @@
  (func $call_memcpy (; 2 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memcpy
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
  )
@@ -46,24 +46,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 5 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

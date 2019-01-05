@@ -9,7 +9,7 @@
       unreachable
      end
      unreachable
-     tee_local $var$0
+     local.tee $var$0
      unreachable
      unreachable
     end
@@ -30,7 +30,7 @@
    (br_if $label$1
     (block $label$2
      (loop $label$3
-      (tee_local $var$0
+      (local.tee $var$0
        (block $label$4
         (unreachable)
        )

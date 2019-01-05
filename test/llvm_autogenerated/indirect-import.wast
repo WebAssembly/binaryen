@@ -12,7 +12,7 @@
  (import "env" "extern_fd" (func $extern_fd (param f64) (result f32)))
  (import "env" "extern_struct" (func $extern_struct (param i32)))
  (import "env" "extern_sret" (func $extern_sret (param i32)))
- (table 7 7 anyfunc)
+ (table 7 7 funcref)
  (elem (i32.const 0) $__wasm_nullptr $__importThunk_extern_fd $__importThunk_extern_vj $__importThunk_extern_v $__importThunk_extern_ijidf $__importThunk_extern_struct $__importThunk_extern_sret)
  (data (i32.const 4) "\10\04\00\00")
  (export "bar" (func $bar))
@@ -27,7 +27,7 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -37,23 +37,23 @@
    )
   )
   (i32.store offset=28
-   (get_local $1)
+   (local.get $1)
    (i32.const 1)
   )
   (i32.store offset=24
-   (get_local $1)
+   (local.get $1)
    (i32.const 2)
   )
   (call $extern_vj
    (i64.const 1)
   )
   (i32.store offset=20
-   (get_local $1)
+   (local.get $1)
    (i32.const 3)
   )
   (call $extern_v)
   (i32.store offset=16
-   (get_local $1)
+   (local.get $1)
    (i32.const 4)
   )
   (drop
@@ -65,27 +65,27 @@
    )
   )
   (i32.store offset=12
-   (get_local $1)
+   (local.get $1)
    (i32.const 5)
   )
   (i32.store offset=8
-   (get_local $1)
+   (local.get $1)
    (i32.const 6)
   )
-  (set_local $0
+  (local.set $0
    (i32.load offset=28
-    (get_local $1)
+    (local.get $1)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 32)
    )
   )
   (return
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $__wasm_nullptr (; 7 ;) (type $FUNCSIG$v)
@@ -93,12 +93,12 @@
  )
  (func $__importThunk_extern_fd (; 8 ;) (type $FUNCSIG$fd) (param $0 f64) (result f32)
   (call $extern_fd
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $__importThunk_extern_vj (; 9 ;) (type $FUNCSIG$vj) (param $0 i64)
   (call $extern_vj
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $__importThunk_extern_v (; 10 ;) (type $FUNCSIG$v)
@@ -106,20 +106,20 @@
  )
  (func $__importThunk_extern_ijidf (; 11 ;) (type $FUNCSIG$ijidf) (param $0 i64) (param $1 i32) (param $2 f64) (param $3 f32) (result i32)
   (call $extern_ijidf
-   (get_local $0)
-   (get_local $1)
-   (get_local $2)
-   (get_local $3)
+   (local.get $0)
+   (local.get $1)
+   (local.get $2)
+   (local.get $3)
   )
  )
  (func $__importThunk_extern_struct (; 12 ;) (type $FUNCSIG$vi) (param $0 i32)
   (call $extern_struct
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $__importThunk_extern_sret (; 13 ;) (type $FUNCSIG$vi) (param $0 i32)
   (call $extern_sret
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $stackSave (; 14 ;) (result i32)
@@ -131,41 +131,41 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 16 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $dynCall_fd (; 17 ;) (param $fptr i32) (param $0 f64) (result f32)
   (call_indirect (type $FUNCSIG$fd)
-   (get_local $0)
-   (get_local $fptr)
+   (local.get $0)
+   (local.get $fptr)
   )
  )
  (func $dynCall_v (; 18 ;) (param $fptr i32)
   (call_indirect (type $FUNCSIG$v)
-   (get_local $fptr)
+   (local.get $fptr)
   )
  )
  (func $dynCall_vi (; 19 ;) (param $fptr i32) (param $0 i32)
   (call_indirect (type $FUNCSIG$vi)
-   (get_local $0)
-   (get_local $fptr)
+   (local.get $0)
+   (local.get $fptr)
   )
  )
 )

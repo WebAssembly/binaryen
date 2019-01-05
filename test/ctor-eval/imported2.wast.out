@@ -6,7 +6,7 @@
  (export "test2" (func $test2))
  (export "test3" (func $test3))
  (func $test2 (; 0 ;) (type $0)
-  (set_global $mine
+  (global.set $mine
    (i32.const 2)
   )
   (i32.store8

@@ -6,10 +6,10 @@
  (func $basic (; 0 ;) (type $0) (param $x i32) (param $y f64)
   (local $a f32)
   (local $b i64)
-  (set_local $x
+  (local.set $x
    (i32.const 0)
   )
-  (set_local $y
+  (local.set $y
    (f64.const 0)
   )
   (drop
@@ -20,7 +20,7 @@
   )
  )
  (func $later-param-use (; 1 ;) (type $1) (param $x i32)
-  (set_local $x
+  (local.set $x
    (i32.const 0)
   )
   (drop
@@ -29,22 +29,22 @@
  )
  (func $diff-value (; 2 ;) (type $1) (param $x i32)
   (local $a i32)
-  (set_local $x
+  (local.set $x
    (i32.const 0)
   )
-  (set_local $x
+  (local.set $x
    (i32.const 1)
   )
   (drop
    (i32.const 1)
   )
-  (set_local $a
+  (local.set $a
    (i32.const 1)
   )
   (drop
    (i32.const 1)
   )
-  (set_local $a
+  (local.set $a
    (i32.const 0)
   )
  )
@@ -54,20 +54,20 @@
    (drop
     (i32.const 0)
    )
-   (set_local $a
+   (local.set $a
     (i32.const 1)
    )
    (drop
     (i32.const 1)
    )
    (br $x)
-   (set_local $a
+   (local.set $a
     (i32.const 1)
    )
-   (set_local $a
+   (local.set $a
     (i32.const 2)
    )
-   (set_local $a
+   (local.set $a
     (i32.const 2)
    )
   )
@@ -76,10 +76,10 @@
   (local $a i32)
   (local $b i32)
   (loop $x
-   (set_local $a
+   (local.set $a
     (i32.const 0)
    )
-   (set_local $a
+   (local.set $a
     (i32.const 1)
    )
    (br_if $x
@@ -90,7 +90,7 @@
    (drop
     (i32.const 0)
    )
-   (set_local $b
+   (local.set $b
     (i32.const 1)
    )
    (br $y)
@@ -103,10 +103,10 @@
   (local $x i32)
   (if
    (i32.const 0)
-   (set_local $x
+   (local.set $x
     (i32.const 1)
    )
-   (set_local $x
+   (local.set $x
     (i32.const 1)
    )
   )
@@ -117,7 +117,7 @@
  (func $if2 (; 6 ;) (type $2)
   (local $x i32)
   (if
-   (tee_local $x
+   (local.tee $x
     (i32.const 1)
    )
    (drop
@@ -134,33 +134,33 @@
  (func $if3 (; 7 ;) (type $2)
   (local $x i32)
   (if
-   (tee_local $x
+   (local.tee $x
     (i32.const 1)
    )
    (drop
     (i32.const 1)
    )
-   (set_local $x
+   (local.set $x
     (i32.const 2)
    )
   )
-  (set_local $x
+  (local.set $x
    (i32.const 1)
   )
  )
  (func $copy (; 8 ;) (type $2)
   (local $x i32)
   (local $y i32)
-  (set_local $x
+  (local.set $x
    (i32.const 1)
   )
-  (set_local $y
-   (get_local $x)
+  (local.set $y
+   (local.get $x)
   )
   (drop
    (i32.const 1)
   )
-  (set_local $x
+  (local.set $x
    (i32.const 2)
   )
   (if
@@ -168,8 +168,8 @@
    (nop)
    (nop)
   )
-  (set_local $y
-   (get_local $x)
+  (local.set $y
+   (local.get $x)
   )
   (drop
    (i32.const 2)
@@ -182,62 +182,62 @@
   (drop
    (i32.const 2)
   )
-  (set_local $x
+  (local.set $x
    (i32.const 3)
   )
-  (set_local $y
+  (local.set $y
    (i32.const 3)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $param-unique (; 9 ;) (type $1) (param $x i32)
   (local $a i32)
-  (set_local $a
-   (get_local $x)
+  (local.set $a
+   (local.get $x)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
-  (set_local $x
+  (local.set $x
    (i32.eqz
     (i32.const 9999)
    )
   )
-  (set_local $a
-   (get_local $x)
+  (local.set $a
+   (local.get $x)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $set-unique (; 10 ;) (type $2)
   (local $x i32)
   (local $y i32)
-  (set_local $x
+  (local.set $x
    (i32.eqz
     (i32.const 123)
    )
   )
-  (set_local $y
-   (get_local $x)
+  (local.set $y
+   (local.get $x)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
-  (set_local $x
+  (local.set $x
    (i32.eqz
     (i32.const 456)
    )
   )
-  (set_local $y
-   (get_local $x)
+  (local.set $y
+   (local.get $x)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
-  (set_local $x
+  (local.set $x
    (i32.eqz
     (i32.const 789)
    )
@@ -247,19 +247,19 @@
    (nop)
    (nop)
   )
-  (set_local $y
-   (get_local $x)
+  (local.set $y
+   (local.get $x)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
-  (set_local $x
+  (local.set $x
    (i32.eqz
     (i32.const 1000)
    )
   )
-  (set_local $y
-   (get_local $x)
+  (local.set $y
+   (local.get $x)
   )
   (if
    (i32.const 1)
@@ -267,55 +267,55 @@
    (nop)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $identical_complex (; 11 ;) (type $1) (param $x i32)
   (local $y i32)
-  (set_local $y
-   (get_local $x)
+  (local.set $y
+   (local.get $x)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
   (drop
-   (get_local $x)
+   (local.get $x)
   )
   (drop
-   (get_local $y)
+   (local.get $y)
   )
   (drop
-   (get_local $y)
+   (local.get $y)
   )
  )
  (func $merge (; 12 ;) (type $2)
   (local $x i32)
   (if
    (i32.const 1)
-   (set_local $x
+   (local.set $x
     (i32.const 1)
    )
-   (set_local $x
+   (local.set $x
     (i32.const 1)
    )
   )
   (drop
    (i32.const 1)
   )
-  (set_local $x
+  (local.set $x
    (i32.const 2)
   )
   (loop $loop
    (drop
     (i32.const 2)
    )
-   (set_local $x
+   (local.set $x
     (i32.const 3)
    )
-   (set_local $x
+   (local.set $x
     (i32.const 2)
    )
    (br_if $loop
@@ -327,25 +327,25 @@
   )
  )
  (func $one-arm (; 13 ;) (type $3) (param $1 i32) (param $3 i32)
-  (set_local $1
-   (get_local $3)
+  (local.set $1
+   (local.get $3)
   )
   (if
    (i32.const 1)
    (nop)
    (drop
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
  (func $one-arm2 (; 14 ;) (type $3) (param $1 i32) (param $3 i32)
-  (set_local $1
-   (get_local $3)
+  (local.set $1
+   (local.get $3)
   )
   (if
    (i32.const 1)
    (drop
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
@@ -357,10 +357,10 @@
     (i32.const 0)
    )
    (loop $loop
-    (set_local $1
-     (get_local $0)
+    (local.set $1
+     (local.get $0)
     )
-    (set_local $0
+    (local.set $0
      (i32.const 99)
     )
     (br_if $loop
@@ -368,13 +368,13 @@
     )
    )
   )
-  (set_local $0
-   (get_local $1)
+  (local.set $0
+   (local.get $1)
   )
   (if
    (i32.const 0)
    (drop
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
@@ -385,7 +385,7 @@
     (if
      (i32.const 1)
      (block $block
-      (set_local $x
+      (local.set $x
        (i32.const 203)
       )
       (br $label$5)
@@ -413,7 +413,7 @@
    (i32.const 0)
    (if
     (i32.const 1)
-    (set_local $var$1
+    (local.set $var$1
      (i32.const 2)
     )
    )
@@ -438,10 +438,10 @@
     (i32.const 0)
    )
    (loop $loop
-    (set_local $1
-     (get_local $0)
+    (local.set $1
+     (local.get $0)
     )
-    (set_local $0
+    (local.set $0
      (f64.const -nan:0xfffffffffff87)
     )
     (br_if $loop
@@ -449,13 +449,13 @@
     )
    )
   )
-  (set_local $0
-   (get_local $1)
+  (local.set $0
+   (local.get $1)
   )
   (if
    (i32.const 0)
    (drop
-    (get_local $0)
+    (local.get $0)
    )
   )
  )

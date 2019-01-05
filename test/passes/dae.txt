@@ -2,12 +2,12 @@
  (type $0 (func (param i32)))
  (type $1 (func))
  (type $2 (func (param i32 f64)))
- (table $0 1 1 anyfunc)
+ (table $0 1 1 funcref)
  (elem (i32.const 0) $a9)
  (export "a8" (func $a8))
  (func $a (; 0 ;)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 1)
   )
   (nop)
@@ -17,7 +17,7 @@
  )
  (func $a1 (; 2 ;)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 2)
   )
   (unreachable)
@@ -30,7 +30,7 @@
  )
  (func $a2 (; 5 ;) (type $0) (param $x i32)
   (drop
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $b2 (; 6 ;) (type $1)
@@ -71,19 +71,19 @@
  (func $a5 (; 14 ;)
   (local $0 f64)
   (local $1 i32)
-  (set_local $0
+  (local.set $0
    (f64.const 3.14159)
   )
   (block
-   (set_local $1
+   (local.set $1
     (i32.const 1)
    )
    (block
     (drop
-     (get_local $1)
+     (local.get $1)
     )
     (drop
-     (get_local $0)
+     (local.get $0)
     )
    )
   )
@@ -93,15 +93,15 @@
  )
  (func $a6 (; 16 ;) (param $0 i32)
   (local $1 f64)
-  (set_local $1
+  (local.set $1
    (f64.const 3.14159)
   )
   (block
    (drop
-    (get_local $0)
+    (local.get $0)
    )
    (drop
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
@@ -112,15 +112,15 @@
  )
  (func $a7 (; 18 ;) (param $0 f64)
   (local $1 i32)
-  (set_local $1
+  (local.set $1
    (i32.const 1)
   )
   (block
    (drop
-    (get_local $1)
+    (local.get $1)
    )
    (drop
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
@@ -147,7 +147,7 @@
  )
  (func $a10 (; 24 ;)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 1)
   )
   (block
@@ -162,7 +162,7 @@
  )
  (func $a12 (; 26 ;) (type $0) (param $x i32)
   (drop
-   (get_local $x)
+   (local.get $x)
   )
   (call $a12
    (i32.const 1)

@@ -12,7 +12,7 @@
  (import "env" "setjmp" (func $setjmp (param i32) (result i32)))
  (import "env" "memory" (memory $0 1))
  (import "env" "foo" (func $foo))
- (table 2 2 anyfunc)
+ (table 2 2 funcref)
  (elem (i32.const 0) $__wasm_nullptr $__importThunk_foo)
  (data (i32.const 4) " \04\00\00")
  (data (i32.const 12) "\00\00\00\00")
@@ -35,7 +35,7 @@
   (call $invoke_v
    (i32.const 1)
   )
-  (set_local $0
+  (local.set $0
    (i32.load offset=12
     (i32.const 0)
    )
@@ -47,7 +47,7 @@
   (block $label$0
    (br_if $label$0
     (i32.ne
-     (get_local $0)
+     (local.get $0)
      (i32.const 1)
     )
    )
@@ -65,7 +65,7 @@
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $0
+   (local.tee $0
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -76,11 +76,11 @@
   )
   (drop
    (call $setjmp
-    (get_local $0)
+    (local.get $0)
    )
   )
   (call $longjmp
-   (get_local $0)
+   (local.get $0)
    (i32.const 1)
   )
   (unreachable)
@@ -94,18 +94,18 @@
    )
    (i32.store offset=16
     (i32.const 0)
-    (get_local $1)
+    (local.get $1)
    )
    (i32.store offset=12
     (i32.const 0)
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $setTempRet0 (; 10 ;) (param $0 i32)
   (i32.store offset=20
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $__wasm_nullptr (; 11 ;) (type $FUNCSIG$v)
@@ -123,29 +123,29 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 15 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $dynCall_v (; 16 ;) (param $fptr i32)
   (call_indirect (type $FUNCSIG$v)
-   (get_local $fptr)
+   (local.get $fptr)
   )
  )
 )

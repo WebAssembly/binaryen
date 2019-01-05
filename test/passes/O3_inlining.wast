@@ -5,14 +5,14 @@
  (export "func_217" (func $1))
  (func $0
   (if
-   (get_global $global$1)
+   (global.get $global$1)
    (unreachable)
   )
-  (set_global $global$1
+  (global.set $global$1
    (i32.const 0)
   )
   (block $label$2
-   (set_global $global$0
+   (global.set $global$0
     (block $label$3 (result f64)
      (br_if $label$2
       (if (result i32)

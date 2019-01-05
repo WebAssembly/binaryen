@@ -12,12 +12,12 @@
   ;; ok to modify a global, if we keep it the same value
   (global $mine (mut i32) (i32.const 1))
   (func $test1
-    (set_global $mine (i32.const 2))
-    (set_global $mine (i32.const 1)) ;; restore!
+    (global.set $mine (i32.const 2))
+    (global.set $mine (i32.const 1)) ;; restore!
     (i32.store8 (i32.const 12) (i32.const 115))
   )
   (func $test2
-    (set_global $mine (i32.const 2)) ;; embadden
+    (global.set $mine (i32.const 2)) ;; embadden
     (i32.store8 (i32.const 13) (i32.const 115))
   )
   (func $test3

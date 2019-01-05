@@ -5,14 +5,14 @@
    (i32.xor
     (i32.shr_s
      (i32.shl
-      (get_local $0)
+      (local.get $0)
       (i32.const 16)
      )
      (i32.const 16)
     )
     (i32.shr_s
      (i32.shl
-      (get_local $1)
+      (local.get $1)
       (i32.const 16)
      )
      (i32.const 16)
@@ -21,14 +21,14 @@
    (i32.xor
     (i32.shr_s
      (i32.shl
-      (get_local $0)
+      (local.get $0)
       (i32.const 16)
      )
      (i32.const 16)
     )
     (i32.shr_s
      (i32.shl
-      (get_local $1)
+      (local.get $1)
       (i32.const 16)
      )
      (i32.const 16)

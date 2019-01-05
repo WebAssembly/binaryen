@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $memory (shared 256 256)))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR$asm2wasm$import i32))
@@ -10,17 +10,17 @@
  (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
  (import "global" "NaN" (global $nan$asm2wasm$import f64))
  (import "global" "Infinity" (global $inf$asm2wasm$import f64))
- (global $DYNAMICTOP_PTR (mut i32) (get_global $DYNAMICTOP_PTR$asm2wasm$import))
- (global $tempDoublePtr (mut i32) (get_global $tempDoublePtr$asm2wasm$import))
- (global $ABORT (mut i32) (get_global $ABORT$asm2wasm$import))
- (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
- (global $STACK_MAX (mut i32) (get_global $STACK_MAX$asm2wasm$import))
+ (global $DYNAMICTOP_PTR (mut i32) (global.get $DYNAMICTOP_PTR$asm2wasm$import))
+ (global $tempDoublePtr (mut i32) (global.get $tempDoublePtr$asm2wasm$import))
+ (global $ABORT (mut i32) (global.get $ABORT$asm2wasm$import))
+ (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
+ (global $STACK_MAX (mut i32) (global.get $STACK_MAX$asm2wasm$import))
  (global $__THREW__ (mut i32) (i32.const 0))
  (global $threwValue (mut i32) (i32.const 0))
  (global $setjmpId (mut i32) (i32.const 0))
  (global $undef (mut i32) (i32.const 0))
- (global $nan (mut f64) (get_global $nan$asm2wasm$import))
- (global $inf (mut f64) (get_global $inf$asm2wasm$import))
+ (global $nan (mut f64) (global.get $nan$asm2wasm$import))
+ (global $inf (mut f64) (global.get $inf$asm2wasm$import))
  (global $tempInt (mut i32) (i32.const 0))
  (global $tempBigInt (mut i32) (i32.const 0))
  (global $tempBigIntS (mut i32) (i32.const 0))
@@ -36,98 +36,98 @@
  (func $test (; 0 ;)
   (local $$temp i32)
   (local $1 i32)
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.load
     (i32.const 4916)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.load16_u
     (i32.const 2458)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (block (result i32)
     (i32.atomic.store
-     (get_local $$temp)
-     (tee_local $1
+     (local.get $$temp)
+     (local.tee $1
       (i32.const 0)
      )
     )
-    (get_local $1)
+    (local.get $1)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.rmw.xchg
-    (get_local $$temp)
+    (local.get $$temp)
     (i32.const 1)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.rmw.cmpxchg
-    (get_local $$temp)
+    (local.get $$temp)
     (i32.const 1)
     (i32.const 2)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.rmw.add
-    (get_local $$temp)
+    (local.get $$temp)
     (i32.const 0)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.rmw.sub
-    (get_local $$temp)
+    (local.get $$temp)
     (i32.const 0)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.rmw.and
-    (get_local $$temp)
+    (local.get $$temp)
     (i32.const 0)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.rmw.or
-    (get_local $$temp)
+    (local.get $$temp)
     (i32.const 0)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.rmw.xor
-    (get_local $$temp)
+    (local.get $$temp)
     (i32.const 0)
    )
   )
-  (set_local $$temp
+  (local.set $$temp
    (i32.atomic.rmw.xor
     (i32.const 4096)
     (i32.const 0)
    )
   )
-  (set_local $$temp
-   (i32.atomic.rmw16_u.xor
+  (local.set $$temp
+   (i32.atomic.rmw16.xor_u
     (i32.const 2048)
     (i32.const 0)
    )
   )
-  (set_local $$temp
-   (i32.atomic.rmw8_u.xor
+  (local.set $$temp
+   (i32.atomic.rmw8.xor_u
     (i32.const 1024)
     (i32.const 0)
    )
   )
-  (set_local $$temp
-   (i32.atomic.rmw8_u.cmpxchg
-    (get_local $$temp)
+  (local.set $$temp
+   (i32.atomic.rmw8.cmpxchg_u
+    (local.get $$temp)
     (i32.const 1)
     (i32.const 2)
    )
   )
-  (set_local $$temp
-   (i32.atomic.rmw8_u.cmpxchg
-    (get_local $$temp)
+  (local.set $$temp
+   (i32.atomic.rmw8.cmpxchg_u
+    (local.get $$temp)
     (i32.const 1)
     (i32.const 2)
    )

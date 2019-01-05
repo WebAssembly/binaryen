@@ -17,14 +17,14 @@ var body = module.block(
           module.current_memory(),
           module.i32.const(65536)
         ),
-        module.get_local(0, Binaryen.i32)
+        module.local.get(0, Binaryen.i32)
       ),
       module.drop(
         module.grow_memory(
           module.i32.sub(
             module.i32.div_u(
               module.i32.add(
-                module.get_local(0, Binaryen.i32),
+                module.local.get(0, Binaryen.i32),
                 module.i32.const(65535)
               ),
               module.i32.const(65536)
@@ -35,24 +35,24 @@ var body = module.block(
       )
     ),
     // first, clear memory
-    module.set_local(1, module.i32.const(0)),
+    module.local.set(1, module.i32.const(0)),
     module.loop('clear', module.block(null, [
       module.i32.store8(0, 1,
-        module.get_local(1, Binaryen.i32),
+        module.local.get(1, Binaryen.i32),
         module.i32.const(0)
       ),
-      module.set_local(1, module.i32.add(
-        module.get_local(1, Binaryen.i32),
+      module.local.set(1, module.i32.add(
+        module.local.get(1, Binaryen.i32),
         module.i32.const(1)
       )),
       module.br_if('clear', module.i32.eq(
-        module.get_local(1, Binaryen.i32),
-        module.get_local(0, Binaryen.i32)
+        module.local.get(1, Binaryen.i32),
+        module.local.get(0, Binaryen.i32)
       ))
     ])),
     // perform the sieve TODO
     // calculate how many primes there are
-    module.return(module.get_local(0, Binaryen.i32))
+    module.return(module.local.get(0, Binaryen.i32))
   ],
   Binaryen.none
 );

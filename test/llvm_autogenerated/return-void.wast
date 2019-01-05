@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "return_void" (func $return_void))
  (export "return_void_twice" (func $return_void_twice))
@@ -13,7 +13,7 @@
   (block $label$0
    (br_if $label$0
     (i32.eqz
-     (get_local $0)
+     (local.get $0)
     )
    )
    (i32.store
@@ -36,24 +36,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 4 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

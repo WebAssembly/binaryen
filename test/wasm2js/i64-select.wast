@@ -1,7 +1,7 @@
 ;; Testing i64 select
 
 (module
- (func $p (param $i i32) (result i32) (get_local $i))
+ (func $p (param $i i32) (result i32) (local.get $i))
  (func (param i32) (result i64)
   (return
    (select

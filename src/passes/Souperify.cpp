@@ -131,7 +131,7 @@ struct UseFinder {
 };
 
 // Generates a trace: all the information to generate a Souper LHS
-// for a specific set_local whose value we want to infer.
+// for a specific local.set whose value we want to infer.
 struct Trace {
   Graph& graph;
   Node* toInfer;

@@ -12,7 +12,7 @@
   (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
   (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
   (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
-  (table 10 anyfunc)
+  (table 10 funcref)
   (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (memory $0 4096 4096)
   (data (i32.const 1026) "\14\00")
@@ -20,19 +20,19 @@
   (func $big_negative (type $FUNCSIG$v)
     (local $temp f64)
     (block $block0
-      (set_local $temp
+      (local.set $temp
         (f64.const -2147483648)
       )
-      (set_local $temp
+      (local.set $temp
         (f64.const -2147483648)
       )
-      (set_local $temp
+      (local.set $temp
         (f64.const -21474836480)
       )
-      (set_local $temp
+      (local.set $temp
         (f64.const 0.039625)
       )
-      (set_local $temp
+      (local.set $temp
         (f64.const -0.039625)
       )
     )
@@ -40,7 +40,7 @@
   (func $importedDoubles (type $4) (result f64)
     (local $temp f64)
     (block $topmost (result f64)
-      (set_local $temp
+      (local.set $temp
         (f64.add
           (f64.add
             (f64.add
@@ -96,7 +96,7 @@
     (block $topmost (result f64)
       (if
         (f64.gt
-          (get_local $x)
+          (local.get $x)
           (f64.const 0)
         )
         (br $topmost
@@ -105,7 +105,7 @@
       )
       (if
         (f64.gt
-          (get_local $Int)
+          (local.get $Int)
           (f64.const 0)
         )
         (br $topmost
@@ -114,7 +114,7 @@
       )
       (if
         (i32.gt_s
-          (get_local $Double)
+          (local.get $Double)
           (i32.const 0)
         )
         (br $topmost
@@ -123,20 +123,20 @@
       )
       (if
         (f64.lt
-          (get_local $x)
-          (get_local $y)
+          (local.get $x)
+          (local.get $y)
         )
         (br $topmost
-          (get_local $x)
+          (local.get $x)
         )
       )
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $intOps (type $5) (result i32)
     (local $x i32)
     (i32.eq
-      (get_local $x)
+      (local.get $x)
       (i32.const 0)
     )
   )
@@ -155,20 +155,20 @@
     (local $i i32)
     (local $d f64)
     (block $block0
-      (set_local $i
+      (local.set $i
         (call $f64-to-int
-          (get_local $d)
+          (local.get $d)
         )
       )
-      (set_local $d
-        (f64.convert_s/i32
-          (get_local $i)
+      (local.set $d
+        (f64.convert_i32_s
+          (local.get $i)
         )
       )
-      (set_local $d
-        (f64.convert_u/i32
+      (local.set $d
+        (f64.convert_i32_u
           (i32.shr_u
-            (get_local $i)
+            (local.get $i)
             (i32.const 0)
           )
         )
@@ -177,7 +177,7 @@
   )
   (func $seq (type $FUNCSIG$v)
     (local $J f64)
-    (set_local $J
+    (local.set $J
       (f64.sub
         (block $block0 (result f64)
           (drop
@@ -202,7 +202,7 @@
             (block $switch-case$1
               (br_table $switch-case$1 $switch-case$2 $switch-default$3
                 (i32.sub
-                  (get_local $x)
+                  (local.get $x)
                   (i32.const 1)
                 )
               )
@@ -223,7 +223,7 @@
             (block $switch-case$5
               (br_table $switch-case$6 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-case$5 $switch-default$7
                 (i32.sub
-                  (get_local $x)
+                  (local.get $x)
                   (i32.const 5)
                 )
               )
@@ -246,7 +246,7 @@
                 (block $switch-case$8
                   (br_table $switch-case$15 $switch-default$16 $switch-default$16 $switch-case$12 $switch-default$16 $switch-default$16 $switch-default$16 $switch-default$16 $switch-case$9 $switch-default$16 $switch-case$8 $switch-default$16
                     (i32.sub
-                      (get_local $x)
+                      (local.get $x)
                       (i32.const 2)
                     )
                   )
@@ -294,7 +294,7 @@
   (func $big_uint_div_u (type $5) (result i32)
     (local $x i32)
     (block $topmost (result i32)
-      (set_local $x
+      (local.set $x
         (i32.and
           (i32.div_u
             (i32.const -1)
@@ -303,7 +303,7 @@
           (i32.const -1)
         )
       )
-      (get_local $x)
+      (local.get $x)
     )
   )
   (func $fr (type $FUNCSIG$vf) (param $x f32)
@@ -311,12 +311,12 @@
     (local $z f64)
     (block $block0
       (drop
-        (f32.demote/f64
-          (get_local $z)
+        (f32.demote_f64
+          (local.get $z)
         )
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
       (drop
         (f32.const 5)
@@ -341,30 +341,30 @@
     (local $z f32)
     (local $asm2wasm_i32_temp i32)
     (block $block0
-      (set_local $x
+      (local.set $x
         (block $block1 (result i32)
-          (set_local $asm2wasm_i32_temp
+          (local.set $asm2wasm_i32_temp
             (i32.const 0)
           )
           (select
             (i32.sub
               (i32.const 0)
-              (get_local $asm2wasm_i32_temp)
+              (local.get $asm2wasm_i32_temp)
             )
-            (get_local $asm2wasm_i32_temp)
+            (local.get $asm2wasm_i32_temp)
             (i32.lt_s
-              (get_local $asm2wasm_i32_temp)
+              (local.get $asm2wasm_i32_temp)
               (i32.const 0)
             )
           )
         )
       )
-      (set_local $y
+      (local.set $y
         (f64.abs
           (f64.const 0)
         )
       )
-      (set_local $z
+      (local.set $z
         (f32.abs
           (f32.const 0)
         )
@@ -374,13 +374,13 @@
   (func $neg (type $FUNCSIG$v)
     (local $x f32)
     (block $block0
-      (set_local $x
+      (local.set $x
         (f32.neg
-          (get_local $x)
+          (local.get $x)
         )
       )
       (call_indirect (type $FUNCSIG$vf)
-        (get_local $x)
+        (local.get $x)
         (i32.add
           (i32.and
             (i32.const 1)
@@ -393,7 +393,7 @@
   )
   (func $cneg (type $FUNCSIG$vf) (param $x f32)
     (call_indirect (type $FUNCSIG$vf)
-      (get_local $x)
+      (local.get $x)
       (i32.add
         (i32.and
           (i32.const 1)
@@ -408,7 +408,7 @@
     (drop
       (i32.gt_u
         (i32.shr_u
-          (get_local $$0)
+          (local.get $$0)
           (i32.const 0)
         )
         (i32.const -4096)
@@ -433,9 +433,9 @@
   (func $loop-roundtrip (type $7) (param $0 f64) (result f64)
     (loop $loop-in1 (result f64)
       (drop
-        (get_local $0)
+        (local.get $0)
       )
-      (get_local $0)
+      (local.get $0)
     )
   )
   (func $big-i64 (type $8) (result i64)
@@ -443,8 +443,8 @@
   )
   (func $i64-store32 (type $9) (param $0 i32) (param $1 i64)
     (i64.store32
-      (get_local $0)
-      (get_local $1)
+      (local.get $0)
+      (local.get $1)
     )
   )
   (func $return-unreachable (result i32)
@@ -553,146 +553,146 @@
   )
   (func $local-to-stack (param $x i32) (result i32)
     (local $temp i32)
-    (set_local $temp (call $local-to-stack (i32.const 1))) ;; this set could just be on the stack
+    (local.set $temp (call $local-to-stack (i32.const 1))) ;; this set could just be on the stack
     (drop (call $local-to-stack (i32.const 2)))
-    (get_local $temp)
+    (local.get $temp)
   )
   (func $local-to-stack-1 (param $x i32) (result i32)
     (local $temp i32)
-    (set_local $temp (call $local-to-stack (i32.const 1)))
+    (local.set $temp (call $local-to-stack (i32.const 1)))
     (drop (call $local-to-stack (i32.const 2)))
     (i32.eqz
-      (get_local $temp)
+      (local.get $temp)
     )
   )
   (func $local-to-stack-1b (param $x i32) (result i32)
     (local $temp i32)
-    (set_local $temp (call $local-to-stack (i32.const 1)))
+    (local.set $temp (call $local-to-stack (i32.const 1)))
     (drop (call $local-to-stack (i32.const 2)))
     (i32.add
-      (get_local $temp)
+      (local.get $temp)
       (i32.const 3)
     )
   )
   (func $local-to-stack-1c-no (param $x i32) (result i32)
     (local $temp i32)
-    (set_local $temp (call $local-to-stack (i32.const 1)))
+    (local.set $temp (call $local-to-stack (i32.const 1)))
     (drop (call $local-to-stack (i32.const 2)))
     (i32.add
       (i32.const 3) ;; this is in the way
-      (get_local $temp)
+      (local.get $temp)
     )
   )
   (func $local-to-stack-2-no (param $x i32) (result i32)
     (local $temp i32)
-    (set_local $temp (call $local-to-stack (i32.const 1)))
+    (local.set $temp (call $local-to-stack (i32.const 1)))
     (drop (call $local-to-stack (i32.const 2)))
     (i32.add
-      (get_local $temp)
-      (get_local $temp) ;; a second use - so cannot stack it
+      (local.get $temp)
+      (local.get $temp) ;; a second use - so cannot stack it
     )
   )
   (func $local-to-stack-3-no (param $x i32) (result i32)
     (local $temp i32)
     (if (i32.const 1)
-      (set_local $temp (call $local-to-stack (i32.const 1)))
-      (set_local $temp (call $local-to-stack (i32.const 2))) ;; two sets for that get
+      (local.set $temp (call $local-to-stack (i32.const 1)))
+      (local.set $temp (call $local-to-stack (i32.const 2))) ;; two sets for that get
     )
     (drop (call $local-to-stack (i32.const 3)))
-    (get_local $temp)
+    (local.get $temp)
   )
   (func $local-to-stack-multi-4 (param $x i32) (result i32)
     (local $temp1 i32)
     (local $temp2 i32)
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
     (drop (call $local-to-stack-multi-4 (i32.const 2)))
-    (drop (get_local $temp1))
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 3))) ;; same local, used later
+    (drop (local.get $temp1))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 3))) ;; same local, used later
     (drop (call $local-to-stack-multi-4 (i32.const 4)))
-    (get_local $temp1)
+    (local.get $temp1)
   )
   (func $local-to-stack-multi-5 (param $x i32) (result i32)
     (local $temp1 i32)
     (local $temp2 i32)
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
     (drop (call $local-to-stack-multi-4 (i32.const 2)))
-    (drop (get_local $temp1))
-    (set_local $temp2 (call $local-to-stack-multi-4 (i32.const 3))) ;; different local, used later
+    (drop (local.get $temp1))
+    (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 3))) ;; different local, used later
     (drop (call $local-to-stack-multi-4 (i32.const 4)))
-    (get_local $temp2)
+    (local.get $temp2)
   )
   (func $local-to-stack-multi-6-justone (param $x i32) (result i32)
     (local $temp1 i32)
     (local $temp2 i32)
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
     (drop (call $local-to-stack-multi-4 (i32.const 2)))
-    (drop (get_local $temp1))
-    (set_local $temp2 (call $local-to-stack-multi-4 (i32.const 3))) ;; different local, used later
+    (drop (local.get $temp1))
+    (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 3))) ;; different local, used later
     (drop (call $local-to-stack-multi-4 (i32.const 4)))
     (i32.add
-      (get_local $temp2)
-      (get_local $temp2)
+      (local.get $temp2)
+      (local.get $temp2)
     )
   )
   (func $local-to-stack-multi-7-justone (param $x i32) (result i32)
     (local $temp1 i32)
     (local $temp2 i32)
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
     (drop (call $local-to-stack-multi-4 (i32.const 2)))
     (drop
       (i32.add
-        (get_local $temp1)
-        (get_local $temp1)
+        (local.get $temp1)
+        (local.get $temp1)
       )
     )
-    (set_local $temp2 (call $local-to-stack-multi-4 (i32.const 3))) ;; different local, used later
+    (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 3))) ;; different local, used later
     (drop (call $local-to-stack-multi-4 (i32.const 4)))
-    (get_local $temp2)
+    (local.get $temp2)
   )
   (func $local-to-stack-overlapping-multi-8-no (param $x i32) (result i32)
     (local $temp1 i32)
     (local $temp2 i32)
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
-    (set_local $temp2 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 1)))
     (drop (call $local-to-stack-multi-4 (i32.const 3)))
     (i32.add
-      (get_local $temp2) ;; the timing
-      (get_local $temp1) ;; it sucks
+      (local.get $temp2) ;; the timing
+      (local.get $temp1) ;; it sucks
     )
   )
   (func $local-to-stack-overlapping-multi-9-yes (param $x i32) (result i32)
     (local $temp1 i32)
     (local $temp2 i32)
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
-    (set_local $temp2 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 1)))
     (drop (call $local-to-stack-multi-4 (i32.const 3)))
     (i32.add
-      (get_local $temp1) ;; the stars align
-      (get_local $temp2) ;; and a time presents itself
+      (local.get $temp1) ;; the stars align
+      (local.get $temp2) ;; and a time presents itself
     )
   )
   (func $local-to-stack-through-control-flow
     (local $temp1 i32)
     (local $temp2 i32)
-    (set_local $temp2 (call $local-to-stack-multi-4 (i32.const 0)))
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 0)))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
     (if (i32.const 0) (nop))
-    (drop (get_local $temp1))
-    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 2)))
+    (drop (local.get $temp1))
+    (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 2)))
     (block $block (br $block))
-    (drop (get_local $temp1))
-    (drop (get_local $temp2))
+    (drop (local.get $temp1))
+    (drop (local.get $temp2))
   )
   (func $local-to-stack-in-control-flow
     (local $temp1 i32)
     (if (i32.const 0)
       (block
-        (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 0)))
-        (drop (get_local $temp1))
+        (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 0)))
+        (drop (local.get $temp1))
       )
       (block
-        (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
-        (drop (get_local $temp1))
+        (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+        (drop (local.get $temp1))
       )
     )
   )
@@ -702,9 +702,9 @@
     (call $remove-block (i32.const 0))
     (i32.eqz
      (block (result i32) ;; after we use the stack instead of the local, we can remove this block
-      (set_local $temp (call $remove-block (i32.const 1)))
+      (local.set $temp (call $remove-block (i32.const 1)))
       (drop (call $remove-block (i32.const 2)))
-      (get_local $temp)
+      (local.get $temp)
      )
     )
    )

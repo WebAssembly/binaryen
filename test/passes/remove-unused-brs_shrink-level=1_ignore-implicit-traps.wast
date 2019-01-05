@@ -32,7 +32,7 @@
     (drop
       (if (result i32)
         (i32.const 1)
-        (i32.trunc_u/f64 (f64.const 12.34)) ;; float to int may have side effects, unless ignored
+        (i32.trunc_f64_u (f64.const 12.34)) ;; float to int may have side effects, unless ignored
         (i32.const 27)
       )
     )

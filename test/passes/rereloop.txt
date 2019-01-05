@@ -30,12 +30,12 @@
   (block
   )
   (if
-   (get_local $x)
+   (local.get $x)
    (block
     (block
     )
     (if
-     (get_local $x)
+     (local.get $x)
      (block
       (return
        (i32.const 2)
@@ -52,7 +52,7 @@
     (block
     )
     (if
-     (get_local $x)
+     (local.get $x)
      (block
       (return
        (i32.const 4)
@@ -73,7 +73,7 @@
    (block
    )
    (if
-    (get_local $x)
+    (local.get $x)
     (loop $shape$2$continue
      (call $trivial)
      (block
@@ -88,7 +88,7 @@
     (loop $shape$4$continue
      (call $trivial)
      (if
-      (get_local $x)
+      (local.get $x)
       (br $shape$4$continue)
       (br $block$8$break)
      )
@@ -99,7 +99,7 @@
      (loop $shape$6$continue
       (call $trivial)
       (if
-       (get_local $x)
+       (local.get $x)
        (br $shape$6$continue)
        (br $block$11$break)
       )
@@ -131,7 +131,7 @@
    (block
    )
    (if
-    (get_local $x)
+    (local.get $x)
     (br $block$2$break)
     (block
      (block $block$11$break
@@ -152,7 +152,7 @@
    (block
    )
    (if
-    (get_local $x)
+    (local.get $x)
     (block
      (block
       (call $unreachable
@@ -207,7 +207,7 @@
     )
    )
    (if
-    (get_local $x)
+    (local.get $x)
     (br $block$3$break)
     (block
      (call $before-and-after
@@ -245,7 +245,7 @@
        (i32.const 9)
       )
       (if
-       (get_local $x)
+       (local.get $x)
        (br $shape$4$continue)
        (br $block$8$break)
       )
@@ -262,7 +262,7 @@
        )
       )
       (if
-       (get_local $x)
+       (local.get $x)
        (block
         (call $before-and-after
          (i32.const 12)
@@ -280,7 +280,7 @@
         (i32.const 13)
        )
        (if
-        (get_local $x)
+        (local.get $x)
         (block
          (call $before-and-after
           (i32.const 14)
@@ -304,7 +304,7 @@
         (block
         )
         (if
-         (get_local $x)
+         (local.get $x)
          (block
           (call $before-and-after
            (i32.const 16)
@@ -396,7 +396,7 @@
      (block $switch$3$default
       (block $switch$3$case$6
        (br_table $switch$3$case$6 $switch$3$case$6 $switch$3$case$6 $switch$3$default
-        (get_local $x)
+        (local.get $x)
        )
       )
       (block
@@ -462,7 +462,7 @@
      (i32.const 0)
     )
     (if
-     (get_local $x)
+     (local.get $x)
      (block
       (call $if-br-wat
        (i32.const 1)
@@ -475,7 +475,7 @@
       (block
       )
       (if
-       (get_local $x)
+       (local.get $x)
        (br $block$2$break)
        (br $block$8$break)
       )
@@ -510,7 +510,7 @@
      (block $switch$1$case$3
       (block $switch$1$case$4
        (br_table $switch$1$case$4 $switch$1$case$3 $switch$1$default
-        (get_local $0)
+        (local.get $0)
        )
       )
       (block
@@ -558,7 +558,7 @@
    )
    (block
     (block
-     (set_global $global$0
+     (global.set $global$0
       (i32.const 0)
      )
      (unreachable)
@@ -569,7 +569,7 @@
  (func $1 (; 1 ;) (type $1) (result i32)
   (local $0 i32)
   (return
-   (get_global $global$0)
+   (global.get $global$0)
   )
  )
 )

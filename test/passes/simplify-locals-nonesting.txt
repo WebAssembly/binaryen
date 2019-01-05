@@ -28,35 +28,35 @@
    (nop)
    (nop)
    (nop)
-   (set_local $12
+   (local.set $12
     (i64.eq
-     (get_local $a)
-     (get_local $x)
+     (local.get $a)
+     (local.get $x)
     )
    )
-   (set_local $13
+   (local.set $13
     (i64.ne
-     (get_local $a)
-     (get_local $y)
+     (local.get $a)
+     (local.get $y)
     )
    )
    (nop)
    (nop)
    (nop)
-   (set_local $15
+   (local.set $15
     (i32.and
-     (get_local $12)
-     (get_local $13)
+     (local.get $12)
+     (local.get $13)
     )
    )
    (return
-    (get_local $15)
+    (local.get $15)
    )
    (unreachable)
   )
   (nop)
   (return
-   (get_local $16)
+   (local.get $16)
   )
  )
  (func $figure-1b (; 1 ;) (type $0) (param $a i64) (param $x i64) (param $y i64) (result i32)
@@ -79,14 +79,14 @@
   (block $block
    (nop)
    (nop)
-   (set_local $8
+   (local.set $8
     (i64.lt_s
-     (get_local $x)
-     (get_local $y)
+     (local.get $x)
+     (local.get $y)
     )
    )
    (if
-    (get_local $8)
+    (local.get $8)
     (block $block0
      (block $block1
       (nop)
@@ -99,29 +99,29 @@
       (nop)
       (nop)
       (nop)
-      (set_local $15
+      (local.set $15
        (i64.eq
-        (get_local $a)
-        (get_local $x)
+        (local.get $a)
+        (local.get $x)
        )
       )
-      (set_local $16
+      (local.set $16
        (i64.ne
-        (get_local $a)
-        (get_local $y)
+        (local.get $a)
+        (local.get $y)
        )
       )
       (nop)
       (nop)
       (nop)
-      (set_local $18
+      (local.set $18
        (i32.and
-        (get_local $15)
-        (get_local $16)
+        (local.get $15)
+        (local.get $16)
        )
       )
       (return
-       (get_local $18)
+       (local.get $18)
       )
       (unreachable)
      )
@@ -149,20 +149,20 @@
   (block $block
    (block $block3
     (nop)
-    (set_local $2
+    (local.set $2
      (i32.and
-      (get_local $x)
+      (local.get $x)
       (i32.const 1)
      )
     )
     (if
-     (get_local $2)
+     (local.get $2)
      (block $block4
       (nop)
       (nop)
-      (set_local $x
+      (local.set $x
        (i32.add
-        (get_local $x)
+        (local.get $x)
         (i32.const 1)
        )
       )
@@ -171,9 +171,9 @@
      (block $block5
       (nop)
       (nop)
-      (set_local $x
+      (local.set $x
        (i32.add
-        (get_local $x)
+        (local.get $x)
         (i32.const 2)
        )
       )
@@ -183,20 +183,20 @@
    )
    (nop)
    (nop)
-   (set_local $8
+   (local.set $8
     (i32.and
-     (get_local $x)
+     (local.get $x)
      (i32.const 1)
     )
    )
    (return
-    (get_local $8)
+    (local.get $8)
    )
    (unreachable)
   )
   (nop)
   (return
-   (get_local $9)
+   (local.get $9)
   )
  )
 )

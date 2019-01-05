@@ -1,14 +1,14 @@
 (module
   (type $FUNCSIG$ii (func (param i32) (result i32)))
-  (import "env" "table" (table 9 9 anyfunc))
+  (import "env" "table" (table 9 9 funcref))
   (func $break-and-binary (result i32)
     (block $x (result i32)
       (f32.add
         (br_if $x
-          (i32.trunc_u/f64
+          (i32.trunc_f64_u
             (unreachable)
           )
-          (i32.trunc_u/f64
+          (i32.trunc_f64_u
             (unreachable)
           )
         )
@@ -44,13 +44,13 @@
     (local $y f32)
     (drop
       (i64.eqz
-        (tee_local $x
+        (local.tee $x
           (unreachable)
         )
       )
     )
     (drop
-      (tee_local $y
+      (local.tee $y
         (i64.eqz
           (unreachable)
         )
@@ -61,7 +61,7 @@
     (local $0 f32)
     (if
       (i32.const 259)
-      (set_local $0
+      (local.set $0
         (unreachable)
       )
     )
@@ -89,7 +89,7 @@
   )
   (func $unreachable-in-block-but-code-before (param $0 i32) (result i32)
    (if
-    (get_local $0)
+    (local.get $0)
     (return
      (i32.const 127)
     )

@@ -42,7 +42,7 @@ public:
   // signature in the indirect function table.
   void generateDynCallThunks();
 
-  // Convert stack pointer access from get_global/set_global to calling save
+  // Convert stack pointer access from global.get/global.set to calling save
   // and restore functions.
   void replaceStackPointerGlobal();
 

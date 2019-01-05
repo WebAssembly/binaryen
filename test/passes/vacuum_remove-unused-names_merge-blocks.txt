@@ -1,11 +1,11 @@
 (module
  (type $0 (func (param i32) (result i32)))
  (func $return-block (; 0 ;) (type $0) (param $x i32) (result i32)
-  (set_local $x
-   (get_local $x)
+  (local.set $x
+   (local.get $x)
   )
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
 )

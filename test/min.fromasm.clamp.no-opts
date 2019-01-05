@@ -1,10 +1,10 @@
 (module
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "tempDoublePtr" (global $tDP$asm2wasm$import i32))
- (global $tDP (mut i32) (get_global $tDP$asm2wasm$import))
+ (global $tDP (mut i32) (global.get $tDP$asm2wasm$import))
  (global $M (mut i32) (i32.const 0))
  (export "floats" (func $legalstub$floats))
  (export "getTempRet0" (func $ub))
@@ -15,46 +15,46 @@
   (local $t f32)
   (return
    (f32.add
-    (get_local $t)
-    (get_local $f)
+    (local.get $t)
+    (local.get $f)
    )
   )
  )
  (func $neg (; 1 ;) (param $k i32) (param $p i32) (result f32)
   (local $n f32)
-  (set_local $n
+  (local.set $n
    (f32.neg
     (block (result f32)
      (i32.store
-      (get_local $k)
-      (get_local $p)
+      (local.get $k)
+      (local.get $p)
      )
      (f32.load
-      (get_local $k)
+      (local.get $k)
      )
     )
    )
   )
   (return
-   (get_local $n)
+   (local.get $n)
   )
  )
  (func $bitcasts (; 2 ;) (param $i i32) (param $f f32)
   (drop
-   (f32.reinterpret/i32
-    (get_local $i)
+   (f32.reinterpret_i32
+    (local.get $i)
    )
   )
   (drop
-   (f64.promote/f32
-    (f32.reinterpret/i32
-     (get_local $i)
+   (f64.promote_f32
+    (f32.reinterpret_i32
+     (local.get $i)
     )
    )
   )
   (drop
-   (i32.reinterpret/f32
-    (get_local $f)
+   (i32.reinterpret_f32
+    (local.get $f)
    )
   )
  )
@@ -70,31 +70,31 @@
    (call $ub)
   )
   (return
-   (get_global $M)
+   (global.get $M)
   )
  )
  (func $legalstub$floats (; 5 ;) (param $0 f64) (result f64)
-  (f64.promote/f32
+  (f64.promote_f32
    (call $floats
-    (f32.demote/f64
-     (get_local $0)
+    (f32.demote_f64
+     (local.get $0)
     )
    )
   )
  )
  (func $legalstub$neg (; 6 ;) (param $0 i32) (param $1 i32) (result f64)
-  (f64.promote/f32
+  (f64.promote_f32
    (call $neg
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $legalstub$bitcasts (; 7 ;) (param $0 i32) (param $1 f64)
   (call $bitcasts
-   (get_local $0)
-   (f32.demote/f64
-    (get_local $1)
+   (local.get $0)
+   (f32.demote_f64
+    (local.get $1)
    )
   )
  )

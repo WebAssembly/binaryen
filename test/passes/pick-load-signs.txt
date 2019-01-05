@@ -3,77 +3,77 @@
  (type $1 (func (result i32)))
  (func $a (; 0 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_u
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
  )
  (func $b (; 1 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load16_u
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 65535)
    )
   )
  )
  (func $c (; 2 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_u
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
  )
  (func $d (; 3 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load16_u
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 65535)
    )
   )
  )
  (func $one-of-each (; 4 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_s
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
   (drop
    (i32.shr_s
     (i32.shl
-     (get_local $y)
+     (local.get $y)
      (i32.const 24)
     )
     (i32.const 24)
@@ -82,27 +82,27 @@
  )
  (func $more-of-one (; 5 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_s
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
   (drop
    (i32.shr_s
     (i32.shl
-     (get_local $y)
+     (local.get $y)
      (i32.const 24)
     )
     (i32.const 24)
@@ -111,33 +111,33 @@
  )
  (func $many-more-of-one (; 6 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_u
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
   (drop
    (i32.shr_s
     (i32.shl
-     (get_local $y)
+     (local.get $y)
      (i32.const 24)
     )
     (i32.const 24)
@@ -146,7 +146,7 @@
  )
  (func $a-sign (; 7 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_s
     (i32.const 1024)
    )
@@ -154,7 +154,7 @@
   (drop
    (i32.shr_s
     (i32.shl
-     (get_local $y)
+     (local.get $y)
      (i32.const 24)
     )
     (i32.const 24)
@@ -164,18 +164,18 @@
  (func $multivar (; 8 ;) (type $0)
   (local $x i32)
   (local $y i32)
-  (set_local $x
+  (local.set $x
    (i32.load8_u
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $x)
+    (local.get $x)
     (i32.const 255)
    )
   )
-  (set_local $y
+  (local.set $y
    (i32.load8_s
     (i32.const 1024)
    )
@@ -183,7 +183,7 @@
   (drop
    (i32.shr_s
     (i32.shl
-     (get_local $y)
+     (local.get $y)
      (i32.const 24)
     )
     (i32.const 24)
@@ -202,27 +202,27 @@
     (i32.const 1024)
    )
   )
-  (set_local $y
+  (local.set $y
    (i32.const 1024)
   )
  )
  (func $wrong-size (; 10 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_s
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 65535)
    )
   )
  )
  (func $wrong-size_s (; 11 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_u
     (i32.const 1024)
    )
@@ -230,7 +230,7 @@
   (drop
    (i32.shr_s
     (i32.shl
-     (get_local $y)
+     (local.get $y)
      (i32.const 16)
     )
     (i32.const 16)
@@ -239,19 +239,19 @@
  )
  (func $non-sign-or-unsigned-use (; 12 ;) (type $0)
   (local $y i32)
-  (set_local $y
+  (local.set $y
    (i32.load8_s
     (i32.const 1024)
    )
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )
   (drop
-   (get_local $y)
+   (local.get $y)
   )
  )
  (func $toplevel-load (; 13 ;) (type $1) (result i32)
@@ -262,7 +262,7 @@
  (func $tees (; 14 ;) (type $0)
   (local $y i32)
   (drop
-   (tee_local $y
+   (local.tee $y
     (i32.load8_s
      (i32.const 1024)
     )
@@ -270,7 +270,7 @@
   )
   (drop
    (i32.and
-    (get_local $y)
+    (local.get $y)
     (i32.const 255)
    )
   )

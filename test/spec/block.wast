@@ -85,29 +85,29 @@
   )
   (func (export "break-inner") (result i32)
     (local i32)
-    (set_local 0 (i32.const 0))
-    (set_local 0 (i32.add (get_local 0) (block i32 (block i32 (br 1 (i32.const 0x1))))))
-    (set_local 0 (i32.add (get_local 0) (block i32 (block (br 0)) (i32.const 0x2))))
-    (set_local 0
-      (i32.add (get_local 0) (block i32 (i32.ctz (br 0 (i32.const 0x4)))))
+    (local.set 0 (i32.const 0))
+    (local.set 0 (i32.add (local.get 0) (block i32 (block i32 (br 1 (i32.const 0x1))))))
+    (local.set 0 (i32.add (local.get 0) (block i32 (block (br 0)) (i32.const 0x2))))
+    (local.set 0
+      (i32.add (local.get 0) (block i32 (i32.ctz (br 0 (i32.const 0x4)))))
     )
-    (set_local 0
-      (i32.add (get_local 0) (block i32 (i32.ctz (block i32 (br 1 (i32.const 0x8))))))
+    (local.set 0
+      (i32.add (local.get 0) (block i32 (i32.ctz (block i32 (br 1 (i32.const 0x8))))))
     )
-    (get_local 0)
+    (local.get 0)
   )
 
   (func (export "effects") (result i32)
     (local i32)
     (block
-      (set_local 0 (i32.const 1))
-      (set_local 0 (i32.mul (get_local 0) (i32.const 3)))
-      (set_local 0 (i32.sub (get_local 0) (i32.const 5)))
-      (set_local 0 (i32.mul (get_local 0) (i32.const 7)))
+      (local.set 0 (i32.const 1))
+      (local.set 0 (i32.mul (local.get 0) (i32.const 3)))
+      (local.set 0 (i32.sub (local.get 0) (i32.const 5)))
+      (local.set 0 (i32.mul (local.get 0) (i32.const 7)))
       (br 0)
-      (set_local 0 (i32.mul (get_local 0) (i32.const 100)))
+      (local.set 0 (i32.mul (local.get 0) (i32.const 100)))
     )
-    (i32.eq (get_local 0) (i32.const -14))
+    (i32.eq (local.get 0) (i32.const -14))
   )
 )
 

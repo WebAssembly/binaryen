@@ -7,11 +7,11 @@
   call $stacky-help
   i32.const 1
   call $stacky-help
-  set_local $1
+  local.set $1
   i32.const 2
   call $stacky-help
   drop
-  get_local $1
+  local.get $1
   i32.eqz
   i32.add
  )
@@ -26,7 +26,7 @@
     (i32.const 0)
    )
    (block (result i32)
-    (set_local $1
+    (local.set $1
      (call $stacky-help
       (i32.const 1)
      )
@@ -37,7 +37,7 @@
      )
     )
     (i32.eqz
-     (get_local $1)
+     (local.get $1)
     )
    )
   )

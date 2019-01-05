@@ -2,9 +2,9 @@
  (type $0 (func))
  (import "env" "global-mut" (global $gimport$0 (mut i32)))
  (func $0 (; 0 ;) (type $0)
-  (set_global $gimport$0
+  (global.set $gimport$0
    (i32.add
-    (get_global $gimport$0)
+    (global.get $gimport$0)
     (i32.const 1)
    )
   )
