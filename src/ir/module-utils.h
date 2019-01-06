@@ -92,6 +92,8 @@ inline Global* copyGlobal(Global* global, Module& out) {
   ret->name = global->name;
   ret->type = global->type;
   ret->mutable_ = global->mutable_;
+  ret->module = global->module;
+  ret->base = global->base;
   if (global->imported()) {
     ret->init = nullptr;
   } else {
