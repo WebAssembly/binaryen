@@ -65,7 +65,8 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   bool converge = false;
-  bool fuzzExec = false;
+  bool fuzzExecBefore = false;
+  bool fuzzExecAfter = false;
   bool fuzzBinary = false;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
@@ -93,9 +94,12 @@ int main(int argc, const char* argv[]) {
       .add("--converge", "-c", "Run passes to convergence, continuing while binary size decreases",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { converge = true; })
+      .add("--fuzz-exec-before", "-feh", "Execute functions before optimization, helping fuzzing find bugs",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzExecBefore = true; })
       .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzExec = true; })
+           [&](Options *o, const std::string& arguments) { fuzzExecBefore = fuzzExecAfter = true; })
       .add("--fuzz-binary", "-fb", "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find binary format bugs",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { fuzzBinary = true; })
@@ -172,8 +176,15 @@ int main(int argc, const char* argv[]) {
     }
   }
 
+  if (emitJSWrapper.size() > 0) {
+    // As the code will run in JS, we must legalize it.
+    PassRunner runner(&wasm);
+    runner.add("legalize-js-interface");
+    runner.run();
+  }
+
   ExecutionResults results;
-  if (fuzzExec) {
+  if (fuzzExecBefore) {
     results.get(wasm);
   }
 
@@ -207,7 +218,7 @@ int main(int argc, const char* argv[]) {
   Module* curr = &wasm;
   Module other;
 
-  if (fuzzExec && fuzzBinary) {
+  if (fuzzExecAfter && fuzzBinary) {
     BufferWithRandomAccess buffer(false);
     // write the binary
     WasmBinaryWriter writer(&wasm, buffer, false);
@@ -259,7 +270,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (fuzzExec) {
+  if (fuzzExecAfter) {
     results.check(*curr);
   }
 

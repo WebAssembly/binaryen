@@ -22,10 +22,6 @@
 namespace wasm {
 
 static std::string generateJSWrapper(Module& wasm) {
-  PassRunner runner(&wasm);
-  runner.add("legalize-js-interface");
-  runner.run();
-
   std::string ret;
   ret += "if (typeof console === 'undefined') {\n"
          "  console = { log: print };\n"
@@ -49,12 +45,20 @@ static std::string generateJSWrapper(Module& wasm) {
          "    binary = read(args[0], 'binary');\n"
          "  }\n"
          "}\n"
+         "function literal(x, type) {\n"
+         "  switch (type) {\n"
+         "    case 'i32': return 'i32.const ' + (x | 0); break;\n"
+         "    case 'f32': return 'f32.const ' + x;        break;\n"
+         "    case 'f64': return 'f64.const ' + x;        break;\n"
+         "    default: throw 'what?'\n"
+         "  }\n"
+         "}\n"
          "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {\n"
          "  'fuzzing-support': {\n"
-         "    'log-i32': function(x) { console.log('i32: ' + x) },\n"
-         "    'log-i64': function(x, y) { console.log('i64: ' + x + ', ' + y) },\n"
-         "    'log-f32': function(x) { console.log('f32: ' + x) },\n"
-         "    'log-f64': function(x) { console.log('f64: ' + x) }\n"
+         "    'log-i32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ']') },\n"
+         "    'log-i64': function(x, y) { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(x, 'i32') + ']') },\n"
+         "    'log-f32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f32') + ']') },\n"
+         "    'log-f64': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },\n"
          "  },\n"
          "  'env': {\n"
          "    'setTempRet0': function(x) { tempRet0 = x },\n"
@@ -64,22 +68,17 @@ static std::string generateJSWrapper(Module& wasm) {
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
     if (!func) continue; // something exported other than a function
-    auto bad = false; // check for things we can't support
-    for (Type param : func->params) {
-      if (param == i64) bad = true;
-    }
-    if (func->result == i64) bad = true;
-    if (bad) continue;
     ret += "if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
-    ret += std::string("  console.log('calling: ") + exp->name.str + "');\n";
+    ret += std::string("  console.log('[fuzz-exec] calling $") + exp->name.str + "');\n";
     if (func->result != none) {
-      ret += "  console.log('   result: ' + ";
+      ret += std::string("  console.log('[fuzz-exec] note result: $") + exp->name.str + " => ' + literal(";
+    } else {
+      ret += "  ";
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
     for (Type param : func->params) {
-      WASM_UNUSED(param);
       // zeros in arguments TODO more?
       if (first) {
         first = false;
@@ -87,17 +86,20 @@ static std::string generateJSWrapper(Module& wasm) {
         ret += ", ";
       }
       ret += "0";
+      if (param == i64) {
+        ret += ", 0";
+      }
     }
     ret += ")";
     if (func->result != none) {
-      ret += ")"; // for console.log
+      ret += ", '" + std::string(printType(func->result)) + "'))";
+      // TODO: getTempRet
     }
     ret += ";\n";
     ret += "} catch (e) {\n";
-    ret += "  console.log('   exception: ' + e);\n";
+    ret += "  console.log('exception: ' + e);\n";
     ret += "}\n";
   }
-  ret += "console.log('done.')\n";
   return ret;
 }
 
