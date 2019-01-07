@@ -56,8 +56,8 @@ static std::string generateJSWrapper(Module& wasm) {
          "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {\n"
          "  'fuzzing-support': {\n"
          "    'log-i32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ']') },\n"
-         "    'log-i64': function(x, y) { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(x, 'i32') + ']') },\n"
-         "    'log-f32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f32') + ']') },\n"
+         "    'log-i64': function(x, y) { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(x, 'i32') + ']') },\n" // legalization: two i32s
+         "    'log-f32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },\n" // legalization: an f64
          "    'log-f64': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },\n"
          "  },\n"
          "  'env': {\n"
