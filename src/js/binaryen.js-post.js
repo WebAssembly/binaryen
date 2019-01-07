@@ -442,11 +442,11 @@ function wrapModule(module, self) {
   self['teeLocal'] = self['local']['tee'];
 
   self['global'] = {
-    'get': function(index, type) {
-      return Module['_BinaryenGetGlobal'](module, index, type);
+    'get': function(name, type) {
+      return Module['_BinaryenGetGlobal'](module, strToStack(name), type);
     },
-    'set': function(index, value) {
-      return Module['_BinaryenSetGlobal'](module, index, value);
+    'set': function(name, value) {
+      return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
     }
   }
 
