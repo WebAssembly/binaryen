@@ -86,6 +86,9 @@ def run_vms(prefix):
       return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nan:abcdef\d]+)', fix_double, out)
 
+    # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
+    out = out.replace('[trap ', 'exception: [trap ')
+
     # exceptions may differ when optimizing, but an exception should occur. so ignore their types
     # also js engines print them out slightly differently
     return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
