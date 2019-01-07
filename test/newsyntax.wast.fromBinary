@@ -2,7 +2,7 @@
  (type $0 (func))
  (type $1 (func (param i32 f64) (result i32)))
  (type $2 (func))
- (import "env" "table" (table $timport$0 9 9 anyfunc))
+ (import "env" "table" (table $timport$0 9 9 funcref))
  (export "call_indirect" (func $0))
  (func $0 (; 0 ;) (type $0)
   (drop

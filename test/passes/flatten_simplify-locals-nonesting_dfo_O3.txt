@@ -26,10 +26,10 @@
   (loop $label$1
    (if
     (i32.eqz
-     (get_local $1)
+     (local.get $1)
     )
     (block
-     (set_local $1
+     (local.set $1
       (i32.const -2147483648)
      )
      (br $label$1)

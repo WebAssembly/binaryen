@@ -15,7 +15,7 @@
   (local $var$2 i64)
   (if
    (i64.eq
-    (get_local $var$1)
+    (local.get $var$1)
     (i64.const 0)
    )
    (unreachable)

@@ -5,7 +5,7 @@
   (data (i32.const 10) "waka ")
   (data (i32.const 15) "waka") ;; skip a byte here
   (data (i32.const 20) "waka waka waka")
-  (table 1 1 anyfunc)
+  (table 1 1 funcref)
   (elem (i32.const 0) $call-indirect)
   (export "test1" $test1)
   (export "test2" $test2)

@@ -1,4 +1,4 @@
-;; Tests for lowering get_local and set_local.
+;; Tests for lowering local.get and local.set.
 
 (module
   (func $dummy)
@@ -7,10 +7,10 @@
     (local $x i32)
     (local $result i64)
     (local $extend i64)
-    (set_local $x (get_local $0))
-    (set_local $result (get_local $r))
-    (set_local $extend (i64.extend_u/i32 (get_local $x)))
-    (i64.eq (get_local $extend) (get_local $result)))
+    (local.set $x (local.get $0))
+    (local.set $result (local.get $r))
+    (local.set $extend (i64.extend_i32_u (local.get $x)))
+    (i64.eq (local.get $extend) (local.get $result)))
 )
 
 (assert_return (invoke "check_extend_ui32" (i32.const 0)

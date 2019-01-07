@@ -3,7 +3,7 @@
     (block $out
       (loop $loop
         (br_if $out
-          (get_local $x)
+          (local.get $x)
         )
         (nop)
         (br $loop)

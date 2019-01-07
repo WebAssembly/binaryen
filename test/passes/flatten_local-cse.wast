@@ -14,21 +14,21 @@
       (i32.add (i32.const 1) (i32.const 2))
     )
     (drop
-      (i32.add (get_local $x) (get_local $y))
+      (i32.add (local.get $x) (local.get $y))
     )
     (drop
-      (i32.add (get_local $x) (get_local $y))
+      (i32.add (local.get $x) (local.get $y))
     )
     (drop
-      (i32.add (get_local $x) (get_local $y))
+      (i32.add (local.get $x) (local.get $y))
     )
     (call $basics) ;; side effects, but no matter for our locals
     (drop
-      (i32.add (get_local $x) (get_local $y))
+      (i32.add (local.get $x) (local.get $y))
     )
-    (set_local $x (i32.const 100))
+    (local.set $x (i32.const 100))
     (drop ;; x was changed!
-      (i32.add (get_local $x) (get_local $y))
+      (i32.add (local.get $x) (local.get $y))
     )
   )
   (func $recursive1
@@ -123,18 +123,18 @@
     (local $var$3 i32)
     (block $label$0 (result i32)
       (i32.store
-        (tee_local $var$2
+        (local.tee $var$2
           (i32.add
-            (get_local $var$1)
+            (local.get $var$1)
             (i32.const 4)
           )
         )
         (i32.and
           (i32.load
-            (get_local $var$2)
+            (local.get $var$2)
           )
           (i32.xor
-            (tee_local $var$2
+            (local.tee $var$2
               (i32.const 74)
             )
             (i32.const -1)
@@ -142,18 +142,18 @@
         )
       )
       (i32.store
-        (tee_local $var$1
+        (local.tee $var$1
           (i32.add
-            (get_local $var$1)
+            (local.get $var$1)
             (i32.const 4)
           )
         )
         (i32.or
           (i32.load
-            (get_local $var$1)
+            (local.get $var$1)
           )
           (i32.and
-            (get_local $var$2)
+            (local.get $var$2)
             (i32.const 8)
           )
         )
@@ -162,36 +162,36 @@
     )
   )
   (func $loop1 (param $x i32) (param $y i32) (result i32)
-    (set_local $x (get_local $y))
-    (set_local $y (get_local $x))
-    (set_local $x (get_local $y))
-    (set_local $y (get_local $x))
-    (return (get_local $y))
+    (local.set $x (local.get $y))
+    (local.set $y (local.get $x))
+    (local.set $x (local.get $y))
+    (local.set $y (local.get $x))
+    (return (local.get $y))
   )
   (func $loop2 (param $x i32) (param $y i32) (param $z i32) (result i32)
-    (set_local $x (get_local $y))
-    (set_local $y (get_local $z))
-    (set_local $z (get_local $x))
-    (set_local $x (get_local $y))
-    (set_local $y (get_local $z))
-    (set_local $z (get_local $x))
-    (return (get_local $x))
+    (local.set $x (local.get $y))
+    (local.set $y (local.get $z))
+    (local.set $z (local.get $x))
+    (local.set $x (local.get $y))
+    (local.set $y (local.get $z))
+    (local.set $z (local.get $x))
+    (return (local.get $x))
   )
   (func $loop3 (param $x i32) (param $y i32) (param $z i32) (result i32)
-    (set_local $x (get_local $y))
-    (set_local $y (get_local $z))
-    (set_local $z (get_local $y))
-    (set_local $y (get_local $z))
-    (set_local $z (get_local $y))
-    (return (get_local $y))
+    (local.set $x (local.get $y))
+    (local.set $y (local.get $z))
+    (local.set $z (local.get $y))
+    (local.set $y (local.get $z))
+    (local.set $z (local.get $y))
+    (return (local.get $y))
   )
   (func $handle-removing (param $var$0 f64) (param $var$1 f64) (param $var$2 i32) (result f32)
-   (set_local $var$2
+   (local.set $var$2
     (select
-     (tee_local $var$2
+     (local.tee $var$2
       (i32.const 32767)
      )
-     (tee_local $var$2
+     (local.tee $var$2
       (i32.const 1024)
      )
      (i32.const -2147483648)
@@ -206,7 +206,7 @@
  (type $1 (func (param i32 f64) (result i32)))
  (type $2 (func (param i64 f32 i32)))
  (global $global$0 (mut i32) (i32.const 10))
- (table 23 23 anyfunc)
+ (table 23 23 funcref)
  (export "func_1_invoker" (func $1))
  (export "func_6" (func $2))
  (func $0 (; 0 ;) (type $2) (param $var$0 i64) (param $var$1 f32) (param $var$2 i32)
@@ -223,7 +223,7 @@
     )
     (i32.const -14051)
    )
-   (set_global $global$0
+   (global.set $global$0
     (i32.const 0)
    )
   )
@@ -237,7 +237,7 @@
  )
  (func $2 (; 2 ;) (type $1) (param $var$0 i32) (param $var$1 f64) (result i32)
   (if
-   (get_global $global$0)
+   (global.get $global$0)
    (unreachable)
   )
   (i32.const 0)
@@ -248,12 +248,12 @@
  (func $each-pass-must-clear (param $var$0 i32)
   (call $out
    (i32.eqz
-    (get_local $var$0)
+    (local.get $var$0)
    )
   )
   (call $out
    (i32.eqz
-    (get_local $var$0)
+    (local.get $var$0)
    )
   )
  )

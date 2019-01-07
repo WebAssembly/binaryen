@@ -1,5 +1,5 @@
 (module
-  (table 1 1 anyfunc)
+  (table 1 1 funcref)
   (elem (i32.const 0) $tabled)
   (func $user (export "user")
     (local $x i32)
@@ -15,8 +15,8 @@
     (call $ok)
     (drop (call $int))
     (drop (call $double))
-    (set_local $x (call $int2))
-    (set_local $y (call $double2))
+    (local.set $x (call $int2))
+    (local.set $y (call $double2))
     (call $with-local)
     (call $with-local2)
     (drop (call $return))
@@ -70,11 +70,11 @@
   )
   (func $with-local
     (local $x f32)
-    (set_local $x (f32.const 2.141828))
+    (local.set $x (f32.const 2.141828))
   )
   (func $with-local2
     (local $y i64)
-    (set_local $y (i64.const 4))
+    (local.set $y (i64.const 4))
   )
   (func $return (result i32)
     (return (i32.const 5))
@@ -87,9 +87,9 @@
   )
   (func $param (param $x f32) (param $y i64)
     (local $z f32)
-    (drop (get_local $x))
-    (drop (get_local $y))
-    (drop (get_local $z))
+    (drop (local.get $x))
+    (drop (local.get $y))
+    (drop (local.get $z))
   )
 )
 (module
@@ -144,19 +144,19 @@
 (module
  (type $0 (func))
  (type $1 (func (param i32 i32) (result i32)))
- (table 89 89 anyfunc)
+ (table 89 89 funcref)
  (memory $0 17)
  (start $1)
  (func $0 (; 0 ;) (type $1) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
    (i32.const 4)
-   (tee_local $0
+   (local.tee $0
     (i32.const 0)
    )
   )
   (i32.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 56)
    )
    (i32.const 0)

@@ -15,7 +15,7 @@
  */
 
 //
-// Hoists repeated constants to a local. A get_local takes 2 bytes
+// Hoists repeated constants to a local. A local.get takes 2 bytes
 // in most cases, and if a const is larger than that, it may be
 // better to store it to a local, then get it from that local.
 //
@@ -108,7 +108,7 @@ private:
     // or
     //   num > (size+2)/(size-2)
     auto before = num * size;
-    auto after = size + 2 /* set_local */ + (2 /* get_local */ * num);
+    auto after = size + 2 /* local.set */ + (2 /* local.get */ * num);
     return after < before;
   }
 

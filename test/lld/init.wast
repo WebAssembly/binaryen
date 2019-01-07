@@ -4,7 +4,7 @@
  (global $global$0 (mut i32) (i32.const 66112))
  (global $global$1 i32 (i32.const 66112))
  (global $global$2 i32 (i32.const 576))
- (table 1 1 anyfunc)
+ (table 1 1 funcref)
  (memory $0 2)
  (data (i32.const 568) "\00\00\00\00\00\00\00\00")
  (export "memory" (memory $0))

@@ -6,15 +6,15 @@
   (local $2 i32)
   (i32.add
    (block (result i32)
-    (set_local $2
-     (get_local $0)
+    (local.set $2
+     (local.get $0)
     )
-    (set_local $0
+    (local.set $0
      (i32.const 100)
     )
-    (get_local $2)
+    (local.get $2)
    )
-   (get_local $1)
+   (local.get $1)
   )
  )
 )

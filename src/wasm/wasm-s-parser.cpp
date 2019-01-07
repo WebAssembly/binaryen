@@ -769,7 +769,7 @@ Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
   ret->name = getGlobalName(*s[1]);
   auto* global = wasm.getGlobalOrNull(ret->name);
   if (!global) {
-    throw ParseException("bad get_global name", s.line, s.col);
+    throw ParseException("bad global.get name", s.line, s.col);
   }
   ret->type = global->type;
   return ret;
@@ -778,7 +778,7 @@ Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
 Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
   auto ret = allocator.alloc<SetGlobal>();
   ret->name = getGlobalName(*s[1]);
-  if (wasm.getGlobalOrNull(ret->name) && !wasm.getGlobalOrNull(ret->name)->mutable_) throw ParseException("set_global of immutable", s.line, s.col);
+  if (wasm.getGlobalOrNull(ret->name) && !wasm.getGlobalOrNull(ret->name)->mutable_) throw ParseException("global.set of immutable", s.line, s.col);
   ret->value = parseExpression(s[2]);
   ret->finalize();
   return ret;
@@ -1751,7 +1751,7 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   }
   if (i == s.size()) return;
   if (!s[i]->dollared()) {
-    if (s[i]->str() == ANYFUNC) {
+    if (s[i]->str() == FUNCREF) {
       // (table type (elem ..))
       parseInnerElem(*s[i + 1]);
       if (wasm.table.segments.size() > 0) {
@@ -1761,8 +1761,8 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
       }
       return;
     }
-    // first element isn't dollared, and isn't anyfunc. this could be old syntax for (table 0 1) which means function 0 and 1, or it could be (table initial max? type), look for type
-    if (s[s.size() - 1]->str() == ANYFUNC) {
+    // first element isn't dollared, and isn't funcref. this could be old syntax for (table 0 1) which means function 0 and 1, or it could be (table initial max? type), look for type
+    if (s[s.size() - 1]->str() == FUNCREF) {
       // (table initial max? type)
       if (i < s.size() - 1) {
         wasm.table.initial = atoi(s[i++]->c_str());

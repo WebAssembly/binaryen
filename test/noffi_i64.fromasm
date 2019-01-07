@@ -1,15 +1,15 @@
 (module
  (type $FUNCSIG$jj (func (param i64) (result i64)))
  (import "env" "memory" (memory $memory 256 256))
- (data (get_global $__memory_base) "noffi_i64.asm.js")
+ (data (global.get $__memory_base) "noffi_i64.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "_importll" (func $importll (param i64) (result i64)))
  (export "_add" (func $add))
  (export "_main" (func $main))
  (func $add (; 1 ;) (; has Stack IR ;) (param $0 i64) (param $1 i64) (result i64)
   (i64.add
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
  )
  (func $main (; 2 ;) (; has Stack IR ;) (result i32)

@@ -48,7 +48,7 @@
    (call $print
     (i32.const 0)
    )
-   (set_local $0
+   (local.set $0
     (call $check)
    )
   )
@@ -59,7 +59,7 @@
       (block $switch$1$case$2
        (br_table $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$case$4 $switch$1$case$3 $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$case$4 $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$default $switch$1$case$4 $switch$1$default
         (i32.rem_u
-         (get_local $0)
+         (local.get $0)
          (i32.const 1)
         )
        )
@@ -73,7 +73,7 @@
          (call $print
           (i32.const 1)
          )
-         (set_local $0
+         (local.set $0
           (call $check)
          )
         )
@@ -90,7 +90,7 @@
         (call $print
          (i32.const 1)
         )
-        (set_local $0
+        (local.set $0
          (call $check)
         )
        )
@@ -107,7 +107,7 @@
        (call $print
         (i32.const 1)
        )
-       (set_local $0
+       (local.set $0
         (call $check)
        )
       )
@@ -121,7 +121,7 @@
       (call $print
        (i32.const 1)
       )
-      (set_local $0
+      (local.set $0
        (call $check)
       )
      )

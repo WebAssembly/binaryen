@@ -6,7 +6,7 @@
  (type $4 (func (result i32)))
  (type $5 (func (result f64)))
  (memory $0 (shared 256 256))
- (table $0 1 1 anyfunc)
+ (table $0 1 1 funcref)
  (elem (i32.const 0) $call-i)
  (func $call-i (; 0 ;) (type $i) (param $0 i32)
   (nop)
@@ -155,7 +155,7 @@
   (drop
    (i32.const 10)
   )
-  (set_local $x
+  (local.set $x
    (i32.const 20)
   )
   (drop
@@ -769,10 +769,10 @@
  (func $mix-select (; 19 ;) (type $i) (param $x i32)
   (drop
    (select
-    (get_local $x)
-    (get_local $x)
+    (local.get $x)
+    (local.get $x)
     (block (result i32)
-     (set_local $x
+     (local.set $x
       (i32.const 1)
      )
      (i32.const 2)
@@ -787,8 +787,8 @@
    (block (result i32)
     (nop)
     (f64.gt
-     (get_local $0)
-     (get_local $1)
+     (local.get $0)
+     (local.get $1)
     )
    )
    (nop)
@@ -799,12 +799,12 @@
   (if
    (i32.const 1)
    (block
-    (set_local $y
+    (local.set $y
      (i32.const 5)
     )
-    (set_local $x
+    (local.set $x
      (i32.le_u
-      (get_local $x)
+      (local.get $x)
       (i32.const 10)
      )
     )
@@ -815,11 +815,11 @@
   (local $y i32)
   (if
    (i32.const 1)
-   (set_local $x
+   (local.set $x
     (i32.le_u
-     (get_local $y)
+     (local.get $y)
      (block (result i32)
-      (set_local $y
+      (local.set $y
        (i32.const 5)
       )
       (i32.const 10)
@@ -1329,12 +1329,12 @@
   (local $2 i32)
   (local $9 i32)
   (loop $label$1
-   (set_local $9
-    (tee_local $2
+   (local.set $9
+    (local.tee $2
      (block $label$2 (result i32)
       (drop
        (br_if $label$2
-        (tee_local $2
+        (local.tee $2
          (i32.const 0)
         )
         (i32.const 0)
@@ -1352,7 +1352,7 @@
    )
   )
   (nop)
-  (get_local $9)
+  (local.get $9)
  )
  (func $trivial (; 1 ;) (type $1) (result i32)
   (block

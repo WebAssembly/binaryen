@@ -17,15 +17,15 @@
 //
 // Locals-related optimizations
 //
-// This "sinks" set_locals, pushing them to the next get_local where possible,
+// This "sinks" local.sets, pushing them to the next local.get where possible,
 // and removing the set if there are no gets remaining (the latter is
 // particularly useful in ssa mode, but not only).
 //
-// We also note where set_locals coalesce: if all breaks of a block set
+// We also note where local.sets coalesce: if all breaks of a block set
 // a specific local, we can use a block return value for it, in effect
-// removing multiple set_locals and replacing them with one that the
+// removing multiple local.sets and replacing them with one that the
 // block returns to. Further optimization rounds then have the opportunity
-// to remove that set_local as well. TODO: support partial traces; right
+// to remove that local.set as well. TODO: support partial traces; right
 // now, whenever control flow splits, we invalidate everything.
 //
 // After this pass, some locals may be completely unused. reorder-locals
@@ -37,7 +37,7 @@
 //   * Tee: allow teeing, i.e., sinking a local with more than one use,
 //          and so after sinking we have a tee for the first use.
 //   * Structure: create block and if return values, by merging the
-//                internal set_locals into one on the outside,
+//                internal local.sets into one on the outside,
 //                that can itself then be sunk further.
 //
 // There is also an option to disallow nesting entirely, which disallows
@@ -67,7 +67,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   Pass* create() override { return new SimplifyLocals<allowTee, allowStructure, allowNesting>(); }
 
-  // information for a set_local we can sink
+  // information for a local.set we can sink
   struct SinkableInfo {
     Expression** item;
     EffectAnalyzer effects;
@@ -109,7 +109,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   // whether this is the first cycle, in which we always disallow teeing
   bool firstCycle;
 
-  // local => # of get_locals for it
+  // local => # of local.gets for it
   GetLocalCounter getCounter;
 
   static void doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
@@ -373,7 +373,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     blockBreaks.erase(block->name);
     if (breaks.size() == 0) return; // block has no branches TODO we might optimize trivial stuff here too
     assert(!(*breaks[0].brp)->template cast<Break>()->value); // block does not already have a return value (if one break has one, they all do)
-    // look for a set_local that is present in them all
+    // look for a local.set that is present in them all
     bool found = false;
     Index sharedIndex = -1;
     for (auto& sinkable : sinkables) {
@@ -398,19 +398,19 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     //  (br_if
     //   (block
     //    ..use $x..
-    //    (set_local $x ..)
+    //    (local.set $x ..)
     //   )
     //  )
     // =>
     //  (br_if
-    //   (tee_local $x ..) ;; this now affects the use!
+    //   (local.tee $x ..) ;; this now affects the use!
     //   (block
     //    ..use $x..
     //   )
     //  )
     // so we must check for that.
     for (size_t j = 0; j < breaks.size(); j++) {
-      // move break set_local's value to the break
+      // move break local.set's value to the break
       auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->template cast<Break>();
@@ -446,14 +446,14 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       blocksToEnlarge.push_back(block);
       return;
     }
-    // move block set_local's value to the end, in return position, and nop the set
+    // move block local.set's value to the end, in return position, and nop the set
     auto* blockSetLocalPointer = sinkables.at(sharedIndex).item;
     auto* value = (*blockSetLocalPointer)->template cast<SetLocal>()->value;
     block->list[block->list.size() - 1] = value;
     block->type = value->type;
     ExpressionManipulator::nop(*blockSetLocalPointer);
     for (size_t j = 0; j < breaks.size(); j++) {
-      // move break set_local's value to the break
+      // move break local.set's value to the break
       auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->template cast<Break>();
@@ -472,14 +472,14 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         ExpressionManipulator::nop(set);
       }
     }
-    // finally, create a set_local on the block itself
+    // finally, create a local.set on the block itself
     auto* newSetLocal = Builder(*this->getModule()).makeSetLocal(sharedIndex, block);
     this->replaceCurrent(newSetLocal);
     sinkables.clear();
     anotherCycle = true;
   }
 
-  // optimize set_locals from both sides of an if into a return value
+  // optimize local.sets from both sides of an if into a return value
   void optimizeIfElseReturn(If* iff, Expression** currp, Sinkables& ifTrue) {
     assert(iff->ifFalse);
     // if this if already has a result, or is unreachable code, we have
@@ -491,10 +491,10 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     //   (if
     //     (..)
     //     (br $x)
-    //     (set_local $y (..))
+    //     (local.set $y (..))
     //   )
     //    =>
-    //   (set_local $y
+    //   (local.set $y
     //     (if (result i32)
     //       (..)
     //       (br $x)
@@ -562,27 +562,27 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
     iff->finalize(); // update type
     assert(iff->type != none);
-    // finally, create a set_local on the iff itself
+    // finally, create a local.set on the iff itself
     auto* newSetLocal = Builder(*this->getModule()).makeSetLocal(goodIndex, iff);
     *currp = newSetLocal;
     anotherCycle = true;
   }
 
-  // Optimize set_locals from a one-sided iff, adding a get on the other:
+  // Optimize local.sets from a one-sided iff, adding a get on the other:
   //  (if
   //    (..condition..)
   //    (block
-  //      (set_local $x (..value..))
+  //      (local.set $x (..value..))
   //    )
   //  )
   // =>
-  //  (set_local $x
+  //  (local.set $x
   //    (if (result ..)
   //      (..condition..)
   //      (block (result ..)
   //        (..value..)
   //      )
-  //      (get_local $x)
+  //      (local.get $x)
   //    )
   //  )
   // This is a speculative optimization: we add a get here, as well as a branch
@@ -617,7 +617,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // Update the get count.
     getCounter.num[set->index]++;
     assert(iff->type != none);
-    // Finally, reuse the set_local on the iff itself.
+    // Finally, reuse the local.set on the iff itself.
     set->value = iff;
     set->finalize();
     *currp = set;
@@ -648,7 +648,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   }
 
   void doWalkFunction(Function* func) {
-    // scan get_locals
+    // scan local.gets
     getCounter.analyze(func);
     // multiple passes may be required per function, consider this:
     //    x = load
@@ -741,11 +741,11 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // we do that at the very end, and only after structure, as removing
     // the copy here:
     //   (if
-    //    (get_local $var$0)
-    //    (set_local $var$0
-    //     (get_local $var$0)
+    //    (local.get $var$0)
+    //    (local.set $var$0
+    //     (local.get $var$0)
     //    )
-    //    (set_local $var$0
+    //    (local.set $var$0
     //     (i32.const 208)
     //    )
     //   )

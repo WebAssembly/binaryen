@@ -8,7 +8,7 @@
  (import "env" "memmove" (func $memmove (param i32 i32 i32) (result i32)))
  (import "env" "memset" (func $memset (param i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "copy_yes" (func $copy_yes))
  (export "copy_no" (func $copy_no))
@@ -25,18 +25,18 @@
  (func $copy_yes (; 5 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memcpy
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
  )
  (func $copy_no (; 6 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memcpy
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
   (return)
@@ -44,18 +44,18 @@
  (func $move_yes (; 7 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memmove
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
  )
  (func $move_no (; 8 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memmove
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
   (return)
@@ -63,18 +63,18 @@
  (func $set_yes (; 9 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memset
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
  )
  (func $set_no (; 10 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memset
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
   (return)
@@ -83,7 +83,7 @@
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $0
+   (local.tee $0
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -95,7 +95,7 @@
   (drop
    (call $memset
     (i32.add
-     (get_local $0)
+     (local.get $0)
      (i32.const 2048)
     )
     (i32.const 0)
@@ -106,7 +106,7 @@
    (i32.const 0)
    (i32.add
     (call $memset
-     (get_local $0)
+     (local.get $0)
      (i32.const 0)
      (i32.const 1024)
     )
@@ -121,35 +121,35 @@
     (block $label$2
      (br_if $label$2
       (i32.eqz
-       (get_local $3)
+       (local.get $3)
       )
      )
-     (set_local $0
+     (local.set $0
       (call $def)
      )
      (br $label$1)
     )
     (br_if $label$0
      (i32.eqz
-      (get_local $4)
+      (local.get $4)
      )
     )
    )
    (call $block_tail_dup)
    (return
-    (get_local $0)
+    (local.get $0)
    )
   )
   (drop
    (call $memset
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
   (call $block_tail_dup)
   (return
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $tail_dup_to_reuse_result (; 13 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
@@ -158,29 +158,29 @@
     (block $label$2
      (br_if $label$2
       (i32.eqz
-       (get_local $3)
+       (local.get $3)
       )
      )
-     (set_local $0
+     (local.set $0
       (call $def)
      )
      (br $label$1)
     )
     (br_if $label$0
      (i32.eqz
-      (get_local $4)
+      (local.get $4)
      )
     )
    )
    (return
-    (get_local $0)
+    (local.get $0)
    )
   )
   (return
    (call $memset
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
  )
@@ -193,24 +193,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 16 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

@@ -118,12 +118,12 @@ private:
     }
   }
 
-  // If ordered properly, we can avoid a set_local/get_local pair,
+  // If ordered properly, we can avoid a local.set/local.get pair,
   // and use the value directly from the stack, for example
   //    [..produce a value on the stack..]
-  //    set_local $x
+  //    local.set $x
   //    [..much code..]
-  //    get_local $x
+  //    local.get $x
   //    call $foo ;; use the value, foo(value)
   // As long as the code in between does not modify $x, and has
   // no control flow branching out, we can remove both the set

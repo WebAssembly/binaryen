@@ -11,15 +11,15 @@
       (f32.add
        (f32.sub
         (f32.add
-         (tee_local $0
+         (local.tee $0
           (f32.add
-           (get_local $0)
-           (get_local $0)
+           (local.get $0)
+           (local.get $0)
           )
          )
          (f32.const 1)
         )
-        (get_local $0)
+        (local.get $0)
        )
        (f32.const -1)
       )
@@ -31,15 +31,15 @@
     (drop
      (call $0
       (f32.add
-       (get_local $0)
-       (tee_local $1
+       (local.get $0)
+       (local.tee $1
         (f32.add
-         (get_local $1)
+         (local.get $1)
          (f32.const 1)
         )
        )
       )
-      (get_local $0)
+      (local.get $0)
      )
     )
     (unreachable)
@@ -54,15 +54,15 @@
       (f64.add
        (f64.sub
         (f64.add
-         (tee_local $0
+         (local.tee $0
           (f64.add
-           (get_local $0)
-           (get_local $0)
+           (local.get $0)
+           (local.get $0)
           )
          )
          (f64.const 1)
         )
-        (get_local $0)
+        (local.get $0)
        )
        (f64.const -1)
       )
@@ -76,23 +76,23 @@
       (f64.sub
        (f64.sub
         (f64.add
-         (get_local $0)
-         (tee_local $1
+         (local.get $0)
+         (local.tee $1
           (f64.add
-           (get_local $1)
+           (local.get $1)
            (f64.const 1)
           )
          )
         )
-        (get_local $0)
+        (local.get $0)
        )
-       (get_local $1)
+       (local.get $1)
       )
       (f64.const 0)
      )
     )
    )
-   (get_local $1)
+   (local.get $1)
   )
  )
 )

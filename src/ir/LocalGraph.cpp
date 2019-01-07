@@ -28,8 +28,8 @@ namespace LocalGraphInternal {
 
 // Information about a basic block.
 struct Info {
-  std::vector<Expression*> actions; // actions occurring in this block: get_locals and set_locals
-  std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last set_local for it
+  std::vector<Expression*> actions; // actions occurring in this block: local.gets and local.sets
+  std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last local.set for it
 };
 
 // flow helper class. flows the gets to their sets
@@ -78,7 +78,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       size_t lastTraversedIteration;
       std::vector<Expression*> actions;
       std::vector<FlowBlock*> in;
-      // Sor each index, the last set_local for it
+      // Sor each index, the last local.set for it
       // The unordered_map from BasicBlock.Info is converted into a vector
       // This speeds up search as there are usually few sets in a block, so just scanning
       // them linearly is efficient, avoiding hash computations (while in Info,

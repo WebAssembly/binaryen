@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "i32_wrap_i64" (func $i32_wrap_i64))
  (export "i64_extend_s_i32" (func $i64_extend_s_i32))
@@ -33,156 +33,156 @@
  (export "stackRestore" (func $stackRestore))
  (func $i32_wrap_i64 (; 0 ;) (param $0 i64) (result i32)
   (return
-   (i32.wrap/i64
-    (get_local $0)
+   (i32.wrap_i64
+    (local.get $0)
    )
   )
  )
  (func $i64_extend_s_i32 (; 1 ;) (param $0 i32) (result i64)
   (return
-   (i64.extend_s/i32
-    (get_local $0)
+   (i64.extend_i32_s
+    (local.get $0)
    )
   )
  )
  (func $i64_extend_u_i32 (; 2 ;) (param $0 i32) (result i64)
   (return
-   (i64.extend_u/i32
-    (get_local $0)
+   (i64.extend_i32_u
+    (local.get $0)
    )
   )
  )
  (func $i32_trunc_s_f32 (; 3 ;) (param $0 f32) (result i32)
   (return
-   (i32.trunc_s/f32
-    (get_local $0)
+   (i32.trunc_f32_s
+    (local.get $0)
    )
   )
  )
  (func $i32_trunc_u_f32 (; 4 ;) (param $0 f32) (result i32)
   (return
-   (i32.trunc_u/f32
-    (get_local $0)
+   (i32.trunc_f32_u
+    (local.get $0)
    )
   )
  )
  (func $i32_trunc_s_f64 (; 5 ;) (param $0 f64) (result i32)
   (return
-   (i32.trunc_s/f64
-    (get_local $0)
+   (i32.trunc_f64_s
+    (local.get $0)
    )
   )
  )
  (func $i32_trunc_u_f64 (; 6 ;) (param $0 f64) (result i32)
   (return
-   (i32.trunc_u/f64
-    (get_local $0)
+   (i32.trunc_f64_u
+    (local.get $0)
    )
   )
  )
  (func $i64_trunc_s_f32 (; 7 ;) (param $0 f32) (result i64)
   (return
-   (i64.trunc_s/f32
-    (get_local $0)
+   (i64.trunc_f32_s
+    (local.get $0)
    )
   )
  )
  (func $i64_trunc_u_f32 (; 8 ;) (param $0 f32) (result i64)
   (return
-   (i64.trunc_u/f32
-    (get_local $0)
+   (i64.trunc_f32_u
+    (local.get $0)
    )
   )
  )
  (func $i64_trunc_s_f64 (; 9 ;) (param $0 f64) (result i64)
   (return
-   (i64.trunc_s/f64
-    (get_local $0)
+   (i64.trunc_f64_s
+    (local.get $0)
    )
   )
  )
  (func $i64_trunc_u_f64 (; 10 ;) (param $0 f64) (result i64)
   (return
-   (i64.trunc_u/f64
-    (get_local $0)
+   (i64.trunc_f64_u
+    (local.get $0)
    )
   )
  )
  (func $f32_convert_s_i32 (; 11 ;) (param $0 i32) (result f32)
   (return
-   (f32.convert_s/i32
-    (get_local $0)
+   (f32.convert_i32_s
+    (local.get $0)
    )
   )
  )
  (func $f32_convert_u_i32 (; 12 ;) (param $0 i32) (result f32)
   (return
-   (f32.convert_u/i32
-    (get_local $0)
+   (f32.convert_i32_u
+    (local.get $0)
    )
   )
  )
  (func $f64_convert_s_i32 (; 13 ;) (param $0 i32) (result f64)
   (return
-   (f64.convert_s/i32
-    (get_local $0)
+   (f64.convert_i32_s
+    (local.get $0)
    )
   )
  )
  (func $f64_convert_u_i32 (; 14 ;) (param $0 i32) (result f64)
   (return
-   (f64.convert_u/i32
-    (get_local $0)
+   (f64.convert_i32_u
+    (local.get $0)
    )
   )
  )
  (func $f32_convert_s_i64 (; 15 ;) (param $0 i64) (result f32)
   (return
-   (f32.convert_s/i64
-    (get_local $0)
+   (f32.convert_i64_s
+    (local.get $0)
    )
   )
  )
  (func $f32_convert_u_i64 (; 16 ;) (param $0 i64) (result f32)
   (return
-   (f32.convert_u/i64
-    (get_local $0)
+   (f32.convert_i64_u
+    (local.get $0)
    )
   )
  )
  (func $f64_convert_s_i64 (; 17 ;) (param $0 i64) (result f64)
   (return
-   (f64.convert_s/i64
-    (get_local $0)
+   (f64.convert_i64_s
+    (local.get $0)
    )
   )
  )
  (func $f64_convert_u_i64 (; 18 ;) (param $0 i64) (result f64)
   (return
-   (f64.convert_u/i64
-    (get_local $0)
+   (f64.convert_i64_u
+    (local.get $0)
    )
   )
  )
  (func $f64_promote_f32 (; 19 ;) (param $0 f32) (result f64)
   (return
-   (f64.promote/f32
-    (get_local $0)
+   (f64.promote_f32
+    (local.get $0)
    )
   )
  )
  (func $f32_demote_f64 (; 20 ;) (param $0 f64) (result f32)
   (return
-   (f32.demote/f64
-    (get_local $0)
+   (f32.demote_f64
+    (local.get $0)
    )
   )
  )
  (func $anyext (; 21 ;) (param $0 i32) (result i64)
   (return
    (i64.shl
-    (i64.extend_u/i32
-     (get_local $0)
+    (i64.extend_i32_u
+     (local.get $0)
     )
     (i64.const 32)
    )
@@ -190,29 +190,29 @@
  )
  (func $bitcast_i32_to_float (; 22 ;) (param $0 i32) (result f32)
   (return
-   (f32.reinterpret/i32
-    (get_local $0)
+   (f32.reinterpret_i32
+    (local.get $0)
    )
   )
  )
  (func $bitcast_float_to_i32 (; 23 ;) (param $0 f32) (result i32)
   (return
-   (i32.reinterpret/f32
-    (get_local $0)
+   (i32.reinterpret_f32
+    (local.get $0)
    )
   )
  )
  (func $bitcast_i64_to_double (; 24 ;) (param $0 i64) (result f64)
   (return
-   (f64.reinterpret/i64
-    (get_local $0)
+   (f64.reinterpret_i64
+    (local.get $0)
    )
   )
  )
  (func $bitcast_double_to_i64 (; 25 ;) (param $0 f64) (result i64)
   (return
-   (i64.reinterpret/f64
-    (get_local $0)
+   (i64.reinterpret_f64
+    (local.get $0)
    )
   )
  )
@@ -225,24 +225,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 28 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

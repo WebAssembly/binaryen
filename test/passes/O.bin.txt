@@ -8,36 +8,36 @@
  (func $0 (; 0 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (if (result i64)
    (i64.eq
-    (get_local $0)
+    (local.get $0)
     (i64.const 0)
    )
    (i64.const 1)
    (i64.mul
     (call $0
      (i64.sub
-      (get_local $0)
+      (local.get $0)
       (i64.const 1)
      )
     )
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $1 (; 1 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (if (result i64)
    (i64.eq
-    (get_local $0)
+    (local.get $0)
     (i64.const 0)
    )
    (i64.const 1)
    (i64.mul
     (call $1
      (i64.sub
-      (get_local $0)
+      (local.get $0)
       (i64.const 1)
      )
     )
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
@@ -46,25 +46,25 @@
  )
  (func $3 (; 3 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (local $1 i64)
-  (set_local $1
+  (local.set $1
    (i64.const 1)
   )
   (loop $label$3
    (if
     (i64.ne
-     (get_local $0)
+     (local.get $0)
      (i64.const 0)
     )
     (block
-     (set_local $1
+     (local.set $1
       (i64.mul
-       (get_local $0)
-       (get_local $1)
+       (local.get $0)
+       (local.get $1)
       )
      )
-     (set_local $0
+     (local.set $0
       (i64.sub
-       (get_local $0)
+       (local.get $0)
        (i64.const 1)
       )
      )
@@ -72,30 +72,30 @@
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $4 (; 4 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (local $1 i64)
-  (set_local $1
+  (local.set $1
    (i64.const 1)
   )
   (if
    (i64.ge_s
-    (get_local $0)
+    (local.get $0)
     (i64.const 2)
    )
    (loop $label$3
-    (set_local $1
+    (local.set $1
      (i64.mul
-      (get_local $0)
-      (get_local $1)
+      (local.get $0)
+      (local.get $1)
      )
     )
     (br_if $label$3
      (i64.gt_s
-      (tee_local $0
+      (local.tee $0
        (i64.add
-        (get_local $0)
+        (local.get $0)
         (i64.const -1)
        )
       )
@@ -104,6 +104,6 @@
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
 )

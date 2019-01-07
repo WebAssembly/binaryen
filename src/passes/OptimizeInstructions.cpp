@@ -48,7 +48,7 @@ Name I32_EXPR  = "i32.expr",
 // returns the maximum amount of bits used in an integer expression
 // not extremely precise (doesn't look into add operands, etc.)
 // LocalInfoProvider is an optional class that can provide answers about
-// get_local.
+// local.get.
 template<typename LocalInfoProvider>
 Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
   if (auto* const_ = curr->dynCast<Const>()) {

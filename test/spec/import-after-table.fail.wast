@@ -1,1 +1,1 @@
-(module (table 0 anyfunc) (import "" "" (func)))
+(module (table 0 funcref) (import "" "" (func)))

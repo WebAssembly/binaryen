@@ -3,7 +3,7 @@
  (func $1 (param $x i32) (result f64)
   (local $var$0 f64)
   (block $label$0
-   (set_local $var$0
+   (local.set $var$0
     (f64.const 0)
    )
    (if
@@ -16,7 +16,7 @@
     )
    )
    (if
-    (get_local $x)
+    (local.get $x)
     (return
      (f64.const 5.6)
     )

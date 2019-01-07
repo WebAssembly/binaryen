@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$vi (func (param i32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
@@ -18,15 +18,15 @@
       (i32.add
        (i32.add
         (i32.mul
-         (get_local $$b$1)
-         (get_local $$x_sroa_0_0_extract_trunc)
+         (local.get $$b$1)
+         (local.get $$x_sroa_0_0_extract_trunc)
         )
-        (get_local $$2)
+        (local.get $$2)
        )
-       (get_local $$1$1)
+       (local.get $$1$1)
       )
       (i32.and
-       (get_local $$1$1)
+       (local.get $$1$1)
        (i32.const 0)
       )
      )
@@ -34,7 +34,7 @@
     (i32.or
      (i32.const 0)
      (i32.and
-      (get_local $$1$0)
+      (local.get $$1$0)
       (i32.const -1)
      )
     )

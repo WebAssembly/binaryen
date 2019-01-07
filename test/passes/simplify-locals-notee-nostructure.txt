@@ -6,15 +6,15 @@
   (local $z i32)
   (local $a i32)
   (local $b i32)
-  (set_local $x
+  (local.set $x
    (i32.const 1)
   )
   (if
-   (get_local $x)
+   (local.get $x)
    (nop)
   )
   (if
-   (get_local $x)
+   (local.get $x)
    (nop)
   )
   (nop)
@@ -33,32 +33,32 @@
   )
   (if
    (i32.const 6)
-   (set_local $a
+   (local.set $a
     (i32.const 7)
    )
-   (set_local $a
+   (local.set $a
     (i32.const 8)
    )
   )
   (drop
-   (get_local $a)
+   (local.get $a)
   )
   (block $val
    (if
     (i32.const 10)
     (block $block4
-     (set_local $b
+     (local.set $b
       (i32.const 11)
      )
      (br $val)
     )
    )
-   (set_local $b
+   (local.set $b
     (i32.const 12)
    )
   )
   (drop
-   (get_local $b)
+   (local.get $b)
   )
  )
 )

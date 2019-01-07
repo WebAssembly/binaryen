@@ -7,13 +7,13 @@
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "imports" (func $imports))
  (func $imports (; 3 ;) (; has Stack IR ;) (result i32)
-  (i32.wrap/i64
+  (i32.wrap_i64
    (i64.or
-    (i64.extend_u/i32
+    (i64.extend_i32_u
      (call $legalimport$illegalImportResult)
     )
     (i64.shl
-     (i64.extend_u/i32
+     (i64.extend_i32_u
       (call $getTempRet0)
      )
      (i64.const 32)

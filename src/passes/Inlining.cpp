@@ -55,11 +55,11 @@ static const int FLEXIBLE_SIZE_LIMIT = 20;
 // smaller than the call instruction itself. 2 is a safe number because
 // there is no risk of things like
 //  (func $reverse (param $x i32) (param $y i32)
-//   (call $something (get_local $y) (get_local $x))
+//   (call $something (local.get $y) (local.get $x))
 //  )
 // in which case the reversing of the params means we'll possibly need
 // a block and a temp local. But that takes at least 3 nodes, and 2 < 3.
-// More generally, with 2 items we may have a get_local, but no way to
+// More generally, with 2 items we may have a local.get, but no way to
 // require it to be saved instead of directly consumed.
 static const int INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT = 2;
 

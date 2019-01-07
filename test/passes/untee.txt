@@ -5,39 +5,39 @@
   (local $y f64)
   (drop
    (block (result i32)
-    (set_local $x
+    (local.set $x
      (i32.const 1)
     )
-    (get_local $x)
+    (local.get $x)
    )
   )
   (drop
    (block (result f64)
-    (set_local $y
+    (local.set $y
      (f64.const 2)
     )
-    (get_local $y)
+    (local.get $y)
    )
   )
-  (set_local $x
+  (local.set $x
    (block (result i32)
-    (set_local $x
+    (local.set $x
      (i32.const 3)
     )
-    (get_local $x)
+    (local.get $x)
    )
   )
-  (set_local $x
+  (local.set $x
    (block (result i32)
-    (set_local $x
+    (local.set $x
      (block (result i32)
-      (set_local $x
+      (local.set $x
        (i32.const 3)
       )
-      (get_local $x)
+      (local.get $x)
      )
     )
-    (get_local $x)
+    (local.get $x)
    )
   )
   (drop

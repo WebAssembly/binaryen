@@ -81,17 +81,17 @@
     (block i32 (if i32 (br 0 (i32.const 2)) (i32.const 0) (i32.const 1)))
   )
   (func (export "as-if-then") (param i32 i32) (result i32)
-    (block i32 (if i32 (get_local 0) (br 1 (i32.const 3)) (get_local 1)))
+    (block i32 (if i32 (local.get 0) (br 1 (i32.const 3)) (local.get 1)))
   )
   (func (export "as-if-else") (param i32 i32) (result i32)
-    (block i32 (if i32 (get_local 0) (get_local 1) (br 1 (i32.const 4))))
+    (block i32 (if i32 (local.get 0) (local.get 1) (br 1 (i32.const 4))))
   )
 
   (func (export "as-select-first") (param i32 i32) (result i32)
-    (block i32 (select (br 0 (i32.const 5)) (get_local 0) (get_local 1)))
+    (block i32 (select (br 0 (i32.const 5)) (local.get 0) (local.get 1)))
   )
   (func (export "as-select-second") (param i32 i32) (result i32)
-    (block i32 (select (get_local 0) (br 0 (i32.const 6)) (get_local 1)))
+    (block i32 (select (local.get 0) (br 0 (i32.const 6)) (local.get 1)))
   )
   (func (export "as-select-cond") (result i32)
     (block i32 (select (i32.const 0) (i32.const 1) (br 0 (i32.const 7))))
@@ -109,7 +109,7 @@
   )
 
   (type $sig (func (param i32 i32 i32) (result i32)))
-  (table anyfunc (elem $f))
+  (table funcref (elem $f))
   (func (export "as-call_indirect-func") (result i32)
     (block i32
       (call_indirect (type $sig)
@@ -143,8 +143,8 @@
     )
   )
 
-  (func (export "as-set_local-value") (result i32) (local f32)
-    (block i32 (set_local 0 (br 0 (i32.const 17))) (i32.const -1))
+  (func (export "as-local.set-value") (result i32) (local f32)
+    (block i32 (local.set 0 (br 0 (i32.const 17))) (i32.const -1))
   )
 
   (memory 1)
@@ -192,7 +192,7 @@
   )
 
   (func (export "as-convert-operand") (result i32)
-    (block i32 (i32.wrap/i64 (br 0 (i32.const 41))))
+    (block i32 (i32.wrap_i64 (br 0 (i32.const 41))))
   )
 
   (func (export "as-grow_memory-size") (result i32)
@@ -333,7 +333,7 @@
 (assert_return (invoke "as-call_indirect-mid") (i32.const 22))
 (assert_return (invoke "as-call_indirect-last") (i32.const 23))
 
-(assert_return (invoke "as-set_local-value") (i32.const 17))
+(assert_return (invoke "as-local.set-value") (i32.const 17))
 
 (assert_return (invoke "as-load-address") (f32.const 1.7))
 (assert_return (invoke "as-loadN-address") (i64.const 30))

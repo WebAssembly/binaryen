@@ -20,7 +20,7 @@
 // This requires --flatten to be run before in order to be effective,
 // and preserves flatness. The reason flatness is required is that
 // this pass assumes everything is stored in a local, and all it does
-// is alter set_locals to do get_locals of an existing value when
+// is alter local.sets to do local.gets of an existing value when
 // possible, replacing a recomputing of that value. That design means that
 // if there are block and if return values, nested expressions not stored
 // to a local, etc., then it can't operate on them (and will just not
@@ -56,7 +56,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // information for an expression we can reuse
   struct UsableInfo {
     Expression* value; // the value we can reuse
-    Index index; // the local we are assigned to, get_local that to reuse us
+    Index index; // the local we are assigned to, local.get that to reuse us
     EffectAnalyzer effects;
 
     UsableInfo(Expression* value, Index index, PassOptions& passOptions) : value(value), index(index), effects(passOptions, value) {}

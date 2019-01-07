@@ -4,9 +4,9 @@
  (type $ii$0 (func (param i32 i32)))
  (type $FUNCSIG$v$0 (func))
  (import "env" "memory" (memory $0 256))
- (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n\00\00\00\00\00\00")
- (import "env" "table" (table $0 18 anyfunc))
- (elem (get_global $tableBase) $only-a $willCollide $some-func $some-collide $only-a $some-func $only-b $willCollide$0 $some-func-b $some-collide$0)
+ (data (global.get $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n\00\00\00\00\00\00")
+ (import "env" "table" (table $0 18 funcref))
+ (elem (global.get $tableBase) $only-a $willCollide $some-func $some-collide $only-a $some-func $only-b $willCollide$0 $some-func-b $some-collide$0)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "__memory_base" (global $__memory_base i32))
@@ -45,21 +45,21 @@
    (i32.const 789)
   )
   (drop
-   (get_global $global-collide)
+   (global.get $global-collide)
   )
   (drop
-   (get_global $global-a)
+   (global.get $global-a)
   )
   (drop
-   (get_global $global-a-mut)
+   (global.get $global-a-mut)
   )
   (drop
-   (get_global $memoryBase)
+   (global.get $memoryBase)
   )
   (drop
-   (get_global $tableBase)
+   (global.get $tableBase)
   )
-  (set_global $global-collide-mut
+  (global.set $global-collide-mut
    (i32.const 1234)
   )
  )
@@ -82,45 +82,45 @@
    (i32.const 56)
   )
   (drop
-   (get_global $global-collide$0)
+   (global.get $global-collide$0)
   )
   (drop
-   (get_global $global-b)
+   (global.get $global-b)
   )
   (drop
-   (get_global $global-b-mut)
+   (global.get $global-b-mut)
   )
   (drop
-   (get_global $memoryBase$0)
+   (global.get $memoryBase$0)
   )
   (drop
-   (get_global $tableBase$0)
+   (global.get $tableBase$0)
   )
   (drop
    (i32.add
-    (get_global $memoryBase$0)
+    (global.get $memoryBase$0)
     (i32.const 1000)
    )
   )
   (drop
    (i32.add
-    (get_global $tableBase$0)
+    (global.get $tableBase$0)
     (i32.const 1000)
    )
   )
   (drop
    (i32.add
-    (get_global $tableBase$0)
+    (global.get $tableBase$0)
     (unreachable)
    )
   )
   (drop
    (i32.sub
-    (get_global $tableBase$0)
+    (global.get $tableBase$0)
     (i32.const 1000)
    )
   )
-  (set_global $global-collide-mut$0
+  (global.set $global-collide-mut$0
    (i32.const 5678)
   )
  )

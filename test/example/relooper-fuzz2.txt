@@ -158,7 +158,7 @@
      (call $print
       (i32.const 0)
      )
-     (set_local $0
+     (local.set $0
       (call $check)
      )
     )
@@ -180,7 +180,7 @@
      (call $print
       (i32.const 0)
      )
-     (set_local $0
+     (local.set $0
       (call $check)
      )
     )

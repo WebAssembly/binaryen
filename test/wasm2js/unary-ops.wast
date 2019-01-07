@@ -2,31 +2,31 @@
   (func $dummy)
 
   (func (export "i32.popcnt") (param $0 i32) (result i32)
-    (i32.popcnt (get_local $0)))
+    (i32.popcnt (local.get $0)))
 
   (func (export "check_popcnt_i64") (param $0 i64) (param $r i64) (result i32)
-    (i64.eq (i64.popcnt (get_local $0)) (get_local $r)))
+    (i64.eq (i64.popcnt (local.get $0)) (local.get $r)))
 
   (func (export "check_extend_ui32") (param $0 i32) (param $r i64) (result i32)
-    (i64.eq (i64.extend_u/i32 (get_local $0)) (get_local $r)))
+    (i64.eq (i64.extend_i32_u (local.get $0)) (local.get $r)))
 
   (func (export "check_extend_si32") (param $0 i32) (param $r i64) (result i32)
-    (i64.eq (i64.extend_s/i32 (get_local $0)) (get_local $r)))
+    (i64.eq (i64.extend_i32_s (local.get $0)) (local.get $r)))
 
   (func (export "check_eqz_i64") (param $0 i64) (result i32)
-    (i64.eqz (get_local $0)))
+    (i64.eqz (local.get $0)))
 
   (func (export "i32.clz") (param $0 i32) (result i32)
-    (i32.clz (get_local $0)))
+    (i32.clz (local.get $0)))
 
   (func (export "i32.ctz") (param $0 i32) (result i32)
-    (i32.ctz (get_local $0)))
+    (i32.ctz (local.get $0)))
 
   (func (export "check_clz_i64") (param $0 i64) (param $r i64) (result i32)
-    (i64.eq (i64.clz (get_local $0)) (get_local $r)))
+    (i64.eq (i64.clz (local.get $0)) (local.get $r)))
 
   (func (export "check_ctz_i64") (param $0 i64) (param $r i64) (result i32)
-    (i64.eq (i64.ctz (get_local $0)) (get_local $r)))
+    (i64.eq (i64.ctz (local.get $0)) (local.get $r)))
 )
 
 (assert_return (invoke "i32.popcnt" (i32.const 0)) (i32.const 0))

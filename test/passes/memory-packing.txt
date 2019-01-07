@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $0 2048 2048))
- (data (get_global $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
+ (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
  (data (i32.const 1024) "waka this CAN be optimized")
  (data (i32.const 1107) "we DO know where it will go")
  (data (i32.const 2057) "zeros before")

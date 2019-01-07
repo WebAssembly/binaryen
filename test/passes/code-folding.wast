@@ -1,6 +1,6 @@
 (module
  (type $13 (func (param f32)))
- (table 282 282 anyfunc)
+ (table 282 282 funcref)
  (memory $0 1 1)
  (func $0
   (block $label$1
@@ -142,10 +142,10 @@
   (if (result i32)
    (i32.const 0)
    (i32.load offset=22
-    (get_local $var$0)
+    (local.get $var$0)
    )
    (i32.atomic.load offset=22
-    (get_local $var$0)
+    (local.get $var$0)
    )
   )
  )

@@ -14,21 +14,21 @@
  (export "types3" (func $legalstub$types3))
  (func $add (; 1 ;) (type $0) (param $x i32) (param $y i32) (result i32)
   (i32.add
-   (get_local $x)
-   (get_local $y)
+   (local.get $x)
+   (local.get $y)
   )
  )
  (func $unexported (; 2 ;) (type $0) (param $x i32) (param $y i32) (result i32)
   (i32.add
-   (get_local $x)
-   (get_local $y)
+   (local.get $x)
+   (local.get $y)
   )
  )
  (func $no-return (; 3 ;) (type $1) (param $x i32)
   (drop
    (i32.add
-    (get_local $x)
-    (get_local $x)
+    (local.get $x)
+    (local.get $x)
    )
   )
  )
@@ -43,54 +43,54 @@
  )
  (func $legalstub$types (; 7 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64) (param $4 f64)
   (call $types
-   (get_local $0)
+   (local.get $0)
    (i64.or
-    (i64.extend_u/i32
-     (get_local $1)
+    (i64.extend_i32_u
+     (local.get $1)
     )
     (i64.shl
-     (i64.extend_u/i32
-      (get_local $2)
+     (i64.extend_i32_u
+      (local.get $2)
      )
      (i64.const 32)
     )
    )
-   (f32.demote/f64
-    (get_local $3)
+   (f32.demote_f64
+    (local.get $3)
    )
-   (get_local $4)
+   (local.get $4)
   )
  )
  (func $legalstub$types2 (; 8 ;) (param $0 i32) (param $1 f64) (param $2 f64)
   (call $types2
-   (get_local $0)
-   (f32.demote/f64
-    (get_local $1)
+   (local.get $0)
+   (f32.demote_f64
+    (local.get $1)
    )
-   (get_local $2)
+   (local.get $2)
   )
  )
  (func $legalstub$types3 (; 9 ;) (param $0 i32) (param $1 f64) (param $2 f64) (result i32)
   (local $3 i64)
-  (set_local $3
+  (local.set $3
    (call $types3
-    (get_local $0)
-    (f32.demote/f64
-     (get_local $1)
+    (local.get $0)
+    (f32.demote_f64
+     (local.get $1)
     )
-    (get_local $2)
+    (local.get $2)
    )
   )
   (call $setTempRet0
-   (i32.wrap/i64
+   (i32.wrap_i64
     (i64.shr_u
-     (get_local $3)
+     (local.get $3)
      (i64.const 32)
     )
    )
   )
-  (i32.wrap/i64
-   (get_local $3)
+  (i32.wrap_i64
+   (local.get $3)
   )
  )
 )

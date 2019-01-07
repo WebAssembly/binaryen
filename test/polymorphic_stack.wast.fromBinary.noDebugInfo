@@ -3,7 +3,7 @@
  (type $1 (func (result i32)))
  (type $2 (func (param i32)))
  (type $3 (func))
- (import "env" "table" (table $timport$0 9 9 anyfunc))
+ (import "env" "table" (table $timport$0 9 9 funcref))
  (func $0 (; 0 ;) (type $1) (result i32)
   (block $label$1 (result i32)
    (unreachable)
@@ -39,7 +39,7 @@
  )
  (func $6 (; 6 ;) (type $0) (param $0 i32) (result i32)
   (if
-   (get_local $0)
+   (local.get $0)
    (return
     (i32.const 127)
    )

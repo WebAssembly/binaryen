@@ -2,7 +2,7 @@
  (type $FUNCSIG$ffff (func (param f32 f32 f32) (result f32)))
  (import "env" "fmaf" (func $fmaf (param f32 f32 f32) (result f32)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "fadd32" (func $fadd32))
  (export "fsub32" (func $fsub32))
@@ -26,103 +26,103 @@
  (func $fadd32 (; 1 ;) (param $0 f32) (param $1 f32) (result f32)
   (return
    (f32.add
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $fsub32 (; 2 ;) (param $0 f32) (param $1 f32) (result f32)
   (return
    (f32.sub
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $fmul32 (; 3 ;) (param $0 f32) (param $1 f32) (result f32)
   (return
    (f32.mul
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $fdiv32 (; 4 ;) (param $0 f32) (param $1 f32) (result f32)
   (return
    (f32.div
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $fabs32 (; 5 ;) (param $0 f32) (result f32)
   (return
    (f32.abs
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $fneg32 (; 6 ;) (param $0 f32) (result f32)
   (return
    (f32.neg
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $copysign32 (; 7 ;) (param $0 f32) (param $1 f32) (result f32)
   (return
    (f32.copysign
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sqrt32 (; 8 ;) (param $0 f32) (result f32)
   (return
    (f32.sqrt
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $ceil32 (; 9 ;) (param $0 f32) (result f32)
   (return
    (f32.ceil
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $floor32 (; 10 ;) (param $0 f32) (result f32)
   (return
    (f32.floor
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $trunc32 (; 11 ;) (param $0 f32) (result f32)
   (return
    (f32.trunc
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $nearest32 (; 12 ;) (param $0 f32) (result f32)
   (return
    (f32.nearest
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $nearest32_via_rint (; 13 ;) (param $0 f32) (result f32)
   (return
    (f32.nearest
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $fmin32 (; 14 ;) (param $0 f32) (result f32)
   (return
    (f32.min
-    (get_local $0)
+    (local.get $0)
     (f32.const 0)
    )
   )
@@ -130,7 +130,7 @@
  (func $fmax32 (; 15 ;) (param $0 f32) (result f32)
   (return
    (f32.max
-    (get_local $0)
+    (local.get $0)
     (f32.const 0)
    )
   )
@@ -138,9 +138,9 @@
  (func $fma32 (; 16 ;) (param $0 f32) (param $1 f32) (param $2 f32) (result f32)
   (return
    (call $fmaf
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
  )
@@ -153,24 +153,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 19 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

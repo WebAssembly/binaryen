@@ -4,10 +4,10 @@
   (func $dummy)
 
   (func (export "check_add_i64") (param $0 i64) (param $1 i64) (param $r i64) (result i32)
-    (i64.eq (i64.add (get_local $0) (get_local $1)) (get_local $r)))
+    (i64.eq (i64.add (local.get $0) (local.get $1)) (local.get $r)))
 
   (func (export "check_sub_i64") (param $0 i64) (param $1 i64) (param $r i64) (result i32)
-    (i64.eq (i64.sub (get_local $0) (get_local $1)) (get_local $r)))
+    (i64.eq (i64.sub (local.get $0) (local.get $1)) (local.get $r)))
 )
 
 (assert_return (invoke "check_add_i64" (i32.const 0) (i32.const 0)

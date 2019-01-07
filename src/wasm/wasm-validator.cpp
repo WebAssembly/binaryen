@@ -472,32 +472,32 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
 }
 
 void FunctionValidator::visitGetLocal(GetLocal* curr) {
-  shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "get_local index must be small enough");
-  shouldBeTrue(isConcreteType(curr->type), curr, "get_local must have a valid type - check what you provided when you constructed the node");
-  shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index), curr, "get_local must have proper type");
+  shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "local.get index must be small enough");
+  shouldBeTrue(isConcreteType(curr->type), curr, "local.get must have a valid type - check what you provided when you constructed the node");
+  shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index), curr, "local.get must have proper type");
 }
 
 void FunctionValidator::visitSetLocal(SetLocal* curr) {
-  shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "set_local index must be small enough");
+  shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "local.set index must be small enough");
   if (curr->value->type != unreachable) {
     if (curr->type != none) { // tee is ok anyhow
-      shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "set_local type must be correct");
+      shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "local.set type must be correct");
     }
-    shouldBeEqual(getFunction()->getLocalType(curr->index), curr->value->type, curr, "set_local type must match function");
+    shouldBeEqual(getFunction()->getLocalType(curr->index), curr->value->type, curr, "local.set type must match function");
   }
 }
 
 void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
   if (!info.validateGlobally) return;
-  shouldBeTrue(getModule()->getGlobalOrNull(curr->name), curr, "get_global name must be valid");
+  shouldBeTrue(getModule()->getGlobalOrNull(curr->name), curr, "global.get name must be valid");
 }
 
 void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
   if (!info.validateGlobally) return;
   auto* global = getModule()->getGlobalOrNull(curr->name);
-  if (shouldBeTrue(global, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
-    shouldBeTrue(global->mutable_, curr, "set_global global must be mutable");
-    shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "set_global value must have right type");
+  if (shouldBeTrue(global, curr, "global.set name must be valid (and not an import; imports can't be modified)")) {
+    shouldBeTrue(global->mutable_, curr, "global.set global must be mutable");
+    shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "global.set value must have right type");
   }
 }
 
