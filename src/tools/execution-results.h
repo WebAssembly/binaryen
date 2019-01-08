@@ -130,8 +130,8 @@ struct ExecutionResults {
     try {
       LiteralList arguments;
       // init hang support, if present
-      if (wasm.getFunctionOrNull("hangLimitInitializer")) {
-        instance.callFunction("hangLimitInitializer", arguments);
+      if (auto* ex = wasm.getExportOrNull("hangLimitInitializer")) {
+        instance.callFunction(ex->value, arguments);
       }
       // call the method
       for (Type param : func->params) {
