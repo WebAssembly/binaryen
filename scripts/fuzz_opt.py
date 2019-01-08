@@ -82,9 +82,10 @@ def run_vms(prefix):
       if 'nan' in x or 'NaN' in x:
         x = 'nan'
       else:
+        x = x.replace('Infinity', 'inf')
         x = str(float(x))
       return 'f64.const ' + x
-    out = re.sub(r'f64\.const (-?[nanN:abcdefx\d+-.]+)', fix_double, out)
+    out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
 
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace('[trap ', 'exception: [trap ')
