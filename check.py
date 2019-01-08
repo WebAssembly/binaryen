@@ -354,7 +354,7 @@ def run_spec_tests():
           expected = open(expected).read()
 
           # fix it up, our pretty (i32.const 83) must become compared to a homely 83 : i32
-          def fix(x):
+          def fix_expected(x):
             x = x.strip()
             if not x:
               return x
@@ -363,7 +363,13 @@ def run_spec_tests():
               v = v[:-1]  # remove trailing '.'
             return '(' + t + '.const ' + v + ')'
 
-          expected = '\n'.join(map(fix, expected.split('\n')))
+          def fix_actual(x):
+            if '[trap ' in x:
+              return ''
+            return x
+
+          expected = '\n'.join(map(fix_expected, expected.split('\n')))
+          actual = '\n'.join(map(fix_actual, actual.split('\n')))
           print '       (using expected output)'
           actual = actual.strip()
           expected = expected.strip()
