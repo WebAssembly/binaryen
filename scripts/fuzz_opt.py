@@ -28,7 +28,7 @@ from test.shared import options
 
 
 LOG_LIMIT = 125
-INPUT_SIZE_LIMIT = 1024
+INPUT_SIZE_LIMIT = 250 * 1024
 
 
 # utilities
