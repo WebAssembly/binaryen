@@ -84,7 +84,7 @@ def run_vms(prefix):
       else:
         x = str(float(x))
       return 'f64.const ' + x
-    out = re.sub(r'f64\.const (-?[nanN:abcdefx\d+.]+)', fix_double, out)
+    out = re.sub(r'f64\.const (-?[nanN:abcdefx\d+-.]+)', fix_double, out)
 
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace('[trap ', 'exception: [trap ')
