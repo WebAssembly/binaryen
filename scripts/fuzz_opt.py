@@ -79,12 +79,12 @@ def run_vms(prefix):
     # large doubles may print slightly different on different VMs
     def fix_double(x):
       x = x.group(1)
-      if 'nan' in x:
+      if 'nan' in x or 'NaN' in x:
         x = 'nan'
       else:
         x = str(float(x))
       return 'f64.const ' + x
-    out = re.sub(r'f64\.const (-?[nan:abcdef\d]+)', fix_double, out)
+    out = re.sub(r'f64\.const (-?[nanN:abcdefx\d]+)', fix_double, out)
 
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace('[trap ', 'exception: [trap ')
