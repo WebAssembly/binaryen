@@ -158,9 +158,9 @@
    (br_if $label$1
     (i32.const 1)
    )
-   (set_global $global$0
+   (global.set $global$0
     (i32.sub
-     (get_global $global$0)
+     (global.get $global$0)
      (i32.const 1)
     )
    )
@@ -171,11 +171,11 @@
     (i32.const 0)
    )
    (if
-    (get_global $global$0)
+    (global.get $global$0)
     (block
-     (set_global $global$0
+     (global.set $global$0
       (i32.sub
-       (get_global $global$0)
+       (global.get $global$0)
        (i32.const 1)
       )
      )
@@ -185,11 +185,11 @@
    (unreachable)
   )
   (if
-   (get_global $global$0)
+   (global.get $global$0)
    (block
-    (set_global $global$0
+    (global.set $global$0
      (i32.sub
-      (get_global $global$0)
+      (global.get $global$0)
       (i32.const 1)
      )
     )

@@ -157,7 +157,7 @@
       (i32.const 0)
      )
      (if
-      (get_global $global$0)
+      (global.get $global$0)
       (block $block
        (br $folding-inner0)
       )
@@ -165,7 +165,7 @@
      (unreachable)
     )
     (if
-     (get_global $global$0)
+     (global.get $global$0)
      (block $block1
       (br $folding-inner0)
      )
@@ -173,9 +173,9 @@
     (unreachable)
    )
   )
-  (set_global $global$0
+  (global.set $global$0
    (i32.sub
-    (get_global $global$0)
+    (global.get $global$0)
     (i32.const 1)
    )
   )
