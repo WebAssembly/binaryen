@@ -7,7 +7,7 @@
     (select
      (i32.const 65473)
      (i32.const 1)
-     (get_local $var$0)
+     (local.get $var$0)
     )
     (i32.const -2405046)
     (i32.const 1)
@@ -65,7 +65,7 @@
         (if (result i32)
          (i32.const 0)
          (i32.const 0)
-         (get_local $var$2)
+         (local.get $var$2)
         )
        )
       )
@@ -83,23 +83,23 @@
   (local $var$3 i32)
   (local $var$4 i32)
   (loop $label$1
-   (set_local $var$3
-    (tee_local $var$1
-     (tee_local $var$2
-      (get_local $var$1)
+   (local.set $var$3
+    (local.tee $var$1
+     (local.tee $var$2
+      (local.get $var$1)
      )
     )
    )
    (if
     (i32.eqz
-     (get_local $var$4)
+     (local.get $var$4)
     )
     (block
-     (set_local $var$4
+     (local.set $var$4
       (select
-       (get_local $var$3)
+       (local.get $var$3)
        (i32.const -2147483648)
-       (get_local $var$2)
+       (local.get $var$2)
       )
      )
      (br $label$1)

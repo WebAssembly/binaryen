@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $memory 256 256))
- (data (get_global $__memory_base) "min.asm.js")
+ (data (global.get $__memory_base) "min.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))
  (global $M (mut i32) (i32.const 0))
  (export "floats" (func $legalstub$floats))
@@ -15,27 +15,27 @@
   (drop
    (call $ub)
   )
-  (get_global $M)
+  (global.get $M)
  )
  (func $legalstub$floats (; 2 ;) (; has Stack IR ;) (param $0 f64) (result f64)
-  (f64.promote/f32
+  (f64.promote_f32
    (f32.add
     (f32.const 0)
-    (f32.demote/f64
-     (get_local $0)
+    (f32.demote_f64
+     (local.get $0)
     )
    )
   )
  )
  (func $legalstub$neg (; 3 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result f64)
   (i32.store
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
-  (f64.promote/f32
+  (f64.promote_f32
    (f32.neg
     (f32.load
-     (get_local $0)
+     (local.get $0)
     )
    )
   )

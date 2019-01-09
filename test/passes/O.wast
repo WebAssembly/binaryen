@@ -27,41 +27,41 @@
   (func $many-selects (export "many-selects") (param $0 i32) (result i32)
    (if
     (i32.lt_s
-     (get_local $0)
+     (local.get $0)
      (i32.const -1073741824)
     )
-    (set_local $0
+    (local.set $0
      (i32.const -1073741824)
     )
     (if
      (i32.gt_s
-      (get_local $0)
+      (local.get $0)
       (i32.const 1073741823)
      )
-     (set_local $0
+     (local.set $0
       (i32.const 1073741823)
      )
     )
    )
-   (get_local $0)
+   (local.get $0)
   )
   (func $end-if-else (export "end-if-else") (param $x i32) (result i32)
     (if
-      (get_local $x)
-      (set_local $x
+      (local.get $x)
+      (local.set $x
         (i32.const 1)
       )
     )
-    (get_local $x)
+    (local.get $x)
   )
   (func $end-if-else-call (export "end-if-else-call") (param $x i32) (result i32)
     (if
-      (get_local $x)
-      (set_local $x
+      (local.get $x)
+      (local.set $x
         (call $ret)
       )
     )
-    (get_local $x)
+    (local.get $x)
   )
 )
 

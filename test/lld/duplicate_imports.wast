@@ -9,7 +9,7 @@
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 581))
- (table 1 1 anyfunc)
+ (table 1 1 funcref)
  (memory $0 2)
  (data (i32.const 568) "Hello, world\00")
  (export "memory" (memory $0))

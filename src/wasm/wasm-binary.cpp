@@ -1986,10 +1986,10 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
 
 void WasmBinaryBuilder::visitGetLocal(GetLocal* curr) {
   if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
-  requireFunctionContext("get_local");
+  requireFunctionContext("local.get");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
-    throwError("bad get_local index");
+    throwError("bad local.get index");
   }
   curr->type = currFunction->getLocalType(curr->index);
   curr->finalize();
@@ -1997,10 +1997,10 @@ void WasmBinaryBuilder::visitGetLocal(GetLocal* curr) {
 
 void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
-  requireFunctionContext("set_local outside of function");
+  requireFunctionContext("local.set outside of function");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
-    throwError("bad set_local index");
+    throwError("bad local.set index");
   }
   curr->value = popNonVoidExpression();
   curr->type = curr->value->type;

@@ -3,7 +3,7 @@
  (type $1 (func (result i32)))
  (type $2 (func (result f64)))
  (type $3 (func (param f32 i64)))
- (table $0 1 1 anyfunc)
+ (table $0 1 1 funcref)
  (elem (i32.const 0) $tabled)
  (export "user" (func $user))
  (export "exported" (func $exported))
@@ -56,14 +56,14 @@
     )
    )
   )
-  (set_local $x
+  (local.set $x
    (block (result i32)
     (block $__inlined_func$int2 (result i32)
      (i32.const 112)
     )
    )
   )
-  (set_local $y
+  (local.set $y
    (block (result f64)
     (block $__inlined_func$double2 (result f64)
      (f64.const 113.14159)
@@ -72,20 +72,20 @@
   )
   (block
    (block $__inlined_func$with-local
-    (set_local $2
+    (local.set $2
      (f32.const 0)
     )
-    (set_local $2
+    (local.set $2
      (f32.const 2.1418280601501465)
     )
    )
   )
   (block
    (block $__inlined_func$with-local2
-    (set_local $3
+    (local.set $3
      (i64.const 0)
     )
-    (set_local $3
+    (local.set $3
      (i64.const 4)
     )
    )
@@ -114,24 +114,24 @@
   )
   (block
    (block $__inlined_func$param
-    (set_local $4
+    (local.set $4
      (f32.const 12.34000015258789)
     )
-    (set_local $5
+    (local.set $5
      (i64.const 890005350012)
     )
-    (set_local $6
+    (local.set $6
      (f32.const 0)
     )
     (block
      (drop
-      (get_local $4)
+      (local.get $4)
      )
      (drop
-      (get_local $5)
+      (local.get $5)
      )
      (drop
-      (get_local $6)
+      (local.get $6)
      )
     )
    )
@@ -185,15 +185,15 @@
    (block $block
     (if
      (i32.eqz
-      (get_global $hangLimit)
+      (global.get $hangLimit)
      )
      (return
       (i32.const 54)
      )
     )
-    (set_global $hangLimit
+    (global.set $hangLimit
      (i32.sub
-      (get_global $hangLimit)
+      (global.get $hangLimit)
       (i32.const 1)
      )
     )
@@ -205,12 +205,12 @@
       (i32.eqz
        (block (result i32)
         (block $__inlined_func$func_3 (result i32)
-         (set_local $8
+         (local.set $8
           (i32.const 0)
          )
          (select
-          (get_local $8)
-          (tee_local $8
+          (local.get $8)
+          (local.tee $8
            (i32.const -1)
           )
           (i32.const 1)
@@ -227,7 +227,7 @@
   )
  )
  (func $hangLimitInitializer (; 1 ;) (type $2)
-  (set_global $hangLimit
+  (global.set $hangLimit
    (i32.const 25)
   )
  )
@@ -235,7 +235,7 @@
 (module
  (type $T (func (param i32)))
  (type $1 (func))
- (table $0 10 anyfunc)
+ (table $0 10 funcref)
  (func $0 (; 0 ;) (type $1)
   (block $__inlined_func$1
    (call_indirect (type $T)

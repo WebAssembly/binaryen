@@ -34,6 +34,7 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "support/permutations.h"
+#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 
@@ -59,26 +60,24 @@ struct SSAify : public Pass {
     func = func_;
     LocalGraph graph(func);
     // create new local indexes, one for each set
-    createNewIndexes(graph);
+    createNewIndexes();
     // we now know the sets for each get, and can compute get indexes and handle phis
     computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
   }
 
-  void createNewIndexes(LocalGraph& graph) {
-    for (auto& pair : graph.locations) {
-      auto* curr = pair.first;
-      if (auto* set = curr->dynCast<SetLocal>()) {
-        set->index = addLocal(func->getLocalType(set->index));
-      }
+  void createNewIndexes() {
+    FindAll<SetLocal> sets(func->body);
+    for (auto* set : sets.list) {
+      set->index = addLocal(func->getLocalType(set->index));
     }
   }
 
   void computeGetsAndPhis(LocalGraph& graph) {
-    for (auto& iter : graph.getSetses) {
-      auto* get = iter.first;
-      auto& sets = iter.second;
+    FindAll<GetLocal> gets(func->body);
+    for (auto* get : gets.list) {
+      auto& sets = graph.getSetses[get];
       if (sets.size() == 0) {
         continue; // unreachable, ignore
       }

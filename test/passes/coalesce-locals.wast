@@ -25,138 +25,138 @@
   (func $leave-interfere (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
-    (set_local $y
+    (local.set $y
       (i32.const 0)
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $almost-interfere (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
-    (set_local $y
+    (local.set $y
       (i32.const 0)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $redundant-copy (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
-    (set_local $y
-      (get_local $x)
+    (local.set $y
+      (local.get $x)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $ineffective-store (type $2)
     (local $x i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
   )
   (func $block (type $2)
     (local $x i32)
     (block $block0
-      (set_local $x
+      (local.set $x
         (i32.const 0)
       )
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
   )
   (func $see-both-sides (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
     (block $block0
-      (set_local $y
+      (local.set $y
         (i32.const 0)
       )
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $see-br-and-ignore-dead (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
     (block $block
       (br $block)
-      (set_local $y
+      (local.set $y
         (i32.const 0)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
-      (set_local $x
+      (local.set $x
         (i32.const -1)
       )
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
   )
   (func $see-block-body (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
     (block $block
-      (set_local $y
+      (local.set $y
         (i32.const 0)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
       (br $block)
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
   )
   (func $zero-init (type $2)
     (local $x i32)
     (local $y i32)
     (drop
-      (get_local $x)
+      (local.get $x)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $multi (type $2)
@@ -164,10 +164,10 @@
     (local $y i32)
     (local $z i32)
     (drop
-      (get_local $y)
+      (local.get $y)
     )
     (drop
-      (get_local $z)
+      (local.get $z)
     )
   )
   (func $if-else (type $2)
@@ -176,10 +176,10 @@
     (if
       (i32.const 0)
       (drop
-        (get_local $x)
+        (local.get $x)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
     )
   )
@@ -189,19 +189,19 @@
     (if
       (i32.const 0)
       (block $block1
-        (set_local $x
+        (local.set $x
           (i32.const 0)
         )
         (drop
-          (get_local $x)
+          (local.get $x)
         )
       )
       (block $block3
-        (set_local $y
+        (local.set $y
           (i32.const 1)
         )
         (drop
-          (get_local $y)
+          (local.get $y)
         )
       )
     )
@@ -211,27 +211,27 @@
     (local $y i32)
     (if
       (i32.const 0)
-      (set_local $x
+      (local.set $x
         (i32.const 0)
       )
-      (set_local $y
+      (local.set $y
         (i32.const 1)
       )
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $if-else-through (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
-    (set_local $y
+    (local.set $y
       (i32.const 1)
     )
     (if
@@ -244,19 +244,19 @@
       )
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $if-through (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
-    (set_local $y
+    (local.set $y
       (i32.const 1)
     )
     (if
@@ -266,45 +266,45 @@
       )
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $if-through2 (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
     (if
       (i32.const 0)
-      (set_local $y
+      (local.set $y
         (i32.const 1)
       )
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $if-through3 (type $2)
     (local $x i32)
     (local $y i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
     (if
       (i32.const 0)
       (block $block1
         (drop
-          (get_local $x)
+          (local.get $x)
         )
         (drop
-          (get_local $y)
+          (local.get $y)
         )
       )
     )
@@ -313,15 +313,15 @@
     (local $x i32)
     (local $y i32)
     (if
-      (tee_local $x
+      (local.tee $x
         (i32.const 0)
       )
       (block $block1
         (drop
-          (get_local $x)
+          (local.get $x)
         )
         (drop
-          (get_local $y)
+          (local.get $y)
         )
       )
     )
@@ -332,16 +332,16 @@
     (if
       (i32.const 0)
       (block $block1
-        (set_local $x
+        (local.set $x
           (i32.const 0)
         )
         (drop
-          (get_local $x)
+          (local.get $x)
         )
       )
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $if4 (type $2)
@@ -350,19 +350,19 @@
     (if
       (i32.const 0)
       (block $block1
-        (set_local $x
+        (local.set $x
           (i32.const 0)
         )
         (drop
-          (get_local $x)
+          (local.get $x)
         )
-        (set_local $y
+        (local.set $y
           (i32.const 1)
         )
       )
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $if5 (type $2)
@@ -372,15 +372,15 @@
       (i32.const 0)
       (block $block1
         (drop
-          (get_local $x)
+          (local.get $x)
         )
-        (set_local $y
+        (local.set $y
           (i32.const 1)
         )
       )
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
   )
   (func $loop (type $2)
@@ -388,13 +388,13 @@
     (local $y i32)
     (loop $in
       (drop
-        (get_local $x)
+        (local.get $x)
       )
-      (set_local $x
+      (local.set $x
         (i32.const 0)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
       (br $in)
     )
@@ -405,10 +405,10 @@
     (block $block
       (br $block)
       (drop
-        (get_local $x)
+        (local.get $x)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
     )
   )
@@ -418,10 +418,10 @@
     (block $block
       (unreachable)
       (drop
-        (get_local $x)
+        (local.get $x)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
     )
   )
@@ -431,10 +431,10 @@
     (block $block
       (return)
       (drop
-        (get_local $x)
+        (local.get $x)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
     )
   )
@@ -444,13 +444,13 @@
     (local $z i32)
     (local $w i32)
     (drop
-      (get_local $y)
+      (local.get $y)
     )
     (drop
-      (get_local $z)
+      (local.get $z)
     )
     (drop
-      (get_local $w)
+      (local.get $w)
     )
   )
   (func $interfere-in-dead4 (type $2)
@@ -461,10 +461,10 @@
         (i32.const 0)
       )
       (drop
-        (get_local $x)
+        (local.get $x)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
     )
   )
@@ -480,19 +480,19 @@
             (i32.const 100)
           )
           (drop
-            (get_local $x)
+            (local.get $x)
           )
         )
         (drop
-          (get_local $y)
+          (local.get $y)
         )
       )
       (drop
-        (get_local $z)
+        (local.get $z)
       )
     )
     (drop
-      (get_local $w)
+      (local.get $w)
     )
   )
   (func $greedy-can-be-happy (type $2)
@@ -509,62 +509,62 @@
         (if
           (i32.const 2)
           (block $block3
-            (set_local $x1
+            (local.set $x1
               (i32.const 100)
             )
-            (set_local $y2
+            (local.set $y2
               (i32.const 101)
             )
             (drop
-              (get_local $x1)
+              (local.get $x1)
             )
             (drop
-              (get_local $y2)
+              (local.get $y2)
             )
           )
           (block $block5
-            (set_local $x1
+            (local.set $x1
               (i32.const 102)
             )
-            (set_local $y3
+            (local.set $y3
               (i32.const 103)
             )
             (drop
-              (get_local $x1)
+              (local.get $x1)
             )
             (drop
-              (get_local $y3)
+              (local.get $y3)
             )
           )
         )
         (if
           (i32.const 3)
           (block $block8
-            (set_local $x2
+            (local.set $x2
               (i32.const 104)
             )
-            (set_local $y1
+            (local.set $y1
               (i32.const 105)
             )
             (drop
-              (get_local $x2)
+              (local.get $x2)
             )
             (drop
-              (get_local $y1)
+              (local.get $y1)
             )
           )
           (block $block10
-            (set_local $x2
+            (local.set $x2
               (i32.const 106)
             )
-            (set_local $y3
+            (local.set $y3
               (i32.const 107)
             )
             (drop
-              (get_local $x2)
+              (local.get $x2)
             )
             (drop
-              (get_local $y3)
+              (local.get $y3)
             )
           )
         )
@@ -572,31 +572,31 @@
       (if
         (i32.const 4)
         (block $block13
-          (set_local $x3
+          (local.set $x3
             (i32.const 108)
           )
-          (set_local $y1
+          (local.set $y1
             (i32.const 109)
           )
           (drop
-            (get_local $x3)
+            (local.get $x3)
           )
           (drop
-            (get_local $y1)
+            (local.get $y1)
           )
         )
         (block $block15
-          (set_local $x3
+          (local.set $x3
             (i32.const 110)
           )
-          (set_local $y2
+          (local.set $y2
             (i32.const 111)
           )
           (drop
-            (get_local $x3)
+            (local.get $x3)
           )
           (drop
-            (get_local $y2)
+            (local.get $y2)
           )
         )
       )
@@ -616,62 +616,62 @@
         (if
           (i32.const 2)
           (block $block3
-            (set_local $x1
+            (local.set $x1
               (i32.const 100)
             )
-            (set_local $y2
+            (local.set $y2
               (i32.const 101)
             )
             (drop
-              (get_local $x1)
+              (local.get $x1)
             )
             (drop
-              (get_local $y2)
+              (local.get $y2)
             )
           )
           (block $block5
-            (set_local $x1
+            (local.set $x1
               (i32.const 102)
             )
-            (set_local $y3
+            (local.set $y3
               (i32.const 103)
             )
             (drop
-              (get_local $x1)
+              (local.get $x1)
             )
             (drop
-              (get_local $y3)
+              (local.get $y3)
             )
           )
         )
         (if
           (i32.const 3)
           (block $block8
-            (set_local $x2
+            (local.set $x2
               (i32.const 104)
             )
-            (set_local $y1
+            (local.set $y1
               (i32.const 105)
             )
             (drop
-              (get_local $x2)
+              (local.get $x2)
             )
             (drop
-              (get_local $y1)
+              (local.get $y1)
             )
           )
           (block $block10
-            (set_local $x2
+            (local.set $x2
               (i32.const 106)
             )
-            (set_local $y3
+            (local.set $y3
               (i32.const 107)
             )
             (drop
-              (get_local $x2)
+              (local.get $x2)
             )
             (drop
-              (get_local $y3)
+              (local.get $y3)
             )
           )
         )
@@ -679,31 +679,31 @@
       (if
         (i32.const 4)
         (block $block13
-          (set_local $x3
+          (local.set $x3
             (i32.const 108)
           )
-          (set_local $y1
+          (local.set $y1
             (i32.const 109)
           )
           (drop
-            (get_local $x3)
+            (local.get $x3)
           )
           (drop
-            (get_local $y1)
+            (local.get $y1)
           )
         )
         (block $block15
-          (set_local $x3
+          (local.set $x3
             (i32.const 110)
           )
-          (set_local $y2
+          (local.set $y2
             (i32.const 111)
           )
           (drop
-            (get_local $x3)
+            (local.get $x3)
           )
           (drop
-            (get_local $y2)
+            (local.get $y2)
           )
         )
       )
@@ -713,24 +713,24 @@
     (local $i4 i32)
     (if
       (i32.ge_s
-        (get_local $i3)
+        (local.get $i3)
         (i32.const 4096)
       )
       (drop
-        (get_local $i1)
+        (local.get $i1)
       )
     )
-    (set_local $i4
-      (get_local $i1)
+    (local.set $i4
+      (local.get $i1)
     )
     (if
       (i32.eq
         (i32.and
-          (get_local $i1)
+          (local.get $i1)
           (i32.const 3)
         )
         (i32.and
-          (get_local $i2)
+          (local.get $i2)
           (i32.const 3)
         )
       )
@@ -740,7 +740,7 @@
             (if
               (i32.eqz
                 (i32.and
-                  (get_local $i1)
+                  (local.get $i1)
                   (i32.const 3)
                 )
               )
@@ -749,33 +749,33 @@
             (block $block4
               (if
                 (i32.eqz
-                  (get_local $i3)
+                  (local.get $i3)
                 )
                 (return
-                  (get_local $i4)
+                  (local.get $i4)
                 )
               )
               (i32.store8
-                (get_local $i1)
+                (local.get $i1)
                 (i32.load8_s
-                  (get_local $i2)
+                  (local.get $i2)
                 )
               )
-              (set_local $i1
+              (local.set $i1
                 (i32.add
-                  (get_local $i1)
+                  (local.get $i1)
                   (i32.const 1)
                 )
               )
-              (set_local $i2
+              (local.set $i2
                 (i32.add
-                  (get_local $i2)
+                  (local.get $i2)
                   (i32.const 1)
                 )
               )
-              (set_local $i3
+              (local.set $i3
                 (i32.sub
-                  (get_local $i3)
+                  (local.get $i3)
                   (i32.const 1)
                 )
               )
@@ -788,7 +788,7 @@
             (if
               (i32.eqz
                 (i32.ge_s
-                  (get_local $i3)
+                  (local.get $i3)
                   (i32.const 4)
                 )
               )
@@ -796,26 +796,26 @@
             )
             (block $block7
               (i32.store
-                (get_local $i1)
+                (local.get $i1)
                 (i32.load
-                  (get_local $i2)
+                  (local.get $i2)
                 )
               )
-              (set_local $i1
+              (local.set $i1
                 (i32.add
-                  (get_local $i1)
+                  (local.get $i1)
                   (i32.const 4)
                 )
               )
-              (set_local $i2
+              (local.set $i2
                 (i32.add
-                  (get_local $i2)
+                  (local.get $i2)
                   (i32.const 4)
                 )
               )
-              (set_local $i3
+              (local.set $i3
                 (i32.sub
-                  (get_local $i3)
+                  (local.get $i3)
                   (i32.const 4)
                 )
               )
@@ -830,7 +830,7 @@
         (if
           (i32.eqz
             (i32.gt_s
-              (get_local $i3)
+              (local.get $i3)
               (i32.const 0)
             )
           )
@@ -838,26 +838,26 @@
         )
         (block $block9
           (i32.store8
-            (get_local $i1)
+            (local.get $i1)
             (i32.load8_s
-              (get_local $i2)
+              (local.get $i2)
             )
           )
-          (set_local $i1
+          (local.set $i1
             (i32.add
-              (get_local $i1)
+              (local.get $i1)
               (i32.const 1)
             )
           )
-          (set_local $i2
+          (local.set $i2
             (i32.add
-              (get_local $i2)
+              (local.get $i2)
               (i32.const 1)
             )
           )
-          (set_local $i3
+          (local.set $i3
             (i32.sub
-              (get_local $i3)
+              (local.get $i3)
               (i32.const 1)
             )
           )
@@ -866,7 +866,7 @@
       )
     )
     (return
-      (get_local $i4)
+      (local.get $i4)
     )
   )
   (func $this-is-effective-i-tell-you (type $4) (param $x i32)
@@ -877,83 +877,83 @@
           (i32.const 0)
           (nop)
         )
-        (set_local $x
+        (local.set $x
           (i32.const 1)
         )
       )
       (nop)
     )
     (drop
-      (get_local $x)
+      (local.get $x)
     )
   )
   (func $prefer-remove-copies1 (type $2)
     (local $y i32)
     (local $z i32)
     (local $x i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
-    (set_local $y
-      (get_local $x)
+    (local.set $y
+      (local.get $x)
     )
-    (set_local $z
+    (local.set $z
       (i32.const 1)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
     (drop
-      (get_local $z)
+      (local.get $z)
     )
   )
   (func $prefer-remove-copies2 (type $2)
     (local $y i32)
     (local $z i32)
     (local $x i32)
-    (set_local $x
+    (local.set $x
       (i32.const 0)
     )
-    (set_local $z
-      (get_local $x)
+    (local.set $z
+      (local.get $x)
     )
-    (set_local $y
+    (local.set $y
       (i32.const 1)
     )
     (drop
-      (get_local $y)
+      (local.get $y)
     )
     (drop
-      (get_local $z)
+      (local.get $z)
     )
   )
   (func $in-unreachable
     (local $a i32)
     (block $x
       (return)
-      (set_local $a (i32.const 1))
-      (drop (get_local $a))
-      (set_local $a (get_local $a))
+      (local.set $a (i32.const 1))
+      (drop (local.get $a))
+      (local.set $a (local.get $a))
     )
     (block $y
       (unreachable)
-      (set_local $a (i32.const 1))
-      (drop (get_local $a))
-      (set_local $a (get_local $a))
+      (local.set $a (i32.const 1))
+      (drop (local.get $a))
+      (local.set $a (local.get $a))
     )
     (block $z
       (br $z)
-      (set_local $a (i32.const 1))
-      (drop (get_local $a))
-      (set_local $a (get_local $a))
+      (local.set $a (i32.const 1))
+      (drop (local.get $a))
+      (local.set $a (local.get $a))
     )
     (block $z
       (br_table $z $z
         (i32.const 100)
       )
-      (set_local $a (i32.const 1))
-      (drop (get_local $a))
-      (set_local $a (get_local $a))
+      (local.set $a (i32.const 1))
+      (drop (local.get $a))
+      (local.set $a (local.get $a))
     )
   )
   (func $nop-in-unreachable
@@ -961,8 +961,8 @@
     (block
       (unreachable)
       (i32.store
-        (get_local $x)
-        (tee_local $x (i32.const 0))
+        (local.get $x)
+        (local.tee $x (i32.const 0))
       )
     )
   )
@@ -970,25 +970,25 @@
     (local $0 i32) ;; loop phi
     (local $1 i32) ;; value for next loop iteration
     (local $2 i32) ;; a local that might be merged with with $1, perhaps making us prefer it to removing a backedge copy
-    (set_local $0
+    (local.set $0
       (i32.const 2)
     )
     (block $out
       (loop $while-in7
-        (set_local $2 (i32.const 0)) ;; 2 interferes with 0
-        (call $set (get_local $2))
-        (set_local $1
+        (local.set $2 (i32.const 0)) ;; 2 interferes with 0
+        (call $set (local.get $2))
+        (local.set $1
           (i32.add
-            (get_local $0)
+            (local.get $0)
             (i32.const 1)
           )
         )
         (if (call $get)
-          (set_local $2 (get_local $1)) ;; copy for 1/2
+          (local.set $2 (local.get $1)) ;; copy for 1/2
         )
-        (br_if $out (get_local $2))
-        (set_local $1 (i32.const 100))
-        (set_local $0 (get_local $1)) ;; copy for 1/0, with extra weight should win the tie
+        (br_if $out (local.get $2))
+        (local.set $1 (i32.const 100))
+        (local.set $0 (local.get $1)) ;; copy for 1/0, with extra weight should win the tie
         (br $while-in7)
       )
     )
@@ -997,15 +997,15 @@
     (local $x i32)
     (local $y i32)
     (loop $top
-      (set_local $x
+      (local.set $x
         (if (result i32)
           (i32.const 1)
-          (get_local $x)
-          (get_local $y)
+          (local.get $x)
+          (local.get $y)
         )
       )
-      (drop (get_local $x))
-      (drop (get_local $y))
+      (drop (local.get $x))
+      (drop (local.get $y))
       (br $top)
     )
   )
@@ -1013,15 +1013,15 @@
     (local $x i32)
     (local $y i32)
     (loop $top
-      (set_local $x
+      (local.set $x
         (if (result i32)
           (i32.const 1)
-          (get_local $y)
-          (get_local $x)
+          (local.get $y)
+          (local.get $x)
         )
       )
-      (drop (get_local $x))
-      (drop (get_local $y))
+      (drop (local.get $x))
+      (drop (local.get $y))
       (br $top)
     )
   )
@@ -1029,15 +1029,15 @@
     (local $x i32)
     (local $y i32)
     (loop $top
-      (set_local $x
+      (local.set $x
         (if (result i32)
           (i32.const 1)
           (unreachable)
-          (get_local $x)
+          (local.get $x)
         )
       )
-      (drop (get_local $x))
-      (drop (get_local $y))
+      (drop (local.get $x))
+      (drop (local.get $y))
       (br $top)
     )
   )
@@ -1045,15 +1045,15 @@
     (local $x i32)
     (local $y i32)
     (loop $top
-      (set_local $x
+      (local.set $x
         (if (result i32)
           (i32.const 1)
           (unreachable)
-          (get_local $y)
+          (local.get $y)
         )
       )
-      (drop (get_local $x))
-      (drop (get_local $y))
+      (drop (local.get $x))
+      (drop (local.get $y))
       (br $top)
     )
   )
@@ -1062,23 +1062,23 @@
     (local $y i32)
     (loop $top
       (drop
-        (tee_local $x
+        (local.tee $x
           (if (result i32)
             (i32.const 1)
-            (get_local $x)
+            (local.get $x)
             (i32.const 2)
           )
         )
       )
-      (drop (get_local $x))
-      (drop (get_local $y))
+      (drop (local.get $x))
+      (drop (local.get $y))
       (br $top)
     )
   )
   (func $tee_br (param $x i32) (result i32)
     (block $b
       (return
-        (tee_local $x
+        (local.tee $x
           (br $b)
         )
       )
@@ -1088,7 +1088,7 @@
   (func $unused-tee-with-child-if-no-else (param $0 i32)
    (loop $label$0
     (drop
-     (tee_local $0
+     (local.tee $0
       (if
        (br $label$0)
        (nop)
@@ -1099,103 +1099,103 @@
   )
   (func $tee_if_with_unreachable_else (param $0 f64) (param $1 i32) (result i64)
     (call $tee_if_with_unreachable_else
-     (tee_local $0
+     (local.tee $0
       (if (result f64)
-       (get_local $1)
-       (get_local $0)
+       (local.get $1)
+       (local.get $0)
        (unreachable)
       )
      )
      (f64.lt
       (f64.const -128)
-      (get_local $0)
+      (local.get $0)
      )
     )
   )
   (func $tee_if_with_unreachable_true (param $0 f64) (param $1 i32) (result i64)
     (call $tee_if_with_unreachable_else
-     (tee_local $0
+     (local.tee $0
       (if (result f64)
-       (get_local $1)
+       (local.get $1)
        (unreachable)
-       (get_local $0)
+       (local.get $0)
       )
      )
      (f64.lt
       (f64.const -128)
-      (get_local $0)
+      (local.get $0)
      )
     )
   )
   (func $pick
    (local $x i32)
    (local $y i32)
-   (set_local $x (get_local $y))
+   (local.set $x (local.get $y))
    (if (i32.const 1)
-    (set_local $x (i32.const 1))
+    (local.set $x (i32.const 1))
    )
-   (set_local $x (get_local $y))
-   (set_local $x (get_local $y))
+   (local.set $x (local.get $y))
+   (local.set $x (local.get $y))
   )
   (func $pick-2
    (local $x i32)
    (local $y i32)
-   (set_local $y (get_local $x))
+   (local.set $y (local.get $x))
    (if (i32.const 1)
-    (set_local $y (i32.const 1))
+    (local.set $y (i32.const 1))
    )
-   (set_local $y (get_local $x))
-   (set_local $y (get_local $x))
+   (local.set $y (local.get $x))
+   (local.set $y (local.get $x))
   )
   (func $many
    (local $x i32)
    (local $y i32)
    (local $z i32)
    (local $w i32)
-   (set_local $y (get_local $x))
-   (set_local $z (get_local $y))
-   (set_local $w (get_local $z))
-   (set_local $x (get_local $z))
+   (local.set $y (local.get $x))
+   (local.set $z (local.get $y))
+   (local.set $w (local.get $z))
+   (local.set $x (local.get $z))
    (if (i32.const 1)
-    (set_local $y (i32.const 1))
+    (local.set $y (i32.const 1))
    )
-   (set_local $x (get_local $z))
+   (local.set $x (local.get $z))
    (if (i32.const 1)
-    (set_local $y (i32.const 1))
+    (local.set $y (i32.const 1))
    )
-   (set_local $y (get_local $x))
-   (set_local $z (get_local $y))
-   (set_local $w (get_local $z))
-   (set_local $z (i32.const 2))
-   (set_local $x (get_local $z))
+   (local.set $y (local.get $x))
+   (local.set $z (local.get $y))
+   (local.set $w (local.get $z))
+   (local.set $z (i32.const 2))
+   (local.set $x (local.get $z))
    (if (i32.const 1)
-    (set_local $y (i32.const 1))
+    (local.set $y (i32.const 1))
    )
-   (set_local $y (get_local $x))
-   (set_local $z (get_local $y))
-   (set_local $w (get_local $z))
-   (set_local $z (i32.const 2))
-   (set_local $x (get_local $w))
+   (local.set $y (local.get $x))
+   (local.set $z (local.get $y))
+   (local.set $w (local.get $z))
+   (local.set $z (i32.const 2))
+   (local.set $x (local.get $w))
   )
   (func $loop-copies (param $x i32) (param $y i32)
    (loop $loop
-    (set_local $x (get_local $y))
-    (set_local $y (get_local $x))
-    (br_if $loop (get_local $x))
+    (local.set $x (local.get $y))
+    (local.set $y (local.get $x))
+    (br_if $loop (local.get $x))
    )
   )
   (func $proper-type (result f64)
    (local $var$0 i32)
    (local $var$2 f64)
-   (set_local $var$0
+   (local.set $var$0
     (select
      (i32.const 0)
      (i32.const 1)
-     (get_local $var$0)
+     (local.get $var$0)
     )
    )
-   (tee_local $var$2 ;; the locals will be reordered, this should be the f64
-    (get_local $var$2)
+   (local.tee $var$2 ;; the locals will be reordered, this should be the f64
+    (local.get $var$2)
    )
   )
 )

@@ -1,9 +1,9 @@
 (module
  (type $0 (func))
  (import "env" "memory" (memory $0 256))
- (data (get_global $__memory_base) "hello, this is some data!\00\00\00\00\00\00\00")
- (import "env" "table" (table $0 2 anyfunc))
- (elem (get_global $__table_base) $foo $foo)
+ (data (global.get $__memory_base) "hello, this is some data!\00\00\00\00\00\00\00")
+ (import "env" "table" (table $0 2 funcref))
+ (elem (global.get $__table_base) $foo $foo)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "__memory_base" (global $__memory_base i32))
@@ -14,10 +14,10 @@
  (import "env" "__table_base" (global $__table_base$0 i32))
  (func $foo (; 0 ;) (type $0)
   (drop
-   (get_global $tableBase$0)
+   (global.get $tableBase$0)
   )
   (drop
-   (get_global $memoryBase$0)
+   (global.get $memoryBase$0)
   )
  )
 )

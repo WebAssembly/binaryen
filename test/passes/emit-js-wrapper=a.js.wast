@@ -7,21 +7,21 @@
  (export "types3" (func $types3))
  (func $add (param $x i32) (param $y i32) (result i32)
   (i32.add
-   (get_local $x)
-   (get_local $y)
+   (local.get $x)
+   (local.get $y)
   )
  )
  (func $unexported (param $x i32) (param $y i32) (result i32)
   (i32.add
-   (get_local $x)
-   (get_local $y)
+   (local.get $x)
+   (local.get $y)
   )
  )
  (func $no-return (param $x i32)
   (drop
    (i32.add
-    (get_local $x)
-    (get_local $x)
+    (local.get $x)
+    (local.get $x)
    )
   )
  )

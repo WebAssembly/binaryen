@@ -1,1 +1,1 @@
-(module (memory 1) (func (param i32) (param f32) (f64.store32 (get_local 0) (get_local 1))))
+(module (memory 1) (func (param i32) (param f32) (f64.store32 (local.get 0) (local.get 1))))

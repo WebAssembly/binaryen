@@ -88,7 +88,7 @@
    (block $a2
     (block $a3
      (block $a4
-      (br_table $a1 $a2 $a3 $a4 $a1 $a2 $a3 $a4 (get_local $x))
+      (br_table $a1 $a2 $a3 $a4 $a1 $a2 $a3 $a4 (local.get $x))
      )
      (br $a3)
     )
@@ -123,7 +123,7 @@
  (func $skip-only-empty
   (if
    (i32.const 1)
-   (set_global $global
+   (global.set $global
     (i32.const 0)
    )
   )

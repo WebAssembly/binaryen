@@ -388,7 +388,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
     hash(curr->_id);
     // we often don't need to hash the type, as it is tied to other values
     // we are hashing anyhow, but there are exceptions: for example, a
-    // get_local's type is determined by the function, so if we are
+    // local.get's type is determined by the function, so if we are
     // hashing only expression fragments, then two from different
     // functions may turn out the same even if the type differs. Likewise,
     // if we hash between modules, then we need to take int account

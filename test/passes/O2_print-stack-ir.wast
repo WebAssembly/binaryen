@@ -6,9 +6,9 @@
    (call $stacky-help (i32.const 0))
    (i32.eqz
     (block (result i32) ;; after we use the stack instead of the local, we can remove this block
-     (set_local $temp (call $stacky-help (i32.const 1)))
+     (local.set $temp (call $stacky-help (i32.const 1)))
      (drop (call $stacky-help (i32.const 2)))
-     (get_local $temp)
+     (local.get $temp)
     )
    )
   )

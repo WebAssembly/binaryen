@@ -20,22 +20,22 @@
 // gets:
 //
 //  Before:
-//   (get_local $x)
+//   (local.get $x)
 //
 //  After:
 //    (call $get_TYPE
 //     (i32.const n) // call id
 //     (i32.const n) // local id
-//     (get_local $x)
+//     (local.get $x)
 //    )
 //
 // sets:
 //
 //  Before:
-//   (set_local $x (i32.const 1))
+//   (local.set $x (i32.const 1))
 //
 //  After:
-//   (set_local $x
+//   (local.set $x
 //    (call $set_TYPE
 //     (i32.const n) // call id
 //     (i32.const n) // local id

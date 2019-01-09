@@ -1,7 +1,7 @@
 (module
  (type $0 (func (result i32)))
  (type $1 (func))
- (table $0 1 1 anyfunc)
+ (table $0 1 1 funcref)
  (elem (i32.const 0) $no-loops-but-one-use-but-tabled)
  (export "yes" (func $yes))
  (export "no-loops-but-one-use-but-exported" (func $no-loops-but-one-use-but-exported))

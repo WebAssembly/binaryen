@@ -12,7 +12,7 @@
   (export "exported" $exported)
   (export "other1" $other1)
   (export "other2" $other2)
-  (table 1 1 anyfunc)
+  (table 1 1 funcref)
   (elem (i32.const 0) $called_indirect)
   (func $start (type $0)
     (call $called0)
@@ -71,21 +71,21 @@
 )
 (module ;; remove the table and memory
   (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 0 anyfunc))
+  (import "env" "table" (table 0 funcref))
 )
 (module ;; also when not imported
   (memory 256)
-  (table 1 anyfunc)
+  (table 1 funcref)
 )
 (module ;; but not when exported
   (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 1 anyfunc))
+  (import "env" "table" (table 1 funcref))
   (export "mem" (memory 0))
   (export "tab" (table 0))
 )
 (module ;; and not when there are segments
   (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 1 anyfunc))
+  (import "env" "table" (table 1 funcref))
   (data (i32.const 1) "hello, world!")
   (elem (i32.const 0) $waka)
   (func $waka)
@@ -93,7 +93,7 @@
 (module ;; and not when used
   (type $0 (func))
   (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 0 anyfunc))
+  (import "env" "table" (table 0 funcref))
   (export "user" $user)
   (func $user
     (drop (i32.load (i32.const 0)))
@@ -118,7 +118,7 @@
   (memory $0 (shared 23 256))
   (export "user" $user)
   (func $user (result i32)
-    (i32.atomic.rmw8_u.cmpxchg (i32.const 0) (i32.const 0) (i32.const 0))
+    (i32.atomic.rmw8.cmpxchg_u (i32.const 0) (i32.const 0) (i32.const 0))
   )
 )
 (module ;; more use checks
@@ -129,9 +129,9 @@
     (local $1 i64)
     (drop
      (i32.wait
-      (get_local $0)
-      (get_local $0)
-      (get_local $1)
+      (local.get $0)
+      (local.get $0)
+      (local.get $1)
      )
     )
   )
@@ -166,11 +166,11 @@
 )
 (module
   (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 0 anyfunc))
+  (import "env" "table" (table 0 funcref))
   (import "env" "memoryBase" (global $memoryBase i32)) ;; used in init
   (import "env" "tableBase" (global $tableBase i32)) ;; used in init
-  (data (get_global $memoryBase) "hello, world!")
-  (elem (get_global $tableBase) $waka)
+  (data (global.get $memoryBase) "hello, world!")
+  (elem (global.get $tableBase) $waka)
   (func $waka) ;; used in table
 )
 (module ;; one is exported, and one->two->int global, whose init->imported
@@ -178,9 +178,9 @@
   (import "env" "forgetme" (global $forgetme i32))
   (import "env" "_puts" (func $_puts (param i32) (result i32)))
   (import "env" "forget_puts" (func $forget_puts (param i32) (result i32)))
-  (global $int (mut i32) (get_global $imported))
+  (global $int (mut i32) (global.get $imported))
   (global $set (mut i32) (i32.const 100))
-  (global $forget_global (mut i32) (i32.const 500))
+  (global $forglobal.get (mut i32) (i32.const 500))
   (global $exp_glob i32 (i32.const 600))
   (export "one" (func $one))
   (export "three" (func $three))
@@ -190,13 +190,13 @@
     (call $two)
   )
   (func $two (result i32)
-    (get_global $int)
+    (global.get $int)
   )
   (func $three
     (call $four)
   )
   (func $four
-    (set_global $set (i32.const 200))
+    (global.set $set (i32.const 200))
     (drop (call $_puts (i32.const 300)))
   )
   (func $forget_implemented
@@ -220,7 +220,7 @@
 )
 (module ;; the function stays but the table can be removed
  (type $0 (func (param f64) (result f64)))
- (table 6 6 anyfunc)
+ (table 6 6 funcref)
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)
   (if (result f64)
    (f64.eq
@@ -234,7 +234,7 @@
 )
 (module ;; the function keeps the table alive
  (type $0 (func (param f64) (result f64)))
- (table 6 6 anyfunc)
+ (table 6 6 funcref)
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)
   (if (result f64)
    (f64.eq
@@ -248,7 +248,7 @@
 )
 (module ;; the table is imported - we can't remove it
  (type $0 (func (param f64) (result f64)))
- (import "env" "table" (table 6 6 anyfunc))
+ (import "env" "table" (table 6 6 funcref))
  (elem (i32.const 0) $0)
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)
   (if (result f64)

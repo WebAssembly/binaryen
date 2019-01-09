@@ -18,7 +18,7 @@
      )
      (unreachable)
     )
-    (get_local $var$1)
+    (local.get $var$1)
    )
   )
 
@@ -30,21 +30,21 @@
     (loop $label$2
      (if
       (i64.eq
-       (get_local $var$1)
+       (local.get $var$1)
        (i64.const 0)
       )
       (unreachable)
-      (set_local $var$2
+      (local.set $var$2
        (i64.mul
         (unreachable)
-        (get_local $var$2)
+        (local.get $var$2)
        )
       )
      )
      (br $label$2)
     )
    )
-   (get_local $var$2)
+   (local.get $var$2)
   )
  )
 )

@@ -8,12 +8,12 @@
         (i32.const 1)
         (i32.const 0)
         (i32.gt_s
-          (get_local $0)
+          (local.get $0)
           (i32.const 0)
         )
       )
       (i32.lt_s
-        (get_local $0)
+        (local.get $0)
         (i32.const 0)
       )
     )

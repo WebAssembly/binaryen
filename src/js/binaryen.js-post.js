@@ -424,21 +424,35 @@ function wrapModule(module, self) {
       return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
     });
   };
-  self['getLocal'] = self['get_local'] = function(index, type) {
-    return Module['_BinaryenGetLocal'](module, index, type);
-  };
-  self['setLocal'] = self['set_local'] = self['set_local'] = function(index, value) {
-    return Module['_BinaryenSetLocal'](module, index, value);
-  };
-  self['teeLocal'] = self['tee_local'] = function(index, value) {
-    return Module['_BinaryenTeeLocal'](module, index, value);
-  };
-  self['getGlobal'] = self['get_global'] = function(name, type) {
-    return Module['_BinaryenGetGlobal'](module, strToStack(name), type);
+
+  self['local'] = {
+    'get': function(index, type) {
+      return Module['_BinaryenGetLocal'](module, index, type);
+    },
+    'set': function(index, value) {
+      return Module['_BinaryenSetLocal'](module, index, value);
+    },
+    'tee': function(index, value) {
+      return Module['_BinaryenTeeLocal'](module, index, value);
+    }
   }
-  self['setGlobal'] = self['set_global'] = function(name, value) {
-    return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
+
+  self['getLocal'] = self['local']['get'];
+  self['setLocal'] = self['local']['set'];
+  self['teeLocal'] = self['local']['tee'];
+
+  self['global'] = {
+    'get': function(name, type) {
+      return Module['_BinaryenGetGlobal'](module, strToStack(name), type);
+    },
+    'set': function(name, value) {
+      return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
+    }
   }
+
+  self['getGlobal'] = self['global']['get'];
+  self['setGlobal'] = self['global']['set'];
+
   self['currentMemory'] = self['current_memory'] = function() {
     return Module['_BinaryenHost'](module, Module['CurrentMemory']);
   }

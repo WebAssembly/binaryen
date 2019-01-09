@@ -3,7 +3,7 @@
  (type $FUNCSIG$vi (func (param i32)))
  (import "env" "callee" (func $callee (param i32)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "start" (func $start))
  (export "end" (func $end))
@@ -19,8 +19,8 @@
  (export "stackRestore" (func $stackRestore))
  (func $start (; 1 ;) (param $0 i32) (param $1 i32)
   (i32.store
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
   (return)
  )
@@ -29,9 +29,9 @@
  )
  (func $copy (; 3 ;) (param $0 i32) (param $1 i32)
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.load
-    (get_local $1)
+    (local.get $1)
    )
   )
   (return)
@@ -39,11 +39,11 @@
  (func $arg_i8 (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.add
-    (tee_local $1
+    (local.tee $1
      (i32.load
-      (get_local $0)
+      (local.get $0)
      )
     )
     (i32.const 4)
@@ -51,20 +51,20 @@
   )
   (return
    (i32.load
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
  (func $arg_i32 (; 5 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.add
-    (tee_local $1
+    (local.tee $1
      (i32.and
       (i32.add
        (i32.load
-        (get_local $0)
+        (local.get $0)
        )
        (i32.const 3)
       )
@@ -76,7 +76,7 @@
   )
   (return
    (i32.load
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
@@ -85,14 +85,14 @@
   (local $3 i32)
   (local $4 i64)
   (i32.store
-   (get_local $1)
-   (tee_local $3
+   (local.get $1)
+   (local.tee $3
     (i32.add
-     (tee_local $2
+     (local.tee $2
       (i32.and
        (i32.add
         (i32.load
-         (get_local $1)
+         (local.get $1)
         )
         (i32.const 7)
        )
@@ -103,30 +103,30 @@
     )
    )
   )
-  (set_local $4
+  (local.set $4
    (i64.load
-    (get_local $2)
+    (local.get $2)
    )
   )
   (i32.store
-   (get_local $1)
+   (local.get $1)
    (i32.add
-    (get_local $2)
+    (local.get $2)
     (i32.const 16)
    )
   )
   (i64.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 8)
    )
    (i64.load
-    (get_local $3)
+    (local.get $3)
    )
   )
   (i64.store
-   (get_local $0)
-   (get_local $4)
+   (local.get $0)
+   (local.get $4)
   )
   (return)
  )
@@ -140,7 +140,7 @@
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $0
+   (local.tee $0
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -150,20 +150,20 @@
    )
   )
   (i64.store offset=8
-   (get_local $0)
+   (local.get $0)
    (i64.const 4611686018427387904)
   )
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.const 0)
   )
   (call $callee
-   (get_local $0)
+   (local.get $0)
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 16)
    )
   )
@@ -174,7 +174,7 @@
    (br_if $label$0
     (i32.eqz
      (i32.and
-      (get_local $0)
+      (local.get $0)
       (i32.const 1)
      )
     )
@@ -182,8 +182,8 @@
    (return)
   )
   (i32.store
-   (get_local $1)
-   (get_local $2)
+   (local.get $1)
+   (local.get $2)
   )
   (return)
  )
@@ -196,24 +196,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 12 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

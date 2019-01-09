@@ -5,7 +5,7 @@
    (block $out
     (block
      (br_if $out
-      (get_local $x)
+      (local.get $x)
      )
      (nop)
      (br $loop)

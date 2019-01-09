@@ -1,12 +1,12 @@
 (module
  (type $FUNCSIG$vi (func (param i32)))
  (import "env" "memory" (memory $memory (shared 256 256)))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
- (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
+ (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (export "test64" (func $legalstub$test64))
  (func $test64 (; 1 ;) (result i64)
   (local $x i64)
@@ -19,73 +19,73 @@
    (i32.const 4656)
    (i64.const 92)
   )
-  (set_local $x
+  (local.set $x
    (i64.atomic.load
     (i32.const 4656)
    )
   )
-  (set_local $y
+  (local.set $y
    (i64.atomic.rmw.add
-    (get_local $int32)
+    (local.get $int32)
     (i64.const 26)
    )
   )
-  (set_local $x
+  (local.set $x
    (i64.atomic.rmw.sub
     (i32.const 1024)
-    (get_local $y)
+    (local.get $y)
    )
   )
-  (set_local $y
+  (local.set $y
    (i64.atomic.rmw.and
     (i32.const 1024)
-    (get_local $x)
+    (local.get $x)
    )
   )
-  (set_local $x
+  (local.set $x
    (i64.atomic.rmw.or
     (i32.const 1024)
-    (get_local $y)
+    (local.get $y)
    )
   )
-  (set_local $y
+  (local.set $y
    (i64.atomic.rmw.xor
     (i32.const 1024)
-    (get_local $x)
+    (local.get $x)
    )
   )
-  (set_local $x
+  (local.set $x
    (i64.atomic.rmw.xchg
     (i32.const 1024)
-    (get_local $y)
+    (local.get $y)
    )
   )
-  (set_local $y
+  (local.set $y
    (i64.atomic.rmw.cmpxchg
     (i32.const 1024)
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $legalstub$test64 (; 2 ;) (result i32)
   (local $0 i64)
-  (set_local $0
+  (local.set $0
    (call $test64)
   )
   (call $setTempRet0
-   (i32.wrap/i64
+   (i32.wrap_i64
     (i64.shr_u
-     (get_local $0)
+     (local.get $0)
      (i64.const 32)
     )
    )
   )
-  (i32.wrap/i64
-   (get_local $0)
+  (i32.wrap_i64
+   (local.get $0)
   )
  )
 )

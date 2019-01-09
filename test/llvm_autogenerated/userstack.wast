@@ -4,7 +4,7 @@
  (import "env" "ext_func_i32" (func $ext_func_i32 (param i32)))
  (import "env" "use_i8_star" (func $use_i8_star (param i32)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "alloca32" (func $alloca32))
  (export "alloca3264" (func $alloca3264))
@@ -27,7 +27,7 @@
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $0
+   (local.tee $0
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -37,13 +37,13 @@
    )
   )
   (i32.store offset=12
-   (get_local $0)
+   (local.get $0)
    (i32.const 0)
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 16)
    )
   )
@@ -52,7 +52,7 @@
  (func $alloca3264 (; 4 ;)
   (local $0 i32)
   (i32.store offset=12
-   (tee_local $0
+   (local.tee $0
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -63,7 +63,7 @@
    (i32.const 0)
   )
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.const 0)
   )
   (return)
@@ -72,7 +72,7 @@
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $0
+   (local.tee $0
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -83,19 +83,19 @@
   )
   (i32.store
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 24)
    )
    (i32.const 1)
   )
   (i32.store offset=12
-   (get_local $0)
+   (local.get $0)
    (i32.const 1)
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 144)
    )
   )
@@ -105,7 +105,7 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -116,24 +116,24 @@
   )
   (call $ext_func
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 8)
    )
   )
   (call $ext_func
-   (get_local $1)
+   (local.get $1)
   )
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 16)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 48)
    )
   )
@@ -143,7 +143,7 @@
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $0
+   (local.tee $0
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -153,11 +153,11 @@
    )
   )
   (i32.store offset=24
-   (get_local $0)
+   (local.get $0)
    (i32.const 1)
   )
   (i32.store offset=12
-   (get_local $0)
+   (local.get $0)
    (i32.const 1)
   )
   (call $ext_func
@@ -166,7 +166,7 @@
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 32)
    )
   )
@@ -176,9 +176,9 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $0
+   (local.tee $0
     (i32.sub
-     (tee_local $1
+     (local.tee $1
       (i32.load offset=4
        (i32.const 0)
       )
@@ -186,7 +186,7 @@
      (i32.and
       (i32.add
        (i32.shl
-        (get_local $0)
+        (local.get $0)
         (i32.const 2)
        )
        (i32.const 15)
@@ -197,31 +197,31 @@
    )
   )
   (call $ext_func_i32
-   (get_local $0)
+   (local.get $0)
   )
   (i32.store offset=4
    (i32.const 0)
-   (get_local $1)
+   (local.get $1)
   )
   (return)
  )
  (func $dynamic_alloca_redzone (; 9 ;) (param $0 i32)
   (local $1 i32)
   (drop
-   (tee_local $1
+   (local.tee $1
     (i32.load offset=4
      (i32.const 0)
     )
    )
   )
   (drop
-   (tee_local $0
+   (local.tee $0
     (i32.sub
-     (get_local $1)
+     (local.get $1)
      (i32.and
       (i32.add
        (i32.shl
-        (get_local $0)
+        (local.get $0)
         (i32.const 2)
        )
        (i32.const 15)
@@ -232,7 +232,7 @@
    )
   )
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.const 0)
   )
   (return)
@@ -243,7 +243,7 @@
   (local $3 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $2
+   (local.tee $2
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -253,22 +253,22 @@
    )
   )
   (i32.store offset=12
-   (tee_local $1
-    (get_local $2)
+   (local.tee $1
+    (local.get $2)
    )
    (i32.const 101)
   )
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $3
-    (tee_local $2
+   (local.tee $3
+    (local.tee $2
      (i32.sub
-      (get_local $2)
-      (tee_local $0
+      (local.get $2)
+      (local.tee $0
        (i32.and
         (i32.add
          (i32.shl
-          (get_local $0)
+          (local.get $0)
           (i32.const 2)
          )
          (i32.const 15)
@@ -281,38 +281,38 @@
    )
   )
   (i32.store offset=12
-   (get_local $1)
+   (local.get $1)
    (i32.const 102)
   )
   (i32.store
-   (get_local $2)
+   (local.get $2)
    (i32.const 103)
   )
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $0
+   (local.tee $0
     (i32.sub
-     (get_local $3)
-     (get_local $0)
+     (local.get $3)
+     (local.get $0)
     )
    )
   )
   (i32.store offset=12
-   (get_local $1)
+   (local.get $1)
    (i32.const 104)
   )
   (i32.store
-   (get_local $2)
+   (local.get $2)
    (i32.const 105)
   )
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.const 106)
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 16)
    )
   )
@@ -322,24 +322,24 @@
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
-  (set_local $2
-   (tee_local $3
+  (local.set $2
+   (local.tee $3
     (i32.load offset=4
      (i32.const 0)
     )
    )
   )
-  (set_local $1
-   (get_local $3)
+  (local.set $1
+   (local.get $3)
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.sub
-    (get_local $3)
+    (local.get $3)
     (i32.and
      (i32.add
       (i32.shl
-       (get_local $0)
+       (local.get $0)
        (i32.const 2)
       )
       (i32.const 15)
@@ -349,19 +349,19 @@
    )
   )
   (drop
-   (get_local $1)
+   (local.get $1)
   )
   (i32.store offset=4
    (i32.const 0)
-   (get_local $2)
+   (local.get $2)
   )
   (return)
  )
  (func $dynamic_alloca_nouse (; 12 ;) (param $0 i32)
   (local $1 i32)
   (local $2 i32)
-  (set_local $1
-   (tee_local $2
+  (local.set $1
+   (local.tee $2
     (i32.load offset=4
      (i32.const 0)
     )
@@ -370,11 +370,11 @@
   (i32.store offset=4
    (i32.const 0)
    (i32.sub
-    (get_local $2)
+    (local.get $2)
     (i32.and
      (i32.add
       (i32.shl
-       (get_local $0)
+       (local.get $0)
        (i32.const 2)
       )
       (i32.const 15)
@@ -385,13 +385,13 @@
   )
   (i32.store offset=4
    (i32.const 0)
-   (get_local $1)
+   (local.get $1)
   )
   (return)
  )
  (func $copytoreg_fi (; 13 ;) (param $0 i32) (param $1 i32)
   (local $2 i32)
-  (set_local $2
+  (local.set $2
    (i32.add
     (i32.sub
      (i32.load offset=4
@@ -402,22 +402,22 @@
     (i32.const 12)
    )
   )
-  (set_local $0
+  (local.set $0
    (i32.and
-    (get_local $0)
+    (local.get $0)
     (i32.const 1)
    )
   )
   (loop $label$0
    (i32.store
-    (get_local $2)
+    (local.get $2)
     (i32.const 1)
    )
-   (set_local $2
-    (get_local $1)
+   (local.set $2
+    (local.get $1)
    )
    (br_if $label$0
-    (get_local $0)
+    (local.get $0)
    )
   )
   (return)
@@ -425,7 +425,7 @@
  (func $frameaddress_0 (; 14 ;)
   (local $0 i32)
   (call $use_i8_star
-   (tee_local $0
+   (local.tee $0
     (i32.load offset=4
      (i32.const 0)
     )
@@ -433,7 +433,7 @@
   )
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
   (return)
  )
@@ -445,7 +445,7 @@
  )
  (func $inline_asm (; 16 ;)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i32.add
     (i32.sub
      (i32.load offset=4
@@ -467,24 +467,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 19 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

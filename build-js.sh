@@ -161,18 +161,6 @@ echo "building shared bitcode"
   -I$BINARYEN_SRC \
   -o shared.bc
 
-echo "building wasm.js"
-
-"$EMSCRIPTEN/em++" \
-  $EMCC_ARGS \
-  $BINARYEN_SRC/wasm-js.cpp \
-  shared.bc \
-  -I$BINARYEN_SRC/ \
-  -o $BINARYEN_BIN/wasm${OUT_FILE_SUFFIX}.js \
-  -s MODULARIZE=1 \
-  -s 'EXTRA_EXPORTED_RUNTIME_METHODS=["writeAsciiToMemory"]' \
-  -s 'EXPORT_NAME="WasmJS"'
-
 echo "building binaryen.js"
 
 function export_function { if [ -z ${EXPORTED_FUNCTIONS} ]; then EXPORTED_FUNCTIONS='"'$1'"'; else EXPORTED_FUNCTIONS=${EXPORTED_FUNCTIONS}',"'$1'"'; fi }

@@ -18,7 +18,7 @@
  (import "env" "use_b" (func $use_b (param i32)))
  (import "env" "use_memory" (func $use_memory (param i32) (result i32)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (data (i32.const 12) "\00\00\00\00")
  (export "no0" (func $no0))
@@ -50,66 +50,66 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (func $no0 (; 12 ;) (param $0 i32) (param $1 i32) (result i32)
-  (set_local $1
+  (local.set $1
    (i32.load
-    (get_local $1)
+    (local.get $1)
    )
   )
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.const 0)
   )
   (return
-   (get_local $1)
+   (local.get $1)
   )
  )
  (func $no1 (; 13 ;) (param $0 i32) (param $1 i32) (result i32)
-  (set_local $1
+  (local.set $1
    (i32.load
-    (get_local $1)
+    (local.get $1)
    )
   )
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.const 0)
   )
   (return
-   (get_local $1)
+   (local.get $1)
   )
  )
  (func $yes0 (; 14 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.const 0)
   )
   (return
    (i32.load
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
  (func $yes1 (; 15 ;) (param $0 i32) (result i32)
   (return
    (i32.load
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $sink_trap (; 16 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
-   (get_local $2)
+   (local.get $2)
    (i32.const 0)
   )
   (return
    (i32.div_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sink_readnone_call (; 17 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
-   (get_local $2)
+   (local.get $2)
    (i32.const 0)
   )
   (return
@@ -118,15 +118,15 @@
  )
  (func $no_sink_readonly_call (; 18 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
-  (set_local $3
+  (local.set $3
    (call $readonly_callee)
   )
   (i32.store
-   (get_local $2)
+   (local.get $2)
    (i32.const 0)
   )
   (return
-   (get_local $3)
+   (local.get $3)
   )
  )
  (func $stack_uses (; 19 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
@@ -136,21 +136,21 @@
      (i32.xor
       (i32.xor
        (i32.lt_s
-        (get_local $0)
+        (local.get $0)
         (i32.const 1)
        )
        (i32.lt_s
-        (get_local $1)
+        (local.get $1)
         (i32.const 2)
        )
       )
       (i32.xor
        (i32.lt_s
-        (get_local $2)
+        (local.get $2)
         (i32.const 1)
        )
        (i32.lt_s
-        (get_local $3)
+        (local.get $3)
         (i32.const 2)
        )
       )
@@ -171,35 +171,35 @@
   (block $label$0
    (br_if $label$0
     (i32.ge_u
-     (tee_local $3
+     (local.tee $3
       (i32.load
-       (get_local $2)
+       (local.get $2)
       )
      )
-     (get_local $1)
+     (local.get $1)
     )
    )
    (br_if $label$0
     (i32.lt_u
-     (get_local $3)
-     (get_local $0)
+     (local.get $3)
+     (local.get $0)
     )
    )
    (i32.store
-    (get_local $2)
-    (get_local $3)
+    (local.get $2)
+    (local.get $3)
    )
   )
   (return)
  )
  (func $stackify_store_across_side_effects (; 21 ;) (param $0 i32)
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.const 4611686018427387904)
   )
   (call $evoke_side_effects)
   (i64.store
-   (get_local $0)
+   (local.get $0)
    (i64.const 4611686018427387904)
   )
   (call $evoke_side_effects)
@@ -211,44 +211,44 @@
     (i32.div_s
      (i32.div_s
       (i32.div_s
-       (get_local $0)
-       (get_local $1)
+       (local.get $0)
+       (local.get $1)
       )
       (i32.div_s
-       (get_local $2)
-       (get_local $3)
+       (local.get $2)
+       (local.get $3)
       )
      )
      (i32.div_s
       (i32.div_s
-       (get_local $4)
-       (get_local $5)
+       (local.get $4)
+       (local.get $5)
       )
       (i32.div_s
-       (get_local $6)
-       (get_local $7)
+       (local.get $6)
+       (local.get $7)
       )
      )
     )
     (i32.div_s
      (i32.div_s
       (i32.div_s
-       (get_local $8)
-       (get_local $9)
+       (local.get $8)
+       (local.get $9)
       )
       (i32.div_s
-       (get_local $10)
-       (get_local $11)
+       (local.get $10)
+       (local.get $11)
       )
      )
      (i32.div_s
       (i32.div_s
-       (get_local $12)
-       (get_local $13)
+       (local.get $12)
+       (local.get $13)
       )
       (i32.div_s
-       (get_local $14)
-       (get_local $15)
+       (local.get $14)
+       (local.get $15)
       )
      )
     )
@@ -257,27 +257,27 @@
  )
  (func $simple_multiple_use (; 23 ;) (param $0 i32) (param $1 i32)
   (call $use_a
-   (tee_local $1
+   (local.tee $1
     (i32.mul
-     (get_local $1)
-     (get_local $0)
+     (local.get $1)
+     (local.get $0)
     )
    )
   )
   (call $use_b
-   (get_local $1)
+   (local.get $1)
   )
   (return)
  )
  (func $multiple_uses_in_same_insn (; 24 ;) (param $0 i32) (param $1 i32)
   (call $use_2
-   (tee_local $1
+   (local.tee $1
     (i32.mul
-     (get_local $1)
-     (get_local $0)
+     (local.get $1)
+     (local.get $0)
     )
    )
-   (get_local $1)
+   (local.get $1)
   )
   (return)
  )
@@ -294,9 +294,9 @@
  )
  (func $no_stackify_past_use (; 26 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
+  (local.set $1
    (call $callee
-    (get_local $0)
+    (local.get $0)
    )
   )
   (return
@@ -304,13 +304,13 @@
     (i32.sub
      (call $callee
       (i32.add
-       (get_local $0)
+       (local.get $0)
        (i32.const 1)
       )
      )
-     (get_local $1)
+     (local.get $1)
     )
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
@@ -318,16 +318,16 @@
   (local $1 i32)
   (return
    (i32.mul
-    (tee_local $1
+    (local.tee $1
      (call $callee
-      (get_local $0)
+      (local.get $0)
      )
     )
     (i32.add
-     (get_local $1)
+     (local.get $1)
      (call $callee
       (i32.add
-       (get_local $0)
+       (local.get $0)
        (i32.const 1)
       )
      )
@@ -341,35 +341,35 @@
   (local $7 f64)
   (local $8 f64)
   (local $9 f64)
-  (set_local $6
+  (local.set $6
    (f64.const 0)
   )
-  (set_local $2
+  (local.set $2
    (i32.and
-    (get_local $2)
+    (local.get $2)
     (i32.const 1)
    )
   )
-  (set_local $3
+  (local.set $3
    (i32.and
-    (get_local $3)
+    (local.get $3)
     (i32.const 1)
    )
   )
-  (set_local $5
+  (local.set $5
    (select
     (f64.const -11353.57)
     (f64.const -0.23500000000001364)
     (i32.eq
      (i32.or
-      (get_local $1)
+      (local.get $1)
       (i32.const 2)
      )
      (i32.const 14)
     )
    )
   )
-  (set_local $7
+  (local.set $7
    (f64.const 0)
   )
   (loop $label$0
@@ -377,61 +377,61 @@
     (br_if $label$1
      (i32.or
       (f64.ge
-       (get_local $7)
+       (local.get $7)
        (f64.const 23.2345)
       )
       (f64.ne
-       (get_local $7)
-       (get_local $7)
+       (local.get $7)
+       (local.get $7)
       )
      )
     )
-    (set_local $8
-     (get_local $6)
+    (local.set $8
+     (local.get $6)
     )
     (loop $label$2
-     (set_local $8
+     (local.set $8
       (f64.add
        (select
         (f64.const -11353.57)
-        (tee_local $9
+        (local.tee $9
          (f64.add
-          (get_local $7)
+          (local.get $7)
           (f64.const -1)
          )
         )
-        (get_local $2)
+        (local.get $2)
        )
-       (tee_local $6
-        (get_local $8)
+       (local.tee $6
+        (local.get $8)
        )
       )
      )
      (block $label$3
       (br_if $label$3
-       (get_local $3)
+       (local.get $3)
       )
-      (set_local $9
-       (get_local $5)
+      (local.set $9
+       (local.get $5)
       )
      )
-     (set_local $8
+     (local.set $8
       (f64.add
-       (get_local $9)
-       (get_local $8)
+       (local.get $9)
+       (local.get $8)
       )
      )
      (br_if $label$2
       (f64.lt
-       (get_local $7)
+       (local.get $7)
        (f64.const 23.2345)
       )
      )
     )
    )
-   (set_local $7
+   (local.set $7
     (f64.add
-     (get_local $7)
+     (local.get $7)
      (f64.const 1)
     )
    )
@@ -441,55 +441,55 @@
  (func $no_stackify_call_past_load (; 29 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (set_local $0
+  (local.set $0
    (call $red)
   )
-  (set_local $1
+  (local.set $1
    (i32.load offset=12
     (i32.const 0)
    )
   )
   (drop
    (call $callee
-    (get_local $0)
+    (local.get $0)
    )
   )
   (return
-   (get_local $1)
+   (local.get $1)
   )
  )
  (func $no_stackify_store_past_load (; 30 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
-   (get_local $1)
-   (get_local $0)
+   (local.get $1)
+   (local.get $0)
   )
-  (set_local $2
+  (local.set $2
    (i32.load
-    (get_local $2)
+    (local.get $2)
    )
   )
   (drop
    (call $callee
-    (get_local $0)
+    (local.get $0)
    )
   )
   (return
-   (get_local $2)
+   (local.get $2)
   )
  )
  (func $store_past_invar_load (; 31 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
-   (get_local $1)
-   (get_local $0)
+   (local.get $1)
+   (local.get $0)
   )
   (drop
    (call $callee
-    (get_local $0)
+    (local.get $0)
    )
   )
   (return
    (i32.load
-    (get_local $2)
+    (local.get $2)
    )
   )
  )
@@ -501,7 +501,7 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -510,10 +510,10 @@
     )
    )
   )
-  (set_local $0
+  (local.set $0
    (call $use_memory
     (i32.add
-     (get_local $1)
+     (local.get $1)
      (i32.const 12)
     )
    )
@@ -521,35 +521,35 @@
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 16)
    )
   )
   (return
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $stackify_indvar (; 34 ;) (param $0 i32) (param $1 i32)
   (local $2 i32)
-  (set_local $2
+  (local.set $2
    (i32.const 0)
   )
   (loop $label$0
    (i32.store
-    (get_local $1)
+    (local.get $1)
     (i32.add
-     (get_local $2)
+     (local.get $2)
      (i32.load
-      (get_local $1)
+      (local.get $1)
      )
     )
    )
    (br_if $label$0
     (i32.ne
-     (get_local $0)
-     (tee_local $2
+     (local.get $0)
+     (local.tee $2
       (i32.add
-       (get_local $2)
+       (local.get $2)
        (i32.const 1)
       )
      )
@@ -560,10 +560,10 @@
  )
  (func $stackpointer_dependency (; 35 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $0
+  (local.set $0
    (call $stackpointer_callee
-    (get_local $0)
-    (tee_local $1
+    (local.get $0)
+    (local.tee $1
      (i32.load offset=4
       (i32.const 0)
      )
@@ -572,24 +572,24 @@
   )
   (i32.store offset=4
    (i32.const 0)
-   (get_local $1)
+   (local.get $1)
   )
   (return
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $call_indirect_stackify (; 36 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (call_indirect (type $FUNCSIG$iii)
-    (tee_local $0
+    (local.tee $0
      (i32.load
-      (get_local $0)
+      (local.get $0)
      )
     )
-    (get_local $1)
+    (local.get $1)
     (i32.load
      (i32.load
-      (get_local $0)
+      (local.get $0)
      )
     )
    )
@@ -604,24 +604,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 39 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

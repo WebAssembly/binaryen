@@ -10,13 +10,13 @@
   (local $b i32)
   (nop)
   (if
-   (tee_local $x
+   (local.tee $x
     (i32.const 1)
    )
    (nop)
   )
   (if
-   (get_local $x)
+   (local.get $x)
    (nop)
   )
   (nop)
@@ -35,32 +35,32 @@
   )
   (if
    (i32.const 6)
-   (set_local $a
+   (local.set $a
     (i32.const 7)
    )
-   (set_local $a
+   (local.set $a
     (i32.const 8)
    )
   )
   (drop
-   (get_local $a)
+   (local.get $a)
   )
   (block $val
    (if
     (i32.const 10)
     (block $block4
-     (set_local $b
+     (local.set $b
       (i32.const 11)
      )
      (br $val)
     )
    )
-   (set_local $b
+   (local.set $b
     (i32.const 12)
    )
   )
   (drop
-   (get_local $b)
+   (local.get $b)
   )
  )
  (func $no-unreachable (; 1 ;) (type $0)
@@ -69,8 +69,8 @@
  )
  (func $implicit-trap-and-global-effects (; 2 ;) (type $0)
   (local $var$0 i32)
-  (set_local $var$0
-   (i32.trunc_u/f64
+  (local.set $var$0
+   (i32.trunc_f64_u
     (f64.const -nan:0xfffffffffffc3)
    )
   )
@@ -79,25 +79,25 @@
    (f32.const 154)
   )
   (drop
-   (get_local $var$0)
+   (local.get $var$0)
   )
  )
  (func $implicit-trap-and-local-effects (; 3 ;) (type $0)
   (local $var$0 i32)
   (local $other i32)
   (nop)
-  (set_local $other
+  (local.set $other
    (i32.const 100)
   )
   (drop
-   (i32.trunc_u/f64
+   (i32.trunc_f64_u
     (f64.const -nan:0xfffffffffffc3)
    )
   )
   (if
    (i32.const 1)
    (drop
-    (get_local $other)
+    (local.get $other)
    )
   )
  )
@@ -105,12 +105,12 @@
   (local $var$2 i32)
   (nop)
   (i32.store
-   (get_local $var$0)
+   (local.get $var$0)
    (i32.const 1)
   )
-  (f64.promote/f32
+  (f64.promote_f32
    (f32.load
-    (get_local $var$0)
+    (local.get $var$0)
    )
   )
  )
@@ -118,16 +118,16 @@
   (local $y i32)
   (if
    (i32.const 1)
-   (set_local $x
+   (local.set $x
     (i32.const 2)
    )
    (block $block
     (nop)
-    (set_local $x
-     (get_local $x)
+    (local.set $x
+     (local.get $x)
     )
    )
   )
-  (get_local $x)
+  (local.get $x)
  )
 )

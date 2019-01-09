@@ -19,19 +19,19 @@
  )
  (func $legalstub$dyn (; 4 ;) (result i32)
   (local $0 i64)
-  (set_local $0
+  (local.set $0
    (call $dyn)
   )
   (call $setTempRet0
-   (i32.wrap/i64
+   (i32.wrap_i64
     (i64.shr_u
-     (get_local $0)
+     (local.get $0)
      (i64.const 32)
     )
    )
   )
-  (i32.wrap/i64
-   (get_local $0)
+  (i32.wrap_i64
+   (local.get $0)
   )
  )
 )
