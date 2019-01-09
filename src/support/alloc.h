@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 
-#if defined(WIN32) || defined(_WIN32) 
+#if defined(WIN32) || defined(_WIN32)
 #include <malloc.h>
 #endif
 
@@ -32,7 +32,7 @@ namespace wasm {
 // An allocation of a specific size and a minimum alignment. Must be freed
 // with aligned_free. Returns nullptr on failure.
 inline void* aligned_malloc(size_t align, size_t size) {
-#if defined(WIN32) || defined(_WIN32) 
+#if defined(WIN32) || defined(_WIN32)
   _set_errno(0);
   void* ret = _aligned_malloc(size, align);
   if (errno == ENOMEM) ret = nullptr;
@@ -43,7 +43,7 @@ inline void* aligned_malloc(size_t align, size_t size) {
 }
 
 inline void aligned_free(void* ptr) {
-#if defined(WIN32) || defined(_WIN32) 
+#if defined(WIN32) || defined(_WIN32)
   _aligned_free(ptr);
 #else
   free(ptr);
