@@ -80,7 +80,7 @@ jobs:
       before_install:
         - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
       script:
-        # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
+        # run binaryen.js tests before and after building, so we see if the bundled
         # version is good too
         - docker exec -it emscripten bash ./travis-emcc-tests.sh
 
