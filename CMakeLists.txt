@@ -294,10 +294,10 @@ INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 ENABLE_TESTING()
 
-ADD_TEST(NAME metrics-unit
+ADD_TEST(NAME opt-unit
          COMMAND bin/wasm-opt test/unit.wast --flatten --ssa --metrics -O4 -Os --metrics)
 ADD_TEST(NAME metrics-emcc
-         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics -O2 --metrics)
+         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
 ADD_TEST(NAME exec-unit
          COMMAND bin/wasm-opt test/unit.wast --fuzz-exec)
 ADD_TEST(NAME exec-hello
