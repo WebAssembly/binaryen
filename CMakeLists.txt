@@ -287,3 +287,18 @@ TARGET_LINK_LIBRARIES(wasm-reduce wasm asmjs passes wasm ir cfg support)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# Testing
+#
+# Currently just some very simple smoke tests.
+
+ENABLE_TESTING()
+
+ADD_TEST(NAME metrics-unit
+         COMMAND bin/wasm-opt test/unit.wast --flatten --ssa --metrics -O4 -Os --metrics)
+ADD_TEST(NAME metrics-emcc
+         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --flatten --ssa --metrics -O4 -Os --metrics)
+ADD_TEST(NAME exec-unit
+         COMMAND bin/wasm-opt test/unit.wast --fuzz-exec)
+ADD_TEST(NAME exec-hello
+         COMMAND bin/wasm-opt test/hello_world.wast --fuzz-exec)
