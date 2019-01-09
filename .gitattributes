@@ -1,3 +1,2 @@
 *.a binary
-bin/wasm.js -diff
 bin/binaryen.js -diff
