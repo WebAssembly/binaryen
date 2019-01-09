@@ -297,7 +297,7 @@ ENABLE_TESTING()
 ADD_TEST(NAME metrics-unit
          COMMAND bin/wasm-opt test/unit.wast --flatten --ssa --metrics -O4 -Os --metrics)
 ADD_TEST(NAME metrics-emcc
-         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --flatten --ssa --metrics -O4 -Os --metrics)
+         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics -O2 --metrics)
 ADD_TEST(NAME exec-unit
          COMMAND bin/wasm-opt test/unit.wast --fuzz-exec)
 ADD_TEST(NAME exec-hello
