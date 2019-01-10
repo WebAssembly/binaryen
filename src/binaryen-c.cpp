@@ -306,19 +306,12 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
 
 BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const char* name, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams) {
   auto* wasm = (Module*)module;
-  auto* ret = new FunctionType;
+  auto ret = make_unique<FunctionType>();
   if (name) ret->name = name;
   else ret->name = Name::fromInt(wasm->functionTypes.size());
   ret->result = Type(result);
   for (BinaryenIndex i = 0; i < numParams; i++) {
     ret->params.push_back(Type(paramTypes[i]));
-  }
-
-  // Lock. This can be called from multiple threads at once, and is a
-  // point where they all access and modify the module.
-  {
-    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
-    wasm->addFunctionType(ret);
   }
 
   if (tracing) {
@@ -332,13 +325,16 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
     std::cout << " };\n";
     size_t id = functionTypes.size();
     std::cout << "    functionTypes[" << id << "] = BinaryenAddFunctionType(the_module, ";
-    functionTypes[ret] = id;
+    functionTypes[ret.get()] = id;
     traceNameOrNULL(name);
     std::cout << ", " << result << ", paramTypes, " << numParams << ");\n";
     std::cout << "  }\n";
   }
 
-  return ret;
+  // Lock. This can be called from multiple threads at once, and is a
+  // point where they all access and modify the module.
+  std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
+  return wasm->addFunctionType(std::move(ret));
 }
 void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name) {
   if (tracing) {

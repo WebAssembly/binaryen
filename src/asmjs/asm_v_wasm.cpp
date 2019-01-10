@@ -107,14 +107,13 @@ FunctionType* ensureFunctionType(std::string sig, Module* wasm) {
     return wasm->getFunctionType(name);
   }
   // add new type
-  auto type = new FunctionType;
+  auto type = make_unique<FunctionType>();
   type->name = name;
   type->result = sigToType(sig[0]);
   for (size_t i = 1; i < sig.size(); i++) {
     type->params.push_back(sigToType(sig[i]));
   }
-  wasm->addFunctionType(type);
-  return type;
+  return wasm->addFunctionType(std::move(type));
 }
 
 Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
