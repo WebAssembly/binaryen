@@ -37,6 +37,10 @@ inline void* aligned_malloc(size_t align, size_t size) {
   void* ret = _aligned_malloc(size, align);
   if (errno == ENOMEM) ret = nullptr;
   return ret;
+#elif defined(__APPLE__)
+  void *ptr;
+  int result = posix_memalign(&ptr, align, size);
+  return result == 0 ? ptr : nullptr;
 #else
   return aligned_alloc(align, size);
 #endif
