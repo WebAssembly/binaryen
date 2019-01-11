@@ -524,13 +524,21 @@ private:
     // if we have enough to investigate, do so
     if (next.size() >= 2) {
       // now we want to find a mergeable item - any item that is equal among a subset
-      std::map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
+      std::map<Expression*, HashType> hashes; // expression => hash value
+      std::map<HashType, std::vector<Expression*>> hashed; // hash value => expressions with that hash
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
-        hashed[ExpressionAnalyzer::hash(item)].push_back(item);
+        auto hash = hashes[item] = ExpressionAnalyzer::hash(item);
+        hashed[hash].push_back(item);
       }
-      for (auto& iter : hashed) {
-        auto& items = iter.second;
+      // look at each hash value exactly once. we do this in a deterministic order.
+      std::set<HashType> seen;
+      for (auto& tail : next) {
+        auto* item = getItem(tail, num);
+        auto hash = hashes[item];
+        if (seen.count(hash)) continue;
+        seen.insert(hash);
+        auto& items = hashed[hash];
         if (items.size() == 1) continue;
         assert(items.size() > 0);
         // look for an item that has another match.

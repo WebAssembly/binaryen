@@ -19,12 +19,13 @@
 
 #include <atomic>
 #include <cassert>
-#include <cstdlib>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <type_traits>
 #include <vector>
+
+#include <support/alloc.h>
 
 //
 // Arena allocation for mixed-type data.
@@ -63,11 +64,9 @@ struct MixedArena {
   static const size_t CHUNK_SIZE = 32768;
   static const size_t MAX_ALIGN = 16; // allow 128bit SIMD
 
-  typedef std::aligned_storage<CHUNK_SIZE, MAX_ALIGN>::type Chunk;
-
-  // Each pointer in chunks is to an array of Chunk structs; typically 1,
+  // Each pointer in chunks is to a multiple of CHUNK_SIZE - typically 1,
   // but possibly more.
-  std::vector<Chunk*> chunks;
+  std::vector<void*> chunks;
 
   size_t index = 0; // in last chunk
 
@@ -122,10 +121,12 @@ struct MixedArena {
       // Allocate a new chunk.
       auto numChunks = (size + CHUNK_SIZE - 1) / CHUNK_SIZE;
       assert(size <= numChunks * CHUNK_SIZE);
-      chunks.push_back(new Chunk[numChunks]);
+      auto* allocation = wasm::aligned_malloc(MAX_ALIGN, numChunks * CHUNK_SIZE);
+      if (!allocation) abort();
+      chunks.push_back(allocation);
       index = 0;
     }
-    uint8_t* ret = static_cast<uint8_t*>(static_cast<void*>(chunks.back()));
+    uint8_t* ret = static_cast<uint8_t*>(chunks.back());
     ret += index;
     index += size; // TODO: if we allocated more than 1 chunk, reuse the remainder, right now we allocate another next time
     return static_cast<void*>(ret);
@@ -141,7 +142,7 @@ struct MixedArena {
 
   void clear() {
     for (auto* chunk : chunks) {
-      delete[] chunk;
+      wasm::aligned_free(chunk);
     }
     chunks.clear();
   }

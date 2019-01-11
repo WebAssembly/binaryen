@@ -74,6 +74,9 @@ IF(MSVC)
   ADD_NONDEBUG_COMPILE_FLAG("/O2")
   ADD_COMPILE_FLAG("/D_CRT_SECURE_NO_WARNINGS")
   ADD_COMPILE_FLAG("/D_SCL_SECURE_NO_WARNINGS")
+  # Visual Studio 2018 15.8 implemented conformant support for std::aligned_storage, but the conformant support is only enabled when the following flag is passed, to avoid
+  # breaking backwards compatibility with code that relied on the non-conformant behavior (the old nonconformant behavior is not used with Binaryen)
+  ADD_COMPILE_FLAG("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   ADD_COMPILE_FLAG("/D_CRT_NONSTDC_NO_DEPRECATE")
 
@@ -169,13 +172,10 @@ INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-# if binaryen.js and wasm.js were built (using "./build-js.sh", currently
-# optional), install them
+# if binaryen.js was built (using "./build-js.sh", currently
+# optional), install it
 IF(EXISTS "${PROJECT_SOURCE_DIR}/bin/binaryen.js")
   INSTALL(FILES bin/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
-ENDIF()
-IF(EXISTS "${PROJECT_SOURCE_DIR}/bin/wasm.js")
-  INSTALL(FILES bin/wasm.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
 ENDIF()
 
 SET(wasm-shell_SOURCES
@@ -287,3 +287,18 @@ TARGET_LINK_LIBRARIES(wasm-reduce wasm asmjs passes wasm ir cfg support)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# Testing
+#
+# Currently just some very simple smoke tests.
+
+ENABLE_TESTING()
+
+ADD_TEST(NAME opt-unit
+         COMMAND bin/wasm-opt test/unit.wast --flatten --ssa --metrics -O4 -Os --metrics)
+ADD_TEST(NAME metrics-emcc
+         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
+ADD_TEST(NAME exec-unit
+         COMMAND bin/wasm-opt test/unit.wast --fuzz-exec)
+ADD_TEST(NAME exec-hello
+         COMMAND bin/wasm-opt test/hello_world.wast --fuzz-exec)

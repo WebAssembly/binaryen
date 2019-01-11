@@ -150,4 +150,53 @@
   )
  )
 )
+(module
+ (type $0 (func))
+ (global $global$0 (mut i32) (i32.const 10))
+ (func $determinism (; 0 ;) (type $0)
+  (block $label$1
+   (br_if $label$1
+    (i32.const 1)
+   )
+   (global.set $global$0
+    (i32.sub
+     (global.get $global$0)
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+  )
+  (block $label$2
+   (br_if $label$2
+    (i32.const 0)
+   )
+   (if
+    (global.get $global$0)
+    (block
+     (global.set $global$0
+      (i32.sub
+       (global.get $global$0)
+       (i32.const 1)
+      )
+     )
+     (unreachable)
+    )
+   )
+   (unreachable)
+  )
+  (if
+   (global.get $global$0)
+   (block
+    (global.set $global$0
+     (i32.sub
+      (global.get $global$0)
+      (i32.const 1)
+     )
+    )
+    (unreachable)
+   )
+  )
+  (unreachable)
+ )
+)
 
