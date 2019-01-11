@@ -3,25 +3,25 @@
  (export "div16_internal" (func $0))
  (func $0 (; 0 ;) (; has Stack IR ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
-   (tee_local $0
+   (local.tee $0
     (i32.xor
      (i32.shr_s
       (i32.shl
-       (get_local $0)
+       (local.get $0)
        (i32.const 16)
       )
       (i32.const 16)
      )
      (i32.shr_s
       (i32.shl
-       (get_local $1)
+       (local.get $1)
        (i32.const 16)
       )
       (i32.const 16)
      )
     )
    )
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

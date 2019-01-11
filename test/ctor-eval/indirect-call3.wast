@@ -4,8 +4,8 @@
   (data (i32.const 10) "waka waka waka waka waka")
   (import "env" "tableBase" (global $tableBase i32))
   (import "env" "_abort" (func $_abort))
-  (table 2 2 anyfunc)
-  (elem (get_global $tableBase) $_abort $call-indirect)
+  (table 2 2 funcref)
+  (elem (global.get $tableBase) $_abort $call-indirect)
   (export "test1" $test1)
   (func $test1
     (call_indirect (type $v) (i32.const 1)) ;; safe to call

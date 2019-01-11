@@ -67,7 +67,11 @@ struct FeatureSet {
   void setSIMD(bool v = true) { set(SIMD, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
- private:
+  bool operator<=(const FeatureSet& other) {
+    return !(features & ~other.features);
+  }
+
+private:
   uint32_t features;
 };
 
@@ -913,7 +917,7 @@ public:
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
 
-  void addFunctionType(FunctionType* curr);
+  FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
   void addExport(Export* curr);
   void addFunction(Function* curr);
   void addGlobal(Global* curr);

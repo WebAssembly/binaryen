@@ -27,26 +27,26 @@
 //  )
 // =>
 //  (if (..condition..)
-//    (set_local $temp
+//    (local.set $temp
 //      (..if true..)
 //    )
-//    (set_local $temp
+//    (local.set $temp
 //      (..if false..)
 //    )
 //  )
 //  (i32.add
-//    (get_local $temp)
+//    (local.get $temp)
 //    (i32.const 1)
 //  )
 //
 // Formally, this pass flattens in the precise sense of
 // making the AST have these properties:
 //
-//  1. The operands of an instruction must be a get_local or a const.
+//  1. The operands of an instruction must be a local.get or a const.
 //     anything else is written to a local earlier.
 //  2. Disallow block, loop, and if return values, i.e., do not use
 //     control flow to pass around values.
-//  3. Disallow tee_local, setting a local is always done in a set_local
+//  3. Disallow local.tee, setting a local is always done in a local.set
 //     on a non-nested-expression location.
 //
 
@@ -62,7 +62,7 @@ namespace wasm {
 // We use the following algorithm: we maintain a list of "preludes", code
 // that runs right before an expression. When we visit an expression we
 // must handle it and its preludes. If the expression has side effects,
-// we reduce it to a get_local and add a prelude for that. We then handle
+// we reduce it to a local.get and add a prelude for that. We then handle
 // the preludes, by moving them to the parent or handling them directly.
 // we can move them to the parent if the parent is not a control flow
 // structure. Otherwise, if the parent is a control flow structure, it
@@ -190,7 +190,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
       // special handling
       if (auto* set = curr->dynCast<SetLocal>()) {
         if (set->isTee()) {
-          // we disallow tee_local
+          // we disallow local.tee
           if (set->value->type == unreachable) {
             replaceCurrent(set->value); // trivial, no set happens
           } else {

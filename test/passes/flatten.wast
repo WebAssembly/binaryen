@@ -5,7 +5,7 @@
  (type $3 (func (param i32) (result i32)))
  (type $4 (func (param i64 i64) (result i64)))
  (global $x (mut i32) (i32.const 0))
- (table 1 1 anyfunc)
+ (table 1 1 funcref)
  (elem (i32.const 0) $call-me)
  (memory $0 10)
  (func $a1
@@ -46,12 +46,12 @@
   (local $x i32)
   (i32.add
    (block (result i32)
-    (tee_local $x
+    (local.tee $x
      (i32.const 0)
     )
    )
    (block (result i32)
-    (tee_local $x
+    (local.tee $x
      (i32.const 1)
     )
    )
@@ -62,12 +62,12 @@
   (block (result i32)
    (i32.add
     (block (result i32)
-     (tee_local $x
+     (local.tee $x
       (i32.const 0)
      )
     )
     (block (result i32)
-     (tee_local $x
+     (local.tee $x
       (i32.const 1)
      )
     )
@@ -92,7 +92,7 @@
       (br $outer
        (i32.const 2)
       )
-      (tee_local $x
+      (local.tee $x
        (i32.const 3)
       )
      )
@@ -115,9 +115,9 @@
   (local $x i32)
   (block $outer (result i32)
    (drop (br_if $outer (i32.const 0) (i32.const 1)))
-   (drop (br_if $outer (tee_local $x (i32.const 2)) (i32.const 3)))
-   (drop (br_if $outer (i32.const 4) (tee_local $x (i32.const 5))))
-   (drop (br_if $outer (tee_local $x (i32.const 6)) (tee_local $x (i32.const 7))))
+   (drop (br_if $outer (local.tee $x (i32.const 2)) (i32.const 3)))
+   (drop (br_if $outer (i32.const 4) (local.tee $x (i32.const 5))))
+   (drop (br_if $outer (local.tee $x (i32.const 6)) (local.tee $x (i32.const 7))))
    (br $outer (i32.const 8))
   )
  )
@@ -166,12 +166,12 @@
   (block $label$1 (result i32)
    (drop
     (br_if $label$1
-     (tee_local $x ;; set here, then it is undone later, but this value is used, not the contents of $x!
+     (local.tee $x ;; set here, then it is undone later, but this value is used, not the contents of $x!
       (i32.const 1)
      )
      (i32.eqz ;; 0 into 1, so take the br_if
       (block $label$2 (result i32)
-       (set_local $x
+       (local.set $x
         (i32.const 0) ;; undo the above tee
        )
        (i32.const 0)
@@ -185,12 +185,12 @@
  (func $a17 (result f32)
   (local $var$0 f32)
   (f32.max
-   (get_local $var$0)
+   (local.get $var$0)
    (select
-    (tee_local $var$0
+    (local.tee $var$0
      (f32.const -137438953472)
     )
-    (get_local $var$0)
+    (local.get $var$0)
     (i32.const 0)
    )
   )
@@ -500,7 +500,7 @@
   )
   (if
    (i32.const 11)
-   (set_local $x
+   (local.set $x
     (unreachable)
    )
   )
@@ -635,12 +635,12 @@
      )
     )
     (return
-     (get_local $$$0)
+     (local.get $$$0)
     )
     (br $switch$7)
    )
    (return
-    (get_local $$$0)
+    (local.get $$$0)
    )
   )
   (return
@@ -650,9 +650,9 @@
  (func $global (type $1)
   (unreachable)
   (drop
-   (get_global $x)
+   (global.get $x)
   )
-  (set_global $x
+  (global.set $x
    (i32.const 1)
   )
  )
@@ -736,24 +736,24 @@
   (local $2 i64)
   (if (result i64)
    (i64.eqz
-    (get_local $var$0)
+    (local.get $var$0)
    )
    (block $label$0 (result i64)
-    (get_local $var$1)
+    (local.get $var$1)
    )
    (block $label$1 (result i64)
     (call $call-unreach
      (i64.sub
-      (get_local $var$0)
+      (local.get $var$0)
       (i64.const 1)
      )
      (i64.mul
       (block $block (result i64)
-       (set_local $2
-        (get_local $var$0)
+       (local.set $2
+        (local.get $var$0)
        )
        (nop)
-       (get_local $2)
+       (local.get $2)
       )
       (unreachable)
      )
@@ -918,29 +918,29 @@
     (block (result i32)
      (if
       (i32.eq
-       (get_local $12)
+       (local.get $12)
        (i32.const 65535)
       )
       (block
        (block $label$78
-        (set_local $430
+        (local.set $430
          (i32.const 0)
         )
        )
-       (set_local $432
-        (get_local $430)
+       (local.set $432
+        (local.get $430)
        )
       )
       (block
        (block $label$79
-        (set_local $431
+        (local.set $431
          (i32.lt_u
-          (get_local $9)
+          (local.get $9)
           (i32.load16_u offset=2
            (i32.add
-            (get_local $5)
+            (local.get $5)
             (i32.mul
-             (get_local $12)
+             (local.get $12)
              (i32.const 12)
             )
            )
@@ -948,17 +948,17 @@
          )
         )
        )
-       (set_local $432
-        (get_local $431)
+       (local.set $432
+        (local.get $431)
        )
       )
      )
-     (set_local $433
+     (local.set $433
       (i32.const 1)
      )
      (i32.xor
-      (get_local $432)
-      (get_local $433)
+      (local.get $432)
+      (local.get $433)
      )
     )
    )
@@ -980,7 +980,7 @@
      (br_if $label$0
       (i32.const 0)
       (block (result i32)
-       (get_local $0)
+       (local.get $0)
       )
      )
     )
@@ -1012,9 +1012,9 @@
    )
   )
   (func $tees (param $x i32) (param $y i32)
-    (drop (tee_local $x (i32.const 1)))
-    (drop (tee_local $x (unreachable)))
-    (drop (tee_local $y (tee_local $x (i32.const 2))))
+    (drop (local.tee $x (i32.const 1)))
+    (drop (local.tee $x (unreachable)))
+    (drop (local.tee $y (local.tee $x (i32.const 2))))
   )
   (func $return (param $x i32) (result i32)
     (return (i32.sub (i32.const 1) (i32.const 2)))

@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "sti32" (func $sti32))
  (export "sti64" (func $sti64))
@@ -11,29 +11,29 @@
  (export "stackRestore" (func $stackRestore))
  (func $sti32 (; 0 ;) (param $0 i32) (param $1 i32)
   (i32.store
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
   (return)
  )
  (func $sti64 (; 1 ;) (param $0 i32) (param $1 i64)
   (i64.store
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
   (return)
  )
  (func $stf32 (; 2 ;) (param $0 i32) (param $1 f32)
   (f32.store
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
   (return)
  )
  (func $stf64 (; 3 ;) (param $0 i32) (param $1 f64)
   (f64.store
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
   (return)
  )
@@ -46,24 +46,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 6 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

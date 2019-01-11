@@ -5,7 +5,7 @@
  (type $3 (func (param i32 i32 i32) (result i32)))
  (func $basic (; 0 ;) (type $0) (param $p i32)
   (local $x i32)
-  (set_local $x
+  (local.set $x
    (i32.const 10)
   )
   (call $basic
@@ -16,14 +16,14 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (set_local $x
+   (local.set $x
     (i32.const 10)
    )
   )
   (call $basic
    (i32.add
-    (get_local $x)
-    (get_local $x)
+    (local.get $x)
+    (local.get $x)
    )
   )
  )
@@ -31,10 +31,10 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (set_local $x
+   (local.set $x
     (i32.const 10)
    )
-   (set_local $x
+   (local.set $x
     (i32.const 10)
    )
   )
@@ -46,17 +46,17 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (set_local $x
+   (local.set $x
     (i32.const 10)
    )
-   (set_local $x
+   (local.set $x
     (i32.const 20)
    )
   )
   (call $basic
    (i32.add
-    (get_local $x)
-    (get_local $x)
+    (local.get $x)
+    (local.get $x)
    )
   )
  )
@@ -64,17 +64,17 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (set_local $x
+   (local.set $x
     (i32.const 10)
    )
-   (set_local $x
-    (get_local $p)
+   (local.set $x
+    (local.get $p)
    )
   )
   (call $basic
    (i32.add
-    (get_local $x)
-    (get_local $x)
+    (local.get $x)
+    (local.get $x)
    )
   )
  )
@@ -82,7 +82,7 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (set_local $x
+   (local.set $x
     (i32.const 0)
    )
   )
@@ -92,28 +92,28 @@
  )
  (func $later (; 6 ;) (type $0) (param $p i32)
   (local $x i32)
-  (set_local $x
+  (local.set $x
    (i32.const 10)
   )
   (call $basic
    (i32.const 20)
   )
-  (set_local $x
+  (local.set $x
    (i32.const 22)
   )
   (call $basic
    (i32.const 44)
   )
-  (set_local $x
+  (local.set $x
    (i32.const 39)
   )
  )
  (func $later2 (; 7 ;) (type $1) (param $p i32) (result i32)
   (local $x i32)
-  (set_local $x
+  (local.set $x
    (i32.const 10)
   )
-  (set_local $x
+  (local.set $x
    (i32.const 20)
   )
   (i32.const 20)
@@ -121,19 +121,19 @@
  (func $two-ways-but-identical (; 8 ;) (type $1) (param $p i32) (result i32)
   (local $x i32)
   (local $y i32)
-  (set_local $x
+  (local.set $x
    (i32.const 10)
   )
   (if
    (i32.const 1)
-   (set_local $y
+   (local.set $y
     (i32.const 11)
    )
-   (set_local $y
+   (local.set $y
     (i32.const 11)
    )
   )
-  (set_local $y
+  (local.set $y
    (i32.const 21)
   )
   (i32.const 21)
@@ -141,34 +141,34 @@
  (func $two-ways-but-almost-identical (; 9 ;) (type $1) (param $p i32) (result i32)
   (local $x i32)
   (local $y i32)
-  (set_local $x
+  (local.set $x
    (i32.const 10)
   )
   (if
    (i32.const 1)
-   (set_local $y
+   (local.set $y
     (i32.const 12)
    )
-   (set_local $y
+   (local.set $y
     (i32.const 11)
    )
   )
-  (set_local $y
+  (local.set $y
    (i32.add
     (i32.const 10)
-    (get_local $y)
+    (local.get $y)
    )
   )
-  (get_local $y)
+  (local.get $y)
  )
  (func $deadloop (; 10 ;) (type $1) (param $p i32) (result i32)
   (local $x i32)
   (local $y i32)
   (loop $loop
-   (set_local $x
+   (local.set $x
     (i32.const 0)
    )
-   (set_local $y
+   (local.set $y
     (i32.const 0)
    )
    (br $loop)
@@ -178,10 +178,10 @@
   (local $x i32)
   (local $y i32)
   (loop $loop
-   (set_local $x
+   (local.set $x
     (i32.const 0)
    )
-   (set_local $y
+   (local.set $y
     (i32.const 0)
    )
    (call $deadloop2
@@ -197,10 +197,10 @@
   (local $x i32)
   (local $y i32)
   (loop $loop
-   (set_local $x
+   (local.set $x
     (i32.const 0)
    )
-   (set_local $y
+   (local.set $y
     (i32.const 0)
    )
    (call $deadloop2
@@ -213,8 +213,8 @@
   )
  )
  (func $through-tee (; 13 ;) (type $2) (param $x i32) (param $y i32) (result i32)
-  (set_local $x
-   (tee_local $y
+  (local.set $x
+   (local.tee $y
     (i32.const 7)
    )
   )
@@ -223,9 +223,9 @@
   )
  )
  (func $through-tee-more (; 14 ;) (type $2) (param $x i32) (param $y i32) (result i32)
-  (set_local $x
+  (local.set $x
    (i32.eqz
-    (tee_local $y
+    (local.tee $y
      (i32.const 7)
     )
    )
@@ -238,6 +238,6 @@
   (local $3 i32)
   (nop)
   (nop)
-  (get_local $2)
+  (local.get $2)
  )
 )

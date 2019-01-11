@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "add64" (func $add64))
  (export "sub64" (func $sub64))
@@ -31,178 +31,178 @@
  (func $add64 (; 0 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.add
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sub64 (; 1 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.sub
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $mul64 (; 2 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.mul
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sdiv64 (; 3 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.div_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $udiv64 (; 4 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.div_u
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $srem64 (; 5 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.rem_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $urem64 (; 6 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.rem_u
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $and64 (; 7 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.and
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $or64 (; 8 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.or
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $xor64 (; 9 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.xor
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $shl64 (; 10 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.shl
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $shr64 (; 11 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.shr_u
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sar64 (; 12 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.shr_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $clz64 (; 13 ;) (param $0 i64) (result i64)
   (return
    (i64.clz
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $clz64_zero_undef (; 14 ;) (param $0 i64) (result i64)
   (return
    (i64.clz
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $ctz64 (; 15 ;) (param $0 i64) (result i64)
   (return
    (i64.ctz
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $ctz64_zero_undef (; 16 ;) (param $0 i64) (result i64)
   (return
    (i64.ctz
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $popcnt64 (; 17 ;) (param $0 i64) (result i64)
   (return
    (i64.popcnt
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $eqz64 (; 18 ;) (param $0 i64) (result i32)
   (return
    (i64.eqz
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $rotl (; 19 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.rotl
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $masked_rotl (; 20 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.rotl
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $rotr (; 21 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.rotr
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $masked_rotr (; 22 ;) (param $0 i64) (param $1 i64) (result i64)
   (return
    (i64.rotr
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
@@ -215,24 +215,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 25 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

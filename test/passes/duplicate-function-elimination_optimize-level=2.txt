@@ -43,7 +43,7 @@
 (module
  (type $0 (func))
  (memory $0 0)
- (table $0 3 3 anyfunc)
+ (table $0 3 3 funcref)
  (elem (i32.const 0) $keep2 $keep2 $caller)
  (export "keep2" (func $keep2))
  (export "other" (func $keep2))
@@ -388,7 +388,7 @@
 (module
  (type $T (func))
  (memory $0 0)
- (table $0 2 2 anyfunc)
+ (table $0 2 2 funcref)
  (elem (i32.const 0) $erase $erase)
  (func $erase (; 0 ;) (type $T)
   (call_indirect (type $T)
@@ -399,7 +399,7 @@
 (module
  (type $T (func))
  (memory $0 0)
- (table $0 2 2 anyfunc)
+ (table $0 2 2 funcref)
  (elem (i32.const 0) $keep2 $other)
  (func $keep2 (; 0 ;) (type $T)
   (call_indirect (type $T)
@@ -416,7 +416,7 @@
  (type $T (func))
  (type $S (func))
  (memory $0 0)
- (table $0 2 2 anyfunc)
+ (table $0 2 2 funcref)
  (elem (i32.const 0) $keep2 $other)
  (func $keep2 (; 0 ;) (type $T)
   (call_indirect (type $T)
@@ -435,7 +435,7 @@
  (func $erase-even-locals-with-different-names (; 0 ;) (type $0)
   (local $i i32)
   (drop
-   (get_local $i)
+   (local.get $i)
   )
  )
 )
@@ -445,13 +445,13 @@
  (func $keep2 (; 0 ;) (type $0)
   (local $i i32)
   (drop
-   (get_local $i)
+   (local.get $i)
   )
  )
  (func $other (; 1 ;) (type $0)
   (local $j i64)
   (drop
-   (get_local $j)
+   (local.get $j)
   )
  )
 )
@@ -460,7 +460,7 @@
  (memory $0 0)
  (func $erase-even-locals-with-different-names (; 0 ;) (type $0)
   (local $i i32)
-  (set_local $i
+  (local.set $i
    (i32.const 0)
   )
  )
@@ -470,13 +470,13 @@
  (memory $0 0)
  (func $keep2 (; 0 ;) (type $0)
   (local $i i32)
-  (set_local $i
+  (local.set $i
    (i32.const 0)
   )
  )
  (func $other (; 1 ;) (type $0)
   (local $j i64)
-  (set_local $j
+  (local.set $j
    (i64.const 0)
   )
  )
@@ -486,13 +486,13 @@
  (memory $0 0)
  (func $keep2 (; 0 ;) (type $0)
   (local $i i32)
-  (set_local $i
+  (local.set $i
    (i32.const 0)
   )
  )
  (func $other (; 1 ;) (type $0)
   (local $j i32)
-  (set_local $j
+  (local.set $j
    (i32.const 1)
   )
  )

@@ -1,6 +1,6 @@
 (module
   (memory 256 256)
-  (table 256 256 anyfunc)
+  (table 256 256 funcref)
   (elem (i32.const 0) $ifs $ifs $ifs)
   (data (i32.const 0) "\ff\ef\0f\1f\20\30\40\50\99")
   (type $0 (func (param i32)))

@@ -7,8 +7,8 @@
   (block (result i32)
    (block (result i32)
     (if (result i32)
-     (get_local $0)
-     (get_local $0)
+     (local.get $0)
+     (local.get $0)
      (i32.const 0)
     )
    )
@@ -23,9 +23,9 @@
  (export "test" (func $test))
  (func $test (; 0 ;) (type $i) (param $0 i32) (result i32)
   block $block0 (result i32)
-   get_local $0
+   local.get $0
    if (result i32)
-    get_local $0
+    local.get $0
    else    
     i32.const 0
    end
@@ -39,9 +39,9 @@
  (memory $0 0)
  (export "test" (func $test))
  (func $test (; 0 ;) (type $i) (param $0 i32) (result i32)
-  get_local $0
+  local.get $0
   if (result i32)
-   get_local $0
+   local.get $0
   else   
    i32.const 0
   end

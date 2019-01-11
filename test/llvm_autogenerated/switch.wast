@@ -7,7 +7,7 @@
  (import "env" "foo4" (func $foo4))
  (import "env" "foo5" (func $foo5))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "bar32" (func $bar32))
  (export "bar64" (func $bar64))
@@ -18,7 +18,7 @@
   (block $label$0
    (br_if $label$0
     (i32.gt_u
-     (get_local $0)
+     (local.get $0)
      (i32.const 23)
     )
    )
@@ -29,7 +29,7 @@
        (block $label$5
         (block $label$6
          (br_table $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$4 $label$4 $label$4 $label$4 $label$4 $label$4 $label$3 $label$2 $label$1 $label$6
-          (get_local $0)
+          (local.get $0)
          )
         )
         (call $foo0)
@@ -55,7 +55,7 @@
   (block $label$0
    (br_if $label$0
     (i64.gt_u
-     (get_local $0)
+     (local.get $0)
      (i64.const 23)
     )
    )
@@ -66,8 +66,8 @@
        (block $label$5
         (block $label$6
          (br_table $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$4 $label$4 $label$4 $label$4 $label$4 $label$4 $label$3 $label$2 $label$1 $label$6
-          (i32.wrap/i64
-           (get_local $0)
+          (i32.wrap_i64
+           (local.get $0)
           )
          )
         )
@@ -99,24 +99,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 10 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

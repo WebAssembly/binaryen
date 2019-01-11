@@ -5,18 +5,18 @@
  (func $0 (; 0 ;) (type $0)
   (if
    (block $label$1 (result i32)
-    (set_global $global$0
+    (global.set $global$0
      (i32.const 0)
     )
     (i32.const 127)
    )
    (unreachable)
   )
-  (set_global $global$0
+  (global.set $global$0
    (i32.const -1)
   )
   (if
-   (get_global $global$0)
+   (global.get $global$0)
    (unreachable)
   )
   (unreachable)

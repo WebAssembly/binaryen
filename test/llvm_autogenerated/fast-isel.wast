@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "immediate_f32" (func $immediate_f32))
  (export "immediate_f64" (func $immediate_f64))
@@ -18,23 +18,23 @@
   (f64.const 2.5)
  )
  (func $bitcast_i32_f32 (; 2 ;) (param $0 f32) (result i32)
-  (i32.reinterpret/f32
-   (get_local $0)
+  (i32.reinterpret_f32
+   (local.get $0)
   )
  )
  (func $bitcast_f32_i32 (; 3 ;) (param $0 i32) (result f32)
-  (f32.reinterpret/i32
-   (get_local $0)
+  (f32.reinterpret_i32
+   (local.get $0)
   )
  )
  (func $bitcast_i64_f64 (; 4 ;) (param $0 f64) (result i64)
-  (i64.reinterpret/f64
-   (get_local $0)
+  (i64.reinterpret_f64
+   (local.get $0)
   )
  )
  (func $bitcast_f64_i64 (; 5 ;) (param $0 i64) (result f64)
-  (f64.reinterpret/i64
-   (get_local $0)
+  (f64.reinterpret_i64
+   (local.get $0)
   )
  )
  (func $stackSave (; 6 ;) (result i32)
@@ -46,24 +46,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 8 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

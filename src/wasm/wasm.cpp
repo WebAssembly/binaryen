@@ -66,7 +66,7 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
      NEG_NAN("-nan"),
      CASE("case"),
      BR("br"),
-     ANYFUNC("anyfunc"),
+     FUNCREF("funcref"),
      FAKE_RETURN("fake_return_waka123"),
      MUT("mut"),
      SPECTEST("spectest"),
@@ -85,10 +85,10 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::SwitchId: return "switch";
     case Expression::Id::CallId: return "call";
     case Expression::Id::CallIndirectId: return "call_indirect";
-    case Expression::Id::GetLocalId: return "get_local";
-    case Expression::Id::SetLocalId: return "set_local";
-    case Expression::Id::GetGlobalId: return "get_global";
-    case Expression::Id::SetGlobalId: return "set_global";
+    case Expression::Id::GetLocalId: return "local.get";
+    case Expression::Id::SetLocalId: return "local.set";
+    case Expression::Id::GetGlobalId: return "global.get";
+    case Expression::Id::SetGlobalId: return "global.set";
     case Expression::Id::LoadId: return "load";
     case Expression::Id::StoreId: return "store";
     case Expression::Id::ConstId: return "const";
@@ -809,15 +809,17 @@ Global* Module::getGlobalOrNull(Name name) {
   return iter->second;
 }
 
-void Module::addFunctionType(FunctionType* curr) {
+FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunctionType: empty name";
   }
   if (getFunctionTypeOrNull(curr->name)) {
     Fatal() << "Module::addFunctionType: " << curr->name << " already exists";
   }
-  functionTypes.push_back(std::unique_ptr<FunctionType>(curr));
-  functionTypesMap[curr->name] = curr;
+  auto* p = curr.get();
+  functionTypes.emplace_back(std::move(curr));
+  functionTypesMap[p->name] = p;
+  return p;
 }
 
 void Module::addExport(Export* curr) {

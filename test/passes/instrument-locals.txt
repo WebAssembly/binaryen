@@ -21,92 +21,92 @@
    (call $get_i32
     (i32.const 0)
     (i32.const 0)
-    (get_local $x)
+    (local.get $x)
    )
   )
   (drop
-   (get_local $y)
+   (local.get $y)
   )
   (drop
    (call $get_f32
     (i32.const 1)
     (i32.const 2)
-    (get_local $z)
+    (local.get $z)
    )
   )
   (drop
    (call $get_f64
     (i32.const 2)
     (i32.const 3)
-    (get_local $w)
+    (local.get $w)
    )
   )
   (drop
    (call $get_i32
     (i32.const 3)
     (i32.const 0)
-    (get_local $x)
+    (local.get $x)
    )
   )
   (drop
-   (get_local $y)
+   (local.get $y)
   )
   (drop
    (call $get_f32
     (i32.const 4)
     (i32.const 2)
-    (get_local $z)
+    (local.get $z)
    )
   )
   (drop
    (call $get_f64
     (i32.const 5)
     (i32.const 3)
-    (get_local $w)
+    (local.get $w)
    )
   )
-  (set_local $x
+  (local.set $x
    (call $set_i32
     (i32.const 6)
     (i32.const 0)
     (i32.const 1)
    )
   )
-  (set_local $y
+  (local.set $y
    (i64.const 2)
   )
-  (set_local $z
+  (local.set $z
    (call $set_f32
     (i32.const 7)
     (i32.const 2)
     (f32.const 3.2100000381469727)
    )
   )
-  (set_local $w
+  (local.set $w
    (call $set_f64
     (i32.const 8)
     (i32.const 3)
     (f64.const 4.321)
    )
   )
-  (set_local $x
+  (local.set $x
    (call $set_i32
     (i32.const 9)
     (i32.const 0)
     (i32.const 11)
    )
   )
-  (set_local $y
+  (local.set $y
    (i64.const 22)
   )
-  (set_local $z
+  (local.set $z
    (call $set_f32
     (i32.const 10)
     (i32.const 2)
     (f32.const 33.209999084472656)
    )
   )
-  (set_local $w
+  (local.set $w
    (call $set_f64
     (i32.const 11)
     (i32.const 3)

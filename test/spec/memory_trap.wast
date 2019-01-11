@@ -6,15 +6,15 @@
     )
 
     (func (export "store") (param $i i32) (param $v i32)
-      (i32.store (i32.add (call $addr_limit) (get_local $i)) (get_local $v))
+      (i32.store (i32.add (call $addr_limit) (local.get $i)) (local.get $v))
     )
 
     (func (export "load") (param $i i32) (result i32)
-      (i32.load (i32.add (call $addr_limit) (get_local $i)))
+      (i32.load (i32.add (call $addr_limit) (local.get $i)))
     )
 
     (func (export "grow_memory") (param i32) (result i32)
-      (grow_memory (get_local 0))
+      (grow_memory (local.get 0))
     )
 )
 

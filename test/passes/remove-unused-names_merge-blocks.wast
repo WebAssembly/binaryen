@@ -4,7 +4,7 @@
   (type $ii (func (param i32 i32)))
   (type $iii (func (param i32 i32 i32)))
   (type $3 (func))
-  (table 1 1 anyfunc)
+  (table 1 1 funcref)
   (elem (i32.const 0) $call-i)
   (func $call-i (type $i) (param $0 i32)
     (nop)
@@ -184,7 +184,7 @@
         )
       )
     )
-    (set_local $x
+    (local.set $x
       (block $block3 (result i32)
         (drop
           (i32.const 10)
@@ -923,10 +923,10 @@
   (func $mix-select (param $x i32)
     (drop
       (select
-        (get_local $x)
-        (get_local $x)
+        (local.get $x)
+        (local.get $x)
         (block (result i32)
-          (set_local $x ;; cannot be moved before the gets
+          (local.set $x ;; cannot be moved before the gets
             (i32.const 1)
           )
           (i32.const 2)
@@ -939,10 +939,10 @@
     (local $1 f64)
     (if
       (f64.gt
-        (get_local $0)
+        (local.get $0)
         (block $block0 (result f64)
           (nop)
-          (get_local $1)
+          (local.get $1)
         )
       )
       (nop)
@@ -952,11 +952,11 @@
     (local $y i32)
     (if (i32.const 1)
       (block
-        (set_local $x
+        (local.set $x
           (i32.le_u
-            (get_local $x)
+            (local.get $x)
             (block (result i32)
-              (set_local $y (i32.const 5))
+              (local.set $y (i32.const 5))
               (i32.const 10)
             )
           )
@@ -968,11 +968,11 @@
     (local $y i32)
     (if (i32.const 1)
       (block
-        (set_local $x
+        (local.set $x
           (i32.le_u
-            (get_local $y)
+            (local.get $y)
             (block (result i32)
-              (set_local $y (i32.const 5))
+              (local.set $y (i32.const 5))
               (i32.const 10)
             )
           )
@@ -1327,13 +1327,13 @@
   (local $2 i32)
   (local $9 i32)
   (loop $label$1
-   (set_local $9
-    (tee_local $2
+   (local.set $9
+    (local.tee $2
      (block $label$2 (result i32)
       (block
        (drop
         (br_if $label$2
-         (tee_local $2
+         (local.tee $2
           (i32.const 0)
          )
          (i32.const 0)
@@ -1352,7 +1352,7 @@
    )
   )
   (nop)
-  (get_local $9)
+  (local.get $9)
  )
  (func $trivial (result i32)
    (block (result i32)

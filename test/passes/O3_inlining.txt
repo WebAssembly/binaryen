@@ -5,10 +5,10 @@
  (export "func_217" (func $1))
  (func $1 (; 0 ;) (type $1) (param $0 i32)
   (if
-   (get_global $global$1)
+   (global.get $global$1)
    (unreachable)
   )
-  (set_global $global$1
+  (global.set $global$1
    (i32.const 0)
   )
   (if

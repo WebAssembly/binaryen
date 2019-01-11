@@ -12,13 +12,13 @@ total
  call_indirect  : 4       
  const          : 47      
  drop           : 3       
- get_global     : 1       
- get_local      : 18      
+ global.get     : 1       
+ global.set     : 1       
  if             : 3       
  load           : 16      
+ local.get      : 18      
+ local.set      : 7       
  loop           : 1       
- set_global     : 1       
- set_local      : 7       
  store          : 5       
 (module
  (type $0 (func (param i32 i32) (result i32)))
@@ -35,7 +35,7 @@ total
  (data (i32.const 18128) ",I")
  (data (i32.const 18732) "D\1b")
  (data (i32.const 18764) "`\0b")
- (import "env" "table" (table $timport$2 478 478 anyfunc))
+ (import "env" "table" (table $timport$2 478 478 funcref))
  (elem (i32.const 0) $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $___stdout_write $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE6xsputnEPKci $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE8overflowEi)
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 1))
@@ -50,27 +50,27 @@ total
  (func $___stdio_write (; 3 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
    (i32.const 8)
-   (get_local $0)
+   (local.get $0)
   )
   (i32.store
    (i32.const 12)
-   (get_local $1)
+   (local.get $1)
   )
   (i32.store
-   (tee_local $0
-    (get_global $global$0)
+   (local.tee $0
+    (global.get $global$0)
    )
    (i32.const 1)
   )
   (i32.store offset=8
-   (get_local $0)
+   (local.get $0)
    (i32.const 2)
   )
   (drop
    (if (result i32)
     (call $import$0
      (i32.const 146)
-     (get_local $0)
+     (local.get $0)
     )
     (i32.const -1)
     (i32.const 0)
@@ -81,7 +81,7 @@ total
  (func $_main (; 4 ;) (; has Stack IR ;) (type $7) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (set_local $1
+  (local.set $1
    (i32.load offset=24
     (i32.add
      (i32.load
@@ -98,24 +98,24 @@ total
   )
   (if
    (block (result i32)
-    (set_local $0
+    (local.set $0
      (i32.const 10888)
     )
     (loop $label$3
      (br_if $label$3
       (i32.load8_s
-       (tee_local $0
+       (local.tee $0
         (i32.add
-         (get_local $0)
+         (local.get $0)
          (i32.const 1)
         )
        )
       )
      )
     )
-    (tee_local $0
+    (local.tee $0
      (i32.sub
-      (get_local $0)
+      (local.get $0)
       (i32.const 10888)
      )
     )
@@ -123,13 +123,13 @@ total
    (block $label$2
     (br_if $label$2
      (call_indirect (type $1)
-      (get_local $1)
+      (local.get $1)
       (i32.const 10888)
-      (get_local $0)
+      (local.get $0)
       (i32.add
        (i32.load offset=48
         (i32.load
-         (get_local $1)
+         (local.get $1)
         )
        )
        (i32.const 8)
@@ -142,12 +142,12 @@ total
   (i32.const 0)
  )
  (func $___stdout_write (; 5 ;) (; has Stack IR ;) (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (set_global $global$0
+  (global.set $global$0
    (i32.const 32)
   )
   (call $___stdio_write
-   (get_local $1)
-   (get_local $2)
+   (local.get $1)
+   (local.get $2)
   )
  )
  (func $__ZNSt3__213basic_ostreamIcNS_11char_traitsIcEEE3putEc (; 6 ;) (; has Stack IR ;)
@@ -158,8 +158,8 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (tee_local $1
-        (tee_local $0
+       (local.tee $1
+        (local.tee $0
          (i32.load
           (i32.add
            (i32.load
@@ -180,12 +180,12 @@ total
      )
      (i32.const 0)
      (call_indirect (type $0)
-      (get_local $1)
+      (local.get $1)
       (i32.const 10)
       (i32.add
        (i32.load offset=52
         (i32.load
-         (get_local $0)
+         (local.get $0)
         )
        )
        (i32.const 422)
@@ -198,7 +198,7 @@ total
  (func $__ZNSt3__211__stdoutbufIcE8overflowEi (; 7 ;) (; has Stack IR ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.store8
    (i32.const 0)
-   (get_local $1)
+   (local.get $1)
   )
   (drop
    (call_indirect (type $1)
@@ -209,7 +209,7 @@ total
      (i32.load offset=36
       (i32.load
        (i32.add
-        (get_local $0)
+        (local.get $0)
         (i32.const 32)
        )
       )
@@ -224,12 +224,12 @@ total
   (drop
    (call_indirect (type $1)
     (i32.const 0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $1)
+    (local.get $2)
     (i32.add
      (i32.load offset=36
       (i32.load offset=32
-       (get_local $0)
+       (local.get $0)
       )
      )
      (i32.const 8)
@@ -253,13 +253,13 @@ total
  call_indirect  : 4       
  const          : 47      
  drop           : 3       
- get_global     : 1       
- get_local      : 18      
+ global.get     : 1       
+ global.set     : 1       
  if             : 3       
  load           : 16      
+ local.get      : 18      
+ local.set      : 7       
  loop           : 1       
- set_global     : 1       
- set_local      : 7       
  store          : 5       
 (module
  (type $0 (func (param i32 i32) (result i32)))
@@ -277,7 +277,7 @@ total
  (data (i32.const 18128) ",I")
  (data (i32.const 18732) "D\1b")
  (data (i32.const 18764) "`\0b")
- (import "env" "table" (table $timport$2 478 478 anyfunc))
+ (import "env" "table" (table $timport$2 478 478 funcref))
  (elem (i32.const 0) $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $___stdout_write $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE6xsputnEPKci $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE8overflowEi)
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 1))
@@ -292,27 +292,27 @@ total
  (func $___stdio_write (; 3 ;) (; has Stack IR ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
    (i32.const 8)
-   (get_local $0)
+   (local.get $0)
   )
   (i32.store
    (i32.const 12)
-   (get_local $1)
+   (local.get $1)
   )
   (i32.store
-   (tee_local $0
-    (get_global $global$0)
+   (local.tee $0
+    (global.get $global$0)
    )
    (i32.const 1)
   )
   (i32.store offset=8
-   (get_local $0)
+   (local.get $0)
    (i32.const 2)
   )
   (drop
    (if (result i32)
     (call $import$0
      (i32.const 146)
-     (get_local $0)
+     (local.get $0)
     )
     (i32.const -1)
     (i32.const 0)
@@ -323,7 +323,7 @@ total
  (func $_main (; 4 ;) (; has Stack IR ;) (type $7) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (set_local $1
+  (local.set $1
    (i32.load offset=24
     (i32.add
      (i32.load
@@ -340,24 +340,24 @@ total
   )
   (if
    (block (result i32)
-    (set_local $0
+    (local.set $0
      (i32.const 10888)
     )
     (loop $label$3
      (br_if $label$3
       (i32.load8_s
-       (tee_local $0
+       (local.tee $0
         (i32.add
-         (get_local $0)
+         (local.get $0)
          (i32.const 1)
         )
        )
       )
      )
     )
-    (tee_local $0
+    (local.tee $0
      (i32.sub
-      (get_local $0)
+      (local.get $0)
       (i32.const 10888)
      )
     )
@@ -365,13 +365,13 @@ total
    (block $label$2
     (br_if $label$2
      (call_indirect (type $1)
-      (get_local $1)
+      (local.get $1)
       (i32.const 10888)
-      (get_local $0)
+      (local.get $0)
       (i32.add
        (i32.load offset=48
         (i32.load
-         (get_local $1)
+         (local.get $1)
         )
        )
        (i32.const 8)
@@ -384,12 +384,12 @@ total
   (i32.const 0)
  )
  (func $___stdout_write (; 5 ;) (; has Stack IR ;) (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (set_global $global$0
+  (global.set $global$0
    (i32.const 32)
   )
   (call $___stdio_write
-   (get_local $1)
-   (get_local $2)
+   (local.get $1)
+   (local.get $2)
   )
  )
  (func $__ZNSt3__213basic_ostreamIcNS_11char_traitsIcEEE3putEc (; 6 ;) (; has Stack IR ;) (type $FUNCSIG$v)
@@ -400,8 +400,8 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (tee_local $1
-        (tee_local $0
+       (local.tee $1
+        (local.tee $0
          (i32.load
           (i32.add
            (i32.load
@@ -422,12 +422,12 @@ total
      )
      (i32.const 0)
      (call_indirect (type $0)
-      (get_local $1)
+      (local.get $1)
       (i32.const 10)
       (i32.add
        (i32.load offset=52
         (i32.load
-         (get_local $0)
+         (local.get $0)
         )
        )
        (i32.const 422)
@@ -440,7 +440,7 @@ total
  (func $__ZNSt3__211__stdoutbufIcE8overflowEi (; 7 ;) (; has Stack IR ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.store8
    (i32.const 0)
-   (get_local $1)
+   (local.get $1)
   )
   (drop
    (call_indirect (type $1)
@@ -451,7 +451,7 @@ total
      (i32.load offset=36
       (i32.load
        (i32.add
-        (get_local $0)
+        (local.get $0)
         (i32.const 32)
        )
       )
@@ -466,12 +466,12 @@ total
   (drop
    (call_indirect (type $1)
     (i32.const 0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $1)
+    (local.get $2)
     (i32.add
      (i32.load offset=36
       (i32.load offset=32
-       (get_local $0)
+       (local.get $0)
       )
      )
      (i32.const 8)
@@ -495,13 +495,13 @@ total
  call_indirect  : 4       
  const          : 47      
  drop           : 3       
- get_global     : 1       
- get_local      : 18      
+ global.get     : 1       
+ global.set     : 1       
  if             : 3       
  load           : 16      
+ local.get      : 18      
+ local.set      : 7       
  loop           : 1       
- set_global     : 1       
- set_local      : 7       
  store          : 5       
 (module
  (type $0 (func (param i32 i32) (result i32)))
@@ -519,7 +519,7 @@ total
  (data (i32.const 18128) ",I")
  (data (i32.const 18732) "D\1b")
  (data (i32.const 18764) "`\0b")
- (import "env" "table" (table $timport$2 478 478 anyfunc))
+ (import "env" "table" (table $timport$2 478 478 funcref))
  (elem (i32.const 0) $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $___stdout_write $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE6xsputnEPKci $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE8overflowEi)
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 1))
@@ -534,27 +534,27 @@ total
  (func $___stdio_write (; 3 ;) (; has Stack IR ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
    (i32.const 8)
-   (get_local $0)
+   (local.get $0)
   )
   (i32.store
    (i32.const 12)
-   (get_local $1)
+   (local.get $1)
   )
   (i32.store
-   (tee_local $0
-    (get_global $global$0)
+   (local.tee $0
+    (global.get $global$0)
    )
    (i32.const 1)
   )
   (i32.store offset=8
-   (get_local $0)
+   (local.get $0)
    (i32.const 2)
   )
   (drop
    (if (result i32)
     (call $import$0
      (i32.const 146)
-     (get_local $0)
+     (local.get $0)
     )
     (i32.const -1)
     (i32.const 0)
@@ -565,7 +565,7 @@ total
  (func $_main (; 4 ;) (; has Stack IR ;) (type $7) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (set_local $1
+  (local.set $1
    (i32.load offset=24
     (i32.add
      (i32.load
@@ -582,24 +582,24 @@ total
   )
   (if
    (block (result i32)
-    (set_local $0
+    (local.set $0
      (i32.const 10888)
     )
     (loop $label$3
      (br_if $label$3
       (i32.load8_s
-       (tee_local $0
+       (local.tee $0
         (i32.add
-         (get_local $0)
+         (local.get $0)
          (i32.const 1)
         )
        )
       )
      )
     )
-    (tee_local $0
+    (local.tee $0
      (i32.sub
-      (get_local $0)
+      (local.get $0)
       (i32.const 10888)
      )
     )
@@ -607,13 +607,13 @@ total
    (block $label$2
     (br_if $label$2
      (call_indirect (type $1)
-      (get_local $1)
+      (local.get $1)
       (i32.const 10888)
-      (get_local $0)
+      (local.get $0)
       (i32.add
        (i32.load offset=48
         (i32.load
-         (get_local $1)
+         (local.get $1)
         )
        )
        (i32.const 8)
@@ -626,12 +626,12 @@ total
   (i32.const 0)
  )
  (func $___stdout_write (; 5 ;) (; has Stack IR ;) (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (set_global $global$0
+  (global.set $global$0
    (i32.const 32)
   )
   (call $___stdio_write
-   (get_local $1)
-   (get_local $2)
+   (local.get $1)
+   (local.get $2)
   )
  )
  (func $__ZNSt3__213basic_ostreamIcNS_11char_traitsIcEEE3putEc (; 6 ;) (; has Stack IR ;) (type $FUNCSIG$v)
@@ -642,8 +642,8 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (tee_local $1
-        (tee_local $0
+       (local.tee $1
+        (local.tee $0
          (i32.load
           (i32.add
            (i32.load
@@ -664,12 +664,12 @@ total
      )
      (i32.const 0)
      (call_indirect (type $0)
-      (get_local $1)
+      (local.get $1)
       (i32.const 10)
       (i32.add
        (i32.load offset=52
         (i32.load
-         (get_local $0)
+         (local.get $0)
         )
        )
        (i32.const 422)
@@ -682,7 +682,7 @@ total
  (func $__ZNSt3__211__stdoutbufIcE8overflowEi (; 7 ;) (; has Stack IR ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.store8
    (i32.const 0)
-   (get_local $1)
+   (local.get $1)
   )
   (drop
    (call_indirect (type $1)
@@ -693,7 +693,7 @@ total
      (i32.load offset=36
       (i32.load
        (i32.add
-        (get_local $0)
+        (local.get $0)
         (i32.const 32)
        )
       )
@@ -708,12 +708,12 @@ total
   (drop
    (call_indirect (type $1)
     (i32.const 0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $1)
+    (local.get $2)
     (i32.add
      (i32.load offset=36
       (i32.load offset=32
-       (get_local $0)
+       (local.get $0)
       )
      )
      (i32.const 8)

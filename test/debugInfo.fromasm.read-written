@@ -3,7 +3,7 @@
  (type $1 (func (param i32) (result i32)))
  (type $2 (func))
  (import "env" "memory" (memory $1 256 256))
- (data (get_global $gimport$0) "debugInfo.asm.js")
+ (data (global.get $gimport$0) "debugInfo.asm.js")
  (import "env" "__memory_base" (global $gimport$0 i32))
  (export "add" (func $add))
  (export "ret" (func $ret))
@@ -14,56 +14,56 @@
  (func $add (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;;@ tests/other_file.cpp:314159:0
   (i32.add
-   (get_local $1)
-   (get_local $1)
+   (local.get $1)
+   (local.get $1)
   )
  )
  (func $ret (; 1 ;) (type $1) (param $0 i32) (result i32)
   ;;@ return.cpp:50:0
-  (set_local $0
+  (local.set $0
    (i32.shl
-    (get_local $0)
+    (local.get $0)
     (i32.const 1)
    )
   )
   ;;@ return.cpp:100:0
   (i32.add
-   (get_local $0)
+   (local.get $0)
    (i32.const 1)
   )
  )
  (func $i32s-rem (; 2 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
-   (get_local $1)
+   (local.get $1)
    (i32.rem_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
    (i32.const 0)
   )
  )
  (func $opts (; 3 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;;@ even-opted.cpp:1:0
-  (set_local $0
+  (local.set $0
    (i32.add
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
   ;;@ even-opted.cpp:2:0
-  (set_local $1
+  (local.set $1
    (i32.shr_s
-    (get_local $1)
-    (get_local $0)
+    (local.get $1)
+    (local.get $0)
    )
   )
   ;;@ even-opted.cpp:3:0
   (i32.add
    (call $i32s-rem
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
-   (get_local $1)
+   (local.get $1)
   )
  )
  (func $fib (; 4 ;) (type $1) (param $0 i32) (result i32)
@@ -72,74 +72,74 @@
   (local $3 i32)
   (local $4 i32)
   ;;@ fib.c:8:0
-  (set_local $4
+  (local.set $4
    ;;@ fib.c:3:0
    (if (result i32)
     (i32.gt_s
-     (get_local $0)
+     (local.get $0)
      (i32.const 0)
     )
     (block (result i32)
-     (set_local $3
+     (local.set $3
       (i32.const 1)
      )
      (i32.const 0)
     )
     (block (result i32)
-     (set_local $1
+     (local.set $1
       (i32.const 1)
      )
      ;;@ fib.c:8:0
      (return
-      (get_local $1)
+      (local.get $1)
      )
     )
    )
   )
   (loop $label$3
    ;;@ fib.c:4:0
-   (set_local $1
+   (local.set $1
     (i32.add
-     (get_local $3)
-     (get_local $4)
+     (local.get $3)
+     (local.get $4)
     )
    )
    ;;@ fib.c:3:0
-   (set_local $2
+   (local.set $2
     (i32.add
-     (get_local $2)
+     (local.get $2)
      (i32.const 1)
     )
    )
    (if
     (i32.ne
-     (get_local $0)
-     (get_local $2)
+     (local.get $0)
+     (local.get $2)
     )
     (block
-     (set_local $4
-      (get_local $3)
+     (local.set $4
+      (local.get $3)
      )
-     (set_local $3
-      (get_local $1)
+     (local.set $3
+      (local.get $1)
      )
      (br $label$3)
     )
    )
   )
   ;;@ fib.c:8:0
-  (get_local $1)
+  (local.get $1)
  )
  (func $switch_reach (; 5 ;) (type $1) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
+  (local.set $1
    (block $label$1 (result i32)
     (block $label$2
      (if
       (i32.lt_s
-       (tee_local $1
+       (local.tee $1
         (i32.add
-         (get_local $0)
+         (local.get $0)
          (i32.const 52)
         )
        )
@@ -148,7 +148,7 @@
       (br_if $label$2
        (i32.eqz
         (i32.sub
-         (get_local $1)
+         (local.get $1)
          (i32.const -1108210269)
         )
        )
@@ -156,7 +156,7 @@
       (br_if $label$2
        (i32.eqz
         (i32.sub
-         (get_local $1)
+         (local.get $1)
          (i32.const 1369188723)
         )
        )
@@ -167,17 +167,17 @@
      )
     )
     (call $switch_reach
-     (get_local $0)
+     (local.get $0)
     )
    )
   )
   (drop
    (call $switch_reach
-    (get_local $0)
+    (local.get $0)
    )
   )
   ;;@ /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0
-  (get_local $1)
+  (local.get $1)
  )
  (func $nofile (; 6 ;) (type $2)
   ;;@ (unknown):1337:0

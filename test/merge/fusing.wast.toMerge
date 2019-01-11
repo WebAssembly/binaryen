@@ -2,7 +2,7 @@
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
   (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 0 anyfunc))
+  (import "env" "table" (table 0 funcref))
   (import "env" "foo" (func $b-foo))
   (export "bar" (func $bar-func))
   (global $b-global f64 (f64.const 2.14281428))
@@ -13,8 +13,8 @@
   )
   (func $bar-func
     (drop (f64.const 3.14159))
-    (drop (get_global $a-global))
-    (drop (get_global $b-global))
+    (drop (global.get $a-global))
+    (drop (global.get $b-global))
   )
 )
 

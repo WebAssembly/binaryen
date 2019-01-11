@@ -2,7 +2,7 @@
  (type $FUNCSIG$dddd (func (param f64 f64 f64) (result f64)))
  (import "env" "fma" (func $fma (param f64 f64 f64) (result f64)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "fadd64" (func $fadd64))
  (export "fsub64" (func $fsub64))
@@ -26,103 +26,103 @@
  (func $fadd64 (; 1 ;) (param $0 f64) (param $1 f64) (result f64)
   (return
    (f64.add
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $fsub64 (; 2 ;) (param $0 f64) (param $1 f64) (result f64)
   (return
    (f64.sub
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $fmul64 (; 3 ;) (param $0 f64) (param $1 f64) (result f64)
   (return
    (f64.mul
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $fdiv64 (; 4 ;) (param $0 f64) (param $1 f64) (result f64)
   (return
    (f64.div
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $fabs64 (; 5 ;) (param $0 f64) (result f64)
   (return
    (f64.abs
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $fneg64 (; 6 ;) (param $0 f64) (result f64)
   (return
    (f64.neg
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $copysign64 (; 7 ;) (param $0 f64) (param $1 f64) (result f64)
   (return
    (f64.copysign
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sqrt64 (; 8 ;) (param $0 f64) (result f64)
   (return
    (f64.sqrt
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $ceil64 (; 9 ;) (param $0 f64) (result f64)
   (return
    (f64.ceil
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $floor64 (; 10 ;) (param $0 f64) (result f64)
   (return
    (f64.floor
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $trunc64 (; 11 ;) (param $0 f64) (result f64)
   (return
    (f64.trunc
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $nearest64 (; 12 ;) (param $0 f64) (result f64)
   (return
    (f64.nearest
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $nearest64_via_rint (; 13 ;) (param $0 f64) (result f64)
   (return
    (f64.nearest
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
  (func $fmin64 (; 14 ;) (param $0 f64) (result f64)
   (return
    (f64.min
-    (get_local $0)
+    (local.get $0)
     (f64.const 0)
    )
   )
@@ -130,7 +130,7 @@
  (func $fmax64 (; 15 ;) (param $0 f64) (result f64)
   (return
    (f64.max
-    (get_local $0)
+    (local.get $0)
     (f64.const 0)
    )
   )
@@ -138,9 +138,9 @@
  (func $fma64 (; 16 ;) (param $0 f64) (param $1 f64) (param $2 f64) (result f64)
   (return
    (call $fma
-    (get_local $0)
-    (get_local $1)
-    (get_local $2)
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
    )
   )
  )
@@ -153,24 +153,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 19 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

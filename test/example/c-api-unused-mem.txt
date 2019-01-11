@@ -10,7 +10,7 @@
   (local $1 i32)
   (local $2 i64)
   (block $block$2$break
-   (set_local $0
+   (local.set $0
     (i32.load
      (i32.const 0)
     )
@@ -23,7 +23,7 @@
    (block
     (i32.store
      (i32.const 0)
-     (get_local $0)
+     (local.get $0)
     )
     (return)
    )
@@ -50,7 +50,7 @@
   (local $1 i32)
   (local $2 i64)
   (block $label$1
-   (set_local $0
+   (local.set $0
     (i32.load
      (i32.const 0)
     )
@@ -63,7 +63,7 @@
    (block $label$4
     (i32.store
      (i32.const 0)
-     (get_local $0)
+     (local.get $0)
     )
     (return)
    )

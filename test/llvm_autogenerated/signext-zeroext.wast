@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "z2s_func" (func $z2s_func))
  (export "s2z_func" (func $s2z_func))
@@ -13,7 +13,7 @@
   (return
    (i32.shr_s
     (i32.shl
-     (get_local $0)
+     (local.get $0)
      (i32.const 24)
     )
     (i32.const 24)
@@ -23,7 +23,7 @@
  (func $s2z_func (; 1 ;) (param $0 i32) (result i32)
   (return
    (i32.and
-    (get_local $0)
+    (local.get $0)
     (i32.const 255)
    )
   )
@@ -32,7 +32,7 @@
   (return
    (call $z2s_func
     (i32.and
-     (get_local $0)
+     (local.get $0)
      (i32.const 255)
     )
    )
@@ -45,7 +45,7 @@
      (call $s2z_func
       (i32.shr_s
        (i32.shl
-        (get_local $0)
+        (local.get $0)
         (i32.const 24)
        )
        (i32.const 24)
@@ -66,24 +66,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 6 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

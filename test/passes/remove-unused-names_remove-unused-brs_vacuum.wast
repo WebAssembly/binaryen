@@ -46,20 +46,20 @@
   (import "asm2wasm" "i32u-rem" (func $import$28 (param i32 i32) (result i32)))
   (import "asm2wasm" "i32u-div" (func $import$29 (param i32 i32) (result i32)))
   (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 18 18 anyfunc))
+  (import "env" "table" (table 18 18 funcref))
   (import "env" "memoryBase" (global $import$32 i32))
   (import "env" "tableBase" (global $import$33 i32))
-  (global $global$0 (mut i32) (get_global $import$0))
-  (global $global$1 (mut i32) (get_global $import$1))
-  (global $global$2 (mut i32) (get_global $import$2))
-  (global $global$3 (mut i32) (get_global $import$3))
-  (global $global$4 (mut i32) (get_global $import$4))
+  (global $global$0 (mut i32) (global.get $import$0))
+  (global $global$1 (mut i32) (global.get $import$1))
+  (global $global$2 (mut i32) (global.get $import$2))
+  (global $global$3 (mut i32) (global.get $import$3))
+  (global $global$4 (mut i32) (global.get $import$4))
   (global $global$5 (mut i32) (i32.const 0))
   (global $global$6 (mut i32) (i32.const 0))
   (global $global$7 (mut i32) (i32.const 0))
   (global $global$8 (mut i32) (i32.const 0))
-  (global $global$9 (mut f64) (get_global $import$5))
-  (global $global$10 (mut f64) (get_global $import$6))
+  (global $global$9 (mut f64) (global.get $import$5))
+  (global $global$10 (mut f64) (global.get $import$6))
   (global $global$11 (mut i32) (i32.const 0))
   (global $global$12 (mut i32) (i32.const 0))
   (global $global$13 (mut i32) (i32.const 0))
@@ -81,15 +81,15 @@
       (block $label$1
         (block $label$3
           (if
-            (get_local $var$4)
+            (local.get $var$4)
             (block $label$4
               (if
-                (get_local $var$8)
+                (local.get $var$8)
                 (block $label$7
                   (loop $label$8
                     (block $label$9
                       (if
-                        (get_local $var$3)
+                        (local.get $var$3)
                         (block $label$12 ;; these empty blocks must never be unreachable-typed
                         )
                         (block $label$13
@@ -102,7 +102,7 @@
                 )
                 (block $label$16
                   (if
-                    (get_local $var$6)
+                    (local.get $var$6)
                     (block $label$17
                     )
                     (block $label$18
@@ -113,9 +113,9 @@
               )
               (drop
                 (call $23
-                  (get_local $var$7)
-                  (get_local $var$4)
-                  (get_local $var$0)
+                  (local.get $var$7)
+                  (local.get $var$4)
+                  (local.get $var$0)
                 )
               )
             )
@@ -137,7 +137,7 @@
       (br $label$0)
       (block $label$3
        (br_if $label$3
-        (get_local $0)
+        (local.get $0)
        )
       )
      )

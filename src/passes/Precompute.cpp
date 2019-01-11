@@ -46,7 +46,7 @@ class PrecomputingExpressionRunner : public ExpressionRunner<PrecomputingExpress
   GetValues& getValues;
 
   // Whether we are trying to precompute down to an expression (which we can do on
-  // say 5 + 6) or to a value (which we can't do on a tee_local that flows a 7
+  // say 5 + 6) or to a value (which we can't do on a local.tee that flows a 7
   // through it). When we want to replace the expression, we can only do so
   // when it has no side effects. When we don't care about replacing the expression,
   // we just want to know if it will contain a known constant.
@@ -159,7 +159,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   }
 
   void visitExpression(Expression* curr) {
-    // TODO: if get_local, only replace with a constant if we don't care about size...?
+    // TODO: if local.get, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
     // Until engines implement v128.const and we have SIMD-aware optimizations
     // that can break large v128.const instructions into smaller consts and
@@ -245,7 +245,7 @@ private:
   // itself. This differs from precomputeExpression in that we care about
   // the value the expression will have, which we cannot necessary replace
   // the expression with. For example,
-  //  (tee_local (i32.const 1))
+  //  (local.tee (i32.const 1))
   // will have value 1 which we can optimize here, but in precomputeExpression
   // we could not do anything.
   Literal precomputeValue(Expression* curr) {

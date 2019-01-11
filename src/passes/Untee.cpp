@@ -15,7 +15,7 @@
  */
 
 //
-// Removes tee_locals, replacing them with gets and sets.
+// Removes local.tees, replacing them with gets and sets.
 //
 // This makes the code "flatter", with less nested side
 // effects. That can make some passes, like CodePushing,

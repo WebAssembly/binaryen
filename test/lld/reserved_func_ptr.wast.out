@@ -11,9 +11,9 @@
  (import "env" "STACKTOP" (global $stack$init i32))
  (import "env" "_Z4atoiPKc" (func $_Z4atoiPKc (param i32) (result i32)))
  (memory $0 2)
- (table $0 3 3 anyfunc)
+ (table $0 3 3 funcref)
  (elem (i32.const 1) $_Z18address_taken_funciii $_Z19address_taken_func2iii)
- (global $global$0 (mut i32) (get_global $stack$init))
+ (global $global$0 (mut i32) (global.get $stack$init))
  (global $global$1 i32 (i32.const 66112))
  (global $global$2 i32 (i32.const 568))
  (export "memory" (memory $0))
@@ -37,53 +37,53 @@
   (local $var$3 i32)
   (local $var$4 i32)
   (local $var$5 i32)
-  (set_local $var$2
+  (local.set $var$2
    (call $_Z4atoiPKc
     (i32.load offset=4
-     (get_local $var$1)
+     (local.get $var$1)
     )
    )
   )
-  (set_local $var$3
+  (local.set $var$3
    (call $_Z4atoiPKc
     (i32.load offset=8
-     (get_local $var$1)
+     (local.get $var$1)
     )
    )
   )
-  (set_local $var$4
+  (local.set $var$4
    (call $_Z4atoiPKc
     (i32.load offset=12
-     (get_local $var$1)
+     (local.get $var$1)
     )
    )
   )
-  (set_local $var$5
+  (local.set $var$5
    (call $_Z4atoiPKc
     (i32.load offset=16
-     (get_local $var$1)
+     (local.get $var$1)
     )
    )
   )
-  (set_local $var$1
+  (local.set $var$1
    (call $_Z4atoiPKc
     (i32.load offset=20
-     (get_local $var$1)
+     (local.get $var$1)
     )
    )
   )
   (call_indirect (type $0)
-   (get_local $var$2)
+   (local.get $var$2)
   )
   (call_indirect (type $1)
    (i32.const 3)
-   (get_local $var$3)
+   (local.get $var$3)
   )
   (drop
    (call_indirect (type $2)
     (i32.const 4)
     (i32.const 5)
-    (get_local $var$4)
+    (local.get $var$4)
    )
   )
   (drop
@@ -91,14 +91,14 @@
     (f32.const 3.0999999046325684)
     (f32.const 4.199999809265137)
     (i32.const 5)
-    (get_local $var$5)
+    (local.get $var$5)
    )
   )
   (drop
    (call_indirect (type $4)
     (f64.const 4.2)
     (i32.const 5)
-    (get_local $var$1)
+    (local.get $var$1)
    )
   )
   (call_indirect (type $5)
@@ -109,7 +109,7 @@
     (i32.const 1)
     (i32.const 2)
     (i32.gt_s
-     (get_local $var$0)
+     (local.get $var$0)
      (i32.const 3)
     )
    )
@@ -120,39 +120,39 @@
   (nop)
  )
  (func $stackSave (; 5 ;) (result i32)
-  (get_global $global$0)
+  (global.get $global$0)
  )
  (func $stackAlloc (; 6 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_global $global$0
-   (tee_local $1
+  (global.set $global$0
+   (local.tee $1
     (i32.and
      (i32.sub
-      (get_global $global$0)
-      (get_local $0)
+      (global.get $global$0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 7 ;) (param $0 i32)
-  (set_global $global$0
-   (get_local $0)
+  (global.set $global$0
+   (local.get $0)
   )
  )
  (func $__growWasmMemory (; 8 ;) (param $newSize i32) (result i32)
   (grow_memory
-   (get_local $newSize)
+   (local.get $newSize)
   )
  )
  (func $dynCall_viii (; 9 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32)
   (call_indirect (type $FUNCSIG$viii)
-   (get_local $0)
-   (get_local $1)
-   (get_local $2)
-   (get_local $fptr)
+   (local.get $0)
+   (local.get $1)
+   (local.get $2)
+   (local.get $fptr)
   )
  )
 )

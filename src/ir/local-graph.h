@@ -20,7 +20,7 @@
 namespace wasm {
 
 //
-// Finds the connections between get_locals and set_locals, creating
+// Finds the connections between local.gets and local.sets, creating
 // a graph of those ties. This is useful for "ssa-style" optimization,
 // in which you want to know exactly which sets are relevant for a
 // a get, so it is as if each get has just one set, logically speaking
@@ -33,7 +33,7 @@ struct LocalGraph {
   // the constructor computes getSetses, the sets affecting each get
   LocalGraph(Function* func);
 
-  // the set_locals relevant for an index or a get.
+  // the local.sets relevant for an index or a get.
   typedef std::set<SetLocal*> Sets;
 
   typedef std::map<GetLocal*, Sets> GetSetses;

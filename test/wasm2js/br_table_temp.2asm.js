@@ -50290,7 +50290,7 @@ function asmFunc(global, env, buffer) {
   as_call_indirect_mid: $42, 
   as_call_indirect_last: $43, 
   as_call_indirect_func: $44, 
-  as_set_local_value: $45, 
+  as_local_set_value: $45, 
   as_load_address: $46, 
   as_loadN_address: $47, 
   as_store_address: $48, 
@@ -50359,7 +50359,7 @@ export const as_call_indirect_first = retasmFunc.as_call_indirect_first;
 export const as_call_indirect_mid = retasmFunc.as_call_indirect_mid;
 export const as_call_indirect_last = retasmFunc.as_call_indirect_last;
 export const as_call_indirect_func = retasmFunc.as_call_indirect_func;
-export const as_set_local_value = retasmFunc.as_set_local_value;
+export const as_local_set_value = retasmFunc.as_local_set_value;
 export const as_load_address = retasmFunc.as_load_address;
 export const as_loadN_address = retasmFunc.as_loadN_address;
 export const as_store_address = retasmFunc.as_store_address;

@@ -2,8 +2,8 @@
  (type $FUNCSIG$v (func))
  (type $FUNCSIG$v$0 (func))
  (import "env" "memory" (memory $0 256))
- (data (get_global $__memory_base) "")
- (import "env" "table" (table $0 0 anyfunc))
+ (data (global.get $__memory_base) "")
+ (import "env" "table" (table $0 0 funcref))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "__memory_base" (global $__memory_base i32))
@@ -24,10 +24,10 @@
   )
   (call $bar-func$0)
   (drop
-   (get_global $a-global)
+   (global.get $a-global)
   )
   (drop
-   (get_global $b-global$0)
+   (global.get $b-global$0)
   )
  )
  (func $b (; 1 ;) (type $FUNCSIG$v$0)
@@ -38,10 +38,10 @@
    (f64.const 3.14159)
   )
   (drop
-   (get_global $a-global)
+   (global.get $a-global)
   )
   (drop
-   (get_global $b-global$0)
+   (global.get $b-global$0)
   )
  )
 )

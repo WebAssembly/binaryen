@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $memory (shared 256 256)))
- (data (get_global $__memory_base) "threads.asm.js")
+ (data (global.get $__memory_base) "threads.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))
  (export "test" (func $test))
  (func $test (; 0 ;) (; has Stack IR ;)
@@ -25,7 +25,7 @@
            (i32.const 0)
           )
           (i32.atomic.rmw.xchg
-           (get_local $0)
+           (local.get $0)
            (i32.const 1)
           )
          )
@@ -50,15 +50,15 @@
    )
   )
   (drop
-   (i32.atomic.rmw16_u.xor
+   (i32.atomic.rmw16.xor_u
     (i32.const 2048)
     (i32.const 0)
    )
   )
   (drop
-   (i32.atomic.rmw8_u.cmpxchg
-    (i32.atomic.rmw8_u.cmpxchg
-     (i32.atomic.rmw8_u.xor
+   (i32.atomic.rmw8.cmpxchg_u
+    (i32.atomic.rmw8.cmpxchg_u
+     (i32.atomic.rmw8.xor_u
       (i32.const 1024)
       (i32.const 0)
      )

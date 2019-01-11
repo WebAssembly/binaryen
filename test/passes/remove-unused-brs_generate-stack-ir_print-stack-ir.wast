@@ -5,7 +5,7 @@
    (br_if $label$1
     (block $label$2 (result i32)
      (loop $label$3
-      (set_local $var$0
+      (local.set $var$0
        (block $label$4 (result i64)
         (unreachable)
        )

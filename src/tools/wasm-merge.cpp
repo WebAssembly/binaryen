@@ -447,7 +447,7 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
 
     // copy in the data
     for (auto& curr : wasm.functionTypes) {
-      outputMergeable.wasm.addFunctionType(curr.release());
+      outputMergeable.wasm.addFunctionType(std::move(curr));
     }
     for (auto& curr : wasm.globals) {
       if (curr->imported()) {
@@ -500,7 +500,7 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
   }
 
 private:
-  // add an offset to a get_global. we look above, and if there is already an add,
+  // add an offset to a global.get. we look above, and if there is already an add,
   // we can add into it, avoiding creating a new node
   void addBump(Index bump) {
     if (expressionStack.size() >= 2) {

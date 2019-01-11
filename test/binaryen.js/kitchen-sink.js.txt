@@ -55,7 +55,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
- (table $0 1 anyfunc)
+ (table $0 1 funcref)
  (elem (i32.const 0) "$kitchen()sinker")
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
@@ -122,167 +122,167 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        )
       )
       (drop
-       (i64.extend_s/i32
+       (i64.extend_i32_s
         (i32.const -10)
        )
       )
       (drop
-       (i64.extend_u/i32
+       (i64.extend_i32_u
         (i32.const -10)
        )
       )
       (drop
-       (i32.wrap/i64
+       (i32.wrap_i64
         (i64.const -22)
        )
       )
       (drop
-       (i32.trunc_s/f32
+       (i32.trunc_f32_s
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.trunc_s/f32
+       (i64.trunc_f32_s
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i32.trunc_u/f32
+       (i32.trunc_f32_u
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.trunc_u/f32
+       (i64.trunc_f32_u
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i32.trunc_s/f64
+       (i32.trunc_f64_s
         (f64.const -9005.841)
        )
       )
       (drop
-       (i64.trunc_s/f64
+       (i64.trunc_f64_s
         (f64.const -9005.841)
        )
       )
       (drop
-       (i32.trunc_u/f64
+       (i32.trunc_f64_u
         (f64.const -9005.841)
        )
       )
       (drop
-       (i64.trunc_u/f64
+       (i64.trunc_f64_u
         (f64.const -9005.841)
        )
       )
       (drop
-       (i32.trunc_s:sat/f32
+       (i32.trunc_sat_f32_s
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.trunc_s:sat/f32
+       (i64.trunc_sat_f32_s
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i32.trunc_u:sat/f32
+       (i32.trunc_sat_f32_u
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.trunc_u:sat/f32
+       (i64.trunc_sat_f32_u
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i32.trunc_s:sat/f64
+       (i32.trunc_sat_f64_s
         (f64.const -9005.841)
        )
       )
       (drop
-       (i64.trunc_s:sat/f64
+       (i64.trunc_sat_f64_s
         (f64.const -9005.841)
        )
       )
       (drop
-       (i32.trunc_u:sat/f64
+       (i32.trunc_sat_f64_u
         (f64.const -9005.841)
        )
       )
       (drop
-       (i64.trunc_u:sat/f64
+       (i64.trunc_sat_f64_u
         (f64.const -9005.841)
        )
       )
       (drop
-       (i32.reinterpret/f32
+       (i32.reinterpret_f32
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.reinterpret/f64
+       (i64.reinterpret_f64
         (f64.const -9005.841)
        )
       )
       (drop
-       (f32.convert_s/i32
+       (f32.convert_i32_s
         (i32.const -10)
        )
       )
       (drop
-       (f64.convert_s/i32
+       (f64.convert_i32_s
         (i32.const -10)
        )
       )
       (drop
-       (f32.convert_u/i32
+       (f32.convert_i32_u
         (i32.const -10)
        )
       )
       (drop
-       (f64.convert_u/i32
+       (f64.convert_i32_u
         (i32.const -10)
        )
       )
       (drop
-       (f32.convert_s/i64
+       (f32.convert_i64_s
         (i64.const -22)
        )
       )
       (drop
-       (f64.convert_s/i64
+       (f64.convert_i64_s
         (i64.const -22)
        )
       )
       (drop
-       (f32.convert_u/i64
+       (f32.convert_i64_u
         (i64.const -22)
        )
       )
       (drop
-       (f64.convert_u/i64
+       (f64.convert_i64_u
         (i64.const -22)
        )
       )
       (drop
-       (f64.promote/f32
+       (f64.promote_f32
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (f32.demote/f64
+       (f32.demote_f64
         (f64.const -9005.841)
        )
       )
       (drop
-       (f32.reinterpret/i32
+       (f32.reinterpret_i32
         (i32.const -10)
        )
       )
       (drop
-       (f64.reinterpret/i64
+       (f64.reinterpret_i64
         (i64.const -22)
        )
       )
@@ -412,42 +412,42 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        )
       )
       (drop
-       (i32x4.trunc_s/f32x4:sat
+       (i32x4.trunc_sat_f32x4_s
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (i32x4.trunc_u/f32x4:sat
+       (i32x4.trunc_sat_f32x4_u
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (i64x2.trunc_s/f64x2:sat
+       (i64x2.trunc_sat_f64x2_s
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (i64x2.trunc_u/f64x2:sat
+       (i64x2.trunc_sat_f64x2_u
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (f32x4.convert_s/i32x4
+       (f32x4.convert_i32x4_s
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (f32x4.convert_u/i32x4
+       (f32x4.convert_i32x4_u
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (f64x2.convert_s/i64x2
+       (f64x2.convert_i64x2_s
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (f64x2.convert_u/i64x2
+       (f64x2.convert_i64x2_u
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
@@ -1310,7 +1310,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
       )
       (drop
        (i32.eqz
-        (i32.trunc_s/f32
+        (i32.trunc_f32_s
          (call $an-imported
           (i32.const 13)
           (f64.const 3.7)
@@ -1330,13 +1330,13 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        )
       )
       (drop
-       (get_local $0)
+       (local.get $0)
       )
-      (set_local $0
+      (local.set $0
        (i32.const 101)
       )
       (drop
-       (tee_local $0
+       (local.tee $0
         (i32.const 102)
        )
       )
@@ -1786,13 +1786,13 @@ raw:
      (if
       (i32.const 10)
       (block
-       (set_local $3
+       (local.set $3
         (i32.const 2)
        )
        (br $block$2$break)
       )
       (block
-       (set_local $3
+       (local.set $3
         (i32.const 3)
        )
        (br $block$3$break)
@@ -1804,18 +1804,18 @@ raw:
   (loop $shape$1$continue
    (if
     (i32.eq
-     (get_local $3)
+     (local.get $3)
      (i32.const 2)
     )
     (block
-     (set_local $3
+     (local.set $3
       (i32.const 0)
      )
      (call $check
       (i32.const 1)
      )
      (block
-      (set_local $3
+      (local.set $3
        (i32.const 3)
       )
       (br $shape$1$continue)
@@ -1823,18 +1823,18 @@ raw:
     )
     (if
      (i32.eq
-      (get_local $3)
+      (local.get $3)
       (i32.const 3)
      )
      (block
-      (set_local $3
+      (local.set $3
        (i32.const 0)
       )
       (call $check
        (i32.const 2)
       )
       (block
-       (set_local $3
+       (local.set $3
         (i32.const 2)
        )
        (br $shape$1$continue)
@@ -1866,8 +1866,8 @@ module loaded from binary form:
  (type $0 (func (param i32 i32) (result i32)))
  (func $adder (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
  )
 )
@@ -1889,14 +1889,14 @@ module loaded from binary form:
  (type $v (func))
  (func $func (; 0 ;) (type $v)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i64.const 1234)
   )
  )
 )
 
-[wasm-validator error in function $func] 1 != 2: set_local type must match function, on 
-[none] (set_local $0
+[wasm-validator error in function $func] 1 != 2: local.set type must match function, on 
+[none] (local.set $0
  [i64] (i64.const 1234)
 )
 validation: 0
@@ -3348,7 +3348,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
- (table $0 1 anyfunc)
+ (table $0 1 funcref)
  (elem (i32.const 0) "$kitchen()sinker")
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
@@ -3415,167 +3415,167 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        )
       )
       (drop
-       (i64.extend_s/i32
+       (i64.extend_i32_s
         (i32.const -10)
        )
       )
       (drop
-       (i64.extend_u/i32
+       (i64.extend_i32_u
         (i32.const -10)
        )
       )
       (drop
-       (i32.wrap/i64
+       (i32.wrap_i64
         (i64.const -22)
        )
       )
       (drop
-       (i32.trunc_s/f32
+       (i32.trunc_f32_s
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.trunc_s/f32
+       (i64.trunc_f32_s
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i32.trunc_u/f32
+       (i32.trunc_f32_u
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.trunc_u/f32
+       (i64.trunc_f32_u
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i32.trunc_s/f64
+       (i32.trunc_f64_s
         (f64.const -9005.841)
        )
       )
       (drop
-       (i64.trunc_s/f64
+       (i64.trunc_f64_s
         (f64.const -9005.841)
        )
       )
       (drop
-       (i32.trunc_u/f64
+       (i32.trunc_f64_u
         (f64.const -9005.841)
        )
       )
       (drop
-       (i64.trunc_u/f64
+       (i64.trunc_f64_u
         (f64.const -9005.841)
        )
       )
       (drop
-       (i32.trunc_s:sat/f32
+       (i32.trunc_sat_f32_s
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.trunc_s:sat/f32
+       (i64.trunc_sat_f32_s
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i32.trunc_u:sat/f32
+       (i32.trunc_sat_f32_u
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.trunc_u:sat/f32
+       (i64.trunc_sat_f32_u
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i32.trunc_s:sat/f64
+       (i32.trunc_sat_f64_s
         (f64.const -9005.841)
        )
       )
       (drop
-       (i64.trunc_s:sat/f64
+       (i64.trunc_sat_f64_s
         (f64.const -9005.841)
        )
       )
       (drop
-       (i32.trunc_u:sat/f64
+       (i32.trunc_sat_f64_u
         (f64.const -9005.841)
        )
       )
       (drop
-       (i64.trunc_u:sat/f64
+       (i64.trunc_sat_f64_u
         (f64.const -9005.841)
        )
       )
       (drop
-       (i32.reinterpret/f32
+       (i32.reinterpret_f32
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (i64.reinterpret/f64
+       (i64.reinterpret_f64
         (f64.const -9005.841)
        )
       )
       (drop
-       (f32.convert_s/i32
+       (f32.convert_i32_s
         (i32.const -10)
        )
       )
       (drop
-       (f64.convert_s/i32
+       (f64.convert_i32_s
         (i32.const -10)
        )
       )
       (drop
-       (f32.convert_u/i32
+       (f32.convert_i32_u
         (i32.const -10)
        )
       )
       (drop
-       (f64.convert_u/i32
+       (f64.convert_i32_u
         (i32.const -10)
        )
       )
       (drop
-       (f32.convert_s/i64
+       (f32.convert_i64_s
         (i64.const -22)
        )
       )
       (drop
-       (f64.convert_s/i64
+       (f64.convert_i64_s
         (i64.const -22)
        )
       )
       (drop
-       (f32.convert_u/i64
+       (f32.convert_i64_u
         (i64.const -22)
        )
       )
       (drop
-       (f64.convert_u/i64
+       (f64.convert_i64_u
         (i64.const -22)
        )
       )
       (drop
-       (f64.promote/f32
+       (f64.promote_f32
         (f32.const -33.61199951171875)
        )
       )
       (drop
-       (f32.demote/f64
+       (f32.demote_f64
         (f64.const -9005.841)
        )
       )
       (drop
-       (f32.reinterpret/i32
+       (f32.reinterpret_i32
         (i32.const -10)
        )
       )
       (drop
-       (f64.reinterpret/i64
+       (f64.reinterpret_i64
         (i64.const -22)
        )
       )
@@ -3705,42 +3705,42 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        )
       )
       (drop
-       (i32x4.trunc_s/f32x4:sat
+       (i32x4.trunc_sat_f32x4_s
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (i32x4.trunc_u/f32x4:sat
+       (i32x4.trunc_sat_f32x4_u
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (i64x2.trunc_s/f64x2:sat
+       (i64x2.trunc_sat_f64x2_s
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (i64x2.trunc_u/f64x2:sat
+       (i64x2.trunc_sat_f64x2_u
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (f32x4.convert_s/i32x4
+       (f32x4.convert_i32x4_s
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (f32x4.convert_u/i32x4
+       (f32x4.convert_i32x4_u
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (f64x2.convert_s/i64x2
+       (f64x2.convert_i64x2_s
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
       (drop
-       (f64x2.convert_u/i64x2
+       (f64x2.convert_i64x2_u
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
@@ -4603,7 +4603,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
       )
       (drop
        (i32.eqz
-        (i32.trunc_s/f32
+        (i32.trunc_f32_s
          (call $an-imported
           (i32.const 13)
           (f64.const 3.7)
@@ -4623,13 +4623,13 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        )
       )
       (drop
-       (get_local $0)
+       (local.get $0)
       )
-      (set_local $0
+      (local.set $0
        (i32.const 101)
       )
       (drop
-       (tee_local $0
+       (local.tee $0
         (i32.const 102)
        )
       )
@@ -5541,13 +5541,13 @@ raw:
      (if
       (i32.const 10)
       (block
-       (set_local $3
+       (local.set $3
         (i32.const 2)
        )
        (br $block$2$break)
       )
       (block
-       (set_local $3
+       (local.set $3
         (i32.const 3)
        )
        (br $block$3$break)
@@ -5559,18 +5559,18 @@ raw:
   (loop $shape$1$continue
    (if
     (i32.eq
-     (get_local $3)
+     (local.get $3)
      (i32.const 2)
     )
     (block
-     (set_local $3
+     (local.set $3
       (i32.const 0)
      )
      (call $check
       (i32.const 1)
      )
      (block
-      (set_local $3
+      (local.set $3
        (i32.const 3)
       )
       (br $shape$1$continue)
@@ -5578,18 +5578,18 @@ raw:
     )
     (if
      (i32.eq
-      (get_local $3)
+      (local.get $3)
       (i32.const 3)
      )
      (block
-      (set_local $3
+      (local.set $3
        (i32.const 0)
       )
       (call $check
        (i32.const 2)
       )
       (block
-       (set_local $3
+       (local.set $3
         (i32.const 2)
        )
        (br $shape$1$continue)
@@ -5639,8 +5639,8 @@ test_parsing text:
  (type $iii (func (param i32 i32) (result i32)))
  (func $adder (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
  )
 )
@@ -5650,8 +5650,8 @@ module loaded from text form:
  (type $iii (func (param i32 i32) (result i32)))
  (func $ADD_ER (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
  )
 )

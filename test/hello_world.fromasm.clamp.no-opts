@@ -1,14 +1,14 @@
 (module
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (export "add" (func $add))
  (func $add (; 0 ;) (param $x i32) (param $y i32) (result i32)
   (return
    (i32.add
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
  )

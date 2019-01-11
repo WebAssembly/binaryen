@@ -292,7 +292,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
     }
     // TODO: if-else can be turned into a br_if as well, if one of the sides is a dead end
-    //       we handle the case of a returned value to a set_local later down, see
+    //       we handle the case of a returned value to a local.set later down, see
     //       visitSetLocal.
   }
 
@@ -847,7 +847,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       // If one arm is a br, we prefer a br_if and the set later:
-      //  (set_local $x
+      //  (local.set $x
       //    (if (result i32)
       //      (..condition..)
       //      (br $somewhere)
@@ -858,7 +858,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       //  (br_if $somewhere
       //    (..condition..)
       //  )
-      //  (set_local $x
+      //  (local.set $x
       //    (..result)
       //  )
       // TODO: handle a condition in the br? need to watch for side effects
@@ -900,38 +900,38 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // we can remove. If this is not a tee, then we remove the get
       // as well as the if-else opcode in the binary format, which is
       // great:
-      //  (set_local $x
+      //  (local.set $x
       //    (if (result i32)
       //      (..condition..)
       //      (..result)
-      //      (get_local $x)
+      //      (local.get $x)
       //    )
       //  )
       // =>
       //  (if
       //    (..condition..)
-      //    (set_local $x
+      //    (local.set $x
       //      (..result)
       //    )
       //  )
       // If this is a tee, then we can do the same operation but
       // inside a block, and keep the get:
-      //  (tee_local $x
+      //  (local.tee $x
       //    (if (result i32)
       //      (..condition..)
       //      (..result)
-      //      (get_local $x)
+      //      (local.get $x)
       //    )
       //  )
       // =>
       //  (block (result i32)
       //    (if
       //      (..condition..)
-      //      (set_local $x
+      //      (local.set $x
       //        (..result)
       //      )
       //    )
-      //    (get_local $x)
+      //    (local.get $x)
       //  )
       // We save the if-else opcode, and add the block's opcodes.
       // This may be detrimental, however, often the block can be

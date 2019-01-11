@@ -7,8 +7,8 @@
  (import "env" "puts" (func $puts (param i32) (result i32)))
  (memory $0 2)
  (data (i32.const 568) "Hello, world\00")
- (table $0 1 1 anyfunc)
- (global $global$0 (mut i32) (get_global $stack$init))
+ (table $0 1 1 funcref)
+ (global $global$0 (mut i32) (global.get $stack$init))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 581))
  (export "memory" (memory $0))
@@ -32,31 +32,31 @@
   (nop)
  )
  (func $stackSave (; 3 ;) (result i32)
-  (get_global $global$0)
+  (global.get $global$0)
  )
  (func $stackAlloc (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_global $global$0
-   (tee_local $1
+  (global.set $global$0
+   (local.tee $1
     (i32.and
      (i32.sub
-      (get_global $global$0)
-      (get_local $0)
+      (global.get $global$0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 5 ;) (param $0 i32)
-  (set_global $global$0
-   (get_local $0)
+  (global.set $global$0
+   (local.get $0)
   )
  )
  (func $__growWasmMemory (; 6 ;) (param $newSize i32) (result i32)
   (grow_memory
-   (get_local $newSize)
+   (local.get $newSize)
   )
  )
 )

@@ -10,7 +10,7 @@
  (type $8 (func (param f64) (result f64)))
  (memory $0 (shared 1 1))
  (data (i32.const 0) "\00\00\00\00\00\00\00\00X\00\00\00U\00\00\0b\00\00\00\00\00\00\00k\00\00")
- (table $0 2 anyfunc)
+ (table $0 2 funcref)
  (elem (i32.const 0) $1 $5)
  (global $global$0 (mut i32) (i32.const 255))
  (global $global$1 (mut i32) (i32.const -7045592))
@@ -25,15 +25,15 @@
   (block $label$1
    (if
     (i32.eqz
-     (get_global $global$5)
+     (global.get $global$5)
     )
     (return
      (f32.const -nan:0x1d717c)
     )
    )
-   (set_global $global$5
+   (global.set $global$5
     (i32.sub
-     (get_global $global$5)
+     (global.get $global$5)
      (i32.const 1)
     )
    )
@@ -49,15 +49,15 @@
   (block $label$1
    (if
     (i32.eqz
-     (get_global $global$5)
+     (global.get $global$5)
     )
     (return
      (f64.const 128)
     )
    )
-   (set_global $global$5
+   (global.set $global$5
     (i32.sub
-     (get_global $global$5)
+     (global.get $global$5)
      (i32.const 1)
     )
    )
@@ -82,15 +82,15 @@
   (block $label$1
    (if
     (i32.eqz
-     (get_global $global$5)
+     (global.get $global$5)
     )
     (return
-     (get_local $13)
+     (local.get $13)
     )
    )
-   (set_global $global$5
+   (global.set $global$5
     (i32.sub
-     (get_global $global$5)
+     (global.get $global$5)
      (i32.const 1)
     )
    )
@@ -141,15 +141,15 @@
   (block $label$1
    (if
     (i32.eqz
-     (get_global $global$5)
+     (global.get $global$5)
     )
     (return
-     (get_local $8)
+     (local.get $8)
     )
    )
-   (set_global $global$5
+   (global.set $global$5
     (i32.sub
-     (get_global $global$5)
+     (global.get $global$5)
      (i32.const 1)
     )
    )
@@ -161,21 +161,21 @@
   (block $label$1
    (if
     (i32.eqz
-     (get_global $global$5)
+     (global.get $global$5)
     )
     (return
      (block (result i64)
-      (set_local $0
+      (local.set $0
        (i64.const 0)
       )
       (nop)
-      (get_local $0)
+      (local.get $0)
      )
     )
    )
-   (set_global $global$5
+   (global.set $global$5
     (i32.sub
-     (get_global $global$5)
+     (global.get $global$5)
      (i32.const 1)
     )
    )
@@ -187,66 +187,66 @@
   (block $label$1
    (if
     (i32.eqz
-     (get_global $global$5)
+     (global.get $global$5)
     )
     (return)
    )
-   (set_global $global$5
+   (global.set $global$5
     (i32.sub
-     (get_global $global$5)
+     (global.get $global$5)
      (i32.const 1)
     )
    )
   )
   (block $label$3
    (br_if $label$3
-    (get_local $1)
+    (local.get $1)
    )
    (if
     (i32.eqz
-     (get_local $1)
+     (local.get $1)
     )
     (block $label$5
      (nop)
      (br_if $label$3
-      (tee_local $1
-       (tee_local $1
-        (tee_local $1
+      (local.tee $1
+       (local.tee $1
+        (local.tee $1
          (if (result i32)
           (i32.eqz
-           (get_local $1)
+           (local.get $1)
           )
           (block $label$7 (result i32)
-           (set_local $2
+           (local.set $2
             (block $label$8 (result i64)
              (loop $label$9
               (block $label$10
                (if
                 (i32.eqz
-                 (get_global $global$5)
+                 (global.get $global$5)
                 )
                 (return)
                )
-               (set_global $global$5
+               (global.set $global$5
                 (i32.sub
-                 (get_global $global$5)
+                 (global.get $global$5)
                  (i32.const 1)
                 )
                )
               )
               (block $label$12
                (block $label$13
-                (set_local $1
+                (local.set $1
                  (br_if $label$7
-                  (get_local $0)
+                  (local.get $0)
                   (i32.eqz
-                   (get_local $1)
+                   (local.get $1)
                   )
                  )
                 )
                 (if
                  (i32.eqz
-                  (get_local $1)
+                  (local.get $1)
                  )
                  (br_if $label$5
                   (i32.eqz
@@ -256,13 +256,13 @@
                      (block $label$16
                       (if
                        (i32.eqz
-                        (get_global $global$5)
+                        (global.get $global$5)
                        )
                        (return)
                       )
-                      (set_global $global$5
+                      (global.set $global$5
                        (i32.sub
-                        (get_global $global$5)
+                        (global.get $global$5)
                         (i32.const 1)
                        )
                       )
@@ -271,7 +271,7 @@
                       (nop)
                       (br_if $label$15
                        (i32.eqz
-                        (tee_local $1
+                        (local.tee $1
                          (i32.const 32767)
                         )
                        )
@@ -285,8 +285,8 @@
                  (block
                   (drop
                    (i64.add
-                    (get_local $2)
-                    (get_local $2)
+                    (local.get $2)
+                    (local.get $2)
                    )
                   )
                   (nop)
@@ -294,15 +294,15 @@
                 )
                )
                (br_if $label$9
-                (get_local $1)
+                (local.get $1)
                )
                (nop)
               )
              )
-             (get_local $2)
+             (local.get $2)
             )
            )
-           (get_local $1)
+           (local.get $1)
           )
           (i32.const -7059178)
          )
@@ -316,27 +316,27 @@
   )
  )
  (func $7 (; 7 ;) (type $1)
-  (set_global $global$5
+  (global.set $global$5
    (i32.const 10)
   )
  )
  (func $8 (; 8 ;) (type $7) (param $0 f32) (result f32)
   (if (result f32)
    (f32.eq
-    (get_local $0)
-    (get_local $0)
+    (local.get $0)
+    (local.get $0)
    )
-   (get_local $0)
+   (local.get $0)
    (f32.const 0)
   )
  )
  (func $9 (; 9 ;) (type $8) (param $0 f64) (result f64)
   (if (result f64)
    (f64.eq
-    (get_local $0)
-    (get_local $0)
+    (local.get $0)
+    (local.get $0)
    )
-   (get_local $0)
+   (local.get $0)
    (f64.const 0)
   )
  )

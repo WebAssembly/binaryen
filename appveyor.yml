@@ -32,4 +32,4 @@ build_script:
   - cmake --build . --config %CONFIG% -- %PARALLEL_FLAG%%DEGREE_OF_PARALLELISM%
 
 test_script:
-  - ctest --output-on-failure --timeout 10 -j 5
+  - ctest --output-on-failure --timeout 10 -j 5 -C Release

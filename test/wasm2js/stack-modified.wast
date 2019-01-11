@@ -8,30 +8,30 @@
  (func $0 (; 0 ;) (type $0) (param $var$0 i64) (result i64)
   (local $var$1 i64)
   (local $var$2 i64)
-  (set_local $var$1
-   (get_local $var$0)
+  (local.set $var$1
+   (local.get $var$0)
   )
-  (set_local $var$2
+  (local.set $var$2
    (i64.const 1)
   )
   (block $label$1
    (loop $label$2
     (if
      (i64.eq
-      (get_local $var$1)
+      (local.get $var$1)
       (i64.const 0)
      )
      (br $label$1)
      (block $label$5
-      (set_local $var$2
+      (local.set $var$2
        (i64.mul
-        (get_local $var$1)
-        (get_local $var$2)
+        (local.get $var$1)
+        (local.get $var$2)
        )
       )
-      (set_local $var$1
+      (local.set $var$1
        (i64.sub
-        (get_local $var$1)
+        (local.get $var$1)
         (i64.const 1)
        )
       )
@@ -40,35 +40,35 @@
     (br $label$2)
    )
   )
-  (get_local $var$2)
+  (local.get $var$2)
  )
  (func $1 (; 1 ;) (type $0) (param $var$0 i64) (result i64)
   (local $var$1 i64)
   (local $var$2 i64)
-  (set_local $var$1
-   (get_local $var$0)
+  (local.set $var$1
+   (local.get $var$0)
   )
-  (set_local $var$2
+  (local.set $var$2
    (i64.const 1)
   )
   (block $label$1
    (loop $label$2
     (if
      (i64.eq
-      (get_local $var$1)
+      (local.get $var$1)
       (i64.const 0)
      )
      (br $label$1)
      (block
-      (set_local $var$2
+      (local.set $var$2
        (i64.mul
-        (get_local $var$1)
-        (get_local $var$2)
+        (local.get $var$1)
+        (local.get $var$2)
        )
       )
-      (set_local $var$1
+      (local.set $var$1
        (i64.sub
-        (get_local $var$1)
+        (local.get $var$1)
         (i64.const 1)
        )
       )
@@ -77,35 +77,35 @@
     (br $label$2)
    )
   )
-  (get_local $var$2)
+  (local.get $var$2)
  )
  (func $2 (; 2 ;) (type $0) (param $var$0 i64) (result i64)
   (local $var$1 i64)
   (local $var$2 i64)
-  (set_local $var$1
-   (get_local $var$0)
+  (local.set $var$1
+   (local.get $var$0)
   )
-  (set_local $var$2
+  (local.set $var$2
    (i64.const 1)
   )
   (block $label$1
    (loop $label$2
     (if
      (i64.eq
-      (get_local $var$1)
+      (local.get $var$1)
       (i64.const 0)
      )
      (br $label$1)
      (block
-      (set_local $var$2
+      (local.set $var$2
        (i64.mul
-        (get_local $var$1)
-        (get_local $var$2)
+        (local.get $var$1)
+        (local.get $var$2)
        )
       )
-      (set_local $var$1
+      (local.set $var$1
        (i64.sub
-        (get_local $var$1)
+        (local.get $var$1)
         (i64.const 1)
        )
       )
@@ -114,35 +114,35 @@
     (br $label$2)
    )
   )
-  (get_local $var$2)
+  (local.get $var$2)
  )
  (func $3 (; 3 ;) (type $0) (param $var$0 i64) (result i64)
   (local $var$1 i64)
   (local $var$2 i64)
-  (set_local $var$1
-   (get_local $var$0)
+  (local.set $var$1
+   (local.get $var$0)
   )
-  (set_local $var$2
+  (local.set $var$2
    (i64.const 1)
   )
   (block $label$1
    (loop $label$2
     (if
      (i64.eq
-      (get_local $var$1)
+      (local.get $var$1)
       (i64.const 0)
      )
      (br $label$1)
      (block
-      (set_local $var$2
+      (local.set $var$2
        (i64.mul
-        (get_local $var$1)
-        (get_local $var$2)
+        (local.get $var$1)
+        (local.get $var$2)
        )
       )
-      (set_local $var$1
+      (local.set $var$1
        (i64.sub
-        (get_local $var$1)
+        (local.get $var$1)
         (i64.const 1)
        )
       )
@@ -151,35 +151,35 @@
     (br $label$2)
    )
   )
-  (get_local $var$2)
+  (local.get $var$2)
  )
  (func $4 (; 4 ;) (type $0) (param $var$0 i64) (result i64)
   (local $var$1 i64)
   (local $var$2 i64)
-  (set_local $var$1
-   (get_local $var$0)
+  (local.set $var$1
+   (local.get $var$0)
   )
-  (set_local $var$2
+  (local.set $var$2
    (i64.const 1)
   )
   (block $label$1
    (loop $label$2
     (if
      (i64.eq
-      (get_local $var$1)
+      (local.get $var$1)
       (i64.const 0)
      )
      (br $label$1)
      (block
-      (set_local $var$2
+      (local.set $var$2
        (i64.mul
-        (get_local $var$1)
-        (get_local $var$2)
+        (local.get $var$1)
+        (local.get $var$2)
        )
       )
-      (set_local $var$1
+      (local.set $var$1
        (i64.sub
-        (get_local $var$1)
+        (local.get $var$1)
         (i64.const 1)
        )
       )
@@ -188,7 +188,7 @@
     (br $label$2)
    )
   )
-  (get_local $var$2)
+  (local.get $var$2)
  )
 )
 

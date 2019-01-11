@@ -5,8 +5,8 @@
  (export "_main" (func $main))
  (func $add (; 1 ;) (; has Stack IR ;) (param $0 i64) (param $1 i64) (result i64)
   (i64.add
-   (get_local $0)
-   (get_local $1)
+   (local.get $0)
+   (local.get $1)
   )
  )
  (func $main (; 2 ;) (; has Stack IR ;) (result i32)

@@ -40,7 +40,7 @@ namespace DataFlow {
 // contains the DataFlow IR for that expression, which can be a
 // Bad node if not supported, or nullptr if not relevant (we only
 // use the return value for internal expressions, that is, the
-// value of a set_local or the condition of an if etc).
+// value of a local.set or the condition of an if etc).
 struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // We only need one canonical bad node. It is never modified.
   Node bad = Node(Node::Type::Bad);
@@ -699,7 +699,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return node;
   }
 
-  // Given a node representing something that is set_local'd, return
+  // Given a node representing something that is local.set'd, return
   // the set.
   SetLocal* getSet(Node* node) {
     auto iter = nodeParentMap.find(node);
@@ -721,7 +721,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   }
 
   // Creates an expression that uses a node. Generally, a node represents
-  // a value in a local, so we create a get_local for it.
+  // a value in a local, so we create a local.get for it.
   Expression* makeUse(Node* node) {
     Builder builder(*module);
     if (node->isPhi()) {

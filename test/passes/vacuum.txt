@@ -15,14 +15,14 @@
  (func $l (; 2 ;) (type $0)
   (local $x i32)
   (local $y i32)
-  (set_local $x
-   (get_local $x)
+  (local.set $x
+   (local.get $x)
   )
-  (set_local $x
-   (get_local $x)
+  (local.set $x
+   (local.get $x)
   )
-  (set_local $x
-   (get_local $y)
+  (local.set $x
+   (local.get $y)
   )
  )
  (func $loopy (; 3 ;) (type $1) (param $0 i32)
@@ -62,19 +62,19 @@
  (func $Gu (; 10 ;) (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
   (if
    (if (result i32)
-    (get_local $d)
+    (local.get $d)
     (f64.ne
-     (f64.promote/f32
+     (f64.promote_f32
       (f32.load
-       (tee_local $l
+       (local.tee $l
         (i32.add
-         (get_local $b)
+         (local.get $b)
          (i32.const 60)
         )
        )
       )
      )
-     (get_local $e)
+     (local.get $e)
     )
     (i32.const 0)
    )
@@ -168,7 +168,7 @@
   (block $out
    (drop
     (if (result i32)
-     (get_local $0)
+     (local.get $0)
      (br $out)
      (br $out)
     )
@@ -176,7 +176,7 @@
   )
   (drop
    (if (result i32)
-    (get_local $0)
+    (local.get $0)
     (unreachable)
     (unreachable)
    )
@@ -185,10 +185,10 @@
  (func $if-1-block (; 21 ;) (type $1) (param $x i32)
   (block $out
    (if
-    (get_local $x)
+    (local.get $x)
     (block $block9
-     (set_local $x
-      (get_local $x)
+     (local.set $x
+      (local.get $x)
      )
      (br $out)
     )
@@ -268,7 +268,7 @@
    )
   )
   (drop
-   (i64.trunc_u/f32
+   (i64.trunc_f32_u
     (f32.const 70847791997969805621592064)
    )
   )

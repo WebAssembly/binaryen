@@ -84,17 +84,17 @@
     (if i32 (unreachable) (i32.const 0) (i32.const 1))
   )
   (func (export "as-if-then") (param i32 i32) (result i32)
-    (if i32 (get_local 0) (unreachable) (get_local 1))
+    (if i32 (local.get 0) (unreachable) (local.get 1))
   )
   (func (export "as-if-else") (param i32 i32) (result i32)
-    (if i32 (get_local 0) (get_local 1) (unreachable))
+    (if i32 (local.get 0) (local.get 1) (unreachable))
   )
 
   (func (export "as-select-first") (param i32 i32) (result i32)
-    (select (unreachable) (get_local 0) (get_local 1))
+    (select (unreachable) (local.get 0) (local.get 1))
   )
   (func (export "as-select-second") (param i32 i32) (result i32)
-    (select (get_local 0) (unreachable) (get_local 1))
+    (select (local.get 0) (unreachable) (local.get 1))
   )
   (func (export "as-select-cond") (result i32)
     (select (i32.const 0) (i32.const 1) (unreachable))
@@ -111,7 +111,7 @@
   )
 
   (type $sig (func (param i32 i32 i32)))
-  (table anyfunc (elem $dummy3))
+  (table funcref (elem $dummy3))
   (func (export "as-call_indirect-func")
     (call_indirect (type $sig) (unreachable) (i32.const 1) (i32.const 2) (i32.const 3))
   )
@@ -125,8 +125,8 @@
     (call_indirect (type $sig) (i32.const 0) (i32.const 1) (i32.const 2) (unreachable))
   )
 
-  (func (export "as-set_local-value") (local f32)
-    (set_local 0 (unreachable))
+  (func (export "as-local.set-value") (local f32)
+    (local.set 0 (unreachable))
   )
 
   (memory 1)
@@ -174,7 +174,7 @@
   )
 
   (func (export "as-convert-operand") (result i32)
-    (i32.wrap/i64 (unreachable))
+    (i32.wrap_i64 (unreachable))
   )
 
   (func (export "as-grow_memory-size") (result i32)
@@ -236,7 +236,7 @@
 (assert_trap (invoke "as-call_indirect-mid") "unreachable")
 (assert_trap (invoke "as-call_indirect-last") "unreachable")
 
-(assert_trap (invoke "as-set_local-value") "unreachable")
+(assert_trap (invoke "as-local.set-value") "unreachable")
 
 (assert_trap (invoke "as-load-address") "unreachable")
 (assert_trap (invoke "as-loadN-address") "unreachable")

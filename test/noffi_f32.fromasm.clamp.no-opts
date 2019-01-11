@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$ff (func (param f32) (result f32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "_importf" (func $importf (param f32) (result f32)))
@@ -10,7 +10,7 @@
  (func $exportf (; 1 ;) (param $a f32) (result f32)
   (return
    (f32.add
-    (get_local $a)
+    (local.get $a)
     (f32.const 1)
    )
   )
