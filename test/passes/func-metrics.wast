@@ -122,4 +122,13 @@
   (call $waka)
  )
 )
+(module ;; various globals
+ (type $0 (func (result i32)))
+ (import "env" "STACKTOP" (global $gimport$0 i32))
+ (global $global$0 (mut i32) (global.get $gimport$0))
+ (export "stackSave" (func $0))
+ (func $0 (; 0 ;) (type $0) (result i32)
+  (global.get $global$0)
+ )
+)
 
