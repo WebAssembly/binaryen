@@ -17,6 +17,7 @@ import os
 import difflib
 import subprocess
 import random
+import re
 import shutil
 import time
 
@@ -64,85 +65,88 @@ def randomize_pass_debug():
 IGNORE = '[binaryen-fuzzer-ignore]'
 
 
+def compare(x, y, comment):
+  if x != y and x != IGNORE and y != IGNORE:
+    message = ''.join([a.rstrip() + '\n' for a in difflib.unified_diff(x.split('\n'), y.split('\n'), fromfile='expected', tofile='actual')])
+    raise Exception(str(comment) + ": Expected to have '%s' == '%s', diff:\n\n%s" % (
+      x, y,
+      message
+    ))
+
+
+def run_vms(prefix):
+  def fix_output(out):
+    # large doubles may print slightly different on different VMs
+    def fix_double(x):
+      x = x.group(1)
+      if 'nan' in x or 'NaN' in x:
+        x = 'nan'
+      else:
+        x = x.replace('Infinity', 'inf')
+        x = str(float(x))
+      return 'f64.const ' + x
+    out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
+
+    # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
+    out = out.replace('[trap ', 'exception: [trap ')
+
+    # exceptions may differ when optimizing, but an exception should occur. so ignore their types
+    # also js engines print them out slightly differently
+    return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
+
+  def fix_spec_output(out):
+    out = fix_output(out)
+    # spec shows a pointer when it traps, remove that
+    out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.split('\n')))
+    # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
+    out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
+    return out
+
+  def run_vm(cmd):
+    # ignore some vm assertions, if bugs have already been filed
+    known_issues = [
+      'local count too large',  # ignore this; can be caused by flatten, ssa, etc. passes
+      'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
+      'liftoff-assembler.cc, line 245\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
+      'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
+    ]
+    try:
+      return run(cmd)
+    except:
+      output = run_unchecked(cmd)
+      for issue in known_issues:
+        if issue in output:
+          return IGNORE
+      raise
+
+  results = []
+  # append to this list to add results from VMs
+  results += [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
+  results += [fix_output(run_vm([os.path.expanduser('d8'),       '--experimental-wasm-sat_f2i_conversions',                      prefix + 'js', '--', prefix + 'wasm']))]
+  results += [fix_output(run_vm([os.path.expanduser('d8-debug'), '--experimental-wasm-sat_f2i_conversions', '--wasm-tier-up',    prefix + 'js', '--', prefix + 'wasm']))]
+  results += [fix_output(run_vm([os.path.expanduser('d8-debug'), '--experimental-wasm-sat_f2i_conversions', '--no-wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
+  # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
+  # run(['../spec/interpreter/wasm', prefix + 'wasm'])
+  # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', prefix + 'wasm', '-e', open(prefix + 'wat').read()]))]
+
+  if len(results) == 0:
+    results = [0]
+
+  first = results[0]
+  for i in range(len(results)):
+    compare(first, results[i], 'comparing between vms at ' + str(i))
+
+  return results
+
+
 def test_one(infile, opts):
-  def compare(x, y, comment):
-    if x != y and x != IGNORE and y != IGNORE:
-      message = ''.join([a.rstrip() + '\n' for a in difflib.unified_diff(x.split('\n'), y.split('\n'), fromfile='expected', tofile='actual')])
-      raise Exception(str(comment) + ": Expected to have '%s' == '%s', diff:\n\n%s" % (
-        x, y,
-        message
-      ))
-
-  def run_vms(prefix):
-    def fix_output(out):
-      # exceptions may differ when optimizing, but an exception should occur. so ignore their types
-      # also js engines print them out slightly differently
-      return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
-
-      # normalize different vm output
-      # also the binaryen optimizer can reorder traps (but not remove them), so
-      # it really just matters if you trap, not how you trap
-      return out.replace('unreachable executed', 'unreachable') \
-                .replace('integer result unrepresentable', 'integer overflow') \
-                .replace('invalid conversion to integer', 'integer overflow') \
-                .replace('memory access out of bounds', 'index out of bounds') \
-                .replace('integer divide by zero', 'divide by zero') \
-                .replace('integer remainder by zero', 'remainder by zero') \
-                .replace('remainder by zero', 'divide by zero') \
-                .replace('divide result unrepresentable', 'integer overflow') \
-                .replace('divide by zero', 'integer overflow') \
-                .replace('index out of bounds', 'integer overflow') \
-                .replace('out of bounds memory access', 'integer overflow')
-
-    def fix_spec_output(out):
-      out = fix_output(out)
-      # spec shows a pointer when it traps, remove that
-      out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.split('\n')))
-      # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
-      out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
-      return out
-
-    def run_vm(cmd):
-      # ignore some vm assertions, if bugs have already been filed
-      known_issues = [
-        'local count too large',  # ignore this; can be caused by flatten, ssa, etc. passes
-        'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-        'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
-      ]
-      try:
-        return run(cmd)
-      except:
-        output = run_unchecked(cmd)
-        for issue in known_issues:
-          if issue in output:
-            return IGNORE
-        raise
-
-    results = []
-    # append to this list to add results from VMs
-    results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
-    results += [fix_output(run_vm([os.path.expanduser('d8-debug'), '--wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
-    results += [fix_output(run_vm([os.path.expanduser('d8-debug'), '--no-wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
-    # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
-    # run(['../spec/interpreter/wasm', prefix + 'wasm'])
-    # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', prefix + 'wasm', '-e', open(prefix + 'wat').read()]))]
-
-    if len(results) == 0:
-      results = [0]
-
-    first = results[0]
-    for i in range(len(results)):
-      compare(first, results[i], 'comparing between vms at ' + str(i))
-
-    return results
-
   randomize_pass_debug()
 
   bytes = 0
 
   # fuzz vms
   # gather VM outputs on input file
-  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm', '--mvp-features'])
+  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm', '--mvp-features', '--enable-nontrapping-float-to-int'])
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)

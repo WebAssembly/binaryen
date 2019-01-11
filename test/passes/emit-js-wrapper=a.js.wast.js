@@ -20,12 +20,26 @@ if (typeof process === 'object' && typeof require === 'function' /* node.js dete
     binary = read(args[0], 'binary');
   }
 }
+function literal(x, type) {
+  var ret = type + '.const ';
+  switch (type) {
+    case 'i32': ret += (x | 0); break;
+    case 'f32':
+    case 'f64': {
+      if (x == 0 && (1 / x) < 0) ret += '-';
+      ret += x;
+      break;
+    }
+    default: throw 'what?';
+  }
+  return ret;
+}
 var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {
   'fuzzing-support': {
-    'log-i32': function(x) { console.log('i32: ' + x) },
-    'log-i64': function(x, y) { console.log('i64: ' + x + ', ' + y) },
-    'log-f32': function(x) { console.log('f32: ' + x) },
-    'log-f64': function(x) { console.log('f64: ' + x) }
+    'log-i32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ']') },
+    'log-i64': function(x, y) { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(y, 'i32') + ']') },
+    'log-f32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },
+    'log-f64': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },
   },
   'env': {
     'setTempRet0': function(x) { tempRet0 = x },
@@ -34,37 +48,36 @@ var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {
 });
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('calling: add');
-  console.log('   result: ' + instance.exports.add(0, 0));
+  console.log('[fuzz-exec] calling $add');
+  console.log('[fuzz-exec] note result: $add => ' + literal(instance.exports.add(0, 0), 'i32'));
 } catch (e) {
-  console.log('   exception: ' + e);
+  console.log('exception: ' + e);
 }
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('calling: no_return');
-instance.exports.no_return(0);
+  console.log('[fuzz-exec] calling $no_return');
+  instance.exports.no_return(0);
 } catch (e) {
-  console.log('   exception: ' + e);
+  console.log('exception: ' + e);
 }
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('calling: types');
-instance.exports.types(0, 0, 0, 0, 0);
+  console.log('[fuzz-exec] calling $types');
+  instance.exports.types(0, 0, 0, 0, 0);
 } catch (e) {
-  console.log('   exception: ' + e);
+  console.log('exception: ' + e);
 }
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('calling: types2');
-instance.exports.types2(0, 0, 0);
+  console.log('[fuzz-exec] calling $types2');
+  instance.exports.types2(0, 0, 0);
 } catch (e) {
-  console.log('   exception: ' + e);
+  console.log('exception: ' + e);
 }
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('calling: types3');
-  console.log('   result: ' + instance.exports.types3(0, 0, 0));
+  console.log('[fuzz-exec] calling $types3');
+  console.log('[fuzz-exec] note result: $types3 => ' + literal(instance.exports.types3(0, 0, 0), 'i32'));
 } catch (e) {
-  console.log('   exception: ' + e);
+  console.log('exception: ' + e);
 }
-console.log('done.')

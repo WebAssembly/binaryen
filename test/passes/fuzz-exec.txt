@@ -1,9 +1,13 @@
+[fuzz-exec] calling $a
 [fuzz-exec] note result: $a => i32.const -69
+[fuzz-exec] calling $b
 [fuzz-exec] note result: $b => i32.const -31768
+[fuzz-exec] calling $c
 [fuzz-exec] note result: $c => i64.const -69
+[fuzz-exec] calling $d
 [fuzz-exec] note result: $d => i64.const -31768
+[fuzz-exec] calling $e
 [fuzz-exec] note result: $e => i64.const -2146649112
-[fuzz-exec] 5 results noted
 (module
  (type $0 (func (result i32)))
  (type $1 (func (result i64)))
@@ -38,15 +42,18 @@
   )
  )
 )
+[fuzz-exec] calling $a
 [fuzz-exec] note result: $a => i32.const -69
+[fuzz-exec] calling $b
 [fuzz-exec] note result: $b => i32.const -31768
+[fuzz-exec] calling $c
 [fuzz-exec] note result: $c => i64.const -69
+[fuzz-exec] calling $d
 [fuzz-exec] note result: $d => i64.const -31768
+[fuzz-exec] calling $e
 [fuzz-exec] note result: $e => i64.const -2146649112
-[fuzz-exec] 5 results noted
 [fuzz-exec] comparing $a
 [fuzz-exec] comparing $b
 [fuzz-exec] comparing $c
 [fuzz-exec] comparing $d
 [fuzz-exec] comparing $e
-[fuzz-exec] 5 results match

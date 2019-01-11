@@ -26,20 +26,22 @@ namespace wasm {
 
 typedef std::vector<Literal> Loggings;
 
-// Logs every single import call parameter.
+// Logs every relevant import call parameter.
 struct LoggingExternalInterface : public ShellExternalInterface {
   Loggings& loggings;
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
   Literal callImport(Function* import, LiteralList& arguments) override {
-    std::cout << "[LoggingExternalInterface logging";
-    loggings.push_back(Literal()); // buffer with a None between calls
-    for (auto argument : arguments) {
-      std::cout << ' ' << argument;
-      loggings.push_back(argument);
+    if (import->module == "fuzzing-support") {
+      std::cout << "[LoggingExternalInterface logging";
+      loggings.push_back(Literal()); // buffer with a None between calls
+      for (auto argument : arguments) {
+        std::cout << ' ' << argument;
+        loggings.push_back(argument);
+      }
+      std::cout << "]\n";
     }
-    std::cout << "]\n";
     return Literal();
   }
 };
@@ -60,21 +62,23 @@ struct ExecutionResults {
       // execute all exported methods (that are therefore preserved through opts)
       for (auto& exp : wasm.exports) {
         if (exp->kind != ExternalKind::Function) continue;
+        std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
         if (func->result != none) {
           // this has a result
           results[exp->name] = run(func, wasm, instance);
-          std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name] << '\n';
+          // ignore the result if we hit an unreachable and returned no value
+          if (isConcreteType(results[exp->name].type)) {
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name] << '\n';
+          }
         } else {
           // no result, run it anyhow (it might modify memory etc.)
           run(func, wasm, instance);
-          std::cout << "[fuzz-exec] no result for void func: " << exp->name << '\n';
         }
       }
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)
     }
-    std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
   }
 
   // get current results and check them against previous ones
@@ -85,7 +89,6 @@ struct ExecutionResults {
       std::cout << "[fuzz-exec] optimization passes changed execution results";
       abort();
     }
-    std::cout << "[fuzz-exec] " << results.size() << " results match\n";
   }
 
   bool operator==(ExecutionResults& other) {
@@ -127,8 +130,8 @@ struct ExecutionResults {
     try {
       LiteralList arguments;
       // init hang support, if present
-      if (wasm.getFunctionOrNull("hangLimitInitializer")) {
-        instance.callFunction("hangLimitInitializer", arguments);
+      if (auto* ex = wasm.getExportOrNull("hangLimitInitializer")) {
+        instance.callFunction(ex->value, arguments);
       }
       // call the method
       for (Type param : func->params) {
