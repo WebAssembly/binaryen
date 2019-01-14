@@ -35,7 +35,7 @@
 namespace cashew {
 
 struct IString {
-  const char *str;
+  const char *str = nullptr;
 
   static size_t hash_c(const char *str) { // see http://www.cse.yorku.ca/~oz/hash.html
     unsigned int hash = 5381;
@@ -59,7 +59,7 @@ struct IString {
     }
   };
 
-  IString() : str(nullptr) {}
+  IString() {}
   IString(const char *s, bool reuse=true) { // if reuse=true, then input is assumed to remain alive; not copied
     assert(s);
     set(s, reuse);

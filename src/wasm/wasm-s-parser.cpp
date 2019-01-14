@@ -104,7 +104,7 @@ void Element::dump() {
 }
 
 
-SExpressionParser::SExpressionParser(char* input) : input(input), loc(nullptr) {
+SExpressionParser::SExpressionParser(char* input) : input(input) {
   root = nullptr;
   line = 1;
   lineStart = input;
@@ -253,7 +253,7 @@ Element* SExpressionParser::parseString() {
   return ret;
 }
 
-SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName) : wasm(wasm), allocator(wasm.allocator), globalCounter(0) {
+SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName) : wasm(wasm), allocator(wasm.allocator) {
   if (module.size() == 0) throw ParseException("empty toplevel, expected module");
   if (module[0]->str() != MODULE) throw ParseException("toplevel does not start with module");
   if (module.size() == 1) return;

@@ -259,9 +259,10 @@ public:
   };
   Id _id;
 
-  Type type; // the type of the expression: its *output*, not necessarily its input(s)
+  // the type of the expression: its *output*, not necessarily its input(s)
+  Type type = none;
 
-  Expression(Id id) : _id(id), type(none) {}
+  Expression(Id id) : _id(id) {}
 
   void finalize() {}
 
@@ -376,14 +377,14 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator), condition(nullptr), value(nullptr) {
+  Switch(MixedArena& allocator) : targets(allocator) {
     type = unreachable;
   }
 
   ArenaVector<Name> targets;
   Name default_;
-  Expression* condition;
-  Expression* value;
+  Expression* condition = nullptr;
+  Expression* value = nullptr;
 
   void finalize();
 };
@@ -401,10 +402,10 @@ public:
 class FunctionType {
 public:
   Name name;
-  Type result;
+  Type result = none;
   std::vector<Type> params;
 
-  FunctionType() : result(none) {}
+  FunctionType() {}
 
   bool structuralComparison(FunctionType& b);
 
@@ -483,7 +484,7 @@ public:
 
 class Store : public SpecificExpression<Expression::StoreId> {
 public:
-  Store() : valueType(none) {}
+  Store() = default;
   Store(MixedArena& allocator) : Store() {}
 
   uint8_t bytes;
@@ -492,7 +493,7 @@ public:
   bool isAtomic;
   Expression* ptr;
   Expression* value;
-  Type valueType; // the store never returns a value
+  Type valueType;
 
   void finalize();
 };
@@ -678,12 +679,12 @@ public:
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() : value(nullptr) {
+  Return() {
     type = unreachable;
   }
   Return(MixedArena& allocator) : Return() {}
 
-  Expression* value;
+  Expression* value = nullptr;
 };
 
 class Host : public SpecificExpression<Expression::HostId> {
@@ -817,12 +818,13 @@ public:
 
   // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or imported.
   // The table can exist but be empty and have no defined initial or max size.
-  bool exists;
+  bool exists = false;
   Name name;
-  Address initial, max;
+  Address initial = 0,
+          max = kMaxSize;
   std::vector<Segment> segments;
 
-  Table() : exists(false), initial(0), max(kMaxSize) {
+  Table() {
     name = Name::fromInt(0);
   }
   bool hasMax() { return max != kUnlimitedSize; }
@@ -850,15 +852,16 @@ public:
     }
   };
 
+  bool exists = false;
   Name name;
-  Address initial, max; // sizes are in pages
+  Address initial = 0,
+          max = kMaxSize; // sizes are in pages
   std::vector<Segment> segments;
 
   // See comment in Table.
-  bool exists;
-  bool shared;
+  bool shared = false;
 
-  Memory() : initial(0), max(kMaxSize), exists(false), shared(false) {
+  Memory() {
     name = Name::fromInt(0);
   }
   bool hasMax() { return max != kUnlimitedSize; }
