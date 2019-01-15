@@ -87,7 +87,7 @@ def update_lld_tests():
       if ext != '.out' and not os.path.exists(out_path):
         continue
       cmd = (WASM_EMSCRIPTEN_FINALIZE +
-             [wast_path, '-S', '--global-base=568', '--stack-base=16384'] + ext_args)
+             [wast_path, '-S', '--global-base=568', '--initial-stack-pointer=16384'] + ext_args)
       actual = run_command(cmd)
       with open(out_path, 'w') as o:
         o.write(actual)

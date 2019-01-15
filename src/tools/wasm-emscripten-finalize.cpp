@@ -49,7 +49,7 @@ int main(int argc, const char *argv[]) {
   bool legalizeJavaScriptFFI = true;
   unsigned numReservedFunctionPointers = 0;
   uint64_t globalBase = INVALID_BASE;
-  uint64_t stackBase = INVALID_BASE;
+  uint64_t initialStackPointer = INVALID_BASE;
   Options options("wasm-emscripten-finalize",
                   "Performs Emscripten-specific transforms on .wasm files");
   options
@@ -83,10 +83,10 @@ int main(int argc, const char *argv[]) {
            [&globalBase](Options*, const std::string&argument ) {
              globalBase = std::stoull(argument);
            })
-      .add("--stack-base", "", "The initial location of the stack pointer",
+      .add("--initial-stack-pointer", "", "The initial location of the stack pointer",
            Options::Arguments::One,
-           [&stackBase](Options*, const std::string&argument ) {
-             stackBase = std::stoull(argument);
+           [&initialStackPointer](Options*, const std::string&argument ) {
+             initialStackPointer = std::stoull(argument);
            })
 
       .add("--input-source-map", "-ism", "Consume source map from the specified file",
@@ -152,8 +152,8 @@ int main(int argc, const char *argv[]) {
     if (globalBase == INVALID_BASE) {
       Fatal() << "globalBase must be set";
     }
-    if (stackBase == INVALID_BASE) {
-      Fatal() << "stackBase must be set";
+    if (initialStackPointer == INVALID_BASE) {
+      Fatal() << "initialStackPointer must be set";
     }
     Export* dataEndExport = wasm.getExport("__data_end");
     if (dataEndExport == nullptr) {
@@ -203,7 +203,7 @@ int main(int argc, const char *argv[]) {
   } else {
     generator.generateRuntimeFunctions();
     generator.generateMemoryGrowthFunction();
-    generator.generateStackInitialization(stackBase);
+    generator.generateStackInitialization(initialStackPointer);
     // emscripten calls this by default for side libraries so we only need
     // to include in as a static ctor for main module case.
     if (wasm.getExportOrNull("__post_instantiate")) {
