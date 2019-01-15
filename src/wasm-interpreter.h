@@ -53,7 +53,7 @@ enum {
 // Stuff that flows around during executing expressions: a literal, or a change in control flow.
 class Flow {
 public:
-  Flow() {}
+  Flow() = default;
   Flow(Literal value) : value(value) {}
   Flow(Name breakTo) : breakTo(breakTo) {}
 

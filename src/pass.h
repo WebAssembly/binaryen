@@ -49,7 +49,7 @@ private:
   struct PassInfo {
     std::string description;
     Creator create;
-    PassInfo() {}
+    PassInfo() = default;
     PassInfo(std::string description, Creator create) : description(description), create(create) {}
   };
   std::map<std::string, PassInfo> passInfos;
@@ -253,8 +253,8 @@ public:
   std::string name;
 
 protected:
-  Pass() {}
-  Pass(Pass &) {}
+  Pass() = default;
+  Pass(Pass &) = default;
   Pass &operator=(const Pass&) = delete;
 };
 

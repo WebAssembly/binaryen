@@ -42,7 +42,7 @@ using namespace wasm;
 struct DCENode {
   Name name;
   std::vector<Name> reaches; // the other nodes this one can reach
-  DCENode() {}
+  DCENode() = default;
   DCENode(Name name) : name(name) {}
 };
 

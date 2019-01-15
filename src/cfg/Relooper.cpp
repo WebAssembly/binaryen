@@ -99,9 +99,9 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret, Shape* P
 
 // Branch
 
-Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(ConditionInit), Code(CodeInit) {}
+Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit) : Condition(ConditionInit), Code(CodeInit) {}
 
-Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(nullptr), Code(CodeInit) {
+Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit) : Condition(nullptr), Code(CodeInit) {
   if (ValuesInit.size() > 0) {
     SwitchValues = wasm::make_unique<std::vector<wasm::Index>>(ValuesInit);
   }
@@ -124,7 +124,7 @@ wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block* Target, bool S
 
 // Block
 
-Block::Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit) : Parent(nullptr), Id(-1), Code(CodeInit), SwitchCondition(SwitchConditionInit), IsCheckedMultipleEntry(false) {}
+Block::Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit) : Code(CodeInit), SwitchCondition(SwitchConditionInit), IsCheckedMultipleEntry(false) {}
 
 Block::~Block() {
   for (auto& iter : ProcessedBranchesOut) {

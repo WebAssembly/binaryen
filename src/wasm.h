@@ -259,9 +259,10 @@ public:
   };
   Id _id;
 
-  Type type; // the type of the expression: its *output*, not necessarily its input(s)
+  // the type of the expression: its *output*, not necessarily its input(s)
+  Type type = none;
 
-  Expression(Id id) : _id(id), type(none) {}
+  Expression(Id id) : _id(id) {}
 
   void finalize() {}
 
@@ -298,7 +299,7 @@ public:
 
 class Nop : public SpecificExpression<Expression::NopId> {
 public:
-  Nop() {}
+  Nop() = default;
   Nop(MixedArena& allocator) {}
 };
 
@@ -345,7 +346,7 @@ public:
 
 class Loop : public SpecificExpression<Expression::LoopId> {
 public:
-  Loop() {}
+  Loop() = default;
   Loop(MixedArena& allocator) {}
 
   Name name;
@@ -376,14 +377,14 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator), condition(nullptr), value(nullptr) {
+  Switch(MixedArena& allocator) : targets(allocator) {
     type = unreachable;
   }
 
   ArenaVector<Name> targets;
   Name default_;
-  Expression* condition;
-  Expression* value;
+  Expression* condition = nullptr;
+  Expression* value = nullptr;
 
   void finalize();
 };
@@ -401,10 +402,10 @@ public:
 class FunctionType {
 public:
   Name name;
-  Type result;
+  Type result = none;
   std::vector<Type> params;
 
-  FunctionType() : result(none) {}
+  FunctionType() = default;
 
   bool structuralComparison(FunctionType& b);
 
@@ -425,7 +426,7 @@ public:
 
 class GetLocal : public SpecificExpression<Expression::GetLocalId> {
 public:
-  GetLocal() {}
+  GetLocal() = default;
   GetLocal(MixedArena& allocator) {}
 
   Index index;
@@ -433,7 +434,7 @@ public:
 
 class SetLocal : public SpecificExpression<Expression::SetLocalId> {
 public:
-  SetLocal() {}
+  SetLocal() = default;
   SetLocal(MixedArena& allocator) {}
 
   void finalize();
@@ -447,7 +448,7 @@ public:
 
 class GetGlobal : public SpecificExpression<Expression::GetGlobalId> {
 public:
-  GetGlobal() {}
+  GetGlobal() = default;
   GetGlobal(MixedArena& allocator) {}
 
   Name name;
@@ -455,7 +456,7 @@ public:
 
 class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
 public:
-  SetGlobal() {}
+  SetGlobal() = default;
   SetGlobal(MixedArena& allocator) {}
 
   Name name;
@@ -466,7 +467,7 @@ public:
 
 class Load : public SpecificExpression<Expression::LoadId> {
 public:
-  Load() {}
+  Load() = default;
   Load(MixedArena& allocator) {}
 
   uint8_t bytes;
@@ -483,7 +484,7 @@ public:
 
 class Store : public SpecificExpression<Expression::StoreId> {
 public:
-  Store() : valueType(none) {}
+  Store() = default;
   Store(MixedArena& allocator) : Store() {}
 
   uint8_t bytes;
@@ -492,7 +493,7 @@ public:
   bool isAtomic;
   Expression* ptr;
   Expression* value;
-  Type valueType; // the store never returns a value
+  Type valueType;
 
   void finalize();
 };
@@ -614,7 +615,7 @@ class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
 
 class Const : public SpecificExpression<Expression::ConstId> {
 public:
-  Const() {}
+  Const() = default;
   Const(MixedArena& allocator) {}
 
   Literal value;
@@ -626,7 +627,7 @@ public:
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
 public:
-  Unary() {}
+  Unary() = default;
   Unary(MixedArena& allocator) {}
 
   UnaryOp op;
@@ -639,7 +640,7 @@ public:
 
 class Binary : public SpecificExpression<Expression::BinaryId> {
 public:
-  Binary() {}
+  Binary() = default;
   Binary(MixedArena& allocator) {}
 
   BinaryOp op;
@@ -656,7 +657,7 @@ public:
 
 class Select : public SpecificExpression<Expression::SelectId> {
 public:
-  Select() {}
+  Select() = default;
   Select(MixedArena& allocator) {}
 
   Expression* ifTrue;
@@ -668,7 +669,7 @@ public:
 
 class Drop : public SpecificExpression<Expression::DropId> {
 public:
-  Drop() {}
+  Drop() = default;
   Drop(MixedArena& allocator) {}
 
   Expression* value;
@@ -678,12 +679,12 @@ public:
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() : value(nullptr) {
+  Return() {
     type = unreachable;
   }
   Return(MixedArena& allocator) : Return() {}
 
-  Expression* value;
+  Expression* value = nullptr;
 };
 
 class Host : public SpecificExpression<Expression::HostId> {
@@ -808,7 +809,7 @@ public:
   struct Segment {
     Expression* offset;
     std::vector<Name> data;
-    Segment() {}
+    Segment() = default;
     Segment(Expression* offset) : offset(offset) {}
     Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
       data.swap(init);
@@ -817,12 +818,13 @@ public:
 
   // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or imported.
   // The table can exist but be empty and have no defined initial or max size.
-  bool exists;
+  bool exists = false;
   Name name;
-  Address initial, max;
+  Address initial = 0;
+  Address max = kMaxSize;
   std::vector<Segment> segments;
 
-  Table() : exists(false), initial(0), max(kMaxSize) {
+  Table() {
     name = Name::fromInt(0);
   }
   bool hasMax() { return max != kUnlimitedSize; }
@@ -839,7 +841,7 @@ public:
   struct Segment {
     Expression* offset;
     std::vector<char> data; // TODO: optimize
-    Segment() {}
+    Segment() = default;
     Segment(Expression* offset) : offset(offset) {}
     Segment(Expression* offset, const char* init, Address size) : offset(offset) {
       data.resize(size);
@@ -850,15 +852,16 @@ public:
     }
   };
 
+  bool exists = false;
   Name name;
-  Address initial, max; // sizes are in pages
+  Address initial = 0; // sizes are in pages
+  Address max = kMaxSize;
   std::vector<Segment> segments;
 
   // See comment in Table.
-  bool exists;
-  bool shared;
+  bool shared = false;
 
-  Memory() : initial(0), max(kMaxSize), exists(false), shared(false) {
+  Memory() {
     name = Name::fromInt(0);
   }
   bool hasMax() { return max != kUnlimitedSize; }
@@ -905,7 +908,7 @@ private:
   std::map<Name, Global*> globalsMap;
 
 public:
-  Module() {};
+  Module() = default;;
 
   FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);

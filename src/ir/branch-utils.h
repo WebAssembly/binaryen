@@ -149,10 +149,10 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   Name target;
   bool named = true;
 
-  Index found;
+  Index found = 0;
   Type valueType;
 
-  BranchSeeker(Name target) : target(target), found(0) {}
+  BranchSeeker(Name target) : target(target) {}
 
   void noteFound(Expression* value) {
     found++;

@@ -671,7 +671,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
-  ControlFlowWalker() {}
+  ControlFlowWalker() = default;
 
   std::vector<Expression*> controlFlowStack; // contains blocks, loops, and ifs
 
@@ -734,7 +734,7 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
-  ExpressionStackWalker() {}
+  ExpressionStackWalker() = default;
 
   std::vector<Expression*> expressionStack;
 
@@ -798,7 +798,7 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
-  LinearExecutionWalker() {}
+  LinearExecutionWalker() = default;
 
   // subclasses should implement this
   void noteNonLinear(Expression* curr) { abort(); }

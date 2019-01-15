@@ -188,7 +188,7 @@ void dump(const char *str, Ref node, bool pretty) {
 // Traversals
 
 struct TraverseInfo {
-  TraverseInfo() {}
+  TraverseInfo() = default;
   TraverseInfo(Ref node, ArrayStorage* arr) : node(node), arr(arr), index(0) {}
   Ref node;
   ArrayStorage* arr;
@@ -199,10 +199,11 @@ template<class T, int init>
 struct StackedStack { // a stack, on the stack
   T stackStorage[init];
   T* storage;
-  int used, available; // used amount, available amount
-  bool alloced;
+  int used = 0;
+  int available = init; // used amount, available amount
+  bool alloced = false;
 
-  StackedStack() : used(0), available(init), alloced(false) {
+  StackedStack() {
     storage = stackStorage;
   }
   ~StackedStack() {

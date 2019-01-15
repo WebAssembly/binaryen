@@ -1350,7 +1350,7 @@ Pass *createPrinterPass() {
 
 class MinifiedPrinter : public Printer {
 public:
-  MinifiedPrinter() : Printer() {}
+  MinifiedPrinter() = default;
   MinifiedPrinter(std::ostream* o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override {
@@ -1368,7 +1368,7 @@ Pass *createMinifiedPrinterPass() {
 
 class FullPrinter : public Printer {
 public:
-  FullPrinter() : Printer() {}
+  FullPrinter() = default;
   FullPrinter(std::ostream* o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override {
@@ -1386,7 +1386,7 @@ Pass *createFullPrinterPass() {
 
 class PrintStackIR : public Printer {
 public:
-  PrintStackIR() : Printer() {}
+  PrintStackIR() = default;
   PrintStackIR(std::ostream* o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override {

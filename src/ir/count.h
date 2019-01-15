@@ -22,7 +22,7 @@ namespace wasm {
 struct GetLocalCounter : public PostWalker<GetLocalCounter> {
   std::vector<Index> num;
 
-  GetLocalCounter() {}
+  GetLocalCounter() = default;
   GetLocalCounter(Function* func) {
     analyze(func, func->body);
   }
