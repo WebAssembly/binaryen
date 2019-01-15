@@ -156,19 +156,9 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   return growFunction;
 }
 
-void EmscriptenGlueGenerator::generateStackInitialization() {
-  // Replace a global with a constant initial value with an imported
-  // initial value, which emscripten JS will send us.
-  // TODO: with mutable imported globals, we can avoid adding another
-  //       global for the import.
-  Builder builder(wasm);
-  auto* import = builder.makeGlobal(STACK_INIT, i32, nullptr, Builder::Immutable);
-  import->module = ENV;
-  import->base = STACKTOP;
-  wasm.addGlobal(import);
+void EmscriptenGlueGenerator::generateStackInitialization(Address addr) {
   auto* stackPointer = getStackPointerGlobal();
-  assert(stackPointer->init->is<Const>());
-  stackPointer->init = builder.makeGetGlobal(import->name, i32);
+  stackPointer->init->cast<Const>()->value = Literal(int32_t(addr));
 }
 
 static bool hasI64ResultOrParam(FunctionType* ft) {
