@@ -655,7 +655,7 @@ Function::DebugLocation SExpressionWasmBuilder::getDebugLocation(const SourceLoc
 
 Expression* SExpressionWasmBuilder::parseExpression(Element& s) {
   Expression* result = makeExpression(s);
-  if (s.startLoc) {
+  if (s.startLoc && currFunction) {
     currFunction->debugLocations[result] = getDebugLocation(*s.startLoc);
   }
   return result;
