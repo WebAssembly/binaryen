@@ -58,8 +58,8 @@ public:
   bool dollared() const { return isStr() && dollared_; }
   bool quoted() const { return isStr() && quoted_; }
 
-  size_t line = -1,
-         col  = -1;
+  size_t line = -1;
+  size_t col  = -1;
   // original locations at the start/end of the S-Expression list
   SourceLocation* startLoc = nullptr;
   SourceLocation* endLoc = nullptr;

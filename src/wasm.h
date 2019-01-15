@@ -820,8 +820,8 @@ public:
   // The table can exist but be empty and have no defined initial or max size.
   bool exists = false;
   Name name;
-  Address initial = 0,
-          max = kMaxSize;
+  Address initial = 0;
+  Address max = kMaxSize;
   std::vector<Segment> segments;
 
   Table() {
@@ -854,8 +854,8 @@ public:
 
   bool exists = false;
   Name name;
-  Address initial = 0,
-          max = kMaxSize; // sizes are in pages
+  Address initial = 0; // sizes are in pages
+  Address max = kMaxSize;
   std::vector<Segment> segments;
 
   // See comment in Table.

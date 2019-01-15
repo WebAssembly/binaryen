@@ -199,8 +199,8 @@ template<class T, int init>
 struct StackedStack { // a stack, on the stack
   T stackStorage[init];
   T* storage;
-  int used = 0,
-      available = init; // used amount, available amount
+  int used = 0;
+  int available = init; // used amount, available amount
   bool alloced = false;
 
   StackedStack() {

@@ -545,8 +545,8 @@ struct JSPrinter {
   bool pretty, finalize;
 
   char *buffer = nullptr;
-  size_t size = 0,
-         used = 0;
+  size_t size = 0;
+  size_t used = 0;
 
   int indent = 0;
   bool possibleSpace = false; // add a space to separate identifiers
