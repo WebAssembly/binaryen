@@ -31,6 +31,7 @@
  (global $tempDoublePtr (mut i32) (global.get $tempDoublePtr$asm2wasm$import))
  (global $n (mut i32) (global.get $n$asm2wasm$import))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
+ (global $nonZero (mut i32) (i32.const 1337))
  (global $exportedNumber i32 (i32.const 42))
  (export "big_negative" (func $big_negative))
  (export "pick" (func $exportMe))
@@ -2213,6 +2214,12 @@
     (f64.const 1)
     (f64.const 2.31)
     (f64.const 9.78)
+   )
+  )
+  (global.set $nonZero
+   (i32.add
+    (global.get $nonZero)
+    (i32.const 1)
    )
   )
  )

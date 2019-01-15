@@ -22,6 +22,7 @@
  (global $Int (mut i32) (i32.const 0))
  (global $Double (mut f64) (f64.const 0))
  (global $n (mut i32) (global.get $n$asm2wasm$import))
+ (global $nonZero (mut i32) (i32.const 1337))
  (global $exportedNumber i32 (i32.const 42))
  (export "big_negative" (func $big_negative))
  (export "pick" (func $big_negative))
@@ -1139,6 +1140,12 @@
    (call $f64-rem
     (f64.const 9.78)
     (f64.const 1)
+   )
+  )
+  (global.set $nonZero
+   (i32.add
+    (global.get $nonZero)
+    (i32.const 1)
    )
   )
  )
