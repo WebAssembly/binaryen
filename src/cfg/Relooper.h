@@ -151,7 +151,7 @@ struct InsertOrderedSet
 
   size_t count(const T& val) const { return Map.count(val); }
 
-  InsertOrderedSet() {}
+  InsertOrderedSet() = default;
   InsertOrderedSet(const InsertOrderedSet& other) {
     *this = other;
   }
@@ -214,7 +214,7 @@ struct InsertOrderedMap
   bool empty() const { return Map.empty(); }
   size_t count(const Key& k) const { return Map.count(k); }
 
-  InsertOrderedMap() {}
+  InsertOrderedMap() = default;
   InsertOrderedMap(InsertOrderedMap& other) {
     abort(); // TODO, watch out for iterators
   }

@@ -55,7 +55,7 @@ struct LEB {
 
   T value;
 
-  LEB() {}
+  LEB() = default;
   LEB(T value) : value(value) {}
 
   bool hasMore(T temp, MiniT byte) {

@@ -188,7 +188,7 @@ void dump(const char *str, Ref node, bool pretty) {
 // Traversals
 
 struct TraverseInfo {
-  TraverseInfo() {}
+  TraverseInfo() = default;
   TraverseInfo(Ref node, ArrayStorage* arr) : node(node), arr(arr), index(0) {}
   Ref node;
   ArrayStorage* arr;

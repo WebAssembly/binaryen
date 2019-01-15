@@ -79,7 +79,7 @@ struct ProgramResult {
   std::string output;
   double time;
 
-  ProgramResult() {}
+  ProgramResult() = default;
   ProgramResult(std::string command) {
     getFromExecution(command);
   }

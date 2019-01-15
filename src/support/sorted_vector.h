@@ -26,7 +26,7 @@
 namespace wasm {
 
 struct SortedVector : public std::vector<Index> {
-  SortedVector() {}
+  SortedVector() = default;
 
   SortedVector merge(const SortedVector& other) const {
     SortedVector ret;

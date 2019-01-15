@@ -47,7 +47,7 @@ typedef cashew::IString IString;
 // Main value type
 struct Value {
   struct Ref : public std::shared_ptr<Value> {
-    Ref() : std::shared_ptr<Value>() {}
+    Ref() = default;
     Ref(Value* value) : std::shared_ptr<Value>(value) {}
 
     Ref& operator[](size_t x) {

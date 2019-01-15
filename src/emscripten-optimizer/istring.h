@@ -59,7 +59,7 @@ struct IString {
     }
   };
 
-  IString() {}
+  IString() = default;
   IString(const char *s, bool reuse=true) { // if reuse=true, then input is assumed to remain alive; not copied
     assert(s);
     set(s, reuse);
@@ -178,7 +178,7 @@ namespace cashew {
 class IStringSet : public std::unordered_set<IString> {
   std::vector<char> data;
 public:
-  IStringSet() {}
+  IStringSet() = default;
   IStringSet(const char *init) { // comma-delimited list
     int size = strlen(init) + 1;
     data.resize(size);

@@ -299,7 +299,7 @@ public:
 
 class Nop : public SpecificExpression<Expression::NopId> {
 public:
-  Nop() {}
+  Nop() = default;
   Nop(MixedArena& allocator) {}
 };
 
@@ -346,7 +346,7 @@ public:
 
 class Loop : public SpecificExpression<Expression::LoopId> {
 public:
-  Loop() {}
+  Loop() = default;
   Loop(MixedArena& allocator) {}
 
   Name name;
@@ -405,7 +405,7 @@ public:
   Type result = none;
   std::vector<Type> params;
 
-  FunctionType() {}
+  FunctionType() = default;
 
   bool structuralComparison(FunctionType& b);
 
@@ -426,7 +426,7 @@ public:
 
 class GetLocal : public SpecificExpression<Expression::GetLocalId> {
 public:
-  GetLocal() {}
+  GetLocal() = default;
   GetLocal(MixedArena& allocator) {}
 
   Index index;
@@ -434,7 +434,7 @@ public:
 
 class SetLocal : public SpecificExpression<Expression::SetLocalId> {
 public:
-  SetLocal() {}
+  SetLocal() = default;
   SetLocal(MixedArena& allocator) {}
 
   void finalize();
@@ -448,7 +448,7 @@ public:
 
 class GetGlobal : public SpecificExpression<Expression::GetGlobalId> {
 public:
-  GetGlobal() {}
+  GetGlobal() = default;
   GetGlobal(MixedArena& allocator) {}
 
   Name name;
@@ -456,7 +456,7 @@ public:
 
 class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
 public:
-  SetGlobal() {}
+  SetGlobal() = default;
   SetGlobal(MixedArena& allocator) {}
 
   Name name;
@@ -467,7 +467,7 @@ public:
 
 class Load : public SpecificExpression<Expression::LoadId> {
 public:
-  Load() {}
+  Load() = default;
   Load(MixedArena& allocator) {}
 
   uint8_t bytes;
@@ -615,7 +615,7 @@ class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
 
 class Const : public SpecificExpression<Expression::ConstId> {
 public:
-  Const() {}
+  Const() = default;
   Const(MixedArena& allocator) {}
 
   Literal value;
@@ -627,7 +627,7 @@ public:
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
 public:
-  Unary() {}
+  Unary() = default;
   Unary(MixedArena& allocator) {}
 
   UnaryOp op;
@@ -640,7 +640,7 @@ public:
 
 class Binary : public SpecificExpression<Expression::BinaryId> {
 public:
-  Binary() {}
+  Binary() = default;
   Binary(MixedArena& allocator) {}
 
   BinaryOp op;
@@ -657,7 +657,7 @@ public:
 
 class Select : public SpecificExpression<Expression::SelectId> {
 public:
-  Select() {}
+  Select() = default;
   Select(MixedArena& allocator) {}
 
   Expression* ifTrue;
@@ -669,7 +669,7 @@ public:
 
 class Drop : public SpecificExpression<Expression::DropId> {
 public:
-  Drop() {}
+  Drop() = default;
   Drop(MixedArena& allocator) {}
 
   Expression* value;
@@ -809,7 +809,7 @@ public:
   struct Segment {
     Expression* offset;
     std::vector<Name> data;
-    Segment() {}
+    Segment() = default;
     Segment(Expression* offset) : offset(offset) {}
     Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
       data.swap(init);
@@ -841,7 +841,7 @@ public:
   struct Segment {
     Expression* offset;
     std::vector<char> data; // TODO: optimize
-    Segment() {}
+    Segment() = default;
     Segment(Expression* offset) : offset(offset) {}
     Segment(Expression* offset, const char* init, Address size) : offset(offset) {
       data.resize(size);
@@ -908,7 +908,7 @@ private:
   std::map<Name, Global*> globalsMap;
 
 public:
-  Module() {};
+  Module() = default;;
 
   FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);
