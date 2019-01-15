@@ -185,15 +185,14 @@ void SExpressionParser::skipWhitespace() {
       }
       while (input[0] && input[0] != '\n') input++;
       line++;
+      if (!input[0]) return;
       lineStart = ++input;
     } else if (input[0] == '(' && input[1] == ';') {
       // Skip nested block comments.
       input += 2;
       int depth = 1;
       while (1) {
-        if (input[0] == 0) {
-          return;
-        }
+        if (!input[0]) return;
         if (input[0] == '(' && input[1] == ';') {
           input += 2;
           depth++;
