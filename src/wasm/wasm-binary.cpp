@@ -1955,7 +1955,10 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
     auto* import = functionImports[index];
     type = wasm.getFunctionType(import->type);
   } else {
-    auto adjustedIndex = index - functionImports.size();
+    Index adjustedIndex = index - functionImports.size();
+    if (adjustedIndex >= functionTypes.size()) {
+      throwError("invalid call index");
+    }
     type = functionTypes[adjustedIndex];
   }
   assert(type);
