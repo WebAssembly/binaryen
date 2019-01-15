@@ -78,12 +78,12 @@ int main(int argc, const char *argv[]) {
                                           const std::string &argument) {
              numReservedFunctionPointers = std::stoi(argument);
            })
-      .add("--global-base", "", "Where lld should start to place static globals",
+      .add("--global-base", "", "The address at which static globals were placed",
            Options::Arguments::One,
            [&globalBase](Options*, const std::string&argument ) {
              globalBase = std::stoull(argument);
            })
-      .add("--stack-base", "", "Where the stack begins",
+      .add("--stack-base", "", "The initial location of the stack pointer",
            Options::Arguments::One,
            [&stackBase](Options*, const std::string&argument ) {
              stackBase = std::stoull(argument);
