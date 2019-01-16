@@ -847,7 +847,6 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::f32: return f32;
     case BinaryConsts::EncodedType::f64: return f64;
     case BinaryConsts::EncodedType::v128: return v128;
-    case BinaryConsts::EncodedType::AnyFunc:
     default: {
       throwError("invalid wasm type: " + std::to_string(type));
     }
