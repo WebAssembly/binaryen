@@ -709,8 +709,13 @@ void WasmBinaryBuilder::read() {
 void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
   auto oldPos = pos;
   Name sectionName = getInlineString();
+  size_t read = pos - oldPos;
+  if (read > payloadLen) {
+    throwError("bad user section size");
+  }
+  payloadLen -= read;
   if (sectionName.equals(BinaryConsts::UserSections::Name)) {
-    readNames(payloadLen - (pos - oldPos));
+    readNames(payloadLen);
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::UserSections::Linking)) {
@@ -719,7 +724,7 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     wasm.userSections.resize(wasm.userSections.size() + 1);
     auto& section = wasm.userSections.back();
     section.name = sectionName.str;
-    auto sectionSize = payloadLen - (pos - oldPos);
+    auto sectionSize = payloadLen;
     section.data.resize(sectionSize);
     for (size_t i = 0; i < sectionSize; i++) {
       section.data[i] = getInt8();
@@ -1950,7 +1955,10 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
     auto* import = functionImports[index];
     type = wasm.getFunctionType(import->type);
   } else {
-    auto adjustedIndex = index - functionImports.size();
+    Index adjustedIndex = index - functionImports.size();
+    if (adjustedIndex >= functionTypes.size()) {
+      throwError("invalid call index");
+    }
     type = functionTypes[adjustedIndex];
   }
   assert(type);
