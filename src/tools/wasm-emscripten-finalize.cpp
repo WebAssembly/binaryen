@@ -36,6 +36,8 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
+  const uint64_t INVALID_BASE = -1;
+
   std::string infile;
   std::string outfile;
   std::string inputSourceMapFilename;
@@ -46,7 +48,8 @@ int main(int argc, const char *argv[]) {
   bool debugInfo = false;
   bool legalizeJavaScriptFFI = true;
   unsigned numReservedFunctionPointers = 0;
-  uint64_t globalBase;
+  uint64_t globalBase = INVALID_BASE;
+  uint64_t initialStackPointer = INVALID_BASE;
   Options options("wasm-emscripten-finalize",
                   "Performs Emscripten-specific transforms on .wasm files");
   options
@@ -75,10 +78,15 @@ int main(int argc, const char *argv[]) {
                                           const std::string &argument) {
              numReservedFunctionPointers = std::stoi(argument);
            })
-      .add("--global-base", "", "Where lld started to place globals",
+      .add("--global-base", "", "The address at which static globals were placed",
            Options::Arguments::One,
            [&globalBase](Options*, const std::string&argument ) {
              globalBase = std::stoull(argument);
+           })
+      .add("--initial-stack-pointer", "", "The initial location of the stack pointer",
+           Options::Arguments::One,
+           [&initialStackPointer](Options*, const std::string&argument ) {
+             initialStackPointer = std::stoull(argument);
            })
 
       .add("--input-source-map", "-ism", "Consume source map from the specified file",
@@ -141,6 +149,12 @@ int main(int argc, const char *argv[]) {
   uint32_t dataSize = 0;
 
   if (!isSideModule) {
+    if (globalBase == INVALID_BASE) {
+      Fatal() << "globalBase must be set";
+    }
+    if (initialStackPointer == INVALID_BASE) {
+      Fatal() << "initialStackPointer must be set";
+    }
     Export* dataEndExport = wasm.getExport("__data_end");
     if (dataEndExport == nullptr) {
       Fatal() << "__data_end export not found";
@@ -189,7 +203,7 @@ int main(int argc, const char *argv[]) {
   } else {
     generator.generateRuntimeFunctions();
     generator.generateMemoryGrowthFunction();
-    generator.generateStackInitialization();
+    generator.generateStackInitialization(initialStackPointer);
     // emscripten calls this by default for side libraries so we only need
     // to include in as a static ctor for main module case.
     if (wasm.getExportOrNull("__post_instantiate")) {

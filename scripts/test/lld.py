@@ -38,7 +38,7 @@ def test_wasm_emscripten_finalize():
         continue
 
       cmd = (WASM_EMSCRIPTEN_FINALIZE +
-             [wast_path, '-S', '--global-base=568'] + ext_args)
+             [wast_path, '-S', '--global-base=568', '--initial-stack-pointer=16384'] + ext_args)
       actual = run_command(cmd)
 
       if not os.path.exists(expected_file):
