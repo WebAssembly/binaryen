@@ -1,0 +1,10 @@
+(module
+ (type $0 (func))
+ (export "a" (func $0))
+ (func $0 (; 0 ;) (type $0)
+  (nop)
+ )
+ ;; custom section "emscripten_metadata", size 7
+ ;; custom section "producers", size 187
+)
+

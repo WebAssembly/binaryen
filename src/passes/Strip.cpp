@@ -16,7 +16,8 @@
 
 //
 // Similar to strip-ing a native binary, this removes debug info
-// and related things like source map URLs, names section, etc.
+// and related things like source map URLs, names section, various
+// metadata, etc.
 //
 
 #include "wasm.h"
@@ -39,7 +40,8 @@ struct Strip : public Pass {
           return curr.name == BinaryConsts::UserSections::Name ||
                  curr.name == BinaryConsts::UserSections::SourceMapUrl ||
                  curr.name.find(".debug") == 0 ||
-                 curr.name.find("reloc..debug") == 0;
+                 curr.name.find("reloc..debug") == 0 ||
+                 curr.name == BinaryConsts::UserSections::Producers;
         }
       ),
       sections.end()
