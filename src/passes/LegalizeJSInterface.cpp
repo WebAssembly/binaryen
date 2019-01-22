@@ -63,58 +63,57 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
-    if (full) {
-      // Avoid iterator invalidation later.
-      std::vector<Function*> originalFunctions;
-      for (auto& func : module->functions) {
-        originalFunctions.push_back(func.get());
-      }
-      // for each illegal import, we must call a legalized stub instead
-      for (auto* im : originalFunctions) {
-        if (im->imported() && isIllegal(module->getFunctionType(im->type))) {
-          auto funcName = makeLegalStubForCalledImport(im, module);
-          illegalImportsToLegal[im->name] = funcName;
-          // we need to use the legalized version in the table, as the import from JS
-          // is legal for JS. Our stub makes it look like a native wasm function.
-          for (auto& segment : module->table.segments) {
-            for (auto& name : segment.data) {
-              if (name == im->name) {
-                name = funcName;
-              }
+    // Avoid iterator invalidation later.
+    std::vector<Function*> originalFunctions;
+    for (auto& func : module->functions) {
+      originalFunctions.push_back(func.get());
+    }
+    // for each illegal import, we must call a legalized stub instead
+    for (auto* im : originalFunctions) {
+      if (im->imported() && isIllegal(module->getFunctionType(im->type))
+                         && shouldBeLegalized(im)) {
+        auto funcName = makeLegalStubForCalledImport(im, module);
+        illegalImportsToLegal[im->name] = funcName;
+        // we need to use the legalized version in the table, as the import from JS
+        // is legal for JS. Our stub makes it look like a native wasm function.
+        for (auto& segment : module->table.segments) {
+          for (auto& name : segment.data) {
+            if (name == im->name) {
+              name = funcName;
             }
           }
         }
       }
-      if (illegalImportsToLegal.size() > 0) {
-        for (auto& pair : illegalImportsToLegal) {
-          module->removeFunction(pair.first);
-        }
-
-        // fix up imports: call_import of an illegal must be turned to a call of a legal
-
-        struct FixImports : public WalkerPass<PostWalker<FixImports>> {
-          bool isFunctionParallel() override { return true; }
-
-          Pass* create() override { return new FixImports(illegalImportsToLegal); }
-
-          std::map<Name, Name>* illegalImportsToLegal;
-
-          FixImports(std::map<Name, Name>* illegalImportsToLegal) : illegalImportsToLegal(illegalImportsToLegal) {}
-
-          void visitCall(Call* curr) {
-            auto iter = illegalImportsToLegal->find(curr->target);
-            if (iter == illegalImportsToLegal->end()) return;
-
-            if (iter->second == getFunction()->name) return; // inside the stub function itself, is the one safe place to do the call
-            replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
-          }
-        };
-
-        PassRunner passRunner(module);
-        passRunner.setIsNested(true);
-        passRunner.add<FixImports>(&illegalImportsToLegal);
-        passRunner.run();
+    }
+    if (illegalImportsToLegal.size() > 0) {
+      for (auto& pair : illegalImportsToLegal) {
+        module->removeFunction(pair.first);
       }
+
+      // fix up imports: call_import of an illegal must be turned to a call of a legal
+
+      struct FixImports : public WalkerPass<PostWalker<FixImports>> {
+        bool isFunctionParallel() override { return true; }
+
+        Pass* create() override { return new FixImports(illegalImportsToLegal); }
+
+        std::map<Name, Name>* illegalImportsToLegal;
+
+        FixImports(std::map<Name, Name>* illegalImportsToLegal) : illegalImportsToLegal(illegalImportsToLegal) {}
+
+        void visitCall(Call* curr) {
+          auto iter = illegalImportsToLegal->find(curr->target);
+          if (iter == illegalImportsToLegal->end()) return;
+
+          if (iter->second == getFunction()->name) return; // inside the stub function itself, is the one safe place to do the call
+          replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+        }
+      };
+
+      PassRunner passRunner(module);
+      passRunner.setIsNested(true);
+      passRunner.add<FixImports>(&illegalImportsToLegal);
+      passRunner.run();
     }
   }
 
@@ -131,10 +130,18 @@ private:
     return false;
   }
 
+  // Check if an export should be legalized.
   bool shouldBeLegalized(Export* ex, Function* func) {
     if (full) return true;
     // We are doing minimal legalization - just what JS needs.
     return ex->name.startsWith("dynCall_");
+  }
+
+  // Check if an import should be legalized.
+  bool shouldBeLegalized(Function* im) {
+    if (full) return true;
+    // We are doing minimal legalization - just what JS needs.
+    return im->module == ENV && im->base.startsWith("invoke_");
   }
 
   // JS calls the export, so it must call a legal stub that calls the actual wasm function

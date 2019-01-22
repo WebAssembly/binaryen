@@ -1,23 +1,29 @@
 (module
  (type $FUNCSIG$j (func (result i64)))
+ (type $FUNCSIG$vj (func (param i64)))
  (type $FUNCSIG$vi (func (param i32)))
+ (type $legaltype$invoke_vj (func (param i32 i32)))
  (import "env" "imported" (func $imported (result i64)))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (import "env" "invoke_vj" (func $legalimport$invoke_vj (param i32 i32)))
  (export "func" (func $func))
  (export "dynCall_foo" (func $legalstub$dyn))
- (func $func (; 2 ;) (type $FUNCSIG$j) (result i64)
+ (func $func (; 3 ;) (type $FUNCSIG$j) (result i64)
+  (drop
+   (call $imported)
+  )
+  (call $legalfunc$invoke_vj
+   (i64.const 0)
+  )
+  (unreachable)
+ )
+ (func $dyn (; 4 ;) (type $FUNCSIG$j) (result i64)
   (drop
    (call $imported)
   )
   (unreachable)
  )
- (func $dyn (; 3 ;) (type $FUNCSIG$j) (result i64)
-  (drop
-   (call $imported)
-  )
-  (unreachable)
- )
- (func $legalstub$dyn (; 4 ;) (result i32)
+ (func $legalstub$dyn (; 5 ;) (result i32)
   (local $0 i64)
   (local.set $0
    (call $dyn)
@@ -32,6 +38,19 @@
   )
   (i32.wrap_i64
    (local.get $0)
+  )
+ )
+ (func $legalfunc$invoke_vj (; 6 ;) (param $0 i64)
+  (call $legalimport$invoke_vj
+   (i32.wrap_i64
+    (local.get $0)
+   )
+   (i32.wrap_i64
+    (i64.shr_u
+     (local.get $0)
+     (i64.const 32)
+    )
+   )
   )
  )
 )
