@@ -23,10 +23,10 @@
 
 namespace wasm {
 
-struct FeatureOptions : public Options {
+struct ToolOptions : public Options {
   PassOptions passOptions;
 
-  FeatureOptions(const std::string& command, const std::string& description)
+  ToolOptions(const std::string& command, const std::string& description)
       : Options(command, description) {
     (*this)
         .add("--mvp-features", "-mvp", "Disable all non-MVP features",

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "feature-options.h"
+#include "tool-options.h"
 
 //
 // Shared optimization options for commandline tools
@@ -22,12 +22,12 @@
 
 namespace wasm {
 
-struct OptimizationOptions : public FeatureOptions {
+struct OptimizationOptions : public ToolOptions {
   static constexpr const char* DEFAULT_OPT_PASSES = "O";
 
   std::vector<std::string> passes;
 
-  OptimizationOptions(const std::string& command, const std::string& description) : FeatureOptions(command, description) {
+  OptimizationOptions(const std::string& command, const std::string& description) : ToolOptions(command, description) {
     (*this).add("", "-O", "execute default optimization passes",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {

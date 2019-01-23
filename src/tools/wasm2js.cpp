@@ -23,14 +23,14 @@
 #include "support/file.h"
 #include "wasm-s-parser.h"
 #include "wasm2js.h"
-#include "feature-options.h"
+#include "tool-options.h"
 
 using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   Wasm2JSBuilder::Flags builderFlags;
-  FeatureOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
+  ToolOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
