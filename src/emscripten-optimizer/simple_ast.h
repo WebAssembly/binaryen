@@ -561,6 +561,7 @@ struct JSPrinter {
 
   void printAst() {
     print(ast);
+    ensure(1);
     buffer[used] = 0;
   }
 

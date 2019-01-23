@@ -1505,6 +1505,9 @@ void WasmBinaryBuilder::processFunctions() {
     auto index = exportIndexes[curr];
     switch (curr->kind) {
       case ExternalKind::Function: {
+        if (index >= wasm.functions.size()) {
+          throwError("bad function export index");
+        }
         curr->value = getFunctionIndexName(index);
         break;
       }
