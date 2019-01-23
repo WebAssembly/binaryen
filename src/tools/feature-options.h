@@ -83,6 +83,11 @@ struct FeatureOptions : public Options {
              [this](Options *o, const std::string& arguments) {
                passOptions.features.setSIMD(false);
              })
+        .add("--no-validation", "-n", "Disables validation, assumes inputs are correct",
+             Options::Arguments::Zero,
+             [this](Options* o, const std::string& argument) {
+               passOptions.validate = false;
+             });
         ;
   }
 
