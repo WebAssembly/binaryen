@@ -967,6 +967,9 @@ void WasmBinaryBuilder::readSignatures() {
 }
 
 Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
+  if (i >= wasm.functions.size()) {
+    throwError("invalid function index");
+  }
   return wasm.functions[i]->name;
 }
 
@@ -1505,9 +1508,6 @@ void WasmBinaryBuilder::processFunctions() {
     auto index = exportIndexes[curr];
     switch (curr->kind) {
       case ExternalKind::Function: {
-        if (index >= wasm.functions.size()) {
-          throwError("bad function export index");
-        }
         curr->value = getFunctionIndexName(index);
         break;
       }
