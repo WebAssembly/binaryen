@@ -1072,6 +1072,12 @@ void FunctionValidator::visitFunction(Function* curr) {
   if (curr->imported()) {
     shouldBeTrue(curr->type.is(), curr->name, "imported functions must have a function type");
   }
+  // validate optional local names
+  std::set<Name> seen;
+  for (auto& pair : curr->localNames) {
+    Name name = pair.second;
+    shouldBeTrue(seen.insert(name).second, name, "local names must be unique");
+  }
 }
 
 static bool checkOffset(Expression* curr, Address add, Address max) {

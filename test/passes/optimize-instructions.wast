@@ -1377,7 +1377,7 @@
       )
     )
   )
-  (func $almost-sign-ext (param $0 i32) (param $0 i32)
+  (func $almost-sign-ext (param $0 i32)
     (drop
       (i32.shr_s
         (i32.shl
