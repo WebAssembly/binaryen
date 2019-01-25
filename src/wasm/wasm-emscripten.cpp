@@ -608,7 +608,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       }
     }
     if (addrConst == nullptr) {
-      Fatal() << "Unexpected generated __em_js__ function body: " << curr;
+      Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
     }
     auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
     codeByName[funcName] = code;

@@ -170,6 +170,16 @@ int main(int argc, const char *argv[]) {
     dataSize = dataEndConst->value.geti32() - globalBase;
   }
 
+  {
+    PassRunner passRunner(&wasm);
+    passRunner.setDebug(options.debug);
+    passRunner.setDebugInfo(debugInfo);
+    passRunner.add("simplify-locals-nostructure"); // FIXME
+    passRunner.add("remove-unused-brs"); // FIXME
+    passRunner.add("vacuum"); // FIXME
+    passRunner.run();
+ }
+
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
