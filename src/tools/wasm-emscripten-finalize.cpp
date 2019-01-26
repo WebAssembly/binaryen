@@ -171,26 +171,30 @@ int main(int argc, const char *argv[]) {
   }
 
   {
+    // Perform some minor optimizations in order to get the code into a form
+    // that is easy to process for EM_ASMs. In particular, if we have
+    //   emscripten_asm_const(X, ..)
+    // then we need X to be a constant.
     PassRunner passRunner(&wasm);
     passRunner.setDebug(options.debug);
     passRunner.setDebugInfo(debugInfo);
-    passRunner.add("simplify-locals-nostructure"); // FIXME
-    passRunner.add("remove-unused-brs"); // FIXME
-    passRunner.add("vacuum"); // FIXME
+    passRunner.add("simplify-locals-nostructure");
     passRunner.run();
  }
 
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
-  PassRunner passRunner(&wasm);
-  passRunner.setDebug(options.debug);
-  passRunner.setDebugInfo(debugInfo);
-  passRunner.add(ABI::getLegalizationPass(
-    legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
-                          : ABI::LegalizationLevel::Minimal
-  ));
-  passRunner.run();
+  {
+    PassRunner passRunner(&wasm);
+    passRunner.setDebug(options.debug);
+    passRunner.setDebugInfo(debugInfo);
+    passRunner.add(ABI::getLegalizationPass(
+      legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
+                            : ABI::LegalizationLevel::Minimal
+    ));
+    passRunner.run();
+  }
 
   std::vector<Name> initializerFunctions;
 

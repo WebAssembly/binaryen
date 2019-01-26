@@ -602,6 +602,14 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       Expression* first = nullptr;
       if (block && block->list.size() > 0) {
         first = block->list[0];
+        // skip a potential initial nop
+        if (first->is<Nop>()) {
+          first = block->list[1];
+        }
+        // look into a return value
+        if (auto* ret = first->dynCast<Return>()) {
+          first = ret->value;
+        }
       }
       if (first) {
         addrConst = first->dynCast<Const>();
