@@ -178,7 +178,7 @@ int main(int argc, const char *argv[]) {
     PassRunner passRunner(&wasm);
     passRunner.setDebug(options.debug);
     passRunner.setDebugInfo(debugInfo);
-    passRunner.add("simplify-locals-nostructure");
+    passRunner.add("simplify-locals-notee-nostructure");
     passRunner.run();
  }
 
