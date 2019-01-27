@@ -869,6 +869,11 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef modul
 // Sets the debug location of the specified `Expression` within the specified `Function`.
 void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressionRef expr, BinaryenIndex fileIndex, BinaryenIndex lineNumber, BinaryenIndex columnNumber);
 
+// Gets the user defined flags for this function
+int BinaryenFunctionGetUserFlags(BinaryenFunctionRef func);
+// Sets the user defined flags for this function
+void BinaryenFunctionSetUserFlags(BinaryenFunctionRef func, int flags);
+
 //
 // ========== Import Operations ==========
 //

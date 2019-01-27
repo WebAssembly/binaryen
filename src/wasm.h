@@ -781,6 +781,17 @@ public:
 
   void clearNames();
   void clearDebugInfo();
+
+  // Special flags that can be set by a an API user
+  enum class UserFlags : unsigned int {
+    None = 0,
+    Inline = 1 << 0
+  };
+  UserFlags userFlags = UserFlags::None;
+
+  bool hasUserFlags(UserFlags flags) {
+    return static_cast<UserFlags>((static_cast<int>(userFlags) & static_cast<int>(flags))) == flags;
+  }
 };
 
 // The kind of an import or export.

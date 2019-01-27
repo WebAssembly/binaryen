@@ -284,7 +284,7 @@ struct Inlining : public Pass {
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      if (infos[func->name].worthInlining(runner->options)) {
+      if (func->hasUserFlags(Function::UserFlags::Inline) || infos[func->name].worthInlining(runner->options)) {
         state.worthInlining.insert(func->name);
       }
     });

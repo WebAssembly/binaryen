@@ -2685,6 +2685,22 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressi
 
   fn->debugLocations[ex] = loc;
 }
+int BinaryenFunctionGetUserFlags(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetUserFlags(functions[" << functions[func] << "]);\n";
+  }
+
+  auto* fn = (Function*)func;
+  return static_cast<int>(fn->userFlags);
+}
+void BinaryenFunctionSetUserFlags(BinaryenFunctionRef func, int flags) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionSetUserFlags(functions[" << functions[func] << "], " << flags << ");\n";
+  }
+
+  auto* fn = (Function*)func;
+  fn->userFlags = (Function::UserFlags)flags;
+}
 
 //
 // =========== Import operations ===========
