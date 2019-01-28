@@ -170,18 +170,6 @@ int main(int argc, const char *argv[]) {
     dataSize = dataEndConst->value.geti32() - globalBase;
   }
 
-  {
-    // Perform some minor optimizations in order to get the code into a form
-    // that is easy to process for EM_ASMs. In particular, if we have
-    //   emscripten_asm_const(X, ..)
-    // then we need X to be a constant.
-    PassRunner passRunner(&wasm);
-    passRunner.setDebug(options.debug);
-    passRunner.setDebugInfo(debugInfo);
-    passRunner.add("simplify-locals-notee-nostructure");
-    passRunner.run();
- }
-
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
