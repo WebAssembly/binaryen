@@ -173,14 +173,16 @@ int main(int argc, const char *argv[]) {
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
-  PassRunner passRunner(&wasm);
-  passRunner.setDebug(options.debug);
-  passRunner.setDebugInfo(debugInfo);
-  passRunner.add(ABI::getLegalizationPass(
-    legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
-                          : ABI::LegalizationLevel::Minimal
-  ));
-  passRunner.run();
+  {
+    PassRunner passRunner(&wasm);
+    passRunner.setDebug(options.debug);
+    passRunner.setDebugInfo(debugInfo);
+    passRunner.add(ABI::getLegalizationPass(
+      legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
+                            : ABI::LegalizationLevel::Minimal
+    ));
+    passRunner.run();
+  }
 
   std::vector<Name> initializerFunctions;
 

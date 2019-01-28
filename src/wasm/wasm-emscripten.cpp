@@ -443,18 +443,22 @@ std::string codeForConstAddr(Module& wasm,
   return escape(str);
 }
 
-struct AsmConstWalker : public PostWalker<AsmConstWalker> {
+struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
   std::vector<Address> segmentOffsets; // segment index => address offset
 
   std::map<std::string, std::set<std::string>> sigsForCode;
   std::map<std::string, Address> ids;
   std::set<std::string> allSigs;
+  std::map<Index, SetLocal*> sets; // last sets in the current basic block, per index
 
   AsmConstWalker(Module& _wasm)
     : wasm(_wasm),
       segmentOffsets(getSegmentOffsets(wasm)) { }
 
+  void noteNonLinear(Expression* curr);
+
+  void visitSetLocal(SetLocal* curr);
   void visitCall(Call* curr);
   void visitTable(Table* curr);
 
@@ -471,15 +475,33 @@ private:
   std::vector<std::unique_ptr<Function>> queuedImports;
 };
 
+void AsmConstWalker::noteNonLinear(Expression* curr) {
+  // End of this basic block; clear sets.
+  sets.clear();
+}
+
+void AsmConstWalker::visitSetLocal(SetLocal* curr) {
+  sets[curr->index] = curr;
+}
+
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
   if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
-
-    auto arg = curr->operands[0]->cast<Const>();
-    auto code = codeForConstAddr(wasm, segmentOffsets, arg);
-    arg->value = idLiteralForCode(code);
+    auto* arg = curr->operands[0];
+    // The argument may be a get, in which case, the last set in this basic block
+    // has the value.
+    if (auto* get = arg->dynCast<GetLocal>()) {
+      auto* set = sets[get->index];
+      if (set) {
+        assert(set->index == get->index);
+        arg = set->value;
+      }
+    }
+    auto* value = arg->cast<Const>();
+    auto code = codeForConstAddr(wasm, segmentOffsets, value);
+    value->value = idLiteralForCode(code);
     sigsForCode[code].insert(sig);
   }
 }
@@ -599,16 +621,31 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
     auto addrConst = curr->body->dynCast<Const>();
     if (addrConst == nullptr) {
       auto block = curr->body->dynCast<Block>();
-      Expression* first = nullptr;
+      Expression* value = nullptr;
       if (block && block->list.size() > 0) {
-        first = block->list[0];
+        value = block->list[0];
+        // first item may be a set of a local that we get later
+        auto* set = value->dynCast<SetLocal>();
+        if (set) {
+          value = block->list[1];
+        }
+        // look into a return value
+        if (auto* ret = value->dynCast<Return>()) {
+          value = ret->value;
+        }
+        // if it's a get of that set, use that value
+        if (auto* get = value->dynCast<GetLocal>()) {
+          if (set && get->index == set->index) {
+            value = set->value;
+          }
+        }
       }
-      if (first) {
-        addrConst = first->dynCast<Const>();
+      if (value) {
+        addrConst = value->dynCast<Const>();
       }
     }
     if (addrConst == nullptr) {
-      Fatal() << "Unexpected generated __em_js__ function body: " << curr;
+      Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
     }
     auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
     codeByName[funcName] = code;
