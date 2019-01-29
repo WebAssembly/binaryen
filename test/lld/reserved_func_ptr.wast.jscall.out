@@ -18,13 +18,14 @@
  (type $FUNCSIG$v (func))
  (type $FUNCSIG$vii (func (param i32 i32)))
  (type $FUNCSIG$viiii (func (param i32 i32 i32 i32)))
+ (type $legaltype$jsCall_fffi (func (param i32 f64 f64 i32) (result f64)))
  (import "env" "_Z4atoiPKc" (func $_Z4atoiPKc (param i32) (result i32)))
  (import "env" "jsCall_ddi" (func $jsCall_ddi (param i32 f64 i32) (result f64)))
- (import "env" "jsCall_fffi" (func $jsCall_fffi (param i32 f32 f32 i32) (result f32)))
  (import "env" "jsCall_iii" (func $jsCall_iii (param i32 i32 i32) (result i32)))
  (import "env" "jsCall_v" (func $jsCall_v (param i32)))
  (import "env" "jsCall_vi" (func $jsCall_vi (param i32 i32)))
  (import "env" "jsCall_viii" (func $jsCall_viii (param i32 i32 i32 i32)))
+ (import "env" "jsCall_fffi" (func $legalimport$jsCall_fffi (param i32 f64 f64 i32) (result f64)))
  (memory $0 2)
  (table $0 21 21 funcref)
  (elem (i32.const 1) $_Z18address_taken_funciii $_Z19address_taken_func2iii $jsCall_ddi_0 $jsCall_ddi_1 $jsCall_ddi_2 $jsCall_fffi_0 $jsCall_fffi_1 $jsCall_fffi_2 $jsCall_iii_0 $jsCall_iii_1 $jsCall_iii_2 $jsCall_v_0 $jsCall_v_1 $jsCall_v_2 $jsCall_vi_0 $jsCall_vi_1 $jsCall_vi_2 $jsCall_viii_0 $jsCall_viii_1 $jsCall_viii_2)
@@ -192,7 +193,7 @@
   )
  )
  (func $jsCall_fffi_0 (; 19 ;) (param $0 f32) (param $1 f32) (param $2 i32) (result f32)
-  (call $jsCall_fffi
+  (call $legalfunc$jsCall_fffi
    (i32.const 0)
    (local.get $0)
    (local.get $1)
@@ -200,7 +201,7 @@
   )
  )
  (func $jsCall_fffi_1 (; 20 ;) (param $0 f32) (param $1 f32) (param $2 i32) (result f32)
-  (call $jsCall_fffi
+  (call $legalfunc$jsCall_fffi
    (i32.const 1)
    (local.get $0)
    (local.get $1)
@@ -208,7 +209,7 @@
   )
  )
  (func $jsCall_fffi_2 (; 21 ;) (param $0 f32) (param $1 f32) (param $2 i32) (result f32)
-  (call $jsCall_fffi
+  (call $legalfunc$jsCall_fffi
    (i32.const 2)
    (local.get $0)
    (local.get $1)
@@ -291,6 +292,20 @@
    (local.get $0)
    (local.get $1)
    (local.get $2)
+  )
+ )
+ (func $legalfunc$jsCall_fffi (; 34 ;) (param $0 i32) (param $1 f32) (param $2 f32) (param $3 i32) (result f32)
+  (f32.demote_f64
+   (call $legalimport$jsCall_fffi
+    (local.get $0)
+    (f64.promote_f32
+     (local.get $1)
+    )
+    (f64.promote_f32
+     (local.get $2)
+    )
+    (local.get $3)
+   )
   )
  )
 )

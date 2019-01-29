@@ -161,14 +161,6 @@ void EmscriptenGlueGenerator::generateStackInitialization(Address addr) {
   stackPointer->init->cast<Const>()->value = Literal(int32_t(addr));
 }
 
-static bool hasI64ResultOrParam(FunctionType* ft) {
-  if (ft->result == i64) return true;
-  for (auto ty : ft->params) {
-    if (ty == i64) return true;
-  }
-  return false;
-}
-
 inline void exportFunction(Module& wasm, Name name, bool must_export) {
   if (!wasm.getFunctionOrNull(name)) {
     assert(!must_export);
@@ -194,7 +186,6 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     }
     std::string sig = getSig(wasm.getFunction(indirectFunc));
     auto* funcType = ensureFunctionType(sig, &wasm);
-    if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
     if (!sigs.insert(sig).second) continue; // Sig is already in the set
     std::vector<NameType> params;
     params.emplace_back("fptr", i32); // function pointer param
