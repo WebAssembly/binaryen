@@ -149,8 +149,7 @@
     "stackRestore",
     "__growWasmMemory"
   ],
-  "imports": [
-    ["env", "printf"]
+  "invokeFuncs": [
   ]
 }
 -- END METADATA --

@@ -68,7 +68,7 @@
     "stackRestore",
     "__growWasmMemory"
   ],
-  "imports": [
+  "invokeFuncs": [
   ]
 }
 -- END METADATA --

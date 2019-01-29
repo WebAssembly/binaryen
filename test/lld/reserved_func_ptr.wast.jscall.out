@@ -352,14 +352,7 @@
     "__growWasmMemory",
     "dynCall_viii"
   ],
-  "imports": [
-    ["env", "_Z4atoiPKc"],
-    ["env", "jsCall_ddi"],
-    ["env", "jsCall_iii"],
-    ["env", "jsCall_v"],
-    ["env", "jsCall_vi"],
-    ["env", "jsCall_viii"],
-    ["env", "jsCall_fffi"]
+  "invokeFuncs": [
   ]
 }
 -- END METADATA --

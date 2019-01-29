@@ -904,11 +904,14 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << "\n  ],\n";
   }
 
-  ImportInfo imports(wasm);
-  meta << "  \"imports\": [";
+  meta << "  \"invokeFuncs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    meta << nextElement() << "[\"" << import->module.str << "\", \"" << import->base.str << "\"]";
+    if (import->base.startsWith("invoke_")) {
+      if (invokeFuncs.insert(import->base.str).second) {
+        meta << nextElement() << '"' << import->base.str << '"';
+      }
+    }
   });
   meta << "\n  ]\n";
   meta << "}\n";

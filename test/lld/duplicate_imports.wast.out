@@ -133,11 +133,8 @@
     "stackRestore",
     "__growWasmMemory"
   ],
-  "imports": [
-    ["env", "puts"],
-    ["env", "puts"],
-    ["env", "invoke_ffd"],
-    ["env", "invoke_ffd"]
+  "invokeFuncs": [
+    "invoke_ffd"
   ]
 }
 -- END METADATA --

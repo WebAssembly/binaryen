@@ -119,10 +119,7 @@
     "stackRestore",
     "__growWasmMemory"
   ],
-  "imports": [
-    ["env", "emscripten_asm_const_i"],
-    ["env", "emscripten_asm_const_iii"],
-    ["env", "emscripten_asm_const_ii"]
+  "invokeFuncs": [
   ]
 }
 -- END METADATA --
