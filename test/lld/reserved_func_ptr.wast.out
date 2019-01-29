@@ -189,7 +189,8 @@
     "__growWasmMemory",
     "dynCall_viii"
   ],
-  "invokeFuncs": [
+  "imports": [
+    ["env", "_Z4atoiPKc"]
   ]
 }
 -- END METADATA --

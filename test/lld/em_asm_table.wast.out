@@ -88,7 +88,9 @@
     "dynCall_vii",
     "dynCall_iiii"
   ],
-  "invokeFuncs": [
+  "imports": [
+    ["env", "emscripten_log"],
+    ["env", "emscripten_asm_const_iii"]
   ]
 }
 -- END METADATA --
