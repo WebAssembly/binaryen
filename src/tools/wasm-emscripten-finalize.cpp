@@ -173,15 +173,6 @@ int main(int argc, const char *argv[]) {
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
-  PassRunner passRunner(&wasm);
-  passRunner.setDebug(options.debug);
-  passRunner.setDebugInfo(debugInfo);
-  passRunner.add(ABI::getLegalizationPass(
-    legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
-                          : ABI::LegalizationLevel::Minimal
-  ));
-  passRunner.run();
-
   std::vector<Name> initializerFunctions;
 
   // The names of standard imports/exports used by lld doesn't quite match that
@@ -213,11 +204,25 @@ int main(int argc, const char *argv[]) {
 
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
   if (!dataSegmentFile.empty()) {
     Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
     generator.separateDataSegments(&memInitFile);
   }
+
+  // Finally, legalize the wasm.
+  {
+    PassRunner passRunner(&wasm);
+    passRunner.setDebug(options.debug);
+    passRunner.setDebugInfo(debugInfo);
+    passRunner.add(ABI::getLegalizationPass(
+      legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
+                            : ABI::LegalizationLevel::Minimal
+    ));
+    passRunner.run();
+  }
+
+  // All changes to the wasm are done, create the metadata.
+  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
 
   if (options.debug) {
     std::cerr << "Module after:\n";

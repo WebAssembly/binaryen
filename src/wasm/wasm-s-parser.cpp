@@ -580,6 +580,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   }
   if (importModule.is()) {
     // this is an import, actually
+    if (!importBase.size()) throw ParseException("module but no base for import");
     if (!preParseImport) throw ParseException("!preParseImport in func");
     auto im = make_unique<Function>();
     im->name = name;
@@ -1571,6 +1572,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   auto module = s[i++]->str();
   if (!s[i]->isStr()) throw ParseException("no name for import");
   auto base = s[i++]->str();
+  if (!module.size() || !base.size()) throw ParseException("imports must have module and base");
   // parse internals
   Element& inner = newStyle ? *s[3] : s;
   Index j = newStyle ? newStyleInner : i;
@@ -1694,6 +1696,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   }
   if (importModule.is()) {
     // this is an import, actually
+    if (!importBase.size()) throw ParseException("module but no base for import");
     if (!preParseImport) throw ParseException("!preParseImport in global");
     auto im = make_unique<Global>();
     im->name = global->name;

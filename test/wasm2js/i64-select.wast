@@ -2,7 +2,7 @@
 
 (module
  (func $p (param $i i32) (result i32) (local.get $i))
- (func (param i32) (result i64)
+ (func (param i32) (result i32)
   (return
    (select
     (call $p (i32.const -1))

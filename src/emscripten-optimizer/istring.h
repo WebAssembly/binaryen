@@ -149,6 +149,10 @@ struct IString {
   bool startsWith(const char *prefix) const {
     return stripPrefix(prefix) != nullptr;
   }
+
+  size_t size() const {
+    return str ? strlen(str) : 0;
+  }
 };
 
 } // namespace cashew

@@ -23,10 +23,10 @@
 
 namespace wasm {
 
-struct FeatureOptions : public Options {
+struct ToolOptions : public Options {
   PassOptions passOptions;
 
-  FeatureOptions(const std::string& command, const std::string& description)
+  ToolOptions(const std::string& command, const std::string& description)
       : Options(command, description) {
     (*this)
         .add("--mvp-features", "-mvp", "Disable all non-MVP features",
@@ -83,6 +83,11 @@ struct FeatureOptions : public Options {
              [this](Options *o, const std::string& arguments) {
                passOptions.features.setSIMD(false);
              })
+        .add("--no-validation", "-n", "Disables validation, assumes inputs are correct",
+             Options::Arguments::Zero,
+             [this](Options* o, const std::string& argument) {
+               passOptions.validate = false;
+             });
         ;
   }
 
