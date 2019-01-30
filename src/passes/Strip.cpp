@@ -15,10 +15,11 @@
  */
 
 //
-// Similar to strip-ing a native binary, this removes debug info
-// and related things like source map URLs, names section, various
-// metadata, etc.
+// Similar to strip-ing a native binary, this family of passes can
+// removes debug info and other things.
 //
+
+#include <functional>
 
 #include "wasm.h"
 #include "wasm-binary.h"
@@ -28,12 +29,12 @@ using namespace std;
 
 namespace wasm {
 
-template<typename T>
 struct Strip : public Pass {
   // A function that returns true if the method should be removed.
-  T decider;
+  typedef std::function<bool (UserSection&)> Decider;
+  Decider decider;
 
-  Strip(T decider) : decider(decider) {}
+  Strip(Decider decider) : decider(decider) {}
 
   void run(PassRunner* runner, Module* module) override {
     // Remove name and debug sections.
