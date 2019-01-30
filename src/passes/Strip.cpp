@@ -28,7 +28,13 @@ using namespace std;
 
 namespace wasm {
 
+template<typename T>
 struct Strip : public Pass {
+  // A function that returns true if the method should be removed.
+  T decider;
+
+  Strip(T decider) : decider(decider) {}
+
   void run(PassRunner* runner, Module* module) override {
     // Remove name and debug sections.
     auto& sections = module->userSections;
@@ -36,13 +42,7 @@ struct Strip : public Pass {
       std::remove_if(
         sections.begin(),
         sections.end(),
-        [&](const UserSection& curr) {
-          return curr.name == BinaryConsts::UserSections::Name ||
-                 curr.name == BinaryConsts::UserSections::SourceMapUrl ||
-                 curr.name.find(".debug") == 0 ||
-                 curr.name.find("reloc..debug") == 0 ||
-                 curr.name == BinaryConsts::UserSections::Producers;
-        }
+        decider
       ),
       sections.end()
     );
@@ -55,8 +55,19 @@ struct Strip : public Pass {
   }
 };
 
-Pass *createStripPass() {
-  return new Strip();
+Pass *createStripDebugPass() {
+  return new Strip([&](const UserSection& curr) {
+    return curr.name == BinaryConsts::UserSections::Name ||
+           curr.name == BinaryConsts::UserSections::SourceMapUrl ||
+           curr.name.find(".debug") == 0 ||
+           curr.name.find("reloc..debug") == 0;
+  });
+}
+
+Pass *createStripProducersPass() {
+  return new Strip([&](const UserSection& curr) {
+    return curr.name == BinaryConsts::UserSections::Producers;
+  });
 }
 
 } // namespace wasm
