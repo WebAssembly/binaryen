@@ -595,11 +595,16 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   const char *maybeSpace;
   const char *maybeNewLine;
 
-  bool full = false; // whether to not elide nodes in output when possible
-                     // (like implicit blocks) and to emit types
-  bool printStackIR = false; // whether to print stack IR if it is present
-                             // (if false, and Stack IR is there, we just
-                             // note it exists)
+  // whether to not elide nodes in output when possible
+  // (like implicit blocks) and to emit types
+  bool full = false;
+  // whether to print stack IR if it is present
+  // (if false, and Stack IR is there, we just
+  // note it exists)
+  bool printStackIR = false;
+  // if null, print the entire module, otherwise print only
+  // the single function with this name
+  Name singleFunctionName;
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
@@ -645,6 +650,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 
   void setFull(bool full_) { full = full_; }
+
+  void setSingleFunction(Name const& name) { singleFunctionName = name; }
 
   void incIndent() {
     if (minify) return;
@@ -1271,53 +1278,59 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << '(';
     printMajor(o, "module");
     incIndent();
-    for (auto& child : curr->functionTypes) {
-      doIndent(o, indent);
-      o << '(';
-      printMedium(o, "type") << ' ';
-      printName(child->name, o) << ' ';
-      visitFunctionType(child.get());
-      o << ")" << maybeNewLine;
-    }
-    ModuleUtils::iterImportedMemories(*curr, [&](Memory* memory) {
-      visitMemory(memory);
-    });
-    ModuleUtils::iterImportedTables(*curr, [&](Table* table) {
-      visitTable(table);
-    });
-    ModuleUtils::iterImportedGlobals(*curr, [&](Global* global) {
-      visitGlobal(global);
-    });
-    ModuleUtils::iterImportedFunctions(*curr, [&](Function* func) {
-      visitFunction(func);
-    });
-    ModuleUtils::iterDefinedMemories(*curr, [&](Memory* memory) {
-      visitMemory(memory);
-    });
-    ModuleUtils::iterDefinedTables(*curr, [&](Table* table) {
-      visitTable(table);
-    });
-    ModuleUtils::iterDefinedGlobals(*curr, [&](Global* global) {
-      visitGlobal(global);
-    });
-    for (auto& child : curr->exports) {
-      doIndent(o, indent);
-      visitExport(child.get());
-      o << maybeNewLine;
-    }
-    if (curr->start.is()) {
-      doIndent(o, indent);
-      o << '(';
-      printMedium(o, "start") << ' ' << curr->start << ')';
-      o << maybeNewLine;
+    if (singleFunctionName.isNull()) {
+      for (auto& child : curr->functionTypes) {
+        doIndent(o, indent);
+        o << '(';
+        printMedium(o, "type") << ' ';
+        printName(child->name, o) << ' ';
+        visitFunctionType(child.get());
+        o << ")" << maybeNewLine;
+      }
+      ModuleUtils::iterImportedMemories(*curr, [&](Memory* memory) {
+        visitMemory(memory);
+      });
+      ModuleUtils::iterImportedTables(*curr, [&](Table* table) {
+        visitTable(table);
+      });
+      ModuleUtils::iterImportedGlobals(*curr, [&](Global* global) {
+        visitGlobal(global);
+      });
+      ModuleUtils::iterImportedFunctions(*curr, [&](Function* func) {
+          visitFunction(func);
+      });
+      ModuleUtils::iterDefinedMemories(*curr, [&](Memory* memory) {
+        visitMemory(memory);
+      });
+      ModuleUtils::iterDefinedTables(*curr, [&](Table* table) {
+        visitTable(table);
+      });
+      ModuleUtils::iterDefinedGlobals(*curr, [&](Global* global) {
+        visitGlobal(global);
+      });
+      for (auto& child : curr->exports) {
+        doIndent(o, indent);
+        visitExport(child.get());
+        o << maybeNewLine;
+      }
+      if (curr->start.is()) {
+        doIndent(o, indent);
+        o << '(';
+        printMedium(o, "start") << ' ' << curr->start << ')';
+        o << maybeNewLine;
+      }
     }
     ModuleUtils::iterDefinedFunctions(*curr, [&](Function* func) {
-      visitFunction(func);
+      if (singleFunctionName.is() && func->name.hasSubstring(singleFunctionName)) {
+        visitFunction(func);
+      }
     });
-    for (auto& section : curr->userSections) {
-      doIndent(o, indent);
-      o << ";; custom section \"" << section.name << "\", size " << section.data.size();
-      o << maybeNewLine;
+    if (singleFunctionName.isNull()) {
+      for (auto& section : curr->userSections) {
+        doIndent(o, indent);
+        o << ";; custom section \"" << section.name << "\", size " << section.data.size();
+        o << maybeNewLine;
+      }
     }
     decIndent();
     o << maybeNewLine;
@@ -1413,6 +1426,14 @@ std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
 
 std::ostream& WasmPrinter::printModule(Module* module) {
   return printModule(module, std::cout);
+}
+
+std::ostream& WasmPrinter::printSingleFunction(Module* module, Name const& name, std::ostream& o) {
+  PrintSExpression print(o);
+  print.setMinify(false);
+  print.setSingleFunction(name);
+  print.visitModule(module);
+  return o;
 }
 
 std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full) {
