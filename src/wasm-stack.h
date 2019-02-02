@@ -140,6 +140,10 @@ public:
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDBitselect(SIMDBitselect* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitMemoryInit(MemoryInit* curr);
+  void visitDataDrop(DataDrop* curr);
+  void visitMemoryCopy(MemoryCopy* curr);
+  void visitMemoryFill(MemoryFill* curr);
   void visitConst(Const* curr);
   void visitUnary(Unary* curr);
   void visitBinary(Binary* curr);
@@ -952,6 +956,47 @@ void StackWriter<Mode, Parent>::visitSIMDShift(SIMDShift* curr) {
     case ShrSVecI64x2: o << U32LEB(BinaryConsts::I64x2ShrS); break;
     case ShrUVecI64x2: o << U32LEB(BinaryConsts::I64x2ShrU); break;
   }
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryInit(MemoryInit* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->offset);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::TruncSatPrefix);
+  o << U32LEB(BinaryConsts::MemoryInit);
+  o << U32LEB(curr->segment) << int8_t(0);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitDataDrop(DataDrop* curr) {
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::TruncSatPrefix);
+  o << U32LEB(BinaryConsts::DataDrop);
+  o << U32LEB(curr->segment);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryCopy(MemoryCopy* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->source);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::TruncSatPrefix);
+  o << U32LEB(BinaryConsts::MemoryCopy);
+  o << int8_t(0) << int8_t(0);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryFill(MemoryFill* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->value);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::TruncSatPrefix);
+  o << U32LEB(BinaryConsts::MemoryFill);
+  o << int8_t(0);
 }
 
 template<StackWriterMode Mode, typename Parent>

@@ -1216,6 +1216,22 @@
         (v128.const i32 0x1 0x2 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10)
        )
       )
+      (memory.init 0
+       (i32.const 1024)
+       (i32.const 0)
+       (i32.const 12)
+      )
+      (data.drop 0)
+      (memory.copy
+       (i32.const 2048)
+       (i32.const 1024)
+       (i32.const 12)
+      )
+      (memory.fill
+       (i32.const 0)
+       (i32.const 42)
+       (i32.const 1024)
+      )
       (block
       )
       (if

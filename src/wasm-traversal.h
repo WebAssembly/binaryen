@@ -59,6 +59,10 @@ struct Visitor {
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return ReturnType(); }
   ReturnType visitSIMDBitselect(SIMDBitselect* curr) { return ReturnType(); }
   ReturnType visitSIMDShift(SIMDShift* curr) { return ReturnType(); }
+  ReturnType visitMemoryInit(MemoryInit* curr) { return ReturnType(); }
+  ReturnType visitDataDrop(DataDrop* curr) { return ReturnType(); }
+  ReturnType visitMemoryCopy(MemoryCopy* curr) { return ReturnType(); }
+  ReturnType visitMemoryFill(MemoryFill* curr) { return ReturnType(); }
   ReturnType visitConst(Const* curr) { return ReturnType(); }
   ReturnType visitUnary(Unary* curr) { return ReturnType(); }
   ReturnType visitBinary(Binary* curr) { return ReturnType(); }
@@ -107,6 +111,10 @@ struct Visitor {
       case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
       case Expression::Id::SIMDBitselectId: DELEGATE(SIMDBitselect);
       case Expression::Id::SIMDShiftId: DELEGATE(SIMDShift);
+      case Expression::Id::MemoryInitId: DELEGATE(MemoryInit);
+      case Expression::Id::DataDropId: DELEGATE(DataDrop);
+      case Expression::Id::MemoryCopyId: DELEGATE(MemoryCopy);
+      case Expression::Id::MemoryFillId: DELEGATE(MemoryFill);
       case Expression::Id::ConstId: DELEGATE(Const);
       case Expression::Id::UnaryId: DELEGATE(Unary);
       case Expression::Id::BinaryId: DELEGATE(Binary);
@@ -157,6 +165,10 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(SIMDShuffle);
   UNIMPLEMENTED(SIMDBitselect);
   UNIMPLEMENTED(SIMDShift);
+  UNIMPLEMENTED(MemoryInit);
+  UNIMPLEMENTED(DataDrop);
+  UNIMPLEMENTED(MemoryCopy);
+  UNIMPLEMENTED(MemoryFill);
   UNIMPLEMENTED(Const);
   UNIMPLEMENTED(Unary);
   UNIMPLEMENTED(Binary);
@@ -206,6 +218,10 @@ struct OverriddenVisitor {
       case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
       case Expression::Id::SIMDBitselectId: DELEGATE(SIMDBitselect);
       case Expression::Id::SIMDShiftId: DELEGATE(SIMDShift);
+      case Expression::Id::MemoryInitId: DELEGATE(MemoryInit);
+      case Expression::Id::DataDropId: DELEGATE(DataDrop);
+      case Expression::Id::MemoryCopyId: DELEGATE(MemoryCopy);
+      case Expression::Id::MemoryFillId: DELEGATE(MemoryFill);
       case Expression::Id::ConstId: DELEGATE(Const);
       case Expression::Id::UnaryId: DELEGATE(Unary);
       case Expression::Id::BinaryId: DELEGATE(Binary);
@@ -254,6 +270,10 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSIMDBitselect(SIMDBitselect* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSIMDShift(SIMDShift* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitMemoryInit(MemoryInit* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitDataDrop(DataDrop* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitMemoryCopy(MemoryCopy* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitMemoryFill(MemoryFill* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitConst(Const* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitUnary(Unary* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitBinary(Binary* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
@@ -444,6 +464,10 @@ struct Walker : public VisitorType {
   static void doVisitSIMDShuffle(SubType* self, Expression** currp)  { self->visitSIMDShuffle((*currp)->cast<SIMDShuffle>()); }
   static void doVisitSIMDBitselect(SubType* self, Expression** currp) { self->visitSIMDBitselect((*currp)->cast<SIMDBitselect>()); }
   static void doVisitSIMDShift(SubType* self, Expression** currp)    { self->visitSIMDShift((*currp)->cast<SIMDShift>()); }
+  static void doVisitMemoryInit(SubType* self, Expression** currp)   { self->visitMemoryInit((*currp)->cast<MemoryInit>()); }
+  static void doVisitDataDrop(SubType* self, Expression** currp)     { self->visitDataDrop((*currp)->cast<DataDrop>()); }
+  static void doVisitMemoryCopy(SubType* self, Expression** currp)   { self->visitMemoryCopy((*currp)->cast<MemoryCopy>()); }
+  static void doVisitMemoryFill(SubType* self, Expression** currp)   { self->visitMemoryFill((*currp)->cast<MemoryFill>()); }
   static void doVisitConst(SubType* self, Expression** currp)        { self->visitConst((*currp)->cast<Const>()); }
   static void doVisitUnary(SubType* self, Expression** currp)        { self->visitUnary((*currp)->cast<Unary>()); }
   static void doVisitBinary(SubType* self, Expression** currp)       { self->visitBinary((*currp)->cast<Binary>()); }
@@ -614,6 +638,31 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<SIMDShift>()->vec);
         break;
       }
+      case Expression::Id::MemoryInitId: {
+        self->pushTask(SubType::doVisitMemoryInit, currp);
+        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->dest);
+        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->offset);
+        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->size);
+        break;
+        }
+      case Expression::Id::DataDropId: {
+        self->pushTask(SubType::doVisitDataDrop, currp);
+        break;
+        }
+      case Expression::Id::MemoryCopyId: {
+        self->pushTask(SubType::doVisitMemoryCopy, currp);
+        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->dest);
+        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->source);
+        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->size);
+        break;
+        }
+      case Expression::Id::MemoryFillId: {
+        self->pushTask(SubType::doVisitMemoryFill, currp);
+        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->dest);
+        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->value);
+        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->size);
+        break;
+        }
       case Expression::Id::ConstId: {
         self->pushTask(SubType::doVisitConst, currp);
         break;

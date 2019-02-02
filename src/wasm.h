@@ -45,7 +45,8 @@ struct FeatureSet {
     MutableGlobals = 1 << 1,
     TruncSat = 1 << 2,
     SIMD = 1 << 3,
-    All = Atomics | MutableGlobals | TruncSat | SIMD
+    BulkMemory = 1 << 4,
+    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory
   };
 
   FeatureSet() : features(MVP) {}
@@ -57,6 +58,7 @@ struct FeatureSet {
   bool hasMutableGlobals() const { return features & MutableGlobals; }
   bool hasTruncSat() const { return features & TruncSat; }
   bool hasSIMD() const { return features & SIMD; }
+  bool hasBulkMemory() const { return features & BulkMemory; }
   bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
@@ -65,6 +67,7 @@ struct FeatureSet {
   void setMutableGlobals(bool v = true) { set(MutableGlobals, v); }
   void setTruncSat(bool v = true) { set(TruncSat, v); }
   void setSIMD(bool v = true) { set(SIMD, v); }
+  void setBulkMemory(bool v = true) { set(BulkMemory, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   bool operator<=(const FeatureSet& other) {
@@ -255,6 +258,10 @@ public:
     SIMDShuffleId,
     SIMDBitselectId,
     SIMDShiftId,
+    MemoryInitId,
+    DataDropId,
+    MemoryCopyId,
+    MemoryFillId,
     NumExpressionIds
   };
   Id _id;
@@ -609,6 +616,53 @@ class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
   SIMDShiftOp op;
   Expression* vec;
   Expression* shift;
+
+  void finalize();
+};
+
+class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
+ public:
+  MemoryInit() = default;
+  MemoryInit(MixedArena& allocator) : MemoryInit() {}
+
+  uint32_t segment;
+  Expression* dest;
+  Expression* offset;
+  Expression* size;
+
+  void finalize();
+};
+
+class DataDrop : public SpecificExpression<Expression::DataDropId> {
+ public:
+  DataDrop() = default;
+  DataDrop(MixedArena& allocator) : DataDrop() {}
+
+  uint32_t segment;
+
+  void finalize();
+};
+
+class MemoryCopy : public SpecificExpression<Expression::MemoryCopyId> {
+ public:
+  MemoryCopy() = default;
+  MemoryCopy(MixedArena& allocator) : MemoryCopy() {}
+
+  Expression* dest;
+  Expression* source;
+  Expression* size;
+
+  void finalize();
+};
+
+class MemoryFill : public SpecificExpression<Expression::MemoryFillId> {
+ public:
+  MemoryFill() = default;
+  MemoryFill(MixedArena& allocator) : MemoryFill() {}
+
+  Expression* dest;
+  Expression* value;
+  Expression* size;
 
   void finalize();
 };

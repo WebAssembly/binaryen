@@ -122,6 +122,10 @@ BinaryenExpressionId BinaryenSIMDReplaceId(void);
 BinaryenExpressionId BinaryenSIMDShuffleId(void);
 BinaryenExpressionId BinaryenSIMDBitselectId(void);
 BinaryenExpressionId BinaryenSIMDShiftId(void);
+BinaryenExpressionId BinaryenMemoryCopyId(void);
+BinaryenExpressionId BinaryenDataDropId(void);
+BinaryenExpressionId BinaryenMemoryCopyId(void);
+BinaryenExpressionId BinaryenMemoryFillId(void);
 
 // External kinds (call to get the value of each; you can cache them)
 
@@ -540,6 +544,10 @@ BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp o
 BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, const uint8_t mask[16]);
 BinaryenExpressionRef BinaryenSIMDBitselect(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenExpressionRef cond);
 BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, BinaryenExpressionRef shift);
+BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module, uint32_t segment, BinaryenExpressionRef dest, BinaryenExpressionRef offset, BinaryenExpressionRef size);
+BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module, uint32_t segment);
+BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module, BinaryenExpressionRef dest, BinaryenExpressionRef source, BinaryenExpressionRef size);
+BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module, BinaryenExpressionRef dest, BinaryenExpressionRef value, BinaryenExpressionRef size);
 
 BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
 BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
@@ -667,6 +675,20 @@ BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDShiftGetShift(BinaryenExpressionRef expr);
 
+uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenMemoryInitGetDest(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenMemoryInitGetOffset(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenMemoryInitGetSize(BinaryenExpressionRef expr);
+
+uint32_t BinaryenDataDropGetSegment(BinaryenExpressionRef expr);
+
+BinaryenExpressionRef BinaryenMemoryCopyGetDest(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenMemoryCopyGetSource(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenMemoryCopyGetSize(BinaryenExpressionRef expr);
+
+BinaryenExpressionRef BinaryenMemoryFillGetDest(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenMemoryFillGetValue(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr);
 
 // Functions
 

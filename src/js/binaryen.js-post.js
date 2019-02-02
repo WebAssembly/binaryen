@@ -73,6 +73,10 @@ Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
 Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
 Module['SIMDBitselectId'] = Module['_BinaryenSIMDBitselectId']();
 Module['SIMDShiftId'] = Module['_BinaryenSIMDShiftId']();
+Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
+Module['DataDropId'] = Module['_BinaryenDataDropId']();
+Module['MemoryCopyId'] = Module['_BinaryenMemoryCopyId']();
+Module['MemoryFillId'] = Module['_BinaryenMemoryFillId']();
 
 // External kinds
 Module['ExternalFunction'] = Module['_BinaryenExternalFunction']();
@@ -458,6 +462,24 @@ function wrapModule(module, self) {
   }
   self['growMemory'] = self['grow_memory'] = function(value) {
     return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
+  }
+
+  self['memory'] = {
+    'init': function(segment, dest, offset, size) {
+      return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size);
+    },
+    'copy': function(dest, source, size) {
+      return Module['_BinaryenMemoryCopy'](module, dest, source, size);
+    },
+    'fill': function(dest, value, size) {
+      return Module['_BinaryenMemoryFill'](module, dest, value, size);
+    }
+  }
+
+  self['data'] = {
+    'drop': function(segment) {
+      return Module['_BinaryenDataDrop'](module, segment);
+    }
   }
 
   // The Const creation API is a little different: we don't want users to
@@ -2211,6 +2233,34 @@ Module['getExpressionInfo'] = function(expr) {
         'vec': Module['_BinaryenSIMDShiftGetVec'](expr),
         'shift': Module['_BinaryenSIMDShiftGetShift'](expr)
       };
+    case Module['MemoryInitId']:
+      return {
+        'id': id,
+        'segment': Module['_BinaryenMemoryInitGetSegment'](expr),
+        'dest': Module['_BinaryenMemoryInitGetDest'](expr),
+        'offset': Module['_BinaryenMemoryInitGetOffset'](expr),
+        'size': Module['_BinaryenMemoryInitGetSize'](expr)
+      };
+    case Module['DataDropId']:
+      return {
+        'id': id,
+        'segment': Module['_BinaryenDataDropGetSegment'](expr),
+      };
+    case Module['MemoryCopyId']:
+      return {
+        'id': id,
+        'dest': Module['_BinaryenMemoryCopyGetDest'](expr),
+        'source': Module['_BinaryenMemoryCopyGetSource'](expr),
+        'size': Module['_BinaryenMemoryCopyGetSize'](expr)
+      };
+    case Module['MemoryFillId']:
+      return {
+        'id': id,
+        'dest': Module['_BinaryenMemoryFillGetDest'](expr),
+        'value': Module['_BinaryenMemoryFillGetValue'](expr),
+        'size': Module['_BinaryenMemoryFillGetSize'](expr)
+      };
+
     default:
       throw Error('unexpected id: ' + id);
   }
