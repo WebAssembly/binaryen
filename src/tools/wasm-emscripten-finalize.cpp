@@ -204,12 +204,8 @@ int main(int argc, const char *argv[]) {
 
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
-  if (!dataSegmentFile.empty()) {
-    Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
-    generator.separateDataSegments(&memInitFile);
-  }
 
-  // Finally, legalize the wasm.
+  // Legalize the wasm.
   {
     PassRunner passRunner(&wasm);
     passRunner.setDebug(options.debug);
@@ -221,8 +217,15 @@ int main(int argc, const char *argv[]) {
     passRunner.run();
   }
 
-  // All changes to the wasm are done, create the metadata.
+  // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
+
+  // Finally, separate out data segments if relevant (they may have been needed
+  // for metadata).
+  if (!dataSegmentFile.empty()) {
+    Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
+    generator.separateDataSegments(&memInitFile);
+  }
 
   if (options.debug) {
     std::cerr << "Module after:\n";
