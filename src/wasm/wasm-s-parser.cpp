@@ -786,6 +786,7 @@ Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
 
 
 Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
+  if (!currFunction) throw ParseException("block is unallowed outside of functions");
   // special-case Block, because Block nesting (in their first element) can be incredibly deep
   auto curr = allocator.alloc<Block>();
   auto* sp = &s;
