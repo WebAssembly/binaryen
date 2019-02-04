@@ -23,22 +23,12 @@
 
 namespace wasm {
 
-struct InliningAction {
-  Expression** callSite;
-  Function* contents;
-
-  InliningAction(Expression** callSite, Function* contents) : callSite(callSite), contents(contents) {}
-};
-
-// Core inlining logic. Modifies the outside function (adding locals as
-// needed), and returns the inlined code.
-static Expression* doInlining(Module* module, Function* into, InliningAction& action) {
-  Function* from = action.contents;
-  auto* call = (*action.callSite)->cast<Call>();
+// Core inlining logic. Modifies the caller (adding locals as needed), and returns the inlined code.
+static Expression* doInlining(Module* module, Function* caller, Call* call) {
+  auto* callee = module->getFunction(call->target);
   Builder builder(*module);
   auto* block = Builder(*module).makeBlock();
-  block->name = Name(std::string("__inlined_func$") + from->name.str);
-  *action.callSite = block;
+  block->name = Name(std::string("__inlined_func$") + callee->name.str);
   // set up a locals mapping
   struct Updater : public PostWalker<Updater> {
     std::map<Index, Index> localMapping;
@@ -57,19 +47,19 @@ static Expression* doInlining(Module* module, Function* into, InliningAction& ac
   } updater;
   updater.returnName = block->name;
   updater.builder = &builder;
-  for (Index i = 0; i < from->getNumLocals(); i++) {
-    updater.localMapping[i] = builder.addVar(into, from->getLocalType(i));
+  for (Index i = 0; i < callee->getNumLocals(); i++) {
+    updater.localMapping[i] = builder.addVar(caller, callee->getLocalType(i));
   }
   // assign the operands into the params
-  for (Index i = 0; i < from->params.size(); i++) {
+  for (Index i = 0; i < callee->params.size(); i++) {
     block->list.push_back(builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
   }
   // zero out the vars (as we may be in a loop, and may depend on their zero-init value
-  for (Index i = 0; i < from->vars.size(); i++) {
-    block->list.push_back(builder.makeSetLocal(updater.localMapping[from->getVarIndexBase() + i], LiteralUtils::makeZero(from->vars[i], *module)));
+  for (Index i = 0; i < callee->vars.size(); i++) {
+    block->list.push_back(builder.makeSetLocal(updater.localMapping[callee->getVarIndexBase() + i], LiteralUtils::makeZero(callee->vars[i], *module)));
   }
   // generate and update the inlined contents
-  auto* contents = ExpressionManipulator::copy(from->body, *module);
+  auto* contents = ExpressionManipulator::copy(callee->body, *module);
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = call->type;

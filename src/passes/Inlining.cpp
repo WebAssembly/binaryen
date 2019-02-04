@@ -127,6 +127,13 @@ private:
   NameInfoMap* infos;
 };
 
+struct InliningAction {
+  Expression** callSite;
+  Function* contents;
+
+  InliningAction(Expression** callSite, Function* contents) : callSite(callSite), contents(contents) {}
+};
+
 struct InliningState {
   std::unordered_set<Name> worthInlining;
   std::unordered_map<Name, std::vector<InliningAction>> actionsForFunction; // function name => actions that can be performed in it
@@ -259,7 +266,8 @@ struct Inlining : public Pass {
 #ifdef INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
-        doInlining(module, func.get(), action);
+        *action.callSite = doInlining(module, func.get(), (*action.callSite)->cast<Call>());
+
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func.get());
         assert(inlinedUses[inlinedName] <= infos[inlinedName].calls);
