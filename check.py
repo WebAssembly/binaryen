@@ -55,7 +55,7 @@ def with_pass_debug(check):
 def run_help_tests():
   print '[ checking --help is useful... ]\n'
 
-  not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll']
+  not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm']
   executables = sorted(filter(lambda x: not any(x.endswith(s) for s in
                                                 not_executable_suffix) and os.path.isfile(x),
                               os.listdir(options.binaryen_bin)))

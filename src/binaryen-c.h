@@ -122,7 +122,7 @@ BinaryenExpressionId BinaryenSIMDReplaceId(void);
 BinaryenExpressionId BinaryenSIMDShuffleId(void);
 BinaryenExpressionId BinaryenSIMDBitselectId(void);
 BinaryenExpressionId BinaryenSIMDShiftId(void);
-BinaryenExpressionId BinaryenMemoryCopyId(void);
+BinaryenExpressionId BinaryenMemoryInitId(void);
 BinaryenExpressionId BinaryenDataDropId(void);
 BinaryenExpressionId BinaryenMemoryCopyId(void);
 BinaryenExpressionId BinaryenMemoryFillId(void);
