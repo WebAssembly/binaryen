@@ -35,6 +35,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
+#include "ir/inlining.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
@@ -126,13 +127,6 @@ private:
   NameInfoMap* infos;
 };
 
-struct InliningAction {
-  Expression** callSite;
-  Function* contents;
-
-  InliningAction(Expression** callSite, Function* contents) : callSite(callSite), contents(contents) {}
-};
-
 struct InliningState {
   std::unordered_set<Name> worthInlining;
   std::unordered_map<Name, std::vector<InliningAction>> actionsForFunction; // function name => actions that can be performed in it
@@ -171,61 +165,6 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
 private:
   InliningState* state;
 };
-
-// Core inlining logic. Modifies the outside function (adding locals as
-// needed), and returns the inlined code.
-static Expression* doInlining(Module* module, Function* into, InliningAction& action) {
-  Function* from = action.contents;
-  auto* call = (*action.callSite)->cast<Call>();
-  Builder builder(*module);
-  auto* block = Builder(*module).makeBlock();
-  block->name = Name(std::string("__inlined_func$") + from->name.str);
-  *action.callSite = block;
-  // set up a locals mapping
-  struct Updater : public PostWalker<Updater> {
-    std::map<Index, Index> localMapping;
-    Name returnName;
-    Builder* builder;
-
-    void visitReturn(Return* curr) {
-      replaceCurrent(builder->makeBreak(returnName, curr->value));
-    }
-    void visitGetLocal(GetLocal* curr) {
-      curr->index = localMapping[curr->index];
-    }
-    void visitSetLocal(SetLocal* curr) {
-      curr->index = localMapping[curr->index];
-    }
-  } updater;
-  updater.returnName = block->name;
-  updater.builder = &builder;
-  for (Index i = 0; i < from->getNumLocals(); i++) {
-    updater.localMapping[i] = builder.addVar(into, from->getLocalType(i));
-  }
-  // assign the operands into the params
-  for (Index i = 0; i < from->params.size(); i++) {
-    block->list.push_back(builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
-  }
-  // zero out the vars (as we may be in a loop, and may depend on their zero-init value
-  for (Index i = 0; i < from->vars.size(); i++) {
-    block->list.push_back(builder.makeSetLocal(updater.localMapping[from->getVarIndexBase() + i], LiteralUtils::makeZero(from->vars[i], *module)));
-  }
-  // generate and update the inlined contents
-  auto* contents = ExpressionManipulator::copy(from->body, *module);
-  updater.walk(contents);
-  block->list.push_back(contents);
-  block->type = call->type;
-  // if the function returned a value, we just set the block containing the
-  // inlined code to have that type. or, if the function was void and
-  // contained void, that is fine too. a bad case is a void function in which
-  // we have unreachable code, so we would be replacing a void call with an
-  // unreachable; we need to handle
-  if (contents->type == unreachable && block->type == none) {
-    // make the block reachable by adding a break to it
-    block->list.push_back(builder.makeBreak(block->name));
-  }
-  return block;
-}
 
 struct Inlining : public Pass {
   // whether to optimize where we inline
