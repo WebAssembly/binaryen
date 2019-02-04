@@ -1715,7 +1715,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       throwError("invalid code after atomic prefix: " + std::to_string(code));
       break;
     }
-    case BinaryConsts::TruncSatPrefix: {
+    case BinaryConsts::MiscPrefix: {
       auto opcode = getU32LEB();
       if (maybeVisitTruncSat(curr, opcode)) break;
       if (maybeVisitMemoryInit(curr, opcode)) break;
