@@ -80,7 +80,7 @@ def update_lld_tests():
     extension_arg_map = {
       '.out': [],
       '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
-      '.mem.out': ['--separate-data-segments', mem_file],
+      '.mem.out': ['--separate-data-segments', mem_file + '.mem'],
     }
     for ext, ext_args in extension_arg_map.items():
       out_path = wast_path + ext
