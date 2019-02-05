@@ -2933,6 +2933,7 @@ int BinaryenForceInline(BinaryenModuleRef module, BinaryenFunctionRef funcRef, B
   updater.callToReplace = call;
   updater.callReplaced = false;
   updater.walkFunctionInModule(func, wasm);
+  if (updater.callReplaced) UniqueNameMapper::uniquify(func->body);
   return updater.callReplaced;
 }
 
