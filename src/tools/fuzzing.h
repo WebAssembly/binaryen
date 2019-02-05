@@ -727,6 +727,9 @@ private:
                         &Self::makeSelect,
                         &Self::makeGetGlobal)
                    .add(FeatureSet::SIMD, &Self::makeSIMD);
+    if (type == none) {
+      options.add(FeatureSet::BulkMemory, &Self::makeBulkMemory);
+    }
     if (type == i32 || type == i64) {
       options.add(FeatureSet::Atomics, &Self::makeAtomic);
     }
@@ -1711,6 +1714,44 @@ private:
     Expression* vec = make(v128);
     Expression* shift = make(i32);
     return builder.makeSIMDShift(op, vec, shift);
+  }
+
+  Expression* makeBulkMemory(Type type) {
+    assert(features.hasBulkMemory());
+    assert(type == none);
+    switch (upTo(4)) {
+      case 0: return makeMemoryInit();
+      case 1: return makeDataDrop();
+      case 2: return makeMemoryCopy();
+      case 3: return makeMemoryFill();
+    }
+    WASM_UNREACHABLE();
+  }
+
+  Expression* makeMemoryInit() {
+    auto segment = uint32_t(get32());
+    Expression* dest = make(i32);
+    Expression* offset = make(i32);
+    Expression* size = make(i32);
+    return builder.makeMemoryInit(segment, dest, offset, size);
+  }
+
+  Expression* makeDataDrop() {
+    return builder.makeDataDrop(get32());
+  }
+
+  Expression* makeMemoryCopy() {
+    Expression* dest = make(i32);
+    Expression* source = make(i32);
+    Expression* size = make(i32);
+    return builder.makeMemoryCopy(dest, source, size);
+  }
+
+  Expression* makeMemoryFill() {
+    Expression* dest = make(i32);
+    Expression* value = make(i32);
+    Expression* size = make(i32);
+    return builder.makeMemoryFill(dest, value, size);
   }
 
   // special makers

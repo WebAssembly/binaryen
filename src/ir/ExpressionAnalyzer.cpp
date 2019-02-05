@@ -280,6 +280,29 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         PUSH(SIMDShift, shift);
         break;
       }
+      case Expression::Id::MemoryInitId: {
+        CHECK(MemoryInit, segment);
+        PUSH(MemoryInit, dest);
+        PUSH(MemoryInit, offset);
+        PUSH(MemoryInit, size);
+        break;
+      }
+      case Expression::Id::DataDropId: {
+        CHECK(DataDrop, segment);
+        break;
+      }
+      case Expression::Id::MemoryCopyId: {
+        PUSH(MemoryCopy, dest);
+        PUSH(MemoryCopy, source);
+        PUSH(MemoryCopy, size);
+        break;
+      }
+      case Expression::Id::MemoryFillId: {
+        PUSH(MemoryFill, dest);
+        PUSH(MemoryFill, value);
+        PUSH(MemoryFill, size);
+        break;
+      }
       case Expression::Id::ConstId: {
         if (left->cast<Const>()->value != right->cast<Const>()->value) {
           return false;
@@ -559,6 +582,29 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         HASH(SIMDShift, op);
         PUSH(SIMDShift, vec);
         PUSH(SIMDShift, shift);
+        break;
+      }
+      case Expression::Id::MemoryInitId: {
+        HASH(MemoryInit, segment);
+        PUSH(MemoryInit, dest);
+        PUSH(MemoryInit, offset);
+        PUSH(MemoryInit, size);
+        break;
+      }
+      case Expression::Id::DataDropId: {
+        HASH(DataDrop, segment);
+        break;
+      }
+      case Expression::Id::MemoryCopyId: {
+        PUSH(MemoryCopy, dest);
+        PUSH(MemoryCopy, source);
+        PUSH(MemoryCopy, size);
+        break;
+      }
+      case Expression::Id::MemoryFillId: {
+        PUSH(MemoryFill, dest);
+        PUSH(MemoryFill, value);
+        PUSH(MemoryFill, size);
         break;
       }
       case Expression::Id::ConstId: {

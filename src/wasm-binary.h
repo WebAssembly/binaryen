@@ -550,7 +550,7 @@ enum ASTNodes {
   I64ExtendS16 = 0xc3,
   I64ExtendS32 = 0xc4,
 
-  TruncSatPrefix = 0xfc,
+  MiscPrefix = 0xfc,
   SIMDPrefix = 0xfd,
   AtomicPrefix = 0xfe
 };
@@ -783,6 +783,13 @@ enum SIMDOpcodes {
   F32x4ConvertUI32x4 = 0xb0,
   F64x2ConvertSI64x2 = 0xb1,
   F64x2ConvertUI64x2 = 0xb2
+};
+
+enum BulkMemoryOpcodes {
+  MemoryInit = 0x08,
+  DataDrop = 0x09,
+  MemoryCopy = 0x0a,
+  MemoryFill = 0x0b
 };
 
 enum MemoryAccess {
@@ -1115,6 +1122,10 @@ public:
   bool maybeVisitSIMDShuffle(Expression*& out, uint32_t code);
   bool maybeVisitSIMDBitselect(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
+  bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
+  bool maybeVisitDataDrop(Expression*& out, uint32_t code);
+  bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
+  bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   bool maybeVisitHost(Expression*& out, uint8_t code);

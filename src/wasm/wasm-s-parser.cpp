@@ -1134,6 +1134,41 @@ Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
+  auto ret = allocator.alloc<MemoryInit>();
+  ret->segment = atoi(s[1]->str().c_str());
+  ret->dest = parseExpression(s[2]);
+  ret->offset = parseExpression(s[3]);
+  ret->size = parseExpression(s[4]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeDataDrop(Element& s) {
+  auto ret = allocator.alloc<DataDrop>();
+  ret->segment = atoi(s[1]->str().c_str());
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeMemoryCopy(Element& s) {
+  auto ret = allocator.alloc<MemoryCopy>();
+  ret->dest = parseExpression(s[1]);
+  ret->source = parseExpression(s[2]);
+  ret->size = parseExpression(s[3]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeMemoryFill(Element& s) {
+  auto ret = allocator.alloc<MemoryFill>();
+  ret->dest = parseExpression(s[1]);
+  ret->value = parseExpression(s[2]);
+  ret->size = parseExpression(s[3]);
+  ret->finalize();
+  return ret;
+}
+
 Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   auto ret = allocator.alloc<If>();
   Index i = 1;

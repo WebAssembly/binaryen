@@ -110,6 +110,10 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::SIMDShuffleId: return "simd_shuffle";
     case Expression::Id::SIMDBitselectId: return "simd_bitselect";
     case Expression::Id::SIMDShiftId: return "simd_shift";
+    case Expression::Id::MemoryInitId: return "memory_init";
+    case Expression::Id::DataDropId: return "data_drop";
+    case Expression::Id::MemoryCopyId: return "memory_copy";
+    case Expression::Id::MemoryFillId: return "memory_fill";
     case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
@@ -460,6 +464,34 @@ void SIMDBitselect::finalize() {
   assert(left && right && cond);
   type = v128;
   if (left->type == unreachable || right->type == unreachable || cond->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void MemoryInit::finalize() {
+  assert(dest && offset && size);
+  type = none;
+  if (dest->type == unreachable || offset->type == unreachable || size->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void DataDrop::finalize() {
+  type = none;
+}
+
+void MemoryCopy::finalize() {
+  assert(dest && source && size);
+  type = none;
+  if (dest->type == unreachable || source->type == unreachable || size->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void MemoryFill::finalize() {
+  assert(dest && value && size);
+  type = none;
+  if (dest->type == unreachable || value->type == unreachable || size->type == unreachable) {
     type = unreachable;
   }
 }
