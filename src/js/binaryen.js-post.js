@@ -1819,6 +1819,9 @@ function wrapModule(module, self) {
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
   };
+  self['forceInline'] = function (func, call) {
+   return Module['_BinaryenForceInline'](module, func, call) == 1;
+  };
   self['emitText'] = function() {
     var old = out;
     var ret = '';

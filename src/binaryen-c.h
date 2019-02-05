@@ -950,6 +950,9 @@ void BinaryenSetAPITracing(int on);
 // signature, it returns a pointer to the existing signature or NULL if there is no
 // such signature yet.
 BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams);
+// Directs the API to inline a specific call into the caller. Returns `1` if the
+// call has been found in the caller's body and replaced, otherwise `0`.
+int BinaryenForceInline(BinaryenModuleRef module, BinaryenFunctionRef func, BinaryenExpressionRef call);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -768,6 +768,9 @@ export_function "_BinaryenExportGetKind"
 export_function "_BinaryenExportGetName"
 export_function "_BinaryenExportGetValue"
 
+# Utility
+export_function "_BinaryenForceInline"
+
 # 'Relooper' operations
 export_function "_RelooperCreate"
 export_function "_RelooperAddBlock"

@@ -32,6 +32,7 @@
 #include "wasm2js.h"
 #include "cfg/Relooper.h"
 #include "ir/function-type-utils.h"
+#include "ir/inlining.h"
 #include "ir/utils.h"
 #include "shell-interface.h"
 
@@ -2908,6 +2909,31 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef mod
   }
 
   return NULL;
+}
+int BinaryenForceInline(BinaryenModuleRef module, BinaryenFunctionRef funcRef, BinaryenExpressionRef callRef) {
+  auto* wasm = (Module*)module;
+  auto* func = (Function*)funcRef;
+  auto* call = (Call*)callRef;
+
+  if (tracing) {
+    std::cout << "  BinaryenForceInline(theModule, functions[" << functions[funcRef] << "], " << callRef << ");\n";
+  }
+
+  struct Updater : public PostWalker<Updater> {
+    Call* callToReplace;
+    bool callReplaced;
+
+    void visitCall(Call* call) {
+      if (callToReplace == call) {
+        replaceCurrent(doInlining(getModule(), getFunction(), call));
+        callReplaced = true;
+      }
+    }
+  } updater;
+  updater.callToReplace = call;
+  updater.callReplaced = false;
+  updater.walkFunctionInModule(func, wasm);
+  return updater.callReplaced;
 }
 
 #ifdef __EMSCRIPTEN__
