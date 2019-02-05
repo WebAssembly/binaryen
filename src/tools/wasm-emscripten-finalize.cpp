@@ -224,7 +224,10 @@ int main(int argc, const char *argv[]) {
   // for metadata).
   if (!dataSegmentFile.empty()) {
     Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
-    generator.separateDataSegments(&memInitFile);
+    if (globalBase == INVALID_BASE) {
+      Fatal() << "globalBase must be set";
+    }
+    generator.separateDataSegments(&memInitFile, globalBase);
   }
 
   if (options.debug) {
