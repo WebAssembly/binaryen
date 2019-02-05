@@ -2911,13 +2911,13 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef mod
   return NULL;
 }
 int BinaryenForceInline(BinaryenModuleRef module, BinaryenFunctionRef funcRef, BinaryenExpressionRef callRef) {
-  auto* wasm = (Module*)module;
-  auto* func = (Function*)funcRef;
-  auto* call = (Call*)callRef;
-
   if (tracing) {
     std::cout << "  BinaryenForceInline(theModule, functions[" << functions[funcRef] << "], " << callRef << ");\n";
   }
+
+  auto* wasm = (Module*)module;
+  auto* func = (Function*)funcRef;
+  auto* call = (Call*)callRef;
 
   struct Updater : public PostWalker<Updater> {
     Call* callToReplace;

@@ -1,0 +1,21 @@
+=== before ===
+(module
+ (type $i (func (result i32)))
+ (func $outer (; 0 ;) (type $i) (result i32)
+  (call $inner)
+ )
+ (func $inner (; 1 ;) (type $i) (result i32)
+  (i32.const 42)
+ )
+)
+
+=== after ===
+(module
+ (type $i (func (result i32)))
+ (func $outer (; 0 ;) (type $i) (result i32)
+  (block $__inlined_func$inner (result i32)
+   (i32.const 42)
+  )
+ )
+)
+
