@@ -35,6 +35,10 @@
 #include "ir/utils.h"
 #include "shell-interface.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 using namespace wasm;
 
 // Literal utilities
@@ -2916,6 +2920,15 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef mod
 int atexit(void (*function)(void)) {
   return 0;
 }
+
+// Internal binaryen.js APIs
+
+// Returns the size of a Literal object.
+EMSCRIPTEN_KEEPALIVE
+size_t BinaryenSizeofLiteral(void) {
+  return sizeof(Literal);
+}
+
 #endif
 
 } // extern "C"
