@@ -146,7 +146,7 @@ def test_one(infile, opts):
 
   # fuzz vms
   # gather VM outputs on input file
-  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm', '--mvp-features', '--enable-nontrapping-float-to-int'])
+  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm', '--mvp-features'])
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
@@ -202,6 +202,7 @@ opt_choices = [
   ["--pick-load-signs"],
   ["--precompute"],
   ["--precompute-propagate"],
+  ["--print"],
   ["--remove-unused-brs"],
   ["--remove-unused-nonfunction-module-elements"],
   ["--remove-unused-module-elements"],
