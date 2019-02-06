@@ -5705,3 +5705,4 @@ module loaded from text form:
  )
 )
 
+sizeof Literal: 24

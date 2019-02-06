@@ -741,6 +741,10 @@ function test_parsing() {
   module2.dispose();
 }
 
+function test_internals() {
+  console.log('sizeof Literal: ' + Binaryen['_BinaryenSizeofLiteral']());
+}
+
 function main() {
   test_types();
   test_ids();
@@ -751,6 +755,7 @@ function main() {
   test_nonvalid();
   test_tracing();
   test_parsing();
+  test_internals();
 }
 
 main();

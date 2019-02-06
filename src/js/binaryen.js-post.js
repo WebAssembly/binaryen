@@ -486,8 +486,8 @@ function wrapModule(module, self) {
   // need to make their own Literals, as the C API handles them by value,
   // which means we would leak them. Instead, this is the only API that
   // accepts Literals, so fuse it with Literal creation
-  var temp = _malloc(16); // a single literal in memory. the LLVM C ABI
-                          // makes us pass pointers to this.
+  var temp = _malloc(Module['_BinaryenSizeofLiteral']()); // a single literal in memory. the LLVM C ABI
+                                                          // makes us pass pointers to this.
 
   self['i32'] = {
     'load': function(offset, align, ptr) {
