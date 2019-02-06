@@ -235,9 +235,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       }
       case Expression::Id::MemoryInitId: {
         CHECK(MemoryInit, segment);
-        PUSH(MemoryInit, dest);
-        PUSH(MemoryInit, offset);
-        PUSH(MemoryInit, size);
         break;
       }
       case Expression::Id::DataDropId: {
@@ -245,15 +242,9 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         break;
       }
       case Expression::Id::MemoryCopyId: {
-        PUSH(MemoryCopy, dest);
-        PUSH(MemoryCopy, source);
-        PUSH(MemoryCopy, size);
         break;
       }
       case Expression::Id::MemoryFillId: {
-        PUSH(MemoryFill, dest);
-        PUSH(MemoryFill, value);
-        PUSH(MemoryFill, size);
         break;
       }
       case Expression::Id::ConstId: {
@@ -301,7 +292,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       rightStack.push_back(child);
     }
     #undef CHECK
-    #undef PUSH
   }
   if (leftStack.size() > 0 || rightStack.size() > 0) return false;
   return true;
