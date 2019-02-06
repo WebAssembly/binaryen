@@ -206,7 +206,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case Xor:  o << "xor";  break;
       case Xchg: o << "xchg"; break;
     }
-    if (curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -218,7 +218,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
      o << "cmpxchg";
-    if (curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
       o << "_u";
     }
     restoreNormalColor(o);
