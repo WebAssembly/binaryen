@@ -359,21 +359,62 @@ void StackWriter<Mode, Parent>::visitChild(Expression* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitBlock(Block* curr) {
-  if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackIR.push_back(makeStackInst(StackInst::BlockBegin, curr));
-  } else {
-    o << int8_t(BinaryConsts::Block);
-    o << binaryType(curr->type != unreachable ? curr->type : none);
+  auto tilChildren = [this](Block* curr) {
+    if (Mode == StackWriterMode::Binaryen2Stack) {
+      stackIR.push_back(makeStackInst(StackInst::BlockBegin, curr));
+    } else {
+      o << int8_t(BinaryConsts::Block);
+      o << binaryType(curr->type != unreachable ? curr->type : none);
+    }
+    breakStack.push_back(curr->name); // TODO: we don't need to do this in Binaryen2Stack
+  };
+  auto visitChildren = [this](Block* curr, Index from) {
+    auto& list = curr->list;
+    while (from < list.size()) {
+      visitChild(list[from++]);
+    }
+  };
+  auto afterChildren = [this](Block* curr) {
+    // in Stack2Binary the block ending is in the stream later on
+    if (Mode != StackWriterMode::Stack2Binary) {
+      visitBlockEnd(curr);
+    }
+  };
+  // Handle very deeply nested blocks in the first position efficiently,
+  // avoiding heavy recursion.
+  // We only start to do this if we see it will help us (to avoid allocation
+  // of the vector).
+  // Note that Stack2Binary mode we don't need to visit children anyhow, so
+  // we don't need this optimization.
+  if (Mode != StackWriterMode::Stack2Binary) {
+    if (!curr->list.empty() && curr->list[0]->is<Block>()) {
+      std::vector<Block*> parents;
+      Block* child;
+      while (!curr->list.empty() &&
+             (child = curr->list[0]->dynCast<Block>())) {
+        parents.push_back(curr);
+        tilChildren(curr);
+        curr = child;
+      }
+      // Emit the current block, which does not have a block as
+      // a child in the first position.
+      tilChildren(curr);
+      visitChildren(curr, 0);
+      afterChildren(curr);
+      // Finish the later parts of all the parent blocks.
+      while (!parents.empty()) {
+        auto* parent = parents.back();
+        parents.pop_back();
+        visitChildren(parent, 1);
+        afterChildren(parent);
+      }
+      return;
+    }
   }
-  breakStack.push_back(curr->name); // TODO: we don't need to do this in Binaryen2Stack
-  for (auto* child : curr->list) {
-    visitChild(child);
-  }
-  // in Stack2Binary the block ending is in the stream later on
-  if (Mode == StackWriterMode::Stack2Binary) {
-    return;
-  }
-  visitBlockEnd(curr);
+  // Simple case of not having a nested block in the first position.
+  tilChildren(curr);
+  visitChildren(curr, 0);
+  afterChildren(curr);
 }
 
 template<StackWriterMode Mode, typename Parent>
