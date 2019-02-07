@@ -362,14 +362,11 @@ void StackWriter<Mode, Parent>::visitBlock(Block* curr) {
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackIR.push_back(makeStackInst(StackInst::BlockBegin, curr));
   } else {
-    if (debug) std::cerr << "zz node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block);
     o << binaryType(curr->type != unreachable ? curr->type : none);
   }
   breakStack.push_back(curr->name); // TODO: we don't need to do this in Binaryen2Stack
-  Index i = 0;
   for (auto* child : curr->list) {
-    if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i++ << std::endl;
     visitChild(child);
   }
   // in Stack2Binary the block ending is in the stream later on
@@ -403,7 +400,6 @@ void StackWriter<Mode, Parent>::visitBlockEnd(Block* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitIf(If* curr) {
-  if (debug) std::cerr << "zz node: If" << std::endl;
   if (curr->condition->type == unreachable) {
     // this if-else is unreachable because of the condition, i.e., the condition
     // does not exit. So don't emit the if, but do consume the condition
@@ -465,7 +461,6 @@ void StackWriter<Mode, Parent>::visitIfEnd(If* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitLoop(Loop* curr) {
-  if (debug) std::cerr << "zz node: Loop" << std::endl;
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackIR.push_back(makeStackInst(StackInst::LoopBegin, curr));
   } else {
@@ -502,7 +497,6 @@ void StackWriter<Mode, Parent>::visitLoopEnd(Loop* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitBreak(Break* curr) {
-  if (debug) std::cerr << "zz node: Break" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
   }
@@ -525,7 +519,6 @@ void StackWriter<Mode, Parent>::visitBreak(Break* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSwitch(Switch* curr) {
-  if (debug) std::cerr << "zz node: Switch" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
   }
@@ -547,7 +540,6 @@ void StackWriter<Mode, Parent>::visitSwitch(Switch* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitCall(Call* curr) {
-  if (debug) std::cerr << "zz node: Call" << std::endl;
   for (auto* operand : curr->operands) {
     visitChild(operand);
   }
@@ -561,7 +553,6 @@ void StackWriter<Mode, Parent>::visitCall(Call* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
-  if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
   for (auto* operand : curr->operands) {
     visitChild(operand);
   }
@@ -578,14 +569,12 @@ void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitGetLocal(GetLocal* curr) {
-  if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->index]);
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
-  if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
   visitChild(curr->value);
   if (!justAddToStack(curr)) {
     o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
@@ -597,14 +586,12 @@ void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitGetGlobal(GetGlobal* curr) {
-  if (debug) std::cerr << "zz node: GetGlobal " << (o.size() + 1) << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::GetGlobal) << U32LEB(parent.getGlobalIndex(curr->name));
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSetGlobal(SetGlobal* curr) {
-  if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
   visitChild(curr->value);
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::SetGlobal) << U32LEB(parent.getGlobalIndex(curr->name));
@@ -612,7 +599,6 @@ void StackWriter<Mode, Parent>::visitSetGlobal(SetGlobal* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
-  if (debug) std::cerr << "zz node: Load" << std::endl;
   visitChild(curr->ptr);
   if (curr->type == unreachable) {
     // don't even emit it; we don't know the right type
@@ -678,7 +664,6 @@ void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitStore(Store* curr) {
-  if (debug) std::cerr << "zz node: Store" << std::endl;
   visitChild(curr->ptr);
   visitChild(curr->value);
   if (curr->type == unreachable) {
@@ -744,7 +729,6 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicRMW(AtomicRMW* curr) {
-  if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
@@ -799,7 +783,6 @@ void StackWriter<Mode, Parent>::visitAtomicRMW(AtomicRMW* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-  if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
@@ -840,7 +823,6 @@ void StackWriter<Mode, Parent>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicWait(AtomicWait* curr) {
-  if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
@@ -868,7 +850,6 @@ void StackWriter<Mode, Parent>::visitAtomicWait(AtomicWait* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicWake(AtomicWake* curr) {
-  if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
@@ -1001,7 +982,6 @@ void StackWriter<Mode, Parent>::visitMemoryFill(MemoryFill* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitConst(Const* curr) {
-  if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
   if (justAddToStack(curr)) return;
   switch (curr->type) {
     case i32: {
@@ -1032,12 +1012,10 @@ void StackWriter<Mode, Parent>::visitConst(Const* curr) {
     case unreachable:
       WASM_UNREACHABLE();
   }
-  if (debug) std::cerr << "zz const node done.\n";
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
-  if (debug) std::cerr << "zz node: Unary" << std::endl;
   visitChild(curr->value);
   if (curr->type == unreachable) {
     emitExtraUnreachable();
@@ -1144,7 +1122,6 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
-  if (debug) std::cerr << "zz node: Binary" << std::endl;
   visitChild(curr->left);
   visitChild(curr->right);
   if (curr->type == unreachable) {
@@ -1317,7 +1294,6 @@ void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSelect(Select* curr) {
-  if (debug) std::cerr << "zz node: Select" << std::endl;
   visitChild(curr->ifTrue);
   visitChild(curr->ifFalse);
   visitChild(curr->condition);
@@ -1331,7 +1307,6 @@ void StackWriter<Mode, Parent>::visitSelect(Select* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitReturn(Return* curr) {
-  if (debug) std::cerr << "zz node: Return" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
   }
@@ -1342,7 +1317,6 @@ void StackWriter<Mode, Parent>::visitReturn(Return* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitHost(Host* curr) {
-  if (debug) std::cerr << "zz node: Host" << std::endl;
   switch (curr->op) {
     case CurrentMemory: {
       break;
@@ -1368,21 +1342,18 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitNop(Nop* curr) {
-  if (debug) std::cerr << "zz node: Nop" << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Nop);
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitUnreachable(Unreachable* curr) {
-  if (debug) std::cerr << "zz node: Unreachable" << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Unreachable);
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitDrop(Drop* curr) {
-  if (debug) std::cerr << "zz node: Drop" << std::endl;
   visitChild(curr->value);
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Drop);
