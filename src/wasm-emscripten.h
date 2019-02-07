@@ -57,7 +57,10 @@ public:
 
   void fixInvokeFunctionNames();
 
-  void separateDataSegments(Output* outfile);
+  // Emits the data segments to a file. The file contains data from address base
+  // onwards (we must pass in base, as we can't tell it from the wasm - the first
+  // segment may start after a run of zeros, but we need those zeros in the file).
+  void separateDataSegments(Output* outfile, Address base);
 
 private:
   Module& wasm;
