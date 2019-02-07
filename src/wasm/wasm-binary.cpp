@@ -1806,8 +1806,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
     curr->name = getNextLabel();
     breakStack.push_back({curr->name, curr->type != none});
     stack.push_back(curr);
-    auto peek = input[pos];
-    if (peek == BinaryConsts::Block) {
+    if (more() && input[pos] == BinaryConsts::Block) {
       // a recursion
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
