@@ -195,7 +195,11 @@ private:
   Expression* makeSIMDReplace(Element& s, SIMDReplaceOp op, size_t lanes);
   Expression* makeSIMDShuffle(Element& s);
   Expression* makeSIMDBitselect(Element& s);
-  Expression* makeSIMDShift(Element& s, SIMDShiftOp);
+  Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
+  Expression* makeMemoryInit(Element& s);
+  Expression* makeDataDrop(Element& s);
+  Expression* makeMemoryCopy(Element& s);
+  Expression* makeMemoryFill(Element& s);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);

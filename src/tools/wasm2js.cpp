@@ -23,13 +23,14 @@
 #include "support/file.h"
 #include "wasm-s-parser.h"
 #include "wasm2js.h"
+#include "tool-options.h"
 
 using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   Wasm2JSBuilder::Flags builderFlags;
-  Options options("wasm2js", "Transform .wasm/.wast files to asm.js");
+  ToolOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -95,6 +96,13 @@ int main(int argc, const char *argv[]) {
     Fatal() << "error in parsing input";
   } catch (std::bad_alloc&) {
     Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
+  }
+
+  if (options.passOptions.validate) {
+    if (!WasmValidator().validate(wasm, options.getFeatures())) {
+      WasmPrinter::printModule(&wasm);
+      Fatal() << "error in validating input";
+    }
   }
 
   if (options.debug) std::cerr << "asming..." << std::endl;

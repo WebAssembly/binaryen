@@ -51,9 +51,17 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'd':
-    if (strcmp(op, "drop") == 0) return makeDrop(s);
-    goto parse_error;
+  case 'd': {
+    switch (op[1]) {
+      case 'a':
+        if (strcmp(op, "data.drop") == 0) return makeDataDrop(s);
+        goto parse_error;
+      case 'r':
+        if (strcmp(op, "drop") == 0) return makeDrop(s);
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
   case 'e':
     if (strcmp(op, "else") == 0) return makeThenOrElse(s);
     goto parse_error;
@@ -2179,6 +2187,20 @@ switch (op[0]) {
       }
       case 'o':
         if (strcmp(op, "loop") == 0) return makeLoop(s);
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
+  case 'm': {
+    switch (op[7]) {
+      case 'c':
+        if (strcmp(op, "memory.copy") == 0) return makeMemoryCopy(s);
+        goto parse_error;
+      case 'f':
+        if (strcmp(op, "memory.fill") == 0) return makeMemoryFill(s);
+        goto parse_error;
+      case 'i':
+        if (strcmp(op, "memory.init") == 0) return makeMemoryInit(s);
         goto parse_error;
       default: goto parse_error;
     }

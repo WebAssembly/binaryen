@@ -262,6 +262,10 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
         case Expression::Id::SIMDBitselectId: DELEGATE(SIMDBitselect);
         case Expression::Id::SIMDShiftId: DELEGATE(SIMDShift);
+        case Expression::Id::MemoryInitId: DELEGATE(MemoryInit);
+        case Expression::Id::DataDropId: DELEGATE(DataDrop);
+        case Expression::Id::MemoryCopyId: DELEGATE(MemoryCopy);
+        case Expression::Id::MemoryFillId: DELEGATE(MemoryFill);
         case Expression::Id::InvalidId: WASM_UNREACHABLE();
         case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
       }

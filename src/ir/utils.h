@@ -134,6 +134,10 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDBitselect(SIMDBitselect* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitMemoryInit(MemoryInit* curr);
+  void visitDataDrop(DataDrop* curr);
+  void visitMemoryCopy(MemoryCopy* curr);
+  void visitMemoryFill(MemoryFill* curr);
   void visitConst(Const* curr);
   void visitUnary(Unary* curr);
   void visitBinary(Binary* curr);
@@ -186,6 +190,10 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
   void visitSIMDBitselect(SIMDBitselect* curr) { curr->finalize(); }
   void visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
+  void visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
+  void visitDataDrop(DataDrop* curr) { curr->finalize(); }
+  void visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
+  void visitMemoryFill(MemoryFill* curr) { curr->finalize(); }
   void visitConst(Const* curr) { curr->finalize(); }
   void visitUnary(Unary* curr) { curr->finalize(); }
   void visitBinary(Binary* curr) { curr->finalize(); }

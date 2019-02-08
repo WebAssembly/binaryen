@@ -580,6 +580,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   }
   if (importModule.is()) {
     // this is an import, actually
+    if (!importBase.size()) throw ParseException("module but no base for import");
     if (!preParseImport) throw ParseException("!preParseImport in func");
     auto im = make_unique<Function>();
     im->name = name;
@@ -785,6 +786,7 @@ Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
 
 
 Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
+  if (!currFunction) throw ParseException("block is unallowed outside of functions");
   // special-case Block, because Block nesting (in their first element) can be incredibly deep
   auto curr = allocator.alloc<Block>();
   auto* sp = &s;
@@ -1129,6 +1131,41 @@ Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
   ret->op = op;
   ret->vec = parseExpression(s[1]);
   ret->shift = parseExpression(s[2]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
+  auto ret = allocator.alloc<MemoryInit>();
+  ret->segment = atoi(s[1]->str().c_str());
+  ret->dest = parseExpression(s[2]);
+  ret->offset = parseExpression(s[3]);
+  ret->size = parseExpression(s[4]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeDataDrop(Element& s) {
+  auto ret = allocator.alloc<DataDrop>();
+  ret->segment = atoi(s[1]->str().c_str());
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeMemoryCopy(Element& s) {
+  auto ret = allocator.alloc<MemoryCopy>();
+  ret->dest = parseExpression(s[1]);
+  ret->source = parseExpression(s[2]);
+  ret->size = parseExpression(s[3]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeMemoryFill(Element& s) {
+  auto ret = allocator.alloc<MemoryFill>();
+  ret->dest = parseExpression(s[1]);
+  ret->value = parseExpression(s[2]);
+  ret->size = parseExpression(s[3]);
   ret->finalize();
   return ret;
 }
@@ -1571,6 +1608,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   auto module = s[i++]->str();
   if (!s[i]->isStr()) throw ParseException("no name for import");
   auto base = s[i++]->str();
+  if (!module.size() || !base.size()) throw ParseException("imports must have module and base");
   // parse internals
   Element& inner = newStyle ? *s[3] : s;
   Index j = newStyle ? newStyleInner : i;
@@ -1694,6 +1732,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   }
   if (importModule.is()) {
     // this is an import, actually
+    if (!importBase.size()) throw ParseException("module but no base for import");
     if (!preParseImport) throw ParseException("!preParseImport in global");
     auto im = make_unique<Global>();
     im->name = global->name;

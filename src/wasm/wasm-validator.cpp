@@ -250,6 +250,10 @@ public:
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDBitselect(SIMDBitselect* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitMemoryInit(MemoryInit* curr);
+  void visitDataDrop(DataDrop* curr);
+  void visitMemoryCopy(MemoryCopy* curr);
+  void visitMemoryFill(MemoryFill* curr);
   void visitBinary(Binary* curr);
   void visitUnary(Unary* curr);
   void visitSelect(Select* curr);
@@ -634,6 +638,37 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "vector shift must have type v128");
   shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(curr->shift->type, i32, curr, "expected shift amount to have type i32");
+}
+
+void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
+  shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.init must have type none");
+  shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.init dest must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->offset->type, i32, curr, "memory.init offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->size->type, i32, curr, "memory.init size must be an i32");
+  shouldBeTrue(curr->segment < getModule()->memory.segments.size(), curr, "memory.init segment index out of bounds");
+}
+
+void FunctionValidator::visitDataDrop(DataDrop* curr) {
+  shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "data.drop must have type none");
+  shouldBeTrue(curr->segment < getModule()->memory.segments.size(), curr, "data.drop segment index out of bounds");
+}
+
+void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
+  shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.copy must have type none");
+  shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.copy dest must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->source->type, i32, curr, "memory.copy source must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->size->type, i32, curr, "memory.copy size must be an i32");
+}
+
+void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
+  shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.fill must have type none");
+  shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.fill dest must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->value->type, i32, curr, "memory.fill value must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->size->type, i32, curr, "memory.fill size must be an i32");
 }
 
 void FunctionValidator::validateMemBytes(uint8_t bytes, Type type, Expression* curr) {
@@ -1071,6 +1106,12 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   if (curr->imported()) {
     shouldBeTrue(curr->type.is(), curr->name, "imported functions must have a function type");
+  }
+  // validate optional local names
+  std::set<Name> seen;
+  for (auto& pair : curr->localNames) {
+    Name name = pair.second;
+    shouldBeTrue(seen.insert(name).second, name, "local names must be unique");
   }
 }
 

@@ -206,7 +206,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case Xor:  o << "xor";  break;
       case Xchg: o << "xchg"; break;
     }
-    if (curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -218,7 +218,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
      o << "cmpxchg";
-    if (curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -292,6 +292,22 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case ShrSVecI64x2: o << "i64x2.shr_s"; break;
       case ShrUVecI64x2: o << "i64x2.shr_u"; break;
     }
+  }
+  void visitMemoryInit(MemoryInit* curr) {
+    prepareColor(o);
+    o << "memory.init " << curr->segment;
+  }
+  void visitDataDrop(DataDrop* curr) {
+    prepareColor(o);
+    o << "data.drop " << curr->segment;
+  }
+  void visitMemoryCopy(MemoryCopy* curr) {
+    prepareColor(o);
+    o << "memory.copy";
+  }
+  void visitMemoryFill(MemoryFill* curr) {
+    prepareColor(o);
+    o << "memory.fill";
   }
   void visitConst(Const* curr) {
     o << curr->value;
@@ -934,6 +950,38 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->vec);
     printFullLine(curr->shift);
+    decIndent();
+  }
+  void visitMemoryInit(MemoryInit* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->dest);
+    printFullLine(curr->offset);
+    printFullLine(curr->size);
+    decIndent();
+  }
+  void visitDataDrop(DataDrop* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitMemoryCopy(MemoryCopy* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->dest);
+    printFullLine(curr->source);
+    printFullLine(curr->size);
+    decIndent();
+  }
+  void visitMemoryFill(MemoryFill* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->dest);
+    printFullLine(curr->value);
+    printFullLine(curr->size);
     decIndent();
   }
   void visitConst(Const* curr) {

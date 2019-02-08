@@ -140,6 +140,10 @@ public:
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDBitselect(SIMDBitselect* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitMemoryInit(MemoryInit* curr);
+  void visitDataDrop(DataDrop* curr);
+  void visitMemoryCopy(MemoryCopy* curr);
+  void visitMemoryFill(MemoryFill* curr);
   void visitConst(Const* curr);
   void visitUnary(Unary* curr);
   void visitBinary(Binary* curr);
@@ -955,6 +959,47 @@ void StackWriter<Mode, Parent>::visitSIMDShift(SIMDShift* curr) {
 }
 
 template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryInit(MemoryInit* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->offset);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::MiscPrefix);
+  o << U32LEB(BinaryConsts::MemoryInit);
+  o << U32LEB(curr->segment) << int8_t(0);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitDataDrop(DataDrop* curr) {
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::MiscPrefix);
+  o << U32LEB(BinaryConsts::DataDrop);
+  o << U32LEB(curr->segment);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryCopy(MemoryCopy* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->source);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::MiscPrefix);
+  o << U32LEB(BinaryConsts::MemoryCopy);
+  o << int8_t(0) << int8_t(0);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryFill(MemoryFill* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->value);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::MiscPrefix);
+  o << U32LEB(BinaryConsts::MemoryFill);
+  o << int8_t(0);
+}
+
+template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitConst(Const* curr) {
   if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
   if (justAddToStack(curr)) return;
@@ -1052,14 +1097,14 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
     case ExtendS8Int64:          o << int8_t(BinaryConsts::I64ExtendS8); break;
     case ExtendS16Int64:         o << int8_t(BinaryConsts::I64ExtendS16); break;
     case ExtendS32Int64:         o << int8_t(BinaryConsts::I64ExtendS32); break;
-    case TruncSatSFloat32ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32STruncSatF32); break;
-    case TruncSatUFloat32ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32UTruncSatF32); break;
-    case TruncSatSFloat64ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32STruncSatF64); break;
-    case TruncSatUFloat64ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32UTruncSatF64); break;
-    case TruncSatSFloat32ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64STruncSatF32); break;
-    case TruncSatUFloat32ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64UTruncSatF32); break;
-    case TruncSatSFloat64ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64STruncSatF64); break;
-    case TruncSatUFloat64ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64UTruncSatF64); break;
+    case TruncSatSFloat32ToInt32: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I32STruncSatF32); break;
+    case TruncSatUFloat32ToInt32: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I32UTruncSatF32); break;
+    case TruncSatSFloat64ToInt32: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I32STruncSatF64); break;
+    case TruncSatUFloat64ToInt32: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I32UTruncSatF64); break;
+    case TruncSatSFloat32ToInt64: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I64STruncSatF32); break;
+    case TruncSatUFloat32ToInt64: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I64UTruncSatF32); break;
+    case TruncSatSFloat64ToInt64: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I64STruncSatF64); break;
+    case TruncSatUFloat64ToInt64: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I64UTruncSatF64); break;
     case SplatVecI8x16:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Splat); break;
     case SplatVecI16x8:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Splat); break;
     case SplatVecI32x4:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Splat); break;

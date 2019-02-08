@@ -43,6 +43,7 @@ EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
 EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=1"
 EMCC_ARGS="$EMCC_ARGS -s WASM=0"
 EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
+EMCC_ARGS="$EMCC_ARGS -s BINARYEN_ASYNC_COMPILATION=0"
 # TODO: enable this (need nearbyint in emscripten tag) EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
 EMCC_ARGS="$EMCC_ARGS -s DISABLE_EXCEPTION_CATCHING=0" # Exceptions are thrown and caught when optimizing endless loops
 OUT_FILE_SUFFIX=
@@ -208,6 +209,10 @@ export_function "_BinaryenSIMDReplaceId"
 export_function "_BinaryenSIMDShuffleId"
 export_function "_BinaryenSIMDBitselectId"
 export_function "_BinaryenSIMDShiftId"
+export_function "_BinaryenMemoryInitId"
+export_function "_BinaryenDataDropId"
+export_function "_BinaryenMemoryCopyId"
+export_function "_BinaryenMemoryFillId"
 
 # External kinds
 export_function "_BinaryenExternalFunction"
@@ -540,6 +545,10 @@ export_function "_BinaryenSIMDReplace"
 export_function "_BinaryenSIMDShuffle"
 export_function "_BinaryenSIMDBitselect"
 export_function "_BinaryenSIMDShift"
+export_function "_BinaryenMemoryInit"
+export_function "_BinaryenDataDrop"
+export_function "_BinaryenMemoryCopy"
+export_function "_BinaryenMemoryFill"
 
 # 'Expression' operations
 export_function "_BinaryenExpressionGetId"
@@ -695,6 +704,25 @@ export_function "_BinaryenSIMDBitselectGetCond"
 export_function "_BinaryenSIMDShiftGetOp"
 export_function "_BinaryenSIMDShiftGetVec"
 export_function "_BinaryenSIMDShiftGetShift"
+
+# 'MemoryInit' expression operations
+export_function "_BinaryenMemoryInitGetSegment"
+export_function "_BinaryenMemoryInitGetDest"
+export_function "_BinaryenMemoryInitGetOffset"
+export_function "_BinaryenMemoryInitGetSize"
+
+# 'DataDrop' expression operations
+export_function "_BinaryenDataDropGetSegment"
+
+# 'MemoryCopy' expression operations
+export_function "_BinaryenMemoryCopyGetDest"
+export_function "_BinaryenMemoryCopyGetSource"
+export_function "_BinaryenMemoryCopyGetSize"
+
+# 'MemoryFill' expression operations
+export_function "_BinaryenMemoryFillGetDest"
+export_function "_BinaryenMemoryFillGetValue"
+export_function "_BinaryenMemoryFillGetSize"
 
 # 'Module' operations
 export_function "_BinaryenModuleCreate"

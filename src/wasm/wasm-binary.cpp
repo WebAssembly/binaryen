@@ -719,7 +719,7 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::UserSections::Linking)) {
-      std::cerr << "warning: linking section is present, which binaryen cannot handle yet - relocations will be invalidated!\n";
+      std::cerr << "warning: linking section is present, so this is not a standard wasm file - binaryen cannot handle this properly!\n";
     }
     wasm.userSections.resize(wasm.userSections.size() + 1);
     auto& section = wasm.userSections.back();
@@ -967,6 +967,9 @@ void WasmBinaryBuilder::readSignatures() {
 }
 
 Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
+  if (i >= wasm.functions.size()) {
+    throwError("invalid function index");
+  }
   return wasm.functions[i]->name;
 }
 
@@ -1712,10 +1715,14 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       throwError("invalid code after atomic prefix: " + std::to_string(code));
       break;
     }
-    case BinaryConsts::TruncSatPrefix: {
+    case BinaryConsts::MiscPrefix: {
       auto opcode = getU32LEB();
       if (maybeVisitTruncSat(curr, opcode)) break;
-      throwError("invalid code after nontrapping float-to-int prefix: " + std::to_string(code));
+      if (maybeVisitMemoryInit(curr, opcode)) break;
+      if (maybeVisitDataDrop(curr, opcode)) break;
+      if (maybeVisitMemoryCopy(curr, opcode)) break;
+      if (maybeVisitMemoryFill(curr, opcode)) break;
+      throwError("invalid code after nontrapping float-to-int prefix: " + std::to_string(opcode));
       break;
     }
     case BinaryConsts::SIMDPrefix: {
@@ -1799,8 +1806,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
     curr->name = getNextLabel();
     breakStack.push_back({curr->name, curr->type != none});
     stack.push_back(curr);
-    auto peek = input[pos];
-    if (peek == BinaryConsts::Block) {
+    if (more() && input[pos] == BinaryConsts::Block) {
       // a recursion
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
@@ -2334,6 +2340,66 @@ bool WasmBinaryBuilder::maybeVisitTruncSat(Expression*& out, uint32_t code) {
   }
   if (debug) std::cerr << "zz node: Unary (nontrapping float-to-int)" << std::endl;
   curr->value = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitMemoryInit(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::MemoryInit) {
+    return false;
+  }
+  auto* curr = allocator.alloc<MemoryInit>();
+  curr->size = popNonVoidExpression();
+  curr->offset = popNonVoidExpression();
+  curr->dest = popNonVoidExpression();
+  curr->segment = getU32LEB();
+  if (getInt8() != 0) {
+    throwError("Unexpected nonzero memory index");
+  }
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitDataDrop(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::DataDrop) {
+    return false;
+  }
+  auto* curr = allocator.alloc<DataDrop>();
+  curr->segment = getU32LEB();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitMemoryCopy(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::MemoryCopy) {
+    return false;
+  }
+  auto* curr = allocator.alloc<MemoryCopy>();
+  curr->size = popNonVoidExpression();
+  curr->source = popNonVoidExpression();
+  curr->dest = popNonVoidExpression();
+  if (getInt8() != 0 || getInt8() != 0) {
+    throwError("Unexpected nonzero memory index");
+  }
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitMemoryFill(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::MemoryFill) {
+    return false;
+  }
+  auto* curr = allocator.alloc<MemoryFill>();
+  curr->size = popNonVoidExpression();
+  curr->value = popNonVoidExpression();
+  curr->dest = popNonVoidExpression();
+  if (getInt8() != 0) {
+    throwError("Unexpected nonzero memory index");
+  }
   curr->finalize();
   out = curr;
   return true;

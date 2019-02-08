@@ -1241,7 +1241,7 @@
    (local.get $0)
   )
  )
- (func $almost-sign-ext (; 12 ;) (type $5) (param $0 i32) (param $0 i32)
+ (func $almost-sign-ext (; 12 ;) (type $6) (param $0 i32)
   (drop
    (i32.shr_s
     (i32.shl

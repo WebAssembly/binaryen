@@ -73,6 +73,10 @@ Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
 Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
 Module['SIMDBitselectId'] = Module['_BinaryenSIMDBitselectId']();
 Module['SIMDShiftId'] = Module['_BinaryenSIMDShiftId']();
+Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
+Module['DataDropId'] = Module['_BinaryenDataDropId']();
+Module['MemoryCopyId'] = Module['_BinaryenMemoryCopyId']();
+Module['MemoryFillId'] = Module['_BinaryenMemoryFillId']();
 
 // External kinds
 Module['ExternalFunction'] = Module['_BinaryenExternalFunction']();
@@ -460,12 +464,30 @@ function wrapModule(module, self) {
     return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
   }
 
+  self['memory'] = {
+    'init': function(segment, dest, offset, size) {
+      return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size);
+    },
+    'copy': function(dest, source, size) {
+      return Module['_BinaryenMemoryCopy'](module, dest, source, size);
+    },
+    'fill': function(dest, value, size) {
+      return Module['_BinaryenMemoryFill'](module, dest, value, size);
+    }
+  }
+
+  self['data'] = {
+    'drop': function(segment) {
+      return Module['_BinaryenDataDrop'](module, segment);
+    }
+  }
+
   // The Const creation API is a little different: we don't want users to
   // need to make their own Literals, as the C API handles them by value,
   // which means we would leak them. Instead, this is the only API that
   // accepts Literals, so fuse it with Literal creation
-  var temp = _malloc(16); // a single literal in memory. the LLVM C ABI
-                          // makes us pass pointers to this.
+  var temp = _malloc(Module['_BinaryenSizeofLiteral']()); // a single literal in memory. the LLVM C ABI
+                                                          // makes us pass pointers to this.
 
   self['i32'] = {
     'load': function(offset, align, ptr) {
@@ -1887,7 +1909,7 @@ function wrapModule(module, self) {
         buffer.set(HEAPU8.subarray(binaryPtr, binaryPtr + binaryBytes));
         return typeof sourceMapUrl === 'undefined'
           ? buffer
-          : { 'binary': buffer, 'sourceMap': Pointer_stringify(sourceMapPtr) };
+          : { 'binary': buffer, 'sourceMap': UTF8ToString(sourceMapPtr) };
       } finally {
         _free(binaryPtr);
         if (sourceMapPtr) _free(sourceMapPtr);
@@ -1903,7 +1925,7 @@ function wrapModule(module, self) {
     });
   };
   self['getDebugInfoFileName'] = function(index) {
-    return Pointer_stringify(Module['_BinaryenModuleGetDebugInfoFileName'](module, index));
+    return UTF8ToString(Module['_BinaryenModuleGetDebugInfoFileName'](module, index));
   };
   self['setDebugLocation'] = function(func, expr, fileIndex, lineNumber, columnNumber) {
     return Module['_BinaryenFunctionSetDebugLocation'](func, expr, fileIndex, lineNumber, columnNumber);
@@ -1964,7 +1986,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'name': Pointer_stringify(Module['_BinaryenBlockGetName'](expr)),
+        'name': UTF8ToString(Module['_BinaryenBlockGetName'](expr)),
         'children': getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChild'])
       };
     case Module['IfId']:
@@ -1979,14 +2001,14 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'name': Pointer_stringify(Module['_BinaryenLoopGetName'](expr)),
+        'name': UTF8ToString(Module['_BinaryenLoopGetName'](expr)),
         'body': Module['_BinaryenLoopGetBody'](expr)
       };
     case Module['BreakId']:
       return {
         'id': id,
         'type': type,
-        'name': Pointer_stringify(Module['_BinaryenBreakGetName'](expr)),
+        'name': UTF8ToString(Module['_BinaryenBreakGetName'](expr)),
         'condition': Module['_BinaryenBreakGetCondition'](expr),
         'value': Module['_BinaryenBreakGetValue'](expr)
       };
@@ -1995,7 +2017,7 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetName']).map(Pointer_stringify),
-        'defaultName': Pointer_stringify(Module['_BinaryenSwitchGetDefaultName'](expr)),
+        'defaultName': UTF8ToString(Module['_BinaryenSwitchGetDefaultName'](expr)),
         'condition': Module['_BinaryenSwitchGetCondition'](expr),
         'value': Module['_BinaryenSwitchGetValue'](expr)
       };
@@ -2003,7 +2025,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'target': Pointer_stringify(Module['_BinaryenCallGetTarget'](expr)),
+        'target': UTF8ToString(Module['_BinaryenCallGetTarget'](expr)),
         'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperand'])
       };
     case Module['CallIndirectId']:
@@ -2031,13 +2053,13 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'name': Pointer_stringify(Module['_BinaryenGetGlobalGetName'](expr))
+        'name': UTF8ToString(Module['_BinaryenGetGlobalGetName'](expr))
       };
     case Module['SetGlobalId']:
       return {
         'id': id,
         'type': type,
-        'name': Pointer_stringify(Module['_BinaryenSetGlobalGetName'](expr)),
+        'name': UTF8ToString(Module['_BinaryenSetGlobalGetName'](expr)),
         'value': Module['_BinaryenSetGlobalGetValue'](expr)
       };
     case Module['LoadId']:
@@ -2123,7 +2145,7 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'op': Module['_BinaryenHostGetOp'](expr),
-        'nameOperand': Pointer_stringify(Module['_BinaryenHostGetNameOperand'](expr)),
+        'nameOperand': UTF8ToString(Module['_BinaryenHostGetNameOperand'](expr)),
         'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperand'])
       };
     case Module['AtomicRMWId']:
@@ -2211,6 +2233,34 @@ Module['getExpressionInfo'] = function(expr) {
         'vec': Module['_BinaryenSIMDShiftGetVec'](expr),
         'shift': Module['_BinaryenSIMDShiftGetShift'](expr)
       };
+    case Module['MemoryInitId']:
+      return {
+        'id': id,
+        'segment': Module['_BinaryenMemoryInitGetSegment'](expr),
+        'dest': Module['_BinaryenMemoryInitGetDest'](expr),
+        'offset': Module['_BinaryenMemoryInitGetOffset'](expr),
+        'size': Module['_BinaryenMemoryInitGetSize'](expr)
+      };
+    case Module['DataDropId']:
+      return {
+        'id': id,
+        'segment': Module['_BinaryenDataDropGetSegment'](expr),
+      };
+    case Module['MemoryCopyId']:
+      return {
+        'id': id,
+        'dest': Module['_BinaryenMemoryCopyGetDest'](expr),
+        'source': Module['_BinaryenMemoryCopyGetSource'](expr),
+        'size': Module['_BinaryenMemoryCopyGetSize'](expr)
+      };
+    case Module['MemoryFillId']:
+      return {
+        'id': id,
+        'dest': Module['_BinaryenMemoryFillGetDest'](expr),
+        'value': Module['_BinaryenMemoryFillGetValue'](expr),
+        'size': Module['_BinaryenMemoryFillGetSize'](expr)
+      };
+
     default:
       throw Error('unexpected id: ' + id);
   }
@@ -2219,7 +2269,7 @@ Module['getExpressionInfo'] = function(expr) {
 // Obtains information about a 'FunctionType'
 Module['getFunctionTypeInfo'] = function(func) {
   return {
-    'name': Pointer_stringify(Module['_BinaryenFunctionTypeGetName'](func)),
+    'name': UTF8ToString(Module['_BinaryenFunctionTypeGetName'](func)),
     'params': getAllNested(func, Module['_BinaryenFunctionTypeGetNumParams'], Module['_BinaryenFunctionTypeGetParam']),
     'result': Module['_BinaryenFunctionTypeGetResult'](func)
   };
@@ -2228,10 +2278,10 @@ Module['getFunctionTypeInfo'] = function(func) {
 // Obtains information about a 'Function'
 Module['getFunctionInfo'] = function(func) {
   return {
-    'name': Pointer_stringify(Module['_BinaryenFunctionGetName'](func)),
-    'module': Pointer_stringify(Module['_BinaryenFunctionImportGetModule'](func)),
-    'base': Pointer_stringify(Module['_BinaryenFunctionImportGetBase'](func)),
-    'type': Pointer_stringify(Module['_BinaryenFunctionGetType'](func)),
+    'name': UTF8ToString(Module['_BinaryenFunctionGetName'](func)),
+    'module': UTF8ToString(Module['_BinaryenFunctionImportGetModule'](func)),
+    'base': UTF8ToString(Module['_BinaryenFunctionImportGetBase'](func)),
+    'type': UTF8ToString(Module['_BinaryenFunctionGetType'](func)),
     'params': getAllNested(func, Module['_BinaryenFunctionGetNumParams'], Module['_BinaryenFunctionGetParam']),
     'result': Module['_BinaryenFunctionGetResult'](func),
     'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
@@ -2242,10 +2292,10 @@ Module['getFunctionInfo'] = function(func) {
 // Obtains information about a 'Global'
 Module['getGlobalInfo'] = function(func) {
   return {
-    'name': Pointer_stringify(Module['_BinaryenGlobalGetName'](func)),
-    'module': Pointer_stringify(Module['_BinaryenGlobalImportGetModule'](func)),
-    'base': Pointer_stringify(Module['_BinaryenGlobalImportGetBase'](func)),
-    'type': Pointer_stringify(Module['_BinaryenGlobalGetType'](func))
+    'name': UTF8ToString(Module['_BinaryenGlobalGetName'](func)),
+    'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](func)),
+    'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](func)),
+    'type': UTF8ToString(Module['_BinaryenGlobalGetType'](func))
   };
 };
 
@@ -2253,8 +2303,8 @@ Module['getGlobalInfo'] = function(func) {
 Module['getExportInfo'] = function(export_) {
   return {
     'kind': Module['_BinaryenExportGetKind'](export_),
-    'name': Pointer_stringify(Module['_BinaryenExportGetName'](export_)),
-    'value': Pointer_stringify(Module['_BinaryenExportGetValue'](export_))
+    'name': UTF8ToString(Module['_BinaryenExportGetName'](export_)),
+    'value': UTF8ToString(Module['_BinaryenExportGetValue'](export_))
   };
 };
 

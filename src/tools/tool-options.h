@@ -23,10 +23,10 @@
 
 namespace wasm {
 
-struct FeatureOptions : public Options {
+struct ToolOptions : public Options {
   PassOptions passOptions;
 
-  FeatureOptions(const std::string& command, const std::string& description)
+  ToolOptions(const std::string& command, const std::string& description)
       : Options(command, description) {
     (*this)
         .add("--mvp-features", "-mvp", "Disable all non-MVP features",
@@ -72,17 +72,34 @@ struct FeatureOptions : public Options {
                passOptions.features.setTruncSat(false);
              })
         .add("--enable-simd", "",
-             "Enable nontrapping float-to-int operations",
+             "Enable SIMD operations and types",
              Options::Arguments::Zero,
              [this](Options *o, const std::string& arguments) {
                passOptions.features.setSIMD();
              })
         .add("--disable-simd", "",
-             "Disable nontrapping float-to-int operations",
+             "Disable SIMD operations and types",
              Options::Arguments::Zero,
              [this](Options *o, const std::string& arguments) {
                passOptions.features.setSIMD(false);
              })
+        .add("--enable-bulk-memory", "",
+             "Enable bulk memory operations",
+             Options::Arguments::Zero,
+             [this](Options *o, const std::string& arguments) {
+               passOptions.features.setBulkMemory();
+             })
+        .add("--disable-bulk-memory", "",
+             "Disable bulk memory operations",
+             Options::Arguments::Zero,
+             [this](Options *o, const std::string& arguments) {
+               passOptions.features.setBulkMemory(false);
+             })
+        .add("--no-validation", "-n", "Disables validation, assumes inputs are correct",
+             Options::Arguments::Zero,
+             [this](Options* o, const std::string& argument) {
+               passOptions.validate = false;
+             });
         ;
   }
 

@@ -334,6 +334,37 @@ public:
     ret->finalize();
     return ret;
   }
+  MemoryInit* makeMemoryInit(uint32_t segment, Expression* dest, Expression* offset, Expression* size) {
+    auto* ret = allocator.alloc<MemoryInit>();
+    ret->segment = segment;
+    ret->dest = dest;
+    ret->offset = offset;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  DataDrop* makeDataDrop(uint32_t segment) {
+    auto* ret = allocator.alloc<DataDrop>();
+    ret->segment = segment;
+    ret->finalize();
+    return ret;
+  }
+  MemoryCopy* makeMemoryCopy(Expression* dest, Expression* source, Expression* size) {
+    auto* ret = allocator.alloc<MemoryCopy>();
+    ret->dest = dest;
+    ret->source = source;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  MemoryFill* makeMemoryFill(Expression* dest, Expression* value, Expression* size) {
+    auto* ret = allocator.alloc<MemoryFill>();
+    ret->dest = dest;
+    ret->value = value;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
   Const* makeConst(Literal value) {
     assert(isConcreteType(value.type));
     auto* ret = allocator.alloc<Const>();

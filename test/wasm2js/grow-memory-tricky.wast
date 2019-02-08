@@ -7,14 +7,14 @@
  (export "f2" (func $1))
 
  (func $0 (result i32)
-  (block
+  (block (result i32)
     (i32.store (i32.const 0) (grow_memory (i32.const 1)))
     (i32.load (i32.const 0))
   )
  )
 
  (func $1 (result i32)
-  (block
+  (block (result i32)
     (i32.store (i32.const 0) (call $grow))
     (i32.load (i32.const 0))
   )

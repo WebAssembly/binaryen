@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "feature-options.h"
+#include "tool-options.h"
 
 //
 // Shared optimization options for commandline tools
@@ -22,12 +22,12 @@
 
 namespace wasm {
 
-struct OptimizationOptions : public FeatureOptions {
+struct OptimizationOptions : public ToolOptions {
   static constexpr const char* DEFAULT_OPT_PASSES = "O";
 
   std::vector<std::string> passes;
 
-  OptimizationOptions(const std::string& command, const std::string& description) : FeatureOptions(command, description) {
+  OptimizationOptions(const std::string& command, const std::string& description) : ToolOptions(command, description) {
     (*this).add("", "-O", "execute default optimization passes",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
@@ -91,11 +91,6 @@ struct OptimizationOptions : public FeatureOptions {
                 Options::Arguments::One,
                 [this](Options* o, const std::string& argument) {
                   passOptions.shrinkLevel = atoi(argument.c_str());
-                })
-           .add("--no-validation", "-n", "Disables validation, assumes inputs are correct",
-                Options::Arguments::Zero,
-                [this](Options* o, const std::string& argument) {
-                  passOptions.validate = false;
                 })
            .add("--ignore-implicit-traps", "-iit", "Optimize under the helpful assumption that no surprising traps occur (from load, div/mod, etc.)",
                 Options::Arguments::Zero,

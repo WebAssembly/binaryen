@@ -94,6 +94,10 @@ function test_ids() {
   console.log("BinaryenSIMDShuffleId: " + Binaryen.SIMDShuffleId);
   console.log("BinaryenSIMDBitselectId: " + Binaryen.SIMDBitselectId);
   console.log("BinaryenSIMDShiftId: " + Binaryen.SIMDShiftId);
+  console.log("MemoryInitId: " + Binaryen.MemoryInitId);
+  console.log("DataDropId: " + Binaryen.DataDropId);
+  console.log("MemoryCopyId: " + Binaryen.MemoryCopyId);
+  console.log("MemoryFillId: " + Binaryen.MemoryFillId);
 }
 
 function test_core() {
@@ -340,6 +344,11 @@ function test_core() {
     // Other SIMD
     module.v8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    // Bulk memory
+    module.memory.init(0, makeInt32(1024), makeInt32(0), makeInt32(12)),
+    module.data.drop(0),
+    module.memory.copy(makeInt32(2048), makeInt32(1024), makeInt32(12)),
+    module.memory.fill(makeInt32(0), makeInt32(42), makeInt32(1024)),
     // All the rest
     module.block('', []), // block with no name
     module.if(temp1, temp2, temp3),
@@ -732,6 +741,10 @@ function test_parsing() {
   module2.dispose();
 }
 
+function test_internals() {
+  console.log('sizeof Literal: ' + Binaryen['_BinaryenSizeofLiteral']());
+}
+
 function main() {
   test_types();
   test_ids();
@@ -742,6 +755,7 @@ function main() {
   test_nonvalid();
   test_tracing();
   test_parsing();
+  test_internals();
 }
 
 main();

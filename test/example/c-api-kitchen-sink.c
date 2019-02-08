@@ -121,6 +121,31 @@ BinaryenExpressionRef makeSIMDShift(BinaryenModuleRef module, BinaryenOp op) {
   return BinaryenSIMDShift(module, op, vec, makeInt32(module, 1));
 }
 
+BinaryenExpressionRef makeMemoryInit(BinaryenModuleRef module) {
+  BinaryenExpressionRef dest = makeInt32(module, 1024);
+  BinaryenExpressionRef offset = makeInt32(module, 0);
+  BinaryenExpressionRef size = makeInt32(module, 12);
+  return BinaryenMemoryInit(module, 0, dest, offset, size);
+};
+
+BinaryenExpressionRef makeDataDrop(BinaryenModuleRef module) {
+  return BinaryenDataDrop(module, 0);
+};
+
+BinaryenExpressionRef makeMemoryCopy(BinaryenModuleRef module) {
+  BinaryenExpressionRef dest = makeInt32(module, 2048);
+  BinaryenExpressionRef source = makeInt32(module, 1024);
+  BinaryenExpressionRef size = makeInt32(module, 12);
+  return BinaryenMemoryCopy(module, dest, source, size);
+};
+
+BinaryenExpressionRef makeMemoryFill(BinaryenModuleRef module) {
+  BinaryenExpressionRef dest = makeInt32(module, 0);
+  BinaryenExpressionRef value = makeInt32(module, 42);
+  BinaryenExpressionRef size = makeInt32(module, 1024);
+  return BinaryenMemoryFill(module, dest, value, size);
+};
+
 // tests
 
 void test_types() {
@@ -387,6 +412,11 @@ void test_core() {
     // Other SIMD
     makeSIMDShuffle(module),
     makeSIMDBitselect(module),
+    // Bulk memory
+    makeMemoryInit(module),
+    makeDataDrop(module),
+    makeMemoryCopy(module),
+    makeMemoryFill(module),
     // All the rest
     BinaryenBlock(module, NULL, NULL, 0, -1), // block with no name and no type
     BinaryenIf(module, temp1, temp2, temp3),

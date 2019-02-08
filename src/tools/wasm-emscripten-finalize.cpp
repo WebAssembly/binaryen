@@ -173,15 +173,6 @@ int main(int argc, const char *argv[]) {
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
-  PassRunner passRunner(&wasm);
-  passRunner.setDebug(options.debug);
-  passRunner.setDebugInfo(debugInfo);
-  passRunner.add(ABI::getLegalizationPass(
-    legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
-                          : ABI::LegalizationLevel::Minimal
-  ));
-  passRunner.run();
-
   std::vector<Name> initializerFunctions;
 
   // The names of standard imports/exports used by lld doesn't quite match that
@@ -213,10 +204,30 @@ int main(int argc, const char *argv[]) {
 
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
+
+  // Legalize the wasm.
+  {
+    PassRunner passRunner(&wasm);
+    passRunner.setDebug(options.debug);
+    passRunner.setDebugInfo(debugInfo);
+    passRunner.add(ABI::getLegalizationPass(
+      legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
+                            : ABI::LegalizationLevel::Minimal
+    ));
+    passRunner.run();
+  }
+
+  // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
+
+  // Finally, separate out data segments if relevant (they may have been needed
+  // for metadata).
   if (!dataSegmentFile.empty()) {
     Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
-    generator.separateDataSegments(&memInitFile);
+    if (globalBase == INVALID_BASE) {
+      Fatal() << "globalBase must be set";
+    }
+    generator.separateDataSegments(&memInitFile, globalBase);
   }
 
   if (options.debug) {
