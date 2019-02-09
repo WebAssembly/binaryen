@@ -206,7 +206,12 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         break;
       }
       case Expression::Id::AtomicWaitId: {
+        CHECK(AtomicWait, offset);
         CHECK(AtomicWait, expectedType);
+        break;
+      }
+      case Expression::Id::AtomicWakeId: {
+        CHECK(AtomicWake, offset);
         break;
       }
       case Expression::Id::SIMDExtractId: {
@@ -259,7 +264,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       case Expression::Id::NumExpressionIds: {
         WASM_UNREACHABLE();
       }
-      case Expression::Id::AtomicWakeId:
       case Expression::Id::SIMDBitselectId:
       case Expression::Id::MemoryCopyId:
       case Expression::Id::MemoryFillId:
@@ -489,7 +493,6 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       case Expression::Id::NumExpressionIds: {
         WASM_UNREACHABLE();
       }
-      case Expression::Id::AtomicWakeId:
       case Expression::Id::SIMDBitselectId:
       case Expression::Id::MemoryCopyId:
       case Expression::Id::MemoryFillId:
