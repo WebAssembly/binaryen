@@ -209,9 +209,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         CHECK(AtomicWait, expectedType);
         break;
       }
-      case Expression::Id::AtomicWakeId: {
-        break;
-      }
       case Expression::Id::SIMDExtractId: {
         CHECK(SIMDExtract, op);
         CHECK(SIMDExtract, index);
@@ -226,9 +223,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         CHECK(SIMDShuffle, mask);
         break;
       }
-      case Expression::Id::SIMDBitselectId: {
-        break;
-      }
       case Expression::Id::SIMDShiftId: {
         CHECK(SIMDShift, op);
         break;
@@ -239,12 +233,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       }
       case Expression::Id::DataDropId: {
         CHECK(DataDrop, segment);
-        break;
-      }
-      case Expression::Id::MemoryCopyId: {
-        break;
-      }
-      case Expression::Id::MemoryFillId: {
         break;
       }
       case Expression::Id::ConstId: {
@@ -267,16 +255,16 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         CHECK(Host, operands.size());
         break;
       }
-      case Expression::Id::NopId: {
-        break;
-      }
-      case Expression::Id::UnreachableId: {
-        break;
-      }
       case Expression::Id::InvalidId:
       case Expression::Id::NumExpressionIds: {
         WASM_UNREACHABLE();
       }
+      case Expression::Id::AtomicWakeId:
+      case Expression::Id::SIMDBitselectId:
+      case Expression::Id::MemoryCopyId:
+      case Expression::Id::MemoryFillId:
+      case Expression::Id::NopId:
+      case Expression::Id::UnreachableId:
       case Expression::Id::IfId:
       case Expression::Id::SelectId:
       case Expression::Id::DropId:
@@ -355,8 +343,6 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
     // type for all of them.
     hash(curr->type);
 
-    #define PUSH(clazz, what) \
-      stack.push_back(curr->cast<clazz>()->what);
     #define HASH(clazz, what) \
       hash(curr->cast<clazz>()->what);
     #define HASH64(clazz, what) \
@@ -369,26 +355,14 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       case Expression::Id::BlockId: {
         noteName(curr->cast<Block>()->name);
         HASH(Block, list.size());
-        for (Index i = 0; i < curr->cast<Block>()->list.size(); i++) {
-          PUSH(Block, list[i]);
-        }
-        break;
-      }
-      case Expression::Id::IfId: {
-        PUSH(If, condition);
-        PUSH(If, ifTrue);
-        PUSH(If, ifFalse);
         break;
       }
       case Expression::Id::LoopId: {
         noteName(curr->cast<Loop>()->name);
-        PUSH(Loop, body);
         break;
       }
       case Expression::Id::BreakId: {
         hashName(curr->cast<Break>()->name);
-        PUSH(Break, condition);
-        PUSH(Break, value);
         break;
       }
       case Expression::Id::SwitchId: {
@@ -397,25 +371,16 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
           hashName(curr->cast<Switch>()->targets[i]);
         }
         hashName(curr->cast<Switch>()->default_);
-        PUSH(Switch, condition);
-        PUSH(Switch, value);
         break;
       }
       case Expression::Id::CallId: {
         HASH_NAME(Call, target);
         HASH(Call, operands.size());
-        for (Index i = 0; i < curr->cast<Call>()->operands.size(); i++) {
-          PUSH(Call, operands[i]);
-        }
         break;
       }
       case Expression::Id::CallIndirectId: {
-        PUSH(CallIndirect, target);
         HASH_NAME(CallIndirect, fullType);
         HASH(CallIndirect, operands.size());
-        for (Index i = 0; i < curr->cast<CallIndirect>()->operands.size(); i++) {
-          PUSH(CallIndirect, operands[i]);
-        }
         break;
       }
       case Expression::Id::GetLocalId: {
@@ -424,7 +389,6 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       }
       case Expression::Id::SetLocalId: {
         HASH(SetLocal, index);
-        PUSH(SetLocal, value);
         break;
       }
       case Expression::Id::GetGlobalId: {
@@ -433,7 +397,6 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       }
       case Expression::Id::SetGlobalId: {
         HASH_NAME(SetGlobal, name);
-        PUSH(SetGlobal, value);
         break;
       }
       case Expression::Id::LoadId: {
@@ -444,7 +407,6 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         HASH(Load, offset);
         HASH(Load, align);
         HASH(Load, isAtomic);
-        PUSH(Load, ptr);
         break;
       }
       case Expression::Id::StoreId: {
@@ -453,94 +415,54 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         HASH(Store, align);
         HASH(Store, valueType);
         HASH(Store, isAtomic);
-        PUSH(Store, ptr);
-        PUSH(Store, value);
         break;
       }
       case Expression::Id::AtomicCmpxchgId: {
         HASH(AtomicCmpxchg, bytes);
         HASH(AtomicCmpxchg, offset);
-        PUSH(AtomicCmpxchg, ptr);
-        PUSH(AtomicCmpxchg, expected);
-        PUSH(AtomicCmpxchg, replacement);
         break;
       }
       case Expression::Id::AtomicRMWId: {
         HASH(AtomicRMW, op);
         HASH(AtomicRMW, bytes);
         HASH(AtomicRMW, offset);
-        PUSH(AtomicRMW, ptr);
-        PUSH(AtomicRMW, value);
         break;
       }
       case Expression::Id::AtomicWaitId: {
         HASH(AtomicWait, offset);
         HASH(AtomicWait, expectedType);
-        PUSH(AtomicWait, ptr);
-        PUSH(AtomicWait, expected);
-        PUSH(AtomicWait, timeout);
         break;
       }
       case Expression::Id::AtomicWakeId: {
         HASH(AtomicWake, offset);
-        PUSH(AtomicWake, ptr);
-        PUSH(AtomicWake, wakeCount);
         break;
       }
       case Expression::Id::SIMDExtractId: {
         HASH(SIMDExtract, op);
         HASH(SIMDExtract, index);
-        PUSH(SIMDExtract, vec);
         break;
       }
       case Expression::Id::SIMDReplaceId: {
         HASH(SIMDReplace, op);
         HASH(SIMDReplace, index);
-        PUSH(SIMDReplace, vec);
-        PUSH(SIMDReplace, value);
         break;
       }
       case Expression::Id::SIMDShuffleId: {
         for (size_t i = 0; i < 16; ++i) {
           HASH(SIMDShuffle, mask[i]);
         }
-        PUSH(SIMDShuffle, left);
-        PUSH(SIMDShuffle, right);
-        break;
-      }
-      case Expression::Id::SIMDBitselectId: {
-        PUSH(SIMDBitselect, left);
-        PUSH(SIMDBitselect, right);
-        PUSH(SIMDBitselect, cond);
         break;
       }
       case Expression::Id::SIMDShiftId: {
         HASH(SIMDShift, op);
-        PUSH(SIMDShift, vec);
-        PUSH(SIMDShift, shift);
         break;
       }
       case Expression::Id::MemoryInitId: {
         HASH(MemoryInit, segment);
-        PUSH(MemoryInit, dest);
-        PUSH(MemoryInit, offset);
-        PUSH(MemoryInit, size);
         break;
       }
       case Expression::Id::DataDropId: {
         HASH(DataDrop, segment);
-        break;
-      }
-      case Expression::Id::MemoryCopyId: {
-        PUSH(MemoryCopy, dest);
-        PUSH(MemoryCopy, source);
-        PUSH(MemoryCopy, size);
-        break;
-      }
-      case Expression::Id::MemoryFillId: {
-        PUSH(MemoryFill, dest);
-        PUSH(MemoryFill, value);
-        PUSH(MemoryFill, size);
         break;
       }
       case Expression::Id::ConstId: {
@@ -551,51 +473,39 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       }
       case Expression::Id::UnaryId: {
         HASH(Unary, op);
-        PUSH(Unary, value);
         break;
       }
       case Expression::Id::BinaryId: {
         HASH(Binary, op);
-        PUSH(Binary, left);
-        PUSH(Binary, right);
-        break;
-      }
-      case Expression::Id::SelectId: {
-        PUSH(Select, ifTrue);
-        PUSH(Select, ifFalse);
-        PUSH(Select, condition);
-        break;
-      }
-      case Expression::Id::DropId: {
-        PUSH(Drop, value);
-        break;
-      }
-      case Expression::Id::ReturnId: {
-        PUSH(Return, value);
         break;
       }
       case Expression::Id::HostId: {
         HASH(Host, op);
         HASH_NAME(Host, nameOperand);
         HASH(Host, operands.size());
-        for (Index i = 0; i < curr->cast<Host>()->operands.size(); i++) {
-          PUSH(Host, operands[i]);
-        }
-        break;
-      }
-      case Expression::Id::NopId: {
-        break;
-      }
-      case Expression::Id::UnreachableId: {
         break;
       }
       case Expression::Id::InvalidId:
       case Expression::Id::NumExpressionIds: {
         WASM_UNREACHABLE();
       }
+      case Expression::Id::AtomicWakeId:
+      case Expression::Id::SIMDBitselectId:
+      case Expression::Id::MemoryCopyId:
+      case Expression::Id::MemoryFillId:
+      case Expression::Id::NopId:
+      case Expression::Id::UnreachableId:
+      case Expression::Id::IfId:
+      case Expression::Id::SelectId:
+      case Expression::Id::DropId:
+      case Expression::Id::ReturnId: {
+        break; // some nodes have no immediate fields
+      }
     }
     #undef HASH
-    #undef PUSH
+    for (auto* child : ChildIterator(curr)) {
+      stack.push_back(child);
+    }
   }
   return digest;
 }
