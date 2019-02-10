@@ -77,6 +77,149 @@ bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
   return false;
 }
 
+//
+// Allows visiting the immediate fields of the expression. This is
+// useful for comparisons and hashing.
+//
+// The passed-in visitor object must implement:
+//  * visitName    - a Name
+//  * visitInt     - anything that has a short enumeration, including
+//                   opcodes, # of bytes in a load, bools, etc. - must be
+//                   guaranteed to fit in an int32 or less.
+//  * visitLiteral - a Literal
+//  * visitType    - a Type
+//  * visitIndex   - an Index
+//
+
+static
+template<typename T>
+void visitImmediates(Expression* curr, T& visitor) {
+  struct ImmediateVisitor : public OverriddenVisitor {
+    T& visitor;
+
+    ImmediateVisitor(Expression* curr, T& visitor) : visitor(visitor) {
+      visit(curr);
+    }
+
+    ReturnType visitBlock(Block* curr) {
+      visitor.visitName(curr->name);
+    }
+    ReturnType visitIf(If* curr) {
+    }
+    ReturnType visitLoop(Loop* curr) {
+      visitor.visitName(curr->name);
+    }
+    ReturnType visitBreak(Break* curr) {
+      visitor.visitName(curr->name);
+    }
+    ReturnType visitSwitch(Switch* curr) {
+      for (auto target : curr->targets) {
+        visitor.visitName(target);
+      }
+      visitor.visitName(curr->default_);
+    }
+    ReturnType visitCall(Call* curr) {
+      visitor.visitName(curr->target);
+    }
+    ReturnType visitCallIndirect(CallIndirect* curr) {
+      visitor.visitName(curr->fullType);
+    }
+    ReturnType visitGetLocal(GetLocal* curr) {
+      visitor.visitIndex(curr->index);
+    }
+    ReturnType visitSetLocal(SetLocal* curr) {
+      visitor.visitIndex(curr->index);
+    }
+    ReturnType visitGetGlobal(GetGlobal* curr) {
+      visitor.visitName(curr->name);
+    }
+    ReturnType visitSetGlobal(SetGlobal* curr) {
+      visitor.visitName(curr->name);
+    }
+    ReturnType visitLoad(Load* curr) {
+      visitor.visitInt(curr->bytes);
+      visitor.visitInt(curr->signed_);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+      visitor.visitEnum(curr->isAtomic);
+    }
+    ReturnType visitStore(Store* curr) {
+      visitor.visitEnum(curr->bytes);
+      visitor.visitEnum(curr->signed_);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+      visitor.visitEnum(curr->isAtomic);
+      visitor.visitEnum(curr->valueType);
+    }
+    ReturnType visitAtomicRMW(AtomicRMW* curr) {
+      visitor.visitEnum(curr->op);
+      visitor.visitEnum(curr->bytes);
+      visitor.visitAddress(curr->offset);
+    }
+    ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      visitor.visitEnum(curr->bytes);
+      visitor.visitAddress(curr->offset);
+    }
+    ReturnType visitAtomicWait(AtomicWait* curr) {
+      visitor.visitAddress(curr->offset);
+      visitor.visitType(curr->expectedType);
+    }
+    ReturnType visitAtomicWake(AtomicWake* curr) {
+      visitor.visitAddress(curr->offset);
+    }
+    ReturnType visitSIMDExtract(SIMDExtract* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitInt(curr->index);
+    }
+    ReturnType visitSIMDReplace(SIMDReplace* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitInt(curr->index);
+    }
+    ReturnType visitSIMDShuffle(SIMDShuffle* curr) {
+      for (auto x : curr->mask) {
+        visitor.visitInt(x);
+      }
+    }
+    ReturnType visitSIMDBitselect(SIMDBitselect* curr) {
+    }
+    ReturnType visitSIMDShift(SIMDShift* curr) {
+      visitor.visitInt(curr->op);
+    }
+    ReturnType visitMemoryInit(MemoryInit* curr) {
+      visitor.visitIndex(curr->segment);
+    }
+    ReturnType visitDataDrop(DataDrop* curr) {
+      visitor.visitIndex(curr->segment);
+    }
+    ReturnType visitMemoryCopy(MemoryCopy* curr) {
+    }
+    ReturnType visitMemoryFill(MemoryFill* curr) {
+    }
+    ReturnType visitConst(Const* curr) {
+      visitor.visitLiteral(curr->value);
+    }
+    ReturnType visitUnary(Unary* curr) {
+      visitor.visitInt(curr->op);
+    }
+    ReturnType visitBinary(Binary* curr) {
+      visitor.visitInt(curr->op);
+    }
+    ReturnType visitSelect(Select* curr) {
+    }
+    ReturnType visitDrop(Drop* curr) {{
+    }
+    ReturnType visitReturn(Return* curr) {
+    }
+    ReturnType visitHost(Host* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitName(curr->nameOperand);
+    }
+    ReturnType visitNop(Nop* curr) {
+    }
+    ReturnType visitUnreachable(Unreachable* curr) {
+    }
+  } singleton(curr, visitor);
+}
 
 bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, ExprComparer comparer) {
   std::vector<Name> nameStack;
@@ -84,6 +227,20 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
   Nop popNameMarker;
   std::vector<Expression*> leftStack;
   std::vector<Expression*> rightStack;
+
+  struct ImmediateVisitor {
+    std::vector<Name> names;
+    std::vector<int32_t> ints;
+    std::vector<Literal> literals;
+    std::vector<Type> types;
+    std::vector<Index> indexes;
+
+    void visitName(Name curr) { names.push_back(curr); }
+    void visitInt(int32_t curr) { ints.push_back(curr); }
+    void visitLiteral(Literal curr) { literals.push_back(curr); }
+    void visitType(Type curr) { types.push_back(curr); }
+    void visitIndex(Index curr) { indexes.push_back(curr); }
+  } leftImmediates, rightImmediates;
 
   auto noteNames = [&](Name left, Name right) {
     if (left.is() != right.is()) return false;
@@ -124,7 +281,11 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
     // continue with normal structural comparison
     if (left->_id != right->_id) return false;
     // Compare immediate values
-waka
+    visitImmediates(left, leftImmediates);
+    visitImmediates(right, rightImmediates);
+    if (leftImmediates != rightImmediates) return false;
+    leftImmediates.clear();
+    rightImmediates.clear();
     // Add child nodes
     Index counter = 0;
     for (auto* child : ChildIterator(left)) {
@@ -136,237 +297,90 @@ waka
       counter--;
     }
     if (counter != 0) return false;
-    #undef CHECK
   }
   if (leftStack.size() > 0 || rightStack.size() > 0) return false;
   return true;
 }
 
-
 // hash an expression, ignoring superficial details like specific internal names
 HashType ExpressionAnalyzer::hash(Expression* curr) {
-  HashType digest = 0;
+  struct Hasher {
+    HashType digest = 0;
 
-  auto hash = [&digest](HashType hash) {
-    digest = rehash(digest, hash);
-  };
-  auto hash64 = [&digest](uint64_t hash) {
-    digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
-  };
-
-  std::vector<Name> nameStack;
-  Index internalCounter = 0;
-  std::map<Name, std::vector<Index>> internalNames; // for each internal name, a vector if unique ids
-  Nop popNameMarker;
-  std::vector<Expression*> stack;
-
-  auto noteName = [&](Name curr) {
-    if (curr.is()) {
-      nameStack.push_back(curr);
-      internalNames[curr].push_back(internalCounter++);
-      stack.push_back(&popNameMarker);
+    void hash(HashType hash) {
+      digest = rehash(digest, hash);
     }
-    return true;
-  };
-  auto hashName = [&](Name curr) {
-    auto iter = internalNames.find(curr);
-    if (iter == internalNames.end()) hash64(uint64_t(curr.str));
-    else hash(iter->second.back());
-  };
-  auto popName = [&]() {
-    auto curr = nameStack.back();
-    nameStack.pop_back();
-    internalNames[curr].pop_back();
-  };
-
-  stack.push_back(curr);
-
-  while (stack.size() > 0) {
-    curr = stack.back();
-    stack.pop_back();
-    if (!curr) continue;
-    if (curr == &popNameMarker) {
-      popName();
-      continue;
+    void hash64(uint64_t hash) {
+      digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
     }
-    hash(curr->_id);
-    // we often don't need to hash the type, as it is tied to other values
-    // we are hashing anyhow, but there are exceptions: for example, a
-    // local.get's type is determined by the function, so if we are
-    // hashing only expression fragments, then two from different
-    // functions may turn out the same even if the type differs. Likewise,
-    // if we hash between modules, then we need to take int account
-    // call_imports type, etc. The simplest thing is just to hash the
-    // type for all of them.
-    hash(curr->type);
 
-    #define HASH(clazz, what) \
-      hash(curr->cast<clazz>()->what);
-    #define HASH64(clazz, what) \
-      hash64(curr->cast<clazz>()->what);
-    #define HASH_NAME(clazz, what) \
-      hash64(uint64_t(curr->cast<clazz>()->what.str));
-    #define HASH_PTR(clazz, what) \
-      hash64(uint64_t(curr->cast<clazz>()->what));
-    switch (curr->_id) {
-      case Expression::Id::BlockId: {
-        noteName(curr->cast<Block>()->name);
-        HASH(Block, list.size());
-        break;
+    std::vector<Name> nameStack;
+    Index internalCounter = 0;
+    std::map<Name, std::vector<Index>> internalNames; // for each internal name, a vector if unique ids
+    Nop popNameMarker;
+    std::vector<Expression*> stack;
+
+    void noteName(Name curr) {
+      if (curr.is()) {
+        nameStack.push_back(curr);
+        internalNames[curr].push_back(internalCounter++);
+        stack.push_back(&popNameMarker);
       }
-      case Expression::Id::LoopId: {
-        noteName(curr->cast<Loop>()->name);
-        break;
-      }
-      case Expression::Id::BreakId: {
-        hashName(curr->cast<Break>()->name);
-        break;
-      }
-      case Expression::Id::SwitchId: {
-        HASH(Switch, targets.size());
-        for (Index i = 0; i < curr->cast<Switch>()->targets.size(); i++) {
-          hashName(curr->cast<Switch>()->targets[i]);
+    }
+    void hashName(Name curr) {
+      auto iter = internalNames.find(curr);
+      if (iter == internalNames.end()) hash64(uint64_t(curr.str));
+      else hash(iter->second.back());
+    }
+    void popName() {
+      auto curr = nameStack.back();
+      nameStack.pop_back();
+      internalNames[curr].pop_back();
+    };
+
+    Hasher(Expression* curr) {
+      stack.push_back(curr);
+
+      while (stack.size() > 0) {
+        curr = stack.back();
+        stack.pop_back();
+        if (!curr) continue;
+        if (curr == &popNameMarker) {
+          popName();
+          continue;
         }
-        hashName(curr->cast<Switch>()->default_);
-        break;
-      }
-      case Expression::Id::CallId: {
-        HASH_NAME(Call, target);
-        HASH(Call, operands.size());
-        break;
-      }
-      case Expression::Id::CallIndirectId: {
-        HASH_NAME(CallIndirect, fullType);
-        HASH(CallIndirect, operands.size());
-        break;
-      }
-      case Expression::Id::GetLocalId: {
-        HASH(GetLocal, index);
-        break;
-      }
-      case Expression::Id::SetLocalId: {
-        HASH(SetLocal, index);
-        break;
-      }
-      case Expression::Id::GetGlobalId: {
-        HASH_NAME(GetGlobal, name);
-        break;
-      }
-      case Expression::Id::SetGlobalId: {
-        HASH_NAME(SetGlobal, name);
-        break;
-      }
-      case Expression::Id::LoadId: {
-        HASH(Load, bytes);
-        if (LoadUtils::isSignRelevant(curr->cast<Load>())) {
-          HASH(Load, signed_);
+        hash(curr->_id);
+        // we often don't need to hash the type, as it is tied to other values
+        // we are hashing anyhow, but there are exceptions: for example, a
+        // local.get's type is determined by the function, so if we are
+        // hashing only expression fragments, then two from different
+        // functions may turn out the same even if the type differs. Likewise,
+        // if we hash between modules, then we need to take int account
+        // call_imports type, etc. The simplest thing is just to hash the
+        // type for all of them.
+        hash(curr->type);
+        // Hash immediates
+        visitImmediates(curr, *this);
+        // Hash children
+        Index counter = 0;
+        for (auto* child : ChildIterator(curr)) {
+          stack.push_back(child);
+          counter++;
         }
-        HASH(Load, offset);
-        HASH(Load, align);
-        HASH(Load, isAtomic);
-        break;
-      }
-      case Expression::Id::StoreId: {
-        HASH(Store, bytes);
-        HASH(Store, offset);
-        HASH(Store, align);
-        HASH(Store, valueType);
-        HASH(Store, isAtomic);
-        break;
-      }
-      case Expression::Id::AtomicCmpxchgId: {
-        HASH(AtomicCmpxchg, bytes);
-        HASH(AtomicCmpxchg, offset);
-        break;
-      }
-      case Expression::Id::AtomicRMWId: {
-        HASH(AtomicRMW, op);
-        HASH(AtomicRMW, bytes);
-        HASH(AtomicRMW, offset);
-        break;
-      }
-      case Expression::Id::AtomicWaitId: {
-        HASH(AtomicWait, offset);
-        HASH(AtomicWait, expectedType);
-        break;
-      }
-      case Expression::Id::AtomicWakeId: {
-        HASH(AtomicWake, offset);
-        break;
-      }
-      case Expression::Id::SIMDExtractId: {
-        HASH(SIMDExtract, op);
-        HASH(SIMDExtract, index);
-        break;
-      }
-      case Expression::Id::SIMDReplaceId: {
-        HASH(SIMDReplace, op);
-        HASH(SIMDReplace, index);
-        break;
-      }
-      case Expression::Id::SIMDShuffleId: {
-        for (size_t i = 0; i < 16; ++i) {
-          HASH(SIMDShuffle, mask[i]);
-        }
-        break;
-      }
-      case Expression::Id::SIMDShiftId: {
-        HASH(SIMDShift, op);
-        break;
-      }
-      case Expression::Id::MemoryInitId: {
-        HASH(MemoryInit, segment);
-        break;
-      }
-      case Expression::Id::DataDropId: {
-        HASH(DataDrop, segment);
-        break;
-      }
-      case Expression::Id::ConstId: {
-        auto* c = curr->cast<Const>();
-        hash(c->type);
-        hash(std::hash<Literal>()(c->value));
-        break;
-      }
-      case Expression::Id::UnaryId: {
-        HASH(Unary, op);
-        break;
-      }
-      case Expression::Id::BinaryId: {
-        HASH(Binary, op);
-        break;
-      }
-      case Expression::Id::HostId: {
-        HASH(Host, op);
-        HASH_NAME(Host, nameOperand);
-        HASH(Host, operands.size());
-        break;
-      }
-      case Expression::Id::InvalidId:
-      case Expression::Id::NumExpressionIds: {
-        WASM_UNREACHABLE();
-      }
-      case Expression::Id::SIMDBitselectId:
-      case Expression::Id::MemoryCopyId:
-      case Expression::Id::MemoryFillId:
-      case Expression::Id::NopId:
-      case Expression::Id::UnreachableId:
-      case Expression::Id::IfId:
-      case Expression::Id::SelectId:
-      case Expression::Id::DropId:
-      case Expression::Id::ReturnId: {
-        break; // some nodes have no immediate fields
+        // Sometimes children are optional, e.g. return, so we must hash
+        // their number as well.
+        hash(counter);
       }
     }
-    #undef HASH
-    Index counter = 0;
-    for (auto* child : ChildIterator(curr)) {
-      stack.push_back(child);
-      counter++;
-    }
-    hash(counter);
-  }
-  return digest;
+
+    void visitName(Name curr) { names.push_back(curr); }
+    void visitInt(int32_t curr) { ints.push_back(curr); }
+    void visitLiteral(Literal curr) { literals.push_back(curr); }
+    void visitType(Type curr) { types.push_back(curr); }
+    void visitIndex(Index curr) { indexes.push_back(curr); }
+  };
+
+  return Hasher(curr).digest;
 }
 
 } // namespace wasm
