@@ -222,84 +222,118 @@ void visitImmediates(Expression* curr, T& visitor) {
 }
 
 bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, ExprComparer comparer) {
-  std::vector<Name> nameStack;
-  std::map<Name, std::vector<Name>> rightNames; // for each name on the left, the stack of names on the right (a stack, since names are scoped and can nest duplicatively
-  Nop popNameMarker;
-  std::vector<Expression*> leftStack;
-  std::vector<Expression*> rightStack;
+  struct Comparer {
+    std::vector<Name> nameStack; // the named scopes on the left
+    std::map<Name, Name> rightNames; // for each name on the left, the corresponding name on the right
+    Nop popNameMarker; // a special marker that indicates we must pop a name here.
+    std::vector<Expression*> leftStack;
+    std::vector<Expression*> rightStack;
 
-  struct ImmediateVisitor {
-    std::vector<Name> names;
-    std::vector<int32_t> ints;
-    std::vector<Literal> literals;
-    std::vector<Type> types;
-    std::vector<Index> indexes;
+    struct Immediates {
+      Comparer& parent;
 
-    void visitName(Name curr) { names.push_back(curr); }
-    void visitInt(int32_t curr) { ints.push_back(curr); }
-    void visitLiteral(Literal curr) { literals.push_back(curr); }
-    void visitType(Type curr) { types.push_back(curr); }
-    void visitIndex(Index curr) { indexes.push_back(curr); }
-  } leftImmediates, rightImmediates;
+      Immediates(Comparer& parent) : parent(parent) {}
 
-  auto noteNames = [&](Name left, Name right) {
-    if (left.is() != right.is()) return false;
-    if (left.is()) {
-      nameStack.push_back(left);
-      rightNames[left].push_back(right);
-      leftStack.push_back(&popNameMarker);
-      rightStack.push_back(&popNameMarker);
+      // TODO: SmallVector
+      std::vector<Name> names;
+      std::vector<int32_t> ints;
+      std::vector<Literal> literals;
+      std::vector<Type> types;
+      std::vector<Index> indexes;
+
+      void visitName(Name curr) { names.push_back(curr); }
+      void visitInt(int32_t curr) { ints.push_back(curr); }
+      void visitLiteral(Literal curr) { literals.push_back(curr); }
+      void visitType(Type curr) { types.push_back(curr); }
+      void visitIndex(Index curr) { indexes.push_back(curr); }
+
+      // Comparison is by value, except for names, which must match.
+      bool operator==(const Immediates& other) {
+        if (names.size() != other.names.size() return false;
+        for (Index i = 0; i < names.size()) {
+          if (names[i] != parent.rightNames[names[i]]) {
+            return false;
+          }
+        }
+        if (ints != other.ints) return false;
+        if (literals != other.literals) return false;
+        if (types != other.types) return false;
+        if (indexes != other.indexes) return false;
+      }
+    };
+
+    bool noteNames(Name left, Name right) {
+      if (left.is() != right.is()) return false;
+      if (left.is()) {
+        nameStack.push_back(left);
+        rightNames[left] = right;
+        leftStack.push_back(&popNameMarker);
+        rightStack.push_back(&popNameMarker);
+      }
+      return true;
     }
-    return true;
+
+    void popName() {
+      auto left = nameStack.back();
+      nameStack.pop_back();
+      rightNames[left].pop_back();
+    }
+
+    void compare(Expression* left, Expression* right, ExprComparer comparer) {
+      Immediates leftImmediates(*this),
+                 rightImmediates(*this);
+
+      // The empty name is the same on both sides.
+      rightNames[Name()] = Name();
+
+      leftStack.push_back(left);
+      rightStack.push_back(right);
+
+      while (leftStack.size() > 0 && rightStack.size() > 0) {
+        left = leftStack.back();
+        leftStack.pop_back();
+        right = rightStack.back();
+        rightStack.pop_back();
+        if (!left != !right) return false;
+        if (!left) continue;
+        if (left == &popNameMarker) {
+          popName();
+          continue;
+        }
+        if (comparer(left, right)) continue; // comparison hook, before all the rest
+        // continue with normal structural comparison
+        if (left->_id != right->_id) return false;
+        // Blocks and loops introduce scoping.
+        if (auto* block = left->dynCast<Block>()) {
+          if (!noteNames(block->name, right->cast<Block>()->name)) return false;
+        } else if (auto* loop = left->dynCast<Loop>()) {
+          if (!noteNames(loop->name, right->cast<Loop>()->name)) return false;
+        } else {
+          // For all other nodes, compare their immediate values
+          visitImmediates(left, leftImmediates);
+          visitImmediates(right, rightImmediates);
+          if (leftImmediates != rightImmediates) return false;
+          leftImmediates.clear();
+          rightImmediates.clear();
+        }
+        // Add child nodes
+        Index counter = 0;
+        for (auto* child : ChildIterator(left)) {
+          leftStack.push_back(child);
+          counter++;
+        }
+        for (auto* child : ChildIterator(right)) {
+          rightStack.push_back(child);
+          counter--;
+        }
+        if (counter != 0) return false;
+      }
+      if (leftStack.size() > 0 || rightStack.size() > 0) return false;
+      return true;
+    }
   };
-  auto checkNames = [&](Name left, Name right) {
-    auto iter = rightNames.find(left);
-    if (iter == rightNames.end()) return left == right; // non-internal name
-    return iter->second.back() == right;
-  };
-  auto popName = [&]() {
-    auto left = nameStack.back();
-    nameStack.pop_back();
-    rightNames[left].pop_back();
-  };
 
-  leftStack.push_back(left);
-  rightStack.push_back(right);
-
-  while (leftStack.size() > 0 && rightStack.size() > 0) {
-    left = leftStack.back();
-    leftStack.pop_back();
-    right = rightStack.back();
-    rightStack.pop_back();
-    if (!left != !right) return false;
-    if (!left) continue;
-    if (left == &popNameMarker) {
-      popName();
-      continue;
-    }
-    if (comparer(left, right)) continue; // comparison hook, before all the rest
-    // continue with normal structural comparison
-    if (left->_id != right->_id) return false;
-    // Compare immediate values
-    visitImmediates(left, leftImmediates);
-    visitImmediates(right, rightImmediates);
-    if (leftImmediates != rightImmediates) return false;
-    leftImmediates.clear();
-    rightImmediates.clear();
-    // Add child nodes
-    Index counter = 0;
-    for (auto* child : ChildIterator(left)) {
-      leftStack.push_back(child);
-      counter++;
-    }
-    for (auto* child : ChildIterator(right)) {
-      rightStack.push_back(child);
-      counter--;
-    }
-    if (counter != 0) return false;
-  }
-  if (leftStack.size() > 0 || rightStack.size() > 0) return false;
-  return true;
+  return Comparer().compare(left, right, comparer);
 }
 
 // hash an expression, ignoring superficial details like specific internal names
