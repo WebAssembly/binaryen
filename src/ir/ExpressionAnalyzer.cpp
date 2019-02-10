@@ -15,6 +15,8 @@
  */
 
 #include "support/hash.h"
+#include "wasm.h"
+#include "wasm-traversal.h"
 #include "ir/iteration.h"
 #include "ir/load-utils.h"
 #include "ir/utils.h"
@@ -89,135 +91,135 @@ bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
 //  * visitLiteral - a Literal
 //  * visitType    - a Type
 //  * visitIndex   - an Index
+//  * visitAddress - an Address
 //
 
 namespace {
 
 template<typename T>
 void visitImmediates(Expression* curr, T& visitor) {
-  struct ImmediateVisitor : public OverriddenVisitor {
+  struct ImmediateVisitor : public OverriddenVisitor<ImmediateVisitor> {
     T& visitor;
 
     ImmediateVisitor(Expression* curr, T& visitor) : visitor(visitor) {
-      visit(curr);
+      this->visit(curr);
     }
 
-    ReturnType visitBlock(Block* curr) {
+    void visitBlock(Block* curr) {
       visitor.visitName(curr->name);
     }
-    ReturnType visitIf(If* curr) {
+    void visitIf(If* curr) {
     }
-    ReturnType visitLoop(Loop* curr) {
+    void visitLoop(Loop* curr) {
       visitor.visitName(curr->name);
     }
-    ReturnType visitBreak(Break* curr) {
+    void visitBreak(Break* curr) {
       visitor.visitName(curr->name);
     }
-    ReturnType visitSwitch(Switch* curr) {
+    void visitSwitch(Switch* curr) {
       for (auto target : curr->targets) {
         visitor.visitName(target);
       }
       visitor.visitName(curr->default_);
     }
-    ReturnType visitCall(Call* curr) {
+    void visitCall(Call* curr) {
       visitor.visitName(curr->target);
     }
-    ReturnType visitCallIndirect(CallIndirect* curr) {
+    void visitCallIndirect(CallIndirect* curr) {
       visitor.visitName(curr->fullType);
     }
-    ReturnType visitGetLocal(GetLocal* curr) {
+    void visitGetLocal(GetLocal* curr) {
       visitor.visitIndex(curr->index);
     }
-    ReturnType visitSetLocal(SetLocal* curr) {
+    void visitSetLocal(SetLocal* curr) {
       visitor.visitIndex(curr->index);
     }
-    ReturnType visitGetGlobal(GetGlobal* curr) {
+    void visitGetGlobal(GetGlobal* curr) {
       visitor.visitName(curr->name);
     }
-    ReturnType visitSetGlobal(SetGlobal* curr) {
+    void visitSetGlobal(SetGlobal* curr) {
       visitor.visitName(curr->name);
     }
-    ReturnType visitLoad(Load* curr) {
+    void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
       visitor.visitInt(curr->signed_);
       visitor.visitAddress(curr->offset);
       visitor.visitAddress(curr->align);
-      visitor.visitEnum(curr->isAtomic);
+      visitor.visitInt(curr->isAtomic);
     }
-    ReturnType visitStore(Store* curr) {
-      visitor.visitEnum(curr->bytes);
-      visitor.visitEnum(curr->signed_);
+    void visitStore(Store* curr) {
+      visitor.visitInt(curr->bytes);
       visitor.visitAddress(curr->offset);
       visitor.visitAddress(curr->align);
-      visitor.visitEnum(curr->isAtomic);
-      visitor.visitEnum(curr->valueType);
+      visitor.visitInt(curr->isAtomic);
+      visitor.visitInt(curr->valueType);
     }
-    ReturnType visitAtomicRMW(AtomicRMW* curr) {
-      visitor.visitEnum(curr->op);
-      visitor.visitEnum(curr->bytes);
+    void visitAtomicRMW(AtomicRMW* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitInt(curr->bytes);
       visitor.visitAddress(curr->offset);
     }
-    ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-      visitor.visitEnum(curr->bytes);
+    void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      visitor.visitInt(curr->bytes);
       visitor.visitAddress(curr->offset);
     }
-    ReturnType visitAtomicWait(AtomicWait* curr) {
+    void visitAtomicWait(AtomicWait* curr) {
       visitor.visitAddress(curr->offset);
       visitor.visitType(curr->expectedType);
     }
-    ReturnType visitAtomicWake(AtomicWake* curr) {
+    void visitAtomicWake(AtomicWake* curr) {
       visitor.visitAddress(curr->offset);
     }
-    ReturnType visitSIMDExtract(SIMDExtract* curr) {
+    void visitSIMDExtract(SIMDExtract* curr) {
       visitor.visitInt(curr->op);
       visitor.visitInt(curr->index);
     }
-    ReturnType visitSIMDReplace(SIMDReplace* curr) {
+    void visitSIMDReplace(SIMDReplace* curr) {
       visitor.visitInt(curr->op);
       visitor.visitInt(curr->index);
     }
-    ReturnType visitSIMDShuffle(SIMDShuffle* curr) {
+    void visitSIMDShuffle(SIMDShuffle* curr) {
       for (auto x : curr->mask) {
         visitor.visitInt(x);
       }
     }
-    ReturnType visitSIMDBitselect(SIMDBitselect* curr) {
+    void visitSIMDBitselect(SIMDBitselect* curr) {
     }
-    ReturnType visitSIMDShift(SIMDShift* curr) {
+    void visitSIMDShift(SIMDShift* curr) {
       visitor.visitInt(curr->op);
     }
-    ReturnType visitMemoryInit(MemoryInit* curr) {
+    void visitMemoryInit(MemoryInit* curr) {
       visitor.visitIndex(curr->segment);
     }
-    ReturnType visitDataDrop(DataDrop* curr) {
+    void visitDataDrop(DataDrop* curr) {
       visitor.visitIndex(curr->segment);
     }
-    ReturnType visitMemoryCopy(MemoryCopy* curr) {
+    void visitMemoryCopy(MemoryCopy* curr) {
     }
-    ReturnType visitMemoryFill(MemoryFill* curr) {
+    void visitMemoryFill(MemoryFill* curr) {
     }
-    ReturnType visitConst(Const* curr) {
+    void visitConst(Const* curr) {
       visitor.visitLiteral(curr->value);
     }
-    ReturnType visitUnary(Unary* curr) {
+    void visitUnary(Unary* curr) {
       visitor.visitInt(curr->op);
     }
-    ReturnType visitBinary(Binary* curr) {
+    void visitBinary(Binary* curr) {
       visitor.visitInt(curr->op);
     }
-    ReturnType visitSelect(Select* curr) {
+    void visitSelect(Select* curr) {
     }
-    ReturnType visitDrop(Drop* curr) {{
+    void visitDrop(Drop* curr) {
     }
-    ReturnType visitReturn(Return* curr) {
+    void visitReturn(Return* curr) {
     }
-    ReturnType visitHost(Host* curr) {
+    void visitHost(Host* curr) {
       visitor.visitInt(curr->op);
       visitor.visitName(curr->nameOperand);
     }
-    ReturnType visitNop(Nop* curr) {
+    void visitNop(Nop* curr) {
     }
-    ReturnType visitUnreachable(Unreachable* curr) {
+    void visitUnreachable(Unreachable* curr) {
     }
   } singleton(curr, visitor);
 }
@@ -243,17 +245,19 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       std::vector<Literal> literals;
       std::vector<Type> types;
       std::vector<Index> indexes;
+      std::vector<Address> addresses;
 
       void visitName(Name curr) { names.push_back(curr); }
       void visitInt(int32_t curr) { ints.push_back(curr); }
       void visitLiteral(Literal curr) { literals.push_back(curr); }
       void visitType(Type curr) { types.push_back(curr); }
       void visitIndex(Index curr) { indexes.push_back(curr); }
+      void visitAddress(Address curr) { addresses.push_back(curr); }
 
       // Comparison is by value, except for names, which must match.
       bool operator==(const Immediates& other) {
-        if (names.size() != other.names.size() return false;
-        for (Index i = 0; i < names.size()) {
+        if (names.size() != other.names.size()) return false;
+        for (Index i = 0; i < names.size(); i++) {
           if (names[i] != parent.rightNames[names[i]]) {
             return false;
           }
@@ -262,6 +266,12 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         if (literals != other.literals) return false;
         if (types != other.types) return false;
         if (indexes != other.indexes) return false;
+        if (addresses != other.addresses) return false;
+        return true;
+      }
+
+      bool operator!=(const Immediates& other) {
+        return !(*this == other);
       }
 
       void clear() {
@@ -270,6 +280,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         literals.clear();
         types.clear();
         indexes.clear();
+        addresses.clear();
       }
     };
 
@@ -284,13 +295,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       return true;
     }
 
-    void popName() {
-      auto left = nameStack.back();
-      nameStack.pop_back();
-      rightNames[left].pop_back();
-    }
-
-    void compare(Expression* left, Expression* right, ExprComparer comparer) {
+    bool compare(Expression* left, Expression* right, ExprComparer comparer) {
       Immediates leftImmediates(*this),
                  rightImmediates(*this);
 
@@ -308,7 +313,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         if (!left != !right) return false;
         if (!left) continue;
         if (left == &popNameMarker) {
-          popName();
+          nameStack.pop_back();
           continue;
         }
         if (comparer(left, right)) continue; // comparison hook, before all the rest
@@ -366,10 +371,6 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         stack.push_back(&popNameMarker);
       }
     }
-    void popName() {
-      auto curr = nameStack.back();
-      nameStack.pop_back();
-    };
 
     Hasher(Expression* curr) {
       stack.push_back(curr);
@@ -379,7 +380,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         stack.pop_back();
         if (!curr) continue;
         if (curr == &popNameMarker) {
-          popName();
+          nameStack.pop_back();
           continue;
         }
         hash(curr->_id);
@@ -421,7 +422,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       // (block $y (br $y))
       auto iter = internalNames.find(curr);
       if (iter == internalNames.end()) hash64(uint64_t(curr.str));
-      else hash(iter->second.back());
+      else hash(iter->second);
     }
     void visitInt(int32_t curr) {
       hash(curr);
@@ -434,6 +435,10 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
     }
     void visitIndex(Index curr) {
       static_assert(sizeof(Index) == sizeof(int32_t), "wasm64 will need changes here");
+      hash(int32_t(curr));
+    }
+    void visitAddress(Address curr) {
+      static_assert(sizeof(Address) == sizeof(int32_t), "wasm64 will need changes here");
       hash(int32_t(curr));
     }
   };
