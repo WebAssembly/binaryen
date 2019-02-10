@@ -258,7 +258,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       bool operator==(const Immediates& other) {
         if (names.size() != other.names.size()) return false;
         for (Index i = 0; i < names.size(); i++) {
-          if (names[i] != parent.rightNames[names[i]]) {
+          if (parent.rightNames[names[i]] != other.names[i]) {
             return false;
           }
         }
@@ -313,6 +313,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         if (!left != !right) return false;
         if (!left) continue;
         if (left == &popNameMarker) {
+          assert(right == &popNameMarker);
           nameStack.pop_back();
           continue;
         }
