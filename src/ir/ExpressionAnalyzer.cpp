@@ -91,7 +91,8 @@ bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
 //  * visitIndex   - an Index
 //
 
-static
+namespace {
+
 template<typename T>
 void visitImmediates(Expression* curr, T& visitor) {
   struct ImmediateVisitor : public OverriddenVisitor {
@@ -220,6 +221,8 @@ void visitImmediates(Expression* curr, T& visitor) {
     }
   } singleton(curr, visitor);
 }
+
+} // namespace
 
 bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, ExprComparer comparer) {
   struct Comparer {
