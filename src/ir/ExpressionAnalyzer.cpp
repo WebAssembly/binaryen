@@ -260,6 +260,14 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         if (types != other.types) return false;
         if (indexes != other.indexes) return false;
       }
+
+      void clear() {
+        names.clear();
+        ints.clear();
+        literals.clear();
+        types.clear();
+        indexes.clear();
+      }
     };
 
     bool noteNames(Name left, Name right) {
@@ -316,7 +324,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
           leftImmediates.clear();
           rightImmediates.clear();
         }
-        // Add child nodes
+        // Add child nodes.
         Index counter = 0;
         for (auto* child : ChildIterator(left)) {
           leftStack.push_back(child);
@@ -326,6 +334,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
           rightStack.push_back(child);
           counter--;
         }
+        // The number of child nodes must match (e.g. return has an optional one).
         if (counter != 0) return false;
       }
       if (leftStack.size() > 0 || rightStack.size() > 0) return false;
@@ -341,35 +350,22 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
   struct Hasher {
     HashType digest = 0;
 
-    void hash(HashType hash) {
-      digest = rehash(digest, hash);
-    }
-    void hash64(uint64_t hash) {
-      digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
-    }
-
     std::vector<Name> nameStack;
     Index internalCounter = 0;
-    std::map<Name, std::vector<Index>> internalNames; // for each internal name, a vector if unique ids
+    std::map<Name, Index> internalNames; // for each internal name, its unique id
     Nop popNameMarker;
     std::vector<Expression*> stack;
 
     void noteName(Name curr) {
       if (curr.is()) {
         nameStack.push_back(curr);
-        internalNames[curr].push_back(internalCounter++);
+        internalNames[curr] = internalCounter++;
         stack.push_back(&popNameMarker);
       }
-    }
-    void hashName(Name curr) {
-      auto iter = internalNames.find(curr);
-      if (iter == internalNames.end()) hash64(uint64_t(curr.str));
-      else hash(iter->second.back());
     }
     void popName() {
       auto curr = nameStack.back();
       nameStack.pop_back();
-      internalNames[curr].pop_back();
     };
 
     Hasher(Expression* curr) {
@@ -407,11 +403,36 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       }
     }
 
-    void visitName(Name curr) { names.push_back(curr); }
-    void visitInt(int32_t curr) { ints.push_back(curr); }
-    void visitLiteral(Literal curr) { literals.push_back(curr); }
-    void visitType(Type curr) { types.push_back(curr); }
-    void visitIndex(Index curr) { indexes.push_back(curr); }
+    void hash(HashType hash) {
+      digest = rehash(digest, hash);
+    }
+    void hash64(uint64_t hash) {
+      digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
+    }
+    void hashName(Name curr) {
+    }
+
+    void visitName(Name curr) {
+      // Names are relative, we give the same hash for
+      // (block $x (br $x))
+      // (block $y (br $y))
+      auto iter = internalNames.find(curr);
+      if (iter == internalNames.end()) hash64(uint64_t(curr.str));
+      else hash(iter->second.back());
+    }
+    void visitInt(int32_t curr) {
+      hash(curr);
+    }
+    void visitLiteral(Literal curr) {
+      hash(std::hash<Literal>()(curr));
+    }
+    void visitType(Type curr) {
+      hash(int32_t(curr));
+    }
+    void visitIndex(Index curr) {
+      static_assert(sizeof(Index) == sizeof(int32_t), "wasm64 will need changes here");
+      hash(int32_t(curr));
+    }
   };
 
   return Hasher(curr).digest;
