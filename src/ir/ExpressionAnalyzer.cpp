@@ -228,9 +228,7 @@ void visitImmediates(Expression* curr, T& visitor) {
 
 bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, ExprComparer comparer) {
   struct Comparer {
-    std::vector<Name> nameStack; // the named scopes on the left
     std::map<Name, Name> rightNames; // for each name on the left, the corresponding name on the right
-    Nop popNameMarker; // a special marker that indicates we must pop a name here.
     std::vector<Expression*> leftStack;
     std::vector<Expression*> rightStack;
 
@@ -287,10 +285,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
     bool noteNames(Name left, Name right) {
       if (left.is() != right.is()) return false;
       if (left.is()) {
-        nameStack.push_back(left);
         rightNames[left] = right;
-        leftStack.push_back(&popNameMarker);
-        rightStack.push_back(&popNameMarker);
       }
       return true;
     }
@@ -312,11 +307,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         rightStack.pop_back();
         if (!left != !right) return false;
         if (!left) continue;
-        if (left == &popNameMarker) {
-          assert(right == &popNameMarker);
-          nameStack.pop_back();
-          continue;
-        }
         if (comparer(left, right)) continue; // comparison hook, before all the rest
         // continue with normal structural comparison
         if (left->_id != right->_id) return false;
@@ -359,17 +349,13 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
   struct Hasher {
     HashType digest = 0;
 
-    std::vector<Name> nameStack;
     Index internalCounter = 0;
     std::map<Name, Index> internalNames; // for each internal name, its unique id
-    Nop popNameMarker;
     std::vector<Expression*> stack;
 
     void noteName(Name curr) {
       if (curr.is()) {
-        nameStack.push_back(curr);
         internalNames[curr] = internalCounter++;
-        stack.push_back(&popNameMarker);
       }
     }
 
@@ -380,10 +366,6 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         curr = stack.back();
         stack.pop_back();
         if (!curr) continue;
-        if (curr == &popNameMarker) {
-          nameStack.pop_back();
-          continue;
-        }
         hash(curr->_id);
         // we often don't need to hash the type, as it is tied to other values
         // we are hashing anyhow, but there are exceptions: for example, a
@@ -394,8 +376,15 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         // call_imports type, etc. The simplest thing is just to hash the
         // type for all of them.
         hash(curr->type);
-        // Hash immediates
-        visitImmediates(curr, *this);
+        // Blocks and loops introduce scoping.
+        if (auto* block = curr->dynCast<Block>()) {
+          noteName(block->name);
+        } else if (auto* loop = curr->dynCast<Loop>()) {
+          noteName(loop->name);
+        } else {
+          // For all other nodes, compare their immediate values
+          visitImmediates(curr, *this);
+        }
         // Hash children
         Index counter = 0;
         for (auto* child : ChildIterator(curr)) {
