@@ -84,13 +84,14 @@ bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
 // useful for comparisons and hashing.
 //
 // The passed-in visitor object must implement:
-//  * visitName    - a Name
-//  * visitInt     - anything that has a short enumeration, including
-//                   opcodes, # of bytes in a load, bools, etc. - must be
-//                   guaranteed to fit in an int32 or less.
+//  * visitScopeName - a Name that represents a block or loop scope
+//  * visitNonScopeName - a non-scope name
+//  * visitInt - anything that has a short enumeration, including
+//               opcodes, # of bytes in a load, bools, etc. - must be
+//               guaranteed to fit in an int32 or less.
 //  * visitLiteral - a Literal
-//  * visitType    - a Type
-//  * visitIndex   - an Index
+//  * visitType - a Type
+//  * visitIndex - an Index
 //  * visitAddress - an Address
 //
 
@@ -106,27 +107,27 @@ void visitImmediates(Expression* curr, T& visitor) {
     }
 
     void visitBlock(Block* curr) {
-      visitor.visitName(curr->name);
+      visitor.visitScopeName(curr->name);
     }
     void visitIf(If* curr) {
     }
     void visitLoop(Loop* curr) {
-      visitor.visitName(curr->name);
+      visitor.visitScopeName(curr->name);
     }
     void visitBreak(Break* curr) {
-      visitor.visitName(curr->name);
+      visitor.visitScopeName(curr->name);
     }
     void visitSwitch(Switch* curr) {
       for (auto target : curr->targets) {
-        visitor.visitName(target);
+        visitor.visitScopeName(target);
       }
-      visitor.visitName(curr->default_);
+      visitor.visitScopeName(curr->default_);
     }
     void visitCall(Call* curr) {
-      visitor.visitName(curr->target);
+      visitor.visitNonScopeName(curr->target);
     }
     void visitCallIndirect(CallIndirect* curr) {
-      visitor.visitName(curr->fullType);
+      visitor.visitNonScopeName(curr->fullType);
     }
     void visitGetLocal(GetLocal* curr) {
       visitor.visitIndex(curr->index);
@@ -135,10 +136,10 @@ void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitIndex(curr->index);
     }
     void visitGetGlobal(GetGlobal* curr) {
-      visitor.visitName(curr->name);
+      visitor.visitNonScopeName(curr->name);
     }
     void visitSetGlobal(SetGlobal* curr) {
-      visitor.visitName(curr->name);
+      visitor.visitNonScopeName(curr->name);
     }
     void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
@@ -215,7 +216,7 @@ void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitHost(Host* curr) {
       visitor.visitInt(curr->op);
-      visitor.visitName(curr->nameOperand);
+      visitor.visitNonScopeName(curr->nameOperand);
     }
     void visitNop(Nop* curr) {
     }
@@ -238,14 +239,16 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       Immediates(Comparer& parent) : parent(parent) {}
 
       // TODO: SmallVector
-      std::vector<Name> names;
+      std::vector<Name> scopeNames;
+      std::vector<Name> nonScopeNames;
       std::vector<int32_t> ints;
       std::vector<Literal> literals;
       std::vector<Type> types;
       std::vector<Index> indexes;
       std::vector<Address> addresses;
 
-      void visitName(Name curr) { names.push_back(curr); }
+      void visitScopeName(Name curr) { scopeNames.push_back(curr); }
+      void visitNonScopeName(Name curr) { nonScopeNames.push_back(curr); }
       void visitInt(int32_t curr) { ints.push_back(curr); }
       void visitLiteral(Literal curr) { literals.push_back(curr); }
       void visitType(Type curr) { types.push_back(curr); }
@@ -254,12 +257,13 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
 
       // Comparison is by value, except for names, which must match.
       bool operator==(const Immediates& other) {
-        if (names.size() != other.names.size()) return false;
-        for (Index i = 0; i < names.size(); i++) {
-          if (parent.rightNames[names[i]] != other.names[i]) {
+        if (scopeNames.size() != other.scopeNames.size()) return false;
+        for (Index i = 0; i < scopeNames.size(); i++) {
+          if (parent.rightNames[scopeNames[i]] != other.scopeNames[i]) {
             return false;
           }
         }
+        if (nonScopeNames != other.nonScopeNames) return false;
         if (ints != other.ints) return false;
         if (literals != other.literals) return false;
         if (types != other.types) return false;
@@ -273,7 +277,8 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       }
 
       void clear() {
-        names.clear();
+        scopeNames.clear();
+        nonScopeNames.clear();
         ints.clear();
         literals.clear();
         types.clear();
@@ -353,7 +358,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
     std::map<Name, Index> internalNames; // for each internal name, its unique id
     std::vector<Expression*> stack;
 
-    void noteName(Name curr) {
+    void noteScopeName(Name curr) {
       if (curr.is()) {
         internalNames[curr] = internalCounter++;
       }
@@ -378,9 +383,9 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
         hash(curr->type);
         // Blocks and loops introduce scoping.
         if (auto* block = curr->dynCast<Block>()) {
-          noteName(block->name);
+          noteScopeName(block->name);
         } else if (auto* loop = curr->dynCast<Loop>()) {
-          noteName(loop->name);
+          noteScopeName(loop->name);
         } else {
           // For all other nodes, compare their immediate values
           visitImmediates(curr, *this);
@@ -403,16 +408,17 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
     void hash64(uint64_t hash) {
       digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
     }
-    void hashName(Name curr) {
-    }
 
-    void visitName(Name curr) {
+    void visitScopeName(Name curr) {
       // Names are relative, we give the same hash for
       // (block $x (br $x))
       // (block $y (br $y))
-      auto iter = internalNames.find(curr);
-      if (iter == internalNames.end()) hash64(uint64_t(curr.str));
-      else hash(iter->second);
+      static_assert(sizeof(Index) == sizeof(int32_t), "wasm64 will need changes here");
+      assert(internalNames.find(curr) != internalNames.end());
+      return hash(internalNames[curr]);
+    }
+    void visitNonScopeName(Name curr) {
+      return hash64(uint64_t(curr.str));
     }
     void visitInt(int32_t curr) {
       hash(curr);
