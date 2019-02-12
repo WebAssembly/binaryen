@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -259,7 +260,15 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       bool operator==(const Immediates& other) {
         if (scopeNames.size() != other.scopeNames.size()) return false;
         for (Index i = 0; i < scopeNames.size(); i++) {
-          if (parent.rightNames[scopeNames[i]] != other.scopeNames[i]) {
+          auto leftName = scopeNames[i];
+          auto rightName = other.scopeNames[i];
+          auto iter = parent.rightNames.find(scopeNames[i]);
+          // If it's not found, that means it was defined out of the expression being compared,
+          // in which case we can just treat it literally - it must be exactly identical.
+          if (iter != parent.rightNames.end()) {
+            rightName = iter->second;
+          }
+          if (leftName != rightName) {
             return false;
           }
         }
@@ -290,6 +299,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
     bool noteNames(Name left, Name right) {
       if (left.is() != right.is()) return false;
       if (left.is()) {
+        assert(rightNames.find(left) == rightNames.end());
         rightNames[left] = right;
       }
       return true;
