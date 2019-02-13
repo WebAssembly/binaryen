@@ -289,28 +289,31 @@ void PassRunner::run() {
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
       totalTime += diff;
-      // validate, ignoring the time
-      std::cerr << "[PassRunner]   (validating)\n";
-      if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
-        WasmPrinter::printModule(wasm);
-        if (passDebug >= 2) {
-          std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
-        } else {
-          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state, or 3 to dump byn-* files for each pass\n";
+      if (options.validate) {
+        // validate, ignoring the time
+        std::cerr << "[PassRunner]   (validating)\n";
+        if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
+          WasmPrinter::printModule(wasm);
+          if (passDebug >= 2) {
+            std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
+          } else {
+            std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state, or 3 to dump byn-* files for each pass\n";
+          }
+          abort();
         }
-        abort();
       }
       if (passDebug >= 3) {
         dumpWast(pass->name, wasm);
       }
     }
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
-    // validate
-    std::cerr << "[PassRunner] (final validation)\n";
-    if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
-      WasmPrinter::printModule(wasm);
-      std::cerr << "final module does not validate\n";
-      abort();
+    if (options.validate) {
+      std::cerr << "[PassRunner] (final validation)\n";
+      if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
+        WasmPrinter::printModule(wasm);
+        std::cerr << "final module does not validate\n";
+        abort();
+      }
     }
   } else {
     // non-debug normal mode, run them in an optimal manner - for locality it is better
