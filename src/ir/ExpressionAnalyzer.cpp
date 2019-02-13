@@ -1,4 +1,3 @@
-#include <wasm-printing.h>
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -262,11 +261,11 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         for (Index i = 0; i < scopeNames.size(); i++) {
           auto leftName = scopeNames[i];
           auto rightName = other.scopeNames[i];
-          auto iter = parent.rightNames.find(scopeNames[i]);
+          auto iter = parent.rightNames.find(leftName);
           // If it's not found, that means it was defined out of the expression being compared,
           // in which case we can just treat it literally - it must be exactly identical.
           if (iter != parent.rightNames.end()) {
-            rightName = iter->second;
+            leftName = iter->second;
           }
           if (leftName != rightName) {
             return false;
