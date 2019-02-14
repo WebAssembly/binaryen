@@ -143,7 +143,9 @@ void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
-      visitor.visitInt(curr->signed_);
+      if (curr->bytes < getTypeSize(curr->type)) {
+        visitor.visitInt(curr->signed_);
+      }
       visitor.visitAddress(curr->offset);
       visitor.visitAddress(curr->align);
       visitor.visitInt(curr->isAtomic);
