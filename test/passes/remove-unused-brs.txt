@@ -984,7 +984,7 @@
      (i32.const 607395945)
     )
     (br_if $label$1
-     (unreachable.load16_s offset=3 align=1
+     (unreachable.load offset=3 align=1
       (select
        (call $untaken-brs-might-prevent-block-removal
         (f32.const 1.4904844647389837e-07)
