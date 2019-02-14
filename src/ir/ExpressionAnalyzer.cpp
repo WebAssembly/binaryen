@@ -15,6 +15,7 @@
  */
 
 #include "support/hash.h"
+#include "support/small_vector.h"
 #include "wasm.h"
 #include "wasm-traversal.h"
 #include "ir/iteration.h"
@@ -240,14 +241,13 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
 
       Immediates(Comparer& parent) : parent(parent) {}
 
-      // TODO: SmallVector
-      std::vector<Name> scopeNames;
-      std::vector<Name> nonScopeNames;
-      std::vector<int32_t> ints;
-      std::vector<Literal> literals;
-      std::vector<Type> types;
-      std::vector<Index> indexes;
-      std::vector<Address> addresses;
+      SmallVector<Name, 1> scopeNames;
+      SmallVector<Name, 1> nonScopeNames;
+      SmallVector<int32_t, 3> ints;
+      SmallVector<Literal, 1> literals;
+      SmallVector<Type, 1> types;
+      SmallVector<Index, 1> indexes;
+      SmallVector<Address, 2> addresses;
 
       void visitScopeName(Name curr) { scopeNames.push_back(curr); }
       void visitNonScopeName(Name curr) { nonScopeNames.push_back(curr); }
