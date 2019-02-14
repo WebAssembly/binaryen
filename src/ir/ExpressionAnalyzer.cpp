@@ -27,7 +27,7 @@ namespace wasm {
 // Given a stack of expressions, checks if the topmost is used as a result.
 // For example, if the parent is a block and the node is before the last position,
 // it is not used.
-bool ExpressionAnalyzer::isResultUsed(std::vector<Expression*> stack, Function* func) {
+bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
   for (int i = int(stack.size()) - 2; i >= 0; i--) {
     auto* curr = stack[i];
     auto* above = stack[i + 1];
@@ -55,7 +55,7 @@ bool ExpressionAnalyzer::isResultUsed(std::vector<Expression*> stack, Function* 
 }
 
 // Checks if a value is dropped.
-bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
+bool ExpressionAnalyzer::isResultDropped(ExpressionStack& stack) {
   for (int i = int(stack.size()) - 2; i >= 0; i--) {
     auto* curr = stack[i];
     auto* above = stack[i + 1];

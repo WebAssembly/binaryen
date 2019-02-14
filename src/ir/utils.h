@@ -45,10 +45,10 @@ struct ExpressionAnalyzer {
   // Given a stack of expressions, checks if the topmost is used as a result.
   // For example, if the parent is a block and the node is before the last position,
   // it is not used.
-  static bool isResultUsed(std::vector<Expression*> stack, Function* func);
+  static bool isResultUsed(ExpressionStack& stack, Function* func);
 
   // Checks if a value is dropped.
-  static bool isResultDropped(std::vector<Expression*> stack);
+  static bool isResultDropped(ExpressionStack& stack);
 
   // Checks if a break is a simple - no condition, no value, just a plain branching
   static bool isSimple(Break* curr) {
@@ -212,7 +212,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
   // given a stack of nested expressions, update them all from child to parent
-  static void updateStack(std::vector<Expression*>& expressionStack) {
+  static void updateStack(ExpressionStack& expressionStack) {
     for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
       auto* curr = expressionStack[i];
       ReFinalizeNode().visit(curr);

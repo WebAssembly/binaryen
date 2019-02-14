@@ -30,12 +30,14 @@ namespace wasm {
 
 template<typename T, size_t N>
 struct SmallVector {
+  // fixed-space storage
   size_t usedFixed = 0;
   std::array<T, N> fixed;
 
+  // flexible additional storage
   std::vector<T> flexible;
 
-  SmallVector() = default;
+  SmallVector() {}
 
   T& operator[](size_t i) {
     if (i < N) {
@@ -61,8 +63,45 @@ struct SmallVector {
     }
   }
 
+  template <typename... ArgTypes>
+  void emplace_back(ArgTypes &&... Args) {
+    if (usedFixed < N) {
+      new(&fixed[usedFixed++]) T(std::forward<ArgTypes>(Args)...);
+    } else {
+      flexible.emplace_back(std::forward<ArgTypes>(Args)...);
+    }
+  }
+
+  void pop_back() {
+    if (flexible.empty()) {
+      usedFixed--;
+    } else {
+      flexible.pop_back();
+    }
+  }
+
+  T& back() {
+    if (flexible.empty()) {
+      return fixed[usedFixed - 1];
+    } else {
+      return flexible.back();
+    }
+  }
+
+  const T& back() const {
+    if (flexible.empty()) {
+      return fixed[usedFixed - 1];
+    } else {
+      return flexible.back();
+    }
+  }
+
   size_t size() const {
     return usedFixed + flexible.size();
+  }
+
+  bool empty() const {
+    return size() == 0;
   }
 
   void clear() {
@@ -80,6 +119,43 @@ struct SmallVector {
 
   bool operator!=(const SmallVector<T, N>& other) const {
     return !(*this == other);
+  }
+
+  // iteration
+
+  struct Iterator {
+    const SmallVector<T, N>* parent;
+    size_t index;
+
+    Iterator(const SmallVector<T, N>* parent, size_t index) : parent(parent), index(index) {}
+
+    bool operator!=(const Iterator& other) const {
+      return index != other.index || parent != other.parent;
+    }
+
+    void operator++() {
+      index++;
+    }
+
+    Iterator& operator+=(int off) {
+      index += off;
+      return *this;
+    }
+
+    const Iterator operator+(int off) const {
+      return Iterator(*this) += off;
+    }
+
+    const T operator*() const {
+      return (*parent)[index];
+    }
+  };
+
+  Iterator begin() const {
+    return Iterator(static_cast<const SmallVector<T, N>*>(this), 0);
+  }
+  Iterator end() const {
+    return Iterator(static_cast<const SmallVector<T, N>*>(this), size());
   }
 };
 
