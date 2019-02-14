@@ -28,6 +28,7 @@
 #define wasm_wasm_traversal_h
 
 #include "wasm.h"
+#include "support/small_vector.h"
 #include "support/threads.h"
 
 namespace wasm {
@@ -408,6 +409,7 @@ struct Walker : public VisitorType {
   struct Task {
     TaskFunc func;
     Expression** currp;
+    Task() {}
     Task(TaskFunc func, Expression** currp) : func(func), currp(currp) {}
   };
 
@@ -488,7 +490,7 @@ struct Walker : public VisitorType {
 
 private:
   Expression** replacep = nullptr; // the address of the current node, used to replace it
-  std::vector<Task> stack; // stack of tasks
+  SmallVector<Task, 10> stack; // stack of tasks
   Function* currFunction = nullptr; // current function being processed
   Module* currModule = nullptr; // current module being processed
 };
@@ -716,13 +718,17 @@ struct PostWalker : public Walker<SubType, VisitorType> {
   }
 };
 
+// Stacks of expressions tend to be limited in size (although, sometimes
+// super-nested blocks exist for br_table).
+typedef SmallVector<Expression*, 10> ExpressionStack;
+
 // Traversal with a control-flow stack.
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   ControlFlowWalker() = default;
 
-  std::vector<Expression*> controlFlowStack; // contains blocks, loops, and ifs
+  ExpressionStack controlFlowStack; // contains blocks, loops, and ifs
 
   // Uses the control flow stack to find the target of a break to a name
   Expression* findBreakTarget(Name name) {
@@ -785,7 +791,7 @@ template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
   ExpressionStackWalker() = default;
 
-  std::vector<Expression*> expressionStack;
+  ExpressionStack expressionStack;
 
   // Uses the control flow stack to find the target of a break to a name
   Expression* findBreakTarget(Name name) {
