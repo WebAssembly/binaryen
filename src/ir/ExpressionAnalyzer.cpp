@@ -143,7 +143,7 @@ void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
-      if (curr->bytes < getTypeSize(curr->type)) {
+      if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
         visitor.visitInt(curr->signed_);
       }
       visitor.visitAddress(curr->offset);
