@@ -110,6 +110,8 @@ public:
   bool operator==(const Literal& other) const;
   bool operator!=(const Literal& other) const;
 
+  bool isNaN();
+
   static uint32_t NaNPayload(float f);
   static uint64_t NaNPayload(double f);
   static float setQuietNaN(float f);

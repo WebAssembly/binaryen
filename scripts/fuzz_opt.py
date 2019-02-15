@@ -122,9 +122,8 @@ def run_vms(prefix):
   results = []
   # append to this list to add results from VMs
   results += [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
-  results += [fix_output(run_vm([os.path.expanduser('d8'),       '--experimental-wasm-sat_f2i_conversions',                      prefix + 'js', '--', prefix + 'wasm']))]
-  results += [fix_output(run_vm([os.path.expanduser('d8-debug'), '--experimental-wasm-sat_f2i_conversions', '--wasm-tier-up',    prefix + 'js', '--', prefix + 'wasm']))]
-  results += [fix_output(run_vm([os.path.expanduser('d8-debug'), '--experimental-wasm-sat_f2i_conversions', '--no-wasm-tier-up', prefix + 'js', '--', prefix + 'wasm']))]
+  results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
+  results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
   # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
   # run(['../spec/interpreter/wasm', prefix + 'wasm'])
   # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', prefix + 'wasm', '-e', open(prefix + 'wat').read()]))]

@@ -350,7 +350,7 @@
  )
  (func $func_10_invoker (; 11 ;) (type $FUNCSIG$v)
   (call $func_10
-   (f64.const -nan:0xfffffffffffac)
+   (f64.const 0)
   )
   (call $func_10
    (f64.const -81)

@@ -1213,7 +1213,7 @@ private:
     return store;
   }
 
-  Literal makeLiteral(Type type) {
+  Literal makeArbitraryLiteral(Type type) {
     if (type == v128) {
       // generate each lane individually for random lane interpretation
       switch (upTo(6)) {
@@ -1342,6 +1342,14 @@ private:
       }
     }
     WASM_UNREACHABLE();
+  }
+
+  Literal makeLiteral(Type type) {
+    auto ret = makeArbitraryLiteral(type);
+    if (DE_NAN && ret.isNaN()) {
+      ret = Literal::makeFromInt32(0, type);
+    }
+    return ret;
   }
 
   Expression* makeConst(Type type) {
