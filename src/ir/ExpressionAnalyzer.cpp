@@ -367,7 +367,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
 
     Index internalCounter = 0;
     std::map<Name, Index> internalNames; // for each internal name, its unique id
-    std::vector<Expression*> stack;
+    ExpressionStack stack;
 
     void noteScopeName(Name curr) {
       if (curr.is()) {
