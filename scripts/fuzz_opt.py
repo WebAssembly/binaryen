@@ -27,8 +27,11 @@ from test.shared import options
 # parameters
 
 
-LOG_LIMIT = 125
+FUZZ_OPTS = ['--mvp-features']  # may want to add '--no-fuzz-nans' for cross-VM testing
+
 INPUT_SIZE_LIMIT = 250 * 1024
+
+LOG_LIMIT = 125
 
 
 # utilities
@@ -123,7 +126,7 @@ def run_vms(prefix):
   # append to this list to add results from VMs
   results += [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
   results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
-  results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
+  # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
   # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
   # run(['../spec/interpreter/wasm', prefix + 'wasm'])
   # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', prefix + 'wasm', '-e', open(prefix + 'wat').read()]))]
@@ -145,7 +148,7 @@ def test_one(infile, opts):
 
   # fuzz vms
   # gather VM outputs on input file
-  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm', '--mvp-features'])
+  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'] + FUZZ_OPTS)
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
