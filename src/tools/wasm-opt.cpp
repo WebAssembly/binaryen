@@ -274,7 +274,9 @@ int main(int argc, const char* argv[]) {
     results.check(*curr);
   }
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.count("output") == 0) {
+    std::cerr << "(no output file specified, not emitting output)\n";
+  } else {
     if (options.debug) std::cerr << "writing..." << std::endl;
     ModuleWriter writer;
     writer.setDebug(options.debug);
