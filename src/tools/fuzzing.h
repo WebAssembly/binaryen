@@ -123,8 +123,15 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void build(FeatureSet features_) {
+  void setFeatures(FeatureSet features_) {
     features = features_;
+  }
+
+  void setAllowNaNs(bool allowNaNs_) {
+    allowNaNs = allowNaNs_;
+  }
+
+  void build() {
     setupMemory();
     setupTable();
     setupGlobals();
@@ -137,7 +144,7 @@ public:
     if (HANG_LIMIT > 0) {
       addHangLimitSupport();
     }
-    if (DE_NAN) {
+    if (!allowNaNs) {
       addDeNanSupport();
     }
     finalizeTable();
@@ -178,7 +185,7 @@ private:
   // Optionally remove NaNs, which are a source of nondeterminism (which makes
   // cross-VM comparisons harder)
   // TODO: de-NaN SIMD values
-  static const bool DE_NAN = true;
+  bool allowNaNs = true;
 
   // Features allowed to be emitted
   FeatureSet features = FeatureSet::All;
@@ -361,7 +368,7 @@ private:
   }
 
   Expression* makeDeNanOp(Expression* expr) {
-    if (!DE_NAN) return expr;
+    if (allowNaNs) return expr;
     if (expr->type == f32) {
       return builder.makeCall("deNan32", { expr }, f32);
     } else if (expr->type == f64) {
@@ -1213,7 +1220,7 @@ private:
     return store;
   }
 
-  Literal makeLiteral(Type type) {
+  Literal makeArbitraryLiteral(Type type) {
     if (type == v128) {
       // generate each lane individually for random lane interpretation
       switch (upTo(6)) {
@@ -1342,6 +1349,14 @@ private:
       }
     }
     WASM_UNREACHABLE();
+  }
+
+  Literal makeLiteral(Type type) {
+    auto ret = makeArbitraryLiteral(type);
+    if (!allowNaNs && ret.isNaN()) {
+      ret = Literal::makeFromInt32(0, type);
+    }
+    return ret;
   }
 
   Expression* makeConst(Type type) {
