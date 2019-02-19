@@ -131,8 +131,14 @@ public:
     allowNaNs = allowNaNs_;
   }
 
+  void setAllowMemory(bool allowMemory_) {
+    allowMemory = allowMemory_;
+  }
+
   void build() {
-    setupMemory();
+    if (allowMemory) {
+      setupMemory();
+    }
     setupTable();
     setupGlobals();
     addImportLoggingSupport();
@@ -186,6 +192,9 @@ private:
   // cross-VM comparisons harder)
   // TODO: de-NaN SIMD values
   bool allowNaNs = true;
+
+  // Whether to emit memory operations like loads and stores.
+  bool allowMemory = true;
 
   // Features allowed to be emitted
   FeatureSet features = FeatureSet::All;
@@ -1137,6 +1146,7 @@ private:
   }
 
   Expression* makeLoad(Type type) {
+    if (!allowMemory) return makeTrivial(type);
     auto* ret = makeNonAtomicLoad(type);
     if (type != i32 && type != i64) return ret;
     if (!features.hasAtomics() || oneIn(2)) return ret;
@@ -1208,6 +1218,7 @@ private:
   }
 
   Expression* makeStore(Type type) {
+    if (!allowMemory) return makeTrivial(type);
     auto* ret = makeNonAtomicStore(type);
     auto* store = ret->dynCast<Store>();
     if (!store) return ret;
@@ -1595,6 +1606,7 @@ private:
 
   Expression* makeAtomic(Type type) {
     assert(features.hasAtomics());
+    if (!allowMemory) return makeTrivial(type);
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {
@@ -1732,6 +1744,7 @@ private:
   }
 
   Expression* makeBulkMemory(Type type) {
+    if (!allowMemory) return makeTrivial(type);
     assert(features.hasBulkMemory());
     assert(type == none);
     switch (upTo(4)) {
@@ -1744,6 +1757,7 @@ private:
   }
 
   Expression* makeMemoryInit() {
+    if (!allowMemory) return makeTrivial(none);
     auto segment = uint32_t(get32());
     Expression* dest = make(i32);
     Expression* offset = make(i32);
@@ -1752,10 +1766,12 @@ private:
   }
 
   Expression* makeDataDrop() {
+    if (!allowMemory) return makeTrivial(none);
     return builder.makeDataDrop(get32());
   }
 
   Expression* makeMemoryCopy() {
+    if (!allowMemory) return makeTrivial(none);
     Expression* dest = make(i32);
     Expression* source = make(i32);
     Expression* size = make(i32);
@@ -1763,6 +1779,7 @@ private:
   }
 
   Expression* makeMemoryFill() {
+    if (!allowMemory) return makeTrivial(none);
     Expression* dest = make(i32);
     Expression* value = make(i32);
     Expression* size = make(i32);
