@@ -193,7 +193,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       if (!optimized) {
         if (isConcreteType(child->type)) {
           // We can't just skip a final concrete element, even if it isn't used. Instead,
-          // replace it with something that's easy to optimize out.
+          // replace it with something that's easy to optimize out (for example, code-folding
+          // can merge out identical zeros at the end of if arms).
           optimized = LiteralUtils::makeZero(child->type, *getModule());
         } else if (child->type == unreachable) {
           // Don't try to optimize out an unreachable child (dce can do that properly).
