@@ -215,5 +215,6 @@
   (drop
    (i32.const 14)
   )
+  (return)
  )
 )

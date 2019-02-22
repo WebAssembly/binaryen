@@ -42,7 +42,6 @@
 #include "wasm-builder.h"
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
-#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -326,13 +325,16 @@ struct DAE : public Pass {
       }
     }
     // We can also tell which calls have all their return values dropped.
-    for (auto& pair : allCalls) {
-      auto name = pair.first;
-      auto& calls = pair.second;
-      auto* func = module->getFunction(name);
+    for (auto& func : module->functions) {
       if (func->result == none) {
         continue;
       }
+      auto name = func->name;
+      auto iter = allCalls.find(name);
+      if (iter == allCalls.end()) {
+        continue;
+      }
+      auto& calls = iter->second;
       bool allDropped = true;
       for (auto* call : calls) {
         if (!allDroppedCalls.count(call)) {
@@ -343,9 +345,9 @@ struct DAE : public Pass {
       if (!allDropped) {
         continue;
       }
-      removeReturnValue(func, calls, module);
+      removeReturnValue(func.get(), calls, module);
       // TODO Removing a drop may also open optimization opportunities in the callers.
-      changed.insert(func);
+      changed.insert(func.get());
     }
     if (optimize && changed.size() > 0) {
       OptUtils::optimizeAfterInlining(changed, module, runner);
@@ -398,14 +400,23 @@ private:
     func->type = Name();
     func->result = none;
     Builder builder(*module);
-    // Remove any returns.
-    FindAll<Return> returns(func->body);
-    for (auto* ret : returns.list) {
-      auto* value = ret->value;
-      assert(ret->value);
-      auto* drop = ExpressionManipulator::convert<Return, Drop>(ret);
-      drop->value = value;
-    }
+    // Remove any return values.
+    struct ReturnUpdater : public PostWalker<ReturnUpdater> {
+      Module* module;
+      ReturnUpdater(Function* func, Module* module) : module(module) {
+        walk(func->body);
+      }
+      void visitReturn(Return* curr) {
+        auto* value = curr->value;
+        assert(value);
+        curr->value = nullptr;
+        Builder builder(*module);
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(value),
+          curr
+        ));
+      }
+    } returnUpdater(func, module);
     // Remove any value flowing out.
     if (isConcreteType(func->body->type)) {
       func->body = builder.makeDrop(func->body);
