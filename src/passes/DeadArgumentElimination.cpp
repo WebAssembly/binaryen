@@ -250,7 +250,9 @@ struct DAE : public Pass {
       auto name = pair.first;
       // We can only optimize if we see all the calls and can modify
       // them.
-      if (infoMap[name].hasUnseenCalls) continue;
+      if (infoMap[name].hasUnseenCalls) {
+        continue;
+      }
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
@@ -329,10 +331,10 @@ struct DAE : public Pass {
       if (func->result == none) {
         continue;
       }
+      auto name = func->name;
       if (infoMap[name].hasUnseenCalls) {
         continue;
       }
-      auto name = func->name;
       auto iter = allCalls.find(name);
       if (iter == allCalls.end()) {
         continue;
