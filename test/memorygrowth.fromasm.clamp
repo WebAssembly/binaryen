@@ -8044,52 +8044,52 @@
   )
   (local.get $15)
  )
- (func $Wa (; 16 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $Wa (; 16 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  (local $2 i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
   (local $6 i32)
-  (local $7 i32)
-  (if
-   (local.tee $4
-    (i32.load
-     (local.tee $3
-      (i32.add
-       (local.get $2)
-       (i32.const 16)
+  (local.set $6
+   (i32.const 1144)
+  )
+  (local.set $5
+   (if (result i32)
+    (local.tee $3
+     (i32.load
+      (local.tee $2
+       (i32.add
+        (local.get $1)
+        (i32.const 16)
+       )
       )
      )
     )
-   )
-   (block
-    (local.set $5
-     (local.get $4)
-    )
-    (local.set $7
-     (i32.const 5)
-    )
-   )
-   (if
-    (i32.eqz
-     (call $Xa
-      (local.get $2)
-     )
-    )
-    (block
-     (local.set $5
-      (i32.load
-       (local.get $3)
-      )
-     )
-     (local.set $7
+    (block (result i32)
+     (local.set $4
       (i32.const 5)
+     )
+     (local.get $3)
+    )
+    (if (result i32)
+     (call $Xa
+      (local.get $1)
+     )
+     (local.get $5)
+     (block (result i32)
+      (local.set $4
+       (i32.const 5)
+      )
+      (i32.load
+       (local.get $2)
+      )
      )
     )
    )
   )
   (if (result i32)
    (i32.eq
-    (local.get $7)
+    (local.get $4)
     (i32.const 5)
    )
    (block $label$break$a (result i32)
@@ -8097,28 +8097,28 @@
      (i32.lt_u
       (i32.sub
        (local.get $5)
-       (local.tee $3
+       (local.tee $2
         (i32.load
-         (local.tee $4
+         (local.tee $3
           (i32.add
-           (local.get $2)
+           (local.get $1)
            (i32.const 20)
           )
          )
         )
        )
       )
-      (local.get $1)
+      (local.get $0)
      )
      (br $label$break$a
       (call_indirect (type $FUNCSIG$iiii)
-       (local.get $2)
-       (local.get $0)
        (local.get $1)
+       (i32.const 1144)
+       (local.get $0)
        (i32.add
         (i32.and
          (i32.load offset=36
-          (local.get $2)
+          (local.get $1)
          )
          (i32.const 3)
         )
@@ -8127,27 +8127,27 @@
       )
      )
     )
-    (local.set $6
-     (local.get $3)
+    (local.set $4
+     (local.get $2)
     )
     (if
      (i32.gt_s
       (i32.load8_s offset=75
-       (local.get $2)
+       (local.get $1)
       )
       (i32.const -1)
      )
      (block $label$break$b
-      (local.set $3
-       (local.get $1)
+      (local.set $2
+       (local.get $0)
       )
       (loop $while-in
        (if
         (i32.eqz
-         (local.get $3)
+         (local.get $2)
         )
         (block
-         (local.set $3
+         (local.set $2
           (i32.const 0)
          )
          (br $label$break$b)
@@ -8157,19 +8157,19 @@
         (i32.ne
          (i32.load8_s
           (i32.add
-           (local.get $0)
            (local.tee $5
             (i32.add
-             (local.get $3)
+             (local.get $2)
              (i32.const -1)
             )
            )
+           (i32.const 1144)
           )
          )
          (i32.const 10)
         )
         (block
-         (local.set $3
+         (local.set $2
           (local.get $5)
          )
          (br $while-in)
@@ -8178,131 +8178,87 @@
       )
       (drop
        (br_if $label$break$a
-        (local.get $3)
+        (local.get $2)
         (i32.lt_u
          (call_indirect (type $FUNCSIG$iiii)
+          (local.get $1)
+          (i32.const 1144)
           (local.get $2)
-          (local.get $0)
-          (local.get $3)
           (i32.add
            (i32.and
             (i32.load offset=36
-             (local.get $2)
+             (local.get $1)
             )
             (i32.const 3)
            )
            (i32.const 2)
           )
          )
-         (local.get $3)
+         (local.get $2)
         )
        )
       )
-      (local.set $1
-       (i32.sub
-        (local.get $1)
-        (local.get $3)
-       )
-      )
       (local.set $0
-       (i32.add
+       (i32.sub
         (local.get $0)
-        (local.get $3)
+        (local.get $2)
        )
       )
       (local.set $6
+       (i32.add
+        (local.get $2)
+        (i32.const 1144)
+       )
+      )
+      (local.set $4
        (i32.load
-        (local.get $4)
+        (local.get $3)
        )
       )
      )
-     (local.set $3
+     (local.set $2
       (i32.const 0)
      )
     )
     (drop
      (call $jb
+      (local.get $4)
       (local.get $6)
       (local.get $0)
-      (local.get $1)
      )
     )
     (i32.store
-     (local.get $4)
+     (local.get $3)
      (i32.add
-      (local.get $1)
+      (local.get $0)
       (i32.load
-       (local.get $4)
+       (local.get $3)
       )
      )
     )
     (i32.add
-     (local.get $1)
-     (local.get $3)
+     (local.get $0)
+     (local.get $2)
     )
    )
-   (local.get $6)
+   (i32.const 0)
   )
  )
- (func $Za (; 17 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $Za (; 17 ;) (; has Stack IR ;) (result i32)
+  (local $0 i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (local $5 i32)
-  (if
-   (i32.and
-    (local.tee $3
-     (local.get $0)
-    )
-    (i32.const 3)
+  (local.set $0
+   (i32.const 1144)
+  )
+  (block
+   (local.set $1
+    (i32.const 1144)
    )
-   (block $label$break$a
-    (local.set $4
-     (local.get $3)
-    )
-    (local.set $1
-     (loop $while-in (result i32)
-      (if
-       (i32.eqz
-        (i32.load8_s
-         (local.get $0)
-        )
-       )
-       (block
-        (local.set $5
-         (local.get $4)
-        )
-        (br $label$break$a)
-       )
-      )
-      (br_if $while-in
-       (i32.and
-        (local.tee $4
-         (local.tee $0
-          (i32.add
-           (local.get $0)
-           (i32.const 1)
-          )
-         )
-        )
-        (i32.const 3)
-       )
-      )
-      (local.set $2
-       (i32.const 4)
-      )
-      (local.get $0)
-     )
-    )
-   )
-   (block
-    (local.set $1
-     (local.get $0)
-    )
-    (local.set $2
-     (i32.const 4)
-    )
+   (local.set $2
+    (i32.const 4)
    )
   )
   (i32.sub
@@ -8379,9 +8335,9 @@
      )
      (local.get $0)
     )
-    (local.get $5)
+    (local.get $4)
    )
-   (local.get $3)
+   (i32.const 1144)
   )
  )
  (func $_a (; 18 ;) (; has Stack IR ;) (param $0 i32) (result i32)
@@ -9058,10 +9014,7 @@
     (i32.lt_s
      (i32.add
       (call $bb
-       (i32.const 1144)
-       (call $Za
-        (i32.const 1144)
-       )
+       (call $Za)
        (local.get $0)
       )
       (i32.const -1)
@@ -9197,34 +9150,33 @@
    )
   )
  )
- (func $bb (; 26 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (local $3 i32)
-  (local.set $3
-   (local.get $1)
+ (func $bb (; 26 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  (local $2 i32)
+  (local.set $2
+   (local.get $0)
   )
   (if (result i32)
    (block (result i32)
     (drop
      (i32.load offset=76
-      (local.get $2)
+      (local.get $1)
      )
     )
     (i32.ne
-     (local.get $3)
-     (local.tee $0
+     (local.get $2)
+     (local.tee $1
       (call $Wa
-       (local.get $0)
-       (local.get $3)
        (local.get $2)
+       (local.get $1)
       )
      )
     )
    )
    (if (result i32)
-    (local.get $1)
+    (local.get $0)
     (i32.div_u
-     (local.get $0)
      (local.get $1)
+     (local.get $0)
     )
     (i32.const 0)
    )

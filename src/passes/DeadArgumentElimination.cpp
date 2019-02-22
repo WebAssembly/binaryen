@@ -207,6 +207,15 @@ struct DAE : public Pass {
   bool optimize = false;
 
   void run(PassRunner* runner, Module* module) override {
+    // Iterate to convergence.
+    while (1) {
+      if (!iteration(runner, module)) {
+        break;
+      }
+    }
+  }
+
+  bool iteration(PassRunner* runner, Module* module) {
     DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data structure.
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
@@ -354,9 +363,10 @@ struct DAE : public Pass {
       // TODO Removing a drop may also open optimization opportunities in the callers.
       changed.insert(func.get());
     }
-    if (optimize && changed.size() > 0) {
+    if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, runner);
     }
+    return !changed.empty();
   }
 
 private:
