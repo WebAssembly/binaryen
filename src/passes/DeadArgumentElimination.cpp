@@ -27,6 +27,7 @@
 //    If so, we can avoid even sending and receiving it. (Note how if
 //    the previous point was true for an argument, then the second
 //    must as well.)
+//  * Find return values ("return arguments" ;) that are never used.
 //
 // This pass does not depend on flattening, but it may be more effective,
 // as then call arguments never have side effects (which we need to
@@ -41,6 +42,7 @@
 #include "wasm-builder.h"
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
+#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -53,6 +55,9 @@ struct DAEFunctionInfo {
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
   std::unordered_map<Name, std::vector<Call*>> calls;
+  // Map of all calls that are dropped, to their drops' locations (so that
+  // if we can optimize out the drop, we can replace the drop there).
+  std::unordered_map<Call*, Expression**> droppedCalls;
   // Whether the function can be called from places that
   // affect what we can do. For now, any call we don't
   // see inhibits our optimizations, but TODO: an export
@@ -113,6 +118,12 @@ struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>,
   void visitCall(Call* curr) {
     if (!getModule()->getFunction(curr->target)->imported()) {
       info->calls[curr->target].push_back(curr);
+    }
+  }
+
+  void visitDrop(Drop* curr) {
+    if (auto* call = curr->value->dynCast<Call>()) {
+      info->droppedCalls[call] = getCurrentPointer();
     }
   }
 
@@ -230,6 +241,9 @@ struct DAE : public Pass {
         auto& allCallsToName = allCalls[name];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
       }
+      for (auto& pair : info.droppedCalls) {
+        allDroppedCalls[pair.first] = pair.second;
+      }
     }
     // We now have a mapping of all call sites for each function. Check which
     // are always passed the same constant for a particular argument.
@@ -311,13 +325,37 @@ struct DAE : public Pass {
         i--;
       }
     }
+    // We can also tell which calls have all their return values dropped.
+    for (auto& pair : allCalls) {
+      auto name = pair.first;
+      auto& calls = pair.second;
+      auto* func = module->getFunction(name);
+      if (func->result == none) {
+        continue;
+      }
+      bool allDropped = true;
+      for (auto* call : calls) {
+        if (!allDroppedCalls.count(call)) {
+          allDropped = false;
+          break;
+        }
+      }
+      if (!allDropped) {
+        continue;
+      }
+      removeReturnValue(func, calls, module);
+      // TODO Removing a drop may also open optimization opportunities in the callers
+      changed.insert(func);
+    }
     if (optimize && changed.size() > 0) {
       OptUtils::optimizeAfterInlining(changed, module, runner);
     }
   }
 
 private:
-  void removeParameter(Function* func, Index i, std::vector<Call*> calls) {
+  std::unordered_map<Call*, Expression**> allDroppedCalls;
+
+  void removeParameter(Function* func, Index i, std::vector<Call*>& calls) {
     // Clear the type, which is no longer accurate.
     func->type = Name();
     // It's cumbersome to adjust local names - TODO don't clear them?
@@ -352,6 +390,36 @@ private:
     // Remove the arguments from the calls.
     for (auto* call : calls) {
       call->operands.erase(call->operands.begin() + i);
+    }
+  }
+
+  void removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
+    // Clear the type, which is no longer accurate.
+    func->type = Name();
+    func->result = none;
+    Builder builder(*module);
+    // Remove any returns.
+    FindAll<Return> returns(func->body);
+    for (auto* ret : returns.list) {
+      auto* value = ret->value;
+      assert(ret->value);
+      auto* drop = ExpressionManipulator::convert<Return, Drop>(ret);
+      drop->value = value;
+    }
+    // Remove any value flowing out.
+    if (isConcreteType(func->body->type)) {
+      func->body = builder.makeDrop(func->body);
+    }
+    // Remove the drops on the calls.
+    for (auto* call : calls) {
+      auto iter = allDroppedCalls.find(call);
+      assert(iter != allDroppedCalls.end());
+      Expression** location = iter->second;
+      *location = call;
+      // Update the call's type.
+      if (call->type != unreachable) {
+        call->type = none;
+      }
     }
   }
 };

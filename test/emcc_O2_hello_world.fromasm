@@ -8174,12 +8174,10 @@
       (i32.const 0)
      )
     )
-    (drop
-     (call $_memcpy
-      (local.get $6)
-      (local.get $0)
-      (local.get $1)
-     )
+    (call $_memcpy
+     (local.get $6)
+     (local.get $0)
+     (local.get $1)
     )
     (i32.store
      (local.get $4)
@@ -8700,23 +8698,19 @@
    )
   )
  )
- (func $_memcpy (; 23 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (local $3 i32)
+ (func $_memcpy (; 23 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (if
    (i32.ge_s
     (local.get $2)
     (i32.const 4096)
    )
-   (return
+   (drop
     (call $_emscripten_memcpy_big
      (local.get $0)
      (local.get $1)
      (local.get $2)
     )
    )
-  )
-  (local.set $3
-   (local.get $0)
   )
   (if
    (i32.eq
@@ -8737,14 +8731,6 @@
        (i32.const 3)
       )
       (block
-       (if
-        (i32.eqz
-         (local.get $2)
-        )
-        (return
-         (local.get $3)
-        )
-       )
        (i32.store8
         (local.get $0)
         (i32.load8_s
@@ -8845,7 +8831,6 @@
     )
    )
   )
-  (local.get $3)
  )
  (func $runPostSets (; 24 ;) (; has Stack IR ;)
   (nop)
@@ -8988,7 +8973,7 @@
    (local.get $2)
   )
  )
- (func $_puts (; 26 ;) (; has Stack IR ;) (result i32)
+ (func $_puts (; 26 ;) (; has Stack IR ;)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -9001,77 +8986,73 @@
     )
    )
   )
-  (i32.shr_s
-   (i32.shl
-    (if (result i32)
-     (i32.lt_s
-      (i32.add
-       (call $_fwrite
+  (drop
+   (if (result i32)
+    (i32.lt_s
+     (i32.add
+      (call $_fwrite
+       (i32.const 672)
+       (call $_strlen
         (i32.const 672)
-        (call $_strlen
-         (i32.const 672)
-        )
-        (local.get $0)
        )
-       (i32.const -1)
+       (local.get $0)
       )
-      (i32.const 0)
+      (i32.const -1)
      )
-     (i32.const 1)
-     (block $do-once (result i32)
-      (if
-       (if (result i32)
-        (i32.ne
-         (i32.load8_s offset=75
-          (local.get $0)
-         )
-         (i32.const 10)
+     (i32.const 0)
+    )
+    (i32.const 1)
+    (block $do-once (result i32)
+     (if
+      (if (result i32)
+       (i32.ne
+        (i32.load8_s offset=75
+         (local.get $0)
         )
-        (i32.lt_u
-         (local.tee $1
-          (i32.load
-           (local.tee $2
-            (i32.add
-             (local.get $0)
-             (i32.const 20)
-            )
+        (i32.const 10)
+       )
+       (i32.lt_u
+        (local.tee $1
+         (i32.load
+          (local.tee $2
+           (i32.add
+            (local.get $0)
+            (i32.const 20)
            )
           )
          )
-         (i32.load offset=16
-          (local.get $0)
-         )
         )
-        (i32.const 0)
-       )
-       (block
-        (i32.store
-         (local.get $2)
-         (i32.add
-          (local.get $1)
-          (i32.const 1)
-         )
+        (i32.load offset=16
+         (local.get $0)
         )
-        (i32.store8
-         (local.get $1)
-         (i32.const 10)
-        )
-        (br $do-once
-         (i32.const 0)
-        )
-       )
-      )
-      (i32.lt_s
-       (call $___overflow
-        (local.get $0)
        )
        (i32.const 0)
       )
+      (block
+       (i32.store
+        (local.get $2)
+        (i32.add
+         (local.get $1)
+         (i32.const 1)
+        )
+       )
+       (i32.store8
+        (local.get $1)
+        (i32.const 10)
+       )
+       (br $do-once
+        (i32.const 0)
+       )
+      )
+     )
+     (i32.lt_s
+      (call $___overflow
+       (local.get $0)
+      )
+      (i32.const 0)
      )
     )
-    (i32.const 31)
    )
-   (i32.const 31)
   )
  )
  (func $___stdio_seek (; 27 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
@@ -9495,9 +9476,7 @@
   (global.get $tempRet0)
  )
  (func $_main (; 46 ;) (; has Stack IR ;) (result i32)
-  (drop
-   (call $_puts)
-  )
+  (call $_puts)
   (i32.const 0)
  )
  (func $stackSave (; 47 ;) (; has Stack IR ;) (result i32)
