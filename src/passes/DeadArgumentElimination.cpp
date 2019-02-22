@@ -344,7 +344,7 @@ struct DAE : public Pass {
         continue;
       }
       removeReturnValue(func, calls, module);
-      // TODO Removing a drop may also open optimization opportunities in the callers
+      // TODO Removing a drop may also open optimization opportunities in the callers.
       changed.insert(func);
     }
     if (optimize && changed.size() > 0) {
