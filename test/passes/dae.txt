@@ -4,8 +4,8 @@
  (type $2 (func (param i32 f64)))
  (type $3 (func (result i32)))
  (type $4 (func (param i32) (result i32)))
- (table $0 1 1 funcref)
- (elem (i32.const 0) $a9)
+ (table $0 2 2 funcref)
+ (elem (i32.const 0) $a9 $c8)
  (export "a8" (func $a8))
  (func $a (; 0 ;)
   (local $0 i32)
@@ -189,6 +189,9 @@
   )
   (call $c6)
   (call $c7)
+  (drop
+   (call $c8)
+  )
  )
  (func $c2 (; 28 ;)
   (drop
@@ -213,7 +216,10 @@
  )
  (func $c7 (; 33 ;)
   (drop
-   (i32.const 14)
+   (i32.const 4)
   )
+ )
+ (func $c8 (; 34 ;) (type $3) (result i32)
+  (i32.const 5)
  )
 )

@@ -1,7 +1,7 @@
 (module
   (export "a8" (func $a8))
-  (table 1 1 funcref)
-  (elem (i32.const 0) $a9)
+  (table 2 2 funcref)
+  (elem (i32.const 0) $a9 $c8)
   (func $a (param $x i32))
   (func $b
     (call $a (i32.const 1)) ;; best case scenario
@@ -94,6 +94,7 @@
     (drop (call $c5 (unreachable)))
     (drop (call $c6))
     (drop (call $c7))
+    (drop (call $c8))
   )
   (func $c2 (result i32)
     (i32.const 1)
@@ -111,7 +112,10 @@
     (unreachable)
   )
   (func $c7 (result i32)
-    (return (i32.const 14))
+    (return (i32.const 4))
+  )
+  (func $c8 (result i32)
+    (i32.const 5)
   )
 )
 

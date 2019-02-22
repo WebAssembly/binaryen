@@ -8215,10 +8215,12 @@
       (i32.const 0)
      )
     )
-    (call $jb
-     (local.get $6)
-     (local.get $0)
-     (local.get $1)
+    (drop
+     (call $jb
+      (local.get $6)
+      (local.get $0)
+      (local.get $1)
+     )
     )
     (i32.store
      (local.get $4)
@@ -8740,19 +8742,23 @@
    (local.get $2)
   )
  )
- (func $jb (; 21 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $jb (; 21 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (local $3 i32)
   (if
    (i32.ge_s
     (local.get $2)
     (i32.const 4096)
    )
-   (drop
+   (return
     (call $va
      (local.get $0)
      (local.get $1)
      (local.get $2)
     )
    )
+  )
+  (local.set $3
+   (local.get $0)
   )
   (if
    (i32.eq
@@ -8773,6 +8779,14 @@
        (i32.const 3)
       )
       (block
+       (if
+        (i32.eqz
+         (local.get $2)
+        )
+        (return
+         (local.get $3)
+        )
+       )
        (i32.store8
         (local.get $0)
         (i32.load8_s
@@ -8873,6 +8887,7 @@
     )
    )
   )
+  (local.get $3)
  )
  (func $gb (; 22 ;) (; has Stack IR ;)
   (nop)

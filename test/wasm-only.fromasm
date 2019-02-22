@@ -728,8 +728,8 @@
    (local.get $2)
   )
  )
- (func $legalfunc$_fabsf (; 27 ;) (; has Stack IR ;) (param $0 f32)
-  (drop
+ (func $legalfunc$_fabsf (; 27 ;) (; has Stack IR ;) (param $0 f32) (result f32)
+  (f32.demote_f64
    (call $legalimport$_fabsf
     (f64.promote_f32
      (local.get $0)
@@ -737,18 +737,16 @@
    )
   )
  )
- (func $legalfunc$do_i64 (; 28 ;) (; has Stack IR ;)
-  (drop
-   (i64.or
+ (func $legalfunc$do_i64 (; 28 ;) (; has Stack IR ;) (result i64)
+  (i64.or
+   (i64.extend_i32_u
+    (call $legalimport$do_i64)
+   )
+   (i64.shl
     (i64.extend_i32_u
-     (call $legalimport$do_i64)
+     (call $getTempRet0)
     )
-    (i64.shl
-     (i64.extend_i32_u
-      (call $getTempRet0)
-     )
-     (i64.const 32)
-    )
+    (i64.const 32)
    )
   )
  )

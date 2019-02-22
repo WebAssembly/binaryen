@@ -333,6 +333,9 @@ struct DAE : public Pass {
       if (func->result == none) {
         continue;
       }
+      if (infoMap[name].hasUnseenCalls) {
+        continue;
+      }
       bool allDropped = true;
       for (auto* call : calls) {
         if (!allDroppedCalls.count(call)) {
