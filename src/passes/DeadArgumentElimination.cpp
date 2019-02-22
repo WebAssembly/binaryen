@@ -345,6 +345,9 @@ struct DAE : public Pass {
       if (!allDropped) {
         continue;
       }
+      if (infoMap[name].hasUnseenCalls) {
+        continue;
+      }
       removeReturnValue(func.get(), calls, module);
       // TODO Removing a drop may also open optimization opportunities in the callers.
       changed.insert(func.get());
