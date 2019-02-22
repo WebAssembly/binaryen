@@ -1426,12 +1426,10 @@
      (i32.const 0)
     )
    )
-   (drop
-    (call $_memcpy
-     (local.get $4)
-     (local.get $0)
-     (local.get $1)
-    )
+   (call $_memcpy
+    (local.get $4)
+    (local.get $0)
+    (local.get $1)
    )
    (i32.store
     (local.get $5)
@@ -7312,22 +7310,20 @@
     )
    )
    (block $do-once
-    (drop
-     (call $_memset
-      (local.get $6)
-      (local.get $1)
-      (select
+    (call $_memset
+     (local.get $6)
+     (local.get $1)
+     (select
+      (i32.const 256)
+      (local.tee $5
+       (i32.sub
+        (local.get $2)
+        (local.get $3)
+       )
+      )
+      (i32.gt_u
+       (local.get $5)
        (i32.const 256)
-       (local.tee $5
-        (i32.sub
-         (local.get $2)
-         (local.get $3)
-        )
-       )
-       (i32.gt_u
-        (local.get $5)
-        (i32.const 256)
-       )
       )
      )
     )
@@ -14652,11 +14648,10 @@
   )
   (local.get $4)
  )
- (func $_memset (; 53 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memset (; 53 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (local $5 i32)
-  (local.set $4
+  (local.set $3
    (i32.add
     (local.get $0)
     (local.get $2)
@@ -14675,27 +14670,27 @@
      )
     )
     (if
-     (local.tee $3
+     (local.tee $2
       (i32.and
        (local.get $0)
        (i32.const 3)
       )
      )
      (block
-      (local.set $3
+      (local.set $2
        (i32.sub
         (i32.add
          (local.get $0)
          (i32.const 4)
         )
-        (local.get $3)
+        (local.get $2)
        )
       )
       (loop $while-in
        (if
         (i32.lt_s
          (local.get $0)
-         (local.get $3)
+         (local.get $2)
         )
         (block
          (i32.store8
@@ -14714,7 +14709,7 @@
       )
      )
     )
-    (local.set $3
+    (local.set $2
      (i32.or
       (i32.or
        (i32.or
@@ -14735,9 +14730,9 @@
       )
      )
     )
-    (local.set $5
+    (local.set $4
      (i32.and
-      (local.get $4)
+      (local.get $3)
       (i32.const -4)
      )
     )
@@ -14745,12 +14740,12 @@
      (if
       (i32.lt_s
        (local.get $0)
-       (local.get $5)
+       (local.get $4)
       )
       (block
        (i32.store
         (local.get $0)
-        (local.get $3)
+        (local.get $2)
        )
        (local.set $0
         (i32.add
@@ -14768,7 +14763,7 @@
    (if
     (i32.lt_s
      (local.get $0)
-     (local.get $4)
+     (local.get $3)
     )
     (block
      (i32.store8
@@ -14784,10 +14779,6 @@
      (br $while-in3)
     )
    )
-  )
-  (i32.sub
-   (local.get $0)
-   (local.get $2)
   )
  )
  (func $_bitshift64Lshr (; 54 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
@@ -14896,23 +14887,22 @@
   )
   (i32.const 0)
  )
- (func $_memcpy (; 56 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (local $3 i32)
+ (func $_memcpy (; 56 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (if
    (i32.ge_s
     (local.get $2)
     (i32.const 4096)
    )
-   (return
-    (call $_emscripten_memcpy_big
-     (local.get $0)
-     (local.get $1)
-     (local.get $2)
+   (block
+    (drop
+     (call $_emscripten_memcpy_big
+      (local.get $0)
+      (local.get $1)
+      (local.get $2)
+     )
     )
+    (return)
    )
-  )
-  (local.set $3
-   (local.get $0)
   )
   (if
    (i32.eq
@@ -14937,9 +14927,7 @@
         (i32.eqz
          (local.get $2)
         )
-        (return
-         (local.get $3)
-        )
+        (return)
        )
        (i32.store8
         (local.get $0)
@@ -15041,7 +15029,6 @@
     )
    )
   )
-  (local.get $3)
  )
  (func $___udivdi3 (; 57 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (call $___udivmoddi4

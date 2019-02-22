@@ -1,6 +1,5 @@
 (module
  (import "env" "memory" (memory $memory 256 256))
- (global $M (mut i32) (i32.const 0))
  (export "floats" (func $legalstub$floats))
  (export "getTempRet0" (func $ub))
  (export "neg" (func $legalstub$neg))
@@ -9,11 +8,8 @@
  (func $ctzzzz (; 0 ;) (; has Stack IR ;) (result i32)
   (i32.const 2)
  )
- (func $ub (; 1 ;) (; has Stack IR ;) (result i32)
-  (drop
-   (call $ub)
-  )
-  (global.get $M)
+ (func $ub (; 1 ;) (; has Stack IR ;)
+  (call $ub)
  )
  (func $legalstub$floats (; 2 ;) (; has Stack IR ;) (param $0 f64) (result f64)
   (f64.promote_f32

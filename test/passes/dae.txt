@@ -189,9 +189,7 @@
   )
   (call $c6)
   (call $c7)
-  (drop
-   (call $c8)
-  )
+  (call $c8)
  )
  (func $c2 (; 28 ;)
   (drop
@@ -218,8 +216,11 @@
   (drop
    (i32.const 4)
   )
+  (return)
  )
- (func $c8 (; 34 ;) (type $3) (result i32)
-  (i32.const 5)
+ (func $c8 (; 34 ;)
+  (drop
+   (i32.const 5)
+  )
  )
 )
