@@ -170,7 +170,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
-    if (curr->is<Load>() || curr->is<Store>()) {
+    if (getPassOptions.unusedLowMemory && (curr->is<Load>() || curr->is<Store>())) {
       optimizeMemoryAccess(curr);
       return;
     }
@@ -303,6 +303,7 @@ private:
           for (auto* get : localGraph.setInfluences[set]) {
             work.insert(get);
           }
+          worked = true;
         }
       } else {
         auto* get = curr->cast<GetLocal>();
@@ -347,6 +348,7 @@ private:
           for (auto* set : localGraph.getInfluences[get]) {
             work.insert(set);
           }
+          worked = true;
         }
       }
     }
@@ -364,26 +366,101 @@ private:
 
   template<typename T>
   void optimizeMemoryAccessInternal(T* curr) {
-    // Look for a single added constant on the right (which optimize-instructions
-    // canonicalizes to).
     auto* ptr = curr->ptr;
+    // First, try the pointer itself. If it can be replaced by a constant,
+    // that is,  (load (const X))  =>  (load offset=X (const 0))
+    // then this is worth it for the speed benefits, even though it's not
+    // actually smaller (we can't eliminate the const).
+    auto result = tryToOptimizeMemoryAccessConstant(ptr);
+    if (result.succeeded) {
+      curr->offset = result.total;
+      curr->ptr = LiteralUtils::makeZero(i32, getModule());
+      return;
+    }
     if (auto* add = ptr->dynCast<Binary>()) {
       if (add->op == AddInt32) {
-        if (auto* right = add->right->dynCast<Const>()) {
-          auto value = left->value.geti32();
-          // Avoid uninteresting corner cases with peculiar offsets.
-          if (value >= 0 && value < PassOptions::LowMemoryBound) {
-            // The total offset must not allow reaching reasonable memory
-            // by overflowing.
-            auto total = offset + value;
-            if (total < PassOptions::LowMemoryBound) {
-              curr->offset = total;
-              curr->ptr = add->left;
-            }
+        // Look for a single added constant on the right (which optimize-instructions
+        // canonicalizes to). If propagating, we can also look for a suitable get.
+        auto result = tryToOptimizeMemoryAccessConstant(add->right);
+        if (result.succeeded) {
+          curr->offset = result.total;
+          curr->ptr = add->left;
+          return;
+        }
+      }
+      // Look for a propagate-able constant on the left as well
+      if (propagate) {
+        auto result = tryToOptimizeMemoryAccessConstant(add->left);
+        if (result.succeeded) {
+          curr->offset = result.total;
+          curr->ptr = add->right;
+          return;
+        }
+      }
+    }
+    if (propagate) {
+      // A final interesting case is a propagated add:
+      //
+      //  x = y + 10
+      //  ..
+      //  load(x)
+      // =>
+      //  x = y + 10
+      //  ..
+      //  load(y, offset=10)
+      //
+      // This is only valid if y does not change in the middle.
+TODO
+    }
+  }
+
+  struct MemoryAccessResult {
+    bool succeeded;
+    Address total;
+    MemoryAccessResult() : succeeded(false) {}
+    MemoryAccessResult(Address total) : succeeded(true), total(total) {}
+  };
+
+  // See if we can optimize an offset from an expression. If we report
+  // success, the returned offset can be added as a replacement for the
+  // expression here.
+  MemoryAccessResult canOptimizeMemoryAccessConstant(Expression* curr) {
+    if (auto* c = curr->dynCast<Const>()) {
+      auto ret = canOptimizeMemoryAccessConstant(c->value);
+      if (ret.succeeded) {
+        return ret;
+      }
+    }
+    // If propagating, look at a get too.
+    if (propagate) {
+      if (auto* get = curr->dynCast<GetLocal>()) {
+        auto iter = getValues.find(get);
+        if (iter != getValues.end()) {
+        auto value = iter->second;
+        if (value.isConcrete()) {
+          auto ret = canOptimizeMemoryAccessConstant(c->value);
+          if (ret.succeeded) {
+            return ret;
           }
         }
       }
     }
+    return MemoryAccessResult();
+  }
+
+  // Sees if we can optimize a particular constant.
+  MemoryAccessResult canOptimizeMemoryAccessConstant(Literal literal) {
+    auto value = literal.geti32();
+    // Avoid uninteresting corner cases with peculiar offsets.
+    if (value >= 0 && value < PassOptions::LowMemoryBound) {
+      // The total offset must not allow reaching reasonable memory
+      // by overflowing.
+      auto total = offset + value;
+      if (total < PassOptions::LowMemoryBound) {
+        return MemoryAccessResult(total);
+      }
+    }
+    return MemoryAccessResult();
   }
 };
 
