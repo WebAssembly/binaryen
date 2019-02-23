@@ -318,9 +318,9 @@ struct SafeHeap : public Pass {
       builder.makeBinary(
         OrInt32,
         builder.makeBinary(
-          EqInt32,
+          LtUInt32,
           builder.makeGetLocal(local, i32),
-          builder.makeConst(Literal(int32_t(0)))
+          builder.makeConst(Literal(int32_t(1024)))
         ),
         builder.makeBinary(
           GtUInt32,

@@ -98,12 +98,6 @@ struct Address {
   Address& operator++() { ++addr; return *this; }
 };
 
-// An offset into memory
-typedef int32_t Offset;
-
-// Types
-
-
 // Operators
 
 enum UnaryOp {

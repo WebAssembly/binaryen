@@ -225,6 +225,26 @@ LocalGraph::LocalGraph(Function* func) {
 #endif
 }
 
+std::set<Index> LocalGraph::getSSAIndexes() {
+  std::unordered_map<Index, std::set<SetLocal*>> indexSets;
+  for (auto& pair : getSetses) {
+    auto* get = pair.first;
+    auto& sets = pair.second;
+    for (auto* set : sets) {
+      indexSets[get->index].insert(set);
+    }
+  }
+  std::set<Index> ret;
+  for (auto& pair : indexSets) {
+    auto index = pair.first;
+    auto& sets = pair.second;
+    if (sets.size() == 1) {
+      ret.insert(index);
+    }
+  }
+  return ret;
+}
+
 void LocalGraph::computeInfluences() {
   for (auto& pair : locations) {
     auto* curr = pair.first;

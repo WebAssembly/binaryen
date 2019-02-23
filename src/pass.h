@@ -56,14 +56,26 @@ private:
 };
 
 struct PassOptions {
-  bool debug = false; // run passes in debug mode, doing extra validation and timing checks
-  bool validate = true; // whether to run the validator to check for errors
-  bool validateGlobally = false; // when validating validate globally and not just locally
-  int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
-  int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
-  bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
-  bool debugInfo = false; // whether to try to preserve debug info through, which are special calls
-  FeatureSet features = FeatureSet::All; // Which wasm features to accept, and be allowed to use
+  // Run passes in debug mode, doing extra validation and timing checks.
+  bool debug = false;
+  // Whether to run the validator to check for errors.
+  bool validate = true;
+  // When validating validate globally and not just locally
+  bool validateGlobally = false;
+  // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+  int optimizeLevel = 0;
+  // 0, 1, 2 correspond to -O0, -Os, -Oz
+  int shrinkLevel = 0;
+  // Optimize assuming things like div by 0, bad load/store, will not trap.
+  bool ignoreImplicitTraps = false;
+  // Optimize assuming that the low 1K of memory is not valid memory for the application
+  // to use. In that case, we can optimize load/store offsets in many cases.
+  bool lowMemoryUnused = false;
+  enum { LowMemoryBound = 1024 };
+  // Whether to try to preserve debug info through, which are special calls.
+  bool debugInfo = false;
+  // Which wasm features to accept, and be allowed to use.
+  FeatureSet features = FeatureSet::All;
 
   void setDefaultOptimizationOptions() {
     // -Os is our default

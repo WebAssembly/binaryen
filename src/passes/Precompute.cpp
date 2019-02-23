@@ -15,7 +15,16 @@
  */
 
 //
-// Computes code at compile time where possible.
+// Computes code at compile time where possible, replacing it with the
+// computed constant.
+//
+// The "propagate" variant of this pass also propagates constants across
+// sets and gets, which implements a standard constant propagation.
+//
+// In addition, this pass will optimize added constants into load/store
+// offsets where possible. If propagating, that is done for this as well.
+// While this may increase the size of a load/store, it is almost always
+// beneficial both size, and should be faster too.
 //
 // Possible nondeterminism: WebAssembly NaN signs are nondeterministic,
 // and this pass may optimize e.g. a float 0 / 0 into +nan while a VM may
@@ -161,6 +170,10 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
+    if (curr->is<Load>() || curr->is<Store>()) {
+      optimizeMemoryAccess(curr);
+      return;
+    }
     // Until engines implement v128.const and we have SIMD-aware optimizations
     // that can break large v128.const instructions into smaller consts and
     // splats, do not try to precompute v128 expressions.
@@ -333,6 +346,40 @@ private:
           getValues[get] = value;
           for (auto* set : localGraph.getInfluences[get]) {
             work.insert(set);
+          }
+        }
+      }
+    }
+  }
+
+  void optimizeMemoryAccess(Expression* curr) {
+    if (auto* load = curr->dynCast<Load>()) {
+      optimizeMemoryAccessInternal(load);
+    } else if (auto* store = curr->dynCast<Store>()) {
+      optimizeMemoryAccessInternal(store);
+    } else {
+      WASM_UNREACHABLE();
+    }
+  }
+
+  template<typename T>
+  void optimizeMemoryAccessInternal(T* curr) {
+    // Look for a single added constant on the right (which optimize-instructions
+    // canonicalizes to).
+    auto* ptr = curr->ptr;
+    if (auto* add = ptr->dynCast<Binary>()) {
+      if (add->op == AddInt32) {
+        if (auto* right = add->right->dynCast<Const>()) {
+          auto value = left->value.geti32();
+          // Avoid uninteresting corner cases with peculiar offsets.
+          if (value >= 0 && value < PassOptions::LowMemoryBound) {
+            // The total offset must not allow reaching reasonable memory
+            // by overflowing.
+            auto total = offset + value;
+            if (total < PassOptions::LowMemoryBound) {
+              curr->offset = total;
+              curr->ptr = add->left;
+            }
           }
         }
       }
