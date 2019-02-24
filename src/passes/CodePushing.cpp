@@ -77,8 +77,8 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
   }
 };
 
-// Implement core optimization logic in a struct, used and then discarded entirely
-// for each block
+// Implements core optimization logic. Used and then discarded entirely
+// for each block.
 class Pusher {
   ExpressionList& list;
   LocalAnalyzer& analyzer;
@@ -92,7 +92,7 @@ public:
     // continuing forward.
     Index relevant = list.size() - 1; // we never need to push past a final element, as
                                       // we couldn't be used after it.
-    Index nothing = -1;
+    const Index nothing = -1;
     Index i = 0;
     Index firstPushable = nothing;
     while (i < relevant) {
