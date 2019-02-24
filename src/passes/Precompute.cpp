@@ -163,6 +163,7 @@ private:
         // both sides are constant, this is unoptimized code.)
         if (auto* get = otherSide->template dynCast<GetLocal>()) {
           if (localGraph->isSSA(get->index)) {
+// XXX not good enough! see $offset-propagate6
             curr->offset = result.total;
             curr->ptr = Builder(*module).makeGetLocal(get->index, get->type);
             return true;

@@ -25,8 +25,6 @@ namespace wasm {
 // help remove the most sign/unsign operations
 // unsigned, then it could be either
 
-// propagate offsets too!
-
 struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
   bool isFunctionParallel() override { return true; }
 
