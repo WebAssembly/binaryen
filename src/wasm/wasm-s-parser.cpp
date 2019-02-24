@@ -966,10 +966,10 @@ static size_t parseMemAttributes(Element& s, Address* offset, Address* align, Ad
       throw ParseException("bad memory attribute immediate", s.line, s.col);
     }
     if (str[0] == 'a') {
-      if (value > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
+      if (value > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align", s.line, s.col);
       *align = value;
     } else if (str[0] == 'o') {
-      if (value > std::numeric_limits<uint32_t>::max()) throw ParseException("bad offset");
+      if (value > std::numeric_limits<uint32_t>::max()) throw ParseException("bad offset", s.line, s.col);
       *offset = value;
     } else throw ParseException("bad memory attribute");
     i++;

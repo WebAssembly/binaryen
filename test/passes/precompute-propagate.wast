@@ -337,7 +337,7 @@
       )
     )
     (drop
-      (i32.load offset=-1
+      (i32.load offset=99999
         (i32.const 512)
       )
     )
@@ -438,6 +438,60 @@
     (drop
       (i32.load
         (local.get $x)
+      )
+    )
+  )
+  (func $offset-realistic (param $ptr i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local.set $x
+      (i32.add
+        (local.get $ptr)
+        (i32.const 8)
+      )
+    )
+    (local.set $y
+      (i32.add
+        (local.get $ptr)
+        (i32.const 16)
+      )
+    )
+    (local.set $z
+      (i32.add
+        (local.get $ptr)
+        (i32.const 24)
+      )
+    )
+    (loop $l
+      (drop
+        (i32.load
+          (local.get $x)
+        )
+      )
+      (drop
+        (i32.load
+          (local.get $y)
+        )
+      )
+      (drop
+        (i32.load
+          (local.get $y)
+        )
+      )
+      (i32.store
+        (local.get $z)
+        (i32.add
+          (i32.load
+            (local.get $z)
+          )
+          (i32.const 1)
+        )
+      )
+      (br_if $l
+        (i32.load
+          (local.get $z)
+        )
       )
     )
   )
