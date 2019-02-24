@@ -45,17 +45,23 @@ struct LocalGraph {
                        // value (0 for a var, the received value for a param)
   Locations locations; // where each get and set is (for easy replacing)
 
-  // Get the local indexes that are SSA, in the sense of having a have a single
-  // set for all the gets for that local index.
-  std::set<Index> getSSAIndexes();
+  // Optional: compute the influence graphs between sets and gets
+  // (useful for algorithms that propagate changes).
 
-  // optional computation: compute the influence graphs between sets and gets
-  // (useful for algorithms that propagate changes)
+  void computeInfluences();
 
   std::unordered_map<GetLocal*, std::unordered_set<SetLocal*>> getInfluences; // for each get, the sets whose values are influenced by that get
   std::unordered_map<SetLocal*, std::unordered_set<GetLocal*>> setInfluences; // for each set, the gets whose values are influenced by that set
 
-  void computeInfluences();
+  // Optional: Get the local indexes that are SSA, in the sense of having a have a single
+  // set for all the gets for that local index.
+
+  void computeSSAIndexes();
+
+  bool isSSA(Index x);
+
+private:
+  std::set<Index> SSAIndexes;
 };
 
 } // namespace wasm

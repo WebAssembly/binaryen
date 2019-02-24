@@ -145,6 +145,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
 
   Precompute(bool propagate) : propagate(propagate) {}
 
+  std::unique_ptr<LocalGraph> localGraph;
   GetValues getValues;
 
   bool worked;
@@ -171,7 +172,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     // TODO: if local.get, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
     if (getPassOptions.unusedLowMemory && (curr->is<Load>() || curr->is<Store>())) {
-      optimizeMemoryAccess(curr);
+      optimizeAccess(curr);
       return;
     }
     // Until engines implement v128.const and we have SIMD-aware optimizations
@@ -278,12 +279,13 @@ private:
     // compute other sets as locals (since some of the gets they read may be
     // constant).
     // compute all dependencies
-    LocalGraph localGraph(func);
-    localGraph.computeInfluences();
+    localGraph = make_unique<LocalGraph>(func);
+    localGraph->computeInfluences();
+    localGraph->computeSSAIndexes();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     std::unordered_set<Expression*> work;
-    for (auto& pair : localGraph.locations) {
+    for (auto& pair : localGraph->locations) {
       auto* curr = pair.first;
       work.insert(curr);
     }
@@ -300,10 +302,9 @@ private:
         if (setValues[set].isConcrete()) continue; // already known constant
         auto value = setValues[set] = precomputeValue(set->value);
         if (value.isConcrete()) {
-          for (auto* get : localGraph.setInfluences[set]) {
+          for (auto* get : localGraph->setInfluences[set]) {
             work.insert(get);
           }
-          worked = true;
         }
       } else {
         auto* get = curr->cast<GetLocal>();
@@ -311,7 +312,7 @@ private:
         // for this get to have constant value, all sets must agree
         Literal value;
         bool first = true;
-        for (auto* set : localGraph.getSetses[get]) {
+        for (auto* set : localGraph->getSetses[get]) {
           Literal curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
@@ -345,61 +346,55 @@ private:
         if (value.isConcrete()) {
           // we did!
           getValues[get] = value;
-          for (auto* set : localGraph.getInfluences[get]) {
+          for (auto* set : localGraph->getInfluences[get]) {
             work.insert(set);
           }
-          worked = true;
         }
       }
     }
   }
 
-  void optimizeMemoryAccess(Expression* curr) {
+  void optimizeAccess(Expression* curr) {
     if (auto* load = curr->dynCast<Load>()) {
-      optimizeMemoryAccessInternal(load);
+      optimizeAccessInternal(load);
     } else if (auto* store = curr->dynCast<Store>()) {
-      optimizeMemoryAccessInternal(store);
+      optimizeAccessInternal(store);
     } else {
       WASM_UNREACHABLE();
     }
   }
 
   template<typename T>
-  void optimizeMemoryAccessInternal(T* curr) {
-    auto* ptr = curr->ptr;
-    // First, try the pointer itself. If it can be replaced by a constant,
-    // that is,  (load (const X))  =>  (load offset=X (const 0))
-    // then this is worth it for the speed benefits, even though it's not
-    // actually smaller (we can't eliminate the const).
-    auto result = tryToOptimizeMemoryAccessConstant(ptr);
-    if (result.succeeded) {
-      curr->offset = result.total;
-      curr->ptr = LiteralUtils::makeZero(i32, getModule());
+  void optimizeAccessInternal(T* curr) {
+    // The pointer itself may be a constant, if e.g. it was precomputed or
+    // a get that we propagated.
+    if (curr->ptr->is<Const>()) {
+      optimizeConstantPointer(curr);
       return;
     }
-    if (auto* add = ptr->dynCast<Binary>()) {
+    if (auto* add = curr->ptr->dynCast<Binary>()) {
       if (add->op == AddInt32) {
         // Look for a single added constant on the right (which optimize-instructions
-        // canonicalizes to). If propagating, we can also look for a suitable get.
-        auto result = tryToOptimizeMemoryAccessConstant(add->right);
-        if (result.succeeded) {
-          curr->offset = result.total;
-          curr->ptr = add->left;
+        // canonicalizes to).
+        if (tryToOptimizeAccessConstant(curr, add->right, add->left)) {
           return;
         }
-      }
-      // Look for a propagate-able constant on the left as well
-      if (propagate) {
-        auto result = tryToOptimizeMemoryAccessConstant(add->left);
-        if (result.succeeded) {
-          curr->offset = result.total;
-          curr->ptr = add->right;
+        // If propagating, a constant may also have appeared on the other side.
+        if (propagate && tryToOptimizeAccessConstant(curr, add->left, add->right)) {
           return;
         }
       }
     }
     if (propagate) {
-      // A final interesting case is a propagated add:
+      // We ruled out a constant before; this might be a get of
+      // a constant.
+      auto result = tryToOptimizeAccessConstant(curr->ptr);
+      if (result.succeeded) {
+        curr->offset = result.total;
+        curr->ptr = LiteralUtils::makeZero(i32, getModule());
+        return;
+      }
+      // A final important case is a propagated add:
       //
       //  x = y + 10
       //  ..
@@ -410,46 +405,72 @@ private:
       //  load(y, offset=10)
       //
       // This is only valid if y does not change in the middle.
-TODO
+      if (auto* get = curr->ptr->dynCast<GetLocal>()) {
+        auto& sets = localGraph->getSetses[get];
+        if (sets.size() == 1) {
+          auto* set = *sets.begin();
+          // May be a zero-init (in which case, we can ignore it).
+          if (set) {
+            auto* value = set->value;
+            if (auto* add = value->dynCast<Binary>()) {
+              if (add->op == AddInt32) {
+                // We can optimize on either side, but only if both we find
+                // a constant *and* the other side cannot change in the middle.
+                // TODO If it could change, we may add a new local to capture the
+                //      old value.
+                if (tryToOptimizePropagatedAccessAdd(curr, add->right, add->left)) {
+                  return;
+                }
+                if (tryToOptimizePropagatedAccessAdd(curr, add->left, add->right)) {
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 
-  struct MemoryAccessResult {
+  void optimizeConstantPointer(Expression* curr) {
+    // The constant and an offset are interchangeable:
+    //   (load (const X))  <=>  (load offset=X (const 0))
+    // It may not matter if we do this or not - it's the same size,
+    // and in both cases the compiler can see it's a constant location.
+    // For code clarity and compressibility, we prefer to put the
+    // entire address in the constant.
+    if (curr->offset) {
+      auto* c = curr->ptr->cast<Constant>();
+      c->value = c->value.add(Literal(int32_t(curr->offset)));
+      curr->offset = 0;
+    }
+  }
+
+  struct AccessResult {
     bool succeeded;
     Address total;
-    MemoryAccessResult() : succeeded(false) {}
-    MemoryAccessResult(Address total) : succeeded(true), total(total) {}
+    AccessResult() : succeeded(false) {}
+    AccessResult(Address total) : succeeded(true), total(total) {}
   };
 
   // See if we can optimize an offset from an expression. If we report
   // success, the returned offset can be added as a replacement for the
   // expression here.
-  MemoryAccessResult canOptimizeMemoryAccessConstant(Expression* curr) {
+  template<typename T>
+  AccessResult tryToOptimizeAccessConstant(T* curr, Expression* oneSide, Expression* otherSide) {
     if (auto* c = curr->dynCast<Const>()) {
-      auto ret = canOptimizeMemoryAccessConstant(c->value);
-      if (ret.succeeded) {
-        return ret;
+      auto result = tryToOptimizeAccessConstant(c->value);
+      if (result.succeeded) {
+        curr->offset = result.total;
+        curr->ptr = otherSide;
+        return;
       }
     }
-    // If propagating, look at a get too.
-    if (propagate) {
-      if (auto* get = curr->dynCast<GetLocal>()) {
-        auto iter = getValues.find(get);
-        if (iter != getValues.end()) {
-        auto value = iter->second;
-        if (value.isConcrete()) {
-          auto ret = canOptimizeMemoryAccessConstant(c->value);
-          if (ret.succeeded) {
-            return ret;
-          }
-        }
-      }
-    }
-    return MemoryAccessResult();
+    return AccessResult();
   }
 
   // Sees if we can optimize a particular constant.
-  MemoryAccessResult canOptimizeMemoryAccessConstant(Literal literal) {
+  AccessResult canOptimizeAccessConstant(Literal literal) {
     auto value = literal.geti32();
     // Avoid uninteresting corner cases with peculiar offsets.
     if (value >= 0 && value < PassOptions::LowMemoryBound) {
@@ -457,10 +478,30 @@ TODO
       // by overflowing.
       auto total = offset + value;
       if (total < PassOptions::LowMemoryBound) {
-        return MemoryAccessResult(total);
+        return AccessResult(total);
       }
     }
-    return MemoryAccessResult();
+    return AccessResult();
+  }
+
+  template<typename T>
+  bool tryToOptimizePropagatedAccessAdd(T* curr, Expression* oneSide, Expression* otherSide) {
+    auto result = tryToOptimizeAccessConstant(oneSide);
+    if (result.succeeded) {
+      // We need to make sure the other side cannot change. The case we do care
+      // about is a get of a local that we can prove does not change.
+      // (Technically a constant value cannot change, but that is not interesting
+      // for us since we are optimizing a constant factor into the offset - if
+      // both sides are constant, this is unoptimized code.)
+      if (auto* get = otherSide->dynCast<GetLocal>()) {
+        if (localGraph->isSSA(get->index)) {
+          curr->offset = result.total;
+          curr->ptr = Builder(*getModule()).makeGetLocal(get->index, get->type);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 };
 
