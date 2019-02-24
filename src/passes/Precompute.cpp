@@ -22,9 +22,7 @@
 // sets and gets, which implements a standard constant propagation.
 //
 // In addition, this pass will optimize added constants into load/store
-// offsets where possible. If propagating, that is done for this as well.
-// While this may increase the size of a load/store, it is almost always
-// beneficial both size, and should be faster too.
+// offsets where possible (the "last mile" of propagating constants).
 //
 // Possible nondeterminism: WebAssembly NaN signs are nondeterministic,
 // and this pass may optimize e.g. a float 0 / 0 into +nan while a VM may
@@ -42,6 +40,154 @@
 #include <ir/manipulation.h>
 
 namespace wasm {
+
+// Helper to optimize constants into load/store offsets. This is almost always
+// beneficial for speed, as VMs can optimize these operations better.
+// If a LocalGraph is provided, this can also propagate values along get/set
+// pairs. In such a case, we may increase code size slightly or reduce
+// compressibility (e.g., replace (load (get $x)) with (load offset=Z (get $y)),
+// where Z is big enough to not fit in a single byte), but this is good for
+// speed, and may lead to code size reductions elsewhere by using fewer locals.
+
+template<typename T>
+class MemoryAccessOptimizer {
+public:
+  MemoryAccessOptimizer(T* curr, Module* module, LocalGraph* localGraph) : curr(curr), module(module), localGraph(localGraph) {
+    // The pointer itself may be a constant, if e.g. it was precomputed or
+    // a get that we propagated.
+    if (curr->ptr->template is<Const>()) {
+      optimizeConstantPointer();
+      return;
+    }
+    if (auto* add = curr->ptr->template dynCast<Binary>()) {
+      if (add->op == AddInt32) {
+        // Look for a single added constant on the right (which optimize-instructions
+        // canonicalizes to).
+        if (tryToOptimizeConstant(add->right, add->left)) {
+          return;
+        }
+        // If propagating, a constant may also have appeared on the other side.
+        if (localGraph && tryToOptimizeConstant(add->left, add->right)) {
+          return;
+        }
+      }
+    }
+    if (localGraph) {
+      // A final important case is a propagated add:
+      //
+      //  x = y + 10
+      //  ..
+      //  load(x)
+      // =>
+      //  x = y + 10
+      //  ..
+      //  load(y, offset=10)
+      //
+      // This is only valid if y does not change in the middle.
+      if (auto* get = curr->ptr->template dynCast<GetLocal>()) {
+        auto& sets = localGraph->getSetses[get];
+        if (sets.size() == 1) {
+          auto* set = *sets.begin();
+          // May be a zero-init (in which case, we can ignore it).
+          if (set) {
+            auto* value = set->value;
+            if (auto* add = value->template dynCast<Binary>()) {
+              if (add->op == AddInt32) {
+                // We can optimize on either side, but only if both we find
+                // a constant *and* the other side cannot change in the middle.
+                // TODO If it could change, we may add a new local to capture the
+                //      old value.
+                if (tryToOptimizePropagatedAdd(add->right, add->left)) {
+                  return;
+                }
+                if (tryToOptimizePropagatedAdd(add->left, add->right)) {
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+private:
+  T* curr;
+  Module* module;
+  LocalGraph* localGraph;
+
+  void optimizeConstantPointer() {
+    // The constant and an offset are interchangeable:
+    //   (load (const X))  <=>  (load offset=X (const 0))
+    // It may not matter if we do this or not - it's the same size,
+    // and in both cases the compiler can see it's a constant location.
+    // For code clarity and compressibility, we prefer to put the
+    // entire address in the constant.
+    if (curr->offset) {
+      auto* c = curr->ptr->template cast<Const>();
+      c->value = c->value.add(Literal(int32_t(curr->offset)));
+      curr->offset = 0;
+    }
+  }
+
+  struct Result {
+    bool succeeded;
+    Address total;
+    Result() : succeeded(false) {}
+    Result(Address total) : succeeded(true), total(total) {}
+  };
+
+  // See if we can optimize an offset from an expression. If we report
+  // success, the returned offset can be added as a replacement for the
+  // expression here.
+  bool tryToOptimizeConstant(Expression* oneSide, Expression* otherSide) {
+    if (auto* c = curr->template dynCast<Const>()) {
+      auto result = canOptimizeConstant(c->value);
+      if (result.succeeded) {
+        curr->offset = result.total;
+        curr->ptr = otherSide;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool tryToOptimizePropagatedAdd(Expression* oneSide, Expression* otherSide) {
+    if (auto* c = curr->template dynCast<Const>()) {
+      auto result = canOptimizeConstant(c->value);
+      if (result.succeeded) {
+        // We need to make sure the other side cannot change. The case we do care
+        // about is a get of a local that we can prove does not change.
+        // (Technically a constant value cannot change, but that is not interesting
+        // for us since we are optimizing a constant factor into the offset - if
+        // both sides are constant, this is unoptimized code.)
+        if (auto* get = otherSide->template dynCast<GetLocal>()) {
+          if (localGraph->isSSA(get->index)) {
+            curr->offset = result.total;
+            curr->ptr = Builder(*module).makeGetLocal(get->index, get->type);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  // Sees if we can optimize a particular constant.
+  Result canOptimizeConstant(Literal literal) {
+    auto value = literal.geti32();
+    // Avoid uninteresting corner cases with peculiar offsets.
+    if (value >= 0 && value < PassOptions::LowMemoryBound) {
+      // The total offset must not allow reaching reasonable memory
+      // by overflowing.
+      auto total = curr->offset + value;
+      if (total < PassOptions::LowMemoryBound) {
+        return Result(total);
+      }
+    }
+    return Result();
+  }
+};
 
 static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
 
@@ -171,8 +317,8 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
-    if (getPassOptions.unusedLowMemory && (curr->is<Load>() || curr->is<Store>())) {
-      optimizeAccess(curr);
+    if (getPassOptions().lowMemoryUnused && (curr->is<Load>() || curr->is<Store>())) {
+      optimizeMemoryAccess(curr);
       return;
     }
     // Until engines implement v128.const and we have SIMD-aware optimizations
@@ -354,154 +500,14 @@ private:
     }
   }
 
-  void optimizeAccess(Expression* curr) {
+  void optimizeMemoryAccess(Expression* curr) {
     if (auto* load = curr->dynCast<Load>()) {
-      optimizeAccessInternal(load);
+      MemoryAccessOptimizer<Load>(load, getModule(), localGraph.get());
     } else if (auto* store = curr->dynCast<Store>()) {
-      optimizeAccessInternal(store);
+      MemoryAccessOptimizer<Store>(store, getModule(), localGraph.get());
     } else {
       WASM_UNREACHABLE();
     }
-  }
-
-  template<typename T>
-  void optimizeAccessInternal(T* curr) {
-    // The pointer itself may be a constant, if e.g. it was precomputed or
-    // a get that we propagated.
-    if (curr->ptr->is<Const>()) {
-      optimizeConstantPointer(curr);
-      return;
-    }
-    if (auto* add = curr->ptr->dynCast<Binary>()) {
-      if (add->op == AddInt32) {
-        // Look for a single added constant on the right (which optimize-instructions
-        // canonicalizes to).
-        if (tryToOptimizeAccessConstant(curr, add->right, add->left)) {
-          return;
-        }
-        // If propagating, a constant may also have appeared on the other side.
-        if (propagate && tryToOptimizeAccessConstant(curr, add->left, add->right)) {
-          return;
-        }
-      }
-    }
-    if (propagate) {
-      // We ruled out a constant before; this might be a get of
-      // a constant.
-      auto result = tryToOptimizeAccessConstant(curr->ptr);
-      if (result.succeeded) {
-        curr->offset = result.total;
-        curr->ptr = LiteralUtils::makeZero(i32, getModule());
-        return;
-      }
-      // A final important case is a propagated add:
-      //
-      //  x = y + 10
-      //  ..
-      //  load(x)
-      // =>
-      //  x = y + 10
-      //  ..
-      //  load(y, offset=10)
-      //
-      // This is only valid if y does not change in the middle.
-      if (auto* get = curr->ptr->dynCast<GetLocal>()) {
-        auto& sets = localGraph->getSetses[get];
-        if (sets.size() == 1) {
-          auto* set = *sets.begin();
-          // May be a zero-init (in which case, we can ignore it).
-          if (set) {
-            auto* value = set->value;
-            if (auto* add = value->dynCast<Binary>()) {
-              if (add->op == AddInt32) {
-                // We can optimize on either side, but only if both we find
-                // a constant *and* the other side cannot change in the middle.
-                // TODO If it could change, we may add a new local to capture the
-                //      old value.
-                if (tryToOptimizePropagatedAccessAdd(curr, add->right, add->left)) {
-                  return;
-                }
-                if (tryToOptimizePropagatedAccessAdd(curr, add->left, add->right)) {
-                  return;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  void optimizeConstantPointer(Expression* curr) {
-    // The constant and an offset are interchangeable:
-    //   (load (const X))  <=>  (load offset=X (const 0))
-    // It may not matter if we do this or not - it's the same size,
-    // and in both cases the compiler can see it's a constant location.
-    // For code clarity and compressibility, we prefer to put the
-    // entire address in the constant.
-    if (curr->offset) {
-      auto* c = curr->ptr->cast<Constant>();
-      c->value = c->value.add(Literal(int32_t(curr->offset)));
-      curr->offset = 0;
-    }
-  }
-
-  struct AccessResult {
-    bool succeeded;
-    Address total;
-    AccessResult() : succeeded(false) {}
-    AccessResult(Address total) : succeeded(true), total(total) {}
-  };
-
-  // See if we can optimize an offset from an expression. If we report
-  // success, the returned offset can be added as a replacement for the
-  // expression here.
-  template<typename T>
-  AccessResult tryToOptimizeAccessConstant(T* curr, Expression* oneSide, Expression* otherSide) {
-    if (auto* c = curr->dynCast<Const>()) {
-      auto result = tryToOptimizeAccessConstant(c->value);
-      if (result.succeeded) {
-        curr->offset = result.total;
-        curr->ptr = otherSide;
-        return;
-      }
-    }
-    return AccessResult();
-  }
-
-  // Sees if we can optimize a particular constant.
-  AccessResult canOptimizeAccessConstant(Literal literal) {
-    auto value = literal.geti32();
-    // Avoid uninteresting corner cases with peculiar offsets.
-    if (value >= 0 && value < PassOptions::LowMemoryBound) {
-      // The total offset must not allow reaching reasonable memory
-      // by overflowing.
-      auto total = offset + value;
-      if (total < PassOptions::LowMemoryBound) {
-        return AccessResult(total);
-      }
-    }
-    return AccessResult();
-  }
-
-  template<typename T>
-  bool tryToOptimizePropagatedAccessAdd(T* curr, Expression* oneSide, Expression* otherSide) {
-    auto result = tryToOptimizeAccessConstant(oneSide);
-    if (result.succeeded) {
-      // We need to make sure the other side cannot change. The case we do care
-      // about is a get of a local that we can prove does not change.
-      // (Technically a constant value cannot change, but that is not interesting
-      // for us since we are optimizing a constant factor into the offset - if
-      // both sides are constant, this is unoptimized code.)
-      if (auto* get = otherSide->dynCast<GetLocal>()) {
-        if (localGraph->isSSA(get->index)) {
-          curr->offset = result.total;
-          curr->ptr = Builder(*getModule()).makeGetLocal(get->index, get->type);
-          return true;
-        }
-      }
-    }
-    return false;
   }
 };
 
