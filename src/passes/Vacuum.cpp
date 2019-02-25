@@ -23,11 +23,13 @@
 #include <wasm-builder.h>
 #include <ir/block-utils.h>
 #include <ir/effects.h>
+#include <ir/literal-utils.h>
 #include <ir/type-updating.h>
+#include <ir/utils.h>
 
 namespace wasm {
 
-struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
+struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Vacuum; }
@@ -47,11 +49,21 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     walk(func->body);
   }
 
-  // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
-  Expression* optimize(Expression* curr, bool resultUsed) {
-    // an unreachable node must not be changed
-    if (curr->type == unreachable) return curr;
+  // Returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced.
+  // Takes into account:
+  //  * The result may be used or unused.
+  //  * The type may or may not matter (a drop can drop anything, for example).
+  Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
+    auto type = curr->type;
+    // An unreachable node must not be changed.
+    if (type == unreachable) return curr;
+    // We iterate on possible replacements. If a replacement changes the type, stop and go back.
+    auto* prev = curr;
     while (1) {
+      if (typeMatters && curr->type != type) {
+        return prev;
+      }
+      prev = curr;
       switch (curr->_id) {
         case Expression::Id::NopId: return nullptr; // never needed
 
@@ -173,7 +185,22 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     size_t size = list.size();
     for (size_t z = 0; z < size; z++) {
       auto* child = list[z];
-      auto* optimized = optimize(child, z == size - 1 && isConcreteType(curr->type));
+      // The last element may be used.
+      bool used = z == size - 1 &&
+                  isConcreteType(curr->type) &&
+                  ExpressionAnalyzer::isResultUsed(expressionStack, getFunction());
+      auto* optimized = optimize(child, used, true);
+      if (!optimized) {
+        if (isConcreteType(child->type)) {
+          // We can't just skip a final concrete element, even if it isn't used. Instead,
+          // replace it with something that's easy to optimize out (for example, code-folding
+          // can merge out identical zeros at the end of if arms).
+          optimized = LiteralUtils::makeZero(child->type, *getModule());
+        } else if (child->type == unreachable) {
+          // Don't try to optimize out an unreachable child (dce can do that properly).
+          optimized = child;
+        }
+      }
       if (!optimized) {
         typeUpdater.noteRecursiveRemoval(child);
         skip++;
@@ -275,7 +302,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
 
   void visitDrop(Drop* curr) {
     // optimize the dropped value, maybe leaving nothing
-    curr->value = optimize(curr->value, false);
+    curr->value = optimize(curr->value, false, false);
     if (curr->value == nullptr) {
       ExpressionManipulator::nop(curr);
       return;
@@ -294,7 +321,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
       // block has an unreachable element in the middle, making the block unreachable
       // despite later elements and in particular the last
       if (isConcreteType(last->type) && block->type == last->type) {
-        last = optimize(last, false);
+        last = optimize(last, false, false);
         if (!last) {
           // we may be able to remove this, if there are no brs
           bool canPop = true;
@@ -343,7 +370,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
   }
 
   void visitFunction(Function* curr) {
-    auto* optimized = optimize(curr->body, curr->result != none);
+    auto* optimized = optimize(curr->body, curr->result != none, true);
     if (optimized) {
       curr->body = optimized;
     } else {
