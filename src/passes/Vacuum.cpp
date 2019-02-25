@@ -58,12 +58,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // An unreachable node must not be changed.
     if (type == unreachable) return curr;
     // We iterate on possible replacements. If a replacement changes the type, stop and go back.
-    auto* last = curr;
+    auto* prev = curr;
     while (1) {
       if (typeMatters && curr->type != type) {
-        return last;
+        return prev;
       }
-      last = curr;
+      prev = curr;
       switch (curr->_id) {
         case Expression::Id::NopId: return nullptr; // never needed
 
