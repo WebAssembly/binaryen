@@ -660,3 +660,137 @@
    )
   )
 )
+(module ;; a child with a different type, cannot simply replace the parent with it
+ (type $0 (func (param i64)))
+ (type $1 (func (param f32 i32) (result i32)))
+ (func $0 (; 0 ;) (type $0) (param $0 i64)
+  (nop)
+ )
+ (func $1 (; 1 ;) (type $1) (param $0 f32) (param $1 i32) (result i32)
+  (drop
+   (block $label$1 (result i32)
+    (i32.wrap_i64
+     (block $label$2 (result i64)
+      (call $0
+       (br_if $label$2
+        (i64.const -137438953472)
+        (i32.const 1)
+       )
+      )
+      (unreachable)
+     )
+    )
+   )
+  )
+  (unreachable)
+ )
+)
+(module ;; vacuum away a drop on an if where both arms can be vacuumed
+ (global $global$1 (mut i32) (i32.const 0))
+ (func $_deflate (param i32) (result i32)
+  (call $_deflate (local.get $0))
+ )
+ (func $_deflateInit2_ (param i32) (result i32)
+  (call $_deflateInit2_ (local.get $0))
+ )
+ (func $_deflateEnd (param i32) (result i32)
+  (call $_deflateEnd (local.get $0))
+ )
+ (func "compress" (param $0 i32) (param $1 i32) (param $2 i32)
+  (local $3 i32)
+  (local.set $3
+   (global.get $global$1)
+  )
+  (global.set $global$1
+   (i32.sub
+    (global.get $global$1)
+    (i32.const -64)
+   )
+  )
+  (i32.store
+   (local.get $3)
+   (local.get $2)
+  )
+  (i32.store offset=4
+   (local.get $3)
+   (i32.const 100000)
+  )
+  (i32.store offset=12
+   (local.get $3)
+   (local.get $0)
+  )
+  (i32.store offset=16
+   (local.get $3)
+   (i32.load
+    (local.get $1)
+   )
+  )
+  (i32.store offset=32
+   (local.get $3)
+   (i32.const 0)
+  )
+  (i32.store offset=36
+   (local.get $3)
+   (i32.const 0)
+  )
+  (i32.store offset=40
+   (local.get $3)
+   (i32.const 0)
+  )
+  (if
+   (call $_deflateInit2_
+    (local.get $3)
+   )
+   (block
+    (global.set $global$1
+     (local.get $3)
+    )
+    (return)
+   )
+  )
+  (drop
+   (if (result i32)
+    (i32.eq
+     (local.tee $0
+      (call $_deflate
+       (local.get $3)
+      )
+     )
+     (i32.const 1)
+    )
+    (block (result i32)
+     (i32.store
+      (local.get $1)
+      (i32.load offset=20
+       (local.get $3)
+      )
+     )
+     (local.set $0
+      (call $_deflateEnd
+       (local.get $3)
+      )
+     )
+     (global.set $global$1
+      (local.get $3)
+     )
+     (local.get $0)
+    )
+    (block (result i32)
+     (drop
+      (call $_deflateEnd
+       (local.get $3)
+      )
+     )
+     (global.set $global$1
+      (local.get $3)
+     )
+     (select
+      (local.get $0)
+      (i32.const -5)
+      (local.get $0)
+     )
+    )
+   )
+  )
+ )
+)
