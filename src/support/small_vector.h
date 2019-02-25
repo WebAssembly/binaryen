@@ -1,4 +1,3 @@
-#include <iostream>
 /*
  * Copyright 2019 WebAssembly Community Group participants
  *
@@ -24,12 +23,13 @@
 #define wasm_support_small_vector_h
 
 #include <array>
+#include <iterator>
 #include <vector>
 
 namespace wasm {
 
 template<typename T, size_t N>
-struct SmallVector {
+class SmallVector {
   // fixed-space storage
   size_t usedFixed = 0;
   std::array<T, N> fixed;
@@ -37,6 +37,7 @@ struct SmallVector {
   // flexible additional storage
   std::vector<T> flexible;
 
+public:
   SmallVector() {}
 
   T& operator[](size_t i) {
@@ -74,6 +75,7 @@ struct SmallVector {
 
   void pop_back() {
     if (flexible.empty()) {
+      assert(usedFixed > 0);
       usedFixed--;
     } else {
       flexible.pop_back();
@@ -82,6 +84,7 @@ struct SmallVector {
 
   T& back() {
     if (flexible.empty()) {
+      assert(usedFixed > 0);
       return fixed[usedFixed - 1];
     } else {
       return flexible.back();
@@ -90,6 +93,7 @@ struct SmallVector {
 
   const T& back() const {
     if (flexible.empty()) {
+      assert(usedFixed > 0);
       return fixed[usedFixed - 1];
     } else {
       return flexible.back();
@@ -124,6 +128,10 @@ struct SmallVector {
   // iteration
 
   struct Iterator {
+    typedef T value_type;
+    typedef long difference_type;
+    typedef T& reference;
+
     const SmallVector<T, N>* parent;
     size_t index;
 
@@ -137,16 +145,16 @@ struct SmallVector {
       index++;
     }
 
-    Iterator& operator+=(int off) {
+    Iterator& operator+=(difference_type off) {
       index += off;
       return *this;
     }
 
-    const Iterator operator+(int off) const {
+    const Iterator operator+(difference_type off) const {
       return Iterator(*this) += off;
     }
 
-    const T operator*() const {
+    const value_type operator*() const {
       return (*parent)[index];
     }
   };
