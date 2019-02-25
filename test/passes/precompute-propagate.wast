@@ -427,7 +427,7 @@
   (func $offset-propagate6 (param $z i32)
     (local $x i32)
     (local $y i32)
-    (local.set $y (i32.const -1))
+    (local.set $y (local.get $z))
     (local.set $x
       (i32.add
         (i32.const 1)
@@ -441,6 +441,7 @@
       )
     )
   )
+  (export "offset-realistic" (func $offset-realistic))
   (func $offset-realistic (param $ptr i32)
     (local $x i32)
     (local $y i32)
@@ -464,17 +465,17 @@
       )
     )
     (loop $l
-      (drop
+      (call $offset-realistic
         (i32.load
           (local.get $x)
         )
       )
-      (drop
+      (call $offset-realistic
         (i32.load
           (local.get $y)
         )
       )
-      (drop
+      (call $offset-realistic
         (i32.load
           (local.get $y)
         )
