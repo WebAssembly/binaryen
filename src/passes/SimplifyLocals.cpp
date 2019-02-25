@@ -271,7 +271,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   // a full expression stack is used when !allowNesting, so that we can check if
   // a sink would cause nesting
-  std::vector<Expression*> expressionStack;
+  ExpressionStack expressionStack;
 
   static void visitPre(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
     Expression* curr = *currp;
