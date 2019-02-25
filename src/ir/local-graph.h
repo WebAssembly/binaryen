@@ -53,8 +53,9 @@ struct LocalGraph {
   std::unordered_map<GetLocal*, std::unordered_set<SetLocal*>> getInfluences; // for each get, the sets whose values are influenced by that get
   std::unordered_map<SetLocal*, std::unordered_set<GetLocal*>> setInfluences; // for each set, the gets whose values are influenced by that set
 
-  // Optional: Get the local indexes that are SSA, in the sense of having a have a single
-  // set for all the gets for that local index.
+  // Optional: Compute the local indexes that are SSA, in the sense of having a have a single
+  // set for all the gets for that local index. This in particular implies that the single
+  // set dominates all the gets.
 
   void computeSSAIndexes();
 

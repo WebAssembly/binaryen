@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -59,6 +60,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
   Pass* create() override { return new MergeLocals(); }
 
   void doWalkFunction(Function* func) {
+std::cout << "walk\n";
     // first, instrument the graph by modifying each copy
     //   (local.set $x
     //    (local.get $y)
@@ -75,9 +77,13 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
     // is still used after that point
     super::doWalkFunction(func);
 
+std::cout << *func->body << '\n';
+
     // optimize the copies, merging when we can, and removing
     // the trivial assigns we added temporarily
+std::cout << "opt\n";
     optimizeCopies();
+std::cout << "stop\n";
   }
 
   std::vector<SetLocal*> copies;
@@ -101,6 +107,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
     // optimize each copy
     std::unordered_map<SetLocal*, SetLocal*> optimizedToCopy, optimizedToTrivial;
     for (auto* copy : copies) {
+std::cout << "copy: " << copy->index << '\n';
       auto* trivial = copy->value->cast<SetLocal>();
       bool canOptimizeToCopy = false;
       auto& trivialInfluences = preGraph.setInfluences[trivial];
@@ -120,13 +127,16 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
           }
         }
       }
+canOptimizeToCopy = false;
       if (canOptimizeToCopy) {
+std::cout << "  opt!\n";
         // worth it for this copy, do it
         for (auto* influencedGet : trivialInfluences) {
           influencedGet->index = copy->index;
         }
         optimizedToCopy[copy] = trivial;
       } else {
+std::cout << "  try1, with trivial inluences " << trivialInfluences.size() << "\n";
         // alternatively, we can try to remove the conflict in the opposite way: given
         //   (local.set $x
         //    (local.get $y)
@@ -134,9 +144,11 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
         // we can look for uses of $x that could instead be uses of $y. this extends
         // $y's live range, but if it removes the conflict between $x and $y, it may be
         // worth it
-        if (!trivialInfluences.empty()) { // if the trivial set we added has influences, it means $y lives on
+        if (1) { //!trivialInfluences.empty()) { // if the trivial set we added has influences, it means $y lives on
+std::cout << "  try2\n";
           auto& copyInfluences = preGraph.setInfluences[copy];
           if (!copyInfluences.empty()) {
+std::cout << "  try3\n";
             bool canOptimizeToTrivial = true;
             for (auto* influencedGet : copyInfluences) {
               // as above, avoid merges/phis
@@ -150,6 +162,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
               }
             }
             if (canOptimizeToTrivial) {
+std::cout << "    yes!\n";
               // worth it for this copy, do it
               for (auto* influencedGet : copyInfluences) {
                 influencedGet->index = trivial->index;
@@ -162,6 +175,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
       }
     }
     if (!optimizedToCopy.empty() || !optimizedToTrivial.empty()) {
+std::cout << "verify\n";
       // finally, we need to verify that the changes work properly, that is,
       // they use the value from the right place (and are not affected by
       // another set of the index we changed to).
@@ -179,6 +193,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
           auto& sets = postGraph.getSetses[influencedGet];
           if (sets.size() != 1 || *sets.begin() != copy) {
             // not good, undo all the changes for this copy
+std::cout << "  undo " << trivial->index << "\n";
             for (auto* undo : trivialInfluences) {
               undo->index = trivial->index;
             }
@@ -195,6 +210,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
           auto& sets = postGraph.getSetses[influencedGet];
           if (sets.size() != 1 || *sets.begin() != trivial) {
             // not good, undo all the changes for this copy
+std::cout << "  undo " << copy->index << "\n";
             for (auto* undo : copyInfluences) {
               undo->index = copy->index;
             }
