@@ -221,11 +221,12 @@ static std::unordered_set<Name> functionsWeTriedToRemove;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
-  bool binary, verbose, debugInfo;
+  bool binary, deNan, verbose, debugInfo;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string test, std::string working, bool binary, bool verbose, bool debugInfo) : command(command), test(test), working(working), binary(binary), verbose(verbose), debugInfo(debugInfo) {}
+  Reducer(std::string command, std::string test, std::string working, bool binary, bool deNan, bool verbose, bool debugInfo) :
+    command(command), test(test), working(working), binary(binary), deNan(deNan), verbose(verbose), debugInfo(debugInfo) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -360,8 +361,22 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     return (counter % factor) <= bonus;
   }
 
+  bool isOkReplacement(Expression* with) {
+    if (deNan) {
+      if (auto* c = with->dynCast<Const>()) {
+        if (c->value.isNaN()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   // tests a reduction on the current traversal node, and undos if it failed
   bool tryToReplaceCurrent(Expression* with) {
+    if (!isOkReplacement(with)) {
+      return false;
+    }
     auto* curr = getCurrent();
     //std::cerr << "try " << curr << " => " << with << '\n';
     if (curr->type != with->type) return false;
@@ -383,6 +398,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   // tests a reduction on an arbitrary child
   bool tryToReplaceChild(Expression*& child, Expression* with) {
+    if (!isOkReplacement(with)) {
+      return false;
+    }
     if (child->type != with->type) return false;
     if (!shouldTryToReduce()) return false;
     auto* before = child;
@@ -865,6 +883,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 int main(int argc, const char* argv[]) {
   std::string input, test, working, command;
   bool binary = true,
+       deNan = false,
        verbose = false,
        debugInfo = false,
        force = false;
@@ -898,6 +917,11 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::Zero,
            [&](Options* o, const std::string& argument) {
              binary = false;
+           })
+      .add("--denan", "", "Avoid nans when reducing",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             deNan = true;
            })
       .add("--verbose", "-v", "Verbose output mode",
            Options::Arguments::Zero,
@@ -997,7 +1021,7 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, binary, verbose, debugInfo);
+    Reducer reducer(command, test, working, binary, deNan, verbose, debugInfo);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed

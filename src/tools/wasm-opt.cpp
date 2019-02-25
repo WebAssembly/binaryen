@@ -71,6 +71,8 @@ int main(int argc, const char* argv[]) {
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
   bool fuzzPasses = false;
+  bool fuzzNaNs = true;
+  bool fuzzMemory = true;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
   std::string inputSourceMapFilename;
@@ -112,6 +114,12 @@ int main(int argc, const char* argv[]) {
       .add("--fuzz-passes", "-fp", "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz (it picks the passes from the input)",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { fuzzPasses = true; })
+      .add("--no-fuzz-nans", "", "don't emit NaNs when fuzzing, and remove them at runtime as well (helps avoid nondeterminism between VMs)",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzNaNs = false; })
+      .add("--no-fuzz-memory", "", "don't emit memory ops when fuzzing",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzMemory = false; })
       .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
            Options::Arguments::One,
            [&](Options *o, const std::string& arguments) { emitJSWrapper = arguments; })
@@ -166,7 +174,10 @@ int main(int argc, const char* argv[]) {
     if (fuzzPasses) {
       reader.pickPasses(options);
     }
-    reader.build(options.getFeatures());
+    reader.setFeatures(options.getFeatures());
+    reader.setAllowNaNs(fuzzNaNs);
+    reader.setAllowMemory(fuzzMemory);
+    reader.build();
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm, options.getFeatures())) {
         WasmPrinter::printModule(&wasm);
@@ -274,7 +285,9 @@ int main(int argc, const char* argv[]) {
     results.check(*curr);
   }
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.count("output") == 0) {
+    std::cerr << "(no output file specified, not emitting output)\n";
+  } else {
     if (options.debug) std::cerr << "writing..." << std::endl;
     ModuleWriter writer;
     writer.setDebug(options.debug);

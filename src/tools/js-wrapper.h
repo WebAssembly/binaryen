@@ -103,7 +103,7 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     ret += ";\n";
     ret += "} catch (e) {\n";
-    ret += "  console.log('exception: ' + e);\n";
+    ret += "  console.log('exception!' /* + e */);\n";
     ret += "}\n";
   }
   return ret;

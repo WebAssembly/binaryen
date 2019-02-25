@@ -123,9 +123,22 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void build(FeatureSet features_) {
+  void setFeatures(FeatureSet features_) {
     features = features_;
-    setupMemory();
+  }
+
+  void setAllowNaNs(bool allowNaNs_) {
+    allowNaNs = allowNaNs_;
+  }
+
+  void setAllowMemory(bool allowMemory_) {
+    allowMemory = allowMemory_;
+  }
+
+  void build() {
+    if (allowMemory) {
+      setupMemory();
+    }
     setupTable();
     setupGlobals();
     addImportLoggingSupport();
@@ -137,7 +150,7 @@ public:
     if (HANG_LIMIT > 0) {
       addHangLimitSupport();
     }
-    if (DE_NAN) {
+    if (!allowNaNs) {
       addDeNanSupport();
     }
     finalizeTable();
@@ -178,7 +191,10 @@ private:
   // Optionally remove NaNs, which are a source of nondeterminism (which makes
   // cross-VM comparisons harder)
   // TODO: de-NaN SIMD values
-  static const bool DE_NAN = true;
+  bool allowNaNs = true;
+
+  // Whether to emit memory operations like loads and stores.
+  bool allowMemory = true;
 
   // Features allowed to be emitted
   FeatureSet features = FeatureSet::All;
@@ -361,7 +377,7 @@ private:
   }
 
   Expression* makeDeNanOp(Expression* expr) {
-    if (!DE_NAN) return expr;
+    if (allowNaNs) return expr;
     if (expr->type == f32) {
       return builder.makeCall("deNan32", { expr }, f32);
     } else if (expr->type == f64) {
@@ -1130,6 +1146,7 @@ private:
   }
 
   Expression* makeLoad(Type type) {
+    if (!allowMemory) return makeTrivial(type);
     auto* ret = makeNonAtomicLoad(type);
     if (type != i32 && type != i64) return ret;
     if (!features.hasAtomics() || oneIn(2)) return ret;
@@ -1201,6 +1218,7 @@ private:
   }
 
   Expression* makeStore(Type type) {
+    if (!allowMemory) return makeTrivial(type);
     auto* ret = makeNonAtomicStore(type);
     auto* store = ret->dynCast<Store>();
     if (!store) return ret;
@@ -1213,7 +1231,7 @@ private:
     return store;
   }
 
-  Literal makeLiteral(Type type) {
+  Literal makeArbitraryLiteral(Type type) {
     if (type == v128) {
       // generate each lane individually for random lane interpretation
       switch (upTo(6)) {
@@ -1342,6 +1360,14 @@ private:
       }
     }
     WASM_UNREACHABLE();
+  }
+
+  Literal makeLiteral(Type type) {
+    auto ret = makeArbitraryLiteral(type);
+    if (!allowNaNs && ret.isNaN()) {
+      ret = Literal::makeFromInt32(0, type);
+    }
+    return ret;
   }
 
   Expression* makeConst(Type type) {
@@ -1580,6 +1606,7 @@ private:
 
   Expression* makeAtomic(Type type) {
     assert(features.hasAtomics());
+    if (!allowMemory) return makeTrivial(type);
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {
@@ -1717,6 +1744,7 @@ private:
   }
 
   Expression* makeBulkMemory(Type type) {
+    if (!allowMemory) return makeTrivial(type);
     assert(features.hasBulkMemory());
     assert(type == none);
     switch (upTo(4)) {
@@ -1729,6 +1757,7 @@ private:
   }
 
   Expression* makeMemoryInit() {
+    if (!allowMemory) return makeTrivial(none);
     auto segment = uint32_t(get32());
     Expression* dest = make(i32);
     Expression* offset = make(i32);
@@ -1737,10 +1766,12 @@ private:
   }
 
   Expression* makeDataDrop() {
+    if (!allowMemory) return makeTrivial(none);
     return builder.makeDataDrop(get32());
   }
 
   Expression* makeMemoryCopy() {
+    if (!allowMemory) return makeTrivial(none);
     Expression* dest = make(i32);
     Expression* source = make(i32);
     Expression* size = make(i32);
@@ -1748,6 +1779,7 @@ private:
   }
 
   Expression* makeMemoryFill() {
+    if (!allowMemory) return makeTrivial(none);
     Expression* dest = make(i32);
     Expression* value = make(i32);
     Expression* size = make(i32);

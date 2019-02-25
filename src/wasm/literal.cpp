@@ -144,6 +144,17 @@ bool Literal::operator!=(const Literal& other) const {
   return !(*this == other);
 }
 
+bool Literal::isNaN() {
+  if (type == Type::f32 && std::isnan(getf32())) {
+    return true;
+  }
+  if (type == Type::f64 && std::isnan(getf64())) {
+    return true;
+  }
+  // TODO: SIMD?
+  return false;
+}
+
 uint32_t Literal::NaNPayload(float f) {
   assert(std::isnan(f) && "expected a NaN");
   // SEEEEEEE EFFFFFFF FFFFFFFF FFFFFFFF
