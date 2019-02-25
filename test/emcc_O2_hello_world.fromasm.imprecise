@@ -9025,11 +9025,8 @@
        )
       )
      )
-     (i32.lt_s
-      (call $___overflow
-       (local.get $0)
-      )
-      (i32.const 0)
+     (call $___overflow
+      (local.get $0)
      )
     )
    )
