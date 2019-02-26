@@ -314,13 +314,14 @@ struct SafeHeap : public Pass {
   }
 
   Expression* makeBoundsCheck(Type type, Builder& builder, Index local, Index bytes) {
+    auto upperBound = getPassOptions().lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
         builder.makeBinary(
           LtUInt32,
           builder.makeGetLocal(local, i32),
-          builder.makeConst(Literal(int32_t(1024)))
+          builder.makeConst(Literal(int32_t(upperBound)))
         ),
         builder.makeBinary(
           GtUInt32,
