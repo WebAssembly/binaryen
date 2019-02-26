@@ -335,33 +335,37 @@ struct DAE : public Pass {
         i--;
       }
     }
-    // We can also tell which calls have all their return values dropped.
-    for (auto& func : module->functions) {
-      if (func->result == none) {
-        continue;
-      }
-      auto name = func->name;
-      if (infoMap[name].hasUnseenCalls) {
-        continue;
-      }
-      auto iter = allCalls.find(name);
-      if (iter == allCalls.end()) {
-        continue;
-      }
-      auto& calls = iter->second;
-      bool allDropped = true;
-      for (auto* call : calls) {
-        if (!allDroppedCalls.count(call)) {
-          allDropped = false;
-          break;
+    // We can also tell which calls have all their return values dropped. Note that we can't do this
+    // if we changed anything so far, as we may have modified allCalls (we can't modify a call site
+    // twice in one iteration, once to remove a param, once to drop the return value).
+    if (changed.empty()) {
+      for (auto& func : module->functions) {
+        if (func->result == none) {
+          continue;
         }
+        auto name = func->name;
+        if (infoMap[name].hasUnseenCalls) {
+          continue;
+        }
+        auto iter = allCalls.find(name);
+        if (iter == allCalls.end()) {
+          continue;
+        }
+        auto& calls = iter->second;
+        bool allDropped = true;
+        for (auto* call : calls) {
+          if (!allDroppedCalls.count(call)) {
+            allDropped = false;
+            break;
+          }
+        }
+        if (!allDropped) {
+          continue;
+        }
+        removeReturnValue(func.get(), calls, module);
+        // TODO Removing a drop may also open optimization opportunities in the callers.
+        changed.insert(func.get());
       }
-      if (!allDropped) {
-        continue;
-      }
-      removeReturnValue(func.get(), calls, module);
-      // TODO Removing a drop may also open optimization opportunities in the callers.
-      changed.insert(func.get());
     }
     if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, runner);

@@ -9064,11 +9064,8 @@
        )
       )
      )
-     (i32.lt_s
-      (call $ab
-       (local.get $0)
-      )
-      (i32.const 0)
+     (call $ab
+      (local.get $0)
      )
     )
    )
