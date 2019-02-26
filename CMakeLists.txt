@@ -172,6 +172,11 @@ ENDIF()
 set(_dependencies "passes;wasm;asmjs;emscripten-optimizer;ir;cfg;support")
 foreach(_dep ${_dependencies})
   SET_TARGET_PROPERTIES(${_dep} PROPERTIES OUTPUT_NAME binaryen-${_dep})
+  TARGET_INCLUDE_DIRECTORIES(${_dep} INTERFACE
+    $<INSTALL_INTERFACE:include/binaryen>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    )
+
 endforeach()
 
 TARGET_LINK_LIBRARIES(binaryen ${_dependencies})
