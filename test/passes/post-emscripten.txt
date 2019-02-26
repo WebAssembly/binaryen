@@ -1,121 +1,10 @@
 (module
  (type $0 (func (param i32)))
  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
- (type $2 (func (param i32) (result i32)))
- (type $3 (func))
+ (type $2 (func))
  (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
  (memory $0 256 256)
- (export "load-off-2" (func $load-off-2))
- (func $b0 (; 1 ;) (type $0) (param $x i32)
-  (drop
-   (i32.load offset=1
-    (local.get $x)
-   )
-  )
-  (drop
-   (i32.load offset=8
-    (local.get $x)
-   )
-  )
-  (drop
-   (i32.load offset=1023
-    (local.get $x)
-   )
-  )
-  (drop
-   (i32.load
-    (i32.add
-     (local.get $x)
-     (i32.const 1024)
-    )
-   )
-  )
-  (drop
-   (i32.load
-    (i32.add
-     (local.get $x)
-     (i32.const 2048)
-    )
-   )
-  )
-  (drop
-   (i32.load offset=4
-    (local.get $x)
-   )
-  )
- )
- (func $load-off-2 (; 2 ;) (type $2) (param $0 i32) (result i32)
-  (i32.store
-   (i32.const 6)
-   (local.get $0)
-  )
-  (i32.store
-   (i32.const 6)
-   (local.get $0)
-  )
-  (i32.store offset=7
-   (local.get $0)
-   (local.get $0)
-  )
-  (i32.store offset=9
-   (local.get $0)
-   (local.get $0)
-  )
-  (i32.store offset=2
-   (i32.add
-    (i32.const -11)
-    (local.get $0)
-   )
-   (local.get $0)
-  )
-  (i32.store offset=2
-   (i32.add
-    (local.get $0)
-    (i32.const -13)
-   )
-   (local.get $0)
-  )
-  (i32.store
-   (i32.const 4)
-   (local.get $0)
-  )
-  (i32.store
-   (i32.const 0)
-   (local.get $0)
-  )
-  (i32.store
-   (i32.const 25)
-   (local.get $0)
-  )
-  (i32.store
-   (i32.const -23)
-   (local.get $0)
-  )
-  (drop
-   (i32.load
-    (i32.const 8)
-   )
-  )
-  (drop
-   (i32.load
-    (i32.const 8)
-   )
-  )
-  (drop
-   (i32.load offset=8
-    (local.get $0)
-   )
-  )
-  (drop
-   (i32.load
-    (i32.const 10)
-   )
-  )
-  (i32.load offset=12
-   (local.get $0)
-  )
- )
- (func $pow2 (; 3 ;) (type $3)
+ (func $pow2 (; 1 ;) (type $2)
   (local $x f64)
   (local $y f64)
   (local $2 f64)
@@ -166,7 +55,7 @@
    )
   )
  )
- (func $pow.2 (; 4 ;) (type $3)
+ (func $pow.2 (; 2 ;) (type $2)
   (drop
    (f64.sqrt
     (f64.const 1)
