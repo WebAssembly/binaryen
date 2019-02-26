@@ -224,3 +224,22 @@
   (i32.const 5)
  )
 )
+(module
+ (type $0 (func))
+ (type $1 (func (param i32) (result i32)))
+ (export "a" (func $0))
+ (func $0 (; 0 ;) (type $0)
+  (call $b)
+ )
+ (func $b (; 1 ;)
+  (local $0 i32)
+  (drop
+   (block (result i32)
+    (local.set $0
+     (i32.const 1)
+    )
+    (local.get $0)
+   )
+  )
+ )
+)

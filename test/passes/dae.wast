@@ -118,4 +118,16 @@
     (i32.const 5)
   )
 )
+(module ;; both operations at once: remove params and return value
+  (func "a"
+    (drop
+      (call $b
+        (i32.const 1)
+      )
+    )
+  )
+  (func $b (param $x i32) (result i32)
+    (local.get $x)
+  )
+)
 
