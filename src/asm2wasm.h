@@ -957,6 +957,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
     optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, passOptions, [&](PassRunner& passRunner) {
       // addPrePasses
+      passRunner.options.lowMemoryUnused = true;
       if (debug) {
         passRunner.setDebug(true);
         passRunner.setValidateGlobally(false);
@@ -1189,6 +1190,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     // functions). Optimize those now. Typically there are very few, just do it
     // sequentially.
     PassRunner passRunner(&wasm, passOptions);
+    passRunner.options.lowMemoryUnused = true;
     passRunner.addDefaultFunctionOptimizationPasses();
     for (auto& pair : trappingFunctions.getFunctions()) {
       auto* func = pair.second;
@@ -1447,6 +1449,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   };
 
   PassRunner passRunner(&wasm, passOptions);
+  passRunner.options.lowMemoryUnused = true;
   passRunner.setFeatures(passOptions.features);
   if (debug) {
     passRunner.setDebug(true);
