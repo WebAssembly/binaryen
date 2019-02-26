@@ -57,6 +57,7 @@ Pass* createMinifyImportsAndExportsPass();
 Pass* createMetricsPass();
 Pass* createNameListPass();
 Pass* createNoExitRuntimePass();
+Pass* createOptimizeAddedConstantsPass();
 Pass* createOptimizeInstructionsPass();
 Pass* createOptimizeStackIRPass();
 Pass* createPickLoadSignsPass();
