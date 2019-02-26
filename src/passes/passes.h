@@ -58,6 +58,7 @@ Pass* createMetricsPass();
 Pass* createNameListPass();
 Pass* createNoExitRuntimePass();
 Pass* createOptimizeAddedConstantsPass();
+Pass* createOptimizeAddedConstantsPropagatePass();
 Pass* createOptimizeInstructionsPass();
 Pass* createOptimizeStackIRPass();
 Pass* createPickLoadSignsPass();

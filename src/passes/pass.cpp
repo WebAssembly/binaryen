@@ -101,6 +101,7 @@ void PassRegistry::registerPasses() {
   registerPass("nm", "name list", createNameListPass);
   registerPass("no-exit-runtime", "removes calls to atexit(), which is valid if the C runtime will never be exited", createNoExitRuntimePass);
   registerPass("optimize-added-constants", "optimizes added constants into load/store offsets", createOptimizeAddedConstantsPass);
+  registerPass("optimize-added-constants-propagate", "optimizes added constants into load/store offsets, propagating them across locals too", createOptimizeAddedConstantsPropagatePass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
   registerPass("optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);

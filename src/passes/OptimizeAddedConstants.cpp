@@ -21,6 +21,14 @@
 //
 // The propagate option also propagates offsets across set/get local pairs.
 //
+// Optimizing constants into load/store offsets is almost always
+// beneficial for speed, as VMs can optimize these operations better.
+// If a LocalGraph is provided, this can also propagate values along get/set
+// pairs. In such a case, we may increase code size slightly or reduce
+// compressibility (e.g., replace (load (get $x)) with (load offset=Z (get $y)),
+// where Z is big enough to not fit in a single byte), but this is good for
+// speed, and may lead to code size reductions elsewhere by using fewer locals.
+//
 
 #include <wasm.h>
 #include <pass.h>
@@ -28,14 +36,6 @@
 #include <ir/local-graph.h>
 
 namespace wasm {
-
-// Helper to optimize constants into load/store offsets. This is almost always
-// beneficial for speed, as VMs can optimize these operations better.
-// If a LocalGraph is provided, this can also propagate values along get/set
-// pairs. In such a case, we may increase code size slightly or reduce
-// compressibility (e.g., replace (load (get $x)) with (load offset=Z (get $y)),
-// where Z is big enough to not fit in a single byte), but this is good for
-// speed, and may lead to code size reductions elsewhere by using fewer locals.
 
 template<typename T>
 class MemoryAccessOptimizer {
@@ -81,10 +81,8 @@ public:
                 // a constant *and* the other side cannot change in the middle.
                 // TODO If it could change, we may add a new local to capture the
                 //      old value.
-                if (tryToOptimizePropagatedAdd(add->right, add->left)) {
-                  return;
-                }
-                if (tryToOptimizePropagatedAdd(add->left, add->right)) {
+                if (tryToOptimizePropagatedAdd(add->right, add->left, get) ||
+                   tryToOptimizePropagatedAdd(add->left, add->right, get)) {
                   return;
                 }
               }
@@ -125,29 +123,47 @@ private:
   // success, the returned offset can be added as a replacement for the
   // expression here.
   bool tryToOptimizeConstant(Expression* oneSide, Expression* otherSide) {
-    if (auto* c = curr->template dynCast<Const>()) {
+    if (auto* c = oneSide->template dynCast<Const>()) {
       auto result = canOptimizeConstant(c->value);
       if (result.succeeded) {
         curr->offset = result.total;
         curr->ptr = otherSide;
+        if (curr->ptr->template is<Const>()) {
+          optimizeConstantPointer();
+        }
         return true;
       }
     }
     return false;
   }
 
-  bool tryToOptimizePropagatedAdd(Expression* oneSide, Expression* otherSide) {
-    if (auto* c = curr->template dynCast<Const>()) {
+  bool tryToOptimizePropagatedAdd(Expression* oneSide, Expression* otherSide, GetLocal* ptr) {
+    if (auto* c = oneSide->template dynCast<Const>()) {
       auto result = canOptimizeConstant(c->value);
       if (result.succeeded) {
-        // We need to make sure the other side cannot change. The case we do care
-        // about is a get of a local that we can prove does not change.
-        // (Technically a constant value cannot change, but that is not interesting
-        // for us since we are optimizing a constant factor into the offset - if
-        // both sides are constant, this is unoptimized code.)
+        // Looks good, but we need to make sure the other side cannot change:
+        //
+        //  x = y + 10
+        //  y = y + 1
+        //  load(x)
+        //
+        // This example should not be optimized into
+        //
+        //  load(x, offset=10)
+        //
+        // If the other side is a get, we may be able to prove that we can just use that same
+        // local, if both it and the pointer are in SSA form. In that case,
+        //
+        //  y = .. // single assignment that dominates all uses
+        //  x = y + 10 // single assignment that dominates all uses
+        //  [..]
+        //  load(x) => load(y, offset=10)
+        //
+        // This is valid since dominance is transitive, so y's definition dominates the load,
+        // and it is ok to replace x with y + 10 there.
+        // TODO otherwise, create a new local
         if (auto* get = otherSide->template dynCast<GetLocal>()) {
-          if (localGraph->isSSA(get->index)) {
-// XXX not good enough! see $offset-propagate6
+          if (localGraph->isSSA(get->index) && localGraph->isSSA(ptr->index)) {
             curr->offset = result.total;
             curr->ptr = Builder(*module).makeGetLocal(get->index, get->type);
             return true;
@@ -194,6 +210,8 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
   }
 
   void doWalkFunction(Function* func) {
+    // This pass is only valid under the assumption of unused low memory.
+    assert(getPassOptions().lowMemoryUnused);
     if (propagate) {
       localGraph = make_unique<LocalGraph>(func);
       localGraph->computeSSAIndexes();

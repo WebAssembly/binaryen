@@ -251,6 +251,17 @@ void LocalGraph::computeSSAIndexes() {
       indexSets[get->index].insert(set);
     }
   }
+  for (auto& pair : locations) {
+    auto* curr = pair.first;
+    if (auto* set = curr->dynCast<SetLocal>()) {
+      auto& sets = indexSets[set->index];
+      if (sets.size() == 1 && *sets.begin() != curr) {
+        // While it has just one set, it is not the right one (us),
+        // so mark it invalid.
+        sets.clear();
+      }
+    }
+  }
   for (auto& pair : indexSets) {
     auto index = pair.first;
     auto& sets = pair.second;
