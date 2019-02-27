@@ -140,7 +140,6 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
 
   Precompute(bool propagate) : propagate(propagate) {}
 
-  std::unique_ptr<LocalGraph> localGraph;
   GetValues getValues;
 
   bool worked;
@@ -270,13 +269,13 @@ private:
     // compute other sets as locals (since some of the gets they read may be
     // constant).
     // compute all dependencies
-    localGraph = make_unique<LocalGraph>(func);
-    localGraph->computeInfluences();
-    localGraph->computeSSAIndexes();
+    LocalGraph localGraph(func);
+    localGraph.computeInfluences();
+    localGraph.computeSSAIndexes();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     std::unordered_set<Expression*> work;
-    for (auto& pair : localGraph->locations) {
+    for (auto& pair : localGraph.locations) {
       auto* curr = pair.first;
       work.insert(curr);
     }
@@ -293,7 +292,7 @@ private:
         if (setValues[set].isConcrete()) continue; // already known constant
         auto value = setValues[set] = precomputeValue(set->value);
         if (value.isConcrete()) {
-          for (auto* get : localGraph->setInfluences[set]) {
+          for (auto* get : localGraph.setInfluences[set]) {
             work.insert(get);
           }
         }
@@ -303,7 +302,7 @@ private:
         // for this get to have constant value, all sets must agree
         Literal value;
         bool first = true;
-        for (auto* set : localGraph->getSetses[get]) {
+        for (auto* set : localGraph.getSetses[get]) {
           Literal curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
@@ -337,7 +336,7 @@ private:
         if (value.isConcrete()) {
           // we did!
           getValues[get] = value;
-          for (auto* set : localGraph->getInfluences[get]) {
+          for (auto* set : localGraph.getInfluences[get]) {
             work.insert(set);
           }
         }
