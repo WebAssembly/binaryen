@@ -287,42 +287,54 @@
  (func $offset-propagate5 (; 9 ;) (type $1) (param $z i32)
   (local $x i32)
   (local $y i32)
+  (local $3 i32)
   (if
    (local.get $z)
    (local.set $y
     (i32.const -1)
    )
   )
-  (local.set $x
-   (i32.add
-    (i32.const 1)
+  (block
+   (local.set $3
     (local.get $y)
+   )
+   (local.set $x
+    (i32.add
+     (i32.const 1)
+     (local.get $3)
+    )
    )
   )
   (drop
-   (i32.load
-    (local.get $x)
+   (i32.load offset=1
+    (local.get $3)
    )
   )
  )
  (func $offset-propagate6 (; 10 ;) (type $1) (param $z i32)
   (local $x i32)
   (local $y i32)
+  (local $3 i32)
   (local.set $y
    (local.get $z)
   )
-  (local.set $x
-   (i32.add
-    (i32.const 1)
+  (block
+   (local.set $3
     (local.get $y)
+   )
+   (local.set $x
+    (i32.add
+     (i32.const 1)
+     (local.get $3)
+    )
    )
   )
   (local.set $y
    (i32.const -2)
   )
   (drop
-   (i32.load
-    (local.get $x)
+   (i32.load offset=1
+    (local.get $3)
    )
   )
  )
