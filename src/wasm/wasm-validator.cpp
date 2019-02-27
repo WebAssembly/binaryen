@@ -179,14 +179,12 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   FunctionValidator(ValidationInfo* info) : info(*info) {}
 
   struct BreakInfo {
-    enum {
-      UnsetArity = Index(-1),
-      PoisonArity = Index(-2)
-    };
+    static const Index UnsetArity = -1;
+    static const Index PoisonArity = -2;
 
     Type type;
     Index arity{UnsetArity};
-    BreakInfo()  {}
+    BreakInfo()  = default;
     BreakInfo(Type type, Index arity) : type(type), arity(arity) {}
 
     bool hasBeenSet() {

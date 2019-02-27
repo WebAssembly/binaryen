@@ -1102,7 +1102,7 @@ void WasmBinaryBuilder::readFunctions() {
     if (debug) std::cerr << "reading " << i << std::endl;
     func->type = type->name;
     func->result = type->result;
-    for (auto & param : type->params) {
+    for (auto& param : type->params) {
       func->params.emplace_back(param);
     }
     size_t numLocalTypes = getU32LEB();

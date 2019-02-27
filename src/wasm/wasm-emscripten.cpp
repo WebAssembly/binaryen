@@ -373,7 +373,7 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
 
 std::vector<Address> getSegmentOffsets(Module& wasm) {
   std::vector<Address> segmentOffsets;
-  for (auto & segment : wasm.memory.segments) {
+  for (auto& segment : wasm.memory.segments) {
     if (auto* addrConst = segment.offset->dynCast<Const>()) {
       auto address = addrConst->value.geti32();
       segmentOffsets.emplace_back(address);

@@ -965,7 +965,7 @@ LaneArray<2> Literal::getLanesI64x2() const {
 }
 LaneArray<4> Literal::getLanesF32x4() const {
   auto lanes = getLanesI32x4();
-  for (auto & lane : lanes) {
+  for (auto& lane : lanes) {
     lane = lane.castToF32();
   }
   return lanes;

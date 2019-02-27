@@ -131,7 +131,7 @@ std::string Archive::Child::getRawName() const {
 Archive::Child Archive::Child::getNext(bool& error) const {
   uint32_t nextOffset = len + (len & 1); // Members are aligned to even byte boundaries.
   if ((size_t)(data - (const uint8_t*)parent->data.data() + nextOffset) >= parent->data.size()) {  // End of the archive.
-    return Child();
+    return {};
   }
   return {parent, data + nextOffset, &error};
 }

@@ -527,7 +527,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       super::doWalkFunction(func);
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be optimized
-      for (auto & i : flows) {
+      for (auto& i : flows) {
         auto* flow = (*i)->dynCast<Return>();
         if (!flow) continue;
         if (!flow->value) {

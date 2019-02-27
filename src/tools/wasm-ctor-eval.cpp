@@ -89,9 +89,9 @@ public:
   struct Iterator {
     Name first;
     Literal second;
-    bool found{false};
+    bool found = false;
 
-    Iterator()  {}
+    Iterator() = default;
     Iterator(Name name, Literal value) : first(name), second(value), found(true) {}
 
     bool operator==(const Iterator& other) {
@@ -285,11 +285,7 @@ private:
     if (wasm->memory.segments.size() == 0) {
       std::vector<char> temp;
       Builder builder(*wasm);
-      wasm->memory.segments.emplace_back(
-          builder.makeConst(Literal(int32_t(0))),
-          temp
-        
-      );
+      wasm->memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))), temp);
     }
     assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() == 0);
     auto max = address + sizeof(T);

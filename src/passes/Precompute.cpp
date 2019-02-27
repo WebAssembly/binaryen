@@ -74,7 +74,7 @@ public:
     if (iter != getValues.end()) {
       auto value = iter->second;
       if (value.isConcrete()) {
-        return Flow(value);
+        return {value};
       }
     }
     return {NOTPRECOMPUTABLE_FLOW};
