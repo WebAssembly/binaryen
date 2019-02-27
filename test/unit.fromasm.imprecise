@@ -1086,31 +1086,7 @@
    (i32.const 30)
   )
  )
- (func $sqrts (; 52 ;) (; has Stack IR ;) (param $0 f64) (result f64)
-  (f64.add
-   (f64.sqrt
-    (local.get $0)
-   )
-   (f64.promote_f32
-    (f32.sqrt
-     (f32.demote_f64
-      (local.get $0)
-     )
-    )
-   )
-  )
- )
- (func $keepAlive (; 53 ;) (; has Stack IR ;)
-  (drop
-   (call $sqrts
-    (f64.const 3.14159)
-   )
-  )
-  (drop
-   (call $sqrts
-    (f64.const 2.18281)
-   )
-  )
+ (func $keepAlive (; 52 ;) (; has Stack IR ;)
   (call_indirect (type $FUNCSIG$vi)
    (i32.const 0)
    (i32.const 17)
@@ -1149,16 +1125,16 @@
    )
   )
  )
- (func $vi (; 54 ;) (; has Stack IR ;) (param $0 i32)
+ (func $vi (; 53 ;) (; has Stack IR ;) (param $0 i32)
   (nop)
  )
- (func $ii (; 55 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $ii (; 54 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local.get $0)
  )
- (func $legalstub$conversions (; 56 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64)
+ (func $legalstub$conversions (; 55 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64)
   (nop)
  )
- (func $legalstub$frem_float (; 57 ;) (; has Stack IR ;) (result f64)
+ (func $legalstub$frem_float (; 56 ;) (; has Stack IR ;) (result f64)
   (f64.promote_f32
    (f32.demote_f64
     (call $f64-rem
@@ -1168,16 +1144,16 @@
    )
   )
  )
- (func $legalstub$fr (; 58 ;) (; has Stack IR ;) (param $0 f64)
+ (func $legalstub$fr (; 57 ;) (; has Stack IR ;) (param $0 f64)
   (nop)
  )
- (func $legalstub$ceiling_32_64 (; 59 ;) (; has Stack IR ;) (param $0 f64) (param $1 f64)
+ (func $legalstub$ceiling_32_64 (; 58 ;) (; has Stack IR ;) (param $0 f64) (param $1 f64)
   (nop)
  )
- (func $legalstub$bitcasts (; 60 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64)
+ (func $legalstub$bitcasts (; 59 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64)
   (nop)
  )
- (func $legalstub$exported_f32_user (; 61 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
+ (func $legalstub$exported_f32_user (; 60 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
   (f64.promote_f32
    (f32.demote_f64
     (local.get $1)
