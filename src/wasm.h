@@ -54,12 +54,12 @@ struct FeatureSet {
 
   bool isMVP() const { return features == MVP; }
   bool has(Feature f) { return (features & f) == f; }
-  bool hasAtomics() const { return static_cast<bool>(features & Atomics); }
-  bool hasMutableGlobals() const { return static_cast<bool>(features & MutableGlobals); }
-  bool hasTruncSat() const { return static_cast<bool>(features & TruncSat); }
-  bool hasSIMD() const { return static_cast<bool>(features & SIMD); }
-  bool hasBulkMemory() const { return static_cast<bool>(features & BulkMemory); }
-  bool hasAll() const { return static_cast<bool>(features & All); }
+  bool hasAtomics() const { return (features & Atomics) != 0; }
+  bool hasMutableGlobals() const { return (features & MutableGlobals) != 0; }
+  bool hasTruncSat() const { return (features & TruncSat) != 0; }
+  bool hasSIMD() const { return (features & SIMD) != 0; }
+  bool hasBulkMemory() const { return (features & BulkMemory) != 0; }
+  bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
   void set(Feature f, bool v = true) { features = v ? (features | f) : (features & ~f); }
