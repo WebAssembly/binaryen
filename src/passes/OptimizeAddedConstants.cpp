@@ -106,9 +106,16 @@ private:
     // For code clarity and compressibility, we prefer to put the
     // entire address in the constant.
     if (curr->offset) {
+      // Note that the offset may already be larger than low memory - the
+      // code may know that is valid, even if we can't. Only handle the
+      // obviously valid case where an overflow can't occur.
       auto* c = curr->ptr->template cast<Const>();
-      c->value = c->value.add(Literal(int32_t(curr->offset)));
-      curr->offset = 0;
+      uint32_t base = c->value.geti32();
+      uint32_t offset = curr->offset;
+      if (uint64_t(base) + uint64_t(offset) < (uint64_t(1) << 32)) {
+        c->value = c->value.add(Literal(uint32_t(curr->offset)));
+        curr->offset = 0;
+      }
     }
   }
 
