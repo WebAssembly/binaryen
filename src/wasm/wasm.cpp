@@ -734,7 +734,7 @@ Name Function::getLocalNameOrDefault(Index index) {
     return nameIt->second;
   }
   // this is an unnamed local
-  return Name();
+  return {};
 }
 
 Name Function::getLocalNameOrGeneric(Index index) {

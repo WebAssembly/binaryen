@@ -133,7 +133,7 @@ Archive::Child Archive::Child::getNext(bool& error) const {
   if ((size_t)(data - (const uint8_t*)parent->data.data() + nextOffset) >= parent->data.size()) {  // End of the archive.
     return Child();
   }
-  return Child(parent, data + nextOffset, &error);
+  return {parent, data + nextOffset, &error};
 }
 
 std::string Archive::Child::getName() const {

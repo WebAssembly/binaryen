@@ -373,14 +373,14 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
 
 std::vector<Address> getSegmentOffsets(Module& wasm) {
   std::vector<Address> segmentOffsets;
-  for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    if (auto* addrConst = wasm.memory.segments[i].offset->dynCast<Const>()) {
+  for (auto & segment : wasm.memory.segments) {
+    if (auto* addrConst = segment.offset->dynCast<Const>()) {
       auto address = addrConst->value.geti32();
-      segmentOffsets.push_back(address);
+      segmentOffsets.emplace_back(address);
     } else {
       // TODO(sbc): Wasm shared libraries have data segments with non-const
       // offset.
-      segmentOffsets.push_back(0);
+      segmentOffsets.emplace_back(0);
     }
   }
   return segmentOffsets;
@@ -553,7 +553,7 @@ std::string AsmConstWalker::asmConstSig(std::string baseSig) {
 
 Name AsmConstWalker::nameForImportWithSig(std::string sig) {
   std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
-  return Name(fixedTarget.c_str());
+  return {fixedTarget.c_str()};
 }
 
 void AsmConstWalker::queueImport(Name importName, std::string baseSig) {

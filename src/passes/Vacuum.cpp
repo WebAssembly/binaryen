@@ -59,7 +59,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     if (type == unreachable) return curr;
     // We iterate on possible replacements. If a replacement changes the type, stop and go back.
     auto* prev = curr;
-    while (1) {
+    while (true) {
       if (typeMatters && curr->type != type) {
         return prev;
       }

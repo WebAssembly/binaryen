@@ -687,7 +687,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitBlock(Block* curr) {
     // special-case Block, because Block nesting (in their first element) can be incredibly deep
     std::vector<Block*> stack;
-    while (1) {
+    while (true) {
       if (stack.size() > 0) {
         doIndent(o, indent);
         printDebugLocation(curr);
@@ -1200,7 +1200,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       // It is ok to emit a block here, as a function can directly contain a list, even if our
       // ast avoids that for simplicity. We can just do that optimization here..
       if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
-        Block* block = curr->body->cast<Block>();
+        auto* block = curr->body->cast<Block>();
         for (auto item : block->list) {
           printFullLine(item);
         }
@@ -1291,8 +1291,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printMajor(o, "data ");
       visit(segment.offset);
       o << " \"";
-      for (size_t i = 0; i < segment.data.size(); i++) {
-        unsigned char c = segment.data[i];
+      for (unsigned char c : segment.data) {
         switch (c) {
           case '\n': o << "\\n"; break;
           case '\r': o << "\\0d"; break;
@@ -1512,8 +1511,7 @@ std::ostream& WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* 
       o << ' ';
     }
   };
-  for (Index i = 0; i < (*ir).size(); i++) {
-    auto* inst = (*ir)[i];
+  for (auto inst : (*ir)) {
     if (!inst) continue;
     switch (inst->op) {
       case StackInst::Basic: {

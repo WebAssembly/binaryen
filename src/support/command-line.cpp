@@ -76,7 +76,7 @@ Options::Options(const std::string& command, const std::string& description)
       [&](Options* o, const std::string& arguments) { debug = true; });
 }
 
-Options::~Options() {}
+Options::~Options() = default;
 
 Options& Options::add(const std::string& longName, const std::string& shortName,
                       const std::string& description, Arguments arguments,

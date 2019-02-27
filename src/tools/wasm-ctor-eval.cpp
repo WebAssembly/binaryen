@@ -23,6 +23,7 @@
 //
 
 #include <memory>
+#include <utility>
 
 #include "pass.h"
 #include "support/command-line.h"
@@ -42,7 +43,7 @@ using namespace wasm;
 
 struct FailToEvalException {
   std::string why;
-  FailToEvalException(std::string why) : why(why) {}
+  FailToEvalException(std::string why) : why(std::move(why)) {}
 };
 
 // We do not have access to imported globals
@@ -88,9 +89,9 @@ public:
   struct Iterator {
     Name first;
     Literal second;
-    bool found;
+    bool found{false};
 
-    Iterator() : found(false) {}
+    Iterator()  {}
     Iterator(Name name, Literal value) : first(name), second(value), found(true) {}
 
     bool operator==(const Iterator& other) {
@@ -105,11 +106,11 @@ public:
     if (globals.find(name) == globals.end()) {
       return end();
     }
-    return Iterator(name, globals[name]);
+    return {name, globals[name]};
   }
 
   Iterator end() {
-    return Iterator();
+    return {};
   }
 };
 
@@ -284,11 +285,10 @@ private:
     if (wasm->memory.segments.size() == 0) {
       std::vector<char> temp;
       Builder builder(*wasm);
-      wasm->memory.segments.push_back(
-        Memory::Segment(
+      wasm->memory.segments.emplace_back(
           builder.makeConst(Literal(int32_t(0))),
           temp
-        )
+        
       );
     }
     assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() == 0);

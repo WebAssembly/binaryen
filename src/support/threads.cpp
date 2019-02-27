@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <assert.h>
+#include <cassert>
 
 #include <algorithm>
 #include <iostream>
@@ -70,7 +70,7 @@ void Thread::work(std::function<ThreadWorkState ()> doWork_) {
 
 void Thread::mainLoop(void *self_) {
   auto* self = static_cast<Thread*>(self_);
-  while (1) {
+  while (true) {
     DEBUG_THREAD("checking for work\n");
     {
       std::unique_lock<std::mutex> lock(self->mutex);

@@ -257,7 +257,7 @@ void traversePre(Ref node, std::function<void (Ref)> visit) {
   int arrsize = (int)arr->size();
   Ref* arrdata = &(*arr)[0];
   stack.push_back(TraverseInfo(node, arr));
-  while (1) {
+  while (true) {
     if (index < arrsize) {
       Ref sub = *(arrdata+index);
       index++;
@@ -292,7 +292,7 @@ void traversePrePost(Ref node, std::function<void (Ref)> visitPre, std::function
   int arrsize = (int)arr->size();
   Ref* arrdata = &(*arr)[0];
   stack.push_back(TraverseInfo(node, arr));
-  while (1) {
+  while (true) {
     if (index < arrsize) {
       Ref sub = *(arrdata+index);
       index++;
@@ -328,7 +328,7 @@ void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, st
   int arrsize = (int)arr->size();
   Ref* arrdata = &(*arr)[0];
   stack.push_back(TraverseInfo(node, arr));
-  while (1) {
+  while (true) {
     if (index < arrsize) {
       Ref sub = *(arrdata+index);
       index++;

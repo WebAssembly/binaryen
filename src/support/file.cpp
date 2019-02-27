@@ -44,7 +44,7 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary, Flags
   infile.seekg(0);
   infile.read(&input[0], insize);
   if (binary == Flags::Text) {
-    size_t chars = size_t(infile.gcount());
+    auto chars = size_t(infile.gcount());
     input.resize(chars+1); // Truncate size to the number of ASCII characters actually read in text mode (which is generally less than the number of bytes on Windows, if \r\n line endings are present)
     input[chars] = '\0';
   }

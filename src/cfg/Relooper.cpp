@@ -16,8 +16,8 @@
 
 #include "Relooper.h"
 
-#include <string.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
 
 #include <list>
 #include <stack>
@@ -434,8 +434,8 @@ Relooper::Relooper(wasm::Module* ModuleInit) :
 }
 
 Relooper::~Relooper() {
-  for (unsigned i = 0; i < Blocks.size(); i++) delete Blocks[i];
-  for (unsigned i = 0; i < Shapes.size(); i++) delete Shapes[i];
+  for (auto & Block : Blocks) delete Block;
+  for (auto & Shape : Shapes) delete Shape;
 }
 
 void Relooper::AddBlock(Block* New, int Id) {
@@ -445,7 +445,7 @@ void Relooper::AddBlock(Block* New, int Id) {
 
 namespace {
 
-typedef std::list<Block*> BlockList;
+using BlockList = std::list<Block *>;
 
 struct RelooperRecursor {
   Relooper* Parent;
@@ -544,7 +544,7 @@ struct Optimizer : public RelooperRecursor {
         std::cout << " maybeskip from " << Block->Id << " to next=" << Next->Id << '\n';
 #endif
         std::unordered_set<decltype(Replacement)> Seen;
-        while (1) {
+        while (true) {
           if (IsEmpty(Next) &&
               Next->BranchesOut.size() == 1) {
             auto iter = Next->BranchesOut.begin();
@@ -723,7 +723,7 @@ private:
     // Our preferred form is a block with no name and a flat list
     // with Nops removed, and extra Unreachables removed as well.
     // If the block would contain one item, return just the item.
-    wasm::Block* Outer = Curr->dynCast<wasm::Block>();
+    auto* Outer = Curr->dynCast<wasm::Block>();
     if (!Outer) {
       Outer = Builder.makeBlock(Curr);
     } else if (Outer->name.is()) {
@@ -958,8 +958,7 @@ void Relooper::Calculate(Block* Entry) {
   Live.FindLive(Entry);
 
   // Add incoming branches from live blocks, ignoring dead code
-  for (unsigned i = 0; i < Blocks.size(); i++) {
-    Block* Curr = Blocks[i];
+  for (auto Curr : Blocks) {
     if (!contains(Live.Live, Curr)) continue;
     for (auto& iter : Curr->BranchesOut) {
       iter.first->BranchesIn.insert(Curr);
@@ -1011,7 +1010,7 @@ void Relooper::Calculate(Block* Entry) {
 
     Shape* MakeSimple(BlockSet &Blocks, Block* Inner, BlockSet &NextEntries) {
       PrintDebug("creating simple block with block #%d\n", Inner->Id);
-      SimpleShape* Simple = new SimpleShape;
+      auto* Simple = new SimpleShape;
       Notice(Simple);
       Simple->Inner = Inner;
       Inner->Parent = Simple;
@@ -1120,7 +1119,7 @@ void Relooper::Calculate(Block* Entry) {
       DebugDump(Blocks, "  outer blocks:");
       DebugDump(NextEntries, "  outer entries:");
 
-      LoopShape* Loop = new LoopShape();
+      auto* Loop = new LoopShape();
       Notice(Loop);
 
       // Solipsize the loop, replacing with break/continue and marking branches as Processed (will not affect later calculations)
@@ -1258,7 +1257,7 @@ void Relooper::Calculate(Block* Entry) {
 
     Shape* MakeMultiple(BlockSet &Blocks, BlockSet& Entries, BlockBlockSetMap& IndependentGroups, BlockSet &NextEntries, bool IsCheckedMultiple) {
       PrintDebug("creating multiple block with %d inner groups\n", IndependentGroups.size());
-      MultipleShape* Multiple = new MultipleShape();
+      auto* Multiple = new MultipleShape();
       Notice(Multiple);
       BlockSet CurrEntries;
       for (auto& iter : IndependentGroups) {
@@ -1320,7 +1319,7 @@ void Relooper::Calculate(Block* Entry) {
         Prev = Temp; \
         Entries = NextEntries; \
         continue;
-      while (1) {
+      while (true) {
         PrintDebug("Process() running\n", 0);
         DebugDump(Blocks, "  blocks : ");
         DebugDump(*Entries, "  entries: ");
@@ -1357,8 +1356,7 @@ void Relooper::Calculate(Block* Entry) {
             Block* Entry = iter->first;
             BlockSet &Group = iter->second;
             auto curr = iter++; // iterate carefully, we may delete
-            for (auto iterBranch = Entry->BranchesIn.begin(); iterBranch != Entry->BranchesIn.end(); iterBranch++) {
-              Block* Origin = *iterBranch;
+            for (auto Origin : Entry->BranchesIn) {
               if (!contains(Group, Origin)) {
                 // Reached from outside the group, so we cannot handle this
                 PrintDebug("Cannot handle group with entry %d because of incoming branch from %d\n", Entry->Id, Origin->Id);

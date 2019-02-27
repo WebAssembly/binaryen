@@ -15,7 +15,7 @@
  */
 
 #include "asmjs/asmangle.h"
-#include <assert.h>
+#include <cassert>
 
 
 namespace wasm {

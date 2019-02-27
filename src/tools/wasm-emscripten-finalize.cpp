@@ -166,7 +166,7 @@ int main(int argc, const char *argv[]) {
     if (dataEnd->type != Type::i32) {
       Fatal() << "__data_end global has wrong type";
     }
-    Const* dataEndConst = dataEnd->init->cast<Const>();
+    auto* dataEndConst = dataEnd->init->cast<Const>();
     dataSize = dataEndConst->value.geti32() - globalBase;
   }
 
@@ -198,7 +198,7 @@ int main(int argc, const char *argv[]) {
     // emscripten calls this by default for side libraries so we only need
     // to include in as a static ctor for main module case.
     if (wasm.getExportOrNull("__post_instantiate")) {
-      initializerFunctions.push_back("__post_instantiate");
+      initializerFunctions.emplace_back("__post_instantiate");
     }
   }
 

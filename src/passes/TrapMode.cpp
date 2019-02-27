@@ -49,7 +49,7 @@ Name getBinaryFuncName(Binary* curr) {
     case RemUInt64: return I64U_REM;
     case DivSInt64: return I64S_DIV;
     case DivUInt64: return I64U_DIV;
-    default:        return Name();
+    default:        return {};
   }
 }
 
@@ -63,7 +63,7 @@ Name getUnaryFuncName(Unary* curr) {
   case TruncUFloat64ToInt32: return F64_TO_UINT;
   case TruncSFloat64ToInt64: return F64_TO_INT64;
   case TruncUFloat64ToInt64: return F64_TO_UINT64;
-  default:                   return Name();
+  default:                   return {};
   }
 }
 

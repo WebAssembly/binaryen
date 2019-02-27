@@ -230,7 +230,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
 
   void visitExpression(Expression* curr) {
     // we may be able to apply multiple patterns, one may open opportunities that look deeper NB: patterns must not have cycles
-    while (1) {
+    while (true) {
       auto* handOptimized = handOptimize(curr);
       if (handOptimized) {
         curr = handOptimized;

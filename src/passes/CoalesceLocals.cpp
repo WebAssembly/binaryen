@@ -67,12 +67,12 @@ struct CoalesceLocals : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor
 
   void interfere(Index i, Index j) {
     if (i == j) return;
-    interferences[std::min(i, j) * numLocals + std::max(i, j)] = 1;
+    interferences[std::min(i, j) * numLocals + std::max(i, j)] = true;
   }
 
   void interfereLowHigh(Index low, Index high) { // optimized version where you know that low < high
     assert(low < high);
-    interferences[low * numLocals + high] = 1;
+    interferences[low * numLocals + high] = true;
   }
 
   bool interferes(Index i, Index j) {
@@ -366,9 +366,9 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
 }
 
 struct CoalesceLocalsWithLearning : public CoalesceLocals {
-  virtual Pass* create() override { return new CoalesceLocalsWithLearning; }
+  Pass* create() override { return new CoalesceLocalsWithLearning; }
 
-  virtual void pickIndices(std::vector<Index>& indices) override;
+  void pickIndices(std::vector<Index>& indices) override;
 };
 
 void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
@@ -484,7 +484,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
 #endif
   // keep working while we see improvement
   auto oldBest = learner.getBest()->getFitness();
-  while (1) {
+  while (true) {
     learner.runGeneration();
     auto newBest = learner.getBest()->getFitness();
     if (newBest == oldBest) break; // unlikely we can improve

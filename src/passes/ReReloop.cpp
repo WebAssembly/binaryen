@@ -111,7 +111,7 @@ struct ReReloop final : public Pass {
     }
   };
 
-  typedef std::shared_ptr<Task> TaskPtr;
+  using TaskPtr = std::shared_ptr<Task>;
   std::vector<TaskPtr> stack;
 
   struct TriageTask final : public Task {

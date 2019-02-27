@@ -2,6 +2,8 @@ PROJECT(binaryen C CXX)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
 INCLUDE(GNUInstallDirs)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # generates compile_commands.json
+
 IF(NOT CMAKE_BUILD_TYPE)
   MESSAGE(STATUS "No build type selected, default to Release")
   SET(CMAKE_BUILD_TYPE "Release")

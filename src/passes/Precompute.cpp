@@ -60,14 +60,14 @@ public:
   Flow visitLoop(Loop* curr) {
     // loops might be infinite, so must be careful
     // but we can't tell if non-infinite, since we don't have state, so loops are just impossible to optimize for now
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
 
   Flow visitCall(Call* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitCallIndirect(CallIndirect* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitGetLocal(GetLocal *curr) {
     auto iter = getValues.find(curr);
@@ -77,7 +77,7 @@ public:
         return Flow(value);
       }
     }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitSetLocal(SetLocal *curr) {
     // If we don't need to replace the whole expression, see if there
@@ -88,38 +88,38 @@ public:
         return visit(curr->value);
       }
     }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitGetGlobal(GetGlobal *curr) {
     auto* global = module->getGlobal(curr->name);
     if (!global->imported() && !global->mutable_) {
       return visit(global->init);
     }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitSetGlobal(SetGlobal *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitLoad(Load *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitStore(Store *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitAtomicRMW(AtomicRMW *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitAtomicWait(AtomicWait *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitAtomicWake(AtomicWake *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
   Flow visitHost(Host *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return {NOTPRECOMPUTABLE_FLOW};
   }
 
   void trap(const char* why) override {
@@ -237,7 +237,7 @@ private:
     try {
       return PrecomputingExpressionRunner(getModule(), getValues, replaceExpression).visit(curr);
     } catch (PrecomputingExpressionRunner::NonstandaloneException&) {
-      return Flow(NOTPRECOMPUTABLE_FLOW);
+      return {NOTPRECOMPUTABLE_FLOW};
     }
   }
 
@@ -253,7 +253,7 @@ private:
     // the value here.
     Flow flow = precomputeExpression(curr, false /* replaceExpression */);
     if (flow.breaking()) {
-      return Literal();
+      return {};
     }
     return flow.value;
   }

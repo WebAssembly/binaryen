@@ -131,7 +131,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // we can only optimize if we are at the end of the parent block,
       // and if the parent block does not return a value (we can't move
       // elements out of it if there is a value being returned)
-      Block* parent = controlFlowStack.back()->dynCast<Block>();
+      auto* parent = controlFlowStack.back()->dynCast<Block>();
       if (parent && curr == parent->list.back() &&
           !isConcreteType(parent->list.back()->type)) {
         breakTails[curr->name].push_back(Tail(curr, parent));
@@ -151,9 +151,9 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   void visitUnreachable(Unreachable* curr) {
     // we can only optimize if we are at the end of the parent block
     if (!controlFlowStack.empty()) {
-      Block* parent = controlFlowStack.back()->dynCast<Block>();
+      auto* parent = controlFlowStack.back()->dynCast<Block>();
       if (parent && curr == parent->list.back()) {
-        unreachableTails.push_back(Tail(curr, parent));
+        unreachableTails.emplace_back(curr, parent);
       }
     }
   }
@@ -161,14 +161,14 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   void visitReturn(Return* curr) {
     if (!controlFlowStack.empty()) {
       // we can easily optimize if we are at the end of the parent block
-      Block* parent = controlFlowStack.back()->dynCast<Block>();
+      auto* parent = controlFlowStack.back()->dynCast<Block>();
       if (parent && curr == parent->list.back()) {
-        returnTails.push_back(Tail(curr, parent));
+        returnTails.emplace_back(curr, parent);
         return;
       }
     }
     // otherwise, if we have a large value, it might be worth optimizing us as well
-    returnTails.push_back(Tail(curr, getCurrentPointer()));
+    returnTails.emplace_back(curr, getCurrentPointer());
   }
 
   void visitBlock(Block* curr) {
@@ -318,7 +318,7 @@ private:
     std::vector<Expression*> mergeable; // the elements we can merge
     Index num = 0; // how many elements back from the tail to look at
     Index saved = 0; // how much we can save
-    while (1) {
+    while (true) {
       // check if this num is still relevant
       bool stop = false;
       for (auto& tail : tails) {

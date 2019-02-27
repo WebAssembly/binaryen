@@ -23,9 +23,10 @@
 // much more debuggable manner).
 //
 
-#include <memory>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
+#include <utility>
 
 #include "pass.h"
 #include "support/command-line.h"
@@ -178,7 +179,7 @@ struct ProgramResult {
     const int MAX_BUFFER = 1024;
     char buffer[MAX_BUFFER];
     FILE *stream = popen(("timeout " + std::to_string(timeout) + "s " + command + " 2> /dev/null").c_str(), "r");
-    while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
+    while (fgets(buffer, MAX_BUFFER, stream) != nullptr) {
       output.append(buffer);
     }
     pclose(stream);
@@ -226,7 +227,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
   Reducer(std::string command, std::string test, std::string working, bool binary, bool deNan, bool verbose, bool debugInfo) :
-    command(command), test(test), working(working), binary(binary), deNan(deNan), verbose(verbose), debugInfo(debugInfo) {}
+    command(std::move(command)), test(std::move(test)), working(std::move(working)), binary(binary), deNan(deNan), verbose(verbose), debugInfo(debugInfo) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -1020,7 +1021,7 @@ int main(int argc, const char* argv[]) {
 
   bool stopping = false;
 
-  while (1) {
+  while (true) {
     Reducer reducer(command, test, working, binary, deNan, verbose, debugInfo);
 
     // run binaryen optimization passes to reduce. passes are fast to run
@@ -1071,7 +1072,7 @@ int main(int argc, const char* argv[]) {
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce
     // destructively at least a little)
-    while (1) {
+    while (true) {
       std::cerr << "|  reduce destructively... (factor: " << factor << ")\n";
       lastDestructiveReductions = reducer.reduceDestructively(factor);
       if (lastDestructiveReductions > 0) break;

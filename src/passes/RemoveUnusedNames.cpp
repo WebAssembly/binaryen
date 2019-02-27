@@ -61,9 +61,9 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
         // we have just one child, this block, so breaking out of it goes to the same place as breaking out of us, we just need one name (and block)
         auto& branches = branchesSeen[curr->name];
         for (auto* branch : branches) {
-          if (Break* br = branch->dynCast<Break>()) {
+          if (auto* br = branch->dynCast<Break>()) {
             if (br->name == curr->name) br->name = child->name;
-          } else if (Switch* sw = branch->dynCast<Switch>()) {
+          } else if (auto* sw = branch->dynCast<Switch>()) {
             for (auto& target : sw->targets) {
               if (target == curr->name) target = child->name;
             }

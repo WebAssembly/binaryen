@@ -329,7 +329,7 @@ void PassRunner::run() {
         nextFunction.store(0);
         size_t numFunctions = wasm->functions.size();
         for (size_t i = 0; i < num; i++) {
-          doWorkers.push_back([&]() {
+          doWorkers.emplace_back([&]() {
             auto index = nextFunction.fetch_add(1);
             // get the next task, if there is one
             if (index >= numFunctions) {

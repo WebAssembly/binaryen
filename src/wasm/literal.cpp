@@ -965,15 +965,15 @@ LaneArray<2> Literal::getLanesI64x2() const {
 }
 LaneArray<4> Literal::getLanesF32x4() const {
   auto lanes = getLanesI32x4();
-  for (size_t i = 0; i < lanes.size(); ++i) {
-    lanes[i] = lanes[i].castToF32();
+  for (auto & lane : lanes) {
+    lane = lane.castToF32();
   }
   return lanes;
 }
 LaneArray<2> Literal::getLanesF64x2() const {
   auto lanes = getLanesI64x2();
-  for (size_t i = 0; i < lanes.size(); ++i) {
-    lanes[i] = lanes[i].castToF64();
+  for (auto & lane : lanes) {
+    lane = lane.castToF64();
   }
   return lanes;
 }

@@ -285,7 +285,7 @@ BinaryenModuleRef BinaryenModuleCreate(void) {
   if (tracing) {
     std::cout << "  the_module = BinaryenModuleCreate();\n";
     std::cout << "  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);\n";
-    expressions[NULL] = 0;
+    expressions[nullptr] = 0;
   }
 
   return new Module();
@@ -352,7 +352,7 @@ void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name) {
   }
 
   auto* wasm = (Module*)module;
-  assert(name != NULL);
+  assert(name != nullptr);
 
   // Lock. This can be called from multiple threads at once, and is a
   // point where they all access and modify the module.
@@ -2341,7 +2341,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenIndex initial, B
   auto* wasm = (Module*)module;
   Table::Segment segment(wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))));
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
-    segment.data.push_back(funcNames[i]);
+    segment.data.emplace_back(funcNames[i]);
   }
   wasm->table.initial = initial;
   wasm->table.max = maximum;
@@ -2451,7 +2451,7 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
     std::cout << "  BinaryenModulePrintAsmjs(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   Wasm2JSBuilder::Flags builderFlags;
   Wasm2JSBuilder wasm2js(builderFlags);
   Ref asmjs = wasm2js.processWasm(wasm);
@@ -2466,7 +2466,7 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
     std::cout << "  BinaryenModuleValidate(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   // TODO add feature selection support to C API
   FeatureSet features = FeatureSet::All;
   return WasmValidator().validate(*wasm, features) ? 1 : 0;
@@ -2477,7 +2477,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
     std::cout << "  BinaryenModuleOptimize(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
@@ -2545,7 +2545,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module, const char** passes, Bina
     std::cout << "  }\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
@@ -2559,7 +2559,7 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
     std::cout << "  BinaryenModuleAutoDrop(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   passRunner.add<AutoDrop>();
@@ -2567,7 +2567,7 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
 }
 
 static BinaryenBufferSizes writeModule(BinaryenModuleRef module, char* output, size_t outputSize, const char* sourceMapUrl, char* sourceMap, size_t sourceMapSize) {
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   BufferWithRandomAccess buffer(false);
   WasmBinaryWriter writer(wasm, buffer, false);
   writer.setNamesSection(globalPassOptions.debugInfo);
@@ -2612,7 +2612,7 @@ BinaryenModuleAllocateAndWriteResult BinaryenModuleAllocateAndWrite(BinaryenModu
     std::cout << ");\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   BufferWithRandomAccess buffer(false);
   WasmBinaryWriter writer(wasm, buffer, false);
   writer.setNamesSection(globalPassOptions.debugInfo);
@@ -2656,7 +2656,7 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
     std::cout << "  BinaryenModuleInterpret(the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   ShellExternalInterface interface;
   ModuleInstance instance(*wasm, &interface);
 }
@@ -2666,9 +2666,9 @@ BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module, const
     std::cout << "  BinaryenModuleAddDebugInfoFileName(the_module, \"" << filename << "\");\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   BinaryenIndex index = wasm->debugInfoFileNames.size();
-  wasm->debugInfoFileNames.push_back(filename);
+  wasm->debugInfoFileNames.emplace_back(filename);
   return index;
 }
 
@@ -2677,7 +2677,7 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module, Binarye
     std::cout << "  BinaryenModuleGetDebugInfoFileName(the_module, \"" << index << "\");\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   return index < wasm->debugInfoFileNames.size() ? wasm->debugInfoFileNames.at(index).c_str() : nullptr;
 }
 
@@ -2785,7 +2785,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
     std::cout << "  BinaryenFunctionOptimize(functions[" << functions[func] << "], the_module);\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
@@ -2804,7 +2804,7 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef modul
     std::cout << "  }\n";
   }
 
-  Module* wasm = (Module*)module;
+  auto* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
@@ -3041,15 +3041,15 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef mod
   // Lock. Guard against reading the list while types are being added.
   {
     std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
-    for (BinaryenIndex i = 0; i < wasm->functionTypes.size(); i++) {
-      FunctionType* curr = wasm->functionTypes[i].get();
+    for (auto & functionType : wasm->functionTypes) {
+      FunctionType* curr = functionType.get();
       if (curr->structuralComparison(test)) {
         return curr;
       }
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 #ifdef __EMSCRIPTEN__

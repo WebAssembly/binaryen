@@ -196,7 +196,7 @@ private:
           // can reach the set.
           if (values.size() > 0) {
             Index j = values.size() - 1;
-            while (1) {
+            while (true) {
               // If there's an actual value in the way, we've failed.
               auto index = values[j];
               if (index == null) break;
@@ -320,7 +320,7 @@ private:
       return; // that was it
     }
     auto* origin = inst->origin;
-    while (1) {
+    while (true) {
       i++;
       assert(i < insts.size());
       inst = insts[i];

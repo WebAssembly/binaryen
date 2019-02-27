@@ -38,7 +38,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
 
   Pass* create() override { return new LoopInvariantCodeMotion; }
 
-  typedef std::unordered_set<SetLocal*> LoopSets;
+  using LoopSets = std::unordered_set<SetLocal *>;
 
   // main entry point
 
@@ -204,7 +204,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     // too, as with more nesting moving code is harder - so something
     // like -O --flatten --licm -O may be best).
     if (auto* set = curr->dynCast<SetLocal>()) {
-      while (1) {
+      while (true) {
         auto* next = set->value->dynCast<SetLocal>();
         if (!next) break;
         set = next;

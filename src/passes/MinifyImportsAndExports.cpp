@@ -118,7 +118,7 @@ private:
         }
         // Increment the state.
         size_t i = 0;
-        while (1) {
+        while (true) {
           minifiedState[i]++;
           if (minifiedState[i] < (i == 0 ? validInitialChars : validLaterChars).size()) {
             break;

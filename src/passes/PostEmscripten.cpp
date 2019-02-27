@@ -50,7 +50,7 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   #define SAFE_MAX 1024
 
   void optimizeMemoryAccess(Expression*& ptr, Address& offset) {
-    while (1) {
+    while (true) {
       auto* add = ptr->dynCast<Binary>();
       if (!add) break;
       if (add->op != AddInt32) break;

@@ -48,7 +48,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   bool anotherCycle;
 
-  typedef std::vector<Expression**> Flows;
+  using Flows = std::vector<Expression **>;
 
   // list of breaks that are currently flowing. if they reach their target without
   // interference, they can be removed (or their value forwarded TODO)
@@ -281,7 +281,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   void visitIf(If* curr) {
     if (!curr->ifFalse) {
       // if without an else. try to reduce   if (condition) br  =>  br_if (condition)
-      Break* br = curr->ifTrue->dynCast<Break>();
+      auto* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
         if (canTurnIfIntoBrIf(curr->condition, br->value, getPassOptions())) {
           br->condition = curr->condition;
@@ -354,7 +354,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     // it won't block things from flowing out and not needing breaks to do so.
     Index i = list.size() - 2;
     Builder builder(*getModule());
-    while (1) {
+    while (true) {
       auto* curr = list[i];
       if (auto* iff = curr->dynCast<If>()) {
         // let's try to move the code going to the top of the loop into the if-else
@@ -527,8 +527,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       super::doWalkFunction(func);
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be optimized
-      for (Index i = 0; i < flows.size(); i++) {
-        auto* flow = (*flows[i])->dynCast<Return>();
+      for (auto & i : flows) {
+        auto* flow = (*i)->dynCast<Return>();
         if (!flow) continue;
         if (!flow->value) {
           // return => nop
@@ -536,7 +536,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           anotherCycle = true;
         } else {
           // return with value => value
-          *flows[i] = flow->value;
+          *i = flow->value;
           anotherCycle = true;
         }
       }
@@ -946,7 +946,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return false;
         }
         Builder builder(*getModule());
-        GetLocal* get = iff->ifTrue->dynCast<GetLocal>();
+        auto* get = iff->ifTrue->dynCast<GetLocal>();
         if (get && get->index == set->index) {
           builder.flip(iff);
         } else {
@@ -1091,7 +1091,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               // we need a name for the default too
               Name defaultName;
               Index i = 0;
-              while (1) {
+              while (true) {
                 defaultName = "tablify|" + std::to_string(i++);
                 if (usedNames.count(defaultName) == 0) break;
               }

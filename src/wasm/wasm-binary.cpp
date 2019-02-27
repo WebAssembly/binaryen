@@ -490,18 +490,18 @@ void WasmBinaryWriter::initializeDebugInfo() {
 }
 
 void WasmBinaryWriter::writeSourceMapProlog() {
-  *sourceMap << "{\"version\":3,\"sources\":[";
+  *sourceMap << R"({"version":3,"sources":[)";
   for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
     if (i > 0) *sourceMap << ",";
     // TODO respect JSON string encoding, e.g. quotes and control chars.
     *sourceMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
   }
-  *sourceMap << "],\"names\":[],\"mappings\":\"";
+  *sourceMap << R"(],"names":[],"mappings":")";
 }
 
 static void writeBase64VLQ(std::ostream& out, int32_t n) {
   uint32_t value = n >= 0 ? n << 1 : ((-n) << 1) | 1;
-  while (1) {
+  while (true) {
     uint32_t digit = value & 0x1F;
     value >>= 5;
     if (!value) {
@@ -556,8 +556,8 @@ void WasmBinaryWriter::writeLateUserSections() {
 void WasmBinaryWriter::writeUserSection(const UserSection& section) {
   auto start = startSection(0);
   writeInlineString(section.name.c_str());
-  for (size_t i = 0; i < section.data.size(); i++) {
-    o << uint8_t(section.data[i]);
+  for (char i : section.data) {
+    o << uint8_t(i);
   }
   finishSection(start);
 }
@@ -1092,7 +1092,7 @@ void WasmBinaryBuilder::readFunctions() {
     }
     endOfFunction = pos + size;
 
-    Function *func = new Function;
+    auto *func = new Function;
     func->name = Name::fromInt(i);
     currFunction = func;
 
@@ -1102,8 +1102,8 @@ void WasmBinaryBuilder::readFunctions() {
     if (debug) std::cerr << "reading " << i << std::endl;
     func->type = type->name;
     func->result = type->result;
-    for (size_t j = 0; j < type->params.size(); j++) {
-      func->params.emplace_back(type->params[j]);
+    for (auto & param : type->params) {
+      func->params.emplace_back(param);
     }
     size_t numLocalTypes = getU32LEB();
     for (size_t t = 0; t < numLocalTypes; t++) {
@@ -1168,7 +1168,7 @@ void WasmBinaryBuilder::readExports() {
 static int32_t readBase64VLQ(std::istream& in) {
   uint32_t value = 0;
   uint32_t shift = 0;
-  while (1) {
+  while (true) {
     auto ch = in.get();
     if (ch == EOF)
       throw MapParseException("unexpected EOF in the middle of VLQ");
@@ -1215,7 +1215,7 @@ void WasmBinaryBuilder::readSourceMapHeader() {
     bool matching = false;
     size_t len = strlen(name);
     size_t pos;
-    while (1) {
+    while (true) {
       int ch = sourceMap->get();
       if (ch == EOF) return false;
       if (ch == '\"') {
@@ -1245,7 +1245,7 @@ void WasmBinaryBuilder::readSourceMapHeader() {
     skipWhitespace();
     mustReadChar('\"');
     if (!maybeReadChar('\"')) {
-      while (1) {
+      while (true) {
         int ch = sourceMap->get();
         if (ch == EOF) {
           throw MapParseException("unexpected EOF in the middle of string");
@@ -1362,7 +1362,7 @@ void WasmBinaryBuilder::readGlobals() {
 void WasmBinaryBuilder::processExpressions() {
   if (debug) std::cerr << "== processExpressions" << std::endl;
   unreachableInTheWasmSense = false;
-  while (1) {
+  while (true) {
     Expression* curr;
     auto ret = readExpression(curr);
     if (!curr) {
@@ -1410,7 +1410,7 @@ void WasmBinaryBuilder::skipUnreachableCode() {
   // can be pushed and then popped. Popping past the top of the stack will
   // result in uneachables being returned
   expressionStack.clear();
-  while (1) {
+  while (true) {
     // set the unreachableInTheWasmSense flag each time, as sub-blocks may set and unset it
     unreachableInTheWasmSense = true;
     Expression* curr;
@@ -1452,7 +1452,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   // add elements until we find a non-void
   std::vector<Expression*> expressions;
   expressions.push_back(ret);
-  while (1) {
+  while (true) {
     auto* curr = popExpression();
     expressions.push_back(curr);
     if (curr->type != none) break;
@@ -1486,7 +1486,7 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
     ModuleUtils::iterImportedGlobals(wasm, add);
     ModuleUtils::iterDefinedGlobals(wasm, add);
   }
-  if (index == Index(-1)) return Name("null"); // just a force-rebuild
+  if (index == Index(-1)) return {"null"}; // just a force-rebuild
   if (mappedGlobals.count(index) == 0) {
     throwError("bad global index");
   }
@@ -1801,10 +1801,10 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
   // special-case Block and de-recurse nested blocks in their first position, as that is
   // a common pattern that can be very highly nested.
   std::vector<Block*> stack;
-  while (1) {
+  while (true) {
     curr->type = getType();
     curr->name = getNextLabel();
-    breakStack.push_back({curr->name, curr->type != none});
+    breakStack.emplace_back(curr->name, curr->type != none);
     stack.push_back(curr);
     if (more() && input[pos] == BinaryConsts::Block) {
       // a recursion
@@ -1844,7 +1844,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
 
 Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
   Name label = getNextLabel();
-  breakStack.push_back({label, type != none && type != unreachable});
+  breakStack.emplace_back(label, type != none && type != unreachable);
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
@@ -1885,7 +1885,7 @@ void WasmBinaryBuilder::visitLoop(Loop* curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   curr->type = getType();
   curr->name = getNextLabel();
-  breakStack.push_back({curr->name, 0});
+  breakStack.emplace_back(curr->name, 0);
   // find the expressions in the block, and create the body
   // a loop may have a list of instructions in wasm, much like
   // a block, but it only has a label at the top of the loop,

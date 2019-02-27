@@ -198,7 +198,7 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
     for (size_t i = 0; i < list.size(); i++) {
       auto* child = list[i];
       // The child block, if there is one.
-      Block* childBlock = child->dynCast<Block>();
+      auto* childBlock = child->dynCast<Block>();
       // If we are merging an inner block of a loop, then we must not
       // merge things before and including the name of the loop, moving
       // those out would break things.

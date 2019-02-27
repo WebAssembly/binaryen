@@ -20,6 +20,7 @@
 //
 
 #include <functional>
+#include <utility>
 
 #include "wasm.h"
 #include "wasm-binary.h"
@@ -31,10 +32,10 @@ namespace wasm {
 
 struct Strip : public Pass {
   // A function that returns true if the method should be removed.
-  typedef std::function<bool (UserSection&)> Decider;
+  using Decider = std::function<bool (UserSection &)>;
   Decider decider;
 
-  Strip(Decider decider) : decider(decider) {}
+  Strip(Decider decider) : decider(std::move(decider)) {}
 
   void run(PassRunner* runner, Module* module) override {
     // Remove name and debug sections.

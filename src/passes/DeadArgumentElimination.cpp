@@ -208,7 +208,7 @@ struct DAE : public Pass {
 
   void run(PassRunner* runner, Module* module) override {
     // Iterate to convergence.
-    while (1) {
+    while (true) {
       if (!iteration(runner, module)) {
         break;
       }
@@ -311,7 +311,7 @@ struct DAE : public Pass {
       if (numParams == 0) continue;
       // Iterate downwards, as we may remove more than one.
       Index i = numParams - 1;
-      while (1) {
+      while (true) {
         if (infoMap[name].unusedParams.has(i)) {
           // Great, it's not used. Check if none of the calls has a param with side
           // effects, as that would prevent us removing them (flattening should

@@ -116,8 +116,8 @@ SExpressionParser::SExpressionParser(char* input) : input(input) {
 Element* SExpressionParser::parse() {
   std::vector<Element *> stack;
   std::vector<SourceLocation*> stackLocs;
-  Element *curr = allocator.alloc<Element>();
-  while (1) {
+  auto *curr = allocator.alloc<Element>();
+  while (true) {
     skipWhitespace();
     if (input[0] == 0) break;
     if (input[0] == '(') {
@@ -171,7 +171,7 @@ void SExpressionParser::parseDebugLocation() {
 }
 
 void SExpressionParser::skipWhitespace() {
-  while (1) {
+  while (true) {
     while (isspace(input[0])) {
       if (input[0] == '\n') {
         line++;
@@ -191,7 +191,7 @@ void SExpressionParser::skipWhitespace() {
       // Skip nested block comments.
       input += 2;
       int depth = 1;
-      while (1) {
+      while (true) {
         if (!input[0]) return;
         if (input[0] == '(' && input[1] == ';') {
           input += 2;
@@ -227,7 +227,7 @@ Element* SExpressionParser::parseString() {
     // parse escaping \", but leave code escaped - we'll handle escaping in memory segments specifically
     input++;
     std::string str;
-    while (1) {
+    while (true) {
       if (input[0] == 0) throw ParseException("unterminated string", line, start - lineStart);
       if (input[0] == '"') break;
       if (input[0] == '\\') {
@@ -647,7 +647,7 @@ Function::DebugLocation SExpressionWasmBuilder::getDebugLocation(const SourceLoc
   auto iter = debugInfoFileIndices.find(file);
   if (iter == debugInfoFileIndices.end()) {
     Index index = debugInfoFileNames.size();
-    debugInfoFileNames.push_back(file.c_str());
+    debugInfoFileNames.emplace_back(file.c_str());
     debugInfoFileIndices[file] = index;
   }
   uint32_t fileIndex = debugInfoFileIndices[file];
@@ -791,7 +791,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
   auto curr = allocator.alloc<Block>();
   auto* sp = &s;
   std::vector<std::pair<Element*, Block*>> stack;
-  while (1) {
+  while (true) {
     stack.emplace_back(sp, curr);
     auto& s = *sp;
     Index i = 1;
@@ -1277,7 +1277,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   } else {
     // inline type
     FunctionType type;
-    while (1) {
+    while (true) {
       Element& curr = *s[i];
       if (curr[0]->str() == PARAM) {
         for (size_t j = 1; j < curr.size(); j++) {
@@ -1372,7 +1372,7 @@ void SExpressionWasmBuilder::stringToBinary(const char* input, size_t size, std:
   auto originalSize = data.size();
   data.resize(originalSize + size);
   char *write = data.data() + originalSize;
-  while (1) {
+  while (true) {
     if (input[0] == 0) break;
     if (input[0] == '\\') {
       if (input[1] == '"') {

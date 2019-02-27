@@ -47,7 +47,7 @@ namespace wasm {
 // number for constants so far, enough to see
 // trivial duplication. LocalValues maps each local index to
 // its current value
-typedef std::vector<Index> LocalValues;
+using LocalValues = std::vector<Index>;
 
 namespace {
 

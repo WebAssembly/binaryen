@@ -63,7 +63,7 @@ struct MetaDCEGraph {
   // be imported twice, for example. So we don't map a DCE node to an Import,
   // but rather the module.base pair ("id") for the import.
   // TODO: implement this in a safer way, not a string with a magic separator
-  typedef Name ImportId;
+  using ImportId = Name;
 
   ImportId getImportId(Name module, Name base) {
     return std::string(module.str) + " (*) " + std::string(base.str);
@@ -253,7 +253,7 @@ struct MetaDCEGraph {
 private:
   // gets a unique name for the graph
   Name getName(std::string prefix1, std::string prefix2) {
-    while (1) {
+    while (true) {
       auto curr = Name(prefix1 + '$' + prefix2 + '$' + std::to_string(nameIndex++));
       if (nodes.find(curr) == nodes.end()) {
         return curr;
@@ -500,7 +500,7 @@ int main(int argc, const char* argv[]) {
         if (!name->isString()) {
           Fatal() << "node.reaches items must be strings. see --help for the form";
         }
-        node.reaches.push_back(name->getIString());
+        node.reaches.emplace_back(name->getIString());
       }
     }
     if (ref->has(ROOT)) {

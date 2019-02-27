@@ -34,9 +34,9 @@
 namespace wasm {
 
 static Name makeHighName(Name n) {
-  return Name(
+  return {
     cashew::IString((std::string(n.c_str()) + "$hi").c_str(), false)
-  );
+  };
 }
 
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {

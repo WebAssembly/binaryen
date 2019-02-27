@@ -154,7 +154,7 @@ private:
                                         // that is the crucial point of this opt
     std::vector<SetLocal*> toPush;
     Index i = pushPoint - 1;
-    while (1) {
+    while (true) {
       auto* pushable = isPushable(list[i]);
       if (pushable) {
         auto iter = pushableEffects.find(pushable);

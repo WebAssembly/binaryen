@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <utility>
+
 #include "ir/utils.h"
 #include "support/hash.h"
 
@@ -28,7 +30,7 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
 
     Builder builder;
 
-    Copier(Module& wasm, CustomCopier custom) : wasm(wasm), custom(custom), builder(wasm) {}
+    Copier(Module& wasm, CustomCopier custom) : wasm(wasm), custom(std::move(custom)), builder(wasm) {}
 
     Expression* copy(Expression* curr) {
       if (!curr) return nullptr;

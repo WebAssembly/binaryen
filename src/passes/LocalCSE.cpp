@@ -63,7 +63,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   };
 
   // a list of usables in a linear execution trace
-  typedef HashedExpressionMap<UsableInfo> Usables;
+  using Usables = HashedExpressionMap<UsableInfo>;
 
   // locals in current linear execution trace, which we try to sink
   Usables usables;

@@ -164,7 +164,7 @@ struct Mergeable {
       return initial;
     }
     int x = 0;
-    while (1) {
+    while (true) {
       auto curr = Name(std::string(initial.str) + '$' + std::to_string(x));
       if (!checkIfCollides(curr)) {
         return curr;
@@ -564,7 +564,7 @@ void finalizeBases(Module& wasm, Index memory, Index table) {
 int main(int argc, const char* argv[]) {
   std::vector<std::string> filenames;
   bool emitBinary = true;
-  Index finalizeMemoryBase = Index(-1),
+  auto finalizeMemoryBase = Index(-1),
         finalizeTableBase = Index(-1);
   bool optimize = false;
   bool verbose = false;

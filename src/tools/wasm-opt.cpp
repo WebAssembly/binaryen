@@ -271,7 +271,7 @@ int main(int argc, const char* argv[]) {
         return buffer.size();
       };
       auto lastSize = getSize();
-      while (1) {
+      while (true) {
         if (options.debug) std::cerr << "running iteration for convergence (" << lastSize << ")...\n";
         runPasses();
         auto currSize = getSize();

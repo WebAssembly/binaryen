@@ -185,8 +185,8 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
     };
 
     Type type;
-    Index arity;
-    BreakInfo() : arity(UnsetArity) {}
+    Index arity{UnsetArity};
+    BreakInfo()  {}
     BreakInfo(Type type, Index arity) : type(type), arity(arity) {}
 
     bool hasBeenSet() {
