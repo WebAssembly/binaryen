@@ -1,7 +1,7 @@
 (module
   (export "a8" (func $a8))
-  (table 1 1 funcref)
-  (elem (i32.const 0) $a9)
+  (table 2 2 funcref)
+  (elem (i32.const 0) $a9 $c8)
   (func $a (param $x i32))
   (func $b
     (call $a (i32.const 1)) ;; best case scenario
@@ -82,6 +82,52 @@
     (drop (local.get $x))
     (call $a12 (i32.const 1))
     (call $a12 (i32.const 2))
+  )
+  ;; return values
+  (func $c1
+    (local $x i32)
+    (drop (call $c2))
+    (drop (call $c3))
+    (drop (call $c3))
+    (drop (call $c4))
+    (local.set $x (call $c4))
+    (drop (call $c5 (unreachable)))
+    (drop (call $c6))
+    (drop (call $c7))
+    (drop (call $c8))
+  )
+  (func $c2 (result i32)
+    (i32.const 1)
+  )
+  (func $c3 (result i32)
+    (i32.const 2)
+  )
+  (func $c4 (result i32)
+    (i32.const 3)
+  )
+  (func $c5 (param $x i32) (result i32)
+    (local.get $x)
+  )
+  (func $c6 (result i32)
+    (unreachable)
+  )
+  (func $c7 (result i32)
+    (return (i32.const 4))
+  )
+  (func $c8 (result i32)
+    (i32.const 5)
+  )
+)
+(module ;; both operations at once: remove params and return value
+  (func "a"
+    (drop
+      (call $b
+        (i32.const 1)
+      )
+    )
+  )
+  (func $b (param $x i32) (result i32)
+    (local.get $x)
   )
 )
 

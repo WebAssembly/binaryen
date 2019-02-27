@@ -170,27 +170,29 @@
    )
   )
  )
- (func $f32-to-int (; 12 ;) (; has Stack IR ;) (param $0 f32) (result i32)
-  (if (result i32)
-   (f32.ne
-    (local.get $0)
-    (local.get $0)
-   )
-   (i32.const -2147483648)
+ (func $f32-to-int (; 12 ;) (; has Stack IR ;) (param $0 f32)
+  (drop
    (if (result i32)
-    (f32.ge
+    (f32.ne
      (local.get $0)
-     (f32.const 2147483648)
+     (local.get $0)
     )
     (i32.const -2147483648)
     (if (result i32)
-     (f32.le
+     (f32.ge
       (local.get $0)
-      (f32.const -2147483648)
+      (f32.const 2147483648)
      )
      (i32.const -2147483648)
-     (i32.trunc_f32_s
-      (local.get $0)
+     (if (result i32)
+      (f32.le
+       (local.get $0)
+       (f32.const -2147483648)
+      )
+      (i32.const -2147483648)
+      (i32.trunc_f32_s
+       (local.get $0)
+      )
      )
     )
    )
@@ -1137,62 +1139,7 @@
    (i32.const 30)
   )
  )
- (func $sqrts (; 54 ;) (; has Stack IR ;) (param $0 f64) (result f64)
-  (f64.add
-   (f64.sqrt
-    (local.get $0)
-   )
-   (f64.promote_f32
-    (f32.sqrt
-     (f32.demote_f64
-      (local.get $0)
-     )
-    )
-   )
-  )
- )
- (func $f64-to-uint (; 55 ;) (; has Stack IR ;) (param $0 f64) (result i32)
-  (if (result i32)
-   (f64.ne
-    (local.get $0)
-    (local.get $0)
-   )
-   (i32.const 0)
-   (if (result i32)
-    (f64.ge
-     (local.get $0)
-     (f64.const 4294967296)
-    )
-    (i32.const 0)
-    (if (result i32)
-     (f64.le
-      (local.get $0)
-      (f64.const -1)
-     )
-     (i32.const 0)
-     (i32.trunc_f64_u
-      (local.get $0)
-     )
-    )
-   )
-  )
- )
- (func $keepAlive (; 56 ;) (; has Stack IR ;)
-  (drop
-   (call $sqrts
-    (f64.const 3.14159)
-   )
-  )
-  (drop
-   (call $sqrts
-    (f64.const 2.18281)
-   )
-  )
-  (drop
-   (call $f64-to-uint
-    (f64.const 100)
-   )
-  )
+ (func $keepAlive (; 54 ;) (; has Stack IR ;)
   (drop
    (call $f64-to-int
     (f64.const 100)
@@ -1246,27 +1193,25 @@
    )
   )
  )
- (func $vi (; 57 ;) (; has Stack IR ;) (param $0 i32)
+ (func $vi (; 55 ;) (; has Stack IR ;) (param $0 i32)
   (nop)
  )
- (func $ii (; 58 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $ii (; 56 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local.get $0)
  )
- (func $legalstub$conversions (; 59 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64)
+ (func $legalstub$conversions (; 57 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64)
   (drop
    (call $f64-to-int
     (local.get $1)
    )
   )
-  (drop
-   (call $f32-to-int
-    (f32.demote_f64
-     (local.get $2)
-    )
+  (call $f32-to-int
+   (f32.demote_f64
+    (local.get $2)
    )
   )
  )
- (func $legalstub$frem_float (; 60 ;) (; has Stack IR ;) (result f64)
+ (func $legalstub$frem_float (; 58 ;) (; has Stack IR ;) (result f64)
   (f64.promote_f32
    (f32.demote_f64
     (call $f64-rem
@@ -1276,16 +1221,16 @@
    )
   )
  )
- (func $legalstub$fr (; 61 ;) (; has Stack IR ;) (param $0 f64)
+ (func $legalstub$fr (; 59 ;) (; has Stack IR ;) (param $0 f64)
   (nop)
  )
- (func $legalstub$ceiling_32_64 (; 62 ;) (; has Stack IR ;) (param $0 f64) (param $1 f64)
+ (func $legalstub$ceiling_32_64 (; 60 ;) (; has Stack IR ;) (param $0 f64) (param $1 f64)
   (nop)
  )
- (func $legalstub$bitcasts (; 63 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64)
+ (func $legalstub$bitcasts (; 61 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64)
   (nop)
  )
- (func $legalstub$exported_f32_user (; 64 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
+ (func $legalstub$exported_f32_user (; 62 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
   (f64.promote_f32
    (f32.demote_f64
     (local.get $1)

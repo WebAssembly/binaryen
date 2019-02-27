@@ -214,14 +214,15 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("dae-optimizing");
-  }
-  // inline when working hard, and when not preserving debug info
-  // (inlining+optimizing can remove the annotations)
-  if ((options.optimizeLevel >= 2 || options.shrinkLevel >= 2) &&
-      !options.debugInfo) {
-    add("inlining-optimizing");
+  // inlining/dae+optimizing can remove debug annotations
+  if (!options.debugInfo) {
+    if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+      add("dae-optimizing");
+    }
+    // inline when working hard, and when not preserving debug info
+    if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+      add("inlining-optimizing");
+    }
   }
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-module-elements");
