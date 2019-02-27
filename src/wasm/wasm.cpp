@@ -866,6 +866,7 @@ void Module::addExport(Export* curr) {
   exportsMap[curr->name] = curr;
 }
 
+// TODO(@warchant): refactor all usages to use variant with unique_ptr
 void Module::addFunction(Function* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunction: empty name";
@@ -875,6 +876,17 @@ void Module::addFunction(Function* curr) {
   }
   functions.push_back(std::unique_ptr<Function>(curr));
   functionsMap[curr->name] = curr;
+}
+
+void Module::addFunction(std::unique_ptr<Function> curr) {
+  if (!curr->name.is()) {
+    Fatal() << "Module::addFunction: empty name";
+  }
+  if (getFunctionOrNull(curr->name)) {
+    Fatal() << "Module::addFunction: " << curr->name << " already exists";
+  }
+  functionsMap[curr->name] = curr.get();
+  functions.push_back(std::move(curr));
 }
 
 void Module::addGlobal(Global* curr) {

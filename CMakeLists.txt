@@ -2,6 +2,8 @@ PROJECT(binaryen C CXX)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
 INCLUDE(GNUInstallDirs)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # generates compile_commands.json
+
 IF(NOT CMAKE_BUILD_TYPE)
   MESSAGE(STATUS "No build type selected, default to Release")
   SET(CMAKE_BUILD_TYPE "Release")
@@ -295,10 +297,10 @@ INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 ENABLE_TESTING()
 
 ADD_TEST(NAME opt-unit
-         COMMAND bin/wasm-opt test/unit.wast --flatten --ssa --metrics -O4 -Os --metrics)
+         COMMAND bin/wasm-opt ${CMAKE_SOURCE_DIR}/test/unit.wast --flatten --ssa --metrics -O4 -Os --metrics)
 ADD_TEST(NAME metrics-emcc
-         COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
+         COMMAND bin/wasm-opt ${CMAKE_SOURCE_DIR}/test/emcc_hello_world.fromasm --metrics)
 ADD_TEST(NAME exec-unit
-         COMMAND bin/wasm-opt test/unit.wast --fuzz-exec)
+         COMMAND bin/wasm-opt ${CMAKE_SOURCE_DIR}/test/unit.wast --fuzz-exec)
 ADD_TEST(NAME exec-hello
-         COMMAND bin/wasm-opt test/hello_world.wast --fuzz-exec)
+         COMMAND bin/wasm-opt ${CMAKE_SOURCE_DIR}/test/hello_world.wast --fuzz-exec)
