@@ -117,6 +117,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/MinifyImportsAndExports.cpp \
   $BINARYEN_SRC/passes/NameList.cpp \
   $BINARYEN_SRC/passes/NoExitRuntime.cpp \
+  $BINARYEN_SRC/passes/OptimizeAddedConstants.cpp \
   $BINARYEN_SRC/passes/OptimizeInstructions.cpp \
   $BINARYEN_SRC/passes/PickLoadSigns.cpp \
   $BINARYEN_SRC/passes/PostEmscripten.cpp \
