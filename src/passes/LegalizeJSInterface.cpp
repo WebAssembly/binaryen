@@ -171,7 +171,7 @@ private:
     if (func->result == i64) {
       Function* f = getFunctionOrImport(module, SET_TEMP_RET0, "vi");
       legal->result = i32;
-      auto index = wasm::Builder::addVar(legal, Name(), i64);
+      auto index = Builder::addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
       block->list.push_back(builder.makeCall(f->name, {I64Utilities::getI64High(builder, index)}, none));
