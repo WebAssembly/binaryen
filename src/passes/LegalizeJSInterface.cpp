@@ -33,6 +33,7 @@
 // disallow f32s. TODO: an option to not do that, if it matters?
 //
 
+#include <utility>
 #include "wasm.h"
 #include "pass.h"
 #include "asm_v_wasm.h"
@@ -85,7 +86,7 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
-    if (illegalImportsToLegal.size() > 0) {
+    if (!illegalImportsToLegal.empty()) {
       for (auto& pair : illegalImportsToLegal) {
         module->removeFunction(pair.first);
       }
@@ -126,8 +127,7 @@ private:
     for (auto param : t->params) {
       if (param == i64 || param == f32) return true;
     }
-    if (t->result == i64 || t->result == f32) return true;
-    return false;
+    return t->result == i64 || t->result == f32;
   }
 
   // Check if an export should be legalized.
@@ -171,7 +171,7 @@ private:
     if (func->result == i64) {
       Function* f = getFunctionOrImport(module, SET_TEMP_RET0, "vi");
       legal->result = i32;
-      auto index = builder.addVar(legal, Name(), i64);
+      auto index = Builder::addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
       block->list.push_back(builder.makeCall(f->name, {I64Utilities::getI64High(builder, index)}, none));
@@ -198,12 +198,12 @@ private:
     Builder builder(*module);
     auto type = make_unique<FunctionType>();
     type->name =  Name(std::string("legaltype$") + im->name.str);
-    auto* legal = new Function;
+    auto legal = make_unique<Function>();
     legal->name = Name(std::string("legalimport$") + im->name.str);
     legal->module = im->module;
     legal->base = im->base;
     legal->type = type->name;
-    auto* func = new Function;
+    auto func = make_unique<Function>();
     func->name = Name(std::string("legalfunc$") + im->name.str);
 
     auto* call = module->allocator.alloc<Call>();
@@ -243,18 +243,19 @@ private:
       type->result = imFunctionType->result;
     }
     func->result = imFunctionType->result;
-    FunctionTypeUtils::fillFunction(legal, type.get());
+    FunctionTypeUtils::fillFunction(legal.get(), type.get());
 
-    if (!module->getFunctionOrNull(func->name)) {
-      module->addFunction(func);
+    const auto& funcName = func->name;
+    if (!module->getFunctionOrNull(funcName)) {
+      module->addFunction(std::move(func));
     }
     if (!module->getFunctionTypeOrNull(type->name)) {
       module->addFunctionType(std::move(type));
     }
     if (!module->getFunctionOrNull(legal->name)) {
-      module->addFunction(legal);
+      module->addFunction(std::move(legal));
     }
-    return func->name;
+    return funcName;
   }
 
   static Function* getFunctionOrImport(Module* module, Name name, std::string sig) {
@@ -272,7 +273,7 @@ private:
     import->name = name;
     import->module = ENV;
     import->base = name;
-    auto* functionType = ensureFunctionType(sig, module);
+    auto* functionType = ensureFunctionType(std::move(sig), module);
     import->type = functionType->name;
     FunctionTypeUtils::fillFunction(import, functionType);
     module->addFunction(import);
