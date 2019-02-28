@@ -302,6 +302,19 @@ struct Walker : public VisitorType {
   // just one visit*() method is called by the traversal; if you replace a node,
   // and you want to process the output, you must do that explicitly).
   Expression* replaceCurrent(Expression* expression) {
+    // Copy debug info, if present.
+    if (currFunction) {
+      auto& debugLocations = currFunction->debugLocations;
+      if (!debugLocations.empty()) {
+        auto* curr = getCurrent();
+        auto iter = debugLocations.find(curr);
+        if (iter != debugLocations.end()) {
+          auto location = iter->second;
+          debugLocations.erase(iter);
+          debugLocations[expression] = location;
+        }
+      }
+    }
     return *replacep = expression;
   }
 
