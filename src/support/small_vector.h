@@ -23,6 +23,7 @@
 #define wasm_support_small_vector_h
 
 #include <array>
+#include <cassert>
 #include <iterator>
 #include <vector>
 

@@ -135,7 +135,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
     prepareColor(o) << printType(curr->type);
     if (curr->isAtomic) o << ".atomic";
     o << ".load";
-    if (curr->bytes < 4 || (curr->type == i64 && curr->bytes < 8)) {
+    if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {

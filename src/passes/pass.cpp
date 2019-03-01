@@ -158,9 +158,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("flatten");
     add("local-cse");
   }
-  if (!options.debugInfo) { // debug info must be preserved, do not dce it
-    add("dce");
-  }
+  add("dce");
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
@@ -224,14 +222,12 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   // inlining/dae+optimizing can remove debug annotations
-  if (!options.debugInfo) {
-    if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-      add("dae-optimizing");
-    }
-    // inline when working hard, and when not preserving debug info
-    if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-      add("inlining-optimizing");
-    }
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    add("dae-optimizing");
+  }
+  // inline when working hard, and when not preserving debug info
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+    add("inlining-optimizing");
   }
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-module-elements");
