@@ -96,6 +96,11 @@ struct OptimizationOptions : public ToolOptions {
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.ignoreImplicitTraps = true;
+                })
+           .add("--low-memory-unused", "-lmu", "Optimize under the helpful assumption that the low 1K of memory is not used by the application",
+                Options::Arguments::Zero,
+                [this](Options*, const std::string&) {
+                  passOptions.lowMemoryUnused = true;
                 });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {

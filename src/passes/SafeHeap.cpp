@@ -100,7 +100,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
 };
 
 struct SafeHeap : public Pass {
+  PassOptions options;
+
   void run(PassRunner* runner, Module* module) override {
+    options = runner->options;
     // add imports
     addImports(module);
     // instrument loads and stores
@@ -314,13 +317,15 @@ struct SafeHeap : public Pass {
   }
 
   Expression* makeBoundsCheck(Type type, Builder& builder, Index local, Index bytes) {
+    auto upperOp = options.lowMemoryUnused ? LtUInt32 : EqInt32;
+    auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
         builder.makeBinary(
-          EqInt32,
+          upperOp,
           builder.makeGetLocal(local, i32),
-          builder.makeConst(Literal(int32_t(0)))
+          builder.makeConst(Literal(int32_t(upperBound)))
         ),
         builder.makeBinary(
           GtUInt32,

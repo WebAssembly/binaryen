@@ -1,4 +1,5 @@
 (module
+  (memory 10 10)
   (func $basic (param $p i32)
     (local $x i32)
     (local.set $x (i32.const 10))

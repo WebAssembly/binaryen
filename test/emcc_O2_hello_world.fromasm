@@ -7641,9 +7641,7 @@
   (local $13 i32)
   (local $14 i32)
   (local $15 i32)
-  (local $16 i32)
-  (local $17 i32)
-  (local.set $12
+  (local.set $7
    (global.get $STACKTOP)
   )
   (global.set $STACKTOP
@@ -7652,29 +7650,25 @@
     (i32.const 48)
    )
   )
-  (local.set $9
+  (local.set $11
    (i32.add
-    (local.get $12)
+    (local.get $7)
     (i32.const 16)
    )
+  )
+  (local.set $9
+   (local.get $7)
   )
   (i32.store
    (local.tee $3
     (i32.add
-     (local.tee $10
-      (local.get $12)
-     )
+     (local.get $7)
      (i32.const 32)
     )
    )
-   (local.tee $11
-    (i32.load
-     (local.tee $7
-      (i32.add
-       (local.get $0)
-       (i32.const 28)
-      )
-     )
+   (local.tee $10
+    (i32.load offset=28
+     (local.get $0)
     )
    )
   )
@@ -7682,15 +7676,10 @@
    (local.get $3)
    (local.tee $8
     (i32.sub
-     (i32.load
-      (local.tee $13
-       (i32.add
-        (local.get $0)
-        (i32.const 20)
-       )
-      )
+     (i32.load offset=20
+      (local.get $0)
      )
-     (local.get $11)
+     (local.get $10)
     )
    )
   )
@@ -7708,7 +7697,7 @@
     (i32.const 60)
    )
   )
-  (local.set $11
+  (local.set $10
    (i32.add
     (local.get $0)
     (i32.const 44)
@@ -7742,24 +7731,24 @@
           (local.get $0)
          )
          (i32.store
-          (local.get $10)
+          (local.get $9)
           (i32.load
            (local.get $1)
           )
          )
          (i32.store offset=4
-          (local.get $10)
+          (local.get $9)
           (local.get $5)
          )
          (i32.store offset=8
-          (local.get $10)
+          (local.get $9)
           (local.get $3)
          )
          (local.set $8
           (call $___syscall_ret
            (call $___syscall146
             (i32.const 146)
-            (local.get $10)
+            (local.get $9)
            )
           )
          )
@@ -7769,24 +7758,24 @@
          (local.get $8)
         )
         (block (result i32)
-         (i32.store
-          (local.get $9)
+         (i32.store offset=16
+          (local.get $7)
           (i32.load
            (local.get $1)
           )
          )
          (i32.store offset=4
-          (local.get $9)
+          (local.get $11)
           (local.get $5)
          )
          (i32.store offset=8
-          (local.get $9)
+          (local.get $11)
           (local.get $3)
          )
          (call $___syscall_ret
           (call $___syscall146
            (i32.const 146)
-           (local.get $9)
+           (local.get $11)
           )
          )
         )
@@ -7806,10 +7795,10 @@
       (i32.const 0)
      )
      (block
-      (local.set $16
+      (local.set $14
        (local.get $5)
       )
-      (local.set $17
+      (local.set $15
        (local.get $3)
       )
       (local.set $1
@@ -7827,7 +7816,7 @@
     (if
      (i32.le_u
       (local.get $6)
-      (local.tee $14
+      (local.tee $12
        (i32.load offset=4
         (local.get $5)
        )
@@ -7840,12 +7829,12 @@
         (i32.const 2)
        )
        (block
-        (i32.store
-         (local.get $7)
+        (i32.store offset=28
+         (local.get $0)
          (i32.add
           (local.get $6)
-          (i32.load
-           (local.get $7)
+          (i32.load offset=28
+           (local.get $0)
           )
          )
         )
@@ -7855,20 +7844,20 @@
        )
       )
       (local.set $4
-       (local.get $14)
+       (local.get $12)
       )
      )
      (block
-      (i32.store
-       (local.get $7)
+      (i32.store offset=28
+       (local.get $0)
        (local.tee $4
         (i32.load
-         (local.get $11)
+         (local.get $10)
         )
        )
       )
-      (i32.store
-       (local.get $13)
+      (i32.store offset=20
+       (local.get $0)
        (local.get $4)
       )
       (local.set $4
@@ -7879,7 +7868,7 @@
       (local.set $6
        (i32.sub
         (local.get $6)
-        (local.get $14)
+        (local.get $12)
        )
       )
       (local.set $5
@@ -7918,7 +7907,7 @@
     (br $while-in)
    )
   )
-  (local.set $15
+  (local.set $13
    (if (result i32)
     (i32.eq
      (local.get $1)
@@ -7930,7 +7919,7 @@
       (i32.add
        (local.tee $4
         (i32.load
-         (local.get $11)
+         (local.get $10)
         )
        )
        (i32.load offset=48
@@ -7938,12 +7927,12 @@
        )
       )
      )
-     (i32.store
-      (local.get $7)
+     (i32.store offset=28
+      (local.get $0)
       (local.get $4)
      )
-     (i32.store
-      (local.get $13)
+     (i32.store offset=20
+      (local.get $0)
       (local.get $4)
      )
      (local.get $2)
@@ -7958,12 +7947,12 @@
        (local.get $0)
        (i32.const 0)
       )
-      (i32.store
-       (local.get $7)
+      (i32.store offset=28
+       (local.get $0)
        (i32.const 0)
       )
-      (i32.store
-       (local.get $13)
+      (i32.store offset=20
+       (local.get $0)
        (i32.const 0)
       )
       (i32.store
@@ -7977,26 +7966,26 @@
       )
       (if (result i32)
        (i32.eq
-        (local.get $17)
+        (local.get $15)
         (i32.const 2)
        )
        (i32.const 0)
        (i32.sub
         (local.get $2)
         (i32.load offset=4
-         (local.get $16)
+         (local.get $14)
         )
        )
       )
      )
-     (local.get $15)
+     (local.get $13)
     )
    )
   )
   (global.set $STACKTOP
-   (local.get $12)
+   (local.get $7)
   )
-  (local.get $15)
+  (local.get $13)
  )
  (func $___fwritex (; 18 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
@@ -8109,15 +8098,12 @@
        )
        (if
         (i32.ne
-         (i32.load8_s
-          (i32.add
-           (local.tee $5
-            (i32.add
-             (local.get $2)
-             (i32.const -1)
-            )
+         (i32.load8_s offset=672
+          (local.tee $5
+           (i32.add
+            (local.get $2)
+            (i32.const -1)
            )
-           (i32.const 672)
           )
          )
          (i32.const 10)
@@ -8538,28 +8524,14 @@
  (func $___fflush_unlocked (; 22 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
-  (local $3 i32)
-  (local $4 i32)
-  (local $5 i32)
-  (local $6 i32)
   (if (result i32)
    (if (result i32)
     (i32.gt_u
-     (i32.load
-      (local.tee $1
-       (i32.add
-        (local.get $0)
-        (i32.const 20)
-       )
-      )
+     (i32.load offset=20
+      (local.get $0)
      )
-     (i32.load
-      (local.tee $2
-       (i32.add
-        (local.get $0)
-        (i32.const 28)
-       )
-      )
+     (i32.load offset=28
+      (local.get $0)
      )
     )
     (block (result i32)
@@ -8580,8 +8552,8 @@
       )
      )
      (i32.eqz
-      (i32.load
-       (local.get $1)
+      (i32.load offset=20
+       (local.get $0)
       )
      )
     )
@@ -8591,24 +8563,14 @@
    (block (result i32)
     (if
      (i32.lt_u
-      (local.tee $4
-       (i32.load
-        (local.tee $3
-         (i32.add
-          (local.get $0)
-          (i32.const 4)
-         )
-        )
+      (local.tee $1
+       (i32.load offset=4
+        (local.get $0)
        )
       )
-      (local.tee $6
-       (i32.load
-        (local.tee $5
-         (i32.add
-          (local.get $0)
-          (i32.const 8)
-         )
-        )
+      (local.tee $2
+       (i32.load offset=8
+        (local.get $0)
        )
       )
      )
@@ -8616,8 +8578,8 @@
       (call_indirect (type $FUNCSIG$iiii)
        (local.get $0)
        (i32.sub
-        (local.get $4)
-        (local.get $6)
+        (local.get $1)
+        (local.get $2)
        )
        (i32.const 1)
        (i32.add
@@ -8636,20 +8598,20 @@
      (local.get $0)
      (i32.const 0)
     )
-    (i32.store
-     (local.get $2)
+    (i32.store offset=28
+     (local.get $0)
      (i32.const 0)
     )
-    (i32.store
-     (local.get $1)
+    (i32.store offset=20
+     (local.get $0)
      (i32.const 0)
     )
-    (i32.store
-     (local.get $5)
+    (i32.store offset=8
+     (local.get $0)
      (i32.const 0)
     )
-    (i32.store
-     (local.get $3)
+    (i32.store offset=4
+     (local.get $0)
      (i32.const 0)
     )
     (i32.const 0)
@@ -9022,8 +8984,7 @@
  )
  (func $___stdio_seek (; 27 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
-  (local $4 i32)
-  (local.set $4
+  (local.set $3
    (global.get $STACKTOP)
   )
   (global.set $STACKTOP
@@ -9033,9 +8994,7 @@
    )
   )
   (i32.store
-   (local.tee $3
-    (local.get $4)
-   )
+   (local.get $3)
    (i32.load offset=60
     (local.get $0)
    )
@@ -9050,11 +9009,9 @@
   )
   (i32.store offset=12
    (local.get $3)
-   (local.tee $0
-    (i32.add
-     (local.get $3)
-     (i32.const 20)
-    )
+   (i32.add
+    (local.get $3)
+    (i32.const 20)
    )
   )
   (i32.store offset=16
@@ -9073,19 +9030,19 @@
      (i32.const 0)
     )
     (block (result i32)
-     (i32.store
-      (local.get $0)
+     (i32.store offset=20
+      (local.get $3)
       (i32.const -1)
      )
      (i32.const -1)
     )
-    (i32.load
-     (local.get $0)
+    (i32.load offset=20
+     (local.get $3)
     )
    )
   )
   (global.set $STACKTOP
-   (local.get $4)
+   (local.get $3)
   )
   (local.get $0)
  )

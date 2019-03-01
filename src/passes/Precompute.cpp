@@ -15,7 +15,11 @@
  */
 
 //
-// Computes code at compile time where possible.
+// Computes code at compile time where possible, replacing it with the
+// computed constant.
+//
+// The "propagate" variant of this pass also propagates constants across
+// sets and gets, which implements a standard constant propagation.
 //
 // Possible nondeterminism: WebAssembly NaN signs are nondeterministic,
 // and this pass may optimize e.g. a float 0 / 0 into +nan while a VM may
@@ -267,6 +271,7 @@ private:
     // compute all dependencies
     LocalGraph localGraph(func);
     localGraph.computeInfluences();
+    localGraph.computeSSAIndexes();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     std::unordered_set<Expression*> work;

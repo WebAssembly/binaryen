@@ -242,5 +242,38 @@ void LocalGraph::computeInfluences() {
   }
 }
 
+void LocalGraph::computeSSAIndexes() {
+  std::unordered_map<Index, std::set<SetLocal*>> indexSets;
+  for (auto& pair : getSetses) {
+    auto* get = pair.first;
+    auto& sets = pair.second;
+    for (auto* set : sets) {
+      indexSets[get->index].insert(set);
+    }
+  }
+  for (auto& pair : locations) {
+    auto* curr = pair.first;
+    if (auto* set = curr->dynCast<SetLocal>()) {
+      auto& sets = indexSets[set->index];
+      if (sets.size() == 1 && *sets.begin() != curr) {
+        // While it has just one set, it is not the right one (us),
+        // so mark it invalid.
+        sets.clear();
+      }
+    }
+  }
+  for (auto& pair : indexSets) {
+    auto index = pair.first;
+    auto& sets = pair.second;
+    if (sets.size() == 1) {
+      SSAIndexes.insert(index);
+    }
+  }
+}
+
+bool LocalGraph::isSSA(Index x) {
+  return SSAIndexes.count(x);
+}
+
 } // namespace wasm
 

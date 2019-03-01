@@ -45,13 +45,40 @@ struct LocalGraph {
                        // value (0 for a var, the received value for a param)
   Locations locations; // where each get and set is (for easy replacing)
 
-  // optional computation: compute the influence graphs between sets and gets
-  // (useful for algorithms that propagate changes)
+  // Optional: compute the influence graphs between sets and gets
+  // (useful for algorithms that propagate changes).
+
+  void computeInfluences();
 
   std::unordered_map<GetLocal*, std::unordered_set<SetLocal*>> getInfluences; // for each get, the sets whose values are influenced by that get
   std::unordered_map<SetLocal*, std::unordered_set<GetLocal*>> setInfluences; // for each set, the gets whose values are influenced by that set
 
-  void computeInfluences();
+  // Optional: Compute the local indexes that are SSA, in the sense of
+  //  * a single set for all the gets for that local index
+  //  * the set dominates all the gets (logically implied by the former property)
+  //  * no other set (aside from the zero-init)
+  // The third property is not exactly standard SSA, but is useful since we are not in
+  // SSA form in our IR. To see why it matters, consider these:
+  //
+  // x = 0 // zero init
+  // [..]
+  // x = 10
+  // y = x + 20
+  // x = 30 // !!!
+  // f(y)
+  //
+  // The !!! line violates that property - it is another set for x, and it may interfere
+  // say with replacing f(y) with f(x + 20). Instead, if we know the only other possible set for x
+  // is the zero init, then things like the !!! line cannot exist, and it is valid to replace
+  // f(y) with f(x + 20).
+  // (This could be simpler, but in wasm the zero init always exists.)
+
+  void computeSSAIndexes();
+
+  bool isSSA(Index x);
+
+private:
+  std::set<Index> SSAIndexes;
 };
 
 } // namespace wasm

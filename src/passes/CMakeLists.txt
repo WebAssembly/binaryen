@@ -31,6 +31,7 @@ SET(passes_SOURCES
   MinifyImportsAndExports.cpp
   NameList.cpp
   NoExitRuntime.cpp
+  OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
   PostEmscripten.cpp
