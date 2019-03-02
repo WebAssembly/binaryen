@@ -1623,7 +1623,9 @@ const uint8_t* BinaryenConstGetValueV128(BinaryenExpressionRef expr) {
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Const>());
-  return static_cast<Const*>(expression)->value.getv128().data();
+  void* buf = malloc(16);
+  memcpy(buf, static_cast<Const*>(expression)->value.getv128().data(), 16);
+  return static_cast<const uint8_t*>(buf);
 }
 // Unary
 BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
