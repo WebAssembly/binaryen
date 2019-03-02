@@ -2090,7 +2090,13 @@ Module['getExpressionInfo'] = function(expr) {
         case Module['i32']: value = Module['_BinaryenConstGetValueI32'](expr); break;
         case Module['i64']: value = { 'low': Module['_BinaryenConstGetValueI64Low'](expr), 'high': Module['_BinaryenConstGetValueI64High'](expr) }; break;
         case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
-        case Module['f64']: value =  Module['_BinaryenConstGetValueF64'](expr); break;
+        case Module['f64']: value = Module['_BinaryenConstGetValueF64'](expr); break;
+        case Module['v128']: {
+          var ptr = Module['_BinaryenConstGetValueV128'](expr);
+          value = new Uint8Array(16);
+          value.set(HEAPU8.subarray(ptr, ptr + 16));
+          break;
+        }
         default: throw Error('unexpected type: ' + type);
       }
       return {

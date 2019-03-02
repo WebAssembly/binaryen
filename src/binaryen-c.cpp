@@ -1616,6 +1616,15 @@ double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.getf64();
 }
+const uint8_t* BinaryenConstGetValueV128(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueV128(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.getv128().data();
+}
 // Unary
 BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
