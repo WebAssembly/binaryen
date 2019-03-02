@@ -223,9 +223,14 @@ void Literal::printDouble(std::ostream& o, double d) {
 
 void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
   o << std::hex;
-  for (auto i = 0; i < 16; ++i) {
-    o << "0x" << uint32_t(v[i]);
-    if (i < 15) o << " ";
+  for (auto i = 0; i < 16; i += 4) {
+    if (i) o << " ";
+    o << "0x" << std::setfill('0') << std::setw(8) << uint32_t(
+       v[i    ]        |
+      (v[i + 1] <<  8) |
+      (v[i + 2] << 16) |
+      (v[i + 3] << 24)
+    );
   }
   o << std::dec;
 }
