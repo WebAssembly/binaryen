@@ -617,10 +617,8 @@ int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
 int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
 int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
 float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
-// Implicitly allocates an appropriate buffer using malloc() to hold the literal's contents,
-// and expects the user to free() the buffer manually once not needed anymore.
-const uint8_t* BinaryenConstGetValueV128(BinaryenExpressionRef expr);
 double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
+void BinaryenConstGetValueV128(BinaryenExpressionRef expr, void* out);
 
 BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr);

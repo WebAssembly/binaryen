@@ -2092,10 +2092,12 @@ Module['getExpressionInfo'] = function(expr) {
         case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
         case Module['f64']: value = Module['_BinaryenConstGetValueF64'](expr); break;
         case Module['v128']: {
-          var buffer = Module['_BinaryenConstGetValueV128'](expr);
-          value = new Uint8Array(16);
-          value.set(HEAPU8.subarray(buffer, buffer + 16));
-          _free(buffer);
+          var ret = stackAlloc(16);
+          Module['_BinaryenConstGetValueV128'](expr, ret);
+          value = [];
+          for (var i = 0 ; i < 16; i++) {
+            value[i] = HEAP8[ret + i];
+          }
           break;
         }
         default: throw Error('unexpected type: ' + type);
