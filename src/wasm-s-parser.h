@@ -152,6 +152,7 @@ private:
     return stringToType(str.str, allowError, prefix);
   }
   Type stringToType(const char* str, bool allowError=false, bool prefix=false);
+  Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) {
     return stringToType(str, true) != none;
   }

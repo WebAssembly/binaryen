@@ -641,6 +641,16 @@ Type SExpressionWasmBuilder::stringToType(const char* str, bool allowError, bool
   throw ParseException("invalid wasm type");
 }
 
+Type SExpressionWasmBuilder::stringToLaneType(const char* str) {
+  if (strcmp(str, "i8x16") == 0) return i32;
+  if (strcmp(str, "i16x8") == 0) return i32;
+  if (strcmp(str, "i32x4") == 0) return i32;
+  if (strcmp(str, "i64x2") == 0) return i64;
+  if (strcmp(str, "f32x4") == 0) return f32;
+  if (strcmp(str, "f64x2") == 0) return f64;
+  return none;
+}
+
 Function::DebugLocation SExpressionWasmBuilder::getDebugLocation(const SourceLocation& loc) {
   IString file = loc.filename;
   auto& debugInfoFileNames = wasm.debugInfoFileNames;
@@ -878,7 +888,7 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
     }
     return expr->cast<Const>()->value;
   };
-  Type lane_t = stringToType(s[1]->str());
+  Type lane_t = stringToLaneType(s[1]->str().str);
   size_t lanes = s.size() - 2;
   switch (lanes) {
     case 2: {

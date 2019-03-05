@@ -32,7 +32,7 @@
   (i64.store (i32.const 11) (i64.const 1100))
   (f32.store (i32.const 12) (f32.const 1200))
   (f64.store (i32.const 13) (f64.const 1300))
-  (v128.store (i32.const 14) (v128.const i32 1 2 3 4))
+  (v128.store (i32.const 14) (v128.const i32x4 1 2 3 4))
  )
 )
 ;; not shared
