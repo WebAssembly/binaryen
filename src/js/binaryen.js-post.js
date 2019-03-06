@@ -2092,11 +2092,10 @@ Module['getExpressionInfo'] = function(expr) {
         case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
         case Module['f64']: value = Module['_BinaryenConstGetValueF64'](expr); break;
         case Module['v128']: {
-          var ret = stackAlloc(16);
-          Module['_BinaryenConstGetValueV128'](expr, ret);
-          value = [];
+          Module['_BinaryenConstGetValueV128'](expr, temp);
+          value = new Array(16);
           for (var i = 0 ; i < 16; i++) {
-            value[i] = HEAP8[ret + i];
+            value[i] = HEAP8[temp + i];
           }
           break;
         }
@@ -2211,21 +2210,18 @@ Module['getExpressionInfo'] = function(expr) {
         'value': Module['_BinaryenSIMDReplaceGetValue'](expr)
       };
     case Module['SIMDShuffleId']:
-      return preserveStack(function() {
-        var ret = stackAlloc(16);
-        Module['_BinaryenSIMDShuffleGetMask'](expr, ret);
-        var mask = [];
-        for (var i = 0 ; i < 16; i++) {
-          mask[i] = HEAP8[ret + i];
-        }
-        return {
-          'id': id,
-          'type': type,
-          'left': Module['_BinaryenSIMDShuffleGetLeft'](expr),
-          'right': Module['_BinaryenSIMDShuffleGetRight'](expr),
-          'mask': mask
-        };
-      });
+      Module['_BinaryenSIMDShuffleGetMask'](expr, temp);
+      var mask = new Array(16);
+      for (var i = 0 ; i < 16; i++) {
+        mask[i] = HEAP8[temp + i];
+      }
+      return {
+        'id': id,
+        'type': type,
+        'left': Module['_BinaryenSIMDShuffleGetLeft'](expr),
+        'right': Module['_BinaryenSIMDShuffleGetRight'](expr),
+        'mask': mask
+      };
     case Module['SIMDBitselectId']:
       return {
         'id': id,
