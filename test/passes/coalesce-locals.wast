@@ -1198,4 +1198,28 @@
     (local.get $var$2)
    )
   )
+  (func $reuse-param (param $x i32) (param $y i32) (result i32)
+   (local $temp i32)
+   (i32.add
+    (local.tee $temp
+     (i32.xor
+      (i32.shr_s
+       (i32.shl
+        (local.get $x) ;; $x and $temp do not interfere
+        (i32.const 16)
+       )
+      (i32.const 16)
+     )
+     (i32.shr_s
+      (i32.shl
+        (local.get $y)
+        (i32.const 16)
+       )
+       (i32.const 16)
+      )
+     )
+    )
+    (local.get $temp)
+   )
+  )
 )
