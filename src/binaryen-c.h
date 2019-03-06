@@ -618,7 +618,7 @@ int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
 int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
 float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
 double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
-void BinaryenConstGetValueV128(BinaryenExpressionRef expr, void* out);
+void BinaryenConstGetValueV128(BinaryenExpressionRef expr, uint8_t* out);
 
 BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr);
