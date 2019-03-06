@@ -365,6 +365,13 @@ Module['ConvertUVecI32x4ToVecF32x4'] = Module['_BinaryenConvertUVecI32x4ToVecF32
 Module['ConvertSVecI64x2ToVecF64x2'] = Module['_BinaryenConvertSVecI64x2ToVecF64x2']();
 Module['ConvertUVecI64x2ToVecF64x2'] = Module['_BinaryenConvertUVecI64x2ToVecF64x2']();
 
+// The size of a single literal in memory as used in Const creation,
+// which is a little different: we don't want users to need to make
+// their own Literals, as the C API handles them by value, which means
+// we would leak them. Instead, Const creation is fused together with
+// an intermediate stack allocation of this size to pass the value.
+var sizeOfLiteral = _BinaryenSizeofLiteral();
+
 // 'Module' interface
 Module['Module'] = function(module) {
   assert(!module); // guard against incorrect old API usage
@@ -482,11 +489,6 @@ function wrapModule(module, self) {
     }
   }
 
-  // The Const creation API is a little different: we don't want users to
-  // need to make their own Literals, as the C API handles them by value,
-  // which means we would leak them. Instead, this is the only API that
-  // accepts Literals, so fuse it with Literal creation
-
   self['i32'] = {
     'load': function(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i32'], ptr);
@@ -514,7 +516,7 @@ function wrapModule(module, self) {
     },
     'const': function(x) {
       return preserveStack(function() {
-        var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
+        var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralInt32'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
@@ -780,7 +782,7 @@ function wrapModule(module, self) {
     },
     'const': function(x, y) {
       return preserveStack(function() {
-        var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
+        var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralInt64'](tempLiteral, x, y);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
@@ -1054,14 +1056,14 @@ function wrapModule(module, self) {
     },
     'const': function(x) {
       return preserveStack(function() {
-        var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
+        var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralFloat32'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
     'const_bits': function(x) {
       return preserveStack(function() {
-        var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
+        var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralFloat32Bits'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
@@ -1159,14 +1161,14 @@ function wrapModule(module, self) {
     },
     'const': function(x) {
       return preserveStack(function() {
-        var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
+        var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralFloat64'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
     'const_bits': function(x, y) {
       return preserveStack(function() {
-        var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
+        var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralFloat64Bits'](tempLiteral, x, y);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
@@ -1264,7 +1266,7 @@ function wrapModule(module, self) {
     },
     'const': function(i8s) {
       return preserveStack(function() {
-        var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
+        var tempLiteral = stackAlloc(sizeOfLiteral);
         Module['_BinaryenLiteralVec128'](tempLiteral, i8sToStack(i8s));
         return Module['_BinaryenConst'](module, tempLiteral);
       });
@@ -1917,7 +1919,7 @@ function wrapModule(module, self) {
   };
   self['emitBinary'] = function(sourceMapUrl) {
     return preserveStack(function() {
-      var tempBuffer = stackAlloc(12);
+      var tempBuffer = stackAlloc(_BinaryenSizeofAllocateAndWriteResult());
       Module['_BinaryenModuleAllocateAndWrite'](tempBuffer, module, strToStack(sourceMapUrl));
       var binaryPtr    = HEAPU32[ tempBuffer >>> 2     ];
       var binaryBytes  = HEAPU32[(tempBuffer >>> 2) + 1];

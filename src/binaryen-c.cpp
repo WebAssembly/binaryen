@@ -3076,6 +3076,12 @@ size_t BinaryenSizeofLiteral(void) {
   return sizeof(Literal);
 }
 
+// Returns the size of an allocate and write result object.
+EMSCRIPTEN_KEEPALIVE
+size_t BinaryenSizeofAllocateAndWriteResult(void) {
+  return sizeof(BinaryenModuleAllocateAndWriteResult);
+}
+
 #endif
 
 } // extern "C"
