@@ -411,5 +411,25 @@
       )
     )
   )
+  (func $multiadd (param $sp i32)
+    (local $$vararg_buffer i32)
+    (local $$vararg_ptr1 i32)
+    (local.set $$vararg_buffer
+     (i32.add
+      (local.get $sp)
+      (i32.const 16)
+     )
+    )
+    (local.set $$vararg_ptr1
+     (i32.add
+      (local.get $$vararg_buffer)
+      (i32.const 4)
+     )
+    )
+    (i32.store
+     (local.get $$vararg_ptr1)
+     (i32.const 1)
+    )
+  )
 )
 
