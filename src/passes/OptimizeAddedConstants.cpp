@@ -41,19 +41,22 @@ template<typename P, typename T>
 class MemoryAccessOptimizer {
 public:
   MemoryAccessOptimizer(P* parent, T* curr, Module* module, LocalGraph* localGraph) :
-    parent(parent), curr(curr), module(module), localGraph(localGraph) {
+    parent(parent), curr(curr), module(module), localGraph(localGraph) {}
+
+  // Tries to optimize, and returns whether we propagated a change.
+  bool optimize() {
     // The pointer itself may be a constant, if e.g. it was precomputed or
     // a get that we propagated.
     if (curr->ptr->template is<Const>()) {
       optimizeConstantPointer();
-      return;
+      return false;
     }
     if (auto* add = curr->ptr->template dynCast<Binary>()) {
       if (add->op == AddInt32) {
         // Look for a constant on both sides.
         if (tryToOptimizeConstant(add->right, add->left) ||
             tryToOptimizeConstant(add->left, add->right)) {
-          return;
+          return false;
         }
       }
     }
@@ -84,7 +87,7 @@ public:
                 //      old value.
                 if (tryToOptimizePropagatedAdd(add->right, add->left, get, set) ||
                    tryToOptimizePropagatedAdd(add->left, add->right, get, set)) {
-                  return;
+                  return true;
                 }
               }
             }
@@ -92,6 +95,7 @@ public:
         }
       }
     }
+    return false;
   }
 
 private:
@@ -233,23 +237,37 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
   std::unique_ptr<LocalGraph> localGraph;
 
   void visitLoad(Load* curr) {
-    MemoryAccessOptimizer<OptimizeAddedConstants, Load>(this, curr, getModule(), localGraph.get());
+    MemoryAccessOptimizer<OptimizeAddedConstants, Load> optimizer(this, curr, getModule(), localGraph.get());
+    if (optimizer.optimize()) {
+      propagated = true;
+    }
   }
 
   void visitStore(Store* curr) {
-    MemoryAccessOptimizer<OptimizeAddedConstants, Store>(this, curr, getModule(), localGraph.get());
+    MemoryAccessOptimizer<OptimizeAddedConstants, Store> optimizer(this, curr, getModule(), localGraph.get());
+    if (optimizer.optimize()) {
+      propagated = true;
+    }
   }
 
   void doWalkFunction(Function* func) {
     // This pass is only valid under the assumption of unused low memory.
     assert(getPassOptions().lowMemoryUnused);
-    if (propagate) {
-      localGraph = make_unique<LocalGraph>(func);
-      localGraph->computeSSAIndexes();
-    }
-    super::doWalkFunction(func);
-    if (!helperIndexes.empty()) {
-      createHelperIndexes();
+    // Multiple passes may be needed if we have x + 4 + 8 etc. (nested structs in C
+    // can cause this, but it's rare). Note that we only need that for the propagation
+    // case (as 4 + 8 would be optimized directly if it were adjacent).
+    while (1) {
+      propagated = false;
+      if (propagate) {
+        localGraph = make_unique<LocalGraph>(func);
+        localGraph->computeSSAIndexes();
+      }
+      super::doWalkFunction(func);
+      if (!helperIndexes.empty()) {
+        createHelperIndexes();
+        helperIndexes.clear();
+      }
+      if (!propagated) return;
     }
   }
 
@@ -268,6 +286,8 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
 
 private:
   std::map<SetLocal*, Index> helperIndexes;
+
+  bool propagated;
 
   void createHelperIndexes() {
     struct Creator : public PostWalker<Creator> {
