@@ -95,7 +95,7 @@ inline std::set<Name> getExitingBranches(Expression* ast) {
       targets.insert(curr->name);
     }
     void visitSwitch(Switch* curr) {
-      for (auto target : targets) {
+      for (auto target : curr->targets) {
         targets.insert(target);
       }
       targets.insert(curr->default_);
