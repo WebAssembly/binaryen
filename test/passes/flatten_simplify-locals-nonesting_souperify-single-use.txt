@@ -4437,9 +4437,7 @@ infer %4
           )
          )
          (nop)
-         (drop
-          (local.get $6)
-         )
+         (nop)
         )
         (nop)
         (if
@@ -4458,9 +4456,7 @@ infer %4
     )
    )
    (nop)
-   (drop
-    (local.get $14)
-   )
+   (nop)
    (nop)
    (unreachable)
    (unreachable)

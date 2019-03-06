@@ -206,12 +206,7 @@
  )
  (func $offset-propagate-param (; 4 ;) (type $1) (param $x i32)
   (local $y i32)
-  (local.set $x
-   (i32.add
-    (local.get $y)
-    (i32.const 1)
-   )
-  )
+  (nop)
   (drop
    (i32.load offset=1
     (local.get $y)
@@ -221,12 +216,7 @@
  (func $offset-propagate (; 5 ;) (type $0)
   (local $x i32)
   (local $y i32)
-  (local.set $x
-   (i32.add
-    (local.get $y)
-    (i32.const 1)
-   )
-  )
+  (nop)
   (drop
    (i32.load offset=1
     (local.get $y)
@@ -254,12 +244,7 @@
  (func $offset-propagate3 (; 7 ;) (type $0)
   (local $x i32)
   (local $y i32)
-  (local.set $x
-   (i32.add
-    (i32.const 1)
-    (local.get $y)
-   )
-  )
+  (nop)
   (drop
    (i32.load offset=1
     (local.get $y)
@@ -272,12 +257,7 @@
   (local.set $y
    (i32.const -1)
   )
-  (local.set $x
-   (i32.add
-    (i32.const 1)
-    (local.get $y)
-   )
-  )
+  (nop)
   (drop
    (i32.load offset=1
     (local.get $y)
@@ -298,12 +278,7 @@
    (local.set $3
     (local.get $y)
    )
-   (local.set $x
-    (i32.add
-     (i32.const 1)
-     (local.get $3)
-    )
-   )
+   (nop)
   )
   (drop
    (i32.load offset=1
@@ -322,12 +297,7 @@
    (local.set $3
     (local.get $y)
    )
-   (local.set $x
-    (i32.add
-     (i32.const 1)
-     (local.get $3)
-    )
-   )
+   (nop)
   )
   (local.set $y
    (i32.const -2)
@@ -369,24 +339,9 @@
   (local $x i32)
   (local $y i32)
   (local $z i32)
-  (local.set $x
-   (i32.add
-    (local.get $ptr)
-    (i32.const 8)
-   )
-  )
-  (local.set $y
-   (i32.add
-    (local.get $ptr)
-    (i32.const 16)
-   )
-  )
-  (local.set $z
-   (i32.add
-    (local.get $ptr)
-    (i32.const 24)
-   )
-  )
+  (nop)
+  (nop)
+  (nop)
   (loop $l
    (call $offset-realistic
     (i32.load offset=8
@@ -422,20 +377,28 @@
  (func $multiadd (; 13 ;) (type $1) (param $sp i32)
   (local $$vararg_buffer i32)
   (local $$vararg_ptr1 i32)
+  (nop)
+  (nop)
+  (i32.store offset=20
+   (local.get $sp)
+   (i32.const 1)
+  )
+ )
+ (func $multiadd-extraUse (; 14 ;) (type $1) (param $sp i32)
+  (local $$vararg_buffer i32)
+  (local $$vararg_ptr1 i32)
   (local.set $$vararg_buffer
    (i32.add
     (local.get $sp)
     (i32.const 16)
    )
   )
-  (local.set $$vararg_ptr1
-   (i32.add
-    (local.get $$vararg_buffer)
-    (i32.const 4)
-   )
+  (nop)
+  (drop
+   (local.get $$vararg_buffer)
   )
-  (i32.store offset=20
-   (local.get $sp)
+  (i32.store offset=4
+   (local.get $$vararg_buffer)
    (i32.const 1)
   )
  )

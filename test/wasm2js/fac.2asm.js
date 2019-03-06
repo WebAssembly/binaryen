@@ -42,7 +42,7 @@ function asmFunc(global, env, buffer) {
    $6$hi = i64toi32_i32$3;
    i64toi32_i32$3 = $0$hi;
    i64toi32_i32$5 = $6$hi;
-   i64toi32_i32$5 = __wasm_i64_mul($0_1 | 0, $0$hi | 0, $6 | 0, i64toi32_i32$5 | 0) | 0;
+   i64toi32_i32$5 = __wasm_i64_mul($0_1 | 0, i64toi32_i32$3 | 0, $6 | 0, i64toi32_i32$5 | 0) | 0;
    i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;
    i64toi32_i32$3 = i64toi32_i32$3;
    $8 = i64toi32_i32$5;
@@ -76,7 +76,7 @@ function asmFunc(global, env, buffer) {
    $6$hi = i64toi32_i32$3;
    i64toi32_i32$3 = n$hi;
    i64toi32_i32$5 = $6$hi;
-   i64toi32_i32$5 = __wasm_i64_mul(n | 0, n$hi | 0, $6 | 0, i64toi32_i32$5 | 0) | 0;
+   i64toi32_i32$5 = __wasm_i64_mul(n | 0, i64toi32_i32$3 | 0, $6 | 0, i64toi32_i32$5 | 0) | 0;
    i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;
    i64toi32_i32$3 = i64toi32_i32$3;
    $8 = i64toi32_i32$5;

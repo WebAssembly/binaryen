@@ -34,6 +34,8 @@
 #include <pass.h>
 #include <wasm-builder.h>
 #include <ir/local-graph.h>
+#include <ir/local-utils.h>
+#include <ir/parents.h>
 
 namespace wasm {
 
@@ -76,8 +78,9 @@ public:
         auto& sets = localGraph->getSetses[get];
         if (sets.size() == 1) {
           auto* set = *sets.begin();
-          // May be a zero-init (in which case, we can ignore it).
-          if (set) {
+          // May be a zero-init (in which case, we can ignore it). Must also be valid
+          // to propagate, as checked earlier in the parent.
+          if (set && parent->isPropagatable(set)) {
             auto* value = set->value;
             if (auto* add = value->template dynCast<Binary>()) {
               if (add->op == AddInt32) {
@@ -234,8 +237,6 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
 
   Pass* create() override { return new OptimizeAddedConstants(propagate); }
 
-  std::unique_ptr<LocalGraph> localGraph;
-
   void visitLoad(Load* curr) {
     MemoryAccessOptimizer<OptimizeAddedConstants, Load> optimizer(this, curr, getModule(), localGraph.get());
     if (optimizer.optimize()) {
@@ -258,16 +259,23 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
     // case (as 4 + 8 would be optimized directly if it were adjacent).
     while (1) {
       propagated = false;
+      helperIndexes.clear();
+      propagatable.clear();
       if (propagate) {
         localGraph = make_unique<LocalGraph>(func);
+        localGraph->computeInfluences();
         localGraph->computeSSAIndexes();
+        findPropagatable();
       }
       super::doWalkFunction(func);
       if (!helperIndexes.empty()) {
         createHelperIndexes();
-        helperIndexes.clear();
       }
-      if (!propagated) return;
+      if (propagated) {
+        cleanUpAfterPropagation();
+      } else {
+        return;
+      }
     }
   }
 
@@ -284,10 +292,62 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
     return helperIndexes[set] = Builder(*getModule()).addVar(getFunction(), i32);
   }
 
-private:
-  std::map<SetLocal*, Index> helperIndexes;
+  bool isPropagatable(SetLocal* set) {
+    return propagatable.count(set);
+  }
 
+private:
   bool propagated;
+
+  std::unique_ptr<LocalGraph> localGraph;
+
+  // Whether a set is propagatable.
+  std::set<SetLocal*> propagatable;
+
+  void findPropagatable() {
+    // Conservatively, only propagate if all uses can be removed of the original. That is,
+    //  x = a + 10
+    //  f(x)
+    //  g(x)
+    // should be optimized to
+    //  f(a, offset=10)
+    //  g(a, offset=10)
+    // but if x has other uses, then avoid doing so - we'll be doing that add anyhow, so
+    // the load/store offset trick won't actually help.
+    Parents parents(getFunction()->body);
+    for (auto& pair : localGraph->locations) {
+      auto* location = pair.first;
+      if (auto* set = location->dynCast<SetLocal>()) {
+        if (auto* add = set->value->dynCast<Binary>()) {
+          if (add->op == AddInt32) {
+            if (add->left->is<Const>() || add->right->is<Const>()) {
+              // Looks like this might be relevant, check all uses.
+              bool canPropagate = true;
+              for (auto* get :localGraph->setInfluences[set]) {
+                auto* parent = parents.getParent(get);
+                assert(parent); // if this is at the top level, it's the whole body - no set can exist!
+                if (!(parent->is<Load>() || parent->is<Store>())) {
+                  canPropagate = false;
+                  break;
+                }
+              }
+              if (canPropagate) {
+                propagatable.insert(set);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  void cleanUpAfterPropagation() {
+    // Remove sets that no longer have uses. This allows further propagation by letting
+    // us see the accurate amount of uses of each set.
+    UnneededSetRemover remover(getFunction(), getPassOptions());
+  }
+
+  std::map<SetLocal*, Index> helperIndexes;
 
   void createHelperIndexes() {
     struct Creator : public PostWalker<Creator> {
