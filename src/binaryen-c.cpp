@@ -1954,7 +1954,7 @@ BinaryenExpressionRef BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr) {
 }
 void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t *mask) {
   if (tracing) {
-    std::cout << "  BinaryenSIMDShuffleGetMask(expressions[" << expressions[expr] << ", " << mask << "]);\n";
+    std::cout << "  BinaryenSIMDShuffleGetMask(expressions[" << expressions[expr] << "], " << mask << ");\n";
   }
 
   auto* expression = (Expression*)expr;
