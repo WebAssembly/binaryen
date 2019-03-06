@@ -51,7 +51,7 @@
 #include <wasm-traversal.h>
 #include <pass.h>
 #include <ir/branch-utils.h>
-#include <ir/count.h>
+#include <ir/local-utils.h>
 #include <ir/effects.h>
 #include "ir/equivalent_sets.h"
 #include <ir/find_all.h>
@@ -844,31 +844,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // We may have already had a local with no uses, or we may have just
     // gotten there thanks to the EquivalentOptimizer. If there are such
     // locals, remove all their sets.
-    struct UneededSetRemover : public PostWalker<UneededSetRemover> {
-      std::vector<Index>* numGetLocals;
+    UnneededSetRemover setRemover(getCounter, func, this->getPassOptions());
 
-      bool anotherCycle = false;
-
-      void visitSetLocal(SetLocal *curr) {
-        if ((*numGetLocals)[curr->index] == 0) {
-          auto* value = curr->value;
-          if (curr->isTee()) {
-            this->replaceCurrent(value);
-          } else {
-            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
-            drop->value = value;
-            drop->finalize();
-          }
-          anotherCycle = true;
-        }
-      }
-    };
-
-    UneededSetRemover setRemover;
-    setRemover.numGetLocals = &getCounter.num;
-    setRemover.walkFunction(func);
-
-    return eqOpter.anotherCycle || setRemover.anotherCycle;
+    return eqOpter.anotherCycle || setRemover.removed;
   }
 };
 

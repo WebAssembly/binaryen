@@ -32,7 +32,7 @@ function asmFunc(global, env, buffer) {
   $1$hi = $1$hi | 0;
   $2_1 = $2_1 | 0;
   $2$hi = $2$hi | 0;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $12 = 0, $5$hi = 0;
+  var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $12 = 0, $5$hi = 0;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$0 = $0$hi;
