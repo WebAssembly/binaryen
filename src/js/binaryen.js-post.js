@@ -512,7 +512,7 @@ function wrapModule(module, self) {
     'store16': function(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i32']);
     },
-    'const': function (x) {
+    'const': function(x) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
         Module['_BinaryenLiteralInt32'](tempLiteral, x);
@@ -778,7 +778,7 @@ function wrapModule(module, self) {
     'store32': function(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64']);
     },
-    'const': function (x, y) {
+    'const': function(x, y) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
         Module['_BinaryenLiteralInt64'](tempLiteral, x, y);
@@ -1052,14 +1052,14 @@ function wrapModule(module, self) {
     'store': function(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['f32']);
     },
-    'const': function (x) {
+    'const': function(x) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
         Module['_BinaryenLiteralFloat32'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'const_bits': function (x) {
+    'const_bits': function(x) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
         Module['_BinaryenLiteralFloat32Bits'](tempLiteral, x);
@@ -1157,14 +1157,14 @@ function wrapModule(module, self) {
     'store': function(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['f64']);
     },
-    'const': function (x) {
+    'const': function(x) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
         Module['_BinaryenLiteralFloat64'](tempLiteral, x);
         return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
-    'const_bits': function (x, y) {
+    'const_bits': function(x, y) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
         Module['_BinaryenLiteralFloat64Bits'](tempLiteral, x, y);
@@ -1262,7 +1262,7 @@ function wrapModule(module, self) {
     'store': function(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 16, offset, align, ptr, value, Module['v128']);
     },
-    'const': function (i8s) {
+    'const': function(i8s) {
       return preserveStack(function() {
         var tempLiteral = stackAlloc(_BinaryenSizeofLiteral());
         Module['_BinaryenLiteralVec128'](tempLiteral, i8sToStack(i8s));
@@ -1746,7 +1746,7 @@ function wrapModule(module, self) {
     });
   };
   self['removeFunctionType'] = function(name) {
-    return preserveStack(function () {
+    return preserveStack(function() {
       return Module['_BinaryenRemoveFunctionType'](module, strToStack(name));
     });
   };
@@ -1771,7 +1771,7 @@ function wrapModule(module, self) {
     });
   }
   self['removeGlobal'] = function(name) {
-    return preserveStack(function () {
+    return preserveStack(function() {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
     });
   }
