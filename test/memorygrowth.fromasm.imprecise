@@ -9186,12 +9186,12 @@
   (local.get $0)
  )
  (func $Pa (; 29 ;) (; has Stack IR ;) (param $0 i32) (result i32)
-  (if (result i32)
+  (if
    (i32.gt_u
     (local.get $0)
     (i32.const -4096)
    )
-   (block (result i32)
+   (block
     (i32.store
      (call $Qa)
      (i32.sub
@@ -9199,10 +9199,12 @@
       (local.get $0)
      )
     )
-    (i32.const -1)
+    (local.set $0
+     (i32.const -1)
+    )
    )
-   (local.get $0)
   )
+  (local.get $0)
  )
  (func $Qa (; 30 ;) (; has Stack IR ;) (result i32)
   (select

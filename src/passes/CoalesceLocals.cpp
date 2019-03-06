@@ -279,11 +279,6 @@ void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
     indices.push_back(0);
     return;
   }
-  if (getFunction()->getNumVars() <= 1) {
-    // nothing to think about here, since we can't reorder params
-    indices = makeIdentity(numLocals);
-    return;
-  }
   // take into account total copies. but we must keep params in place, so give them max priority
   auto adjustedTotalCopies = totalCopies;
   auto numParams = getFunction()->getNumParams();

@@ -1810,12 +1810,12 @@
   )
  )
  (func $___syscall_ret (; 42 ;) (; has Stack IR ;) (param $0 i32) (result i32)
-  (if (result i32)
+  (if
    (i32.gt_u
     (local.get $0)
     (i32.const -4096)
    )
-   (block (result i32)
+   (block
     (i32.store
      (call $___errno_location)
      (i32.sub
@@ -1823,10 +1823,12 @@
       (local.get $0)
      )
     )
-    (i32.const -1)
+    (local.set $0
+     (i32.const -1)
+    )
    )
-   (local.get $0)
   )
+  (local.get $0)
  )
  (func $___fflush_unlocked (; 43 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
@@ -14427,7 +14429,6 @@
   )
  )
  (func $_i64Add (; 56 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-  (local $4 i32)
   (global.set $tempRet0
    (i32.add
     (i32.add
@@ -14435,7 +14436,7 @@
      (local.get $3)
     )
     (i32.lt_u
-     (local.tee $4
+     (local.tee $1
       (i32.add
        (local.get $0)
        (local.get $2)
@@ -14445,7 +14446,7 @@
     )
    )
   )
-  (local.get $4)
+  (local.get $1)
  )
  (func $_memset (; 57 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
