@@ -3677,9 +3677,7 @@ infer %4
      )
      (nop)
      (nop)
-     (local.set $y
-      (local.get $y)
-     )
+     (nop)
      (nop)
      (nop)
      (br_if $loopy
@@ -4430,9 +4428,7 @@ infer %4
        (nop)
       )
       (nop)
-      (local.set $var$0
-       (local.get $var$0)
-      )
+      (nop)
       (nop)
       (loop $label$6
        (block $label$7
@@ -4476,9 +4472,7 @@ infer %4
      (nop)
     )
     (nop)
-    (local.set $var$1
-     (local.get $var$1)
-    )
+    (nop)
     (nop)
     (br $label$1)
     (unreachable)
@@ -5161,9 +5155,7 @@ infer %4
     (nop)
     (nop)
     (nop)
-    (local.set $var$2
-     (local.get $var$2)
-    )
+    (nop)
     (nop)
     (br $label$1)
     (unreachable)
