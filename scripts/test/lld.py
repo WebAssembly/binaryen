@@ -29,7 +29,6 @@ def test_wasm_emscripten_finalize():
     mem_file = wast_path + '.mem'
     extension_arg_map = {
       '.out': [],
-      '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
       '.mem.out': ['--separate-data-segments', mem_file],
     }
     for ext, ext_args in extension_arg_map.items():
