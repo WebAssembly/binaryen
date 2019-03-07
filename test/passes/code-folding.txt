@@ -142,6 +142,7 @@
 )
 (module
  (type $0 (func))
+ (type $1 (func (param i32)))
  (global $global$0 (mut i32) (i32.const 10))
  (func $determinism (; 0 ;) (type $0)
   (block $folding-inner0
@@ -180,5 +181,26 @@
    )
   )
   (unreachable)
+ )
+ (func $careful-of-the-switch (; 1 ;) (type $1) (param $0 i32)
+  (block $label$1
+   (block $label$3
+    (block $label$5
+     (block $label$7
+      (br_table $label$3 $label$7
+       (i32.const 0)
+      )
+     )
+     (br $label$1)
+    )
+    (block $label$8
+     (br_table $label$3 $label$8
+      (i32.const 0)
+     )
+    )
+    (br $label$1)
+   )
+   (unreachable)
+  )
  )
 )

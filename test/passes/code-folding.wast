@@ -198,5 +198,26 @@
   )
   (unreachable)
  )
+ (func $careful-of-the-switch (param $0 i32)
+  (block $label$1
+    (block $label$3
+      (block $label$5
+       (block $label$7 ;;  this is block is equal to $label$8 when accounting for the internal 7/8 difference
+        (br_table $label$3 $label$7 ;; the reference to $label$3 must remain valid, cannot hoist out of it!
+         (i32.const 0)
+        )
+       )
+       (br $label$1)
+      )
+      (block $label$8
+       (br_table $label$3 $label$8
+        (i32.const 0)
+       )
+      )
+      (br $label$1)
+    )
+    (unreachable)
+  )
+ )
 )
 
