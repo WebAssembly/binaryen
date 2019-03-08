@@ -428,11 +428,11 @@ def main():
   update_example_tests()
   update_wasm_dis_tests()
   update_wasm_merge_tests()
-  update_binaryen_js_tests()
   update_ctor_eval_tests()
   update_wasm2js_tests()
   update_metadce_tests()
   update_reduce_tests()
+  update_binaryen_js_tests()
 
   print '\n[ success! ]'
 

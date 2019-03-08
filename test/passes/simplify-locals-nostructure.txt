@@ -123,9 +123,7 @@
    )
    (block $block
     (nop)
-    (local.set $x
-     (local.get $x)
-    )
+    (nop)
    )
   )
   (local.get $x)

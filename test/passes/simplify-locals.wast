@@ -1514,4 +1514,35 @@
     (local.get $2)
    )
   )
+  (func $tee-chain
+    (param $x i32)
+    (param $z i32)
+    (param $t1 i32)
+    (param $t2 i32)
+    (param $t3 i32)
+    (result i32)
+    (local.set $x
+      (local.get $x)
+    )
+    (local.set $z
+      (local.tee $z
+        (i32.const 10)
+      )
+    )
+    (local.set $z
+      (local.tee $z
+        (i32.const 10)
+      )
+    )
+    (local.set $t1
+      (local.tee $t2
+        (local.tee $t3
+          (local.tee $t1
+            (call $tee-chain (local.get $x) (local.get $z) (local.get $t1) (local.get $t2) (local.get $t3))
+          )
+        )
+      )
+    )
+    (call $tee-chain (local.get $x) (local.get $z) (local.get $t1) (local.get $t2) (local.get $t3))
+  )
 )

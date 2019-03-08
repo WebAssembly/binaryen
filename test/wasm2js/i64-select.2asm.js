@@ -33,12 +33,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function $2() {
-  var i64toi32_i32$3 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
+  var i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$2 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   i64toi32_i32$4 = 1;
   i64toi32_i32$3 = (wasm2js_i32$0 = 4294967295, wasm2js_i32$1 = 0, wasm2js_i32$2 = i64toi32_i32$4, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1);
   i64toi32_i32$2 = (wasm2js_i32$0 = 4294967295, wasm2js_i32$1 = 0, wasm2js_i32$2 = i64toi32_i32$4, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1);
-  i64toi32_i32$2 = i64toi32_i32$2;
-  i64toi32_i32$3 = i64toi32_i32$3;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$2;
   return i64toi32_i32$3 | 0;
  }

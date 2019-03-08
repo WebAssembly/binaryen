@@ -78,15 +78,12 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = 0;
   $6$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$1 = $0_1;
   $10 = +(i64toi32_i32$1 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0);
   i64toi32_i32$0 = $6$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$1 = 6;
   $21 = +(i64toi32_i32$1 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0);
   i64toi32_i32$0 = $7$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$1 = $7_1;
   i64toi32_i32$3 = $10 + (+Math_fround(-.30000001192092896) + ($2_1 + (+(40 >>> 0) + (+(4294967289 | 0) + (+Math_fround(5.5) + ($21 + (+(i64toi32_i32$1 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0) + 8.0)))))));
   if (Math_abs(i64toi32_i32$3) >= 1.0) {
@@ -94,9 +91,6 @@ function asmFunc(global, env, buffer) {
    $15 = $14;
   } else $15 = 0;
   i64toi32_i32$0 = $15;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$1 = ~~i64toi32_i32$3 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;

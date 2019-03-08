@@ -84,7 +84,6 @@ function asmFunc(global, env, buffer) {
    dummy();
    $2_1 = 11;
    if ($0) break block;
-   $2_1 = $2_1;
   };
   return $2_1 | 0;
  }

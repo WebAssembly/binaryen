@@ -212,12 +212,11 @@ function asmFunc(global, env, buffer) {
  function copysign64($0, $1_1) {
   $0 = +$0;
   $1_1 = +$1_1;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
   wasm2js_i32$0 = 0;
   wasm2js_f64$0 = $0;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
   i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
   i64toi32_i32$1 = 2147483647;
   i64toi32_i32$3 = 4294967295;
@@ -228,7 +227,6 @@ function asmFunc(global, env, buffer) {
   wasm2js_f64$0 = $1_1;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
   i64toi32_i32$1 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
   i64toi32_i32$2 = 2147483648;
   i64toi32_i32$3 = 0;
@@ -240,7 +238,6 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $7$hi;
   i64toi32_i32$3 = $7_1;
   i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
   wasm2js_i32$0 = 0;
   wasm2js_i32$1 = i64toi32_i32$1 | i64toi32_i32$3 | 0;
   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
@@ -301,7 +298,6 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
   return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 | 0)));
  }
  
@@ -310,7 +306,6 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
   return +(+($0 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 | 0));
  }
  
@@ -319,7 +314,6 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
   return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0)));
  }
  
@@ -328,59 +322,54 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
   return +(+($0 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0));
  }
  
  function $47($0) {
   $0 = Math_fround($0);
-  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $3_1 = 0, $4_1 = 0;
+  var i64toi32_i32$0 = Math_fround(0), $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
    if (i64toi32_i32$0 > Math_fround(0.0)) $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
    $4_1 = $3_1;
   } else $4_1 = 0;
   i64toi32_i32$1 = $4_1;
-  i64toi32_i32$1 = i64toi32_i32$1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $48($0) {
   $0 = +$0;
-  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $3_1 = 0, $4_1 = 0;
+  var i64toi32_i32$0 = 0.0, $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
    if (i64toi32_i32$0 > 0.0) $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
    $4_1 = $3_1;
   } else $4_1 = 0;
   i64toi32_i32$1 = $4_1;
-  i64toi32_i32$1 = i64toi32_i32$1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $49($0) {
   $0 = Math_fround($0);
-  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $3_1 = 0, $4_1 = 0;
+  var i64toi32_i32$0 = Math_fround(0), $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
    if (i64toi32_i32$0 > Math_fround(0.0)) $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
    $4_1 = $3_1;
   } else $4_1 = 0;
   i64toi32_i32$1 = $4_1;
-  i64toi32_i32$1 = i64toi32_i32$1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $50($0) {
   $0 = +$0;
-  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $3_1 = 0, $4_1 = 0;
+  var i64toi32_i32$0 = 0.0, $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
    if (i64toi32_i32$0 > 0.0) $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
    $4_1 = $3_1;
   } else $4_1 = 0;
   i64toi32_i32$1 = $4_1;
-  i64toi32_i32$1 = i64toi32_i32$1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  

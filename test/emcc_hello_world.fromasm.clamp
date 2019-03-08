@@ -2083,6 +2083,9 @@
   (local $48 i32)
   (local $49 i32)
   (local $50 i32)
+  (local.set $4
+   (i32.const 672)
+  )
   (local.set $28
    (global.get $STACKTOP)
   )
@@ -2128,7 +2131,7 @@
   (local.set $38
    (local.tee $25
     (i32.add
-     (local.tee $4
+     (local.tee $19
       (i32.add
        (local.get $13)
        (i32.const 536)
@@ -2140,13 +2143,13 @@
   )
   (local.set $39
    (i32.add
-    (local.get $4)
+    (local.get $19)
     (i32.const 39)
    )
   )
   (local.set $33
    (i32.add
-    (local.tee $4
+    (local.tee $19
      (i32.add
       (local.get $13)
       (i32.const 576)
@@ -2157,7 +2160,7 @@
   )
   (local.set $40
    (i32.add
-    (local.get $4)
+    (local.get $19)
     (i32.const 11)
    )
   )
@@ -2213,8 +2216,8 @@
     (i32.const 8)
    )
   )
-  (local.set $4
-   (i32.const 672)
+  (local.set $19
+   (i32.const 0)
   )
   (block $label$break$L343
    (block $__rjti$9
@@ -6673,7 +6676,7 @@
        )
        (loop $while-in130
         (if
-         (local.tee $19
+         (local.tee $4
           (i32.load
            (i32.add
             (i32.shl
@@ -6693,7 +6696,7 @@
             )
             (local.get $2)
            )
-           (local.get $19)
+           (local.get $4)
            (local.get $1)
           )
           (br_if $while-in130

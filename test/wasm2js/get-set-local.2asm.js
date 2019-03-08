@@ -31,10 +31,7 @@ function asmFunc(global, env, buffer) {
   r$hi = r$hi | 0;
   var i64toi32_i32$0 = 0, $9$hi = 0;
   i64toi32_i32$0 = r$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  i64toi32_i32$0 = i64toi32_i32$0;
   $9$hi = i64toi32_i32$0;
   i64toi32_i32$0 = r$hi;
   i64toi32_i32$0 = $9$hi;

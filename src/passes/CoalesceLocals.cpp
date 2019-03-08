@@ -75,6 +75,10 @@ struct CoalesceLocals : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor
     interferences[low * numLocals + high] = 1;
   }
 
+  void unInterfere(Index i, Index j) {
+    interferences[std::min(i, j) * numLocals + std::max(i, j)] = 0;
+  }
+
   bool interferes(Index i, Index j) {
     return interferences[std::min(i, j) * numLocals + std::max(i, j)];
   }

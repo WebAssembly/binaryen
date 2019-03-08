@@ -121,7 +121,6 @@ function asmFunc(global, env, buffer) {
         i64toi32_i32$2 = 0;
         i64toi32_i32$5 = (i64toi32_i32$2 >>> 0 < i >>> 0) + i$hi | 0;
         i64toi32_i32$5 = 0 - i64toi32_i32$5 | 0;
-        i64toi32_i32$5 = i64toi32_i32$5;
         $7_1 = i64toi32_i32$2 - i | 0;
         $7$hi = i64toi32_i32$5;
         break switch_;
@@ -133,7 +132,6 @@ function asmFunc(global, env, buffer) {
      };
     };
     i64toi32_i32$5 = j$hi;
-    i64toi32_i32$5 = i64toi32_i32$5;
     $7_1 = j;
     $7$hi = i64toi32_i32$5;
     break switch_;
@@ -143,7 +141,6 @@ function asmFunc(global, env, buffer) {
    $7$hi = i64toi32_i32$5;
   };
   i64toi32_i32$5 = $7$hi;
-  i64toi32_i32$5 = i64toi32_i32$5;
   i64toi32_i32$2 = $7_1;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$5;
   return i64toi32_i32$2 | 0;

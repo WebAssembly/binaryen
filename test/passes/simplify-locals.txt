@@ -1690,4 +1690,33 @@
    (i32.const -5417091)
   )
  )
+ (func $tee-chain (; 28 ;) (type $FUNCSIG$iiiiii) (param $x i32) (param $z i32) (param $t1 i32) (param $t2 i32) (param $t3 i32) (result i32)
+  (nop)
+  (drop
+   (i32.const 10)
+  )
+  (nop)
+  (local.set $t2
+   (local.tee $t3
+    (local.tee $t1
+     (call $tee-chain
+      (local.get $x)
+      (local.tee $z
+       (i32.const 10)
+      )
+      (local.get $t1)
+      (local.get $t2)
+      (local.get $t3)
+     )
+    )
+   )
+  )
+  (call $tee-chain
+   (local.get $x)
+   (local.get $z)
+   (local.get $t1)
+   (local.get $t2)
+   (local.get $t3)
+  )
+ )
 )

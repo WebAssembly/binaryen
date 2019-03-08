@@ -46,6 +46,8 @@ struct GetLocalCounter : public PostWalker<GetLocalCounter> {
   }
 };
 
+// Removes trivially unneeded sets: sets for whom there is no possible get, and
+// sets of the same value immediately.
 struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
   PassOptions& passOptions;
 
@@ -64,19 +66,42 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
   bool removed = false;
 
   void visitSetLocal(SetLocal *curr) {
+    // If no possible uses, remove.
     if (getLocalCounter->num[curr->index] == 0) {
-      auto* value = curr->value;
-      if (curr->isTee()) {
-        this->replaceCurrent(value);
-      } else if (EffectAnalyzer(passOptions, curr->value).hasSideEffects()) {
-        Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
-        drop->value = value;
-        drop->finalize();
-      } else {
-        ExpressionManipulator::nop(curr);
-      }
-      removed = true;
+      remove(curr);
     }
+    // If setting the same value as we already have, remove.
+    auto* value = curr->value;
+    while (true) {
+      if (auto* set = value->dynCast<SetLocal>()) {
+        if (set->index == curr->index) {
+          remove(curr);
+        } else {
+          // Handle tee chains.
+          value = set->value;
+          continue;
+        }
+      } else if (auto* get = value->dynCast<GetLocal>()) {
+        if (get->index == curr->index) {
+          remove(curr);
+        }
+      }
+      break;
+    }
+  }
+
+  void remove(SetLocal* set) {
+    auto* value = set->value;
+    if (set->isTee()) {
+      replaceCurrent(value);
+    } else if (EffectAnalyzer(passOptions, set->value).hasSideEffects()) {
+      Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(set);
+      drop->value = value;
+      drop->finalize();
+    } else {
+      ExpressionManipulator::nop(set);
+    }
+    removed = true;
   }
 };
 
