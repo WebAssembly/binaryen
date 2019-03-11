@@ -101,6 +101,11 @@ struct OptimizationOptions : public ToolOptions {
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.lowMemoryUnused = true;
+                })
+           .add("--pass-arg", "-pa", "An argument passed along to optimization passes being run.",
+                Options::Arguments::N,
+                [this](Options*, const std::string& argument) {
+                  passOptions.arguments.push_back(argument);
                 });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {

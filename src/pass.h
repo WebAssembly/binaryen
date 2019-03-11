@@ -76,6 +76,8 @@ struct PassOptions {
   bool debugInfo = false;
   // Which wasm features to accept, and be allowed to use.
   FeatureSet features = FeatureSet::All;
+  // Arbitrary string arguments from the commandline, which we forward to passes.
+  std::vector<std::string> arguments;
 
   void setDefaultOptimizationOptions() {
     // -Os is our default

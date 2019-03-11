@@ -1,0 +1,13 @@
+(module
+ (type $0 (func))
+ (export "foo" (func $foo))
+ (func $foo (; 0 ;) (type $0)
+  (call $bar)
+ )
+ (func $bar (; 1 ;) (type $0)
+  (unreachable)
+ )
+ (func $other (; 2 ;) (type $0)
+  (unreachable)
+ )
+)
