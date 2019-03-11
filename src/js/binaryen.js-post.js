@@ -2117,7 +2117,7 @@ Module['getExpressionInfo'] = function(expr) {
             Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
             value = new Array(16);
             for (var i = 0 ; i < 16; i++) {
-              value[i] = HEAP8[tempBuffer + i];
+              value[i] = HEAPU8[tempBuffer + i];
             }
           });
           break;
@@ -2238,7 +2238,7 @@ Module['getExpressionInfo'] = function(expr) {
         Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
         var mask = new Array(16);
         for (var i = 0 ; i < 16; i++) {
-          mask[i] = HEAP8[tempBuffer + i];
+          mask[i] = HEAPU8[tempBuffer + i];
         }
         return {
           'id': id,
