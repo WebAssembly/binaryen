@@ -46,14 +46,8 @@ public:
   // and restore functions.
   void replaceStackPointerGlobal();
 
-  // Create thunks to support emscripten's addFunction functionality. Creates (#
-  // of reserved function pointers) thunks for each indirectly called function
-  // signature.
-  void generateJSCallThunks(unsigned numReservedFunctionPointers);
-
   std::string generateEmscriptenMetadata(
-      Address staticBump, std::vector<Name> const& initializerFunctions,
-      unsigned numReservedFunctionPointers);
+    Address staticBump, std::vector<Name> const& initializerFunctions);
 
   void fixInvokeFunctionNames();
 
