@@ -1616,6 +1616,15 @@ double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.getf64();
 }
+void BinaryenConstGetValueV128(BinaryenExpressionRef expr, uint8_t* out) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueV128(expressions[" << expressions[expr] << "], " << out << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  memcpy(out, static_cast<Const*>(expression)->value.getv128().data(), 16);
+}
 // Unary
 BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
@@ -1945,7 +1954,7 @@ BinaryenExpressionRef BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr) {
 }
 void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t *mask) {
   if (tracing) {
-    std::cout << "  BinaryenSIMDShuffleGetMask(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenSIMDShuffleGetMask(expressions[" << expressions[expr] << "], " << mask << ");\n";
   }
 
   auto* expression = (Expression*)expr;
@@ -3065,6 +3074,12 @@ int atexit(void (*function)(void)) {
 EMSCRIPTEN_KEEPALIVE
 size_t BinaryenSizeofLiteral(void) {
   return sizeof(Literal);
+}
+
+// Returns the size of an allocate and write result object.
+EMSCRIPTEN_KEEPALIVE
+size_t BinaryenSizeofAllocateAndWriteResult(void) {
+  return sizeof(BinaryenModuleAllocateAndWriteResult);
 }
 
 #endif
