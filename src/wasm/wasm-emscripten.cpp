@@ -157,6 +157,10 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
 
 void EmscriptenGlueGenerator::generateStackInitialization(Address addr) {
   auto* stackPointer = getStackPointerGlobal();
+  if (stackPointer->imported())
+    Fatal() << "stack pointer not assignable becasue it is imported";
+  if (!stackPointer->init || !stackPointer->init->is<Const>())
+    Fatal() << "stack pointer global is not assignable";
   stackPointer->init->cast<Const>()->value = Literal(int32_t(addr));
 }
 
