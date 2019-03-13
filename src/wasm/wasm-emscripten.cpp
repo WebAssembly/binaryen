@@ -47,10 +47,15 @@ void addExportedFunction(Module& wasm, Function* function) {
 }
 
 Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
-  // Assumption: first global is __stack_pointer
-  // TODO(sbc): Once mutable globals are a thing we shouldn't need this
-  // at all since we can simply export __stack_pointer.
-  return wasm.globals[0].get();
+  // Assumption: The first non-imported global is global is __stack_pointer
+  // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
+  // linker could export it by name?
+  for (auto& g : wasm.globals) {
+    if (!g->imported()) {
+      return g.get();
+    }
+  }
+  Fatal() << "stack pointer global not found";
 }
 
 Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
@@ -157,8 +162,7 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
 
 void EmscriptenGlueGenerator::generateStackInitialization(Address addr) {
   auto* stackPointer = getStackPointerGlobal();
-  if (stackPointer->imported())
-    Fatal() << "stack pointer not assignable becasue it is imported";
+  assert(!stackPointer->imported());
   if (!stackPointer->init || !stackPointer->init->is<Const>())
     Fatal() << "stack pointer global is not assignable";
   stackPointer->init->cast<Const>()->value = Literal(int32_t(addr));
