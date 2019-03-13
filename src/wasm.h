@@ -956,7 +956,7 @@ private:
   std::map<Name, Global*> globalsMap;
 
 public:
-  Module() = default;;
+  Module() = default;
 
   FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);
