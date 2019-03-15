@@ -138,6 +138,7 @@ void PassRegistry::registerPasses() {
   registerPass("strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("strip-debug", "strip debug info (including the names section)", createStripDebugPass);
   registerPass("strip-producers", "strip the wasm producers section", createStripProducersPass);
+  registerPass("strip-target-features", "strip the wasm target features section", createStripTargetFeaturesPass);
   registerPass("trap-mode-clamp", "replace trapping operations with clamping semantics", createTrapModeClamp);
   registerPass("trap-mode-js", "replace trapping operations with js semantics", createTrapModeJS);
   registerPass("untee", "removes local.tees, replacing them with sets and gets", createUnteePass);

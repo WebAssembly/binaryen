@@ -88,6 +88,7 @@ Pass* createSimplifyLocalsNoStructurePass();
 Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createStripDebugPass();
 Pass* createStripProducersPass();
+Pass* createStripTargetFeaturesPass();
 Pass* createSouperifyPass();
 Pass* createSouperifySingleUsePass();
 Pass* createSpillPointersPass();
