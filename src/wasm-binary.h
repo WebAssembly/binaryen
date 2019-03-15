@@ -345,6 +345,7 @@ extern const char* SourceMapUrl;
 extern const char* Dylink;
 extern const char* Linking;
 extern const char* Producers;
+extern const char* TargetFeatures;
 
 enum Subsection {
   NameFunction = 1,

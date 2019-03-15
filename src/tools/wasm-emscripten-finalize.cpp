@@ -204,6 +204,7 @@ int main(int argc, const char *argv[]) {
       legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
                             : ABI::LegalizationLevel::Minimal
     ));
+    passRunner.add("strip-target-features");
     passRunner.run();
   }
 
