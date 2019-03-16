@@ -27,7 +27,8 @@ struct FeatureSet {
     TruncSat = 1 << 2,
     SIMD = 1 << 3,
     BulkMemory = 1 << 4,
-    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory
+    SignExt = 1 << 5,
+    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory | SignExt
   };
 
   FeatureSet() : features(MVP) {}
@@ -40,6 +41,7 @@ struct FeatureSet {
   bool hasTruncSat() const { return features & TruncSat; }
   bool hasSIMD() const { return features & SIMD; }
   bool hasBulkMemory() const { return features & BulkMemory; }
+  bool hasSignExt() const { return features & SignExt; }
   bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
@@ -49,6 +51,7 @@ struct FeatureSet {
   void setTruncSat(bool v = true) { set(TruncSat, v); }
   void setSIMD(bool v = true) { set(SIMD, v); }
   void setBulkMemory(bool v = true) { set(BulkMemory, v); }
+  void setSignExt(bool v = true) { set(SignExt, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   bool operator<=(const FeatureSet& other) {
