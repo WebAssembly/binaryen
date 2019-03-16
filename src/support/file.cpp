@@ -21,6 +21,17 @@
 #include <cstdint>
 #include <limits>
 
+std::vector<char> wasm::read_stdin(Flags::DebugOption debug) {
+  if (debug == Flags::Debug) std::cerr << "Loading stdin..." << std::endl;
+  std::vector<char> input;
+  char c;
+  while (std::cin.get(c) && !std::cin.eof()) {
+    input.push_back(c);
+  }
+  return input;
+}
+
+
 template<typename T>
 T wasm::read_file(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
   if (debug == Flags::Debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
@@ -84,4 +95,3 @@ size_t wasm::file_size(std::string filename) {
   std::ifstream infile(filename, std::ifstream::ate | std::ifstream::binary);
   return infile.tellg();
 }
-

@@ -30,18 +30,21 @@
 
 namespace wasm {
 
-void ModuleReader::readText(std::string filename, Module& wasm) {
-  if (debug) std::cerr << "reading text from " << filename << "\n";
-  auto input(read_file<std::string>(filename, Flags::Text, debug ? Flags::Debug : Flags::Release));
+static void readTextData(std::string& input, Module& wasm) {
   SExpressionParser parser(const_cast<char*>(input.c_str()));
   Element& root = *parser.root;
   SExpressionWasmBuilder builder(wasm, *root[0]);
+
 }
 
-void ModuleReader::readBinary(std::string filename, Module& wasm,
-                              std::string sourceMapFilename) {
-  if (debug) std::cerr << "reading binary from " << filename << "\n";
-  auto input(read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release));
+void ModuleReader::readText(std::string filename, Module& wasm) {
+  if (debug) std::cerr << "reading text from " << filename << "\n";
+  auto input(read_file<std::string>(filename, Flags::Text, debug ? Flags::Debug : Flags::Release));
+  readTextData(input, wasm);
+}
+
+static void readBinaryData(std::vector<char>& input, Module& wasm,
+                           std::string sourceMapFilename, bool debug) {
   std::unique_ptr<std::ifstream> sourceMapStream;
   WasmBinaryBuilder parser(wasm, input, debug);
   if (sourceMapFilename.size()) {
@@ -53,6 +56,13 @@ void ModuleReader::readBinary(std::string filename, Module& wasm,
   if (sourceMapStream) {
     sourceMapStream->close();
   }
+}
+
+void ModuleReader::readBinary(std::string filename, Module& wasm,
+                              std::string sourceMapFilename) {
+  if (debug) std::cerr << "reading binary from " << filename << "\n";
+  auto input(read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release));
+  readBinaryData(input, wasm, sourceMapFilename, debug);
 }
 
 bool ModuleReader::isBinaryFile(std::string filename) {
@@ -75,6 +85,20 @@ void ModuleReader::read(std::string filename, Module& wasm,
       std::cerr << "Binaryen ModuleReader::read() - source map filename provided, but file appears to not be binary\n";
     }
     readText(filename, wasm);
+  }
+}
+
+void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
+  std::vector<char> input = read_stdin(debug ? Flags::Debug : Flags::Release);
+  if (input.size() >= 4 && input[0] == '\0' && input[1] == 'a' &&
+      input[2] == 's' && input[3] == 'm') {
+    readBinaryData(input, wasm, sourceMapFilename, debug);
+  } else {
+    std::ostringstream s;
+    s.write(input.data(), input.size());
+    s << '\0';
+    std::string input_str = s.str();
+    readTextData(input_str, wasm);
   }
 }
 

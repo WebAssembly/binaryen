@@ -45,6 +45,7 @@ public:
   // read text or binary, checking the contents for what it is
   void read(std::string filename, Module& wasm,
             std::string sourceMapFilename="");
+  void readStdin(Module& wasm, std::string sourceMapFilename="");
   // check whether a file is a wasm binary
   bool isBinaryFile(std::string filename);
 };

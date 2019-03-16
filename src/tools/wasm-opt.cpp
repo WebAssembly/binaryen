@@ -149,7 +149,11 @@ int main(int argc, const char* argv[]) {
     ModuleReader reader;
     reader.setDebug(options.debug);
     try {
-      reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
+      if (options.extra["infile"].size()) {
+        reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
+      } else {
+        reader.readStdin(wasm, inputSourceMapFilename);
+      }
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
