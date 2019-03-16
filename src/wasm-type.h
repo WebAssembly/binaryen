@@ -17,6 +17,8 @@
 #ifndef wasm_wasm_type_h
 #define wasm_wasm_type_h
 
+#include "wasm-features.h"
+
 namespace wasm {
 
 enum Type {
@@ -33,6 +35,7 @@ enum Type {
 
 const char* printType(Type type);
 unsigned getTypeSize(Type type);
+FeatureSet getFeatures(Type type);
 Type getType(unsigned size, bool float_);
 Type getReachableType(Type a, Type b);
 bool isConcreteType(Type type);

@@ -35,48 +35,9 @@
 #include "mixed_arena.h"
 #include "support/name.h"
 #include "wasm-type.h"
+#include "wasm-features.h"
 
 namespace wasm {
-
-struct FeatureSet {
-  enum Feature : uint32_t {
-    MVP = 0,
-    Atomics = 1 << 0,
-    MutableGlobals = 1 << 1,
-    TruncSat = 1 << 2,
-    SIMD = 1 << 3,
-    BulkMemory = 1 << 4,
-    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory
-  };
-
-  FeatureSet() : features(MVP) {}
-  FeatureSet(uint32_t features) : features(features) {}
-
-  bool isMVP() const { return features == MVP; }
-  bool has(Feature f) { return (features & f) == f; }
-  bool hasAtomics() const { return features & Atomics; }
-  bool hasMutableGlobals() const { return features & MutableGlobals; }
-  bool hasTruncSat() const { return features & TruncSat; }
-  bool hasSIMD() const { return features & SIMD; }
-  bool hasBulkMemory() const { return features & BulkMemory; }
-  bool hasAll() const { return features & All; }
-
-  void makeMVP() { features = MVP; }
-  void set(Feature f, bool v = true) { features = v ? (features | f) : (features & ~f); }
-  void setAtomics(bool v = true) { set(Atomics, v); }
-  void setMutableGlobals(bool v = true) { set(MutableGlobals, v); }
-  void setTruncSat(bool v = true) { set(TruncSat, v); }
-  void setSIMD(bool v = true) { set(SIMD, v); }
-  void setBulkMemory(bool v = true) { set(BulkMemory, v); }
-  void setAll(bool v = true) { features = v ? All : MVP; }
-
-  bool operator<=(const FeatureSet& other) {
-    return !(features & ~other.features);
-  }
-
-private:
-  uint32_t features;
-};
 
 // An index in a wasm module
 typedef uint32_t Index;
