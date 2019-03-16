@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import os
+import unittest
 import shutil
 import subprocess
 import sys
@@ -592,6 +593,16 @@ def run_gcc_tests():
       fail_if_not_identical_to_file(actual, expected)
 
 
+def run_unittest():
+  global num_failures
+  print '\n[ checking unit tests...]\n'
+
+  # equivalent to `python -m unittest discover -s . -v`
+  suite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
+  result = unittest.TextTestRunner(verbosity=2).run(suite)
+  num_failures += len(result.errors) + len(result.failures)
+
+
 # Run all the tests
 def main():
   run_help_tests()
@@ -618,6 +629,8 @@ def main():
   if options.run_gcc_tests:
     run_gcc_tests()
 
+  run_unittest()
+
   # Check/display the results
   if num_failures == 0:
     print '\n[ success! ]'
@@ -628,7 +641,7 @@ def main():
   if num_failures > 0:
     print '\n[ ' + str(num_failures) + ' failures! ]'
 
-  return num_failures
+  return 0 if num_failures == 0 else 1
 
 
 if __name__ == '__main__':
