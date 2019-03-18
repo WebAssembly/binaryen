@@ -54,7 +54,7 @@ struct FeatureSet {
   FeatureSet(uint32_t features) : features(features) {}
 
   bool isMVP() const { return features == MVP; }
-  bool has(Feature f) { return (features & f) == f; }
+  bool has(Feature f) const { return (features & f) == f; }
   bool hasAtomics() const { return features & Atomics; }
   bool hasMutableGlobals() const { return features & MutableGlobals; }
   bool hasTruncSat() const { return features & TruncSat; }
@@ -270,7 +270,7 @@ public:
   void finalize() {}
 
   template<class T>
-  bool is() {
+  bool is() const {
     return int(_id) == int(T::SpecificId);
   }
 
@@ -279,10 +279,21 @@ public:
     return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
   }
 
+  template <class T>
+  const T* dynCast() const {
+    return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
+  }
+
   template<class T>
   T* cast() {
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
+  }
+
+  template<class T>
+  const T* cast() const {
+    assert(int(_id) == int(T::SpecificId));
+    return (const T*)this;
   }
 };
 
