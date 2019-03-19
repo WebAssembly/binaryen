@@ -46,19 +46,21 @@ struct FeatureSet {
     TruncSat = 1 << 2,
     SIMD = 1 << 3,
     BulkMemory = 1 << 4,
-    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory
+    SignExt = 1 << 5,
+    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory | SignExt
   };
 
   FeatureSet() : features(MVP) {}
   FeatureSet(uint32_t features) : features(features) {}
 
   bool isMVP() const { return features == MVP; }
-  bool has(Feature f) { return (features & f) == f; }
+  bool has(Feature f) const { return (features & f) == f; }
   bool hasAtomics() const { return features & Atomics; }
   bool hasMutableGlobals() const { return features & MutableGlobals; }
   bool hasTruncSat() const { return features & TruncSat; }
   bool hasSIMD() const { return features & SIMD; }
   bool hasBulkMemory() const { return features & BulkMemory; }
+  bool hasSignExt() const { return features & SignExt; }
   bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
@@ -68,6 +70,7 @@ struct FeatureSet {
   void setTruncSat(bool v = true) { set(TruncSat, v); }
   void setSIMD(bool v = true) { set(SIMD, v); }
   void setBulkMemory(bool v = true) { set(BulkMemory, v); }
+  void setSignExt(bool v = true) { set(SignExt, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   bool operator<=(const FeatureSet& other) {
@@ -114,7 +117,6 @@ enum UnaryOp {
   PromoteFloat32, // f32 to f64
   DemoteFloat64, // f64 to f32
   ReinterpretInt32, ReinterpretInt64, // reinterpret bits to float
-  // The following sign-extention operators go along with wasm atomics support.
   // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
   // because the input integer is in an i64 value insetad of an i32 value.
   ExtendS8Int32, ExtendS16Int32, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64,
@@ -268,7 +270,7 @@ public:
   void finalize() {}
 
   template<class T>
-  bool is() {
+  bool is() const {
     return int(_id) == int(T::SpecificId);
   }
 
@@ -277,10 +279,21 @@ public:
     return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
   }
 
+  template <class T>
+  const T* dynCast() const {
+    return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
+  }
+
   template<class T>
   T* cast() {
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
+  }
+
+  template<class T>
+  const T* cast() const {
+    assert(int(_id) == int(T::SpecificId));
+    return (const T*)this;
   }
 };
 
@@ -956,7 +969,7 @@ private:
   std::map<Name, Global*> globalsMap;
 
 public:
-  Module() = default;;
+  Module() = default;
 
   FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);

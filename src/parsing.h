@@ -40,7 +40,7 @@ struct ParseException {
   ParseException(std::string text) : text(text), line(-1), col(-1) {}
   ParseException(std::string text, size_t line, size_t col) : text(text), line(line), col(col) {}
 
-  void dump(std::ostream& o) {
+  void dump(std::ostream& o) const {
     Colors::magenta(o);
     o << "[";
     Colors::red(o);
@@ -63,7 +63,7 @@ struct MapParseException {
   MapParseException() : text("unknown parse error") {}
   MapParseException(std::string text) : text(text) {}
 
-  void dump(std::ostream& o) {
+  void dump(std::ostream& o) const {
     Colors::magenta(o);
     o << "[";
     Colors::red(o);
