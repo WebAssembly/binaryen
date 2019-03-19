@@ -1081,12 +1081,17 @@ void FunctionValidator::visitHost(Host* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
+  FeatureSet typeFeatures = getFeatures(curr->result);
   for (auto type : curr->params) {
+    typeFeatures |= getFeatures(type);
     shouldBeTrue(isConcreteType(type), curr, "params must be concretely typed");
   }
   for (auto type : curr->vars) {
+    typeFeatures |= getFeatures(type);
     shouldBeTrue(isConcreteType(type), curr, "vars must be concretely typed");
   }
+  shouldBeTrue(typeFeatures <= info.features, curr,
+               "all used types should be allowed");
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
   if (curr->body->type != unreachable) {
