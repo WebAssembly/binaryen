@@ -228,7 +228,7 @@ public:
   void finalize() {}
 
   template<class T>
-  bool is() {
+  bool is() const {
     return int(_id) == int(T::SpecificId);
   }
 
@@ -237,10 +237,21 @@ public:
     return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
   }
 
+  template <class T>
+  const T* dynCast() const {
+    return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
+  }
+
   template<class T>
   T* cast() {
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
+  }
+
+  template<class T>
+  const T* cast() const {
+    assert(int(_id) == int(T::SpecificId));
+    return (const T*)this;
   }
 };
 
@@ -916,7 +927,7 @@ private:
   std::map<Name, Global*> globalsMap;
 
 public:
-  Module() = default;;
+  Module() = default;
 
   FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);
