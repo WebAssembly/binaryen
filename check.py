@@ -15,10 +15,10 @@
 # limitations under the License.
 
 import os
-import unittest
 import shutil
 import subprocess
 import sys
+import unittest
 
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
@@ -597,10 +597,12 @@ def run_unittest():
   global num_failures
   print '\n[ checking unit tests...]\n'
 
-  # equivalent to `python -m unittest discover -s . -v`
-  suite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
-  result = unittest.TextTestRunner(verbosity=2).run(suite)
+  # equivalent to `python -m unittest discover -s ./test -v`
+  suite = unittest.defaultTestLoader.discover(os.path.dirname(options.binaryen_test))
+  result = unittest.TextTestRunner(verbosity=2, failfast=options.abort_on_first_failure).run(suite)
   num_failures += len(result.errors) + len(result.failures)
+  if options.abort_on_first_failure and num_failures:
+    raise Exception("unittest failed")
 
 
 # Run all the tests
@@ -640,8 +642,9 @@ def main():
 
   if num_failures > 0:
     print '\n[ ' + str(num_failures) + ' failures! ]'
+    return 1
 
-  return 0 if num_failures == 0 else 1
+  return 0
 
 
 if __name__ == '__main__':
