@@ -1,6 +1,9 @@
 total
+ [exports]      : 1       
  [funcs]        : 1       
  [imports]      : 10      
+ [memory-data]  : 0       
+ [table-data]   : 0       
  [total]        : 1965    
  [vars]         : 9       
  binary         : 241     

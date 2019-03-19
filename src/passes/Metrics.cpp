@@ -66,6 +66,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     counts["[imports]"] = imports.getNumImports();
     // add functions
     counts["[funcs]"] = imports.getNumDefinedFunctions();
+    counts["[exports]"] = module->exports.size();
     // add memory and table
     if (module->memory.exists) {
       Index size = 0;
@@ -172,7 +173,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     o << title << "\n";
     for (auto* key : keys) {
       auto value = counts[key];
-      if (value == 0) continue;
+      if (value == 0 && key[0] != '[') continue;
       o << " " << left << setw(15) << key << ": " << setw(8)
         << value;
       if (lastCounts.count(key)) {

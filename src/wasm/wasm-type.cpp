@@ -15,6 +15,7 @@
  */
 
 #include "wasm-type.h"
+#include "wasm-features.h"
 
 #include <cstdlib>
 #include "compiler-support.h"
@@ -45,6 +46,13 @@ unsigned getTypeSize(Type type) {
     case Type::unreachable: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
+}
+
+FeatureSet getFeatures(Type type) {
+  if (type == v128) {
+    return FeatureSet::SIMD;
+  }
+  return FeatureSet();
 }
 
 Type getType(unsigned size, bool float_) {

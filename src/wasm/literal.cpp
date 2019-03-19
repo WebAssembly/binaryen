@@ -243,7 +243,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     case Type::i64: o << literal.i64; break;
     case Type::f32: literal.printFloat(o, literal.getf32()); break;
     case Type::f64: literal.printDouble(o, literal.getf64()); break;
-    case Type::v128: o << "i32 "; literal.printVec128(o, literal.getv128()); break;
+    case Type::v128: o << "i32x4 "; literal.printVec128(o, literal.getv128()); break;
     case Type::unreachable: WASM_UNREACHABLE();
   }
   restoreNormalColor(o);
