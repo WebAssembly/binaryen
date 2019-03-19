@@ -30,9 +30,11 @@ struct ExtractFunction : public Pass {
     bool found = false;
     for (auto& func : module->functions) {
       if (func->name != name) {
-        // wipe out all the contents
+        // Turn it into an import.
+        func->module = "env";
+        func->base = func->name;
         func->vars.clear();
-        func->body = module->allocator.alloc<Unreachable>();
+        func->body = nullptr;
       } else {
         found = true;
       }
