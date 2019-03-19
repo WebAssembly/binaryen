@@ -1,5 +1,7 @@
 global
+ [exports]      : 0       
  [funcs]        : 3       
+ [imports]      : 0       
  [memory-data]  : 9       
  [table-data]   : 3       
  [total]        : 3       
@@ -7,10 +9,12 @@ global
 func: empty
  [binary-bytes] : 3       
  [total]        : 1       
+ [vars]         : 0       
  nop            : 1       
 func: small
  [binary-bytes] : 9       
  [total]        : 5       
+ [vars]         : 0       
  block          : 1       
  const          : 1       
  drop           : 1       
@@ -84,30 +88,41 @@ func: ifs
  )
 )
 global
+ [exports]      : 0       
+ [funcs]        : 0       
+ [imports]      : 0       
+ [total]        : 0       
 (module
 )
 global
+ [exports]      : 2       
  [funcs]        : 3       
  [imports]      : 1       
+ [total]        : 0       
 func: func_a
  [binary-bytes] : 16      
  [total]        : 8       
+ [vars]         : 0       
  block          : 1       
  call           : 7       
 func: func_b
  [binary-bytes] : 22      
  [total]        : 11      
+ [vars]         : 0       
  block          : 1       
  call           : 10      
 func: func_c
  [binary-bytes] : 32      
  [total]        : 16      
+ [vars]         : 0       
  block          : 1       
  call           : 15      
 export: a (func_a)
  [removable-bytes-without-it]: 72      
+ [total]        : 0       
 export: b (func_b)
  [removable-bytes-without-it]: 18      
+ [total]        : 0       
 (module
  (type $FUNCSIG$v (func))
  (import "env" "waka" (func $waka))
@@ -153,17 +168,22 @@ export: b (func_b)
  )
 )
 global
+ [exports]      : 1       
  [funcs]        : 1       
  [imports]      : 1       
+ [total]        : 0       
 func: func_a
  [binary-bytes] : 12      
  [total]        : 6       
+ [vars]         : 0       
  block          : 1       
  call           : 5       
 export: a (func_a)
  [removable-bytes-without-it]: 7       
+ [total]        : 0       
 start: func_a
  [removable-bytes-without-it]: 3       
+ [total]        : 0       
 (module
  (type $FUNCSIG$v (func))
  (import "env" "waka" (func $waka))
@@ -178,15 +198,19 @@ start: func_a
  )
 )
 global
+ [exports]      : 0       
  [funcs]        : 1       
  [imports]      : 1       
+ [total]        : 0       
 func: func_a
  [binary-bytes] : 12      
  [total]        : 6       
+ [vars]         : 0       
  block          : 1       
  call           : 5       
 start: func_a
  [removable-bytes-without-it]: 67      
+ [total]        : 0       
 (module
  (type $FUNCSIG$v (func))
  (import "env" "waka" (func $waka))
@@ -200,6 +224,7 @@ start: func_a
  )
 )
 global
+ [exports]      : 1       
  [funcs]        : 1       
  [imports]      : 1       
  [total]        : 1       
@@ -207,9 +232,11 @@ global
 func: 0
  [binary-bytes] : 4       
  [total]        : 1       
+ [vars]         : 0       
  global.get     : 1       
 export: stackSave (0)
  [removable-bytes-without-it]: 74      
+ [total]        : 0       
 (module
  (type $0 (func (result i32)))
  (import "env" "STACKTOP" (global $gimport$0 i32))
