@@ -77,6 +77,11 @@ bool ModuleReader::isBinaryFile(std::string filename) {
 
 void ModuleReader::read(std::string filename, Module& wasm,
                         std::string sourceMapFilename) {
+  // empty filename means read from stdin
+  if (!filename.size()) {
+    readStdin(wasm, sourceMapFilename);
+    return;
+  }
   if (isBinaryFile(filename)) {
     readBinary(filename, wasm, sourceMapFilename);
   } else {
@@ -88,6 +93,8 @@ void ModuleReader::read(std::string filename, Module& wasm,
   }
 }
 
+// TODO: reading into a vector<char> then copying into a string is unnecessarily
+// inefficient. It would be better to read just once into a stringstream.
 void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
   std::vector<char> input = read_stdin(debug ? Flags::Debug : Flags::Release);
   if (input.size() >= 4 && input[0] == '\0' && input[1] == 'a' &&
@@ -101,6 +108,7 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
     readTextData(input_str, wasm);
   }
 }
+
 
 void ModuleWriter::writeText(Module& wasm, Output& output) {
   WasmPrinter::printModule(&wasm, output.getStream());
