@@ -39,6 +39,8 @@ namespace Flags {
   };
 }
 
+std::vector<char> read_stdin(Flags::DebugOption);
+
 template<typename T>
 T read_file(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug);
 // Declare the valid explicit specializations.
