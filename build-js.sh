@@ -635,6 +635,7 @@ export_function "_BinaryenConstGetValueI64Low"
 export_function "_BinaryenConstGetValueI64High"
 export_function "_BinaryenConstGetValueF32"
 export_function "_BinaryenConstGetValueF64"
+export_function "_BinaryenConstGetValueV128"
 
 # 'Unary' expression operations
 export_function "_BinaryenUnaryGetOp"

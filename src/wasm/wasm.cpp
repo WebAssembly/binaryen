@@ -32,6 +32,7 @@ const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
 const char* Linking = "linking";
 const char* Producers = "producers";
+const char* TargetFeatures = "target_features";
 }
 }
 

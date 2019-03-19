@@ -76,6 +76,14 @@ inline FeatureSet get(UnaryOp op) {
       ret.setSIMD();
       break;
     }
+    case ExtendS8Int32:
+    case ExtendS16Int32:
+    case ExtendS8Int64:
+    case ExtendS16Int64:
+    case ExtendS32Int64: {
+      ret.setSignExt();
+      break;
+    }
     default: {}
   }
   return ret;

@@ -48,7 +48,7 @@ namespace GlobalUtils {
     });
     return ret;
   }
-};
+}
 
 } // namespace wasm
 

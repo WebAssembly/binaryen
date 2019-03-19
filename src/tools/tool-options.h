@@ -39,6 +39,16 @@ struct ToolOptions : public Options {
              [this](Options *o, const std::string& arguments) {
                passOptions.features = FeatureSet::All;
              })
+        .add("--enable-sign-ext", "", "Enable sign extension operations",
+             Options::Arguments::Zero,
+             [this](Options *o, const std::string& arguments) {
+               passOptions.features.setSignExt();
+             })
+        .add("--disable-sign-ext", "", "Disable sign extension operations",
+             Options::Arguments::Zero,
+             [this](Options *o, const std::string& arguments) {
+               passOptions.features.setSignExt(false);
+             })
         .add("--enable-threads", "", "Enable atomic operations",
              Options::Arguments::Zero,
              [this](Options *o, const std::string& arguments) {
