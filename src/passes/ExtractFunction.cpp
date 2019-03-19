@@ -25,19 +25,7 @@ namespace wasm {
 
 struct ExtractFunction : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    Name name;
-    for (auto& arg : runner->options.arguments) {
-      if (arg.find("extract:") != std::string::npos) {
-        auto colon = arg.find(':');
-        if (colon != std::string::npos) {
-          name = arg.substr(colon + 1);
-          break;
-        }
-      }
-    }
-    if (!name.is()) {
-      Fatal() << "ExtractFunction usage:  wasm-opt --pass-arg=extract:FUNCTION_NAME\n";
-    }
+    Name name = runner->options.getArgument("extract", "ExtractFunction usage:  wasm-opt --pass-arg=extract:FUNCTION_NAME");
     std::cerr << "extracting " << name << "\n";
     bool found = false;
     for (auto& func : module->functions) {

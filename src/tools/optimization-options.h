@@ -102,10 +102,16 @@ struct OptimizationOptions : public ToolOptions {
                 [this](Options*, const std::string&) {
                   passOptions.lowMemoryUnused = true;
                 })
-           .add("--pass-arg", "-pa", "An argument passed along to optimization passes being run.",
+           .add("--pass-arg", "-pa", "An argument passed along to optimization passes being run. Must be in the form KEY:VALUE",
                 Options::Arguments::N,
                 [this](Options*, const std::string& argument) {
-                  passOptions.arguments.push_back(argument);
+                  auto colon = argument.find(':');
+                  if (colon == std::string::npos) {
+                    Fatal() << "--pass-arg value must be in the form of KEY:VALUE";
+                  }
+                  auto key = argument.substr(0, colon);
+                  auto value = argument.substr(colon + 1);
+                  passOptions.arguments[key] = value;
                 });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {

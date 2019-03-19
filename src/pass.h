@@ -77,7 +77,7 @@ struct PassOptions {
   // Which wasm features to accept, and be allowed to use.
   FeatureSet features = FeatureSet::All;
   // Arbitrary string arguments from the commandline, which we forward to passes.
-  std::vector<std::string> arguments;
+  std::map<std::string, std::string> arguments;
 
   void setDefaultOptimizationOptions() {
     // -Os is our default
@@ -93,6 +93,13 @@ struct PassOptions {
 
   static PassOptions getWithoutOptimization() {
     return PassOptions(); // defaults are to not optimize
+  }
+
+  std::string getArgument(std::string key, std::string errorTextIfMissing) {
+    if (arguments.count(key) == 0) {
+      Fatal() << errorTextIfMissing;
+    }
+    return arguments[key];
   }
 };
 
