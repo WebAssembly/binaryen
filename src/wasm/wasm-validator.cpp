@@ -235,6 +235,7 @@ public:
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
+  void visitConst(Const* curr);
   void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal* curr);
   void visitGetGlobal(GetGlobal* curr);
@@ -473,6 +474,11 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
       getStream() << "(on argument " << i << ")\n";
     }
   }
+}
+
+void FunctionValidator::visitConst(Const* curr) {
+  shouldBeTrue(getFeatures(curr->type) <= info.features, curr,
+               "all used features should be allowed");
 }
 
 void FunctionValidator::visitGetLocal(GetLocal* curr) {
@@ -1270,6 +1276,8 @@ static void validateExports(Module& module, ValidationInfo& info) {
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
+    info.shouldBeTrue(getFeatures(curr->type) <= info.features, curr->name,
+                      "all used types should be allowed");
     info.shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
     info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
     if (!info.shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !info.quiet) {
