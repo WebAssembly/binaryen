@@ -18,6 +18,7 @@ import os
 import shutil
 import subprocess
 import sys
+import unittest
 
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
@@ -25,9 +26,13 @@ from scripts.test.shared import (
     WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_METADCE,
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
-    has_vanilla_llvm, minify_check, num_failures, options, tests,
-    requested, warnings, has_shell_timeout, fail_if_not_identical_to_file
+    has_vanilla_llvm, minify_check, options, tests, requested, warnings,
+    has_shell_timeout, fail_if_not_identical_to_file
 )
+
+# For shared.num_failures. Cannot import directly because modifications made in
+# shared.py would not affect the version imported here.
+import scripts.test.shared as shared
 
 import scripts.test.asm2wasm as asm2wasm
 import scripts.test.lld as lld
@@ -592,6 +597,17 @@ def run_gcc_tests():
       fail_if_not_identical_to_file(actual, expected)
 
 
+def run_unittest():
+  print '\n[ checking unit tests...]\n'
+
+  # equivalent to `python -m unittest discover -s ./test -v`
+  suite = unittest.defaultTestLoader.discover(os.path.dirname(options.binaryen_test))
+  result = unittest.TextTestRunner(verbosity=2, failfast=options.abort_on_first_failure).run(suite)
+  shared.num_failures += len(result.errors) + len(result.failures)
+  if options.abort_on_first_failure and shared.num_failures:
+    raise Exception("unittest failed")
+
+
 # Run all the tests
 def main():
   run_help_tests()
@@ -618,17 +634,20 @@ def main():
   if options.run_gcc_tests:
     run_gcc_tests()
 
+  run_unittest()
+
   # Check/display the results
-  if num_failures == 0:
+  if shared.num_failures == 0:
     print '\n[ success! ]'
 
   if warnings:
     print '\n' + '\n'.join(warnings)
 
-  if num_failures > 0:
-    print '\n[ ' + str(num_failures) + ' failures! ]'
+  if shared.num_failures > 0:
+    print '\n[ ' + str(shared.num_failures) + ' failures! ]'
+    return 1
 
-  return num_failures
+  return 0
 
 
 if __name__ == '__main__':
