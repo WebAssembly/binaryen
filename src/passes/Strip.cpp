@@ -47,11 +47,15 @@ struct Strip : public Pass {
       ),
       sections.end()
     );
-    // Clean up internal data structures.
-    module->clearDebugInfo();
-    for (auto& func : module->functions) {
-      func->clearNames();
-      func->clearDebugInfo();
+    // If we're cleaning up debug info, clear on the function and module too.
+    UserSection temp;
+    temp.name = BinaryConsts::UserSections::Name;
+    if (decider(temp)) {
+      module->clearDebugInfo();
+      for (auto& func : module->functions) {
+        func->clearNames();
+        func->clearDebugInfo();
+      }
     }
   }
 };
@@ -71,4 +75,9 @@ Pass *createStripProducersPass() {
   });
 }
 
+Pass *createStripTargetFeaturesPass() {
+  return new Strip([&](const UserSection& curr) {
+    return curr.name == BinaryConsts::UserSections::TargetFeatures;
+  });
+}
 } // namespace wasm

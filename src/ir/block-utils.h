@@ -59,7 +59,7 @@ namespace BlockUtils {
   inline Expression* simplifyToContentsWithPossibleTypeChange(Block* block, T* parent) {
     return simplifyToContents(block, parent, true);
   }
-};
+}
 
 } // namespace wasm
 

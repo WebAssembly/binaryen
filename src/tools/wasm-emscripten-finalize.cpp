@@ -47,7 +47,6 @@ int main(int argc, const char *argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   bool legalizeJavaScriptFFI = true;
-  unsigned numReservedFunctionPointers = 0;
   uint64_t globalBase = INVALID_BASE;
   uint64_t initialStackPointer = INVALID_BASE;
   Options options("wasm-emscripten-finalize",
@@ -69,14 +68,6 @@ int main(int argc, const char *argv[]) {
            Options::Arguments::Zero,
            [&emitBinary](Options*, const std::string& ) {
              emitBinary = false;
-           })
-      .add("--emscripten-reserved-function-pointers", "",
-           "Number of reserved function pointers for emscripten addFunction "
-           "support",
-           Options::Arguments::One,
-           [&numReservedFunctionPointers](Options *,
-                                          const std::string &argument) {
-             numReservedFunctionPointers = std::stoi(argument);
            })
       .add("--global-base", "", "The address at which static globals were placed",
            Options::Arguments::One,
@@ -203,7 +194,6 @@ int main(int argc, const char *argv[]) {
   }
 
   generator.generateDynCallThunks();
-  generator.generateJSCallThunks(numReservedFunctionPointers);
 
   // Legalize the wasm.
   {
@@ -214,11 +204,12 @@ int main(int argc, const char *argv[]) {
       legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
                             : ABI::LegalizationLevel::Minimal
     ));
+    passRunner.add("strip-target-features");
     passRunner.run();
   }
 
   // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
+  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).

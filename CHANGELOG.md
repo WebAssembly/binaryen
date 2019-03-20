@@ -12,6 +12,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Remove jsCall generation from wasm-emscripten-finalize.  This is not needed
+  as of https://github.com/emscripten-core/emscripten/pull/8255.
+
 ### BREAKING CHANGES (old to new)
 
 v.55

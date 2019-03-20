@@ -302,24 +302,24 @@
        (br_if $label$1
         (i32.const -1)
        )
-       (v128.const i32 0x0b00c0b2 0x1f010200 0xff00ff01 0xff0fed00)
+       (v128.const i32x4 0x0b00c0b2 0x1f010200 0xff00ff01 0xff0fed00)
       )
      )
     )
    )
    (local.set $5
-    (v128.const i32 0x80190000 0xeb00021b 0x7f001a4a 0x005d1280)
+    (v128.const i32x4 0x80190000 0xeb00021b 0x7f001a4a 0x005d1280)
    )
   )
  )
  (func $func_8_invoker (; 9 ;) (type $FUNCSIG$v)
   (call $func_8
    (i32.const 68)
-   (v128.const i32 0x25373870 0x313c793d 0x150c0902 0x1f4c030a)
+   (v128.const i32x4 0x25373870 0x313c793d 0x150c0902 0x1f4c030a)
    (i32.const 420088586)
-   (v128.const i32 0xfffe1b09 0xfffe0000 0x5f0b1615 0x463dffe6)
+   (v128.const i32x4 0xfffe1b09 0xfffe0000 0x5f0b1615 0x463dffe6)
    (i64.const 2055)
-   (v128.const i32 0x00000000 0x43e00000 0x00000000 0x406c6000)
+   (v128.const i32x4 0x00000000 0x43e00000 0x00000000 0x406c6000)
   )
  )
  (func $func_10 (; 10 ;) (type $FUNCSIG$vd) (param $0 f64)
@@ -366,7 +366,7 @@
      (global.get $hangLimit)
     )
     (return
-     (v128.const i32 0xff040000 0xff371d46 0x6f000002 0x00004318)
+     (v128.const i32x4 0xff040000 0xff371d46 0x6f000002 0x00004318)
     )
    )
    (global.set $hangLimit
@@ -461,7 +461,7 @@
   )
   (block $label$0
    (local.set $5
-    (v128.const i32 0x5d1b5d4e 0x48481b54 0x00000000 0xf8000000)
+    (v128.const i32x4 0x5d1b5d4e 0x48481b54 0x00000000 0xf8000000)
    )
    (nop)
   )

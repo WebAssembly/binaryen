@@ -281,6 +281,60 @@ def delete_from_orbit(filename):
     pass
 
 
+# This is a workaround for https://bugs.python.org/issue9400
+class Py2CalledProcessError(subprocess.CalledProcessError):
+  def __init__(self, returncode, cmd, output=None, stderr=None):
+    super(Exception, self).__init__(returncode, cmd, output, stderr)
+    self.returncode = returncode
+    self.cmd = cmd
+    self.output = output
+    self.stderr = stderr
+
+
+# https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess
+class Py2CompletedProcess:
+  def __init__(self, args, returncode, stdout, stderr):
+    self.args = args
+    self.returncode = returncode
+    self.stdout = stdout
+    self.stderr = stderr
+
+  def __repr__(self):
+    _repr = ['args=%s, returncode=%s' % (self.args, self.returncode)]
+    if self.stdout is not None:
+      _repr += 'stdout=' + repr(self.stdout)
+    if self.stderr is not None:
+      _repr += 'stderr=' + repr(self.stderr)
+    return 'CompletedProcess(%s)' % ', '.join(_repr)
+
+  def check_returncode(self):
+    if self.returncode != 0:
+      raise Py2CalledProcessError(returncode=self.returncode, cmd=self.args,
+                                  output=self.stdout, stderr=self.stderr)
+
+
+def run_process(cmd, check=True, input=None, universal_newlines=True,
+                capture_output=False, *args, **kw):
+  kw.setdefault('universal_newlines', True)
+
+  if hasattr(subprocess, "run"):
+    ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
+    return ret
+
+  # Python 2 compatibility: Introduce Python 3 subprocess.run-like behavior
+  if input is not None:
+    kw['stdin'] = subprocess.PIPE
+  if capture_output:
+    kw['stdout'] = subprocess.PIPE
+    kw['stderr'] = subprocess.PIPE
+  proc = subprocess.Popen(cmd, *args, **kw)
+  stdout, stderr = proc.communicate(input)
+  result = Py2CompletedProcess(cmd, proc.returncode, stdout, stderr)
+  if check:
+    result.check_returncode()
+  return result
+
+
 def fail_with_error(msg):
   global num_failures
   try:

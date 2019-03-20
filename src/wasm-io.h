@@ -42,11 +42,15 @@ public:
   // read binary
   void readBinary(std::string filename, Module& wasm,
                   std::string sourceMapFilename="");
-  // read text or binary, checking the contents for what it is
+  // read text or binary, checking the contents for what it is. If `filename` is
+  // empty, read from stdin.
   void read(std::string filename, Module& wasm,
             std::string sourceMapFilename="");
   // check whether a file is a wasm binary
   bool isBinaryFile(std::string filename);
+
+private:
+  void readStdin(Module& wasm, std::string sourceMapFilename);
 };
 
 class ModuleWriter : public ModuleIO {

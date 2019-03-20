@@ -275,7 +275,7 @@ std::vector<Index> adjustOrderByPriorities(std::vector<Index>& baseline, std::ve
     return priorities[x] > priorities[y] || (priorities[x] == priorities[y] && reversed[x] < reversed[y]);
   });
   return ret;
-};
+}
 
 void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
   if (numLocals == 0) return;

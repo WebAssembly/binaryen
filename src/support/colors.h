@@ -52,6 +52,6 @@ inline void green(std::ostream& stream) {}
 inline void blue(std::ostream& stream) {}
 inline void bold(std::ostream& stream) {}
 #endif
-};
+}
 
 #endif // wasm_support_color_h
