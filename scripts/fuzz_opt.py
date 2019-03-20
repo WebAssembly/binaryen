@@ -173,12 +173,6 @@ def test_one(infile, opts):
   run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm'] + opts)
   assert open('b.wasm').read() == open('c.wasm').read(), 'output must be deterministic'
 
-  os.environ['OLD'] = '1'
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm', '-O'])
-  del os.environ['OLD']
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm', '--ssa', '-O'])
-  assert os.path.getsize('b.wasm') >= os.path.getsize('c.wasm')
-
   return bytes
 
 
