@@ -17,7 +17,7 @@
  (global $global$1 i32 (i32.const 66192))
  (global $global$2 i32 (i32.const 652))
  (export "memory" (memory $0))
- (export "__post_instantiate" (func $__wasm_call_ctors))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
@@ -94,14 +94,14 @@
   "staticBump": 84,
   "tableSize": 1,
   "initializers": [
-    "__post_instantiate"
+    "__wasm_call_ctors"
   ],
   "declares": [
   ],
   "externs": [
   ],
   "implementedFunctions": [
-    "___post_instantiate",
+    "___wasm_call_ctors",
     "_main",
     "_stackSave",
     "_stackAlloc",
@@ -110,7 +110,7 @@
   ],
   "exports": [
     "memory",
-    "__post_instantiate",
+    "__wasm_call_ctors",
     "main",
     "__heap_base",
     "__data_end",

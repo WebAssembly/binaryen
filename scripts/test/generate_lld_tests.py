@@ -22,7 +22,7 @@ import shared
 
 def files_with_extensions(path, extensions):
   for file in sorted(os.listdir(path)):
-    _, ext = os.path.splitext(file)
+    ext = os.path.splitext(file)[1]
     if ext in extensions:
       yield file, ext
 
@@ -33,37 +33,47 @@ def generate_wast_files(llvm_bin, emscripten_root):
   lld_path = os.path.join(shared.options.binaryen_test, 'lld')
   for src_file, ext in files_with_extensions(lld_path, ['.c', '.cpp']):
     print '..', src_file
+    obj_file = src_file.replace(ext, '.o')
+
+    src_path = os.path.join(lld_path, src_file)
+    obj_path = os.path.join(lld_path, obj_file)
+
+    wasm_file = src_file.replace(ext, '.wasm')
+    wast_file = src_file.replace(ext, '.wast')
+
+    obj_path = os.path.join(lld_path, obj_file)
+    wasm_path = os.path.join(lld_path, wasm_file)
+    wast_path = os.path.join(lld_path, wast_file)
+    is_shared = 'shared' in src_file
+
+    compile_cmd = [
+        os.path.join(llvm_bin, 'clang'), src_path, '-o', obj_path,
+        '--target=wasm32-unknown-unknown-wasm',
+        '-c',
+        '-nostdinc',
+        '-Xclang', '-nobuiltininc',
+        '-Xclang', '-nostdsysteminc',
+        '-Xclang', '-I%s/system/include' % emscripten_root,
+        '-O1',
+    ]
+
+    link_cmd = [
+        os.path.join(llvm_bin, 'wasm-ld'), '-flavor', 'wasm',
+        '-z', '-stack-size=1048576',
+        obj_path, '-o', wasm_path,
+        '--entry=main',
+        '--allow-undefined',
+        '--export', '__wasm_call_ctors',
+        '--global-base=568',
+    ]
+    if is_shared:
+      compile_cmd.append('-fPIC')
+      compile_cmd.append('-fvisibility=default')
+      link_cmd.append('-shared')
+
     try:
-      obj_file = src_file.replace(ext, '.o')
-
-      src_path = os.path.join(lld_path, src_file)
-      obj_path = os.path.join(lld_path, obj_file)
-      run_command([
-          os.path.join(llvm_bin, 'clang'), src_path, '-o', obj_path,
-          '--target=wasm32-unknown-unknown-wasm',
-          '-c',
-          '-nostdinc',
-          '-Xclang', '-nobuiltininc',
-          '-Xclang', '-nostdsysteminc',
-          '-Xclang', '-I%s/system/include' % emscripten_root,
-          '-O1',
-      ])
-
-      wasm_file = src_file.replace(ext, '.wasm')
-      wast_file = src_file.replace(ext, '.wast')
-
-      obj_path = os.path.join(lld_path, obj_file)
-      wasm_path = os.path.join(lld_path, wasm_file)
-      wast_path = os.path.join(lld_path, wast_file)
-      run_command([
-          os.path.join(llvm_bin, 'wasm-ld'),
-          '-z', '-stack-size=1048576',
-          obj_path, '-o', wasm_path,
-          '--entry=main',
-          '--allow-undefined',
-          '--export', '__wasm_call_ctors',
-          '--global-base=568',
-      ])
+      run_command(compile_cmd)
+      run_command(link_cmd)
       run_command(shared.WASM_DIS + [wasm_path, '-o', wast_path])
     finally:
       # Don't need the .o or .wasm files, don't leave them around
