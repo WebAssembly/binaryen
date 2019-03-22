@@ -442,10 +442,9 @@
   (local $4 i32)
   (local $5 i32)
   (local $6 i32)
-  (local $7 i32)
   (local.set $3
-   (local.tee $7
-    (local.tee $6
+   (local.tee $6
+    (local.tee $5
      (local.get $param)
     )
    )
@@ -456,16 +455,16 @@
      (i32.const 1)
      (br $stop)
     )
-    (local.set $4
+    (local.set $inc
      (i32.add
-      (local.get $6)
+      (local.get $5)
       (i32.const 1)
      )
     )
-    (local.set $5
-     (local.tee $7
-      (local.tee $6
-       (local.get $4)
+    (local.set $4
+     (local.tee $6
+      (local.tee $5
+       (local.get $inc)
       )
      )
     )
@@ -473,7 +472,7 @@
    )
   )
   (drop
-   (local.get $7)
+   (local.get $6)
   )
  )
  (func $real-loop-outblock (; 9 ;) (type $0) (param $param i32)
@@ -483,10 +482,9 @@
   (local $4 i32)
   (local $5 i32)
   (local $6 i32)
-  (local $7 i32)
   (local.set $3
-   (local.tee $7
-    (local.tee $6
+   (local.tee $6
+    (local.tee $5
      (local.get $param)
     )
    )
@@ -497,16 +495,16 @@
      (i32.const 1)
      (br $stop)
     )
-    (local.set $4
+    (local.set $inc
      (i32.add
-      (local.get $6)
+      (local.get $5)
       (i32.const 1)
      )
     )
-    (local.set $5
-     (local.tee $7
-      (local.tee $6
-       (local.get $4)
+    (local.set $4
+     (local.tee $6
+      (local.tee $5
+       (local.get $inc)
       )
      )
     )
@@ -514,7 +512,7 @@
    )
   )
   (drop
-   (local.get $7)
+   (local.get $6)
   )
  )
  (func $loop-loop-param (; 10 ;) (type $0) (param $param i32)

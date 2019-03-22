@@ -84,6 +84,7 @@ struct SSAify : public Pass {
     func = func_;
     LocalGraph graph(func);
     graph.computeInfluences();
+    graph.computeSSAIndexes();
     // create new local indexes, one for each set
     createNewIndexes(graph);
     // we now know the sets for each get, and can compute get indexes and handle phis
@@ -95,7 +96,10 @@ struct SSAify : public Pass {
   void createNewIndexes(LocalGraph& graph) {
     FindAll<SetLocal> sets(func->body);
     for (auto* set : sets.list) {
-      if (allowMerges || !hasMerges(set, graph)) {
+      // Indexes already in SSA form do not need to be modified - there is already
+      // just one set for that index. Otherwise, use a new index, unless merges
+      // are disallowed.
+      if (!graph.isSSA(set->index) && (allowMerges || !hasMerges(set, graph))) {
         set->index = addLocal(func->getLocalType(set->index));
       }
     }
