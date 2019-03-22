@@ -118,7 +118,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
     }
   }
 }
-// handle copies through select!!1
+
 void CoalesceLocals::calculateInterferences() {
   interferences.resize(numLocals * numLocals);
   std::fill(interferences.begin(), interferences.end(), false);
