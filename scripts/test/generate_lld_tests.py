@@ -72,7 +72,6 @@ def generate_wast_files(llvm_bin, emscripten_root):
 
 
 if __name__ == '__main__':
-  print(shared.options.positional_args)
   if len(shared.options.positional_args) != 2:
     print 'Usage: generate_lld_tests.py [llvm/bin/dir] [path/to/emscripten]'
     sys.exit(1)
