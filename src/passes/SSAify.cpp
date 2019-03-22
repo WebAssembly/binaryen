@@ -103,7 +103,7 @@ struct SSAify : public Pass {
 
   bool hasMerges(SetLocal* set, LocalGraph& graph) {
     for (auto* get : graph.setInfluences[set]) {
-      if (graph.getSetses[get].count() > 1) {
+      if (graph.getSetses[get].size() > 1) {
         return true;
       }
     }
