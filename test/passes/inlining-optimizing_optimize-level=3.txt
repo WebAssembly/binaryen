@@ -570,14 +570,10 @@
        )
       )
      )
-     (select
-      (local.tee $0
-       (call $___fflush_unlocked
-        (local.get $0)
-       )
+     (local.tee $0
+      (call $___fflush_unlocked
+       (local.get $0)
       )
-      (local.get $0)
-      (i32.const 1)
      )
     )
    )
