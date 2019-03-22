@@ -27,6 +27,26 @@
 // TODO: consider adding a "proper" phi node to the AST, that passes
 //       can utilize
 //
+// There is also a "no-merge" variant of this pass. That will ignore
+// sets leading to merges, that is, it only creates new SSA indexes
+// for sets whose gets have just that set, e.g.
+//
+//  x = ..
+//  f(x, x)
+//  x = ..
+//  g(x, x)
+// =>
+//  x = ..
+//  f(x, x)
+//  x' = ..
+//  g(x', x')
+//
+// This "untangles" local indexes in a way that helps other passes,
+// while not creating copies with overlapping lifetimes that can
+// lead to a code size increase. In particular, the new variables
+// added by ssa-nomerge can be easily removed by the coalesce-locals
+// pass.
+//
 
 #include <iterator>
 
