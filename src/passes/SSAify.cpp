@@ -49,7 +49,11 @@ static SetLocal IMPOSSIBLE_SET;
 struct SSAify : public Pass {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SSAify; }
+  Pass* create() override { return new SSAify(allowMerges); }
+
+  SSAify(bool allowMerges) : allowMerges(allowMerges) {}
+
+  bool allowMerges;
 
   Module* module;
   Function* func;
@@ -59,19 +63,31 @@ struct SSAify : public Pass {
     module = module_;
     func = func_;
     LocalGraph graph(func);
+    graph.computeInfluences();
     // create new local indexes, one for each set
-    createNewIndexes();
+    createNewIndexes(graph);
     // we now know the sets for each get, and can compute get indexes and handle phis
     computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
   }
 
-  void createNewIndexes() {
+  void createNewIndexes(LocalGraph& graph) {
     FindAll<SetLocal> sets(func->body);
     for (auto* set : sets.list) {
-      set->index = addLocal(func->getLocalType(set->index));
+      if (allowMerges || !hasMerges(set, graph)) {
+        set->index = addLocal(func->getLocalType(set->index));
+      }
     }
+  }
+
+  bool hasMerges(SetLocal* set, LocalGraph& graph) {
+    for (auto* get : graph.setInfluences[set]) {
+      if (graph.getSetses[get].count() > 1) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void computeGetsAndPhis(LocalGraph& graph) {
@@ -97,6 +113,7 @@ struct SSAify : public Pass {
         }
         continue;
       }
+      if (!allowMerges) continue;
       // more than 1 set, need a phi: a new local written to at each of the sets
       auto new_ = addLocal(get->type);
       auto old = get->index;
@@ -154,8 +171,12 @@ struct SSAify : public Pass {
   }
 };
 
-Pass *createSSAifyPass() {
-  return new SSAify();
+Pass* createSSAifyPass() {
+  return new SSAify(true);
+}
+
+Pass* createSSAifyNoMergePass() {
+  return new SSAify(false);
 }
 
 } // namespace wasm
