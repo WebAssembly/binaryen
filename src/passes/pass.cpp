@@ -210,13 +210,13 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs"); // coalesce-locals opens opportunities
   add("remove-unused-names"); // remove-unused-brs opens opportunities
   add("merge-blocks"); // clean up remove-unused-brs new blocks
-  add("optimize-instructions");
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");
   } else {
     add("precompute");
   }
+  add("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }
