@@ -154,6 +154,11 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
+  // Untangling to semi-ssa form is helpful (but best to ignore merges
+  // so as to not introduce new copies).
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    add("ssa-nomerge");
+  }
   // if we are willing to work very very hard, flatten the IR and do opts
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
