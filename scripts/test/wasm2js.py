@@ -106,5 +106,51 @@ def test_wasm2js():
   test_asserts_output()
 
 
+def update_wasm2js_tests():
+  print '\n[ checking wasm2js ]\n'
+
+  for wasm in tests + spec_tests + extra_wasm2js_tests:
+    if not wasm.endswith('.wast'):
+      continue
+
+    if os.path.basename(wasm) in wasm2js_blacklist:
+      continue
+
+    asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
+    expected_file = os.path.join(wasm2js_dir, asm)
+
+    # we run wasm2js on tests and spec tests only if the output
+    # exists - only some work so far. the tests in extra are in
+    # the test/wasm2js dir and so are specific to wasm2js, and
+    # we run all of those.
+    if wasm not in extra_wasm2js_tests and not os.path.exists(expected_file):
+      continue
+
+    print '..', wasm
+
+    cmd = WASM2JS + [os.path.join('test', wasm)]
+    out = run_command(cmd)
+    with open(expected_file, 'w') as o:
+      o.write(out)
+
+  for wasm in assert_tests:
+    print '..', wasm
+
+    asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
+    traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
+    asserts_expected_file = os.path.join('test', asserts)
+    traps_expected_file = os.path.join('test', traps)
+
+    cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts']
+    out = run_command(cmd)
+    with open(asserts_expected_file, 'w') as o:
+      o.write(out)
+
+    cmd += ['--pedantic']
+    out = run_command(cmd)
+    with open(traps_expected_file, 'w') as o:
+      o.write(out)
+
+
 if __name__ == "__main__":
   test_wasm2js()
