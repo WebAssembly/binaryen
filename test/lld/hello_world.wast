@@ -1,20 +1,23 @@
 (module
  (type $0 (func (param i32) (result i32)))
- (type $1 (func (result i32)))
- (type $2 (func))
+ (type $1 (func))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32 i32) (result i32)))
  (import "env" "puts" (func $puts (param i32) (result i32)))
+ (memory $0 2)
+ (data (i32.const 568) "Hello, world\00")
+ (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 581))
- (table 1 1 funcref)
- (memory $0 2)
- (data (i32.const 568) "Hello, world\00")
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
- (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
- (func $main (; 1 ;) (type $1) (result i32)
+ (export "main" (func $main))
+ (func $__wasm_call_ctors (; 1 ;) (type $1)
+ )
+ (func $__original_main (; 2 ;) (type $2) (result i32)
   (drop
    (call $puts
     (i32.const 568)
@@ -22,8 +25,9 @@
   )
   (i32.const 0)
  )
- (func $__wasm_call_ctors (; 2 ;) (type $2)
+ (func $main (; 3 ;) (type $3) (param $0 i32) (param $1 i32) (result i32)
+  (call $__original_main)
  )
- ;; custom section "linking", size 3
+ ;; custom section "producers", size 125
 )
 

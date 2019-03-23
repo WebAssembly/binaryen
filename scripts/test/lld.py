@@ -51,5 +51,26 @@ def test_wasm_emscripten_finalize():
         os.remove(mem_file)
 
 
+def update_lld_tests():
+  print '\n[ updatring wasm-emscripten-finalize testcases... ]\n'
+
+  for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
+    print '..', wast_path
+    mem_file = wast_path + '.mem'
+    extension_arg_map = {
+      '.out': [],
+      '.mem.out': ['--separate-data-segments', mem_file + '.mem'],
+    }
+    for ext, ext_args in extension_arg_map.items():
+      out_path = wast_path + ext
+      if ext != '.out' and not os.path.exists(out_path):
+        continue
+      cmd = (WASM_EMSCRIPTEN_FINALIZE +
+             [wast_path, '-S', '--global-base=568', '--initial-stack-pointer=16384'] + ext_args)
+      actual = run_command(cmd)
+      with open(out_path, 'w') as o:
+        o.write(actual)
+
+
 if __name__ == '__main__':
   test_wasm_emscripten_finalize()

@@ -27,7 +27,7 @@ def files_with_extensions(path, extensions):
       yield file, ext
 
 
-def generate_wast_files(clang_bin, lld_bin, emscripten_root):
+def generate_wast_files(llvm_bin, emscripten_root):
   print '\n[ building wast files from C sources... ]\n'
 
   lld_path = os.path.join(shared.options.binaryen_test, 'lld')
@@ -39,7 +39,7 @@ def generate_wast_files(clang_bin, lld_bin, emscripten_root):
       src_path = os.path.join(lld_path, src_file)
       obj_path = os.path.join(lld_path, obj_file)
       run_command([
-          clang_bin, src_path, '-o', obj_path,
+          os.path.join(llvm_bin, 'clang'), src_path, '-o', obj_path,
           '--target=wasm32-unknown-unknown-wasm',
           '-c',
           '-nostdinc',
@@ -56,7 +56,7 @@ def generate_wast_files(clang_bin, lld_bin, emscripten_root):
       wasm_path = os.path.join(lld_path, wasm_file)
       wast_path = os.path.join(lld_path, wast_file)
       run_command([
-          lld_bin, '-flavor', 'wasm',
+          os.path.join(llvm_bin, 'wasm-ld'),
           '-z', '-stack-size=1048576',
           obj_path, '-o', wasm_path,
           '--entry=main',
@@ -72,8 +72,7 @@ def generate_wast_files(clang_bin, lld_bin, emscripten_root):
 
 
 if __name__ == '__main__':
-  if len(sys.argv) != 4:
-    print 'Usage: generate_lld_tests.py [path/to/clang] [path/to/lld] \
-[path/to/emscripten]'
+  if len(shared.options.positional_args) != 2:
+    print 'Usage: generate_lld_tests.py [llvm/bin/dir] [path/to/emscripten]'
     sys.exit(1)
-  generate_wast_files(*sys.argv[1:])
+  generate_wast_files(*shared.options.positional_args)

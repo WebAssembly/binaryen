@@ -32,11 +32,10 @@ from scripts.test.shared import (
 
 # For shared.num_failures. Cannot import directly because modifications made in
 # shared.py would not affect the version imported here.
-import scripts.test.shared as shared
-
-import scripts.test.asm2wasm as asm2wasm
-import scripts.test.lld as lld
-import scripts.test.wasm2js as wasm2js
+from scripts.test import shared
+from scripts.test import asm2wasm
+from scripts.test import lld
+from scripts.test import wasm2js
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
