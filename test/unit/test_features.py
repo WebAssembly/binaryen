@@ -77,7 +77,6 @@ class FeatureValidationTest(unittest.TestCase):
     """
     self.check_simd(module, "all used features should be allowed")
 
-
   def test_sign_ext(self):
     module = """
     (module
