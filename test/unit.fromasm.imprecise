@@ -218,11 +218,8 @@
   (f64.const -0)
  )
  (func $neg (; 16 ;) (; has Stack IR ;)
-  (local $0 f32)
   (call_indirect (type $FUNCSIG$vf)
-   (f32.neg
-    (local.get $0)
-   )
+   (f32.const -0)
    (i32.const 9)
   )
  )

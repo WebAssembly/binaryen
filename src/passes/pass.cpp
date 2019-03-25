@@ -135,6 +135,7 @@ void PassRegistry::registerPasses() {
   registerPass("souperify-single-use", "emit Souper IR in text form (single-use nodes only)", createSouperifySingleUsePass);
   registerPass("spill-pointers", "spill pointers to the C stack (useful for Boehm-style GC)", createSpillPointersPass);
   registerPass("ssa", "ssa-ify variables so that they have a single assignment", createSSAifyPass);
+  registerPass("ssa-nomerge", "ssa-ify variables so that they have a single assignment, ignoring merges", createSSAifyNoMergePass);
   registerPass("strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("strip-debug", "strip debug info (including the names section)", createStripDebugPass);
   registerPass("strip-producers", "strip the wasm producers section", createStripProducersPass);
@@ -153,6 +154,11 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
+  // Untangling to semi-ssa form is helpful (but best to ignore merges
+  // so as to not introduce new copies).
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    add("ssa-nomerge");
+  }
   // if we are willing to work very very hard, flatten the IR and do opts
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
