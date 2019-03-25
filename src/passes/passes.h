@@ -93,6 +93,7 @@ Pass* createSouperifyPass();
 Pass* createSouperifySingleUsePass();
 Pass* createSpillPointersPass();
 Pass* createSSAifyPass();
+Pass* createSSAifyNoMergePass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
 Pass* createUnteePass();
