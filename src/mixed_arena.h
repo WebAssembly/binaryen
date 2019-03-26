@@ -298,7 +298,8 @@ public:
     }
 
     bool operator<(const Iterator& other) const {
-      return (parent->data + index) < (other.parent->data + other.index);
+      assert(parent == other.parent);
+      return index < other.index;
     }
 
     bool operator>(const Iterator& other) const {
