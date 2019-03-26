@@ -729,6 +729,11 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     for (size_t i = 0; i < sectionSize; i++) {
       section.data[i] = getInt8();
     }
+
+    // read the used features out of the target features section
+    if (sectionName.equals(BinaryConsts::UserSections::TargetFeatures)) {
+      readFeatures(wasm.userSections.back());
+    }
   }
 }
 
@@ -1670,6 +1675,54 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     throwError("bad names section position change");
   }
 }
+
+void WasmBinaryBuilder::readFeatures(const UserSection& section) try {
+  size_t index = 0;
+  auto next_byte = [&]() {
+    return section.data.at(index++);
+  };
+
+  FeatureSet features;
+
+  size_t num_feats = U32LEB().read(next_byte).value;
+  for (size_t i = 0; i < num_feats; ++i) {
+    uint8_t prefix = section.data.at(index++);
+    if (prefix != '=' && prefix != '+' && prefix != '-') {
+      // unrecognized prefix, silently fail
+      return;
+    }
+
+    size_t len = U32LEB().read(next_byte).value;
+    if (index + len > section.data.size()) {
+      // ill-formed string, silently fail
+      return;
+    }
+    std::string name(&section.data[index], len);
+    index += len;
+
+    if (prefix == '-')
+      continue;
+
+    if (name == BinaryConsts::UserSections::AtomicsFeature) {
+      features.setAtomics();
+    } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
+      features.setBulkMemory();
+    } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
+      // TODO: exception handling
+    } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
+      features.setTruncSat();
+    } else if (name == BinaryConsts::UserSections::SignExtFeature) {
+      features.setSignExt();
+    } else if (name == BinaryConsts::UserSections::SIMD128Feature) {
+      features.setSIMD();
+    }
+  }
+
+  wasm.features = features;
+  wasm.hasFeatures = true;
+// silently fail to read features. Maybe this should warn?
+} catch (std::out_of_range& e) {}
+
 
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (pos == endOfFunction) {

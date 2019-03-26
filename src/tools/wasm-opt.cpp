@@ -162,8 +162,16 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
 
+    if (options.explicitFeatures) {
+      if (!(wasm.features <= options.passOptions.features)) {
+        Fatal() << "module uses features not explicitly specified";
+      }
+    } else if (wasm.hasFeatures) {
+      options.passOptions.features = wasm.features;
+    }
+
     if (options.passOptions.validate) {
-      if (!WasmValidator().validate(wasm, options.getFeatures())) {
+      if (!WasmValidator().validate(wasm, options.passOptions.features)) {
         WasmPrinter::printModule(&wasm);
         Fatal() << "error in validating input";
       }
@@ -174,12 +182,12 @@ int main(int argc, const char* argv[]) {
     if (fuzzPasses) {
       reader.pickPasses(options);
     }
-    reader.setFeatures(options.getFeatures());
+    reader.setFeatures(options.passOptions.features);
     reader.setAllowNaNs(fuzzNaNs);
     reader.setAllowMemory(fuzzMemory);
     reader.build();
     if (options.passOptions.validate) {
-      if (!WasmValidator().validate(wasm, options.getFeatures())) {
+      if (!WasmValidator().validate(wasm, options.passOptions.features)) {
         WasmPrinter::printModule(&wasm);
         std::cerr << "translate-to-fuzz must always generate a valid module";
         abort();
@@ -239,7 +247,7 @@ int main(int argc, const char* argv[]) {
     WasmBinaryBuilder parser(other, input, false);
     parser.read();
     if (options.passOptions.validate) {
-      bool valid = WasmValidator().validate(other, options.getFeatures());
+      bool valid = WasmValidator().validate(other, options.passOptions.features);
       if (!valid) {
         WasmPrinter::printModule(&other);
       }
@@ -253,7 +261,7 @@ int main(int argc, const char* argv[]) {
     auto runPasses = [&]() {
       options.runPasses(*curr);
       if (options.passOptions.validate) {
-        bool valid = WasmValidator().validate(*curr, options.getFeatures());
+        bool valid = WasmValidator().validate(*curr, options.passOptions.features);
         if (!valid) {
           WasmPrinter::printModule(&*curr);
         }

@@ -916,6 +916,8 @@ public:
 
   std::vector<UserSection> userSections;
   std::vector<std::string> debugInfoFileNames;
+  FeatureSet features = FeatureSet::MVP;
+  bool hasFeatures = false;
 
   MixedArena allocator;
 

@@ -99,7 +99,7 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.passOptions.validate) {
-    if (!WasmValidator().validate(wasm, options.getFeatures())) {
+    if (!WasmValidator().validate(wasm, options.passOptions.features)) {
       WasmPrinter::printModule(&wasm);
       Fatal() << "error in validating input";
     }
