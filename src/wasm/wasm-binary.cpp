@@ -862,14 +862,6 @@ Type WasmBinaryBuilder::getConcreteType() {
   return type;
 }
 
-Name WasmBinaryBuilder::getString() {
-  if (debug) std::cerr << "<==" << std::endl;
-  size_t offset = getInt32();
-  Name ret = cashew::IString((&input[0]) + offset, false);
-  if (debug) std::cerr << "getString: " << ret << " ==>" << std::endl;
-  return ret;
-}
-
 Name WasmBinaryBuilder::getInlineString() {
   if (debug) std::cerr << "<==" << std::endl;
   auto len = getU32LEB();
