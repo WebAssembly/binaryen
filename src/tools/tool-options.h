@@ -24,102 +24,44 @@
 namespace wasm {
 
 struct ToolOptions : public Options {
+  using Builder = std::function<void (FeatureSet&)>;
   PassOptions passOptions;
-  bool explicitFeatures = false;
 
   ToolOptions(const std::string& command, const std::string& description)
       : Options(command, description) {
     (*this)
-        .add("--mvp-features", "-mvp", "Disable all non-MVP features",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features = FeatureSet::MVP;
-               explicitFeatures = true;
-             })
-        .add("--all-features", "-all", "Enable all features (default)",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features = FeatureSet::All;
-               explicitFeatures = true;
-             })
-        .add("--enable-sign-ext", "", "Enable sign extension operations",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setSignExt();
-               explicitFeatures = true;
-             })
-        .add("--disable-sign-ext", "", "Disable sign extension operations",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setSignExt(false);
-               explicitFeatures = true;
-             })
-        .add("--enable-threads", "", "Enable atomic operations",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setAtomics();
-               explicitFeatures = true;
-             })
-        .add("--disable-threads", "", "Disable atomic operations",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setAtomics(false);
-               explicitFeatures = true;
-             })
-        .add("--enable-mutable-globals", "", "Enable mutable globals",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setMutableGlobals();
-               explicitFeatures = true;
-             })
-        .add("--disable-mutable-globals", "", "Disable mutable globals",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setMutableGlobals(false);
-               explicitFeatures = true;
-             })
-        .add("--enable-nontrapping-float-to-int", "",
-             "Enable nontrapping float-to-int operations",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setTruncSat();
-               explicitFeatures = true;
-             })
-        .add("--disable-nontrapping-float-to-int", "",
-             "Disable nontrapping float-to-int operations",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setTruncSat(false);
-               explicitFeatures = true;
-             })
-        .add("--enable-simd", "",
-             "Enable SIMD operations and types",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setSIMD();
-               explicitFeatures = true;
-             })
-        .add("--disable-simd", "",
-             "Disable SIMD operations and types",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setSIMD(false);
-               explicitFeatures = true;
-             })
-        .add("--enable-bulk-memory", "",
-             "Enable bulk memory operations",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setBulkMemory();
-               explicitFeatures = true;
-             })
-        .add("--disable-bulk-memory", "",
-             "Disable bulk memory operations",
-             Options::Arguments::Zero,
-             [this](Options *o, const std::string& arguments) {
-               passOptions.features.setBulkMemory(false);
-               explicitFeatures = true;
-             })
+        .addFeatureOpt("--mvp-features", "-mvp", "Disable all non-MVP features",
+                       [this](FeatureSet& features) {
+                         features = FeatureSet::MVP;
+                       })
+        .addFeatureOpt("--all-features", "-all",
+                       "Enable all features "
+                       "(default if there is no target features section"
+                       " or if any feature options are provided)",
+                       [this](FeatureSet& features) {
+                         features = FeatureSet::All;
+                       })
+        .addFeatureOpt("--detect-features", "",
+                       "Use features from the target features section"
+                       "(default if there is a target features section"
+                       " and no feature options are provided)",
+                       [this](FeatureSet& features) {
+                         features = wasmFeatures;
+                         errorOnFeatureMismatch = false;
+                       })
+        .addFeature("sign-ext", "sign extension operations",
+                    FeatureSet::SignExt)
+        .addFeature("threads", "atomic operations",
+                    FeatureSet::Atomics)
+        .addFeature("mutable-globals", "mutable globals",
+                    FeatureSet::MutableGlobals)
+        .addFeature("nontrapping-float-to-int",
+                    "nontrapping float-to-int operations",
+                    FeatureSet::TruncSat)
+        .addFeature("simd", "SIMD operations and types",
+                    FeatureSet::SIMD)
+        .addFeature("bulk-memory", "bulk memory operations",
+                    FeatureSet::BulkMemory)
         .add("--no-validation", "-n",
              "Disables validation, assumes inputs are correct",
              Options::Arguments::Zero,
@@ -127,6 +69,63 @@ struct ToolOptions : public Options {
                passOptions.validate = false;
              });
   }
+
+  ToolOptions &addFeatureOpt(const std::string& longName,
+                             const std::string& shortName,
+                             const std::string& description,
+                             Builder builder) {
+    add(longName, shortName, description, Options::Arguments::Zero,
+        [=](Options*, const std::string&) {
+          featureBuilders.push_back(builder);
+        });
+    return *this;
+  }
+
+  ToolOptions &addFeature(const std::string& name,
+                          const std::string& description,
+                          FeatureSet::Feature feature) {
+    (*this)
+        .addFeatureOpt(std::string("--enable-") + name, "",
+                       std::string("Enable ") + description,
+                       [=](FeatureSet& features) {
+                         features.set(feature, true);
+                       })
+        .addFeatureOpt(std::string("--disable-") + name, "",
+                       std::string("Disable ") + description,
+                       [=](FeatureSet& features) {
+                         features.set(feature, false);
+                       });
+    return *this;
+  }
+
+  FeatureSet& getFeatures(const Module& module) {
+    if (featuresInitialized)
+      return passOptions.features;
+
+    bool wasmHasFeatures = module.readFeatures(wasmFeatures);
+    if (featureBuilders.size()) {
+      for (auto& builder : featureBuilders) {
+        builder(passOptions.features);
+      }
+      if (errorOnFeatureMismatch &&
+          !(wasmFeatures <= passOptions.features)) {
+        Fatal() << "module uses features not explicitly specified, "
+                << "use --detect-features to resolve";
+      }
+    } else if (wasmHasFeatures) {
+      passOptions.features = wasmFeatures;
+    }
+    featuresInitialized = true;
+    return passOptions.features;
+  }
+
+private:
+  std::vector<Builder> featureBuilders;
+  bool errorOnFeatureMismatch = true;
+  bool featuresInitialized = false;
+
+  // cached contents of the target features section
+  FeatureSet wasmFeatures = FeatureSet::MVP;
 };
 
 } // namespace wasm

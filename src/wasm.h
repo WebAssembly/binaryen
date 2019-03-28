@@ -955,7 +955,7 @@ public:
   void updateMaps();
 
   // returns true if the module has a target features section
-  bool readFeatures(FeatureSet&);
+  bool readFeatures(FeatureSet&) const;
 
   void clearDebugInfo();
 };

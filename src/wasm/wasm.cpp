@@ -973,10 +973,10 @@ void Module::updateMaps() {
   }
 }
 
-bool Module::readFeatures(FeatureSet& features) try {
+bool Module::readFeatures(FeatureSet& features) const try {
   features = FeatureSet::MVP;
 
-  UserSection* section = nullptr;
+  const UserSection* section = nullptr;
   for (auto &s : userSections) {
     if (s.name == BinaryConsts::UserSections::TargetFeatures) {
       section = &s;

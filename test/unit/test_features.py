@@ -126,5 +126,28 @@ class TargetFeaturesSectionTest(unittest.TestCase):
         check=False, capture_output=True
     )
     self.assertNotEqual(p.returncode, 0)
-    self.assertIn('Fatal: module uses features not explicitly specified',
+    self.assertIn('Fatal: module uses features not explicitly specified, ' +
+                  'use --detect-features to resolve',
                   p.stderr)
+
+  def test_incompatible_features_forced(self):
+    path = os.path.join(options.binaryen_test, 'unit', 'input',
+                        'signext_target_feature.wasm')
+    p = run_process(
+        WASM_OPT + ['--print', '--detect-features', '-mvp', '--enable-simd',
+                    '-o', os.devnull, path],
+        check=False, capture_output=True
+    )
+    self.assertNotEqual(p.returncode, 0)
+    self.assertIn('all used features should be allowed', p.stderr)
+
+  def test_explicit_detect_features(self):
+    path = os.path.join(options.binaryen_test, 'unit', 'input',
+                        'signext_target_feature.wasm')
+    p = run_process(
+        WASM_OPT + ['--print', '-mvp', '--detect-features',
+                    '-o', os.devnull, path],
+        check=False, capture_output=True
+    )
+    self.assertEqual(p.returncode, 0)
+    self.assertEqual(p.stderr, '')

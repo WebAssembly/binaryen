@@ -185,7 +185,7 @@ int main(int argc, const char *argv[]) {
   if (memInit != options.extra.end()) {
     if (options.runningDefaultOptimizationPasses()) {
       PassRunner runner(&wasm);
-      runner.setFeatures(options.passOptions.features);
+      runner.setFeatures(options.getFeatures(wasm));
       runner.add("memory-packing");
       runner.run();
     }
@@ -213,7 +213,7 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.passOptions.validate) {
-    if (!WasmValidator().validate(wasm, options.passOptions.features)) {
+    if (!WasmValidator().validate(wasm, options.getFeatures(wasm))) {
       WasmPrinter::printModule(&wasm);
       Fatal() << "error in validating output";
     }
