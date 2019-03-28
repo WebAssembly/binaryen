@@ -162,12 +162,15 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
 
+    // Read the target features section and use its features if possible
+    FeatureSet wasmFeatures;
+    bool wasmHasFeatures = wasm.readFeatures(wasmFeatures);
     if (options.explicitFeatures) {
-      if (!(wasm.features <= options.passOptions.features)) {
+      if (!(wasmFeatures <= options.passOptions.features)) {
         Fatal() << "module uses features not explicitly specified";
       }
-    } else if (wasm.hasFeatures) {
-      options.passOptions.features = wasm.features;
+    } else if (wasmHasFeatures) {
+      options.passOptions.features = wasmFeatures;
     }
 
     if (options.passOptions.validate) {

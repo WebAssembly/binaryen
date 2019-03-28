@@ -916,8 +916,6 @@ public:
 
   std::vector<UserSection> userSections;
   std::vector<std::string> debugInfoFileNames;
-  FeatureSet features = FeatureSet::MVP;
-  bool hasFeatures = false;
 
   MixedArena allocator;
 
@@ -955,6 +953,9 @@ public:
   void removeGlobal(Name name);
 
   void updateMaps();
+
+  // returns true if the module has a target features section
+  bool readFeatures(FeatureSet&);
 
   void clearDebugInfo();
 };
