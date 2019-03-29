@@ -22,9 +22,8 @@ import sys
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS,
-    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM_METADCE,
-    BINARYEN_INSTALL_DIR, BINARYEN_JS,
-    has_shell_timeout, options)
+    WASM_CTOR_EVAL, WASM_REDUCE, WASM_METADCE, BINARYEN_INSTALL_DIR,
+    BINARYEN_JS, has_shell_timeout, options)
 
 from scripts.test import lld
 from scripts.test import wasm2js
@@ -245,33 +244,6 @@ def update_wasm_dis_tests():
       open(t + '.fromBinary', 'w').write(actual)
 
 
-def update_wasm_merge_tests():
-  print '\n[ checking wasm-merge... ]\n'
-  for t in os.listdir(os.path.join('test', 'merge')):
-    if t.endswith(('.wast', '.wasm')):
-      print '..', t
-      t = os.path.join('test', 'merge', t)
-      u = t + '.toMerge'
-      for finalize in [0, 1]:
-        for opt in [0, 1]:
-          cmd = WASM_MERGE + [t, u, '-o', 'a.wast', '-S', '--verbose']
-          if finalize:
-            cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
-          if opt:
-            cmd += ['-O']
-          stdout = run_command(cmd)
-          actual = open('a.wast').read()
-          out = t + '.combined'
-          if finalize:
-            out += '.finalized'
-          if opt:
-            out += '.opt'
-          with open(out, 'w') as o:
-            o.write(actual)
-          with open(out + '.stdout', 'w') as o:
-            o.write(stdout)
-
-
 def update_binaryen_js_tests():
   if not (MOZJS or NODEJS):
     print 'no vm to run binaryen.js tests'
@@ -362,7 +334,6 @@ def main():
   update_bin_fmt_tests()
   update_example_tests()
   update_wasm_dis_tests()
-  update_wasm_merge_tests()
   update_ctor_eval_tests()
   wasm2js.update_wasm2js_tests()
   update_metadce_tests()
