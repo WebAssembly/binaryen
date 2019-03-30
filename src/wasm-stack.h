@@ -134,7 +134,7 @@ public:
   void visitAtomicRMW(AtomicRMW* curr);
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicWake(AtomicWake* curr);
+  void visitAtomicNotify(AtomicNotify* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
@@ -890,15 +890,15 @@ void StackWriter<Mode, Parent>::visitAtomicWait(AtomicWait* curr) {
 }
 
 template<StackWriterMode Mode, typename Parent>
-void StackWriter<Mode, Parent>::visitAtomicWake(AtomicWake* curr) {
+void StackWriter<Mode, Parent>::visitAtomicNotify(AtomicNotify* curr) {
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
-  visitChild(curr->wakeCount);
-  if (curr->wakeCount->type == unreachable) return;
+  visitChild(curr->notifyCount);
+  if (curr->notifyCount->type == unreachable) return;
   if (justAddToStack(curr)) return;
 
-  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicWake);
+  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
   emitMemoryAccess(4, 4, 0);
 }
 

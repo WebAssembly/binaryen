@@ -1618,7 +1618,7 @@ private:
       } else {
         auto* ptr = makePointer();
         auto* count = make(i32);
-        return builder.makeAtomicWake(ptr, count, logify(get()));
+        return builder.makeAtomicNotify(ptr, count, logify(get()));
       }
     }
     Index bytes;

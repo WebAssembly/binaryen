@@ -199,9 +199,9 @@ instructions = [
     ("i64.extend16_s",      "makeUnary(s, UnaryOp::ExtendS16Int64)"),
     ("i64.extend32_s",      "makeUnary(s, UnaryOp::ExtendS32Int64)"),
     # atomic instructions
-    ("wake",             "makeAtomicWake(s)"),
-    ("i32.wait",         "makeAtomicWait(s, i32)"),
-    ("i64.wait",         "makeAtomicWait(s, i64)"),
+    ("atomic.notify",           "makeAtomicNotify(s)"),
+    ("i32.atomic.wait",         "makeAtomicWait(s, i32)"),
+    ("i64.atomic.wait",         "makeAtomicWait(s, i64)"),
     ("i32.atomic.load8_u",      "makeLoad(s, i32, /*isAtomic=*/true)"),
     ("i32.atomic.load16_u",     "makeLoad(s, i32, /*isAtomic=*/true)"),
     ("i32.atomic.load",         "makeLoad(s, i32, /*isAtomic=*/true)"),

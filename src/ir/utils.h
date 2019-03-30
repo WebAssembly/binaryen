@@ -128,7 +128,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitAtomicRMW(AtomicRMW* curr);
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicWake(AtomicWake* curr);
+  void visitAtomicNotify(AtomicNotify* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
@@ -184,7 +184,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
   void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
-  void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
+  void visitAtomicNotify(AtomicNotify* curr) { curr->finalize(); }
   void visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
   void visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
   void visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }

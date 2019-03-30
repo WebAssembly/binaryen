@@ -67,7 +67,7 @@ Module['UnreachableId'] = Module['_BinaryenUnreachableId']();
 Module['AtomicCmpxchgId'] = Module['_BinaryenAtomicCmpxchgId']();
 Module['AtomicRMWId'] = Module['_BinaryenAtomicRMWId']();
 Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
-Module['AtomicWakeId'] = Module['_BinaryenAtomicWakeId']();
+Module['AtomicNotifyId'] = Module['_BinaryenAtomicNotifyId']();
 Module['SIMDExtractId'] = Module['_BinaryenSIMDExtractId']();
 Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
 Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
@@ -1728,8 +1728,8 @@ function wrapModule(module, self) {
   self['unreachable'] = function() {
     return Module['_BinaryenUnreachable'](module);
   };
-  self['wake'] = function(ptr, wakeCount) {
-    return Module['_BinaryenAtomicWake'](module, ptr, wakeCount);
+  self['notify'] = function(ptr, notifyCount) {
+    return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
   };
 
   // 'Module' operations
@@ -2208,12 +2208,12 @@ Module['getExpressionInfo'] = function(expr) {
         'timeout': Module['_BinaryenAtomicWaitGetTimeout'](expr),
         'expectedType': Module['_BinaryenAtomicWaitGetExpectedType'](expr)
       };
-    case Module['AtomicWakeId']:
+    case Module['AtomicNotifyId']:
       return {
         'id': id,
         'type': type,
-        'ptr': Module['_BinaryenAtomicWakeGetPtr'](expr),
-        'wakeCount': Module['_BinaryenAtomicWakeGetWakeCount'](expr)
+        'ptr': Module['_BinaryenAtomicNotifyGetPtr'](expr),
+        'notifyCount': Module['_BinaryenAtomicNotifyGetNotifyCount'](expr)
       };
     case Module['SIMDExtractId']:
       return {

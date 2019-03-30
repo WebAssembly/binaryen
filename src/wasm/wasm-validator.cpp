@@ -245,7 +245,7 @@ public:
   void visitAtomicRMW(AtomicRMW* curr);
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicWake(AtomicWake* curr);
+  void visitAtomicNotify(AtomicNotify* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
@@ -576,12 +576,12 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->timeout->type, i64, curr, "AtomicWait timeout type must be i64");
 }
 
-void FunctionValidator::visitAtomicWake(AtomicWake* curr) {
+void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
   shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWake must have type i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWake pointer type must be i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->wakeCount->type, i32, curr, "AtomicWake wakeCount type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicNotify must have type i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicNotify pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->notifyCount->type, i32, curr, "AtomicNotify notifyCount type must be i32");
 }
 
 void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {

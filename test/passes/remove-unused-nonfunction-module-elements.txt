@@ -172,7 +172,7 @@
   (local $0 i32)
   (local $1 i64)
   (drop
-   (i32.wait
+   (i32.atomic.wait
     (local.get $0)
     (local.get $0)
     (local.get $1)
@@ -185,7 +185,7 @@
  (memory $0 (shared 23 256))
  (export "user" (func $user))
  (func $user (; 0 ;) (type $0) (result i32)
-  (wake
+  (atomic.notify
    (i32.const 0)
    (i32.const 0)
   )

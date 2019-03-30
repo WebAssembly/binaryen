@@ -5,6 +5,9 @@
 char op[27] = {'\0'};
 strncpy(op, s[0]->c_str(), 26);
 switch (op[0]) {
+  case 'a':
+    if (strcmp(op, "atomic.notify") == 0) return makeAtomicNotify(s);
+    goto parse_error;
   case 'b': {
     switch (op[1]) {
       case 'l':
@@ -946,6 +949,9 @@ switch (op[0]) {
                           default: goto parse_error;
                         }
                       }
+                      case 'w':
+                        if (strcmp(op, "i32.atomic.wait") == 0) return makeAtomicWait(s, i32);
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
@@ -1235,17 +1241,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'w': {
-                switch (op[5]) {
-                  case 'a':
-                    if (strcmp(op, "i32.wait") == 0) return makeAtomicWait(s, i32);
-                    goto parse_error;
-                  case 'r':
-                    if (strcmp(op, "i32.wrap_i64") == 0) return makeUnary(s, UnaryOp::WrapInt64);
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case 'w':
+                if (strcmp(op, "i32.wrap_i64") == 0) return makeUnary(s, UnaryOp::WrapInt64);
+                goto parse_error;
               case 'x':
                 if (strcmp(op, "i32.xor") == 0) return makeBinary(s, BinaryOp::XorInt32);
                 goto parse_error;
@@ -1594,6 +1592,9 @@ switch (op[0]) {
                           default: goto parse_error;
                         }
                       }
+                      case 'w':
+                        if (strcmp(op, "i64.atomic.wait") == 0) return makeAtomicWait(s, i64);
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
@@ -1911,9 +1912,6 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'w':
-                if (strcmp(op, "i64.wait") == 0) return makeAtomicWait(s, i64);
-                goto parse_error;
               case 'x':
                 if (strcmp(op, "i64.xor") == 0) return makeBinary(s, BinaryOp::XorInt64);
                 goto parse_error;
@@ -2257,9 +2255,6 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'w':
-    if (strcmp(op, "wake") == 0) return makeAtomicWake(s);
-    goto parse_error;
   default: goto parse_error;
 }
 parse_error:

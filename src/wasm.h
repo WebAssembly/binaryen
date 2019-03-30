@@ -206,7 +206,7 @@ public:
     AtomicRMWId,
     AtomicCmpxchgId,
     AtomicWaitId,
-    AtomicWakeId,
+    AtomicNotifyId,
     SIMDExtractId,
     SIMDReplaceId,
     SIMDShuffleId,
@@ -512,14 +512,14 @@ class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
   void finalize();
 };
 
-class AtomicWake : public SpecificExpression<Expression::AtomicWakeId> {
+class AtomicNotify : public SpecificExpression<Expression::AtomicNotifyId> {
  public:
-  AtomicWake() = default;
-  AtomicWake(MixedArena& allocator) : AtomicWake() {}
+  AtomicNotify() = default;
+  AtomicNotify(MixedArena& allocator) : AtomicNotify() {}
 
   Address offset;
   Expression* ptr;
-  Expression* wakeCount;
+  Expression* notifyCount;
 
   void finalize();
 };

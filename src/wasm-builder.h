@@ -247,13 +247,13 @@ public:
     wait->finalize();
     return wait;
   }
-  AtomicWake* makeAtomicWake(Expression* ptr, Expression* wakeCount, Address offset) {
-    auto* wake = allocator.alloc<AtomicWake>();
-    wake->offset = offset;
-    wake->ptr = ptr;
-    wake->wakeCount = wakeCount;
-    wake->finalize();
-    return wake;
+  AtomicNotify* makeAtomicNotify(Expression* ptr, Expression* notifyCount, Address offset) {
+    auto* notify = allocator.alloc<AtomicNotify>();
+    notify->offset = offset;
+    notify->ptr = ptr;
+    notify->notifyCount = notifyCount;
+    notify->finalize();
+    return notify;
   }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, Type type) {
     auto* ret = allocator.alloc<Store>();

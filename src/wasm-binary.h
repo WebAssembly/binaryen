@@ -557,7 +557,7 @@ enum ASTNodes {
 };
 
 enum AtomicOpcodes {
-  AtomicWake = 0x00,
+  AtomicNotify = 0x00,
   I32AtomicWait = 0x01,
   I64AtomicWait = 0x02,
 
@@ -1108,7 +1108,7 @@ public:
   bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
   bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
   bool maybeVisitAtomicWait(Expression*& out, uint8_t code);
-  bool maybeVisitAtomicWake(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicNotify(Expression*& out, uint8_t code);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);

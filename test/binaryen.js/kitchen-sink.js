@@ -88,7 +88,7 @@ function test_ids() {
   console.log("BinaryenAtomicCmpxchgId: " + Binaryen.AtomicCmpxchgId);
   console.log("BinaryenAtomicRMWId: " + Binaryen.AtomicRMWId);
   console.log("BinaryenAtomicWaitId: " + Binaryen.AtomicWaitId);
-  console.log("BinaryenAtomicWakeId: " + Binaryen.AtomicWakeId);
+  console.log("BinaryenAtomicNotifyId: " + Binaryen.AtomicNotifyId);
   console.log("BinaryenSIMDExtractId: " + Binaryen.SIMDExtractId);
   console.log("BinaryenSIMDReplaceId: " + Binaryen.SIMDReplaceId);
   console.log("BinaryenSIMDShuffleId: " + Binaryen.SIMDShuffleId);
