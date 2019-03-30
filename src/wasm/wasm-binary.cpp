@@ -395,7 +395,7 @@ void WasmBinaryWriter::writeDataSegments() {
         if (combined.data.size() < needed) {
           combined.data.resize(needed);
         }
-        std::copy(segment.data.begin(), segment.data.end(), combined.data.begin() + offset - start);
+        std::copy(segment.data.begin(), segment.data.end(), combined.data.begin() + (offset - start));
       }
       emit(combined);
       break;
@@ -861,14 +861,6 @@ Type WasmBinaryBuilder::getConcreteType() {
     throw ParseException("non-concrete type when one expected");
   }
   return type;
-}
-
-Name WasmBinaryBuilder::getString() {
-  if (debug) std::cerr << "<==" << std::endl;
-  size_t offset = getInt32();
-  Name ret = cashew::IString((&input[0]) + offset, false);
-  if (debug) std::cerr << "getString: " << ret << " ==>" << std::endl;
-  return ret;
 }
 
 Name WasmBinaryBuilder::getInlineString() {

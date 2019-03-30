@@ -880,7 +880,8 @@ public:
 
   void read();
   void readUserSection(size_t payloadLen);
-  bool more() { return pos < input.size();}
+
+  bool more() { return pos < input.size(); }
 
   uint8_t getInt8();
   uint16_t getInt16();
@@ -897,7 +898,6 @@ public:
   int64_t getS64LEB();
   Type getType();
   Type getConcreteType();
-  Name getString();
   Name getInlineString();
   void verifyInt8(int8_t x);
   void verifyInt16(int16_t x);

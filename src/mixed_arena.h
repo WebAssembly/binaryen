@@ -277,30 +277,101 @@ public:
   // iteration
 
   struct Iterator {
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = T*;
+    using reference = T&;
+
     const SubType* parent;
     size_t index;
 
+    Iterator() : parent(nullptr), index(0) {}
     Iterator(const SubType* parent, size_t index) : parent(parent), index(index) {}
 
+    bool operator==(const Iterator& other) const {
+      return index == other.index && parent == other.parent;
+    }
+
     bool operator!=(const Iterator& other) const {
-      return index != other.index || parent != other.parent;
+      return !(*this == other);
     }
 
-    void operator++() {
+    bool operator<(const Iterator& other) const {
+      assert(parent == other.parent);
+      return index < other.index;
+    }
+
+    bool operator>(const Iterator& other) const {
+      return other < *this;
+    }
+
+    bool operator<=(const Iterator& other) const {
+      return !(other < *this);
+    }
+
+    bool operator>=(const Iterator& other) const {
+      return !(*this < other);
+    }
+
+    Iterator& operator++() {
       index++;
+      return *this;
     }
 
-    Iterator& operator+=(int off) {
+    Iterator& operator--() {
+      index--;
+      return *this;
+    }
+
+    Iterator operator++(int) {
+      Iterator it = *this;
+      ++*this;
+      return it;
+    }
+
+    Iterator operator--(int) {
+      Iterator it = *this;
+      --*this;
+      return it;
+    }
+
+    Iterator& operator+=(std::ptrdiff_t off) {
       index += off;
       return *this;
     }
 
-    const Iterator operator+(int off) const {
+    Iterator& operator-=(std::ptrdiff_t off) {
+      return *this += -off;
+    }
+
+    Iterator operator+(std::ptrdiff_t off) const {
       return Iterator(*this) += off;
     }
 
-    T& operator*() {
+    Iterator operator-(std::ptrdiff_t off) const {
+      return *this + -off;
+    }
+
+    std::ptrdiff_t operator-(const Iterator& other) const {
+      assert(parent == other.parent);
+      return index - other.index;
+    }
+
+    friend Iterator operator+(std::ptrdiff_t off, const Iterator& it) {
+      return it + off;
+    }
+
+    T& operator*() const {
       return (*parent)[index];
+    }
+
+    T& operator[](std::ptrdiff_t off) const {
+      return (*parent)[index + off];
+    }
+
+    T* operator->() const {
+      return &(*parent)[index];
     }
   };
 

@@ -142,8 +142,6 @@ This repository contains code that builds the following tools in `bin/`:
    optimizer infrastructure. This is used by Emscripten in Binaryen mode when it
    uses Emscripten's fastcomp asm.js backend.
  * **wasm2js**: A WebAssembly-to-JS compiler (still experimental).
- * **wasm-merge**: Combines wasm files into a single big wasm file (without
-   sophisticated linking).
  * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of
    time. Used by Emscripten.
  * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
