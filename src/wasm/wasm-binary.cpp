@@ -394,7 +394,7 @@ void WasmBinaryWriter::writeDataSegments() {
         if (combined.data.size() < needed) {
           combined.data.resize(needed);
         }
-        std::copy(segment.data.begin(), segment.data.end(), combined.data.begin() + offset - start);
+        std::copy(segment.data.begin(), segment.data.end(), combined.data.begin() + (offset - start));
       }
       emit(combined);
       break;
