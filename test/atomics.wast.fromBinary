@@ -134,7 +134,7 @@
    )
   )
  )
- (func $atomic-wait-atomic.notify (; 3 ;) (type $0)
+ (func $atomic-wait-notify (; 3 ;) (type $0)
   (local $0 i32)
   (local $1 i64)
   (drop
