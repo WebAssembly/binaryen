@@ -136,7 +136,7 @@ void ReFinalize::visitStore(Store* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
-void ReFinalize::visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
+void ReFinalize::visitAtomicNotify(AtomicNotify* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }

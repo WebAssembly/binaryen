@@ -128,7 +128,7 @@
     (local $0 i32)
     (local $1 i64)
     (drop
-     (i32.wait
+     (i32.atomic.wait
       (local.get $0)
       (local.get $0)
       (local.get $1)
@@ -140,7 +140,7 @@
   (memory $0 (shared 23 256))
   (export "user" $user)
   (func $user (result i32)
-    (wake (i32.const 0) (i32.const 0))
+    (atomic.notify (i32.const 0) (i32.const 0))
   )
 )
 (module ;; more use checks

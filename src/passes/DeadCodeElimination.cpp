@@ -256,7 +256,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
         case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
         case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
-        case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
+        case Expression::Id::AtomicNotifyId: DELEGATE(AtomicNotify);
         case Expression::Id::SIMDExtractId: DELEGATE(SIMDExtract);
         case Expression::Id::SIMDReplaceId: DELEGATE(SIMDReplace);
         case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);

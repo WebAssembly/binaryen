@@ -1071,11 +1071,11 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeAtomicWake(Element& s) {
-  auto ret = allocator.alloc<AtomicWake>();
+Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
+  auto ret = allocator.alloc<AtomicNotify>();
   ret->type = i32;
   ret->ptr = parseExpression(s[1]);
-  ret->wakeCount = parseExpression(s[2]);
+  ret->notifyCount = parseExpression(s[2]);
   ret->finalize();
   return ret;
 }

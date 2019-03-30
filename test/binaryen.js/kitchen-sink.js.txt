@@ -32,7 +32,7 @@ BinaryenUnreachableId: 22
 BinaryenAtomicCmpxchgId: 24
 BinaryenAtomicRMWId: 23
 BinaryenAtomicWaitId: 25
-BinaryenAtomicWakeId: 26
+BinaryenAtomicNotifyId: 26
 BinaryenSIMDExtractId: 27
 BinaryenSIMDReplaceId: 28
 BinaryenSIMDShuffleId: 29

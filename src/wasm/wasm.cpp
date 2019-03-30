@@ -105,7 +105,7 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::AtomicCmpxchgId: return "atomic_cmpxchg";
     case Expression::Id::AtomicRMWId: return "atomic_rmw";
     case Expression::Id::AtomicWaitId: return "atomic_wait";
-    case Expression::Id::AtomicWakeId: return "atomic_wake";
+    case Expression::Id::AtomicNotifyId: return "atomic_notify";
     case Expression::Id::SIMDExtractId: return "simd_extract";
     case Expression::Id::SIMDReplaceId: return "simd_replace";
     case Expression::Id::SIMDShuffleId: return "simd_shuffle";
@@ -420,9 +420,9 @@ void AtomicWait::finalize() {
   }
 }
 
-void AtomicWake::finalize() {
+void AtomicNotify::finalize() {
   type = i32;
-  if (ptr->type == unreachable || wakeCount->type == unreachable) {
+  if (ptr->type == unreachable || notifyCount->type == unreachable) {
     type = unreachable;
   }
 }

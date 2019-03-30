@@ -111,8 +111,8 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
     Expression* visitAtomicWait(AtomicWait* curr) {
       return builder.makeAtomicWait(copy(curr->ptr), copy(curr->expected), copy(curr->timeout), curr->expectedType, curr->offset);
     }
-    Expression* visitAtomicWake(AtomicWake* curr) {
-      return builder.makeAtomicWake(copy(curr->ptr), copy(curr->wakeCount), curr->offset);
+    Expression* visitAtomicNotify(AtomicNotify* curr) {
+      return builder.makeAtomicNotify(copy(curr->ptr), copy(curr->notifyCount), curr->offset);
     }
     Expression* visitSIMDExtract(SIMDExtract* curr) {
       return builder.makeSIMDExtract(curr->op, copy(curr->vec), curr->index);

@@ -65,7 +65,7 @@ static std::mutex debug;
 //    * workers transform functions into nullptrs, and optimize them
 //    * we keep an atomic count of the number of active workers and
 //      the number of optimized functions.
-//    * after adding a function, the main thread wakes up workers if
+//    * after adding a function, the main thread notifys up workers if
 //      it calculates there is work for them.
 //    * a lock is used for going to sleep and waking up.
 // Locking should be rare, as optimization is
@@ -156,10 +156,10 @@ public:
     wasm->addFunction(func);
     if (!useWorkers()) return; // we optimize at the end in that case
     queueFunction(func);
-    // wake workers if needed
-    auto wake = availableFuncs.load();
-    for (uint32_t i = 0; i < wake; i++) {
-      wakeWorker();
+    // notify workers if needed
+    auto notify = availableFuncs.load();
+    for (uint32_t i = 0; i < notify; i++) {
+      notifyWorker();
     }
   }
 
@@ -180,7 +180,7 @@ public:
     } else {
       DEBUG_THREAD("finish()ing");
       assert(nextFunction == numFunctions);
-      wakeAllWorkers();
+      notifyAllWorkers();
       waitUntilAllFinished();
     }
     // TODO: clear side thread allocators from module allocator, as these threads were transient
@@ -192,14 +192,14 @@ private:
     threads.emplace_back(make_unique<std::thread>(workerMain, this));
   }
 
-  void wakeWorker() {
-    DEBUG_THREAD("wake a worker");
+  void notifyWorker() {
+    DEBUG_THREAD("notify a worker");
     std::lock_guard<std::mutex> lock(mutex);
     condition.notify_one();
   }
 
-  void wakeAllWorkers() {
-    DEBUG_THREAD("wake all workers");
+  void notifyAllWorkers() {
+    DEBUG_THREAD("notify all workers");
     std::lock_guard<std::mutex> lock(mutex);
     condition.notify_all();
   }

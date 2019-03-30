@@ -1124,12 +1124,12 @@ public:
         //       for now, just assume we are woken up
         return Literal(int32_t(0)); // woken up
       }
-      Flow visitAtomicWake(AtomicWake *curr) {
-        NOTE_ENTER("AtomicWake");
+      Flow visitAtomicNotify(AtomicNotify *curr) {
+        NOTE_ENTER("AtomicNotify");
         Flow ptr = this->visit(curr->ptr);
         if (ptr.breaking()) return ptr;
         NOTE_EVAL1(ptr);
-        auto count = this->visit(curr->wakeCount);
+        auto count = this->visit(curr->notifyCount);
         NOTE_EVAL1(count);
         if (count.breaking()) return count;
         // TODO: add threads support!

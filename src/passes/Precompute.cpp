@@ -119,7 +119,7 @@ public:
   Flow visitAtomicWait(AtomicWait *curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitAtomicWake(AtomicWake *curr) {
+  Flow visitAtomicNotify(AtomicNotify *curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitHost(Host *curr) {

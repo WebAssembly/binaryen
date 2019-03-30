@@ -116,7 +116,7 @@ BinaryenExpressionId BinaryenUnreachableId(void);
 BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
 BinaryenExpressionId BinaryenAtomicRMWId(void);
 BinaryenExpressionId BinaryenAtomicWaitId(void);
-BinaryenExpressionId BinaryenAtomicWakeId(void);
+BinaryenExpressionId BinaryenAtomicNotifyId(void);
 BinaryenExpressionId BinaryenSIMDExtractId(void);
 BinaryenExpressionId BinaryenSIMDReplaceId(void);
 BinaryenExpressionId BinaryenSIMDShuffleId(void);
@@ -538,7 +538,7 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module, uint32_t byt
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef replacement, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType type);
-BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef wakeCount);
+BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef notifyCount);
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t index);
 BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t index, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, const uint8_t mask[16]);
@@ -652,8 +652,8 @@ BinaryenExpressionRef BinaryenAtomicWaitGetExpected(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr);
 BinaryenType BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr);
 
-BinaryenExpressionRef BinaryenAtomicWakeGetPtr(BinaryenExpressionRef expr);
-BinaryenExpressionRef BinaryenAtomicWakeGetWakeCount(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenAtomicNotifyGetPtr(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenAtomicNotifyGetNotifyCount(BinaryenExpressionRef expr);
 
 BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr);

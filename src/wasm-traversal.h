@@ -54,7 +54,7 @@ struct Visitor {
   ReturnType visitAtomicRMW(AtomicRMW* curr) { return ReturnType(); }
   ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return ReturnType(); }
   ReturnType visitAtomicWait(AtomicWait* curr) { return ReturnType(); }
-  ReturnType visitAtomicWake(AtomicWake* curr) { return ReturnType(); }
+  ReturnType visitAtomicNotify(AtomicNotify* curr) { return ReturnType(); }
   ReturnType visitSIMDExtract(SIMDExtract* curr) { return ReturnType(); }
   ReturnType visitSIMDReplace(SIMDReplace* curr) { return ReturnType(); }
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return ReturnType(); }
@@ -106,7 +106,7 @@ struct Visitor {
       case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
       case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
       case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
-      case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
+      case Expression::Id::AtomicNotifyId: DELEGATE(AtomicNotify);
       case Expression::Id::SIMDExtractId: DELEGATE(SIMDExtract);
       case Expression::Id::SIMDReplaceId: DELEGATE(SIMDReplace);
       case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
@@ -160,7 +160,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(AtomicRMW);
   UNIMPLEMENTED(AtomicCmpxchg);
   UNIMPLEMENTED(AtomicWait);
-  UNIMPLEMENTED(AtomicWake);
+  UNIMPLEMENTED(AtomicNotify);
   UNIMPLEMENTED(SIMDExtract);
   UNIMPLEMENTED(SIMDReplace);
   UNIMPLEMENTED(SIMDShuffle);
@@ -213,7 +213,7 @@ struct OverriddenVisitor {
       case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
       case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
       case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
-      case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
+      case Expression::Id::AtomicNotifyId: DELEGATE(AtomicNotify);
       case Expression::Id::SIMDExtractId: DELEGATE(SIMDExtract);
       case Expression::Id::SIMDReplaceId: DELEGATE(SIMDReplace);
       case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
@@ -265,7 +265,7 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitAtomicRMW(AtomicRMW* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitAtomicWait(AtomicWait* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitAtomicWake(AtomicWake* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitAtomicNotify(AtomicNotify* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSIMDExtract(SIMDExtract* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSIMDReplace(SIMDReplace* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
@@ -473,7 +473,7 @@ struct Walker : public VisitorType {
   static void doVisitAtomicRMW(SubType* self, Expression** currp)    { self->visitAtomicRMW((*currp)->cast<AtomicRMW>()); }
   static void doVisitAtomicCmpxchg(SubType* self, Expression** currp){ self->visitAtomicCmpxchg((*currp)->cast<AtomicCmpxchg>()); }
   static void doVisitAtomicWait(SubType* self, Expression** currp)   { self->visitAtomicWait((*currp)->cast<AtomicWait>()); }
-  static void doVisitAtomicWake(SubType* self, Expression** currp)   { self->visitAtomicWake((*currp)->cast<AtomicWake>()); }
+  static void doVisitAtomicNotify(SubType* self, Expression** currp) { self->visitAtomicNotify((*currp)->cast<AtomicNotify>()); }
   static void doVisitSIMDExtract(SubType* self, Expression** currp)  { self->visitSIMDExtract((*currp)->cast<SIMDExtract>()); }
   static void doVisitSIMDReplace(SubType* self, Expression** currp)  { self->visitSIMDReplace((*currp)->cast<SIMDReplace>()); }
   static void doVisitSIMDShuffle(SubType* self, Expression** currp)  { self->visitSIMDShuffle((*currp)->cast<SIMDShuffle>()); }
@@ -617,10 +617,10 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<AtomicWait>()->ptr);
         break;
       }
-      case Expression::Id::AtomicWakeId: {
-        self->pushTask(SubType::doVisitAtomicWake, currp);
-        self->pushTask(SubType::scan, &curr->cast<AtomicWake>()->wakeCount);
-        self->pushTask(SubType::scan, &curr->cast<AtomicWake>()->ptr);
+      case Expression::Id::AtomicNotifyId: {
+        self->pushTask(SubType::doVisitAtomicNotify, currp);
+        self->pushTask(SubType::scan, &curr->cast<AtomicNotify>()->notifyCount);
+        self->pushTask(SubType::scan, &curr->cast<AtomicNotify>()->ptr);
         break;
       }
       case Expression::Id::SIMDExtractId: {

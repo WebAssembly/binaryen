@@ -171,7 +171,7 @@ void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitAddress(curr->offset);
       visitor.visitType(curr->expectedType);
     }
-    void visitAtomicWake(AtomicWake* curr) {
+    void visitAtomicNotify(AtomicNotify* curr) {
       visitor.visitAddress(curr->offset);
     }
     void visitSIMDExtract(SIMDExtract* curr) {

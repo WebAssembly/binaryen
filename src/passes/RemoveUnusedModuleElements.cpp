@@ -114,7 +114,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitAtomicWait(AtomicWait* curr) {
     usesMemory = true;
   }
-  void visitAtomicWake(AtomicWake* curr) {
+  void visitAtomicNotify(AtomicNotify* curr) {
     usesMemory = true;
   }
   void visitHost(Host* curr) {

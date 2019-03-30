@@ -228,13 +228,13 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   }
   void visitAtomicWait(AtomicWait* curr) {
     prepareColor(o);
-    o << printType(curr->expectedType) << ".wait";
+    o << printType(curr->expectedType) << ".atomic.wait";
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
   }
-  void visitAtomicWake(AtomicWake* curr) {
-    printMedium(o, "wake");
+  void visitAtomicNotify(AtomicNotify* curr) {
+    printMedium(o, "atomic.notify");
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -904,12 +904,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->timeout);
     decIndent();
   }
-  void visitAtomicWake(AtomicWake* curr) {
+  void visitAtomicNotify(AtomicNotify* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ptr);
-    printFullLine(curr->wakeCount);
+    printFullLine(curr->notifyCount);
     decIndent();
   }
   void visitSIMDExtract(SIMDExtract* curr) {
