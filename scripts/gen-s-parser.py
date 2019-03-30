@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 instructions = [
     ("unreachable",    "makeUnreachable()"),
     ("nop",            "makeNop()"),
@@ -541,6 +543,10 @@ def generate_with_guard(generator, guard):
 
 
 def main():
+  if sys.version_info.major != 3:
+    import datetime
+    print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
+    sys.exit(1)
   print_header()
   generate_with_guard(instruction_parser, "INSTRUCTION_PARSER")
 
