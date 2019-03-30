@@ -473,7 +473,7 @@ struct Walker : public VisitorType {
   static void doVisitAtomicRMW(SubType* self, Expression** currp)    { self->visitAtomicRMW((*currp)->cast<AtomicRMW>()); }
   static void doVisitAtomicCmpxchg(SubType* self, Expression** currp){ self->visitAtomicCmpxchg((*currp)->cast<AtomicCmpxchg>()); }
   static void doVisitAtomicWait(SubType* self, Expression** currp)   { self->visitAtomicWait((*currp)->cast<AtomicWait>()); }
-  static void doVisitAtomicNotify(SubType* self, Expression** currp)   { self->visitAtomicNotify((*currp)->cast<AtomicNotify>()); }
+  static void doVisitAtomicNotify(SubType* self, Expression** currp) { self->visitAtomicNotify((*currp)->cast<AtomicNotify>()); }
   static void doVisitSIMDExtract(SubType* self, Expression** currp)  { self->visitSIMDExtract((*currp)->cast<SIMDExtract>()); }
   static void doVisitSIMDReplace(SubType* self, Expression** currp)  { self->visitSIMDReplace((*currp)->cast<SIMDReplace>()); }
   static void doVisitSIMDShuffle(SubType* self, Expression** currp)  { self->visitSIMDShuffle((*currp)->cast<SIMDShuffle>()); }
