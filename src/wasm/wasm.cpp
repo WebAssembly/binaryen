@@ -1012,15 +1012,16 @@ bool Module::readFeatures(FeatureSet& features) const try {
     std::string name(&section->data[index], len);
     index += len;
 
-    if (prefix == '-')
+    if (prefix == '-') {
       continue;
+    }
 
     if (name == BinaryConsts::UserSections::AtomicsFeature) {
       features.setAtomics();
     } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
       features.setBulkMemory();
     } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
-      // TODO: exception handling
+      WASM_UNREACHABLE(); // TODO: exception handling
     } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
       features.setTruncSat();
     } else if (name == BinaryConsts::UserSections::SignExtFeature) {

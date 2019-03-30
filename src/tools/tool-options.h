@@ -99,8 +99,9 @@ struct ToolOptions : public Options {
   }
 
   FeatureSet& getFeatures(const Module& module) {
-    if (featuresInitialized)
+    if (featuresInitialized) {
       return passOptions.features;
+    }
 
     bool wasmHasFeatures = module.readFeatures(wasmFeatures);
     if (featureBuilders.size()) {
