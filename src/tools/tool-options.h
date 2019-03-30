@@ -31,14 +31,14 @@ struct ToolOptions : public Options {
       : Options(command, description) {
     (*this)
         .addFeatureOpt("--mvp-features", "-mvp", "Disable all non-MVP features",
-                       [this](FeatureSet& features) {
+                       [](FeatureSet& features) {
                          features = FeatureSet::MVP;
                        })
         .addFeatureOpt("--all-features", "-all",
                        "Enable all features "
                        "(default if there is no target features section"
                        " or if any feature options are provided)",
-                       [this](FeatureSet& features) {
+                       [](FeatureSet& features) {
                          features = FeatureSet::All;
                        })
         .addFeatureOpt("--detect-features", "",
