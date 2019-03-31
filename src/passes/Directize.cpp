@@ -26,8 +26,6 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
-#include "find_all.h"
-#include "ir/module-utils.h"
 #include "asm_v_wasm.h"
 
 namespace wasm {
@@ -41,8 +39,9 @@ struct FlatTable {
   FlatTable(Table& table) {
     valid = true;
     for (auto& segment : table.segments) {
-      auto offset = segment->offset;
+      auto offset = segment.offset;
       if (!offset->is<Const>()) {
+        // TODO: handle some non-constant segments
         valid = false;
         return;
       }
@@ -58,12 +57,12 @@ struct FlatTable {
   }
 };
 
-struct FunctionDirectizer : public WalkerPass<FunctionDirectizer> {
+struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new Scanner(flatTable); }
+  Pass* create() override { return new FunctionDirectizer(flatTable); }
 
-  Scanner(FlatTable* flatTable) : flatTable(flatTable) {}
+  FunctionDirectizer(FlatTable* flatTable) : flatTable(flatTable) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     if (auto* c = curr->target->dynCast<Const>()) {
@@ -72,11 +71,15 @@ struct FunctionDirectizer : public WalkerPass<FunctionDirectizer> {
       // emit an unreachable here, since in Binaryen it is ok to
       // reorder/replace traps when optimizing (but never to
       // remove them, at least not by default).
-      if (index >= flatTable.names.size()) {
+      if (index >= flatTable->names.size()) {
         replaceWithUnreachable();
         return;
       }
-      auto name = flatTable.names[index];
+      auto name = flatTable->names[index];
+      if (!name.is()) {
+        replaceWithUnreachable();
+        return;
+      }
       auto* func = getModule()->getFunction(name);
       if (getSig(getModule()->getFunctionType(curr->fullType)) !=
           getSig(func)) {
@@ -96,16 +99,16 @@ private:
   FlatTable* flatTable;
 
   void replaceWithUnreachable() {
-    return replaceCurrent(Builder(*getModule()).makeUnreachable));
+    replaceCurrent(Builder(*getModule()).makeUnreachable());
   }
 };
 
-struct Directize : public WalkerPass<Directize> {
+struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    if (!module->table.exists()) return;
+    if (!module->table.exists) return;
     if (module->table.imported()) return;
-    for (auto& export : module->exports) {
-      if (export->kind == ExternalKind::Table) return;
+    for (auto& ex : module->exports) {
+      if (ex->kind == ExternalKind::Table) return;
     }
     FlatTable flatTable(module->table);
     if (!flatTable.valid) return;
@@ -118,7 +121,6 @@ struct Directize : public WalkerPass<Directize> {
     }
   }
 };
-
 
 } // anonymous namespace
 
