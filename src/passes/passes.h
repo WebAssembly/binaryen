@@ -31,6 +31,7 @@ Pass* createDAEPass();
 Pass* createDAEOptimizingPass();
 Pass* createDataFlowOptsPass();
 Pass* createDeadCodeEliminationPass();
+Pass* createDirectizePass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createExtractFunctionPass();
 Pass* createFlattenPass();

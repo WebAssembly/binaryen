@@ -75,6 +75,7 @@ void PassRegistry::registerPasses() {
   registerPass("code-folding", "fold code, merging duplicates", createCodeFoldingPass);
   registerPass("const-hoisting", "hoist repeated constants to a local", createConstHoistingPass);
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("directize", "turns indirect calls into direct ones", createDirectize);
   registerPass("dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
@@ -228,11 +229,10 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
-  // inlining/dae+optimizing can remove debug annotations
+  add("directize");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("dae-optimizing");
   }
-  // inline when working hard, and when not preserving debug info
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("inlining-optimizing");
   }
