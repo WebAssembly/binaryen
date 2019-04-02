@@ -1,0 +1,75 @@
+(module
+ (type $0 (func (param i32) (result i32)))
+ (type $1 (func))
+ (type $2 (func (result i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $FUNCSIG$i (func (result i32)))
+ (import "env" "memory" (memory $0 0))
+ (data (global.get $gimport$2) "Hello, world\00")
+ (import "env" "table" (table $0 0 funcref))
+ (import "env" "__memory_base" (global $gimport$2 i32))
+ (import "env" "__table_base" (global $gimport$3 i32))
+ (import "env" "puts" (func $puts (param i32) (result i32)))
+ (import "env" "g$external_var" (func $g$external_var (result i32)))
+ (import "env" "f$puts$ii" (func $f$puts$ii (result i32)))
+ (global $gimport$5 (mut i32) (i32.const 0))
+ (global $gimport$6 (mut i32) (i32.const 0))
+ (export "print_message" (func $print_message))
+ (export "__post_instantiate" (func $__post_instantiate))
+ (func $__wasm_call_ctors (; 3 ;) (type $1)
+  (nop)
+ )
+ (func $print_message (; 4 ;) (type $2) (result i32)
+  (drop
+   (i32.add
+    (global.get $gimport$2)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (call $print_message)
+  )
+  (i32.load
+   (global.get $gimport$6)
+  )
+ )
+ (func $__post_instantiate (; 5 ;)
+  (call $__assign_got_enties)
+  (call $__wasm_call_ctors)
+ )
+ (func $__assign_got_enties (; 6 ;)
+  (global.set $gimport$6
+   (call $g$external_var)
+  )
+  (global.set $gimport$5
+   (call $f$puts$ii)
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 0,
+  "tableSize": 0,
+  "declares": [
+    "puts",
+    "g$external_var",
+    "f$puts$ii"
+  ],
+  "externs": [
+    "___memory_base",
+    "___table_base"
+  ],
+  "implementedFunctions": [
+    "_print_message",
+    "___post_instantiate"
+  ],
+  "exports": [
+    "print_message",
+    "__post_instantiate"
+  ],
+  "invokeFuncs": [
+  ]
+}
+-- END METADATA --
+;)

@@ -37,6 +37,7 @@ const char* TargetFeatures = "target_features";
 }
 
 Name GROW_WASM_MEMORY("__growWasmMemory"),
+     WASM_CALL_CTORS("__wasm_call_ctors"),
      MEMORY_BASE("__memory_base"),
      TABLE_BASE("__table_base"),
      GET_TEMP_RET0("getTempRet0"),
