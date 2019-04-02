@@ -12,13 +12,22 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add support for llvm PIC code.
+- Add --side-module option to wasm-emscripten-finalize.
+
+v73
+===
+
+- Remove wasm-merge tool.
+
+v73
+===
+
 - Remove jsCall generation from wasm-emscripten-finalize.  This is not needed
   as of https://github.com/emscripten-core/emscripten/pull/8255.
 
-### BREAKING CHANGES (old to new)
-
-v.55
-====
+v55
+===
 
 - `RelooperCreate` in the C API now has a Module parameter, and
   `RelooperRenderAndDispose` does not.
