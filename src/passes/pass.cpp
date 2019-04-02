@@ -230,7 +230,6 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("directize");
     add("dae-optimizing");
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
@@ -239,6 +238,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-module-elements");
   add("memory-packing");
+  add("directize"); // may allow more inlining/dae/etc., need --converge for that
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
