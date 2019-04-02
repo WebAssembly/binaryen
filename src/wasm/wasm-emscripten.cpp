@@ -191,8 +191,9 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     g->init = Builder(wasm).makeConst(Literal(0));
   }
 
-  if (!got_entries_func.size() && !got_entries_mem.size())
+  if (!got_entries_func.size() && !got_entries_mem.size()) {
     return nullptr;
+  }
 
   Function* assign_func =
     builder.makeFunction(ASSIGN_GOT_ENTIRES, std::vector<NameType>{}, none, {});
