@@ -1289,7 +1289,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMajor(o, "data ");
-      visit(segment.offset);
+      if (segment.isPassive()) {
+        printMedium(o, "passive");
+      } else {
+        visit(segment.offset);
+      }
       o << " \"";
       for (size_t i = 0; i < segment.data.size(); i++) {
         unsigned char c = segment.data[i];

@@ -1454,7 +1454,8 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     } else {
       if (!(inner.size() > 0 ? inner[0]->str() != IMPORT : true)) throw ParseException("bad import ending");
       // (memory (data ..)) format
-      parseInnerData(*s[i]);
+      auto offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+      parseInnerData(*s[i], 1, offset, false);
       wasm.memory.initial = wasm.memory.segments[0].data.size();
       return;
     }
@@ -1488,16 +1489,26 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
 
 void SExpressionWasmBuilder::parseData(Element& s) {
   if (!wasm.memory.exists) throw ParseException("data but no memory");
+  bool isPassive = false;
+  Expression* offset = nullptr;
   Index i = 1;
-  if (!s[i]->isList()) {
-    // the memory is named
+  if (s[i]->isStr()) {
+    // data is passive or named
+    if (s[i]->str() == PASSIVE) {
+      isPassive = true;
+    }
     i++;
   }
-  auto* offset = parseExpression(s[i++]);
-  parseInnerData(s, i, offset);
+  if (!isPassive) {
+    offset = parseExpression(s[i]);
+  }
+  if (s.size() != 3 && s.size() != 4) {
+    throw ParseException("Unexpected data items");
+  }
+  parseInnerData(s, s.size() - 1, offset, isPassive);
 }
 
-void SExpressionWasmBuilder::parseInnerData(Element& s, Index i, Expression* offset) {
+void SExpressionWasmBuilder::parseInnerData(Element& s, Index i, Expression* offset, bool isPassive) {
   std::vector<char> data;
   while (i < s.size()) {
     const char *input = s[i++]->c_str();
@@ -1505,10 +1516,8 @@ void SExpressionWasmBuilder::parseInnerData(Element& s, Index i, Expression* off
       stringToBinary(input, size, data);
     }
   }
-  if (!offset) {
-    offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
-  }
-  wasm.memory.segments.emplace_back(offset, data.data(), data.size());
+  uint32_t flags = isPassive ? BinaryConsts::IsPassive : 0;
+  wasm.memory.segments.emplace_back(flags, offset, data.data(), data.size());
 }
 
 void SExpressionWasmBuilder::parseExport(Element& s) {

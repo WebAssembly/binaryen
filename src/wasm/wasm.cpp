@@ -15,6 +15,7 @@
  */
 
 #include "wasm.h"
+#include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "ir/branch-utils.h"
 
@@ -49,7 +50,7 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
      RESULT("result"),
      MEMORY("memory"),
      DATA("data"),
-     SEGMENT("segment"),
+     PASSIVE("passive"),
      EXPORT("export"),
      IMPORT("import"),
      TABLE("table"),
@@ -969,5 +970,14 @@ void Module::updateMaps() {
 void Module::clearDebugInfo() {
   debugInfoFileNames.clear();
 }
+
+bool Memory::Segment::isPassive() const {
+  return flags & BinaryConsts::IsPassive;
+}
+
+bool Memory::Segment::hasMemIndex() const {
+  return flags & BinaryConsts::HasMemIndex;
+}
+
 
 } // namespace wasm

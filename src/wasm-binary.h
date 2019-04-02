@@ -324,6 +324,11 @@ enum Section {
   Data = 11
 };
 
+enum SegmentFlag {
+  IsPassive = 0x01,
+  HasMemIndex = 0x02,
+};
+
 enum EncodedType {
   // value_type
   i32 = -0x1, // 0x7f

@@ -1293,19 +1293,30 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   info.shouldBeTrue(!curr.shared || curr.hasMax(), "memory", "shared memory must have max size");
   if (curr.shared) info.shouldBeTrue(info.features.hasAtomics(), "memory", "memory is shared, but atomics are disabled");
   for (auto& segment : curr.segments) {
-    if (!info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;
-    info.shouldBeTrue(checkOffset(segment.offset, segment.data.size(), curr.initial * Memory::kPageSize), segment.offset, "segment offset should be reasonable");
+    info.shouldBeTrue(segment.flags < 3, segment.offset, "segment flags should be 0, 1, or 2");
     Index size = segment.data.size();
+    if (segment.hasMemIndex()) {
+      info.shouldBeEqual(segment.index, 0u, segment.offset, "segment memory index should be 0");
+    }
+    if (segment.flags > 0) {
+      info.shouldBeTrue(info.features.hasBulkMemory(), segment.offset, "nonzero segment flags (bulk memory is disabled)");
+    }
+    if (segment.isPassive()) {
+      info.shouldBeEqual(segment.offset, (Expression*)nullptr, segment.offset, "passive segment should not have an offset");
+    } else {
+      if (!info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;
+      info.shouldBeTrue(checkOffset(segment.offset, segment.data.size(), curr.initial * Memory::kPageSize), segment.offset, "segment offset should be reasonable");
+      if (segment.offset->is<Const>()) {
+        Index start = segment.offset->cast<Const>()->value.geti32();
+        Index end = start + size;
+        info.shouldBeTrue(end <= curr.initial * Memory::kPageSize, segment.data.size(), "segment size should fit in memory (end)");
+      }
+    }
     // If the memory is imported we don't actually know its initial size.
     // Specifically wasm dll's import a zero sized memory which is perfectly
     // valid.
     if (!curr.imported()) {
       info.shouldBeTrue(size <= curr.initial * Memory::kPageSize, segment.data.size(), "segment size should fit in memory (initial)");
-    }
-    if (segment.offset->is<Const>()) {
-      Index start = segment.offset->cast<Const>()->value.geti32();
-      Index end = start + size;
-      info.shouldBeTrue(end <= curr.initial * Memory::kPageSize, segment.data.size(), "segment size should fit in memory (end)");
     }
   }
 }
