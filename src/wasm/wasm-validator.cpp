@@ -653,6 +653,7 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.init must have type none");
   shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.init dest must be an i32");
@@ -662,12 +663,14 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
 }
 
 void FunctionValidator::visitDataDrop(DataDrop* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "data.drop must have type none");
   shouldBeTrue(curr->segment < getModule()->memory.segments.size(), curr, "data.drop segment index out of bounds");
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.copy must have type none");
   shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.copy dest must be an i32");
@@ -676,6 +679,7 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.fill dest must be an i32");
