@@ -31,10 +31,13 @@ const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
 const char* Linking = "linking";
+const char* Producers = "producers";
+const char* TargetFeatures = "target_features";
 }
 }
 
 Name GROW_WASM_MEMORY("__growWasmMemory"),
+     WASM_CALL_CTORS("__wasm_call_ctors"),
      MEMORY_BASE("__memory_base"),
      TABLE_BASE("__table_base"),
      GET_TEMP_RET0("getTempRet0"),
@@ -66,7 +69,7 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
      NEG_NAN("-nan"),
      CASE("case"),
      BR("br"),
-     ANYFUNC("anyfunc"),
+     FUNCREF("funcref"),
      FAKE_RETURN("fake_return_waka123"),
      MUT("mut"),
      SPECTEST("spectest"),
@@ -85,10 +88,10 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::SwitchId: return "switch";
     case Expression::Id::CallId: return "call";
     case Expression::Id::CallIndirectId: return "call_indirect";
-    case Expression::Id::GetLocalId: return "get_local";
-    case Expression::Id::SetLocalId: return "set_local";
-    case Expression::Id::GetGlobalId: return "get_global";
-    case Expression::Id::SetGlobalId: return "set_global";
+    case Expression::Id::GetLocalId: return "local.get";
+    case Expression::Id::SetLocalId: return "local.set";
+    case Expression::Id::GetGlobalId: return "global.get";
+    case Expression::Id::SetGlobalId: return "global.set";
     case Expression::Id::LoadId: return "load";
     case Expression::Id::StoreId: return "store";
     case Expression::Id::ConstId: return "const";
@@ -103,7 +106,16 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::AtomicCmpxchgId: return "atomic_cmpxchg";
     case Expression::Id::AtomicRMWId: return "atomic_rmw";
     case Expression::Id::AtomicWaitId: return "atomic_wait";
-    case Expression::Id::AtomicWakeId: return "atomic_wake";
+    case Expression::Id::AtomicNotifyId: return "atomic_notify";
+    case Expression::Id::SIMDExtractId: return "simd_extract";
+    case Expression::Id::SIMDReplaceId: return "simd_replace";
+    case Expression::Id::SIMDShuffleId: return "simd_shuffle";
+    case Expression::Id::SIMDBitselectId: return "simd_bitselect";
+    case Expression::Id::SIMDShiftId: return "simd_shift";
+    case Expression::Id::MemoryInitId: return "memory_init";
+    case Expression::Id::DataDropId: return "data_drop";
+    case Expression::Id::MemoryCopyId: return "memory_copy";
+    case Expression::Id::MemoryFillId: return "memory_fill";
     case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
@@ -409,9 +421,87 @@ void AtomicWait::finalize() {
   }
 }
 
-void AtomicWake::finalize() {
+void AtomicNotify::finalize() {
   type = i32;
-  if (ptr->type == unreachable || wakeCount->type == unreachable) {
+  if (ptr->type == unreachable || notifyCount->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDExtract::finalize() {
+  assert(vec);
+  switch (op) {
+    case ExtractLaneSVecI8x16:
+    case ExtractLaneUVecI8x16:
+    case ExtractLaneSVecI16x8:
+    case ExtractLaneUVecI16x8:
+    case ExtractLaneVecI32x4: type = i32; break;
+    case ExtractLaneVecI64x2: type = i64; break;
+    case ExtractLaneVecF32x4: type = f32; break;
+    case ExtractLaneVecF64x2: type = f64; break;
+    default: WASM_UNREACHABLE();
+  }
+  if (vec->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDReplace::finalize() {
+  assert(vec && value);
+  type = v128;
+  if (vec->type == unreachable || value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDShuffle::finalize() {
+  assert(left && right);
+  type = v128;
+  if (left->type == unreachable || right->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDBitselect::finalize() {
+  assert(left && right && cond);
+  type = v128;
+  if (left->type == unreachable || right->type == unreachable || cond->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void MemoryInit::finalize() {
+  assert(dest && offset && size);
+  type = none;
+  if (dest->type == unreachable || offset->type == unreachable || size->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void DataDrop::finalize() {
+  type = none;
+}
+
+void MemoryCopy::finalize() {
+  assert(dest && source && size);
+  type = none;
+  if (dest->type == unreachable || source->type == unreachable || size->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void MemoryFill::finalize() {
+  assert(dest && value && size);
+  type = none;
+  if (dest->type == unreachable || value->type == unreachable || size->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDShift::finalize() {
+  assert(vec && shift);
+  type = v128;
+  if (vec->type == unreachable || shift->type == unreachable) {
     type = unreachable;
   }
 }
@@ -491,6 +581,39 @@ void Unary::finalize() {
     case ConvertUInt32ToFloat64:
     case ConvertSInt64ToFloat64:
     case ConvertUInt64ToFloat64: type = f64; break;
+    case SplatVecI8x16:
+    case SplatVecI16x8:
+    case SplatVecI32x4:
+    case SplatVecI64x2:
+    case SplatVecF32x4:
+    case SplatVecF64x2:
+    case NotVec128:
+    case NegVecI8x16:
+    case NegVecI16x8:
+    case NegVecI32x4:
+    case NegVecI64x2:
+    case AbsVecF32x4:
+    case NegVecF32x4:
+    case SqrtVecF32x4:
+    case AbsVecF64x2:
+    case NegVecF64x2:
+    case SqrtVecF64x2:
+    case TruncSatSVecF32x4ToVecI32x4:
+    case TruncSatUVecF32x4ToVecI32x4:
+    case TruncSatSVecF64x2ToVecI64x2:
+    case TruncSatUVecF64x2ToVecI64x2:
+    case ConvertSVecI32x4ToVecF32x4:
+    case ConvertUVecI32x4ToVecF32x4:
+    case ConvertSVecI64x2ToVecF64x2:
+    case ConvertUVecI64x2ToVecF64x2: type = v128; break;
+    case AnyTrueVecI8x16:
+    case AllTrueVecI8x16:
+    case AnyTrueVecI16x8:
+    case AllTrueVecI16x8:
+    case AnyTrueVecI32x4:
+    case AllTrueVecI32x4:
+    case AnyTrueVecI64x2:
+    case AllTrueVecI64x2: type = i32; break;
     case InvalidUnary: WASM_UNREACHABLE();
   }
 }
@@ -721,15 +844,17 @@ Global* Module::getGlobalOrNull(Name name) {
   return iter->second;
 }
 
-void Module::addFunctionType(FunctionType* curr) {
+FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunctionType: empty name";
   }
   if (getFunctionTypeOrNull(curr->name)) {
     Fatal() << "Module::addFunctionType: " << curr->name << " already exists";
   }
-  functionTypes.push_back(std::unique_ptr<FunctionType>(curr));
-  functionTypesMap[curr->name] = curr;
+  auto* p = curr.get();
+  functionTypes.emplace_back(std::move(curr));
+  functionTypesMap[p->name] = p;
+  return p;
 }
 
 void Module::addExport(Export* curr) {
@@ -743,6 +868,7 @@ void Module::addExport(Export* curr) {
   exportsMap[curr->name] = curr;
 }
 
+// TODO(@warchant): refactor all usages to use variant with unique_ptr
 void Module::addFunction(Function* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunction: empty name";
@@ -752,6 +878,17 @@ void Module::addFunction(Function* curr) {
   }
   functions.push_back(std::unique_ptr<Function>(curr));
   functionsMap[curr->name] = curr;
+}
+
+void Module::addFunction(std::unique_ptr<Function> curr) {
+  if (!curr->name.is()) {
+    Fatal() << "Module::addFunction: empty name";
+  }
+  if (getFunctionOrNull(curr->name)) {
+    Fatal() << "Module::addFunction: " << curr->name << " already exists";
+  }
+  functionsMap[curr->name] = curr.get();
+  functions.push_back(std::move(curr));
 }
 
 void Module::addGlobal(Global* curr) {

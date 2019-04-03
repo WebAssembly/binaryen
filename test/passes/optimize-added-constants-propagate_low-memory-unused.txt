@@ -1,0 +1,405 @@
+(module
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i32) (result i32)))
+ (func $consts (; 0 ;) (type $0)
+  (drop
+   (i32.load
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1023)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1024)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1023)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1024)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1023)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1024)
+   )
+  )
+  (i32.store
+   (i32.const 1)
+   (i32.const 1)
+  )
+ )
+ (func $offsets (; 1 ;) (type $1) (param $x i32)
+  (drop
+   (i32.load offset=1
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.load offset=8
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.load offset=1023
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.add
+     (local.get $x)
+     (i32.const 1024)
+    )
+   )
+  )
+  (drop
+   (i32.load
+    (i32.add
+     (local.get $x)
+     (i32.const 2048)
+    )
+   )
+  )
+  (drop
+   (i32.load offset=4
+    (local.get $x)
+   )
+  )
+ )
+ (func $load-off-2 (; 2 ;) (type $2) (param $0 i32) (result i32)
+  (i32.store
+   (i32.const 6)
+   (local.get $0)
+  )
+  (i32.store
+   (i32.const 6)
+   (local.get $0)
+  )
+  (i32.store offset=7
+   (local.get $0)
+   (local.get $0)
+  )
+  (i32.store offset=9
+   (local.get $0)
+   (local.get $0)
+  )
+  (i32.store offset=2
+   (i32.add
+    (i32.const -11)
+    (local.get $0)
+   )
+   (local.get $0)
+  )
+  (i32.store offset=2
+   (i32.add
+    (local.get $0)
+    (i32.const -13)
+   )
+   (local.get $0)
+  )
+  (i32.store offset=19
+   (i32.const -15)
+   (local.get $0)
+  )
+  (i32.store offset=21
+   (i32.const -21)
+   (local.get $0)
+  )
+  (i32.store
+   (i32.const 25)
+   (local.get $0)
+  )
+  (i32.store
+   (i32.const -23)
+   (local.get $0)
+  )
+  (drop
+   (i32.load
+    (i32.const 8)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 8)
+   )
+  )
+  (drop
+   (i32.load offset=8
+    (local.get $0)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 10)
+   )
+  )
+  (i32.load offset=12
+   (local.get $0)
+  )
+ )
+ (func $offset-constant (; 3 ;) (type $0)
+  (drop
+   (i32.load
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 20)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1024)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1023)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1023)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 100511)
+   )
+  )
+ )
+ (func $offset-propagate-param (; 4 ;) (type $1) (param $x i32)
+  (local $y i32)
+  (nop)
+  (drop
+   (i32.load offset=1
+    (local.get $y)
+   )
+  )
+ )
+ (func $offset-propagate (; 5 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (nop)
+  (drop
+   (i32.load offset=1
+    (local.get $y)
+   )
+  )
+ )
+ (func $offset-propagate2 (; 6 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (local.set $x
+   (i32.add
+    (local.get $y)
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
+    )
+   )
+  )
+  (drop
+   (i32.load
+    (local.get $x)
+   )
+  )
+ )
+ (func $offset-propagate3 (; 7 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (nop)
+  (drop
+   (i32.load offset=1
+    (local.get $y)
+   )
+  )
+ )
+ (func $offset-propagate4 (; 8 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (local.set $y
+   (i32.const -1)
+  )
+  (nop)
+  (drop
+   (i32.load offset=1
+    (local.get $y)
+   )
+  )
+ )
+ (func $offset-propagate5 (; 9 ;) (type $1) (param $z i32)
+  (local $x i32)
+  (local $y i32)
+  (local $3 i32)
+  (if
+   (local.get $z)
+   (local.set $y
+    (i32.const -1)
+   )
+  )
+  (block
+   (local.set $3
+    (local.get $y)
+   )
+   (nop)
+  )
+  (drop
+   (i32.load offset=1
+    (local.get $3)
+   )
+  )
+ )
+ (func $offset-propagate6 (; 10 ;) (type $1) (param $z i32)
+  (local $x i32)
+  (local $y i32)
+  (local $3 i32)
+  (local.set $y
+   (local.get $z)
+  )
+  (block
+   (local.set $3
+    (local.get $y)
+   )
+   (nop)
+  )
+  (local.set $y
+   (i32.const -2)
+  )
+  (drop
+   (i32.load offset=1
+    (local.get $3)
+   )
+  )
+ )
+ (func $offset-propagate7 (; 11 ;) (type $1) (param $z i32)
+  (local $x i32)
+  (local $y i32)
+  (local.set $y
+   (local.get $z)
+  )
+  (local.set $x
+   (i32.add
+    (i32.const 1)
+    (local.get $y)
+   )
+  )
+  (if
+   (i32.const 1)
+   (local.set $x
+    (i32.add
+     (i32.const 2)
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.load
+    (local.get $x)
+   )
+  )
+ )
+ (func $offset-realistic (; 12 ;) (type $1) (param $ptr i32)
+  (local $x i32)
+  (local $y i32)
+  (local $z i32)
+  (nop)
+  (nop)
+  (nop)
+  (loop $l
+   (call $offset-realistic
+    (i32.load offset=8
+     (local.get $ptr)
+    )
+   )
+   (call $offset-realistic
+    (i32.load offset=16
+     (local.get $ptr)
+    )
+   )
+   (call $offset-realistic
+    (i32.load offset=16
+     (local.get $ptr)
+    )
+   )
+   (i32.store offset=24
+    (local.get $ptr)
+    (i32.add
+     (i32.load offset=24
+      (local.get $ptr)
+     )
+     (i32.const 1)
+    )
+   )
+   (br_if $l
+    (i32.load offset=24
+     (local.get $ptr)
+    )
+   )
+  )
+ )
+ (func $multiadd (; 13 ;) (type $1) (param $sp i32)
+  (local $$vararg_buffer i32)
+  (local $$vararg_ptr1 i32)
+  (nop)
+  (nop)
+  (i32.store offset=20
+   (local.get $sp)
+   (i32.const 1)
+  )
+ )
+ (func $multiadd-extraUse (; 14 ;) (type $1) (param $sp i32)
+  (local $$vararg_buffer i32)
+  (local $$vararg_ptr1 i32)
+  (local.set $$vararg_buffer
+   (i32.add
+    (local.get $sp)
+    (i32.const 16)
+   )
+  )
+  (nop)
+  (drop
+   (local.get $$vararg_buffer)
+  )
+  (i32.store offset=4
+   (local.get $$vararg_buffer)
+   (i32.const 1)
+  )
+ )
+)

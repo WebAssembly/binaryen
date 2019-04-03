@@ -2,12 +2,14 @@
  (type $0 (func (param i32)))
  (type $1 (func))
  (type $2 (func (param i32 f64)))
- (table $0 1 1 anyfunc)
- (elem (i32.const 0) $a9)
+ (type $3 (func (result i32)))
+ (type $4 (func (param i32) (result i32)))
+ (table $0 2 2 funcref)
+ (elem (i32.const 0) $a9 $c8)
  (export "a8" (func $a8))
  (func $a (; 0 ;)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 1)
   )
   (nop)
@@ -17,7 +19,7 @@
  )
  (func $a1 (; 2 ;)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 2)
   )
   (unreachable)
@@ -30,7 +32,7 @@
  )
  (func $a2 (; 5 ;) (type $0) (param $x i32)
   (drop
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $b2 (; 6 ;) (type $1)
@@ -71,19 +73,19 @@
  (func $a5 (; 14 ;)
   (local $0 f64)
   (local $1 i32)
-  (set_local $0
+  (local.set $0
    (f64.const 3.14159)
   )
   (block
-   (set_local $1
+   (local.set $1
     (i32.const 1)
    )
    (block
     (drop
-     (get_local $1)
+     (local.get $1)
     )
     (drop
-     (get_local $0)
+     (local.get $0)
     )
    )
   )
@@ -93,15 +95,15 @@
  )
  (func $a6 (; 16 ;) (param $0 i32)
   (local $1 f64)
-  (set_local $1
+  (local.set $1
    (f64.const 3.14159)
   )
   (block
    (drop
-    (get_local $0)
+    (local.get $0)
    )
    (drop
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
@@ -112,15 +114,15 @@
  )
  (func $a7 (; 18 ;) (param $0 f64)
   (local $1 i32)
-  (set_local $1
+  (local.set $1
    (i32.const 1)
   )
   (block
    (drop
-    (get_local $1)
+    (local.get $1)
    )
    (drop
-    (get_local $0)
+    (local.get $0)
    )
   )
  )
@@ -147,7 +149,7 @@
  )
  (func $a10 (; 24 ;)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 1)
   )
   (block
@@ -162,13 +164,82 @@
  )
  (func $a12 (; 26 ;) (type $0) (param $x i32)
   (drop
-   (get_local $x)
+   (local.get $x)
   )
   (call $a12
    (i32.const 1)
   )
   (call $a12
    (i32.const 2)
+  )
+ )
+ (func $c1 (; 27 ;) (type $1)
+  (local $x i32)
+  (call $c2)
+  (call $c3)
+  (call $c3)
+  (drop
+   (call $c4)
+  )
+  (local.set $x
+   (call $c4)
+  )
+  (call $c5
+   (unreachable)
+  )
+  (call $c6)
+  (call $c7)
+  (drop
+   (call $c8)
+  )
+ )
+ (func $c2 (; 28 ;)
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $c3 (; 29 ;)
+  (drop
+   (i32.const 2)
+  )
+ )
+ (func $c4 (; 30 ;) (type $3) (result i32)
+  (i32.const 3)
+ )
+ (func $c5 (; 31 ;) (param $x i32)
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $c6 (; 32 ;)
+  (unreachable)
+ )
+ (func $c7 (; 33 ;)
+  (drop
+   (i32.const 4)
+  )
+  (return)
+ )
+ (func $c8 (; 34 ;) (type $3) (result i32)
+  (i32.const 5)
+ )
+)
+(module
+ (type $0 (func))
+ (type $1 (func (param i32) (result i32)))
+ (export "a" (func $0))
+ (func $0 (; 0 ;) (type $0)
+  (call $b)
+ )
+ (func $b (; 1 ;)
+  (local $0 i32)
+  (drop
+   (block (result i32)
+    (local.set $0
+     (i32.const 1)
+    )
+    (local.get $0)
+   )
   )
  )
 )

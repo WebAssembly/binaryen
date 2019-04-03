@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "feature-options.h"
+#include "tool-options.h"
 
 //
 // Shared optimization options for commandline tools
@@ -22,12 +22,12 @@
 
 namespace wasm {
 
-struct OptimizationOptions : public FeatureOptions {
+struct OptimizationOptions : public ToolOptions {
   static constexpr const char* DEFAULT_OPT_PASSES = "O";
 
   std::vector<std::string> passes;
 
-  OptimizationOptions(const std::string& command, const std::string& description) : FeatureOptions(command, description) {
+  OptimizationOptions(const std::string& command, const std::string& description) : ToolOptions(command, description) {
     (*this).add("", "-O", "execute default optimization passes",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
@@ -92,15 +92,26 @@ struct OptimizationOptions : public FeatureOptions {
                 [this](Options* o, const std::string& argument) {
                   passOptions.shrinkLevel = atoi(argument.c_str());
                 })
-           .add("--no-validation", "-n", "Disables validation, assumes inputs are correct",
-                Options::Arguments::Zero,
-                [this](Options* o, const std::string& argument) {
-                  passOptions.validate = false;
-                })
            .add("--ignore-implicit-traps", "-iit", "Optimize under the helpful assumption that no surprising traps occur (from load, div/mod, etc.)",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.ignoreImplicitTraps = true;
+                })
+           .add("--low-memory-unused", "-lmu", "Optimize under the helpful assumption that the low 1K of memory is not used by the application",
+                Options::Arguments::Zero,
+                [this](Options*, const std::string&) {
+                  passOptions.lowMemoryUnused = true;
+                })
+           .add("--pass-arg", "-pa", "An argument passed along to optimization passes being run. Must be in the form KEY:VALUE",
+                Options::Arguments::N,
+                [this](Options*, const std::string& argument) {
+                  auto colon = argument.find(':');
+                  if (colon == std::string::npos) {
+                    Fatal() << "--pass-arg value must be in the form of KEY:VALUE";
+                  }
+                  auto key = argument.substr(0, colon);
+                  auto value = argument.substr(colon + 1);
+                  passOptions.arguments[key] = value;
                 });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {

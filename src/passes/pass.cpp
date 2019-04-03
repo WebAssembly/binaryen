@@ -75,6 +75,7 @@ void PassRegistry::registerPasses() {
   registerPass("code-folding", "fold code, merging duplicates", createCodeFoldingPass);
   registerPass("const-hoisting", "hoist repeated constants to a local", createConstHoistingPass);
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("directize", "turns indirect calls into direct ones", createDirectizePass);
   registerPass("dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
@@ -85,6 +86,7 @@ void PassRegistry::registerPasses() {
   registerPass("inlining", "inline functions (you probably want inlining-optimizing)", createInliningPass);
   registerPass("inlining-optimizing", "inline functions and optimizes where we inlined", createInliningOptimizingPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
+  registerPass("legalize-js-interface-minimally", "legalizes i64 types on the import/export boundary in a minimal manner, only on things only JS will call", createLegalizeJSInterfaceMinimallyPass);
   registerPass("local-cse", "common subexpression elimination inside basic blocks", createLocalCSEPass);
   registerPass("log-execution", "instrument the build with logging of where execution goes", createLogExecutionPass);
   registerPass("i64-to-i32-lowering", "lower all uses of i64s to use i32s instead", createI64ToI32LoweringPass);
@@ -98,6 +100,9 @@ void PassRegistry::registerPasses() {
   registerPass("minify-imports", "minifies import names (only those, and not export names), and emits a mapping to the minified ones", createMinifyImportsPass);
   registerPass("minify-imports-and-exports", "minifies both import and export names, and emits a mapping to the minified ones", createMinifyImportsAndExportsPass);
   registerPass("nm", "name list", createNameListPass);
+  registerPass("no-exit-runtime", "removes calls to atexit(), which is valid if the C runtime will never be exited", createNoExitRuntimePass);
+  registerPass("optimize-added-constants", "optimizes added constants into load/store offsets", createOptimizeAddedConstantsPass);
+  registerPass("optimize-added-constants-propagate", "optimizes added constants into load/store offsets, propagating them across locals too", createOptimizeAddedConstantsPropagatePass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
   registerPass("optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);
@@ -120,7 +125,7 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
   registerPass("rereloop", "re-optimize control flow using the relooper algorithm", createReReloopPass);
-  registerPass("rse", "remove redundant set_locals", createRedundantSetEliminationPass);
+  registerPass("rse", "remove redundant local.sets", createRedundantSetEliminationPass);
   registerPass("safe-heap", "instrument loads and stores to check for invalid behavior", createSafeHeapPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
   registerPass("simplify-locals-nonesting", "miscellaneous locals-related optimizations (no nesting at all; preserves flatness)", createSimplifyLocalsNoNestingPass);
@@ -131,10 +136,14 @@ void PassRegistry::registerPasses() {
   registerPass("souperify-single-use", "emit Souper IR in text form (single-use nodes only)", createSouperifySingleUsePass);
   registerPass("spill-pointers", "spill pointers to the C stack (useful for Boehm-style GC)", createSpillPointersPass);
   registerPass("ssa", "ssa-ify variables so that they have a single assignment", createSSAifyPass);
-  registerPass("strip", "strip debug info (including the names section)", createStripPass);
+  registerPass("ssa-nomerge", "ssa-ify variables so that they have a single assignment, ignoring merges", createSSAifyNoMergePass);
+  registerPass("strip", "deprecated; same as strip-debug", createStripDebugPass);
+  registerPass("strip-debug", "strip debug info (including the names section)", createStripDebugPass);
+  registerPass("strip-producers", "strip the wasm producers section", createStripProducersPass);
+  registerPass("strip-target-features", "strip the wasm target features section", createStripTargetFeaturesPass);
   registerPass("trap-mode-clamp", "replace trapping operations with clamping semantics", createTrapModeClamp);
   registerPass("trap-mode-js", "replace trapping operations with js semantics", createTrapModeJS);
-  registerPass("untee", "removes tee_locals, replacing them with sets and gets", createUnteePass);
+  registerPass("untee", "removes local.tees, replacing them with sets and gets", createUnteePass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
 //  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
@@ -146,15 +155,18 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
+  // Untangling to semi-ssa form is helpful (but best to ignore merges
+  // so as to not introduce new copies).
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    add("ssa-nomerge");
+  }
   // if we are willing to work very very hard, flatten the IR and do opts
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
     add("flatten");
     add("local-cse");
   }
-  if (!options.debugInfo) { // debug info must be preserved, do not dce it
-    add("dce");
-  }
+  add("dce");
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
@@ -166,6 +178,13 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("precompute-propagate");
   } else {
     add("precompute");
+  }
+  if (options.lowMemoryUnused) {
+    if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+      add("optimize-added-constants-propagate");
+    } else {
+      add("optimize-added-constants");
+    }
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");
@@ -192,13 +211,13 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs"); // coalesce-locals opens opportunities
   add("remove-unused-names"); // remove-unused-brs opens opportunities
   add("merge-blocks"); // clean up remove-unused-brs new blocks
-  add("optimize-instructions");
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");
   } else {
     add("precompute");
   }
+  add("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }
@@ -213,15 +232,13 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("dae-optimizing");
   }
-  // inline when working hard, and when not preserving debug info
-  // (inlining+optimizing can remove the annotations)
-  if ((options.optimizeLevel >= 2 || options.shrinkLevel >= 2) &&
-      !options.debugInfo) {
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("inlining-optimizing");
   }
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-module-elements");
   add("memory-packing");
+  add("directize"); // may allow more inlining/dae/etc., need --converge for that
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
@@ -285,28 +302,31 @@ void PassRunner::run() {
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
       totalTime += diff;
-      // validate, ignoring the time
-      std::cerr << "[PassRunner]   (validating)\n";
-      if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
-        WasmPrinter::printModule(wasm);
-        if (passDebug >= 2) {
-          std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
-        } else {
-          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state, or 3 to dump byn-* files for each pass\n";
+      if (options.validate) {
+        // validate, ignoring the time
+        std::cerr << "[PassRunner]   (validating)\n";
+        if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
+          WasmPrinter::printModule(wasm);
+          if (passDebug >= 2) {
+            std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
+          } else {
+            std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state, or 3 to dump byn-* files for each pass\n";
+          }
+          abort();
         }
-        abort();
       }
       if (passDebug >= 3) {
         dumpWast(pass->name, wasm);
       }
     }
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
-    // validate
-    std::cerr << "[PassRunner] (final validation)\n";
-    if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
-      WasmPrinter::printModule(wasm);
-      std::cerr << "final module does not validate\n";
-      abort();
+    if (options.validate) {
+      std::cerr << "[PassRunner] (final validation)\n";
+      if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
+        WasmPrinter::printModule(wasm);
+        std::cerr << "final module does not validate\n";
+        abort();
+      }
     }
   } else {
     // non-debug normal mode, run them in an optimal manner - for locality it is better

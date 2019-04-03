@@ -39,7 +39,7 @@ namespace wasm {
 // This should be enough for everybody. (As described above, we need this
 // to match when dynamically linking, and also dynamic linking is why we
 // can't just detect this automatically in the module we see.)
-static const int NUM_PARAMS = 15;
+static const int NUM_PARAMS = 16;
 
 // Converts a value to the ABI type of i64.
 static Expression* toABI(Expression* value, Module* module) {

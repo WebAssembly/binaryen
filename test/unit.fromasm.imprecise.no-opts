@@ -8,8 +8,8 @@
  (type $FUNCSIG$dd (func (param f64) (result f64)))
  (type $FUNCSIG$i (func (result i32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 25 25 anyfunc))
- (elem (get_global $__table_base) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi $ii)
+ (import "env" "table" (table $table 25 25 funcref))
+ (elem (global.get $__table_base) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi $ii)
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "global" "NaN" (global $t$asm2wasm$import f64))
@@ -24,13 +24,14 @@
  (import "env" "return_int" (func $return_int (result i32)))
  (import "env" "emscripten_log" (func $emscripten_log))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
- (global $t (mut f64) (get_global $t$asm2wasm$import))
- (global $u (mut f64) (get_global $u$asm2wasm$import))
+ (global $t (mut f64) (global.get $t$asm2wasm$import))
+ (global $u (mut f64) (global.get $u$asm2wasm$import))
  (global $Int (mut i32) (i32.const 0))
  (global $Double (mut f64) (f64.const 0))
- (global $tempDoublePtr (mut i32) (get_global $tempDoublePtr$asm2wasm$import))
- (global $n (mut i32) (get_global $n$asm2wasm$import))
- (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
+ (global $tempDoublePtr (mut i32) (global.get $tempDoublePtr$asm2wasm$import))
+ (global $n (mut i32) (global.get $n$asm2wasm$import))
+ (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
+ (global $nonZero (mut i32) (i32.const 1337))
  (global $exportedNumber i32 (i32.const 42))
  (export "big_negative" (func $big_negative))
  (export "pick" (func $exportMe))
@@ -84,43 +85,43 @@
  (export "keepAlive" (func $keepAlive))
  (func $big_negative (; 7 ;)
   (local $temp f64)
-  (set_local $temp
+  (local.set $temp
    (f64.const -2147483648)
   )
-  (set_local $temp
+  (local.set $temp
    (f64.const -2147483648)
   )
-  (set_local $temp
+  (local.set $temp
    (f64.const -21474836480)
   )
-  (set_local $temp
+  (local.set $temp
    (f64.const 0.039625)
   )
-  (set_local $temp
+  (local.set $temp
    (f64.const -0.039625)
   )
  )
  (func $importedDoubles (; 8 ;) (result f64)
   (local $temp f64)
-  (set_local $temp
+  (local.set $temp
    (f64.add
     (f64.add
      (f64.add
-      (get_global $t)
-      (get_global $u)
+      (global.get $t)
+      (global.get $u)
      )
      (f64.neg
-      (get_global $u)
+      (global.get $u)
      )
     )
     (f64.neg
-     (get_global $t)
+     (global.get $t)
     )
    )
   )
   (if
    (i32.gt_s
-    (get_global $Int)
+    (global.get $Int)
     (i32.const 0)
    )
    (return
@@ -129,7 +130,7 @@
   )
   (if
    (f64.gt
-    (get_global $Double)
+    (global.get $Double)
     (f64.const 0)
    )
    (return
@@ -146,22 +147,22 @@
   (local $Double i32)
   (if
    (f64.gt
-    (get_local $x)
+    (local.get $x)
     (f64.const 0)
    )
    (return
     (f64.const 1.2)
    )
   )
-  (set_local $Int
-   (get_local $x)
+  (local.set $Int
+   (local.get $x)
   )
-  (set_local $Double
-   (get_global $n)
+  (local.set $Double
+   (global.get $n)
   )
   (if
    (f64.gt
-    (get_local $Int)
+    (local.get $Int)
     (f64.const 0)
    )
    (return
@@ -170,7 +171,7 @@
   )
   (if
    (i32.gt_s
-    (get_local $Double)
+    (local.get $Double)
     (i32.const 0)
    )
    (return
@@ -179,27 +180,27 @@
   )
   (if
    (f64.lt
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
    (return
-    (get_local $x)
+    (local.get $x)
    )
   )
   (return
-   (get_local $y)
+   (local.get $y)
   )
  )
  (func $intOps (; 10 ;) (param $x i32) (result i32)
   (return
    (i32.eqz
-    (get_local $x)
+    (local.get $x)
    )
   )
  )
  (func $hexLiterals (; 11 ;)
   (local $i i32)
-  (set_local $i
+  (local.set $i
    (i32.add
     (i32.add
      (i32.const 0)
@@ -210,30 +211,30 @@
   )
  )
  (func $conversions (; 12 ;) (param $i i32) (param $d f64) (param $f f32)
-  (set_local $i
-   (i32.trunc_s/f64
-    (get_local $d)
+  (local.set $i
+   (i32.trunc_f64_s
+    (local.get $d)
    )
   )
-  (set_local $i
-   (i32.trunc_s/f32
-    (get_local $f)
+  (local.set $i
+   (i32.trunc_f32_s
+    (local.get $f)
    )
   )
-  (set_local $d
-   (f64.convert_s/i32
-    (get_local $i)
+  (local.set $d
+   (f64.convert_i32_s
+    (local.get $i)
    )
   )
-  (set_local $d
-   (f64.convert_u/i32
-    (get_local $i)
+  (local.set $d
+   (f64.convert_i32_u
+    (local.get $i)
    )
   )
  )
  (func $seq (; 13 ;)
   (local $J f64)
-  (set_local $J
+  (local.set $J
    (f64.sub
     (block (result f64)
      (drop
@@ -257,7 +258,7 @@
     (block $switch-case
      (br_table $switch-case $switch-case0 $switch
       (i32.sub
-       (get_local $x)
+       (local.get $x)
        (i32.const 1)
       )
      )
@@ -275,7 +276,7 @@
     (block $switch-case2
      (br_table $switch-case3 $switch1 $switch1 $switch1 $switch1 $switch1 $switch1 $switch-case2 $switch1
       (i32.sub
-       (get_local $x)
+       (local.get $x)
        (i32.const 5)
       )
      )
@@ -295,7 +296,7 @@
       (block $switch-case4
        (br_table $switch-case9 $label$break$Lout $label$break$Lout $switch-case6 $label$break$Lout $label$break$Lout $label$break$Lout $label$break$Lout $switch-case5 $label$break$Lout $switch-case4 $label$break$Lout
         (i32.sub
-         (get_local $x)
+         (local.get $x)
          (i32.const 2)
         )
        )
@@ -335,7 +336,7 @@
           (block $switch-case11
            (br_table $switch-case11 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case13 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case12 $switch-default
             (i32.sub
-             (get_local $x)
+             (local.get $x)
              (i32.const -1)
             )
            )
@@ -346,7 +347,7 @@
           )
          )
          (block
-          (set_local $waka
+          (local.set $waka
            (i32.const 1)
           )
           (br $switch10)
@@ -387,12 +388,12 @@
  )
  (func $frem_float (; 17 ;) (result f32)
   (return
-   (f32.demote/f64
+   (f32.demote_f64
     (call $f64-rem
-     (f64.promote/f32
+     (f64.promote_f32
       (f32.const 5.5)
      )
-     (f64.promote/f32
+     (f64.promote_f32
       (f32.const 1.2000000476837158)
      )
     )
@@ -401,7 +402,7 @@
  )
  (func $big_uint_div_u (; 18 ;) (result i32)
   (local $x i32)
-  (set_local $x
+  (local.set $x
    (i32.and
     (i32.div_u
      (i32.const -1)
@@ -411,31 +412,31 @@
    )
   )
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $trapping_sint_div_s (; 19 ;) (result i32)
   (local $x i32)
-  (set_local $x
+  (local.set $x
    (i32.div_s
     (i32.const -2147483648)
     (i32.const -1)
    )
   )
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $fr (; 20 ;) (param $x f32)
   (local $y f32)
   (local $z f64)
   (drop
-   (f32.demote/f64
-    (get_local $z)
+   (f32.demote_f64
+    (local.get $z)
    )
   )
   (drop
-   (get_local $y)
+   (local.get $y)
   )
   (drop
    (f32.const 5)
@@ -460,30 +461,30 @@
   (local $y f64)
   (local $z f32)
   (local $asm2wasm_i32_temp i32)
-  (set_local $x
+  (local.set $x
    (block (result i32)
-    (set_local $asm2wasm_i32_temp
+    (local.set $asm2wasm_i32_temp
      (i32.const 0)
     )
     (select
      (i32.sub
       (i32.const 0)
-      (get_local $asm2wasm_i32_temp)
+      (local.get $asm2wasm_i32_temp)
      )
-     (get_local $asm2wasm_i32_temp)
+     (local.get $asm2wasm_i32_temp)
      (i32.lt_s
-      (get_local $asm2wasm_i32_temp)
+      (local.get $asm2wasm_i32_temp)
       (i32.const 0)
      )
     )
    )
   )
-  (set_local $y
+  (local.set $y
    (f64.abs
     (f64.const 0)
    )
   )
-  (set_local $z
+  (local.set $z
    (f32.abs
     (f32.const 0)
    )
@@ -494,40 +495,40 @@
   (local $y f64)
   (local $z f32)
   (local $w f32)
-  (set_local $x
+  (local.set $x
    (f64.min
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
-  (set_local $y
+  (local.set $y
    (f64.max
-    (get_local $x)
-    (get_local $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
-  (set_local $z
+  (local.set $z
    (f32.min
-    (get_local $z)
-    (get_local $w)
+    (local.get $z)
+    (local.get $w)
    )
   )
-  (set_local $w
+  (local.set $w
    (f32.max
-    (get_local $z)
-    (get_local $w)
+    (local.get $z)
+    (local.get $w)
    )
   )
  )
  (func $neg (; 24 ;)
   (local $x f32)
-  (set_local $x
+  (local.set $x
    (f32.neg
-    (get_local $x)
+    (local.get $x)
    )
   )
   (call_indirect (type $FUNCSIG$vf)
-   (get_local $x)
+   (local.get $x)
    (i32.add
     (i32.and
      (i32.const 1)
@@ -539,7 +540,7 @@
  )
  (func $cneg (; 25 ;) (param $x f32)
   (call_indirect (type $FUNCSIG$vf)
-   (get_local $x)
+   (local.get $x)
    (i32.add
     (i32.and
      (i32.const 1)
@@ -553,7 +554,7 @@
   (local $$0 i32)
   (drop
    (i32.gt_u
-    (get_local $$0)
+    (local.get $$0)
     (i32.const -4096)
    )
   )
@@ -561,30 +562,30 @@
  (func $smallCompare (; 27 ;) (param $i i32) (param $j i32) (result i32)
   (if
    (i32.lt_s
-    (get_local $i)
-    (get_local $j)
+    (local.get $i)
+    (local.get $j)
    )
-   (set_local $i
+   (local.set $i
     (i32.add
-     (get_local $i)
+     (local.get $i)
      (i32.const 1)
     )
    )
   )
   (if
    (i32.lt_u
-    (get_local $i)
-    (get_local $j)
+    (local.get $i)
+    (local.get $j)
    )
-   (set_local $i
+   (local.set $i
     (i32.add
-     (get_local $i)
+     (local.get $i)
      (i32.const 1)
     )
    )
   )
   (return
-   (get_local $i)
+   (local.get $i)
   )
  )
  (func $cneg_nosemicolon (; 28 ;)
@@ -601,7 +602,7 @@
  )
  (func $forLoop (; 29 ;)
   (local $i i32)
-  (set_local $i
+  (local.set $i
    (i32.const 1)
   )
   (loop $for-in
@@ -609,18 +610,18 @@
     (if
      (i32.eqz
       (i32.lt_s
-       (get_local $i)
+       (local.get $i)
        (i32.const 200)
       )
      )
      (br $for-out)
     )
     (call $h
-     (get_local $i)
+     (local.get $i)
     )
-    (set_local $i
+    (local.set $i
      (i32.add
-      (get_local $i)
+      (local.get $i)
       (i32.const 1)
      )
     )
@@ -630,19 +631,19 @@
  )
  (func $ceiling_32_64 (; 30 ;) (param $u f32) (param $B f64)
   (local $temp f32)
-  (set_local $temp
-   (f32.demote/f64
+  (local.set $temp
+   (f32.demote_f64
     (f64.ceil
-     (get_local $B)
+     (local.get $B)
     )
    )
   )
-  (set_local $temp
+  (local.set $temp
    (f32.mul
-    (get_local $u)
+    (local.get $u)
     (f32.ceil
-     (f32.demote/f64
-      (get_local $B)
+     (f32.demote_f64
+      (local.get $B)
      )
     )
    )
@@ -656,7 +657,7 @@
   )
   (drop
    (call $abort
-    (f64.convert_s/i32
+    (f64.convert_i32_s
      (i32.const 55)
     )
    )
@@ -673,7 +674,7 @@
   )
   (drop
    (call $abort
-    (f64.promote/f32
+    (f64.promote_f32
      (f32.const 56.779998779296875)
     )
    )
@@ -706,26 +707,26 @@
  (func $bitcasts (; 33 ;) (param $i i32) (param $f f32)
   (local $d f64)
   (drop
-   (f32.reinterpret/i32
-    (get_local $i)
+   (f32.reinterpret_i32
+    (local.get $i)
    )
   )
   (drop
-   (f64.promote/f32
-    (f32.reinterpret/i32
-     (get_local $i)
+   (f64.promote_f32
+    (f32.reinterpret_i32
+     (local.get $i)
     )
    )
   )
   (drop
-   (i32.reinterpret/f32
-    (get_local $f)
+   (i32.reinterpret_f32
+    (local.get $f)
    )
   )
   (drop
-   (i32.reinterpret/f32
-    (f32.demote/f64
-     (get_local $d)
+   (i32.reinterpret_f32
+    (f32.demote_f64
+     (local.get $d)
     )
    )
   )
@@ -740,7 +741,7 @@
         (drop
          (i32.const 1)
         )
-        (get_local $x)
+        (local.get $x)
        )
        (block (result i32)
         (drop
@@ -790,7 +791,7 @@
     )
    )
   )
-  (set_local $x
+  (local.set $x
    (i32.add
     (i32.add
      (i32.add
@@ -800,7 +801,7 @@
          (i32.const 1)
         )
        )
-       (get_local $x)
+       (local.get $x)
       )
       (block (result i32)
        (drop
@@ -872,15 +873,15 @@
    )
   )
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $lb (; 35 ;) (param $a i32) (result i32)
   (i32.store
-   (get_local $a)
+   (local.get $a)
    (i32.add
     (i32.add
-     (get_global $n)
+     (global.get $n)
      (i32.const 136)
     )
     (i32.const 8)
@@ -910,17 +911,17 @@
     (call $lb
      (i32.const 1)
     )
-    (set_local $y
+    (local.set $y
      (i32.const 3)
     )
    )
-   (set_local $y
+   (local.set $y
     (i32.const 3)
    )
   )
   (if
    (i32.eq
-    (get_local $y)
+    (local.get $y)
     (i32.const 3)
    )
    (drop
@@ -939,19 +940,19 @@
       (i32.const 1)
      )
      (block
-      (set_local $x
+      (local.set $x
        (i32.const 0)
       )
       (br $do-once)
      )
     )
-    (set_local $x
+    (local.set $x
      (i32.const 1)
     )
    )
   )
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $smallIf (; 40 ;)
@@ -993,23 +994,23 @@
  )
  (func $useSetGlobal (; 42 ;) (result i32)
   (local $x i32)
-  (set_local $x
+  (local.set $x
    (block (result i32)
-    (set_global $Int
+    (global.set $Int
      (i32.const 10)
     )
-    (get_global $Int)
+    (global.get $Int)
    )
   )
-  (set_global $Int
+  (global.set $Int
    (i32.const 20)
   )
   (return
    (block (result i32)
-    (set_global $Int
+    (global.set $Int
      (i32.const 30)
     )
-    (get_global $Int)
+    (global.get $Int)
    )
   )
  )
@@ -1017,11 +1018,11 @@
   (return
    (block (result i32)
     (block
-     (set_global $Int
+     (global.set $Int
       (i32.const 40)
      )
      (drop
-      (get_global $Int)
+      (global.get $Int)
      )
     )
     (i32.const 50)
@@ -1031,12 +1032,12 @@
  (func $breakThroughMany (; 44 ;) (param $$s i32)
   (block $label$break$L1
    (if
-    (get_local $$s)
+    (local.get $$s)
     (loop $while-in
      (block $while-out
       (if
        (i32.eqz
-        (get_local $$s)
+        (local.get $$s)
        )
        (br $label$break$L1)
       )
@@ -1056,7 +1057,7 @@
  (func $ifChainEmpty (; 45 ;) (param $label i32) (result i32)
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 4)
    )
    (return
@@ -1064,7 +1065,7 @@
    )
    (if
     (i32.eq
-     (get_local $label)
+     (local.get $label)
      (i32.const 7)
     )
     (nop)
@@ -1077,19 +1078,19 @@
  (func $heap8NoShift (; 46 ;) (param $x i32) (result i32)
   (return
    (i32.load8_s
-    (get_local $x)
+    (local.get $x)
    )
   )
  )
  (func $conditionalTypeFun (; 47 ;)
   (local $x i32)
   (local $y f64)
-  (set_local $x
+  (local.set $x
    (if (result i32)
     (call $return_int)
-    (i32.trunc_s/f64
+    (i32.trunc_f64_s
      (call $abort
-      (f64.convert_s/i32
+      (f64.convert_i32_s
        (i32.const 5)
       )
      )
@@ -1097,11 +1098,11 @@
     (i32.const 2)
    )
   )
-  (set_local $y
+  (local.set $y
    (if (result f64)
     (call $return_int)
     (call $abort
-     (f64.convert_s/i32
+     (f64.convert_i32_s
       (i32.const 7)
      )
     )
@@ -1114,7 +1115,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load8_s
-      (get_local $x)
+      (local.get $x)
      )
      (i32.const 24)
     )
@@ -1125,7 +1126,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load8_u
-      (get_local $x)
+      (local.get $x)
      )
      (i32.const 24)
     )
@@ -1136,7 +1137,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load16_s
-      (get_local $x)
+      (local.get $x)
      )
      (i32.const 16)
     )
@@ -1147,7 +1148,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load16_u
-      (get_local $x)
+      (local.get $x)
      )
      (i32.const 16)
     )
@@ -1158,7 +1159,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load8_s
-      (get_local $x)
+      (local.get $x)
      )
      (i32.const 24)
     )
@@ -1169,7 +1170,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load8_u
-      (get_local $x)
+      (local.get $x)
      )
      (i32.const 16)
     )
@@ -1180,7 +1181,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load16_s
-      (get_local $x)
+      (local.get $x)
      )
      (i32.const 16)
     )
@@ -1191,7 +1192,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load16_u
-      (get_local $x)
+      (local.get $x)
      )
      (i32.const 24)
     )
@@ -1210,11 +1211,11 @@
  (func $globalOpts (; 51 ;)
   (local $x i32)
   (local $y f64)
-  (set_local $x
-   (get_global $Int)
+  (local.set $x
+   (global.get $Int)
   )
-  (set_local $y
-   (get_global $Double)
+  (local.set $y
+   (global.get $Double)
   )
   (i32.store8
    (i32.const 13)
@@ -1222,32 +1223,32 @@
     (i32.const 12)
    )
   )
-  (set_global $Double
-   (get_local $y)
+  (global.set $Double
+   (local.get $y)
   )
-  (set_global $Int
-   (get_local $x)
+  (global.set $Int
+   (local.get $x)
   )
   (call $globalOpts)
-  (set_local $x
-   (get_global $Int)
+  (local.set $x
+   (global.get $Int)
   )
   (if
    (call $return_int)
-   (set_global $Int
+   (global.set $Int
     (i32.const 20)
    )
   )
-  (set_global $Int
-   (get_local $x)
+  (global.set $Int
+   (local.get $x)
   )
   (call $globalOpts)
-  (set_local $x
-   (get_global $Int)
+  (local.set $x
+   (global.get $Int)
   )
   (call $globalOpts)
-  (set_global $Int
-   (get_local $x)
+  (global.set $Int
+   (local.get $x)
   )
  )
  (func $dropCallImport (; 52 ;)
@@ -1262,38 +1263,38 @@
   (local $temp i32)
   (local $inc i32)
   (local $loopvar i32)
-  (set_local $loopvar
-   (get_local $x)
+  (local.set $loopvar
+   (local.get $x)
   )
   (loop $while-in
    (block $while-out
     (call $loophi
-     (get_local $loopvar)
+     (local.get $loopvar)
      (i32.const 0)
     )
-    (set_local $temp
-     (get_local $loopvar)
+    (local.set $temp
+     (local.get $loopvar)
     )
     (if
-     (get_local $temp)
+     (local.get $temp)
      (if
-      (get_local $temp)
+      (local.get $temp)
       (br $while-out)
      )
     )
-    (set_local $inc
+    (local.set $inc
      (i32.add
-      (get_local $loopvar)
+      (local.get $loopvar)
       (i32.const 1)
      )
     )
     (if
      (i32.eq
-      (get_local $inc)
-      (get_local $y)
+      (local.get $inc)
+      (local.get $y)
      )
-     (set_local $loopvar
-      (get_local $inc)
+     (local.set $loopvar
+      (local.get $inc)
      )
      (br $while-out)
     )
@@ -1307,41 +1308,41 @@
   (local $i$lcssa i32)
   (local $temp i32)
   (local $j i32)
-  (set_local $i
+  (local.set $i
    (i32.const 0)
   )
   (loop $label$continue$L7
    (block $label$break$L7
-    (set_local $j
+    (local.set $j
      (i32.const 0)
     )
     (loop $while-in
      (block $while-out
-      (set_local $temp
-       (get_local $j)
+      (local.set $temp
+       (local.get $j)
       )
       (if
        (call $return_int)
        (if
-        (get_local $temp)
+        (local.get $temp)
         (block
-         (set_local $i$lcssa
-          (get_local $i)
+         (local.set $i$lcssa
+          (local.get $i)
          )
          (br $label$break$L7)
         )
        )
       )
-      (set_local $jnc
+      (local.set $jnc
        (i32.add
-        (get_local $j)
+        (local.get $j)
         (i32.const 1)
        )
       )
       (if
-       (get_local $jnc)
-       (set_local $j
-        (get_local $jnc)
+       (local.get $jnc)
+       (local.set $j
+        (local.get $jnc)
        )
        (br $while-out)
       )
@@ -1352,7 +1353,7 @@
    )
   )
   (return
-   (get_local $i$lcssa)
+   (local.get $i$lcssa)
   )
  )
  (func $loophi2b (; 55 ;) (result i32)
@@ -1361,41 +1362,41 @@
   (local $i$lcssa i32)
   (local $temp i32)
   (local $j i32)
-  (set_local $i
+  (local.set $i
    (i32.const 0)
   )
   (loop $label$continue$L7
    (block $label$break$L7
-    (set_local $j
+    (local.set $j
      (i32.const 0)
     )
     (loop $while-in
      (block $while-out
-      (set_local $temp
-       (get_local $j)
+      (local.set $temp
+       (local.get $j)
       )
       (if
        (call $return_int)
        (if
-        (get_local $temp)
+        (local.get $temp)
         (block
-         (set_local $i$lcssa
-          (get_local $j)
+         (local.set $i$lcssa
+          (local.get $j)
          )
          (br $label$break$L7)
         )
        )
       )
-      (set_local $jnc
+      (local.set $jnc
        (i32.add
-        (get_local $j)
+        (local.get $j)
         (i32.const 1)
        )
       )
       (if
-       (get_local $jnc)
-       (set_local $j
-        (get_local $jnc)
+       (local.get $jnc)
+       (local.set $j
+        (local.get $jnc)
        )
        (br $while-out)
       )
@@ -1406,25 +1407,25 @@
    )
   )
   (return
-   (get_local $i$lcssa)
+   (local.get $i$lcssa)
   )
  )
  (func $relooperJumpThreading (; 56 ;) (param $x i32) (result i32)
   (local $label i32)
   (if
-   (get_local $x)
+   (local.get $x)
    (block
     (call $h
      (i32.const 0)
     )
-    (set_local $label
+    (local.set $label
      (i32.const 1)
     )
    )
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 1)
    )
    (call $h
@@ -1436,19 +1437,19 @@
   )
   (loop $while-in
    (block $while-out
-    (set_local $x
+    (local.set $x
      (i32.add
-      (get_local $x)
+      (local.get $x)
       (i32.const 1)
      )
     )
     (if
-     (get_local $x)
+     (local.get $x)
      (block
       (call $h
        (i32.const 2)
       )
-      (set_local $label
+      (local.set $label
        (i32.const 2)
       )
       (br $while-out)
@@ -1459,7 +1460,7 @@
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 2)
    )
    (call $h
@@ -1470,20 +1471,20 @@
    (i32.const -2)
   )
   (if
-   (get_local $x)
+   (local.get $x)
    (block
     (call $h
      (i32.const 4)
     )
     (if
      (i32.eq
-      (get_local $x)
+      (local.get $x)
       (i32.const 3)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 3)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 4)
      )
     )
@@ -1491,7 +1492,7 @@
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 3)
    )
    (call $h
@@ -1499,7 +1500,7 @@
    )
    (if
     (i32.eq
-     (get_local $label)
+     (local.get $label)
      (i32.const 4)
     )
     (call $h
@@ -1511,20 +1512,20 @@
    (i32.const -3)
   )
   (if
-   (get_local $x)
+   (local.get $x)
    (block
     (call $h
      (i32.const 7)
     )
     (if
      (i32.eq
-      (get_local $x)
+      (local.get $x)
       (i32.const 5)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 5)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 6)
      )
     )
@@ -1532,7 +1533,7 @@
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 5)
    )
    (block
@@ -1541,10 +1542,10 @@
     )
     (if
      (i32.eq
-      (get_local $x)
+      (local.get $x)
       (i32.const 6)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 6)
      )
     )
@@ -1552,7 +1553,7 @@
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 6)
    )
    (call $h
@@ -1563,12 +1564,12 @@
    (i32.const -4)
   )
   (if
-   (get_local $x)
+   (local.get $x)
    (block
     (call $h
      (i32.const 10)
     )
-    (set_local $label
+    (local.set $label
      (i32.const 7)
     )
    )
@@ -1576,7 +1577,7 @@
   (block $label$break$L1
    (if
     (i32.eq
-     (get_local $label)
+     (local.get $label)
      (i32.const 7)
     )
     (block
@@ -1591,20 +1592,20 @@
    (i32.const -5)
   )
   (if
-   (get_local $x)
+   (local.get $x)
    (block
     (call $h
      (i32.const 12)
     )
     (if
      (i32.eq
-      (get_local $x)
+      (local.get $x)
       (i32.const 8)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 8)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 9)
      )
     )
@@ -1612,7 +1613,7 @@
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 8)
    )
    (block
@@ -1620,8 +1621,8 @@
      (i32.const 13)
     )
     (if
-     (get_local $x)
-     (set_local $label
+     (local.get $x)
+     (local.set $label
       (i32.const 9)
      )
     )
@@ -1630,7 +1631,7 @@
   (block $label$break$L10
    (if
     (i32.eq
-     (get_local $label)
+     (local.get $label)
      (i32.const 9)
     )
     (block
@@ -1645,7 +1646,7 @@
    (i32.const -6)
   )
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $relooperJumpThreading__ZN4game14preloadweaponsEv (; 57 ;) (param $$12 i32) (param $$14 i32) (param $$or$cond8 i32) (param $$or$cond6 i32) (param $$vararg_ptr5 i32) (param $$11 i32) (param $$exitcond i32)
@@ -1653,46 +1654,46 @@
   (loop $while-in
    (block $while-out
     (if
-     (get_local $$14)
+     (local.get $$14)
      (if
-      (get_local $$or$cond8)
-      (set_local $label
+      (local.get $$or$cond8)
+      (local.set $label
        (i32.const 7)
       )
-      (set_local $label
+      (local.set $label
        (i32.const 8)
       )
      )
      (if
-      (get_local $$or$cond6)
-      (set_local $label
+      (local.get $$or$cond6)
+      (local.set $label
        (i32.const 7)
       )
-      (set_local $label
+      (local.set $label
        (i32.const 8)
       )
      )
     )
     (if
      (i32.eq
-      (get_local $label)
+      (local.get $label)
       (i32.const 7)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 0)
      )
      (if
       (i32.eq
-       (get_local $label)
+       (local.get $label)
        (i32.const 8)
       )
       (block
-       (set_local $label
+       (local.set $label
         (i32.const 0)
        )
        (i32.store
-        (get_local $$vararg_ptr5)
-        (get_local $$11)
+        (local.get $$vararg_ptr5)
+        (local.get $$11)
        )
       )
      )
@@ -1705,19 +1706,19 @@
   (local $label i32)
   (if
    (i32.eq
-    (get_local $x)
+    (local.get $x)
     (i32.const 100)
    )
-   (set_local $label
+   (local.set $label
     (i32.const 1)
    )
-   (set_local $label
+   (local.set $label
     (i32.const 10)
    )
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 1)
    )
    (loop $while-in
@@ -1725,7 +1726,7 @@
      (call $relooperJumpThreading_irreducible
       (i32.const 1337)
      )
-     (set_local $label
+     (local.set $label
       (i32.const 1)
      )
      (br $while-in)
@@ -1734,28 +1735,28 @@
   )
   (if
    (i32.eq
-    (get_local $x)
+    (local.get $x)
     (i32.const 200)
    )
-   (set_local $label
+   (local.set $label
     (i32.const 2)
    )
-   (set_local $label
+   (local.set $label
     (i32.const 10)
    )
   )
   (if
    (i32.eq
-    (get_local $x)
+    (local.get $x)
     (i32.const 300)
    )
-   (set_local $label
+   (local.set $label
     (i32.const 2)
    )
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 2)
    )
    (call $relooperJumpThreading_irreducible
@@ -1764,7 +1765,7 @@
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 10)
    )
    (call $relooperJumpThreading_irreducible
@@ -1776,17 +1777,17 @@
   (local $$12 i32)
   (local $$20 i32)
   (if
-   (get_local $$2)
+   (local.get $$2)
    (loop $while-in
     (block $while-out
-     (set_local $$12
-      (get_local $$$06$i4)
+     (local.set $$12
+      (local.get $$$06$i4)
      )
      (if
-      (get_local $$exitcond$i6)
+      (local.get $$exitcond$i6)
       (br $while-out)
-      (set_local $$$06$i4
-       (get_local $$20)
+      (local.set $$$06$i4
+       (local.get $$20)
       )
      )
      (br $while-in)
@@ -1802,12 +1803,12 @@
  (func $jumpThreadDrop (; 60 ;) (result i32)
   (local $label i32)
   (local $temp i32)
-  (set_local $temp
+  (local.set $temp
    (call $return_int)
   )
   (loop $while-in
    (block $while-out
-    (set_local $label
+    (local.set $label
      (i32.const 14)
     )
     (br $while-out)
@@ -1816,13 +1817,13 @@
   )
   (if
    (i32.eq
-    (get_local $label)
+    (local.get $label)
     (i32.const 10)
    )
    (nop)
    (if
     (i32.eq
-     (get_local $label)
+     (local.get $label)
      (i32.const 12)
     )
     (drop
@@ -1830,7 +1831,7 @@
     )
     (if
      (i32.eq
-      (get_local $label)
+      (local.get $label)
       (i32.const 14)
      )
      (nop)
@@ -1838,20 +1839,20 @@
    )
   )
   (return
-   (get_local $temp)
+   (local.get $temp)
   )
  )
  (func $dropIgnoredImportInIf (; 61 ;) (param $$0 i32) (param $$1 i32) (param $$2 i32)
   (block $do-once
    (if
-    (get_local $$0)
+    (local.get $$0)
     (block
-     (set_local $$0
+     (local.set $$0
       (i32.const 1)
      )
      (drop
       (call $lb
-       (get_local $$2)
+       (local.get $$2)
       )
      )
     )
@@ -1869,15 +1870,15 @@
  (func $dropIgnoredImportsInIf (; 63 ;) (param $$0 i32) (param $$1 i32) (param $$2 i32)
   (block $do-once
    (if
-    (get_local $$0)
+    (local.get $$0)
     (drop
      (call $lb
-      (get_local $$1)
+      (local.get $$1)
      )
     )
     (drop
      (call $lb
-      (get_local $$2)
+      (local.get $$2)
      )
     )
    )
@@ -1887,24 +1888,24 @@
  )
  (func $f32_ucast (; 64 ;) (param $x i32) (result f32)
   (return
-   (f32.convert_u/i32
-    (get_local $x)
+   (f32.convert_i32_u
+    (local.get $x)
    )
   )
  )
  (func $f32_scast (; 65 ;) (param $x i32) (result f32)
   (return
-   (f32.convert_s/i32
-    (get_local $x)
+   (f32.convert_i32_s
+    (local.get $x)
    )
   )
  )
  (func $store_fround (; 66 ;) (param $x i32)
   (f64.store
    (i32.const 80)
-   (f64.promote/f32
-    (f32.convert_s/i32
-     (get_local $x)
+   (f64.promote_f32
+    (f32.convert_i32_s
+     (local.get $x)
     )
    )
   )
@@ -1926,19 +1927,19 @@
  )
  (func $exported_f32_user (; 68 ;) (param $x i32) (param $y f32) (param $z f64) (result f32)
   (return
-   (get_local $y)
+   (local.get $y)
   )
  )
  (func $sqrts (; 69 ;) (param $x f64) (result f64)
   (return
    (f64.add
     (f64.sqrt
-     (get_local $x)
+     (local.get $x)
     )
-    (f64.promote/f32
+    (f64.promote_f32
      (f32.sqrt
-      (f32.demote/f64
-       (get_local $x)
+      (f32.demote_f64
+       (local.get $x)
       )
      )
     )
@@ -1947,15 +1948,15 @@
  )
  (func $f2u (; 70 ;) (param $x f64) (result i32)
   (return
-   (i32.trunc_u/f64
-    (get_local $x)
+   (i32.trunc_f64_u
+    (local.get $x)
    )
   )
  )
  (func $f2s (; 71 ;) (param $x f64) (result i32)
   (return
-   (i32.trunc_s/f64
-    (get_local $x)
+   (i32.trunc_f64_s
+    (local.get $x)
    )
   )
  )
@@ -1964,7 +1965,7 @@
    (block $while-out
     (if
      (i32.eq
-      (get_local $x)
+      (local.get $x)
       (i32.const 17)
      )
      (block
@@ -1979,7 +1980,7 @@
      )
      (block
       (br $while-out)
-      (set_local $x
+      (local.set $x
        (call $autoDrop
         (i32.const 2)
        )
@@ -1990,12 +1991,12 @@
    )
   )
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $indirectInSequence (; 73 ;)
   (local $i1 i32)
-  (set_local $i1
+  (local.set $i1
    (block (result i32)
     (call_indirect (type $FUNCSIG$vi)
      (i32.const 0)
@@ -2014,14 +2015,14 @@
  (func $emterpretify_assertions_safeHeap (; 74 ;)
   (local $i1 i32)
   (call_indirect (type $FUNCSIG$vi)
-   (get_local $i1)
+   (local.get $i1)
    (i32.add
     (i32.and
      (block (result i32)
-      (set_global $Int
+      (global.set $Int
        (i32.const 1)
       )
-      (get_global $Int)
+      (global.get $Int)
      )
      (i32.const 7)
     )
@@ -2034,7 +2035,7 @@
   (if
    (i32.const 2)
    (drop
-    (i32.trunc_s/f64
+    (i32.trunc_f64_s
      (call $abort
       (f64.const 0)
      )
@@ -2047,18 +2048,18 @@
  )
  (func $mod_detectSign (; 76 ;) (param $d1 f64) (param $d2 f64) (param $d8 f64) (result i32)
   (return
-   (i32.trunc_s/f64
+   (i32.trunc_f64_s
     (f64.sub
-     (get_local $d2)
+     (local.get $d2)
      (f64.mul
       (f64.div
        (call $f64-rem
-        (get_local $d8)
-        (get_local $d1)
+        (local.get $d8)
+        (local.get $d1)
        )
-       (get_local $d1)
+       (local.get $d1)
       )
-      (get_local $d2)
+      (local.get $d2)
      )
     )
    )
@@ -2100,6 +2101,12 @@
     (f64.const 9.78)
    )
   )
+  (global.set $nonZero
+   (i32.add
+    (global.get $nonZero)
+    (i32.const 1)
+   )
+  )
  )
  (func $v (; 78 ;)
   (nop)
@@ -2109,54 +2116,54 @@
  )
  (func $ii (; 80 ;) (param $x i32) (result i32)
   (return
-   (get_local $x)
+   (local.get $x)
   )
  )
  (func $legalstub$conversions (; 81 ;) (param $0 i32) (param $1 f64) (param $2 f64)
   (call $conversions
-   (get_local $0)
-   (get_local $1)
-   (f32.demote/f64
-    (get_local $2)
+   (local.get $0)
+   (local.get $1)
+   (f32.demote_f64
+    (local.get $2)
    )
   )
  )
  (func $legalstub$frem_float (; 82 ;) (result f64)
-  (f64.promote/f32
+  (f64.promote_f32
    (call $frem_float)
   )
  )
  (func $legalstub$fr (; 83 ;) (param $0 f64)
   (call $fr
-   (f32.demote/f64
-    (get_local $0)
+   (f32.demote_f64
+    (local.get $0)
    )
   )
  )
  (func $legalstub$ceiling_32_64 (; 84 ;) (param $0 f64) (param $1 f64)
   (call $ceiling_32_64
-   (f32.demote/f64
-    (get_local $0)
+   (f32.demote_f64
+    (local.get $0)
    )
-   (get_local $1)
+   (local.get $1)
   )
  )
  (func $legalstub$bitcasts (; 85 ;) (param $0 i32) (param $1 f64)
   (call $bitcasts
-   (get_local $0)
-   (f32.demote/f64
-    (get_local $1)
+   (local.get $0)
+   (f32.demote_f64
+    (local.get $1)
    )
   )
  )
  (func $legalstub$exported_f32_user (; 86 ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
-  (f64.promote/f32
+  (f64.promote_f32
    (call $exported_f32_user
-    (get_local $0)
-    (f32.demote/f64
-     (get_local $1)
+    (local.get $0)
+    (f32.demote_f64
+     (local.get $1)
     )
-    (get_local $2)
+    (local.get $2)
    )
   )
  )

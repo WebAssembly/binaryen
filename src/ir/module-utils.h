@@ -92,6 +92,8 @@ inline Global* copyGlobal(Global* global, Module& out) {
   ret->name = global->name;
   ret->type = global->type;
   ret->mutable_ = global->mutable_;
+  ret->module = global->module;
+  ret->base = global->base;
   if (global->imported()) {
     ret->init = nullptr;
   } else {
@@ -105,7 +107,7 @@ inline void copyModule(Module& in, Module& out) {
   // we use names throughout, not raw points, so simple copying is fine
   // for everything *but* expressions
   for (auto& curr : in.functionTypes) {
-    out.addFunctionType(new FunctionType(*curr));
+    out.addFunctionType(make_unique<FunctionType>(*curr));
   }
   for (auto& curr : in.exports) {
     out.addExport(new Export(*curr));
@@ -131,13 +133,15 @@ inline void copyModule(Module& in, Module& out) {
 
 // Renaming
 
+// Rename functions along with all their uses.
+// Note that for this to work the functions themselves don't necessarily need
+// to exist.  For example, it is possible to remove a given function and then
+// call this redirect all of its uses.
 template<typename T>
 inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& pair : map) {
     if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      // In some cases t he function itself might have been removed already
-      // and we just want to rename all its (now invalid) uses.
       assert(!wasm.getFunctionOrNull(pair.second));
       F->name = pair.second;
     }

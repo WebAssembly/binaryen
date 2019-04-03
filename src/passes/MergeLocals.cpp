@@ -22,11 +22,11 @@
 // example, in
 //
 //  (if (result i32)
-//   (tee_local $x
-//    (get_local $y)
+//   (local.tee $x
+//    (local.get $y)
 //   )
 //   (i32.const 100)
-//   (get_local $x)
+//   (local.get $x)
 //  )
 // 
 // If that assignment of $y is never used again, everything is fine. But if
@@ -60,13 +60,13 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
 
   void doWalkFunction(Function* func) {
     // first, instrument the graph by modifying each copy
-    //   (set_local $x
-    //    (get_local $y)
+    //   (local.set $x
+    //    (local.get $y)
     //   )
     // to
-    //   (set_local $x
-    //    (tee_local $y
-    //     (get_local $y)
+    //   (local.set $x
+    //    (local.tee $y
+    //     (local.get $y)
     //    )
     //   )
     // That is, we add a trivial assign of $y. This ensures we
@@ -128,8 +128,8 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
         optimizedToCopy[copy] = trivial;
       } else {
         // alternatively, we can try to remove the conflict in the opposite way: given
-        //   (set_local $x
-        //    (get_local $y)
+        //   (local.set $x
+        //    (local.get $y)
         //   )
         // we can look for uses of $x that could instead be uses of $y. this extends
         // $y's live range, but if it removes the conflict between $x and $y, it may be

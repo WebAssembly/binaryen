@@ -9,54 +9,54 @@
   (local $i64toi32_i32$3 i32)
   (local $i64toi32_i32$4 i32)
   (local $i64toi32_i32$5 i32)
-  (set_local $i64toi32_i32$2
+  (local.set $i64toi32_i32$2
    (block (result i32)
-    (set_local $i64toi32_i32$2
+    (local.set $i64toi32_i32$2
      (block (result i32)
-      (set_local $i64toi32_i32$0
+      (local.set $i64toi32_i32$0
        (i32.const 0)
       )
       (i32.const 1)
      )
     )
-    (set_local $i64toi32_i32$3
+    (local.set $i64toi32_i32$3
      (block (result i32)
-      (set_local $i64toi32_i32$1
+      (local.set $i64toi32_i32$1
        (i32.const 0)
       )
       (i32.const 2)
      )
     )
-    (set_local $i64toi32_i32$4
+    (local.set $i64toi32_i32$4
      (i32.add
-      (get_local $i64toi32_i32$2)
-      (get_local $i64toi32_i32$3)
+      (local.get $i64toi32_i32$2)
+      (local.get $i64toi32_i32$3)
      )
     )
-    (set_local $i64toi32_i32$5
+    (local.set $i64toi32_i32$5
      (i32.add
-      (get_local $i64toi32_i32$0)
-      (get_local $i64toi32_i32$1)
+      (local.get $i64toi32_i32$0)
+      (local.get $i64toi32_i32$1)
      )
     )
     (if
      (i32.lt_u
-      (get_local $i64toi32_i32$4)
-      (get_local $i64toi32_i32$3)
+      (local.get $i64toi32_i32$4)
+      (local.get $i64toi32_i32$3)
      )
-     (set_local $i64toi32_i32$5
+     (local.set $i64toi32_i32$5
       (i32.add
-       (get_local $i64toi32_i32$5)
+       (local.get $i64toi32_i32$5)
        (i32.const 1)
       )
      )
     )
-    (get_local $i64toi32_i32$4)
+    (local.get $i64toi32_i32$4)
    )
   )
-  (set_global $i64toi32_i32$HIGH_BITS
-   (get_local $i64toi32_i32$5)
+  (global.set $i64toi32_i32$HIGH_BITS
+   (local.get $i64toi32_i32$5)
   )
-  (get_local $i64toi32_i32$2)
+  (local.get $i64toi32_i32$2)
  )
 )

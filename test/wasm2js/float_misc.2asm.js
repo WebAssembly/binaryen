@@ -140,12 +140,11 @@ function asmFunc(global, env, buffer) {
  function $21(x, y) {
   x = +x;
   y = +y;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
   wasm2js_i32$0 = 0;
   wasm2js_f64$0 = x;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
   i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
   i64toi32_i32$1 = 2147483647;
   i64toi32_i32$3 = 4294967295;
@@ -156,7 +155,6 @@ function asmFunc(global, env, buffer) {
   wasm2js_f64$0 = y;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
   i64toi32_i32$1 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
   i64toi32_i32$2 = 2147483648;
   i64toi32_i32$3 = 0;
@@ -168,7 +166,6 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $7$hi;
   i64toi32_i32$3 = $7_1;
   i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
   wasm2js_i32$0 = 0;
   wasm2js_i32$1 = i64toi32_i32$1 | i64toi32_i32$3 | 0;
   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;

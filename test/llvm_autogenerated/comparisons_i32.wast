@@ -1,6 +1,6 @@
 (module
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "eq_i32" (func $eq_i32))
  (export "ne_i32" (func $ne_i32))
@@ -18,80 +18,80 @@
  (func $eq_i32 (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.eq
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $ne_i32 (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.ne
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $slt_i32 (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.lt_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sle_i32 (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.le_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $ult_i32 (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.lt_u
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $ule_i32 (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.le_u
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sgt_i32 (; 6 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.gt_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $sge_i32 (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.ge_s
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $ugt_i32 (; 8 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.gt_u
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
  (func $uge_i32 (; 9 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.ge_u
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
   )
  )
@@ -104,24 +104,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 12 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

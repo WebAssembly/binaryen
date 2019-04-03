@@ -230,8 +230,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     isAtomic = true;
     if (!ignoreImplicitTraps) implicitTrap = true;
   }
-  void visitAtomicWake(AtomicWake* curr) {
-    // AtomicWake doesn't strictly write memory, but it does modify the waiters
+  void visitAtomicNotify(AtomicNotify* curr) {
+    // AtomicNotify doesn't strictly write memory, but it does modify the waiters
     // list associated with the specified address, which we can think of as a
     // write.
     readsMemory = true;

@@ -9,30 +9,30 @@
   (local $5 i32)
   (local $6 i32)
   (local $7 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 0)
   )
   (loop $while-in
-   (set_local $3
+   (local.set $3
     (i32.const 0)
    )
    (loop $while-in6
-    (set_local $6
+    (local.set $6
      (i32.add
-      (get_local $0)
+      (local.get $0)
       (i32.const 1)
      )
     )
-    (set_local $0
+    (local.set $0
      (if (result i32)
       (if (result i32)
        (i32.rem_s
         (i32.add
          (i32.mul
-          (get_local $0)
-          (tee_local $7
+          (local.get $0)
+          (local.tee $7
            (i32.add
-            (get_local $0)
+            (local.get $0)
             (i32.const 2)
            )
           )
@@ -45,8 +45,8 @@
         (i32.rem_u
          (i32.add
           (i32.mul
-           (get_local $0)
-           (get_local $0)
+           (local.get $0)
+           (local.get $0)
           )
           (i32.const 11)
          )
@@ -55,27 +55,27 @@
        )
        (i32.const 1)
       )
-      (get_local $7)
-      (get_local $6)
+      (local.get $7)
+      (local.get $6)
      )
     )
     (br_if $while-in6
      (i32.lt_s
-      (tee_local $3
+      (local.tee $3
        (i32.add
-        (get_local $3)
+        (local.get $3)
         (i32.const 1)
        )
       )
-      (get_local $4)
+      (local.get $4)
      )
     )
    )
    (br_if $while-in
     (i32.ne
-     (tee_local $1
+     (local.tee $1
       (i32.add
-       (get_local $1)
+       (local.get $1)
        (i32.const 1)
       )
      )
@@ -84,7 +84,7 @@
    )
   )
   (return
-   (get_local $5)
+   (local.get $5)
   )
  )
  (func $side-effect (; 1 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
@@ -94,30 +94,30 @@
   (local $5 i32)
   (local $6 i32)
   (local $7 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 0)
   )
   (loop $while-in
-   (set_local $3
+   (local.set $3
     (i32.const 0)
    )
    (loop $while-in6
-    (set_local $6
+    (local.set $6
      (i32.add
-      (get_local $0)
+      (local.get $0)
       (i32.const 1)
      )
     )
-    (set_local $0
+    (local.set $0
      (if (result i32)
       (i32.or
        (i32.eqz
         (i32.rem_s
          (i32.add
           (i32.mul
-           (get_local $0)
-           (tee_local $7
-            (get_local $0)
+           (local.get $0)
+           (local.tee $7
+            (local.get $0)
            )
           )
           (i32.const 17)
@@ -129,8 +129,8 @@
         (i32.rem_u
          (i32.add
           (i32.mul
-           (get_local $0)
-           (get_local $0)
+           (local.get $0)
+           (local.get $0)
           )
           (unreachable)
          )
@@ -138,27 +138,27 @@
         )
        )
       )
-      (get_local $7)
-      (get_local $6)
+      (local.get $7)
+      (local.get $6)
      )
     )
     (br_if $while-in6
      (i32.lt_s
-      (tee_local $3
+      (local.tee $3
        (i32.add
-        (get_local $3)
+        (local.get $3)
         (i32.const 1)
        )
       )
-      (get_local $4)
+      (local.get $4)
      )
     )
    )
    (br_if $while-in
     (i32.ne
-     (tee_local $1
+     (local.tee $1
       (i32.add
-       (get_local $1)
+       (local.get $1)
        (i32.const 1)
       )
      )
@@ -167,7 +167,7 @@
    )
   )
   (return
-   (get_local $5)
+   (local.get $5)
   )
  )
  (func $flip (; 2 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
@@ -177,28 +177,28 @@
   (local $5 i32)
   (local $6 i32)
   (local $7 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 0)
   )
   (loop $while-in
-   (set_local $3
+   (local.set $3
     (i32.const 0)
    )
    (loop $while-in6
-    (set_local $6
+    (local.set $6
      (i32.add
-      (get_local $0)
+      (local.get $0)
       (i32.const 1)
      )
     )
-    (set_local $0
+    (local.set $0
      (if (result i32)
       (if (result i32)
        (i32.rem_u
         (i32.add
          (i32.mul
-          (get_local $0)
-          (get_local $0)
+          (local.get $0)
+          (local.get $0)
          )
          (i32.const 100)
         )
@@ -208,9 +208,9 @@
         (i32.rem_s
          (i32.add
           (i32.mul
-           (get_local $0)
+           (local.get $0)
            (i32.eqz
-            (get_local $0)
+            (local.get $0)
            )
           )
           (i32.const 17)
@@ -220,27 +220,27 @@
        )
        (i32.const 1)
       )
-      (get_local $7)
-      (get_local $6)
+      (local.get $7)
+      (local.get $6)
      )
     )
     (br_if $while-in6
      (i32.lt_s
-      (tee_local $3
+      (local.tee $3
        (i32.add
-        (get_local $3)
+        (local.get $3)
         (i32.const 1)
        )
       )
-      (get_local $4)
+      (local.get $4)
      )
     )
    )
    (br_if $while-in
     (i32.ne
-     (tee_local $1
+     (local.tee $1
       (i32.add
-       (get_local $1)
+       (local.get $1)
        (i32.const 1)
       )
      )
@@ -249,7 +249,7 @@
    )
   )
   (return
-   (get_local $5)
+   (local.get $5)
   )
  )
  (func $invalidate-conditionalizeExpensiveOnBitwise (; 3 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
@@ -261,7 +261,7 @@
        (i32.shr_s
         (i32.shl
          (i32.add
-          (get_local $1)
+          (local.get $1)
           (i32.const -1)
          )
          (i32.const 24)
@@ -273,7 +273,7 @@
       (i32.const 3)
      )
      (i32.ne
-      (tee_local $1
+      (local.tee $1
        (i32.const 0)
       )
       (i32.const 0)
@@ -281,18 +281,18 @@
     )
    )
    (return
-    (get_local $0)
+    (local.get $0)
    )
   )
   (return
-   (get_local $1)
+   (local.get $1)
   )
  )
  (func $invalidate-conditionalizeExpensiveOnBitwise-ok (; 4 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (if
    (i32.eqz
     (if (result i32)
-     (tee_local $1
+     (local.tee $1
       (i32.const 0)
      )
      (i32.lt_s
@@ -300,7 +300,7 @@
        (i32.shr_s
         (i32.shl
          (i32.add
-          (get_local $0)
+          (local.get $0)
           (i32.const -1)
          )
          (i32.const 24)
@@ -315,11 +315,11 @@
     )
    )
    (return
-    (get_local $0)
+    (local.get $0)
    )
   )
   (return
-   (get_local $1)
+   (local.get $1)
   )
  )
  (func $conditionalize-if-type-change (; 5 ;) (type $1) (result f64)
@@ -334,7 +334,7 @@
          (f32.gt
           (br_if $label$3
            (f32.const 1)
-           (get_local $0)
+           (local.get $0)
           )
           (br $label$2
            (f32.const 71)

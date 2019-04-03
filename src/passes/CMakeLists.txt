@@ -12,6 +12,7 @@ SET(passes_SOURCES
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
+  Directize.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
   Flatten.cpp
@@ -30,6 +31,8 @@ SET(passes_SOURCES
   Metrics.cpp
   MinifyImportsAndExports.cpp
   NameList.cpp
+  NoExitRuntime.cpp
+  OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
   PostEmscripten.cpp

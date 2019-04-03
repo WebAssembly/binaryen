@@ -27,6 +27,26 @@
 // TODO: consider adding a "proper" phi node to the AST, that passes
 //       can utilize
 //
+// There is also a "no-merge" variant of this pass. That will ignore
+// sets leading to merges, that is, it only creates new SSA indexes
+// for sets whose gets have just that set, e.g.
+//
+//  x = ..
+//  f(x, x)
+//  x = ..
+//  g(x, x)
+// =>
+//  x = ..
+//  f(x, x)
+//  x' = ..
+//  g(x', x')
+//
+// This "untangles" local indexes in a way that helps other passes,
+// while not creating copies with overlapping lifetimes that can
+// lead to a code size increase. In particular, the new variables
+// added by ssa-nomerge can be easily removed by the coalesce-locals
+// pass.
+//
 
 #include <iterator>
 
@@ -34,6 +54,7 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "support/permutations.h"
+#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 
@@ -48,7 +69,11 @@ static SetLocal IMPOSSIBLE_SET;
 struct SSAify : public Pass {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SSAify; }
+  Pass* create() override { return new SSAify(allowMerges); }
+
+  SSAify(bool allowMerges) : allowMerges(allowMerges) {}
+
+  bool allowMerges;
 
   Module* module;
   Function* func;
@@ -58,6 +83,8 @@ struct SSAify : public Pass {
     module = module_;
     func = func_;
     LocalGraph graph(func);
+    graph.computeInfluences();
+    graph.computeSSAIndexes();
     // create new local indexes, one for each set
     createNewIndexes(graph);
     // we now know the sets for each get, and can compute get indexes and handle phis
@@ -67,18 +94,30 @@ struct SSAify : public Pass {
   }
 
   void createNewIndexes(LocalGraph& graph) {
-    for (auto& pair : graph.locations) {
-      auto* curr = pair.first;
-      if (auto* set = curr->dynCast<SetLocal>()) {
+    FindAll<SetLocal> sets(func->body);
+    for (auto* set : sets.list) {
+      // Indexes already in SSA form do not need to be modified - there is already
+      // just one set for that index. Otherwise, use a new index, unless merges
+      // are disallowed.
+      if (!graph.isSSA(set->index) && (allowMerges || !hasMerges(set, graph))) {
         set->index = addLocal(func->getLocalType(set->index));
       }
     }
   }
 
+  bool hasMerges(SetLocal* set, LocalGraph& graph) {
+    for (auto* get : graph.setInfluences[set]) {
+      if (graph.getSetses[get].size() > 1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void computeGetsAndPhis(LocalGraph& graph) {
-    for (auto& iter : graph.getSetses) {
-      auto* get = iter.first;
-      auto& sets = iter.second;
+    FindAll<GetLocal> gets(func->body);
+    for (auto* get : gets.list) {
+      auto& sets = graph.getSetses[get];
       if (sets.size() == 0) {
         continue; // unreachable, ignore
       }
@@ -98,6 +137,7 @@ struct SSAify : public Pass {
         }
         continue;
       }
+      if (!allowMerges) continue;
       // more than 1 set, need a phi: a new local written to at each of the sets
       auto new_ = addLocal(get->type);
       auto old = get->index;
@@ -155,8 +195,12 @@ struct SSAify : public Pass {
   }
 };
 
-Pass *createSSAifyPass() {
-  return new SSAify();
+Pass* createSSAifyPass() {
+  return new SSAify(true);
+}
+
+Pass* createSSAifyNoMergePass() {
+  return new SSAify(false);
 }
 
 } // namespace wasm

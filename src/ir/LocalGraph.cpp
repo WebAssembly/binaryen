@@ -28,8 +28,8 @@ namespace LocalGraphInternal {
 
 // Information about a basic block.
 struct Info {
-  std::vector<Expression*> actions; // actions occurring in this block: get_locals and set_locals
-  std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last set_local for it
+  std::vector<Expression*> actions; // actions occurring in this block: local.gets and local.sets
+  std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last local.set for it
 };
 
 // flow helper class. flows the gets to their sets
@@ -78,7 +78,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       size_t lastTraversedIteration;
       std::vector<Expression*> actions;
       std::vector<FlowBlock*> in;
-      // Sor each index, the last set_local for it
+      // Sor each index, the last local.set for it
       // The unordered_map from BasicBlock.Info is converted into a vector
       // This speeds up search as there are usually few sets in a block, so just scanning
       // them linearly is efficient, avoiding hash computations (while in Info,
@@ -240,6 +240,39 @@ void LocalGraph::computeInfluences() {
       }
     }
   }
+}
+
+void LocalGraph::computeSSAIndexes() {
+  std::unordered_map<Index, std::set<SetLocal*>> indexSets;
+  for (auto& pair : getSetses) {
+    auto* get = pair.first;
+    auto& sets = pair.second;
+    for (auto* set : sets) {
+      indexSets[get->index].insert(set);
+    }
+  }
+  for (auto& pair : locations) {
+    auto* curr = pair.first;
+    if (auto* set = curr->dynCast<SetLocal>()) {
+      auto& sets = indexSets[set->index];
+      if (sets.size() == 1 && *sets.begin() != curr) {
+        // While it has just one set, it is not the right one (us),
+        // so mark it invalid.
+        sets.clear();
+      }
+    }
+  }
+  for (auto& pair : indexSets) {
+    auto index = pair.first;
+    auto& sets = pair.second;
+    if (sets.size() == 1) {
+      SSAIndexes.insert(index);
+    }
+  }
+}
+
+bool LocalGraph::isSSA(Index x) {
+  return SSAIndexes.count(x);
 }
 
 } // namespace wasm

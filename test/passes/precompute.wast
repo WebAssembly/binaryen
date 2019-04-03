@@ -19,7 +19,7 @@
     (drop
       (i32.add
         (i32.const 1)
-        (get_local $x)
+        (local.get $x)
       )
     )
     (drop
@@ -221,7 +221,7 @@
       (block $label$2 (result i32)
        (drop
         (i64.and
-         (i64.trunc_u/f32
+         (i64.trunc_f32_u
           (f32.const 70847791997969805621592064)
          )
          (i64.const 729618461987467893)
@@ -230,7 +230,7 @@
        (br_if $label$2
         (i32.const 2049535349)
         (f32.eq
-         (f32.demote/f64
+         (f32.demote_f64
           (f64.mul
            (br_if $label$0 ;; this br is optimized, and br *and* values reused
             (f64.const 6.134856208230095e-154)
@@ -258,7 +258,7 @@
       (select
        (i64.const 1)
        (block (result i64)
-        (set_global $global-mut
+        (global.set $global-mut
          (i32.const 1)
         )
         (br_if $label$0
@@ -285,25 +285,30 @@
   (func $global-notprecomputable (result i32)
    (i32.add
     (i32.const 1)
-    (get_global $global-mut)
+    (global.get $global-mut)
    )
   )
   (func $global-precomputable (result i32)
    (i32.add
     (i32.const 1)
-    (get_global $global)
+    (global.get $global)
    )
   )
   (func $global-partiallyprecomputable (result i32)
    (i32.sub
     (i32.add
      (i32.const 1)
-     (get_global $global-mut)
+     (global.get $global-mut)
     )
     (i32.add
      (i32.const 1)
-     (get_global $global)
+     (global.get $global)
     )
+   )
+  )
+  (func $no-simd-precompute (result v128)
+   (i32x4.splat
+    (i32.const 0)
    )
   )
 )

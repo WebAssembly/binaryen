@@ -30,6 +30,8 @@ function asm(global, env, buffer) {
   var HEAPF32 = new global.Float32Array(buffer);
   var HEAPF64 = new global.Float64Array(buffer);
 
+  var nonZero = 1337;
+
   function big_negative() {
     var temp = 0.0;
     temp = +-2147483648;
@@ -785,6 +787,7 @@ function asm(global, env, buffer) {
     emterpretify_assertions_safeHeap();
     call_emscripten_log();
     mod_detectSign(1.0, 2.31, 9.78);
+    nonZero = nonZero + 1 | 0;
   }
 
   function v() {

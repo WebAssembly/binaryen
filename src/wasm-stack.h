@@ -134,7 +134,16 @@ public:
   void visitAtomicRMW(AtomicRMW* curr);
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicWake(AtomicWake* curr);
+  void visitAtomicNotify(AtomicNotify* curr);
+  void visitSIMDExtract(SIMDExtract* curr);
+  void visitSIMDReplace(SIMDReplace* curr);
+  void visitSIMDShuffle(SIMDShuffle* curr);
+  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDShift(SIMDShift* curr);
+  void visitMemoryInit(MemoryInit* curr);
+  void visitDataDrop(DataDrop* curr);
+  void visitMemoryCopy(MemoryCopy* curr);
+  void visitMemoryFill(MemoryFill* curr);
   void visitConst(Const* curr);
   void visitUnary(Unary* curr);
   void visitBinary(Binary* curr);
@@ -350,24 +359,62 @@ void StackWriter<Mode, Parent>::visitChild(Expression* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitBlock(Block* curr) {
-  if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackIR.push_back(makeStackInst(StackInst::BlockBegin, curr));
-  } else {
-    if (debug) std::cerr << "zz node: Block" << std::endl;
-    o << int8_t(BinaryConsts::Block);
-    o << binaryType(curr->type != unreachable ? curr->type : none);
+  auto tilChildren = [this](Block* curr) {
+    if (Mode == StackWriterMode::Binaryen2Stack) {
+      stackIR.push_back(makeStackInst(StackInst::BlockBegin, curr));
+    } else {
+      o << int8_t(BinaryConsts::Block);
+      o << binaryType(curr->type != unreachable ? curr->type : none);
+    }
+    breakStack.push_back(curr->name); // TODO: we don't need to do this in Binaryen2Stack
+  };
+  auto visitChildren = [this](Block* curr, Index from) {
+    auto& list = curr->list;
+    while (from < list.size()) {
+      visitChild(list[from++]);
+    }
+  };
+  auto afterChildren = [this](Block* curr) {
+    // in Stack2Binary the block ending is in the stream later on
+    if (Mode != StackWriterMode::Stack2Binary) {
+      visitBlockEnd(curr);
+    }
+  };
+  // Handle very deeply nested blocks in the first position efficiently,
+  // avoiding heavy recursion.
+  // We only start to do this if we see it will help us (to avoid allocation
+  // of the vector).
+  // Note that Stack2Binary mode we don't need to visit children anyhow, so
+  // we don't need this optimization.
+  if (Mode != StackWriterMode::Stack2Binary) {
+    if (!curr->list.empty() && curr->list[0]->is<Block>()) {
+      std::vector<Block*> parents;
+      Block* child;
+      while (!curr->list.empty() &&
+             (child = curr->list[0]->dynCast<Block>())) {
+        parents.push_back(curr);
+        tilChildren(curr);
+        curr = child;
+      }
+      // Emit the current block, which does not have a block as
+      // a child in the first position.
+      tilChildren(curr);
+      visitChildren(curr, 0);
+      afterChildren(curr);
+      // Finish the later parts of all the parent blocks.
+      while (!parents.empty()) {
+        auto* parent = parents.back();
+        parents.pop_back();
+        visitChildren(parent, 1);
+        afterChildren(parent);
+      }
+      return;
+    }
   }
-  breakStack.push_back(curr->name); // TODO: we don't need to do this in Binaryen2Stack
-  Index i = 0;
-  for (auto* child : curr->list) {
-    if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i++ << std::endl;
-    visitChild(child);
-  }
-  // in Stack2Binary the block ending is in the stream later on
-  if (Mode == StackWriterMode::Stack2Binary) {
-    return;
-  }
-  visitBlockEnd(curr);
+  // Simple case of not having a nested block in the first position.
+  tilChildren(curr);
+  visitChildren(curr, 0);
+  afterChildren(curr);
 }
 
 template<StackWriterMode Mode, typename Parent>
@@ -394,7 +441,6 @@ void StackWriter<Mode, Parent>::visitBlockEnd(Block* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitIf(If* curr) {
-  if (debug) std::cerr << "zz node: If" << std::endl;
   if (curr->condition->type == unreachable) {
     // this if-else is unreachable because of the condition, i.e., the condition
     // does not exit. So don't emit the if, but do consume the condition
@@ -456,7 +502,6 @@ void StackWriter<Mode, Parent>::visitIfEnd(If* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitLoop(Loop* curr) {
-  if (debug) std::cerr << "zz node: Loop" << std::endl;
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackIR.push_back(makeStackInst(StackInst::LoopBegin, curr));
   } else {
@@ -493,7 +538,6 @@ void StackWriter<Mode, Parent>::visitLoopEnd(Loop* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitBreak(Break* curr) {
-  if (debug) std::cerr << "zz node: Break" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
   }
@@ -516,7 +560,6 @@ void StackWriter<Mode, Parent>::visitBreak(Break* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSwitch(Switch* curr) {
-  if (debug) std::cerr << "zz node: Switch" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
   }
@@ -538,7 +581,6 @@ void StackWriter<Mode, Parent>::visitSwitch(Switch* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitCall(Call* curr) {
-  if (debug) std::cerr << "zz node: Call" << std::endl;
   for (auto* operand : curr->operands) {
     visitChild(operand);
   }
@@ -552,7 +594,6 @@ void StackWriter<Mode, Parent>::visitCall(Call* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
-  if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
   for (auto* operand : curr->operands) {
     visitChild(operand);
   }
@@ -569,14 +610,12 @@ void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitGetLocal(GetLocal* curr) {
-  if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->index]);
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
-  if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
   visitChild(curr->value);
   if (!justAddToStack(curr)) {
     o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
@@ -588,14 +627,12 @@ void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitGetGlobal(GetGlobal* curr) {
-  if (debug) std::cerr << "zz node: GetGlobal " << (o.size() + 1) << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::GetGlobal) << U32LEB(parent.getGlobalIndex(curr->name));
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSetGlobal(SetGlobal* curr) {
-  if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
   visitChild(curr->value);
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::SetGlobal) << U32LEB(parent.getGlobalIndex(curr->name));
@@ -603,7 +640,6 @@ void StackWriter<Mode, Parent>::visitSetGlobal(SetGlobal* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
-  if (debug) std::cerr << "zz node: Load" << std::endl;
   visitChild(curr->ptr);
   if (curr->type == unreachable) {
     // don't even emit it; we don't know the right type
@@ -634,7 +670,7 @@ void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
       }
       case f32: o << int8_t(BinaryConsts::F32LoadMem); break;
       case f64: o << int8_t(BinaryConsts::F64LoadMem); break;
-      case v128: assert(false && "v128 not implemented yet");
+      case v128: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Load); break;
       case unreachable: return; // the pointer is unreachable, so we are never reached; just don't emit a load
       case none: WASM_UNREACHABLE();
     }
@@ -669,7 +705,6 @@ void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitStore(Store* curr) {
-  if (debug) std::cerr << "zz node: Store" << std::endl;
   visitChild(curr->ptr);
   visitChild(curr->value);
   if (curr->type == unreachable) {
@@ -701,7 +736,7 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
       }
       case f32: o << int8_t(BinaryConsts::F32StoreMem); break;
       case f64: o << int8_t(BinaryConsts::F64StoreMem); break;
-      case v128: assert(false && "v128 not implemented yet");
+      case v128: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Store); break;
       case none:
       case unreachable: WASM_UNREACHABLE();
     }
@@ -735,7 +770,6 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicRMW(AtomicRMW* curr) {
-  if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
@@ -790,7 +824,6 @@ void StackWriter<Mode, Parent>::visitAtomicRMW(AtomicRMW* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-  if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
@@ -831,7 +864,6 @@ void StackWriter<Mode, Parent>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicWait(AtomicWait* curr) {
-  if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
@@ -858,22 +890,139 @@ void StackWriter<Mode, Parent>::visitAtomicWait(AtomicWait* curr) {
 }
 
 template<StackWriterMode Mode, typename Parent>
-void StackWriter<Mode, Parent>::visitAtomicWake(AtomicWake* curr) {
-  if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
+void StackWriter<Mode, Parent>::visitAtomicNotify(AtomicNotify* curr) {
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
-  visitChild(curr->wakeCount);
-  if (curr->wakeCount->type == unreachable) return;
+  visitChild(curr->notifyCount);
+  if (curr->notifyCount->type == unreachable) return;
   if (justAddToStack(curr)) return;
 
-  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicWake);
+  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
   emitMemoryAccess(4, 4, 0);
 }
 
 template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDExtract(SIMDExtract* curr) {
+  visitChild(curr->vec);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case ExtractLaneSVecI8x16: o << U32LEB(BinaryConsts::I8x16ExtractLaneS); break;
+    case ExtractLaneUVecI8x16: o << U32LEB(BinaryConsts::I8x16ExtractLaneU); break;
+    case ExtractLaneSVecI16x8: o << U32LEB(BinaryConsts::I16x8ExtractLaneS); break;
+    case ExtractLaneUVecI16x8: o << U32LEB(BinaryConsts::I16x8ExtractLaneU); break;
+    case ExtractLaneVecI32x4: o << U32LEB(BinaryConsts::I32x4ExtractLane); break;
+    case ExtractLaneVecI64x2: o << U32LEB(BinaryConsts::I64x2ExtractLane); break;
+    case ExtractLaneVecF32x4: o << U32LEB(BinaryConsts::F32x4ExtractLane); break;
+    case ExtractLaneVecF64x2: o << U32LEB(BinaryConsts::F64x2ExtractLane); break;
+  }
+  o << uint8_t(curr->index);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDReplace(SIMDReplace* curr) {
+  visitChild(curr->vec);
+  visitChild(curr->value);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case ReplaceLaneVecI8x16: o << U32LEB(BinaryConsts::I8x16ReplaceLane); break;
+    case ReplaceLaneVecI16x8: o << U32LEB(BinaryConsts::I16x8ReplaceLane); break;
+    case ReplaceLaneVecI32x4: o << U32LEB(BinaryConsts::I32x4ReplaceLane); break;
+    case ReplaceLaneVecI64x2: o << U32LEB(BinaryConsts::I64x2ReplaceLane); break;
+    case ReplaceLaneVecF32x4: o << U32LEB(BinaryConsts::F32x4ReplaceLane); break;
+    case ReplaceLaneVecF64x2: o << U32LEB(BinaryConsts::F64x2ReplaceLane); break;
+  }
+  assert(curr->index < 16);
+  o << uint8_t(curr->index);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDShuffle(SIMDShuffle* curr) {
+  visitChild(curr->left);
+  visitChild(curr->right);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V8x16Shuffle);
+  for (uint8_t m : curr->mask) {
+    o << m;
+  }
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDBitselect(SIMDBitselect* curr) {
+  visitChild(curr->left);
+  visitChild(curr->right);
+  visitChild(curr->cond);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Bitselect);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSIMDShift(SIMDShift* curr) {
+  visitChild(curr->vec);
+  visitChild(curr->shift);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case ShlVecI8x16:  o << U32LEB(BinaryConsts::I8x16Shl); break;
+    case ShrSVecI8x16: o << U32LEB(BinaryConsts::I8x16ShrS); break;
+    case ShrUVecI8x16: o << U32LEB(BinaryConsts::I8x16ShrU); break;
+    case ShlVecI16x8:  o << U32LEB(BinaryConsts::I16x8Shl); break;
+    case ShrSVecI16x8: o << U32LEB(BinaryConsts::I16x8ShrS); break;
+    case ShrUVecI16x8: o << U32LEB(BinaryConsts::I16x8ShrU); break;
+    case ShlVecI32x4:  o << U32LEB(BinaryConsts::I32x4Shl); break;
+    case ShrSVecI32x4: o << U32LEB(BinaryConsts::I32x4ShrS); break;
+    case ShrUVecI32x4: o << U32LEB(BinaryConsts::I32x4ShrU); break;
+    case ShlVecI64x2:  o << U32LEB(BinaryConsts::I64x2Shl); break;
+    case ShrSVecI64x2: o << U32LEB(BinaryConsts::I64x2ShrS); break;
+    case ShrUVecI64x2: o << U32LEB(BinaryConsts::I64x2ShrU); break;
+  }
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryInit(MemoryInit* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->offset);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::MiscPrefix);
+  o << U32LEB(BinaryConsts::MemoryInit);
+  o << U32LEB(curr->segment) << int8_t(0);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitDataDrop(DataDrop* curr) {
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::MiscPrefix);
+  o << U32LEB(BinaryConsts::DataDrop);
+  o << U32LEB(curr->segment);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryCopy(MemoryCopy* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->source);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::MiscPrefix);
+  o << U32LEB(BinaryConsts::MemoryCopy);
+  o << int8_t(0) << int8_t(0);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitMemoryFill(MemoryFill* curr) {
+  visitChild(curr->dest);
+  visitChild(curr->value);
+  visitChild(curr->size);
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::MiscPrefix);
+  o << U32LEB(BinaryConsts::MemoryFill);
+  o << int8_t(0);
+}
+
+template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitConst(Const* curr) {
-  if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
   if (justAddToStack(curr)) return;
   switch (curr->type) {
     case i32: {
@@ -892,16 +1041,22 @@ void StackWriter<Mode, Parent>::visitConst(Const* curr) {
       o << int8_t(BinaryConsts::F64Const) << curr->value.reinterpreti64();
       break;
     }
-    case v128: assert(false && "v128 not implemented yet");
+    case v128: {
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Const);
+      std::array<uint8_t, 16> v = curr->value.getv128();
+      for (size_t i = 0; i < 16; ++i) {
+        o << uint8_t(v[i]);
+      }
+      break;
+    }
     case none:
-    case unreachable: WASM_UNREACHABLE();
+    case unreachable:
+      WASM_UNREACHABLE();
   }
-  if (debug) std::cerr << "zz const node done.\n";
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
-  if (debug) std::cerr << "zz node: Unary" << std::endl;
   visitChild(curr->value);
   if (curr->type == unreachable) {
     emitExtraUnreachable();
@@ -961,21 +1116,53 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
     case ExtendS8Int64:          o << int8_t(BinaryConsts::I64ExtendS8); break;
     case ExtendS16Int64:         o << int8_t(BinaryConsts::I64ExtendS16); break;
     case ExtendS32Int64:         o << int8_t(BinaryConsts::I64ExtendS32); break;
-    case TruncSatSFloat32ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32STruncSatF32); break;
-    case TruncSatUFloat32ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32UTruncSatF32); break;
-    case TruncSatSFloat64ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32STruncSatF64); break;
-    case TruncSatUFloat64ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32UTruncSatF64); break;
-    case TruncSatSFloat32ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64STruncSatF32); break;
-    case TruncSatUFloat32ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64UTruncSatF32); break;
-    case TruncSatSFloat64ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64STruncSatF64); break;
-    case TruncSatUFloat64ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64UTruncSatF64); break;
+    case TruncSatSFloat32ToInt32: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I32STruncSatF32); break;
+    case TruncSatUFloat32ToInt32: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I32UTruncSatF32); break;
+    case TruncSatSFloat64ToInt32: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I32STruncSatF64); break;
+    case TruncSatUFloat64ToInt32: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I32UTruncSatF64); break;
+    case TruncSatSFloat32ToInt64: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I64STruncSatF32); break;
+    case TruncSatUFloat32ToInt64: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I64UTruncSatF32); break;
+    case TruncSatSFloat64ToInt64: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I64STruncSatF64); break;
+    case TruncSatUFloat64ToInt64: o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::I64UTruncSatF64); break;
+    case SplatVecI8x16:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Splat); break;
+    case SplatVecI16x8:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Splat); break;
+    case SplatVecI32x4:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Splat); break;
+    case SplatVecI64x2:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Splat); break;
+    case SplatVecF32x4:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Splat); break;
+    case SplatVecF64x2:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Splat); break;
+    case NotVec128:       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Not); break;
+    case NegVecI8x16:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Neg); break;
+    case AnyTrueVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AnyTrue); break;
+    case AllTrueVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AllTrue); break;
+    case NegVecI16x8:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Neg); break;
+    case AnyTrueVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AnyTrue); break;
+    case AllTrueVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AllTrue); break;
+    case NegVecI32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Neg); break;
+    case AnyTrueVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4AnyTrue); break;
+    case AllTrueVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4AllTrue); break;
+    case NegVecI64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Neg); break;
+    case AnyTrueVecI64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2AnyTrue); break;
+    case AllTrueVecI64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2AllTrue); break;
+    case AbsVecF32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Abs); break;
+    case NegVecF32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Neg); break;
+    case SqrtVecF32x4:    o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Sqrt); break;
+    case AbsVecF64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Abs); break;
+    case NegVecF64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Neg); break;
+    case SqrtVecF64x2:    o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Sqrt); break;
+    case TruncSatSVecF32x4ToVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4TruncSatSF32x4); break;
+    case TruncSatUVecF32x4ToVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4TruncSatUF32x4); break;
+    case TruncSatSVecF64x2ToVecI64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2TruncSatSF64x2); break;
+    case TruncSatUVecF64x2ToVecI64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2TruncSatUF64x2); break;
+    case ConvertSVecI32x4ToVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4ConvertSI32x4); break;
+    case ConvertUVecI32x4ToVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4ConvertUI32x4); break;
+    case ConvertSVecI64x2ToVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2ConvertSI64x2); break;
+    case ConvertUVecI64x2ToVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2ConvertUI64x2); break;
     case InvalidUnary: WASM_UNREACHABLE();
   }
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
-  if (debug) std::cerr << "zz node: Binary" << std::endl;
   visitChild(curr->left);
   visitChild(curr->right);
   if (curr->type == unreachable) {
@@ -1063,13 +1250,91 @@ void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
     case LeFloat64:       o << int8_t(BinaryConsts::F64Le); break;
     case GtFloat64:       o << int8_t(BinaryConsts::F64Gt); break;
     case GeFloat64:       o << int8_t(BinaryConsts::F64Ge); break;
+
+    case EqVecI8x16:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Eq); break;
+    case NeVecI8x16:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Ne); break;
+    case LtSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LtS); break;
+    case LtUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LtU); break;
+    case GtSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GtS); break;
+    case GtUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GtU); break;
+    case LeSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LeS); break;
+    case LeUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LeU); break;
+    case GeSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GeS); break;
+    case GeUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GeU); break;
+    case EqVecI16x8:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Eq); break;
+    case NeVecI16x8:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Ne); break;
+    case LtSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LtS); break;
+    case LtUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LtU); break;
+    case GtSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GtS); break;
+    case GtUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GtU); break;
+    case LeSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LeS); break;
+    case LeUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LeU); break;
+    case GeSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GeS); break;
+    case GeUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GeU); break;
+    case EqVecI32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Eq); break;
+    case NeVecI32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Ne); break;
+    case LtSVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LtS); break;
+    case LtUVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LtU); break;
+    case GtSVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GtS); break;
+    case GtUVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GtU); break;
+    case LeSVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LeS); break;
+    case LeUVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LeU); break;
+    case GeSVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GeS); break;
+    case GeUVecI32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GeU); break;
+    case EqVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Eq); break;
+    case NeVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ne); break;
+    case LtVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Lt); break;
+    case GtVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Gt); break;
+    case LeVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Le); break;
+    case GeVecF32x4:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ge); break;
+    case EqVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Eq); break;
+    case NeVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ne); break;
+    case LtVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Lt); break;
+    case GtVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Gt); break;
+    case LeVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Le); break;
+    case GeVecF64x2:  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ge); break;
+    case AndVec128:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128And); break;
+    case OrVec128:    o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Or); break;
+    case XorVec128:   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Xor); break;
+
+    case AddVecI8x16:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Add); break;
+    case AddSatSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AddSatS); break;
+    case AddSatUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AddSatU); break;
+    case SubVecI8x16:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Sub); break;
+    case SubSatSVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16SubSatS); break;
+    case SubSatUVecI8x16: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16SubSatU); break;
+    case MulVecI8x16:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Mul); break;
+    case AddVecI16x8:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Add); break;
+    case AddSatSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AddSatS); break;
+    case AddSatUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AddSatU); break;
+    case SubVecI16x8:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Sub); break;
+    case SubSatSVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8SubSatS); break;
+    case SubSatUVecI16x8: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8SubSatU); break;
+    case MulVecI16x8:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Mul); break;
+    case AddVecI32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Add); break;
+    case SubVecI32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Sub); break;
+    case MulVecI32x4:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Mul); break;
+    case AddVecI64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Add); break;
+    case SubVecI64x2:     o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Sub); break;
+
+    case AddVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Add); break;
+    case SubVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Sub); break;
+    case MulVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Mul); break;
+    case DivVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Div); break;
+    case MinVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Min); break;
+    case MaxVecF32x4: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Max); break;
+    case AddVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Add); break;
+    case SubVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Sub); break;
+    case MulVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Mul); break;
+    case DivVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Div); break;
+    case MinVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Min); break;
+    case MaxVecF64x2: o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Max); break;
     case InvalidBinary: WASM_UNREACHABLE();
   }
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSelect(Select* curr) {
-  if (debug) std::cerr << "zz node: Select" << std::endl;
   visitChild(curr->ifTrue);
   visitChild(curr->ifFalse);
   visitChild(curr->condition);
@@ -1083,7 +1348,6 @@ void StackWriter<Mode, Parent>::visitSelect(Select* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitReturn(Return* curr) {
-  if (debug) std::cerr << "zz node: Return" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
   }
@@ -1094,7 +1358,6 @@ void StackWriter<Mode, Parent>::visitReturn(Return* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitHost(Host* curr) {
-  if (debug) std::cerr << "zz node: Host" << std::endl;
   switch (curr->op) {
     case CurrentMemory: {
       break;
@@ -1120,21 +1383,18 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitNop(Nop* curr) {
-  if (debug) std::cerr << "zz node: Nop" << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Nop);
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitUnreachable(Unreachable* curr) {
-  if (debug) std::cerr << "zz node: Unreachable" << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Unreachable);
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitDrop(Drop* curr) {
-  if (debug) std::cerr << "zz node: Drop" << std::endl;
   visitChild(curr->value);
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Drop);

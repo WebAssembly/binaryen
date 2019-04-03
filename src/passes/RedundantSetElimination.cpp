@@ -15,7 +15,7 @@
  */
 
 //
-// Eliminate redundant set_locals: if a local already has a particular
+// Eliminate redundant local.sets: if a local already has a particular
 // value, we don't need to set it again. A common case here is loops
 // that start at zero, since the default value is initialized to
 // zero anyhow.
@@ -28,7 +28,7 @@
 // values no longer necessary.
 //
 // So far this tracks constant values, and for everything else it considers
-// them unique (so each set_local of a non-constant is a unique value, each
+// them unique (so each local.set of a non-constant is a unique value, each
 // merge is a unique value, etc.; there is no sophisticated value numbering
 // here).
 //
@@ -172,7 +172,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 #endif
             start[i] = getUniqueValue();
           } else {
-            start[i] = getLiteralValue(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
+            start[i] = getLiteralValue(Literal::makeZero(func->getLocalType(i)));
           }
         }
       } else {
@@ -375,4 +375,3 @@ Pass *createRedundantSetEliminationPass() {
 }
 
 } // namespace wasm
-

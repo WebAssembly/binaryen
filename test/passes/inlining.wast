@@ -1,5 +1,5 @@
 (module
-  (table 1 1 anyfunc)
+  (table 1 1 funcref)
   (elem (i32.const 0) $tabled)
   (func $user (export "user")
     (local $x i32)
@@ -11,8 +11,8 @@
     (call $ok)
     (drop (call $int))
     (drop (call $double))
-    (set_local $x (call $int2))
-    (set_local $y (call $double2))
+    (local.set $x (call $int2))
+    (local.set $y (call $double2))
     (call $with-local)
     (call $with-local2)
     (drop (call $return))
@@ -54,11 +54,11 @@
   )
   (func $with-local
     (local $x f32)
-    (set_local $x (f32.const 2.141828))
+    (local.set $x (f32.const 2.141828))
   )
   (func $with-local2
     (local $y i64)
-    (set_local $y (i64.const 4))
+    (local.set $y (i64.const 4))
   )
   (func $return (result i32)
     (return (i32.const 5))
@@ -71,9 +71,9 @@
   )
   (func $param (param $x f32) (param $y i64)
     (local $z f32)
-    (drop (get_local $x))
-    (drop (get_local $y))
-    (drop (get_local $z))
+    (drop (local.get $x))
+    (drop (local.get $y))
+    (drop (local.get $z))
   )
 )
 (module
@@ -93,8 +93,8 @@
  (func $func_3 (result i32)
   (local $0 i32)
   (select
-   (get_local $0) ;; we depend on the zero-init value here, so it must be set when inlining!
-   (tee_local $0
+   (local.get $0) ;; we depend on the zero-init value here, so it must be set when inlining!
+   (local.tee $0
     (i32.const -1)
    )
    (i32.const 1)
@@ -111,15 +111,15 @@
    (block
     (if
      (i32.eqz
-      (get_global $hangLimit)
+      (global.get $hangLimit)
      )
      (return
       (i32.const 54)
      )
     )
-    (set_global $hangLimit
+    (global.set $hangLimit
      (i32.sub
-      (get_global $hangLimit)
+      (global.get $hangLimit)
       (i32.const 1)
      )
     )
@@ -140,14 +140,14 @@
   )
  )
  (func $hangLimitInitializer
-  (set_global $hangLimit
+  (global.set $hangLimit
    (i32.const 25)
   )
  )
 )
 (module
  (type $T (func (param i32)))
- (table 10 anyfunc)
+ (table 10 funcref)
  (func $0
   (call $1)
  )

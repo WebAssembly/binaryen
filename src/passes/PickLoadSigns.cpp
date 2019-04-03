@@ -46,22 +46,8 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
     usages.resize(func->getNumLocals());
     // walk
     ExpressionStackWalker<PickLoadSigns>::doWalkFunction(func);
-    // optimize based on the info we saw
-    for (auto& pair : loads) {
-      auto* load = pair.first;
-      auto index = pair.second;
-      auto& usage = usages[index];
-      // if we can't optimize, give up
-      if (usage.totalUsages == 0 || // no usages, so no idea
-          usage.signedUsages + usage.unsignedUsages != usage.totalUsages || // non-sign/unsigned usages, so cannot change
-          (usage.signedUsages   != 0 && usage.signedBits   != load->bytes * 8) || // sign usages exist but the wrong size
-          (usage.unsignedUsages != 0 && usage.unsignedBits != load->bytes * 8)) { // unsigned usages exist but the wrong size
-        continue;
-      }
-      // we can pick the optimal one. our hope is to remove 2 items per
-      // signed use (two shifts), so we factor that in
-      load->signed_ = usage.signedUsages * 2 >= usage.unsignedUsages;
-    }
+    // optimize
+    optimize();
   }
 
   void visitGetLocal(GetLocal* curr) {
@@ -102,6 +88,26 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
       loads[load] = curr->index;
     }
   }
+
+  void optimize() {
+    // optimize based on the info we saw
+    for (auto& pair : loads) {
+      auto* load = pair.first;
+      auto index = pair.second;
+      auto& usage = usages[index];
+      // if we can't optimize, give up
+      if (usage.totalUsages == 0 || // no usages, so no idea
+          usage.signedUsages + usage.unsignedUsages != usage.totalUsages || // non-sign/unsigned usages, so cannot change
+          (usage.signedUsages   != 0 && usage.signedBits   != load->bytes * 8) || // sign usages exist but the wrong size
+          (usage.unsignedUsages != 0 && usage.unsignedBits != load->bytes * 8)) { // unsigned usages exist but the wrong size
+        continue;
+      }
+      // we can pick the optimal one. our hope is to remove 2 items per
+      // signed use (two shifts), so we factor that in
+      load->signed_ = usage.signedUsages * 2 >= usage.unsignedUsages;
+    }
+  }
+
 };
 
 Pass *createPickLoadSignsPass() {

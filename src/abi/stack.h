@@ -39,7 +39,7 @@ inline Index stackAlign(Index size) {
 
 // Allocate some space on the stack, and assign it to a local.
 // The local will have the same constant value in all the function, so you can just
-// get_local it anywhere there.
+// local.get it anywhere there.
 inline void getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   auto* stackPointer = GlobalUtils::getGlobalInitializedToImport(wasm, ENV, "STACKTOP");
   if (!stackPointer) {

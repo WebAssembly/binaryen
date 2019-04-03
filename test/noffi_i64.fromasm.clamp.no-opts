@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$jj (func (param i64) (result i64)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "_importll" (func $importll (param i64) (result i64)))
@@ -9,14 +9,14 @@
  (export "_main" (func $main))
  (func $add (; 1 ;) (param $a i64) (param $b i64) (result i64)
   (local $c i64)
-  (set_local $c
+  (local.set $c
    (i64.add
-    (get_local $b)
-    (get_local $a)
+    (local.get $b)
+    (local.get $a)
    )
   )
   (return
-   (get_local $c)
+   (local.get $c)
   )
  )
  (func $main (; 2 ;) (result i32)

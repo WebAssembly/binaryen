@@ -24,7 +24,7 @@
 
 (module $Mg
   (global $glob (export "glob") i32 (i32.const 42))
-  (func (export "get") (result i32) (get_global $glob))
+  (func (export "get") (result i32) (global.get $glob))
 )
 (register "Mg" $Mg)
 
@@ -34,7 +34,7 @@
   (export "Mg.glob" (global $x))
   (export "Mg.get" (func $f))
   (global $glob (export "glob") i32 (i32.const 43))
-  (func (export "get") (result i32) (get_global $glob))
+  (func (export "get") (result i32) (global.get $glob))
 )
 
 (assert_return (get $Mg "glob") (i32.const 42))
@@ -51,13 +51,13 @@
   (type (func (result i32)))
   (type (func))
 
-  (table (export "tab") 10 anyfunc)
+  (table (export "tab") 10 funcref)
   (elem (i32.const 2) $g $g $g $g)
   (func $g (result i32) (i32.const 4))
   (func (export "h") (result i32) (i32.const -4))
 
   (func (export "call") (param i32) (result i32)
-    (call_indirect (type 0) (get_local 0))
+    (call_indirect (type 0) (local.get 0))
   )
 )
 (register "Mt" $Mt)
@@ -69,15 +69,15 @@
   (func $f (import "Mt" "call") (param i32) (result i32))
   (func $h (import "Mt" "h") (result i32))
 
-  (table anyfunc (elem $g $g $g $h $f))
+  (table funcref (elem $g $g $g $h $f))
   (func $g (result i32) (i32.const 5))
 
   (export "Mt.call" (func $f))
   (func (export "call Mt.call") (param i32) (result i32)
-    (call $f (get_local 0))
+    (call $f (local.get 0))
   )
   (func (export "call") (param i32) (result i32)
-    (call_indirect (type 1) (get_local 0))
+    (call_indirect (type 1) (local.get 0))
   )
 )
 
@@ -108,12 +108,12 @@
   (type (func (result i32)))
 
   (func $h (import "Mt" "h") (result i32))
-  (table (import "Mt" "tab") 5 anyfunc)
+  (table (import "Mt" "tab") 5 funcref)
   (elem (i32.const 1) $i $h)
   (func $i (result i32) (i32.const 6))
 
   (func (export "call") (param i32) (result i32)
-    (call_indirect (type 0) (get_local 0))
+    (call_indirect (type 0) (local.get 0))
   )
 )
 
@@ -145,7 +145,7 @@
 (assert_unlinkable
   (module $Qt
     (func $host (import "spectest" "print"))
-    (table (import "Mt" "tab") 10 anyfunc)
+    (table (import "Mt" "tab") 10 funcref)
     (elem (i32.const 7) $own)
     (elem (i32.const 9) $host)
     (func $own (result i32) (i32.const 666))
@@ -162,7 +162,7 @@
   (data (i32.const 10) "\00\01\02\03\04\05\06\07\08\09")
 
   (func (export "load") (param $a i32) (result i32)
-    (i32.load8_u (get_local 0))
+    (i32.load8_u (local.get 0))
   )
 )
 (register "Mm" $Mm)
@@ -175,7 +175,7 @@
 
   (export "Mm.load" (func $loadM))
   (func (export "load") (param $a i32) (result i32)
-    (i32.load8_u (get_local 0))
+    (i32.load8_u (local.get 0))
   )
 )
 
@@ -188,7 +188,7 @@
   (data (i32.const 5) "\a0\a1\a2\a3\a4\a5\a6\a7")
 
   (func (export "load") (param $a i32) (result i32)
-    (i32.load8_u (get_local 0))
+    (i32.load8_u (local.get 0))
   )
 )
 
@@ -201,7 +201,7 @@
   (memory (import "Mm" "mem") 1 8)
 
   (func (export "grow") (param $a i32) (result i32)
-    (grow_memory (get_local 0))
+    (grow_memory (local.get 0))
   )
 )
 
@@ -218,7 +218,7 @@
   (module $Qm
     (func $host (import "spectest" "print"))
     (memory (import "Mm" "mem") 1)
-    (table 10 anyfunc)
+    (table 10 funcref)
     (data (i32.const 0) "abc")
     (elem (i32.const 9) $host)
     (func $own (result i32) (i32.const 666))

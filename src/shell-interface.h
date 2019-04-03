@@ -53,7 +53,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     Memory& operator=(const Memory&) = delete;
 
    public:
-    Memory() {}
+    Memory() = default;
     void resize(size_t newSize) {
       // Ensure the smallest allocation is large enough that most allocators
       // will provide page-aligned storage. This hopefully allows the
@@ -183,18 +183,24 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   uint32_t load32u(Address addr) override { return memory.get<uint32_t>(addr); }
   int64_t load64s(Address addr) override { return memory.get<int64_t>(addr); }
   uint64_t load64u(Address addr) override { return memory.get<uint64_t>(addr); }
+  std::array<uint8_t, 16> load128(Address addr) override {
+    return memory.get<std::array<uint8_t, 16>>(addr);
+  }
 
   void store8(Address addr, int8_t value) override { memory.set<int8_t>(addr, value); }
   void store16(Address addr, int16_t value) override { memory.set<int16_t>(addr, value); }
   void store32(Address addr, int32_t value) override { memory.set<int32_t>(addr, value); }
   void store64(Address addr, int64_t value) override { memory.set<int64_t>(addr, value); }
+  void store128(Address addr, const std::array<uint8_t, 16>& value) override {
+    memory.set<std::array<uint8_t, 16>>(addr, value);
+  }
 
   void growMemory(Address /*oldSize*/, Address newSize) override {
     memory.resize(newSize);
   }
 
   void trap(const char* why) override {
-    std::cerr << "[trap " << why << "]\n";
+    std::cout << "[trap " << why << "]\n";
     throw TrapException();
   }
 };

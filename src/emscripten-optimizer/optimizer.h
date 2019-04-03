@@ -59,7 +59,7 @@ AsmType detectType(cashew::Ref node, AsmData *asmData=nullptr, bool inVarDef=fal
 
 struct AsmData {
   struct Local {
-    Local() {}
+    Local() = default;
     Local(AsmType type, bool param) : type(type), param(param) {}
     AsmType type;
     bool param; // false if a var
@@ -92,7 +92,7 @@ struct AsmData {
     return isLocal(name) && !locals[name].param;
   }
 
-  AsmData() {} // if you want to fill in the data yourself
+  AsmData() = default; // if you want to fill in the data yourself
   AsmData(cashew::Ref f); // if you want to read data from f, and modify it as you go (parallel to denormalize)
 
   void denormalize();

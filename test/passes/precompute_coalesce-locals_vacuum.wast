@@ -7,13 +7,13 @@
     (i32.const 2)
    )
    (block (result i32)
-    (set_local $2
+    (local.set $2
      (i32.const 4)
     )
     (br_if $label$0 ;; precomputing this into a br must change the type
      (i32.const 1)
     )
-    (get_local $2)
+    (local.get $2)
    )
   )
  )

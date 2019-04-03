@@ -1,6 +1,6 @@
 (module
   (type $T (func (result i32)))
-  (table 4 anyfunc)
+  (table 4 funcref)
   (elem (i32.const 1) $t1 $t2 $t3)
 
   (func $t1 (type $T) (i32.const 1))
@@ -8,7 +8,7 @@
   (func $t3 (type $T) (i32.const 3))
 
   (func (export "call") (param i32) (result i32)
-    (call_indirect (type $T) (get_local $0))
+    (call_indirect (type $T) (local.get $0))
   )
 )
 

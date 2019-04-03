@@ -247,13 +247,13 @@ public:
     wait->finalize();
     return wait;
   }
-  AtomicWake* makeAtomicWake(Expression* ptr, Expression* wakeCount, Address offset) {
-    auto* wake = allocator.alloc<AtomicWake>();
-    wake->offset = offset;
-    wake->ptr = ptr;
-    wake->wakeCount = wakeCount;
-    wake->finalize();
-    return wake;
+  AtomicNotify* makeAtomicNotify(Expression* ptr, Expression* notifyCount, Address offset) {
+    auto* notify = allocator.alloc<AtomicNotify>();
+    notify->offset = offset;
+    notify->ptr = ptr;
+    notify->notifyCount = notifyCount;
+    notify->finalize();
+    return notify;
   }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, Type type) {
     auto* ret = allocator.alloc<Store>();
@@ -290,6 +290,78 @@ public:
     ret->expected = expected;
     ret->replacement = replacement;
     ret->type = type;
+    ret->finalize();
+    return ret;
+  }
+  SIMDExtract* makeSIMDExtract(SIMDExtractOp op, Expression* vec, uint8_t index) {
+    auto* ret = allocator.alloc<SIMDExtract>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->index = index;
+    ret->finalize();
+    return ret;
+  }
+  SIMDReplace* makeSIMDReplace(SIMDReplaceOp op, Expression* vec, uint8_t index, Expression* value) {
+    auto* ret = allocator.alloc<SIMDReplace>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->index = index;
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  SIMDShuffle* makeSIMDShuffle(Expression* left, Expression* right, const std::array<uint8_t, 16>& mask) {
+    auto* ret = allocator.alloc<SIMDShuffle>();
+    ret->left = left;
+    ret->right = right;
+    ret->mask = mask;
+    ret->finalize();
+    return ret;
+  }
+  SIMDBitselect* makeSIMDBitselect(Expression* left, Expression* right, Expression* cond) {
+    auto* ret = allocator.alloc<SIMDBitselect>();
+    ret->left = left;
+    ret->right = right;
+    ret->cond = cond;
+    ret->finalize();
+    return ret;
+  }
+  SIMDShift* makeSIMDShift(SIMDShiftOp op, Expression* vec, Expression* shift) {
+    auto* ret = allocator.alloc<SIMDShift>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->shift = shift;
+    ret->finalize();
+    return ret;
+  }
+  MemoryInit* makeMemoryInit(uint32_t segment, Expression* dest, Expression* offset, Expression* size) {
+    auto* ret = allocator.alloc<MemoryInit>();
+    ret->segment = segment;
+    ret->dest = dest;
+    ret->offset = offset;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  DataDrop* makeDataDrop(uint32_t segment) {
+    auto* ret = allocator.alloc<DataDrop>();
+    ret->segment = segment;
+    ret->finalize();
+    return ret;
+  }
+  MemoryCopy* makeMemoryCopy(Expression* dest, Expression* source, Expression* size) {
+    auto* ret = allocator.alloc<MemoryCopy>();
+    ret->dest = dest;
+    ret->source = source;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  MemoryFill* makeMemoryFill(Expression* dest, Expression* value, Expression* size) {
+    auto* ret = allocator.alloc<MemoryFill>();
+    ret->dest = dest;
+    ret->value = value;
+    ret->size = size;
     ret->finalize();
     return ret;
   }
@@ -474,7 +546,12 @@ public:
       case i64: value = Literal(int64_t(0)); break;
       case f32: value = Literal(float(0)); break;
       case f64: value = Literal(double(0)); break;
-      case v128: assert(false && "v128 not implemented yet");
+      case v128: {
+        std::array<uint8_t, 16> bytes;
+        bytes.fill(0);
+        value = Literal(bytes.data());
+        break;
+      }
       case none: return ExpressionManipulator::nop(curr);
       case unreachable: return ExpressionManipulator::convert<T, Unreachable>(curr);
     }

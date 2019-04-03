@@ -22,10 +22,11 @@ import sys
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS,
-    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2JS, WASM_METADCE,
-    WASM_EMSCRIPTEN_FINALIZE, BINARYEN_INSTALL_DIR, BINARYEN_JS,
-    files_with_pattern, has_shell_timeout, options)
-from scripts.test.wasm2js import tests, spec_tests, extra_wasm2js_tests, assert_tests, wasm2js_dir, wasm2js_blacklist
+    WASM_CTOR_EVAL, WASM_REDUCE, WASM_METADCE, BINARYEN_INSTALL_DIR,
+    BINARYEN_JS, has_shell_timeout, options)
+
+from scripts.test import lld
+from scripts.test import wasm2js
 
 
 def update_asm_js_tests():
@@ -69,28 +70,6 @@ def update_asm_js_tests():
           if 'debugInfo' in asm:
             cmd += ['--source-map', os.path.join('test', wasm + '.map'), '-o', 'a.wasm']
             run_command(cmd)
-
-
-def update_lld_tests():
-  print '\n[ checking wasm-emscripten-finalize testcases... ]\n'
-
-  for wast_path in files_with_pattern('test', 'lld', '*.wast'):
-    print '..', wast_path
-    mem_file = wast_path + '.mem'
-    extension_arg_map = {
-      '.out': [],
-      '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
-      '.mem.out': ['--separate-data-segments', mem_file],
-    }
-    for ext, ext_args in extension_arg_map.items():
-      out_path = wast_path + ext
-      if ext != '.out' and not os.path.exists(out_path):
-        continue
-      cmd = (WASM_EMSCRIPTEN_FINALIZE +
-             [wast_path, '-S', '--global-base=568'] + ext_args)
-      actual = run_command(cmd)
-      with open(out_path, 'w') as o:
-        o.write(actual)
 
 
 def update_wasm_opt_tests():
@@ -265,33 +244,6 @@ def update_wasm_dis_tests():
       open(t + '.fromBinary', 'w').write(actual)
 
 
-def update_wasm_merge_tests():
-  print '\n[ checking wasm-merge... ]\n'
-  for t in os.listdir(os.path.join('test', 'merge')):
-    if t.endswith(('.wast', '.wasm')):
-      print '..', t
-      t = os.path.join('test', 'merge', t)
-      u = t + '.toMerge'
-      for finalize in [0, 1]:
-        for opt in [0, 1]:
-          cmd = WASM_MERGE + [t, u, '-o', 'a.wast', '-S', '--verbose']
-          if finalize:
-            cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
-          if opt:
-            cmd += ['-O']
-          stdout = run_command(cmd)
-          actual = open('a.wast').read()
-          out = t + '.combined'
-          if finalize:
-            out += '.finalized'
-          if opt:
-            out += '.opt'
-          with open(out, 'w') as o:
-            o.write(actual)
-          with open(out + '.stdout', 'w') as o:
-            o.write(stdout)
-
-
 def update_binaryen_js_tests():
   if not (MOZJS or NODEJS):
     print 'no vm to run binaryen.js tests'
@@ -343,51 +295,6 @@ def update_ctor_eval_tests():
         o.write(actual)
 
 
-def update_wasm2js_tests():
-  print '\n[ checking wasm2js ]\n'
-  for wasm in tests + spec_tests + extra_wasm2js_tests:
-    if not wasm.endswith('.wast'):
-      continue
-
-    if os.path.basename(wasm) in wasm2js_blacklist:
-      continue
-
-    asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
-    expected_file = os.path.join(wasm2js_dir, asm)
-
-    # we run wasm2js on tests and spec tests only if the output
-    # exists - only some work so far. the tests in extra are in
-    # the test/wasm2js dir and so are specific to wasm2js, and
-    # we run all of those.
-    if wasm not in extra_wasm2js_tests and not os.path.exists(expected_file):
-      continue
-
-    print '..', wasm
-
-    cmd = WASM2JS + [os.path.join('test', wasm)]
-    out = run_command(cmd)
-    with open(expected_file, 'w') as o:
-      o.write(out)
-
-  for wasm in assert_tests:
-    print '..', wasm
-
-    asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
-    traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
-    asserts_expected_file = os.path.join('test', asserts)
-    traps_expected_file = os.path.join('test', traps)
-
-    cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts']
-    out = run_command(cmd)
-    with open(asserts_expected_file, 'w') as o:
-      o.write(out)
-
-    cmd += ['--pedantic']
-    out = run_command(cmd)
-    with open(traps_expected_file, 'w') as o:
-      o.write(out)
-
-
 def update_metadce_tests():
   print '\n[ checking wasm-metadce... ]\n'
   for t in os.listdir(os.path.join('test', 'metadce')):
@@ -422,17 +329,16 @@ def update_reduce_tests():
 
 def main():
   update_asm_js_tests()
-  update_lld_tests()
+  lld.update_lld_tests()
   update_wasm_opt_tests()
   update_bin_fmt_tests()
   update_example_tests()
   update_wasm_dis_tests()
-  update_wasm_merge_tests()
-  update_binaryen_js_tests()
   update_ctor_eval_tests()
-  update_wasm2js_tests()
+  wasm2js.update_wasm2js_tests()
   update_metadce_tests()
   update_reduce_tests()
+  update_binaryen_js_tests()
 
   print '\n[ success! ]'
 

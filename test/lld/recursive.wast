@@ -1,66 +1,68 @@
 (module
  (type $0 (func (param i32 i32) (result i32)))
- (type $1 (func (result i32)))
- (type $2 (func))
+ (type $1 (func))
+ (type $2 (func (result i32)))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
+ (memory $0 2)
+ (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
+ (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 587))
- (table 1 1 anyfunc)
- (memory $0 2)
- (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
- (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
- (func $foo (; 1 ;) (type $0) (param $var$0 i32) (param $var$1 i32) (result i32)
-  (local $var$2 i32)
-  (set_global $global$0
-   (tee_local $var$2
+ (export "main" (func $main))
+ (func $__wasm_call_ctors (; 1 ;) (type $1)
+ )
+ (func $foo (; 2 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+  (local $2 i32)
+  (global.set $global$0
+   (local.tee $2
     (i32.sub
-     (get_global $global$0)
+     (global.get $global$0)
      (i32.const 16)
     )
    )
   )
   (i32.store offset=4
-   (get_local $var$2)
-   (get_local $var$1)
+   (local.get $2)
+   (local.get $1)
   )
   (i32.store
-   (get_local $var$2)
-   (get_local $var$0)
+   (local.get $2)
+   (local.get $0)
   )
   (drop
    (call $printf
     (i32.const 568)
-    (get_local $var$2)
+    (local.get $2)
    )
   )
-  (set_global $global$0
+  (global.set $global$0
    (i32.add
-    (get_local $var$2)
+    (local.get $2)
     (i32.const 16)
    )
   )
   (i32.add
-   (get_local $var$1)
-   (get_local $var$0)
+   (local.get $1)
+   (local.get $0)
   )
  )
- (func $main (; 2 ;) (type $1) (result i32)
-  (local $var$0 i32)
-  (set_global $global$0
-   (tee_local $var$0
+ (func $__original_main (; 3 ;) (type $2) (result i32)
+  (local $0 i32)
+  (global.set $global$0
+   (local.tee $0
     (i32.sub
-     (get_global $global$0)
+     (global.get $global$0)
      (i32.const 16)
     )
    )
   )
   (i32.store
-   (get_local $var$0)
+   (local.get $0)
    (call $foo
     (i32.const 1)
     (i32.const 2)
@@ -69,19 +71,20 @@
   (drop
    (call $printf
     (i32.const 575)
-    (get_local $var$0)
+    (local.get $0)
    )
   )
-  (set_global $global$0
+  (global.set $global$0
    (i32.add
-    (get_local $var$0)
+    (local.get $0)
     (i32.const 16)
    )
   )
   (i32.const 0)
  )
- (func $__wasm_call_ctors (; 3 ;) (type $2)
+ (func $main (; 4 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+  (call $__original_main)
  )
- ;; custom section "linking", size 3
+ ;; custom section "producers", size 125
 )
 

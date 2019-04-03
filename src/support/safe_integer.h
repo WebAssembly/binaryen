@@ -20,6 +20,7 @@
 #include <cstdint>
 
 namespace wasm {
+
 bool isInteger(double x);
 bool isUInteger32(double x);
 bool isSInteger32(double x);
@@ -39,6 +40,7 @@ bool isInRangeI32TruncS(int64_t i);
 bool isInRangeI32TruncU(int64_t i);
 bool isInRangeI64TruncS(int64_t i);
 bool isInRangeI64TruncU(int64_t i);
+
 }  // namespace wasm
 
 #endif  // wasm_safe_integer_h

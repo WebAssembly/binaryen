@@ -112,7 +112,7 @@ struct Value {
     AssignName_ = 7
   };
 
-  Type type;
+  Type type = Null;
 
   typedef std::unordered_map<IString, Ref> ObjectStorage;
 
@@ -131,14 +131,14 @@ struct Value {
   };
 
   // constructors all copy their input
-  Value() : type(Null), num(0) {}
-  explicit Value(const char *s) : type(Null) {
+  Value() {}
+  explicit Value(const char *s) {
     setString(s);
   }
-  explicit Value(double n) : type(Null) {
+  explicit Value(double n) {
     setNumber(n);
   }
-  explicit Value(ArrayStorage &a) : type(Null) {
+  explicit Value(ArrayStorage &a) {
     setArray();
     *arr = a;
   }
@@ -544,15 +544,16 @@ void traverseFunctions(Ref ast, std::function<void (Ref)> visit);
 struct JSPrinter {
   bool pretty, finalize;
 
-  char *buffer;
-  size_t size, used;
+  char *buffer = nullptr;
+  size_t size = 0;
+  size_t used = 0;
 
-  int indent;
-  bool possibleSpace; // add a space to separate identifiers
+  int indent = 0;
+  bool possibleSpace = false; // add a space to separate identifiers
 
   Ref ast;
 
-  JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_) {}
+  JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), ast(ast_) {}
 
   ~JSPrinter() {
     free(buffer);
@@ -560,6 +561,7 @@ struct JSPrinter {
 
   void printAst() {
     print(ast);
+    ensure(1);
     buffer[used] = 0;
   }
 

@@ -256,7 +256,16 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
         case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
         case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
-        case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
+        case Expression::Id::AtomicNotifyId: DELEGATE(AtomicNotify);
+        case Expression::Id::SIMDExtractId: DELEGATE(SIMDExtract);
+        case Expression::Id::SIMDReplaceId: DELEGATE(SIMDReplace);
+        case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
+        case Expression::Id::SIMDBitselectId: DELEGATE(SIMDBitselect);
+        case Expression::Id::SIMDShiftId: DELEGATE(SIMDShift);
+        case Expression::Id::MemoryInitId: DELEGATE(MemoryInit);
+        case Expression::Id::DataDropId: DELEGATE(DataDrop);
+        case Expression::Id::MemoryCopyId: DELEGATE(MemoryCopy);
+        case Expression::Id::MemoryFillId: DELEGATE(MemoryFill);
         case Expression::Id::InvalidId: WASM_UNREACHABLE();
         case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
       }

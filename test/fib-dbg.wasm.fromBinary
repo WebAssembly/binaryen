@@ -5,7 +5,7 @@
  (type $3 (func (param i32)))
  (type $4 (func))
  (import "env" "memory" (memory $9 256 256))
- (import "env" "table" (table $timport$10 0 0 anyfunc))
+ (import "env" "table" (table $timport$10 0 0 funcref))
  (import "env" "DYNAMICTOP_PTR" (global $gimport$0 i32))
  (import "env" "tempDoublePtr" (global $gimport$1 i32))
  (import "env" "ABORT" (global $gimport$2 i32))
@@ -17,19 +17,19 @@
  (import "global" "Infinity" (global $gimport$8 f64))
  (import "env" "memoryBase" (global $gimport$11 i32))
  (import "env" "tableBase" (global $gimport$12 i32))
- (global $global$0 (mut i32) (get_global $gimport$0))
- (global $global$1 (mut i32) (get_global $gimport$1))
- (global $global$2 (mut i32) (get_global $gimport$2))
- (global $global$3 (mut i32) (get_global $gimport$3))
- (global $global$4 (mut i32) (get_global $gimport$4))
- (global $global$5 (mut i32) (get_global $gimport$5))
- (global $global$6 (mut i32) (get_global $gimport$6))
+ (global $global$0 (mut i32) (global.get $gimport$0))
+ (global $global$1 (mut i32) (global.get $gimport$1))
+ (global $global$2 (mut i32) (global.get $gimport$2))
+ (global $global$3 (mut i32) (global.get $gimport$3))
+ (global $global$4 (mut i32) (global.get $gimport$4))
+ (global $global$5 (mut i32) (global.get $gimport$5))
+ (global $global$6 (mut i32) (global.get $gimport$6))
  (global $global$7 (mut i32) (i32.const 0))
  (global $global$8 (mut i32) (i32.const 0))
  (global $global$9 (mut i32) (i32.const 0))
  (global $global$10 (mut i32) (i32.const 0))
- (global $global$11 (mut f64) (get_global $gimport$7))
- (global $global$12 (mut f64) (get_global $gimport$8))
+ (global $global$11 (mut f64) (global.get $gimport$7))
+ (global $global$12 (mut f64) (global.get $gimport$8))
  (global $global$13 (mut i32) (i32.const 0))
  (global $global$14 (mut i32) (i32.const 0))
  (global $global$15 (mut i32) (i32.const 0))
@@ -51,61 +51,61 @@
  (func $stackAlloc (; 0 ;) (type $1) (param $0 i32) (result i32)
   (local $1 i32)
   (block $label$1
-   (set_local $1
-    (get_global $global$3)
+   (local.set $1
+    (global.get $global$3)
    )
-   (set_global $global$3
+   (global.set $global$3
     (i32.add
-     (get_global $global$3)
-     (get_local $0)
+     (global.get $global$3)
+     (local.get $0)
     )
    )
-   (set_global $global$3
+   (global.set $global$3
     (i32.and
      (i32.add
-      (get_global $global$3)
+      (global.get $global$3)
       (i32.const 15)
      )
      (i32.const -16)
     )
    )
    (return
-    (get_local $1)
+    (local.get $1)
    )
   )
  )
  (func $stackSave (; 1 ;) (type $2) (result i32)
   (return
-   (get_global $global$3)
+   (global.get $global$3)
   )
  )
  (func $stackRestore (; 2 ;) (type $3) (param $0 i32)
-  (set_global $global$3
-   (get_local $0)
+  (global.set $global$3
+   (local.get $0)
   )
  )
  (func $establishStackSpace (; 3 ;) (type $0) (param $0 i32) (param $1 i32)
   (block $label$1
-   (set_global $global$3
-    (get_local $0)
+   (global.set $global$3
+    (local.get $0)
    )
-   (set_global $global$4
-    (get_local $1)
+   (global.set $global$4
+    (local.get $1)
    )
   )
  )
  (func $setThrew (; 4 ;) (type $0) (param $0 i32) (param $1 i32)
   (if
    (i32.eq
-    (get_global $global$7)
+    (global.get $global$7)
     (i32.const 0)
    )
    (block
-    (set_global $global$7
-     (get_local $0)
+    (global.set $global$7
+     (local.get $0)
     )
-    (set_global $global$8
-     (get_local $1)
+    (global.set $global$8
+     (local.get $1)
     )
    )
   )
@@ -123,81 +123,81 @@
   (local $10 i32)
   (local $11 i32)
   (block $label$1
-   (set_local $11
-    (get_global $global$3)
+   (local.set $11
+    (global.get $global$3)
    )
    ;;@ fib.c:3:0
-   (set_local $6
+   (local.set $6
     (i32.gt_s
-     (get_local $0)
+     (local.get $0)
      (i32.const 0)
     )
    )
    (if
-    (get_local $6)
+    (local.get $6)
     (block
-     (set_local $1
+     (local.set $1
       (i32.const 0)
      )
-     (set_local $5
+     (local.set $5
       (i32.const 1)
      )
-     (set_local $8
+     (local.set $8
       (i32.const 0)
      )
     )
     (block
-     (set_local $4
+     (local.set $4
       (i32.const 1)
      )
      ;;@ fib.c:8:0
      (return
-      (get_local $4)
+      (local.get $4)
      )
     )
    )
    (loop $label$4
     (block $label$5
      ;;@ fib.c:4:0
-     (set_local $3
+     (local.set $3
       (i32.add
-       (get_local $5)
-       (get_local $1)
+       (local.get $5)
+       (local.get $1)
       )
      )
      ;;@ fib.c:3:0
-     (set_local $9
+     (local.set $9
       (i32.add
-       (get_local $8)
+       (local.get $8)
        (i32.const 1)
       )
      )
-     (set_local $7
+     (local.set $7
       (i32.eq
-       (get_local $9)
-       (get_local $0)
+       (local.get $9)
+       (local.get $0)
       )
      )
      (if
-      (get_local $7)
+      (local.get $7)
       (block
-       (set_local $4
-        (get_local $3)
+       (local.set $4
+        (local.get $3)
        )
        (br $label$5)
       )
       (block
-       (set_local $2
-        (get_local $5)
+       (local.set $2
+        (local.get $5)
        )
-       (set_local $5
-        (get_local $3)
+       (local.set $5
+        (local.get $3)
        )
-       (set_local $8
-        (get_local $9)
+       (local.set $8
+        (local.get $9)
        )
-       (set_local $1
-        (get_local $2)
+       (local.set $1
+        (local.get $2)
        )
       )
      )
@@ -206,7 +206,7 @@
    )
    ;;@ fib.c:8:0
    (return
-    (get_local $4)
+    (local.get $4)
    )
   )
  )

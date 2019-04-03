@@ -910,8 +910,8 @@ class Parser {
 
   // Debugging
 
-  char *allSource;
-  int allSize;
+  char *allSource = nullptr;
+  int allSize = 0;
 
   static void dump(const char *where, char* curr) {
     /*
@@ -938,7 +938,7 @@ class Parser {
 
 public:
 
-  Parser() : allSource(nullptr), allSize(0) {
+  Parser() {
     expressionPartsStack.resize(1);
   }
 

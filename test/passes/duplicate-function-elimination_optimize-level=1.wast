@@ -54,7 +54,7 @@
   (type $0 (func))
   (export "keep2" $keep2)
   (export "other" $other)
-  (table 3 3 anyfunc)
+  (table 3 3 funcref)
   (elem (i32.const 0) $keep2 $other $caller)
   (func $keep2 (type $0)
     (nop)
@@ -461,7 +461,7 @@
 (module
   (memory 0)
   (type $T (func))
-  (table 2 2 anyfunc)
+  (table 2 2 funcref)
   (elem (i32.const 0)  $erase $other)
   (func $erase (type $T)
     (call_indirect (type $T)
@@ -477,7 +477,7 @@
 (module
   (memory 0)
   (type $T (func))
-  (table 2 2 anyfunc)
+  (table 2 2 funcref)
   (elem (i32.const 0)  $keep2 $other)
   (func $keep2 (type $T)
     (call_indirect (type $T)
@@ -494,7 +494,7 @@
   (memory 0)
   (type $T (func))
   (type $S (func))
-  (table 2 2 anyfunc)
+  (table 2 2 funcref)
   (elem (i32.const 0)  $keep2 $other)
   (func $keep2 (type $T)
     (call_indirect (type $T)
@@ -513,13 +513,13 @@
   (func $erase-even-locals-with-different-names (type $0)
     (local $i i32)
     (drop
-      (get_local $i)
+      (local.get $i)
     )
   )
   (func $other (type $0)
     (local $j i32)
     (drop
-      (get_local $j)
+      (local.get $j)
     )
   )
 )
@@ -529,13 +529,13 @@
   (func $keep2 (type $0)
     (local $i i32)
     (drop
-      (get_local $i)
+      (local.get $i)
     )
   )
   (func $other (type $0)
     (local $j i64)
     (drop
-      (get_local $j)
+      (local.get $j)
     )
   )
 )
@@ -544,13 +544,13 @@
   (type $0 (func))
   (func $erase-even-locals-with-different-names (type $0)
     (local $i i32)
-    (set_local $i
+    (local.set $i
       (i32.const 0)
     )
   )
   (func $other (type $0)
     (local $j i32)
-    (set_local $j
+    (local.set $j
       (i32.const 0)
     )
   )
@@ -560,13 +560,13 @@
   (type $0 (func))
   (func $keep2 (type $0)
     (local $i i32)
-    (set_local $i
+    (local.set $i
       (i32.const 0)
     )
   )
   (func $other (type $0)
     (local $j i64)
-    (set_local $j
+    (local.set $j
       (i64.const 0)
     )
   )
@@ -576,13 +576,13 @@
   (type $0 (func))
   (func $keep2 (type $0)
     (local $i i32)
-    (set_local $i
+    (local.set $i
       (i32.const 0)
     )
   )
   (func $other (type $0)
     (local $j i32)
-    (set_local $j
+    (local.set $j
       (i32.const 1)
     )
   )

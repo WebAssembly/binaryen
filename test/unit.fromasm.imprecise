@@ -8,8 +8,8 @@
  (type $FUNCSIG$dd (func (param f64) (result f64)))
  (type $FUNCSIG$i (func (result i32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 25 25 anyfunc))
- (elem (get_global $__table_base) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi $ii)
+ (import "env" "table" (table $table 25 25 funcref))
+ (elem (global.get $__table_base) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi $ii)
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "gb" (global $n$asm2wasm$import i32))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32) (result i32)))
@@ -21,7 +21,8 @@
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
  (global $Int (mut i32) (i32.const 0))
  (global $Double (mut f64) (f64.const 0))
- (global $n (mut i32) (get_global $n$asm2wasm$import))
+ (global $n (mut i32) (global.get $n$asm2wasm$import))
+ (global $nonZero (mut i32) (i32.const 1337))
  (global $exportedNumber i32 (i32.const 42))
  (export "big_negative" (func $big_negative))
  (export "pick" (func $big_negative))
@@ -79,7 +80,7 @@
  (func $importedDoubles (; 8 ;) (; has Stack IR ;) (result f64)
   (if
    (i32.gt_s
-    (get_global $Int)
+    (global.get $Int)
     (i32.const 0)
    )
    (return
@@ -88,7 +89,7 @@
   )
   (if
    (f64.gt
-    (get_global $Double)
+    (global.get $Double)
     (f64.const 0)
    )
    (return
@@ -100,7 +101,7 @@
  (func $doubleCompares (; 9 ;) (; has Stack IR ;) (param $0 f64) (param $1 f64) (result f64)
   (if
    (f64.gt
-    (get_local $0)
+    (local.get $0)
     (f64.const 0)
    )
    (return
@@ -109,7 +110,7 @@
   )
   (if
    (f64.gt
-    (get_local $0)
+    (local.get $0)
     (f64.const 0)
    )
    (return
@@ -118,7 +119,7 @@
   )
   (if
    (i32.gt_s
-    (get_global $n)
+    (global.get $n)
     (i32.const 0)
    )
    (return
@@ -127,18 +128,18 @@
   )
   (if
    (f64.lt
-    (get_local $0)
-    (get_local $1)
+    (local.get $0)
+    (local.get $1)
    )
    (return
-    (get_local $0)
+    (local.get $0)
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $intOps (; 10 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (i32.eqz
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $switcher (; 11 ;) (; has Stack IR ;) (param $0 i32) (result i32)
@@ -147,7 +148,7 @@
     (block $switch-case
      (br_table $switch-case $switch-case0 $switch
       (i32.sub
-       (get_local $0)
+       (local.get $0)
        (i32.const 1)
       )
      )
@@ -165,7 +166,7 @@
     (block $switch-case2
      (br_table $switch-case3 $switch1 $switch1 $switch1 $switch1 $switch1 $switch1 $switch-case2 $switch1
       (i32.sub
-       (get_local $0)
+       (local.get $0)
        (i32.const 5)
       )
      )
@@ -184,7 +185,7 @@
      (block $label$break$L3
       (br_table $label$break$L3 $label$break$L1 $label$break$L1 $label$break$L1 $label$break$L1 $label$break$L1 $label$continue$L3 $label$break$L1
        (i32.add
-        (get_local $0)
+        (local.get $0)
         (i32.const -110)
        )
       )
@@ -217,43 +218,40 @@
   (f64.const -0)
  )
  (func $neg (; 16 ;) (; has Stack IR ;)
-  (local $0 f32)
   (call_indirect (type $FUNCSIG$vf)
-   (f32.neg
-    (get_local $0)
-   )
+   (f32.const -0)
    (i32.const 9)
   )
  )
  (func $cneg (; 17 ;) (; has Stack IR ;) (param $0 f32)
   (call_indirect (type $FUNCSIG$vf)
-   (get_local $0)
+   (local.get $0)
    (i32.const 9)
   )
  )
  (func $smallCompare (; 18 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.lt_u
-    (tee_local $0
+    (local.tee $0
      (select
       (i32.add
-       (get_local $0)
+       (local.get $0)
        (i32.const 1)
       )
-      (get_local $0)
+      (local.get $0)
       (i32.lt_s
-       (get_local $0)
-       (get_local $1)
+       (local.get $0)
+       (local.get $1)
       )
      )
     )
-    (get_local $1)
+    (local.get $1)
    )
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 1)
    )
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $cneg_nosemicolon (; 19 ;) (; has Stack IR ;)
@@ -264,22 +262,22 @@
  )
  (func $forLoop (; 20 ;) (; has Stack IR ;)
   (local $0 i32)
-  (set_local $0
+  (local.set $0
    (i32.const 1)
   )
   (loop $for-in
    (if
     (i32.lt_s
-     (get_local $0)
+     (local.get $0)
      (i32.const 200)
     )
     (block
      (call $h
-      (get_local $0)
+      (local.get $0)
      )
-     (set_local $0
+     (local.set $0
       (i32.add
-       (get_local $0)
+       (local.get $0)
        (i32.const 1)
       )
      )
@@ -296,7 +294,7 @@
   )
   (drop
    (call $abort
-    (f64.convert_s/i32
+    (f64.convert_i32_s
      (i32.const 55)
     )
    )
@@ -340,7 +338,7 @@
   (drop
    (call $lb
     (i32.add
-     (get_local $0)
+     (local.get $0)
      (i32.const 22)
     )
    )
@@ -361,7 +359,7 @@
      (call $lb
       (i32.const 3)
      )
-     (get_local $0)
+     (local.get $0)
     )
     (block (result i32)
      (drop
@@ -413,9 +411,9 @@
  )
  (func $lb (; 24 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (i32.store
-   (get_local $0)
+   (local.get $0)
    (i32.add
-    (get_global $n)
+    (global.get $n)
     (i32.const 144)
    )
   )
@@ -434,7 +432,7 @@
        (i32.const 1)
       )
       (i32.const 3)
-      (get_local $1)
+      (local.get $1)
      )
      (i32.const 3)
     )
@@ -492,29 +490,29 @@
   (call $phi)
  )
  (func $useSetGlobal (; 29 ;) (; has Stack IR ;) (result i32)
-  (set_global $Int
+  (global.set $Int
    (i32.const 10)
   )
-  (set_global $Int
+  (global.set $Int
    (i32.const 20)
   )
-  (set_global $Int
+  (global.set $Int
    (i32.const 30)
   )
-  (get_global $Int)
+  (global.get $Int)
  )
  (func $usesSetGlobal2 (; 30 ;) (; has Stack IR ;) (result i32)
-  (set_global $Int
+  (global.set $Int
    (i32.const 40)
   )
   (i32.const 50)
  )
  (func $breakThroughMany (; 31 ;) (; has Stack IR ;) (param $0 i32)
   (if
-   (get_local $0)
+   (local.get $0)
    (loop $while-in
     (if
-     (get_local $0)
+     (local.get $0)
      (block
       (call $zeroInit
        (i32.const 0)
@@ -528,7 +526,7 @@
  (func $ifChainEmpty (; 32 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (if
    (i32.eq
-    (get_local $0)
+    (local.get $0)
     (i32.const 4)
    )
    (return
@@ -539,16 +537,16 @@
  )
  (func $heap8NoShift (; 33 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (i32.load8_s
-   (get_local $0)
+   (local.get $0)
   )
  )
  (func $conditionalTypeFun (; 34 ;) (; has Stack IR ;)
   (drop
    (if (result i32)
     (call $return_int)
-    (i32.trunc_s/f64
+    (i32.trunc_f64_s
      (call $abort
-      (f64.convert_s/i32
+      (f64.convert_i32_s
        (i32.const 5)
       )
      )
@@ -560,7 +558,7 @@
    (if (result f64)
     (call $return_int)
     (call $abort
-     (f64.convert_s/i32
+     (f64.convert_i32_s
       (i32.const 7)
      )
     )
@@ -571,29 +569,29 @@
  (func $loadSigned (; 35 ;) (; has Stack IR ;) (param $0 i32)
   (call $loadSigned
    (i32.load8_s
-    (get_local $0)
+    (local.get $0)
    )
   )
   (call $loadSigned
    (i32.load8_s
-    (get_local $0)
+    (local.get $0)
    )
   )
   (call $loadSigned
    (i32.load16_s
-    (get_local $0)
+    (local.get $0)
    )
   )
   (call $loadSigned
    (i32.load16_s
-    (get_local $0)
+    (local.get $0)
    )
   )
   (call $loadSigned
    (i32.shr_s
     (i32.shl
      (i32.load8_s
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const 24)
     )
@@ -604,7 +602,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load8_u
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const 16)
     )
@@ -615,7 +613,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load16_s
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const 16)
     )
@@ -626,7 +624,7 @@
    (i32.shr_s
     (i32.shl
      (i32.load16_u
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const 24)
     )
@@ -649,25 +647,25 @@
    )
   )
   (call $globalOpts)
-  (set_local $0
-   (get_global $Int)
+  (local.set $0
+   (global.get $Int)
   )
   (if
    (call $return_int)
-   (set_global $Int
+   (global.set $Int
     (i32.const 20)
    )
   )
-  (set_global $Int
-   (get_local $0)
+  (global.set $Int
+   (local.get $0)
   )
   (call $globalOpts)
-  (set_local $0
-   (get_global $Int)
+  (local.set $0
+   (global.get $Int)
   )
   (call $globalOpts)
-  (set_global $Int
-   (get_local $0)
+  (global.set $Int
+   (local.get $0)
   )
  )
  (func $dropCallImport (; 39 ;) (; has Stack IR ;)
@@ -683,23 +681,23 @@
   (loop $while-in
    (block $while-out
     (call $loophi
-     (get_local $0)
+     (local.get $0)
      (i32.const 0)
     )
     (if
-     (tee_local $2
-      (get_local $0)
+     (local.tee $2
+      (local.get $0)
      )
      (br_if $while-out
-      (get_local $2)
+      (local.get $2)
      )
     )
     (br_if $while-in
      (i32.eq
-      (get_local $1)
-      (tee_local $0
+      (local.get $1)
+      (local.tee $0
        (i32.add
-        (get_local $0)
+        (local.get $0)
         (i32.const 1)
        )
       )
@@ -714,23 +712,23 @@
   (local $2 i32)
   (loop $label$continue$L7
    (block $label$break$L7
-    (set_local $0
+    (local.set $0
      (i32.const 0)
     )
     (loop $while-in
-     (set_local $2
-      (get_local $0)
+     (local.set $2
+      (local.get $0)
      )
      (if
       (call $return_int)
       (br_if $label$break$L7
-       (get_local $2)
+       (local.get $2)
       )
      )
      (br_if $while-in
-      (tee_local $0
+      (local.tee $0
        (i32.add
-        (get_local $0)
+        (local.get $0)
         (i32.const 1)
        )
       )
@@ -739,30 +737,30 @@
     (br $label$continue$L7)
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $loophi2b (; 42 ;) (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (loop $label$continue$L7
    (block $label$break$L7
-    (set_local $0
+    (local.set $0
      (i32.const 0)
     )
     (loop $while-in
-     (set_local $1
-      (get_local $0)
+     (local.set $1
+      (local.get $0)
      )
      (if
       (call $return_int)
       (br_if $label$break$L7
-       (get_local $1)
+       (local.get $1)
       )
      )
      (br_if $while-in
-      (tee_local $0
+      (local.tee $0
        (i32.add
-        (get_local $0)
+        (local.get $0)
         (i32.const 1)
        )
       )
@@ -771,13 +769,13 @@
     (br $label$continue$L7)
    )
   )
-  (get_local $0)
+  (local.get $0)
  )
  (func $relooperJumpThreading (; 43 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (block $__rjto$0
    (block $__rjti$0
     (if
-     (get_local $0)
+     (local.get $0)
      (block
       (call $h
        (i32.const 0)
@@ -797,9 +795,9 @@
   (loop $while-in
    (br_if $while-in
     (i32.eqz
-     (tee_local $0
+     (local.tee $0
       (i32.add
-       (get_local $0)
+       (local.get $0)
        (i32.const 1)
       )
      )
@@ -819,14 +817,14 @@
    (block $__rjti$3
     (block $__rjti$2
      (if
-      (get_local $0)
+      (local.get $0)
       (block
        (call $h
         (i32.const 4)
        )
        (br_if $__rjti$2
         (i32.eq
-         (get_local $0)
+         (local.get $0)
          (i32.const 3)
         )
        )
@@ -851,14 +849,14 @@
    (block $__rjti$5
     (block $__rjti$4
      (if
-      (get_local $0)
+      (local.get $0)
       (block
        (call $h
         (i32.const 7)
        )
        (br_if $__rjti$4
         (i32.eq
-         (get_local $0)
+         (local.get $0)
          (i32.const 5)
         )
        )
@@ -872,7 +870,7 @@
     )
     (br_if $__rjti$5
      (i32.eq
-      (get_local $0)
+      (local.get $0)
       (i32.const 6)
      )
     )
@@ -888,7 +886,7 @@
   (block $label$break$L1
    (block $__rjti$6
     (if
-     (get_local $0)
+     (local.get $0)
      (block
       (call $h
        (i32.const 10)
@@ -909,14 +907,14 @@
    (block $__rjti$8
     (block $__rjti$7
      (if
-      (get_local $0)
+      (local.get $0)
       (block
        (call $h
         (i32.const 12)
        )
        (br_if $__rjti$7
         (i32.eq
-         (get_local $0)
+         (local.get $0)
          (i32.const 8)
         )
        )
@@ -929,7 +927,7 @@
      (i32.const 13)
     )
     (br_if $__rjti$8
-     (get_local $0)
+     (local.get $0)
     )
     (br $label$break$L10)
    )
@@ -940,29 +938,29 @@
   (call $h
    (i32.const -6)
   )
-  (get_local $0)
+  (local.get $0)
  )
  (func $relooperJumpThreading__ZN4game14preloadweaponsEv (; 44 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32)
   (loop $while-in
    (block $__rjti$1
     (if
-     (get_local $1)
+     (local.get $1)
      (br_if $__rjti$1
       (i32.eqz
-       (get_local $2)
+       (local.get $2)
       )
      )
      (br_if $__rjti$1
       (i32.eqz
-       (get_local $3)
+       (local.get $3)
       )
      )
     )
     (br $while-in)
    )
    (i32.store
-    (get_local $4)
-    (get_local $5)
+    (local.get $4)
+    (local.get $5)
    )
    (br $while-in)
   )
@@ -971,7 +969,7 @@
   (local $1 i32)
   (if
    (i32.eq
-    (get_local $0)
+    (local.get $0)
     (i32.const 100)
    )
    (loop $while-in
@@ -981,24 +979,24 @@
     (br $while-in)
    )
   )
-  (set_local $1
+  (local.set $1
    (select
     (i32.const 2)
     (i32.const 10)
     (i32.eq
-     (get_local $0)
+     (local.get $0)
      (i32.const 200)
     )
    )
   )
   (if
    (i32.eq
-    (tee_local $1
+    (local.tee $1
      (select
       (i32.const 2)
-      (get_local $1)
+      (local.get $1)
       (i32.eq
-       (get_local $0)
+       (local.get $0)
        (i32.const 300)
       )
      )
@@ -1011,7 +1009,7 @@
   )
   (if
    (i32.eq
-    (get_local $1)
+    (local.get $1)
     (i32.const 10)
    )
    (call $relooperJumpThreading_irreducible
@@ -1021,11 +1019,11 @@
  )
  (func $__Z12multi_varargiz (; 46 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
   (if
-   (get_local $3)
+   (local.get $3)
    (loop $while-in
     (br_if $while-in
      (i32.eqz
-      (get_local $2)
+      (local.get $2)
      )
     )
    )
@@ -1041,10 +1039,10 @@
  )
  (func $dropIgnoredImportInIf (; 48 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (if
-   (get_local $0)
+   (local.get $0)
    (drop
     (call $lb
-     (get_local $2)
+     (local.get $2)
     )
    )
   )
@@ -1052,12 +1050,12 @@
  (func $dropIgnoredImportsInIf (; 49 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (if (result i32)
-    (get_local $0)
+    (local.get $0)
     (call $lb
-     (get_local $1)
+     (local.get $1)
     )
     (call $lb
-     (get_local $2)
+     (local.get $2)
     )
    )
   )
@@ -1065,9 +1063,9 @@
  (func $store_fround (; 50 ;) (; has Stack IR ;) (param $0 i32)
   (f64.store
    (i32.const 80)
-   (f64.promote/f32
-    (f32.convert_s/i32
-     (get_local $0)
+   (f64.promote_f32
+    (f32.convert_i32_s
+     (local.get $0)
     )
    )
   )
@@ -1085,31 +1083,7 @@
    (i32.const 30)
   )
  )
- (func $sqrts (; 52 ;) (; has Stack IR ;) (param $0 f64) (result f64)
-  (f64.add
-   (f64.sqrt
-    (get_local $0)
-   )
-   (f64.promote/f32
-    (f32.sqrt
-     (f32.demote/f64
-      (get_local $0)
-     )
-    )
-   )
-  )
- )
- (func $keepAlive (; 53 ;) (; has Stack IR ;)
-  (drop
-   (call $sqrts
-    (f64.const 3.14159)
-   )
-  )
-  (drop
-   (call $sqrts
-    (f64.const 2.18281)
-   )
-  )
+ (func $keepAlive (; 52 ;) (; has Stack IR ;)
   (call_indirect (type $FUNCSIG$vi)
    (i32.const 0)
    (i32.const 17)
@@ -1117,12 +1091,12 @@
   (call_indirect (type $FUNCSIG$vi)
    (i32.const 0)
    (block (result i32)
-    (set_global $Int
+    (global.set $Int
      (i32.const 1)
     )
     (i32.add
      (i32.and
-      (get_global $Int)
+      (global.get $Int)
       (i32.const 7)
      )
      (i32.const 16)
@@ -1141,19 +1115,25 @@
     (f64.const 1)
    )
   )
+  (global.set $nonZero
+   (i32.add
+    (global.get $nonZero)
+    (i32.const 1)
+   )
+  )
  )
- (func $vi (; 54 ;) (; has Stack IR ;) (param $0 i32)
+ (func $vi (; 53 ;) (; has Stack IR ;) (param $0 i32)
   (nop)
  )
- (func $ii (; 55 ;) (; has Stack IR ;) (param $0 i32) (result i32)
-  (get_local $0)
+ (func $ii (; 54 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+  (local.get $0)
  )
- (func $legalstub$conversions (; 56 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64)
+ (func $legalstub$conversions (; 55 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64)
   (nop)
  )
- (func $legalstub$frem_float (; 57 ;) (; has Stack IR ;) (result f64)
-  (f64.promote/f32
-   (f32.demote/f64
+ (func $legalstub$frem_float (; 56 ;) (; has Stack IR ;) (result f64)
+  (f64.promote_f32
+   (f32.demote_f64
     (call $f64-rem
      (f64.const 5.5)
      (f64.const 1.2000000476837158)
@@ -1161,19 +1141,19 @@
    )
   )
  )
- (func $legalstub$fr (; 58 ;) (; has Stack IR ;) (param $0 f64)
+ (func $legalstub$fr (; 57 ;) (; has Stack IR ;) (param $0 f64)
   (nop)
  )
- (func $legalstub$ceiling_32_64 (; 59 ;) (; has Stack IR ;) (param $0 f64) (param $1 f64)
+ (func $legalstub$ceiling_32_64 (; 58 ;) (; has Stack IR ;) (param $0 f64) (param $1 f64)
   (nop)
  )
- (func $legalstub$bitcasts (; 60 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64)
+ (func $legalstub$bitcasts (; 59 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64)
   (nop)
  )
- (func $legalstub$exported_f32_user (; 61 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
-  (f64.promote/f32
-   (f32.demote/f64
-    (get_local $1)
+ (func $legalstub$exported_f32_user (; 60 ;) (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
+  (f64.promote_f32
+   (f32.demote_f64
+    (local.get $1)
    )
   )
  )

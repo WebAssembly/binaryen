@@ -82,7 +82,7 @@ struct Branch {
     Break = 1,
     Continue = 2
   };
-  Shape* Ancestor; // If not NULL, this shape is the relevant one for purposes of getting to the target block. We break or continue on it
+  Shape* Ancestor = nullptr; // If not NULL, this shape is the relevant one for purposes of getting to the target block. We break or continue on it
   Branch::FlowType Type; // If Ancestor is not NULL, this says whether to break or continue
 
   // A branch either has a condition expression if the block ends in ifs, or if the block ends in a switch, then a list of indexes, which
@@ -151,7 +151,7 @@ struct InsertOrderedSet
 
   size_t count(const T& val) const { return Map.count(val); }
 
-  InsertOrderedSet() {}
+  InsertOrderedSet() = default;
   InsertOrderedSet(const InsertOrderedSet& other) {
     *this = other;
   }
@@ -214,7 +214,7 @@ struct InsertOrderedMap
   bool empty() const { return Map.empty(); }
   size_t count(const Key& k) const { return Map.count(k); }
 
-  InsertOrderedMap() {}
+  InsertOrderedMap() = default;
   InsertOrderedMap(InsertOrderedMap& other) {
     abort(); // TODO, watch out for iterators
   }
@@ -245,8 +245,8 @@ struct Block {
   BlockSet BranchesIn;
   BlockBranchMap ProcessedBranchesOut;
   BlockSet ProcessedBranchesIn;
-  Shape* Parent; // The shape we are directly inside
-  int Id; // A unique identifier, defined when added to relooper
+  Shape* Parent = nullptr; // The shape we are directly inside
+  int Id = -1; // A unique identifier, defined when added to relooper
   wasm::Expression* Code; // The code in this block. This can be arbitrary wasm code, including internal control flow, it should just not branch to the outside
   wasm::Expression* SwitchCondition; // If nullptr, then this block ends in ifs (or nothing). otherwise, this block ends in a switch, done on this condition
   bool IsCheckedMultipleEntry; // If true, we are a multiple entry, so reaching us requires setting the label variable
@@ -296,8 +296,8 @@ struct MultipleShape;
 struct LoopShape;
 
 struct Shape {
-  int Id; // A unique identifier. Used to identify loops, labels are Lx where x is the Id. Defined when added to relooper
-  Shape* Next; // The shape that will appear in the code right after this one
+  int Id = -1; // A unique identifier. Used to identify loops, labels are Lx where x is the Id. Defined when added to relooper
+  Shape* Next = nullptr; // The shape that will appear in the code right after this one
   Shape* Natural; // The shape that control flow gets to naturally (if there is Next, then this is Next)
 
   enum ShapeType {
@@ -307,7 +307,7 @@ struct Shape {
   };
   ShapeType Type;
 
-  Shape(ShapeType TypeInit) : Id(-1), Next(NULL), Type(TypeInit) {}
+  Shape(ShapeType TypeInit) : Type(TypeInit) {}
   virtual ~Shape() = default;
 
   virtual wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) = 0;
@@ -318,9 +318,9 @@ struct Shape {
 };
 
 struct SimpleShape : public Shape {
-  Block* Inner;
+  Block* Inner = nullptr;
 
-  SimpleShape() : Shape(Simple), Inner(NULL) {}
+  SimpleShape() : Shape(Simple) {}
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 
@@ -335,11 +335,11 @@ struct MultipleShape : public Shape {
 };
 
 struct LoopShape : public Shape {
-  Shape* Inner;
+  Shape* Inner = nullptr;
 
   BlockSet Entries; // we must visit at least one of these
 
-  LoopShape() : Shape(Loop), Inner(NULL) {}
+  LoopShape() : Shape(Loop) {}
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 

@@ -160,20 +160,20 @@
        (call $print
         (i32.const 0)
        )
-       (set_local $0
+       (local.set $0
         (call $check)
        )
       )
       (if
        (i32.eq
         (i32.rem_u
-         (get_local $0)
+         (local.get $0)
          (i32.const 2)
         )
         (i32.const 0)
        )
        (block
-        (set_local $1
+        (local.set $1
          (i32.const 6)
         )
         (br $block$6$break)
@@ -183,7 +183,7 @@
          (call $print
           (i32.const 8)
          )
-         (set_local $0
+         (local.set $0
           (call $check)
          )
         )
@@ -199,32 +199,32 @@
     (block $block$5$break0
      (if
       (i32.eq
-       (get_local $1)
+       (local.get $1)
        (i32.const 6)
       )
       (block
-       (set_local $1
+       (local.set $1
         (i32.const 0)
        )
        (block
         (call $print
          (i32.const 5)
         )
-        (set_local $0
+        (local.set $0
          (call $check)
         )
        )
        (if
         (i32.eq
          (i32.rem_u
-          (get_local $0)
+          (local.get $0)
           (i32.const 2)
          )
          (i32.const 0)
         )
         (br $shape$3$continue)
         (block
-         (set_local $1
+         (local.set $1
           (i32.const 6)
          )
          (br $shape$3$continue)
@@ -239,14 +239,14 @@
        (call $print
         (i32.const 4)
        )
-       (set_local $0
+       (local.set $0
         (call $check)
        )
       )
       (if
        (i32.eq
         (i32.rem_u
-         (get_local $0)
+         (local.get $0)
          (i32.const 3)
         )
         (i32.const 0)
@@ -255,13 +255,13 @@
        (if
         (i32.eq
          (i32.rem_u
-          (get_local $0)
+          (local.get $0)
           (i32.const 3)
          )
          (i32.const 1)
         )
         (block
-         (set_local $1
+         (local.set $1
           (i32.const 6)
          )
          (br $shape$3$continue)
@@ -275,12 +275,12 @@
        (call $print
         (i32.const 2)
        )
-       (set_local $0
+       (local.set $0
         (call $check)
        )
       )
       (block
-       (set_local $1
+       (local.set $1
         (i32.const 6)
        )
        (br $shape$3$continue)
@@ -461,18 +461,18 @@
      (call $check)
     )
    )
-   (set_local $0
+   (local.set $0
     (i32.const 6)
    )
   )
   (loop $shape$3$continue
    (if
     (i32.eq
-     (get_local $0)
+     (local.get $0)
      (i32.const 6)
     )
     (block
-     (set_local $0
+     (local.set $0
       (i32.const 0)
      )
      (call $print
@@ -486,7 +486,7 @@
        )
       )
      )
-     (set_local $0
+     (local.set $0
       (i32.const 6)
      )
      (br $shape$3$continue)
@@ -498,7 +498,7 @@
    (br_if $shape$3$continue
     (i32.eqz
      (i32.rem_u
-      (tee_local $1
+      (local.tee $1
        (call $check)
       )
       (i32.const 3)
@@ -508,13 +508,13 @@
    (if
     (i32.eq
      (i32.rem_u
-      (get_local $1)
+      (local.get $1)
       (i32.const 3)
      )
      (i32.const 1)
     )
     (block
-     (set_local $0
+     (local.set $0
       (i32.const 6)
      )
      (br $shape$3$continue)
@@ -526,7 +526,7 @@
      (drop
       (call $check)
      )
-     (set_local $0
+     (local.set $0
       (i32.const 6)
      )
      (br $shape$3$continue)

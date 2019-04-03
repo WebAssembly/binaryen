@@ -20,7 +20,7 @@
 // This requires --flatten to be run before in order to be effective,
 // and preserves flatness. The reason flatness is required is that
 // this pass assumes everything is stored in a local, and all it does
-// is alter set_locals to do get_locals of an existing value when
+// is alter local.sets to do local.gets of an existing value when
 // possible, replacing a recomputing of that value. That design means that
 // if there are block and if return values, nested expressions not stored
 // to a local, etc., then it can't operate on them (and will just not
@@ -42,6 +42,7 @@
 #include <wasm-traversal.h>
 #include <pass.h>
 #include <ir/effects.h>
+#include <ir/cost.h>
 #include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
 
@@ -55,7 +56,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // information for an expression we can reuse
   struct UsableInfo {
     Expression* value; // the value we can reuse
-    Index index; // the local we are assigned to, get_local that to reuse us
+    Index index; // the local we are assigned to, local.get that to reuse us
     EffectAnalyzer effects;
 
     UsableInfo(Expression* value, Index index, PassOptions& passOptions) : value(value), index(index), effects(passOptions, value) {}
@@ -208,8 +209,19 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
-    // check what we care about TODO: use optimize/shrink levels?
-    return Measurer::measure(value) > 1;
+    auto& options = getPassRunner()->options;
+    // If the size is at least 3, then if we have two of them we have 6,
+    // and so adding one set+two gets and removing one of the items itself
+    // is not detrimental, and may be beneficial.
+    if (options.shrinkLevel > 0 && Measurer::measure(value) >= 3) {
+      return true;
+    }
+    // If we focus on speed, any reduction in cost is beneficial, as the
+    // cost of a get is essentially free.
+    if (options.shrinkLevel == 0 && CostAnalyzer(value).cost > 0) {
+      return true;
+    }
+    return false;
   }
 };
 

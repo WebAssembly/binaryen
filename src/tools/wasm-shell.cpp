@@ -23,7 +23,6 @@
 #include <memory>
 
 #include "execution-results.h"
-#include "feature-options.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/file.h"
@@ -31,6 +30,7 @@
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
+#include "tool-options.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -233,7 +233,7 @@ int main(int argc, const char* argv[]) {
   Name entry;
   std::set<size_t> skipped;
 
-  FeatureOptions options("wasm-shell", "Execute .wast files");
+  ToolOptions options("wasm-shell", "Execute .wast files");
   options
       .add(
           "--entry", "-e", "Call the entry point after parsing the module",

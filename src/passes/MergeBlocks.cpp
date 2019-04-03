@@ -373,7 +373,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
 
   Pass* create() override { return new MergeBlocks; }
 
-  void visitBlock(Block *curr) {
+  void visitBlock(Block* curr) {
     optimizeBlock(curr, getModule(), getPassOptions());
   }
 

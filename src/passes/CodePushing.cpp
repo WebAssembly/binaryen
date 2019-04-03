@@ -29,8 +29,8 @@ namespace wasm {
 //
 // Analyzers some useful local properties: # of sets and gets, and SFA.
 //
-// Single First Assignment (SFA) form: the local has a single set_local, is
-// not a parameter, and has no get_locals before the set_local in postorder.
+// Single First Assignment (SFA) form: the local has a single local.set, is
+// not a parameter, and has no local.gets before the local.set in postorder.
 // This is a much weaker property than SSA, obviously, but together with
 // our implicit dominance properties in the structured AST is quite useful.
 //
@@ -77,8 +77,8 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
   }
 };
 
-// Implement core optimization logic in a struct, used and then discarded entirely
-// for each block
+// Implements core optimization logic. Used and then discarded entirely
+// for each block.
 class Pusher {
   ExpressionList& list;
   LocalAnalyzer& analyzer;
@@ -92,7 +92,7 @@ public:
     // continuing forward.
     Index relevant = list.size() - 1; // we never need to push past a final element, as
                                       // we couldn't be used after it.
-    Index nothing = -1;
+    const Index nothing = -1;
     Index i = 0;
     Index firstPushable = nothing;
     while (i < relevant) {

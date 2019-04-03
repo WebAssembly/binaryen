@@ -113,12 +113,17 @@ public:
   }
 };
 
-enum {
-  // put the stack in some ridiculously high location
-  STACK_START = 0x40000000,
-  // use a ridiculously large stack size
-  STACK_SIZE = 32 * 1024 * 1024
-};
+// Use a ridiculously large stack size.
+static Index STACK_SIZE = 32 * 1024 * 1024;
+
+// Start the stack at a ridiculously large location, and do so in
+// a way that works regardless if the stack goes up or down.
+static Index STACK_START = 1024 * 1024 * 1024 + STACK_SIZE;
+
+// Bound the stack location in both directions, so we have bounds
+// that do not depend on the direction it grows.
+static Index STACK_LOWER_LIMIT = STACK_START - STACK_SIZE;
+static Index STACK_UPPER_LIMIT = STACK_START + STACK_SIZE;
 
 class EvallingModuleInstance : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
 public:
@@ -131,9 +136,9 @@ public:
         if (auto* get = global->init->dynCast<GetGlobal>()) {
           auto name = get->name;
           auto* import = wasm.getGlobal(name);
-          if (import->module == Name("env") && (
-            import->base == Name("STACKTOP") || // stack constants are special, we handle them
-            import->base == Name("STACK_MAX")
+          if (import->module == Name(ENV) && (
+            import->base == STACKTOP || // stack constants are special, we handle them
+            import->base == STACK_MAX
           )) {
             return; // this is fine
           }
@@ -151,7 +156,7 @@ public:
   // but it should not be read afterwards, doing so would be undefined behavior
   void setupEnvironment() {
     // prepare scratch memory
-    stack.resize(STACK_SIZE);
+    stack.resize(2 * STACK_SIZE);
     // tell the module to accept writes up to the stack end
     auto total = STACK_START + STACK_SIZE;
     memorySize = total / Memory::kPageSize;
@@ -175,34 +180,34 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
     // fill usable values for stack imports, and globals initialized to them
     ImportInfo imports(wasm_);
-    if (auto* stackTop = imports.getImportedGlobal("env", "STACKTOP")) {
+    if (auto* stackTop = imports.getImportedGlobal(ENV, STACKTOP)) {
       globals[stackTop->name] = Literal(int32_t(STACK_START));
-      if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACKTOP")) {
+      if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACKTOP)) {
         globals[stackTop->name] = Literal(int32_t(STACK_START));
       }
     }
-    if (auto* stackMax = imports.getImportedGlobal("env", "STACK_MAX")) {
+    if (auto* stackMax = imports.getImportedGlobal(ENV, STACK_MAX)) {
       globals[stackMax->name] = Literal(int32_t(STACK_START));
-      if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACK_MAX")) {
+      if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACK_MAX)) {
         globals[stackMax->name] = Literal(int32_t(STACK_START));
       }
     }
     // fill in fake values for everything else, which is dangerous to use
     ModuleUtils::iterDefinedGlobals(wasm_, [&](Global* defined) {
       if (globals.find(defined->name) == globals.end()) {
-        globals[defined->name] = LiteralUtils::makeLiteralZero(defined->type);
+        globals[defined->name] = Literal::makeZero(defined->type);
       }
     });
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* import) {
       if (globals.find(import->name) == globals.end()) {
-        globals[import->name] = LiteralUtils::makeLiteralZero(import->type);
+        globals[import->name] = Literal::makeZero(import->type);
       }
     });
   }
 
   Literal callImport(Function* import, LiteralList& arguments) override {
     std::string extra;
-    if (import->module == "env" && import->base == "___cxa_atexit") {
+    if (import->module == ENV && import->base == "___cxa_atexit") {
       extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit are not emitted";
     }
     throw FailToEvalException(std::string("call import: ") + import->module.str + "." + import->base.str + extra);
@@ -221,7 +226,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       } else if (segment.offset->is<GetGlobal>()) {
         start = 0;
       } else {
-        WASM_UNREACHABLE(); // wasm spec only allows const and get_global there
+        WASM_UNREACHABLE(); // wasm spec only allows const and global.get there
       }
       auto end = start + segment.data.size();
       if (start <= index && index < end) {
@@ -266,11 +271,11 @@ private:
   template<typename T>
   T* getMemory(Address address) {
     // if memory is on the stack, use the stack
-    if (address >= STACK_START) {
-      Address relative = address - STACK_START;
-      if (relative + sizeof(T) > STACK_SIZE) {
+    if (address >= STACK_LOWER_LIMIT) {
+      if (address >= STACK_UPPER_LIMIT) {
         throw FailToEvalException("stack usage too high");
       }
+      Address relative = address - STACK_LOWER_LIMIT;
       // in range, all is good, use the stack
       return (T*)(&instance->stack[relative]);
     }

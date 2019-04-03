@@ -466,23 +466,23 @@
    (block $out2
     (block
      (drop
-      (get_local $x)
+      (local.get $x)
      )
      (block
       (br_if $out
-       (get_local $y)
+       (local.get $y)
       )
       (nop)
      )
     )
     (block
      (if
-      (get_local $x)
+      (local.get $x)
       (br_if $out
-       (get_local $y)
+       (local.get $y)
       )
       (br_if $out2
-       (get_local $y)
+       (local.get $y)
       )
      )
      (nop)
@@ -490,49 +490,49 @@
     (if
      (i32.const 1234)
      (if
-      (get_local $x)
+      (local.get $x)
       (block
        (nop)
        (br_if $out
-        (get_local $y)
+        (local.get $y)
        )
        (nop)
       )
       (block
        (nop)
        (br_if $out2
-        (get_local $y)
+        (local.get $y)
        )
        (nop)
       )
      )
     )
     (if
-     (get_local $x)
+     (local.get $x)
      (block $left
       (br_if $left
-       (get_local $y)
+       (local.get $y)
       )
       (nop)
      )
      (block
       (br_if $out
-       (get_local $y)
+       (local.get $y)
       )
       (nop)
      )
     )
     (if
-     (get_local $x)
+     (local.get $x)
      (block
       (br_if $out
-       (get_local $y)
+       (local.get $y)
       )
       (nop)
      )
      (block $right
       (br_if $right
-       (get_local $y)
+       (local.get $y)
       )
       (nop)
      )
@@ -1069,19 +1069,19 @@
      (block
       (if
        (i32.const 1)
-       (br $folding-inner1)
-      )
-      (if
-       (i32.const 1)
-       (br $folding-inner1)
-      )
-      (if
-       (i32.const 1)
        (br $folding-inner0)
       )
       (if
        (i32.const 1)
        (br $folding-inner0)
+      )
+      (if
+       (i32.const 1)
+       (br $folding-inner1)
+      )
+      (if
+       (i32.const 1)
+       (br $folding-inner1)
       )
      )
      (return)
@@ -1098,7 +1098,7 @@
     (nop)
     (nop)
     (drop
-     (i32.const 2)
+     (i32.const 1)
     )
     (unreachable)
    )
@@ -1115,7 +1115,7 @@
   (nop)
   (nop)
   (drop
-   (i32.const 1)
+   (i32.const 2)
   )
   (unreachable)
  )
@@ -1681,7 +1681,7 @@
  (func $if-suffix (; 35 ;) (type $3) (param $x i32) (result i32)
   (block
    (if
-    (get_local $x)
+    (local.get $x)
     (block
     )
     (drop
@@ -1690,13 +1690,13 @@
      )
     )
    )
-   (set_local $x
+   (local.set $x
     (i32.const 1)
    )
   )
   (block (result i32)
    (if
-    (get_local $x)
+    (local.get $x)
     (block
     )
     (drop

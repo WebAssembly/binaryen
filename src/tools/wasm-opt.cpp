@@ -65,11 +65,14 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   bool converge = false;
-  bool fuzzExec = false;
+  bool fuzzExecBefore = false;
+  bool fuzzExecAfter = false;
   bool fuzzBinary = false;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
   bool fuzzPasses = false;
+  bool fuzzNaNs = true;
+  bool fuzzMemory = true;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
   std::string inputSourceMapFilename;
@@ -93,9 +96,12 @@ int main(int argc, const char* argv[]) {
       .add("--converge", "-c", "Run passes to convergence, continuing while binary size decreases",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { converge = true; })
+      .add("--fuzz-exec-before", "-feh", "Execute functions before optimization, helping fuzzing find bugs",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzExecBefore = true; })
       .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzExec = true; })
+           [&](Options *o, const std::string& arguments) { fuzzExecBefore = fuzzExecAfter = true; })
       .add("--fuzz-binary", "-fb", "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find binary format bugs",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { fuzzBinary = true; })
@@ -108,6 +114,12 @@ int main(int argc, const char* argv[]) {
       .add("--fuzz-passes", "-fp", "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz (it picks the passes from the input)",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { fuzzPasses = true; })
+      .add("--no-fuzz-nans", "", "don't emit NaNs when fuzzing, and remove them at runtime as well (helps avoid nondeterminism between VMs)",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzNaNs = false; })
+      .add("--no-fuzz-memory", "", "don't emit memory ops when fuzzing",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzMemory = false; })
       .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
            Options::Arguments::One,
            [&](Options *o, const std::string& arguments) { emitJSWrapper = arguments; })
@@ -162,7 +174,10 @@ int main(int argc, const char* argv[]) {
     if (fuzzPasses) {
       reader.pickPasses(options);
     }
-    reader.build(options.getFeatures());
+    reader.setFeatures(options.getFeatures());
+    reader.setAllowNaNs(fuzzNaNs);
+    reader.setAllowMemory(fuzzMemory);
+    reader.build();
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm, options.getFeatures())) {
         WasmPrinter::printModule(&wasm);
@@ -172,8 +187,15 @@ int main(int argc, const char* argv[]) {
     }
   }
 
+  if (emitJSWrapper.size() > 0) {
+    // As the code will run in JS, we must legalize it.
+    PassRunner runner(&wasm);
+    runner.add("legalize-js-interface");
+    runner.run();
+  }
+
   ExecutionResults results;
-  if (fuzzExec) {
+  if (fuzzExecBefore) {
     results.get(wasm);
   }
 
@@ -207,7 +229,7 @@ int main(int argc, const char* argv[]) {
   Module* curr = &wasm;
   Module other;
 
-  if (fuzzExec && fuzzBinary) {
+  if (fuzzExecAfter && fuzzBinary) {
     BufferWithRandomAccess buffer(false);
     // write the binary
     WasmBinaryWriter writer(&wasm, buffer, false);
@@ -259,11 +281,13 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (fuzzExec) {
+  if (fuzzExecAfter) {
     results.check(*curr);
   }
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.count("output") == 0) {
+    std::cerr << "(no output file specified, not emitting output)\n";
+  } else {
     if (options.debug) std::cerr << "writing..." << std::endl;
     ModuleWriter writer;
     writer.setDebug(options.debug);

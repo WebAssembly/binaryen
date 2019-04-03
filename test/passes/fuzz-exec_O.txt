@@ -1,6 +1,7 @@
-[fuzz-exec] note result: $func_0 => none.const ?
-[fuzz-exec] note result: $func_1 => none.const ?
-[fuzz-exec] 2 results noted
+[fuzz-exec] calling $func_0
+[trap final > memory: 18446744073709551615 > 65514]
+[fuzz-exec] calling $func_1
+[trap final > memory: 18446744073709551615 > 65514]
 (module
  (type $0 (func (result i64)))
  (type $1 (func (result i32)))
@@ -23,9 +24,9 @@
   )
  )
 )
-[fuzz-exec] note result: $func_0 => none.const ?
-[fuzz-exec] note result: $func_1 => none.const ?
-[fuzz-exec] 2 results noted
+[fuzz-exec] calling $func_0
+[trap final > memory: 18446744073709551615 > 65514]
+[fuzz-exec] calling $func_1
+[trap final > memory: 18446744073709551615 > 65514]
 [fuzz-exec] comparing $func_0
 [fuzz-exec] comparing $func_1
-[fuzz-exec] 2 results match

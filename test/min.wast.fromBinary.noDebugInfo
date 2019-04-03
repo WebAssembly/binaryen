@@ -8,21 +8,21 @@
  (func $0 (; 0 ;) (type $0) (param $0 f32) (result f32)
   (local $1 f32)
   (f32.add
-   (get_local $1)
-   (get_local $0)
+   (local.get $1)
+   (local.get $0)
   )
  )
  (func $1 (; 1 ;) (type $1) (param $0 i32) (param $1 i32) (result f32)
   (local $2 f32)
-  (tee_local $2
+  (local.tee $2
    (f32.neg
     (block $label$1 (result f32)
      (i32.store
-      (get_local $0)
-      (get_local $1)
+      (local.get $0)
+      (local.get $1)
      )
      (f32.load
-      (get_local $0)
+      (local.get $0)
      )
     )
    )
@@ -34,7 +34,7 @@
     (block $label$3
      (br_table $label$3 $label$2 $label$3
       (i32.sub
-       (get_local $0)
+       (local.get $0)
        (i32.const 1)
       )
      )
@@ -49,7 +49,7 @@
   )
  )
  (func $3 (; 3 ;) (type $3) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (get_local $2)
+  (local.get $2)
  )
 )
 

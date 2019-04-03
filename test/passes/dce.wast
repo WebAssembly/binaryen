@@ -2,7 +2,7 @@
   (memory 10)
   (type $ii (func (param i32 i32)))
   (type $1 (func))
-  (table 1 1 anyfunc)
+  (table 1 1 funcref)
   (elem (i32.const 0) $call-me)
   (global $x (mut i32) (i32.const 0))
   (func $call-me (type $ii) (param $0 i32) (param $1 i32)
@@ -283,7 +283,7 @@
     )
     (if
       (i32.const 11)
-      (set_local $x
+      (local.set $x
         (unreachable)
       )
     )
@@ -418,12 +418,12 @@
           )
         )
         (return
-          (get_local $$$0)
+          (local.get $$$0)
         )
         (br $switch$7)
       )
       (return
-        (get_local $$$0)
+        (local.get $$$0)
       )
     )
     (return
@@ -432,8 +432,8 @@
   )
   (func $global
     (unreachable)
-    (drop (get_global $x))
-    (set_global $x (i32.const 1))
+    (drop (global.get $x))
+    (global.set $x (i32.const 1))
   )
   (func $ret (result i32)
     (return
@@ -513,24 +513,24 @@
   (local $2 i64)
   (if (result i64)
    (i64.eqz
-    (get_local $var$0)
+    (local.get $var$0)
    )
    (block $label$0 (result i64)
-    (get_local $var$1)
+    (local.get $var$1)
    )
    (block $label$1 (result i64)
     (call $call-unreach
      (i64.sub
-      (get_local $var$0)
+      (local.get $var$0)
       (i64.const 1)
      )
      (i64.mul
       (block (result i64)
-       (set_local $2
-        (get_local $var$0)
+       (local.set $2
+        (local.get $var$0)
        )
        (nop)
-       (get_local $2)
+       (local.get $2)
       )
       (unreachable)
      )
@@ -546,7 +546,7 @@
      (drop
       (br_if $label$0
        (unreachable)
-       (get_local $var$0)
+       (local.get $var$0)
       )
      )
      (i32.const 4)
@@ -561,7 +561,7 @@
      (drop
       (br_if $label$0
        (i32.const 8)
-       (get_local $var$0)
+       (local.get $var$0)
       )
      )
      (unreachable)
@@ -586,7 +586,7 @@
    (if
     (unreachable)
     (br_if $label$0
-     (get_local $var$1)
+     (local.get $var$1)
     )
    )
   )
@@ -605,7 +605,7 @@
   (block $label$0 (result i32)
    (br $label$0
     (if (result i32)
-     (get_local $var$0)
+     (local.get $var$0)
      (unreachable)
      (unreachable)
     )
@@ -676,7 +676,7 @@
  )
  (func $replace-block-changes-later-when-if-goes
   (block $top ;; and so should this
-   (set_global $x
+   (global.set $x
     (i32.const 0)
    )
    (drop
@@ -708,11 +708,11 @@
   (i32.const 0)
  )
 )
-;; if goes to unreachable, need to propagate that up to the set_global
+;; if goes to unreachable, need to propagate that up to the global.set
 (module
  (global $global (mut f64) (f64.const 0))
  (func $0
-  (set_global $global
+  (global.set $global
    (if (result f64)
     (i32.const 0)
     (unreachable)
@@ -724,7 +724,7 @@
 (module
  (func $0
   (local $local f64)
-  (set_local $local
+  (local.set $local
    (if (result f64)
     (i32.const 0)
     (unreachable)

@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$id (func (param f64) (result i32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table $table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
@@ -10,74 +10,74 @@
   (local $d6 f64)
   (if
    (i32.eqz
-    (get_local $i5)
+    (local.get $i5)
    )
    (block
-    (set_local $d6
-     (f64.convert_s/i32
+    (local.set $d6
+     (f64.convert_i32_s
       (i32.mul
-       (get_local $i4)
-       (get_local $i3)
+       (local.get $i4)
+       (local.get $i3)
       )
      )
     )
-    (set_local $d6
+    (local.set $d6
      (f64.mul
       (f64.add
-       (f64.convert_s/i32
-        (get_local $i3)
+       (f64.convert_i32_s
+        (local.get $i3)
        )
-       (get_local $d6)
+       (local.get $d6)
       )
       (f64.add
-       (f64.convert_s/i32
-        (get_local $i4)
+       (f64.convert_i32_s
+        (local.get $i4)
        )
-       (get_local $d6)
+       (local.get $d6)
       )
      )
     )
-    (set_local $i5
+    (local.set $i5
      (call $f64-to-int
-      (get_local $d6)
+      (local.get $d6)
      )
     )
     (return
-     (get_local $i5)
+     (local.get $i5)
     )
    )
    (block
-    (set_local $d6
-     (f64.convert_s/i32
+    (local.set $d6
+     (f64.convert_i32_s
       (i32.mul
-       (get_local $i2)
-       (get_local $i1)
+       (local.get $i2)
+       (local.get $i1)
       )
      )
     )
-    (set_local $d6
+    (local.set $d6
      (f64.mul
       (f64.add
-       (f64.convert_s/i32
-        (get_local $i3)
+       (f64.convert_i32_s
+        (local.get $i3)
        )
-       (get_local $d6)
+       (local.get $d6)
       )
       (f64.add
-       (get_local $d6)
-       (f64.convert_s/i32
-        (get_local $i4)
+       (local.get $d6)
+       (f64.convert_i32_s
+        (local.get $i4)
        )
       )
      )
     )
-    (set_local $i5
+    (local.set $i5
      (call $f64-to-int
-      (get_local $d6)
+      (local.get $d6)
      )
     )
     (return
-     (get_local $i5)
+     (local.get $i5)
     )
    )
   )

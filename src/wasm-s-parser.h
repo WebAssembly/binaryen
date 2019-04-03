@@ -44,24 +44,25 @@ public:
 class Element {
   typedef ArenaVector<Element*> List;
 
-  bool isList_;
+  bool isList_ = true;
   List list_;
   cashew::IString str_;
   bool dollared_;
   bool quoted_;
 
 public:
-  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1), startLoc(nullptr), endLoc(nullptr) {}
+  Element(MixedArena& allocator) : list_(allocator) {}
 
   bool isList() const { return isList_; }
   bool isStr() const { return !isList_; }
   bool dollared() const { return isStr() && dollared_; }
   bool quoted() const { return isStr() && quoted_; }
 
-  size_t line, col;
+  size_t line = -1;
+  size_t col  = -1;
   // original locations at the start/end of the S-Expression list
-  SourceLocation* startLoc;
-  SourceLocation* endLoc;
+  SourceLocation* startLoc = nullptr;
+  SourceLocation* endLoc = nullptr;
 
   // list methods
   List& list();
@@ -88,7 +89,7 @@ class SExpressionParser {
   char* input;
   size_t line;
   char* lineStart;
-  SourceLocation* loc;
+  SourceLocation* loc = nullptr;
 
   MixedArena allocator;
 
@@ -114,7 +115,7 @@ class SExpressionWasmBuilder {
   std::vector<Name> functionTypeNames;
   std::vector<Name> globalNames;
   int functionCounter;
-  int globalCounter;
+  int globalCounter = 0;
   std::map<Name, Type> functionTypes; // we need to know function return types before we parse their contents
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
 
@@ -151,6 +152,7 @@ private:
     return stringToType(str.str, allowError, prefix);
   }
   Type stringToType(const char* str, bool allowError=false, bool prefix=false);
+  Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) {
     return stringToType(str, true) != none;
   }
@@ -189,7 +191,16 @@ private:
   Expression* makeAtomicRMW(Element& s, Type type, uint8_t bytes, const char* extra);
   Expression* makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes, const char* extra);
   Expression* makeAtomicWait(Element& s, Type type);
-  Expression* makeAtomicWake(Element& s);
+  Expression* makeAtomicNotify(Element& s);
+  Expression* makeSIMDExtract(Element& s, SIMDExtractOp op, size_t lanes);
+  Expression* makeSIMDReplace(Element& s, SIMDReplaceOp op, size_t lanes);
+  Expression* makeSIMDShuffle(Element& s);
+  Expression* makeSIMDBitselect(Element& s);
+  Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
+  Expression* makeMemoryInit(Element& s);
+  Expression* makeDataDrop(Element& s);
+  Expression* makeMemoryCopy(Element& s);
+  Expression* makeMemoryFill(Element& s);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);

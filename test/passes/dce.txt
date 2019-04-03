@@ -7,7 +7,7 @@
  (type $5 (func (param f32 i64)))
  (type $6 (func (param f32 i64) (result i32)))
  (memory $0 10)
- (table $0 1 1 anyfunc)
+ (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
  (global $x (mut i32) (i32.const 0))
  (func $call-me (; 0 ;) (type $ii) (param $0 i32) (param $1 i32)
@@ -288,11 +288,11 @@
      )
     )
     (return
-     (get_local $$$0)
+     (local.get $$$0)
     )
    )
    (return
-    (get_local $$$0)
+    (local.get $$$0)
    )
   )
  )
@@ -350,26 +350,26 @@
   (local $2 i64)
   (if (result i64)
    (i64.eqz
-    (get_local $var$0)
+    (local.get $var$0)
    )
    (block $label$0 (result i64)
-    (get_local $var$1)
+    (local.get $var$1)
    )
    (block
     (drop
      (i64.sub
-      (get_local $var$0)
+      (local.get $var$0)
       (i64.const 1)
      )
     )
     (block
      (drop
       (block $block (result i64)
-       (set_local $2
-        (get_local $var$0)
+       (local.set $2
+        (local.get $var$0)
        )
        (nop)
-       (get_local $2)
+       (local.get $2)
       )
      )
      (unreachable)
@@ -389,7 +389,7 @@
     (drop
      (br_if $label$0
       (i32.const 8)
-      (get_local $var$0)
+      (local.get $var$0)
      )
     )
     (unreachable)
@@ -413,7 +413,7 @@
  )
  (func $if-with-type-but-is-unreachable (; 20 ;) (type $3) (param $var$0 i32) (result i32)
   (if
-   (get_local $var$0)
+   (local.get $var$0)
    (unreachable)
    (unreachable)
   )
@@ -461,7 +461,7 @@
  )
  (func $replace-block-changes-later-when-if-goes (; 26 ;) (type $1)
   (block $top
-   (set_global $x
+   (global.set $x
     (i32.const 0)
    )
    (block $inner

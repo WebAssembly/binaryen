@@ -1,5 +1,9 @@
 (module
+<<<<<<< HEAD
   (memory 1)
+=======
+  (global $glob (mut i32) (i32.const 1))
+>>>>>>> origin/master
   (func $loop1
     (loop $loop
       (drop (i32.const 10))
@@ -95,23 +99,23 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (drop (get_local $x))
-      (br_if $loop (tee_local $x (i32.const 2)))
+      (drop (local.get $x))
+      (br_if $loop (local.tee $x (i32.const 2)))
     )
   )
   (func $loop12
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (drop (get_local $x))
-      (br_if $loop (tee_local $y (i32.const 2)))
+      (drop (local.get $x))
+      (br_if $loop (local.tee $y (i32.const 2)))
     )
   )
   (func $loop13
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
       (br_if $loop (i32.const 1))
     )
@@ -120,19 +124,19 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
       (br_if $loop (i32.const 1))
-      (set_local $y (get_local $x)) ;; not actually in the loop!
+      (local.set $y (local.get $x)) ;; not actually in the loop!
     )
   )
   (func $loop14-1
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
-      (set_local $y (get_local $x)) ;; in the loop
+      (local.set $y (local.get $x)) ;; in the loop
       (br_if $loop (i32.const 1))
     )
   )
@@ -140,19 +144,19 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
       (br_if $loop (i32.const 1))
-      (drop (get_local $y))
+      (drop (local.get $y))
     )
   )
   (func $loop15-1
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
-      (drop (get_local $y))
+      (drop (local.get $y))
       (br_if $loop (i32.const 1))
     )
   )
@@ -160,41 +164,41 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
       (br_if $loop (i32.const 1))
-      (drop (get_local $x))
+      (drop (local.get $x))
     )
   )
   (func $loop16-1
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
-      (drop (get_local $x))
+      (drop (local.get $x))
       (br_if $loop (i32.const 1))
     )
   )
   (func $loop16-2
     (local $x i32)
     (local $y i32)
-    (set_local $x (i32.const 2))
+    (local.set $x (i32.const 2))
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
-      (drop (get_local $x))
+      (drop (local.get $x))
       (br_if $loop (i32.const 1))
     )
   )
   (func $loop16-3
     (local $x i32)
     (local $y i32)
-    (set_local $y (i32.const 2))
+    (local.set $y (i32.const 2))
     (loop $loop
-      (set_local $x (i32.eqz (get_local $y)))
+      (local.set $x (i32.eqz (local.get $y)))
       (call $loop12)
-      (drop (get_local $x))
+      (drop (local.get $x))
       (br_if $loop (i32.const 1))
     )
   )
@@ -303,9 +307,9 @@
      (block $label$3
       (drop
        (loop $label$4 (result i32)
-        (set_local $var$1
+        (local.set $var$1
          (block $label$5 (result i64)
-          (set_local $var$1
+          (local.set $var$1
            (i64.const -29585)
           )
           (i64.const -70)
@@ -318,30 +322,30 @@
      )
      (unreachable)
     )
-    (get_local $var$1)
+    (local.get $var$1)
    )
   )
   (func $self (result i32)
     (local $x i32)
     (loop $loop
-      (set_local $x (i32.add (get_local $x) (i32.const 1)))
+      (local.set $x (i32.add (local.get $x) (i32.const 1)))
       (br_if $loop (i32.const 1))
     )
-    (get_local $x)
+    (local.get $x)
   )
   (func $nested-set
    (local $var$0 i32)
    (local $var$1 i64)
    (loop $label$1
-    (set_local $var$0
+    (local.set $var$0
      (block $label$3 (result i32)
-      (set_local $var$1 ;; cannot be moved out (in current position - other opts would help), and invalidates moving out the set below
+      (local.set $var$1 ;; cannot be moved out (in current position - other opts would help), and invalidates moving out the set below
        (i64.const 0)
       )
-      (get_local $var$0)
+      (local.get $var$0)
      )
     )
-    (set_local $var$1
+    (local.set $var$1
      (i64.const 1)
     )
     (br_if $label$1
@@ -352,18 +356,18 @@
   (func $load-store (param $x i32)
     (loop $loop
       (drop (i32.load (i32.const 0))) ;; can't move this out, the store might affect it for later iterations
-      (i32.store (get_local $x) (get_local $x))
+      (i32.store (local.get $x) (local.get $x))
       (br_if $loop (i32.const 1))
     )
   )
   (func $set-set (param $x i32) (result i32)
     (loop $loop
-      (set_local $x (i32.const 1))
+      (local.set $x (i32.const 1))
       (br_if $loop (i32.const 2))
-      (set_local $x (i32.const 3))
+      (local.set $x (i32.const 3))
       (br_if $loop (i32.const 4))
     )
-    (get_local $x)
+    (local.get $x)
   )
   (func $copies-no
     (local $x i32)
@@ -373,9 +377,9 @@
     (local $b i32)
     (local $c i32)
     (loop $loop
-      (set_local $x (get_local $x))
-      (set_local $y (get_local $z))
-      (set_local $a (tee_local $b (get_local $c)))
+      (local.set $x (local.get $x))
+      (local.set $y (local.get $z))
+      (local.set $a (local.tee $b (local.get $c)))
       (br_if $loop (i32.const 1))
     )
   )
@@ -384,9 +388,17 @@
     (local $a i32)
     (local $b i32)
     (loop $loop
-      (set_local $x (i32.const 0))
-      (set_local $a (tee_local $b (i32.const 1)))
+      (local.set $x (i32.const 0))
+      (local.set $a (local.tee $b (i32.const 1)))
       (br_if $loop (i32.const 1))
+    )
+  )
+  (func $global
+    (local $x i32)
+    (loop $loop
+      (local.set $x (global.get $glob))
+      (drop (local.get $x))
+      (br_if $loop (local.get $x))
     )
   )
 )

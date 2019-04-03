@@ -47,7 +47,7 @@ typedef cashew::IString IString;
 // Main value type
 struct Value {
   struct Ref : public std::shared_ptr<Value> {
-    Ref() : std::shared_ptr<Value>() {}
+    Ref() = default;
     Ref(Value* value) : std::shared_ptr<Value>(value) {}
 
     Ref& operator[](size_t x) {
@@ -67,7 +67,7 @@ struct Value {
     Object = 5,
   };
 
-  Type type;
+  Type type = Null;
 
   typedef std::vector<Ref> ArrayStorage;
   typedef std::unordered_map<IString, Ref> ObjectStorage;
@@ -79,7 +79,7 @@ struct Value {
 #ifndef _MSC_VER
     IString str;
 #endif
-    double num;
+    double num = 0;
     ArrayStorage *arr; // manually allocated/freed
     bool boo;
     ObjectStorage *obj; // manually allocated/freed
@@ -87,7 +87,7 @@ struct Value {
   };
 
   // constructors all copy their input
-  Value() : type(Null), num(0) {}
+  Value() {}
   explicit Value(const char *s) : type(Null) {
     setString(s);
   }

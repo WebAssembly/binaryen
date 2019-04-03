@@ -18,20 +18,24 @@ import os
 import shutil
 import subprocess
 import sys
+import unittest
 
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
-    BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, BINARYEN_JS,
-    WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_METADCE,
-    WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
+    BIN_DIR, MOZJS, NATIVECC, NATIVEXX, NODEJS, BINARYEN_JS, WASM_AS,
+    WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_METADCE, WASM_DIS, WASM_REDUCE,
+    binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
-    has_vanilla_llvm, minify_check, num_failures, options, tests,
-    requested, warnings, has_shell_timeout, fail_if_not_identical_to_file
+    has_vanilla_llvm, minify_check, options, tests, requested, warnings,
+    has_shell_timeout, fail_if_not_identical_to_file
 )
 
-import scripts.test.asm2wasm as asm2wasm
-import scripts.test.lld as lld
-import scripts.test.wasm2js as wasm2js
+# For shared.num_failures. Cannot import directly because modifications made in
+# shared.py would not affect the version imported here.
+from scripts.test import shared
+from scripts.test import asm2wasm
+from scripts.test import lld
+from scripts.test import wasm2js
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
@@ -55,7 +59,7 @@ def with_pass_debug(check):
 def run_help_tests():
   print '[ checking --help is useful... ]\n'
 
-  not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll']
+  not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm']
   executables = sorted(filter(lambda x: not any(x.endswith(s) for s in
                                                 not_executable_suffix) and os.path.isfile(x),
                               os.listdir(options.binaryen_bin)))
@@ -199,33 +203,6 @@ def run_wasm_dis_tests():
       with_pass_debug(check)
 
 
-def run_wasm_merge_tests():
-  print '\n[ checking wasm-merge... ]\n'
-
-  test_dir = os.path.join(options.binaryen_test, 'merge')
-  for t in os.listdir(test_dir):
-    if t.endswith(('.wast', '.wasm')):
-      print '..', t
-      t = os.path.join(test_dir, t)
-      u = t + '.toMerge'
-      for finalize in [0, 1]:
-        for opt in [0, 1]:
-          cmd = WASM_MERGE + [t, u, '-o', 'a.wast', '-S', '--verbose']
-          if finalize:
-            cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
-          if opt:
-            cmd += ['-O']
-          stdout = run_command(cmd)
-          actual = open('a.wast').read()
-          out = t + '.combined'
-          if finalize:
-            out += '.finalized'
-          if opt:
-            out += '.opt'
-          fail_if_not_identical_to_file(actual, out)
-          fail_if_not_identical_to_file(stdout, out + '.stdout')
-
-
 def run_crash_tests():
   print "\n[ checking we don't crash on tricky inputs... ]\n"
 
@@ -354,7 +331,7 @@ def run_spec_tests():
           expected = open(expected).read()
 
           # fix it up, our pretty (i32.const 83) must become compared to a homely 83 : i32
-          def fix(x):
+          def fix_expected(x):
             x = x.strip()
             if not x:
               return x
@@ -363,7 +340,13 @@ def run_spec_tests():
               v = v[:-1]  # remove trailing '.'
             return '(' + t + '.const ' + v + ')'
 
-          expected = '\n'.join(map(fix, expected.split('\n')))
+          def fix_actual(x):
+            if '[trap ' in x:
+              return ''
+            return x
+
+          expected = '\n'.join(map(fix_expected, expected.split('\n')))
+          actual = '\n'.join(map(fix_actual, actual.split('\n')))
           print '       (using expected output)'
           actual = actual.strip()
           expected = expected.strip()
@@ -586,64 +569,15 @@ def run_gcc_tests():
       fail_if_not_identical_to_file(actual, expected)
 
 
-def run_emscripten_tests():
-  if not os.path.exists(os.path.join(options.binaryen_bin, 'wasm.js')):
-    print 'no wasm.js build to test'
-    return
+def run_unittest():
+  print '\n[ checking unit tests...]\n'
 
-  print '\n[ checking wasm.js methods... ]\n'
-
-  for method_init in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary', 'asmjs,interpret-binary', 'interpret-binary,asmjs']:
-    # check success and failure for simple modes, only success for combined/fallback ones
-    for success in [1, 0] if ',' not in method_init else [1]:
-      method = method_init
-      command = [EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join(options.binaryen_test, 'hello_world.c')]
-      command += ['-s', 'BINARYEN_METHOD="' + method + '"']
-      print method, ' : ', ' '.join(command), ' => ', success
-      subprocess.check_call(command)
-
-      see_polyfill = 'var WasmJS = ' in open('a.wasm.js').read()
-
-      if method and 'interpret' not in method:
-        assert not see_polyfill, 'verify polyfill was not added - we specified a method, and it does not need it'
-      else:
-        assert see_polyfill, 'we need the polyfill'
-
-      def break_cashew():
-        asm = open('a.wasm.asm.js').read()
-        asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
-        asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
-        with open('a.wasm.asm.js', 'w') as o:
-          o.write(asm)
-      if method.startswith('interpret-asm2wasm'):
-        delete_from_orbit('a.wasm.wast')  # we should not need the .wast
-        if not success:
-          break_cashew()  # we need cashew
-      elif method.startswith('interpret-s-expr'):
-        delete_from_orbit('a.wasm.asm.js')  # we should not need the .asm.js
-        if not success:
-          delete_from_orbit('a.wasm.wast')
-      elif method.startswith('asmjs'):
-        delete_from_orbit('a.wasm.wast')  # we should not need the .wast
-        break_cashew()  # we don't use cashew, so ok to break it
-        if not success:
-          delete_from_orbit('a.wasm.js')
-      elif method.startswith('interpret-binary'):
-        delete_from_orbit('a.wasm.wast')  # we should not need the .wast
-        delete_from_orbit('a.wasm.asm.js')  # we should not need the .asm.js
-        if not success:
-          delete_from_orbit('a.wasm.wasm')
-      else:
-        1 / 0
-      if NODEJS:
-        proc = subprocess.Popen([NODEJS, 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = proc.communicate()
-        if success:
-          assert proc.returncode == 0, err
-          assert 'hello, world!' in out, out
-        else:
-          assert proc.returncode != 0, err
-          assert 'hello, world!' not in out, out
+  # equivalent to `python -m unittest discover -s ./test -v`
+  suite = unittest.defaultTestLoader.discover(os.path.dirname(options.binaryen_test))
+  result = unittest.TextTestRunner(verbosity=2, failfast=options.abort_on_first_failure).run(suite)
+  shared.num_failures += len(result.errors) + len(result.failures)
+  if options.abort_on_first_failure and shared.num_failures:
+    raise Exception("unittest failed")
 
 
 # Run all the tests
@@ -653,7 +587,6 @@ def main():
   asm2wasm.test_asm2wasm()
   asm2wasm.test_asm2wasm_binary()
   run_wasm_dis_tests()
-  run_wasm_merge_tests()
   run_crash_tests()
   run_dylink_tests()
   run_ctor_eval_tests()
@@ -671,20 +604,21 @@ def main():
   print '\n[ checking example testcases... ]\n'
   if options.run_gcc_tests:
     run_gcc_tests()
-  if EMCC:
-    run_emscripten_tests()
+
+  run_unittest()
 
   # Check/display the results
-  if num_failures == 0:
+  if shared.num_failures == 0:
     print '\n[ success! ]'
 
   if warnings:
     print '\n' + '\n'.join(warnings)
 
-  if num_failures > 0:
-    print '\n[ ' + str(num_failures) + ' failures! ]'
+  if shared.num_failures > 0:
+    print '\n[ ' + str(shared.num_failures) + ' failures! ]'
+    return 1
 
-  return num_failures
+  return 0
 
 
 if __name__ == '__main__':

@@ -20,14 +20,14 @@
    )
    (block
     (block
-     (set_local $0
+     (local.set $0
       (f64.const -nan:0xfffffd63e4e5a)
      )
-     (set_local $1
-      (get_local $0)
+     (local.set $1
+      (local.get $0)
      )
      (return
-      (get_local $1)
+      (local.get $1)
      )
     )
    )
@@ -78,14 +78,14 @@
      (block
       (block
        (block
-        (set_local $0
+        (local.set $0
          (i32.const 2)
         )
-        (set_local $1
-         (get_local $0)
+        (local.set $1
+         (local.get $0)
         )
         (return
-         (get_local $1)
+         (local.get $1)
         )
        )
       )
@@ -170,8 +170,8 @@
   (local $1 i32)
   (local $2 i32)
   (block $block$2$break
-   (set_local $1
-    (get_local $x)
+   (local.set $1
+    (local.get $x)
    )
    (block
     (br $block$2$break)
@@ -196,20 +196,20 @@
    )
    (block
     (block
-     (set_local $1
+     (local.set $1
       (f32.const 1)
      )
-     (set_local $2
-      (get_local $1)
+     (local.set $2
+      (local.get $1)
      )
-     (set_local $3
-      (get_local $2)
+     (local.set $3
+      (local.get $2)
      )
-     (set_local $4
-      (get_local $3)
+     (local.set $4
+      (local.get $3)
      )
      (return
-      (get_local $4)
+      (local.get $4)
      )
     )
    )
@@ -244,7 +244,7 @@
    (if
     (i32.const 1)
     (block
-     (set_global $global
+     (global.set $global
       (i32.const 0)
      )
      (block
@@ -275,14 +275,14 @@
    )
    (block
     (block
-     (set_local $0
+     (local.set $0
       (i32.const 0)
      )
-     (set_local $1
-      (get_local $0)
+     (local.set $1
+      (local.get $0)
      )
      (return
-      (get_local $1)
+      (local.get $1)
      )
     )
    )
@@ -301,15 +301,15 @@
     (i32.const 0)
     (block
      (block
-      (set_local $0
+      (local.set $0
        (f32.const 9223372036854775808)
       )
       (block
-       (set_local $1
-        (get_local $0)
+       (local.set $1
+        (local.get $0)
        )
-       (set_local $2
-        (get_local $1)
+       (local.set $2
+        (local.get $1)
        )
       )
      )
@@ -318,7 +318,7 @@
      )
     )
     (block
-     (set_local $2
+     (local.set $2
       (f32.const 65505)
      )
      (block
@@ -329,11 +329,11 @@
   )
   (block
    (block
-    (set_local $3
-     (get_local $2)
+    (local.set $3
+     (local.get $2)
     )
     (return
-     (get_local $3)
+     (local.get $3)
     )
    )
   )

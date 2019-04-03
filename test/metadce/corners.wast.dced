@@ -1,15 +1,15 @@
 (module
  (type $FUNCSIG$v (func))
- (import "env" "table" (table $0 10 10 anyfunc))
+ (import "env" "table" (table $0 10 10 funcref))
  (elem (i32.const 0) $imported_table_func)
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (import "env" "imported_twice" (func $imported_twice_a))
  (import "env" "an-imported-table-func" (func $imported_table_func))
- (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
+ (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (export "stackAlloc" (func $stackAlloc))
  (func $stackAlloc (; 2 ;) (type $FUNCSIG$v)
   (drop
-   (get_global $STACKTOP)
+   (global.get $STACKTOP)
   )
   (call $imported_twice_a)
  )

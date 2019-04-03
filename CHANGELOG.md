@@ -1,3 +1,6 @@
+Changelog
+=========
+
 This document describes changes between tagged Binaryen versions.
 
 To browse or download snapshots of old tagged versions, visit
@@ -12,10 +15,22 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
-### BREAKING CHANGES (old to new)
+- Add support for llvm PIC code.
+- Add --side-module option to wasm-emscripten-finalize.
 
-v.55
-====
+v73
+---
+
+- Remove wasm-merge tool.
+
+v73
+---
+
+- Remove jsCall generation from wasm-emscripten-finalize.  This is not needed
+  as of https://github.com/emscripten-core/emscripten/pull/8255.
+
+v55
+---
 
 - `RelooperCreate` in the C API now has a Module parameter, and
   `RelooperRenderAndDispose` does not.
@@ -23,7 +38,7 @@ v.55
 - Relooper: Condition properties on Branches must not have side effects.
 
 older
-=====
+-----
 
 - `BinaryenSetFunctionTable` in the C API no longer accepts an array of
   functions, instead it accepts an array of function names, `const char**

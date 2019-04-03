@@ -1,7 +1,7 @@
 (module
  (type $i (func (result i32)))
  (memory $0 256 256)
- (table 481 481 anyfunc)
+ (table 481 481 funcref)
  (elem (i32.const 0) $f0 $f0 $f1 $f2 $f0 $f3 $f0)
  (data (i32.const 0) "p\0bflkj")
  (data (i32.const 10960) "1234hello")

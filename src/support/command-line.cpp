@@ -51,11 +51,11 @@ Options::Options(const std::string& command, const std::string& description)
     : debug(false), positional(Arguments::Zero) {
   add("--help", "-h", "Show this help message and exit", Arguments::Zero,
       [this, command, description](Options* o, const std::string&) {
-        std::cerr << command;
-        if (positional != Arguments::Zero) std::cerr << ' ' << positionalName;
-        std::cerr << "\n\n";
-        printWrap(std::cerr, 0, description);
-        std::cerr << "\n\nOptions:\n";
+        std::cout << command;
+        if (positional != Arguments::Zero) std::cout << ' ' << positionalName;
+        std::cout << "\n\n";
+        printWrap(std::cout, 0, description);
+        std::cout << "\n\nOptions:\n";
         size_t optionWidth = 0;
         for (const auto& o : options) {
           optionWidth =
@@ -64,12 +64,12 @@ Options::Options(const std::string& command, const std::string& description)
         for (const auto& o : options) {
           bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
-          std::cerr << "  " << o.longName << (long_n_short ? ',' : ' ')
+          std::cout << "  " << o.longName << (long_n_short ? ',' : ' ')
                     << o.shortName << std::string(pad, ' ');
-          printWrap(std::cerr, optionWidth + 4, o.description);
-          std::cerr << '\n';
+          printWrap(std::cout, optionWidth + 4, o.description);
+          std::cout << '\n';
         }
-        std::cerr << '\n';
+        std::cout << '\n';
         exit(EXIT_SUCCESS);
       });
   add("--debug", "-d", "Print debug information to stderr", Arguments::Zero,

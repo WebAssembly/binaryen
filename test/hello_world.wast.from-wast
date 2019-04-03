@@ -4,8 +4,8 @@
  (export "add" (func $add))
  (func $add (; 0 ;) (type $0) (param $x i32) (param $y i32) (result i32)
   (i32.add
-   (get_local $x)
-   (get_local $y)
+   (local.get $x)
+   (local.get $y)
   )
  )
 )

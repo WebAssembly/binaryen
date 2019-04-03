@@ -15,7 +15,11 @@
  */
 
 //
-// Computes code at compile time where possible.
+// Computes code at compile time where possible, replacing it with the
+// computed constant.
+//
+// The "propagate" variant of this pass also propagates constants across
+// sets and gets, which implements a standard constant propagation.
 //
 // Possible nondeterminism: WebAssembly NaN signs are nondeterministic,
 // and this pass may optimize e.g. a float 0 / 0 into +nan while a VM may
@@ -46,7 +50,7 @@ class PrecomputingExpressionRunner : public ExpressionRunner<PrecomputingExpress
   GetValues& getValues;
 
   // Whether we are trying to precompute down to an expression (which we can do on
-  // say 5 + 6) or to a value (which we can't do on a tee_local that flows a 7
+  // say 5 + 6) or to a value (which we can't do on a local.tee that flows a 7
   // through it). When we want to replace the expression, we can only do so
   // when it has no side effects. When we don't care about replacing the expression,
   // we just want to know if it will contain a known constant.
@@ -115,7 +119,7 @@ public:
   Flow visitAtomicWait(AtomicWait *curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitAtomicWake(AtomicWake *curr) {
+  Flow visitAtomicNotify(AtomicNotify *curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitHost(Host *curr) {
@@ -159,8 +163,12 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   }
 
   void visitExpression(Expression* curr) {
-    // TODO: if get_local, only replace with a constant if we don't care about size...?
+    // TODO: if local.get, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
+    // Until engines implement v128.const and we have SIMD-aware optimizations
+    // that can break large v128.const instructions into smaller consts and
+    // splats, do not try to precompute v128 expressions.
+    if (curr->type == v128) return;
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
     if (flow.breaking()) {
@@ -241,7 +249,7 @@ private:
   // itself. This differs from precomputeExpression in that we care about
   // the value the expression will have, which we cannot necessary replace
   // the expression with. For example,
-  //  (tee_local (i32.const 1))
+  //  (local.tee (i32.const 1))
   // will have value 1 which we can optimize here, but in precomputeExpression
   // we could not do anything.
   Literal precomputeValue(Expression* curr) {
@@ -263,6 +271,7 @@ private:
     // compute all dependencies
     LocalGraph localGraph(func);
     localGraph.computeInfluences();
+    localGraph.computeSSAIndexes();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     std::unordered_set<Expression*> work;
@@ -297,7 +306,7 @@ private:
           Literal curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
-              curr = LiteralUtils::makeLiteralZero(getFunction()->getLocalType(get->index));
+              curr = Literal::makeZero(getFunction()->getLocalType(get->index));
             } else {
               // it's a param, so it's hopeless
               value = Literal();

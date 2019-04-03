@@ -106,10 +106,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     } else if (auto* block = curr->dynCast<Block>()) {
       // any breaks flowing to here are unnecessary, as we get here anyhow
       auto name = block->name;
+      auto& list = block->list;
       if (name.is()) {
-        size_t size = flows.size();
-        size_t skip = 0;
-        for (size_t i = 0; i < size; i++) {
+        Index size = flows.size();
+        Index skip = 0;
+        for (Index i = 0; i < size; i++) {
           auto* flow = (*flows[i])->dynCast<Break>();
           if (flow && flow->name == name) {
             if (!flow->value) {
@@ -129,9 +130,20 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           flows.resize(size - skip);
         }
         // drop a nop at the end of a block, which prevents a value flowing
-        while (block->list.size() > 0 && block->list.back()->is<Nop>()) {
-          block->list.resize(block->list.size() - 1);
+        while (list.size() > 0 && list.back()->is<Nop>()) {
+          list.resize(list.size() - 1);
           self->anotherCycle = true;
+        }
+      }
+      // A value flowing is only valid if it is a value that the block actually
+      // flows out. If it is never reached, it does not flow out, and may be
+      // invalid to represent as such.
+      auto size = list.size();
+      for (Index i = 0; i < size; i++) {
+        if (i != size - 1 && list[i]->type == unreachable) {
+          // No value flows out of this block.
+          self->stopValueFlow();
+          break;
         }
       }
     } else if (curr->is<Nop>()) {
@@ -280,7 +292,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
     }
     // TODO: if-else can be turned into a br_if as well, if one of the sides is a dead end
-    //       we handle the case of a returned value to a set_local later down, see
+    //       we handle the case of a returned value to a local.set later down, see
     //       visitSetLocal.
   }
 
@@ -515,7 +527,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       super::doWalkFunction(func);
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be optimized
-      for (size_t i = 0; i < flows.size(); i++) {
+      for (Index i = 0; i < flows.size(); i++) {
         auto* flow = (*flows[i])->dynCast<Return>();
         if (!flow) continue;
         if (!flow->value) {
@@ -835,7 +847,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       // If one arm is a br, we prefer a br_if and the set later:
-      //  (set_local $x
+      //  (local.set $x
       //    (if (result i32)
       //      (..condition..)
       //      (br $somewhere)
@@ -846,7 +858,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       //  (br_if $somewhere
       //    (..condition..)
       //  )
-      //  (set_local $x
+      //  (local.set $x
       //    (..result)
       //  )
       // TODO: handle a condition in the br? need to watch for side effects
@@ -888,38 +900,38 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // we can remove. If this is not a tee, then we remove the get
       // as well as the if-else opcode in the binary format, which is
       // great:
-      //  (set_local $x
+      //  (local.set $x
       //    (if (result i32)
       //      (..condition..)
       //      (..result)
-      //      (get_local $x)
+      //      (local.get $x)
       //    )
       //  )
       // =>
       //  (if
       //    (..condition..)
-      //    (set_local $x
+      //    (local.set $x
       //      (..result)
       //    )
       //  )
       // If this is a tee, then we can do the same operation but
       // inside a block, and keep the get:
-      //  (tee_local $x
+      //  (local.tee $x
       //    (if (result i32)
       //      (..condition..)
       //      (..result)
-      //      (get_local $x)
+      //      (local.get $x)
       //    )
       //  )
       // =>
       //  (block (result i32)
       //    (if
       //      (..condition..)
-      //      (set_local $x
+      //      (local.set $x
       //        (..result)
       //      )
       //    )
-      //    (get_local $x)
+      //    (local.get $x)
       //  )
       // We save the if-else opcode, and add the block's opcodes.
       // This may be detrimental, however, often the block can be

@@ -71,7 +71,7 @@ class Archive {
     Child child;
     bool error = false;  // TODO: use std::error_code instead?
    public:
-    child_iterator() {}
+    child_iterator() = default;
     explicit child_iterator(bool error) : error(error) {}
     child_iterator(const Child& c) : child(c) {}
     const Child* operator->() const { return &child; }

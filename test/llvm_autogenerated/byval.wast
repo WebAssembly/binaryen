@@ -10,7 +10,7 @@
  (import "env" "ext_func_empty" (func $ext_func_empty (param i32)))
  (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $0 1))
- (table 0 anyfunc)
+ (table 0 funcref)
  (data (i32.const 4) "\10\04\00\00")
  (export "byval_arg" (func $byval_arg))
  (export "byval_arg_align8" (func $byval_arg_align8))
@@ -26,7 +26,7 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -36,21 +36,21 @@
    )
   )
   (i32.store offset=12
-   (get_local $1)
+   (local.get $1)
    (i32.load
-    (get_local $0)
+    (local.get $0)
    )
   )
   (call $ext_byval_func
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 12)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 16)
    )
   )
@@ -60,7 +60,7 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -70,21 +70,21 @@
    )
   )
   (i32.store offset=8
-   (get_local $1)
+   (local.get $1)
    (i32.load
-    (get_local $0)
+    (local.get $0)
    )
   )
   (call $ext_byval_func_align8
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 8)
    )
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 16)
    )
   )
@@ -94,7 +94,7 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -105,29 +105,29 @@
   )
   (i64.store
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 8)
    )
    (i64.load
     (i32.add
-     (get_local $0)
+     (local.get $0)
      (i32.const 8)
     )
    )
   )
   (i64.store
-   (get_local $1)
+   (local.get $1)
    (i64.load
-    (get_local $0)
+    (local.get $0)
    )
   )
   (call $ext_byval_func_alignedstruct
-   (get_local $1)
+   (local.get $1)
   )
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $1)
+    (local.get $1)
     (i32.const 16)
    )
   )
@@ -135,19 +135,19 @@
  )
  (func $byval_param (; 11 ;) (param $0 i32)
   (call $ext_func
-   (get_local $0)
+   (local.get $0)
   )
   (return)
  )
  (func $byval_empty_caller (; 12 ;) (param $0 i32)
   (call $ext_byval_func_empty
-   (get_local $0)
+   (local.get $0)
   )
   (return)
  )
  (func $byval_empty_callee (; 13 ;) (param $0 i32)
   (call $ext_func_empty
-   (get_local $0)
+   (local.get $0)
   )
   (return)
  )
@@ -155,7 +155,7 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.sub
      (i32.load offset=4
       (i32.const 0)
@@ -165,10 +165,10 @@
    )
   )
   (call $big_byval_callee
-   (tee_local $0
+   (local.tee $0
     (call $memcpy
-     (get_local $1)
-     (get_local $0)
+     (local.get $1)
+     (local.get $0)
      (i32.const 131072)
     )
    )
@@ -176,7 +176,7 @@
   (i32.store offset=4
    (i32.const 0)
    (i32.add
-    (get_local $0)
+    (local.get $0)
     (i32.const 131072)
    )
   )
@@ -191,24 +191,24 @@
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
-   (tee_local $1
+   (local.tee $1
     (i32.and
      (i32.sub
       (i32.load offset=4
        (i32.const 0)
       )
-      (get_local $0)
+      (local.get $0)
      )
      (i32.const -16)
     )
    )
   )
-  (get_local $1)
+  (local.get $1)
  )
  (func $stackRestore (; 17 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
-   (get_local $0)
+   (local.get $0)
   )
  )
 )

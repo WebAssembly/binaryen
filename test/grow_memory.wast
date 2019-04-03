@@ -7,7 +7,7 @@
  (export "current" (func $1))
  (func $0 (; 0 ;) (type $0) (param $var$0 i32) (result i32)
   (grow_memory
-   (get_local $var$0)
+   (local.get $var$0)
   )
  )
  (func $1 (; 1 ;) (type $1) (result i32)

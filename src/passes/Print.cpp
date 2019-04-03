@@ -113,29 +113,29 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
     printMedium(o, "call_indirect (type ") << curr->fullType << ')';
   }
   void visitGetLocal(GetLocal* curr) {
-    printMedium(o, "get_local ") << printableLocal(curr->index, currFunction);
+    printMedium(o, "local.get ") << printableLocal(curr->index, currFunction);
   }
   void visitSetLocal(SetLocal* curr) {
     if (curr->isTee()) {
-      printMedium(o, "tee_local ");
+      printMedium(o, "local.tee ");
     } else {
-      printMedium(o, "set_local ");
+      printMedium(o, "local.set ");
     }
     o << printableLocal(curr->index, currFunction);
   }
   void visitGetGlobal(GetGlobal* curr) {
-    printMedium(o, "get_global ");
+    printMedium(o, "global.get ");
     printName(curr->name, o);
   }
   void visitSetGlobal(SetGlobal* curr) {
-    printMedium(o, "set_global ");
+    printMedium(o, "global.set ");
     printName(curr->name, o);
   }
   void visitLoad(Load* curr) {
     prepareColor(o) << printType(curr->type);
     if (curr->isAtomic) o << ".atomic";
     o << ".load";
-    if (curr->bytes < 4 || (curr->type == i64 && curr->bytes < 8)) {
+    if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
@@ -192,7 +192,6 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       } else {
         WASM_UNREACHABLE();
       }
-      o << "_u";
     }
     o << '.';
   }
@@ -207,6 +206,9 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case Xor:  o << "xor";  break;
       case Xchg: o << "xchg"; break;
     }
+    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+      o << "_u";
+    }
     restoreNormalColor(o);
     if (curr->offset) {
       o << " offset=" << curr->offset;
@@ -215,7 +217,10 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
-    o << "cmpxchg";
+     o << "cmpxchg";
+    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+      o << "_u";
+    }
     restoreNormalColor(o);
     if (curr->offset) {
       o << " offset=" << curr->offset;
@@ -223,16 +228,86 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   }
   void visitAtomicWait(AtomicWait* curr) {
     prepareColor(o);
-    o << printType(curr->expectedType) << ".wait";
+    o << printType(curr->expectedType) << ".atomic.wait";
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
   }
-  void visitAtomicWake(AtomicWake* curr) {
-    printMedium(o, "wake");
+  void visitAtomicNotify(AtomicNotify* curr) {
+    printMedium(o, "atomic.notify");
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
+  }
+  void visitSIMDExtract(SIMDExtract* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case ExtractLaneSVecI8x16: o << "i8x16.extract_lane_s"; break;
+      case ExtractLaneUVecI8x16: o << "i8x16.extract_lane_u"; break;
+      case ExtractLaneSVecI16x8: o << "i16x8.extract_lane_s"; break;
+      case ExtractLaneUVecI16x8: o << "i16x8.extract_lane_u"; break;
+      case ExtractLaneVecI32x4: o << "i32x4.extract_lane"; break;
+      case ExtractLaneVecI64x2: o << "i64x2.extract_lane"; break;
+      case ExtractLaneVecF32x4: o << "f32x4.extract_lane"; break;
+      case ExtractLaneVecF64x2: o << "f64x2.extract_lane"; break;
+    }
+    o << " " << int(curr->index);
+  }
+  void visitSIMDReplace(SIMDReplace* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case ReplaceLaneVecI8x16: o << "i8x16.replace_lane"; break;
+      case ReplaceLaneVecI16x8: o << "i16x8.replace_lane"; break;
+      case ReplaceLaneVecI32x4: o << "i32x4.replace_lane"; break;
+      case ReplaceLaneVecI64x2: o << "i64x2.replace_lane"; break;
+      case ReplaceLaneVecF32x4: o << "f32x4.replace_lane"; break;
+      case ReplaceLaneVecF64x2: o << "f64x2.replace_lane"; break;
+    }
+    o << " " << int(curr->index);
+  }
+  void visitSIMDShuffle(SIMDShuffle* curr) {
+    prepareColor(o);
+    o << "v8x16.shuffle";
+    for (uint8_t mask_index : curr->mask) {
+      o << " " << std::to_string(mask_index);
+    }
+  }
+  void visitSIMDBitselect(SIMDBitselect* curr) {
+    prepareColor(o);
+    o << "v128.bitselect";
+  }
+  void visitSIMDShift(SIMDShift* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case ShlVecI8x16:  o << "i8x16.shl"; break;
+      case ShrSVecI8x16: o << "i8x16.shr_s"; break;
+      case ShrUVecI8x16: o << "i8x16.shr_u"; break;
+      case ShlVecI16x8:  o << "i16x8.shl"; break;
+      case ShrSVecI16x8: o << "i16x8.shr_s"; break;
+      case ShrUVecI16x8: o << "i16x8.shr_u"; break;
+      case ShlVecI32x4:  o << "i32x4.shl"; break;
+      case ShrSVecI32x4: o << "i32x4.shr_s"; break;
+      case ShrUVecI32x4: o << "i32x4.shr_u"; break;
+      case ShlVecI64x2:  o << "i64x2.shl"; break;
+      case ShrSVecI64x2: o << "i64x2.shr_s"; break;
+      case ShrUVecI64x2: o << "i64x2.shr_u"; break;
+    }
+  }
+  void visitMemoryInit(MemoryInit* curr) {
+    prepareColor(o);
+    o << "memory.init " << curr->segment;
+  }
+  void visitDataDrop(DataDrop* curr) {
+    prepareColor(o);
+    o << "data.drop " << curr->segment;
+  }
+  void visitMemoryCopy(MemoryCopy* curr) {
+    prepareColor(o);
+    o << "memory.copy";
+  }
+  void visitMemoryFill(MemoryFill* curr) {
+    prepareColor(o);
+    o << "memory.fill";
   }
   void visitConst(Const* curr) {
     o << curr->value;
@@ -262,44 +337,77 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case TruncFloat64:           o << "f64.trunc";   break;
       case NearestFloat64:         o << "f64.nearest"; break;
       case SqrtFloat64:            o << "f64.sqrt";    break;
-      case ExtendSInt32:           o << "i64.extend_s/i32"; break;
-      case ExtendUInt32:           o << "i64.extend_u/i32"; break;
-      case WrapInt64:              o << "i32.wrap/i64"; break;
-      case TruncSFloat32ToInt32:   o << "i32.trunc_s/f32"; break;
-      case TruncSFloat32ToInt64:   o << "i64.trunc_s/f32"; break;
-      case TruncUFloat32ToInt32:   o << "i32.trunc_u/f32"; break;
-      case TruncUFloat32ToInt64:   o << "i64.trunc_u/f32"; break;
-      case TruncSFloat64ToInt32:   o << "i32.trunc_s/f64"; break;
-      case TruncSFloat64ToInt64:   o << "i64.trunc_s/f64"; break;
-      case TruncUFloat64ToInt32:   o << "i32.trunc_u/f64"; break;
-      case TruncUFloat64ToInt64:   o << "i64.trunc_u/f64"; break;
-      case ReinterpretFloat32:     o << "i32.reinterpret/f32"; break;
-      case ReinterpretFloat64:     o << "i64.reinterpret/f64"; break;
-      case ConvertUInt32ToFloat32: o << "f32.convert_u/i32"; break;
-      case ConvertUInt32ToFloat64: o << "f64.convert_u/i32"; break;
-      case ConvertSInt32ToFloat32: o << "f32.convert_s/i32"; break;
-      case ConvertSInt32ToFloat64: o << "f64.convert_s/i32"; break;
-      case ConvertUInt64ToFloat32: o << "f32.convert_u/i64"; break;
-      case ConvertUInt64ToFloat64: o << "f64.convert_u/i64"; break;
-      case ConvertSInt64ToFloat32: o << "f32.convert_s/i64"; break;
-      case ConvertSInt64ToFloat64: o << "f64.convert_s/i64"; break;
-      case PromoteFloat32:         o << "f64.promote/f32"; break;
-      case DemoteFloat64:          o << "f32.demote/f64"; break;
-      case ReinterpretInt32:       o << "f32.reinterpret/i32"; break;
-      case ReinterpretInt64:       o << "f64.reinterpret/i64"; break;
-      case ExtendS8Int32:          o << "i32.extend8_s"; break;
-      case ExtendS16Int32:         o << "i32.extend16_s"; break;
-      case ExtendS8Int64:          o << "i64.extend8_s"; break;
-      case ExtendS16Int64:         o << "i64.extend16_s"; break;
-      case ExtendS32Int64:         o << "i64.extend32_s"; break;
-      case TruncSatSFloat32ToInt32: o << "i32.trunc_s:sat/f32"; break;
-      case TruncSatUFloat32ToInt32: o << "i32.trunc_u:sat/f32"; break;
-      case TruncSatSFloat64ToInt32: o << "i32.trunc_s:sat/f64"; break;
-      case TruncSatUFloat64ToInt32: o << "i32.trunc_u:sat/f64"; break;
-      case TruncSatSFloat32ToInt64: o << "i64.trunc_s:sat/f32"; break;
-      case TruncSatUFloat32ToInt64: o << "i64.trunc_u:sat/f32"; break;
-      case TruncSatSFloat64ToInt64: o << "i64.trunc_s:sat/f64"; break;
-      case TruncSatUFloat64ToInt64: o << "i64.trunc_u:sat/f64"; break;
+      case ExtendSInt32:           o << "i64.extend_i32_s";    break;
+      case ExtendUInt32:           o << "i64.extend_i32_u";    break;
+      case WrapInt64:              o << "i32.wrap_i64";        break;
+      case TruncSFloat32ToInt32:   o << "i32.trunc_f32_s";     break;
+      case TruncSFloat32ToInt64:   o << "i64.trunc_f32_s";     break;
+      case TruncUFloat32ToInt32:   o << "i32.trunc_f32_u";     break;
+      case TruncUFloat32ToInt64:   o << "i64.trunc_f32_u";     break;
+      case TruncSFloat64ToInt32:   o << "i32.trunc_f64_s";     break;
+      case TruncSFloat64ToInt64:   o << "i64.trunc_f64_s";     break;
+      case TruncUFloat64ToInt32:   o << "i32.trunc_f64_u";     break;
+      case TruncUFloat64ToInt64:   o << "i64.trunc_f64_u";     break;
+      case ReinterpretFloat32:     o << "i32.reinterpret_f32"; break;
+      case ReinterpretFloat64:     o << "i64.reinterpret_f64"; break;
+      case ConvertUInt32ToFloat32: o << "f32.convert_i32_u";   break;
+      case ConvertUInt32ToFloat64: o << "f64.convert_i32_u";   break;
+      case ConvertSInt32ToFloat32: o << "f32.convert_i32_s";   break;
+      case ConvertSInt32ToFloat64: o << "f64.convert_i32_s";   break;
+      case ConvertUInt64ToFloat32: o << "f32.convert_i64_u";   break;
+      case ConvertUInt64ToFloat64: o << "f64.convert_i64_u";   break;
+      case ConvertSInt64ToFloat32: o << "f32.convert_i64_s";   break;
+      case ConvertSInt64ToFloat64: o << "f64.convert_i64_s";   break;
+      case PromoteFloat32:         o << "f64.promote_f32";     break;
+      case DemoteFloat64:          o << "f32.demote_f64";      break;
+      case ReinterpretInt32:       o << "f32.reinterpret_i32"; break;
+      case ReinterpretInt64:       o << "f64.reinterpret_i64"; break;
+      case ExtendS8Int32:          o << "i32.extend8_s";       break;
+      case ExtendS16Int32:         o << "i32.extend16_s";      break;
+      case ExtendS8Int64:          o << "i64.extend8_s";       break;
+      case ExtendS16Int64:         o << "i64.extend16_s";      break;
+      case ExtendS32Int64:         o << "i64.extend32_s";      break;
+      case TruncSatSFloat32ToInt32: o << "i32.trunc_sat_f32_s"; break;
+      case TruncSatUFloat32ToInt32: o << "i32.trunc_sat_f32_u"; break;
+      case TruncSatSFloat64ToInt32: o << "i32.trunc_sat_f64_s"; break;
+      case TruncSatUFloat64ToInt32: o << "i32.trunc_sat_f64_u"; break;
+      case TruncSatSFloat32ToInt64: o << "i64.trunc_sat_f32_s"; break;
+      case TruncSatUFloat32ToInt64: o << "i64.trunc_sat_f32_u"; break;
+      case TruncSatSFloat64ToInt64: o << "i64.trunc_sat_f64_s"; break;
+      case TruncSatUFloat64ToInt64: o << "i64.trunc_sat_f64_u"; break;
+      case SplatVecI8x16:           o << "i8x16.splat";         break;
+      case SplatVecI16x8:           o << "i16x8.splat";         break;
+      case SplatVecI32x4:           o << "i32x4.splat";         break;
+      case SplatVecI64x2:           o << "i64x2.splat";         break;
+      case SplatVecF32x4:           o << "f32x4.splat";         break;
+      case SplatVecF64x2:           o << "f64x2.splat";         break;
+      case NotVec128:               o << "v128.not";            break;
+      case NegVecI8x16:             o << "i8x16.neg";           break;
+      case AnyTrueVecI8x16:         o << "i8x16.any_true";      break;
+      case AllTrueVecI8x16:         o << "i8x16.all_true";      break;
+      case NegVecI16x8:             o << "i16x8.neg";           break;
+      case AnyTrueVecI16x8:         o << "i16x8.any_true";      break;
+      case AllTrueVecI16x8:         o << "i16x8.all_true";      break;
+      case NegVecI32x4:             o << "i32x4.neg";           break;
+      case AnyTrueVecI32x4:         o << "i32x4.any_true";      break;
+      case AllTrueVecI32x4:         o << "i32x4.all_true";      break;
+      case NegVecI64x2:             o << "i64x2.neg";           break;
+      case AnyTrueVecI64x2:         o << "i64x2.any_true";      break;
+      case AllTrueVecI64x2:         o << "i64x2.all_true";      break;
+      case AbsVecF32x4:             o << "f32x4.abs";           break;
+      case NegVecF32x4:             o << "f32x4.neg";           break;
+      case SqrtVecF32x4:            o << "f32x4.sqrt";          break;
+      case AbsVecF64x2:             o << "f64x2.abs";           break;
+      case NegVecF64x2:             o << "f64x2.neg";           break;
+      case SqrtVecF64x2:            o << "f64x2.sqrt";          break;
+      case TruncSatSVecF32x4ToVecI32x4: o << "i32x4.trunc_sat_f32x4_s"; break;
+      case TruncSatUVecF32x4ToVecI32x4: o << "i32x4.trunc_sat_f32x4_u"; break;
+      case TruncSatSVecF64x2ToVecI64x2: o << "i64x2.trunc_sat_f64x2_s"; break;
+      case TruncSatUVecF64x2ToVecI64x2: o << "i64x2.trunc_sat_f64x2_u"; break;
+      case ConvertSVecI32x4ToVecF32x4:  o << "f32x4.convert_i32x4_s";   break;
+      case ConvertUVecI32x4ToVecF32x4:  o << "f32x4.convert_i32x4_u";   break;
+      case ConvertSVecI64x2ToVecF64x2:  o << "f64x2.convert_i64x2_s";   break;
+      case ConvertUVecI64x2ToVecF64x2:  o << "f64x2.convert_i64x2_u";   break;
       case InvalidUnary: WASM_UNREACHABLE();
     }
   }
@@ -385,6 +493,86 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case LeFloat64:       o << "f64.le";       break;
       case GtFloat64:       o << "f64.gt";       break;
       case GeFloat64:       o << "f64.ge";       break;
+
+      case EqVecI8x16:    o << "i8x16.eq";     break;
+      case NeVecI8x16:    o << "i8x16.ne";     break;
+      case LtSVecI8x16:   o << "i8x16.lt_s";   break;
+      case LtUVecI8x16:   o << "i8x16.lt_u";   break;
+      case GtSVecI8x16:   o << "i8x16.gt_s";   break;
+      case GtUVecI8x16:   o << "i8x16.gt_u";   break;
+      case LeSVecI8x16:   o << "i8x16.le_s";   break;
+      case LeUVecI8x16:   o << "i8x16.le_u";   break;
+      case GeSVecI8x16:   o << "i8x16.ge_s";   break;
+      case GeUVecI8x16:   o << "i8x16.ge_u";   break;
+      case EqVecI16x8:    o << "i16x8.eq";     break;
+      case NeVecI16x8:    o << "i16x8.ne";     break;
+      case LtSVecI16x8:   o << "i16x8.lt_s";   break;
+      case LtUVecI16x8:   o << "i16x8.lt_u";   break;
+      case GtSVecI16x8:   o << "i16x8.gt_s";   break;
+      case GtUVecI16x8:   o << "i16x8.gt_u";   break;
+      case LeSVecI16x8:   o << "i16x8.le_s";   break;
+      case LeUVecI16x8:   o << "i16x8.le_u";   break;
+      case GeSVecI16x8:   o << "i16x8.ge_s";   break;
+      case GeUVecI16x8:   o << "i16x8.ge_u";   break;
+      case EqVecI32x4:    o << "i32x4.eq";     break;
+      case NeVecI32x4:    o << "i32x4.ne";     break;
+      case LtSVecI32x4:   o << "i32x4.lt_s";   break;
+      case LtUVecI32x4:   o << "i32x4.lt_u";   break;
+      case GtSVecI32x4:   o << "i32x4.gt_s";   break;
+      case GtUVecI32x4:   o << "i32x4.gt_u";   break;
+      case LeSVecI32x4:   o << "i32x4.le_s";   break;
+      case LeUVecI32x4:   o << "i32x4.le_u";   break;
+      case GeSVecI32x4:   o << "i32x4.ge_s";   break;
+      case GeUVecI32x4:   o << "i32x4.ge_u";   break;
+      case EqVecF32x4:    o << "f32x4.eq";     break;
+      case NeVecF32x4:    o << "f32x4.ne";     break;
+      case LtVecF32x4:    o << "f32x4.lt";     break;
+      case GtVecF32x4:    o << "f32x4.gt";     break;
+      case LeVecF32x4:    o << "f32x4.le";     break;
+      case GeVecF32x4:    o << "f32x4.ge";     break;
+      case EqVecF64x2:    o << "f64x2.eq";     break;
+      case NeVecF64x2:    o << "f64x2.ne";     break;
+      case LtVecF64x2:    o << "f64x2.lt";     break;
+      case GtVecF64x2:    o << "f64x2.gt";     break;
+      case LeVecF64x2:    o << "f64x2.le";     break;
+      case GeVecF64x2:    o << "f64x2.ge";     break;
+
+      case AndVec128:       o << "v128.and";     break;
+      case OrVec128:        o << "v128.or";      break;
+      case XorVec128:       o << "v128.xor";     break;
+
+      case AddVecI8x16:     o << "i8x16.add";            break;
+      case AddSatSVecI8x16: o << "i8x16.add_saturate_s"; break;
+      case AddSatUVecI8x16: o << "i8x16.add_saturate_u"; break;
+      case SubVecI8x16:     o << "i8x16.sub";            break;
+      case SubSatSVecI8x16: o << "i8x16.sub_saturate_s"; break;
+      case SubSatUVecI8x16: o << "i8x16.sub_saturate_u"; break;
+      case MulVecI8x16:     o << "i8x16.mul";            break;
+      case AddVecI16x8:     o << "i16x8.add";            break;
+      case AddSatSVecI16x8: o << "i16x8.add_saturate_s"; break;
+      case AddSatUVecI16x8: o << "i16x8.add_saturate_u"; break;
+      case SubVecI16x8:     o << "i16x8.sub";            break;
+      case SubSatSVecI16x8: o << "i16x8.sub_saturate_s"; break;
+      case SubSatUVecI16x8: o << "i16x8.sub_saturate_u"; break;
+      case MulVecI16x8:     o << "i16x8.mul";            break;
+      case AddVecI32x4:     o << "i32x4.add";            break;
+      case SubVecI32x4:     o << "i32x4.sub";            break;
+      case MulVecI32x4:     o << "i32x4.mul";            break;
+      case AddVecI64x2:     o << "i64x2.add";            break;
+      case SubVecI64x2:     o << "i64x2.sub";            break;
+
+      case AddVecF32x4:   o << "f32x4.add";    break;
+      case SubVecF32x4:   o << "f32x4.sub";    break;
+      case MulVecF32x4:   o << "f32x4.mul";    break;
+      case DivVecF32x4:   o << "f32x4.div";    break;
+      case MinVecF32x4:   o << "f32x4.min";    break;
+      case MaxVecF32x4:   o << "f32x4.max";    break;
+      case AddVecF64x2:   o << "f64x2.add";    break;
+      case SubVecF64x2:   o << "f64x2.sub";    break;
+      case MulVecF64x2:   o << "f64x2.mul";    break;
+      case DivVecF64x2:   o << "f64x2.div";    break;
+      case MinVecF64x2:   o << "f64x2.min";    break;
+      case MaxVecF64x2:   o << "f64x2.max";    break;
 
       case InvalidBinary: WASM_UNREACHABLE();
     }
@@ -716,12 +904,84 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->timeout);
     decIndent();
   }
-  void visitAtomicWake(AtomicWake* curr) {
+  void visitAtomicNotify(AtomicNotify* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ptr);
-    printFullLine(curr->wakeCount);
+    printFullLine(curr->notifyCount);
+    decIndent();
+  }
+  void visitSIMDExtract(SIMDExtract* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->vec);
+    decIndent();
+  }
+  void visitSIMDReplace(SIMDReplace* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->vec);
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitSIMDShuffle(SIMDShuffle* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->left);
+    printFullLine(curr->right);
+    decIndent();
+  }
+  void visitSIMDBitselect(SIMDBitselect* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->left);
+    printFullLine(curr->right);
+    printFullLine(curr->cond);
+    decIndent();
+  }
+  void visitSIMDShift(SIMDShift* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->vec);
+    printFullLine(curr->shift);
+    decIndent();
+  }
+  void visitMemoryInit(MemoryInit* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->dest);
+    printFullLine(curr->offset);
+    printFullLine(curr->size);
+    decIndent();
+  }
+  void visitDataDrop(DataDrop* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitMemoryCopy(MemoryCopy* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->dest);
+    printFullLine(curr->source);
+    printFullLine(curr->size);
+    decIndent();
+  }
+  void visitMemoryFill(MemoryFill* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->dest);
+    printFullLine(curr->value);
+    printFullLine(curr->size);
     decIndent();
   }
   void visitConst(Const* curr) {
@@ -970,7 +1230,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printName(curr->name, o) << ' ';
     o << curr->initial;
     if (curr->hasMax()) o << ' ' << curr->max;
-    o << " anyfunc)";
+    o << " funcref)";
   }
   void visitTable(Table* curr) {
     if (!curr->exists) return;
@@ -1138,7 +1398,7 @@ Pass *createPrinterPass() {
 
 class MinifiedPrinter : public Printer {
 public:
-  MinifiedPrinter() : Printer() {}
+  MinifiedPrinter() = default;
   MinifiedPrinter(std::ostream* o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override {
@@ -1156,7 +1416,7 @@ Pass *createMinifiedPrinterPass() {
 
 class FullPrinter : public Printer {
 public:
-  FullPrinter() : Printer() {}
+  FullPrinter() = default;
   FullPrinter(std::ostream* o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override {
@@ -1174,7 +1434,7 @@ Pass *createFullPrinterPass() {
 
 class PrintStackIR : public Printer {
 public:
-  PrintStackIR() : Printer() {}
+  PrintStackIR() = default;
   PrintStackIR(std::ostream* o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override {

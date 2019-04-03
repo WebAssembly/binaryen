@@ -1,0 +1,22 @@
+total
+ [exports]      : 1       
+ [funcs]        : 1       
+ [imports]      : 0       
+ [total]        : 1       
+ [vars]         : 0       
+ nop            : 1       
+total
+ [exports]      : 1       
+ [funcs]        : 1       
+ [imports]      : 0       
+ [total]        : 1       
+ [vars]         : 0       
+ nop            : 1       
+(module
+ (type $0 (func))
+ (export "a" (func $0))
+ (func $0 (; 0 ;) (type $0)
+  (nop)
+ )
+ ;; custom section "emscripten_metadata", size 7
+)

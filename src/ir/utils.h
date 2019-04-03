@@ -45,10 +45,10 @@ struct ExpressionAnalyzer {
   // Given a stack of expressions, checks if the topmost is used as a result.
   // For example, if the parent is a block and the node is before the last position,
   // it is not used.
-  static bool isResultUsed(std::vector<Expression*> stack, Function* func);
+  static bool isResultUsed(ExpressionStack& stack, Function* func);
 
   // Checks if a value is dropped.
-  static bool isResultDropped(std::vector<Expression*> stack);
+  static bool isResultDropped(ExpressionStack& stack);
 
   // Checks if a break is a simple - no condition, no value, just a plain branching
   static bool isSimple(Break* curr) {
@@ -128,7 +128,16 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitAtomicRMW(AtomicRMW* curr);
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicWake(AtomicWake* curr);
+  void visitAtomicNotify(AtomicNotify* curr);
+  void visitSIMDExtract(SIMDExtract* curr);
+  void visitSIMDReplace(SIMDReplace* curr);
+  void visitSIMDShuffle(SIMDShuffle* curr);
+  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDShift(SIMDShift* curr);
+  void visitMemoryInit(MemoryInit* curr);
+  void visitDataDrop(DataDrop* curr);
+  void visitMemoryCopy(MemoryCopy* curr);
+  void visitMemoryFill(MemoryFill* curr);
   void visitConst(Const* curr);
   void visitUnary(Unary* curr);
   void visitBinary(Binary* curr);
@@ -175,7 +184,16 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
   void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
-  void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
+  void visitAtomicNotify(AtomicNotify* curr) { curr->finalize(); }
+  void visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
+  void visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
+  void visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
+  void visitSIMDBitselect(SIMDBitselect* curr) { curr->finalize(); }
+  void visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
+  void visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
+  void visitDataDrop(DataDrop* curr) { curr->finalize(); }
+  void visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
+  void visitMemoryFill(MemoryFill* curr) { curr->finalize(); }
   void visitConst(Const* curr) { curr->finalize(); }
   void visitUnary(Unary* curr) { curr->finalize(); }
   void visitBinary(Binary* curr) { curr->finalize(); }
@@ -194,7 +212,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
   // given a stack of nested expressions, update them all from child to parent
-  static void updateStack(std::vector<Expression*>& expressionStack) {
+  static void updateStack(ExpressionStack& expressionStack) {
     for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
       auto* curr = expressionStack[i];
       ReFinalizeNode().visit(curr);

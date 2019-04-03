@@ -43,6 +43,7 @@ EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
 EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=1"
 EMCC_ARGS="$EMCC_ARGS -s WASM=0"
 EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
+EMCC_ARGS="$EMCC_ARGS -s BINARYEN_ASYNC_COMPILATION=0"
 # TODO: enable this (need nearbyint in emscripten tag) EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
 EMCC_ARGS="$EMCC_ARGS -s DISABLE_EXCEPTION_CATCHING=0" # Exceptions are thrown and caught when optimizing endless loops
 OUT_FILE_SUFFIX=
@@ -97,6 +98,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/ConstHoisting.cpp \
   $BINARYEN_SRC/passes/DataFlowOpts.cpp \
   $BINARYEN_SRC/passes/DeadCodeElimination.cpp \
+  $BINARYEN_SRC/passes/Directize.cpp \
   $BINARYEN_SRC/passes/DuplicateFunctionElimination.cpp \
   $BINARYEN_SRC/passes/ExtractFunction.cpp \
   $BINARYEN_SRC/passes/Flatten.cpp \
@@ -115,6 +117,8 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/Metrics.cpp \
   $BINARYEN_SRC/passes/MinifyImportsAndExports.cpp \
   $BINARYEN_SRC/passes/NameList.cpp \
+  $BINARYEN_SRC/passes/NoExitRuntime.cpp \
+  $BINARYEN_SRC/passes/OptimizeAddedConstants.cpp \
   $BINARYEN_SRC/passes/OptimizeInstructions.cpp \
   $BINARYEN_SRC/passes/PickLoadSigns.cpp \
   $BINARYEN_SRC/passes/PostEmscripten.cpp \
@@ -160,18 +164,6 @@ echo "building shared bitcode"
   -I$BINARYEN_SRC \
   -o shared.bc
 
-echo "building wasm.js"
-
-"$EMSCRIPTEN/em++" \
-  $EMCC_ARGS \
-  $BINARYEN_SRC/wasm-js.cpp \
-  shared.bc \
-  -I$BINARYEN_SRC/ \
-  -o $BINARYEN_BIN/wasm${OUT_FILE_SUFFIX}.js \
-  -s MODULARIZE=1 \
-  -s 'EXTRA_EXPORTED_RUNTIME_METHODS=["writeAsciiToMemory"]' \
-  -s 'EXPORT_NAME="WasmJS"'
-
 echo "building binaryen.js"
 
 function export_function { if [ -z ${EXPORTED_FUNCTIONS} ]; then EXPORTED_FUNCTIONS='"'$1'"'; else EXPORTED_FUNCTIONS=${EXPORTED_FUNCTIONS}',"'$1'"'; fi }
@@ -213,7 +205,16 @@ export_function "_BinaryenUnreachableId"
 export_function "_BinaryenAtomicCmpxchgId"
 export_function "_BinaryenAtomicRMWId"
 export_function "_BinaryenAtomicWaitId"
-export_function "_BinaryenAtomicWakeId"
+export_function "_BinaryenAtomicNotifyId"
+export_function "_BinaryenSIMDExtractId"
+export_function "_BinaryenSIMDReplaceId"
+export_function "_BinaryenSIMDShuffleId"
+export_function "_BinaryenSIMDBitselectId"
+export_function "_BinaryenSIMDShiftId"
+export_function "_BinaryenMemoryInitId"
+export_function "_BinaryenDataDropId"
+export_function "_BinaryenMemoryCopyId"
+export_function "_BinaryenMemoryFillId"
 
 # External kinds
 export_function "_BinaryenExternalFunction"
@@ -226,6 +227,7 @@ export_function "_BinaryenLiteralInt32"
 export_function "_BinaryenLiteralInt64"
 export_function "_BinaryenLiteralFloat32"
 export_function "_BinaryenLiteralFloat64"
+export_function "_BinaryenLiteralVec128"
 export_function "_BinaryenLiteralFloat32Bits"
 export_function "_BinaryenLiteralFloat64Bits"
 
@@ -374,6 +376,141 @@ export_function "_BinaryenAtomicRMWAnd"
 export_function "_BinaryenAtomicRMWOr"
 export_function "_BinaryenAtomicRMWXor"
 export_function "_BinaryenAtomicRMWXchg"
+export_function "_BinaryenSplatVecI8x16"
+export_function "_BinaryenExtractLaneSVecI8x16"
+export_function "_BinaryenExtractLaneUVecI8x16"
+export_function "_BinaryenReplaceLaneVecI8x16"
+export_function "_BinaryenSplatVecI16x8"
+export_function "_BinaryenExtractLaneSVecI16x8"
+export_function "_BinaryenExtractLaneUVecI16x8"
+export_function "_BinaryenReplaceLaneVecI16x8"
+export_function "_BinaryenSplatVecI32x4"
+export_function "_BinaryenExtractLaneVecI32x4"
+export_function "_BinaryenReplaceLaneVecI32x4"
+export_function "_BinaryenSplatVecI64x2"
+export_function "_BinaryenExtractLaneVecI64x2"
+export_function "_BinaryenReplaceLaneVecI64x2"
+export_function "_BinaryenSplatVecF32x4"
+export_function "_BinaryenExtractLaneVecF32x4"
+export_function "_BinaryenReplaceLaneVecF32x4"
+export_function "_BinaryenSplatVecF64x2"
+export_function "_BinaryenExtractLaneVecF64x2"
+export_function "_BinaryenReplaceLaneVecF64x2"
+export_function "_BinaryenEqVecI8x16"
+export_function "_BinaryenNeVecI8x16"
+export_function "_BinaryenLtSVecI8x16"
+export_function "_BinaryenLtUVecI8x16"
+export_function "_BinaryenGtSVecI8x16"
+export_function "_BinaryenGtUVecI8x16"
+export_function "_BinaryenLeSVecI8x16"
+export_function "_BinaryenLeUVecI8x16"
+export_function "_BinaryenGeSVecI8x16"
+export_function "_BinaryenGeUVecI8x16"
+export_function "_BinaryenEqVecI16x8"
+export_function "_BinaryenNeVecI16x8"
+export_function "_BinaryenLtSVecI16x8"
+export_function "_BinaryenLtUVecI16x8"
+export_function "_BinaryenGtSVecI16x8"
+export_function "_BinaryenGtUVecI16x8"
+export_function "_BinaryenLeSVecI16x8"
+export_function "_BinaryenLeUVecI16x8"
+export_function "_BinaryenGeSVecI16x8"
+export_function "_BinaryenGeUVecI16x8"
+export_function "_BinaryenEqVecI32x4"
+export_function "_BinaryenNeVecI32x4"
+export_function "_BinaryenLtSVecI32x4"
+export_function "_BinaryenLtUVecI32x4"
+export_function "_BinaryenGtSVecI32x4"
+export_function "_BinaryenGtUVecI32x4"
+export_function "_BinaryenLeSVecI32x4"
+export_function "_BinaryenLeUVecI32x4"
+export_function "_BinaryenGeSVecI32x4"
+export_function "_BinaryenGeUVecI32x4"
+export_function "_BinaryenEqVecF32x4"
+export_function "_BinaryenNeVecF32x4"
+export_function "_BinaryenLtVecF32x4"
+export_function "_BinaryenGtVecF32x4"
+export_function "_BinaryenLeVecF32x4"
+export_function "_BinaryenGeVecF32x4"
+export_function "_BinaryenEqVecF64x2"
+export_function "_BinaryenNeVecF64x2"
+export_function "_BinaryenLtVecF64x2"
+export_function "_BinaryenGtVecF64x2"
+export_function "_BinaryenLeVecF64x2"
+export_function "_BinaryenGeVecF64x2"
+export_function "_BinaryenNotVec128"
+export_function "_BinaryenAndVec128"
+export_function "_BinaryenOrVec128"
+export_function "_BinaryenXorVec128"
+export_function "_BinaryenNegVecI8x16"
+export_function "_BinaryenAnyTrueVecI8x16"
+export_function "_BinaryenAllTrueVecI8x16"
+export_function "_BinaryenShlVecI8x16"
+export_function "_BinaryenShrSVecI8x16"
+export_function "_BinaryenShrUVecI8x16"
+export_function "_BinaryenAddVecI8x16"
+export_function "_BinaryenAddSatSVecI8x16"
+export_function "_BinaryenAddSatUVecI8x16"
+export_function "_BinaryenSubVecI8x16"
+export_function "_BinaryenSubSatSVecI8x16"
+export_function "_BinaryenSubSatUVecI8x16"
+export_function "_BinaryenMulVecI8x16"
+export_function "_BinaryenNegVecI16x8"
+export_function "_BinaryenAnyTrueVecI16x8"
+export_function "_BinaryenAllTrueVecI16x8"
+export_function "_BinaryenShlVecI16x8"
+export_function "_BinaryenShrSVecI16x8"
+export_function "_BinaryenShrUVecI16x8"
+export_function "_BinaryenAddVecI16x8"
+export_function "_BinaryenAddSatSVecI16x8"
+export_function "_BinaryenAddSatUVecI16x8"
+export_function "_BinaryenSubVecI16x8"
+export_function "_BinaryenSubSatSVecI16x8"
+export_function "_BinaryenSubSatUVecI16x8"
+export_function "_BinaryenMulVecI16x8"
+export_function "_BinaryenNegVecI32x4"
+export_function "_BinaryenAnyTrueVecI32x4"
+export_function "_BinaryenAllTrueVecI32x4"
+export_function "_BinaryenShlVecI32x4"
+export_function "_BinaryenShrSVecI32x4"
+export_function "_BinaryenShrUVecI32x4"
+export_function "_BinaryenAddVecI32x4"
+export_function "_BinaryenSubVecI32x4"
+export_function "_BinaryenMulVecI32x4"
+export_function "_BinaryenNegVecI64x2"
+export_function "_BinaryenAnyTrueVecI64x2"
+export_function "_BinaryenAllTrueVecI64x2"
+export_function "_BinaryenShlVecI64x2"
+export_function "_BinaryenShrSVecI64x2"
+export_function "_BinaryenShrUVecI64x2"
+export_function "_BinaryenAddVecI64x2"
+export_function "_BinaryenSubVecI64x2"
+export_function "_BinaryenAbsVecF32x4"
+export_function "_BinaryenNegVecF32x4"
+export_function "_BinaryenSqrtVecF32x4"
+export_function "_BinaryenAddVecF32x4"
+export_function "_BinaryenSubVecF32x4"
+export_function "_BinaryenMulVecF32x4"
+export_function "_BinaryenDivVecF32x4"
+export_function "_BinaryenMinVecF32x4"
+export_function "_BinaryenMaxVecF32x4"
+export_function "_BinaryenAbsVecF64x2"
+export_function "_BinaryenNegVecF64x2"
+export_function "_BinaryenSqrtVecF64x2"
+export_function "_BinaryenAddVecF64x2"
+export_function "_BinaryenSubVecF64x2"
+export_function "_BinaryenMulVecF64x2"
+export_function "_BinaryenDivVecF64x2"
+export_function "_BinaryenMinVecF64x2"
+export_function "_BinaryenMaxVecF64x2"
+export_function "_BinaryenTruncSatSVecF32x4ToVecI32x4"
+export_function "_BinaryenTruncSatUVecF32x4ToVecI32x4"
+export_function "_BinaryenTruncSatSVecF64x2ToVecI64x2"
+export_function "_BinaryenTruncSatUVecF64x2ToVecI64x2"
+export_function "_BinaryenConvertSVecI32x4ToVecF32x4"
+export_function "_BinaryenConvertUVecI32x4ToVecF32x4"
+export_function "_BinaryenConvertSVecI64x2ToVecF64x2"
+export_function "_BinaryenConvertUVecI64x2ToVecF64x2"
 
 # Expression creation
 export_function "_BinaryenBlock"
@@ -404,7 +541,16 @@ export_function "_BinaryenAtomicStore"
 export_function "_BinaryenAtomicRMW"
 export_function "_BinaryenAtomicCmpxchg"
 export_function "_BinaryenAtomicWait"
-export_function "_BinaryenAtomicWake"
+export_function "_BinaryenAtomicNotify"
+export_function "_BinaryenSIMDExtract"
+export_function "_BinaryenSIMDReplace"
+export_function "_BinaryenSIMDShuffle"
+export_function "_BinaryenSIMDBitselect"
+export_function "_BinaryenSIMDShift"
+export_function "_BinaryenMemoryInit"
+export_function "_BinaryenDataDrop"
+export_function "_BinaryenMemoryCopy"
+export_function "_BinaryenMemoryFill"
 
 # 'Expression' operations
 export_function "_BinaryenExpressionGetId"
@@ -490,6 +636,7 @@ export_function "_BinaryenConstGetValueI64Low"
 export_function "_BinaryenConstGetValueI64High"
 export_function "_BinaryenConstGetValueF32"
 export_function "_BinaryenConstGetValueF64"
+export_function "_BinaryenConstGetValueV128"
 
 # 'Unary' expression operations
 export_function "_BinaryenUnaryGetOp"
@@ -531,9 +678,54 @@ export_function "_BinaryenAtomicWaitGetExpected"
 export_function "_BinaryenAtomicWaitGetTimeout"
 export_function "_BinaryenAtomicWaitGetExpectedType"
 
-# 'AtomicWake' expression operations
-export_function "_BinaryenAtomicWakeGetPtr"
-export_function "_BinaryenAtomicWakeGetWakeCount"
+# 'AtomicNotify' expression operations
+export_function "_BinaryenAtomicNotifyGetPtr"
+export_function "_BinaryenAtomicNotifyGetNotifyCount"
+
+# 'SIMDExtract' expression operations
+export_function "_BinaryenSIMDExtractGetOp"
+export_function "_BinaryenSIMDExtractGetVec"
+export_function "_BinaryenSIMDExtractGetIndex"
+
+# 'SIMDReplace' expression operations
+export_function "_BinaryenSIMDReplaceGetOp"
+export_function "_BinaryenSIMDReplaceGetVec"
+export_function "_BinaryenSIMDReplaceGetIndex"
+export_function "_BinaryenSIMDReplaceGetValue"
+
+# 'SIMDShuffle' expression operations
+export_function "_BinaryenSIMDShuffleGetLeft"
+export_function "_BinaryenSIMDShuffleGetRight"
+export_function "_BinaryenSIMDShuffleGetMask"
+
+# 'SIMDBitselect' expression operations
+export_function "_BinaryenSIMDBitselectGetLeft"
+export_function "_BinaryenSIMDBitselectGetRight"
+export_function "_BinaryenSIMDBitselectGetCond"
+
+# 'SIMDShift' expression operations
+export_function "_BinaryenSIMDShiftGetOp"
+export_function "_BinaryenSIMDShiftGetVec"
+export_function "_BinaryenSIMDShiftGetShift"
+
+# 'MemoryInit' expression operations
+export_function "_BinaryenMemoryInitGetSegment"
+export_function "_BinaryenMemoryInitGetDest"
+export_function "_BinaryenMemoryInitGetOffset"
+export_function "_BinaryenMemoryInitGetSize"
+
+# 'DataDrop' expression operations
+export_function "_BinaryenDataDropGetSegment"
+
+# 'MemoryCopy' expression operations
+export_function "_BinaryenMemoryCopyGetDest"
+export_function "_BinaryenMemoryCopyGetSource"
+export_function "_BinaryenMemoryCopyGetSize"
+
+# 'MemoryFill' expression operations
+export_function "_BinaryenMemoryFillGetDest"
+export_function "_BinaryenMemoryFillGetValue"
+export_function "_BinaryenMemoryFillGetSize"
 
 # 'Module' operations
 export_function "_BinaryenModuleCreate"

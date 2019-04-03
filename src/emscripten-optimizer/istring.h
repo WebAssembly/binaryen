@@ -35,7 +35,7 @@
 namespace cashew {
 
 struct IString {
-  const char *str;
+  const char *str = nullptr;
 
   static size_t hash_c(const char *str) { // see http://www.cse.yorku.ca/~oz/hash.html
     unsigned int hash = 5381;
@@ -59,7 +59,7 @@ struct IString {
     }
   };
 
-  IString() : str(nullptr) {}
+  IString() = default;
   IString(const char *s, bool reuse=true) { // if reuse=true, then input is assumed to remain alive; not copied
     assert(s);
     set(s, reuse);
@@ -149,6 +149,10 @@ struct IString {
   bool startsWith(const char *prefix) const {
     return stripPrefix(prefix) != nullptr;
   }
+
+  size_t size() const {
+    return str ? strlen(str) : 0;
+  }
 };
 
 } // namespace cashew
@@ -178,7 +182,7 @@ namespace cashew {
 class IStringSet : public std::unordered_set<IString> {
   std::vector<char> data;
 public:
-  IStringSet() {}
+  IStringSet() = default;
   IStringSet(const char *init) { // comma-delimited list
     int size = strlen(init) + 1;
     data.resize(size);

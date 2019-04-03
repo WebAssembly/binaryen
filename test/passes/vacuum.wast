@@ -68,35 +68,35 @@
     (local $x i32)
     (local $y i32)
     (drop
-      (get_local $x)
+      (local.get $x)
     )
-    (set_local $x
-      (get_local $x)
+    (local.set $x
+      (local.get $x)
     )
     (block $in-a-block
       (drop
-        (get_local $x)
+        (local.get $x)
       )
     )
     (block $two-in-a-block
       (drop
-        (get_local $x)
+        (local.get $x)
       )
       (drop
-        (get_local $y)
+        (local.get $y)
       )
     )
-    (set_local $x
+    (local.set $x
       (block $result-used (result i32)
-        (get_local $x)
+        (local.get $x)
       )
     )
-    (set_local $x
+    (local.set $x
       (block $two-and-result-used (result i32)
         (drop
-          (get_local $x)
+          (local.get $x)
         )
-        (get_local $y)
+        (local.get $y)
       )
     )
   )
@@ -111,7 +111,7 @@
     (drop
       (loop $loop-in5 (result i32)
         (drop
-          (get_local $0)
+          (local.get $0)
         )
         (i32.const 20)
       )
@@ -277,21 +277,21 @@
   (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
     (if
       (if (result i32)
-        (get_local $d)
+        (local.get $d)
         (block $block1 (result i32)
           (nop)
           (f64.ne
-            (f64.promote/f32
+            (f64.promote_f32
               (f32.load
-                (tee_local $l
+                (local.tee $l
                   (i32.add
-                    (get_local $b)
+                    (local.get $b)
                     (i32.const 60)
                   )
                 )
               )
             )
-            (get_local $e)
+            (local.get $e)
           )
         )
         (i32.const 0)
@@ -362,7 +362,7 @@
     (drop
       (block (result i32)
         (call $drop-get-global)
-        (get_global $Int) ;; this is not needed due to the block being drop'd, but make sure the call is not then dropped either
+        (global.get $Int) ;; this is not needed due to the block being drop'd, but make sure the call is not then dropped either
       )
     )
   )
@@ -378,8 +378,8 @@
             )
           )
           (i32.store
-            (get_local $$vararg_ptr5)
-            (get_local $$11)
+            (local.get $$vararg_ptr5)
+            (local.get $$11)
           )
           (i32.const 0)
         )
@@ -449,7 +449,7 @@
     (block $out
       (drop
         (if (result i32)
-          (get_local $0)
+          (local.get $0)
           (br $out)
           (br $out)
         )
@@ -457,7 +457,7 @@
     )
     (drop
       (if (result i32)
-        (get_local $0)
+        (local.get $0)
         (unreachable)
         (unreachable)
       )
@@ -466,13 +466,13 @@
   (func $if-1-block (param $x i32)
    (block $out
     (if
-     (get_local $x)
+     (local.get $x)
      (block
       (if
        (i32.const 1)
        (block
-        (set_local $x
-         (get_local $x)
+        (local.set $x
+         (local.get $x)
         )
         (br $out)
        )
@@ -504,7 +504,7 @@
     (drop
      (block (result i32)
       (br $label$0)
-      (get_local $2)
+      (local.get $2)
      )
     )
    )
@@ -588,7 +588,7 @@
     )
    )
    (drop
-    (i64.trunc_u/f32
+    (i64.trunc_f32_u
      (f32.const 70847791997969805621592064)
     )
    )
@@ -641,7 +641,7 @@
    (block $label$0
     (if
      (i32.eqz
-      (get_local $0)
+      (local.get $0)
      )
      (block $label$1
       (block
@@ -659,4 +659,138 @@
     )
    )
   )
+)
+(module ;; a child with a different type, cannot simply replace the parent with it
+ (type $0 (func (param i64)))
+ (type $1 (func (param f32 i32) (result i32)))
+ (func $0 (; 0 ;) (type $0) (param $0 i64)
+  (nop)
+ )
+ (func $1 (; 1 ;) (type $1) (param $0 f32) (param $1 i32) (result i32)
+  (drop
+   (block $label$1 (result i32)
+    (i32.wrap_i64
+     (block $label$2 (result i64)
+      (call $0
+       (br_if $label$2
+        (i64.const -137438953472)
+        (i32.const 1)
+       )
+      )
+      (unreachable)
+     )
+    )
+   )
+  )
+  (unreachable)
+ )
+)
+(module ;; vacuum away a drop on an if where both arms can be vacuumed
+ (global $global$1 (mut i32) (i32.const 0))
+ (func $_deflate (param i32) (result i32)
+  (call $_deflate (local.get $0))
+ )
+ (func $_deflateInit2_ (param i32) (result i32)
+  (call $_deflateInit2_ (local.get $0))
+ )
+ (func $_deflateEnd (param i32) (result i32)
+  (call $_deflateEnd (local.get $0))
+ )
+ (func "compress" (param $0 i32) (param $1 i32) (param $2 i32)
+  (local $3 i32)
+  (local.set $3
+   (global.get $global$1)
+  )
+  (global.set $global$1
+   (i32.sub
+    (global.get $global$1)
+    (i32.const -64)
+   )
+  )
+  (i32.store
+   (local.get $3)
+   (local.get $2)
+  )
+  (i32.store offset=4
+   (local.get $3)
+   (i32.const 100000)
+  )
+  (i32.store offset=12
+   (local.get $3)
+   (local.get $0)
+  )
+  (i32.store offset=16
+   (local.get $3)
+   (i32.load
+    (local.get $1)
+   )
+  )
+  (i32.store offset=32
+   (local.get $3)
+   (i32.const 0)
+  )
+  (i32.store offset=36
+   (local.get $3)
+   (i32.const 0)
+  )
+  (i32.store offset=40
+   (local.get $3)
+   (i32.const 0)
+  )
+  (if
+   (call $_deflateInit2_
+    (local.get $3)
+   )
+   (block
+    (global.set $global$1
+     (local.get $3)
+    )
+    (return)
+   )
+  )
+  (drop
+   (if (result i32)
+    (i32.eq
+     (local.tee $0
+      (call $_deflate
+       (local.get $3)
+      )
+     )
+     (i32.const 1)
+    )
+    (block (result i32)
+     (i32.store
+      (local.get $1)
+      (i32.load offset=20
+       (local.get $3)
+      )
+     )
+     (local.set $0
+      (call $_deflateEnd
+       (local.get $3)
+      )
+     )
+     (global.set $global$1
+      (local.get $3)
+     )
+     (local.get $0)
+    )
+    (block (result i32)
+     (drop
+      (call $_deflateEnd
+       (local.get $3)
+      )
+     )
+     (global.set $global$1
+      (local.get $3)
+     )
+     (select
+      (local.get $0)
+      (i32.const -5)
+      (local.get $0)
+     )
+    )
+   )
+  )
+ )
 )

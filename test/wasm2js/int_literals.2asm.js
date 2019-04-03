@@ -96,12 +96,11 @@ function asmFunc(global, env, buffer) {
  }
  
  function $17() {
-  var i64toi32_i32$5 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0;
+  var i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$4 = 0;
   i64toi32_i32$3 = 1;
   i64toi32_i32$4 = 0 + i64toi32_i32$3 | 0;
   i64toi32_i32$5 = 2147483648 + 0 | 0;
   if (i64toi32_i32$4 >>> 0 < i64toi32_i32$3 >>> 0) i64toi32_i32$5 = i64toi32_i32$5 + 1 | 0;
-  i64toi32_i32$5 = i64toi32_i32$5;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$5;
   return i64toi32_i32$4 | 0;
  }
