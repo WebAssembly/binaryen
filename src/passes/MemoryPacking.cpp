@@ -35,7 +35,8 @@ struct MemoryPacking : public Pass {
         segment.data.pop_back();
       }
       // we can only handle a constant offset for splitting
-      if (auto* offset = segment.offset->dynCast<Const>()) {
+      Const* offset;
+      if (!segment.isPassive() && (offset = segment.offset->dynCast<Const>())) {
         // Find runs of zeros, and split
         auto& data = segment.data;
         auto base = offset->value.geti32();
@@ -79,4 +80,3 @@ Pass *createMemoryPackingPass() {
 }
 
 } // namespace wasm
-

@@ -373,7 +373,9 @@ struct Walker : public VisitorType {
 
   void walkMemory(Memory* memory) {
     for (auto& segment : memory->segments) {
-      walk(segment.offset);
+      if (!segment.isPassive()) {
+        walk(segment.offset);
+      }
     }
     static_cast<SubType*>(this)->visitMemory(memory);
   }

@@ -31,6 +31,9 @@ namespace MemoryUtils {
     if (memory.segments.size() == 0) return true;
     std::vector<char> data;
     for (auto& segment : memory.segments) {
+      if (segment.isPassive()) {
+        return false;
+      }
       auto* offset = segment.offset->dynCast<Const>();
       if (!offset) return false;
     }
@@ -53,4 +56,3 @@ namespace MemoryUtils {
 } // namespace wasm
 
 #endif // wasm_ir_memory_h
-

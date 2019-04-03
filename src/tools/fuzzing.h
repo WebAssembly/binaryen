@@ -257,12 +257,32 @@ private:
     wasm.memory.exists = true;
     // use one page
     wasm.memory.initial = wasm.memory.max = 1;
-    // init some data
-    wasm.memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
-    auto num = upTo(USABLE_MEMORY * 2);
-    for (size_t i = 0; i < num; i++) {
-      auto value = upTo(512);
-      wasm.memory.segments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
+    if (features.hasBulkMemory()) {
+      size_t memCovered = 0;
+      // need at least one segment for memory.inits
+      size_t numSegments = upTo(15) + 1;
+      for (size_t i = 0; i < numSegments; i++) {
+        Memory::Segment segment;
+        segment.flags = upTo(3);
+        size_t segSize = upTo(4096);
+        segment.data.resize(segSize);
+        for (size_t j = 0; j < segSize; j++) {
+          segment.data[j] = upTo(512);
+        }
+        if (!segment.isPassive()) {
+          segment.offset = builder.makeConst(Literal(int32_t(memCovered)));
+          memCovered += segSize;
+        }
+        wasm.memory.segments.push_back(segment);
+      }
+    } else {
+      // init some data
+      wasm.memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+      auto num = upTo(USABLE_MEMORY * 2);
+      for (size_t i = 0; i < num; i++) {
+        auto value = upTo(512);
+        wasm.memory.segments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
+      }
     }
   }
 
@@ -1758,30 +1778,33 @@ private:
 
   Expression* makeMemoryInit() {
     if (!allowMemory) return makeTrivial(none);
-    auto segment = uint32_t(get32());
-    Expression* dest = make(i32);
-    Expression* offset = make(i32);
-    Expression* size = make(i32);
+    uint32_t segment = upTo(wasm.memory.segments.size());
+    size_t totalSize = wasm.memory.segments[segment].data.size();;;;
+    size_t offsetVal = upTo(totalSize);
+    size_t sizeVal = upTo(totalSize - offsetVal);
+    Expression* dest = makePointer();
+    Expression* offset = builder.makeConst(Literal(int32_t(offsetVal)));
+    Expression* size = builder.makeConst(Literal(int32_t(sizeVal)));
     return builder.makeMemoryInit(segment, dest, offset, size);
   }
 
   Expression* makeDataDrop() {
     if (!allowMemory) return makeTrivial(none);
-    return builder.makeDataDrop(get32());
+    return builder.makeDataDrop(upTo(wasm.memory.segments.size()));
   }
 
   Expression* makeMemoryCopy() {
     if (!allowMemory) return makeTrivial(none);
-    Expression* dest = make(i32);
-    Expression* source = make(i32);
+    Expression* dest = makePointer();
+    Expression* source = makePointer();
     Expression* size = make(i32);
     return builder.makeMemoryCopy(dest, source, size);
   }
 
   Expression* makeMemoryFill() {
     if (!allowMemory) return makeTrivial(none);
-    Expression* dest = make(i32);
-    Expression* value = make(i32);
+    Expression* dest = makePointer();
+    Expression* value = makePointer();
     Expression* size = make(i32);
     return builder.makeMemoryFill(dest, value, size);
   }

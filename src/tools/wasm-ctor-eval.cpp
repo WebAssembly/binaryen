@@ -162,9 +162,9 @@ public:
     memorySize = total / Memory::kPageSize;
   }
 
-  // flatten memory into a single segment
-  void flattenMemory() {
-    MemoryUtils::flatten(wasm.memory);
+  // flatten memory into a single segment, return true if successful
+  bool flattenMemory() {
+    return MemoryUtils::flatten(wasm.memory);
   }
 };
 
@@ -321,7 +321,9 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // create an instance for evalling
     EvallingModuleInstance instance(wasm, &interface);
     // flatten memory, so we do not depend on the layout of data segments
-    instance.flattenMemory();
+    if (!instance.flattenMemory()) {
+      Fatal() << "  ...stopping since could not flatten memory\n";
+    }
     // set up the stack area and other environment details
     instance.setupEnvironment();
     // we should not add new globals from here on; as a result, using

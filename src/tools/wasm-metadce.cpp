@@ -195,7 +195,9 @@ struct MetaDCEGraph {
       rooter.walk(segment.offset);
     }
     for (auto& segment : wasm.memory.segments) {
-      rooter.walk(segment.offset);
+      if (!segment.isPassive()) {
+        rooter.walk(segment.offset);
+      }
     }
 
     // A parallel scanner for function bodies
