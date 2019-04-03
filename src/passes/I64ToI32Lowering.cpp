@@ -27,6 +27,7 @@
 #include "emscripten-optimizer/istring.h"
 #include "support/name.h"
 #include "wasm-builder.h"
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "asmjs/shared-constants.h"
@@ -627,11 +628,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   // Ensure memory exists with a minimal size, enough for round-tripping operations on
   // address 0, which we need for reinterpret operations.
   void ensureMinimalMemory() {
-    auto& memory = getModule()->memory;
-    if (!memory.exists) {
-      memory.exists = true;
-      memory.initial = memory.max = 1;
-    }
+    MemoryUtils::ensureExists(getModule()->memory);
   }
 
   void lowerTruncFloatToInt(Unary *curr) {
