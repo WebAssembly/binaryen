@@ -260,11 +260,11 @@ private:
     if (features.hasBulkMemory()) {
       size_t memCovered = 0;
       // need at least one segment for memory.inits
-      size_t numSegments = upTo(15) + 1;
+      size_t numSegments = upTo(8) + 1;
       for (size_t i = 0; i < numSegments; i++) {
         Memory::Segment segment;
         segment.flags = upTo(3);
-        size_t segSize = upTo(4096);
+        size_t segSize = upTo(USABLE_MEMORY * 2);
         segment.data.resize(segSize);
         for (size_t j = 0; j < segSize; j++) {
           segment.data[j] = upTo(512);
