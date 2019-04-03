@@ -97,6 +97,12 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       }
       neededFunctions.clear();
     }
+
+    // Intrinsics may use memory, so ensure the module has one.
+    if (!module->memory.exists) {
+      module->memory.exists = true;
+      module->memory.initial = module->memory.max = 1;
+    }
   }
 
   void addNeededFunctions(Module &m, Name name, std::set<Name> &needed) {
