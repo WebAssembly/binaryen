@@ -3,6 +3,7 @@
  (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
+ (memory $0 1 1)
  (func $SAFE_HEAP_LOAD_i32_1_1 (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2

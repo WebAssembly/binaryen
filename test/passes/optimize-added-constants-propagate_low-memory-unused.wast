@@ -1,4 +1,5 @@
 (module
+  (memory 1 1)
   (func $consts
     (drop
       (i32.load (i32.const 0))

@@ -1,9 +1,6 @@
 (module
-<<<<<<< HEAD
   (memory 1)
-=======
   (global $glob (mut i32) (i32.const 1))
->>>>>>> origin/master
   (func $loop1
     (loop $loop
       (drop (i32.const 10))

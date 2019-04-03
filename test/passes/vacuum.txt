@@ -329,6 +329,7 @@
 (module
  (type $0 (func (param i32) (result i32)))
  (type $1 (func (param i32 i32 i32)))
+ (memory $0 1 1)
  (global $global$1 (mut i32) (i32.const 0))
  (export "compress" (func $3))
  (func $_deflate (; 0 ;) (type $0) (param $0 i32) (result i32)

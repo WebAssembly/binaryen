@@ -1,4 +1,5 @@
 (module
+ (memory 1 1)
  (func $v128.load (param $0 i32) (result v128)
   (v128.load offset=0 align=16
     (local.get $0)
