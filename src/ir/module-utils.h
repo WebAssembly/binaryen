@@ -17,6 +17,7 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
+#include "wasm-binary.h"
 #include "wasm.h"
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
@@ -67,6 +68,75 @@ struct BinaryIndexes {
     assert(functionIndexes.size() == wasm.functions.size());
   }
 };
+
+// Read the features section into the out param, if it is present. If it is not
+// present, return false
+inline bool readFeaturesSection(const Module& module, FeatureSet& features) try {
+  features = FeatureSet::MVP;
+
+  const UserSection* section = nullptr;
+  for (auto &s : module.userSections) {
+    if (s.name == BinaryConsts::UserSections::TargetFeatures) {
+      section = &s;
+      break;
+    }
+  }
+
+  if (!section) {
+    return false;
+  }
+
+  // read target features section
+  size_t index = 0;
+  auto next_byte = [&]() {
+    return section->data.at(index++);
+  };
+
+  size_t num_feats = U32LEB().read(next_byte).value;
+  for (size_t i = 0; i < num_feats; ++i) {
+    uint8_t prefix = section->data.at(index++);
+    if (prefix != '=' && prefix != '+' && prefix != '-') {
+      // unrecognized prefix, silently fail
+      features = FeatureSet::MVP;
+      return false;
+    }
+
+    size_t len = U32LEB().read(next_byte).value;
+    if (index + len > section->data.size()) {
+      // ill-formed string, silently fail
+      features = FeatureSet::MVP;
+      return false;
+    }
+    std::string name(&section->data[index], len);
+    index += len;
+
+    if (prefix == '-') {
+      continue;
+    }
+
+    if (name == BinaryConsts::UserSections::AtomicsFeature) {
+      features.setAtomics();
+    } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
+      features.setBulkMemory();
+    } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
+      WASM_UNREACHABLE(); // TODO: exception handling
+    } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
+      features.setTruncSat();
+    } else if (name == BinaryConsts::UserSections::SignExtFeature) {
+      features.setSignExt();
+    } else if (name == BinaryConsts::UserSections::SIMD128Feature) {
+      features.setSIMD();
+    }
+  }
+
+  return true;
+
+// silently fail to read features. Maybe this should warn?
+} catch (std::out_of_range& e) {
+  features = FeatureSet::MVP;
+  return false;
+}
+
 
 inline Function* copyFunction(Function* func, Module& out) {
   auto* ret = new Function();
@@ -254,4 +324,3 @@ inline void iterDefinedFunctions(Module& wasm, T visitor) {
 } // namespace wasm
 
 #endif // wasm_ir_module_h
-

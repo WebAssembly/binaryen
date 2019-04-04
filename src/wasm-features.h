@@ -54,6 +54,11 @@ struct FeatureSet {
   void setSignExt(bool v = true) { set(SignExt, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
+  void enable(const FeatureSet& other) { features |= other.features; }
+  void disable(const FeatureSet& other) {
+    features = features & ~other.features & All;
+  }
+
   bool operator<=(const FeatureSet& other) {
     return !(features & ~other.features);
   }

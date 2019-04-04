@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <fstream>
 
-#include "leb.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
 #include "ir/module-utils.h"
