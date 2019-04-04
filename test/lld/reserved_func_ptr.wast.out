@@ -178,10 +178,7 @@
     "_dynCall_viii"
   ],
   "exports": [
-    "memory",
     "__wasm_call_ctors",
-    "__heap_base",
-    "__data_end",
     "main",
     "stackSave",
     "stackAlloc",
@@ -189,6 +186,10 @@
     "__growWasmMemory",
     "dynCall_viii"
   ],
+  "namedGlobals": {
+    "__heap_base" : "66112",
+    "__data_end" : "568"
+  },
   "invokeFuncs": [
   ]
 }
