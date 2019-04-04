@@ -12,6 +12,7 @@ SET(passes_SOURCES
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
+  Directize.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
   Flatten.cpp

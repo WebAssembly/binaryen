@@ -512,6 +512,7 @@ void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
 }
 
 void FunctionValidator::visitLoad(Load* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   if (curr->isAtomic) {
     shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
     shouldBeTrue(curr->type == i32 || curr->type == i64 || curr->type == unreachable, curr, "Atomic load should be i32 or i64");
@@ -528,6 +529,7 @@ void FunctionValidator::visitLoad(Load* curr) {
 }
 
 void FunctionValidator::visitStore(Store* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   if (curr->isAtomic) {
     shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
     shouldBeTrue(curr->valueType == i32 || curr->valueType == i64 || curr->valueType == unreachable, curr, "Atomic store should be i32 or i64");
@@ -545,6 +547,7 @@ void FunctionValidator::visitStore(Store* curr) {
 }
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
@@ -554,6 +557,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 }
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
@@ -567,6 +571,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 }
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWait must have type i32");
@@ -577,6 +582,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
 }
 
 void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicNotify must have type i32");
@@ -647,6 +653,7 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.init must have type none");
   shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.init dest must be an i32");
@@ -656,12 +663,14 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
 }
 
 void FunctionValidator::visitDataDrop(DataDrop* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "data.drop must have type none");
   shouldBeTrue(curr->segment < getModule()->memory.segments.size(), curr, "data.drop segment index out of bounds");
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.copy must have type none");
   shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.copy dest must be an i32");
@@ -670,6 +679,7 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
+  shouldBeTrue(getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.fill dest must be an i32");
@@ -1289,6 +1299,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 static void validateMemory(Module& module, ValidationInfo& info) {
   auto& curr = module.memory;
   info.shouldBeFalse(curr.initial > curr.max, "memory", "memory max >= initial");
+  info.shouldBeTrue(curr.initial <= Memory::kMaxSize, "memory", "initial memory must be <= 4GB");
   info.shouldBeTrue(!curr.hasMax() || curr.max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB, or unlimited");
   info.shouldBeTrue(!curr.shared || curr.hasMax(), "memory", "shared memory must have max size");
   if (curr.shared) info.shouldBeTrue(info.features.hasAtomics(), "memory", "memory is shared, but atomics are disabled");

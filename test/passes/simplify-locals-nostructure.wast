@@ -1,4 +1,5 @@
 (module
+  (memory 1)
   (func $contrast ;; check for tee and structure sinking
     (local $x i32)
     (local $y i32)

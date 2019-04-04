@@ -1,6 +1,7 @@
 (module
  (type $0 (func))
  (type $1 (func (result i32)))
+ (memory $0 1)
  (func $a (; 0 ;) (type $0)
   (local $y i32)
   (local.set $y

@@ -1,1 +1,3 @@
-(module)
+(module
+  (memory 1 1)
+)

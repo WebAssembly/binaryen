@@ -1,6 +1,7 @@
 (module
  (type $0 (func (result i32)))
  (type $1 (func))
+ (memory $0 1)
  (func $load-would-normally-have-side-effects (; 0 ;) (type $0) (result i32)
   (i64.ge_s
    (i64.const 2912825531628789796)

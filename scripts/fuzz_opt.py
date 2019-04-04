@@ -26,8 +26,9 @@ from test.shared import options
 
 # parameters
 
+NANS = True
 
-FUZZ_OPTS = ['--mvp-features']  # may want to add '--no-fuzz-nans' for cross-VM testing
+FUZZ_OPTS = ['--mvp-features']
 
 INPUT_SIZE_LIMIT = 250 * 1024
 
@@ -134,9 +135,11 @@ def run_vms(prefix):
   if len(results) == 0:
     results = [0]
 
-  first = results[0]
-  for i in range(len(results)):
-    compare(first, results[i], 'comparing between vms at ' + str(i))
+  # NaNs are a source of nondeterminism between VMs; don't compare them
+  if not NANS:
+    first = results[0]
+    for i in range(len(results)):
+      compare(first, results[i], 'comparing between vms at ' + str(i))
 
   return results
 
@@ -240,6 +243,9 @@ def get_multiple_opt_choices():
 
 
 # main
+
+if not NANS:
+  FUZZ_OPTS += ['--no-fuzz-nans']
 
 if __name__ == '__main__':
   print('checking infinite random inputs')
