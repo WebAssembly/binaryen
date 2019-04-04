@@ -292,7 +292,7 @@ int main(int argc, const char* argv[]) {
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
         i++;
-        bool valid = WasmValidator().validate(*modules[moduleName], options.getFeatures());
+        bool valid = WasmValidator().validate(*modules[moduleName], options.passOptions.features);
         if (!valid) {
           WasmPrinter::printModule(modules[moduleName].get());
         }

@@ -185,7 +185,7 @@ int main(int argc, const char *argv[]) {
   if (memInit != options.extra.end()) {
     if (options.runningDefaultOptimizationPasses()) {
       PassRunner runner(&wasm);
-      runner.setFeatures(options.getFeatures());
+      runner.setFeatures(options.passOptions.features);
       runner.add("memory-packing");
       runner.run();
     }
