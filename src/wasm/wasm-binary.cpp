@@ -58,6 +58,7 @@ void WasmBinaryWriter::write() {
   writeExports();
   writeStart();
   writeTableElements();
+  writeDataCount();
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
@@ -309,6 +310,15 @@ void WasmBinaryWriter::writeExports() {
     }
 
   }
+  finishSection(start);
+}
+
+void WasmBinaryWriter::writeDataCount() {
+  if (!wasm->features.hasBulkMemory() || !wasm->memory.segments.size()) {
+    return;
+  }
+  auto start = startSection(BinaryConsts::Section::DataCount);
+  o << U32LEB(wasm->memory.segments.size());
   finishSection(start);
 }
 
@@ -657,6 +667,7 @@ void WasmBinaryBuilder::read() {
         break;
       }
       case BinaryConsts::Section::Data: readDataSegments(); break;
+      case BinaryConsts::Section::DataCount: readDataCount(); break;
       case BinaryConsts::Section::Table: readFunctionTableDeclaration(); break;
       default: {
         readUserSection(payloadLen);
@@ -1504,9 +1515,18 @@ void WasmBinaryBuilder::processFunctions() {
   wasm.updateMaps();
 }
 
+void WasmBinaryBuilder::readDataCount() {
+  if (debug) std::cerr << "== readDataCount" << std::endl;
+  hasDataCount = true;
+  dataCount = getU32LEB();
+}
+
 void WasmBinaryBuilder::readDataSegments() {
   if (debug) std::cerr << "== readDataSegments" << std::endl;
   auto num = getU32LEB();
+  if (hasDataCount && num != dataCount) {
+    throwError("Number of segments does not agree with DataCount section");
+  }
   for (size_t i = 0; i < num; i++) {
     Memory::Segment curr;
     uint32_t flags = getU32LEB();
