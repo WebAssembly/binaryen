@@ -15,6 +15,7 @@
  (type $13 (func (param v128 f64) (result v128)))
  (type $14 (func (param v128) (result v128)))
  (type $15 (func (param v128 v128 v128) (result v128)))
+ (memory $0 1 1)
  (func $v128.load (; 0 ;) (type $0) (param $0 i32) (result v128)
   (v128.load
    (local.get $0)

@@ -1,4 +1,5 @@
 (module
+  (memory 1)
   (func $a ;; load 8s, but use is 8u, so load should be signed
     (local $y i32)
     (local.set $y

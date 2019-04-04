@@ -6,6 +6,7 @@
  (type $4 (func (param f64) (result f64)))
  (type $5 (func (param f32) (result f32)))
  (type $6 (func (param i32) (result i32)))
+ (memory $0 1)
  (func $copysign64 (; 0 ;) (type $0) (param $0 f64) (param $1 f64) (result f64)
   (f64.reinterpret_i64
    (i64.or

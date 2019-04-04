@@ -33,6 +33,7 @@
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/find_all.h"
 #include "passes/intrinsics-module.h"
@@ -97,6 +98,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       }
       neededFunctions.clear();
     }
+
+    // Intrinsics may use memory, so ensure the module has one.
+    MemoryUtils::ensureExists(module->memory);
   }
 
   void addNeededFunctions(Module &m, Name name, std::set<Name> &needed) {

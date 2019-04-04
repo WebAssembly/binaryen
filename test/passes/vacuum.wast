@@ -686,6 +686,7 @@
  )
 )
 (module ;; vacuum away a drop on an if where both arms can be vacuumed
+ (memory 1 1)
  (global $global$1 (mut i32) (i32.const 0))
  (func $_deflate (param i32) (result i32)
   (call $_deflate (local.get $0))

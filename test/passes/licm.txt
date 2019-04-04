@@ -4,6 +4,7 @@
  (type $2 (func (result i64)))
  (type $3 (func (param i32)))
  (type $4 (func (param i32) (result i32)))
+ (memory $0 1)
  (global $glob (mut i32) (i32.const 1))
  (func $loop1 (; 0 ;) (type $0)
   (drop

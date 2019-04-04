@@ -48,6 +48,14 @@ namespace MemoryUtils {
     memory.segments[0].data.swap(data);
     return true;
   }
+
+  // Ensures that the memory exists (of minimal size).
+  inline void ensureExists(Memory& memory) {
+    if (!memory.exists) {
+      memory.exists = true;
+      memory.initial = memory.max = 1;
+    }
+  }
 };
 
 } // namespace wasm

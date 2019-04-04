@@ -60,6 +60,7 @@ class FeatureValidationTest(unittest.TestCase):
   def test_simd_load(self):
     module = """
     (module
+     (memory 1 1)
      (func $foo
       (drop (v128.load (i32.const 0)))
      )

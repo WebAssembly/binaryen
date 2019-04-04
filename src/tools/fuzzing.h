@@ -29,6 +29,7 @@ high chance for set at start of loop
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
+#include "ir/memory-utils.h"
 #include <ir/utils.h>
 
 namespace wasm {
@@ -254,9 +255,7 @@ private:
   }
 
   void setupMemory() {
-    wasm.memory.exists = true;
-    // use one page
-    wasm.memory.initial = wasm.memory.max = 1;
+    MemoryUtils::ensureExists(wasm.memory);
     // init some data
     wasm.memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
     auto num = upTo(USABLE_MEMORY * 2);
