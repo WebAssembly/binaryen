@@ -29,8 +29,8 @@
 #include "wasm-traversal.h"
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
-#include "wasm-builder.h"
 #include "parsing.h"
+#include "wasm-builder.h"
 #include "wasm-validator.h"
 #include "ir/import-utils.h"
 
@@ -96,7 +96,7 @@ struct LEB {
     return offset;
   }
 
-  void read(std::function<MiniT()> get) {
+  LEB<T, MiniT>& read(std::function<MiniT()> get) {
     value = 0;
     T shift = 0;
     MiniT byte;
@@ -134,6 +134,7 @@ struct LEB {
         }
       }
     }
+    return *this;
   }
 };
 
@@ -352,10 +353,19 @@ extern const char* Linking;
 extern const char* Producers;
 extern const char* TargetFeatures;
 
+extern const char* AtomicsFeature;
+extern const char* BulkMemoryFeature;
+extern const char* ExceptionHandlingFeature;
+extern const char* TruncSatFeature;
+extern const char* SignExtFeature;
+extern const char* SIMD128Feature;
+
 enum Subsection {
   NameFunction = 1,
   NameLocal = 2,
 };
+
+
 }
 
 enum ASTNodes {

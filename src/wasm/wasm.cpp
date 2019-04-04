@@ -33,6 +33,12 @@ const char* Dylink = "dylink";
 const char* Linking = "linking";
 const char* Producers = "producers";
 const char* TargetFeatures = "target_features";
+const char* AtomicsFeature = "atomics";
+const char* BulkMemoryFeature = "bulk-memory";
+const char* ExceptionHandlingFeature = "exception-handling";
+const char* TruncSatFeature = "nontrapping-fptoint";
+const char* SignExtFeature = "sign-ext";
+const char* SIMD128Feature = "simd128";
 }
 }
 
