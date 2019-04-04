@@ -68,6 +68,8 @@
     "print_message",
     "__post_instantiate"
   ],
+  "namedGlobals": {
+  },
   "invokeFuncs": [
   ]
 }

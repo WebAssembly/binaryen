@@ -123,16 +123,17 @@
     "___growWasmMemory"
   ],
   "exports": [
-    "memory",
     "__wasm_call_ctors",
     "main",
-    "__heap_base",
-    "__data_end",
     "stackSave",
     "stackAlloc",
     "stackRestore",
     "__growWasmMemory"
   ],
+  "namedGlobals": {
+    "__heap_base" : "66128",
+    "__data_end" : "581"
+  },
   "invokeFuncs": [
     "invoke_ffd"
   ]
