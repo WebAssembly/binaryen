@@ -2360,7 +2360,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenIndex initial, B
 
 // Memory. One per module
 
-void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char** segments, uint32_t* segmentFlags, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments, uint8_t shared) {
+void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char** segments, int8_t* segmentPassive, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments, uint8_t shared) {
   if (tracing) {
     std::cout << "  {\n";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
@@ -2378,10 +2378,10 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     }
     if (numSegments == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
     std::cout << " };\n";
-    std::cout << "    uint32_t segmentFlags[] = { ";
+    std::cout << "    int8_t segmentPassive[] = { ";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
       if (i > 0) std::cout << ", ";
-      std::cout << segmentFlags[i];
+      std::cout << int(segmentPassive[i]);
     }
     if (numSegments == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
     std::cout << " };\n";
@@ -2401,7 +2401,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     std::cout << " };\n";
     std::cout << "    BinaryenSetMemory(the_module, " << initial << ", " << maximum << ", ";
     traceNameOrNULL(exportName);
-    std::cout << ", segments, segmentFlags, segmentOffsets, segmentSizes, " << numSegments << ", " << int(shared) << ");\n";
+    std::cout << ", segments, segmentPassive, segmentOffsets, segmentSizes, " << numSegments << ", " << int(shared) << ");\n";
     std::cout << "  }\n";
   }
 
@@ -2418,7 +2418,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     wasm->addExport(memoryExport.release());
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    wasm->memory.segments.emplace_back(segmentFlags[i], (Expression*)segmentOffsets[i], segments[i], segmentSizes[i]);
+    wasm->memory.segments.emplace_back(segmentPassive[i], (Expression*)segmentOffsets[i], segments[i], segmentSizes[i]);
   }
 }
 

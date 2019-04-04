@@ -423,20 +423,15 @@ function test_core() {
 
   module.setMemory(1, 256, "mem", [
     {
-      flags: 0,
+      passive: false,
       offset: module.i32.const(10),
       data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
-      flags: 1,
+      passive: true,
       offset: null,
       data: "I am passive".split('').map(function(x) { return x.charCodeAt(0) })
-    },
-    {
-      flags: 2,
-      offset: module.i32.const(64),
-      data: "with index".split('').map(function(x) { return x.charCodeAt(0) })
-    },
+    }
   ]);
 
   // Start function. One per module

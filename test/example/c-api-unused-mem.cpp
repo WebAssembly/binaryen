@@ -15,10 +15,10 @@ int main() {
   BinaryenModuleAutoDrop(the_module);
   {
     const char* segments[] = { 0 };
-    uint32_t segmentFlags[] = { 0 };
+    int8_t segmentPassive[] = { 0 };
     BinaryenExpressionRef segmentOffsets[] = { 0 };
     BinaryenIndex segmentSizes[] = { 0 };
-    BinaryenSetMemory(the_module, 256, 256, "memory", segments, segmentFlags, segmentOffsets, segmentSizes, 0, 0);
+    BinaryenSetMemory(the_module, 256, 256, "memory", segments, segmentPassive, segmentOffsets, segmentSizes, 0, 0);
   }
   the_relooper = RelooperCreate(the_module);
   {
@@ -57,10 +57,10 @@ int main() {
   }
   {
     const char* segments[] = { 0 };
-    uint32_t segmentFlags[] = { 0 };
+    int8_t segmentPassive[] = { 0 };
     BinaryenExpressionRef segmentOffsets[] = { 0 };
     BinaryenIndex segmentSizes[] = { 0 };
-    BinaryenSetMemory(the_module, 1024, 1024, NULL, segments, segmentFlags, segmentOffsets, segmentSizes, 0, 0);
+    BinaryenSetMemory(the_module, 1024, 1024, NULL, segments, segmentPassive, segmentOffsets, segmentSizes, 0, 0);
   }
   expressions[11] = BinaryenConst(the_module, BinaryenLiteralInt32(65535));
   expressions[12] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
