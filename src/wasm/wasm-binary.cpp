@@ -58,6 +58,7 @@ void WasmBinaryWriter::write() {
   writeExports();
   writeStart();
   writeTableElements();
+  writeDataCount();
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
@@ -317,6 +318,15 @@ static bool isEmpty(Memory::Segment& segment) {
 
 static bool isConstantOffset(Memory::Segment& segment) {
   return segment.offset && segment.offset->is<Const>();
+}
+
+void WasmBinaryWriter::writeDataCount() {
+  if (!features.hasBulkMemory()) {
+    return;
+  }
+  auto start = startSection(BinaryConsts::Section::DataCount);
+  o << U32LEB(wasm->memory.segments.size());
+  finishSection(start);
 }
 
 void WasmBinaryWriter::writeDataSegments() {
