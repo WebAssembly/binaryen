@@ -316,7 +316,7 @@ static bool isEmpty(Memory::Segment& segment) {
 }
 
 static bool isConstantOffset(Memory::Segment& segment) {
-  return segment.offset != nullptr && segment.offset->is<Const>();
+  return segment.offset && segment.offset->is<Const>();
 }
 
 void WasmBinaryWriter::writeDataSegments() {
@@ -324,11 +324,12 @@ void WasmBinaryWriter::writeDataSegments() {
 
   Index emitted = 0;
   auto emit = [&](Memory::Segment& segment) {
-    o << U32LEB(segment.flags);
-    if (segment.hasMemIndex()) {
-      o << U32LEB(segment.index);
+    uint32_t flags = 0;
+    if (segment.isPassive) {
+      flags |= BinaryConsts::IsPassive;
     }
-    if (!segment.isPassive()) {
+    o << U32LEB(flags);
+    if (!segment.isPassive) {
       writeExpression(segment.offset);
       o << int8_t(BinaryConsts::End);
     }
@@ -347,7 +348,7 @@ void WasmBinaryWriter::writeDataSegments() {
         numDynamic++;
       }
     }
-    hasPassiveSegments |= segment.isPassive();
+    hasPassiveSegments |= segment.isPassive;
   }
 
   if (hasPassiveSegments) {
@@ -1560,14 +1561,16 @@ void WasmBinaryBuilder::readDataSegments() {
   auto num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
     Memory::Segment curr;
-    curr.flags = getU32LEB();
-    if (curr.flags > 2) {
-      throwError("bad segment flags, must be 0, 1, or 2, not " + std::to_string(curr.flags));
+    uint32_t flags = getU32LEB();
+    if (flags > 2) {
+      throwError("bad segment flags, must be 0, 1, or 2, not " +
+                 std::to_string(flags));
     }
-    if (curr.hasMemIndex()) {
+    curr.isPassive = flags & BinaryConsts::IsPassive;
+    if (flags & BinaryConsts::HasMemIndex) {
       curr.index = getU32LEB();
     }
-    if (!curr.isPassive()) {
+    if (!curr.isPassive) {
       curr.offset = readExpression();
     }
     auto size = getU32LEB();

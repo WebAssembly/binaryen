@@ -36,7 +36,7 @@ struct MemoryPacking : public Pass {
       }
       // we can only handle a constant offset for splitting
       Const* offset;
-      if (!segment.isPassive() && (offset = segment.offset->dynCast<Const>())) {
+      if (!segment.isPassive && (offset = segment.offset->dynCast<Const>())) {
         // Find runs of zeros, and split
         auto& data = segment.data;
         auto base = offset->value.geti32();

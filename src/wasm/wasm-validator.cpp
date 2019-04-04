@@ -1293,15 +1293,9 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   info.shouldBeTrue(!curr.shared || curr.hasMax(), "memory", "shared memory must have max size");
   if (curr.shared) info.shouldBeTrue(info.features.hasAtomics(), "memory", "memory is shared, but atomics are disabled");
   for (auto& segment : curr.segments) {
-    info.shouldBeTrue(segment.flags < 3, segment.offset, "segment flags should be 0, 1, or 2");
     Index size = segment.data.size();
-    if (segment.hasMemIndex()) {
-      info.shouldBeEqual(segment.index, 0u, segment.offset, "segment memory index should be 0");
-    }
-    if (segment.flags > 0) {
+    if (segment.isPassive) {
       info.shouldBeTrue(info.features.hasBulkMemory(), segment.offset, "nonzero segment flags (bulk memory is disabled)");
-    }
-    if (segment.isPassive()) {
       info.shouldBeEqual(segment.offset, (Expression*)nullptr, segment.offset, "passive segment should not have an offset");
     } else {
       if (!info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;

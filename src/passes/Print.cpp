@@ -1289,7 +1289,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMajor(o, "data ");
-      if (segment.isPassive()) {
+      if (segment.isPassive) {
         printMedium(o, "passive");
       } else {
         visit(segment.offset);

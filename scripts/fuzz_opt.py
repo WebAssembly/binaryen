@@ -27,7 +27,7 @@ from test.shared import options
 # parameters
 
 
-FUZZ_OPTS = ['--mvp-features']  # may want to add '--no-fuzz-nans' for cross-VM testing
+FUZZ_OPTS = ['--mvp-features', '--enable-bulk-memory']  # may want to add '--no-fuzz-nans' for cross-VM testing
 
 INPUT_SIZE_LIMIT = 250 * 1024
 
@@ -125,7 +125,7 @@ def run_vms(prefix):
   results = []
   # append to this list to add results from VMs
   results += [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
-  results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
+  results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--experimental-wasm-bulk-memory', '--', prefix + 'wasm']))]
   # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
   # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
   # run(['../spec/interpreter/wasm', prefix + 'wasm'])

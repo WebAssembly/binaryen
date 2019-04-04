@@ -263,13 +263,13 @@ private:
       size_t numSegments = upTo(8) + 1;
       for (size_t i = 0; i < numSegments; i++) {
         Memory::Segment segment;
-        segment.flags = upTo(3);
+        segment.isPassive = bool(upTo(1));
         size_t segSize = upTo(USABLE_MEMORY * 2);
         segment.data.resize(segSize);
         for (size_t j = 0; j < segSize; j++) {
           segment.data[j] = upTo(512);
         }
-        if (!segment.isPassive()) {
+        if (!segment.isPassive) {
           segment.offset = builder.makeConst(Literal(int32_t(memCovered)));
           memCovered += segSize;
         }
@@ -1779,7 +1779,7 @@ private:
   Expression* makeMemoryInit() {
     if (!allowMemory) return makeTrivial(none);
     uint32_t segment = upTo(wasm.memory.segments.size());
-    size_t totalSize = wasm.memory.segments[segment].data.size();;;;
+    size_t totalSize = wasm.memory.segments[segment].data.size();
     size_t offsetVal = upTo(totalSize);
     size_t sizeVal = upTo(totalSize - offsetVal);
     Expression* dest = makePointer();

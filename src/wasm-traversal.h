@@ -373,7 +373,7 @@ struct Walker : public VisitorType {
 
   void walkMemory(Memory* memory) {
     for (auto& segment : memory->segments) {
-      if (!segment.isPassive()) {
+      if (!segment.isPassive) {
         walk(segment.offset);
       }
     }

@@ -15,7 +15,6 @@
  */
 
 #include "wasm.h"
-#include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "ir/branch-utils.h"
 
@@ -970,14 +969,5 @@ void Module::updateMaps() {
 void Module::clearDebugInfo() {
   debugInfoFileNames.clear();
 }
-
-bool Memory::Segment::isPassive() const {
-  return flags & BinaryConsts::IsPassive;
-}
-
-bool Memory::Segment::hasMemIndex() const {
-  return flags & BinaryConsts::HasMemIndex;
-}
-
 
 } // namespace wasm

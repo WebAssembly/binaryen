@@ -97,7 +97,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     // apply memory segments
     for (auto& segment : wasm.memory.segments) {
-      if (segment.isPassive()) {
+      if (segment.isPassive) {
         continue;
       }
       Address offset = (uint32_t)ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();

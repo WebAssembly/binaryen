@@ -525,7 +525,7 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
     flattenAppend(ast, ValueBuilder::makeName(name));
   }
   for (auto& seg : wasm->memory.segments) {
-    assert(!seg.isPassive() && "passive segments not implemented yet");
+    assert(!seg.isPassive && "passive segments not implemented yet");
     std::ostringstream out;
     out << "assign" << funcName.str << "("
       << constOffset(seg)

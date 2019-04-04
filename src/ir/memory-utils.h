@@ -31,7 +31,7 @@ namespace MemoryUtils {
     if (memory.segments.size() == 0) return true;
     std::vector<char> data;
     for (auto& segment : memory.segments) {
-      if (segment.isPassive()) {
+      if (segment.isPassive) {
         return false;
       }
       auto* offset = segment.offset->dynCast<Const>();

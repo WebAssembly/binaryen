@@ -195,7 +195,7 @@ struct MetaDCEGraph {
       rooter.walk(segment.offset);
     }
     for (auto& segment : wasm.memory.segments) {
-      if (!segment.isPassive()) {
+      if (!segment.isPassive) {
         rooter.walk(segment.offset);
       }
     }

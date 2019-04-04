@@ -1516,8 +1516,7 @@ void SExpressionWasmBuilder::parseInnerData(Element& s, Index i, Expression* off
       stringToBinary(input, size, data);
     }
   }
-  uint32_t flags = isPassive ? BinaryConsts::IsPassive : 0;
-  wasm.memory.segments.emplace_back(flags, offset, data.data(), data.size());
+  wasm.memory.segments.emplace_back(isPassive, offset, data.data(), data.size());
 }
 
 void SExpressionWasmBuilder::parseExport(Element& s) {
