@@ -926,7 +926,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
       }
     }
   });
-  meta << "\n  ]\n";
+  meta << "\n  ],\n";
 
   meta << "  \"features\": [";
   commaFirst = true;
