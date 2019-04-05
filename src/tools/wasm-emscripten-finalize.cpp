@@ -120,7 +120,6 @@ int main(int argc, const char *argv[]) {
   ModuleReader reader;
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
-    options.calculateFeatures(wasm);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     std::cerr << '\n';
@@ -130,6 +129,8 @@ int main(int argc, const char *argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source map";
   }
+
+  options.calculateFeatures(wasm);
 
   if (options.debug) {
     std::cerr << "Module before:\n";
@@ -226,7 +227,7 @@ int main(int argc, const char *argv[]) {
     WasmPrinter::printModule(&wasm, std::cerr);
   }
 
-  // Stip target features section (needed for metadata)
+  // Strip target features section (its information is in the metadata)
   {
     PassRunner passRunner(&wasm);
     passRunner.add("strip-target-features");
