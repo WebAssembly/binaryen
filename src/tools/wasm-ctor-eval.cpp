@@ -25,9 +25,9 @@
 #include <memory>
 
 #include "pass.h"
-#include "support/command-line.h"
 #include "support/file.h"
 #include "support/colors.h"
+#include "tool-options.h"
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
 #include "wasm-builder.h"
@@ -381,7 +381,7 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   std::string ctorsString;
 
-  Options options("wasm-ctor-eval", "Execute C++ global constructors ahead of time");
+  ToolOptions options("wasm-ctor-eval", "Execute C++ global constructors ahead of time");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -423,6 +423,8 @@ int main(int argc, const char* argv[]) {
     }
   }
 
+  options.calculateFeatures(wasm);
+
   if (!WasmValidator().validate(wasm)) {
     WasmPrinter::printModule(&wasm);
     Fatal() << "error in validating input";
@@ -440,6 +442,7 @@ int main(int argc, const char* argv[]) {
   // Do some useful optimizations after the evalling
   {
     PassRunner passRunner(&wasm);
+    passRunner.setFeatures(options.passOptions.features);
     passRunner.add("memory-packing"); // we flattened it, so re-optimize
     passRunner.add("remove-unused-names");
     passRunner.add("dce");

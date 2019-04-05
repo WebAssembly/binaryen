@@ -287,7 +287,7 @@ def update_ctor_eval_tests():
       print '..', t
       t = os.path.join('test', 'ctor-eval', t)
       ctors = open(t + '.ctors').read().strip()
-      cmd = WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
+      cmd = WASM_CTOR_EVAL + [t, '--disable-bulk-memory', '-o', 'a.wast', '-S', '--ctors', ctors]
       run_command(cmd)
       actual = open('a.wast').read()
       out = t + '.out'
