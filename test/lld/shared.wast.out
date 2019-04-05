@@ -71,7 +71,7 @@
   "namedGlobals": {
   },
   "invokeFuncs": [
-  ]
+  ],
   "features": [
     "--mvp-features",
     "--enable-threads",

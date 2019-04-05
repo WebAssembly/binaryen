@@ -261,7 +261,7 @@
     "__data_end" : "652"
   },
   "invokeFuncs": [
-  ]
+  ],
   "features": [
     "--mvp-features",
     "--enable-threads",

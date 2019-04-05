@@ -136,7 +136,7 @@
   },
   "invokeFuncs": [
     "invoke_ffd"
-  ]
+  ],
   "features": [
     "--mvp-features",
     "--enable-threads",
