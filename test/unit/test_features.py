@@ -124,23 +124,37 @@ class TargetFeaturesSectionTest(unittest.TestCase):
     self.assertEqual(p.stderr, '')
     return p.stdout
 
+  def roundtrip(self, filename):
+    path = os.path.join(options.binaryen_test, 'unit', 'input', filename)
+    p = run_process(WASM_OPT + ['-g', '-o', '-', path], check=False,
+                    capture_output=True)
+    self.assertEqual(p.returncode, 0)
+    self.assertEqual(p.stderr, '')
+    with open(path, 'rb') as f:
+      self.assertEqual(str(p.stdout), str(f.read()))
+
   def test_atomics(self):
+    self.roundtrip('atomics_target_feature.wasm')
     module = self.disassemble('atomics_target_feature.wasm')
     self.assertIn('i32.atomic.rmw.add', module)
 
   def test_bulk_memory(self):
+    self.roundtrip('bulkmem_target_feature.wasm')
     module = self.disassemble('bulkmem_target_feature.wasm')
     self.assertIn('memory.copy', module)
 
   def test_nontrapping_fptoint(self):
+    self.roundtrip('truncsat_target_feature.wasm')
     module = self.disassemble('truncsat_target_feature.wasm')
     self.assertIn('i32.trunc_sat_f32_u', module)
 
   def test_sign_ext(self):
+    self.roundtrip('signext_target_feature.wasm')
     module = self.disassemble('signext_target_feature.wasm')
     self.assertIn('i32.extend8_s', module)
 
   def test_simd(self):
+    self.roundtrip('simd_target_feature.wasm')
     module = self.disassemble('simd_target_feature.wasm')
     self.assertIn('i32x4.splat', module)
 

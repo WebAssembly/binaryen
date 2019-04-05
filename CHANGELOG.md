@@ -20,6 +20,7 @@ Current Trunk
 - Add --side-module option to wasm-emscripten-finalize.
 - Add `segmentPassive` argument to `BinaryenSetMemory` for marking segments
   passive.
+- Make `-o -` print to stdout instead of a file named "-".
 
 v73
 ---

@@ -177,6 +177,9 @@ int main(int argc, const char *argv[]) {
     wasm.memory.segments.emplace_back(init, data);
   }
 
+  // set up the module's features, needed by optimization and validation passes
+  options.calculateFeatures(wasm);
+
   // compile the code
   Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);
   asm2wasm.processAsm(asmjs);
@@ -185,7 +188,6 @@ int main(int argc, const char *argv[]) {
   if (memInit != options.extra.end()) {
     if (options.runningDefaultOptimizationPasses()) {
       PassRunner runner(&wasm);
-      runner.setFeatures(options.passOptions.features);
       runner.add("memory-packing");
       runner.run();
     }
@@ -213,7 +215,7 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.passOptions.validate) {
-    if (!WasmValidator().validate(wasm, options.passOptions.features)) {
+    if (!WasmValidator().validate(wasm)) {
       WasmPrinter::printModule(&wasm);
       Fatal() << "error in validating output";
     }

@@ -819,7 +819,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     FunctionReferenceRemover referenceRemover(names);
     referenceRemover.walkModule(module.get());
 
-    if (WasmValidator().validate(*module, FeatureSet::All, WasmValidator::Globally | WasmValidator::Quiet) &&
+    if (WasmValidator().validate(*module, WasmValidator::Globally | WasmValidator::Quiet) &&
         writeAndTestReduction()) {
       std::cerr << "|      removed " << names.size() << " functions\n";
       return true;

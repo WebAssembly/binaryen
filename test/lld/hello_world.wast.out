@@ -101,11 +101,11 @@
   "features": [
     "--mvp-features",
     "--enable-threads",
+    "--enable-bulk-memory",
     "--enable-mutable-globals",
     "--enable-nontrapping-float-to-int",
-    "--enable-simd",
-    "--enable-bulk-memory",
-    "--enable-sign-ext"
+    "--enable-sign-ext",
+    "--enable-simd"
   ]
 }
 -- END METADATA --

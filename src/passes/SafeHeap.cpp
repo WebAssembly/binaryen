@@ -113,7 +113,7 @@ struct SafeHeap : public Pass {
     instrumenter.add<AccessInstrumenter>();
     instrumenter.run();
     // add helper checking funcs and imports
-    addGlobals(module, runner->options.features);
+    addGlobals(module, module->features);
   }
 
   Name dynamicTopPtr, segfault, alignfault;
