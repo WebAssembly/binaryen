@@ -810,8 +810,7 @@ void printSet(std::ostream& o, C& c) {
 }
 
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
-    Address staticBump, std::vector<Name> const& initializerFunctions,
-    FeatureSet features) {
+    Address staticBump, std::vector<Name> const& initializerFunctions) {
   bool commaFirst;
   auto nextElement = [&commaFirst]() {
     if (commaFirst) {
@@ -952,7 +951,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "  \"features\": [";
   commaFirst = true;
   meta << nextElement() << "\"--mvp-features\"";
-  features.iterFeatures([&](FeatureSet::Feature f) {
+  wasm.features.iterFeatures([&](FeatureSet::Feature f) {
     meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
   });
   meta << "\n  ]\n";

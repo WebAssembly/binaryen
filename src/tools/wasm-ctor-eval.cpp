@@ -444,7 +444,6 @@ int main(int argc, const char* argv[]) {
   // Do some useful optimizations after the evalling
   {
     PassRunner passRunner(&wasm);
-    passRunner.setFeatures(options.passOptions.features);
     passRunner.add("memory-packing"); // we flattened it, so re-optimize
     passRunner.add("remove-unused-names");
     passRunner.add("dce");

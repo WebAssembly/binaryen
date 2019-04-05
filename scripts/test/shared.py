@@ -312,10 +312,7 @@ class Py2CompletedProcess:
                                   output=self.stdout, stderr=self.stderr)
 
 
-def run_process(cmd, check=True, input=None, universal_newlines=True,
-                capture_output=False, *args, **kw):
-  kw.setdefault('universal_newlines', True)
-
+def run_process(cmd, check=True, input=None, capture_output=False, *args, **kw):
   if hasattr(subprocess, "run"):
     ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
     return ret
@@ -402,7 +399,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   assert os.path.exists('ab.wast')
 
   # make sure it is a valid wast
-  cmd = WASM_OPT + ['ab.wast']
+  cmd = WASM_OPT + ['ab.wast', '-all']
   print '      ', ' '.join(cmd)
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
@@ -417,14 +414,12 @@ def minify_check(wast, verify_final_result=True):
   # checks we can parse minified output
 
   print '     (minify check)'
-  cmd = WASM_OPT + [wast, '--print-minified']
+  cmd = WASM_OPT + [wast, '--print-minified', '-all']
   print '      ', ' '.join(cmd)
-  subprocess.check_call(
-      WASM_OPT + [wast, '--print-minified'],
-      stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call(cmd, stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wast')
   subprocess.check_call(
-      WASM_OPT + ['a.wast', '--print-minified'],
+      WASM_OPT + ['a.wast', '--print-minified', '-all'],
       stdout=open('b.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('b.wast')
   if verify_final_result:

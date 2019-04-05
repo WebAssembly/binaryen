@@ -306,7 +306,7 @@ void PassRunner::run() {
       if (options.validate) {
         // validate, ignoring the time
         std::cerr << "[PassRunner]   (validating)\n";
-        if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
+        if (!WasmValidator().validate(*wasm, validationFlags)) {
           WasmPrinter::printModule(wasm);
           if (passDebug >= 2) {
             std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
@@ -323,7 +323,7 @@ void PassRunner::run() {
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
     if (options.validate) {
       std::cerr << "[PassRunner] (final validation)\n";
-      if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
+      if (!WasmValidator().validate(*wasm, validationFlags)) {
         WasmPrinter::printModule(wasm);
         std::cerr << "final module does not validate\n";
         abort();

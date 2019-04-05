@@ -20,6 +20,9 @@ Current Trunk
 - Add --side-module option to wasm-emscripten-finalize.
 - Add `segmentPassive` argument to `BinaryenSetMemory` for marking segments
   passive.
+- Change default feature set in the absence of a target features section from
+  all features to MVP.
+- Make `-o -` print to stdout instead of a file named "-".
 
 v73
 ---

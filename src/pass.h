@@ -74,8 +74,6 @@ struct PassOptions {
   enum { LowMemoryBound = 1024 };
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
-  // Which wasm features to accept, and be allowed to use.
-  FeatureSet features = FeatureSet::All;
   // Arbitrary string arguments from the commandline, which we forward to passes.
   std::map<std::string, std::string> arguments;
 
@@ -128,9 +126,6 @@ struct PassRunner {
   }
   void setValidateGlobally(bool validate) {
     options.validateGlobally = validate;
-  }
-  void setFeatures(FeatureSet features) {
-    options.features = features;
   }
 
   void add(std::string passName) {

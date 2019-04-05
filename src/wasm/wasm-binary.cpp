@@ -69,6 +69,7 @@ void WasmBinaryWriter::write() {
   }
 
   writeLateUserSections();
+  writeFeaturesSection();
 
   finishUp();
 }
@@ -356,7 +357,9 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
 }
 
 void WasmBinaryWriter::writeTableElements() {
-  if (!wasm->table.exists) return;
+  if (!wasm->table.exists || wasm->table.segments.size() == 0) {
+    return;
+  }
   if (debug) std::cerr << "== writeTableElements" << std::endl;
   auto start = startSection(BinaryConsts::Section::Element);
 
@@ -486,13 +489,48 @@ void WasmBinaryWriter::writeLateUserSections() {
 }
 
 void WasmBinaryWriter::writeUserSection(const UserSection& section) {
-  auto start = startSection(0);
+  auto start = startSection(BinaryConsts::User);
   writeInlineString(section.name.c_str());
   for (size_t i = 0; i < section.data.size(); i++) {
     o << uint8_t(section.data[i]);
   }
   finishSection(start);
 }
+
+void WasmBinaryWriter::writeFeaturesSection() {
+  if (!wasm->emitFeaturesSection || wasm->features <= FeatureSet{}) {
+    return;
+  }
+
+  // TODO(tlively): unify feature names with rest of toolchain and use
+  // FeatureSet::toString()
+  auto toString = [](FeatureSet::Feature f) {
+    switch (f) {
+      case FeatureSet::Atomics: return "atomics";
+      case FeatureSet::MutableGlobals: return "mutable-globals";
+      case FeatureSet::TruncSat: return "nontrapping-fptoint";
+      case FeatureSet::SIMD: return "simd128";
+      case FeatureSet::BulkMemory: return "bulk-memory";
+      case FeatureSet::SignExt: return "sign-ext";
+      default: WASM_UNREACHABLE();
+    }
+  };
+
+  std::vector<const char*> features;
+  wasm->features.iterFeatures([&](FeatureSet::Feature f) {
+    features.push_back(toString(f));
+  });
+
+  auto start = startSection(BinaryConsts::User);
+  writeInlineString(BinaryConsts::UserSections::TargetFeatures);
+  o << U32LEB(features.size());
+  for (auto& f : features) {
+    o << uint8_t(BinaryConsts::FeatureUsed);
+    writeInlineString(f);
+  }
+  finishSection(start);
+}
+
 
 void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocation& loc) {
   if (loc == lastDebugLocation) {
@@ -648,6 +686,8 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
   payloadLen -= read;
   if (sectionName.equals(BinaryConsts::UserSections::Name)) {
     readNames(payloadLen);
+  } else if (sectionName.equals(BinaryConsts::UserSections::TargetFeatures)) {
+    readFeatures(payloadLen);
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::UserSections::Linking)) {
@@ -666,8 +706,8 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
 
 uint8_t WasmBinaryBuilder::getInt8() {
   if (!more()) throwError("unexpected end of input");
-  if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")" << std::endl;
-  return input[pos++];
+  if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input.at(pos) << " (at " << pos << ")" << std::endl;
+  return input.at(pos++);
 }
 
 uint16_t WasmBinaryBuilder::getInt16() {
@@ -1597,6 +1637,48 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
   }
   if (pos != sectionPos + payloadLen) {
     throwError("bad names section position change");
+  }
+}
+
+void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
+  wasm.emitFeaturesSection = true;
+  wasm.features = FeatureSet::MVP;
+
+  auto sectionPos = pos;
+  size_t num_feats = getU32LEB();
+  for (size_t i = 0; i < num_feats; ++i) {
+    uint8_t prefix = getInt8();
+    if (prefix != BinaryConsts::FeatureUsed) {
+      if (prefix == BinaryConsts::FeatureRequired) {
+        throwError("Required features not supported");
+      } else if (prefix == BinaryConsts::FeatureDisallowed) {
+        throwError("Disallowed features not supported");
+      } else {
+        throwError("Unrecognized feature policy prefix");
+      }
+    }
+
+    Name name = getInlineString();
+    if (pos > sectionPos + payloadLen) {
+      throwError("ill-formed string extends beyond section");
+    }
+
+    if (name == BinaryConsts::UserSections::AtomicsFeature) {
+      wasm.features.setAtomics();
+    } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
+      wasm.features.setBulkMemory();
+    } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
+      WASM_UNREACHABLE(); // TODO: exception handling
+    } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
+      wasm.features.setTruncSat();
+    } else if (name == BinaryConsts::UserSections::SignExtFeature) {
+      wasm.features.setSignExt();
+    } else if (name == BinaryConsts::UserSections::SIMD128Feature) {
+      wasm.features.setSIMD();
+    }
+  }
+  if (pos != sectionPos + payloadLen) {
+    throwError("bad features section size");
   }
 }
 

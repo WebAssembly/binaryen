@@ -1450,7 +1450,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   PassRunner passRunner(&wasm, passOptions);
   passRunner.options.lowMemoryUnused = true;
-  passRunner.setFeatures(passOptions.features);
   if (debug) {
     passRunner.setDebug(true);
     passRunner.setValidateGlobally(false);

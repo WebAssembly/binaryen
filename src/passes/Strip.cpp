@@ -75,9 +75,4 @@ Pass *createStripProducersPass() {
   });
 }
 
-Pass *createStripTargetFeaturesPass() {
-  return new Strip([&](const UserSection& curr) {
-    return curr.name == BinaryConsts::UserSections::TargetFeatures;
-  });
-}
 } // namespace wasm

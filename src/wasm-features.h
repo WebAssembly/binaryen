@@ -77,14 +77,14 @@ struct FeatureSet {
   template<typename F>
   void iterFeatures(F f) {
     if (hasAtomics()) f(Atomics);
+    if (hasBulkMemory()) f(BulkMemory);
     if (hasMutableGlobals()) f(MutableGlobals);
     if (hasTruncSat()) f(TruncSat);
-    if (hasSIMD()) f(SIMD);
-    if (hasBulkMemory()) f(BulkMemory);
     if (hasSignExt()) f(SignExt);
+    if (hasSIMD()) f(SIMD);
   }
 
-  bool operator<=(const FeatureSet& other) {
+  bool operator<=(const FeatureSet& other) const {
     return !(features & ~other.features);
   }
 

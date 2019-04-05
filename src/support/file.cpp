@@ -68,6 +68,9 @@ template std::vector<char> wasm::read_file<>(const std::string& , Flags::BinaryO
 
 wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug)
     : outfile(), out([this, filename, binary, debug]() {
+        if (filename == "-") {
+          return std::cout.rdbuf();
+        }
         std::streambuf *buffer;
         if (filename.size()) {
           if (debug == Flags::Debug) std::cerr << "Opening '" << filename << "'" << std::endl;
