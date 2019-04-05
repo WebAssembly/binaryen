@@ -23,8 +23,8 @@
 
 #include "ir/trapping.h"
 #include "support/colors.h"
-#include "support/command-line.h"
 #include "support/file.h"
+#include "tool-options.h"
 #include "wasm-binary.h"
 #include "wasm-emscripten.h"
 #include "wasm-io.h"
@@ -50,8 +50,8 @@ int main(int argc, const char *argv[]) {
   bool legalizeJavaScriptFFI = true;
   uint64_t globalBase = INVALID_BASE;
   uint64_t initialStackPointer = INVALID_BASE;
-  Options options("wasm-emscripten-finalize",
-                  "Performs Emscripten-specific transforms on .wasm files");
+  ToolOptions options("wasm-emscripten-finalize",
+                      "Performs Emscripten-specific transforms on .wasm files");
   options
       .add("--output", "-o", "Output file",
            Options::Arguments::One,
@@ -120,6 +120,7 @@ int main(int argc, const char *argv[]) {
   ModuleReader reader;
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
+    options.calculateFeatures(wasm);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     std::cerr << '\n';
@@ -204,12 +205,11 @@ int main(int argc, const char *argv[]) {
       legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
                             : ABI::LegalizationLevel::Minimal
     ));
-    passRunner.add("strip-target-features");
     passRunner.run();
   }
 
   // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
+  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, options.passOptions.features);
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
@@ -224,6 +224,13 @@ int main(int argc, const char *argv[]) {
   if (options.debug) {
     std::cerr << "Module after:\n";
     WasmPrinter::printModule(&wasm, std::cerr);
+  }
+
+  // Stip target features section (needed for metadata)
+  {
+    PassRunner passRunner(&wasm);
+    passRunner.add("strip-target-features");
+    passRunner.run();
   }
 
   auto outputBinaryFlag = emitBinary ? Flags::Binary : Flags::Text;
