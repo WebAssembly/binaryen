@@ -44,6 +44,7 @@ Pass* createInliningPass();
 Pass* createInliningOptimizingPass();
 Pass* createLegalizeJSInterfacePass();
 Pass* createLegalizeJSInterfaceMinimallyPass();
+Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
 Pass* createLogExecutionPass();
 Pass* createInstrumentLocalsPass();
