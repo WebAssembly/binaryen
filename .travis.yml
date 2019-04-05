@@ -14,7 +14,7 @@ DEPLOY_TO_GITHUB: &DEPLOY_TO_GITHUB
     - PKGNAME="binaryen-$TRAVIS_TAG-$ARCH"
     - mv bin binaryen-$TRAVIS_TAG
     - tar -czf $PKGNAME.tar.gz binaryen-$TRAVIS_TAG
-    - sha256sum $PKGNAME.tar.gz > $PKGNAME.tar.gz.sha256
+    - shasum -a 256 $PKGNAME.tar.gz > $PKGNAME.tar.gz.sha256
   deploy:
     provider: releases
     api_key:

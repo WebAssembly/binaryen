@@ -261,7 +261,6 @@ void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
   ex->name = POST_INSTANTIATE;
   ex->kind = ExternalKind::Function;
   wasm.addExport(ex);
-  wasm.updateMaps();
 }
 
 Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
@@ -897,9 +896,24 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << "  \"exports\": [";
     commaFirst = true;
     for (const auto& ex : wasm.exports) {
-      meta << nextElement() << '"' << ex->name.str << '"';
+      if (ex->kind == ExternalKind::Function) {
+        meta << nextElement() << '"' << ex->name.str << '"';
+      }
     }
     meta << "\n  ],\n";
+
+    meta << "  \"namedGlobals\": {";
+    commaFirst = true;
+    for (const auto& ex : wasm.exports) {
+      if (ex->kind == ExternalKind::Global) {
+        const Global* g = wasm.getGlobal(ex->value);
+        assert(g->type == i32);
+        Const* init = g->init->cast<Const>();
+        uint32_t addr = init->value.geti32();
+        meta << nextElement() << '"' << ex->name.str << "\" : \"" << addr << '"';
+      }
+    }
+    meta << "\n  },\n";
   }
 
   meta << "  \"invokeFuncs\": [";

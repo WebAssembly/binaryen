@@ -135,12 +135,6 @@ int main(int argc, const char *argv[]) {
     WasmPrinter::printModule(&wasm, std::cerr);
   }
 
-  for (const UserSection& section : wasm.userSections) {
-    if (section.name == BinaryConsts::UserSections::Dylink) {
-      isSideModule = true;
-    }
-  }
-
   uint32_t dataSize = 0;
 
   if (!isSideModule) {
@@ -187,6 +181,11 @@ int main(int argc, const char *argv[]) {
     generator.generateStackInitialization(initialStackPointer);
     // For side modules these gets called via __post_instantiate
     if (Function* F = generator.generateAssignGOTEntriesFunction()) {
+      auto* ex = new Export();
+      ex->value = F->name;
+      ex->name = F->name;
+      ex->kind = ExternalKind::Function;
+      wasm.addExport(ex);
       initializerFunctions.push_back(F->name);
     }
     if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
