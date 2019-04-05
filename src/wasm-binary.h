@@ -886,7 +886,6 @@ public:
   void writeFunctions();
   void writeGlobals();
   void writeExports();
-  void writeDataCount();
   void writeDataSegments();
 
   std::unordered_map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals

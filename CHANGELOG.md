@@ -18,7 +18,6 @@ Current Trunk
 - Add `namedGlobals` to metadata output of wasm-emscripten-finalize
 - Add support for llvm PIC code.
 - Add --side-module option to wasm-emscripten-finalize.
-- Add a `segmentPassive` argument to `BinaryenSetMemory` in the C API.
 
 v73
 ---
@@ -53,3 +52,4 @@ older
 
 - Add `shared` parameters to `BinaryenAddMemoryImport` and `BinaryenSetMemory`,
   to support a shared memory. #1686
+
