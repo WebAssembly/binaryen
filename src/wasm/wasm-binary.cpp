@@ -313,6 +313,11 @@ void WasmBinaryWriter::writeExports() {
 
 void WasmBinaryWriter::writeDataSegments() {
   if (wasm->memory.segments.size() == 0) return;
+  if (wasm->memory.segments.size() > WebLimitations::MaxDataSegments) {
+    std::cerr << "Some VMs may not accept this binary because it has a large "
+              << "number of data segments. Run the limit-segments pass to "
+              << "merge segments." << std::endl;
+  }
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(wasm->memory.segments.size());
   for (auto& segment : wasm->memory.segments) {

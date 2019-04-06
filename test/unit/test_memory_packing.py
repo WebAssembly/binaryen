@@ -1,9 +1,10 @@
 import os
 import unittest
-from scripts.test.shared import WASM_OPT, run_process, options
+from scripts.test.shared import WASM_OPT, run_process
 
 '''Test that MemoryPacking correctly respects the web limitations by not
 generating more than 100K data segments'''
+
 
 class MemoryPackingTest(unittest.TestCase):
   def test_large_segment(self):
@@ -26,3 +27,14 @@ class MemoryPackingTest(unittest.TestCase):
     self.assertEqual(p.returncode, 0)
     for line in output:
       self.assertIn(line, p.stdout)
+
+  def test_large_segment_unmergeable(self):
+    data = '\n'.join('(data (i32.const %i) "A")' % i for i in range(100001))
+    module = '(module (memory 256 256) %s)' % data
+    opts = ['--memory-packing', '--enable-bulk-memory', '--print',
+            '-o', os.devnull]
+    p = run_process(WASM_OPT + opts, input=module, check=False,
+                    capture_output=True)
+    self.assertEqual(p.returncode, 0)
+    self.assertIn('Some VMs may not accept this binary', p.stderr)
+    self.assertIn('Run the limit-segments pass to merge segments.', p.stderr)
