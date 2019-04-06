@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-//
-// Similar to strip-ing a native binary, this family of passes can
-// removes debug info and other things.
-//
-
 #include "ir/memory-utils.h"
 #include "pass.h"
 #include "wasm.h"
