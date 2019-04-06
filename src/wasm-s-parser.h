@@ -224,7 +224,7 @@ private:
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
   void parseData(Element& s);
-  void parseInnerData(Element& s, Index i = 1, Expression* offset = nullptr);
+  void parseInnerData(Element& s, Index i, Expression* offset, bool isPassive);
   void parseExport(Element& s);
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);

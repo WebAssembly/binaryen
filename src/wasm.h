@@ -858,7 +858,9 @@ public:
   static const Address::address_t kPageMask = ~(kPageSize - 1);
 
   struct Segment {
-    Expression* offset;
+    bool isPassive = false;
+    Index index = 0;
+    Expression* offset = nullptr;
     std::vector<char> data; // TODO: optimize
     Segment() = default;
     Segment(Expression* offset) : offset(offset) {}
@@ -868,6 +870,11 @@ public:
     }
     Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
+    }
+    Segment(bool isPassive, Expression* offset, const char* init, Address size)
+        : isPassive(isPassive), offset(offset) {
+      data.resize(size);
+      std::copy_n(init, size, data.begin());
     }
   };
 
