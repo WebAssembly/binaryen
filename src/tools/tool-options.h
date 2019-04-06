@@ -60,19 +60,12 @@ struct ToolOptions : public Options {
                disabledFeatures.makeMVP();
              });
     (*this)
-        .addFeature("sign-ext", "sign extension operations",
-                    FeatureSet::SignExt)
-        .addFeature("threads", "atomic operations",
-                    FeatureSet::Atomics)
-        .addFeature("mutable-globals", "mutable globals",
-                    FeatureSet::MutableGlobals)
-        .addFeature("nontrapping-float-to-int",
-                    "nontrapping float-to-int operations",
-                    FeatureSet::TruncSat)
-        .addFeature("simd", "SIMD operations and types",
-                    FeatureSet::SIMD)
-        .addFeature("bulk-memory", "bulk memory operations",
-                    FeatureSet::BulkMemory)
+        .addFeature(FeatureSet::SignExt, "sign extension operations")
+        .addFeature(FeatureSet::Atomics, "atomic operations")
+        .addFeature(FeatureSet::MutableGlobals, "mutable globals")
+        .addFeature(FeatureSet::TruncSat, "nontrapping float-to-int operations")
+        .addFeature(FeatureSet::SIMD, "SIMD operations and types")
+        .addFeature(FeatureSet::BulkMemory, "bulk memory operations")
         .add("--no-validation", "-n",
              "Disables validation, assumes inputs are correct",
              Options::Arguments::Zero,
@@ -81,11 +74,11 @@ struct ToolOptions : public Options {
              });
   }
 
-  ToolOptions& addFeature(const std::string& name,
-                          const std::string& description,
-                          FeatureSet::Feature feature) {
+  ToolOptions& addFeature(FeatureSet::Feature feature,
+                          const std::string& description) {
+
     (*this)
-        .add(std::string("--enable-") + name, "",
+        .add(std::string("--enable-") + FeatureSet::toString(feature), "",
              std::string("Enable ") + description, Arguments::Zero,
              [=](Options*, const std::string&) {
                hasFeatureOptions = true;
@@ -94,7 +87,7 @@ struct ToolOptions : public Options {
                disabledFeatures.set(feature, false);
              })
 
-        .add(std::string("--disable-") + name, "",
+        .add(std::string("--disable-") + FeatureSet::toString(feature), "",
              std::string("Disable ") + description, Arguments::Zero,
              [=](Options*, const std::string&) {
                hasFeatureOptions = true;

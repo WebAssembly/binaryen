@@ -49,7 +49,8 @@ public:
   void replaceStackPointerGlobal();
 
   std::string generateEmscriptenMetadata(
-    Address staticBump, std::vector<Name> const& initializerFunctions);
+    Address staticBump, std::vector<Name> const& initializerFunctions,
+    FeatureSet features);
 
   void fixInvokeFunctionNames();
 
