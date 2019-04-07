@@ -298,7 +298,7 @@ private:
             builder.makeBinary(AddInt32,
               builder.makeBinary(ShlInt32,
                 builder.makeGetLocal(0, i32),
-                5)
+                builder.makeConst(Literal(uint32_t(5)))
               ),
               builder.makeGetLocal(0, i32)
             ),
@@ -311,8 +311,8 @@ private:
       );
     }
     auto* body = builder.makeBlock(contents);
-    wasm.addFunction(builder.makeFunction("hashMemory", {}, i32, { i32 }, body));
-    wams.addExport(builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
+    auto* hasher = wasm.addFunction(builder.makeFunction("hashMemory", std::vector<Type>{}, i32, { i32 }, body));
+    wasm.addExport(builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
   }
 
   void setupTable() {

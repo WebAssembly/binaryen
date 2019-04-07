@@ -947,10 +947,10 @@ public:
   Global* getGlobalOrNull(Name name);
 
   FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
-  void addExport(Export* curr);
-  void addFunction(Function* curr);
-  void addFunction(std::unique_ptr<Function> curr);
-  void addGlobal(Global* curr);
+  Export* addExport(Export* curr);
+  Function* addFunction(Function* curr);
+  Function* addFunction(std::unique_ptr<Function> curr);
+  Global* addGlobal(Global* curr);
 
   void addStart(const Name& s);
 

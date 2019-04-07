@@ -863,7 +863,7 @@ FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
   return p;
 }
 
-void Module::addExport(Export* curr) {
+Export* Module::addExport(Export* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addExport: empty name";
   }
@@ -872,10 +872,11 @@ void Module::addExport(Export* curr) {
   }
   exports.push_back(std::unique_ptr<Export>(curr));
   exportsMap[curr->name] = curr;
+  return curr;
 }
 
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
-void Module::addFunction(Function* curr) {
+Function* Module::addFunction(Function* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunction: empty name";
   }
@@ -884,20 +885,22 @@ void Module::addFunction(Function* curr) {
   }
   functions.push_back(std::unique_ptr<Function>(curr));
   functionsMap[curr->name] = curr;
+  return curr;
 }
 
-void Module::addFunction(std::unique_ptr<Function> curr) {
+Function* Module::addFunction(std::unique_ptr<Function> curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunction: empty name";
   }
   if (getFunctionOrNull(curr->name)) {
     Fatal() << "Module::addFunction: " << curr->name << " already exists";
   }
-  functionsMap[curr->name] = curr.get();
+  auto* ret = functionsMap[curr->name] = curr.get();
   functions.push_back(std::move(curr));
+  return ret;
 }
 
-void Module::addGlobal(Global* curr) {
+Global* Module::addGlobal(Global* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addGlobal: empty name";
   }
@@ -906,6 +909,7 @@ void Module::addGlobal(Global* curr) {
   }
   globals.push_back(std::unique_ptr<Global>(curr));
   globalsMap[curr->name] = curr;
+  return curr;
 }
 
 void Module::addStart(const Name& s) {
