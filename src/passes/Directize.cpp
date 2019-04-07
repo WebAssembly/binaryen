@@ -72,18 +72,18 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       // reorder/replace traps when optimizing (but never to
       // remove them, at least not by default).
       if (index >= flatTable->names.size()) {
-        replaceWithUnreachable();
+        replaceWithUnreachable(curr);
         return;
       }
       auto name = flatTable->names[index];
       if (!name.is()) {
-        replaceWithUnreachable();
+        replaceWithUnreachable(curr);
         return;
       }
       auto* func = getModule()->getFunction(name);
       if (getSig(getModule()->getFunctionType(curr->fullType)) !=
           getSig(func)) {
-        replaceWithUnreachable();
+        replaceWithUnreachable(curr);
         return;
       }
       // Everything looks good!
@@ -98,8 +98,17 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 private:
   FlatTable* flatTable;
 
-  void replaceWithUnreachable() {
-    replaceCurrent(Builder(*getModule()).makeUnreachable());
+  void replaceWithUnreachable(CallIndirect* call) {
+    Builder builder(*getModule());
+    for (auto*& operand : call->operands) {
+      operand = builder.makeDrop(operand);
+    }
+    replaceCurrent(
+      builder.makeSequence(
+        builder.makeBlock(call->operands),
+        builder.makeUnreachable()
+      )
+    );
   }
 };
 
