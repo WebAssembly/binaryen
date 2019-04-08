@@ -582,41 +582,7 @@ def run_unittest():
 
 # Run all the tests
 def main():
-  run_help_tests()
-  run_wasm_opt_tests()
-  asm2wasm.test_asm2wasm()
-  asm2wasm.test_asm2wasm_binary()
-  run_wasm_dis_tests()
-  run_crash_tests()
-  run_dylink_tests()
-  run_ctor_eval_tests()
-  run_wasm_metadce_tests()
-  if has_shell_timeout():
-    run_wasm_reduce_tests()
-
-  run_spec_tests()
-  run_binaryen_js_tests()
-  lld.test_wasm_emscripten_finalize()
-  wasm2js.test_wasm2js()
-  run_validator_tests()
-  if has_vanilla_emcc and has_vanilla_llvm and 0:
-    run_vanilla_tests()
-  print '\n[ checking example testcases... ]\n'
-  if options.run_gcc_tests:
-    run_gcc_tests()
-
-  run_unittest()
-
-  # Check/display the results
-  if shared.num_failures == 0:
-    print '\n[ success! ]'
-
-  if warnings:
-    print '\n' + '\n'.join(warnings)
-
-  if shared.num_failures > 0:
-    print '\n[ ' + str(shared.num_failures) + ' failures! ]'
-    return 1
+  run_wasm_reduce_tests()
 
   return 0
 
