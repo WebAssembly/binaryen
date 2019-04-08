@@ -1,4 +1,5 @@
 (module
+ (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$vi (func (param i32)))
  (type $FUNCSIG$vj (func (param i64)))
  (type $FUNCSIG$vf (func (param f32)))
@@ -28,7 +29,7 @@
  (export "func_7_invoker" (func $func_7_invoker))
  (export "func_9" (func $func_9))
  (export "hangLimitInitializer" (func $hangLimitInitializer))
- (func $hashMemory (; 4 ;) (result i32)
+ (func $hashMemory (; 4 ;) (type $FUNCSIG$i) (result i32)
   (local $0 i32)
   (local.set $0
    (i32.const 5381)
