@@ -284,14 +284,19 @@ private:
         wasm.memory.segments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
       }
     }
-    // Add memory hasher helper
-    // (for the hash, see hash.h)
+    // Add memory hasher helper (for the hash, see hash.h). The function looks like:
+    // function hashMemory() {
+    //   hash = 5381;
+    //   hash = ((hash << 5) + hash) ^ mem[0];
+    //   hash = ((hash << 5) + hash) ^ mem[1];
+    //   ..
+    //   return hash;
+    // }
     std::vector<Expression*> contents;
     contents.push_back(
       builder.makeSetLocal(0, builder.makeConst(Literal(uint32_t(5381))))
     );
     for (Index i = 0; i < USABLE_MEMORY; i++) {
-      // hash = ((hash << 5) + hash) ^ (newbyte & 0xff);
       contents.push_back(
         builder.makeSetLocal(0,
           builder.makeBinary(XorInt32,
