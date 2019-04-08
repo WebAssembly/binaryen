@@ -58,6 +58,7 @@ jobs:
         - jsvu --os=linux64 --engines=spidermonkey
       script:
         - set -o errexit
+        - flake8
         # ensure generated parser is up to date
         - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
