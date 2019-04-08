@@ -18,6 +18,9 @@
 #define wasm_features_h
 
 #include <stdint.h>
+#include <string>
+
+#include "compiler-support.h"
 
 struct FeatureSet {
   enum Feature : uint32_t {
@@ -30,6 +33,18 @@ struct FeatureSet {
     SignExt = 1 << 5,
     All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory | SignExt
   };
+
+  static std::string toString(Feature f) {
+    switch (f) {
+      case Atomics: return "threads";
+      case MutableGlobals: return "mutable-globals";
+      case TruncSat: return "nontrapping-float-to-int";
+      case SIMD: return "simd";
+      case BulkMemory: return "bulk-memory";
+      case SignExt: return "sign-ext";
+      default: WASM_UNREACHABLE();
+    }
+  }
 
   FeatureSet() : features(MVP) {}
   FeatureSet(uint32_t features) : features(features) {}
@@ -57,6 +72,16 @@ struct FeatureSet {
   void enable(const FeatureSet& other) { features |= other.features; }
   void disable(const FeatureSet& other) {
     features = features & ~other.features & All;
+  }
+
+  template<typename F>
+  void iterFeatures(F f) {
+    if (hasAtomics()) f(Atomics);
+    if (hasMutableGlobals()) f(MutableGlobals);
+    if (hasTruncSat()) f(TruncSat);
+    if (hasSIMD()) f(SIMD);
+    if (hasBulkMemory()) f(BulkMemory);
+    if (hasSignExt()) f(SignExt);
   }
 
   bool operator<=(const FeatureSet& other) {

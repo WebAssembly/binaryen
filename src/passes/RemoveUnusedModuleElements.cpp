@@ -51,7 +51,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     queue = roots;
     // Globals used in memory/table init expressions are also roots
     for (auto& segment : module->memory.segments) {
-      walk(segment.offset);
+      if (!segment.isPassive) {
+        walk(segment.offset);
+      }
     }
     for (auto& segment : module->table.segments) {
       walk(segment.offset);

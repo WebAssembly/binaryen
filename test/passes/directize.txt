@@ -125,6 +125,14 @@
   (unreachable)
  )
  (func $bar (; 1 ;) (type $ii) (param $x i32) (param $y i32)
+  (block
+   (drop
+    (local.get $x)
+   )
+   (drop
+    (local.get $y)
+   )
+  )
   (unreachable)
  )
 )
@@ -136,6 +144,14 @@
   (unreachable)
  )
  (func $bar (; 1 ;) (type $ii) (param $x i32) (param $y i32)
+  (block
+   (drop
+    (local.get $x)
+   )
+   (drop
+    (local.get $y)
+   )
+  )
   (unreachable)
  )
 )
@@ -148,6 +164,14 @@
   (unreachable)
  )
  (func $bar (; 1 ;) (type $ii) (param $x i32) (param $y i32)
+  (block
+   (drop
+    (local.get $x)
+   )
+   (drop
+    (local.get $y)
+   )
+  )
   (unreachable)
  )
 )

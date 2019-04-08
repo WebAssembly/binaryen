@@ -5,12 +5,13 @@ from scripts.test.shared import WASM_OPT, run_process, options
 
 class FeatureValidationTest(unittest.TestCase):
   def check_feature(self, module, error, flag):
-    p = run_process(WASM_OPT + ['--mvp-features', '--print'],
+    p = run_process(WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull],
                     input=module, check=False, capture_output=True)
     self.assertIn(error, p.stderr)
     self.assertIn('Fatal: error in validating input', p.stderr)
     self.assertNotEqual(p.returncode, 0)
-    p = run_process(WASM_OPT + ['--mvp-features', flag, '--print'],
+    p = run_process(WASM_OPT + ['--mvp-features', flag, '--print',
+                                '-o', os.devnull],
                     input=module, check=False, capture_output=True)
     self.assertEqual(p.returncode, 0)
 
@@ -19,6 +20,9 @@ class FeatureValidationTest(unittest.TestCase):
 
   def check_sign_ext(self, module, error):
     self.check_feature(module, error, '--enable-sign-ext')
+
+  def check_bulk_mem(self, module, error):
+    self.check_feature(module, error, '--enable-bulk-memory')
 
   def test_v128_signature(self):
     module = '''
@@ -88,6 +92,27 @@ class FeatureValidationTest(unittest.TestCase):
     )
     '''
     self.check_sign_ext(module, 'all used features should be allowed')
+
+  def test_bulk_mem_inst(self):
+    module = '''
+    (module
+     (memory 1 1)
+     (func $foo
+      (memory.copy (i32.const 0) (i32.const 8) (i32.const 8))
+     )
+    )
+    '''
+    self.check_bulk_mem(module,
+                        'Bulk memory operation (bulk memory is disabled')
+
+  def test_bulk_mem_segment(self):
+    module = '''
+    (module
+     (memory 256 256)
+     (data passive "42")
+    )
+    '''
+    self.check_bulk_mem(module, 'nonzero segment flags (bulk memory is disabled)')
 
 
 class TargetFeaturesSectionTest(unittest.TestCase):

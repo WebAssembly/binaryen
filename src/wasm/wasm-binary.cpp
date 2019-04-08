@@ -321,9 +321,15 @@ void WasmBinaryWriter::writeDataSegments() {
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(wasm->memory.segments.size());
   for (auto& segment : wasm->memory.segments) {
-    o << U32LEB(0); // Linear memory 0 in the MVP
-    writeExpression(segment.offset);
-    o << int8_t(BinaryConsts::End);
+    uint32_t flags = 0;
+    if (segment.isPassive) {
+      flags |= BinaryConsts::IsPassive;
+    }
+    o << U32LEB(flags);
+    if (!segment.isPassive) {
+      writeExpression(segment.offset);
+      o << int8_t(BinaryConsts::End);
+    }
     writeInlineBuffer(&segment.data[0], segment.data.size());
   }
   finishSection(start);
@@ -1462,20 +1468,25 @@ void WasmBinaryBuilder::readDataSegments() {
   if (debug) std::cerr << "== readDataSegments" << std::endl;
   auto num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
-    auto memoryIndex = getU32LEB();
-    WASM_UNUSED(memoryIndex);
-    if (memoryIndex != 0) {
-      throwError("bad memory index, must be 0");
-    }
     Memory::Segment curr;
-    auto offset = readExpression();
-    auto size = getU32LEB();
-    std::vector<char> buffer;
-    buffer.resize(size);
-    for (size_t j = 0; j < size; j++) {
-      buffer[j] = char(getInt8());
+    uint32_t flags = getU32LEB();
+    if (flags > 2) {
+      throwError("bad segment flags, must be 0, 1, or 2, not " +
+                 std::to_string(flags));
     }
-    wasm.memory.segments.emplace_back(offset, (const char*)&buffer[0], size);
+    curr.isPassive = flags & BinaryConsts::IsPassive;
+    if (flags & BinaryConsts::HasMemIndex) {
+      curr.index = getU32LEB();
+    }
+    if (!curr.isPassive) {
+      curr.offset = readExpression();
+    }
+    auto size = getU32LEB();
+    curr.data.resize(size);
+    for (size_t j = 0; j < size; j++) {
+      curr.data[j] = char(getInt8());
+    }
+    wasm.memory.segments.push_back(curr);
   }
 }
 

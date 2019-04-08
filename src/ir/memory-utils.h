@@ -32,6 +32,9 @@ namespace MemoryUtils {
     if (memory.segments.size() == 0) return true;
     std::vector<char> data;
     for (auto& segment : memory.segments) {
+      if (segment.isPassive) {
+        return false;
+      }
       auto* offset = segment.offset->dynCast<Const>();
       if (!offset) return false;
     }
@@ -71,11 +74,12 @@ namespace MemoryUtils {
     };
 
     auto isConstantOffset = [](Memory::Segment& segment) {
-      return segment.offset->is<Const>();
+      return segment.offset && segment.offset->is<Const>();
     };
 
     Index numConstant = 0,
            numDynamic = 0;
+    bool hasPassiveSegments = false;
     for (auto& segment : memory.segments) {
       if (!isEmpty(segment)) {
         if (isConstantOffset(segment)) {
@@ -84,6 +88,11 @@ namespace MemoryUtils {
           numDynamic++;
         }
       }
+      hasPassiveSegments |= segment.isPassive;
+    }
+
+    if (hasPassiveSegments) {
+      return false;
     }
 
     // check if we have too many dynamic data segments, which we can do nothing about

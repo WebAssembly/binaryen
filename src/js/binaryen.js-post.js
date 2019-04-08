@@ -1831,8 +1831,8 @@ function wrapModule(module, self) {
       );
     });
   };
-  self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
-    // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
+  self['setMemory'] = function(initial, maximum, exportName, segments, flags, shared) {
+    // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
     return preserveStack(function() {
       return Module['_BinaryenSetMemory'](
@@ -1840,6 +1840,11 @@ function wrapModule(module, self) {
         i32sToStack(
           segments.map(function(segment) {
             return allocate(segment.data, 'i8', ALLOC_STACK);
+          })
+        ),
+        i8sToStack(
+          segments.map(function(segment) {
+            return segment.passive;
           })
         ),
         i32sToStack(
