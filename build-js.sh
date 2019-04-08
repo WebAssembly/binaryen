@@ -108,6 +108,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/InstrumentLocals.cpp \
   $BINARYEN_SRC/passes/InstrumentMemory.cpp \
   $BINARYEN_SRC/passes/LegalizeJSInterface.cpp \
+  $BINARYEN_SRC/passes/LimitSegments.cpp \
   $BINARYEN_SRC/passes/LocalCSE.cpp \
   $BINARYEN_SRC/passes/LogExecution.cpp \
   $BINARYEN_SRC/passes/LoopInvariantCodeMotion.cpp \
