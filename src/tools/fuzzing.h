@@ -312,6 +312,7 @@ private:
     );
     auto* body = builder.makeBlock(contents);
     auto* hasher = wasm.addFunction(builder.makeFunction("hashMemory", std::vector<Type>{}, i32, { i32 }, body));
+    hasher->type = ensureFunctionType(getSig(hasher), &wasm)->name;
     wasm.addExport(builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
   }
 
