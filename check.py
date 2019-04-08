@@ -240,6 +240,7 @@ def run_ctor_eval_tests():
       print '..', t
       t = os.path.join(test_dir, t)
       ctors = open(t + '.ctors').read().strip()
+      # TODO: remove --disable-bulk-memory once default feature set is MVP
       cmd = WASM_CTOR_EVAL + [t, '--disable-bulk-memory', '-o', 'a.wast', '-S', '--ctors', ctors]
       run_command(cmd)
       actual = open('a.wast').read()

@@ -28,6 +28,10 @@ struct MemoryPacking : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
+    // Conservatively refuse to change segments if bulk memory is enabled to
+    // avoid invalidating segment indices or segment contents referenced from
+    // memory.init instructions.
+    // TODO: optimize in the presence of memory.init instructions
     if (!module->memory.exists || runner->options.features.hasBulkMemory()) {
       return;
     }
