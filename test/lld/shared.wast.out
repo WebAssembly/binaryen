@@ -11,7 +11,7 @@
  (import "env" "__table_base" (global $gimport$3 i32))
  (import "env" "puts" (func $puts (param i32) (result i32)))
  (import "env" "g$external_var" (func $g$external_var (result i32)))
- (import "env" "f$puts$ii" (func $f$puts$ii (result i32)))
+ (import "env" "fp$puts$ii" (func $fp$puts$ii (result i32)))
  (global $gimport$5 (mut i32) (i32.const 0))
  (global $gimport$6 (mut i32) (i32.const 0))
  (export "print_message" (func $print_message))
@@ -42,7 +42,7 @@
    (call $g$external_var)
   )
   (global.set $gimport$5
-   (call $f$puts$ii)
+   (call $fp$puts$ii)
   )
  )
 )
@@ -54,7 +54,7 @@
   "declares": [
     "puts",
     "g$external_var",
-    "f$puts$ii"
+    "fp$puts$ii"
   ],
   "externs": [
     "___memory_base",
