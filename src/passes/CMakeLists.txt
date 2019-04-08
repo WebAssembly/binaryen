@@ -22,6 +22,7 @@ SET(passes_SOURCES
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   LegalizeJSInterface.cpp
+  LimitSegments.cpp
   LocalCSE.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
