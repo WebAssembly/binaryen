@@ -40,7 +40,7 @@ public:
   Builder(MixedArena& allocator) : allocator(allocator) {}
   Builder(Module& wasm) : allocator(wasm.allocator) {}
 
-  // make* functions, create nodes
+  // make* functions, other globals
 
   Function* makeFunction(Name name,
                          std::vector<Type>&& params,
@@ -79,6 +79,16 @@ public:
     }
     return func;
   }
+
+  Export* makeExport(Name name, Name value, ExternalKind kind) {
+    auto* export_ = new Export();
+    export_->name = name;
+    export_->value = value;
+    export_->kind = ExternalKind::Function;
+    return export_;
+  }
+
+  // IR nodes
 
   Nop* makeNop() {
     return allocator.alloc<Nop>();

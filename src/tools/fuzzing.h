@@ -255,6 +255,7 @@ private:
   }
 
   void setupMemory() {
+    // Add memory itself
     MemoryUtils::ensureExists(wasm.memory);
     if (features.hasBulkMemory()) {
       size_t memCovered = 0;
@@ -283,6 +284,41 @@ private:
         wasm.memory.segments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
       }
     }
+    // Add memory hasher helper (for the hash, see hash.h). The function looks like:
+    // function hashMemory() {
+    //   hash = 5381;
+    //   hash = ((hash << 5) + hash) ^ mem[0];
+    //   hash = ((hash << 5) + hash) ^ mem[1];
+    //   ..
+    //   return hash;
+    // }
+    std::vector<Expression*> contents;
+    contents.push_back(
+      builder.makeSetLocal(0, builder.makeConst(Literal(uint32_t(5381))))
+    );
+    for (Index i = 0; i < USABLE_MEMORY; i++) {
+      contents.push_back(
+        builder.makeSetLocal(0,
+          builder.makeBinary(XorInt32,
+            builder.makeBinary(AddInt32,
+              builder.makeBinary(ShlInt32,
+                builder.makeGetLocal(0, i32),
+                builder.makeConst(Literal(uint32_t(5)))
+              ),
+              builder.makeGetLocal(0, i32)
+            ),
+            builder.makeLoad(1, false, i, 1, builder.makeConst(Literal(uint32_t(0))), i32)
+          )
+        )
+      );
+    }
+    contents.push_back(
+      builder.makeGetLocal(0, i32)
+    );
+    auto* body = builder.makeBlock(contents);
+    auto* hasher = wasm.addFunction(builder.makeFunction("hashMemory", std::vector<Type>{}, i32, { i32 }, body));
+    hasher->type = ensureFunctionType(getSig(hasher), &wasm)->name;
+    wasm.addExport(builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
   }
 
   void setupTable() {
@@ -675,6 +711,10 @@ private:
         invoke = builder.makeDrop(invoke);
       }
       invocations.push_back(invoke);
+      // log out memory in some cases
+      if (oneIn(2)) {
+        invocations.push_back(makeMemoryHashLogging());
+      }
     }
     if (invocations.empty()) return;
     auto* invoker = new Function;
@@ -770,7 +810,13 @@ private:
 
   Expression* _makenone() {
     auto choice = upTo(100);
-    if (choice < LOGGING_PERCENT) return makeLogging();
+    if (choice < LOGGING_PERCENT) {
+      if (choice < LOGGING_PERCENT / 2) {
+        return makeLogging();
+      } else {
+        return makeMemoryHashLogging();
+      }
+    }
     choice = upTo(100);
     if (choice < 50) return makeSetLocal(none);
     if (choice < 60) return makeBlock(none);
@@ -1812,6 +1858,11 @@ private:
   Expression* makeLogging() {
     auto type = pick(i32, i64, f32, f64);
     return builder.makeCall(std::string("log-") + printType(type), { make(type) }, none);
+  }
+
+  Expression* makeMemoryHashLogging() {
+    auto* hash = builder.makeCall(std::string("hashMemory"), {}, i32);
+    return builder.makeCall(std::string("log-i32"), { hash }, none);
   }
 
   // special getters

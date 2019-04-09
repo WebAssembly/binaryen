@@ -330,7 +330,7 @@ void WasmBinaryWriter::writeDataSegments() {
       writeExpression(segment.offset);
       o << int8_t(BinaryConsts::End);
     }
-    writeInlineBuffer(&segment.data[0], segment.data.size());
+    writeInlineBuffer(segment.data.data(), segment.data.size());
   }
   finishSection(start);
 }
