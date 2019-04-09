@@ -35,7 +35,7 @@ function asmFunc(global, env, buffer) {
   print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 1 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 2 | 0) >> 0] | 0 | 0) << 8) | 0);
   print(HEAPU16[(i + 2 | 0) >> 1] | 0 | 0);
   print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 25 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 26 | 0) >> 0] | 0 | 0) << 8) | 0);
-  print(HEAPU32[i >> 2] | 0 | 0);
+  print(HEAP32[i >> 2] | 0 | 0);
   print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 1 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 2 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 3 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 4 | 0) >> 0] | 0 | 0) << 24) | 0);
   print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 2 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 3 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 4 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 5 | 0) >> 0] | 0 | 0) << 24) | 0);
   print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 25 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 26 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 27 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 28 | 0) >> 0] | 0 | 0) << 24) | 0);
@@ -43,7 +43,7 @@ function asmFunc(global, env, buffer) {
  
  function $1(i) {
   i = i | 0;
-  HEAPU32[(i + 4294967295 | 0) >> 2] | 0;
+  HEAP32[(i + 4294967295 | 0) >> 2] | 0;
  }
  
  return {

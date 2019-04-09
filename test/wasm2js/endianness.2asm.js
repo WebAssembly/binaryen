@@ -116,7 +116,7 @@ function asmFunc(global, env, buffer) {
  function $8(value) {
   value = value | 0;
   i32_store_little(0 | 0, value | 0);
-  return HEAPU32[0 >> 2] | 0 | 0;
+  return HEAP32[0 >> 2] | 0 | 0;
  }
  
  function $9(value, value$hi) {
@@ -161,7 +161,7 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = value$hi;
   i32_store_little(0 | 0, value | 0);
-  i64toi32_i32$0 = HEAPU32[0 >> 2] | 0;
+  i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
   i64toi32_i32$1 = 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
   return i64toi32_i32$0 | 0;
@@ -174,7 +174,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = value$hi;
   i64_store_little(0 | 0, value | 0, i64toi32_i32$0 | 0);
   i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = HEAPU32[i64toi32_i32$2 >> 2] | 0;
+  i64toi32_i32$0 = HEAP32[i64toi32_i32$2 >> 2] | 0;
   i64toi32_i32$1 = (wasm2js_i32$0 = i64toi32_i32$2, HEAPU8[(wasm2js_i32$0 + 4 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 5 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 6 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 7 | 0) >> 0] | 0 | 0) << 24);
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
   return i64toi32_i32$0 | 0;
