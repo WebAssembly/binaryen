@@ -35,6 +35,7 @@
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
 #include "ir/import-utils.h"
+#include "ir/load-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
@@ -275,6 +276,7 @@ private:
   void addEsmExportsAndInstantiate(Ref ast, Module* wasm, Name funcName);
   void addBasics(Ref ast);
   void addFunctionImport(Ref ast, Function* import);
+  void addGlobalImport(Ref ast, Global* import);
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
@@ -347,7 +349,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     addFunctionImport(asmFunc[3], import);
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* import) {
-    addGlobal(asmFunc[3], import);
+    addGlobalImport(asmFunc[3], import);
   });
   // figure out the table size
   tableSize = std::accumulate(wasm->table.segments.begin(),
@@ -408,33 +410,37 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 }
 
 void Wasm2JSBuilder::addEsmImports(Ref ast, Module* wasm) {
-  std::unordered_map<Name, Name> nameMap;
+  std::unordered_map<Name, Name> baseModuleMap;
 
-  ImportInfo imports(*wasm);
-  if (imports.getNumImportedGlobals() > 0) {
-    Fatal() << "non-function imports aren't supported yet\n";
-    abort();
-  }
-  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
+  auto noteImport = [&](Name module, Name base) {
     // Right now codegen requires a flat namespace going into the module,
-    // meaning we don't importing the same name from multiple namespaces yet.
-    if (nameMap.count(import->base) && nameMap[import->base] != import->module) {
-        Fatal() << "the name " << import->base << " cannot be imported from "
-            << "two different modules yet\n";
-        abort();
+    // meaning we don't support importing the same name from multiple namespaces yet.
+    if (baseModuleMap.count(base) && baseModuleMap[base] != module) {
+      Fatal() << "the name " << base << " cannot be imported from "
+              << "two different modules yet\n";
+      abort();
     }
-
-    nameMap[import->base] = import->module;
+    baseModuleMap[base] = module;
 
     std::ostringstream out;
     out << "import { "
-      << import->base.str
+      << base.str
       << " } from '"
-      << import->module.str
+      << module.str
       << "'";
     std::string os = out.str();
-    IString name(os.c_str(), false);
+    Name name(os.c_str());
     flattenAppend(ast, ValueBuilder::makeName(name));
+  };
+
+  ImportInfo imports(*wasm);
+
+  ModuleUtils::iterImportedGlobals(*wasm, [&](Global* import) {
+    Fatal() << "non-function imports aren't supported yet\n";
+    noteImport(import->module, import->base);
+  });
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
+    noteImport(import->module, import->base);
   });
 }
 
@@ -678,6 +684,19 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
 }
 
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
+  Ref theVar = ValueBuilder::makeVar();
+  ast->push_back(theVar);
+  Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
+  ValueBuilder::appendToVar(theVar,
+    fromName(import->name, NameScope::Top),
+    ValueBuilder::makeDot(
+      module,
+      fromName(import->base, NameScope::Top)
+    )
+  );
+}
+
+void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
@@ -1373,17 +1392,17 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
           switch (curr->bytes) {
             case 1:
               ret = ValueBuilder::makeSub(
-                  ValueBuilder::makeName(curr->signed_ ? HEAP8 : HEAPU8 ),
+                  ValueBuilder::makeName(LoadUtils::isSignRelevant(curr) && curr->signed_ ? HEAP8 : HEAPU8),
                   ValueBuilder::makePtrShift(ptr, 0));
               break;
             case 2:
               ret = ValueBuilder::makeSub(
-                  ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16),
+                  ValueBuilder::makeName(LoadUtils::isSignRelevant(curr) && curr->signed_ ? HEAP16 : HEAPU16),
                   ValueBuilder::makePtrShift(ptr, 1));
               break;
             case 4:
               ret = ValueBuilder::makeSub(
-                  ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32),
+                  ValueBuilder::makeName(HEAP32),
                   ValueBuilder::makePtrShift(ptr, 2));
               break;
             default: {
