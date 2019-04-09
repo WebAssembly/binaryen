@@ -28,6 +28,7 @@
 #include "ir/bits.h"
 #include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
+#include "ir/load-utils.h"
 
 namespace wasm {
 
@@ -39,7 +40,7 @@ static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
   ret += printType(curr->type);
   ret += "_" + std::to_string(curr->bytes) + "_";
-  if (!isFloatType(curr->type) && !curr->signed_) {
+  if (LoadUtils::isSignRelevant(curr) && !curr->signed_) {
     ret += "U_";
   }
   if (curr->isAtomic) {
