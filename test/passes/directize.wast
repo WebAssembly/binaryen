@@ -179,4 +179,15 @@
   (unreachable)
  )
 )
-
+;; change types
+(module
+ (table $0 8 8 funcref)
+ (func $0
+  (block ;; the type of this block will change
+   (nop)
+   (call_indirect (type $0)
+    (i32.const 15)
+   )
+  )
+ )
+)

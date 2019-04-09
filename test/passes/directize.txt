@@ -181,3 +181,17 @@
   (unreachable)
  )
 )
+(module
+ (type $0 (func))
+ (table $0 8 8 funcref)
+ (func $0 (; 0 ;) (type $0)
+  (block $block
+   (nop)
+   (block
+    (block
+    )
+    (unreachable)
+   )
+  )
+ )
+)
