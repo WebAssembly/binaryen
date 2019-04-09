@@ -220,8 +220,10 @@ struct SafeHeap : public Pass {
 
   // creates a function for a particular style of load
   void addLoadFunc(Load style, Module* module) {
+    auto name = getLoadName(&style);
+    if (module->getFunctionOrNull(name)) return;
     auto* func = new Function;
-    func->name = getLoadName(&style);
+    func->name = name;
     func->params.push_back(i32); // pointer
     func->params.push_back(i32); // offset
     func->vars.push_back(i32); // pointer + offset
@@ -266,8 +268,10 @@ struct SafeHeap : public Pass {
 
   // creates a function for a particular type of store
   void addStoreFunc(Store style, Module* module) {
+    auto name = getStoreName(&style);
+    if (module->getFunctionOrNull(name)) return;
     auto* func = new Function;
-    func->name = getStoreName(&style);
+    func->name = name;
     func->params.push_back(i32); // pointer
     func->params.push_back(i32); // offset
     func->params.push_back(style.valueType); // value
