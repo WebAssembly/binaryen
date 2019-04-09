@@ -14,6 +14,12 @@
    )
   )
  )
+ (func $signed-overflow (param $0 f32) (result i32)
+  (i32.sub
+   (i32.const 268435456)
+   (i32.const -2147483648)
+  )
+ )
 )
 
 

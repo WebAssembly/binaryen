@@ -825,11 +825,11 @@ private:
   // find added constants in an expression tree, including multiplied/shifted, and combine them
   // note that we ignore division/shift-right, as rounding makes this nonlinear, so not a valid opt
   Expression* optimizeAddedConstants(Binary* binary) {
-    int32_t constant = 0;
+    uint32_t constant = 0;
     std::vector<Const*> constants;
     std::function<void (Expression*, int)> seek = [&](Expression* curr, int mul) {
       if (auto* c = curr->dynCast<Const>()) {
-        auto value = c->value.geti32();
+        uint32_t value = c->value.geti32();
         if (value != 0) {
           constant += value * mul;
           constants.push_back(c);
