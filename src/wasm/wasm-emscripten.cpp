@@ -513,16 +513,25 @@ void AsmConstWalker::visitCall(Call* curr) {
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
     auto* arg = curr->operands[0];
-    // The argument may be a get, in which case, the last set in this basic block
-    // has the value.
     if (auto* get = arg->dynCast<GetLocal>()) {
+      // The argument may be a local.get, in which case, the last set in this
+      // basic block has the value.
       auto* set = sets[get->index];
       if (set) {
         assert(set->index == get->index);
         arg = set->value;
       }
+    } else if (auto* value = arg->dynCast<Binary>()) {
+      // If the argument is an i32.add then assume its adding a constand to the
+      // __memory_base pointer and the RHS of the additiona is that offset.
+      assert(value->op == AddInt32);
+      arg = value->right;
     }
-    auto* value = arg->cast<Const>();
+
+    auto* value = arg->dynCast<Const>();
+    if (!value)
+      Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
+              << ") in call to to: " << import->base;
     auto code = codeForConstAddr(wasm, segmentOffsets, value);
     value->value = idLiteralForCode(code);
     sigsForCode[code].insert(sig);
