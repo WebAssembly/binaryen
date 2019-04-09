@@ -230,10 +230,20 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   }
 
   for (Global* g : got_entries_func) {
-    Name getter(std::string("fp$") + g->base.c_str());
-    if (auto* f = wasm.getFunctionOrNull(g->base)) {
-      getter.set((getter.c_str() + std::string("$") + getSig(f)).c_str(), false);
+    Function* f = nullptr;
+    // The function has to exist either as export or an import.
+    // Note that we don't search for the function by name since its internal
+    // name may be different.
+    auto* ex = wasm.getExportOrNull(g->base);
+    if (ex) {
+      assert(ex->kind == ExternalKind::Function);
+      f = wasm.getFunction(ex->value);
+    } else {
+      ImportInfo info(wasm);
+      f = info.getImportedFunction(ENV, g->base);
     }
+
+    Name getter((std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f)).c_str());
     ensureFunctionImport(&wasm, getter, "i");
     Expression* call = builder.makeCall(getter, {}, i32);
     SetGlobal* set_global = builder.makeSetGlobal(g->name, call);
