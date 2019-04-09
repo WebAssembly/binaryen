@@ -28,9 +28,21 @@ from test.shared import options
 
 NANS = True
 
-FUZZ_OPTS = ['--mvp-features']
+FUZZ_OPTS = ['--all-features', '--disable-simd', '--disable-bulk-memory']
 
-INPUT_SIZE_LIMIT = 250 * 1024
+V8_OPTS = [
+  '--experimental-wasm-eh',
+  '--experimental-wasm-mv',
+  '--experimental-wasm-sat-f2i-conversions',
+  '--experimental-wasm-se',
+  '--experimental-wasm-threads',
+  '--experimental-wasm-simd',
+  '--experimental-wasm-anyref',
+  '--experimental-wasm-bulk-memory',
+  '--experimental-wasm-return-call'
+]
+
+INPUT_SIZE_LIMIT = 150 * 1024
 
 LOG_LIMIT = 125
 
@@ -126,7 +138,7 @@ def run_vms(prefix):
   results = []
   # append to this list to add results from VMs
   results += [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
-  results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
+  results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
   # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
   # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
   # run(['../spec/interpreter/wasm', prefix + 'wasm'])
