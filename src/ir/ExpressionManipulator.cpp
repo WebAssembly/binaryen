@@ -91,7 +91,7 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
         return builder.makeAtomicLoad(curr->bytes, curr->offset,
                                       copy(curr->ptr), curr->type);
       }
-      return builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
+      return builder.makeLoad(curr->bytes, isFloatType(curr->type) ? false : curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
     }
     Expression* visitStore(Store *curr) {
       if (curr->isAtomic) {
