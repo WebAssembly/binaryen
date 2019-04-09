@@ -48,9 +48,19 @@ void addExportedFunction(Module& wasm, Function* function) {
   wasm.addExport(export_);
 }
 
+// TODO(sbc): There should probably be a better way to do this.
+bool isExported(Module& wasm, Name name) {
+  for (auto& ex : wasm.exports) {
+    if (ex->value == name) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
   // Assumption: The stack pointer is either imported as __stack_pointer or
-  // its the first non-imported global.
+  // its the first non-imported and non-exported global.
   // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
   // linker could export it by name?
   for (auto& g : wasm.globals) {
@@ -58,7 +68,7 @@ Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
       if (g->base == "__stack_pointer") {
         return g.get();
       }
-    } else {
+    } else if (!isExported(wasm, g->name)) {
       return g.get();
     }
   }
@@ -172,6 +182,17 @@ static Function* ensureFunctionImport(Module* module, Name name, std::string sig
   return import;
 }
 
+// Convert LLVM PIC ABI to emscripten ABI
+//
+// When generating -fPIC code llvm will generate imports call GOT.mem and
+// GOT.func in order to access the addresses of external global data and
+// functions.
+//
+// However emscripten uses a different ABI where function and data addresses
+// are available at runtime via special `g$foo` and `fp$bar` function calls.
+//
+// Here we internalize all such wasm globals and generte code that sets their
+// value based on the result of call `g$foo` and `fp$bar` functions at runtime.
 Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   std::vector<Global*> got_entries_func;
   std::vector<Global*> got_entries_mem;
@@ -209,7 +230,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
   }
 
   for (Global* g : got_entries_func) {
-    Name getter(std::string("f$") + g->base.c_str());
+    Name getter(std::string("fp$") + g->base.c_str());
     if (auto* f = wasm.getFunctionOrNull(g->base)) {
       getter.set((getter.c_str() + std::string("$") + getSig(f)).c_str(), false);
     }
@@ -244,7 +265,7 @@ void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
   if (Function* F = generateAssignGOTEntriesFunction()) {
     // call __assign_got_enties from post_instantiate
     Expression* call = builder.makeCall(F->name, {}, none);
-    post_instantiate->body = builder.blockify(call);
+    post_instantiate->body = builder.blockify(post_instantiate->body, call);
   }
 
   // The names of standard imports/exports used by lld doesn't quite match that
