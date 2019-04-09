@@ -3,7 +3,6 @@ PointerAlignment: Left
 IndentCaseLabels: true
 ContinuationIndentWidth: 2
 ConstructorInitializerIndentWidth: 2
-AlignAfterOpenBracket: DontAlign
 SpaceAfterTemplateKeyword: false
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
