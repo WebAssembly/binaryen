@@ -27,6 +27,7 @@
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "asm_v_wasm.h"
+#include <ir/utils.h>
 
 namespace wasm {
 
@@ -95,8 +96,16 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     }
   }
 
+  void doWalkFunction(Function* func) {
+    WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
+    if (changedTypes) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
+  }
+
 private:
   FlatTable* flatTable;
+  bool changedTypes = false;
 
   void replaceWithUnreachable(CallIndirect* call) {
     Builder builder(*getModule());
@@ -109,6 +118,7 @@ private:
         builder.makeUnreachable()
       )
     );
+    changedTypes = true;
   }
 };
 
