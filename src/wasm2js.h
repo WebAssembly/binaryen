@@ -40,6 +40,7 @@
 #include "ir/names.h"
 #include "ir/utils.h"
 #include "passes/passes.h"
+#include "support/base64.h"
 
 namespace wasm {
 
@@ -1984,6 +1985,158 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
   ));
   ast->push_back(growMemoryFunc);
   ast->push_back(currentMemoryFunc);
+}
+
+// Wasm2JSGlue emits the core of the module - the functions etc. that would
+// be the asm.js function in an asm.js world. This class emits the rest of the
+// "glue" around that.
+class Wasm2JSGlue {
+public:
+  Wasm2JSGlue(Module& wasm, Output& out, Wasm2JSBuilder::Flags flags, Name moduleName) : wasm(wasm), out(out), flags(flags), moduleName(moduleName) {}
+
+  void emitPre();
+  void emitPost();
+
+private:
+  Module& wasm;
+  Output& out;
+  Wasm2JSBuilder::Flags flags;
+  Name moduleName;
+};
+
+void Wasm2JSGlue::emitPre() {
+  std::unordered_map<Name, Name> baseModuleMap;
+
+  auto noteImport = [&](Name module, Name base) {
+    // Right now codegen requires a flat namespace going into the module,
+    // meaning we don't support importing the same name from multiple namespaces yet.
+    if (baseModuleMap.count(base) && baseModuleMap[base] != module) {
+      Fatal() << "the name " << base << " cannot be imported from "
+              << "two different modules yet\n";
+      abort();
+    }
+    baseModuleMap[base] = module;
+
+    out << "import { "
+      << base.str
+      << " } from '"
+      << module.str
+      << "';\n";
+  };
+
+  ImportInfo imports(wasm);
+
+  ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
+    Fatal() << "non-function imports aren't supported yet\n";
+    noteImport(import->module, import->base);
+  });
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    noteImport(import->module, import->base);
+  });
+
+  out << '\n';
+}
+
+void Wasm2JSGlue::emitPost() {
+  // Create an initial `ArrayBuffer` and populate it with static data.
+  // Currently we use base64 encoding to encode static data and we decode it at
+  // instantiation time.
+  //
+  // Note that the translation here expects that the lower values of this memory
+  // can be used for conversions, so make sure there's at least one page.
+  {
+    auto pages = wasm.memory.initial == 0 ? 1 : wasm.memory.initial.addr;
+    out << "const mem" << moduleName.str << " = new ArrayBuffer("
+      << pages * Memory::kPageSize
+      << ");\n";
+  }
+
+  if (wasm.memory.segments.size() > 0) {
+    auto expr = R"(
+      function(mem) {
+        const _mem = new Uint8Array(mem);
+        return function(offset, s) {
+          if (typeof Buffer === 'undefined') {
+            const bytes = atob(s);
+            for (let i = 0; i < bytes.length; i++)
+              _mem[offset + i] = bytes.charCodeAt(i);
+          } else {
+            const bytes = Buffer.from(s, 'base64');
+            for (let i = 0; i < bytes.length; i++)
+              _mem[offset + i] = bytes[i];
+          }
+        }
+      }
+    )";
+
+    // const assign$name = ($expr)(mem$name);
+    out << "const assign" << moduleName.str
+      << " = (" << expr << ")(mem" << moduleName.str << ");\n";
+  }
+  for (auto& seg : wasm.memory.segments) {
+    assert(!seg.isPassive && "passive segments not implemented yet");
+    out << "assign" << moduleName.str << "("
+      << constOffset(seg)
+      << ", \""
+      << base64Encode(seg.data)
+      << "\");\n";
+  }
+
+  // Actually invoke the `asmFunc` generated function, passing in all global
+  // values followed by all imports
+  out << "const ret" << moduleName.str << " = " << moduleName.str << "({"
+    << "Math,"
+    << "Int8Array,"
+    << "Uint8Array,"
+    << "Int16Array,"
+    << "Uint16Array,"
+    << "Int32Array,"
+    << "Uint32Array,"
+    << "Float32Array,"
+    << "Float64Array,"
+    << "NaN,"
+    << "Infinity"
+    << "}, {";
+
+  out << "abort:function() { throw new Error('abort'); }";
+
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    out << "," << import->base.str;
+  });
+  out << "},mem" << moduleName.str << ");\n";
+
+  if (flags.allowAsserts) {
+    return;
+  }
+
+  // And now that we have our returned instance, export all our functions
+  // that are hanging off it.
+  for (auto& exp : wasm.exports) {
+    switch (exp->kind) {
+      case ExternalKind::Function:
+      case ExternalKind::Memory:
+        break;
+
+      // Exported globals and function tables aren't supported yet
+      default:
+        continue;
+    }
+    std::ostringstream export_name;
+    for (auto *ptr = exp->name.str; *ptr; ptr++) {
+      if (*ptr == '-') {
+        export_name << '_';
+      } else {
+        export_name << *ptr;
+      }
+    }
+    out << "export const "
+      << asmangle(exp->name.str)
+      << " = ret"
+      << moduleName.str
+      << "."
+      << asmangle(exp->name.str)
+      << ";\n";
+  }
 }
 
 } // namespace wasm
