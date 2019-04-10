@@ -509,8 +509,8 @@ void AsmConstWalker::visitSetLocal(SetLocal* curr) {
 
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
-  // Fine calls the emscripten_asm_const* functions which first argument is
-  // alwasys a constant.
+  // Find calls to emscripten_asm_const* functions whose first argument is
+  // is always a string constant.
   if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
