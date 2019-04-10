@@ -22,7 +22,7 @@ namespace wasm {
 // Look for side effects, including control flow
 // TODO: optimize
 
-struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
+struct EffectAnalyzer : public PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>> {
   EffectAnalyzer(PassOptions& passOptions, Expression *ast = nullptr) {
     ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
     debugInfo = passOptions.debugInfo;
@@ -149,18 +149,10 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
 
   std::set<Name> breakNames;
 
-  void visitBreak(Break *curr) {
-    breakNames.insert(curr->name);
-  }
-  void visitSwitch(Switch *curr) {
-    for (auto name : curr->targets) {
-      breakNames.insert(name);
-    }
-    breakNames.insert(curr->default_);
-  }
   void visitBlock(Block* curr) {
     if (curr->name.is()) breakNames.erase(curr->name); // these were internal breaks
   }
+  void visitIf(If* curr) {}
   void visitLoop(Loop* curr) {
     if (curr->name.is()) breakNames.erase(curr->name); // these were internal breaks
     // if the loop is unreachable, then there is branching control flow:
@@ -175,6 +167,15 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     if (curr->type == unreachable) {
       branches = true;
     }
+  }
+  void visitBreak(Break *curr) {
+    breakNames.insert(curr->name);
+  }
+  void visitSwitch(Switch *curr) {
+    for (auto name : curr->targets) {
+      breakNames.insert(name);
+    }
+    breakNames.insert(curr->default_);
   }
 
   void visitCall(Call *curr) {
@@ -239,7 +240,31 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     isAtomic = true;
     if (!ignoreImplicitTraps) implicitTrap = true;
   };
-  void visitUnary(Unary *curr) {
+  void visitSIMDExtract(SIMDExtract* curr) {}
+  void visitSIMDReplace(SIMDReplace* curr) {}
+  void visitSIMDShuffle(SIMDShuffle* curr) {}
+  void visitSIMDBitselect(SIMDBitselect* curr) {}
+  void visitSIMDShift(SIMDShift* curr) {}
+  void visitMemoryInit(MemoryInit* curr) {
+    writesMemory = true;
+    if (!ignoreImplicitTraps) implicitTrap = true;
+  }
+  void visitDataDrop(DataDrop* curr) {
+    // prevent reordering with memory.init
+    readsMemory = true;
+    if (!ignoreImplicitTraps) implicitTrap = true;
+  }
+  void visitMemoryCopy(MemoryCopy* curr) {
+    readsMemory = true;
+    writesMemory = true;
+    if (!ignoreImplicitTraps) implicitTrap = true;
+  }
+  void visitMemoryFill(MemoryFill* curr) {
+    writesMemory = true;
+    if (!ignoreImplicitTraps) implicitTrap = true;
+  }
+  void visitConst(Const* curr) {}
+  void visitUnary(Unary* curr) {
     if (!ignoreImplicitTraps) {
       switch (curr->op) {
         case TruncSFloat32ToInt32:
@@ -257,7 +282,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
       }
     }
   }
-  void visitBinary(Binary *curr) {
+  void visitBinary(Binary* curr) {
     if (!ignoreImplicitTraps) {
       switch (curr->op) {
         case DivSInt32:
@@ -275,6 +300,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
       }
     }
   }
+  void visitSelect(Select* curr) {}
+  void visitDrop(Drop* curr) {}
   void visitReturn(Return *curr) { branches = true; }
   void visitHost(Host *curr) {
     calls = true;
@@ -283,6 +310,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     // Atomics are also sequentially consistent with grow_memory.
     isAtomic = true;
   }
+  void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable *curr) { branches = true; }
 
   // Helpers

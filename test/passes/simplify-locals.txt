@@ -1720,3 +1720,142 @@
   )
  )
 )
+(module
+ (type $0 (func))
+ (memory $0 256 256)
+ (data passive "hello, there!")
+ (func $memory-init-load (; 0 ;) (type $0)
+  (local $x i32)
+  (local.set $x
+   (i32.load
+    (i32.const 0)
+   )
+  )
+  (memory.init 0
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 5)
+  )
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-init-store (; 1 ;) (type $0)
+  (local $x i32)
+  (local.set $x
+   (block $block (result i32)
+    (i32.store
+     (i32.const 0)
+     (i32.const 42)
+    )
+    (i32.const 0)
+   )
+  )
+  (memory.init 0
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 5)
+  )
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-copy-load (; 2 ;) (type $0)
+  (local $x i32)
+  (local.set $x
+   (i32.load
+    (i32.const 0)
+   )
+  )
+  (memory.copy
+   (i32.const 0)
+   (i32.const 8)
+   (i32.const 8)
+  )
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-copy-store (; 3 ;) (type $0)
+  (local $x i32)
+  (local.set $x
+   (block $block (result i32)
+    (i32.store
+     (i32.const 0)
+     (i32.const 42)
+    )
+    (i32.const 0)
+   )
+  )
+  (memory.copy
+   (i32.const 0)
+   (i32.const 8)
+   (i32.const 8)
+  )
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-fill-load (; 4 ;) (type $0)
+  (local $x i32)
+  (local.set $x
+   (i32.load
+    (i32.const 0)
+   )
+  )
+  (memory.fill
+   (i32.const 0)
+   (i32.const 42)
+   (i32.const 8)
+  )
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-fill-store (; 5 ;) (type $0)
+  (local $x i32)
+  (local.set $x
+   (block $block (result i32)
+    (i32.store
+     (i32.const 0)
+     (i32.const 42)
+    )
+    (i32.const 0)
+   )
+  )
+  (memory.fill
+   (i32.const 0)
+   (i32.const 8)
+   (i32.const 8)
+  )
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $data-drop-load (; 6 ;) (type $0)
+  (local $x i32)
+  (nop)
+  (data.drop 0)
+  (drop
+   (i32.load
+    (i32.const 0)
+   )
+  )
+ )
+ (func $data-drop-store (; 7 ;) (type $0)
+  (local $x i32)
+  (local.set $x
+   (block $block (result i32)
+    (i32.store
+     (i32.const 0)
+     (i32.const 42)
+    )
+    (i32.const 0)
+   )
+  )
+  (data.drop 0)
+  (drop
+   (local.get $x)
+  )
+ )
+)

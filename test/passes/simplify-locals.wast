@@ -1546,3 +1546,99 @@
     (call $tee-chain (local.get $x) (local.get $z) (local.get $t1) (local.get $t2) (local.get $t3))
   )
 )
+(module
+ (memory 256 256)
+ (data passive "hello, there!")
+ (func $memory-init-load
+  (local $x i32)
+  (local.set $x
+   (i32.load (i32.const 0))
+  )
+  (memory.init 0 (i32.const 0) (i32.const 0) (i32.const 5))
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-init-store
+  (local $x i32)
+  (local.set $x
+   (block i32
+    (i32.store (i32.const 0) (i32.const 42))
+    (i32.const 0)
+   )
+  )
+  (memory.init 0 (i32.const 0) (i32.const 0) (i32.const 5))
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-copy-load
+  (local $x i32)
+  (local.set $x
+   (i32.load (i32.const 0))
+  )
+  (memory.copy (i32.const 0) (i32.const 8) (i32.const 8))
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-copy-store
+  (local $x i32)
+  (local.set $x
+   (block i32
+    (i32.store (i32.const 0) (i32.const 42))
+    (i32.const 0)
+   )
+  )
+  (memory.copy (i32.const 0) (i32.const 8) (i32.const 8))
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-fill-load
+  (local $x i32)
+  (local.set $x
+   (i32.load (i32.const 0))
+  )
+  (memory.fill (i32.const 0) (i32.const 42) (i32.const 8))
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $memory-fill-store
+  (local $x i32)
+  (local.set $x
+   (block i32
+    (i32.store (i32.const 0) (i32.const 42))
+    (i32.const 0)
+   )
+  )
+  (memory.fill (i32.const 0) (i32.const 8) (i32.const 8))
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $data-drop-load
+  (local $x i32)
+  (local.set $x
+   (i32.load (i32.const 0))
+  )
+  (data.drop 0)
+  (drop
+   (local.get $x)
+  )
+ )
+ (func $data-drop-store
+  (local $x i32)
+  (local.set $x
+   (block i32
+    (i32.store (i32.const 0) (i32.const 42))
+    (i32.const 0)
+   )
+  )
+  (data.drop 0)
+  (drop
+   (local.get $x)
+  )
+ )
+)
