@@ -278,7 +278,7 @@ void Wasm2JSGlue::emitAsserts(Element& root,
       Module wasm;
       SExpressionWasmBuilder builder(wasm, e);
       Wasm2JSBuilder sub(flags);
-      auto js = sub.processWasm(&wasm);
+      auto js = sub.processWasm(&wasm, funcName);
       JSPrinter jser(true, true, js);
       jser.printAst();
       out << jser.buffer << '\n';
