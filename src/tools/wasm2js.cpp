@@ -36,13 +36,14 @@ namespace {
 // "glue" around that.
 class Wasm2JSGlue {
 public:
-  Wasm2JSGlue(Module& wasm, Output& out) : wasm(wasm), out(out) {}
+  Wasm2JSGlue(Module& wasm, Output& out, Wasm2JSBuilder::Flags flags) : wasm(wasm), out(out), flags(flags) {}
 
   void emitPre();
   void emitPost();
 private:
   Module& wasm;
   Output& out;
+  Wasm2JSBuilder::Flags flags;
 };
 
 void Wasm2JSGlue::emitPre() {
@@ -79,8 +80,8 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPost() {
-/*
-void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name funcName) {
+  std::string funcName = "asmFunc";
+
   // Create an initial `ArrayBuffer` and populate it with static data.
   // Currently we use base64 encoding to encode static data and we decode it at
   // instantiation time.
@@ -88,13 +89,13 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
   // Note that the translation here expects that the lower values of this memory
   // can be used for conversions, so make sure there's at least one page.
   {
-    auto pages = wasm->memory.initial == 0 ? 1 : wasm->memory.initial.addr;
-    out << "const mem" << funcName.str << " = new ArrayBuffer("
+    auto pages = wasm.memory.initial == 0 ? 1 : wasm.memory.initial.addr;
+    out << "const mem" << funcName << " = new ArrayBuffer("
       << pages * Memory::kPageSize
-      << ")";
+      << ")\n";
   }
 
-  if (wasm->memory.segments.size() > 0) {
+  if (wasm.memory.segments.size() > 0) {
     auto expr = R"(
       function(mem) {
         const _mem = new Uint8Array(mem);
@@ -113,22 +114,21 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
     )";
 
     // const assign$name = ($expr)(mem$name);
-    out << "const assign" << funcName.str
-      << " = (" << expr << ")(mem" << funcName.str << ")";
+    out << "const assign" << funcName
+      << " = (" << expr << ")(mem" << funcName << ")\n";
   }
-  for (auto& seg : wasm->memory.segments) {
+  for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
-    out << "assign" << funcName.str << "("
+    out << "assign" << funcName << "("
       << constOffset(seg)
       << ", \""
       << base64Encode(seg.data)
-      << "\")";
+      << "\")\n";
   }
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
-  std::ostringstream construct;
-  construct << "const ret" << funcName.str << " = " << funcName.str << "({"
+  out << "const ret" << funcName << " = " << funcName << "({"
     << "Math,"
     << "Int8Array,"
     << "Uint8Array,"
@@ -142,15 +142,12 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
     << "Infinity"
     << "}, {";
 
-  construct << "abort:function() { throw new Error('abort'); }";
+  out << "abort:function() { throw new Error('abort'); }";
 
-  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
-    construct << "," << import->base.str;
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    out << "," << import->base;
   });
-  construct << "},mem" << funcName.str << ")";
-  std::string sconstruct = construct.str();
-  IString name(sconstruct.c_str(), false);
-  flattenAppend(ast, ValueBuilder::makeName(name));
+  out << "},mem" << funcName << ")\n";
 
   if (flags.allowAsserts) {
     return;
@@ -158,7 +155,7 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
 
   // And now that we have our returned instance, export all our functions
   // that are hanging off it.
-  for (auto& exp : wasm->exports) {
+  for (auto& exp : wasm.exports) {
     switch (exp->kind) {
       case ExternalKind::Function:
       case ExternalKind::Memory:
@@ -177,15 +174,13 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
       }
     }
     out << "export const "
-      << fromName(exp->name, NameScope::Top).str
+      << asmangle(exp->name.str)
       << " = ret"
-      << funcName.str
+      << funcName
       << "."
-      << fromName(exp->name, NameScope::Top).str;
+      << asmangle(exp->name.str);
   }
-}
-*/
-  out << "waka\n";
+  out << "\n";
 }
 
 } // anonymous namespace
@@ -287,7 +282,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "j-printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  Wasm2JSGlue glue(wasm, output);
+  Wasm2JSGlue glue(wasm, output, builderFlags);
   glue.emitPre();
   JSPrinter jser(true, true, asmjs);
   jser.printAst();
