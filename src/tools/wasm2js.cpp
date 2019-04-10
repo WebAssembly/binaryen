@@ -49,17 +49,17 @@ private:
   Wasm2JSBuilder::Flags flags;
 
   bool isAssertHandled(Element& e);
-  Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+  Ref emitAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
                            Builder& wasmBuilder,
                            Element& e,
                            Name testFuncName,
                            Name asmModule);
-  Ref makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
+  Ref emitAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
                               Builder& wasmBuilder,
                               Element& e,
                               Name testFuncName,
                               Name asmModule);
-  Ref makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+  Ref emitAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
                          Builder& wasmBuilder,
                          Element& e,
                          Name testFuncName,
@@ -70,6 +70,12 @@ private:
   Ref processFunction(Function* func) {
     Wasm2JSBuilder sub(flags);
     return sub.processFunction(&wasm, func);
+  }
+
+  void emitFunction(Ref func) {
+    JSPrinter jser(true, true, func);
+    jser.printAst();
+    out << jser.buffer << std::endl;
   }
 };
 
@@ -208,7 +214,6 @@ void Wasm2JSGlue::emitPost() {
       << asmangle(exp->name.str)
       << ";\n";
   }
-  out << "\n";
 }
 
 void Wasm2JSGlue::emitAsserts(Element& root,
@@ -295,18 +300,22 @@ void Wasm2JSGlue::emitAsserts(Element& root,
     testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
 
     if (isReturn) {
-      makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
+      emitAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
     } else if (isReturnNan) {
-      makeAssertReturnNanFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
+      emitAssertReturnNanFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
     } else {
-      makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
+      emitAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
     }
 
-    out << "if (!" << testFuncName << "()) throw 'fail :(';\n";
+    out << "if (!"
+        << testFuncName.str
+        << "()) throw 'assertion failed: "
+        << e
+        << "';\n";
   }
 }
 
-Ref Wasm2JSGlue::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+Ref Wasm2JSGlue::emitAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
                                       Builder& wasmBuilder,
                                       Element& e,
                                       Name testFuncName,
@@ -367,10 +376,11 @@ Ref Wasm2JSGlue::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
   );
   Ref jsFunc = processFunction(testFunc.get());
   fixCalls(jsFunc, asmModule);
+  emitFunction(jsFunc);
   return jsFunc;
 }
 
-Ref Wasm2JSGlue::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
+Ref Wasm2JSGlue::emitAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
                                          Builder& wasmBuilder,
                                          Element& e,
                                          Name testFuncName,
@@ -388,10 +398,11 @@ Ref Wasm2JSGlue::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
   );
   Ref jsFunc = processFunction(testFunc.get());
   fixCalls(jsFunc, asmModule);
+  emitFunction(jsFunc);
   return jsFunc;
 }
 
-Ref Wasm2JSGlue::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+Ref Wasm2JSGlue::emitAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
                                     Builder& wasmBuilder,
                                     Element& e,
                                     Name testFuncName,
@@ -431,6 +442,7 @@ Ref Wasm2JSGlue::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
       ValueBuilder::makeName((IString("e"))),
       catchBlock));
   outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
+  emitFunction(outerFunc);
   return outerFunc;
 }
 
@@ -478,7 +490,7 @@ void Wasm2JSGlue::fixCalls(Ref asmjs, Name asmModule) {
 } // anonymous namespace
 
 int main(int argc, const char *argv[]) {
-  Wasm2JSGlue::Flags builderFlags;
+  Wasm2JSBuilder::Flags builderFlags;
   ToolOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -570,7 +582,7 @@ int main(int argc, const char *argv[]) {
   if (!binaryInput) {
     if (options.extra["asserts"] == "1") {
       if (options.debug) std::cerr << "asserting..." << std::endl;
-      glue.emitAsserts(*root, *sexprBuilder));
+      glue.emitAsserts(*root, *sexprBuilder);
     }
   }
 

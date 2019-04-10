@@ -1,3 +1,4 @@
+
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
