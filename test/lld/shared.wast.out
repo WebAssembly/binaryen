@@ -5,8 +5,9 @@
  (type $FUNCSIG$ii (func (param i32) (result i32)))
  (type $FUNCSIG$i (func (result i32)))
  (import "env" "memory" (memory $0 0))
- (data (global.get $gimport$2) "Hello, world\00")
- (import "env" "table" (table $0 0 funcref))
+ (data (global.get $gimport$2) "\00\00\00\00Hello, world\00")
+ (import "env" "table" (table $0 1 funcref))
+ (elem (global.get $gimport$3) $puts)
  (import "env" "__memory_base" (global $gimport$2 i32))
  (import "env" "__table_base" (global $gimport$3 i32))
  (import "env" "puts" (func $puts (param i32) (result i32)))
@@ -14,35 +15,55 @@
  (import "env" "fp$puts$ii" (func $fp$puts$ii (result i32)))
  (global $gimport$5 (mut i32) (i32.const 0))
  (global $gimport$6 (mut i32) (i32.const 0))
+ (global $global$0 i32 (i32.const 0))
  (export "print_message" (func $print_message))
+ (export "ptr" (global $global$0))
  (export "__post_instantiate" (func $__post_instantiate))
+ (export "dynCall_ii" (func $dynCall_ii))
  (func $__wasm_call_ctors (; 3 ;) (type $1)
-  (nop)
+  (call $__wasm_apply_relocs)
  )
- (func $print_message (; 4 ;) (type $2) (result i32)
-  (drop
+ (func $__wasm_apply_relocs (; 4 ;) (type $1)
+  (i32.store
    (i32.add
     (global.get $gimport$2)
     (i32.const 0)
    )
-  )
-  (drop
-   (call $print_message)
-  )
-  (i32.load
-   (global.get $gimport$6)
+   (i32.add
+    (global.get $gimport$3)
+    (i32.const 0)
+   )
   )
  )
- (func $__post_instantiate (; 5 ;)
+ (func $print_message (; 5 ;) (type $2) (result i32)
+  (drop
+   (call $puts
+    (i32.add
+     (global.get $gimport$2)
+     (i32.const 4)
+    )
+   )
+  )
+  (i32.load
+   (global.get $gimport$5)
+  )
+ )
+ (func $__post_instantiate (; 6 ;)
   (call $__assign_got_enties)
   (call $__wasm_call_ctors)
  )
- (func $__assign_got_enties (; 6 ;)
-  (global.set $gimport$6
+ (func $__assign_got_enties (; 7 ;)
+  (global.set $gimport$5
    (call $g$external_var)
   )
-  (global.set $gimport$5
+  (global.set $gimport$6
    (call $fp$puts$ii)
+  )
+ )
+ (func $dynCall_ii (; 8 ;) (param $fptr i32) (param $0 i32) (result i32)
+  (call_indirect (type $FUNCSIG$ii)
+   (local.get $0)
+   (local.get $fptr)
   )
  )
 )
@@ -50,7 +71,7 @@
 --BEGIN METADATA --
 {
   "staticBump": 0,
-  "tableSize": 0,
+  "tableSize": 1,
   "declares": [
     "puts",
     "g$external_var",
@@ -62,13 +83,16 @@
   ],
   "implementedFunctions": [
     "_print_message",
-    "___post_instantiate"
+    "___post_instantiate",
+    "_dynCall_ii"
   ],
   "exports": [
     "print_message",
-    "__post_instantiate"
+    "__post_instantiate",
+    "dynCall_ii"
   ],
   "namedGlobals": {
+    "ptr" : "0"
   },
   "invokeFuncs": [
   ],
