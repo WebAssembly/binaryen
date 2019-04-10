@@ -7,4 +7,3 @@ SpaceAfterTemplateKeyword: false
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 AllowShortBlocksOnASingleLine: true
-AllowShortFunctionsOnASingleLine: All
