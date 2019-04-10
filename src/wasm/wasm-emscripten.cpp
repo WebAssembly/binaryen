@@ -509,6 +509,8 @@ void AsmConstWalker::visitSetLocal(SetLocal* curr) {
 
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
+  // Fine calls the emscripten_asm_const* functions which first argument is
+  // alwasys a constant.
   if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
@@ -522,8 +524,10 @@ void AsmConstWalker::visitCall(Call* curr) {
         arg = set->value;
       }
     } else if (auto* value = arg->dynCast<Binary>()) {
-      // If the argument is an i32.add then assume its adding a constand to the
-      // __memory_base pointer and the RHS of the additiona is that offset.
+      // In the dynamic linking case the address of the string constant
+      // is the result of adding its offset to __memory_base.
+      // In this case are only looking for the offset with the data segment so
+      // the RHS of the addition is just what we want.
       assert(value->op == AddInt32);
       arg = value->right;
     }
