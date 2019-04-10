@@ -178,7 +178,7 @@ void Wasm2JSGlue::emitPost() {
   out << "abort:function() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    out << "," << import->base;
+    out << "," << import->base.str;
   });
   out << "},mem" << funcName << ");\n";
 
@@ -265,9 +265,7 @@ void Wasm2JSGlue::emitAsserts(Element& root,
   )";
 
   Builder wasmBuilder(sexpBuilder.getAllocator());
-  std::stringstream asmModuleS;
-  asmModuleS << "ret" << ASM_FUNC.c_str();
-  Name asmModule(asmModuleS.str().c_str());
+  Name asmModule = std::string("ret") + ASM_FUNC.str;
   for (size_t i = 1; i < root.size(); ++i) {
     Element& e = *root[i];
     if (e.isList() && e.size() >= 1 && e[0]->isStr() && e[0]->str() == Name("module")) {
@@ -283,7 +281,7 @@ void Wasm2JSGlue::emitAsserts(Element& root,
       auto js = sub.processWasm(&wasm);
       JSPrinter jser(true, true, js);
       jser.printAst();
-      out << jser.buffer << std::endl;
+      out << jser.buffer << '\n';
       continue;
     }
     if (!isAssertHandled(e)) {
