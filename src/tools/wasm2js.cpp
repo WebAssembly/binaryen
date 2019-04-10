@@ -28,6 +28,31 @@
 using namespace cashew;
 using namespace wasm;
 
+namespace {
+
+// Wasm2JSBuilder emits the core of the module - the functions etc. that would
+// be the asm.js function in an asm.js world. This class emits the rest of the
+// "glue" around that.
+class Wasm2JSGlue {
+public:
+  Wasm2JSGlue(Module& wasm) : wasm(wasm) {}
+
+  std::string getPre();
+  std::string getPost();
+private:
+  Module& wasm;
+};
+
+std::string Wasm2JSGlue::getPre() {
+  return "";
+}
+
+std::string Wasm2JSGlue::getPost() {
+  return "";
+}
+
+} // anonymous namespace
+
 int main(int argc, const char *argv[]) {
   Wasm2JSBuilder::Flags builderFlags;
   ToolOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
@@ -124,10 +149,13 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.debug) std::cerr << "j-printing..." << std::endl;
+  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
+  Wasm2JSGlue glue(wasm);
+  output << glue.getPre();
   JSPrinter jser(true, true, asmjs);
   jser.printAst();
-  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   output << jser.buffer << std::endl;
+  output << glue.getPost();
 
   if (options.debug) std::cerr << "done." << std::endl;
 }

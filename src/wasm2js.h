@@ -15,8 +15,8 @@
  */
 
 //
-// WebAssembly-to-asm.js translator. Uses the Emscripten optimizer
-// infrastructure.
+// WebAssembly-to-JS code translator. Converts wasm functions into
+// valid JavaScript (with a somewhat asm.js-ish flavor).
 //
 
 #ifndef wasm_wasm2js_h
@@ -87,15 +87,15 @@ static uint64_t constOffset(const T& segment) {
 }
 
 //
-// Wasm2JSBuilder - converts a WebAssembly module into asm.js
+// Wasm2JSBuilder - converts a WebAssembly module's functions into JS
 //
-// In general, asm.js => wasm is very straightforward, as can
+// In general, JS (asm.js) => wasm is very straightforward, as can
 // be seen in asm2wasm.h. Just a single pass, plus a little
 // state bookkeeping (breakStack, etc.), and a few after-the
-// fact corrections for imports, etc. However, wasm => asm.js
+// fact corrections for imports, etc. However, wasm => JS
 // is tricky because wasm has statements == expressions, or in
 // other words, things like `break` and `if` can show up
-// in places where asm.js can't handle them, like inside an
+// in places where JS can't handle them, like inside an
 // a loop's condition check.
 //
 // We therefore need the ability to lower an expression into
@@ -154,7 +154,7 @@ public:
   void scanFunctionBody(Expression* curr);
 
   // The second pass on an expression: process it fully, generating
-  // asm.js
+  // JS
   // @param result Whether the context we are in receives a value,
   //               and its type, or if not, then we can drop our return,
   //               if we have one.
@@ -315,7 +315,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // i64-to-i32 lowering pass.
   runner.add("remove-non-js-ops");
   // Currently the i64-to-32 lowering pass requires that `flatten` be run before
-  // it produce correct code. For some more details about this see #1480
+  // it to produce correct code. For some more details about this see #1480
   runner.add("flatten");
   runner.add("i64-to-i32-lowering");
   runner.add("flatten");
