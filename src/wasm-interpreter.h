@@ -835,6 +835,8 @@ public:
     virtual void store32(Address addr, int32_t value) { WASM_UNREACHABLE(); }
     virtual void store64(Address addr, int64_t value) { WASM_UNREACHABLE(); }
     virtual void store128(Address addr, const std::array<uint8_t, 16>&) { WASM_UNREACHABLE(); }
+
+    virtual void tableStore(Address addr, Name entry) { WASM_UNREACHABLE(); }
   };
 
   SubType* self() {
@@ -855,8 +857,13 @@ public:
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals).visit(global->init).value;
     });
+
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
+
+    initializeTableContents();
+    initializeMemoryContents();
+
     // run start, if present
     if (wasm.start.is()) {
       LiteralList arguments;
@@ -902,6 +909,358 @@ private:
   // stack traces.
   std::vector<Name> functionStack;
 
+  std::unordered_set<size_t> droppedSegments;
+
+  void initializeTableContents() {
+    for (auto& segment : wasm.table.segments) {
+      Address offset = (uint32_t)ConstantExpressionRunner<GlobalManager>(globals).visit(segment.offset).value.geti32();
+      if (offset + segment.data.size() > wasm.table.initial) {
+        externalInterface->trap("invalid offset when initializing table");
+      }
+      for (size_t i = 0; i != segment.data.size(); ++i) {
+        externalInterface->tableStore(offset + i, segment.data[i]);
+      }
+    }
+  }
+
+  void initializeMemoryContents() {
+    Builder builder(wasm);
+
+    Const offset;
+    offset.value = Literal(uint32_t(0));
+    offset.finalize();
+
+    // apply active memory segments
+    for (size_t i = 0, e = wasm.memory.segments.size(); i < e; ++i) {
+      Memory::Segment& segment = wasm.memory.segments[i];
+      if (segment.isPassive) {
+        continue;
+      }
+
+      Const size;
+      size.value = Literal(uint32_t(segment.data.size()));
+      size.finalize();
+
+      MemoryInit init;
+      init.segment = i;
+      init.dest = segment.offset;
+      init.offset = &offset;
+      init.size = &size;
+      init.finalize();
+
+      DataDrop drop;
+      drop.segment = segment.index;
+      drop.finalize();
+
+      Function initializer;
+      initializer.body = builder.blockify(&init, &drop);
+
+      FunctionScope scope(&initializer, {});
+
+      RuntimeExpressionRunner(*this, scope).visit(&init);
+    }
+  }
+
+  class FunctionScope {
+   public:
+    std::vector<Literal> locals;
+    Function* function;
+
+    FunctionScope(Function* function, const LiteralList& arguments)
+        : function(function) {
+      if (function->params.size() != arguments.size()) {
+        std::cerr << "Function `" << function->name << "` expects "
+                  << function->params.size() << " parameters, got "
+                  << arguments.size() << " arguments." << std::endl;
+        WASM_UNREACHABLE();
+      }
+      locals.resize(function->getNumLocals());
+      for (size_t i = 0; i < function->getNumLocals(); i++) {
+        if (i < arguments.size()) {
+          assert(function->isParam(i));
+          if (function->params[i] != arguments[i].type) {
+            std::cerr << "Function `" << function->name << "` expects type "
+                      << printType(function->params[i])
+                      << " for parameter " << i << ", got "
+                      << printType(arguments[i].type) << "." << std::endl;
+            WASM_UNREACHABLE();
+          }
+          locals[i] = arguments[i];
+        } else {
+          assert(function->isVar(i));
+          locals[i].type = function->getLocalType(i);
+        }
+      }
+    }
+  };
+
+    // Executes expressions with concrete runtime info, the function and module at runtime
+  class RuntimeExpressionRunner : public ExpressionRunner<RuntimeExpressionRunner> {
+    ModuleInstanceBase& instance;
+    FunctionScope& scope;
+
+   public:
+    RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
+
+    Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {
+      NOTE_ENTER_("generateArguments");
+      arguments.reserve(operands.size());
+      for (auto expression : operands) {
+        Flow flow = this->visit(expression);
+        if (flow.breaking()) return flow;
+        NOTE_EVAL1(flow.value);
+        arguments.push_back(flow.value);
+      }
+      return Flow();
+    }
+
+    Flow visitCall(Call *curr) {
+      NOTE_ENTER("Call");
+      NOTE_NAME(curr->target);
+      LiteralList arguments;
+      Flow flow = generateArguments(curr->operands, arguments);
+      if (flow.breaking()) return flow;
+      auto* func = instance.wasm.getFunction(curr->target);
+      Flow ret;
+      if (func->imported()) {
+        ret = instance.externalInterface->callImport(func, arguments);
+      } else {
+        ret = instance.callFunctionInternal(curr->target, arguments);
+      }
+#ifdef WASM_INTERPRETER_DEBUG
+      std::cout << "(returned to " << scope.function->name << ")\n";
+#endif
+      return ret;
+    }
+    Flow visitCallIndirect(CallIndirect *curr) {
+      NOTE_ENTER("CallIndirect");
+      LiteralList arguments;
+      Flow flow = generateArguments(curr->operands, arguments);
+      if (flow.breaking()) return flow;
+      Flow target = this->visit(curr->target);
+      if (target.breaking()) return target;
+      Index index = target.value.geti32();
+      return instance.externalInterface->callTable(index, arguments, curr->type, *instance.self());
+    }
+
+    Flow visitGetLocal(GetLocal *curr) {
+      NOTE_ENTER("GetLocal");
+      auto index = curr->index;
+      NOTE_EVAL1(index);
+      NOTE_EVAL1(scope.locals[index]);
+      return scope.locals[index];
+    }
+    Flow visitSetLocal(SetLocal *curr) {
+      NOTE_ENTER("SetLocal");
+      auto index = curr->index;
+      Flow flow = this->visit(curr->value);
+      if (flow.breaking()) return flow;
+      NOTE_EVAL1(index);
+      NOTE_EVAL1(flow.value);
+      assert(curr->isTee() ? flow.value.type == curr->type : true);
+      scope.locals[index] = flow.value;
+      return curr->isTee() ? flow : Flow();
+    }
+
+    Flow visitGetGlobal(GetGlobal *curr) {
+      NOTE_ENTER("GetGlobal");
+      auto name = curr->name;
+      NOTE_EVAL1(name);
+      assert(instance.globals.find(name) != instance.globals.end());
+      NOTE_EVAL1(instance.globals[name]);
+      return instance.globals[name];
+    }
+    Flow visitSetGlobal(SetGlobal *curr) {
+      NOTE_ENTER("SetGlobal");
+      auto name = curr->name;
+      Flow flow = this->visit(curr->value);
+      if (flow.breaking()) return flow;
+      NOTE_EVAL1(name);
+      NOTE_EVAL1(flow.value);
+      instance.globals[name] = flow.value;
+      return Flow();
+    }
+
+    Flow visitLoad(Load *curr) {
+      NOTE_ENTER("Load");
+      Flow flow = this->visit(curr->ptr);
+      if (flow.breaking()) return flow;
+      NOTE_EVAL1(flow);
+      auto addr = instance.getFinalAddress(curr, flow.value);
+      auto ret = instance.externalInterface->load(curr, addr);
+      NOTE_EVAL1(addr);
+      NOTE_EVAL1(ret);
+      return ret;
+    }
+    Flow visitStore(Store *curr) {
+      NOTE_ENTER("Store");
+      Flow ptr = this->visit(curr->ptr);
+      if (ptr.breaking()) return ptr;
+      Flow value = this->visit(curr->value);
+      if (value.breaking()) return value;
+      auto addr = instance.getFinalAddress(curr, ptr.value);
+      NOTE_EVAL1(addr);
+      NOTE_EVAL1(value);
+      instance.externalInterface->store(curr, addr, value.value);
+      return Flow();
+    }
+
+    Flow visitAtomicRMW(AtomicRMW *curr) {
+      NOTE_ENTER("AtomicRMW");
+      Flow ptr = this->visit(curr->ptr);
+      if (ptr.breaking()) return ptr;
+      auto value = this->visit(curr->value);
+      if (value.breaking()) return value;
+      NOTE_EVAL1(ptr);
+      auto addr = instance.getFinalAddress(curr, ptr.value);
+      NOTE_EVAL1(addr);
+      NOTE_EVAL1(value);
+      auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
+      NOTE_EVAL1(loaded);
+      auto computed = value.value;
+      switch (curr->op) {
+      case Add:  computed = computed.add(value.value); break;
+      case Sub:  computed = computed.sub(value.value); break;
+      case And:  computed = computed.and_(value.value); break;
+      case Or:   computed = computed.or_(value.value);  break;
+      case Xor:  computed = computed.xor_(value.value); break;
+      case Xchg: computed = value.value;               break;
+      }
+      instance.doAtomicStore(addr, curr->bytes, computed);
+      return loaded;
+    }
+    Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+      NOTE_ENTER("AtomicCmpxchg");
+      Flow ptr = this->visit(curr->ptr);
+      if (ptr.breaking()) return ptr;
+      NOTE_EVAL1(ptr);
+      auto expected = this->visit(curr->expected);
+      if (expected.breaking()) return expected;
+      auto replacement = this->visit(curr->replacement);
+      if (replacement.breaking()) return replacement;
+      auto addr = instance.getFinalAddress(curr, ptr.value);
+      NOTE_EVAL1(addr);
+      NOTE_EVAL1(expected);
+      NOTE_EVAL1(replacement);
+      auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
+      NOTE_EVAL1(loaded);
+      if (loaded == expected.value) {
+        instance.doAtomicStore(addr, curr->bytes, replacement.value);
+      }
+      return loaded;
+    }
+    Flow visitAtomicWait(AtomicWait *curr) {
+      NOTE_ENTER("AtomicWait");
+      Flow ptr = this->visit(curr->ptr);
+      if (ptr.breaking()) return ptr;
+      NOTE_EVAL1(ptr);
+      auto expected = this->visit(curr->expected);
+      NOTE_EVAL1(expected);
+      if (expected.breaking()) return expected;
+      auto timeout = this->visit(curr->timeout);
+      NOTE_EVAL1(timeout);
+      if (timeout.breaking()) return timeout;
+      auto bytes = getTypeSize(curr->expectedType);
+      auto addr = instance.getFinalAddress(ptr.value, bytes);
+      auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
+      NOTE_EVAL1(loaded);
+      if (loaded != expected.value) {
+        return Literal(int32_t(1)); // not equal
+      }
+      // TODO: add threads support!
+      //       for now, just assume we are woken up
+      return Literal(int32_t(0)); // woken up
+    }
+    Flow visitAtomicNotify(AtomicNotify *curr) {
+      NOTE_ENTER("AtomicNotify");
+      Flow ptr = this->visit(curr->ptr);
+      if (ptr.breaking()) return ptr;
+      NOTE_EVAL1(ptr);
+      auto count = this->visit(curr->notifyCount);
+      NOTE_EVAL1(count);
+      if (count.breaking()) return count;
+      // TODO: add threads support!
+      return Literal(int32_t(0)); // none woken up
+    }
+    Flow visitHost(Host *curr) {
+      NOTE_ENTER("Host");
+      switch (curr->op) {
+      case CurrentMemory: return Literal(int32_t(instance.memorySize));
+      case GrowMemory: {
+        auto fail = Literal(int32_t(-1));
+        Flow flow = this->visit(curr->operands[0]);
+        if (flow.breaking()) return flow;
+        int32_t ret = instance.memorySize;
+        uint32_t delta = flow.value.geti32();
+        if (delta > uint32_t(-1) /Memory::kPageSize) return fail;
+        if (instance.memorySize >= uint32_t(-1) - delta) return fail;
+        uint32_t newSize = instance.memorySize + delta;
+        if (newSize > instance.wasm.memory.max) return fail;
+        instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
+        instance.memorySize = newSize;
+        return Literal(int32_t(ret));
+      }
+      }
+      WASM_UNREACHABLE();
+    }
+    Flow visitMemoryInit(MemoryInit *curr) {
+      NOTE_ENTER("MemoryInit");
+      Flow dest = this->visit(curr->dest);
+      if (dest.breaking()) return dest;
+      Flow offset = this->visit(curr->offset);
+      if (offset.breaking()) return offset;
+      Flow size = this->visit(curr->size);
+      if (size.breaking()) return size;
+      NOTE_EVAL1(dest);
+      NOTE_EVAL1(offset);
+      NOTE_EVAL1(size);
+
+      assert(curr->segment < instance.wasm.memory.segments.size());
+      Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
+
+      if (instance.droppedSegments.count(curr->segment)) {
+        trap("memory.init of dropped segment");
+      }
+
+      size_t destVal(dest.value.geti32());
+      size_t offsetVal(offset.value.geti32());
+      size_t sizeVal(size.value.geti32());
+      for (size_t i = 0; i < sizeVal; ++i) {
+        if (offsetVal + i >= segment.data.size()) {
+          trap("out of bounds segment access in memory.init");
+        }
+        Literal addr = Literal(uint32_t(destVal + i));
+        instance.externalInterface->store8(
+          instance.getFinalAddress(addr, 1),
+          segment.data[offsetVal + i]
+        );
+      }
+      return {};
+    }
+    Flow visitDataDrop(DataDrop *curr) {
+      NOTE_ENTER("DataDrop");
+      if (instance.droppedSegments.count(curr->segment)) {
+        trap("data.drop of dropped segment");
+      }
+      instance.droppedSegments.insert(curr->segment);
+      return {};
+    }
+    Flow visitMemoryCopy(MemoryCopy *curr) {
+      NOTE_ENTER("MemoryCopy");
+      // TODO(tlively): implement me
+      return {};
+    }
+    Flow visitMemoryFill(MemoryFill *curr) {
+      NOTE_ENTER("MemoryFill");
+      // TODO(tlively): implement me
+      return {};
+    }
+
+    void trap(const char* why) override {
+      instance.externalInterface->trap(why);
+    }
+  };
+
 public:
   // Call a function, starting an invocation.
   Literal callFunction(Name name, const LiteralList& arguments) {
@@ -913,275 +1272,6 @@ public:
 
   // Internal function call. Must be public so that callTable implementations can use it (refactor?)
   Literal callFunctionInternal(Name name, const LiteralList& arguments) {
-
-    class FunctionScope {
-     public:
-      std::vector<Literal> locals;
-      Function* function;
-
-      FunctionScope(Function* function, const LiteralList& arguments)
-          : function(function) {
-        if (function->params.size() != arguments.size()) {
-          std::cerr << "Function `" << function->name << "` expects "
-                    << function->params.size() << " parameters, got "
-                    << arguments.size() << " arguments." << std::endl;
-          WASM_UNREACHABLE();
-        }
-        locals.resize(function->getNumLocals());
-        for (size_t i = 0; i < function->getNumLocals(); i++) {
-          if (i < arguments.size()) {
-            assert(function->isParam(i));
-            if (function->params[i] != arguments[i].type) {
-              std::cerr << "Function `" << function->name << "` expects type "
-                        << printType(function->params[i])
-                        << " for parameter " << i << ", got "
-                        << printType(arguments[i].type) << "." << std::endl;
-              WASM_UNREACHABLE();
-            }
-            locals[i] = arguments[i];
-          } else {
-            assert(function->isVar(i));
-            locals[i].type = function->getLocalType(i);
-          }
-        }
-      }
-    };
-
-    // Executes expressions with concrete runtime info, the function and module at runtime
-    class RuntimeExpressionRunner : public ExpressionRunner<RuntimeExpressionRunner> {
-      ModuleInstanceBase& instance;
-      FunctionScope& scope;
-
-    public:
-      RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
-
-      Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {
-        NOTE_ENTER_("generateArguments");
-        arguments.reserve(operands.size());
-        for (auto expression : operands) {
-          Flow flow = this->visit(expression);
-          if (flow.breaking()) return flow;
-          NOTE_EVAL1(flow.value);
-          arguments.push_back(flow.value);
-        }
-        return Flow();
-      }
-
-      Flow visitCall(Call *curr) {
-        NOTE_ENTER("Call");
-        NOTE_NAME(curr->target);
-        LiteralList arguments;
-        Flow flow = generateArguments(curr->operands, arguments);
-        if (flow.breaking()) return flow;
-        auto* func = instance.wasm.getFunction(curr->target);
-        Flow ret;
-        if (func->imported()) {
-          ret = instance.externalInterface->callImport(func, arguments);
-        } else {
-          ret = instance.callFunctionInternal(curr->target, arguments);
-        }
-#ifdef WASM_INTERPRETER_DEBUG
-        std::cout << "(returned to " << scope.function->name << ")\n";
-#endif
-        return ret;
-      }
-      Flow visitCallIndirect(CallIndirect *curr) {
-        NOTE_ENTER("CallIndirect");
-        LiteralList arguments;
-        Flow flow = generateArguments(curr->operands, arguments);
-        if (flow.breaking()) return flow;
-        Flow target = this->visit(curr->target);
-        if (target.breaking()) return target;
-        Index index = target.value.geti32();
-        return instance.externalInterface->callTable(index, arguments, curr->type, *instance.self());
-      }
-
-      Flow visitGetLocal(GetLocal *curr) {
-        NOTE_ENTER("GetLocal");
-        auto index = curr->index;
-        NOTE_EVAL1(index);
-        NOTE_EVAL1(scope.locals[index]);
-        return scope.locals[index];
-      }
-      Flow visitSetLocal(SetLocal *curr) {
-        NOTE_ENTER("SetLocal");
-        auto index = curr->index;
-        Flow flow = this->visit(curr->value);
-        if (flow.breaking()) return flow;
-        NOTE_EVAL1(index);
-        NOTE_EVAL1(flow.value);
-        assert(curr->isTee() ? flow.value.type == curr->type : true);
-        scope.locals[index] = flow.value;
-        return curr->isTee() ? flow : Flow();
-      }
-
-      Flow visitGetGlobal(GetGlobal *curr) {
-        NOTE_ENTER("GetGlobal");
-        auto name = curr->name;
-        NOTE_EVAL1(name);
-        assert(instance.globals.find(name) != instance.globals.end());
-        NOTE_EVAL1(instance.globals[name]);
-        return instance.globals[name];
-      }
-      Flow visitSetGlobal(SetGlobal *curr) {
-        NOTE_ENTER("SetGlobal");
-        auto name = curr->name;
-        Flow flow = this->visit(curr->value);
-        if (flow.breaking()) return flow;
-        NOTE_EVAL1(name);
-        NOTE_EVAL1(flow.value);
-        instance.globals[name] = flow.value;
-        return Flow();
-      }
-
-      Flow visitLoad(Load *curr) {
-        NOTE_ENTER("Load");
-        Flow flow = this->visit(curr->ptr);
-        if (flow.breaking()) return flow;
-        NOTE_EVAL1(flow);
-        auto addr = instance.getFinalAddress(curr, flow.value);
-        auto ret = instance.externalInterface->load(curr, addr);
-        NOTE_EVAL1(addr);
-        NOTE_EVAL1(ret);
-        return ret;
-      }
-      Flow visitStore(Store *curr) {
-        NOTE_ENTER("Store");
-        Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking()) return ptr;
-        Flow value = this->visit(curr->value);
-        if (value.breaking()) return value;
-        auto addr = instance.getFinalAddress(curr, ptr.value);
-        NOTE_EVAL1(addr);
-        NOTE_EVAL1(value);
-        instance.externalInterface->store(curr, addr, value.value);
-        return Flow();
-      }
-
-      Flow visitAtomicRMW(AtomicRMW *curr) {
-        NOTE_ENTER("AtomicRMW");
-        Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking()) return ptr;
-        auto value = this->visit(curr->value);
-        if (value.breaking()) return value;
-        NOTE_EVAL1(ptr);
-        auto addr = instance.getFinalAddress(curr, ptr.value);
-        NOTE_EVAL1(addr);
-        NOTE_EVAL1(value);
-        auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
-        NOTE_EVAL1(loaded);
-        auto computed = value.value;
-        switch (curr->op) {
-          case Add:  computed = computed.add(value.value); break;
-          case Sub:  computed = computed.sub(value.value); break;
-          case And:  computed = computed.and_(value.value); break;
-          case Or:   computed = computed.or_(value.value);  break;
-          case Xor:  computed = computed.xor_(value.value); break;
-          case Xchg: computed = value.value;               break;
-        }
-        instance.doAtomicStore(addr, curr->bytes, computed);
-        return loaded;
-      }
-      Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
-        NOTE_ENTER("AtomicCmpxchg");
-        Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking()) return ptr;
-        NOTE_EVAL1(ptr);
-        auto expected = this->visit(curr->expected);
-        if (expected.breaking()) return expected;
-        auto replacement = this->visit(curr->replacement);
-        if (replacement.breaking()) return replacement;
-        auto addr = instance.getFinalAddress(curr, ptr.value);
-        NOTE_EVAL1(addr);
-        NOTE_EVAL1(expected);
-        NOTE_EVAL1(replacement);
-        auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
-        NOTE_EVAL1(loaded);
-        if (loaded == expected.value) {
-          instance.doAtomicStore(addr, curr->bytes, replacement.value);
-        }
-        return loaded;
-      }
-      Flow visitAtomicWait(AtomicWait *curr) {
-        NOTE_ENTER("AtomicWait");
-        Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking()) return ptr;
-        NOTE_EVAL1(ptr);
-        auto expected = this->visit(curr->expected);
-        NOTE_EVAL1(expected);
-        if (expected.breaking()) return expected;
-        auto timeout = this->visit(curr->timeout);
-        NOTE_EVAL1(timeout);
-        if (timeout.breaking()) return timeout;
-        auto bytes = getTypeSize(curr->expectedType);
-        auto addr = instance.getFinalAddress(ptr.value, bytes);
-        auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
-        NOTE_EVAL1(loaded);
-        if (loaded != expected.value) {
-          return Literal(int32_t(1)); // not equal
-        }
-        // TODO: add threads support!
-        //       for now, just assume we are woken up
-        return Literal(int32_t(0)); // woken up
-      }
-      Flow visitAtomicNotify(AtomicNotify *curr) {
-        NOTE_ENTER("AtomicNotify");
-        Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking()) return ptr;
-        NOTE_EVAL1(ptr);
-        auto count = this->visit(curr->notifyCount);
-        NOTE_EVAL1(count);
-        if (count.breaking()) return count;
-        // TODO: add threads support!
-        return Literal(int32_t(0)); // none woken up
-      }
-      Flow visitHost(Host *curr) {
-        NOTE_ENTER("Host");
-        switch (curr->op) {
-          case CurrentMemory: return Literal(int32_t(instance.memorySize));
-          case GrowMemory: {
-            auto fail = Literal(int32_t(-1));
-            Flow flow = this->visit(curr->operands[0]);
-            if (flow.breaking()) return flow;
-            int32_t ret = instance.memorySize;
-            uint32_t delta = flow.value.geti32();
-            if (delta > uint32_t(-1) /Memory::kPageSize) return fail;
-            if (instance.memorySize >= uint32_t(-1) - delta) return fail;
-            uint32_t newSize = instance.memorySize + delta;
-            if (newSize > instance.wasm.memory.max) return fail;
-            instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
-            instance.memorySize = newSize;
-            return Literal(int32_t(ret));
-          }
-        }
-        WASM_UNREACHABLE();
-      }
-      Flow visitMemoryInit(MemoryInit *curr) {
-        NOTE_ENTER("MemoryInit");
-        // TODO(tlively): implement me
-        return {};
-      }
-      Flow visitDataDrop(DataDrop *curr) {
-        NOTE_ENTER("DataDrop");
-        // TODO(tlively): implement me
-        return {};
-      }
-      Flow visitMemoryCopy(MemoryCopy *curr) {
-        NOTE_ENTER("MemoryCopy");
-        // TODO(tlively): implement me
-        return {};
-      }
-      Flow visitMemoryFill(MemoryFill *curr) {
-        NOTE_ENTER("MemoryFill");
-        // TODO(tlively): implement me
-        return {};
-      }
-
-      void trap(const char* why) override {
-        instance.externalInterface->trap(why);
-      }
-    };
-
     if (callDepth > maxCallDepth) externalInterface->trap("stack limit");
     auto previousCallDepth = callDepth;
     callDepth++;
@@ -1290,7 +1380,7 @@ protected:
 };
 
 // The default ModuleInstance uses a trivial global manager
-typedef std::map<Name, Literal> TrivialGlobalManager;
+using TrivialGlobalManager = std::map<Name, Literal>;
 class ModuleInstance : public ModuleInstanceBase<TrivialGlobalManager, ModuleInstance> {
 public:
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {}
