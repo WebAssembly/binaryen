@@ -61,7 +61,6 @@ def generate_wast_files(llvm_bin, emscripten_root):
         os.path.join(llvm_bin, 'wasm-ld'), '-flavor', 'wasm',
         '-z', '-stack-size=1048576',
         obj_path, '-o', wasm_path,
-        '--entry=main',
         '--allow-undefined',
         '--export', '__wasm_call_ctors',
         '--global-base=568',
@@ -70,6 +69,8 @@ def generate_wast_files(llvm_bin, emscripten_root):
       compile_cmd.append('-fPIC')
       compile_cmd.append('-fvisibility=default')
       link_cmd.append('-shared')
+    else:
+      link_cmd.append('--entry=main')
 
     try:
       run_command(compile_cmd)
