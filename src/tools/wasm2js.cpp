@@ -29,6 +29,8 @@
 using namespace cashew;
 using namespace wasm;
 
+// helpers
+
 namespace {
 
 // Wasm2JSGlue emits the core of the module - the functions etc. that would
@@ -36,47 +38,16 @@ namespace {
 // "glue" around that.
 class Wasm2JSGlue {
 public:
-  Wasm2JSGlue(Module& wasm, Output& out, Wasm2JSBuilder::Flags flags) : wasm(wasm), out(out), flags(flags) {}
+  Wasm2JSGlue(Module& wasm, Output& out, Wasm2JSBuilder::Flags flags, Name moduleName) : wasm(wasm), out(out), flags(flags), moduleName(moduleName) {}
 
   void emitPre();
   void emitPost();
-  void emitAsserts(Element& root,
-                   SExpressionWasmBuilder& sexpBuilder);
 
 private:
   Module& wasm;
   Output& out;
   Wasm2JSBuilder::Flags flags;
-
-  bool isAssertHandled(Element& e);
-  Ref emitAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
-                           Builder& wasmBuilder,
-                           Element& e,
-                           Name testFuncName,
-                           Name asmModule);
-  Ref emitAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
-                              Builder& wasmBuilder,
-                              Element& e,
-                              Name testFuncName,
-                              Name asmModule);
-  Ref emitAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
-                         Builder& wasmBuilder,
-                         Element& e,
-                         Name testFuncName,
-                         Name asmModule);
-
-  void fixCalls(Ref asmjs, Name asmModule);
-
-  Ref processFunction(Function* func) {
-    Wasm2JSBuilder sub(flags);
-    return sub.processFunction(&wasm, func);
-  }
-
-  void emitFunction(Ref func) {
-    JSPrinter jser(true, true, func);
-    jser.printAst();
-    out << jser.buffer << std::endl;
-  }
+  Name moduleName;
 };
 
 void Wasm2JSGlue::emitPre() {
@@ -113,8 +84,6 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPost() {
-  std::string funcName = "asmFunc";
-
   // Create an initial `ArrayBuffer` and populate it with static data.
   // Currently we use base64 encoding to encode static data and we decode it at
   // instantiation time.
@@ -123,7 +92,7 @@ void Wasm2JSGlue::emitPost() {
   // can be used for conversions, so make sure there's at least one page.
   {
     auto pages = wasm.memory.initial == 0 ? 1 : wasm.memory.initial.addr;
-    out << "const mem" << funcName << " = new ArrayBuffer("
+    out << "const mem" << moduleName.str << " = new ArrayBuffer("
       << pages * Memory::kPageSize
       << ");\n";
   }
@@ -147,12 +116,12 @@ void Wasm2JSGlue::emitPost() {
     )";
 
     // const assign$name = ($expr)(mem$name);
-    out << "const assign" << funcName
-      << " = (" << expr << ")(mem" << funcName << ");\n";
+    out << "const assign" << moduleName.str
+      << " = (" << expr << ")(mem" << moduleName.str << ");\n";
   }
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
-    out << "assign" << funcName << "("
+    out << "assign" << moduleName.str << "("
       << constOffset(seg)
       << ", \""
       << base64Encode(seg.data)
@@ -161,7 +130,7 @@ void Wasm2JSGlue::emitPost() {
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
-  out << "const ret" << funcName << " = " << funcName << "({"
+  out << "const ret" << moduleName.str << " = " << moduleName.str << "({"
     << "Math,"
     << "Int8Array,"
     << "Uint8Array,"
@@ -180,7 +149,7 @@ void Wasm2JSGlue::emitPost() {
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     out << "," << import->base.str;
   });
-  out << "},mem" << funcName << ");\n";
+  out << "},mem" << moduleName.str << ");\n";
 
   if (flags.allowAsserts) {
     return;
@@ -209,115 +178,70 @@ void Wasm2JSGlue::emitPost() {
     out << "export const "
       << asmangle(exp->name.str)
       << " = ret"
-      << funcName
+      << moduleName.str
       << "."
       << asmangle(exp->name.str)
       << ";\n";
   }
 }
 
-void Wasm2JSGlue::emitAsserts(Element& root,
-                              SExpressionWasmBuilder& sexpBuilder) {
-
-  // TODO: nan and infinity shouldn't be needed once literal asm.js code isn't
-  // generated
-  out << R"(
-    var nan = NaN;
-    var infinity = Infinity;
-  )";
-
-  // When equating floating point values in spec tests we want to use bitwise
-  // equality like wasm does. Unfortunately though NaN makes this tricky. JS
-  // implementations like Spidermonkey and JSC will canonicalize NaN loads from
-  // `Float32Array`, but V8 will not. This means that NaN representations are
-  // kind of all over the place and difficult to bitwise equate.
-  //
-  // To work around this problem we just use a small shim which considers all
-  // NaN representations equivalent and otherwise tests for bitwise equality.
-  out << R"(
-    function f32Equal(a, b) {
-       var i = new Int32Array(1);
-       var f = new Float32Array(i.buffer);
-       f[0] = a;
-       var ai = f[0];
-       f[0] = b;
-       var bi = f[0];
-
-       return (isNaN(a) && isNaN(b)) || a == b;
-    }
-
-    function f64Equal(a, b) {
-       var i = new Int32Array(2);
-       var f = new Float64Array(i.buffer);
-       f[0] = a;
-       var ai1 = i[0];
-       var ai2 = i[1];
-       f[0] = b;
-       var bi1 = i[0];
-       var bi2 = i[1];
-
-       return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
-    }
-
-    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
-       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
-    }
-  )";
-
-  Builder wasmBuilder(sexpBuilder.getAllocator());
-  Name asmModule = std::string("ret") + ASM_FUNC.str;
-  for (size_t i = 1; i < root.size(); ++i) {
-    Element& e = *root[i];
-    if (e.isList() && e.size() >= 1 && e[0]->isStr() && e[0]->str() == Name("module")) {
-      std::stringstream funcNameS;
-      funcNameS << ASM_FUNC.c_str() << i;
-      std::stringstream moduleNameS;
-      moduleNameS << "ret" << ASM_FUNC.c_str() << i;
-      Name funcName(funcNameS.str().c_str());
-      asmModule = Name(moduleNameS.str().c_str());
-      Module wasm;
-      SExpressionWasmBuilder builder(wasm, e);
-      Wasm2JSBuilder sub(flags);
-      auto js = sub.processWasm(&wasm, funcName);
-      JSPrinter jser(true, true, js);
-      jser.printAst();
-      out << jser.buffer << '\n';
-      continue;
-    }
-    if (!isAssertHandled(e)) {
-      std::cerr << "skipping " << e << std::endl;
-      continue;
-    }
-    Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
-    bool isReturn = (e[0]->str() == Name("assert_return"));
-    bool isReturnNan = (e[0]->str() == Name("assert_return_nan"));
-    Element& testOp = *e[1];
-    // Replace "invoke" with "call"
-    testOp[0]->setString(IString("call"), false, false);
-    // Need to claim dollared to get string as function target
-    testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
-
-    if (isReturn) {
-      emitAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
-    } else if (isReturnNan) {
-      emitAssertReturnNanFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
-    } else {
-      emitAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule);
-    }
-
-    out << "if (!"
-        << testFuncName.str
-        << "()) throw 'assertion failed: "
-        << e
-        << "';\n";
-  }
+static void emitWasm(Module& wasm, Output& output, Wasm2JSBuilder::Flags flags, Name name) {
+  Wasm2JSBuilder wasm2js(flags);
+  auto js = wasm2js.processWasm(&wasm, name);
+  Wasm2JSGlue glue(wasm, output, flags, name);
+  glue.emitPre();
+  JSPrinter jser(true, true, js);
+  jser.printAst();
+  output << jser.buffer << std::endl;
+  glue.emitPost();
 }
 
-Ref Wasm2JSGlue::emitAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
-                                      Builder& wasmBuilder,
-                                      Element& e,
-                                      Name testFuncName,
-                                      Name asmModule) {
+class AssertionEmitter {
+public:
+  AssertionEmitter(Element& root,
+                   SExpressionWasmBuilder& sexpBuilder,
+                   Output& out,
+                   Wasm2JSBuilder::Flags flags) : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags) {}
+
+  void emit();
+
+private:
+  Element& root;
+  SExpressionWasmBuilder& sexpBuilder;
+  Output& out;
+  Wasm2JSBuilder::Flags flags;
+
+  Ref emitAssertReturnFunc(Builder& wasmBuilder,
+                           Element& e,
+                           Name testFuncName,
+                           Name asmModule);
+  Ref emitAssertReturnNanFunc(Builder& wasmBuilder,
+                              Element& e,
+                              Name testFuncName,
+                              Name asmModule);
+  Ref emitAssertTrapFunc(Builder& wasmBuilder,
+                         Element& e,
+                         Name testFuncName,
+                         Name asmModule);
+  bool isAssertHandled(Element& e);
+  void fixCalls(Ref asmjs, Name asmModule);
+
+  Ref processFunction(Function* func) {
+    Wasm2JSBuilder sub(flags);
+    return sub.processFunction(nullptr, func);
+  }
+
+  void emitFunction(Ref func) {
+    JSPrinter jser(true, true, func);
+    jser.printAst();
+    out << jser.buffer << std::endl;
+  }
+};
+
+Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
+                                           Element& e,
+                                           Name testFuncName,
+                                           Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
@@ -378,11 +302,10 @@ Ref Wasm2JSGlue::emitAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
   return jsFunc;
 }
 
-Ref Wasm2JSGlue::emitAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
-                                         Builder& wasmBuilder,
-                                         Element& e,
-                                         Name testFuncName,
-                                         Name asmModule) {
+Ref AssertionEmitter::emitAssertReturnNanFunc(Builder& wasmBuilder,
+                                              Element& e,
+                                              Name testFuncName,
+                                              Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = wasmBuilder.makeCall("isNaN", {actual}, i32);
   std::unique_ptr<Function> testFunc(
@@ -400,11 +323,10 @@ Ref Wasm2JSGlue::emitAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
   return jsFunc;
 }
 
-Ref Wasm2JSGlue::emitAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
-                                    Builder& wasmBuilder,
-                                    Element& e,
-                                    Name testFuncName,
-                                    Name asmModule) {
+Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
+                                         Element& e,
+                                         Name testFuncName,
+                                         Name asmModule) {
   Name innerFuncName("f");
   Expression* expr = sexpBuilder.parseExpression(e[1]);
   std::unique_ptr<Function> exprFunc(
@@ -444,7 +366,7 @@ Ref Wasm2JSGlue::emitAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
   return outerFunc;
 }
 
-bool Wasm2JSGlue::isAssertHandled(Element& e) {
+bool AssertionEmitter::isAssertHandled(Element& e) {
   return e.isList() && e.size() >= 2 && e[0]->isStr()
       && (e[0]->str() == Name("assert_return") ||
           e[0]->str() == Name("assert_return_nan") ||
@@ -453,7 +375,7 @@ bool Wasm2JSGlue::isAssertHandled(Element& e) {
       && (*e[1])[0]->str() == Name("invoke");
 }
 
-void Wasm2JSGlue::fixCalls(Ref asmjs, Name asmModule) {
+void AssertionEmitter::fixCalls(Ref asmjs, Name asmModule) {
   if (asmjs->isArray()) {
     ArrayStorage& arr = asmjs->getArray();
     for (Ref& r : arr) {
@@ -485,10 +407,103 @@ void Wasm2JSGlue::fixCalls(Ref asmjs, Name asmModule) {
   }
 }
 
+void AssertionEmitter::emit() {
+  // TODO: nan and infinity shouldn't be needed once literal asm.js code isn't
+  // generated
+  out << R"(
+    var nan = NaN;
+    var infinity = Infinity;
+  )";
+
+  // When equating floating point values in spec tests we want to use bitwise
+  // equality like wasm does. Unfortunately though NaN makes this tricky. JS
+  // implementations like Spidermonkey and JSC will canonicalize NaN loads from
+  // `Float32Array`, but V8 will not. This means that NaN representations are
+  // kind of all over the place and difficult to bitwise equate.
+  //
+  // To work around this problem we just use a small shim which considers all
+  // NaN representations equivalent and otherwise tests for bitwise equality.
+  out << R"(
+    function f32Equal(a, b) {
+       var i = new Int32Array(1);
+       var f = new Float32Array(i.buffer);
+       f[0] = a;
+       var ai = f[0];
+       f[0] = b;
+       var bi = f[0];
+
+       return (isNaN(a) && isNaN(b)) || a == b;
+    }
+
+    function f64Equal(a, b) {
+       var i = new Int32Array(2);
+       var f = new Float64Array(i.buffer);
+       f[0] = a;
+       var ai1 = i[0];
+       var ai2 = i[1];
+       f[0] = b;
+       var bi1 = i[0];
+       var bi2 = i[1];
+
+       return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
+    }
+
+    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
+       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
+    }
+  )";
+
+  Builder wasmBuilder(sexpBuilder.getAllocator());
+  Name asmModule = std::string("ret") + ASM_FUNC.str;
+  for (size_t i = 0; i < root.size(); ++i) {
+    Element& e = *root[i];
+    if (e.isList() && e.size() >= 1 && e[0]->isStr() && e[0]->str() == Name("module")) {
+      std::stringstream funcNameS;
+      funcNameS << ASM_FUNC.c_str() << i;
+      std::stringstream moduleNameS;
+      moduleNameS << "ret" << ASM_FUNC.c_str() << i;
+      Name funcName(funcNameS.str().c_str());
+      asmModule = Name(moduleNameS.str().c_str());
+      Module wasm;
+      SExpressionWasmBuilder builder(wasm, e);
+      emitWasm(wasm, out, flags, funcName);
+      continue;
+    }
+    if (!isAssertHandled(e)) {
+      std::cerr << "skipping " << e << std::endl;
+      continue;
+    }
+    Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
+    bool isReturn = (e[0]->str() == Name("assert_return"));
+    bool isReturnNan = (e[0]->str() == Name("assert_return_nan"));
+    Element& testOp = *e[1];
+    // Replace "invoke" with "call"
+    testOp[0]->setString(IString("call"), false, false);
+    // Need to claim dollared to get string as function target
+    testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
+
+    if (isReturn) {
+      emitAssertReturnFunc(wasmBuilder, e, testFuncName, asmModule);
+    } else if (isReturnNan) {
+      emitAssertReturnNanFunc(wasmBuilder, e, testFuncName, asmModule);
+    } else {
+      emitAssertTrapFunc(wasmBuilder, e, testFuncName, asmModule);
+    }
+
+    out << "if (!"
+        << testFuncName.str
+        << "()) throw 'assertion failed: "
+        << e
+        << "';\n";
+  }
+}
+
 } // anonymous namespace
 
+// Main
+
 int main(int argc, const char *argv[]) {
-  Wasm2JSBuilder::Flags builderFlags;
+  Wasm2JSBuilder::Flags flags;
   ToolOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -500,20 +515,20 @@ int main(int argc, const char *argv[]) {
       .add("--allow-asserts", "", "Allow compilation of .wast testing asserts",
            Options::Arguments::Zero,
            [&](Options* o, const std::string& argument) {
-             builderFlags.allowAsserts = true;
+             flags.allowAsserts = true;
              o->extra["asserts"] = "1";
            })
       .add("--pedantic", "", "Emulate WebAssembly trapping behavior",
            Options::Arguments::Zero,
            [&](Options* o, const std::string& argument) {
-             builderFlags.pedantic = true;
+             flags.pedantic = true;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
-  if (options.debug) builderFlags.debug = true;
+  if (options.debug) flags.debug = true;
 
   Element* root = nullptr;
   Module wasm;
@@ -565,23 +580,12 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  if (options.debug) std::cerr << "asming..." << std::endl;
-  Wasm2JSBuilder wasm2js(builderFlags);
-  js = wasm2js.processWasm(&wasm);
-
   if (options.debug) std::cerr << "j-printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  Wasm2JSGlue glue(wasm, output, builderFlags);
-  glue.emitPre();
-  JSPrinter jser(true, true, js);
-  jser.printAst();
-  output << jser.buffer << std::endl;
-  glue.emitPost();
-  if (!binaryInput) {
-    if (options.extra["asserts"] == "1") {
-      if (options.debug) std::cerr << "asserting..." << std::endl;
-      glue.emitAsserts(*root, *sexprBuilder);
-    }
+  if (!binaryInput && options.extra["asserts"] == "1") {
+    AssertionEmitter(*root, *sexprBuilder, output, flags).emit();
+  } else {
+    emitWasm(wasm, output, flags, "asmFunc");
   }
 
   if (options.debug) std::cerr << "done." << std::endl;
