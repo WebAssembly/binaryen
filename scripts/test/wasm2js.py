@@ -52,6 +52,8 @@ def test_wasm2js_output():
     print '..', wasm
 
     cmd = WASM2JS + [os.path.join(options.binaryen_test, wasm)]
+    if 'emscripten' in wasm:
+      cmd += ['--emscripten']
     out = run_command(cmd)
     fail_if_not_identical_to_file(out, expected_file)
 
@@ -142,6 +144,8 @@ def update_wasm2js_tests():
     traps_expected_file = os.path.join('test', traps)
 
     cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts']
+    if 'emscripten' in wasm:
+      cmd += ['--emscripten']
     out = run_command(cmd)
     with open(asserts_expected_file, 'w') as o:
       o.write(out)
