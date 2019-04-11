@@ -89,7 +89,7 @@ struct ToolOptions : public Options {
     return *this;
   }
 
-  void calculateFeatures(Module& module) {
+  void applyFeatures(Module& module) {
     if (hasFeatureOptions) {
       if (!detectFeatures && module.hasFeaturesSection) {
         FeatureSet optionsFeatures = FeatureSet::All;

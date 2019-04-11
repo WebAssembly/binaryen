@@ -925,7 +925,9 @@ public:
   std::vector<std::string> debugInfoFileNames;
 
   // `features` are the features allowed to be used in this module and should be
-  // respected regardless of the value of `hasFeaturesSection`.
+  // respected regardless of the value of`hasFeaturesSection`.
+  // `hasFeaturesSection` means we read a features section and will emit one
+  // too.
   FeatureSet features = FeatureSet::All;
   bool hasFeaturesSection = false;
 

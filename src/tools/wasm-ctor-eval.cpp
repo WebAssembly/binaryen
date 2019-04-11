@@ -425,7 +425,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  options.calculateFeatures(wasm);
+  options.applyFeatures(wasm);
 
   if (!WasmValidator().validate(wasm)) {
     WasmPrinter::printModule(&wasm);

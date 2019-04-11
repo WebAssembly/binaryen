@@ -178,7 +178,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // set up the module's features, needed by optimization and validation passes
-  options.calculateFeatures(wasm);
+  options.applyFeatures(wasm);
 
   // compile the code
   Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);

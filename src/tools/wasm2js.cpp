@@ -81,7 +81,7 @@ int main(int argc, const char *argv[]) {
       ModuleReader reader;
       reader.setDebug(options.debug);
       reader.read(input, wasm, "");
-      options.calculateFeatures(wasm);
+      options.applyFeatures(wasm);
     } else {
       auto input(
           read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));

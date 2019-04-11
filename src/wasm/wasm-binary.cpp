@@ -706,8 +706,8 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
 
 uint8_t WasmBinaryBuilder::getInt8() {
   if (!more()) throwError("unexpected end of input");
-  if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input.at(pos) << " (at " << pos << ")" << std::endl;
-  return input.at(pos++);
+  if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")" << std::endl;
+  return input[pos++];
 }
 
 uint16_t WasmBinaryBuilder::getInt16() {
