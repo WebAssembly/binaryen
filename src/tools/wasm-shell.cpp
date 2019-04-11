@@ -25,12 +25,12 @@
 #include "execution-results.h"
 #include "pass.h"
 #include "shell-interface.h"
-#include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-interpreter.h"
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
+#include "tool-options.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -90,7 +90,8 @@ struct Operation {
 static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
                         Element* root,
                         SExpressionWasmBuilder* builder,
-                        Name entry) {
+                        Name entry,
+                        ToolOptions& options) {
   ModuleInstance* instance = nullptr;
   if (wasm) {
     auto tempInterface = wasm::make_unique<ShellExternalInterface>(); // prefix make_unique to work around visual studio bugs
@@ -142,6 +143,7 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       }
       if (!invalid) {
         // maybe parsed ok, but otherwise incorrect
+        options.applyFeatures(wasm);
         invalid = !WasmValidator().validate(wasm);
       }
       if (!invalid && id == ASSERT_UNLINKABLE) {
@@ -233,7 +235,7 @@ int main(int argc, const char* argv[]) {
   Name entry;
   std::set<size_t> skipped;
 
-  Options options("wasm-shell", "Execute .wast files");
+  ToolOptions options("wasm-shell", "Execute .wast files");
   options
       .add(
           "--entry", "-e", "Call the entry point after parsing the module",
@@ -291,16 +293,16 @@ int main(int argc, const char* argv[]) {
         auto builder = wasm::make_unique<SExpressionWasmBuilder>(*module, *root[i], &moduleName);
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
+        options.applyFeatures(*modules[moduleName]);
         i++;
-        modules[moduleName]->features = FeatureSet::All;
         bool valid = WasmValidator().validate(*modules[moduleName]);
         if (!valid) {
           WasmPrinter::printModule(modules[moduleName].get());
         }
         assert(valid);
-        run_asserts(moduleName, &i, &checked, modules[moduleName].get(), &root, builders[moduleName].get(), entry);
+        run_asserts(moduleName, &i, &checked, modules[moduleName].get(), &root, builders[moduleName].get(), entry, options);
       } else {
-        run_asserts(Name(), &i, &checked, nullptr, &root, nullptr, entry);
+        run_asserts(Name(), &i, &checked, nullptr, &root, nullptr, entry, options);
       }
     }
   } catch (ParseException& p) {
