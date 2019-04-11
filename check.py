@@ -275,7 +275,7 @@ def run_wasm_reduce_tests():
       t = os.path.join(test_dir, t)
       # convert to wasm
       run_command(WASM_AS + [t, '-o', 'a.wasm'])
-      run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+      run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
       expected = t + '.txt'
       run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
       with open('a.wast') as seen:
@@ -286,9 +286,9 @@ def run_wasm_reduce_tests():
   if 'fsanitize=thread' not in str(os.environ):
     print '\n[ checking wasm-reduce fuzz testcase ]\n'
 
-    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
+    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm', '-all'])
     before = os.stat('a.wasm').st_size
-    run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+    run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
     after = os.stat('c.wasm').st_size
     assert after < 0.6 * before, [before, after]
 
