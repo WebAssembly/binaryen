@@ -370,6 +370,11 @@ int main(int argc, const char *argv[]) {
            [&](Options* o, const std::string& argument) {
              flags.pedantic = true;
            })
+      .add("--emscripten", "", "Emulate the glue in emscripten-compatible form (and not ES6 module form)",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             flags.emscripten = true;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
