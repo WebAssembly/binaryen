@@ -498,7 +498,7 @@ void WasmBinaryWriter::writeUserSection(const UserSection& section) {
 }
 
 void WasmBinaryWriter::writeFeaturesSection() {
-  if (!wasm->emitFeaturesSection || wasm->features <= FeatureSet{}) {
+  if (!wasm->hasFeaturesSection || wasm->features.isMVP()) {
     return;
   }
 
@@ -1641,7 +1641,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
 }
 
 void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
-  wasm.emitFeaturesSection = true;
+  wasm.hasFeaturesSection = true;
   wasm.features = FeatureSet::MVP;
 
   auto sectionPos = pos;

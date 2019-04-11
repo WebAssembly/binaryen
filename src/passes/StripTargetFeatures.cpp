@@ -25,14 +25,14 @@ using namespace std;
 
 namespace wasm {
 
-struct FeaturesStrip : public Pass {
+struct StripTargetFeatures : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    module->emitFeaturesSection = false;
+    module->hasFeaturesSection = false;
   }
 };
 
 Pass *createStripTargetFeaturesPass() {
-  return new FeaturesStrip();
+  return new StripTargetFeatures();
 }
 
 } // namespace wasm

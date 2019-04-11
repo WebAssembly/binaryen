@@ -924,8 +924,10 @@ public:
   std::vector<UserSection> userSections;
   std::vector<std::string> debugInfoFileNames;
 
+  // `features` are the features allowed to be used in this module and should be
+  // respected regardless of the value of `hasFeaturesSection`.
   FeatureSet features = FeatureSet::MVP;
-  bool emitFeaturesSection = false;
+  bool hasFeaturesSection = false;
 
   MixedArena allocator;
 
