@@ -1641,4 +1641,17 @@
    (local.get $x)
   )
  )
+ (func $data-drop-memory-init
+  (local $x i32)
+  (local.set $x
+   (block i32
+    (memory.init 0 (i32.const 0) (i32.const 0) (i32.const 5))
+    (i32.const 0)
+   )
+  )
+  (data.drop 0)
+  (drop
+   (local.get $x)
+  )
+ )
 )
