@@ -2088,7 +2088,7 @@ void Wasm2JSGlue::emitPostEmscripten() {
       << "    }\n"
       << "  },\n"
       << "  wasmMemory.buffer\n"
-      << "})"
+      << ")"
       << "\n"
       << "\n"
       << "}";

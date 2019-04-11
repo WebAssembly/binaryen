@@ -73,6 +73,6 @@ return asmFunc(
     }
   },
   wasmMemory.buffer
-})
+)
 
 }
