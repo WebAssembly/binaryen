@@ -91,7 +91,7 @@ struct ToolOptions : public Options {
 
   void calculateFeatures(Module& module) {
     if (hasFeatureOptions) {
-      if (!detectFeatures) {
+      if (!detectFeatures && module.hasFeaturesSection) {
         FeatureSet optionsFeatures = FeatureSet::All;
         optionsFeatures.enable(enabledFeatures);
         optionsFeatures.disable(disabledFeatures);

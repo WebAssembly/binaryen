@@ -926,7 +926,7 @@ public:
 
   // `features` are the features allowed to be used in this module and should be
   // respected regardless of the value of `hasFeaturesSection`.
-  FeatureSet features = FeatureSet::MVP;
+  FeatureSet features = FeatureSet::All;
   bool hasFeaturesSection = false;
 
   MixedArena allocator;
