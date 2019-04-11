@@ -314,7 +314,7 @@ def run_spec_tests():
         continue
 
       def run_spec_test(wast):
-        cmd = WASM_SHELL + [wast, '-all']
+        cmd = WASM_SHELL + [wast]
         # we must skip the stack machine portions of spec tests or apply other extra args
         extra = {
         }

@@ -25,12 +25,12 @@
 #include "execution-results.h"
 #include "pass.h"
 #include "shell-interface.h"
+#include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-interpreter.h"
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
-#include "tool-options.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -233,7 +233,7 @@ int main(int argc, const char* argv[]) {
   Name entry;
   std::set<size_t> skipped;
 
-  ToolOptions options("wasm-shell", "Execute .wast files");
+  Options options("wasm-shell", "Execute .wast files");
   options
       .add(
           "--entry", "-e", "Call the entry point after parsing the module",
@@ -292,7 +292,7 @@ int main(int argc, const char* argv[]) {
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
         i++;
-        options.calculateFeatures(*modules[moduleName]);
+        modules[moduleName]->features = FeatureSet::All;
         bool valid = WasmValidator().validate(*modules[moduleName]);
         if (!valid) {
           WasmPrinter::printModule(modules[moduleName].get());
