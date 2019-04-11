@@ -142,6 +142,7 @@ public:
     bool debug = false;
     bool pedantic = false;
     bool allowAsserts = false;
+    bool emscripten = false;
   };
 
   Wasm2JSBuilder(Flags f) : flags(f) {}
@@ -358,6 +359,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       generateFetchHighBits = true;
     }
   });
+  if (flags.emscripten) {
+    asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_START_FUNCS"));
+  }
   // functions
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     asmFunc[3]->push_back(processFunction(wasm, func));
@@ -378,6 +382,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     e->value = WASM_FETCH_HIGH_BITS;
     e->kind = ExternalKind::Function;
     wasm->addExport(e);
+  }
+  if (flags.emscripten) {
+    asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS"));
   }
 
   addTables(asmFunc[3], wasm);
@@ -2002,9 +2009,26 @@ private:
   Output& out;
   Wasm2JSBuilder::Flags flags;
   Name moduleName;
+
+  void emitPreEmscripten();
+  void emitPreES6();
+  void emitPostEmscripten();
+  void emitPostES6();
 };
 
 void Wasm2JSGlue::emitPre() {
+  if (flags.emscripten) {
+    emitPreEmscripten();
+  } else {
+    emitPreES6();
+  }
+}
+
+void Wasm2JSGlue::emitPreEmscripten() {
+  out << "function instantiate(asmLibraryArg, wasmMemory, wasmTable) {\n\n";
+}
+
+void Wasm2JSGlue::emitPreES6() {
   std::unordered_map<Name, Name> baseModuleMap;
 
   auto noteImport = [&](Name module, Name base) {
@@ -2018,10 +2042,10 @@ void Wasm2JSGlue::emitPre() {
     baseModuleMap[base] = module;
 
     out << "import { "
-      << base.str
-      << " } from '"
-      << module.str
-      << "';\n";
+        << base.str
+        << " } from '"
+        << module.str
+        << "';\n";
   };
 
   ImportInfo imports(wasm);
@@ -2038,6 +2062,39 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPost() {
+  if (flags.emscripten) {
+    emitPostEmscripten();
+  } else {
+    emitPostES6();
+  }
+}
+
+void Wasm2JSGlue::emitPostEmscripten() {
+  out << "return asmFunc(\n"
+      << "  {\n"
+      << "    'env': asmLibraryArg,\n"
+      << "    'global': {\n"
+      << "      'Int8Array': Int8Array,\n"
+      << "      'Int16Array': Int16Array,\n"
+      << "      'Int32Array': Int32Array,\n"
+      << "      'Uint8Array': Uint8Array,\n"
+      << "      'Uint16Array': Uint16Array,\n"
+      << "      'Uint32Array': Uint32Array,\n"
+      << "      'Float32Array': Float32Array,\n"
+      << "      'Float64Array': Float64Array,\n"
+      << "      'NaN': NaN,\n"
+      << "      'Infinity': Infinity,\n"
+      << "      'Math': Math\n"
+      << "    }\n"
+      << "  },\n"
+      << "  wasmMemory.buffer\n"
+      << ")"
+      << "\n"
+      << "\n"
+      << "}";
+}
+
+void Wasm2JSGlue::emitPostES6() {
   // Create an initial `ArrayBuffer` and populate it with static data.
   // Currently we use base64 encoding to encode static data and we decode it at
   // instantiation time.
