@@ -321,6 +321,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     Module wasm;
     ModuleReader reader;
     reader.read(working, *module);
+    wasm.features = FeatureSet::All;
     builder = make_unique<Builder>(*module);
     setModule(module.get());
   }
