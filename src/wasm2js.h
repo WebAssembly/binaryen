@@ -2015,7 +2015,7 @@ private:
   void emitPostEmscripten();
   void emitPostES6();
 
-  void emitMemory();
+  void emitMemory(std::string buffer, std::string segmentWriter);
 };
 
 void Wasm2JSGlue::emitPre() {
@@ -2072,7 +2072,7 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  emitMemory();
+  emitMemory("wasmMemory.buffer", "writeSegment");
 
   out << "return asmFunc(\n"
       << "  {\n"
@@ -2112,7 +2112,8 @@ void Wasm2JSGlue::emitPostES6() {
       << ");\n";
   }
 
-  emitMemory();
+  emitMemory(std::string("mem") + moduleName.str,
+             std::string("assign") + moduleName.str);
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
@@ -2171,7 +2172,7 @@ void Wasm2JSGlue::emitPostES6() {
   }
 }
 
-void Wasm2JSGlue::emitMemory() {
+void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
   if (wasm.memory.segments.empty()) return;
 
   auto expr = R"(
@@ -2192,12 +2193,12 @@ void Wasm2JSGlue::emitMemory() {
   )";
 
   // const assign$name = ($expr)(mem$name);
-  out << "const assign" << moduleName.str
-    << " = (" << expr << ")(mem" << moduleName.str << ");\n";
+  out << "const " << segmentWriter
+      << " = (" << expr << ")(" << buffer << ");\n";
 
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
-    out << "assign" << moduleName.str << "("
+    out << segmentWriter << "("
       << constOffset(seg)
       << ", \""
       << base64Encode(seg.data)
