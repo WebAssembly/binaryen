@@ -28,9 +28,21 @@ from test.shared import options
 
 NANS = True
 
-FUZZ_OPTS = ['--mvp-features']
+FUZZ_OPTS = ['--all-features', '--disable-simd', '--disable-bulk-memory']
 
-INPUT_SIZE_LIMIT = 250 * 1024
+V8_OPTS = [
+  '--experimental-wasm-eh',
+  '--experimental-wasm-mv',
+  '--experimental-wasm-sat-f2i-conversions',
+  '--experimental-wasm-se',
+  '--experimental-wasm-threads',
+  '--experimental-wasm-simd',
+  '--experimental-wasm-anyref',
+  '--experimental-wasm-bulk-memory',
+  '--experimental-wasm-return-call'
+]
+
+INPUT_SIZE_LIMIT = 150 * 1024
 
 LOG_LIMIT = 125
 
@@ -123,10 +135,10 @@ def run_vms(prefix):
           return IGNORE
       raise
 
-  results = []
-  # append to this list to add results from VMs
-  results += [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
-  results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
+  results = [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
+
+  # append to add results from VMs
+  # results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
   # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
   # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
   # run(['../spec/interpreter/wasm', prefix + 'wasm'])
@@ -166,6 +178,9 @@ def test_one(infile, opts):
   after = run_vms('b.')
   for i in range(len(before)):
     compare(before[i], after[i], 'comparing between builds at ' + str(i))
+    # with nans, we can only compare the binaryen interpreter to itself
+    if NANS:
+      break
   # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
   run([in_bin('wasm-opt'), 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts)
   # check for determinism
@@ -189,6 +204,7 @@ opt_choices = [
   ["--dae"],
   ["--dae-optimizing"],
   ["--dce"],
+  ["--directize"],
   ["--flatten", "--dfo"],
   ["--duplicate-function-elimination"],
   ["--flatten"],
@@ -258,7 +274,8 @@ if __name__ == '__main__':
     counter += 1
     f = open(temp, 'w')
     size = random_size()
-    print('\nITERATION:', counter, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
+    print('')
+    print('ITERATION:', counter, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
     for x in range(size):
       f.write(chr(random.randint(0, 255)))
     f.close()

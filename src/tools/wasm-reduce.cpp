@@ -509,7 +509,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
-      if (tryToReplaceCurrent(child)) return;
+      if (isConcreteType(child->type) && curr->type == none) {
+        if (tryToReplaceCurrent(builder->makeDrop(child))) return;
+      } else {
+        if (tryToReplaceCurrent(child)) return;
+      }
     }
     // If that didn't work, try to replace with a child + a unary conversion
     if (isConcreteType(curr->type) &&

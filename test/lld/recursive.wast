@@ -85,6 +85,6 @@
  (func $main (; 4 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- ;; custom section "producers", size 125
+ ;; custom section "producers", size 111
 )
 

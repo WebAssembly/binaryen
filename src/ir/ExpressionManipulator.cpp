@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/load-utils.h"
 #include "ir/utils.h"
 #include "support/hash.h"
 
@@ -91,7 +92,7 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
         return builder.makeAtomicLoad(curr->bytes, curr->offset,
                                       copy(curr->ptr), curr->type);
       }
-      return builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
+      return builder.makeLoad(curr->bytes, LoadUtils::isSignRelevant(curr) ? curr->signed_ : false, curr->offset, curr->align, copy(curr->ptr), curr->type);
     }
     Expression* visitStore(Store *curr) {
       if (curr->isAtomic) {
