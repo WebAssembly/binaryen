@@ -290,6 +290,7 @@ function asmFunc(global, env, buffer) {
   return +(+HEAPF64[__tempMemory__ >> 3]);
  }
  
+ var FUNCTION_TABLE = [];
  return {
   i32_load16_s: $6, 
   i32_load16_u: $7, 

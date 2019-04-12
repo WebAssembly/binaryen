@@ -1581,6 +1581,7 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   add: $0, 
   sub: $1, 

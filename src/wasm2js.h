@@ -38,6 +38,7 @@
 #include "ir/load-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/table-utils.h"
 #include "ir/utils.h"
 #include "passes/passes.h"
 #include "support/base64.h"
@@ -267,7 +268,6 @@ private:
   std::unordered_map<const char*, IString> mangledNames[(int) NameScope::Max];
   std::unordered_set<IString> allMangledNames;
 
-  // All our function tables have the same size TODO: optimize?
   size_t tableSize;
 
   bool almostASM = false;
@@ -275,7 +275,7 @@ private:
   void addBasics(Ref ast);
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
-  void addTables(Ref ast, Module* wasm);
+  void addTable(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
   void setNeedsAlmostASM(const char *reason);
@@ -387,7 +387,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS"));
   }
 
-  addTables(asmFunc[3], wasm);
+  addTable(asmFunc[3], wasm);
   // memory XXX
   addExports(asmFunc[3], wasm);
   return ret;
@@ -499,38 +499,23 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
   );
 }
 
-void Wasm2JSBuilder::addTables(Ref ast, Module* wasm) {
-  std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
-  for (Table::Segment& seg : wasm->table.segments) {
-    for (size_t i = 0; i < seg.data.size(); i++) {
-      Name name = seg.data[i];
-      auto func = wasm->getFunction(name);
-      std::string sig = getSig(func);
-      auto& table = tables[sig];
-      if (table.size() == 0) {
-        // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
-        table.resize(tableSize);
-        for (size_t j = 0; j < tableSize; j++) {
-          table[j] = fromName(name, NameScope::Top);
-        }
-      } else {
-        table[i + constOffset(seg)] = fromName(name, NameScope::Top);
-      }
-    }
+void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
+  FlatTable flat(wasm->table);
+  if (!flat.valid) {
+    Fatal() << "table could not be flattened at compile time";
   }
-  for (auto& pair : tables) {
-    auto& sig = pair.first;
-    auto& table = pair.second;
-    std::string stable = std::string("FUNCTION_TABLE_") + sig;
-    IString asmName = IString(stable.c_str(), false);
-    // add to asm module
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    Ref theArray = ValueBuilder::makeArray();
-    ValueBuilder::appendToVar(theVar, asmName, theArray);
-    for (auto& name : table) {
-      ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
+  Ref theVar = ValueBuilder::makeVar();
+  ast->push_back(theVar);
+  Ref theArray = ValueBuilder::makeArray();
+  ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, theArray);
+  Name null("null");
+  for (auto& name : flat.names) {
+    if (name.is()) {
+      name = fromName(name, NameScope::Top);
+    } else {
+      name = null;
     }
+    ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
   }
 }
 
@@ -1058,11 +1043,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     Ref visitCallIndirect(CallIndirect* curr) {
       // TODO: the codegen here is a pessimization of what the ideal codegen
       // looks like. Eventually if necessary this should be tightened up in the
-      // case that the argument expression don't have any side effects.
+      // case that the argument expression doesn't have any side effects.
       assert(isStatement(curr));
-      std::string stable = std::string("FUNCTION_TABLE_") +
-        getSig(module->getFunctionType(curr->fullType));
-      IString table = IString(stable.c_str(), false);
       Ref ret = ValueBuilder::makeBlock();
       ScopedTemp idx(i32, parent, func);
       return makeStatementizedCall(
@@ -1071,8 +1053,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         [&]() {
           flattenAppend(ret, visitAndAssign(curr->target, idx));
           return ValueBuilder::makeCall(ValueBuilder::makeSub(
-            ValueBuilder::makeName(table),
-            ValueBuilder::makeBinary(idx.getAstName(), AND, ValueBuilder::makeInt(parent->getTableSize()-1))
+            ValueBuilder::makeName(FUNCTION_TABLE),
+            idx.getAstName()
           ));
         },
         result,

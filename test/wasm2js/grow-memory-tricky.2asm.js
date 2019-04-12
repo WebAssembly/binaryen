@@ -42,6 +42,7 @@ function asmFunc(global, env, buffer) {
   return __wasm_grow_memory(1 | 0) | 0;
  }
  
+ var FUNCTION_TABLE = [];
  function __wasm_grow_memory(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
   var oldPages = __wasm_current_memory() | 0;

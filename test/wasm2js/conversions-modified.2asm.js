@@ -221,6 +221,7 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$1 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   i64_extend_s_i32: $0, 
   i64_extend_u_i32: $1, 

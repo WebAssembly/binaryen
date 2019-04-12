@@ -634,6 +634,7 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   no_dce_i32_div_s: $0, 
   no_dce_i32_div_u: $1, 
@@ -1267,6 +1268,7 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   no_dce_i32_rem_s: $0, 
   no_dce_i32_rem_u: $1, 
@@ -1381,6 +1383,7 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$2 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   no_dce_i32_trunc_s_f32: $0, 
   no_dce_i32_trunc_u_f32: $1, 
@@ -1452,6 +1455,7 @@ function asmFunc(global, env, buffer) {
   return +(+HEAPF64[i >> 3]);
  }
  
+ var FUNCTION_TABLE = [];
  return {
   no_dce_i32_load: $0, 
   no_dce_i64_load: $1, 

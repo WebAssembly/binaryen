@@ -250,6 +250,7 @@ function asmFunc(global, env, buffer) {
   return +(wasm2js_f64$0 = Math_ceil(var$0), wasm2js_f64$1 = Math_floor(var$0), wasm2js_i32$0 = var$0 < 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
  }
  
+ var FUNCTION_TABLE = [];
  return {
   f32_add: $0, 
   f32_sub: $1, 

@@ -51,6 +51,7 @@ function asmFunc(global, env, buffer) {
   print($0 | 0);
  }
  
+ var FUNCTION_TABLE = [];
  return {
   one: $3, 
   two: $4, 
@@ -113,7 +114,7 @@ function asmFunc(global, env, buffer) {
   i = i | 0;
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   wasm2js_i32$1 = i;
-  wasm2js_i32$0 = FUNCTION_TABLE_i[wasm2js_i32$1 & 7]() | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1]() | 0;
   return wasm2js_i32$0 | 0;
  }
  
@@ -121,11 +122,11 @@ function asmFunc(global, env, buffer) {
   i = i | 0;
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   wasm2js_i32$1 = i;
-  wasm2js_i32$0 = FUNCTION_TABLE_i[wasm2js_i32$1 & 7]() | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1]() | 0;
   return wasm2js_i32$0 | 0;
  }
  
- var FUNCTION_TABLE_i = [t1, t2, t3, u1, u2, t1, t3, t1];
+ var FUNCTION_TABLE = [t1, t2, t3, u1, u2, t1, t3];
  return {
   callt: $5, 
   callu: $6
@@ -172,11 +173,11 @@ function asmFunc(global, env, buffer) {
   i = i | 0;
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   wasm2js_i32$1 = i;
-  wasm2js_i32$0 = FUNCTION_TABLE_i[wasm2js_i32$1 & 1]() | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1]() | 0;
   return wasm2js_i32$0 | 0;
  }
  
- var FUNCTION_TABLE_i = [t1, t2];
+ var FUNCTION_TABLE = [t1, t2];
  return {
   callt: $2
  };

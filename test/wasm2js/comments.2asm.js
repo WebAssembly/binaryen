@@ -22,6 +22,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
+ var FUNCTION_TABLE = [];
  return {
   
  };
@@ -53,6 +54,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
+ var FUNCTION_TABLE = [];
  return {
   
  };
