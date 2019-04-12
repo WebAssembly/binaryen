@@ -486,12 +486,16 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
+  Ref value = ValueBuilder::makeDot(
+    module,
+    fromName(import->base, NameScope::Top)
+  );
+  if (import->type == i32) {
+    value = makeAsmCoercion(value, ASM_INT);
+  }
   ValueBuilder::appendToVar(theVar,
     fromName(import->name, NameScope::Top),
-    ValueBuilder::makeDot(
-      module,
-      fromName(import->base, NameScope::Top)
-    )
+    value
   );
 }
 
@@ -2053,7 +2057,6 @@ void Wasm2JSGlue::emitPreES6() {
   ImportInfo imports(wasm);
 
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    Fatal() << "non-function imports aren't supported yet\n";
     noteImport(import->module, import->base);
   });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
@@ -2074,23 +2077,20 @@ void Wasm2JSGlue::emitPost() {
 void Wasm2JSGlue::emitPostEmscripten() {
   emitMemory("wasmMemory.buffer", "writeSegment");
 
-  out << "return asmFunc(\n"
-      << "  {\n"
-      << "    'env': asmLibraryArg,\n"
-      << "    'global': {\n"
-      << "      'Int8Array': Int8Array,\n"
-      << "      'Int16Array': Int16Array,\n"
-      << "      'Int32Array': Int32Array,\n"
-      << "      'Uint8Array': Uint8Array,\n"
-      << "      'Uint16Array': Uint16Array,\n"
-      << "      'Uint32Array': Uint32Array,\n"
-      << "      'Float32Array': Float32Array,\n"
-      << "      'Float64Array': Float64Array,\n"
-      << "      'NaN': NaN,\n"
-      << "      'Infinity': Infinity,\n"
-      << "      'Math': Math\n"
-      << "    }\n"
+  out << "return asmFunc({\n"
+      << "    'Int8Array': Int8Array,\n"
+      << "    'Int16Array': Int16Array,\n"
+      << "    'Int32Array': Int32Array,\n"
+      << "    'Uint8Array': Uint8Array,\n"
+      << "    'Uint16Array': Uint16Array,\n"
+      << "    'Uint32Array': Uint32Array,\n"
+      << "    'Float32Array': Float32Array,\n"
+      << "    'Float64Array': Float64Array,\n"
+      << "    'NaN': NaN,\n"
+      << "    'Infinity': Infinity,\n"
+      << "    'Math': Math\n"
       << "  },\n"
+      << "  asmLibraryArg,\n"
       << "  wasmMemory.buffer\n"
       << ")"
       << "\n"

@@ -1,3 +1,4 @@
+import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
  "use asm";
@@ -21,6 +22,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
   var wasm2js_i32$0 = 0;
@@ -45,13 +47,13 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   i64toi32_i32$2 = 0;
   i64toi32_i32$1 = (wasm2js_i32$0 = i64toi32_i32$2, HEAPU8[(wasm2js_i32$0 + 4 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 5 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 6 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 7 | 0) >> 0] | 0 | 0) << 24);
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = (wasm2js_i32$2 = i64toi32_i32$2, HEAPU8[wasm2js_i32$2 >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$2 + 1 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$2 + 2 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$2 + 3 | 0) >> 0] | 0 | 0) << 24);
   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = i64toi32_i32$1;
   HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  return +(+HEAPF64[0 >> 3]);
+  return +(+HEAPF64[__tempMemory__ >> 3]);
  }
  
  function $4() {
@@ -81,13 +83,13 @@ function asmFunc(global, env, buffer) {
  
  function $7() {
   var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_f64$0 = 0.0;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
+  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = 0;
   wasm2js_i32$0 = i64toi32_i32$1;
-  wasm2js_i32$1 = HEAP32[0 >> 2] | 0;
+  wasm2js_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[wasm2js_i32$2 >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 1 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 2 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 3 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
   wasm2js_i32$0 = i64toi32_i32$1;
   wasm2js_i32$1 = i64toi32_i32$0;

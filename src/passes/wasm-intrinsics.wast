@@ -5,6 +5,13 @@
 ;; these pretty early so they can continue to be optimized by further passes
 ;; (aka inlining and whatnot)
 ;;
+;; LOCAL MODS done by hand afterwards:
+;;  * Remove hardcoded address 1024 (apparently a free memory location rustc
+;;    thinks is ok to use?); add a global __tempMemory__ which is used for that
+;;    purpose.
+;;  * Fix function type of __wasm_ctz_i64, which was wrong somehow,
+;;    i32, i32 => i32 instead of i64 => i64
+;;
 ;; [1]: https://gist.github.com/alexcrichton/e7ea67bcdd17ce4b6254e66f77165690
 
 (module
@@ -13,7 +20,9 @@
  (type $2 (func (param f64) (result f64)))
  (type $3 (func (param i32) (result i32)))
  (type $4 (func (param i32 i32) (result i32)))
+ (type $5 (func (param i64) (result i64)))
  (import "env" "memory" (memory $0 17))
+ (import "env" "__tempMemory__" (global $__tempMemory__ i32))
  (export "__wasm_i64_sdiv" (func $__wasm_i64_sdiv))
  (export "__wasm_i64_udiv" (func $__wasm_i64_udiv))
  (export "__wasm_i64_srem" (func $__wasm_i64_srem))
@@ -128,7 +137,7 @@
    )
   )
   (i64.load
-   (i32.const 1024)
+   (global.get $__tempMemory__)
   )
  )
  ;; lowering of the i64.mul instruction, return $var0 * $var$1
@@ -192,7 +201,7 @@
   (i32.const 32)
  )
  ;; lowering of the i64.ctz instruction, counting the number of zeros in $var$0
- (func $__wasm_ctz_i64 (; 8 ;) (type $4) (param $var$0 i64) (result i64)
+ (func $__wasm_ctz_i64 (; 8 ;) (type $5) (param $var$0 i64) (result i64)
   (if
    (i32.eqz
     (i64.eqz
@@ -571,7 +580,7 @@
               )
              )
              (i64.store
-              (i32.const 1024)
+              (global.get $__tempMemory__)
               (i64.extend_i32_u
                (i32.sub
                 (local.tee $var$2
@@ -633,7 +642,7 @@
              )
             )
             (i64.store
-             (i32.const 1024)
+             (global.get $__tempMemory__)
              (i64.or
               (i64.shl
                (i64.extend_i32_u
@@ -714,7 +723,7 @@
          (br $label$3)
         )
         (i64.store
-         (i32.const 1024)
+         (global.get $__tempMemory__)
          (i64.shl
           (i64.extend_i32_u
            (i32.sub
@@ -757,7 +766,7 @@
        (br $label$2)
       )
       (i64.store
-       (i32.const 1024)
+       (global.get $__tempMemory__)
        (i64.extend_i32_u
         (i32.and
          (local.get $var$4)
@@ -889,7 +898,7 @@
      )
     )
     (i64.store
-     (i32.const 1024)
+     (global.get $__tempMemory__)
      (local.get $var$5)
     )
     (return
@@ -903,7 +912,7 @@
     )
    )
    (i64.store
-    (i32.const 1024)
+    (global.get $__tempMemory__)
     (local.get $var$0)
    )
    (local.set $var$0

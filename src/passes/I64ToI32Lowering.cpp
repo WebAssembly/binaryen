@@ -600,16 +600,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // our f64 through memory at address 0
     TempVar highBits = getTemp();
     Block *result = builder->blockify(
-      builder->makeStore(8, 0, 8, builder->makeConst(Literal(int32_t(0))), curr->value, f64),
+      builder->makeStore(8, 0, 8, makeGetTempMemory(), curr->value, f64),
       builder->makeSetLocal(
         highBits,
-        builder->makeLoad(4, true, 4, 4, builder->makeConst(Literal(int32_t(0))), i32)
+        builder->makeLoad(4, true, 4, 4, makeGetTempMemory(), i32)
       ),
-      builder->makeLoad(4, true, 0, 4, builder->makeConst(Literal(int32_t(0))), i32)
+      builder->makeLoad(4, true, 0, 4, makeGetTempMemory(), i32)
     );
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
-    ensureMinimalMemory();
+    MemoryUtils::ensureExists(getModule()->memory);
+    ensureTempMemoryGlobal();
   }
 
   void lowerReinterpretInt64(Unary* curr) {
@@ -617,18 +618,33 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // our i64 through memory at address 0
     TempVar highBits = fetchOutParam(curr->value);
     Block *result = builder->blockify(
-      builder->makeStore(4, 0, 4, builder->makeConst(Literal(int32_t(0))), curr->value, i32),
-      builder->makeStore(4, 4, 4, builder->makeConst(Literal(int32_t(0))), builder->makeGetLocal(highBits, i32), i32),
-      builder->makeLoad(8, true, 0, 8, builder->makeConst(Literal(int32_t(0))), f64)
+      builder->makeStore(4, 0, 4, makeGetTempMemory(), curr->value, i32),
+      builder->makeStore(4, 4, 4, makeGetTempMemory(), builder->makeGetLocal(highBits, i32), i32),
+      builder->makeLoad(8, true, 0, 8, makeGetTempMemory(), f64)
     );
     replaceCurrent(result);
-    ensureMinimalMemory();
+    MemoryUtils::ensureExists(getModule()->memory);
+    ensureTempMemoryGlobal();
   }
 
-  // Ensure memory exists with a minimal size, enough for round-tripping operations on
-  // address 0, which we need for reinterpret operations.
-  void ensureMinimalMemory() {
-    MemoryUtils::ensureExists(getModule()->memory);
+  Name tempMemory = "__tempMemory__";
+
+  void ensureTempMemoryGlobal() {
+    // Ensure the existence of an imported global, __tempMemory__, which points to 8
+    // bytes of scratch memory we can use for roundtrip purposes.
+    if (!getModule()->getGlobalOrNull(tempMemory)) {
+      auto global = make_unique<Global>();
+      global->name = tempMemory;
+      global->type = i32;
+      global->mutable_ = false;
+      global->module = ENV;
+      global->base = tempMemory;
+      getModule()->addGlobal(global.release());
+    }
+  }
+
+  Expression* makeGetTempMemory() {
+    return builder->makeGetGlobal(tempMemory, i32);
   }
 
   void lowerTruncFloatToInt(Unary *curr) {

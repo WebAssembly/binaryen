@@ -1,3 +1,4 @@
+import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
  "use asm";
@@ -21,6 +22,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
@@ -36,20 +38,20 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0, $3$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_f64$0 = 0.0;
   i64toi32_i32$0 = $0$hi;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = $0;
   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = i64toi32_i32$0;
   HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = 0;
-  wasm2js_f64$0 = +HEAPF64[0 >> 3];
+  wasm2js_i32$0 = __tempMemory__;
+  wasm2js_f64$0 = +HEAPF64[__tempMemory__ >> 3];
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
+  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$0 = $3$hi;
-  return (HEAP32[0 >> 2] | 0 | 0) == ($0 | 0) & (i64toi32_i32$0 | 0) == ($0$hi | 0) | 0 | 0;
+  return (HEAP32[__tempMemory__ >> 2] | 0 | 0) == ($0 | 0) & (i64toi32_i32$0 | 0) == ($0$hi | 0) | 0 | 0;
  }
  
  return {
