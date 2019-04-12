@@ -2053,7 +2053,6 @@ void Wasm2JSGlue::emitPreES6() {
   ImportInfo imports(wasm);
 
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    Fatal() << "non-function imports aren't supported yet\n";
     noteImport(import->module, import->base);
   });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {

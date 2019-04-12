@@ -1,3 +1,4 @@
+import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
  "use asm";
@@ -21,6 +22,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ var __tempMemory__ = env.__tempMemory__;
  var i64toi32_i32$HIGH_BITS = 0;
  function i32_t0($0, $1) {
   $0 = $0 | 0;
@@ -1618,7 +1620,7 @@ function asmFunc(global, env, buffer) {
   var$0$hi = var$0$hi | 0;
   var$1 = var$1 | 0;
   var$1$hi = var$1$hi | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, var$2 = 0, var$3 = 0, var$4 = 0, var$5 = 0, var$5$hi = 0, var$6 = 0, var$6$hi = 0, i64toi32_i32$6 = 0, $38_1 = 0, $39_1 = 0, $40_1 = 0, $41_1 = 0, $42_1 = 0, $43_1 = 0, $44_1 = 0, $45_1 = 0, var$8$hi = 0, $46_1 = 0, $47_1 = 0, $48_1 = 0, $49_1 = 0, var$7$hi = 0, $50_1 = 0, $63$hi = 0, $65_1 = 0, $65$hi = 0, $66_1 = 0, $120$hi = 0, $129$hi = 0, $134$hi = 0, var$8 = 0, $140 = 0, $140$hi = 0, $142$hi = 0, $144 = 0, $144$hi = 0, $151 = 0, $151$hi = 0, $154$hi = 0, var$7 = 0, $165$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, var$2 = 0, var$3 = 0, var$4 = 0, var$5 = 0, var$5$hi = 0, var$6 = 0, var$6$hi = 0, i64toi32_i32$6 = 0, $40_1 = 0, $41_1 = 0, $42_1 = 0, $43_1 = 0, $44_1 = 0, $45_1 = 0, $46_1 = 0, $47_1 = 0, var$8$hi = 0, $48_1 = 0, $49_1 = 0, $50_1 = 0, $51_1 = 0, var$7$hi = 0, $52_1 = 0, $60_1 = 0, $65$hi = 0, $67_1 = 0, $67$hi = 0, $68_1 = 0, $93_1 = 0, $124$hi = 0, $133$hi = 0, $138$hi = 0, var$8 = 0, $144 = 0, $144$hi = 0, $146$hi = 0, $148 = 0, $148$hi = 0, $155 = 0, $155$hi = 0, $158$hi = 0, var$7 = 0, $170$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0;
   label$1 : {
    label$2 : {
     label$3 : {
@@ -1637,12 +1639,12 @@ function asmFunc(global, env, buffer) {
              i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
              if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
               i64toi32_i32$1 = 0;
-              $38_1 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+              $40_1 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
              } else {
               i64toi32_i32$1 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
-              $38_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+              $40_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
              }
-             var$2 = $38_1;
+             var$2 = $40_1;
              if (var$2) block : {
               i64toi32_i32$1 = var$1$hi;
               var$3 = var$1;
@@ -1654,12 +1656,12 @@ function asmFunc(global, env, buffer) {
               i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
               if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
                i64toi32_i32$2 = 0;
-               $39_1 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+               $41_1 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
               } else {
                i64toi32_i32$2 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
-               $39_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$0 >>> i64toi32_i32$4 | 0) | 0;
+               $41_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$0 >>> i64toi32_i32$4 | 0) | 0;
               }
-              var$4 = $39_1;
+              var$4 = $41_1;
               if ((var$4 | 0) == (0 | 0)) break label$9;
               var$2 = Math_clz32(var$4) - Math_clz32(var$2) | 0;
               if (var$2 >>> 0 <= 31 >>> 0) break label$8;
@@ -1676,7 +1678,7 @@ function asmFunc(global, env, buffer) {
              var$3 = var$1;
              var$2 = (var$2 >>> 0) / (var$3 >>> 0) | 0;
              i64toi32_i32$1 = 0;
-             i64toi32_i32$2 = 1024;
+             i64toi32_i32$2 = __tempMemory__;
              wasm2js_i32$0 = i64toi32_i32$2;
              wasm2js_i32$1 = var$0 - Math_imul(var$2, var$3) | 0;
              HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
@@ -1695,17 +1697,18 @@ function asmFunc(global, env, buffer) {
             i64toi32_i32$4 = i64toi32_i32$0 & 31 | 0;
             if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
              i64toi32_i32$1 = 0;
-             $40_1 = i64toi32_i32$2 >>> i64toi32_i32$4 | 0;
+             $42_1 = i64toi32_i32$2 >>> i64toi32_i32$4 | 0;
             } else {
              i64toi32_i32$1 = i64toi32_i32$2 >>> i64toi32_i32$4 | 0;
-             $40_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$2 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$3 >>> i64toi32_i32$4 | 0) | 0;
+             $42_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$2 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$3 >>> i64toi32_i32$4 | 0) | 0;
             }
-            var$3 = $40_1;
+            var$3 = $42_1;
             i64toi32_i32$1 = var$0$hi;
             if ((var$0 | 0) == (0 | 0)) break label$7;
             if ((var$3 | 0) == (0 | 0)) break label$6;
             var$4 = var$3 + 4294967295 | 0;
             if (var$4 & var$3 | 0) break label$6;
+            $60_1 = __tempMemory__;
             i64toi32_i32$1 = 0;
             i64toi32_i32$2 = var$4 & var$2 | 0;
             i64toi32_i32$3 = 0;
@@ -1713,28 +1716,28 @@ function asmFunc(global, env, buffer) {
             i64toi32_i32$4 = i64toi32_i32$0 & 31 | 0;
             if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
              i64toi32_i32$3 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-             $41_1 = 0;
+             $43_1 = 0;
             } else {
              i64toi32_i32$3 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$1 << i64toi32_i32$4 | 0) | 0;
-             $41_1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+             $43_1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
             }
-            $63$hi = i64toi32_i32$3;
+            $65$hi = i64toi32_i32$3;
             i64toi32_i32$3 = var$0$hi;
             i64toi32_i32$1 = var$0;
             i64toi32_i32$2 = 0;
             i64toi32_i32$0 = 4294967295;
             i64toi32_i32$2 = i64toi32_i32$3 & i64toi32_i32$2 | 0;
-            $65_1 = i64toi32_i32$1 & i64toi32_i32$0 | 0;
-            $65$hi = i64toi32_i32$2;
-            i64toi32_i32$2 = $63$hi;
-            i64toi32_i32$3 = $41_1;
-            i64toi32_i32$1 = $65$hi;
-            i64toi32_i32$0 = $65_1;
+            $67_1 = i64toi32_i32$1 & i64toi32_i32$0 | 0;
+            $67$hi = i64toi32_i32$2;
+            i64toi32_i32$2 = $65$hi;
+            i64toi32_i32$3 = $43_1;
+            i64toi32_i32$1 = $67$hi;
+            i64toi32_i32$0 = $67_1;
             i64toi32_i32$1 = i64toi32_i32$2 | i64toi32_i32$1 | 0;
-            $66_1 = i64toi32_i32$3 | i64toi32_i32$0 | 0;
-            i64toi32_i32$3 = 1024;
+            $68_1 = i64toi32_i32$3 | i64toi32_i32$0 | 0;
+            i64toi32_i32$3 = $60_1;
             wasm2js_i32$0 = i64toi32_i32$3;
-            wasm2js_i32$1 = $66_1;
+            wasm2js_i32$1 = $68_1;
             HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
             wasm2js_i32$0 = i64toi32_i32$3;
             wasm2js_i32$1 = i64toi32_i32$1;
@@ -1755,6 +1758,7 @@ function asmFunc(global, env, buffer) {
          var$2 = var$2 + 1 | 0;
          break label$3;
         };
+        $93_1 = __tempMemory__;
         var$4 = (var$2 >>> 0) / (var$3 >>> 0) | 0;
         i64toi32_i32$3 = 0;
         i64toi32_i32$2 = var$2 - Math_imul(var$4, var$3) | 0;
@@ -1763,14 +1767,14 @@ function asmFunc(global, env, buffer) {
         i64toi32_i32$4 = i64toi32_i32$0 & 31 | 0;
         if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
          i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-         $42_1 = 0;
+         $44_1 = 0;
         } else {
          i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$3 << i64toi32_i32$4 | 0) | 0;
-         $42_1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+         $44_1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
         }
-        i64toi32_i32$2 = 1024;
+        i64toi32_i32$2 = $93_1;
         wasm2js_i32$0 = i64toi32_i32$2;
-        wasm2js_i32$1 = $42_1;
+        wasm2js_i32$1 = $44_1;
         HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
         wasm2js_i32$0 = i64toi32_i32$2;
         wasm2js_i32$1 = i64toi32_i32$1;
@@ -1786,7 +1790,7 @@ function asmFunc(global, env, buffer) {
       };
       i64toi32_i32$2 = var$0$hi;
       i64toi32_i32$2 = 0;
-      i64toi32_i32$1 = 1024;
+      i64toi32_i32$1 = __tempMemory__;
       wasm2js_i32$0 = i64toi32_i32$1;
       wasm2js_i32$1 = var$4 & var$0 | 0;
       HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
@@ -1796,20 +1800,20 @@ function asmFunc(global, env, buffer) {
       if ((var$3 | 0) == (1 | 0)) break label$1;
       i64toi32_i32$2 = var$0$hi;
       i64toi32_i32$2 = 0;
-      $120$hi = i64toi32_i32$2;
+      $124$hi = i64toi32_i32$2;
       i64toi32_i32$2 = var$0$hi;
       i64toi32_i32$3 = var$0;
-      i64toi32_i32$1 = $120$hi;
+      i64toi32_i32$1 = $124$hi;
       i64toi32_i32$0 = __wasm_ctz_i32(var$3 | 0) | 0;
       i64toi32_i32$4 = i64toi32_i32$0 & 31 | 0;
       if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
        i64toi32_i32$1 = 0;
-       $43_1 = i64toi32_i32$2 >>> i64toi32_i32$4 | 0;
+       $45_1 = i64toi32_i32$2 >>> i64toi32_i32$4 | 0;
       } else {
        i64toi32_i32$1 = i64toi32_i32$2 >>> i64toi32_i32$4 | 0;
-       $43_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$2 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$3 >>> i64toi32_i32$4 | 0) | 0;
+       $45_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$2 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$3 >>> i64toi32_i32$4 | 0) | 0;
       }
-      i64toi32_i32$3 = $43_1;
+      i64toi32_i32$3 = $45_1;
       i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
       return i64toi32_i32$3 | 0;
      };
@@ -1818,37 +1822,37 @@ function asmFunc(global, env, buffer) {
     };
     i64toi32_i32$3 = var$0$hi;
     i64toi32_i32$3 = 0;
-    $129$hi = i64toi32_i32$3;
+    $133$hi = i64toi32_i32$3;
     i64toi32_i32$3 = var$0$hi;
     i64toi32_i32$2 = var$0;
-    i64toi32_i32$1 = $129$hi;
+    i64toi32_i32$1 = $133$hi;
     i64toi32_i32$0 = var$2 & 63 | 0;
     i64toi32_i32$4 = i64toi32_i32$0 & 31 | 0;
     if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
      i64toi32_i32$1 = 0;
-     $44_1 = i64toi32_i32$3 >>> i64toi32_i32$4 | 0;
+     $46_1 = i64toi32_i32$3 >>> i64toi32_i32$4 | 0;
     } else {
      i64toi32_i32$1 = i64toi32_i32$3 >>> i64toi32_i32$4 | 0;
-     $44_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$3 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+     $46_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$3 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
     }
-    var$5 = $44_1;
+    var$5 = $46_1;
     var$5$hi = i64toi32_i32$1;
     i64toi32_i32$1 = var$0$hi;
     i64toi32_i32$1 = 0;
-    $134$hi = i64toi32_i32$1;
+    $138$hi = i64toi32_i32$1;
     i64toi32_i32$1 = var$0$hi;
     i64toi32_i32$3 = var$0;
-    i64toi32_i32$2 = $134$hi;
+    i64toi32_i32$2 = $138$hi;
     i64toi32_i32$0 = var$3 & 63 | 0;
     i64toi32_i32$4 = i64toi32_i32$0 & 31 | 0;
     if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
      i64toi32_i32$2 = i64toi32_i32$3 << i64toi32_i32$4 | 0;
-     $45_1 = 0;
+     $47_1 = 0;
     } else {
      i64toi32_i32$2 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$3 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$1 << i64toi32_i32$4 | 0) | 0;
-     $45_1 = i64toi32_i32$3 << i64toi32_i32$4 | 0;
+     $47_1 = i64toi32_i32$3 << i64toi32_i32$4 | 0;
     }
-    var$0 = $45_1;
+    var$0 = $47_1;
     var$0$hi = i64toi32_i32$2;
     label$13 : {
      if (var$2) block3 : {
@@ -1869,13 +1873,13 @@ function asmFunc(global, env, buffer) {
        i64toi32_i32$3 = i64toi32_i32$0 & 31 | 0;
        if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
         i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$3 | 0;
-        $46_1 = 0;
+        $48_1 = 0;
        } else {
         i64toi32_i32$1 = ((1 << i64toi32_i32$3 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$3 | 0) | 0) | 0 | (i64toi32_i32$5 << i64toi32_i32$3 | 0) | 0;
-        $46_1 = i64toi32_i32$2 << i64toi32_i32$3 | 0;
+        $48_1 = i64toi32_i32$2 << i64toi32_i32$3 | 0;
        }
-       $140 = $46_1;
-       $140$hi = i64toi32_i32$1;
+       $144 = $48_1;
+       $144$hi = i64toi32_i32$1;
        i64toi32_i32$1 = var$0$hi;
        i64toi32_i32$5 = var$0;
        i64toi32_i32$2 = 0;
@@ -1883,21 +1887,21 @@ function asmFunc(global, env, buffer) {
        i64toi32_i32$3 = i64toi32_i32$0 & 31 | 0;
        if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
         i64toi32_i32$2 = 0;
-        $47_1 = i64toi32_i32$1 >>> i64toi32_i32$3 | 0;
+        $49_1 = i64toi32_i32$1 >>> i64toi32_i32$3 | 0;
        } else {
         i64toi32_i32$2 = i64toi32_i32$1 >>> i64toi32_i32$3 | 0;
-        $47_1 = (((1 << i64toi32_i32$3 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$3 | 0) | 0 | (i64toi32_i32$5 >>> i64toi32_i32$3 | 0) | 0;
+        $49_1 = (((1 << i64toi32_i32$3 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$3 | 0) | 0 | (i64toi32_i32$5 >>> i64toi32_i32$3 | 0) | 0;
        }
-       $142$hi = i64toi32_i32$2;
-       i64toi32_i32$2 = $140$hi;
-       i64toi32_i32$1 = $140;
-       i64toi32_i32$5 = $142$hi;
-       i64toi32_i32$0 = $47_1;
+       $146$hi = i64toi32_i32$2;
+       i64toi32_i32$2 = $144$hi;
+       i64toi32_i32$1 = $144;
+       i64toi32_i32$5 = $146$hi;
+       i64toi32_i32$0 = $49_1;
        i64toi32_i32$5 = i64toi32_i32$2 | i64toi32_i32$5 | 0;
        var$5 = i64toi32_i32$1 | i64toi32_i32$0 | 0;
        var$5$hi = i64toi32_i32$5;
-       $144 = var$5;
-       $144$hi = i64toi32_i32$5;
+       $148 = var$5;
+       $148$hi = i64toi32_i32$5;
        i64toi32_i32$5 = var$8$hi;
        i64toi32_i32$5 = var$5$hi;
        i64toi32_i32$5 = var$8$hi;
@@ -1914,12 +1918,12 @@ function asmFunc(global, env, buffer) {
        i64toi32_i32$1 = i64toi32_i32$0 & 31 | 0;
        if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
         i64toi32_i32$2 = i64toi32_i32$4 >> 31 | 0;
-        $48_1 = i64toi32_i32$4 >> i64toi32_i32$1 | 0;
+        $50_1 = i64toi32_i32$4 >> i64toi32_i32$1 | 0;
        } else {
         i64toi32_i32$2 = i64toi32_i32$4 >> i64toi32_i32$1 | 0;
-        $48_1 = (((1 << i64toi32_i32$1 | 0) - 1 | 0) & i64toi32_i32$4 | 0) << (32 - i64toi32_i32$1 | 0) | 0 | (i64toi32_i32$5 >>> i64toi32_i32$1 | 0) | 0;
+        $50_1 = (((1 << i64toi32_i32$1 | 0) - 1 | 0) & i64toi32_i32$4 | 0) << (32 - i64toi32_i32$1 | 0) | 0 | (i64toi32_i32$5 >>> i64toi32_i32$1 | 0) | 0;
        }
-       var$6 = $48_1;
+       var$6 = $50_1;
        var$6$hi = i64toi32_i32$2;
        i64toi32_i32$2 = var$1$hi;
        i64toi32_i32$2 = var$6$hi;
@@ -1927,12 +1931,12 @@ function asmFunc(global, env, buffer) {
        i64toi32_i32$5 = var$1$hi;
        i64toi32_i32$0 = var$1;
        i64toi32_i32$5 = i64toi32_i32$2 & i64toi32_i32$5 | 0;
-       $151 = i64toi32_i32$4 & i64toi32_i32$0 | 0;
-       $151$hi = i64toi32_i32$5;
-       i64toi32_i32$5 = $144$hi;
-       i64toi32_i32$2 = $144;
-       i64toi32_i32$4 = $151$hi;
-       i64toi32_i32$0 = $151;
+       $155 = i64toi32_i32$4 & i64toi32_i32$0 | 0;
+       $155$hi = i64toi32_i32$5;
+       i64toi32_i32$5 = $148$hi;
+       i64toi32_i32$2 = $148;
+       i64toi32_i32$4 = $155$hi;
+       i64toi32_i32$0 = $155;
        i64toi32_i32$1 = i64toi32_i32$2 - i64toi32_i32$0 | 0;
        i64toi32_i32$6 = i64toi32_i32$2 >>> 0 < i64toi32_i32$0 >>> 0;
        i64toi32_i32$3 = i64toi32_i32$6 + i64toi32_i32$4 | 0;
@@ -1946,15 +1950,15 @@ function asmFunc(global, env, buffer) {
        i64toi32_i32$4 = i64toi32_i32$0 & 31 | 0;
        if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
         i64toi32_i32$2 = i64toi32_i32$5 << i64toi32_i32$4 | 0;
-        $49_1 = 0;
+        $51_1 = 0;
        } else {
         i64toi32_i32$2 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$5 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$3 << i64toi32_i32$4 | 0) | 0;
-        $49_1 = i64toi32_i32$5 << i64toi32_i32$4 | 0;
+        $51_1 = i64toi32_i32$5 << i64toi32_i32$4 | 0;
        }
-       $154$hi = i64toi32_i32$2;
+       $158$hi = i64toi32_i32$2;
        i64toi32_i32$2 = var$7$hi;
-       i64toi32_i32$2 = $154$hi;
-       i64toi32_i32$3 = $49_1;
+       i64toi32_i32$2 = $158$hi;
+       i64toi32_i32$3 = $51_1;
        i64toi32_i32$5 = var$7$hi;
        i64toi32_i32$0 = var$7;
        i64toi32_i32$5 = i64toi32_i32$2 | i64toi32_i32$5 | 0;
@@ -1977,7 +1981,7 @@ function asmFunc(global, env, buffer) {
      };
     };
     i64toi32_i32$3 = var$5$hi;
-    i64toi32_i32$2 = 1024;
+    i64toi32_i32$2 = __tempMemory__;
     wasm2js_i32$0 = i64toi32_i32$2;
     wasm2js_i32$1 = var$5;
     HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
@@ -1991,15 +1995,15 @@ function asmFunc(global, env, buffer) {
     i64toi32_i32$4 = i64toi32_i32$0 & 31 | 0;
     if (32 >>> 0 <= (i64toi32_i32$0 & 63 | 0) >>> 0) {
      i64toi32_i32$2 = i64toi32_i32$5 << i64toi32_i32$4 | 0;
-     $50_1 = 0;
+     $52_1 = 0;
     } else {
      i64toi32_i32$2 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$5 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$3 << i64toi32_i32$4 | 0) | 0;
-     $50_1 = i64toi32_i32$5 << i64toi32_i32$4 | 0;
+     $52_1 = i64toi32_i32$5 << i64toi32_i32$4 | 0;
     }
-    $165$hi = i64toi32_i32$2;
+    $170$hi = i64toi32_i32$2;
     i64toi32_i32$2 = var$6$hi;
-    i64toi32_i32$2 = $165$hi;
-    i64toi32_i32$3 = $50_1;
+    i64toi32_i32$2 = $170$hi;
+    i64toi32_i32$3 = $52_1;
     i64toi32_i32$5 = var$6$hi;
     i64toi32_i32$0 = var$6;
     i64toi32_i32$5 = i64toi32_i32$2 | i64toi32_i32$5 | 0;
@@ -2008,7 +2012,7 @@ function asmFunc(global, env, buffer) {
     return i64toi32_i32$3 | 0;
    };
    i64toi32_i32$3 = var$0$hi;
-   i64toi32_i32$5 = 1024;
+   i64toi32_i32$5 = __tempMemory__;
    wasm2js_i32$0 = i64toi32_i32$5;
    wasm2js_i32$1 = var$0;
    HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
@@ -2101,7 +2105,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$1 = var$1$hi;
   i64toi32_i32$1 = _ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E(var$0 | 0, i64toi32_i32$0 | 0, var$1 | 0, i64toi32_i32$1 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  i64toi32_i32$2 = 1024;
+  i64toi32_i32$2 = __tempMemory__;
   i64toi32_i32$0 = HEAP32[i64toi32_i32$2 >> 2] | 0;
   i64toi32_i32$1 = (wasm2js_i32$0 = i64toi32_i32$2, HEAPU8[(wasm2js_i32$0 + 4 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 5 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 6 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 7 | 0) >> 0] | 0 | 0) << 24);
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
