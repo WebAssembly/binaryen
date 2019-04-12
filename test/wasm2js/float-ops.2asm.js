@@ -1,3 +1,4 @@
+import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
  "use asm";
@@ -21,6 +22,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
@@ -214,21 +216,21 @@ function asmFunc(global, env, buffer) {
   $0 = +$0;
   $1_1 = +$1_1;
   var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_f64$0 = $0;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
+  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
+  i64toi32_i32$2 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$1 = 2147483647;
   i64toi32_i32$3 = 4294967295;
   i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1 | 0;
   $4_1 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
   $4$hi = i64toi32_i32$1;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_f64$0 = $1_1;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$1 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
+  i64toi32_i32$1 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
+  i64toi32_i32$0 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$2 = 2147483648;
   i64toi32_i32$3 = 0;
   i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2 | 0;
@@ -239,13 +241,13 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $7$hi;
   i64toi32_i32$3 = $7_1;
   i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = i64toi32_i32$1 | i64toi32_i32$3 | 0;
   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = i64toi32_i32$0;
   HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  return +(+HEAPF64[0 >> 3]);
+  return +(+HEAPF64[__tempMemory__ >> 3]);
  }
  
  function copysign32($0, $1_1) {

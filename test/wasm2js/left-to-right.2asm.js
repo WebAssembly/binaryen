@@ -1189,23 +1189,25 @@ function asmFunc(global, env, buffer) {
  }
  
  function $115() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $2 = 0, $2$hi = 0, $5 = 0, $5$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $0 = 0.0, $2 = 0, $2$hi = 0, $3 = 0.0, $5 = 0, $5$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
   reset();
-  wasm2js_i32$0 = 0;
-  wasm2js_f64$0 = +f64_left();
+  $0 = +f64_left();
+  wasm2js_i32$0 = __tempMemory__;
+  wasm2js_f64$0 = $0;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
+  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
+  i64toi32_i32$2 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$1 = 2147483647;
   i64toi32_i32$3 = 4294967295;
   i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1 | 0;
   $2 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
   $2$hi = i64toi32_i32$1;
-  wasm2js_i32$0 = 0;
-  wasm2js_f64$0 = +f64_right();
+  $3 = +f64_right();
+  wasm2js_i32$0 = __tempMemory__;
+  wasm2js_f64$0 = $3;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$1 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
+  i64toi32_i32$1 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
+  i64toi32_i32$0 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$2 = 2147483648;
   i64toi32_i32$3 = 0;
   i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2 | 0;
@@ -1216,13 +1218,13 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $5$hi;
   i64toi32_i32$3 = $5;
   i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = i64toi32_i32$1 | i64toi32_i32$3 | 0;
   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = i64toi32_i32$0;
   HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  +HEAPF64[0 >> 3];
+  +HEAPF64[__tempMemory__ >> 3];
   return get() | 0 | 0;
  }
  
