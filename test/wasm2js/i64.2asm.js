@@ -22,7 +22,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var __tempMemory__ = env.__tempMemory__;
+ var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, x$hi, y, y$hi) {
   x = x | 0;

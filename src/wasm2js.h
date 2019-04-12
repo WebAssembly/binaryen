@@ -486,12 +486,16 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
+  Ref value = ValueBuilder::makeDot(
+    module,
+    fromName(import->base, NameScope::Top)
+  );
+  if (import->type == i32) {
+    value = makeAsmCoercion(value, ASM_INT);
+  }
   ValueBuilder::appendToVar(theVar,
     fromName(import->name, NameScope::Top),
-    ValueBuilder::makeDot(
-      module,
-      fromName(import->base, NameScope::Top)
-    )
+    value
   );
 }
 
