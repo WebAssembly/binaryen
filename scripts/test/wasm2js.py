@@ -72,15 +72,22 @@ def test_wasm2js_output():
     # to enable ESM syntax and we're also passing a custom loader to handle the
     # `spectest` module in our tests.
     if NODEJS:
-      node = [NODEJS, '--experimental-modules', '--loader', './scripts/test/node-esm-loader.mjs']
-      cmd = node[:]
-      cmd.append('a.2asm.mjs')
-      out = run_command(cmd)
-      fail_if_not_identical(out, '')
-      cmd = node[:]
-      cmd.append('a.2asm.asserts.mjs')
-      out = run_command(cmd, expected_err='', err_ignore='The ESM module loader is experimental')
-      fail_if_not_identical(out, '')
+      try:
+        # generate a fake 'env' module so that importing it works
+        with open('env', 'w') as f:
+          f.write('''export const __tempMemory__ = 0;''')
+
+        node = [NODEJS, '--experimental-modules', '--loader', './scripts/test/node-esm-loader.mjs']
+        cmd = node[:]
+        cmd.append('a.2asm.mjs')
+        out = run_command(cmd)
+        fail_if_not_identical(out, '')
+        cmd = node[:]
+        cmd.append('a.2asm.asserts.mjs')
+        out = run_command(cmd, expected_err='', err_ignore='The ESM module loader is experimental')
+        fail_if_not_identical(out, '')
+      finally:
+        os.unlink('env')
 
 
 def test_asserts_output():
