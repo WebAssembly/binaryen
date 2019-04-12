@@ -531,7 +531,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
               ValueBuilder::makeInt(start + i)
             ),
             SET,
-            ValueBuilder::makeName(segment.data[i])
+            ValueBuilder::makeName(fromName(segment.data[i], NameScope::Top))
           )
         ));
       }
