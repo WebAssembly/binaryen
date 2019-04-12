@@ -315,7 +315,7 @@ def run_spec_tests():
         continue
 
       def run_spec_test(wast):
-        cmd = WASM_SHELL + [wast, '-mvp']
+        cmd = WASM_SHELL + [wast, '--disable-mutable-globals']
         # we must skip the stack machine portions of spec tests or apply other extra args
         extra = {
         }
