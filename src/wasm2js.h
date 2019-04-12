@@ -2014,6 +2014,8 @@ private:
   void emitPreES6();
   void emitPostEmscripten();
   void emitPostES6();
+
+  void emitMemory(std::string buffer, std::string segmentWriter);
 };
 
 void Wasm2JSGlue::emitPre() {
@@ -2070,6 +2072,8 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
+  emitMemory("wasmMemory.buffer", "writeSegment");
+
   out << "return asmFunc(\n"
       << "  {\n"
       << "    'env': asmLibraryArg,\n"
@@ -2108,36 +2112,8 @@ void Wasm2JSGlue::emitPostES6() {
       << ");\n";
   }
 
-  if (wasm.memory.segments.size() > 0) {
-    auto expr = R"(
-      function(mem) {
-        const _mem = new Uint8Array(mem);
-        return function(offset, s) {
-          if (typeof Buffer === 'undefined') {
-            const bytes = atob(s);
-            for (let i = 0; i < bytes.length; i++)
-              _mem[offset + i] = bytes.charCodeAt(i);
-          } else {
-            const bytes = Buffer.from(s, 'base64');
-            for (let i = 0; i < bytes.length; i++)
-              _mem[offset + i] = bytes[i];
-          }
-        }
-      }
-    )";
-
-    // const assign$name = ($expr)(mem$name);
-    out << "const assign" << moduleName.str
-      << " = (" << expr << ")(mem" << moduleName.str << ");\n";
-  }
-  for (auto& seg : wasm.memory.segments) {
-    assert(!seg.isPassive && "passive segments not implemented yet");
-    out << "assign" << moduleName.str << "("
-      << constOffset(seg)
-      << ", \""
-      << base64Encode(seg.data)
-      << "\");\n";
-  }
+  emitMemory(std::string("mem") + moduleName.str,
+             std::string("assign") + moduleName.str);
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
@@ -2196,6 +2172,39 @@ void Wasm2JSGlue::emitPostES6() {
   }
 }
 
+void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
+  if (wasm.memory.segments.empty()) return;
+
+  auto expr = R"(
+    function(mem) {
+      const _mem = new Uint8Array(mem);
+      return function(offset, s) {
+        if (typeof Buffer === 'undefined') {
+          const bytes = atob(s);
+          for (let i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes.charCodeAt(i);
+        } else {
+          const bytes = Buffer.from(s, 'base64');
+          for (let i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes[i];
+        }
+      }
+    }
+  )";
+
+  // const assign$name = ($expr)(mem$name);
+  out << "const " << segmentWriter
+      << " = (" << expr << ")(" << buffer << ");\n";
+
+  for (auto& seg : wasm.memory.segments) {
+    assert(!seg.isPassive && "passive segments not implemented yet");
+    out << segmentWriter << "("
+      << constOffset(seg)
+      << ", \""
+      << base64Encode(seg.data)
+      << "\");\n";
+  }
+}
 } // namespace wasm
 
 #endif // wasm_wasm2js_h
