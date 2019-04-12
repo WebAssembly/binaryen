@@ -16,7 +16,7 @@
 
 import os
 
-from support import run_command
+from support import run_command, split_wast
 from shared import (
     WASM2JS, MOZJS, NODEJS, fail_if_not_identical, options, tests,
     fail_if_not_identical_to_file
@@ -51,36 +51,46 @@ def test_wasm2js_output():
 
     print '..', wasm
 
-    cmd = WASM2JS + [os.path.join(options.binaryen_test, wasm)]
-    if 'emscripten' in wasm:
-      cmd += ['--emscripten']
-    out = run_command(cmd)
-    fail_if_not_identical_to_file(out, expected_file)
+    t = os.path.join(options.binaryen_test, wasm)
 
-    if not NODEJS and not MOZJS:
-      print 'No JS interpreters. Skipping spec tests.'
-      continue
+    all_out = []
 
-    open('a.2asm.mjs', 'w').write(out)
+    for module, asserts in split_wast(t):
+      with open('split.wast', 'w') as o:
+        o.write(module + '\n'.join(asserts))
 
-    cmd += ['--allow-asserts']
-    out = run_command(cmd)
-
-    open('a.2asm.asserts.mjs', 'w').write(out)
-
-    # verify asm.js is valid js, note that we're using --experimental-modules
-    # to enable ESM syntax and we're also passing a custom loader to handle the
-    # `spectest` module in our tests.
-    if NODEJS:
-      node = [NODEJS, '--experimental-modules', '--loader', './scripts/test/node-esm-loader.mjs']
-      cmd = node[:]
-      cmd.append('a.2asm.mjs')
+      cmd = WASM2JS + ['split.wast']
+      if 'emscripten' in wasm:
+        cmd += ['--emscripten']
       out = run_command(cmd)
-      fail_if_not_identical(out, '')
-      cmd = node[:]
-      cmd.append('a.2asm.asserts.mjs')
-      out = run_command(cmd, expected_err='', err_ignore='The ESM module loader is experimental')
-      fail_if_not_identical(out, '')
+      all_out.append(out)
+
+      if not NODEJS and not MOZJS:
+        print 'No JS interpreters. Skipping spec tests.'
+        continue
+
+      open('a.2asm.mjs', 'w').write(out)
+
+      cmd += ['--allow-asserts']
+      out = run_command(cmd)
+
+      open('a.2asm.asserts.mjs', 'w').write(out)
+
+      # verify asm.js is valid js, note that we're using --experimental-modules
+      # to enable ESM syntax and we're also passing a custom loader to handle the
+      # `spectest` and `env` modules in our tests.
+      if NODEJS:
+        node = [NODEJS, '--experimental-modules', '--loader', './scripts/test/node-esm-loader.mjs']
+        cmd = node[:]
+        cmd.append('a.2asm.mjs')
+        out = run_command(cmd)
+        fail_if_not_identical(out, '')
+        cmd = node[:]
+        cmd.append('a.2asm.asserts.mjs')
+        out = run_command(cmd, expected_err='', err_ignore='The ESM module loader is experimental')
+        fail_if_not_identical(out, '')
+
+    fail_if_not_identical_to_file(''.join(all_out), expected_file)
 
 
 def test_asserts_output():
@@ -130,12 +140,22 @@ def update_wasm2js_tests():
 
     print '..', wasm
 
-    cmd = WASM2JS + [os.path.join('test', wasm)]
-    if 'emscripten' in wasm:
-      cmd += ['--emscripten']
-    out = run_command(cmd)
+    t = os.path.join(options.binaryen_test, wasm)
+
+    all_out = []
+
+    for module, asserts in split_wast(t):
+      with open('split.wast', 'w') as o:
+        o.write(module + '\n'.join(asserts))
+
+      cmd = WASM2JS + ['split.wast']
+      if 'emscripten' in wasm:
+        cmd += ['--emscripten']
+      out = run_command(cmd)
+      all_out.append(out)
+
     with open(expected_file, 'w') as o:
-      o.write(out)
+      o.write(''.join(all_out))
 
   for wasm in assert_tests:
     print '..', wasm
