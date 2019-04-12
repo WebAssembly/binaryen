@@ -500,22 +500,42 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
 }
 
 void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
+  // Emit a simple flat table as a JS array literal. Otherwise,
+  // emit assignments separately for each index.
   FlatTable flat(wasm->table);
-  if (!flat.valid) {
-    Fatal() << "table could not be flattened at compile time";
-  }
-  Ref theVar = ValueBuilder::makeVar();
-  ast->push_back(theVar);
-  Ref theArray = ValueBuilder::makeArray();
-  ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, theArray);
-  Name null("null");
-  for (auto& name : flat.names) {
-    if (name.is()) {
-      name = fromName(name, NameScope::Top);
-    } else {
-      name = null;
+  assert(flat.valid); // TODO: non-flat tables
+  if (!wasm->table.imported()) {
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+    Ref theArray = ValueBuilder::makeArray();
+    ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, theArray);
+    Name null("null");
+    for (auto& name : flat.names) {
+      if (name.is()) {
+        name = fromName(name, NameScope::Top);
+      } else {
+        name = null;
+      }
+      ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
     }
-    ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
+  } else {
+    // TODO: optimize for size
+    for (auto& segment : wasm->table.segments) {
+      auto offset = segment.offset;
+      Index start = offset->cast<Const>()->value.geti32();
+      for (Index i = 0; i < segment.data.size(); i++) {
+        ast->push_back(ValueBuilder::makeStatement(
+          ValueBuilder::makeBinary(
+            ValueBuilder::makeSub(
+              ValueBuilder::makeName(FUNCTION_TABLE),
+              ValueBuilder::makeInt(start + i)
+            ),
+            SET,
+            ValueBuilder::makeName(segment.data[i])
+          )
+        ));
+      }
+    }
   }
 }
 
@@ -2013,7 +2033,7 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
-  out << "function instantiate(asmLibraryArg, wasmMemory, wasmTable) {\n\n";
+  out << "function instantiate(asmLibraryArg, wasmMemory, FUNCTION_TABLE) {\n\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {

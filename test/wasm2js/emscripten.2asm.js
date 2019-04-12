@@ -1,4 +1,4 @@
-function instantiate(asmLibraryArg, wasmMemory, wasmTable) {
+function instantiate(asmLibraryArg, wasmMemory, FUNCTION_TABLE) {
 
 function asmFunc(global, env, buffer) {
  "use asm";
@@ -48,7 +48,8 @@ function asmFunc(global, env, buffer) {
  }
  
  // EMSCRIPTEN_END_FUNCS;
- var FUNCTION_TABLE = [null, foo, bar];
+ FUNCTION_TABLE[1] = foo;
+ FUNCTION_TABLE[2] = bar;
  return {
   main: main, 
   other: other
