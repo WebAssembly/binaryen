@@ -312,10 +312,7 @@ class Py2CompletedProcess:
                                   output=self.stdout, stderr=self.stderr)
 
 
-def run_process(cmd, check=True, input=None, universal_newlines=True,
-                capture_output=False, *args, **kw):
-  kw.setdefault('universal_newlines', True)
-
+def run_process(cmd, check=True, input=None, capture_output=False, *args, **kw):
   if hasattr(subprocess, "run"):
     ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
     return ret
@@ -419,9 +416,7 @@ def minify_check(wast, verify_final_result=True):
   print '     (minify check)'
   cmd = WASM_OPT + [wast, '--print-minified']
   print '      ', ' '.join(cmd)
-  subprocess.check_call(
-      WASM_OPT + [wast, '--print-minified'],
-      stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call(cmd, stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wast')
   subprocess.check_call(
       WASM_OPT + ['a.wast', '--print-minified'],

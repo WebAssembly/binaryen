@@ -34,24 +34,18 @@ struct ToolOptions : public Options {
              Arguments::Zero,
              [this](Options*, const std::string&) {
                hasFeatureOptions = true;
-               passOptions.features.makeMVP();
                enabledFeatures.makeMVP();
                disabledFeatures.setAll();
              })
-        .add("--all-features", "-all", "Enable all features "
-             "(default if there is no target features section"
-             " or if any feature options are provided)",
+        .add("--all-features", "-all", "Enable all features",
              Arguments::Zero,
              [this](Options*, const std::string&) {
                hasFeatureOptions = true;
-               passOptions.features.setAll();
                enabledFeatures.setAll();
                disabledFeatures.makeMVP();
              })
         .add("--detect-features", "",
-             "Use features from the target features section"
-             "(default if there is a target features section"
-             " and no feature options are provided)",
+             "Use features from the target features section, or MVP (default)",
              Arguments::Zero,
              [this](Options*, const std::string&) {
                hasFeatureOptions = true;
@@ -76,13 +70,11 @@ struct ToolOptions : public Options {
 
   ToolOptions& addFeature(FeatureSet::Feature feature,
                           const std::string& description) {
-
     (*this)
         .add(std::string("--enable-") + FeatureSet::toString(feature), "",
              std::string("Enable ") + description, Arguments::Zero,
              [=](Options*, const std::string&) {
                hasFeatureOptions = true;
-               passOptions.features.set(feature, true);
                enabledFeatures.set(feature, true);
                disabledFeatures.set(feature, false);
              })
@@ -91,36 +83,32 @@ struct ToolOptions : public Options {
              std::string("Disable ") + description, Arguments::Zero,
              [=](Options*, const std::string&) {
                hasFeatureOptions = true;
-               passOptions.features.set(feature, false);
                enabledFeatures.set(feature, false);
                disabledFeatures.set(feature, true);
              });
     return *this;
   }
 
-  void calculateFeatures(const Module& module) {
-    FeatureSet wasmFeatures;
-    bool wasmHasFeatures =
-        ModuleUtils::readFeaturesSection(module, wasmFeatures);
-
+  void applyFeatures(Module& module) {
     if (hasFeatureOptions) {
-      if (detectFeatures) {
-        wasmFeatures.enable(enabledFeatures);
-        wasmFeatures.disable(disabledFeatures);
-        passOptions.features = wasmFeatures;
-      } else if (!(wasmFeatures <= passOptions.features)) {
-        Fatal() << "module uses features not explicitly specified, "
-                << "use --detect-features to resolve";
+      if (!detectFeatures && module.hasFeaturesSection) {
+        FeatureSet optionsFeatures = FeatureSet::All;
+        optionsFeatures.enable(enabledFeatures);
+        optionsFeatures.disable(disabledFeatures);
+        if (!(module.features <= optionsFeatures)) {
+          Fatal() << "module uses features not explicitly specified, "
+                  << "use --detect-features to resolve";
+        }
       }
-    } else if (wasmHasFeatures) {
-      passOptions.features = wasmFeatures;
+      module.features.enable(enabledFeatures);
+      module.features.disable(disabledFeatures);
     }
   }
 
 private:
   bool hasFeatureOptions = false;
   bool detectFeatures = false;
-  FeatureSet enabledFeatures = FeatureSet::MVP;
+  FeatureSet enabledFeatures = FeatureSet::All;
   FeatureSet disabledFeatures = FeatureSet::MVP;
 };
 

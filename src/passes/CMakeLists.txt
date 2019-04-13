@@ -42,6 +42,7 @@ SET(passes_SOURCES
   PrintCallGraph.cpp
   StackIR.cpp
   Strip.cpp
+  StripTargetFeatures.cpp
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
   ReReloop.cpp

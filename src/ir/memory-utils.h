@@ -69,6 +69,12 @@ namespace MemoryUtils {
       return true;
     }
 
+    // Conservatively refuse to change segments if there might be memory.init
+    // and data.drop instructions.
+    if (module.features.hasBulkMemory()) {
+      return false;
+    }
+
     auto isEmpty = [](Memory::Segment& segment) {
       return segment.data.size() == 0;
     };

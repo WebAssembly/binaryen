@@ -407,7 +407,7 @@ int main(int argc, const char *argv[]) {
       ModuleReader reader;
       reader.setDebug(options.debug);
       reader.read(input, wasm, "");
-      options.calculateFeatures(wasm);
+      options.applyFeatures(wasm);
     } else {
       auto input(
           read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
@@ -426,7 +426,7 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.passOptions.validate) {
-    if (!WasmValidator().validate(wasm, options.passOptions.features)) {
+    if (!WasmValidator().validate(wasm)) {
       WasmPrinter::printModule(&wasm);
       Fatal() << "error in validating input";
     }

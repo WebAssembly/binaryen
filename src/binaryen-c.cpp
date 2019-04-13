@@ -2486,9 +2486,9 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  // TODO add feature selection support to C API
-  FeatureSet features = FeatureSet::All;
-  return WasmValidator().validate(*wasm, features) ? 1 : 0;
+  // TODO(tlively): Add C API for managing features
+  wasm->features = FeatureSet::All;
+  return WasmValidator().validate(*wasm) ? 1 : 0;
 }
 
 void BinaryenModuleOptimize(BinaryenModuleRef module) {

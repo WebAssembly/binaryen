@@ -124,10 +124,6 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void setFeatures(FeatureSet features_) {
-    features = features_;
-  }
-
   void setAllowNaNs(bool allowNaNs_) {
     allowNaNs = allowNaNs_;
   }
@@ -197,9 +193,6 @@ private:
   // Whether to emit memory operations like loads and stores.
   bool allowMemory = true;
 
-  // Features allowed to be emitted
-  FeatureSet features = FeatureSet::All;
-
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
 
@@ -257,7 +250,7 @@ private:
   void setupMemory() {
     // Add memory itself
     MemoryUtils::ensureExists(wasm.memory);
-    if (features.hasBulkMemory()) {
+    if (wasm.features.hasBulkMemory()) {
       size_t memCovered = 0;
       // need at least one segment for memory.inits
       size_t numSegments = upTo(8) + 1;
@@ -1198,7 +1191,7 @@ private:
         return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
       }
       case v128: {
-        if (!features.hasSIMD()) {
+        if (!wasm.features.hasSIMD()) {
           return makeTrivial(type);
         }
         return builder.makeLoad(16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
@@ -1213,7 +1206,7 @@ private:
     if (!allowMemory) return makeTrivial(type);
     auto* ret = makeNonAtomicLoad(type);
     if (type != i32 && type != i64) return ret;
-    if (!features.hasAtomics() || oneIn(2)) return ret;
+    if (!wasm.features.hasAtomics() || oneIn(2)) return ret;
     // make it atomic
     auto* load = ret->cast<Load>();
     wasm.memory.shared = true;
@@ -1270,7 +1263,7 @@ private:
         return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
       }
       case v128: {
-        if (!features.hasSIMD()) {
+        if (!wasm.features.hasSIMD()) {
           return makeTrivial(type);
         }
         return builder.makeStore(16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
@@ -1287,7 +1280,7 @@ private:
     auto* store = ret->dynCast<Store>();
     if (!store) return ret;
     if (store->value->type != i32 && store->value->type != i64) return store;
-    if (!features.hasAtomics() || oneIn(2)) return store;
+    if (!wasm.features.hasAtomics() || oneIn(2)) return store;
     // make it atomic
     wasm.memory.shared = true;
     store->isAtomic = true;
@@ -1482,7 +1475,7 @@ private:
             return buildUnary({ op, make(f64) });
           }
           case v128: {
-            assert(features.hasSIMD());
+            assert(wasm.features.hasSIMD());
             return buildUnary({ pick(AnyTrueVecI8x16, AllTrueVecI8x16, AnyTrueVecI16x8, AllTrueVecI16x8,
                                     AnyTrueVecI32x4, AllTrueVecI32x4, AnyTrueVecI64x2, AllTrueVecI64x2),
                                make(v128) });
@@ -1541,7 +1534,7 @@ private:
         WASM_UNREACHABLE();
       }
       case v128: {
-        assert(features.hasSIMD());
+        assert(wasm.features.hasSIMD());
         switch (upTo(5)) {
           case 0: return buildUnary({ pick(SplatVecI8x16, SplatVecI16x8, SplatVecI32x4), make(i32) });
           case 1: return buildUnary({ SplatVecI64x2, make(i64) });
@@ -1594,7 +1587,7 @@ private:
         return makeDeNanOp(buildBinary({ pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64) }));
       }
       case v128: {
-        assert(features.hasSIMD());
+        assert(wasm.features.hasSIMD());
         return buildBinary({
             pick(EqVecI8x16, NeVecI8x16, LtSVecI8x16, LtUVecI8x16, GtSVecI8x16, GtUVecI8x16, LeSVecI8x16, LeUVecI8x16, GeSVecI8x16, GeUVecI8x16,
                  EqVecI16x8, NeVecI16x8, LtSVecI16x8, LtUVecI16x8, GtSVecI16x8, GtUVecI16x8, LeSVecI16x8, LeUVecI16x8, GeSVecI16x8, GeUVecI16x8,
@@ -1669,7 +1662,7 @@ private:
   }
 
   Expression* makeAtomic(Type type) {
-    assert(features.hasAtomics());
+    assert(wasm.features.hasAtomics());
     if (!allowMemory) return makeTrivial(type);
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
@@ -1722,7 +1715,7 @@ private:
   }
 
   Expression* makeSIMD(Type type) {
-    assert(features.hasSIMD());
+    assert(wasm.features.hasSIMD());
     if (type != v128) {
       return makeSIMDExtract(type);
     }
@@ -1809,7 +1802,7 @@ private:
 
   Expression* makeBulkMemory(Type type) {
     if (!allowMemory) return makeTrivial(type);
-    assert(features.hasBulkMemory());
+    assert(wasm.features.hasBulkMemory());
     assert(type == none);
     switch (upTo(4)) {
       case 0: return makeMemoryInit();
@@ -1988,7 +1981,7 @@ private:
   const T pick(FeatureOptions<T>& picker) {
     std::vector<T> matches;
     for (const auto& item : picker.options) {
-      if (features.has(item.first)) {
+      if (wasm.features.has(item.first)) {
         matches.reserve(matches.size() + item.second.size());
         matches.insert(matches.end(), item.second.begin(), item.second.end());
       }

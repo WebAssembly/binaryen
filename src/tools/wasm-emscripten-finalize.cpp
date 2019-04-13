@@ -130,7 +130,7 @@ int main(int argc, const char *argv[]) {
     Fatal() << "error in parsing wasm source map";
   }
 
-  options.calculateFeatures(wasm);
+  options.applyFeatures(wasm);
 
   if (options.debug) {
     std::cerr << "Module before:\n";
@@ -210,7 +210,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, options.passOptions.features);
+  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).

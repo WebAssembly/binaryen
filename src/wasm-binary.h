@@ -365,8 +365,7 @@ enum Subsection {
   NameLocal = 2,
 };
 
-
-}
+} // namespace UserSections
 
 enum ASTNodes {
   Unreachable = 0x00,
@@ -819,6 +818,12 @@ enum MemoryFlags {
   IsShared = 1 << 1
 };
 
+enum FeaturePrefix {
+  FeatureUsed = '+',
+  FeatureRequired = '=',
+  FeatureDisallowed = '-'
+};
+
 } // namespace BinaryConsts
 
 
@@ -901,6 +906,7 @@ public:
   void writeEarlyUserSections();
   void writeLateUserSections();
   void writeUserSection(const UserSection& section);
+  void writeFeaturesSection();
 
   void initializeDebugInfo();
   void writeSourceMapProlog();
@@ -1085,6 +1091,7 @@ public:
   void readFunctionTableDeclaration();
   void readTableElements();
   void readNames(size_t);
+  void readFeatures(size_t);
 
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) {

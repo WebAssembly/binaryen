@@ -32,7 +32,7 @@ struct MemoryPacking : public Pass {
     // avoid invalidating segment indices or segment contents referenced from
     // memory.init instructions.
     // TODO: optimize in the presence of memory.init instructions
-    if (!module->memory.exists || runner->options.features.hasBulkMemory()) {
+    if (!module->memory.exists || module->features.hasBulkMemory()) {
       return;
     }
 

@@ -162,26 +162,26 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
 
-    options.calculateFeatures(wasm);
+    options.applyFeatures(wasm);
 
     if (options.passOptions.validate) {
-      if (!WasmValidator().validate(wasm, options.passOptions.features)) {
+      if (!WasmValidator().validate(wasm)) {
         WasmPrinter::printModule(&wasm);
         Fatal() << "error in validating input";
       }
     }
   } else {
     // translate-to-fuzz
+    options.applyFeatures(wasm);
     TranslateToFuzzReader reader(wasm, options.extra["infile"]);
     if (fuzzPasses) {
       reader.pickPasses(options);
     }
-    reader.setFeatures(options.passOptions.features);
     reader.setAllowNaNs(fuzzNaNs);
     reader.setAllowMemory(fuzzMemory);
     reader.build();
     if (options.passOptions.validate) {
-      if (!WasmValidator().validate(wasm, options.passOptions.features)) {
+      if (!WasmValidator().validate(wasm)) {
         WasmPrinter::printModule(&wasm);
         std::cerr << "translate-to-fuzz must always generate a valid module";
         abort();
@@ -241,7 +241,7 @@ int main(int argc, const char* argv[]) {
     WasmBinaryBuilder parser(other, input, false);
     parser.read();
     if (options.passOptions.validate) {
-      bool valid = WasmValidator().validate(other, options.passOptions.features);
+      bool valid = WasmValidator().validate(other);
       if (!valid) {
         WasmPrinter::printModule(&other);
       }
@@ -256,7 +256,7 @@ int main(int argc, const char* argv[]) {
       options.runPasses(*curr);
       if (options.passOptions.validate) {
         bool valid =
-            WasmValidator().validate(*curr, options.passOptions.features);
+            WasmValidator().validate(*curr);
         if (!valid) {
           WasmPrinter::printModule(&*curr);
         }
