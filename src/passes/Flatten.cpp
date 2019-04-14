@@ -42,9 +42,10 @@
 // Formally, this pass flattens in the precise sense of
 // making the AST have these properties:
 //
-//  1. The operands of an instruction must be a local.get or a const.
-//     anything else is written to a local earlier.
-//  2. Disallow block, loop, and if return values, i.e., do not use
+//  1. Aside from a local.set, the operands of an instruction must be a
+//     local.get or a const. Anything else is written to a local earlier.
+//  2. Disallow block, loop, and if return values, and do not allow the
+//     function body to have a concrete type, i.e., do not use
 //     control flow to pass around values.
 //  3. Disallow local.tee, setting a local is always done in a local.set
 //     on a non-nested-expression location.
@@ -55,6 +56,7 @@
 #include <wasm-builder.h>
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/flat.h>
 #include <ir/utils.h>
 
 namespace wasm {
@@ -89,7 +91,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
-    if (isControlFlowStructure(curr)) {
+    if (Flat::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
       assert(preludes.find(curr) == preludes.end()); // no one should have given us preludes, they are on the children
@@ -275,7 +277,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
     // next, finish up: migrate our preludes if we can
     if (!ourPreludes.empty()) {
       auto* parent = getParent();
-      if (parent && !isControlFlowStructure(parent)) {
+      if (parent && !Flat::isControlFlowStructure(parent)) {
         auto& parentPreludes = preludes[parent];
         for (auto* prelude : ourPreludes) {
           parentPreludes.push_back(prelude);
@@ -298,10 +300,6 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
   }
 
 private:
-  bool isControlFlowStructure(Expression* curr) {
-    return curr->is<Block>() || curr->is<If>() || curr->is<Loop>();
-  }
-
   // gets an expression, either by itself, or in a block with its
   // preludes (which we use up) before it
   Expression* getPreludesWithExpression(Expression* curr) {
