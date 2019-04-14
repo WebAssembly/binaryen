@@ -27,6 +27,7 @@
 #include "emscripten-optimizer/istring.h"
 #include "support/name.h"
 #include "wasm-builder.h"
+#include "ir/flat.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -139,6 +140,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void doWalkFunction(Function* func) {
+    Flat::verifyFlatness(func);
     // create builder here if this is first entry to module for this object
     if (!builder) builder = make_unique<Builder>(*getModule());
     indexMap.clear();

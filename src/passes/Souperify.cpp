@@ -38,6 +38,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
+#include "ir/flat.h"
 #include "ir/local-graph.h"
 #include "ir/utils.h"
 #include "dataflow/node.h"
@@ -637,6 +638,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
 
   void doWalkFunction(Function* func) {
     std::cout << "\n; function: " << func->name << '\n';
+    Flat::verifyFlatness(func);
     // Build the data-flow IR.
     DataFlow::Graph graph;
     graph.build(func, getModule());
