@@ -44,13 +44,14 @@ inline void verifyFlatness(Function* func) {
 
     void verify(bool condition, const char* message) {
       if (!condition) {
-        Fatal() << "IR must be flat: run --flatten beforehand (" << message << ')';
+        Fatal() << "IR must be flat: run --flatten beforehand (" << message << ", in " << getFunction()->name << ')';
       }
     }
   };
 
   VerifyFlatness verifier;
   verifier.walkFunction(func);
+  verifier.setFunction(func);
   verifier.verify(!isConcreteType(func->body->type), "function bodies must not flow values");
 }
 
