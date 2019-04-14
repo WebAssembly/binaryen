@@ -14,6 +14,44 @@
  * limitations under the License.
  */
 
+//
+// Flattens code, removing nesting.e.g. an if return value would be
+// converted to a local
+//
+//  (i32.add
+//    (if (..condition..)
+//      (..if true..)
+//      (..if false..)
+//    )
+//    (i32.const 1)
+//  )
+// =>
+//  (if (..condition..)
+//    (local.set $temp
+//      (..if true..)
+//    )
+//    (local.set $temp
+//      (..if false..)
+//    )
+//  )
+//  (i32.add
+//    (local.get $temp)
+//    (i32.const 1)
+//  )
+//
+// Formally, this pass flattens in the precise sense of
+// making the AST have these properties:
+//
+//  1. Aside from a local.set, the operands of an instruction must be a
+//     local.get, a const, or an unreachable. Anything else is written
+//     to a local earlier.
+//  2. Disallow block, loop, and if return values, and do not allow the
+//     function body to have a concrete type, i.e., do not use
+//     control flow to pass around values.
+//  3. Disallow local.tee, setting a local is always done in a local.set
+//     on a non-nested-expression location.
+//
+
 #ifndef wasm_ir_flat_h
 #define wasm_ir_flat_h
 
@@ -37,7 +75,8 @@ inline void verifyFlatness(Function* func) {
         verify(!isConcreteType(curr->type), "tees are not allowed, only sets");
       } else {
         for (auto* child : ChildIterator(curr)) {
-          verify(child->is<Const>() || child->is<GetLocal>(), "instructions must only have const or local.get as children");
+          verify(child->is<Const>() || child->is<GetLocal>() || child->is<Unreachable>(),
+                 "instructions must only have const, local.get, or unreachable as children");
         }
       }
     }
