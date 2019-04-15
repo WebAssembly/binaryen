@@ -129,7 +129,7 @@ private:
   void addImport(Module* wasm, Name name, std::string sig) {
     auto import = new Function;
     import->name = name;
-    import->module = INSTRUMENT;
+    import->module = ENV;
     import->base = name;
     auto* functionType = ensureFunctionType(sig, wasm);
     import->type = functionType->name;

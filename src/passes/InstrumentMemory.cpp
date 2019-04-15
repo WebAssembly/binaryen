@@ -18,27 +18,21 @@
 // Instruments the build with code to intercept all memory reads and writes.
 // This can be useful in building tools that analyze memory access behaviour.
 //
-// The instrumentation is performed by calling an FFI with an ID for each
-// memory access site. Load / store IDs share the same index space. The
-// instrumentation wraps the evaluation of the address operand, therefore
-// it executes before the load / store is executed. Note that Instrumentation
-// code must return tha address argument.
-//
-// Loads: load(id, bytes, offset, address) => address
-//
 //  Before:
 //   (i32.load8_s align=1 offset=2 (i32.const 3))
 //
 //  After:
-//   (i32.load8_s align=1 offset=2
-//    (call $load
-//     (i32.const n) // ID
-//     (i32.const 1) // bytes
-//     (i32.const 2) // offset
-//     (i32.const 3) // address
+//   (call $load_val_i32
+//    (i32.const n) // ID
+//    (i32.load8_s align=1 offset=2
+//     (call $load_ptr
+//      (i32.const n) // ID
+//      (i32.const 1) // bytes
+//      (i32.const 2) // offset
+//      (i32.const 3) // address
+//     )
 //    )
 //   )
-//
 // Stores: store(id, bytes, offset, address) => address
 //
 //  Before:
@@ -46,13 +40,16 @@
 //
 //  After:
 //   (i32.store16 align=1 offset=2
-//    (call $store
+//    (call $store_ptr
 //     (i32.const n) // ID
 //     (i32.const 1) // bytes
 //     (i32.const 2) // offset
 //     (i32.const 3) // address
 //    )
-//    (i32.const 4)
+//    (call $store_val_i32
+//     (i32.const n) // ID
+//     (i32.const 4)
+//    )
 //   )
 
 #include <wasm.h>
@@ -65,57 +62,101 @@
 
 namespace wasm {
 
-Name load("load");
-Name store("store");
+static Name load_ptr("load_ptr"),
+            load_val_i32("load_val_i32"),
+            load_val_i64("load_val_i64"),
+            load_val_f32("load_val_f32"),
+            load_val_f64("load_val_f64"),
+            store_ptr("store_ptr"),
+            store_val_i32("store_val_i32"),
+            store_val_i64("store_val_i64"),
+            store_val_f32("store_val_f32"),
+            store_val_f64("store_val_f64");
+
 // TODO: Add support for atomicRMW/cmpxchg
 
 struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   void visitLoad(Load* curr) {
-    makeLoadCall(curr);
-  }
-  void visitStore(Store* curr) {
-    makeStoreCall(curr);
-  }
-  void addImport(Module *curr, Name name, std::string sig) {
-    auto import = new Function;
-    import->name = name;
-    import->module = INSTRUMENT;
-    import->base = name;
-    auto* functionType = ensureFunctionType(sig, curr);
-    import->type = functionType->name;
-    FunctionTypeUtils::fillFunction(import, functionType);
-    curr->addFunction(import);
-  }
-
-  void visitModule(Module *curr) {
-    addImport(curr, load,  "iiiii");
-    addImport(curr, store,  "iiiii");
-  }
-
-private:
-  std::atomic<Index> id;
-  Expression* makeLoadCall(Load* curr) {
+    id++;
     Builder builder(*getModule());
-    curr->ptr = builder.makeCall(load,
-      { builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
+    curr->ptr = builder.makeCall(load_ptr,
+      {
+        builder.makeConst(Literal(int32_t(id))),
         builder.makeConst(Literal(int32_t(curr->bytes))),
         builder.makeConst(Literal(int32_t(curr->offset.addr))),
-        curr->ptr},
+        curr->ptr
+      },
       i32
     );
-    return curr;
+    Name target;
+    switch (curr->type) {
+      case i32: target = load_val_i32; break;
+      case i64: target = load_val_i64; break;
+      case f32: target = load_val_f32; break;
+      case f64: target = load_val_f64; break;
+      default: return; // TODO: other types, unreachable, etc.
+    }
+    replaceCurrent(builder.makeCall(target,
+      {
+        builder.makeConst(Literal(int32_t(id))),
+        curr
+      },
+      curr->type
+    ));
   }
 
-  Expression* makeStoreCall(Store* curr) {
+  void visitStore(Store* curr) {
+    id++;
     Builder builder(*getModule());
-    curr->ptr = builder.makeCall(store,
-      { builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
+    curr->ptr = builder.makeCall(store_ptr,
+      { builder.makeConst(Literal(int32_t(id))),
         builder.makeConst(Literal(int32_t(curr->bytes))),
         builder.makeConst(Literal(int32_t(curr->offset.addr))),
         curr->ptr },
       i32
     );
-    return curr;
+    Name target;
+    switch (curr->type) {
+      case i32: target = store_val_i32; break;
+      case i64: target = store_val_i64; break;
+      case f32: target = store_val_f32; break;
+      case f64: target = store_val_f64; break;
+      default: return; // TODO: other types, unreachable, etc.
+    }
+    curr->value = builder.makeCall(target, 
+      {
+        builder.makeConst(Literal(int32_t(id))),
+        curr->value
+      },
+      curr->value->type
+    );
+  }
+
+  void visitModule(Module *curr) {
+    addImport(curr, load_ptr,      "iiiii");
+    addImport(curr, load_val_i32,  "iii");
+    addImport(curr, load_val_i64,  "jij");
+    addImport(curr, load_val_f32,  "fif");
+    addImport(curr, load_val_f64,  "did");
+    addImport(curr, store_ptr,     "iiiii");
+    addImport(curr, store_val_i32, "iii");
+    addImport(curr, store_val_i64, "jij");
+    addImport(curr, store_val_f32, "fif");
+    addImport(curr, store_val_f64, "did");
+  }
+
+private:
+  Index id;
+
+  void addImport(Module *curr, Name name, std::string sig) {
+    auto import = new Function;
+    import->name = name;
+    import->module = ENV;
+    import->base = name;
+    auto* functionType = ensureFunctionType(sig, curr);
+    import->type = functionType->name;
+    FunctionTypeUtils::fillFunction(import, functionType);
+    curr->addFunction(import);
   }
 };
 
