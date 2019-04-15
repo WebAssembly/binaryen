@@ -1085,6 +1085,7 @@ public:
   std::map<Index, Name> mappedGlobals; // index of the Global => name. first imported globals, then internal globals
 
   Name getGlobalName(Index index);
+  void validateBinary(); // validations that cannot be performed on the Module
   void processFunctions();
 
   size_t dataCount = 0;

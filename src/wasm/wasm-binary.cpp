@@ -684,6 +684,7 @@ void WasmBinaryBuilder::read() {
     }
   }
 
+  validateBinary();
   processFunctions();
 }
 
@@ -1468,6 +1469,12 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
   return mappedGlobals[index];
 }
 
+void WasmBinaryBuilder::validateBinary() {
+  if (hasDataCount && wasm.memory.segments.size() != dataCount) {
+    throwError("Number of segments does not agree with DataCount section");
+  }
+}
+
 void WasmBinaryBuilder::processFunctions() {
   for (auto* func : functions) {
     wasm.addFunction(func);
@@ -1524,9 +1531,6 @@ void WasmBinaryBuilder::readDataCount() {
 void WasmBinaryBuilder::readDataSegments() {
   if (debug) std::cerr << "== readDataSegments" << std::endl;
   auto num = getU32LEB();
-  if (hasDataCount && num != dataCount) {
-    throwError("Number of segments does not agree with DataCount section");
-  }
   for (size_t i = 0; i < num; i++) {
     Memory::Segment curr;
     uint32_t flags = getU32LEB();
