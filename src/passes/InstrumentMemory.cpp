@@ -116,7 +116,7 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
       i32
     );
     Name target;
-    switch (curr->type) {
+    switch (curr->value->type) {
       case i32: target = store_val_i32; break;
       case i64: target = store_val_i64; break;
       case f32: target = store_val_f32; break;
