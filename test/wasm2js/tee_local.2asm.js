@@ -132,6 +132,7 @@ function asmFunc(global, env, buffer) {
   return +($10_1 + (+Math_fround(2.0) + (3.3 + (+(4 >>> 0) + (+(5 | 0) + (+Math_fround(5.5) + ($21 + (+(i64toi32_i32$1 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0) + 8.0))))))));
  }
  
+ var FUNCTION_TABLE = [];
  return {
   type_local_i32: $0, 
   type_local_i64: $1, 

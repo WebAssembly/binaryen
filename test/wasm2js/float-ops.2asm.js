@@ -376,6 +376,7 @@ function asmFunc(global, env, buffer) {
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   f32_add: $1, 
   f32_sub: $2, 

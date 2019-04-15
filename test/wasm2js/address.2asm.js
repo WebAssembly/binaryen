@@ -47,6 +47,7 @@ function asmFunc(global, env, buffer) {
   HEAP32[(i + 4294967295 | 0) >> 2] | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   good: $0, 
   bad: $1

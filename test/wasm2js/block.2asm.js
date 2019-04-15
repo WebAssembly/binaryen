@@ -177,6 +177,7 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   empty: $1, 
   singular: $2, 

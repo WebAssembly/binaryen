@@ -28,6 +28,7 @@ function asmFunc(global, env, buffer) {
   return x + y | 0 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   add: add
  };

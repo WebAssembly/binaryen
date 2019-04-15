@@ -58,6 +58,7 @@ function asmFunc(global, env, buffer) {
   return x >= y | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   eq: $0, 
   ne: $1, 

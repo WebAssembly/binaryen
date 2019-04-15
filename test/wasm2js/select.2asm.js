@@ -75,6 +75,7 @@ function asmFunc(global, env, buffer) {
   return abort() | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   select_i32: $0, 
   select_i64: $1, 

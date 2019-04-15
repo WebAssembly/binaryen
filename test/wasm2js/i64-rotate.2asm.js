@@ -282,6 +282,7 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$5 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   rotl: $1, 
   rotr: $2

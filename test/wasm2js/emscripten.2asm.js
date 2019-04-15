@@ -1,4 +1,4 @@
-function instantiate(asmLibraryArg, wasmMemory, wasmTable) {
+function instantiate(asmLibraryArg, wasmMemory, FUNCTION_TABLE) {
 
 function asmFunc(global, env, buffer) {
  "use asm";
@@ -32,7 +32,7 @@ function asmFunc(global, env, buffer) {
   syscall$6(1 | 0, 2 | 0) | 0;
   syscall$54(3 | 0, 4 | 0) | 0;
   wasm2js_i32$0 = HEAP32[(0 + 1030 | 0) >> 2] | 0;
-  FUNCTION_TABLE_v[wasm2js_i32$0 & 3]();
+  FUNCTION_TABLE[wasm2js_i32$0]();
  }
  
  function other() {
@@ -48,7 +48,8 @@ function asmFunc(global, env, buffer) {
  }
  
  // EMSCRIPTEN_END_FUNCS;
- var FUNCTION_TABLE_v = [foo, foo, bar, foo];
+ FUNCTION_TABLE[1] = foo;
+ FUNCTION_TABLE[2] = bar;
  return {
   main: main, 
   other: other

@@ -119,6 +119,7 @@ function asmFunc(global, env, buffer) {
   return Math_fround((wasm2js_f32$0 = Math_fround(Math_ceil(var$0)), wasm2js_f32$1 = Math_fround(Math_floor(var$0)), wasm2js_i32$0 = var$0 < Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1));
  }
  
+ var FUNCTION_TABLE = [];
  return {
   add: $0, 
   sub: $1, 

@@ -54,6 +54,7 @@ function asmFunc(global, env, buffer) {
   return (HEAP32[__tempMemory__ >> 2] | 0 | 0) == ($0 | 0) & (i64toi32_i32$0 | 0) == ($0$hi | 0) | 0 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   i32_roundtrip: $1, 
   i64_roundtrip: $2

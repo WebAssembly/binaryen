@@ -126,6 +126,7 @@ function asmFunc(global, env, buffer) {
   return 42 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   i32_test: $0, 
   i32_umax: $1, 

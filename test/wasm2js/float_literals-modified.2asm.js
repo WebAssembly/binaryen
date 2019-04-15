@@ -474,6 +474,7 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$1 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   f32_nan: $0, 
   f32_positive_nan: $1, 

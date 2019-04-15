@@ -134,6 +134,7 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$5 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   a: popcnt64, 
   b: ctz64

@@ -27,36 +27,12 @@
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "asm_v_wasm.h"
-#include <ir/utils.h>
+#include "ir/table-utils.h"
+#include "ir/utils.h"
 
 namespace wasm {
 
 namespace {
-
-struct FlatTable {
-  std::vector<Name> names;
-  bool valid;
-
-  FlatTable(Table& table) {
-    valid = true;
-    for (auto& segment : table.segments) {
-      auto offset = segment.offset;
-      if (!offset->is<Const>()) {
-        // TODO: handle some non-constant segments
-        valid = false;
-        return;
-      }
-      Index start = offset->cast<Const>()->value.geti32();
-      Index end = start + segment.data.size();
-      if (end > names.size()) {
-        names.resize(end);
-      }
-      for (Index i = 0; i < segment.data.size(); i++) {
-        names[start + i] = segment.data[i];
-      }
-    }
-  }
-};
 
 struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }

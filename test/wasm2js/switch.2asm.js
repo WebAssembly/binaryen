@@ -183,6 +183,7 @@ function asmFunc(global, env, buffer) {
   return 1 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   stmt: $0, 
   expr: $1, 
