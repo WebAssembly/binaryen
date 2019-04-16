@@ -279,7 +279,7 @@ private:
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
   void setNeedsAlmostASM(const char *reason);
-  void addMemoryGrowthFuncs(Ref ast);
+  void addMemoryGrowthFuncs(Ref ast, Module* wasm);
 
   Wasm2JSBuilder() = delete;
   Wasm2JSBuilder(const Wasm2JSBuilder &) = delete;
@@ -321,6 +321,18 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
+  // add memory import
+  if (wasm->memory.exists && wasm->memory.imported()) {
+    Ref theVar = ValueBuilder::makeVar();
+    asmFunc[3]->push_back(theVar);
+    ValueBuilder::appendToVar(theVar,
+      "memory",
+      ValueBuilder::makeDot(
+        ValueBuilder::makeName(ENV),
+        ValueBuilder::makeName("memory")
+      )
+    );
+  }
   // create heaps, etc
   addBasics(asmFunc[3]);
   ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
@@ -589,7 +601,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
   if (almostASM) {
     // replace "use asm"
     ast[0] = ValueBuilder::makeStatement(ValueBuilder::makeString(ALMOST_ASM));
-    addMemoryGrowthFuncs(ast);
+    addMemoryGrowthFuncs(ast, wasm);
   }
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
 }
@@ -1849,7 +1861,7 @@ void Wasm2JSBuilder::setNeedsAlmostASM(const char *reason) {
   }
 }
 
-void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
+void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
   Ref growMemoryFunc = ValueBuilder::makeFunction(WASM_GROW_MEMORY);
   ValueBuilder::appendArgumentToFunction(growMemoryFunc, IString("pagesToAdd"));
 
@@ -1977,6 +1989,20 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
       ValueBuilder::makeName(IString("newBuffer"))
     )
   );
+
+  // apply the changes to the memory import
+  if (wasm->memory.imported()) {
+    ValueBuilder::appendToBlock(block,
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeDot(
+          ValueBuilder::makeName("memory"),
+          ValueBuilder::makeName(BUFFER)
+        ),
+        SET,
+        ValueBuilder::makeName(IString("newBuffer"))
+      )
+    );
+  }
 
   growMemoryFunc[3]->push_back(
     ValueBuilder::makeReturn(

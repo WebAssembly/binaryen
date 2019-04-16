@@ -10,6 +10,7 @@
  (global $global$0 (mut i32) (i32.const 5243904))
  (export "main" (func $main))
  (export "other" (func $other))
+ (export "__growWasmMemory" (func $__growWasmMemory))
  (func $main
   (drop (call $syscall$6 (i32.const 1) (i32.const 2)))
   (drop (call $syscall$54 (i32.const 3) (i32.const 4)))
@@ -27,6 +28,11 @@
  )
  (func $bar
   (nop)
+ )
+ (func $__growWasmMemory (param $0 i32) (result i32)
+  (grow_memory
+   (local.get $0)
+  )
  )
 )
 
