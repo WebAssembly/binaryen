@@ -15,6 +15,14 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v79
+---
+
+- Improve support for side modules
+
+v78
+---
+
 - Add `namedGlobals` to metadata output of wasm-emscripten-finalize
 - Add support for llvm PIC code.
 - Add --side-module option to wasm-emscripten-finalize.
