@@ -1,7 +1,7 @@
 import os
 import unittest
 from scripts.test.shared import WASM_OPT, run_process
-from utils import input_path, roundtrip, check_features
+from utils import input_path, roundtrip, disassemble, check_features
 
 
 class FeatureValidationTest(unittest.TestCase):
@@ -117,52 +117,36 @@ class FeatureValidationTest(unittest.TestCase):
 
 
 class TargetFeaturesSectionTest(unittest.TestCase):
-  def disassemble(self, filename):
-    path = input_path(filename)
-    p = run_process(WASM_OPT + ['--print', '-o', os.devnull, path], check=False,
-                    capture_output=True)
-    self.assertEqual(p.returncode, 0)
-    self.assertEqual(p.stderr, '')
-    return p.stdout
-
-  def roundtrip(self, filename):
-    path = os.path.join(options.binaryen_test, 'unit', 'input', filename)
-    p = run_process(WASM_OPT + ['-g', '-o', '-', path], check=False,
-                    capture_output=True)
-    self.assertEqual(p.returncode, 0)
-    self.assertEqual(p.stderr, '')
-    with open(path, 'rb') as f:
-      self.assertEqual(str(p.stdout), str(f.read()))
 
   def test_atomics(self):
     filename = 'atomics_target_feature.wasm'
     roundtrip(self, filename)
     check_features(self, filename, ['threads'])
-    self.assertIn('i32.atomic.rmw.add', self.disassemble(filename))
+    self.assertIn('i32.atomic.rmw.add', disassemble(self, filename))
 
   def test_bulk_memory(self):
     filename = 'bulkmem_target_feature.wasm'
     roundtrip(self, filename)
     check_features(self, filename, ['bulk-memory'])
-    self.assertIn('memory.copy', self.disassemble(filename))
+    self.assertIn('memory.copy', disassemble(self, filename))
 
   def test_nontrapping_fptoint(self):
     filename = 'truncsat_target_feature.wasm'
     roundtrip(self, filename)
     check_features(self, filename, ['nontrapping-float-to-int'])
-    self.assertIn('i32.trunc_sat_f32_u', self.disassemble(filename))
+    self.assertIn('i32.trunc_sat_f32_u', disassemble(self, filename))
 
   def test_sign_ext(self):
     filename = 'signext_target_feature.wasm'
     roundtrip(self, filename)
     check_features(self, filename, ['sign-ext'])
-    self.assertIn('i32.extend8_s', self.disassemble(filename))
+    self.assertIn('i32.extend8_s', disassemble(self, filename))
 
   def test_simd(self):
     filename = 'simd_target_feature.wasm'
     roundtrip(self, filename)
     check_features(self, filename, ['simd'])
-    self.assertIn('i32x4.splat', self.disassemble(filename))
+    self.assertIn('i32x4.splat', disassemble(self, filename))
 
   def test_incompatible_features(self):
     path = input_path('signext_target_feature.wasm')
@@ -187,4 +171,4 @@ class TargetFeaturesSectionTest(unittest.TestCase):
 
   def test_explicit_detect_features(self):
     check_features(self, 'signext_target_feature.wasm', ['sign-ext', 'simd'],
-                   opts = ['-mvp', '--detect-features', '--enable-simd'])
+                   opts=['-mvp', '--detect-features', '--enable-simd'])

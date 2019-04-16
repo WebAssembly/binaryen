@@ -15,6 +15,16 @@ def roundtrip(testcase, filename, opts=[]):
   with open(path, 'rb') as f:
     testcase.assertEqual(str(p.stdout), str(f.read()))
 
+
+def disassemble(self, filename):
+  path = input_path(filename)
+  p = run_process(WASM_OPT + ['--print', '-o', os.devnull, path], check=False,
+                  capture_output=True)
+  self.assertEqual(p.returncode, 0)
+  self.assertEqual(p.stderr, '')
+  return p.stdout
+
+
 def check_features(testcase, filename, features, opts=[]):
   path = input_path(filename)
   cmd = WASM_OPT + ['--print-features', '-o', os.devnull, path] + opts
