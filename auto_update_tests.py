@@ -36,6 +36,8 @@ def update_asm_js_tests():
       for precise in [0, 1, 2]:
         for opts in [1, 0]:
           cmd = ASM2WASM + [os.path.join('test', asm)]
+          if 'threads' in asm:
+            cmd += ['--enable-threads']
           wasm = asm.replace('.asm.js', '.fromasm')
           if not precise:
             cmd += ['--trap-mode=allow', '--ignore-implicit-traps']
@@ -79,18 +81,18 @@ def update_wasm_opt_tests():
   run_command(cmd)
   open(wast, 'w').write(open('a.wast').read())
 
-  print '\n[ checking wasm-opt binary reading/writing... ]\n'
+  print '\n[ checking wasm-opt parsing & printing... ]\n'
   for t in sorted(os.listdir(os.path.join('test', 'print'))):
     if t.endswith('.wast'):
       print '..', t
       wasm = os.path.basename(t).replace('.wast', '')
-      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print']
+      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print', '-all']
       print '    ', ' '.join(cmd)
       actual = subprocess.check_output(cmd)
       print cmd, actual
       with open(os.path.join('test', 'print', wasm + '.txt'), 'w') as o:
         o.write(actual)
-      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print-minified']
+      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print-minified', '-all']
       print '    ', ' '.join(cmd)
       actual = subprocess.check_output(cmd)
       with open(os.path.join('test', 'print', wasm + '.minified.txt'), 'w') as o:
@@ -131,7 +133,7 @@ def update_wasm_opt_tests():
       print '..', t
       t = os.path.join('test', t)
       f = t + '.from-wast'
-      cmd = WASM_OPT + [t, '--print']
+      cmd = WASM_OPT + [t, '--print', '-all']
       actual = run_command(cmd)
       actual = actual.replace('printing before:\n', '')
       open(f, 'w').write(actual)
@@ -287,8 +289,7 @@ def update_ctor_eval_tests():
       print '..', t
       t = os.path.join('test', 'ctor-eval', t)
       ctors = open(t + '.ctors').read().strip()
-      # TODO: remove --disable-bulk-memory once default feature set is MVP
-      cmd = WASM_CTOR_EVAL + [t, '--disable-bulk-memory', '-o', 'a.wast', '-S', '--ctors', ctors]
+      cmd = WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
       run_command(cmd)
       actual = open('a.wast').read()
       out = t + '.out'

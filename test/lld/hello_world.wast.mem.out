@@ -98,13 +98,6 @@
   "invokeFuncs": [
   ],
   "features": [
-    "--mvp-features",
-    "--enable-threads",
-    "--enable-bulk-memory",
-    "--enable-mutable-globals",
-    "--enable-nontrapping-float-to-int",
-    "--enable-sign-ext",
-    "--enable-simd"
   ]
 }
 -- END METADATA --

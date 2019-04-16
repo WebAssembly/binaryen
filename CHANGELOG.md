@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Change default feature set in the absence of a target features section from
+  all features to MVP.
+
 v79
 ---
 

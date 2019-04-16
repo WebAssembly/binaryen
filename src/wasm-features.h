@@ -88,6 +88,14 @@ struct FeatureSet {
     return !(features & ~other.features);
   }
 
+  bool operator==(const FeatureSet& other) const {
+    return *this <= other && other <= *this;
+  }
+
+  bool operator!=(const FeatureSet& other) const {
+    return !(*this == other);
+  }
+
   FeatureSet& operator|=(const FeatureSet& other) {
     features |= other.features;
     return *this;

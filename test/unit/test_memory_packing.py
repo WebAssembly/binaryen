@@ -1,12 +1,12 @@
 import os
-import unittest
 from scripts.test.shared import WASM_OPT, run_process
+from utils import BinaryenTestCase
 
 '''Test that MemoryPacking correctly respects the web limitations by not
 generating more than 100K data segments'''
 
 
-class MemoryPackingTest(unittest.TestCase):
+class MemoryPackingTest(BinaryenTestCase):
   def test_large_segment(self):
     data = '"' + (('A' + ('\\00' * 9)) * 100001) + '"'
     module = '''

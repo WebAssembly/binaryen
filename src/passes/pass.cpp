@@ -112,6 +112,7 @@ void PassRegistry::registerPasses() {
   registerPass("precompute-propagate", "computes compile-time evaluatable expressions and propagates them through locals", createPrecomputePropagatePass);
   registerPass("print", "print in s-expression format", createPrinterPass);
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
+  registerPass("print-features", "print options for enabled features", createPrintFeaturesPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass("print-call-graph", "print call graph", createPrintCallGraphPass);
   registerPass("print-stack-ir", "print out Stack IR (useful for internal debugging)", createPrintStackIRPass);

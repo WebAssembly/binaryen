@@ -92,12 +92,12 @@ struct ToolOptions : public Options {
   void applyFeatures(Module& module) {
     if (hasFeatureOptions) {
       if (!detectFeatures && module.hasFeaturesSection) {
-        FeatureSet optionsFeatures = FeatureSet::All;
+        FeatureSet optionsFeatures = FeatureSet::MVP;
         optionsFeatures.enable(enabledFeatures);
         optionsFeatures.disable(disabledFeatures);
-        if (!(module.features <= optionsFeatures)) {
-          Fatal() << "module uses features not explicitly specified, "
-                  << "use --detect-features to resolve";
+        if (module.features != optionsFeatures) {
+          Fatal() << "module features do not match specified features. "
+                  << "Use --detect-features to resolve.";
         }
       }
       module.features.enable(enabledFeatures);
@@ -108,7 +108,7 @@ struct ToolOptions : public Options {
 private:
   bool hasFeatureOptions = false;
   bool detectFeatures = false;
-  FeatureSet enabledFeatures = FeatureSet::All;
+  FeatureSet enabledFeatures = FeatureSet::MVP;
   FeatureSet disabledFeatures = FeatureSet::MVP;
 };
 
