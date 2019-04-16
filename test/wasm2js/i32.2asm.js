@@ -210,7 +210,7 @@ function asmFunc(global, env, buffer) {
     continue label$2;
     break label$2;
    } while (1);
-  };
+  }
   return $5_1 | 0;
  }
  
