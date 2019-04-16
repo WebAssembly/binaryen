@@ -58,6 +58,7 @@ void WasmBinaryWriter::write() {
   writeExports();
   writeStart();
   writeTableElements();
+  writeDataCount();
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
@@ -309,6 +310,15 @@ void WasmBinaryWriter::writeExports() {
     }
 
   }
+  finishSection(start);
+}
+
+void WasmBinaryWriter::writeDataCount() {
+  if (!wasm->features.hasBulkMemory() || !wasm->memory.segments.size()) {
+    return;
+  }
+  auto start = startSection(BinaryConsts::Section::DataCount);
+  o << U32LEB(wasm->memory.segments.size());
   finishSection(start);
 }
 
@@ -657,6 +667,7 @@ void WasmBinaryBuilder::read() {
         break;
       }
       case BinaryConsts::Section::Data: readDataSegments(); break;
+      case BinaryConsts::Section::DataCount: readDataCount(); break;
       case BinaryConsts::Section::Table: readFunctionTableDeclaration(); break;
       default: {
         readUserSection(payloadLen);
@@ -673,6 +684,7 @@ void WasmBinaryBuilder::read() {
     }
   }
 
+  validateBinary();
   processFunctions();
 }
 
@@ -1457,6 +1469,12 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
   return mappedGlobals[index];
 }
 
+void WasmBinaryBuilder::validateBinary() {
+  if (hasDataCount && wasm.memory.segments.size() != dataCount) {
+    throwError("Number of segments does not agree with DataCount section");
+  }
+}
+
 void WasmBinaryBuilder::processFunctions() {
   for (auto* func : functions) {
     wasm.addFunction(func);
@@ -1502,6 +1520,12 @@ void WasmBinaryBuilder::processFunctions() {
   // Everything now has its proper name.
 
   wasm.updateMaps();
+}
+
+void WasmBinaryBuilder::readDataCount() {
+  if (debug) std::cerr << "== readDataCount" << std::endl;
+  hasDataCount = true;
+  dataCount = getU32LEB();
 }
 
 void WasmBinaryBuilder::readDataSegments() {
