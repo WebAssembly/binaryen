@@ -230,9 +230,13 @@ public:
       // it's a bug currently if they're not globally unique. This should
       // probably be fixed via a different namespace for exports or something
       // like that.
+      // XXX This is not actually a valid check atm, since functions are not in the
+      //     global-most scope, but rather in the "asmFunc" scope which is inside it.
+      //     Also, for emscripten style glue, we emit the exports as a return, so there
+      //     is no name placed into the scope. For these reasons, just warn here, don't
+      //     error.
       if (scope == NameScope::Top) {
-        Fatal() << "global scope is colliding with other scope: " << mangled << '\n';
-        abort();
+        std::cerr << "wasm2js: warning: global scope may be colliding with other scope: " << mangled << '\n';
       }
     }
     allMangledNames.insert(ret);
