@@ -14,14 +14,7 @@
  * limitations under the License.
  */
 
-//
-// Similar to strip-ing a native binary, this family of passes can
-// removes debug info and other things.
-//
-
 #include "pass.h"
-
-using namespace std;
 
 namespace wasm {
 

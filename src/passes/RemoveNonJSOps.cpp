@@ -43,6 +43,7 @@ namespace wasm {
 struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   std::unique_ptr<Builder> builder;
   std::unordered_set<Name> neededIntrinsics;
+  std::set<std::pair<Name, Type>> neededImportedGlobals;
 
   bool isFunctionParallel() override { return false; }
 
@@ -101,6 +102,21 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
     // Intrinsics may use memory, so ensure the module has one.
     MemoryUtils::ensureExists(module->memory);
+
+    // Add missing globals
+    for (auto& pair : neededImportedGlobals) {
+      auto name = pair.first;
+      auto type = pair.second;
+      if (!getModule()->getGlobalOrNull(name)) {
+        auto global = make_unique<Global>();
+        global->name = name;
+        global->type = type;
+        global->mutable_ = false;
+        global->module = ENV;
+        global->base = name;
+        module->addGlobal(global.release());
+      }
+    }
   }
 
   void addNeededFunctions(Module &m, Name name, std::set<Name> &needed) {
@@ -121,7 +137,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     PostWalker<RemoveNonJSOpsPass>::doWalkFunction(func);
   }
 
-  void visitLoad(Load *curr) {
+  void visitLoad(Load* curr) {
     if (curr->align == 0 || curr->align >= curr->bytes) {
       return;
     }
@@ -143,7 +159,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     }
   }
 
-  void visitStore(Store *curr) {
+  void visitStore(Store* curr) {
     if (curr->align == 0 || curr->align >= curr->bytes) {
       return;
     }
@@ -165,7 +181,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     }
   }
 
-  void visitBinary(Binary *curr) {
+  void visitBinary(Binary* curr) {
     Name name;
     switch (curr->op) {
       case CopySignFloat32:
@@ -207,7 +223,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     replaceCurrent(builder->makeCall(name, {curr->left, curr->right}, curr->type));
   }
 
-  void rewriteCopysign(Binary *curr) {
+  void rewriteCopysign(Binary* curr) {
     Literal signBit, otherBits;
     UnaryOp int2float, float2int;
     BinaryOp bitAnd, bitOr;
@@ -259,7 +275,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     );
   }
 
-  void visitUnary(Unary *curr) {
+  void visitUnary(Unary* curr) {
     Name functionCall;
     switch (curr->op) {
       case NearestFloat32:
@@ -295,9 +311,13 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     neededIntrinsics.insert(functionCall);
     replaceCurrent(builder->makeCall(functionCall, {curr->value}, curr->type));
   }
+
+  void visitGetGlobal(GetGlobal* curr) {
+    neededImportedGlobals.insert(std::make_pair(curr->name, curr->type));
+  }
 };
 
-Pass *createRemoveNonJSOpsPass() {
+Pass* createRemoveNonJSOpsPass() {
   return new RemoveNonJSOpsPass();
 }
 

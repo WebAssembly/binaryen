@@ -1,3 +1,5 @@
+import { __tempMemory__ } from 'env';
+
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -20,6 +22,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function i16_store_little(address, value) {
   address = address | 0;
@@ -189,11 +192,11 @@ function asmFunc(global, env, buffer) {
  function $15(value) {
   value = +value;
   var i64toi32_i32$0 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_f64$0 = value;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64_store_little(0 | 0, HEAP32[0 >> 2] | 0 | 0, i64toi32_i32$0 | 0);
+  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
+  i64_store_little(0 | 0, HEAP32[__tempMemory__ >> 2] | 0 | 0, i64toi32_i32$0 | 0);
   return +(+HEAPF64[0 >> 3]);
  }
  
@@ -278,15 +281,16 @@ function asmFunc(global, env, buffer) {
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
   i64toi32_i32$0 = i64_load_little(0 | 0) | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = i64toi32_i32$0;
   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = 0;
+  wasm2js_i32$0 = __tempMemory__;
   wasm2js_i32$1 = i64toi32_i32$1;
   HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  return +(+HEAPF64[0 >> 3]);
+  return +(+HEAPF64[__tempMemory__ >> 3]);
  }
  
+ var FUNCTION_TABLE = [];
  return {
   i32_load16_s: $6, 
   i32_load16_u: $7, 

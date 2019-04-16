@@ -1,3 +1,4 @@
+
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -41,6 +42,7 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$3 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   
  };

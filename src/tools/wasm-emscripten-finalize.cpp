@@ -130,7 +130,7 @@ int main(int argc, const char *argv[]) {
     Fatal() << "error in parsing wasm source map";
   }
 
-  options.calculateFeatures(wasm);
+  options.applyFeatures(wasm);
 
   if (options.debug) {
     std::cerr << "Module before:\n";

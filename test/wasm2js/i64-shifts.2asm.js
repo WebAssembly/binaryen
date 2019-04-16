@@ -1,3 +1,4 @@
+
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -87,6 +88,7 @@ function asmFunc(global, env, buffer) {
   return (i64toi32_i32$0 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$1 | 0) == ($2$hi | 0) | 0 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   shl_i64: $1, 
   shr_i64: $2

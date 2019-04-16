@@ -1,3 +1,4 @@
+
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -57,6 +58,7 @@ function asmFunc(global, env, buffer) {
   return x >= y | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   eq: $0, 
   ne: $1, 

@@ -1,3 +1,4 @@
+
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -118,14 +119,14 @@ function asmFunc(global, env, buffer) {
  function $16() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   wasm2js_i32$1 = 0;
-  wasm2js_i32$0 = FUNCTION_TABLE_i[wasm2js_i32$1 & 31]() | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1]() | 0;
   return wasm2js_i32$0 | 0;
  }
  
  function $17() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   wasm2js_i32$1 = 1;
-  wasm2js_i32$0 = FUNCTION_TABLE_i[wasm2js_i32$1 & 31]() | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1]() | 0;
   i64toi32_i32$0 = wasm2js_i32$0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -135,14 +136,14 @@ function asmFunc(global, env, buffer) {
  function $18() {
   var wasm2js_f32$0 = Math_fround(0), wasm2js_i32$0 = 0;
   wasm2js_i32$0 = 2;
-  wasm2js_f32$0 = Math_fround(FUNCTION_TABLE_f[wasm2js_i32$0 & 31]());
+  wasm2js_f32$0 = Math_fround(FUNCTION_TABLE[wasm2js_i32$0]());
   return Math_fround(wasm2js_f32$0);
  }
  
  function $19() {
   var wasm2js_f64$0 = 0.0, wasm2js_i32$0 = 0;
   wasm2js_i32$0 = 3;
-  wasm2js_f64$0 = +FUNCTION_TABLE_d[wasm2js_i32$0 & 31]();
+  wasm2js_f64$0 = +FUNCTION_TABLE[wasm2js_i32$0]();
   return +wasm2js_f64$0;
  }
  
@@ -152,7 +153,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$2 = 100;
   wasm2js_i32$3 = i64toi32_i32$0;
   wasm2js_i32$1 = 5;
-  wasm2js_i32$0 = FUNCTION_TABLE_iii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
   i64toi32_i32$0 = wasm2js_i32$0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -163,7 +164,7 @@ function asmFunc(global, env, buffer) {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   wasm2js_i32$2 = 32;
   wasm2js_i32$1 = 4;
-  wasm2js_i32$0 = FUNCTION_TABLE_ii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0) | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0) | 0;
   return wasm2js_i32$0 | 0;
  }
  
@@ -173,7 +174,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$2 = 64;
   wasm2js_i32$3 = i64toi32_i32$0;
   wasm2js_i32$1 = 5;
-  wasm2js_i32$0 = FUNCTION_TABLE_iii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
   i64toi32_i32$0 = wasm2js_i32$0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -184,7 +185,7 @@ function asmFunc(global, env, buffer) {
   var wasm2js_f32$0 = Math_fround(0), wasm2js_i32$0 = 0, wasm2js_f32$1 = Math_fround(0);
   wasm2js_f32$1 = Math_fround(1.3200000524520874);
   wasm2js_i32$0 = 6;
-  wasm2js_f32$0 = Math_fround(FUNCTION_TABLE_ff[wasm2js_i32$0 & 31](Math_fround(wasm2js_f32$1)));
+  wasm2js_f32$0 = Math_fround(FUNCTION_TABLE[wasm2js_i32$0](Math_fround(wasm2js_f32$1)));
   return Math_fround(wasm2js_f32$0);
  }
  
@@ -192,7 +193,7 @@ function asmFunc(global, env, buffer) {
   var wasm2js_f64$0 = 0.0, wasm2js_i32$0 = 0, wasm2js_f64$1 = 0.0;
   wasm2js_f64$1 = 1.64;
   wasm2js_i32$0 = 7;
-  wasm2js_f64$0 = +FUNCTION_TABLE_dd[wasm2js_i32$0 & 31](+wasm2js_f64$1);
+  wasm2js_f64$0 = +FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$1);
   return +wasm2js_f64$0;
  }
  
@@ -201,7 +202,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_f32$0 = Math_fround(32.099998474121094);
   wasm2js_i32$2 = 32;
   wasm2js_i32$1 = 8;
-  wasm2js_i32$0 = FUNCTION_TABLE_ifi[wasm2js_i32$1 & 31](Math_fround(wasm2js_f32$0), wasm2js_i32$2 | 0) | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](Math_fround(wasm2js_f32$0), wasm2js_i32$2 | 0) | 0;
   return wasm2js_i32$0 | 0;
  }
  
@@ -212,7 +213,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$3 = 64;
   wasm2js_i32$4 = i64toi32_i32$0;
   wasm2js_i32$1 = 9;
-  wasm2js_i32$0 = FUNCTION_TABLE_iiii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0) | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0) | 0;
   i64toi32_i32$0 = wasm2js_i32$0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -224,7 +225,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_f64$0 = 64.0;
   wasm2js_f32$1 = Math_fround(32.0);
   wasm2js_i32$0 = 10;
-  wasm2js_f32$0 = Math_fround(FUNCTION_TABLE_fdf[wasm2js_i32$0 & 31](+wasm2js_f64$0, Math_fround(wasm2js_f32$1)));
+  wasm2js_f32$0 = Math_fround(FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$0, Math_fround(wasm2js_f32$1)));
   return Math_fround(wasm2js_f32$0);
  }
  
@@ -234,7 +235,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$2 = 0;
   wasm2js_f64$1 = 64.1;
   wasm2js_i32$0 = 11;
-  wasm2js_f64$0 = +FUNCTION_TABLE_diid[wasm2js_i32$0 & 31](wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, +wasm2js_f64$1);
+  wasm2js_f64$0 = +FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, +wasm2js_f64$1);
   return +wasm2js_f64$0;
  }
  
@@ -247,7 +248,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$2 = $1;
   wasm2js_i32$3 = i64toi32_i32$0;
   wasm2js_i32$1 = $0;
-  wasm2js_i32$0 = FUNCTION_TABLE_iii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
   i64toi32_i32$0 = wasm2js_i32$0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -261,7 +262,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$2 = 9;
   wasm2js_i32$3 = i64toi32_i32$0;
   wasm2js_i32$1 = $0;
-  wasm2js_i32$0 = FUNCTION_TABLE_iii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
+  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
   i64toi32_i32$0 = wasm2js_i32$0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -286,7 +287,7 @@ function asmFunc(global, env, buffer) {
    wasm2js_i32$2 = i64toi32_i32$2 - i64toi32_i32$3 | 0;
    wasm2js_i32$3 = i64toi32_i32$5;
    wasm2js_i32$1 = 12;
-   wasm2js_i32$0 = FUNCTION_TABLE_iii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
+   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
    i64toi32_i32$5 = wasm2js_i32$0;
    i64toi32_i32$2 = i64toi32_i32$HIGH_BITS;
    $6 = i64toi32_i32$5;
@@ -328,7 +329,7 @@ function asmFunc(global, env, buffer) {
    wasm2js_i32$2 = i64toi32_i32$4;
    wasm2js_i32$3 = i64toi32_i32$5;
    wasm2js_i32$1 = 13;
-   wasm2js_i32$0 = FUNCTION_TABLE_iii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
+   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
    i64toi32_i32$5 = wasm2js_i32$0;
    i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;
    $5 = i64toi32_i32$5;
@@ -345,7 +346,7 @@ function asmFunc(global, env, buffer) {
    wasm2js_i32$3 = i64toi32_i32$0;
    wasm2js_i32$2 = i64toi32_i32$4;
    wasm2js_i32$1 = 13;
-   wasm2js_i32$0 = FUNCTION_TABLE_iii[wasm2js_i32$1 & 31](wasm2js_i32$3 | 0, wasm2js_i32$2 | 0) | 0;
+   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$3 | 0, wasm2js_i32$2 | 0) | 0;
    i64toi32_i32$4 = wasm2js_i32$0;
    i64toi32_i32$2 = i64toi32_i32$HIGH_BITS;
    $8 = i64toi32_i32$4;
@@ -372,7 +373,7 @@ function asmFunc(global, env, buffer) {
   if (($0 | 0) == (0 | 0)) $6 = 44; else {
    wasm2js_i32$2 = $0 - 1 | 0;
    wasm2js_i32$1 = 15;
-   wasm2js_i32$0 = FUNCTION_TABLE_ii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0) | 0;
+   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0) | 0;
    $6 = wasm2js_i32$0;
   }
   return $6 | 0;
@@ -384,7 +385,7 @@ function asmFunc(global, env, buffer) {
   if (($0 | 0) == (0 | 0)) $6 = 99; else {
    wasm2js_i32$2 = $0 - 1 | 0;
    wasm2js_i32$1 = 14;
-   wasm2js_i32$0 = FUNCTION_TABLE_ii[wasm2js_i32$1 & 31](wasm2js_i32$2 | 0) | 0;
+   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0) | 0;
    $6 = wasm2js_i32$0;
   }
   return $6 | 0;
@@ -393,19 +394,19 @@ function asmFunc(global, env, buffer) {
  function runaway() {
   var wasm2js_i32$0 = 0;
   wasm2js_i32$0 = 16;
-  FUNCTION_TABLE_v[wasm2js_i32$0 & 31]();
+  FUNCTION_TABLE[wasm2js_i32$0]();
  }
  
  function mutual_runaway1() {
   var wasm2js_i32$0 = 0;
   wasm2js_i32$0 = 18;
-  FUNCTION_TABLE_v[wasm2js_i32$0 & 31]();
+  FUNCTION_TABLE[wasm2js_i32$0]();
  }
  
  function mutual_runaway2() {
   var wasm2js_i32$0 = 0;
   wasm2js_i32$0 = 17;
-  FUNCTION_TABLE_v[wasm2js_i32$0 & 31]();
+  FUNCTION_TABLE[wasm2js_i32$0]();
  }
  
  function _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0, var$0$hi, var$1, var$1$hi) {
@@ -494,18 +495,7 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$1 | 0;
  }
  
- var FUNCTION_TABLE_d = [const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64, const_f64];
- var FUNCTION_TABLE_dd = [id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, over_f64_duplicate, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64, id_f64];
- var FUNCTION_TABLE_diid = [i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64, i64_f64];
- var FUNCTION_TABLE_f = [const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32, const_f32];
- var FUNCTION_TABLE_fdf = [f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32, f64_f32];
- var FUNCTION_TABLE_ff = [id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, over_f32_duplicate, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32, id_f32];
- var FUNCTION_TABLE_i = [const_i32, const_i64, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32, const_i32];
- var FUNCTION_TABLE_ifi = [f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32, f32_i32];
- var FUNCTION_TABLE_ii = [id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, even, odd, id_i32, id_i32, id_i32, over_i32_duplicate, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32, id_i32];
- var FUNCTION_TABLE_iii = [id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, fac, fib, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, over_i64_duplicate, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64, id_i64];
- var FUNCTION_TABLE_iiii = [i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64, i32_i64];
- var FUNCTION_TABLE_v = [runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, mutual_runaway1, mutual_runaway2, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway, runaway];
+ var FUNCTION_TABLE = [const_i32, const_i64, const_f32, const_f64, id_i32, id_i64, id_f32, id_f64, f32_i32, i32_i64, f64_f32, i64_f64, fac, fib, even, odd, runaway, mutual_runaway1, mutual_runaway2, over_i32_duplicate, over_i64_duplicate, over_f32_duplicate, over_f64_duplicate];
  return {
   type_i32: $16, 
   type_i64: $17, 

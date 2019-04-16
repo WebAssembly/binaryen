@@ -27,6 +27,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
+#include "ir/flat.h"
 #include "ir/utils.h"
 #include "dataflow/node.h"
 #include "dataflow/graph.h"
@@ -48,6 +49,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   DataFlow::Graph graph;
 
   void doWalkFunction(Function* func) {
+    Flat::verifyFlatness(func);
     // Build the data-flow IR.
     graph.build(func, getModule());
     nodeUsers.build(graph);

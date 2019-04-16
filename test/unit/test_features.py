@@ -1,6 +1,7 @@
 import os
 import unittest
-from scripts.test.shared import WASM_OPT, run_process, options
+from scripts.test.shared import WASM_OPT, run_process
+from utils import input_path, roundtrip, check_features
 
 
 class FeatureValidationTest(unittest.TestCase):
@@ -117,7 +118,7 @@ class FeatureValidationTest(unittest.TestCase):
 
 class TargetFeaturesSectionTest(unittest.TestCase):
   def disassemble(self, filename):
-    path = os.path.join(options.binaryen_test, 'unit', 'input', filename)
+    path = input_path(filename)
     p = run_process(WASM_OPT + ['--print', '-o', os.devnull, path], check=False,
                     capture_output=True)
     self.assertEqual(p.returncode, 0)
@@ -134,45 +135,48 @@ class TargetFeaturesSectionTest(unittest.TestCase):
       self.assertEqual(str(p.stdout), str(f.read()))
 
   def test_atomics(self):
-    self.roundtrip('atomics_target_feature.wasm')
-    module = self.disassemble('atomics_target_feature.wasm')
-    self.assertIn('i32.atomic.rmw.add', module)
+    filename = 'atomics_target_feature.wasm'
+    roundtrip(self, filename)
+    check_features(self, filename, ['threads'])
+    self.assertIn('i32.atomic.rmw.add', self.disassemble(filename))
 
   def test_bulk_memory(self):
-    self.roundtrip('bulkmem_target_feature.wasm')
-    module = self.disassemble('bulkmem_target_feature.wasm')
-    self.assertIn('memory.copy', module)
+    filename = 'bulkmem_target_feature.wasm'
+    roundtrip(self, filename)
+    check_features(self, filename, ['bulk-memory'])
+    self.assertIn('memory.copy', self.disassemble(filename))
 
   def test_nontrapping_fptoint(self):
-    self.roundtrip('truncsat_target_feature.wasm')
-    module = self.disassemble('truncsat_target_feature.wasm')
-    self.assertIn('i32.trunc_sat_f32_u', module)
+    filename = 'truncsat_target_feature.wasm'
+    roundtrip(self, filename)
+    check_features(self, filename, ['nontrapping-float-to-int'])
+    self.assertIn('i32.trunc_sat_f32_u', self.disassemble(filename))
 
   def test_sign_ext(self):
-    self.roundtrip('signext_target_feature.wasm')
-    module = self.disassemble('signext_target_feature.wasm')
-    self.assertIn('i32.extend8_s', module)
+    filename = 'signext_target_feature.wasm'
+    roundtrip(self, filename)
+    check_features(self, filename, ['sign-ext'])
+    self.assertIn('i32.extend8_s', self.disassemble(filename))
 
   def test_simd(self):
-    self.roundtrip('simd_target_feature.wasm')
-    module = self.disassemble('simd_target_feature.wasm')
-    self.assertIn('i32x4.splat', module)
+    filename = 'simd_target_feature.wasm'
+    roundtrip(self, filename)
+    check_features(self, filename, ['simd'])
+    self.assertIn('i32x4.splat', self.disassemble(filename))
 
   def test_incompatible_features(self):
-    path = os.path.join(options.binaryen_test, 'unit', 'input',
-                        'signext_target_feature.wasm')
+    path = input_path('signext_target_feature.wasm')
     p = run_process(
         WASM_OPT + ['--print', '--enable-simd', '-o', os.devnull, path],
         check=False, capture_output=True
     )
     self.assertNotEqual(p.returncode, 0)
-    self.assertIn('Fatal: module uses features not explicitly specified, ' +
-                  'use --detect-features to resolve',
+    self.assertIn('Fatal: module features do not match specified features. ' +
+                  'Use --detect-features to resolve.',
                   p.stderr)
 
   def test_incompatible_features_forced(self):
-    path = os.path.join(options.binaryen_test, 'unit', 'input',
-                        'signext_target_feature.wasm')
+    path = input_path('signext_target_feature.wasm')
     p = run_process(
         WASM_OPT + ['--print', '--detect-features', '-mvp', '--enable-simd',
                     '-o', os.devnull, path],
@@ -182,12 +186,5 @@ class TargetFeaturesSectionTest(unittest.TestCase):
     self.assertIn('all used features should be allowed', p.stderr)
 
   def test_explicit_detect_features(self):
-    path = os.path.join(options.binaryen_test, 'unit', 'input',
-                        'signext_target_feature.wasm')
-    p = run_process(
-        WASM_OPT + ['--print', '-mvp', '--detect-features',
-                    '-o', os.devnull, path],
-        check=False, capture_output=True
-    )
-    self.assertEqual(p.returncode, 0)
-    self.assertEqual(p.stderr, '')
+    check_features(self, 'signext_target_feature.wasm', ['sign-ext', 'simd'],
+                   opts = ['-mvp', '--detect-features', '--enable-simd'])

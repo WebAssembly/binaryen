@@ -70,7 +70,6 @@ struct ToolOptions : public Options {
 
   ToolOptions& addFeature(FeatureSet::Feature feature,
                           const std::string& description) {
-
     (*this)
         .add(std::string("--enable-") + FeatureSet::toString(feature), "",
              std::string("Enable ") + description, Arguments::Zero,
@@ -90,18 +89,20 @@ struct ToolOptions : public Options {
     return *this;
   }
 
-  void calculateFeatures(Module& module) {
-    if (hasFeatureOptions && !detectFeatures) {
-      FeatureSet optionsFeatures = FeatureSet::MVP;
-      optionsFeatures.enable(enabledFeatures);
-      optionsFeatures.disable(disabledFeatures);
-      if (!(module.features <= optionsFeatures)) {
-        Fatal() << "module uses features not explicitly specified, "
-                << "use --detect-features to resolve";
+  void applyFeatures(Module& module) {
+    if (hasFeatureOptions) {
+      if (!detectFeatures && module.hasFeaturesSection) {
+        FeatureSet optionsFeatures = FeatureSet::MVP;
+        optionsFeatures.enable(enabledFeatures);
+        optionsFeatures.disable(disabledFeatures);
+        if (module.features != optionsFeatures) {
+          Fatal() << "module features do not match specified features. "
+                  << "Use --detect-features to resolve.";
+        }
       }
+      module.features.enable(enabledFeatures);
+      module.features.disable(disabledFeatures);
     }
-    module.features.enable(enabledFeatures);
-    module.features.disable(disabledFeatures);
   }
 
 private:

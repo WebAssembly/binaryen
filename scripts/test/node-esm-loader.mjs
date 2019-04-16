@@ -16,14 +16,16 @@ export function resolve(specifier, parentModuleURL = baseURL, defaultResolve) {
       format: 'builtin'
     };
   }
-  // Resolve the 'spectest' module to our special module which has some builtins
-  if (specifier == 'spectest') {
-    const resolved = new URL('./scripts/test/spectest.js', parentModuleURL);
+  // Resolve the 'spectest' and 'env' modules to our custom implementations of
+  // various builtins.
+  if (specifier == 'spectest' || specifier == 'env') {
+    const resolved = new URL('./scripts/test/' + specifier + '.js', parentModuleURL);
     return {
       url: resolved.href,
       format: 'esm'
     };
   }
+
   const resolved = new URL(specifier, parentModuleURL);
   return {
     url: resolved.href,

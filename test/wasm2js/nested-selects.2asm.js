@@ -1,3 +1,4 @@
+
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -31,6 +32,7 @@ function asmFunc(global, env, buffer) {
   return (wasm2js_i32$0 = 4294967295, wasm2js_i32$1 = (wasm2js_i32$3 = 1, wasm2js_i32$4 = 0, wasm2js_i32$5 = ($0 | 0) > (0 | 0), wasm2js_i32$5 ? wasm2js_i32$3 : wasm2js_i32$4), wasm2js_i32$2 = ($0 | 0) < (0 | 0), wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   sign: $1
  };

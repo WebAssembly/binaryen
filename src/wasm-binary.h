@@ -323,6 +323,7 @@ enum Section {
   Element = 9,
   Code = 10,
   Data = 11,
+  DataCount = 12,
 };
 
 enum SegmentFlag {
@@ -891,6 +892,7 @@ public:
   void writeFunctions();
   void writeGlobals();
   void writeExports();
+  void writeDataCount();
   void writeDataSegments();
 
   std::unordered_map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
@@ -1083,8 +1085,14 @@ public:
   std::map<Index, Name> mappedGlobals; // index of the Global => name. first imported globals, then internal globals
 
   Name getGlobalName(Index index);
+  void validateBinary(); // validations that cannot be performed on the Module
   void processFunctions();
+
+  size_t dataCount = 0;
+  bool hasDataCount = false;
+
   void readDataSegments();
+  void readDataCount();
 
   std::map<Index, std::vector<Index>> functionTable;
 

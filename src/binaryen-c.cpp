@@ -2468,13 +2468,16 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  Wasm2JSBuilder::Flags builderFlags;
-  Wasm2JSBuilder wasm2js(builderFlags);
+  Wasm2JSBuilder::Flags flags;
+  Wasm2JSBuilder wasm2js(flags);
   Ref asmjs = wasm2js.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
+  Output out("", Flags::Text, Flags::Release); // stdout
+  Wasm2JSGlue glue(*wasm, out, flags, "asmFunc");
+  glue.emitPre();
   jser.printAst();
-
-  std::cout << jser.buffer;
+  std::cout << jser.buffer << std::endl;
+  glue.emitPost();
 }
 
 int BinaryenModuleValidate(BinaryenModuleRef module) {

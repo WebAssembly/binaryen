@@ -6,6 +6,7 @@
  (type $4 (func (param f64) (result f64)))
  (type $5 (func (param f32) (result f32)))
  (type $6 (func (param i32) (result i32)))
+ (import "env" "__tempMemory__" (global $__tempMemory__ i32))
  (memory $0 1)
  (func $copysign64 (; 0 ;) (type $0) (param $0 f64) (param $1 f64) (result f64)
   (f64.reinterpret_i64
@@ -399,7 +400,7 @@
               )
              )
              (i64.store
-              (i32.const 1024)
+              (global.get $__tempMemory__)
               (i64.extend_i32_u
                (i32.sub
                 (local.tee $var$2
@@ -461,7 +462,7 @@
              )
             )
             (i64.store
-             (i32.const 1024)
+             (global.get $__tempMemory__)
              (i64.or
               (i64.shl
                (i64.extend_i32_u
@@ -542,7 +543,7 @@
          (br $label$3)
         )
         (i64.store
-         (i32.const 1024)
+         (global.get $__tempMemory__)
          (i64.shl
           (i64.extend_i32_u
            (i32.sub
@@ -585,7 +586,7 @@
        (br $label$2)
       )
       (i64.store
-       (i32.const 1024)
+       (global.get $__tempMemory__)
        (i64.extend_i32_u
         (i32.and
          (local.get $var$4)
@@ -717,7 +718,7 @@
      )
     )
     (i64.store
-     (i32.const 1024)
+     (global.get $__tempMemory__)
      (local.get $var$5)
     )
     (return
@@ -731,7 +732,7 @@
     )
    )
    (i64.store
-    (i32.const 1024)
+    (global.get $__tempMemory__)
     (local.get $var$0)
    )
    (local.set $var$0
@@ -792,7 +793,7 @@
    )
   )
   (i64.load
-   (i32.const 1024)
+   (global.get $__tempMemory__)
   )
  )
  (func $__wasm_nearest_f32 (; 27 ;) (param $var$0 f32) (result f32)

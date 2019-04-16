@@ -1,4 +1,5 @@
 import { print } from 'spectest';
+
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -46,6 +47,7 @@ function asmFunc(global, env, buffer) {
   HEAP32[(i + 4294967295 | 0) >> 2] | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
   good: $0, 
   bad: $1
@@ -54,21 +56,21 @@ function asmFunc(global, env, buffer) {
 
 const memasmFunc = new ArrayBuffer(65536);
 const assignasmFunc = (
-      function(mem) {
-        const _mem = new Uint8Array(mem);
-        return function(offset, s) {
-          if (typeof Buffer === 'undefined') {
-            const bytes = atob(s);
-            for (let i = 0; i < bytes.length; i++)
-              _mem[offset + i] = bytes.charCodeAt(i);
-          } else {
-            const bytes = Buffer.from(s, 'base64');
-            for (let i = 0; i < bytes.length; i++)
-              _mem[offset + i] = bytes[i];
-          }
+    function(mem) {
+      const _mem = new Uint8Array(mem);
+      return function(offset, s) {
+        if (typeof Buffer === 'undefined') {
+          const bytes = atob(s);
+          for (let i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes.charCodeAt(i);
+        } else {
+          const bytes = Buffer.from(s, 'base64');
+          for (let i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes[i];
         }
       }
-    )(memasmFunc);
+    }
+  )(memasmFunc);
 assignasmFunc(0, "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=");
 const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print},memasmFunc);
 export const good = retasmFunc.good;

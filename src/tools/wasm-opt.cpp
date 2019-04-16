@@ -162,7 +162,7 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
 
-    options.calculateFeatures(wasm);
+    options.applyFeatures(wasm);
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
@@ -172,7 +172,7 @@ int main(int argc, const char* argv[]) {
     }
   } else {
     // translate-to-fuzz
-    options.calculateFeatures(wasm);
+    options.applyFeatures(wasm);
     TranslateToFuzzReader reader(wasm, options.extra["infile"]);
     if (fuzzPasses) {
       reader.pickPasses(options);

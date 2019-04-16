@@ -185,9 +185,9 @@
   (call $switch
    (i32.const 1)
   )
-  (block $block$6$break
+  (block $block$7$break
    (block $switch$3$default
-    (br_table $block$6$break $block$6$break $block$6$break $switch$3$default
+    (br_table $block$7$break $block$7$break $block$7$break $switch$3$default
      (local.get $0)
     )
    )
