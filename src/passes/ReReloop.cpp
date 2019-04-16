@@ -28,6 +28,7 @@
 #include "wasm-traversal.h"
 #include "pass.h"
 #include "cfg/Relooper.h"
+#include "ir/flat.h"
 #include "ir/utils.h"
 
 #ifdef RERELOOP_DEBUG
@@ -297,6 +298,8 @@ struct ReReloop final : public Pass {
   }
 
   void runOnFunction(PassRunner* runner, Module* module, Function* function) override {
+    Flat::verifyFlatness(function);
+
     // since control flow is flattened, this is pretty simple
     // first, traverse the function body. note how we don't need to traverse
     // into expressions, as we know they contain no control flow

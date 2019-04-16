@@ -41,9 +41,10 @@
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <pass.h>
-#include <ir/effects.h>
 #include <ir/cost.h>
+#include <ir/effects.h>
 #include <ir/equivalent_sets.h>
+#include "ir/flat.h"
 #include <ir/hashed.h>
 
 namespace wasm {
@@ -75,6 +76,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   bool anotherPass;
 
   void doWalkFunction(Function* func) {
+    Flat::verifyFlatness(func);
     anotherPass = true;
     // we may need multiple rounds
     while (anotherPass) {
