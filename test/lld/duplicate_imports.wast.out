@@ -138,7 +138,6 @@
     "invoke_ffd"
   ],
   "features": [
-    "--mvp-features"
   ]
 }
 -- END METADATA --

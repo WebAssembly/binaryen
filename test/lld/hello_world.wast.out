@@ -99,7 +99,6 @@
   "invokeFuncs": [
   ],
   "features": [
-    "--mvp-features"
   ]
 }
 -- END METADATA --
