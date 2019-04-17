@@ -21,14 +21,14 @@ import re
 import shutil
 import time
 
-from test.shared import options
+from test.shared import options, NODEJS
 
 
 # parameters
 
 NANS = True
 
-FUZZ_OPTS = ['--all-features', '--disable-simd', '--disable-bulk-memory']
+FUZZ_OPTS = [] # '--all-features' etc
 
 V8_OPTS = [
   '--experimental-wasm-eh',
@@ -90,6 +90,18 @@ def compare(x, y, comment):
     ))
 
 
+def run_wasm2js(wasm):
+  wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'])
+  main = run([in_bin('wasm2js'), wasm, '--emscripten'])
+  with open(os.path.join(options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
+    glue = f.read()
+  with open('js.js', 'w') as f:
+    f.write(glue)
+    f.write(main)
+    f.write(wrapper)
+  return run([NODEJS, 'js.js', 'a.wasm'])
+
+
 def run_vms(prefix):
   def fix_output(out):
     # large doubles may print slightly different on different VMs
@@ -138,6 +150,7 @@ def run_vms(prefix):
   results = [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
 
   # append to add results from VMs
+  results += [run_wasm2js(prefix + 'wasm')]
   # results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
   # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
   # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
