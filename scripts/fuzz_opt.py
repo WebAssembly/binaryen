@@ -28,7 +28,7 @@ from test.shared import options, NODEJS
 
 NANS = True
 
-FUZZ_OPTS = [] # '--all-features' etc
+FUZZ_OPTS = []  # '--all-features' etc
 
 V8_OPTS = [
   '--experimental-wasm-eh',
