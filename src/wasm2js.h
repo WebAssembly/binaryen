@@ -1164,6 +1164,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         Load load = *curr;
         load.ptr = &get;
         load.bytes = 1; // do the worst
+        load.signed_ = false;
         Ref rest;
         switch (curr->type) {
           case i32: {
