@@ -270,15 +270,12 @@ private:
 
   size_t tableSize;
 
-  bool almostASM = false;
-
   void addBasics(Ref ast);
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
   void addTable(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
-  void setNeedsAlmostASM(const char *reason);
   void addMemoryGrowthFuncs(Ref ast, Module* wasm);
 
   Wasm2JSBuilder() = delete;
@@ -320,7 +317,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
-  asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
+  asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(ALMOST_ASM)));
   // add memory import
   if (wasm->memory.exists && wasm->memory.imported()) {
     Ref theVar = ValueBuilder::makeVar();
@@ -562,7 +559,6 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       );
     }
     if (export_->kind == ExternalKind::Memory) {
-      setNeedsAlmostASM("memory export");
       Ref descs = ValueBuilder::makeObject();
       Ref growDesc = ValueBuilder::makeObject();
       ValueBuilder::appendToObject(
@@ -598,9 +594,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         memory);
     }
   }
-  if (almostASM) {
-    // replace "use asm"
-    ast[0] = ValueBuilder::makeStatement(ValueBuilder::makeString(ALMOST_ASM));
+  if (wasm->memory.exists && wasm->memory.max > wasm->memory.initial) {
     addMemoryGrowthFuncs(ast, wasm);
   }
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
@@ -1825,13 +1819,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     Ref visitHost(Host* curr) {
       Ref call;
       if (curr->op == HostOp::GrowMemory) {
-        parent->setNeedsAlmostASM("grow_memory op");
         call = ValueBuilder::makeCall(WASM_GROW_MEMORY,
           makeAsmCoercion(
             visit(curr->operands[0], EXPRESSION_RESULT),
             wasmToAsmType(curr->operands[0]->type)));
       } else if (curr->op == HostOp::CurrentMemory) {
-        parent->setNeedsAlmostASM("current_memory op");
         call = ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
       } else {
         return ValueBuilder::makeCall(ABORT_FUNC);
@@ -1852,13 +1844,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
   };
   return ExpressionProcessor(this, m, func).visit(func->body, result);
-}
-
-void Wasm2JSBuilder::setNeedsAlmostASM(const char *reason) {
-  if (!almostASM) {
-    almostASM = true;
-    std::cerr << "Switching to \"almost asm\" mode, reason: " << reason << std::endl;
-  }
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
