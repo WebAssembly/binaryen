@@ -79,3 +79,61 @@
   )
  )
 )
+(module
+ (type $0 (func (param i32 i32)))
+ (type $1 (func))
+ (global $f (mut i32) (i32.const -1412567121))
+ (global $g (mut i32) (global.get $f))
+ (global $f$hi (mut i32) (i32.const 305419896))
+ (global $g$hi (mut i32) (global.get $f$hi))
+ (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
+ (export "exp" (func $1))
+ (func $call (; 0 ;) (type $0) (param $0 i32) (param $0$hi i32)
+  (nop)
+ )
+ (func $1 (; 1 ;) (type $1)
+  (local $0 i32)
+  (local $0$hi i32)
+  (local $i64toi32_i32$0 i32)
+  (block
+   (block
+    (local.set $0
+     (block (result i32)
+      (local.set $i64toi32_i32$0
+       (global.get $f$hi)
+      )
+      (global.get $f)
+     )
+    )
+    (local.set $0$hi
+     (local.get $i64toi32_i32$0)
+    )
+   )
+   (call $call
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (local.get $0$hi)
+     )
+     (local.get $0)
+    )
+    (local.get $i64toi32_i32$0)
+   )
+   (nop)
+   (block
+    (global.set $f
+     (block (result i32)
+      (local.set $i64toi32_i32$0
+       (i32.const 287454020)
+      )
+      (i32.const 1432778632)
+     )
+    )
+    (global.set $f$hi
+     (local.get $i64toi32_i32$0)
+    )
+   )
+   (nop)
+  )
+  (nop)
+ )
+)

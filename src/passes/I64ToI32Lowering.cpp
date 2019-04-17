@@ -104,6 +104,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     for (size_t i = 0, globals = module->globals.size(); i < globals; ++i) {
       auto* curr = module->globals[i].get();
       if (curr->type != i64) continue;
+      originallyI64Globals.insert(curr->name);
       curr->type = i32;
       auto* high = builder->makeGlobal(makeHighName(curr->name), i32, builder->makeConst(Literal(int32_t(0))), Builder::Mutable);
       module->addGlobal(high);
@@ -446,7 +447,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitGetGlobal(GetGlobal* curr) {
-    if (curr->type != i64) return;
+    if (!getFunction()) return; // if in a global init, skip - we already handled that.
+    if (!originallyI64Globals.count(curr->name)) return;
     curr->type = i32;
     TempVar highBits = getTemp();
     SetLocal *setHighBits = builder->makeSetLocal(
@@ -462,19 +464,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSetGlobal(SetGlobal* curr) {
-    // If our value is unreachable, just emit it, skip ourselves - no need to
-    // handle the case of original global being i64 there.
-    if (curr->type == unreachable) {
-      replaceCurrent(curr->value);
-      return;
-    }
-    if (curr->value->type != i64) return;
+    if (!originallyI64Globals.count(curr->name)) return;
     TempVar highBits = fetchOutParam(curr->value);
     auto* setHigh = builder->makeSetGlobal(
       makeHighName(curr->name),
       builder->makeGetLocal(highBits, i32)
     );
-    replaceCurrent(builder->blockify(curr, setHigh));
+    replaceCurrent(builder->makeSequence(curr, setHigh));
   }
 
   void visitLoad(Load* curr) {
@@ -560,8 +556,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitConst(Const* curr) {
-    // if in a global init, skip - we already handled that.
-    if (!getFunction()) return;
+    if (!getFunction()) return; // if in a global init, skip - we already handled that.
     if (curr->type != i64) return;
     TempVar highBits = getTemp();
     Const* lowVal = builder->makeConst(
@@ -1642,6 +1637,7 @@ private:
   std::unordered_map<Expression*, TempVar> highBitVars;
   std::unordered_map<Name, TempVar> labelHighBitVars;
   std::unordered_map<Index, Type> tempTypes;
+  std::unordered_set<Name> originallyI64Globals;
   Index nextTemp;
 
   TempVar getTemp(Type ty = i32) {

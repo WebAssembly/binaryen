@@ -1,6 +1,6 @@
 
 function asmFunc(global, env, buffer) {
- "almost asm";
+ "use asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -26,13 +26,23 @@ function asmFunc(global, env, buffer) {
  var f$hi = 305419896;
  var g$hi = f$hi;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0() {
+ function call($0, $0$hi) {
+  $0 = $0 | 0;
+  $0$hi = $0$hi | 0;
+ }
+ 
+ function $1() {
+  var i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = f$hi;
+  call(f | 0, i64toi32_i32$0 | 0);
+  i64toi32_i32$0 = 287454020;
   f = 1432778632;
+  f$hi = i64toi32_i32$0;
  }
  
  var FUNCTION_TABLE = [];
  return {
-  exp: $0
+  exp: $1
  };
 }
 
