@@ -36,9 +36,7 @@
 namespace wasm {
 
 static Name makeHighName(Name n) {
-  return Name(
-    cashew::IString((std::string(n.c_str()) + "$hi").c_str(), false)
-  );
+  return std::string(n.c_str()) + "$hi";
 }
 
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
@@ -104,12 +102,26 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (!builder) builder = make_unique<Builder>(*module);
     // add new globals for high bits
     for (size_t i = 0, globals = module->globals.size(); i < globals; ++i) {
-      auto& curr = module->globals[i];
+      auto* curr = module->globals[i].get();
       if (curr->type != i64) continue;
       curr->type = i32;
-      auto* high = ModuleUtils::copyGlobal(curr.get(), *module);
-      high->name = makeHighName(curr->name);
+      auto* high = builder->makeGlobal(makeHighName(curr->name), i32, builder->makeConst(Literal(int32_t(0))), Builder::Mutable);
       module->addGlobal(high);
+      if (curr->imported()) {
+        Fatal() << "TODO: imported i64 globals";
+      } else {
+        if (auto* c = curr->init->dynCast<Const>()) {
+          uint64_t value = c->value.geti64();
+          c->value = Literal(uint32_t(value));
+          c->type = i32;
+          high->init = builder->makeConst(Literal(uint32_t(value >> 32)));
+        } else if (auto* get = curr->init->dynCast<GetGlobal>()) {
+          high->init = builder->makeGetGlobal(makeHighName(get->name), i32);
+        } else {
+          WASM_UNREACHABLE();
+        }
+        curr->init->type = i32;
+      }
     }
 
     // For functions that return 64-bit values, we use this global variable
@@ -425,7 +437,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       return;
     }
     TempVar highBits = fetchOutParam(curr->value);
-    SetLocal* setHigh = builder->makeSetLocal(
+    auto* setHigh = builder->makeSetLocal(
       mappedIndex + 1,
       builder->makeGetLocal(highBits, i32)
     );
@@ -435,12 +447,34 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitGetGlobal(GetGlobal* curr) {
     if (curr->type != i64) return;
-    assert(false && "GetGlobal not implemented");
+    curr->type = i32;
+    TempVar highBits = getTemp();
+    SetLocal *setHighBits = builder->makeSetLocal(
+      highBits,
+      builder->makeGetGlobal(
+        makeHighName(curr->name),
+        i32
+      )
+    );
+    Block* result = builder->blockify(setHighBits, curr);
+    replaceCurrent(result);
+    setOutParam(result, std::move(highBits));
   }
 
   void visitSetGlobal(SetGlobal* curr) {
-    if (curr->type != i64) return;
-    assert(false && "SetGlobal not implemented");
+    // If our value is unreachable, just emit it, skip ourselves - no need to
+    // handle the case of original global being i64 there.
+    if (curr->type == unreachable) {
+      replaceCurrent(curr->value);
+      return;
+    }
+    if (curr->value->type != i64) return;
+    TempVar highBits = fetchOutParam(curr->value);
+    auto* setHigh = builder->makeSetGlobal(
+      makeHighName(curr->name),
+      builder->makeGetLocal(highBits, i32)
+    );
+    replaceCurrent(builder->blockify(curr, setHigh));
   }
 
   void visitLoad(Load* curr) {
@@ -526,6 +560,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitConst(Const* curr) {
+    // if in a global init, skip - we already handled that.
+    if (!getFunction()) return;
     if (curr->type != i64) return;
     TempVar highBits = getTemp();
     Const* lowVal = builder->makeConst(
