@@ -40,12 +40,12 @@ function asmFunc(global, env, buffer) {
    dummy();
    dummy();
    dummy();
-  };
+  }
   block1 : {
    dummy();
    dummy();
    dummy();
-  };
+  }
   return 8 | 0;
  }
  
@@ -53,7 +53,7 @@ function asmFunc(global, env, buffer) {
   block : {
    dummy();
    dummy();
-  };
+  }
   return 9 | 0;
  }
  
@@ -87,17 +87,17 @@ function asmFunc(global, env, buffer) {
  function $10() {
   block : {
    break block;
-  };
+  }
   block44 : {
    if (1) break block44;
    abort();
-  };
+  }
   block45 : {
    switch (0 | 0) {
    default:
     break block45;
    };
-  };
+  }
   block46 : {
    switch (1 | 0) {
    case 0:
@@ -107,7 +107,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block46;
    };
-  };
+  }
   return 19 | 0;
  }
  
@@ -116,7 +116,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 18;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -125,7 +125,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 18;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -137,8 +137,8 @@ function asmFunc(global, env, buffer) {
    block47 : {
     $2_1 = 1;
     break block;
-   };
-  };
+   }
+  }
   $0 = $1_1 + $2_1 | 0;
   $5_1 = $0;
   $0 = $5_1 + 2 | 0;
@@ -146,15 +146,15 @@ function asmFunc(global, env, buffer) {
   block50 : {
    $10_1 = 4;
    break block50;
-  };
+  }
   $0 = $9_1 + $10_1 | 0;
   $13_1 = $0;
   block51 : {
    block52 : {
     $14_1 = 8;
     break block51;
-   };
-  };
+   }
+  }
   $0 = $13_1 + $14_1 | 0;
   return $0 | 0;
  }
@@ -167,7 +167,7 @@ function asmFunc(global, env, buffer) {
    $0 = $0 - 5 | 0;
    $0 = Math_imul($0, 7);
    break block;
-  };
+  }
   return ($0 | 0) == (4294967282 | 0) | 0;
  }
  

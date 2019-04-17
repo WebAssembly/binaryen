@@ -226,14 +226,14 @@ function asmFunc(global, env, buffer) {
     break block;
     break loop_in;
    } while (1);
-  };
+  }
   block48 : {
    loop_in49 : do {
     if (1) break block48;
     abort();
     break loop_in49;
    } while (1);
-  };
+  }
   block50 : {
    loop_in51 : do {
     switch (0 | 0) {
@@ -242,7 +242,7 @@ function asmFunc(global, env, buffer) {
     };
     break loop_in51;
    } while (1);
-  };
+  }
   block52 : {
    loop_in53 : do {
     switch (1 | 0) {
@@ -255,7 +255,7 @@ function asmFunc(global, env, buffer) {
     };
     break loop_in53;
    } while (1);
-  };
+  }
   return 19 | 0;
  }
  
@@ -267,7 +267,7 @@ function asmFunc(global, env, buffer) {
     break block;
     break loop_in;
    } while (1);
-  };
+  }
   return $0 | 0;
  }
  
@@ -279,7 +279,7 @@ function asmFunc(global, env, buffer) {
     break block;
     break loop_in;
    } while (1);
-  };
+  }
   return $0 | 0;
  }
  
@@ -292,10 +292,10 @@ function asmFunc(global, env, buffer) {
     block54 : {
      $2_1 = 1;
      break block;
-    };
+    }
     break loop_in;
    } while (1);
-  };
+  }
   $0 = $1_1 + $2_1 | 0;
   $5_1 = $0;
   block55 : {
@@ -307,7 +307,7 @@ function asmFunc(global, env, buffer) {
     } while (1);
     break loop_in56;
    } while (1);
-  };
+  }
   $0 = $5_1 + $6_1 | 0;
   $9_1 = $0;
   loop_in59 : do {
@@ -317,7 +317,7 @@ function asmFunc(global, env, buffer) {
      break block60;
      break loop_in61;
     } while (1);
-   };
+   }
    $12_1 = $10_1;
    break loop_in59;
   } while (1);
@@ -329,7 +329,7 @@ function asmFunc(global, env, buffer) {
     break block62;
     break loop_in63;
    } while (1);
-  };
+  }
   $0 = $17_1 + $18_1 | 0;
   $21 = $0;
   block64 : {
@@ -341,7 +341,7 @@ function asmFunc(global, env, buffer) {
     } while (1);
     break loop_in65;
    } while (1);
-  };
+  }
   $0 = $21 + $22 | 0;
   return $0 | 0;
  }
@@ -371,7 +371,7 @@ function asmFunc(global, env, buffer) {
     break block;
     break loop_in;
    } while (1);
-  };
+  }
   return ($0 | 0) == (4294967282 | 0) | 0;
  }
  
@@ -404,7 +404,7 @@ function asmFunc(global, env, buffer) {
     continue loop_in;
     break loop_in;
    } while (1);
-  };
+  }
   i64toi32_i32$5 = $1$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$5;
   return $1_1 | 0;
@@ -441,7 +441,7 @@ function asmFunc(global, env, buffer) {
     continue loop_in;
     break loop_in;
    } while (1);
-  };
+  }
   i64toi32_i32$5 = $1$hi;
   i64toi32_i32$HIGH_BITS = $1$hi;
   return $1_1 | 0;
@@ -464,13 +464,13 @@ function asmFunc(global, env, buffer) {
       continue loop_in72;
       break loop_in72;
      } while (1);
-    };
+    }
     $3_1 = Math_fround($3_1 / $0);
     $0 = Math_fround($0 - Math_fround(1.0));
     continue loop_in;
     break loop_in;
    } while (1);
-  };
+  }
   return Math_fround($3_1);
  }
  

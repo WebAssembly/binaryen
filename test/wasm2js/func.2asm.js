@@ -278,7 +278,7 @@ function asmFunc(global, env, buffer) {
   block : {
    dummy();
    dummy();
-  };
+  }
  }
  
  function $48() {
@@ -321,7 +321,7 @@ function asmFunc(global, env, buffer) {
   fake_return_waka123 : {
    $0 = 79;
    break fake_return_waka123;
-  };
+  }
   return $0 | 0;
  }
  
@@ -332,7 +332,7 @@ function asmFunc(global, env, buffer) {
    $0 = 7979;
    $0$hi = i64toi32_i32$0;
    break fake_return_waka123;
-  };
+  }
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return $0 | 0;
@@ -343,7 +343,7 @@ function asmFunc(global, env, buffer) {
   fake_return_waka123 : {
    $0 = Math_fround(79.9000015258789);
    break fake_return_waka123;
-  };
+  }
   return Math_fround($0);
  }
  
@@ -352,7 +352,7 @@ function asmFunc(global, env, buffer) {
   fake_return_waka123 : {
    $0 = 79.79;
    break fake_return_waka123;
-  };
+  }
   return +$0;
  }
  
@@ -362,7 +362,7 @@ function asmFunc(global, env, buffer) {
    dummy();
    $2_1 = 77;
    break fake_return_waka123;
-  };
+  }
   return $2_1 | 0;
  }
  
@@ -377,7 +377,7 @@ function asmFunc(global, env, buffer) {
    $2_1 = 50;
    if ($0) break fake_return_waka123;
    $2_1 = 51;
-  };
+  }
   return $2_1 | 0;
  }
  
@@ -396,7 +396,7 @@ function asmFunc(global, env, buffer) {
    default:
     break fake_return_waka123;
    };
-  };
+  }
   return $3 | 0;
  }
  
@@ -420,9 +420,9 @@ function asmFunc(global, env, buffer) {
     default:
      break block;
     };
-   };
+   }
    $4 = $3 + 2 | 0;
-  };
+  }
   return $4 | 0;
  }
  

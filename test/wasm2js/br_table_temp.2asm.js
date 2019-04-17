@@ -52,7 +52,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -68,7 +68,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   i64toi32_i32$0 = $1$hi;
   return $1_1 | 0;
  }
@@ -83,7 +83,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return Math_fround($1_1);
  }
  
@@ -97,7 +97,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return +$1_1;
  }
  
@@ -115,7 +115,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -129,9 +129,9 @@ function asmFunc(global, env, buffer) {
     default:
      break block0;
     };
-   };
+   }
    return 20 | 0;
-  };
+  }
   return 22 | 0;
  }
  
@@ -149,9 +149,9 @@ function asmFunc(global, env, buffer) {
     default:
      break block;
     };
-   };
+   }
    $3_1 = 32;
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -174,15 +174,15 @@ function asmFunc(global, env, buffer) {
        default:
         break block;
        };
-      };
+      }
       return 100 | 0;
-     };
+     }
      return 101 | 0;
-    };
+    }
     return 102 | 0;
-   };
+   }
    return 103 | 0;
-  };
+  }
   return 104 | 0;
  }
  
@@ -212,19 +212,19 @@ function asmFunc(global, env, buffer) {
        default:
         break block;
        };
-      };
+      }
       $1_1 = $8_1;
       return $1_1 + 10 | 0 | 0;
-     };
+     }
      $1_1 = $7_1;
      return $1_1 + 11 | 0 | 0;
-    };
+    }
     $1_1 = $6_1;
     return $1_1 + 12 | 0 | 0;
-   };
+   }
    $1_1 = $5_1;
    return $1_1 + 13 | 0 | 0;
-  };
+  }
   $1_1 = $4_1;
   return $1_1 + 14 | 0 | 0;
  }
@@ -49467,9 +49467,9 @@ function asmFunc(global, env, buffer) {
     default:
      break block;
     };
-   };
+   }
    return 0 | 0;
-  };
+  }
   return 1 | 0;
  }
  
@@ -49488,7 +49488,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
  }
  
  function $18() {
@@ -49502,7 +49502,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
  }
  
  function $19() {
@@ -49518,7 +49518,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49535,7 +49535,7 @@ function asmFunc(global, env, buffer) {
     };
     break loop_in;
    } while (1);
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49555,7 +49555,7 @@ function asmFunc(global, env, buffer) {
     };
     break loop_in;
    } while (1);
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49575,7 +49575,7 @@ function asmFunc(global, env, buffer) {
     };
     break loop_in;
    } while (1);
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49584,7 +49584,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 9;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -49600,7 +49600,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49614,7 +49614,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49630,7 +49630,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49642,7 +49642,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49656,7 +49656,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   i64toi32_i32$0 = $1$hi;
   return $1_1 | 0;
  }
@@ -49669,7 +49669,7 @@ function asmFunc(global, env, buffer) {
    default:
     break if_;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49686,7 +49686,7 @@ function asmFunc(global, env, buffer) {
     };
    } else $6_1 = $1_1;
    $4_1 = $6_1;
-  };
+  }
   return $4_1 | 0;
  }
  
@@ -49708,9 +49708,9 @@ function asmFunc(global, env, buffer) {
      };
     }
     $6_1 = $7_1;
-   };
+   }
    $5_1 = $6_1;
-  };
+  }
   return $5_1 | 0;
  }
  
@@ -49724,7 +49724,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -49739,7 +49739,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $4_1 | 0;
  }
  
@@ -49751,7 +49751,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49770,7 +49770,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49782,7 +49782,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49794,7 +49794,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49806,7 +49806,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49818,7 +49818,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49830,7 +49830,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49842,7 +49842,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49854,7 +49854,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $2_1 | 0;
  }
  
@@ -49866,7 +49866,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49880,7 +49880,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   i64toi32_i32$0 = $1$hi;
   return $1_1 | 0;
  }
@@ -49893,7 +49893,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49905,7 +49905,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49917,7 +49917,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49929,7 +49929,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49941,7 +49941,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49955,7 +49955,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49969,7 +49969,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   i64toi32_i32$0 = $1$hi;
   return $1_1 | 0;
  }
@@ -49982,7 +49982,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -49996,7 +49996,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -50008,7 +50008,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -50020,7 +50020,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -50032,7 +50032,7 @@ function asmFunc(global, env, buffer) {
    default:
     break block;
    };
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -50054,11 +50054,11 @@ function asmFunc(global, env, buffer) {
      default:
       break block;
      };
-    };
+    }
     $4_1 = 2 + $5_1 | 0;
-   };
+   }
    $3_1 = 1 + $4_1 | 0;
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -50080,11 +50080,11 @@ function asmFunc(global, env, buffer) {
      default:
       break block14;
      };
-    };
+    }
     $4_1 = 16;
-   };
+   }
    $3_1 = 1 + $4_1 | 0;
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -50106,11 +50106,11 @@ function asmFunc(global, env, buffer) {
      default:
       break block;
      };
-    };
+    }
     $4_1 = 16;
-   };
+   }
    $3_1 = 1 + $4_1 | 0;
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -50130,9 +50130,9 @@ function asmFunc(global, env, buffer) {
     default:
      break block17;
     };
-   };
+   }
    $3_1 = 1 + $4_1 | 0;
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -50154,11 +50154,11 @@ function asmFunc(global, env, buffer) {
      default:
       break block;
      };
-    };
+    }
     $4_1 = 16;
-   };
+   }
    $3_1 = 1 + $4_1 | 0;
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -50178,9 +50178,9 @@ function asmFunc(global, env, buffer) {
     default:
      break block20;
     };
-   };
+   }
    $3_1 = 1 + $4_1 | 0;
-  };
+  }
   return $3_1 | 0;
  }
  
