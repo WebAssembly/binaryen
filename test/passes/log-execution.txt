@@ -18,26 +18,31 @@
  )
  (func $workk (; 4 ;) (type $FUNCSIG$v)
   (call $log_execution
-   (i32.const 2)
+   (i32.const 3)
   )
   (block
    (if
     (i32.const 0)
     (nop)
    )
-   (drop
-    (i32.const 1)
+   (block
+    (call $log_execution
+     (i32.const 2)
+    )
+    (drop
+     (i32.const 1)
+    )
    )
   )
  )
  (func $loops (; 5 ;) (type $FUNCSIG$v)
   (call $log_execution
-   (i32.const 6)
+   (i32.const 8)
   )
   (block
    (loop $x
     (call $log_execution
-     (i32.const 3)
+     (i32.const 4)
     )
     (block
      (call $loops)
@@ -48,24 +53,29 @@
     (call $intt)
     (loop $y
      (call $log_execution
-      (i32.const 4)
+      (i32.const 5)
      )
      (call $loops)
     )
    )
-   (loop $loop-in
+   (block
     (call $log_execution
-     (i32.const 5)
+     (i32.const 7)
     )
-    (block
-     (drop
-      (i32.const 10)
+    (loop $loop-in
+     (call $log_execution
+      (i32.const 6)
      )
-     (drop
-      (i32.const 20)
-     )
-     (drop
-      (i32.const 30)
+     (block
+      (drop
+       (i32.const 10)
+      )
+      (drop
+       (i32.const 20)
+      )
+      (drop
+       (i32.const 30)
+      )
      )
     )
    )
@@ -73,11 +83,11 @@
  )
  (func $loops-similar (; 6 ;) (type $FUNCSIG$v)
   (call $log_execution
-   (i32.const 8)
+   (i32.const 10)
   )
   (loop $x
    (call $log_execution
-    (i32.const 7)
+    (i32.const 9)
    )
    (block
     (call $loops)
