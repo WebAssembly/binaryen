@@ -25,14 +25,22 @@ function asmFunc(global, env, buffer) {
  function even(n) {
   n = n | 0;
   var $6 = 0;
-  if ((n | 0) == (0 | 0)) $6 = 1; else $6 = odd(n - 1 | 0 | 0) | 0;
+  if ((n | 0) == (0 | 0)) {
+   $6 = 1
+  } else {
+   $6 = odd(n - 1 | 0 | 0) | 0
+  }
   return $6 | 0;
  }
  
  function odd(n) {
   n = n | 0;
   var $6 = 0;
-  if ((n | 0) == (0 | 0)) $6 = 0; else $6 = even(n - 1 | 0 | 0) | 0;
+  if ((n | 0) == (0 | 0)) {
+   $6 = 0
+  } else {
+   $6 = even(n - 1 | 0 | 0) | 0
+  }
   return $6 | 0;
  }
  
