@@ -1,6 +1,6 @@
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -118,7 +118,7 @@ export const i64_no_fold_cmp_s_offset = retasmFunc.i64_no_fold_cmp_s_offset;
 export const i64_no_fold_cmp_u_offset = retasmFunc.i64_no_fold_cmp_u_offset;
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -162,7 +162,7 @@ const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int
 export const i64_no_fold_wrap_extend_s = retasmFunc.i64_no_fold_wrap_extend_s;
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -205,7 +205,7 @@ const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int
 export const i64_no_fold_wrap_extend_u = retasmFunc.i64_no_fold_wrap_extend_u;
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -318,7 +318,7 @@ export const i64_no_fold_shl_shr_s = retasmFunc.i64_no_fold_shl_shr_s;
 export const i64_no_fold_shl_shr_u = retasmFunc.i64_no_fold_shl_shr_u;
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -432,7 +432,7 @@ export const i64_no_fold_shr_u_shl = retasmFunc.i64_no_fold_shr_u_shl;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -1167,7 +1167,7 @@ export const i64_no_fold_div_u_mul = retasmFunc.i64_no_fold_div_u_mul;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -1902,7 +1902,7 @@ export const i64_no_fold_mul_div_u = retasmFunc.i64_no_fold_mul_div_u;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -2522,7 +2522,7 @@ export const i64_no_fold_div_s_2 = retasmFunc.i64_no_fold_div_s_2;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -3125,7 +3125,7 @@ export const i64_no_fold_rem_s_2 = retasmFunc.i64_no_fold_rem_s_2;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -3766,7 +3766,7 @@ export const i64_div_u_3 = retasmFunc.i64_div_u_3;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -4407,7 +4407,7 @@ export const i64_div_u_3 = retasmFunc.i64_div_u_3;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -5048,7 +5048,7 @@ export const i64_div_u_5 = retasmFunc.i64_div_u_5;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -5689,7 +5689,7 @@ export const i64_div_u_7 = retasmFunc.i64_div_u_7;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -6313,7 +6313,7 @@ export const i64_rem_u_3 = retasmFunc.i64_rem_u_3;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -6937,7 +6937,7 @@ export const i64_rem_u_5 = retasmFunc.i64_rem_u_5;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);

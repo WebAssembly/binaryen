@@ -1,7 +1,7 @@
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -652,7 +652,7 @@ export const no_dce_i64_div_u = retasmFunc.no_dce_i64_div_u;
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -1285,7 +1285,7 @@ export const no_dce_i64_rem_s = retasmFunc.no_dce_i64_rem_s;
 export const no_dce_i64_rem_u = retasmFunc.no_dce_i64_rem_u;
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -1408,7 +1408,7 @@ export const no_dce_i64_trunc_s_f64 = retasmFunc.no_dce_i64_trunc_s_f64;
 export const no_dce_i64_trunc_u_f64 = retasmFunc.no_dce_i64_trunc_u_f64;
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -1456,6 +1456,31 @@ function asmFunc(global, env, buffer) {
  }
  
  var FUNCTION_TABLE = [];
+ function __wasm_grow_memory(pagesToAdd) {
+  pagesToAdd = pagesToAdd | 0;
+  var oldPages = __wasm_current_memory() | 0;
+  var newPages = oldPages + pagesToAdd | 0;
+  if ((oldPages < newPages) && (newPages < 65536)) {
+   var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
+   var newHEAP8 = new global.Int8Array(newBuffer);
+   newHEAP8.set(HEAP8);
+   HEAP8 = newHEAP8;
+   HEAP16 = new global.Int16Array(newBuffer);
+   HEAP32 = new global.Int32Array(newBuffer);
+   HEAPU8 = new global.Uint8Array(newBuffer);
+   HEAPU16 = new global.Uint16Array(newBuffer);
+   HEAPU32 = new global.Uint32Array(newBuffer);
+   HEAPF32 = new global.Float32Array(newBuffer);
+   HEAPF64 = new global.Float64Array(newBuffer);
+   buffer = newBuffer;
+  }
+  return oldPages;
+ }
+ 
+ function __wasm_current_memory() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
  return {
   no_dce_i32_load: $0, 
   no_dce_i64_load: $1, 
