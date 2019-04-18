@@ -140,6 +140,7 @@ def run_vm(cmd):
 def run_bynterp(wasm):
   return fix_output(run_vm([in_bin('wasm-opt'), wasm, '--fuzz-exec-before']))
 
+
 def run_wasm2js(wasm):
   wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'])
   main = run([in_bin('wasm2js'), wasm, '--emscripten'])
