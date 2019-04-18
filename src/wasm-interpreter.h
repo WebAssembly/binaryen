@@ -924,6 +924,8 @@ private:
   }
 
   void initializeMemoryContents() {
+    // no way to create a Block without an ArenaAllocator, so use a builder
+    // instead of creating it locally.
     Builder builder(wasm);
 
     Const offset;
