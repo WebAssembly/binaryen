@@ -99,7 +99,7 @@ var asmLibraryArg = {
     console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(h, 'i32') + ']');
   },
   log_f32: function(x) {
-    console.log('[LoggingExternalInterface logging ' + literal(x, 'f32') + ']');
+    console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']');
   },
   log_f64: function(x) {
     console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']');
