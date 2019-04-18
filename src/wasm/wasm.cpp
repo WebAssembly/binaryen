@@ -907,7 +907,9 @@ Global* Module::addGlobal(Global* curr) {
   if (getGlobalOrNull(curr->name)) {
     Fatal() << "Module::addGlobal: " << curr->name << " already exists";
   }
-  globals.push_back(std::unique_ptr<Global>(curr));
+
+  globals.emplace_back(curr);
+
   globalsMap[curr->name] = curr;
   return curr;
 }
