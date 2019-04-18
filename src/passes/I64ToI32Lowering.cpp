@@ -28,6 +28,7 @@
 #include "support/name.h"
 #include "wasm-builder.h"
 #include "ir/flat.h"
+#include "ir/iteration.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -1578,6 +1579,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSelect(Select* curr) {
+    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->ifTrue)) {
       assert(!hasOutParam(curr->ifFalse));
       return;
@@ -1668,6 +1670,24 @@ private:
     TempVar ret = std::move(outParamIt->second);
     highBitVars.erase(e);
     return ret;
+  }
+
+  // If e.g. a select is unreachable, then one arm may have an out param
+  // but not the other. In this case dce should really have been run
+  // before; handle it in a simple way here.
+  bool handleUnreachable(Expression* curr) {
+    if (curr->type != unreachable) return false;
+    std::vector<Expression*> children;
+    for (auto* child : ChildIterator(curr)) {
+      if (isConcreteType(child->type)) {
+        child = builder->makeDrop(child);
+      }
+      children.push_back(child);
+    }
+    auto* block = builder->makeBlock(children);
+    assert(block->type == unreachable);
+    replaceCurrent(block);
+    return true;
   }
 };
 

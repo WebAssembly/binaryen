@@ -78,6 +78,69 @@
    )
   )
  )
+ (func $unreachable-select-i64 (; 2 ;) (type $FUNCSIG$j) (result i32)
+  (local $i64toi32_i32$0 i32)
+  (unreachable)
+  (block
+   (drop
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (i32.const 0)
+     )
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+   (drop
+    (i32.const 2)
+   )
+  )
+  (unreachable)
+ )
+ (func $unreachable-select-i64-b (; 3 ;) (type $FUNCSIG$j) (result i32)
+  (local $i64toi32_i32$0 i32)
+  (unreachable)
+  (block
+   (unreachable)
+   (drop
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (i32.const 0)
+     )
+     (i32.const 3)
+    )
+   )
+   (drop
+    (i32.const 4)
+   )
+  )
+  (unreachable)
+ )
+ (func $unreachable-select-i64-c (; 4 ;) (type $FUNCSIG$j) (result i32)
+  (local $i64toi32_i32$0 i32)
+  (local $i64toi32_i32$1 i32)
+  (unreachable)
+  (block
+   (drop
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (i32.const 0)
+     )
+     (i32.const 5)
+    )
+   )
+   (drop
+    (block (result i32)
+     (local.set $i64toi32_i32$1
+      (i32.const 0)
+     )
+     (i32.const 6)
+    )
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
 )
 (module
  (type $0 (func (param i32 i32)))
