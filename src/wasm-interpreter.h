@@ -116,10 +116,10 @@ public:
 
 // Execute an expression
 template<typename SubType>
-class ExpressionRunner : public Visitor<SubType, Flow> {
+class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
 public:
   Flow visit(Expression *curr) {
-    auto ret = Visitor<SubType, Flow>::visit(curr);
+    auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() && (isConcreteType(curr->type) || isConcreteType(ret.value.type))) {
 #if 1 // def WASM_INTERPRETER_DEBUG
       if (ret.value.type != curr->type) {
@@ -703,27 +703,11 @@ public:
     }
   }
 
-  virtual void trap(const char* why) {
-    WASM_UNREACHABLE();
-  }
-};
-
-// Execute an constant expression in a global init or memory offset
-template<typename GlobalManager>
-class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner<GlobalManager>> {
-  GlobalManager& globals;
-public:
-  ConstantExpressionRunner(GlobalManager& globals) : globals(globals) {}
-
-  Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
-  Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
-  Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
-  Flow visitGetLocal(GetLocal *curr) { WASM_UNREACHABLE(); }
-  Flow visitSetLocal(SetLocal *curr) { WASM_UNREACHABLE(); }
-  Flow visitGetGlobal(GetGlobal *curr) {
-    return Flow(globals[curr->name]);
-  }
-  Flow visitSetGlobal(SetGlobal *curr) { WASM_UNREACHABLE(); }
+  Flow visitCall(Call*) { WASM_UNREACHABLE(); }
+  Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE(); }
+  Flow visitGetLocal(GetLocal*) { WASM_UNREACHABLE(); }
+  Flow visitSetLocal(SetLocal*) { WASM_UNREACHABLE(); }
+  Flow visitSetGlobal(SetGlobal*) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load *curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store *curr) { WASM_UNREACHABLE(); }
   Flow visitHost(Host *curr) { WASM_UNREACHABLE(); }
@@ -731,6 +715,26 @@ public:
   Flow visitDataDrop(DataDrop *curr) { WASM_UNREACHABLE(); }
   Flow visitMemoryCopy(MemoryCopy *curr) { WASM_UNREACHABLE(); }
   Flow visitMemoryFill(MemoryFill *curr) { WASM_UNREACHABLE(); }
+  Flow visitAtomicRMW(AtomicRMW*) { WASM_UNREACHABLE(); }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE(); }
+  Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE(); }
+  Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
+
+  virtual void trap(const char* why) {
+    WASM_UNREACHABLE();
+  }
+};
+
+// Execute an constant expression in a global init or memory offset.
+template<typename GlobalManager>
+class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner<GlobalManager>> {
+  GlobalManager& globals;
+public:
+  ConstantExpressionRunner(GlobalManager& globals) : globals(globals) {}
+
+  Flow visitGetGlobal(GetGlobal *curr) {
+    return Flow(globals[curr->name]);
+  }
 };
 
 //
