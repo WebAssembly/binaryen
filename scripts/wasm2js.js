@@ -89,7 +89,106 @@ var WebAssembly = {
   }
 };
 
+var tempRet0 = 0;
+
 var asmLibraryArg = {
+  log_i32: function(x) {
+    console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ']');
+  },
+  log_i64: function(x, h) {
+    console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(h, 'i32') + ']');
+  },
+  log_f32: function(x) {
+    console.log('[LoggingExternalInterface logging ' + literal(x, 'f32') + ']');
+  },
+  log_f64: function(x) {
+    console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']');
+  },
+  log_execution: function(loc) {
+    console.log('log_execution ' + loc);
+  },
+  setTempRet0: function(x) {
+    tempRet0 = x;
+  },
+  getTempRet0: function() {
+    return x;
+  },
+  get_i32: function(loc, index, value) {
+    console.log('get_i32 ' + [loc, index, value]);
+    return value;
+  },
+  get_i64: function(loc, index, low, high) {
+    console.log('get_i64 ' + [loc, index, low, high]);
+    asmLibraryArg['setTempRet0'](high);
+    return low;
+  },
+  get_f32: function(loc, index, value) {
+    console.log('get_f32 ' + [loc, index, value]);
+    return value;
+  },
+  get_f64: function(loc, index, value) {
+    console.log('get_f64 ' + [loc, index, value]);
+    return value;
+  },
+  set_i32: function(loc, index, value) {
+    console.log('set_i32 ' + [loc, index, value]);
+    return value;
+  },
+  set_i64: function(loc, index, low, high) {
+    console.log('set_i64 ' + [loc, index, low, high]);
+    asmLibraryArg['setTempRet0'](high);
+    return low;
+  },
+  set_f32: function(loc, index, value) {
+    console.log('set_f32 ' + [loc, index, value]);
+    return value;
+  },
+  set_f64: function(loc, index, value) {
+    console.log('set_f64 ' + [loc, index, value]);
+    return value;
+  },
+  load_ptr: function(loc, bytes, offset, ptr) {
+    console.log('load_ptr ' + [loc, bytes, offset, ptr]);
+    return ptr;
+  },
+  load_val_i32: function(loc, value) {
+    console.log('load_val_i32 ' + [loc, value]);
+    return value;
+  },
+  load_val_i64: function(loc, low, high) {
+    console.log('load_val_i64 ' + [loc, low, high]);
+    asmLibraryArg['setTempRet0'](high);
+    return low;
+  },
+  load_val_f32: function(loc, value) {
+    console.log('loaload_val_i32d_ptr ' + [loc, value]);
+    return value;
+  },
+  load_val_f64: function(loc, value) {
+    console.log('load_val_f64 ' + [loc, value]);
+    return value;
+  },
+  store_ptr: function(loc, bytes, offset, ptr) {
+    console.log('store_ptr ' + [loc, bytes, offset, ptr]);
+    return ptr;
+  },
+  store_val_i32: function(loc, value) {
+    console.log('store_val_i32 ' + [loc, value]);
+    return value;
+  },
+  store_val_i64: function(loc, low, high) {
+    console.log('store_val_i64 ' + [loc, low, high]);
+    asmLibraryArg['setTempRet0'](high);
+    return low;
+  },
+  store_val_f32: function(loc, value) {
+    console.log('loastore_val_i32d_ptr ' + [loc, value]);
+    return value;
+  },
+  store_val_f64: function(loc, value) {
+    console.log('store_val_f64 ' + [loc, value]);
+    return value;
+  },
 };
 
 var wasmMemory = new WebAssembly.Memory({ initial: 1 });
