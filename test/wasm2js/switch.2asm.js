@@ -56,24 +56,24 @@ function asmFunc(global, env, buffer) {
             default:
              break default_;
             };
-           };
+           }
            return i | 0;
-          };
-         };
-        };
+          }
+         }
+        }
         j = 0 - i | 0;
         break switch_;
-       };
+       }
        break switch_;
-      };
+      }
       j = 101;
       break switch_;
-     };
+     }
      j = 101;
-    };
+    }
     j = 102;
-   };
-  };
+   }
+  }
   return j | 0;
  }
  
@@ -113,34 +113,34 @@ function asmFunc(global, env, buffer) {
             default:
              break default_;
             };
-           };
+           }
            i64toi32_i32$HIGH_BITS = i$hi;
            return i | 0;
-          };
-         };
-        };
+          }
+         }
+        }
         i64toi32_i32$2 = 0;
         i64toi32_i32$5 = (i64toi32_i32$2 >>> 0 < i >>> 0) + i$hi | 0;
         i64toi32_i32$5 = 0 - i64toi32_i32$5 | 0;
         $7_1 = i64toi32_i32$2 - i | 0;
         $7$hi = i64toi32_i32$5;
         break switch_;
-       };
+       }
        i64toi32_i32$5 = 0;
        j = 101;
        j$hi = i64toi32_i32$5;
-      };
-     };
-    };
+      }
+     }
+    }
     i64toi32_i32$5 = j$hi;
     $7_1 = j;
     $7$hi = i64toi32_i32$5;
     break switch_;
-   };
+   }
    i64toi32_i32$5 = 4294967295;
    $7_1 = 4294967291;
    $7$hi = i64toi32_i32$5;
-  };
+  }
   i64toi32_i32$5 = $7$hi;
   i64toi32_i32$2 = $7_1;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$5;
@@ -169,13 +169,13 @@ function asmFunc(global, env, buffer) {
       default:
        break default_;
       };
-     };
+     }
      $6_1 = 1e3 + $9 | 0;
-    };
+    }
     $7_1 = 100 + $6_1 | 0;
-   };
+   }
    $8 = 10 + $7_1 | 0;
-  };
+  }
   return $8 | 0;
  }
  

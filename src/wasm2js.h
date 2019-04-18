@@ -230,9 +230,13 @@ public:
       // it's a bug currently if they're not globally unique. This should
       // probably be fixed via a different namespace for exports or something
       // like that.
+      // XXX This is not actually a valid check atm, since functions are not in the
+      //     global-most scope, but rather in the "asmFunc" scope which is inside it.
+      //     Also, for emscripten style glue, we emit the exports as a return, so there
+      //     is no name placed into the scope. For these reasons, just warn here, don't
+      //     error.
       if (scope == NameScope::Top) {
-        Fatal() << "global scope is colliding with other scope: " << mangled << '\n';
-        abort();
+        std::cerr << "wasm2js: warning: global scope may be colliding with other scope: " << mangled << '\n';
       }
     }
     allMangledNames.insert(ret);
@@ -963,6 +967,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       return ValueBuilder::makeLabel(fromName(asmLabel, NameScope::Label), ret);
     }
 
+    Ref makeBreakOrContinue(Name name) {
+      if (continueLabels.count(name)) {
+        return ValueBuilder::makeContinue(fromName(name, NameScope::Label));
+      } else {
+        return ValueBuilder::makeBreak(fromName(name, NameScope::Label));
+      }
+    }
+
     Ref visitBreak(Break* curr) {
       if (curr->condition) {
         // we need an equivalent to an if here, so use that code
@@ -973,13 +985,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         fakeIf.ifTrue = &fakeBreak;
         return visit(&fakeIf, result);
       }
-      Ref theBreak;
-      auto iter = continueLabels.find(curr->name);
-      if (iter == continueLabels.end()) {
-        theBreak = ValueBuilder::makeBreak(fromName(curr->name, NameScope::Label));
-      } else {
-        theBreak = ValueBuilder::makeContinue(fromName(curr->name, NameScope::Label));
-      }
+      Ref theBreak = makeBreakOrContinue(curr->name);
       if (!curr->value) return theBreak;
       // generate the value, including assigning to the result, and then do the break
       Ref ret = visitAndAssign(curr->value, breakResults[curr->name]);
@@ -1006,10 +1012,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       ret[1]->push_back(theSwitch);
       for (size_t i = 0; i < curr->targets.size(); i++) {
         ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
-        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->targets[i], NameScope::Label))), false);
+        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(makeBreakOrContinue(curr->targets[i])), false);
       }
       ValueBuilder::appendDefaultToSwitch(theSwitch);
-      ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->default_, NameScope::Label))), false);
+      ValueBuilder::appendCodeToSwitch(theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
       return ret;
     }
 
@@ -1158,6 +1164,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         Load load = *curr;
         load.ptr = &get;
         load.bytes = 1; // do the worst
+        load.signed_ = false;
         Ref rest;
         switch (curr->type) {
           case i32: {

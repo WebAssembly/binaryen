@@ -69,6 +69,7 @@ Pass* createPrecomputePass();
 Pass* createPrecomputePropagatePass();
 Pass* createPrinterPass();
 Pass* createPrintCallGraphPass();
+Pass* createPrintFeaturesPass();
 Pass* createPrintStackIRPass();
 Pass* createRelooperJumpThreadingPass();
 Pass* createRemoveNonJSOpsPass();

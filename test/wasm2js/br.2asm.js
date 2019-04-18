@@ -47,7 +47,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 1;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -58,7 +58,7 @@ function asmFunc(global, env, buffer) {
    $0 = 2;
    $0$hi = i64toi32_i32$0;
    break block;
-  };
+  }
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return $0 | 0;
@@ -69,7 +69,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = Math_fround(3.0);
    break block;
-  };
+  }
   return Math_fround($0);
  }
  
@@ -78,7 +78,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 4.0;
    break block;
-  };
+  }
   return +$0;
  }
  
@@ -90,14 +90,14 @@ function asmFunc(global, env, buffer) {
   block : {
    dummy();
    break block;
-  };
+  }
  }
  
  function $11() {
   block : {
    dummy();
    break block;
-  };
+  }
  }
  
  function $12() {
@@ -106,7 +106,7 @@ function asmFunc(global, env, buffer) {
    dummy();
    $0 = 2;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -118,7 +118,7 @@ function asmFunc(global, env, buffer) {
     break block;
     break loop_in;
    } while (1);
-  };
+  }
   return $0 | 0;
  }
  
@@ -131,7 +131,7 @@ function asmFunc(global, env, buffer) {
     break block;
     break loop_in;
    } while (1);
-  };
+  }
   return $0 | 0;
  }
  
@@ -144,7 +144,7 @@ function asmFunc(global, env, buffer) {
     break block;
     break loop_in;
    } while (1);
-  };
+  }
   return $0 | 0;
  }
  
@@ -153,7 +153,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 9;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -166,7 +166,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 8;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -175,7 +175,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 9;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -188,7 +188,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 10;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -197,7 +197,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 11;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -208,7 +208,7 @@ function asmFunc(global, env, buffer) {
    $0 = 7;
    $0$hi = i64toi32_i32$0;
    break block;
-  };
+  }
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return $0 | 0;
@@ -219,7 +219,7 @@ function asmFunc(global, env, buffer) {
   if_ : {
    $0 = 2;
    break if_;
-  };
+  }
   return $0 | 0;
  }
  
@@ -233,7 +233,7 @@ function asmFunc(global, env, buffer) {
     break block;
    } else $5_1 = $1_1;
    $3_1 = $5_1;
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -247,7 +247,7 @@ function asmFunc(global, env, buffer) {
     break block;
    }
    $4_1 = $5_1;
-  };
+  }
   return $4_1 | 0;
  }
  
@@ -258,7 +258,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $2_1 = 5;
    break block;
-  };
+  }
   return $2_1 | 0;
  }
  
@@ -270,7 +270,7 @@ function asmFunc(global, env, buffer) {
    $2_1 = $0;
    $3_1 = 6;
    break block;
-  };
+  }
   return $3_1 | 0;
  }
  
@@ -279,7 +279,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 7;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -295,7 +295,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 12;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -304,7 +304,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 13;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -313,7 +313,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 14;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -322,7 +322,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 20;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -331,7 +331,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 21;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -340,7 +340,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 22;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -349,7 +349,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 23;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -358,7 +358,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $1_1 = 17;
    break block;
-  };
+  }
   return $1_1 | 0;
  }
  
@@ -367,7 +367,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = Math_fround(1.7000000476837158);
    break block;
-  };
+  }
   return Math_fround($0);
  }
  
@@ -378,7 +378,7 @@ function asmFunc(global, env, buffer) {
    $0 = 30;
    $0$hi = i64toi32_i32$0;
    break block;
-  };
+  }
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return $0 | 0;
@@ -389,7 +389,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 30;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -398,7 +398,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 31;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -407,7 +407,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 32;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -416,7 +416,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 33;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -425,7 +425,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = Math_fround(3.4000000953674316);
    break block;
-  };
+  }
   return Math_fround($0);
  }
  
@@ -434,7 +434,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 3;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -445,7 +445,7 @@ function asmFunc(global, env, buffer) {
    $0 = 45;
    $0$hi = i64toi32_i32$0;
    break block;
-  };
+  }
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return $0 | 0;
@@ -456,7 +456,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 44;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -465,7 +465,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 43;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -474,7 +474,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 42;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -483,7 +483,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 41;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -492,7 +492,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 40;
    break block;
-  };
+  }
   return $0 | 0;
  }
  
@@ -502,7 +502,7 @@ function asmFunc(global, env, buffer) {
    dummy();
    $0 = 8;
    break block;
-  };
+  }
   return 1 + $0 | 0 | 0;
  }
  
@@ -512,8 +512,8 @@ function asmFunc(global, env, buffer) {
    block0 : {
     $0 = 8;
     break block;
-   };
-  };
+   }
+  }
   return 1 + $0 | 0 | 0;
  }
  
@@ -522,7 +522,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 8;
    break block;
-  };
+  }
   return 1 + $0 | 0 | 0;
  }
  
@@ -531,7 +531,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 8;
    break block;
-  };
+  }
   return 1 + $0 | 0 | 0;
  }
  
@@ -540,7 +540,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 8;
    break block;
-  };
+  }
   return 1 + $0 | 0 | 0;
  }
  
@@ -549,7 +549,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $0 = 8;
    break block;
-  };
+  }
   return 1 + $0 | 0 | 0;
  }
  

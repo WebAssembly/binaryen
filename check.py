@@ -140,12 +140,12 @@ def run_wasm_opt_tests():
     if t.endswith('.wast'):
       print '..', t
       wasm = os.path.basename(t).replace('.wast', '')
-      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print']
+      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print', '-all']
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
       expected_file = os.path.join(options.binaryen_test, 'print', wasm + '.txt')
       fail_if_not_identical_to_file(actual, expected_file)
-      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified']
+      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified', '-all']
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
       fail_if_not_identical(actual.strip(), open(os.path.join(options.binaryen_test, 'print', wasm + '.minified.txt')).read().strip())
@@ -157,7 +157,7 @@ def run_wasm_opt_tests():
       print '..', t
       t = os.path.join(options.binaryen_test, t)
       f = t + '.from-wast'
-      cmd = WASM_OPT + [t, '--print']
+      cmd = WASM_OPT + [t, '--print', '-all']
       actual = run_command(cmd)
       actual = actual.replace('printing before:\n', '')
 
@@ -197,7 +197,7 @@ def run_wasm_dis_tests():
 
       # also verify there are no validation errors
       def check():
-        cmd = WASM_OPT + [t]
+        cmd = WASM_OPT + [t, '-all']
         run_command(cmd)
 
       with_pass_debug(check)
@@ -240,8 +240,7 @@ def run_ctor_eval_tests():
       print '..', t
       t = os.path.join(test_dir, t)
       ctors = open(t + '.ctors').read().strip()
-      # TODO: remove --disable-bulk-memory once default feature set is MVP
-      cmd = WASM_CTOR_EVAL + [t, '--disable-bulk-memory', '-o', 'a.wast', '-S', '--ctors', ctors]
+      cmd = WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
       run_command(cmd)
       actual = open('a.wast').read()
       out = t + '.out'
@@ -276,7 +275,7 @@ def run_wasm_reduce_tests():
       t = os.path.join(test_dir, t)
       # convert to wasm
       run_command(WASM_AS + [t, '-o', 'a.wasm'])
-      run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+      run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
       expected = t + '.txt'
       run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
       with open('a.wast') as seen:
@@ -287,9 +286,9 @@ def run_wasm_reduce_tests():
   if 'fsanitize=thread' not in str(os.environ):
     print '\n[ checking wasm-reduce fuzz testcase ]\n'
 
-    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
+    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm', '-all'])
     before = os.stat('a.wasm').st_size
-    run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+    run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
     after = os.stat('c.wasm').st_size
     assert after < 0.6 * before, [before, after]
 
@@ -324,7 +323,7 @@ def run_spec_tests():
 
       def run_opt_test(wast):
         # check optimization validation
-        cmd = WASM_OPT + [wast, '-O']
+        cmd = WASM_OPT + [wast, '-O', '-all']
         run_command(cmd)
 
       def check_expected(actual, expected):

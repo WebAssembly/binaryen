@@ -635,7 +635,10 @@ struct JSPrinter {
   }
 
   bool isBlock(Ref node) {
-    return node->isArray() && node[0] == BLOCK;
+    if (node->isArray() && node[0] == BLOCK) return true;
+    // Check for a label on a block
+    if (node->isArray() && node[0] == LABEL && isBlock(node[2])) return true;
+    return false;
   }
 
   bool isIf(Ref node) {

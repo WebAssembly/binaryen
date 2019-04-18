@@ -14,18 +14,26 @@
  * limitations under the License.
  */
 
+//
+// Print out the feature options corresponding to enabled features
+//
+
+#include "wasm.h"
+#include "wasm-features.h"
 #include "pass.h"
 
 namespace wasm {
 
-struct StripTargetFeatures : public Pass {
+struct PrintFeatures : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    module->hasFeaturesSection = false;
+    module->features.iterFeatures([](FeatureSet::Feature f) {
+      std::cout << "--enable-" << FeatureSet::toString(f) << std::endl;
+    });
   }
 };
 
-Pass *createStripTargetFeaturesPass() {
-  return new StripTargetFeatures();
+Pass* createPrintFeaturesPass() {
+  return new PrintFeatures();
 }
 
 } // namespace wasm

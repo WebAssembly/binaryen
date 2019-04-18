@@ -40,6 +40,7 @@ SET(passes_SOURCES
   Precompute.cpp
   Print.cpp
   PrintCallGraph.cpp
+  PrintFeatures.cpp
   StackIR.cpp
   Strip.cpp
   StripTargetFeatures.cpp

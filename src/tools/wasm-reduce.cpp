@@ -271,7 +271,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       // try both combining with a generic shrink (so minor pass overhead is compensated for), and without
       for (auto pass : passes) {
         std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-        currCommand += working + " -o " + test + " " + pass;
+        // TODO(tlively): -all should be replaced with an option to use the
+        // existing feature set, once implemented.
+        currCommand += working + " -all -o " + test + " " + pass;
         if (debugInfo) currCommand += " -g ";
         if (verbose) std::cerr << "|    trying pass command: " << currCommand << "\n";
         if (!ProgramResult(currCommand).failed()) {
@@ -321,6 +323,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     Module wasm;
     ModuleReader reader;
     reader.read(working, *module);
+    wasm.features = FeatureSet::All;
     builder = make_unique<Builder>(*module);
     setModule(module.get());
   }
@@ -999,7 +1002,9 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     // read and write it
-    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test;
+    // TODO(tlively): -all should be replaced with an option to use the existing
+    // feature set, once implemented.
+    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -all -o " + test;
     if (!binary) cmd += " -S";
     ProgramResult readWrite(cmd);
     if (readWrite.failed()) {

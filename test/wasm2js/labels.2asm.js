@@ -27,7 +27,7 @@ function asmFunc(global, env, buffer) {
   exit : {
    $0_1 = 1;
    break exit;
-  };
+  }
   return $0_1 | 0;
  }
  
@@ -44,7 +44,7 @@ function asmFunc(global, env, buffer) {
     continue cont;
     break cont;
    } while (1);
-  };
+  }
   return $6_1 | 0;
  }
  
@@ -63,7 +63,7 @@ function asmFunc(global, env, buffer) {
     continue cont;
     break cont;
    } while (1);
-  };
+  }
   return $8_1 | 0;
  }
  
@@ -80,7 +80,7 @@ function asmFunc(global, env, buffer) {
     break cont;
    } while (1);
    $6_1 = i;
-  };
+  }
   return $6_1 | 0;
  }
  
@@ -98,7 +98,7 @@ function asmFunc(global, env, buffer) {
     continue cont;
     break cont;
    } while (1);
-  };
+  }
   return $9_1 | 0;
  }
  
@@ -117,25 +117,25 @@ function asmFunc(global, env, buffer) {
   block_1 : {
    l : {
     break l;
-   };
+   }
    i = i + 1 | 0;
    l1 : {
     break l1;
-   };
+   }
    i = i + 1 | 0;
    l2 : {
     break l2;
-   };
+   }
    i = i + 1 | 0;
    l3 : {
     break l3;
-   };
+   }
    i = i + 1 | 0;
    l4 : {
     break l4;
-   };
+   }
    i = i + 1 | 0;
-  };
+  }
   return i | 0;
  }
  
@@ -145,25 +145,25 @@ function asmFunc(global, env, buffer) {
   block_1 : {
    if_1 : {
     break if_1;
-   };
+   }
    i = i + 1 | 0;
    if5 : {
     break if5;
-   };
+   }
    i = i + 1 | 0;
    if6 : {
     break if6;
-   };
+   }
    i = i + 1 | 0;
    if7 : {
     break if7;
-   };
+   }
    i = i + 1 | 0;
    if8 : {
     break if8;
-   };
+   }
    i = i + 1 | 0;
-  };
+  }
   return i | 0;
  }
  
@@ -189,19 +189,19 @@ function asmFunc(global, env, buffer) {
          default:
           break default_;
          };
-        };
-       };
+        }
+       }
        $2_2 = 2;
        break exit;
-      };
+      }
       $3_2 = 3;
       break ret;
-     };
-    };
+     }
+    }
     $2_2 = 5;
-   };
+   }
    $3_2 = Math_imul(10, $2_2);
-  };
+  }
   return $3_2 | 0;
  }
  
@@ -215,9 +215,9 @@ function asmFunc(global, env, buffer) {
     default:
      break $1_1;
     };
-   };
+   }
    return 0 | 0;
-  };
+  }
   return 2 | 0;
  }
  
@@ -230,7 +230,7 @@ function asmFunc(global, env, buffer) {
     i = i | 1 | 0;
     if (1) break inner;
     i = i | 2 | 0;
-   };
+   }
    i = i | 4 | 0;
    $10_1 = i;
    if (0) break outer;
@@ -240,7 +240,7 @@ function asmFunc(global, env, buffer) {
    if (1) break outer;
    i = i | 32 | 0;
    $10_1 = i;
-  };
+  }
   return $10_1 | 0;
  }
  
@@ -250,11 +250,11 @@ function asmFunc(global, env, buffer) {
    l1 : {
     $0_1 = 1;
     break l1;
-   };
+   }
    $2_2 = $0_1;
    if (1) break l0;
    $2_2 = 1;
-  };
+  }
   return $2_2 | 0;
  }
  
@@ -264,10 +264,10 @@ function asmFunc(global, env, buffer) {
    l1 : {
     $0_1 = 1;
     break l1;
-   };
+   }
    $2_2 = $0_1;
    break l0;
-  };
+  }
   return $2_2 | 0;
  }
  
@@ -280,7 +280,7 @@ function asmFunc(global, env, buffer) {
    $7_1 = $3_2;
    if (i1) break l0;
    $7_1 = 0;
-  };
+  }
   return i1 | 0;
  }
  
@@ -290,10 +290,10 @@ function asmFunc(global, env, buffer) {
    l1 : {
     $0_1 = 1;
     break l1;
-   };
+   }
    $2_2 = $0_1;
    break l0;
-  };
+  }
   return $2_2 | 0;
  }
  
@@ -302,7 +302,7 @@ function asmFunc(global, env, buffer) {
   l1 : {
    $0_1 = 1;
    break l1;
-  };
+  }
   return $0_1 | 0;
  }
  
@@ -313,8 +313,8 @@ function asmFunc(global, env, buffer) {
    l113 : {
     $2_2 = 3;
     break l113;
-   };
-  };
+   }
+  }
   return $1_2 + $2_2 | 0 | 0;
  }
  

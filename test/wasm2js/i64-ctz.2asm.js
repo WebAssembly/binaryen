@@ -127,7 +127,7 @@ function asmFunc(global, env, buffer) {
     continue label$2;
     break label$2;
    } while (1);
-  };
+  }
   i64toi32_i32$4 = $5$hi;
   i64toi32_i32$5 = $5;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$4;
