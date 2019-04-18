@@ -1192,12 +1192,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         return ValueBuilder::makeSeq(ptrSet, rest);
       }
       // normal load
-      Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
-      if (curr->offset) {
-        ptr = makeAsmCoercion(
-            ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)),
-            ASM_INT);
-      }
+      Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref ret;
       switch (curr->type) {
         case i32: {
@@ -1320,10 +1315,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         return ValueBuilder::makeSeq(ValueBuilder::makeSeq(ptrSet, valueSet), rest);
       }
       // normal store
-      Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
-      if (curr->offset) {
-        ptr = makeAsmCoercion(ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
-      }
+      Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
       switch (curr->valueType) {
@@ -1856,7 +1848,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     Ref visitUnreachable(Unreachable* curr) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
+
+  private:
+    Ref makePointer(Expression* ptr, Address offset) {
+      auto ret = visit(ptr, EXPRESSION_RESULT);
+      if (offset) {
+        ret = makeAsmCoercion(
+            ValueBuilder::makeBinary(ret, PLUS, ValueBuilder::makeNum(offset)),
+            ASM_INT);
+      }
+      return ret;
+    }
   };
+
   return ExpressionProcessor(this, m, func).visit(func->body, result);
 }
 
