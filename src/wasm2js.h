@@ -632,6 +632,13 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
       fromName(global->name, NameScope::Top),
       theValue
     );
+  } else if (auto* get = global->init->dynCast<GetGlobal>()) {
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+    ValueBuilder::appendToVar(theVar,
+      fromName(global->name, NameScope::Top),
+      ValueBuilder::makeName(fromName(get->name, NameScope::Top))
+    );
   } else {
     assert(false && "Top init type not supported");
   }
