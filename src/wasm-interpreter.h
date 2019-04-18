@@ -928,10 +928,6 @@ private:
   }
 
   void initializeMemoryContents() {
-    // no way to create a Block without an ArenaAllocator, so use a builder
-    // instead of creating it locally.
-    Builder builder(wasm);
-
     Const offset;
     offset.value = Literal(uint32_t(0));
     offset.finalize();
@@ -955,15 +951,16 @@ private:
       init.finalize();
 
       DataDrop drop;
-      drop.segment = segment.index;
+      drop.segment = i;
       drop.finalize();
 
-      Function initializer;
-      initializer.body = builder.blockify(&init, &drop);
-
-      FunctionScope scope(&initializer, {});
-
-      RuntimeExpressionRunner(*this, scope).visit(&init);
+      // we don't actually have a function, but we need one in order to visit
+      // the memory.init and data.drop instructions.
+      Function dummyFunc;
+      FunctionScope dummyScope(&dummyFunc, {});
+      RuntimeExpressionRunner runner(*this, dummyScope);
+      runner.visit(&init);
+      runner.visit(&drop);
     }
   }
 
@@ -1228,14 +1225,20 @@ private:
         trap("memory.init of dropped segment");
       }
 
-      size_t destVal(dest.value.geti32());
-      size_t offsetVal(offset.value.geti32());
-      size_t sizeVal(size.value.geti32());
+      Address destVal(uint32_t(dest.value.geti32()));
+      Address offsetVal(uint32_t(offset.value.geti32()));
+      Address sizeVal(uint32_t(size.value.geti32()));
+
+      instance.checkLoadAddress(destVal, 0);
+      if (offsetVal > segment.data.size()) {
+        trap("segment offset out of bounds");
+      }
+
       for (size_t i = 0; i < sizeVal; ++i) {
         if (offsetVal + i >= segment.data.size()) {
           trap("out of bounds segment access in memory.init");
         }
-        Literal addr = Literal(uint32_t(destVal + i));
+        Literal addr(uint32_t(destVal + i));
         instance.externalInterface->store8(
           instance.getFinalAddress(addr, 1),
           segment.data[offsetVal + i]
@@ -1253,12 +1256,60 @@ private:
     }
     Flow visitMemoryCopy(MemoryCopy *curr) {
       NOTE_ENTER("MemoryCopy");
-      // TODO(tlively): implement me
+      Flow dest = this->visit(curr->dest);
+      if (dest.breaking()) return dest;
+      Flow source = this->visit(curr->source);
+      if (source.breaking()) return source;
+      Flow size = this->visit(curr->size);
+      if (size.breaking()) return size;
+      NOTE_EVAL1(dest);
+      NOTE_EVAL1(source);
+      NOTE_EVAL1(size);
+      Address destVal(uint32_t(dest.value.geti32()));
+      Address sourceVal(uint32_t(source.value.geti32()));
+      Address sizeVal(uint32_t(size.value.geti32()));
+
+      instance.checkLoadAddress(destVal, 0);
+      instance.checkLoadAddress(sourceVal, 0);
+
+      // Direction of copy depends on arguments
+      size_t start = 0;
+      size_t end = sizeVal;
+      int step = 1;
+      if (sourceVal < destVal && destVal < sourceVal + sizeVal) {
+        start = sizeVal - 1;
+        end = -1;
+        step = -1;
+      }
+      for (size_t i = start; i != end; i += step) {
+        instance.externalInterface->store8(
+          instance.getFinalAddress(Literal(destVal + i), 1),
+          instance.externalInterface->load8s(
+            instance.getFinalAddress(Literal(sourceVal + i), 1)));
+      }
       return {};
     }
     Flow visitMemoryFill(MemoryFill *curr) {
       NOTE_ENTER("MemoryFill");
-      // TODO(tlively): implement me
+      Flow dest = this->visit(curr->dest);
+      if (dest.breaking()) return dest;
+      Flow value = this->visit(curr->value);
+      if (value.breaking()) return value;
+      Flow size = this->visit(curr->size);
+      if (size.breaking()) return size;
+      NOTE_EVAL1(dest);
+      NOTE_EVAL1(value);
+      NOTE_EVAL1(size);
+      Address destVal(uint32_t(dest.value.geti32()));
+      Address sizeVal(uint32_t(size.value.geti32()));
+
+      instance.checkLoadAddress(destVal, 0);
+
+      uint8_t val(value.value.geti32());
+      for (size_t i = 0; i < sizeVal; ++i) {
+        instance.externalInterface->store8(
+          instance.getFinalAddress(Literal(destVal + i), 1), val);
+      }
       return {};
     }
 

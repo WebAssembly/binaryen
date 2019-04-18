@@ -240,6 +240,7 @@ int main(int argc, const char* argv[]) {
     auto input = buffer.getAsChars();
     WasmBinaryBuilder parser(other, input, false);
     parser.read();
+    options.applyFeatures(other);
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(other);
       if (!valid) {

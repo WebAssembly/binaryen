@@ -657,9 +657,9 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::MemoryInitId: {
         self->pushTask(SubType::doVisitMemoryInit, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->dest);
-        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->offset);
         self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->size);
+        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->offset);
+        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->dest);
         break;
         }
       case Expression::Id::DataDropId: {
@@ -668,16 +668,16 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         }
       case Expression::Id::MemoryCopyId: {
         self->pushTask(SubType::doVisitMemoryCopy, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->dest);
-        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->source);
         self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->size);
+        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->source);
+        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->dest);
         break;
         }
       case Expression::Id::MemoryFillId: {
         self->pushTask(SubType::doVisitMemoryFill, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->dest);
-        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->value);
         self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->size);
+        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->value);
+        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->dest);
         break;
         }
       case Expression::Id::ConstId: {
