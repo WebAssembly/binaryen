@@ -1,5 +1,7 @@
 (module
-  (memory 0)
+  (memory 512 512
+   (data passive "hello!")
+  )
   (type $0 (func (param i32)))
   (global $global i32 (i32.const 1))
   (global $global-mut (mut i32) (i32.const 2))
@@ -316,6 +318,30 @@
     (i32x4.splat
      (i32.const 0)
     )
+   )
+  )
+  (func $no-memory-init-precompute
+   (memory.init 0
+    (i32.const 512)
+    (i32.const 0)
+    (i32.const 12)
+   )
+  )
+  (func $no-data-drop-precompute
+   (data.drop 0)
+  )
+  (func $no-memory-copy-precompute
+   (memory.copy
+    (i32.const 512)
+    (i32.const 0)
+    (i32.const 12)
+   )
+  )
+  (func $no-memory-fill-precompute
+   (memory.fill
+    (i32.const 512)
+    (i32.const 0)
+    (i32.const 12)
    )
   )
 )
