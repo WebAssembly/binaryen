@@ -33,4 +33,11 @@
   (call $call (global.get $f))
   (global.set $f (i64.const 0x1122334455667788))
  )
+ (func "unreach"
+  (global.set $f
+   (block $label$1 (result i64)
+    (unreachable)
+   )
+  )
+ )
 )

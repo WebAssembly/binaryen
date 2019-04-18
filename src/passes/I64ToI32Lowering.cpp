@@ -465,6 +465,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSetGlobal(SetGlobal* curr) {
+    if (handleUnreachable(curr)) return;
     if (!originallyI64Globals.count(curr->name)) return;
     TempVar highBits = fetchOutParam(curr->value);
     auto* setHigh = builder->makeSetGlobal(
