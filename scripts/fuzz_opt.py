@@ -26,7 +26,7 @@ from test.shared import options, NODEJS
 
 # parameters
 
-NANS = True
+NANS = False
 
 FUZZ_OPTS = []  # '--all-features' etc
 
@@ -90,6 +90,57 @@ def compare(x, y, comment):
     ))
 
 
+def fix_output(out):
+  # large doubles may print slightly different on different VMs
+  def fix_double(x):
+    x = x.group(1)
+    if 'nan' in x or 'NaN' in x:
+      x = 'nan'
+    else:
+      x = x.replace('Infinity', 'inf')
+      x = str(float(x))
+    return 'f64.const ' + x
+  out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
+
+  # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
+  out = out.replace('[trap ', 'exception: [trap ')
+
+  # exceptions may differ when optimizing, but an exception should occur. so ignore their types
+  # also js engines print them out slightly differently
+  return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
+
+
+def fix_spec_output(out):
+  out = fix_output(out)
+  # spec shows a pointer when it traps, remove that
+  out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.split('\n')))
+  # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
+  out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
+  return out
+
+
+def run_vm(cmd):
+  # ignore some vm assertions, if bugs have already been filed
+  known_issues = [
+    'local count too large',  # ignore this; can be caused by flatten, ssa, etc. passes
+    'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
+    'liftoff-assembler.cc, line 245\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
+    'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
+  ]
+  try:
+    return run(cmd)
+  except:
+    output = run_unchecked(cmd)
+    for issue in known_issues:
+      if issue in output:
+        return IGNORE
+    raise
+
+
+def run_bynterp(wasm):
+  return fix_output(run_vm([in_bin('wasm-opt'), wasm, '--fuzz-exec-before']))
+
+
 def run_wasm2js(wasm):
   wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'])
   main = run([in_bin('wasm2js'), wasm, '--emscripten'])
@@ -99,58 +150,17 @@ def run_wasm2js(wasm):
     f.write(glue)
     f.write(main)
     f.write(wrapper)
-  return run([NODEJS, 'js.js', 'a.wasm'])
+  return fix_output(run_vm([NODEJS, 'js.js', 'a.wasm']))
 
 
 def run_vms(prefix):
-  def fix_output(out):
-    # large doubles may print slightly different on different VMs
-    def fix_double(x):
-      x = x.group(1)
-      if 'nan' in x or 'NaN' in x:
-        x = 'nan'
-      else:
-        x = x.replace('Infinity', 'inf')
-        x = str(float(x))
-      return 'f64.const ' + x
-    out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
-
-    # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
-    out = out.replace('[trap ', 'exception: [trap ')
-
-    # exceptions may differ when optimizing, but an exception should occur. so ignore their types
-    # also js engines print them out slightly differently
-    return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
-
-  def fix_spec_output(out):
-    out = fix_output(out)
-    # spec shows a pointer when it traps, remove that
-    out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.split('\n')))
-    # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
-    out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
-    return out
-
-  def run_vm(cmd):
-    # ignore some vm assertions, if bugs have already been filed
-    known_issues = [
-      'local count too large',  # ignore this; can be caused by flatten, ssa, etc. passes
-      'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-      'liftoff-assembler.cc, line 245\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-      'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
-    ]
-    try:
-      return run(cmd)
-    except:
-      output = run_unchecked(cmd)
-      for issue in known_issues:
-        if issue in output:
-          return IGNORE
-      raise
-
-  results = [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
+  wasm = prefix + 'wasm'
+  results = []
+  results.append(run_bynterp(wasm))
+  results.append(fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', wasm])))
+  # results.append(run_wasm2js(wasm))
 
   # append to add results from VMs
-  results += [run_wasm2js(prefix + 'wasm')]
   # results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
   # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
   # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
