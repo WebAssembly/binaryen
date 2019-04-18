@@ -29,10 +29,16 @@ function asmFunc(global, env, buffer) {
   $3 = $3 | 0;
   $4 = $4 | 0;
   $5 = $5 | 0;
-  if ((0 | 0) != (48 | 0)) label$2 : {
-   if (0) break label$2;
-   abort();
-  } else abort();
+  if ((0 | 0) != (48 | 0)) {
+   label$2 : {
+    if (0) {
+     break label$2
+    }
+    abort();
+   }
+  } else {
+   abort()
+  }
   abort();
  }
  

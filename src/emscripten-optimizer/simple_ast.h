@@ -634,10 +634,12 @@ struct JSPrinter {
     return node->isArray() && node[0] == DEFUN;
   }
 
-  bool isBlock(Ref node) {
+  bool endsInBlock(Ref node) {
     if (node->isArray() && node[0] == BLOCK) return true;
     // Check for a label on a block
-    if (node->isArray() && node[0] == LABEL && isBlock(node[2])) return true;
+    if (node->isArray() && node[0] == LABEL && endsInBlock(node[2])) return true;
+    // Check for an if
+    if (node->isArray() && node[0] == IF && endsInBlock(ifHasElse(node) ? node[3] : node[2])) return true;
     return false;
   }
 
@@ -766,7 +768,7 @@ struct JSPrinter {
         if (first) first = false;
         else newline();
         print(curr);
-        if (!isDefun(curr) && !isBlock(curr) && !isIf(curr)) {
+        if (!isDefun(curr) && !endsInBlock(curr) && !isIf(curr)) {
           emit(';');
         }
       }
@@ -1213,42 +1215,24 @@ struct JSPrinter {
     print(node[1]);
     emit(')');
     space();
-    // special case: we need braces to save us from ambiguity, if () { if () } else. otherwise else binds to inner if
-    // also need to recurse for                                if () { if () { } else { if () } else
-    // (note that this is only a problem if the if body has a single element in it, not a block or such, as then
-    // the block would be braced)
-    // this analysis is a little conservative - it assumes any child if could be confused with us, which implies
-    // all other braces vanished (the worst case for us, we are not saved by other braces).
-    bool needBraces = false;
-    bool hasElse = ifHasElse(node);
-    if (hasElse) {
-      Ref child = node[2];
-      while (child->isArray() && child[0] == IF) {
-        if (!ifHasElse(child)) {
-          needBraces = true;
-          break;
-        }
-        child = child[3]; // continue into the else
-      }
-    }
-    if (needBraces) {
-      emit('{');
-      indent++;
-      newline();
-      print(node[2]);
-      indent--;
-      newline();
-      emit('}');
-    } else {
-      print(node[2], "{}");
-      if (!isBlock(node[2])) emit(';');
-    }
-    if (hasElse) {
+    emit('{');
+    indent++;
+    newline();
+    print(node[2]);
+    indent--;
+    newline();
+    emit('}');
+    if (ifHasElse(node)) {
       space();
       emit("else");
       safeSpace();
-      print(node[3], "{}");
-      if (!isBlock(node[3])) emit(';');
+      emit('{');
+      indent++;
+      newline();
+      print(node[3]);
+      indent--;
+      newline();
+      emit('}');
     }
   }
 

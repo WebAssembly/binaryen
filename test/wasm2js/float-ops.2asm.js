@@ -333,9 +333,17 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$0 = Math_fround(0), $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $4_1 = $3_1;
-  } else $4_1 = 0;
+   {
+    if (i64toi32_i32$0 > Math_fround(0.0)) {
+     $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0
+    } else {
+     $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0
+    }
+    $4_1 = $3_1;
+   }
+  } else {
+   $4_1 = 0
+  }
   i64toi32_i32$1 = $4_1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
@@ -345,9 +353,17 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$0 = 0.0, $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $4_1 = $3_1;
-  } else $4_1 = 0;
+   {
+    if (i64toi32_i32$0 > 0.0) {
+     $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0
+    } else {
+     $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0
+    }
+    $4_1 = $3_1;
+   }
+  } else {
+   $4_1 = 0
+  }
   i64toi32_i32$1 = $4_1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
@@ -357,9 +373,17 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$0 = Math_fround(0), $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $4_1 = $3_1;
-  } else $4_1 = 0;
+   {
+    if (i64toi32_i32$0 > Math_fround(0.0)) {
+     $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0
+    } else {
+     $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0
+    }
+    $4_1 = $3_1;
+   }
+  } else {
+   $4_1 = 0
+  }
   i64toi32_i32$1 = $4_1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
@@ -369,9 +393,17 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$0 = 0.0, $3_1 = 0, $4_1 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $4_1 = $3_1;
-  } else $4_1 = 0;
+   {
+    if (i64toi32_i32$0 > 0.0) {
+     $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0
+    } else {
+     $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0
+    }
+    $4_1 = $3_1;
+   }
+  } else {
+   $4_1 = 0
+  }
   i64toi32_i32$1 = $4_1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
