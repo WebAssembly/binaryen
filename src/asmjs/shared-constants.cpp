@@ -102,4 +102,20 @@ cashew::IString GLOBAL("global"),
                 WASM_I64_UDIV("__wasm_i64_udiv"),
                 WASM_I64_SREM("__wasm_i64_srem"),
                 WASM_I64_UREM("__wasm_i64_urem");
+
+namespace ABI {
+namespace wasm2js {
+
+cashew::IString SCRATCH_LOAD_I32("wasm2js_scratch_load_i32"),
+                SCRATCH_STORE_I32("wasm2js_scratch_store_i32"),
+                SCRATCH_LOAD_I64("wasm2js_scratch_load_i64"),
+                SCRATCH_STORE_I64("wasm2js_scratch_store_i64"),
+                SCRATCH_LOAD_F32("wasm2js_scratch_load_f32"),
+                SCRATCH_STORE_F32("wasm2js_scratch_store_f32"),
+                SCRATCH_LOAD_F64("wasm2js_scratch_load_f64"),
+                SCRATCH_STORE_F64("wasm2js_scratch_store_f64");
+
+} // namespace wasm2js
+} // namespace ABI
+
 }

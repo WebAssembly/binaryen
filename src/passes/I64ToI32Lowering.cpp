@@ -636,12 +636,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // our f64 through memory at address 0
     TempVar highBits = getTemp();
     Block *result = builder->blockify(
-      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_F64, { curr->value }),
+      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_F64, { curr->value }, none),
       builder->makeSetLocal(
         highBits,
-        builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32, { builder->makeConst(Literal(int32_t(1))) }),
+        builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32, { builder->makeConst(Literal(int32_t(1))) }, i32)
       ),
-      builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32, { builder->makeConst(Literal(int32_t(0))) }),
+      builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32, { builder->makeConst(Literal(int32_t(0))) }, i32)
     );
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
@@ -654,9 +654,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // our i64 through memory at address 0
     TempVar highBits = fetchOutParam(curr->value);
     Block *result = builder->blockify(
-      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_I32, { builder->makeConst(Literal(int32_t(0))), curr->value }),
-      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_I32, { builder->makeConst(Literal(int32_t(1))), builder->makeGetLocal(highBits, i32) }),
-      builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_F64, {}),
+      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_I32, { builder->makeConst(Literal(int32_t(0))), curr->value }, none),
+      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_I32, { builder->makeConst(Literal(int32_t(1))), builder->makeGetLocal(highBits, i32) }, none),
+      builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_F64, {}, f64)
     );
     replaceCurrent(result);
     MemoryUtils::ensureExists(getModule()->memory);

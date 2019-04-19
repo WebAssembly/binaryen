@@ -18,6 +18,7 @@
 #define wasm_abi_abi_h
 
 #include "wasm.h"
+#include "asmjs/shared-constants.h"
 
 namespace wasm {
 
@@ -38,18 +39,18 @@ inline std::string getLegalizationPass(LegalizationLevel level) {
 
 namespace wasm2js {
 
-extern const IString SCRATCH_LOAD_I32,
-                     SCRATCH_STORE_I32,
-                     SCRATCH_LOAD_I64,
-                     SCRATCH_STORE_I64,
-                     SCRATCH_LOAD_F32,
-                     SCRATCH_STORE_F32,
-                     SCRATCH_LOAD_F64,
-                     SCRATCH_STORE_F64;
+extern cashew::IString SCRATCH_LOAD_I32,
+                       SCRATCH_STORE_I32,
+                       SCRATCH_LOAD_I64,
+                       SCRATCH_STORE_I64,
+                       SCRATCH_LOAD_F32,
+                       SCRATCH_STORE_F32,
+                       SCRATCH_LOAD_F64,
+                       SCRATCH_STORE_F64;
 
 inline void ensureScratchMemoryHelpers(Module* wasm) {
   auto ensureImport = [&](Name name, const std::vector<Type> params, Type result) {
-    if (wasm->getFunctionOrNull(Name)) return;
+    if (wasm->getFunctionOrNull(name)) return;
     auto func = make_unique<Function>();
     func->name = name;
     func->params = params;

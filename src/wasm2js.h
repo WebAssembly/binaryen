@@ -34,6 +34,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "abi/js.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "ir/module-utils.h"
@@ -1410,10 +1411,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
                   makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
             case ReinterpretFloat32: {
               Ref store = ValueBuilder::makeCall(
-                SCRATCH_STORE_F32,
+                ABI::wasm2js::SCRATCH_STORE_F32,
                 visit(curr->value, EXPRESSION_RESULT)
               );
-              Ref store = ValueBuilder::makeCall(SCRATCH_LOAD_I32);
+              Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_I32);
               return ValueBuilder::makeSeq(store, load);
             }
             // generate (~~expr), what Emscripten does
@@ -1495,11 +1496,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
                                      ASM_FLOAT);
             case ReinterpretInt32: {
               Ref store = ValueBuilder::makeCall(
-                SCRATCH_STORE_I32,
+                ABI::wasm2js::SCRATCH_STORE_I32,
                 ValueBuilder::makeNum(0),
                 visit(curr->value, EXPRESSION_RESULT)
               );
-              Ref store = ValueBuilder::makeCall(SCRATCH_LOAD_F32);
+              Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_F32);
               return ValueBuilder::makeSeq(store, load);
             }
             // Coerce the integer to a float as emscripten does
