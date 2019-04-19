@@ -944,7 +944,7 @@ import { setTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -1874,7 +1874,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i32_no_fold_div_s_mul = retasmFunc.i32_no_fold_div_s_mul;
 export const i32_no_fold_div_u_mul = retasmFunc.i32_no_fold_div_u_mul;
 export const i64_no_fold_div_s_mul = retasmFunc.i64_no_fold_div_s_mul;
@@ -1887,7 +1887,7 @@ import { setTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -2817,7 +2817,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i32_no_fold_mul_div_s = retasmFunc.i32_no_fold_mul_div_s;
 export const i32_no_fold_mul_div_u = retasmFunc.i32_no_fold_mul_div_u;
 export const i64_no_fold_mul_div_s = retasmFunc.i64_no_fold_mul_div_s;
@@ -2830,7 +2830,7 @@ import { setTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -3582,7 +3582,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i32_no_fold_div_s_2 = retasmFunc.i32_no_fold_div_s_2;
 export const i64_no_fold_div_s_2 = retasmFunc.i64_no_fold_div_s_2;
 import { setTempRet0 } from 'env';
@@ -3594,12 +3594,12 @@ import { getTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_load_i64() {
-    setTempRet0(i32ScratchView[1]);
+  function legalimport$wasm2js_scratch_load_i64() {
+    if (typeof setTempRet0 === 'function') setTempRet0(i32ScratchView[1]);
     return i32ScratchView[0];
   }
       
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -4362,7 +4362,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0,wasm2js_scratch_load_i64,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
 export const i32_no_fold_rem_s_2 = retasmFunc.i32_no_fold_rem_s_2;
 export const i64_no_fold_rem_s_2 = retasmFunc.i64_no_fold_rem_s_2;
 import { setTempRet0 } from 'env';
@@ -4373,7 +4373,7 @@ import { setTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -5197,7 +5197,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i32_div_s_3 = retasmFunc.i32_div_s_3;
 export const i32_div_u_3 = retasmFunc.i32_div_u_3;
 export const i64_div_s_3 = retasmFunc.i64_div_s_3;
@@ -5210,7 +5210,7 @@ import { setTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -6034,7 +6034,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i32_div_s_3 = retasmFunc.i32_div_s_3;
 export const i32_div_u_3 = retasmFunc.i32_div_u_3;
 export const i64_div_s_3 = retasmFunc.i64_div_s_3;
@@ -6047,7 +6047,7 @@ import { setTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -6871,7 +6871,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i32_div_s_5 = retasmFunc.i32_div_s_5;
 export const i32_div_u_5 = retasmFunc.i32_div_u_5;
 export const i64_div_s_5 = retasmFunc.i64_div_s_5;
@@ -6884,7 +6884,7 @@ import { setTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -7708,7 +7708,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i32_div_s_7 = retasmFunc.i32_div_s_7;
 export const i32_div_u_7 = retasmFunc.i32_div_u_7;
 export const i64_div_s_7 = retasmFunc.i64_div_s_7;
@@ -7722,12 +7722,12 @@ import { getTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_load_i64() {
-    setTempRet0(i32ScratchView[1]);
+  function legalimport$wasm2js_scratch_load_i64() {
+    if (typeof setTempRet0 === 'function') setTempRet0(i32ScratchView[1]);
     return i32ScratchView[0];
   }
       
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -8562,7 +8562,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0,wasm2js_scratch_load_i64,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
 export const i32_rem_s_3 = retasmFunc.i32_rem_s_3;
 export const i32_rem_u_3 = retasmFunc.i32_rem_u_3;
 export const i64_rem_s_3 = retasmFunc.i64_rem_s_3;
@@ -8576,12 +8576,12 @@ import { getTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_load_i64() {
-    setTempRet0(i32ScratchView[1]);
+  function legalimport$wasm2js_scratch_load_i64() {
+    if (typeof setTempRet0 === 'function') setTempRet0(i32ScratchView[1]);
     return i32ScratchView[0];
   }
       
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -9416,7 +9416,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0,wasm2js_scratch_load_i64,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
 export const i32_rem_s_5 = retasmFunc.i32_rem_s_5;
 export const i32_rem_u_5 = retasmFunc.i32_rem_u_5;
 export const i64_rem_s_5 = retasmFunc.i64_rem_s_5;
@@ -9430,12 +9430,12 @@ import { getTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_load_i64() {
-    setTempRet0(i32ScratchView[1]);
+  function legalimport$wasm2js_scratch_load_i64() {
+    if (typeof setTempRet0 === 'function') setTempRet0(i32ScratchView[1]);
     return i32ScratchView[0];
   }
       
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -10270,7 +10270,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0,wasm2js_scratch_load_i64,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
 export const i32_rem_s_7 = retasmFunc.i32_rem_s_7;
 export const i32_rem_u_7 = retasmFunc.i32_rem_u_7;
 export const i64_rem_s_7 = retasmFunc.i64_rem_s_7;

@@ -729,7 +729,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },wasm2js_scratch_load_i32,wasm2js_scratch_store_i32,wasm2js_scratch_load_f64,wasm2js_scratch_store_f64,setTempRet0,wasm2js_scratch_load_f32,wasm2js_scratch_store_f32},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i64_extend_s_i32 = retasmFunc.i64_extend_s_i32;
 export const i64_extend_u_i32 = retasmFunc.i64_extend_u_i32;
 export const i32_wrap_i64 = retasmFunc.i32_wrap_i64;

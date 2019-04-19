@@ -6,7 +6,7 @@ import { setTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -906,7 +906,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const no_dce_i32_div_s = retasmFunc.no_dce_i32_div_s;
 export const no_dce_i32_div_u = retasmFunc.no_dce_i32_div_u;
 export const no_dce_i64_div_s = retasmFunc.no_dce_i64_div_s;
@@ -920,12 +920,12 @@ import { getTempRet0 } from 'env';
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   
-  function wasm2js_scratch_load_i64() {
-    setTempRet0(i32ScratchView[1]);
+  function legalimport$wasm2js_scratch_load_i64() {
+    if (typeof setTempRet0 === 'function') setTempRet0(i32ScratchView[1]);
     return i32ScratchView[0];
   }
       
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
@@ -1836,7 +1836,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0,wasm2js_scratch_load_i64,wasm2js_scratch_store_i64},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
 export const no_dce_i32_rem_s = retasmFunc.no_dce_i32_rem_s;
 export const no_dce_i32_rem_u = retasmFunc.no_dce_i32_rem_u;
 export const no_dce_i64_rem_s = retasmFunc.no_dce_i64_rem_s;

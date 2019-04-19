@@ -2179,6 +2179,10 @@ void Wasm2JSGlue::emitPostES6() {
   out << "abort:function() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    // The scratch memory helpers are emitted in the glue, see code and comments below.
+    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+      return;
+    }
     out << "," << import->base.str;
   });
   out << "},mem" << moduleName.str << ");\n";
@@ -2286,15 +2290,15 @@ void Wasm2JSGlue::emitScratchMemorySupport() {
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_STORE_I64) {
       out << R"(
-  function wasm2js_scratch_store_i64(low, high) {
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
     i32ScratchView[0] = low;
     i32ScratchView[1] = high;
   }
       )";
     } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_I64) {
       out << R"(
-  function wasm2js_scratch_load_i64() {
-    setTempRet0(i32ScratchView[1]);
+  function legalimport$wasm2js_scratch_load_i64() {
+    if (typeof setTempRet0 === 'function') setTempRet0(i32ScratchView[1]);
     return i32ScratchView[0];
   }
       )";
