@@ -71,8 +71,7 @@ struct LegalizeJSInterface : public Pass {
     }
     // for each illegal import, we must call a legalized stub instead
     for (auto* im : originalFunctions) {
-      if (im->imported() && isIllegal(module->getFunctionType(im->type))
-                         && shouldBeLegalized(im)) {
+      if (im->imported() && isIllegal(im) && shouldBeLegalized(im)) {
         auto funcName = makeLegalStubForCalledImport(im, module);
         illegalImportsToLegal[im->name] = funcName;
         // we need to use the legalized version in the table, as the import from JS
@@ -209,7 +208,7 @@ private:
     auto* call = module->allocator.alloc<Call>();
     call->target = legal->name;
 
-    auto* imFunctionType = module->getFunctionType(im->type);
+    auto* imFunctionType = ensureFunctionType(getSig(im), module);
 
     for (auto param : imFunctionType->params) {
       if (param == i64) {
