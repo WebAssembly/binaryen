@@ -1409,17 +1409,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
                                         EXPRESSION_RESULT), ASM_INT), EQ,
                   makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
             case ReinterpretFloat32: {
-              Ref ptr = ValueBuilder::makeName(TEMP_MEMORY);
-              Ref ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ptr);
-              Ref value = visit(curr->value, EXPRESSION_RESULT);
-              Ref store = ValueBuilder::makeBinary(ret, SET, value);
-              return ValueBuilder::makeSeq(
-                store,
-                makeAsmCoercion(
-                  ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), ptr),
-                  ASM_INT
-                )
+              Ref store = ValueBuilder::makeCall(
+                SCRATCH_STORE_F32,
+                visit(curr->value, EXPRESSION_RESULT)
               );
+              Ref store = ValueBuilder::makeCall(SCRATCH_LOAD_I32);
+              return ValueBuilder::makeSeq(store, load);
             }
             // generate (~~expr), what Emscripten does
             case TruncSFloat32ToInt32:
@@ -1499,15 +1494,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
                                      ASM_FLOAT);
             case ReinterpretInt32: {
-              // Like above, assume address 0 is unused.
-              Ref zero = ValueBuilder::makeInt(0);
-              Ref ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero);
-              Ref value = visit(curr->value, EXPRESSION_RESULT);
-              Ref store = ValueBuilder::makeBinary(ret, SET, value);
-              return ValueBuilder::makeSeq(
-                store,
-                ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), zero)
+              Ref store = ValueBuilder::makeCall(
+                SCRATCH_STORE_I32,
+                ValueBuilder::makeNum(0),
+                visit(curr->value, EXPRESSION_RESULT)
               );
+              Ref store = ValueBuilder::makeCall(SCRATCH_LOAD_F32);
+              return ValueBuilder::makeSeq(store, load);
             }
             // Coerce the integer to a float as emscripten does
             case ConvertSInt32ToFloat32:

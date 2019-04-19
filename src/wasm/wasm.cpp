@@ -82,6 +82,22 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
      PRINT("print"),
      EXIT("exit");
 
+
+namespace ABI {
+namespace wasm2js {
+
+const IString SCRATCH_LOAD_I32("wasm2js_scratch_load_i32"),
+              SCRATCH_STORE_I32("wasm2js_scratch_store_i32"),
+              SCRATCH_LOAD_I64("wasm2js_scratch_load_i64"),
+              SCRATCH_STORE_I64("wasm2js_scratch_store_i64"),
+              SCRATCH_LOAD_F32("wasm2js_scratch_load_f32"),
+              SCRATCH_STORE_F32("wasm2js_scratch_store_f32"),
+              SCRATCH_LOAD_F64("wasm2js_scratch_load_f64"),
+              SCRATCH_STORE_F64("wasm2js_scratch_store_f64");
+
+} // namespace wasm2js
+} // namespace ABI
+
 // Expressions
 
 const char* getExpressionName(Expression* curr) {

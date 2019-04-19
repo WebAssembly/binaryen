@@ -33,6 +33,7 @@
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
+#include "abi/js.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/find_all.h"
@@ -102,6 +103,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
     // Intrinsics may use memory, so ensure the module has one.
     MemoryUtils::ensureExists(module->memory);
+
+    // Intrinsics may use scratch memory, ensure it.
+    ABI::wasm2js::ensureScratchMemoryHelpers(module);
 
     // Add missing globals
     for (auto& pair : neededImportedGlobals) {

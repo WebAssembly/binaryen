@@ -36,6 +36,41 @@ inline std::string getLegalizationPass(LegalizationLevel level) {
   }
 }
 
+namespace wasm2js {
+
+extern const IString SCRATCH_LOAD_I32,
+                     SCRATCH_STORE_I32,
+                     SCRATCH_LOAD_I64,
+                     SCRATCH_STORE_I64,
+                     SCRATCH_LOAD_F32,
+                     SCRATCH_STORE_F32,
+                     SCRATCH_LOAD_F64,
+                     SCRATCH_STORE_F64;
+
+inline void ensureScratchMemoryHelpers(Module* wasm) {
+  auto ensureImport = [&](Name name, const std::vector<Type> params, Type result) {
+    if (wasm->getFunctionOrNull(Name)) return;
+    auto func = make_unique<Function>();
+    func->name = name;
+    func->params = params;
+    func->result = result;
+    func->module = ENV;
+    func->base = name;
+    wasm->addFunction(std::move(func));
+  };
+
+  ensureImport(SCRATCH_LOAD_I32, { i32 }, i32);
+  ensureImport(SCRATCH_STORE_I32, { i32, i32 }, none);
+  ensureImport(SCRATCH_LOAD_I64, {}, i64);
+  ensureImport(SCRATCH_STORE_I64, { i64 }, none);
+  ensureImport(SCRATCH_LOAD_F32, {}, f32);
+  ensureImport(SCRATCH_STORE_F32, { f32 }, none);
+  ensureImport(SCRATCH_LOAD_F64, {}, f64);
+  ensureImport(SCRATCH_STORE_F64, { f64 }, none);
+}
+
+} // namespace wasm2js
+
 } // namespace ABI
 
 } // namespace wasm
