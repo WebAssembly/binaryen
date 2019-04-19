@@ -119,6 +119,18 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitAtomicNotify(AtomicNotify* curr) {
     usesMemory = true;
   }
+  void visitMemoryInit(MemoryInit* curr) {
+    usesMemory = true;
+  }
+  void visitDataDrop(DataDrop* curr) {
+    usesMemory = true;
+  }
+  void visitMemoryCopy(MemoryCopy* curr) {
+    usesMemory = true;
+  }
+  void visitMemoryFill(MemoryFill* curr) {
+    usesMemory = true;
+  }
   void visitHost(Host* curr) {
     if (curr->op == CurrentMemory || curr->op == GrowMemory) {
       usesMemory = true;
