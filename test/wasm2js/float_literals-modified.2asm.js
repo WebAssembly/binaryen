@@ -1,6 +1,7 @@
 import { wasm2js_scratch_load_i32 } from 'env';
 import { wasm2js_scratch_store_f64 } from 'env';
 import { setTempRet0 } from 'env';
+import { wasm2js_scratch_store_f32 } from 'env';
 
 function asmFunc(global, env, buffer) {
  "almost asm";
@@ -1264,7 +1265,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },wasm2js_scratch_load_i32,wasm2js_scratch_store_f64,setTempRet0},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },wasm2js_scratch_load_i32,wasm2js_scratch_store_f64,setTempRet0,wasm2js_scratch_store_f32},memasmFunc);
 export const f32_nan = retasmFunc.f32_nan;
 export const f32_positive_nan = retasmFunc.f32_positive_nan;
 export const f32_negative_nan = retasmFunc.f32_negative_nan;
