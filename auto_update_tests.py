@@ -155,7 +155,7 @@ def update_bin_fmt_tests():
   for wast in sorted(os.listdir('test')):
     if wast.endswith('.wast') and wast not in []:  # blacklist some known failures
       for debug_info in [0, 1]:
-        cmd = WASM_AS + [os.path.join('test', wast), '-o', 'a.wasm']
+        cmd = WASM_AS + [os.path.join('test', wast), '-o', 'a.wasm', '-all']
         if debug_info:
           cmd += ['-g']
         print ' '.join(cmd)

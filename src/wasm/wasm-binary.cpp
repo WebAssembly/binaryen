@@ -317,14 +317,9 @@ void WasmBinaryWriter::writeDataCount() {
   if (!wasm->features.hasBulkMemory() || !wasm->memory.segments.size()) {
     return;
   }
-
-  // TODO(tlively): re-enable writing the data count once the default feature
-  // set is no longer All, which causes validation errors in Emscripten due to
-  // the presence of an unrecognized section.
-
-  // auto start = startSection(BinaryConsts::Section::DataCount);
-  // o << U32LEB(wasm->memory.segments.size());
-  // finishSection(start);
+  auto start = startSection(BinaryConsts::Section::DataCount);
+  o << U32LEB(wasm->memory.segments.size());
+  finishSection(start);
 }
 
 void WasmBinaryWriter::writeDataSegments() {

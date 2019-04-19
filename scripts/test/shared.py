@@ -384,7 +384,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   # checks we can convert the wast to binary and back
 
   print '     (binary format check)'
-  cmd = WASM_AS + [wast, '-o', 'a.wasm'] + wasm_as_args
+  cmd = WASM_AS + [wast, '-o', 'a.wasm', '-all'] + wasm_as_args
   print '      ', ' '.join(cmd)
   if os.path.exists('a.wasm'):
     os.unlink('a.wasm')
