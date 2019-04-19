@@ -57,14 +57,50 @@ function asmFunc(global, env, buffer) {
   return x >= y | 0;
  }
  
+ function legalstub$0($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return $0(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1))) | 0 | 0;
+ }
+ 
+ function legalstub$1($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return $1(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1))) | 0 | 0;
+ }
+ 
+ function legalstub$2($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return $2(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1))) | 0 | 0;
+ }
+ 
+ function legalstub$3($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return $3(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1))) | 0 | 0;
+ }
+ 
+ function legalstub$4($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return $4(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1))) | 0 | 0;
+ }
+ 
+ function legalstub$5($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return $5(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1))) | 0 | 0;
+ }
+ 
  var FUNCTION_TABLE = [];
  return {
-  eq: $0, 
-  ne: $1, 
-  lt: $2, 
-  le: $3, 
-  gt: $4, 
-  ge: $5
+  eq: legalstub$0, 
+  ne: legalstub$1, 
+  lt: legalstub$2, 
+  le: legalstub$3, 
+  gt: legalstub$4, 
+  ge: legalstub$5
  };
 }
 

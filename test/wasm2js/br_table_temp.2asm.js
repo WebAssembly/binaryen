@@ -21,7 +21,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
  }
@@ -50192,92 +50191,11 @@ function asmFunc(global, env, buffer) {
   return $3_1 | 0;
  }
  
- function __wasm_ctz_i32(var$0) {
-  var$0 = var$0 | 0;
-  if (var$0) {
-   return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0
-  }
-  return 32 | 0;
+ function legalstub$7() {
+  return +(+Math_fround($7()));
  }
  
- function __wasm_ctz_i64(var$0, var$0$hi) {
-  var$0 = var$0 | 0;
-  var$0$hi = var$0$hi | 0;
-  var i64toi32_i32$0 = 0, i64toi32_i32$3 = 0, i64toi32_i32$5 = 0, i64toi32_i32$4 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, $10_1 = 0, $5$hi = 0, $8$hi = 0;
-  i64toi32_i32$0 = var$0$hi;
-  if (((var$0 | i64toi32_i32$0 | 0 | 0) == (0 | 0) | 0) == (0 | 0)) {
-   {
-    i64toi32_i32$0 = var$0$hi;
-    i64toi32_i32$2 = var$0;
-    i64toi32_i32$1 = 4294967295;
-    i64toi32_i32$3 = 4294967295;
-    i64toi32_i32$4 = i64toi32_i32$2 + i64toi32_i32$3 | 0;
-    i64toi32_i32$5 = i64toi32_i32$0 + i64toi32_i32$1 | 0;
-    if (i64toi32_i32$4 >>> 0 < i64toi32_i32$3 >>> 0) {
-     i64toi32_i32$5 = i64toi32_i32$5 + 1 | 0
-    }
-    $5$hi = i64toi32_i32$5;
-    i64toi32_i32$5 = var$0$hi;
-    i64toi32_i32$5 = $5$hi;
-    i64toi32_i32$0 = i64toi32_i32$4;
-    i64toi32_i32$2 = var$0$hi;
-    i64toi32_i32$3 = var$0;
-    i64toi32_i32$2 = i64toi32_i32$5 ^ i64toi32_i32$2 | 0;
-    i64toi32_i32$0 = i64toi32_i32$0 ^ i64toi32_i32$3 | 0;
-    i64toi32_i32$3 = Math_clz32(i64toi32_i32$2);
-    i64toi32_i32$5 = 0;
-    if ((i64toi32_i32$3 | 0) == (32 | 0)) {
-     $10_1 = Math_clz32(i64toi32_i32$0) + 32 | 0
-    } else {
-     $10_1 = i64toi32_i32$3
-    }
-    $8$hi = i64toi32_i32$5;
-    i64toi32_i32$5 = 0;
-    i64toi32_i32$0 = 63;
-    i64toi32_i32$2 = $8$hi;
-    i64toi32_i32$3 = $10_1;
-    i64toi32_i32$1 = i64toi32_i32$0 - i64toi32_i32$3 | 0;
-    i64toi32_i32$4 = (i64toi32_i32$0 >>> 0 < i64toi32_i32$3 >>> 0) + i64toi32_i32$2 | 0;
-    i64toi32_i32$4 = i64toi32_i32$5 - i64toi32_i32$4 | 0;
-    i64toi32_i32$0 = i64toi32_i32$1;
-    i64toi32_i32$HIGH_BITS = i64toi32_i32$4;
-    return i64toi32_i32$0 | 0;
-   }
-  }
-  i64toi32_i32$0 = 0;
-  i64toi32_i32$4 = 64;
-  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
-  return i64toi32_i32$4 | 0;
- }
- 
- var FUNCTION_TABLE = [f];
- function __wasm_grow_memory(pagesToAdd) {
-  pagesToAdd = pagesToAdd | 0;
-  var oldPages = __wasm_current_memory() | 0;
-  var newPages = oldPages + pagesToAdd | 0;
-  if ((oldPages < newPages) && (newPages < 65536)) {
-   {
-    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
-    var newHEAP8 = new global.Int8Array(newBuffer);
-    newHEAP8.set(HEAP8);
-    HEAP8 = newHEAP8;
-    HEAP16 = new global.Int16Array(newBuffer);
-    HEAP32 = new global.Int32Array(newBuffer);
-    HEAPU8 = new global.Uint8Array(newBuffer);
-    HEAPU16 = new global.Uint16Array(newBuffer);
-    HEAPU32 = new global.Uint32Array(newBuffer);
-    HEAPF32 = new global.Float32Array(newBuffer);
-    HEAPF64 = new global.Float64Array(newBuffer);
-    buffer = newBuffer;
-   }
-  }
-  return oldPages;
- }
- 
- function __wasm_current_memory() {
-  return buffer.byteLength / 65536 | 0;
- }
- 
+ var FUNCTION_TABLE = [];
  return {
   type_i32: $1, 
   type_i64: $2, 
@@ -50285,7 +50203,7 @@ function asmFunc(global, env, buffer) {
   type_f64: $4, 
   type_i32_value: $5, 
   type_i64_value: $6, 
-  type_f32_value: $7, 
+  type_f32_value: legalstub$7, 
   type_f64_value: $8, 
   empty: $9, 
   empty_value: $10, 

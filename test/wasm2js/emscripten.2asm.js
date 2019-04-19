@@ -25,8 +25,6 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var syscall$6 = env.__syscall6;
  var syscall$54 = env.__syscall54;
- var global$0 = 5243904;
- var i64toi32_i32$HIGH_BITS = 0;
  // EMSCRIPTEN_START_FUNCS;
  function main() {
   var wasm2js_i32$0 = 0;
