@@ -1,4 +1,7 @@
-import { __tempMemory__ } from 'env';
+import { wasm2js_scratch_load_i32 } from 'env';
+import { wasm2js_scratch_store_i32 } from 'env';
+import { wasm2js_scratch_load_f64 } from 'env';
+import { wasm2js_scratch_store_f64 } from 'env';
 
 function asmFunc(global, env, buffer) {
  "almost asm";
@@ -22,7 +25,10 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var __tempMemory__ = env.__tempMemory__ | 0;
+ var wasm2js_scratch_load_i32 = env.wasm2js_scratch_load_i32;
+ var wasm2js_scratch_store_i32 = env.wasm2js_scratch_store_i32;
+ var wasm2js_scratch_load_f64 = env.wasm2js_scratch_load_f64;
+ var wasm2js_scratch_store_f64 = env.wasm2js_scratch_store_f64;
  var i64toi32_i32$HIGH_BITS = 0;
  function i16_store_little(address, value) {
   address = address | 0;
@@ -193,18 +199,16 @@ function asmFunc(global, env, buffer) {
  
  function $14(value) {
   value = Math_fround(value);
-  i32_store_little(0 | 0, (HEAPF32[__tempMemory__] = value, HEAP32[__tempMemory__] | 0) | 0);
+  i32_store_little(0 | 0, (wasm2js_scratch_store_f32(value), wasm2js_scratch_load_i32(0)) | 0);
   return Math_fround(Math_fround(HEAPF32[0 >> 2]));
  }
  
  function $15(value) {
   value = +value;
-  var i64toi32_i32$0 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = value;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64_store_little(0 | 0, HEAP32[__tempMemory__ >> 2] | 0 | 0, i64toi32_i32$0 | 0);
+  var i64toi32_i32$0 = 0;
+  wasm2js_scratch_store_f64(+value);
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64_store_little(0 | 0, wasm2js_scratch_load_i32(0 | 0) | 0 | 0, i64toi32_i32$0 | 0);
   return +(+HEAPF64[0 >> 3]);
  }
  
@@ -278,24 +282,20 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$0 = 0;
   wasm2js_f32$0 = value;
   HEAPF32[wasm2js_i32$0 >> 2] = wasm2js_f32$0;
-  return Math_fround((HEAP32[0] = i32_load_little(0 | 0) | 0, HEAPF32[0]));
+  return Math_fround((wasm2js_scratch_store_i32(0, i32_load_little(0 | 0) | 0), wasm2js_scratch_load_f32()));
  }
  
  function $22(value) {
   value = +value;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
   wasm2js_i32$0 = 0;
   wasm2js_f64$0 = value;
   HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
   i64toi32_i32$0 = i64_load_little(0 | 0) | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_i32$1 = i64toi32_i32$0;
-  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_i32$1 = i64toi32_i32$1;
-  HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  return +(+HEAPF64[__tempMemory__ >> 3]);
+  wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$0 | 0);
+  wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$1 | 0);
+  return +(+wasm2js_scratch_load_f64());
  }
  
  var FUNCTION_TABLE = [];
@@ -348,7 +348,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },wasm2js_scratch_load_i32,wasm2js_scratch_store_i32,wasm2js_scratch_load_f64,wasm2js_scratch_store_f64},memasmFunc);
 export const i32_load16_s = retasmFunc.i32_load16_s;
 export const i32_load16_u = retasmFunc.i32_load16_u;
 export const i32_load = retasmFunc.i32_load;

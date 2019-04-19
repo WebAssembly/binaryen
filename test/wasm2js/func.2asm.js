@@ -26,106 +26,12 @@ function asmFunc(global, env, buffer) {
   
  }
  
- function $1() {
-  
- }
- 
  function $2() {
-  
- }
- 
- function f() {
   
  }
  
  function h() {
   
- }
- 
- function $5() {
-  
- }
- 
- function $6() {
-  
- }
- 
- function $7() {
-  
- }
- 
- function $8() {
-  
- }
- 
- function $9() {
-  
- }
- 
- function $10() {
-  
- }
- 
- function $11() {
-  
- }
- 
- function $12() {
-  
- }
- 
- function $13() {
-  
- }
- 
- function $14($0) {
-  $0 = $0 | 0;
- }
- 
- function $15(x) {
-  x = x | 0;
- }
- 
- function $16($0, $1_1, $2_1, $2$hi) {
-  $0 = $0 | 0;
-  $1_1 = +$1_1;
-  $2_1 = $2_1 | 0;
-  $2$hi = $2$hi | 0;
- }
- 
- function $17($0, $1_1) {
-  $0 = $0 | 0;
-  $1_1 = +$1_1;
- }
- 
- function $18($0, $1_1, x, x$hi, $3, $4) {
-  $0 = $0 | 0;
-  $1_1 = Math_fround($1_1);
-  x = x | 0;
-  x$hi = x$hi | 0;
-  $3 = $3 | 0;
-  $4 = +$4;
- }
- 
- function $19() {
-  return abort() | 0;
- }
- 
- function $20() {
-  
- }
- 
- function complex($0, $1_1, x, x$hi, $3) {
-  $0 = $0 | 0;
-  $1_1 = Math_fround($1_1);
-  x = x | 0;
-  x$hi = x$hi | 0;
-  $3 = $3 | 0;
-  return abort() | 0;
- }
- 
- function complex_sig() {
-  abort();
  }
  
  function $23() {
@@ -151,43 +57,43 @@ function asmFunc(global, env, buffer) {
  }
  
  function $27() {
-  var $1_1 = 0;
-  return $1_1 | 0;
+  var $1 = 0;
+  return $1 | 0;
  }
  
  function $28() {
-  var i64toi32_i32$0 = 0, $1$hi = 0, $1_1 = 0;
+  var i64toi32_i32$0 = 0, $1$hi = 0, $1 = 0;
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
-  return $1_1 | 0;
+  return $1 | 0;
  }
  
  function $29() {
-  var $1_1 = Math_fround(0);
-  return Math_fround($1_1);
+  var $1 = Math_fround(0);
+  return Math_fround($1);
  }
  
  function $30() {
-  var $1_1 = 0.0;
-  return +$1_1;
+  var $1 = 0.0;
+  return +$1;
  }
  
  function $31() {
-  var i64toi32_i32$0 = 0, $4 = 0.0, $0 = Math_fround(0), x = 0, $2$hi = 0, $2_1 = 0, $3 = 0, $5_1 = 0;
+  var i64toi32_i32$0 = 0, $4 = 0.0, $0 = Math_fround(0), x = 0, $2$hi = 0, $2_1 = 0, $3 = 0, $5 = 0;
   i64toi32_i32$0 = $2$hi;
   return +$4;
  }
  
- function $32($0, $1_1) {
+ function $32($0, $1) {
   $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
+  $1 = $1 | 0;
   return $0 | 0;
  }
  
- function $33($0, $0$hi, $1_1, $1$hi) {
+ function $33($0, $0$hi, $1, $1$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  $1_1 = $1_1 | 0;
+  $1 = $1 | 0;
   $1$hi = $1$hi | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = $0$hi;
@@ -195,55 +101,55 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $34($0, $1_1) {
+ function $34($0, $1) {
   $0 = Math_fround($0);
-  $1_1 = Math_fround($1_1);
+  $1 = Math_fround($1);
   return Math_fround($0);
  }
  
- function $35($0, $1_1) {
+ function $35($0, $1) {
   $0 = +$0;
-  $1_1 = +$1_1;
+  $1 = +$1;
   return +$0;
  }
  
- function $36($0, $1_1) {
+ function $36($0, $1) {
   $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  return $1_1 | 0;
+  $1 = $1 | 0;
+  return $1 | 0;
  }
  
- function $37($0, $0$hi, $1_1, $1$hi) {
+ function $37($0, $0$hi, $1, $1$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  $1_1 = $1_1 | 0;
+  $1 = $1 | 0;
   $1$hi = $1$hi | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
-  return $1_1 | 0;
+  return $1 | 0;
  }
  
- function $38($0, $1_1) {
+ function $38($0, $1) {
   $0 = Math_fround($0);
-  $1_1 = Math_fround($1_1);
-  return Math_fround($1_1);
+  $1 = Math_fround($1);
+  return Math_fround($1);
  }
  
- function $39($0, $1_1) {
+ function $39($0, $1) {
   $0 = +$0;
-  $1_1 = +$1_1;
-  return +$1_1;
+  $1 = +$1;
+  return +$1;
  }
  
- function $40($0, $1_1, x, x$hi, $3, $4, $5_1) {
+ function $40($0, $1, x, x$hi, $3, $4, $5) {
   $0 = Math_fround($0);
-  $1_1 = $1_1 | 0;
+  $1 = $1 | 0;
   x = x | 0;
   x$hi = x$hi | 0;
   $3 = $3 | 0;
   $4 = +$4;
-  $5_1 = $5_1 | 0;
+  $5 = $5 | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = x$hi;
   return +$4;
@@ -454,50 +360,36 @@ function asmFunc(global, env, buffer) {
   
  }
  
- function complex_sig_1($0, $1_1, $1$hi, $2_1, $3, $3$hi, $4, $5_1, $5$hi, $6_1, $7_1) {
+ function complex_sig_1($0, $1, $1$hi, $2_1, $3, $3$hi, $4, $5, $5$hi, $6, $7) {
   $0 = +$0;
-  $1_1 = $1_1 | 0;
+  $1 = $1 | 0;
   $1$hi = $1$hi | 0;
   $2_1 = +$2_1;
   $3 = $3 | 0;
   $3$hi = $3$hi | 0;
   $4 = +$4;
-  $5_1 = $5_1 | 0;
+  $5 = $5 | 0;
   $5$hi = $5$hi | 0;
-  $6_1 = Math_fround($6_1);
-  $7_1 = $7_1 | 0;
+  $6 = Math_fround($6);
+  $7 = $7 | 0;
  }
  
  function empty_sig_2() {
   
  }
  
- function complex_sig_2($0, $1_1, $1$hi, $2_1, $3, $3$hi, $4, $5_1, $5$hi, $6_1, $7_1) {
+ function complex_sig_3($0, $1, $1$hi, $2_1, $3, $3$hi, $4, $5, $5$hi, $6, $7) {
   $0 = +$0;
-  $1_1 = $1_1 | 0;
+  $1 = $1 | 0;
   $1$hi = $1$hi | 0;
   $2_1 = +$2_1;
   $3 = $3 | 0;
   $3$hi = $3$hi | 0;
   $4 = +$4;
-  $5_1 = $5_1 | 0;
+  $5 = $5 | 0;
   $5$hi = $5$hi | 0;
-  $6_1 = Math_fround($6_1);
-  $7_1 = $7_1 | 0;
- }
- 
- function complex_sig_3($0, $1_1, $1$hi, $2_1, $3, $3$hi, $4, $5_1, $5$hi, $6_1, $7_1) {
-  $0 = +$0;
-  $1_1 = $1_1 | 0;
-  $1$hi = $1$hi | 0;
-  $2_1 = +$2_1;
-  $3 = $3 | 0;
-  $3$hi = $3$hi | 0;
-  $4 = +$4;
-  $5_1 = $5_1 | 0;
-  $5$hi = $5$hi | 0;
-  $6_1 = Math_fround($6_1);
-  $7_1 = $7_1 | 0;
+  $6 = Math_fround($6);
+  $7 = $7 | 0;
  }
  
  function $76() {

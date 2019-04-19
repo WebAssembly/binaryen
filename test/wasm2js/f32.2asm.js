@@ -21,7 +21,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
@@ -96,7 +95,7 @@ function asmFunc(global, env, buffer) {
  function $13(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
-  return Math_fround((HEAP32[0] = (HEAPF32[__tempMemory__] = x, HEAP32[__tempMemory__] | 0) & 2147483647 | 0 | ((HEAPF32[__tempMemory__] = y, HEAP32[__tempMemory__] | 0) & 2147483648 | 0) | 0, HEAPF32[0]));
+  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & 2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
  }
  
  function __wasm_nearest_f32(var$0) {

@@ -304,6 +304,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   runner.add("simplify-locals-notee-nostructure");
   runner.add("reorder-locals");
   runner.add("vacuum");
+  runner.add("remove-unused-module-elements");
   runner.setDebug(flags.debug);
   runner.run();
 
@@ -1414,7 +1415,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
                 ABI::wasm2js::SCRATCH_STORE_F32,
                 visit(curr->value, EXPRESSION_RESULT)
               );
-              Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_I32);
+              Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_I32, ValueBuilder::makeInt(0));
               return ValueBuilder::makeSeq(store, load);
             }
             // generate (~~expr), what Emscripten does
