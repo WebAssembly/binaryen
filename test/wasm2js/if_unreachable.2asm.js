@@ -21,27 +21,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
- function $0($0_1, $1, $2, $3, $4, $5) {
-  $0_1 = $0_1 | 0;
-  $1 = $1 | 0;
-  $2 = $2 | 0;
-  $3 = $3 | 0;
-  $4 = $4 | 0;
-  $5 = $5 | 0;
-  if ((0 | 0) != (48 | 0)) {
-   label$2 : {
-    if (0) {
-     break label$2
-    }
-    abort();
-   }
-  } else {
-   abort()
-  }
-  abort();
- }
- 
+ var FUNCTION_TABLE = [];
  return {
   
  };

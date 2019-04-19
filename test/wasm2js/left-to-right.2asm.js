@@ -121,15 +121,6 @@ function asmFunc(global, env, buffer) {
   return 1 | 0;
  }
  
- function i32_another() {
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  bump();
-  wasm2js_i32$0 = 8;
-  wasm2js_i32$1 = 3;
-  HEAP8[wasm2js_i32$0 >> 0] = wasm2js_i32$1;
-  return 1 | 0;
- }
- 
  function i32_callee() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   bump();
@@ -164,17 +155,6 @@ function asmFunc(global, env, buffer) {
   bump();
   wasm2js_i32$0 = 8;
   wasm2js_i32$1 = 2;
-  HEAP8[wasm2js_i32$0 >> 0] = wasm2js_i32$1;
-  i64toi32_i32$0 = 0;
-  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
-  return 1 | 0;
- }
- 
- function i64_another() {
-  var i64toi32_i32$0 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  bump();
-  wasm2js_i32$0 = 8;
-  wasm2js_i32$1 = 3;
   HEAP8[wasm2js_i32$0 >> 0] = wasm2js_i32$1;
   i64toi32_i32$0 = 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -217,15 +197,6 @@ function asmFunc(global, env, buffer) {
   return Math_fround(Math_fround(1.0));
  }
  
- function f32_another() {
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  bump();
-  wasm2js_i32$0 = 8;
-  wasm2js_i32$1 = 3;
-  HEAP8[wasm2js_i32$0 >> 0] = wasm2js_i32$1;
-  return Math_fround(Math_fround(1.0));
- }
- 
  function f32_callee() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   bump();
@@ -258,15 +229,6 @@ function asmFunc(global, env, buffer) {
   bump();
   wasm2js_i32$0 = 8;
   wasm2js_i32$1 = 2;
-  HEAP8[wasm2js_i32$0 >> 0] = wasm2js_i32$1;
-  return +(1.0);
- }
- 
- function f64_another() {
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  bump();
-  wasm2js_i32$0 = 8;
-  wasm2js_i32$1 = 3;
   HEAP8[wasm2js_i32$0 >> 0] = wasm2js_i32$1;
   return +(1.0);
  }

@@ -128,7 +128,10 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     auto function = m.getFunction(name);
     FindAll<Call> calls(function->body);
     for (auto* call : calls.list) {
-      this->addNeededFunctions(m, call->target, needed);
+      auto* called = m.getFunction(call->target);
+      if (!called->imported()) {
+        this->addNeededFunctions(m, call->target, needed);
+      }
     }
   }
 
