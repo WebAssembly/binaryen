@@ -156,9 +156,9 @@ def run_wasm2js(wasm):
 def run_vms(prefix):
   wasm = prefix + 'wasm'
   results = []
-  #results.append(run_bynterp(wasm))
-  #results.append(fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', wasm])))
-  results.append(run_wasm2js(wasm))
+  results.append(run_bynterp(wasm))
+  results.append(fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', wasm])))
+  # results.append(run_wasm2js(wasm))
 
   # append to add results from VMs
   # results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
