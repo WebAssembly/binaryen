@@ -50,9 +50,12 @@ extern cashew::IString SCRATCH_LOAD_I32,
 
 // The wasm2js scratch memory helpers let us read and write to scratch memory
 // for purposes of implementing things like reinterpret, etc.
-inline void ensureScratchMemoryHelpers(Module* wasm) {
+// The optional "specific" parameter is a specific function we want. If not
+// provided, we create them all.
+inline void ensureScratchMemoryHelpers(Module* wasm, cashew::IString specific = cashew::IString()) {
   auto ensureImport = [&](Name name, const std::vector<Type> params, Type result) {
     if (wasm->getFunctionOrNull(name)) return;
+    if (specific.is() && name != specific) return;
     auto func = make_unique<Function>();
     func->name = name;
     func->params = params;
@@ -71,6 +74,7 @@ inline void ensureScratchMemoryHelpers(Module* wasm) {
   ensureImport(SCRATCH_LOAD_F64, {}, f64);
   ensureImport(SCRATCH_STORE_F64, { f64 }, none);
 }
+
 
 } // namespace wasm2js
 

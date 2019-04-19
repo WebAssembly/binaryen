@@ -1416,6 +1416,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
                                         EXPRESSION_RESULT), ASM_INT), EQ,
                   makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
             case ReinterpretFloat32: {
+              ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_STORE_F32);
+              ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_LOAD_I32);
+
               Ref store = ValueBuilder::makeCall(
                 ABI::wasm2js::SCRATCH_STORE_F32,
                 visit(curr->value, EXPRESSION_RESULT)
@@ -1501,6 +1504,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
                                      ASM_FLOAT);
             case ReinterpretInt32: {
+              ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_STORE_I32);
+              ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_LOAD_F32);
+
               Ref store = ValueBuilder::makeCall(
                 ABI::wasm2js::SCRATCH_STORE_I32,
                 ValueBuilder::makeNum(0),
