@@ -1283,9 +1283,9 @@ private:
       }
       for (size_t i = start; i != end; i += step) {
         instance.externalInterface->store8(
-          instance.getFinalAddress(Literal(destVal + i), 1),
+          instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1),
           instance.externalInterface->load8s(
-            instance.getFinalAddress(Literal(sourceVal + i), 1)));
+            instance.getFinalAddress(Literal(uint32_t(sourceVal + i)), 1)));
       }
       return {};
     }
@@ -1308,7 +1308,7 @@ private:
       uint8_t val(value.value.geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
-          instance.getFinalAddress(Literal(destVal + i), 1), val);
+          instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1), val);
       }
       return {};
     }
