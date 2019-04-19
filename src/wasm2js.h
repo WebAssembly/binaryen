@@ -289,8 +289,13 @@ private:
 };
 
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
+  // Ensure the scratch memory helpers.
+  // If later on they aren't needed, we'll clean them up.
+  ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
+
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
+  runner.add("legalize-js-interface");
   // First up remove as many non-JS operations we can, including things like
   // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
   // This may inject intrinsics which use i64 so it needs to be run before the
@@ -313,7 +318,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 #ifndef NDEBUG
   if (!WasmValidator().validate(*wasm)) {
     WasmPrinter::printModule(wasm);
-    Fatal() << "error in validating input";
+    Fatal() << "error in validating wasm2js output";
   }
 #endif
 

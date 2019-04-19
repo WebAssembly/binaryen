@@ -338,25 +338,30 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   template<typename T>
   using BuilderFunc = std::function<T*(std::vector<Expression*>&, Type)>;
 
+  // Fixes up a call. If we performed fixups, returns the call; otherwise returns nullptr;
   template<typename T>
-  void visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
+  T* visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
+    bool fixed = false;
     std::vector<Expression*> args;
     for (auto* e : curr->operands) {
       args.push_back(e);
       if (hasOutParam(e)) {
         TempVar argHighBits = fetchOutParam(e);
         args.push_back(builder->makeGetLocal(argHighBits, i32));
+        fixed =  true;
       }
     }
     if (curr->type != i64) {
-      replaceCurrent(callBuilder(args, curr->type));
-      return;
+      auto* ret = callBuilder(args, curr->type);
+      replaceCurrent(ret);
+      return fixed ? ret : nullptr;
     }
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
+    auto* call = callBuilder(args, i32);
     SetLocal* doCall = builder->makeSetLocal(
       lowBits,
-      callBuilder(args, i32)
+      call
     );
     SetLocal* setHigh = builder->makeSetLocal(
       highBits,
@@ -366,14 +371,21 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     Block* result = builder->blockify(doCall, setHigh, getLow);
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
+    return call;
   }
   void visitCall(Call* curr) {
-    visitGenericCall<Call>(
+    auto* fixedCall = visitGenericCall<Call>(
       curr,
       [&](std::vector<Expression*>& args, Type ty) {
         return builder->makeCall(curr->target, args, ty);
       }
     );
+    // If this was to an import, we need to call the legal version. This assumes
+    // that legalize-js-interface has been run before.
+    if (fixedCall && getModule()->getFunction(fixedCall->target)->imported()) {
+      fixedCall->target = std::string("legalfunc$") + fixedCall->target.str;
+      return;
+    }
   }
 
   void visitCallIndirect(CallIndirect* curr) {

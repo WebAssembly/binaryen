@@ -48,6 +48,8 @@ extern cashew::IString SCRATCH_LOAD_I32,
                        SCRATCH_LOAD_F64,
                        SCRATCH_STORE_F64;
 
+// The wasm2js scratch memory helpers let us read and write to scratch memory
+// for purposes of implementing things like reinterpret, etc.
 inline void ensureScratchMemoryHelpers(Module* wasm) {
   auto ensureImport = [&](Name name, const std::vector<Type> params, Type result) {
     if (wasm->getFunctionOrNull(name)) return;
