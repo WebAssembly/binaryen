@@ -77,7 +77,7 @@ function asmFunc(global, env, buffer) {
  function $6() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0;
   wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0);
+  wasm2js_i32$1 = (HEAPF32[__tempMemory__] = Math_fround(0.0), HEAP32[__tempMemory__] | 0);
   (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[wasm2js_i32$2 >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 1 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 2 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 3 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
  }
  

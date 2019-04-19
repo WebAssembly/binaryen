@@ -1409,17 +1409,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
                                         EXPRESSION_RESULT), ASM_INT), EQ,
                   makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
             case ReinterpretFloat32: {
-              // Naively assume that the address 0 and the next 4 bytes are
-              // permanently unused by the source program, which is definitely
-              // true for languages like C/C++/Rust
-              Ref zero = ValueBuilder::makeInt(0);
-              Ref ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), zero);
+              Ref ptr = ValueBuilder::makeName(TEMP_MEMORY);
+              Ref ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ptr);
               Ref value = visit(curr->value, EXPRESSION_RESULT);
               Ref store = ValueBuilder::makeBinary(ret, SET, value);
               return ValueBuilder::makeSeq(
                 store,
                 makeAsmCoercion(
-                  ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero),
+                  ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), ptr),
                   ASM_INT
                 )
               );

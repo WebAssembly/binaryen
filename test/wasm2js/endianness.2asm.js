@@ -193,7 +193,7 @@ function asmFunc(global, env, buffer) {
  
  function $14(value) {
   value = Math_fround(value);
-  i32_store_little(0 | 0, (HEAPF32[0] = value, HEAP32[0] | 0) | 0);
+  i32_store_little(0 | 0, (HEAPF32[__tempMemory__] = value, HEAP32[__tempMemory__] | 0) | 0);
   return Math_fround(Math_fround(HEAPF32[0 >> 2]));
  }
  

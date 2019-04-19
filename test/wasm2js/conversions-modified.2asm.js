@@ -238,7 +238,7 @@ function asmFunc(global, env, buffer) {
  
  function $23(x) {
   x = Math_fround(x);
-  return (HEAPF32[0] = x, HEAP32[0] | 0) | 0;
+  return (HEAPF32[__tempMemory__] = x, HEAP32[__tempMemory__] | 0) | 0;
  }
  
  function $24(x) {

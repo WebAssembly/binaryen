@@ -30,7 +30,7 @@ function asmFunc(global, env, buffer) {
  
  function $1($0) {
   $0 = $0 | 0;
-  return ((HEAPF32[0] = (HEAP32[0] = $0, HEAPF32[0]), HEAP32[0] | 0) | 0) == ($0 | 0) | 0;
+  return ((HEAPF32[__tempMemory__] = (HEAP32[0] = $0, HEAPF32[0]), HEAP32[__tempMemory__] | 0) | 0) == ($0 | 0) | 0;
  }
  
  function $2($0, $0$hi) {
