@@ -1651,21 +1651,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
               ret = ValueBuilder::makeBinary(left, RSHIFT, right);
               break;
             case EqInt32: {
-              // TODO: check if this condition is still valid/necessary
-              if (curr->left->type == i32) {
-                return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ,
-                                                makeSigning(right, ASM_SIGNED));
-              } else {
-                return ValueBuilder::makeBinary(left, EQ, right);
-              }
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ,
+                                              makeSigning(right, ASM_SIGNED));
             }
             case NeInt32: {
-              if (curr->left->type == i32) {
-                return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE,
-                                                makeSigning(right, ASM_SIGNED));
-              } else {
-                return ValueBuilder::makeBinary(left, NE, right);
-              }
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE,
+                                              makeSigning(right, ASM_SIGNED));
             }
             case LtSInt32:
               return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LT,
