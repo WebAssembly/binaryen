@@ -490,6 +490,10 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
 }
 
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
+  // The scratch memory helpers are emitted in the glue, see code and comments below.
+  if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+    return;
+  }
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
@@ -2054,6 +2058,7 @@ private:
   void emitPostES6();
 
   void emitMemory(std::string buffer, std::string segmentWriter);
+  void emitScratchMemorySupport();
 };
 
 void Wasm2JSGlue::emitPre() {
@@ -2062,6 +2067,8 @@ void Wasm2JSGlue::emitPre() {
   } else {
     emitPreES6();
   }
+
+  emitScratchMemorySupport();
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
@@ -2094,6 +2101,10 @@ void Wasm2JSGlue::emitPreES6() {
     noteImport(import->module, import->base);
   });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    // The scratch memory helpers are emitted in the glue, see code and comments below.
+    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+      return;
+    }
     noteImport(import->module, import->base);
   });
 
@@ -2239,6 +2250,83 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
       << "\");\n";
   }
 }
+
+void Wasm2JSGlue::emitScratchMemorySupport() {
+  // The scratch memory helpers are emitted here the glue. We may also want to
+  // emit them inline at some point. (The reason they are imports is so that
+  // they appear as "intrinsics" placeholders, and not normal functions that
+  // the optimizer might want to do something with.)
+  bool needScratchMemory = false;
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+      needScratchMemory = true;
+    }
+  });
+  if (!needScratchMemory) return;
+
+  out << R"(
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  )";
+
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (import->base == ABI::wasm2js::SCRATCH_STORE_I32) {
+      out << R"(
+  function wasm2js_scratch_store_i32(index, value) {
+    i32ScratchView[index] = value;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_I32) {
+      out << R"(
+  function wasm2js_scratch_load_i32(index) {
+    return i32ScratchView[index];
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_STORE_I64) {
+      out << R"(
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_I64) {
+      out << R"(
+  function wasm2js_scratch_load_i64() {
+    setTempRet0(i32ScratchView[1]);
+    return i32ScratchView[0];
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F32) {
+      out << R"(
+  function wasm2js_scratch_store_f32(value) {
+    f32ScratchView[0] = value;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_F32) {
+      out << R"(
+  function wasm2js_scratch_load_f32() {
+    return f32ScratchView[0];
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F64) {
+      out << R"(
+  function wasm2js_scratch_store_f64(value) {
+    f64ScratchView[0] = value;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_F64) {
+      out << R"(
+  function wasm2js_scratch_load_f64() {
+    return f64ScratchView[0];
+  }
+      )";
+    }
+  });
+  out << '\n';
+}
+
 } // namespace wasm
 
 #endif // wasm_wasm2js_h

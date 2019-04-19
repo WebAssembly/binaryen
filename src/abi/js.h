@@ -75,6 +75,16 @@ inline void ensureScratchMemoryHelpers(Module* wasm, cashew::IString specific = 
   ensureImport(SCRATCH_STORE_F64, { f64 }, none);
 }
 
+inline bool isScratchMemoryHelper(cashew::IString name) {
+  return name == SCRATCH_LOAD_I32 ||
+         name == SCRATCH_STORE_I32 ||
+         name == SCRATCH_LOAD_I64 ||
+         name == SCRATCH_STORE_I64 ||
+         name == SCRATCH_LOAD_F32 ||
+         name == SCRATCH_STORE_F32 ||
+         name == SCRATCH_LOAD_F64 ||
+         name == SCRATCH_STORE_F64;
+}
 
 } // namespace wasm2js
 

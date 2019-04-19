@@ -1,11 +1,35 @@
-import { wasm2js_scratch_load_i32 } from 'env';
-import { wasm2js_scratch_store_i32 } from 'env';
-import { wasm2js_scratch_load_f64 } from 'env';
-import { wasm2js_scratch_store_f64 } from 'env';
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_load_f32 } from 'env';
-import { wasm2js_scratch_store_f32 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i32(index) {
+    return i32ScratchView[index];
+  }
+      
+  function wasm2js_scratch_store_i32(index, value) {
+    i32ScratchView[index] = value;
+  }
+      
+  function wasm2js_scratch_load_f64() {
+    return f64ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_f64(value) {
+    f64ScratchView[0] = value;
+  }
+      
+  function wasm2js_scratch_load_f32() {
+    return f32ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_f32(value) {
+    f32ScratchView[0] = value;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -28,10 +52,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var wasm2js_scratch_load_i32 = env.wasm2js_scratch_load_i32;
- var wasm2js_scratch_store_i32 = env.wasm2js_scratch_store_i32;
- var wasm2js_scratch_load_f64 = env.wasm2js_scratch_load_f64;
- var wasm2js_scratch_store_f64 = env.wasm2js_scratch_store_f64;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {

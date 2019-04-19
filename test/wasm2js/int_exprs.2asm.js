@@ -937,8 +937,18 @@ export const i32_no_fold_shr_u_shl = retasmFunc.i32_no_fold_shr_u_shl;
 export const i64_no_fold_shr_s_shl = retasmFunc.i64_no_fold_shr_s_shl;
 export const i64_no_fold_shr_u_shl = retasmFunc.i64_no_fold_shr_u_shl;
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -962,7 +972,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -1871,8 +1880,18 @@ export const i32_no_fold_div_u_mul = retasmFunc.i32_no_fold_div_u_mul;
 export const i64_no_fold_div_s_mul = retasmFunc.i64_no_fold_div_s_mul;
 export const i64_no_fold_div_u_mul = retasmFunc.i64_no_fold_div_u_mul;
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -1896,7 +1915,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -2805,8 +2823,18 @@ export const i32_no_fold_mul_div_u = retasmFunc.i32_no_fold_mul_div_u;
 export const i64_no_fold_mul_div_s = retasmFunc.i64_no_fold_mul_div_s;
 export const i64_no_fold_mul_div_u = retasmFunc.i64_no_fold_mul_div_u;
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -2830,7 +2858,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -3560,9 +3587,23 @@ export const i32_no_fold_div_s_2 = retasmFunc.i32_no_fold_div_s_2;
 export const i64_no_fold_div_s_2 = retasmFunc.i64_no_fold_div_s_2;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
-import { wasm2js_scratch_load_i64 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i64() {
+    setTempRet0(i32ScratchView[1]);
+    return i32ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -3587,8 +3628,6 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
  var getTempRet0 = env.getTempRet0;
- var legalimport$wasm2js_scratch_load_i64 = env.wasm2js_scratch_load_i64;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -4327,8 +4366,18 @@ const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int
 export const i32_no_fold_rem_s_2 = retasmFunc.i32_no_fold_rem_s_2;
 export const i64_no_fold_rem_s_2 = retasmFunc.i64_no_fold_rem_s_2;
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -4352,7 +4401,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -5155,8 +5203,18 @@ export const i32_div_u_3 = retasmFunc.i32_div_u_3;
 export const i64_div_s_3 = retasmFunc.i64_div_s_3;
 export const i64_div_u_3 = retasmFunc.i64_div_u_3;
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -5180,7 +5238,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -5983,8 +6040,18 @@ export const i32_div_u_3 = retasmFunc.i32_div_u_3;
 export const i64_div_s_3 = retasmFunc.i64_div_s_3;
 export const i64_div_u_3 = retasmFunc.i64_div_u_3;
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -6008,7 +6075,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -6811,8 +6877,18 @@ export const i32_div_u_5 = retasmFunc.i32_div_u_5;
 export const i64_div_s_5 = retasmFunc.i64_div_s_5;
 export const i64_div_u_5 = retasmFunc.i64_div_u_5;
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -6836,7 +6912,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -7640,9 +7715,23 @@ export const i64_div_s_7 = retasmFunc.i64_div_s_7;
 export const i64_div_u_7 = retasmFunc.i64_div_u_7;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
-import { wasm2js_scratch_load_i64 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i64() {
+    setTempRet0(i32ScratchView[1]);
+    return i32ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -7667,8 +7756,6 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
  var getTempRet0 = env.getTempRet0;
- var legalimport$wasm2js_scratch_load_i64 = env.wasm2js_scratch_load_i64;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -8482,9 +8569,23 @@ export const i64_rem_s_3 = retasmFunc.i64_rem_s_3;
 export const i64_rem_u_3 = retasmFunc.i64_rem_u_3;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
-import { wasm2js_scratch_load_i64 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i64() {
+    setTempRet0(i32ScratchView[1]);
+    return i32ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -8509,8 +8610,6 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
  var getTempRet0 = env.getTempRet0;
- var legalimport$wasm2js_scratch_load_i64 = env.wasm2js_scratch_load_i64;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -9324,9 +9423,23 @@ export const i64_rem_s_5 = retasmFunc.i64_rem_s_5;
 export const i64_rem_u_5 = retasmFunc.i64_rem_u_5;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
-import { wasm2js_scratch_load_i64 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i64() {
+    setTempRet0(i32ScratchView[1]);
+    return i32ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -9351,8 +9464,6 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
  var getTempRet0 = env.getTempRet0;
- var legalimport$wasm2js_scratch_load_i64 = env.wasm2js_scratch_load_i64;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;

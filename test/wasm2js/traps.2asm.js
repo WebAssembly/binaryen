@@ -1,6 +1,16 @@
 import { setTempRet0 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -24,7 +34,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = x | 0;
@@ -904,9 +913,23 @@ export const no_dce_i64_div_s = retasmFunc.no_dce_i64_div_s;
 export const no_dce_i64_div_u = retasmFunc.no_dce_i64_div_u;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
-import { wasm2js_scratch_load_i64 } from 'env';
-import { wasm2js_scratch_store_i64 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i64() {
+    setTempRet0(i32ScratchView[1]);
+    return i32ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -931,8 +954,6 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
  var getTempRet0 = env.getTempRet0;
- var legalimport$wasm2js_scratch_load_i64 = env.wasm2js_scratch_load_i64;
- var legalimport$wasm2js_scratch_store_i64 = env.wasm2js_scratch_store_i64;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = x | 0;
