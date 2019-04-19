@@ -78,6 +78,69 @@
    )
   )
  )
+ (func $unreachable-select-i64 (; 2 ;) (type $FUNCSIG$j) (result i32)
+  (local $i64toi32_i32$0 i32)
+  (unreachable)
+  (block
+   (drop
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (i32.const 0)
+     )
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+   (drop
+    (i32.const 2)
+   )
+  )
+  (unreachable)
+ )
+ (func $unreachable-select-i64-b (; 3 ;) (type $FUNCSIG$j) (result i32)
+  (local $i64toi32_i32$0 i32)
+  (unreachable)
+  (block
+   (unreachable)
+   (drop
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (i32.const 0)
+     )
+     (i32.const 3)
+    )
+   )
+   (drop
+    (i32.const 4)
+   )
+  )
+  (unreachable)
+ )
+ (func $unreachable-select-i64-c (; 4 ;) (type $FUNCSIG$j) (result i32)
+  (local $i64toi32_i32$0 i32)
+  (local $i64toi32_i32$1 i32)
+  (unreachable)
+  (block
+   (drop
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (i32.const 0)
+     )
+     (i32.const 5)
+    )
+   )
+   (drop
+    (block (result i32)
+     (local.set $i64toi32_i32$1
+      (i32.const 0)
+     )
+     (i32.const 6)
+    )
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
 )
 (module
  (type $0 (func (param i32 i32)))
@@ -88,6 +151,7 @@
  (global $g$hi (mut i32) (global.get $f$hi))
  (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
  (export "exp" (func $1))
+ (export "unreach" (func $2))
  (func $call (; 0 ;) (type $0) (param $0 i32) (param $0$hi i32)
   (nop)
  )
@@ -133,6 +197,44 @@
     )
    )
    (nop)
+  )
+  (nop)
+ )
+ (func $2 (; 2 ;) (type $1)
+  (local $0 i32)
+  (local $0$hi i32)
+  (local $1 i32)
+  (local $1$hi i32)
+  (local $i64toi32_i32$0 i32)
+  (block $label$1
+   (unreachable)
+   (unreachable)
+  )
+  (block
+   (local.set $1
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (local.get $0$hi)
+     )
+     (local.get $0)
+    )
+   )
+   (local.set $1$hi
+    (local.get $i64toi32_i32$0)
+   )
+  )
+  (block
+   (global.set $f
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (local.get $1$hi)
+     )
+     (local.get $1)
+    )
+   )
+   (global.set $f$hi
+    (local.get $i64toi32_i32$0)
+   )
   )
   (nop)
  )

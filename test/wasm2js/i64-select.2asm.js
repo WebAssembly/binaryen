@@ -42,6 +42,18 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$3 | 0;
  }
  
+ function unreachable_select_i64() {
+  return abort() | 0;
+ }
+ 
+ function unreachable_select_i64_b() {
+  return abort() | 0;
+ }
+ 
+ function unreachable_select_i64_c() {
+  return abort() | 0;
+ }
+ 
  var FUNCTION_TABLE = [];
  return {
   
