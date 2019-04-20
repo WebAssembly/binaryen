@@ -582,6 +582,7 @@ def run_unittest():
 
 # Run all the tests
 def main():
+  wasm2js.test_wasm2js()
   run_help_tests()
   run_wasm_opt_tests()
   asm2wasm.test_asm2wasm()

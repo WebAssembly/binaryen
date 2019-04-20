@@ -27,7 +27,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $1() {
-  HEAP32[0 >> 2] = grow() | 0;
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  (wasm2js_i32$0 = 0, wasm2js_i32$1 = grow() | 0), HEAP32[wasm2js_i32$1 >> 2] = wasm2js_i32$0;
   return HEAP32[0 >> 2] | 0 | 0;
  }
  

@@ -1041,8 +1041,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
           getPtr.index = func->getLocalIndex(value.getName());
           getPtr.type = curr->value->type;
           Store fakeStore = *curr;
-          curr->ptr = &getPtr;
-          curr->value = &getValue;
+          fakeStore.ptr = &getPtr;
+          fakeStore.value = &getValue;
           sequenceAppend(ret, visitStore(&fakeStore));
           return ret;
         }
