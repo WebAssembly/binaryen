@@ -74,7 +74,7 @@ def test_wasm2js_output():
       cmd += ['--allow-asserts']
       out = run_command(cmd)
       # also verify it passes pass-debug verifications
-      with_pass_debug(lambda : run_command(cmd))
+      with_pass_debug(lambda: run_command(cmd))
 
       open('a.2asm.asserts.mjs', 'w').write(out)
 
