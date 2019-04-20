@@ -118,7 +118,10 @@ public:
   Wasm2JSBuilder(Flags f) : flags(f) {}
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
-  Ref processFunction(Module* wasm, Function* func);
+  Ref processFunction(Module* wasm, Function* func, bool standalone=false);
+  Ref processStandaloneFunction(Module* wasm, Function* func) {
+    return processFunction(wasm, func, true);
+  }
 
   // The second pass on an expression: process it fully, generating
   // JS
@@ -599,23 +602,21 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
   }
 }
 
-static bool expressionEndsInReturn(Expression *e) {
-  if (e->is<Return>()) {
-    return true;
+Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFunction) {
+  if (standaloneFunction) {
+    // We are only printing a function, not a whole module. Prepare it for
+    // translation now (if there were a module, we'd have done this for all
+    // functions in parallel, earlier).
+    PassRunner runner(m);
+    // We only run a subset of all passes here. TODO: create a full valid module
+    // for each assertion body.
+    runner.add("flatten");
+    runner.add("simplify-locals-notee-nostructure");
+    runner.add("reorder-locals");
+    runner.add("vacuum");
+    runner.runOnFunction(func);
   }
-  if (!e->is<Block>()) {
-    return false;
-  }
-  ExpressionList* stats = &static_cast<Block*>(e)->list;
-  return expressionEndsInReturn((*stats)[stats->size()-1]);
-}
 
-Ref Wasm2JSBuilder::processFunction(Module* m, Function* func) {
-  if (flags.debug) {
-    static int fns = 0;
-    std::cerr << "processFunction " << (fns++) << " " << func->name
-              << std::endl;
-  }
   // We will be symbolically referring to all variables in the function, so make
   // sure that everything has a name and it's unique.
   Names::ensureNames(func);
@@ -645,14 +646,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func) {
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  bool endsInReturn = expressionEndsInReturn(func->body);
-  if (endsInReturn) {
-    // return already taken care of
-    flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
-  } else {
-    // func has no return
-    flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
-  }
+  flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -1542,7 +1536,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         return ValueBuilder::makeReturn(Ref());
       }
       Ref val = makeAsmCoercion(
-        visit(curr->value, NO_RESULT),
+        visit(curr->value, EXPRESSION_RESULT),
         wasmToAsmType(curr->value->type)
       );
       return ValueBuilder::makeReturn(val);

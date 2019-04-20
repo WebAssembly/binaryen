@@ -57,6 +57,7 @@ private:
   SExpressionWasmBuilder& sexpBuilder;
   Output& out;
   Wasm2JSBuilder::Flags flags;
+  Module tempAllocationModule;
 
   Ref emitAssertReturnFunc(Builder& wasmBuilder,
                            Element& e,
@@ -75,7 +76,7 @@ private:
 
   Ref processFunction(Function* func) {
     Wasm2JSBuilder sub(flags);
-    return sub.processFunction(nullptr, func);
+    return sub.processStandaloneFunction(&tempAllocationModule, func);
   }
 
   void emitFunction(Ref func) {
