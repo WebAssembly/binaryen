@@ -1038,8 +1038,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
           getPtr.index = func->getLocalIndex(ptr.getName());
           getPtr.type = i32;
           GetLocal getValue;
-          getPtr.index = func->getLocalIndex(value.getName());
-          getPtr.type = curr->value->type;
+          getValue.index = func->getLocalIndex(value.getName());
+          getValue.type = curr->value->type;
           Store fakeStore = *curr;
           fakeStore.ptr = &getPtr;
           fakeStore.value = &getValue;

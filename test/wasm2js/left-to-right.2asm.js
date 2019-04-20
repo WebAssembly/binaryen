@@ -356,21 +356,21 @@ function asmFunc(global, env, buffer) {
  function $58() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   reset();
-  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i32_right() | 0), HEAP32[wasm2js_i32$1 >> 2] = $15059208;
+  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i32_right() | 0), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
   return get() | 0 | 0;
  }
  
  function $59() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   reset();
-  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i32_right() | 0), HEAP8[wasm2js_i32$1 >> 0] = $15840104;
+  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i32_right() | 0), HEAP8[wasm2js_i32$0 >> 0] = wasm2js_i32$1;
   return get() | 0 | 0;
  }
  
  function $60() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   reset();
-  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i32_right() | 0), HEAP16[wasm2js_i32$1 >> 1] = $15838712;
+  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i32_right() | 0), HEAP16[wasm2js_i32$0 >> 1] = wasm2js_i32$1;
   return get() | 0 | 0;
  }
  
@@ -927,21 +927,21 @@ function asmFunc(global, env, buffer) {
  function $88() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   reset();
-  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i64_right() | 0), HEAP8[wasm2js_i32$1 >> 0] = $15837112;
+  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i64_right() | 0), HEAP8[wasm2js_i32$0 >> 0] = wasm2js_i32$1;
   return get() | 0 | 0;
  }
  
  function $89() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   reset();
-  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i64_right() | 0), HEAP16[wasm2js_i32$1 >> 1] = $15790552;
+  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i64_right() | 0), HEAP16[wasm2js_i32$0 >> 1] = wasm2js_i32$1;
   return get() | 0 | 0;
  }
  
  function $90() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   reset();
-  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i64_right() | 0), HEAP32[wasm2js_i32$1 >> 2] = $15851624;
+  (wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i64_right() | 0), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
   return get() | 0 | 0;
  }
  
@@ -1077,7 +1077,7 @@ function asmFunc(global, env, buffer) {
  function $107() {
   var wasm2js_i32$0 = 0, wasm2js_f32$0 = Math_fround(0);
   reset();
-  (wasm2js_i32$0 = i32_left() | 0, wasm2js_f32$0 = Math_fround(f32_right())), HEAPF32[wasm2js_f32$0 >> 2] = $15280376;
+  (wasm2js_i32$0 = i32_left() | 0, wasm2js_f32$0 = Math_fround(f32_right())), HEAPF32[wasm2js_i32$0 >> 2] = wasm2js_f32$0;
   return get() | 0 | 0;
  }
  
@@ -1208,7 +1208,7 @@ function asmFunc(global, env, buffer) {
  function $124() {
   var wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
   reset();
-  (wasm2js_i32$0 = i32_left() | 0, wasm2js_f64$0 = +f64_right()), HEAPF64[wasm2js_f64$0 >> 3] = $15876232;
+  (wasm2js_i32$0 = i32_left() | 0, wasm2js_f64$0 = +f64_right()), HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
   return get() | 0 | 0;
  }
  
