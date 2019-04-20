@@ -68,6 +68,15 @@ void flattenAppend(Ref ast, Ref extra) {
   }
 }
 
+// Appends extra to a chain of sequence elements
+void sequenceAppend(Ref& ast, Ref extra) {
+  if (!ast.get()) {
+    ast = extra;
+    return;
+  }
+  ast = ValueBuilder::makeSeq(ast, extra);
+}
+
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
@@ -725,7 +734,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       Ref ret = visit(curr, result);
       // if it's not already a statement, then it's an expression, and we need to assign it
       // (if it is a statement, it already assigns to the result var)
-      if (0 /* FIXME waka 1? */ && result != NO_RESULT) {
+      if (result != NO_RESULT) {
         ret = ValueBuilder::makeStatement(
             ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
       }
@@ -860,55 +869,34 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
     }
 
-    Ref makeStatementizedCall(ExpressionList& operands,
-                              Ref ret,
-                              std::function<Ref()> genTheCall,
-                              IString result,
-                              Type type) {
-      std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
-      for (auto& operand : operands) {
-        temps.push_back(new ScopedTemp(operand->type, parent, func));
-        IString temp = temps.back()->temp;
-        flattenAppend(ret, visitAndAssign(operand, temp));
-      }
-      Ref theCall = genTheCall();
-      for (size_t i = 0; i < temps.size(); i++) {
-        IString temp = temps[i]->temp;
-        auto &operand = operands[i];
-        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
-      }
-      theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
-      if (result != NO_RESULT) {
-        theCall = ValueBuilder::makeStatement(
-            ValueBuilder::makeBinary(
-                ValueBuilder::makeName(result), SET, theCall));
-      }
-      flattenAppend(ret, theCall);
-      for (auto temp : temps) {
-        delete temp;
-      }
-      return ret;
-    }
-
     Ref visitCallIndirect(CallIndirect* curr) {
       // TODO: the codegen here is a pessimization of what the ideal codegen
       // looks like. Eventually if necessary this should be tightened up in the
       // case that the argument expression doesn't have any side effects.
-      Ref ret = ValueBuilder::makeBlock();
+      Ref ret;
       ScopedTemp idx(i32, parent, func);
-      return makeStatementizedCall(
-        curr->operands,
-        ret,
-        [&]() {
-          flattenAppend(ret, visitAndAssign(curr->target, idx));
-          return ValueBuilder::makeCall(ValueBuilder::makeSub(
-            ValueBuilder::makeName(FUNCTION_TABLE),
-            idx.getAstName()
-          ));
-        },
-        result,
-        curr->type
-      );
+      std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
+      for (auto& operand : curr->operands) {
+        temps.push_back(new ScopedTemp(operand->type, parent, func));
+        IString temp = temps.back()->temp;
+        sequenceAppend(ret, visitAndAssign(operand, temp));
+      }
+      sequenceAppend(ret, visitAndAssign(curr->target, idx));
+      Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+        ValueBuilder::makeName(FUNCTION_TABLE),
+        idx.getAstName()
+      ));
+      for (size_t i = 0; i < temps.size(); i++) {
+        IString temp = temps[i]->temp;
+        auto &operand = curr->operands[i];
+        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
+      }
+      theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+      sequenceAppend(ret, theCall);
+      for (auto temp : temps) {
+        delete temp;
+      }
+      return ret;
     }
 
     // TODO: remove

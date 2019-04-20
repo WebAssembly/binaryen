@@ -396,10 +396,8 @@ function asmFunc(global, env, buffer) {
  
  function $76() {
   var wasm2js_i32$0 = 0;
-  1;
-  FUNCTION_TABLE[wasm2js_i32$0]();
-  4;
-  FUNCTION_TABLE[wasm2js_i32$0]();
+  wasm2js_i32$0 = 1, FUNCTION_TABLE[wasm2js_i32$0]();
+  wasm2js_i32$0 = 4, FUNCTION_TABLE[wasm2js_i32$0]();
  }
  
  function $77() {
@@ -407,74 +405,25 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = 0;
   i64toi32_i32$1 = 0;
   i64toi32_i32$2 = 0;
-  0.0;
-  0;
-  i64toi32_i32$0;
-  0.0;
-  0;
-  i64toi32_i32$1;
-  0.0;
-  0;
-  i64toi32_i32$2;
-  Math_fround(0.0);
-  0;
-  0;
-  FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$0, wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, +wasm2js_f64$1, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0, +wasm2js_f64$2, wasm2js_i32$5 | 0, wasm2js_i32$6 | 0, Math_fround(wasm2js_f32$0), wasm2js_i32$7 | 0);
+  (((((((((((wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0), wasm2js_i32$2 = i64toi32_i32$0), wasm2js_f64$1 = 0.0), wasm2js_i32$3 = 0), wasm2js_i32$4 = i64toi32_i32$1), wasm2js_f64$2 = 0.0), wasm2js_i32$5 = 0), wasm2js_i32$6 = i64toi32_i32$2), wasm2js_f32$0 = Math_fround(0.0)), wasm2js_i32$7 = 0), wasm2js_i32$0 = 0), FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$0, wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, +wasm2js_f64$1, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0, +wasm2js_f64$2, wasm2js_i32$5 | 0, wasm2js_i32$6 | 0, Math_fround(wasm2js_f32$0), wasm2js_i32$7 | 0);
   i64toi32_i32$2 = 0;
   i64toi32_i32$1 = 0;
   i64toi32_i32$0 = 0;
-  0.0;
-  0;
-  i64toi32_i32$2;
-  0.0;
-  0;
-  i64toi32_i32$1;
-  0.0;
-  0;
-  i64toi32_i32$0;
-  Math_fround(0.0);
-  0;
-  2;
-  FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$2, wasm2js_i32$7 | 0, wasm2js_i32$6 | 0, +wasm2js_f64$1, wasm2js_i32$5 | 0, wasm2js_i32$4 | 0, +wasm2js_f64$0, wasm2js_i32$3 | 0, wasm2js_i32$2 | 0, Math_fround(wasm2js_f32$0), wasm2js_i32$1 | 0);
+  (((((((((((wasm2js_f64$2 = 0.0, wasm2js_i32$7 = 0), wasm2js_i32$6 = i64toi32_i32$2), wasm2js_f64$1 = 0.0), wasm2js_i32$5 = 0), wasm2js_i32$4 = i64toi32_i32$1), wasm2js_f64$0 = 0.0), wasm2js_i32$3 = 0), wasm2js_i32$2 = i64toi32_i32$0), wasm2js_f32$0 = Math_fround(0.0)), wasm2js_i32$1 = 0), wasm2js_i32$0 = 2), FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$2, wasm2js_i32$7 | 0, wasm2js_i32$6 | 0, +wasm2js_f64$1, wasm2js_i32$5 | 0, wasm2js_i32$4 | 0, +wasm2js_f64$0, wasm2js_i32$3 | 0, wasm2js_i32$2 | 0, Math_fround(wasm2js_f32$0), wasm2js_i32$1 | 0);
   i64toi32_i32$0 = 0;
   i64toi32_i32$1 = 0;
   i64toi32_i32$2 = 0;
-  0.0;
-  0;
-  i64toi32_i32$0;
-  0.0;
-  0;
-  i64toi32_i32$1;
-  0.0;
-  0;
-  i64toi32_i32$2;
-  Math_fround(0.0);
-  0;
-  3;
-  FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$0, wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, +wasm2js_f64$1, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0, +wasm2js_f64$2, wasm2js_i32$5 | 0, wasm2js_i32$6 | 0, Math_fround(wasm2js_f32$0), wasm2js_i32$7 | 0);
+  (((((((((((wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0), wasm2js_i32$2 = i64toi32_i32$0), wasm2js_f64$1 = 0.0), wasm2js_i32$3 = 0), wasm2js_i32$4 = i64toi32_i32$1), wasm2js_f64$2 = 0.0), wasm2js_i32$5 = 0), wasm2js_i32$6 = i64toi32_i32$2), wasm2js_f32$0 = Math_fround(0.0)), wasm2js_i32$7 = 0), wasm2js_i32$0 = 3), FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$0, wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, +wasm2js_f64$1, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0, +wasm2js_f64$2, wasm2js_i32$5 | 0, wasm2js_i32$6 | 0, Math_fround(wasm2js_f32$0), wasm2js_i32$7 | 0);
  }
  
  function $78() {
   var wasm2js_i32$0 = 0;
-  1;
-  FUNCTION_TABLE[wasm2js_i32$0]();
+  wasm2js_i32$0 = 1, FUNCTION_TABLE[wasm2js_i32$0]();
  }
  
  function $79() {
   var wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_f64$1 = 0.0, wasm2js_i32$3 = 0, wasm2js_i32$4 = 0, wasm2js_f64$2 = 0.0, wasm2js_i32$5 = 0, wasm2js_i32$6 = 0, wasm2js_f32$0 = Math_fround(0), wasm2js_i32$7 = 0;
-  0.0;
-  0;
-  0;
-  0.0;
-  0;
-  0;
-  0.0;
-  0;
-  0;
-  Math_fround(0.0);
-  0;
-  0;
-  FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$0, wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, +wasm2js_f64$1, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0, +wasm2js_f64$2, wasm2js_i32$5 | 0, wasm2js_i32$6 | 0, Math_fround(wasm2js_f32$0), wasm2js_i32$7 | 0);
+  (((((((((((wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0), wasm2js_i32$2 = 0), wasm2js_f64$1 = 0.0), wasm2js_i32$3 = 0), wasm2js_i32$4 = 0), wasm2js_f64$2 = 0.0), wasm2js_i32$5 = 0), wasm2js_i32$6 = 0), wasm2js_f32$0 = Math_fround(0.0)), wasm2js_i32$7 = 0), wasm2js_i32$0 = 0), FUNCTION_TABLE[wasm2js_i32$0](+wasm2js_f64$0, wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, +wasm2js_f64$1, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0, +wasm2js_f64$2, wasm2js_i32$5 | 0, wasm2js_i32$6 | 0, Math_fround(wasm2js_f32$0), wasm2js_i32$7 | 0);
  }
  
  function legalstub$24() {
