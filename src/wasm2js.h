@@ -355,7 +355,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       std::move(params),
       i32,
       std::move(vars),
-      builder.makeGetGlobal(INT64_TO_32_HIGH_BITS, i32)
+      builder.makeReturn(builder.makeGetGlobal(INT64_TO_32_HIGH_BITS, i32))
     )));
     auto e = new Export();
     e->name = WASM_FETCH_HIGH_BITS;
