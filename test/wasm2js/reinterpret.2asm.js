@@ -31,17 +31,11 @@ function asmFunc(global, env, buffer) {
  function $2($0, $0$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  var i64toi32_i32$0 = 0, $3$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_f64$0 = 0.0;
+  var i64toi32_i32$0 = 0, $3$hi = 0;
   i64toi32_i32$0 = $0$hi;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_i32$1 = $0;
-  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_i32$1 = i64toi32_i32$0;
-  HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = +HEAPF64[__tempMemory__ >> 3];
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  HEAP32[__tempMemory__ >> 2] = $0;
+  HEAP32[(__tempMemory__ + 4 | 0) >> 2] = i64toi32_i32$0;
+  HEAPF64[__tempMemory__ >> 3] = +HEAPF64[__tempMemory__ >> 3];
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;

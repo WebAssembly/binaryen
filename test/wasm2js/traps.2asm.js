@@ -373,7 +373,7 @@ function asmFunc(global, env, buffer) {
   var$0$hi = var$0$hi | 0;
   var$1 = var$1 | 0;
   var$1$hi = var$1$hi | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, var$2 = 0, var$3 = 0, var$4 = 0, var$5 = 0, var$5$hi = 0, var$6 = 0, var$6$hi = 0, i64toi32_i32$6 = 0, $40 = 0, $41 = 0, $42 = 0, $43 = 0, $44 = 0, $45 = 0, $46 = 0, $47 = 0, var$8$hi = 0, $48 = 0, $49 = 0, $50 = 0, $51 = 0, var$7$hi = 0, $52 = 0, $60 = 0, $65$hi = 0, $67 = 0, $67$hi = 0, $68 = 0, $93 = 0, $124$hi = 0, $133$hi = 0, $138$hi = 0, var$8 = 0, $144 = 0, $144$hi = 0, $146$hi = 0, $148 = 0, $148$hi = 0, $155 = 0, $155$hi = 0, $158$hi = 0, var$7 = 0, $170$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, var$2 = 0, var$3 = 0, var$4 = 0, var$5 = 0, var$5$hi = 0, var$6 = 0, var$6$hi = 0, i64toi32_i32$6 = 0, $40 = 0, $41 = 0, $42 = 0, $43 = 0, $44 = 0, $45 = 0, $46 = 0, $47 = 0, var$8$hi = 0, $48 = 0, $49 = 0, $50 = 0, $51 = 0, var$7$hi = 0, $52 = 0, $60 = 0, $65$hi = 0, $67 = 0, $67$hi = 0, $68 = 0, $93 = 0, $124$hi = 0, $133$hi = 0, $138$hi = 0, var$8 = 0, $144 = 0, $144$hi = 0, $146$hi = 0, $148 = 0, $148$hi = 0, $155 = 0, $155$hi = 0, $158$hi = 0, var$7 = 0, $170$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   label$1 : {
    label$2 : {
     label$3 : {
@@ -450,12 +450,8 @@ function asmFunc(global, env, buffer) {
              var$2 = (var$2 >>> 0) / (var$3 >>> 0) | 0;
              i64toi32_i32$1 = 0;
              i64toi32_i32$2 = __tempMemory__;
-             wasm2js_i32$0 = i64toi32_i32$2;
-             wasm2js_i32$1 = var$0 - Math_imul(var$2, var$3) | 0;
-             HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-             wasm2js_i32$0 = i64toi32_i32$2;
-             wasm2js_i32$1 = i64toi32_i32$1;
-             (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+             HEAP32[i64toi32_i32$2 >> 2] = var$0 - Math_imul(var$2, var$3) | 0;
+             (wasm2js_i32$0 = i64toi32_i32$2, wasm2js_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
              i64toi32_i32$1 = 0;
              i64toi32_i32$2 = var$2;
              i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -521,12 +517,8 @@ function asmFunc(global, env, buffer) {
             i64toi32_i32$1 = i64toi32_i32$2 | i64toi32_i32$1 | 0;
             $68 = i64toi32_i32$3 | i64toi32_i32$0 | 0;
             i64toi32_i32$3 = $60;
-            wasm2js_i32$0 = i64toi32_i32$3;
-            wasm2js_i32$1 = $68;
-            HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-            wasm2js_i32$0 = i64toi32_i32$3;
-            wasm2js_i32$1 = i64toi32_i32$1;
-            (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+            HEAP32[i64toi32_i32$3 >> 2] = $68;
+            (wasm2js_i32$0 = i64toi32_i32$3, wasm2js_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
             i64toi32_i32$1 = 0;
             i64toi32_i32$3 = var$2 >>> ((__wasm_ctz_i32(var$3 | 0) | 0) & 31 | 0) | 0;
             i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -564,12 +556,8 @@ function asmFunc(global, env, buffer) {
          }
         }
         i64toi32_i32$2 = $93;
-        wasm2js_i32$0 = i64toi32_i32$2;
-        wasm2js_i32$1 = $44;
-        HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-        wasm2js_i32$0 = i64toi32_i32$2;
-        wasm2js_i32$1 = i64toi32_i32$1;
-        (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+        HEAP32[i64toi32_i32$2 >> 2] = $44;
+        (wasm2js_i32$0 = i64toi32_i32$2, wasm2js_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
         i64toi32_i32$1 = 0;
         i64toi32_i32$2 = var$4;
         i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -584,12 +572,8 @@ function asmFunc(global, env, buffer) {
       i64toi32_i32$2 = var$0$hi;
       i64toi32_i32$2 = 0;
       i64toi32_i32$1 = __tempMemory__;
-      wasm2js_i32$0 = i64toi32_i32$1;
-      wasm2js_i32$1 = var$4 & var$0 | 0;
-      HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-      wasm2js_i32$0 = i64toi32_i32$1;
-      wasm2js_i32$1 = i64toi32_i32$2;
-      (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+      HEAP32[i64toi32_i32$1 >> 2] = var$4 & var$0 | 0;
+      (wasm2js_i32$0 = i64toi32_i32$1, wasm2js_i32$1 = i64toi32_i32$2), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
       if ((var$3 | 0) == (1 | 0)) {
        break label$1
       }
@@ -811,12 +795,8 @@ function asmFunc(global, env, buffer) {
     }
     i64toi32_i32$3 = var$5$hi;
     i64toi32_i32$2 = __tempMemory__;
-    wasm2js_i32$0 = i64toi32_i32$2;
-    wasm2js_i32$1 = var$5;
-    HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-    wasm2js_i32$0 = i64toi32_i32$2;
-    wasm2js_i32$1 = i64toi32_i32$3;
-    (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+    HEAP32[i64toi32_i32$2 >> 2] = var$5;
+    (wasm2js_i32$0 = i64toi32_i32$2, wasm2js_i32$1 = i64toi32_i32$3), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
     i64toi32_i32$3 = var$0$hi;
     i64toi32_i32$5 = var$0;
     i64toi32_i32$2 = 0;
@@ -846,12 +826,8 @@ function asmFunc(global, env, buffer) {
    }
    i64toi32_i32$3 = var$0$hi;
    i64toi32_i32$5 = __tempMemory__;
-   wasm2js_i32$0 = i64toi32_i32$5;
-   wasm2js_i32$1 = var$0;
-   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-   wasm2js_i32$0 = i64toi32_i32$5;
-   wasm2js_i32$1 = i64toi32_i32$3;
-   (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+   HEAP32[i64toi32_i32$5 >> 2] = var$0;
+   (wasm2js_i32$0 = i64toi32_i32$5, wasm2js_i32$1 = i64toi32_i32$3), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
    i64toi32_i32$3 = 0;
    var$0 = 0;
    var$0$hi = i64toi32_i32$3;
@@ -1268,7 +1244,7 @@ function asmFunc(global, env, buffer) {
   var$0$hi = var$0$hi | 0;
   var$1 = var$1 | 0;
   var$1$hi = var$1$hi | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, var$2 = 0, var$3 = 0, var$4 = 0, var$5 = 0, var$5$hi = 0, var$6 = 0, var$6$hi = 0, i64toi32_i32$6 = 0, $40 = 0, $41 = 0, $42 = 0, $43 = 0, $44 = 0, $45 = 0, $46 = 0, $47 = 0, var$8$hi = 0, $48 = 0, $49 = 0, $50 = 0, $51 = 0, var$7$hi = 0, $52 = 0, $60 = 0, $65$hi = 0, $67 = 0, $67$hi = 0, $68 = 0, $93 = 0, $124$hi = 0, $133$hi = 0, $138$hi = 0, var$8 = 0, $144 = 0, $144$hi = 0, $146$hi = 0, $148 = 0, $148$hi = 0, $155 = 0, $155$hi = 0, $158$hi = 0, var$7 = 0, $170$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, var$2 = 0, var$3 = 0, var$4 = 0, var$5 = 0, var$5$hi = 0, var$6 = 0, var$6$hi = 0, i64toi32_i32$6 = 0, $40 = 0, $41 = 0, $42 = 0, $43 = 0, $44 = 0, $45 = 0, $46 = 0, $47 = 0, var$8$hi = 0, $48 = 0, $49 = 0, $50 = 0, $51 = 0, var$7$hi = 0, $52 = 0, $60 = 0, $65$hi = 0, $67 = 0, $67$hi = 0, $68 = 0, $93 = 0, $124$hi = 0, $133$hi = 0, $138$hi = 0, var$8 = 0, $144 = 0, $144$hi = 0, $146$hi = 0, $148 = 0, $148$hi = 0, $155 = 0, $155$hi = 0, $158$hi = 0, var$7 = 0, $170$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   label$1 : {
    label$2 : {
     label$3 : {
@@ -1345,12 +1321,8 @@ function asmFunc(global, env, buffer) {
              var$2 = (var$2 >>> 0) / (var$3 >>> 0) | 0;
              i64toi32_i32$1 = 0;
              i64toi32_i32$2 = __tempMemory__;
-             wasm2js_i32$0 = i64toi32_i32$2;
-             wasm2js_i32$1 = var$0 - Math_imul(var$2, var$3) | 0;
-             HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-             wasm2js_i32$0 = i64toi32_i32$2;
-             wasm2js_i32$1 = i64toi32_i32$1;
-             (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+             HEAP32[i64toi32_i32$2 >> 2] = var$0 - Math_imul(var$2, var$3) | 0;
+             (wasm2js_i32$0 = i64toi32_i32$2, wasm2js_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
              i64toi32_i32$1 = 0;
              i64toi32_i32$2 = var$2;
              i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -1416,12 +1388,8 @@ function asmFunc(global, env, buffer) {
             i64toi32_i32$1 = i64toi32_i32$2 | i64toi32_i32$1 | 0;
             $68 = i64toi32_i32$3 | i64toi32_i32$0 | 0;
             i64toi32_i32$3 = $60;
-            wasm2js_i32$0 = i64toi32_i32$3;
-            wasm2js_i32$1 = $68;
-            HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-            wasm2js_i32$0 = i64toi32_i32$3;
-            wasm2js_i32$1 = i64toi32_i32$1;
-            (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+            HEAP32[i64toi32_i32$3 >> 2] = $68;
+            (wasm2js_i32$0 = i64toi32_i32$3, wasm2js_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
             i64toi32_i32$1 = 0;
             i64toi32_i32$3 = var$2 >>> ((__wasm_ctz_i32(var$3 | 0) | 0) & 31 | 0) | 0;
             i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -1459,12 +1427,8 @@ function asmFunc(global, env, buffer) {
          }
         }
         i64toi32_i32$2 = $93;
-        wasm2js_i32$0 = i64toi32_i32$2;
-        wasm2js_i32$1 = $44;
-        HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-        wasm2js_i32$0 = i64toi32_i32$2;
-        wasm2js_i32$1 = i64toi32_i32$1;
-        (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+        HEAP32[i64toi32_i32$2 >> 2] = $44;
+        (wasm2js_i32$0 = i64toi32_i32$2, wasm2js_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
         i64toi32_i32$1 = 0;
         i64toi32_i32$2 = var$4;
         i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -1479,12 +1443,8 @@ function asmFunc(global, env, buffer) {
       i64toi32_i32$2 = var$0$hi;
       i64toi32_i32$2 = 0;
       i64toi32_i32$1 = __tempMemory__;
-      wasm2js_i32$0 = i64toi32_i32$1;
-      wasm2js_i32$1 = var$4 & var$0 | 0;
-      HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-      wasm2js_i32$0 = i64toi32_i32$1;
-      wasm2js_i32$1 = i64toi32_i32$2;
-      (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+      HEAP32[i64toi32_i32$1 >> 2] = var$4 & var$0 | 0;
+      (wasm2js_i32$0 = i64toi32_i32$1, wasm2js_i32$1 = i64toi32_i32$2), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
       if ((var$3 | 0) == (1 | 0)) {
        break label$1
       }
@@ -1706,12 +1666,8 @@ function asmFunc(global, env, buffer) {
     }
     i64toi32_i32$3 = var$5$hi;
     i64toi32_i32$2 = __tempMemory__;
-    wasm2js_i32$0 = i64toi32_i32$2;
-    wasm2js_i32$1 = var$5;
-    HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-    wasm2js_i32$0 = i64toi32_i32$2;
-    wasm2js_i32$1 = i64toi32_i32$3;
-    (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+    HEAP32[i64toi32_i32$2 >> 2] = var$5;
+    (wasm2js_i32$0 = i64toi32_i32$2, wasm2js_i32$1 = i64toi32_i32$3), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
     i64toi32_i32$3 = var$0$hi;
     i64toi32_i32$5 = var$0;
     i64toi32_i32$2 = 0;
@@ -1741,12 +1697,8 @@ function asmFunc(global, env, buffer) {
    }
    i64toi32_i32$3 = var$0$hi;
    i64toi32_i32$5 = __tempMemory__;
-   wasm2js_i32$0 = i64toi32_i32$5;
-   wasm2js_i32$1 = var$0;
-   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-   wasm2js_i32$0 = i64toi32_i32$5;
-   wasm2js_i32$1 = i64toi32_i32$3;
-   (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
+   HEAP32[i64toi32_i32$5 >> 2] = var$0;
+   (wasm2js_i32$0 = i64toi32_i32$5, wasm2js_i32$1 = i64toi32_i32$3), ((HEAP8[(wasm2js_i32$0 + 4 | 0) >> 0] = wasm2js_i32$1 & 255 | 0, HEAP8[(wasm2js_i32$0 + 5 | 0) >> 0] = (wasm2js_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 6 | 0) >> 0] = (wasm2js_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$0 + 7 | 0) >> 0] = (wasm2js_i32$1 >>> 24 | 0) & 255 | 0;
    i64toi32_i32$3 = 0;
    var$0 = 0;
    var$0$hi = i64toi32_i32$3;

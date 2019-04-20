@@ -147,10 +147,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $30() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -158,10 +156,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $31() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -169,10 +165,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $32() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = -nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -180,10 +174,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $33() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -191,10 +183,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $34() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -202,10 +192,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $35() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = -nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -213,10 +201,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $36() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -224,10 +210,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $37() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -235,10 +219,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $38() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = -nan;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -246,10 +228,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $39() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = infinity;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = infinity;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -257,10 +237,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $40() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = infinity;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = infinity;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -268,10 +246,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $41() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -infinity;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = -infinity;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -279,10 +255,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $42() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 0.0;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -290,10 +264,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $43() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 0.0;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -301,10 +273,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $44() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = -0.0;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -312,10 +282,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $45() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 6.283185307179586;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 6.283185307179586;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -323,10 +291,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $46() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 5.0e-324;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 5.0e-324;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -334,10 +300,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $47() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 2.2250738585072014e-308;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 2.2250738585072014e-308;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -345,10 +309,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $48() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 2.225073858507201e-308;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 2.225073858507201e-308;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -356,10 +318,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $49() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 1797693134862315708145274.0e284;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 1797693134862315708145274.0e284;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -367,10 +327,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $50() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 1267650600228229401496703.0e6;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 1267650600228229401496703.0e6;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -378,10 +336,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $51() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 0.0;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -389,10 +345,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $52() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 0.0;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -400,10 +354,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $53() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = -0.0;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -411,10 +363,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $54() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 6.283185307179586;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 6.283185307179586;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -422,10 +372,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $55() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 5.0e-324;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 5.0e-324;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -433,10 +381,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $56() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 2.2250738585072014e-308;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 2.2250738585072014e-308;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -444,10 +390,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $57() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 2.225073858507201e-308;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 2.225073858507201e-308;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -455,10 +399,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $58() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 1797693134862315708145274.0e284;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 1797693134862315708145274.0e284;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -466,10 +408,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $59() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 1.e+100;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[__tempMemory__ >> 3] = 1.e+100;
   i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;

@@ -68,13 +68,13 @@ function asmFunc(global, env, buffer) {
  function $4(cond) {
   cond = cond | 0;
   var $1_1 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $5(cond) {
   cond = cond | 0;
   var $1_1 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function legalstub$1($0_1, $1_1, $2_1, $3_1, $4_1) {

@@ -102,18 +102,20 @@ function asmFunc(global, env, buffer) {
  
  function $5(i) {
   i = i | 0;
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  wasm2js_i32$1 = i;
-  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1]() | 0;
-  return wasm2js_i32$0 | 0;
+  var wasm2js_i32$0 = 0;
+  return {
+   i;
+   FUNCTION_TABLE[wasm2js_i32$0]() | 0;
+  } | 0;
  }
  
  function $6(i) {
   i = i | 0;
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  wasm2js_i32$1 = i;
-  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1]() | 0;
-  return wasm2js_i32$0 | 0;
+  var wasm2js_i32$0 = 0;
+  return {
+   i;
+   FUNCTION_TABLE[wasm2js_i32$0]() | 0;
+  } | 0;
  }
  
  var FUNCTION_TABLE = [t1, t2, t3, u1, u2, t1, t3];
@@ -160,10 +162,11 @@ function asmFunc(global, env, buffer) {
  
  function $2(i) {
   i = i | 0;
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  wasm2js_i32$1 = i;
-  wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1]() | 0;
-  return wasm2js_i32$0 | 0;
+  var wasm2js_i32$0 = 0;
+  return {
+   i;
+   FUNCTION_TABLE[wasm2js_i32$0]() | 0;
+  } | 0;
  }
  
  var FUNCTION_TABLE = [t1, t2];

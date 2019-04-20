@@ -22,18 +22,12 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = __wasm_grow_memory(1 | 0);
-  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
+  HEAP32[0 >> 2] = __wasm_grow_memory(1 | 0);
   return HEAP32[0 >> 2] | 0 | 0;
  }
  
  function $1() {
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = grow() | 0;
-  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
+  HEAP32[0 >> 2] = grow() | 0;
   return HEAP32[0 >> 2] | 0 | 0;
  }
  

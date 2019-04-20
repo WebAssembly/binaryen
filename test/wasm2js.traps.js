@@ -79,15 +79,13 @@ function asmFunc0(global, env, buffer) {
 const memasmFunc0 = new ArrayBuffer(65536);
 const retasmFunc0 = asmFunc0({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc0);
 function check1() {
- var wasm2js_i32$0 = 0;
  retasmFunc0.empty();
- wasm2js_i32$0 = 1;
- return wasm2js_i32$0 | 0;
+ 1;
 }
 
 if (!check1()) throw 'assertion failed: ( assert_return ( call empty ) )';
 function check2() {
- return (retasmFunc0.add(1 | 0, 1 | 0) | 0 | 0) == (2 | 0) | 0;
+ (retasmFunc0.add(1 | 0, 1 | 0) | 0 | 0) == (2 | 0);
 }
 
 if (!check2()) throw 'assertion failed: ( assert_return ( call add ( i32.const 1 ) ( i32.const 1 ) ) ( i32.const 2 ) )';
