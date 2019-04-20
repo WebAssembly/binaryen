@@ -1026,9 +1026,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         // semantics of JS mean we already looked at HEAP and have
         // decided where to assign to).
         if (!FindAll<Call>(curr->ptr).list.empty() ||
-            !FindAll<CallIndirect>(curr->ptr).list.empty() ||
             !FindAll<Call>(curr->value).list.empty() ||
-            !FindAll<CallIndirect>(curr->value).list.empty()) {
+            !FindAll<CallIndirect>(curr->ptr).list.empty() ||
+            !FindAll<CallIndirect>(curr->value).list.empty() ||
+            !FindAll<Host>(curr->ptr).list.empty() ||
+            !FindAll<Host>(curr->value).list.empty()) {
           Ref ret;
           ScopedTemp ptr(i32, parent, func);
           sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
