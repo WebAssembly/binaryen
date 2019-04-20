@@ -34,6 +34,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "ir/module-utils.h"
@@ -688,7 +689,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     struct ScopedTemp {
       Wasm2JSBuilder* parent;
       Type type;
-      IString temp;
+      IString temp; // TODO: switch to indexes; avoid names
       bool needFree;
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
@@ -1015,6 +1016,37 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitStore(Store* curr) {
+      if (module->memory.initial < module->memory.max && curr->type != unreachable) {
+        // In JS, if memory grows then it is dangerous to write
+        //  HEAP[f()] = ..
+        // or
+        //  HEAP[..] = f()
+        // since if the call swaps HEAP (in a growth operation) then
+        // we will not actually write to the new version (since the
+        // semantics of JS mean we already looked at HEAP and have
+        // decided where to assign to).
+        if (!FindAll<Call>(curr->ptr).list.empty() ||
+            !FindAll<CallIndirect>(curr->ptr).list.empty() ||
+            !FindAll<Call>(curr->value).list.empty() ||
+            !FindAll<CallIndirect>(curr->value).list.empty()) {
+          Ref ret;
+          ScopedTemp ptr(i32, parent, func);
+          sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
+          ScopedTemp value(curr->value->type, parent, func);
+          sequenceAppend(ret, visitAndAssign(curr->value, value));
+          GetLocal getPtr;
+          getPtr.index = func->getLocalIndex(ptr.getName());
+          getPtr.type = i32;
+          GetLocal getValue;
+          getPtr.index = func->getLocalIndex(value.getName());
+          getPtr.type = curr->value->type;
+          Store fakeStore = *curr;
+          curr->ptr = &getPtr;
+          curr->value = &getValue;
+          sequenceAppend(ret, visitStore(&fakeStore));
+          return ret;
+        }
+      }
       // FIXME if memory growth, store ptr cannot contain a function call
       //       also other stores to memory, check them, all makeSub's
       if (curr->align != 0 && curr->align < curr->bytes) {
