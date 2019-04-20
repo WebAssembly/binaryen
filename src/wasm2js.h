@@ -1016,7 +1016,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
 
     Ref visitStore(Store* curr) {
       // FIXME if memory growth, store ptr cannot contain a function call
-      //       (select and call_indirect too?)
+      //       also other stores to memory, check them, all makeSub's
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
         ScopedTemp temp(i32, parent, func);
