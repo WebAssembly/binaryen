@@ -222,6 +222,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitBlock(Block* curr) {
     if (curr->list.size() == 0) return;
+    if (handleUnreachable(curr)) return;
     if (curr->type == i64) curr->type = i32;
     auto highBitsIt = labelHighBitVars.find(curr->name);
     if (!hasOutParam(curr->list.back())) {
@@ -271,6 +272,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitLoop(Loop* curr) {
+    // TODO: in flat IR, no chance for an out param
     assert(labelHighBitVars.find(curr->name) == labelHighBitVars.end());
     if (curr->type != i64) return;
     curr->type = i32;
@@ -278,6 +280,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitBreak(Break* curr) {
+    // TODO: in flat IR, no chance for an out param
     if (!hasOutParam(curr->value)) return;
     assert(curr->value != nullptr);
     TempVar valHighBits = fetchOutParam(curr->value);
@@ -300,6 +303,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSwitch(Switch* curr) {
+    // TODO: in flat IR, no chance for an out param
     if (!hasOutParam(curr->value)) return;
     TempVar outParam = fetchOutParam(curr->value);
     TempVar tmp = getTemp();
@@ -466,6 +470,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitSetGlobal(SetGlobal* curr) {
     if (!originallyI64Globals.count(curr->name)) return;
+    if (handleUnreachable(curr)) return;
     TempVar highBits = fetchOutParam(curr->value);
     auto* setHigh = builder->makeSetGlobal(
       makeHighName(curr->name),
@@ -948,6 +953,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitUnary(Unary* curr) {
     if (!unaryNeedsLowering(curr->op)) return;
+    if (handleUnreachable(curr)) return;
     assert(hasOutParam(curr->value) || curr->type == i64 || curr->type == f64);
     switch (curr->op) {
       case ClzInt64:
@@ -1465,6 +1471,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitBinary(Binary* curr) {
+    if (handleUnreachable(curr)) return;
     if (!binaryNeedsLowering(curr->op)) return;
     // left and right reachable, lower normally
     TempVar leftLow = getTemp();
