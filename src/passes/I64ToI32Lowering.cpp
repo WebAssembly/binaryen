@@ -532,7 +532,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitStore(Store* curr) {
-    if (handleUnreachable(curr)) return;
+//    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->value)) return;
     assert(curr->offset + 4 > curr->offset);
     assert(!curr->isAtomic && "atomic store not implemented");
@@ -545,6 +545,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       TempVar ptrTemp = getTemp();
       SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
       curr->ptr = builder->makeGetLocal(ptrTemp, i32);
+      curr->finalize();
       Store* storeHigh = builder->makeStore(
         4,
         curr->offset + 4,
