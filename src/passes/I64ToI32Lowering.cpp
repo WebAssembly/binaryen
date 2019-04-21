@@ -222,7 +222,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitBlock(Block* curr) {
     if (curr->list.size() == 0) return;
-    if (handleUnreachable(curr)) return;
     if (curr->type == i64) curr->type = i32;
     auto highBitsIt = labelHighBitVars.find(curr->name);
     if (!hasOutParam(curr->list.back())) {
@@ -254,7 +253,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitIf(If* curr) {
-    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->ifTrue)) return;
     assert(curr->ifFalse != nullptr && "Nullable ifFalse found");
     TempVar highBits = fetchOutParam(curr->ifTrue);
@@ -275,13 +273,11 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitLoop(Loop* curr) {
     assert(labelHighBitVars.find(curr->name) == labelHighBitVars.end());
     if (curr->type != i64) return;
-    if (handleUnreachable(curr)) return;
     curr->type = i32;
     setOutParam(curr, fetchOutParam(curr->body));
   }
 
   void visitBreak(Break* curr) {
-    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->value)) return;
     assert(curr->value != nullptr);
     TempVar valHighBits = fetchOutParam(curr->value);
@@ -304,7 +300,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSwitch(Switch* curr) {
-    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->value)) return;
     TempVar outParam = fetchOutParam(curr->value);
     TempVar tmp = getTemp();
@@ -344,7 +339,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   template<typename T>
   void visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
-    if (handleUnreachable(curr)) return;
     std::vector<Expression*> args;
     for (auto* e : curr->operands) {
       args.push_back(e);
@@ -433,7 +427,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSetLocal(SetLocal* curr) {
-    if (handleUnreachable(curr)) return;
     const auto mappedIndex = indexMap[curr->index];
     // Need to remap the local into the new naming scheme, regardless of
     // the type of the local.  Note that lowerTee depends on this happening.
@@ -472,7 +465,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSetGlobal(SetGlobal* curr) {
-    if (handleUnreachable(curr)) return;
     if (!originallyI64Globals.count(curr->name)) return;
     TempVar highBits = fetchOutParam(curr->value);
     auto* setHigh = builder->makeSetGlobal(
@@ -532,7 +524,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitStore(Store* curr) {
-//    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->value)) return;
     assert(curr->offset + 4 > curr->offset);
     assert(!curr->isAtomic && "atomic store not implemented");
@@ -957,7 +948,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitUnary(Unary* curr) {
     if (!unaryNeedsLowering(curr->op)) return;
-    if (handleUnreachable(curr)) return;
     assert(hasOutParam(curr->value) || curr->type == i64 || curr->type == f64);
     switch (curr->op) {
       case ClzInt64:
@@ -1476,7 +1466,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitBinary(Binary* curr) {
     if (!binaryNeedsLowering(curr->op)) return;
-    if (handleUnreachable(curr)) return;
     // left and right reachable, lower normally
     TempVar leftLow = getTemp();
     TempVar leftHigh = fetchOutParam(curr->left);
@@ -1602,14 +1591,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitDrop(Drop* curr) {
-    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->value)) return;
     // free temp var
     fetchOutParam(curr->value);
   }
 
   void visitReturn(Return* curr) {
-    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->value)) return;
     TempVar lowBits = getTemp();
     TempVar highBits = fetchOutParam(curr->value);
@@ -1665,7 +1652,11 @@ private:
 
   // If e.g. a select is unreachable, then one arm may have an out param
   // but not the other. In this case dce should really have been run
-  // before; handle it in a simple way here.
+  // before; handle it in a simple way here by replacing the node with
+  // a block of its children.
+  // This is valid only for nodes that execute their children
+  // unconditionally before themselves, so it is not valid for an if,
+  // in particular.
   bool handleUnreachable(Expression* curr) {
     if (curr->type != unreachable) return false;
     std::vector<Expression*> children;
@@ -1679,6 +1670,8 @@ private:
       children.push_back(child);
     }
     if (!hasUnreachable) return false;
+    // This has an unreachable child, so we can replace it with
+    // the children.
     auto* block = builder->makeBlock(children);
     assert(block->type == unreachable);
     replaceCurrent(block);
