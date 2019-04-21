@@ -330,7 +330,17 @@ def update_reduce_tests():
 
 
 def main():
+  update_asm_js_tests()
+  lld.update_lld_tests()
+  update_wasm_opt_tests()
+  update_bin_fmt_tests()
+  update_example_tests()
+  update_wasm_dis_tests()
+  update_ctor_eval_tests()
   wasm2js.update_wasm2js_tests()
+  update_metadce_tests()
+  update_reduce_tests()
+  update_binaryen_js_tests()
 
   print '\n[ success! ]'
 
