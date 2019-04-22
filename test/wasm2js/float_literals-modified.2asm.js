@@ -1,6 +1,23 @@
-import { __tempMemory__ } from 'env';
 import { setTempRet0 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i32(index) {
+    return i32ScratchView[index];
+  }
+      
+  function wasm2js_scratch_store_f64(value) {
+    f64ScratchView[0] = value;
+  }
+      
+  function wasm2js_scratch_store_f32(value) {
+    f32ScratchView[0] = value;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -24,454 +41,393 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $1() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $2() {
-  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $3() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $4() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $5() {
-  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $6() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $7() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $8() {
-  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-nan)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $9() {
-  return (HEAPF32[0] = Math_fround(infinity), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(infinity)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $10() {
-  return (HEAPF32[0] = Math_fround(infinity), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(infinity)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $11() {
-  return (HEAPF32[0] = Math_fround(-infinity), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-infinity)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $12() {
-  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $13() {
-  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $14() {
-  return (HEAPF32[0] = Math_fround(-0.0), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-0.0)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $15() {
-  return (HEAPF32[0] = Math_fround(6.2831854820251465), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(6.2831854820251465)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $16() {
-  return (HEAPF32[0] = Math_fround(1.401298464324817e-45), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.401298464324817e-45)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $17() {
-  return (HEAPF32[0] = Math_fround(1.1754943508222875e-38), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.1754943508222875e-38)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $18() {
-  return (HEAPF32[0] = Math_fround(3402823466385288598117041.0e14), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(3402823466385288598117041.0e14)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $19() {
-  return (HEAPF32[0] = Math_fround(1.1754942106924411e-38), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.1754942106924411e-38)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $20() {
-  return (HEAPF32[0] = Math_fround(1024.0), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1024.0)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $21() {
-  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $22() {
-  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(0.0)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $23() {
-  return (HEAPF32[0] = Math_fround(-0.0), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-0.0)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $24() {
-  return (HEAPF32[0] = Math_fround(6.2831854820251465), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(6.2831854820251465)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $25() {
-  return (HEAPF32[0] = Math_fround(1.401298464324817e-45), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.401298464324817e-45)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $26() {
-  return (HEAPF32[0] = Math_fround(1.1754943508222875e-38), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.1754943508222875e-38)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $27() {
-  return (HEAPF32[0] = Math_fround(1.1754942106924411e-38), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.1754942106924411e-38)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $28() {
-  return (HEAPF32[0] = Math_fround(3402823466385288598117041.0e14), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(3402823466385288598117041.0e14)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $29() {
-  return (HEAPF32[0] = Math_fround(1.0e10), HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(1.0e10)), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $30() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $31() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $32() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(-nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $33() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $34() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $35() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(-nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $36() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $37() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $38() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -nan;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(-nan));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $39() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = infinity;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(infinity));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $40() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = infinity;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(infinity));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $41() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -infinity;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(-infinity));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $42() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(0.0));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $43() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(0.0));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $44() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(-0.0));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $45() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 6.283185307179586;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(6.283185307179586));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $46() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 5.0e-324;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(5.0e-324));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $47() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 2.2250738585072014e-308;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(2.2250738585072014e-308));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $48() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 2.225073858507201e-308;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(2.225073858507201e-308));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $49() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 1797693134862315708145274.0e284;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(1797693134862315708145274.0e284));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $50() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 1267650600228229401496703.0e6;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(1267650600228229401496703.0e6));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $51() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(0.0));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $52() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(0.0));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $53() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = -0.0;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(-0.0));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $54() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 6.283185307179586;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(6.283185307179586));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $55() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 5.0e-324;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(5.0e-324));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $56() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 2.2250738585072014e-308;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(2.2250738585072014e-308));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $57() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 2.225073858507201e-308;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(2.225073858507201e-308));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $58() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 1797693134862315708145274.0e284;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(1797693134862315708145274.0e284));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
  
  function $59() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = 1.e+100;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+(1.e+100));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
