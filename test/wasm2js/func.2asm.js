@@ -183,10 +183,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $47() {
-  block : {
-   dummy();
-   dummy();
-  }
+  dummy();
+  dummy();
  }
  
  function $48() {

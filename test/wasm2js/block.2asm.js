@@ -34,25 +34,19 @@ function asmFunc(global, env, buffer) {
  }
  
  function $3() {
-  block : {
-   dummy();
-   dummy();
-   dummy();
-   dummy();
-  }
-  block1 : {
-   dummy();
-   dummy();
-   dummy();
-  }
+  dummy();
+  dummy();
+  dummy();
+  dummy();
+  dummy();
+  dummy();
+  dummy();
   return 8 | 0;
  }
  
  function $4() {
-  block : {
-   dummy();
-   dummy();
-  }
+  dummy();
+  dummy();
   return 9 | 0;
  }
  

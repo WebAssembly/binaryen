@@ -136,10 +136,7 @@ public:
 
   // The second pass on an expression: process it fully, generating
   // JS
-  // @param result Whether the context we are in receives a value,
-  //               and its type, or if not, then we can drop our return,
-  //               if we have one.
-  Ref processFunctionBody(Module* m, Function* func, IString result);
+  Ref processFunctionBody(Module* m, Function* func);
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -274,6 +271,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   runner.add("flatten");
   runner.add("simplify-locals-notee-nostructure");
   runner.add("reorder-locals");
+  runner.add("remove-unused-names");
   runner.add("vacuum");
   runner.add("remove-unused-module-elements");
   runner.setDebug(flags.debug);
@@ -632,6 +630,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
     runner.add("flatten");
     runner.add("simplify-locals-notee-nostructure");
     runner.add("reorder-locals");
+    runner.add("remove-unused-names");
     runner.add("vacuum");
     runner.runOnFunction(func);
   }
@@ -665,7 +664,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
+  flattenAppend(ret, processFunctionBody(m, func));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -684,7 +683,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   return ret;
 }
 
-Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString result) {
+Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
     IString result; // TODO: remove
@@ -741,14 +740,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitAndAssign(Expression* curr, IString result) {
+      assert(result != NO_RESULT);
       Ref ret = visit(curr, result);
-      // if it's not already a statement, then it's an expression, and we need to assign it
-      // (if it is a statement, it already assigns to the result var)
-      if (result != NO_RESULT) {
-        ret = ValueBuilder::makeStatement(
-            ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
-      }
-      return ret;
+      return ValueBuilder::makeStatement(ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
     }
 
     Ref visitAndAssign(Expression* curr, ScopedTemp& temp) {
@@ -768,10 +762,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       return ret;
     }
 
-    // For spooky return-at-a-distance/break-with-result, this tells us
-    // what the result var is for a specific label.
-    std::map<Name, IString> breakResults;
-
     // Breaks to the top of a loop should be emitted as continues, to that loop's main label
     std::unordered_set<Name> continueLabels;
 
@@ -782,7 +772,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     // Visitors
 
     Ref visitBlock(Block* curr) {
-      breakResults[curr->name] = result;
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
       auto noResults = result == NO_RESULT ? size : size-1;
@@ -799,20 +788,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitIf(If* curr) {
-      IString temp;
       Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      Ref ifTrue = ValueBuilder::makeStatement(visitAndAssign(curr->ifTrue, result));
+      Ref ifTrue = visit(curr->ifTrue, NO_RESULT);
       Ref ifFalse;
       if (curr->ifFalse) {
-        ifFalse = ValueBuilder::makeStatement(visitAndAssign(curr->ifFalse, result));
+        ifFalse = visit(curr->ifFalse, NO_RESULT);
       }
-      if (temp.isNull()) {
-        return ValueBuilder::makeIf(condition, ifTrue, ifFalse); // simple if
-      }
-      condition = blockify(condition);
-      // just add an if to the block
-      condition[1]->push_back(ValueBuilder::makeIf(ValueBuilder::makeName(temp), ifTrue, ifFalse));
-      return condition;
+      return ValueBuilder::makeIf(condition, ifTrue, ifFalse); // simple if
     }
 
     Ref visitLoop(Loop* curr) {
@@ -842,13 +824,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         fakeIf.ifTrue = &fakeBreak;
         return visit(&fakeIf, result);
       }
-      Ref theBreak = makeBreakOrContinue(curr->name);
-      if (!curr->value) return theBreak;
-      // generate the value, including assigning to the result, and then do the break
-      Ref ret = visitAndAssign(curr->value, breakResults[curr->name]);
-      ret = blockify(ret);
-      ret[1]->push_back(theBreak);
-      return ret;
+      return makeBreakOrContinue(curr->name);
     }
 
     Expression* defaultBody = nullptr; // default must be last in asm.js
@@ -1141,7 +1117,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitDrop(Drop* curr) {
-      return visitAndAssign(curr->value, result);
+      return visit(curr->value, NO_RESULT);
     }
 
     Ref visitConst(Const* curr) {
@@ -1587,7 +1563,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
   };
 
-  return ExpressionProcessor(this, m, func).visit(func->body, result);
+  return ExpressionProcessor(this, m, func).visit(func->body, NO_RESULT);
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {

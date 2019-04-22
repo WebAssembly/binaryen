@@ -104,38 +104,26 @@ function asmFunc(global, env, buffer) {
  
  function $15() {
   var $0 = 0, $2_1 = 0;
-  loop_in : do {
-   abort();
-   break loop_in;
-  } while (1);
+  abort();
  }
  
  function $16() {
   var $0 = 0, $2_1 = 0;
-  loop_in : do {
-   dummy();
-   abort();
-   break loop_in;
-  } while (1);
+  dummy();
+  abort();
  }
  
  function $17() {
-  loop_in : do {
-   dummy();
-   abort();
-   break loop_in;
-  } while (1);
+  dummy();
+  abort();
  }
  
  function $18() {
   var $0 = 0;
   block : {
-   loop_in : do {
-    dummy();
-    $0 = 1;
-    break block;
-    break loop_in;
-   } while (1);
+   dummy();
+   $0 = 1;
+   break block;
   }
   return $0 | 0;
  }
