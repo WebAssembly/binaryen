@@ -26,7 +26,7 @@ from test.shared import options, NODEJS
 
 # parameters
 
-NANS = False
+NANS = True
 
 FUZZ_OPTS = []  # '--all-features' etc
 

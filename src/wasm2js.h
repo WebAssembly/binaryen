@@ -34,6 +34,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "abi/js.h"
 #include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
@@ -254,6 +255,10 @@ private:
 };
 
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
+  // Ensure the scratch memory helpers.
+  // If later on they aren't needed, we'll clean them up.
+  ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
+
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
   runner.add("legalize-js-interface");
@@ -451,6 +456,10 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
 }
 
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
+  // The scratch memory helpers are emitted in the glue, see code and comments below.
+  if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+    return;
+  }
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
@@ -966,12 +975,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         return ValueBuilder::makeSeq(ptrSet, rest);
       }
       // normal load
-      Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
-      if (curr->offset) {
-        ptr = makeAsmCoercion(
-            ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)),
-            ASM_INT);
-      }
+      Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref ret;
       switch (curr->type) {
         case i32: {
@@ -1112,10 +1116,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         return ValueBuilder::makeSeq(ValueBuilder::makeSeq(ptrSet, valueSet), rest);
       }
       // normal store
-      Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
-      if (curr->offset) {
-        ptr = makeAsmCoercion(ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
-      }
+      Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
       switch (curr->valueType) {
@@ -1198,20 +1199,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
                                         EXPRESSION_RESULT), ASM_INT), EQ,
                   makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
             case ReinterpretFloat32: {
-              // Naively assume that the address 0 and the next 4 bytes are
-              // permanently unused by the source program, which is definitely
-              // true for languages like C/C++/Rust
-              Ref zero = ValueBuilder::makeInt(0);
-              Ref ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), zero);
-              Ref value = visit(curr->value, EXPRESSION_RESULT);
-              Ref store = ValueBuilder::makeBinary(ret, SET, value);
-              return ValueBuilder::makeSeq(
-                store,
-                makeAsmCoercion(
-                  ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero),
-                  ASM_INT
-                )
+              ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_STORE_F32);
+              ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_LOAD_I32);
+
+              Ref store = ValueBuilder::makeCall(
+                ABI::wasm2js::SCRATCH_STORE_F32,
+                visit(curr->value, EXPRESSION_RESULT)
               );
+              Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_I32, ValueBuilder::makeInt(0));
+              return ValueBuilder::makeSeq(store, load);
             }
             // generate (~~expr), what Emscripten does
             case TruncSFloat32ToInt32:
@@ -1291,15 +1287,16 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
                                      ASM_FLOAT);
             case ReinterpretInt32: {
-              // Like above, assume address 0 is unused.
-              Ref zero = ValueBuilder::makeInt(0);
-              Ref ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero);
-              Ref value = visit(curr->value, EXPRESSION_RESULT);
-              Ref store = ValueBuilder::makeBinary(ret, SET, value);
-              return ValueBuilder::makeSeq(
-                store,
-                ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), zero)
+              ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_STORE_I32);
+              ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_LOAD_F32);
+
+              Ref store = ValueBuilder::makeCall(
+                ABI::wasm2js::SCRATCH_STORE_I32,
+                ValueBuilder::makeNum(0),
+                visit(curr->value, EXPRESSION_RESULT)
               );
+              Ref load = ValueBuilder::makeCall(ABI::wasm2js::SCRATCH_LOAD_F32);
+              return ValueBuilder::makeSeq(store, load);
             }
             // Coerce the integer to a float as emscripten does
             case ConvertSInt32ToFloat32:
@@ -1415,21 +1412,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
               ret = ValueBuilder::makeBinary(left, RSHIFT, right);
               break;
             case EqInt32: {
-              // TODO: check if this condition is still valid/necessary
-              if (curr->left->type == i32) {
-                return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ,
-                                                makeSigning(right, ASM_SIGNED));
-              } else {
-                return ValueBuilder::makeBinary(left, EQ, right);
-              }
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ,
+                                              makeSigning(right, ASM_SIGNED));
             }
             case NeInt32: {
-              if (curr->left->type == i32) {
-                return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE,
-                                                makeSigning(right, ASM_SIGNED));
-              } else {
-                return ValueBuilder::makeBinary(left, NE, right);
-              }
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE,
+                                              makeSigning(right, ASM_SIGNED));
             }
             case LtSInt32:
               return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LT,
@@ -1586,7 +1574,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     Ref visitUnreachable(Unreachable* curr) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
+
+  private:
+    Ref makePointer(Expression* ptr, Address offset) {
+      auto ret = visit(ptr, EXPRESSION_RESULT);
+      if (offset) {
+        ret = makeAsmCoercion(
+            ValueBuilder::makeBinary(ret, PLUS, ValueBuilder::makeNum(offset)),
+            ASM_INT);
+      }
+      return ret;
+    }
   };
+
   return ExpressionProcessor(this, m, func).visit(func->body, result);
 }
 
@@ -1777,6 +1777,7 @@ private:
   void emitPostES6();
 
   void emitMemory(std::string buffer, std::string segmentWriter);
+  void emitScratchMemorySupport();
 };
 
 void Wasm2JSGlue::emitPre() {
@@ -1785,6 +1786,8 @@ void Wasm2JSGlue::emitPre() {
   } else {
     emitPreES6();
   }
+
+  emitScratchMemorySupport();
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
@@ -1817,6 +1820,10 @@ void Wasm2JSGlue::emitPreES6() {
     noteImport(import->module, import->base);
   });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    // The scratch memory helpers are emitted in the glue, see code and comments below.
+    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+      return;
+    }
     noteImport(import->module, import->base);
   });
 
@@ -1891,6 +1898,10 @@ void Wasm2JSGlue::emitPostES6() {
   out << "abort:function() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    // The scratch memory helpers are emitted in the glue, see code and comments below.
+    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+      return;
+    }
     out << "," << import->base.str;
   });
   out << "},mem" << moduleName.str << ");\n";
@@ -1962,6 +1973,83 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
       << "\");\n";
   }
 }
+
+void Wasm2JSGlue::emitScratchMemorySupport() {
+  // The scratch memory helpers are emitted here the glue. We may also want to
+  // emit them inline at some point. (The reason they are imports is so that
+  // they appear as "intrinsics" placeholders, and not normal functions that
+  // the optimizer might want to do something with.)
+  bool needScratchMemory = false;
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
+      needScratchMemory = true;
+    }
+  });
+  if (!needScratchMemory) return;
+
+  out << R"(
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  )";
+
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (import->base == ABI::wasm2js::SCRATCH_STORE_I32) {
+      out << R"(
+  function wasm2js_scratch_store_i32(index, value) {
+    i32ScratchView[index] = value;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_I32) {
+      out << R"(
+  function wasm2js_scratch_load_i32(index) {
+    return i32ScratchView[index];
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_STORE_I64) {
+      out << R"(
+  function legalimport$wasm2js_scratch_store_i64(low, high) {
+    i32ScratchView[0] = low;
+    i32ScratchView[1] = high;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_I64) {
+      out << R"(
+  function legalimport$wasm2js_scratch_load_i64() {
+    if (typeof setTempRet0 === 'function') setTempRet0(i32ScratchView[1]);
+    return i32ScratchView[0];
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F32) {
+      out << R"(
+  function wasm2js_scratch_store_f32(value) {
+    f32ScratchView[0] = value;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_F32) {
+      out << R"(
+  function wasm2js_scratch_load_f32() {
+    return f32ScratchView[0];
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_STORE_F64) {
+      out << R"(
+  function wasm2js_scratch_store_f64(value) {
+    f64ScratchView[0] = value;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::SCRATCH_LOAD_F64) {
+      out << R"(
+  function wasm2js_scratch_load_f64() {
+    return f64ScratchView[0];
+  }
+      )";
+    }
+  });
+  out << '\n';
+}
+
 } // namespace wasm
 
 #endif // wasm_wasm2js_h

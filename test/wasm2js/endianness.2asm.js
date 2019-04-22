@@ -1,6 +1,35 @@
-import { __tempMemory__ } from 'env';
 import { setTempRet0 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i32(index) {
+    return i32ScratchView[index];
+  }
+      
+  function wasm2js_scratch_store_i32(index, value) {
+    i32ScratchView[index] = value;
+  }
+      
+  function wasm2js_scratch_load_f64() {
+    return f64ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_f64(value) {
+    f64ScratchView[0] = value;
+  }
+      
+  function wasm2js_scratch_store_f32(value) {
+    f32ScratchView[0] = value;
+  }
+      
+  function wasm2js_scratch_load_f32() {
+    return f32ScratchView[0];
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -24,7 +53,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function i16_store_little(address, value) {
   address = address | 0;
@@ -190,16 +218,16 @@ function asmFunc(global, env, buffer) {
  
  function $14(value) {
   value = Math_fround(value);
-  i32_store_little(0 | 0, (HEAPF32[0] = value, HEAP32[0] | 0) | 0);
+  i32_store_little(0 | 0, (wasm2js_scratch_store_f32(value), wasm2js_scratch_load_i32(0)) | 0);
   return Math_fround(Math_fround(HEAPF32[0 >> 2]));
  }
  
  function $15(value) {
   value = +value;
   var i64toi32_i32$0 = 0;
-  HEAPF64[__tempMemory__ >> 3] = value;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64_store_little(0 | 0, HEAP32[__tempMemory__ >> 2] | 0 | 0, i64toi32_i32$0 | 0);
+  wasm2js_scratch_store_f64(+value);
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64_store_little(0 | 0, wasm2js_scratch_load_i32(0 | 0) | 0 | 0, i64toi32_i32$0 | 0);
   return +(+HEAPF64[0 >> 3]);
  }
  
@@ -256,7 +284,7 @@ function asmFunc(global, env, buffer) {
  function $21(value) {
   value = Math_fround(value);
   HEAPF32[0 >> 2] = value;
-  return Math_fround((HEAP32[0] = i32_load_little(0 | 0) | 0, HEAPF32[0]));
+  return Math_fround((wasm2js_scratch_store_i32(0, i32_load_little(0 | 0) | 0), wasm2js_scratch_load_f32()));
  }
  
  function $22(value) {
@@ -265,9 +293,9 @@ function asmFunc(global, env, buffer) {
   HEAPF64[0 >> 3] = value;
   i64toi32_i32$0 = i64_load_little(0 | 0) | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
-  HEAP32[__tempMemory__ >> 2] = i64toi32_i32$0;
-  HEAP32[(__tempMemory__ + 4 | 0) >> 2] = i64toi32_i32$1;
-  return +(+HEAPF64[__tempMemory__ >> 3]);
+  wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$0 | 0);
+  wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$1 | 0);
+  return +(+wasm2js_scratch_load_f64());
  }
  
  function legalstub$9($0, $1) {
