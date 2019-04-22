@@ -25,8 +25,6 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var syscall$6 = env.__syscall6;
  var syscall$54 = env.__syscall54;
- var global$0 = 5243904;
- var i64toi32_i32$HIGH_BITS = 0;
  // EMSCRIPTEN_START_FUNCS;
  function main() {
   var wasm2js_i32$0 = 0;
@@ -56,32 +54,6 @@ function asmFunc(global, env, buffer) {
  // EMSCRIPTEN_END_FUNCS;
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
- function __wasm_grow_memory(pagesToAdd) {
-  pagesToAdd = pagesToAdd | 0;
-  var oldPages = __wasm_current_memory() | 0;
-  var newPages = oldPages + pagesToAdd | 0;
-  if ((oldPages < newPages) && (newPages < 65536)) {
-   var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
-   var newHEAP8 = new global.Int8Array(newBuffer);
-   newHEAP8.set(HEAP8);
-   HEAP8 = newHEAP8;
-   HEAP16 = new global.Int16Array(newBuffer);
-   HEAP32 = new global.Int32Array(newBuffer);
-   HEAPU8 = new global.Uint8Array(newBuffer);
-   HEAPU16 = new global.Uint16Array(newBuffer);
-   HEAPU32 = new global.Uint32Array(newBuffer);
-   HEAPF32 = new global.Float32Array(newBuffer);
-   HEAPF64 = new global.Float64Array(newBuffer);
-   buffer = newBuffer;
-   memory.buffer = newBuffer;
-  }
-  return oldPages;
- }
- 
- function __wasm_current_memory() {
-  return buffer.byteLength / 65536 | 0;
- }
- 
  return {
   main: main, 
   other: other, 

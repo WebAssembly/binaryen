@@ -384,7 +384,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   # checks we can convert the wast to binary and back
 
   print '     (binary format check)'
-  cmd = WASM_AS + [wast, '-o', 'a.wasm'] + wasm_as_args
+  cmd = WASM_AS + [wast, '-o', 'a.wasm', '-all'] + wasm_as_args
   print '      ', ' '.join(cmd)
   if os.path.exists('a.wasm'):
     os.unlink('a.wasm')
@@ -435,3 +435,17 @@ def minify_check(wast, verify_final_result=True):
 
 def files_with_pattern(*path_pattern):
   return sorted(glob.glob(os.path.join(*path_pattern)))
+
+
+# run a check with BINARYEN_PASS_DEBUG set, to do full validation
+def with_pass_debug(check):
+  old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
+  try:
+    os.environ['BINARYEN_PASS_DEBUG'] = '1'
+    check()
+  finally:
+    if old_pass_debug is not None:
+      os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
+    else:
+      if 'BINARYEN_PASS_DEBUG' in os.environ:
+        del os.environ['BINARYEN_PASS_DEBUG']

@@ -27,7 +27,7 @@ from scripts.test.shared import (
     binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, options, tests, requested, warnings,
-    has_shell_timeout, fail_if_not_identical_to_file
+    has_shell_timeout, fail_if_not_identical_to_file, with_pass_debug
 )
 
 # For shared.num_failures. Cannot import directly because modifications made in
@@ -40,20 +40,6 @@ from scripts.test import wasm2js
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
   assert os.path.exists(options.interpreter), 'interpreter not found'
-
-
-# run a check with BINARYEN_PASS_DEBUG set, to do full validation
-def with_pass_debug(check):
-  old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
-  try:
-    os.environ['BINARYEN_PASS_DEBUG'] = '1'
-    check()
-  finally:
-    if old_pass_debug is not None:
-      os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
-    else:
-      if 'BINARYEN_PASS_DEBUG' in os.environ:
-        del os.environ['BINARYEN_PASS_DEBUG']
 
 
 def run_help_tests():

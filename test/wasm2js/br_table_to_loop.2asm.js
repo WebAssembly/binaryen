@@ -22,27 +22,45 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
-  
+  block : {
+   loop : do {
+    switch (1 | 0) {
+    case 0:
+     break block;
+    case 1:
+     continue loop;
+    default:
+     break block;
+    };
+    break loop;
+   } while (1);
+  }
  }
  
  function $1() {
-  
- }
- 
- function $2() {
-  
+  block : {
+   loop : do {
+    switch (1 | 0) {
+    case 0:
+     continue loop;
+    case 1:
+     break block;
+    default:
+     continue loop;
+    };
+    break loop;
+   } while (1);
+  }
  }
  
  var FUNCTION_TABLE = [];
  return {
-  br: $0, 
-  br_if: $1, 
-  br_table: $2
+  exp1: $0, 
+  exp2: $1
  };
 }
 
 const memasmFunc = new ArrayBuffer(65536);
 const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const br = retasmFunc.br;
-export const br_if = retasmFunc.br_if;
-export const br_table = retasmFunc.br_table;
+export const exp1 = retasmFunc.exp1;
+export const exp2 = retasmFunc.exp2;

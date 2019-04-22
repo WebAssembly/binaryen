@@ -1,7 +1,8 @@
 import { __tempMemory__ } from 'env';
+import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -22,6 +23,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ var setTempRet0 = env.setTempRet0;
  var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
@@ -96,11 +98,41 @@ function asmFunc(global, env, buffer) {
   (wasm2js_i32$2 = wasm2js_i32$0, wasm2js_i32$3 = wasm2js_i32$1), ((HEAP8[(wasm2js_i32$2 + 4 | 0) >> 0] = wasm2js_i32$3 & 255 | 0, HEAP8[(wasm2js_i32$2 + 5 | 0) >> 0] = (wasm2js_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 6 | 0) >> 0] = (wasm2js_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2js_i32$2 + 7 | 0) >> 0] = (wasm2js_i32$3 >>> 24 | 0) & 255 | 0;
  }
  
+ function legalstub$1() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0_1 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $1() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0_1 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7_1 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7_1 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0_1 | 0;
+ }
+ 
+ function legalstub$2() {
+  return +(+Math_fround($2()));
+ }
+ 
  var FUNCTION_TABLE = [];
  return {
   i32_load: $0, 
-  i64_load: $1, 
-  f32_load: $2, 
+  i64_load: legalstub$1, 
+  f32_load: legalstub$2, 
   f64_load: $3, 
   i32_store: $4, 
   i64_store: $5, 
@@ -110,7 +142,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const i32_load = retasmFunc.i32_load;
 export const i64_load = retasmFunc.i64_load;
 export const f32_load = retasmFunc.f32_load;

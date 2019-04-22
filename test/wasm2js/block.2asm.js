@@ -1,6 +1,6 @@
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -21,7 +21,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
  }
@@ -89,7 +88,9 @@ function asmFunc(global, env, buffer) {
    break block;
   }
   block44 : {
-   if (1) break block44;
+   if (1) {
+    break block44
+   }
    abort();
   }
   block45 : {
@@ -134,10 +135,8 @@ function asmFunc(global, env, buffer) {
   $0 = 0;
   $1_1 = $0;
   block : {
-   block47 : {
-    $2_1 = 1;
-    break block;
-   }
+   $2_1 = 1;
+   break block;
   }
   $0 = $1_1 + $2_1 | 0;
   $5_1 = $0;
@@ -150,10 +149,8 @@ function asmFunc(global, env, buffer) {
   $0 = $9_1 + $10_1 | 0;
   $13_1 = $0;
   block51 : {
-   block52 : {
-    $14_1 = 8;
-    break block51;
-   }
+   $14_1 = 8;
+   break block51;
   }
   $0 = $13_1 + $14_1 | 0;
   return $0 | 0;
@@ -173,7 +170,9 @@ function asmFunc(global, env, buffer) {
  
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
-  if (var$0) return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0;
+  if (var$0) {
+   return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0
+  }
   return 32 | 0;
  }
  

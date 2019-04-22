@@ -1,6 +1,6 @@
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -21,7 +21,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
  }
@@ -29,7 +28,9 @@ function asmFunc(global, env, buffer) {
  function $1($0) {
   $0 = $0 | 0;
   block : {
-   if ($0) break block;
+   if ($0) {
+    break block
+   }
    return 2 | 0;
   }
   return 3 | 0;
@@ -39,7 +40,9 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   block : {
    dummy();
-   if ($0) break block;
+   if ($0) {
+    break block
+   }
    return 2 | 0;
   }
   return 3 | 0;
@@ -50,7 +53,9 @@ function asmFunc(global, env, buffer) {
   block : {
    dummy();
    dummy();
-   if ($0) break block;
+   if ($0) {
+    break block
+   }
   }
  }
  
@@ -59,7 +64,9 @@ function asmFunc(global, env, buffer) {
   var $2_1 = 0;
   block : {
    $2_1 = 10;
-   if ($0) break block;
+   if ($0) {
+    break block
+   }
    return 11 | 0;
   }
   return $2_1 | 0;
@@ -71,7 +78,9 @@ function asmFunc(global, env, buffer) {
   block : {
    dummy();
    $2_1 = 20;
-   if ($0) break block;
+   if ($0) {
+    break block
+   }
    return 21 | 0;
   }
   return $2_1 | 0;
@@ -84,7 +93,9 @@ function asmFunc(global, env, buffer) {
    dummy();
    dummy();
    $2_1 = 11;
-   if ($0) break block;
+   if ($0) {
+    break block
+   }
   }
   return $2_1 | 0;
  }
@@ -93,7 +104,9 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   block : {
    loop_in : do {
-    if ($0) break block;
+    if ($0) {
+     break block
+    }
     return 2 | 0;
     break loop_in;
    } while (1);
@@ -106,7 +119,9 @@ function asmFunc(global, env, buffer) {
   block : {
    loop_in : do {
     dummy();
-    if ($0) break block;
+    if ($0) {
+     break block
+    }
     return 2 | 0;
     break loop_in;
    } while (1);
@@ -119,7 +134,9 @@ function asmFunc(global, env, buffer) {
   fake_return_waka123 : {
    loop_in : do {
     dummy();
-    if ($0) break fake_return_waka123;
+    if ($0) {
+     break fake_return_waka123
+    }
     break loop_in;
    } while (1);
   }
@@ -130,8 +147,12 @@ function asmFunc(global, env, buffer) {
   $1_1 = $1_1 | 0;
   block : {
    if ($0) {
-    if ($1_1) break block;
-   } else dummy();
+    if ($1_1) {
+     break block
+    }
+   } else {
+    dummy()
+   }
   }
  }
  
@@ -139,7 +160,13 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
   block : {
-   if ($0) dummy(); else if ($1_1) break block;;
+   if ($0) {
+    dummy()
+   } else {
+    if ($1_1) {
+     break block
+    }
+   }
   }
  }
  
@@ -149,7 +176,9 @@ function asmFunc(global, env, buffer) {
   block : {
    block0 : {
     $2_1 = 8;
-    if ($0) break block;
+    if ($0) {
+     break block
+    }
    }
    $2_1 = 4 + 16 | 0;
   }
@@ -162,7 +191,9 @@ function asmFunc(global, env, buffer) {
   block : {
    block1 : {
     $2_1 = 8;
-    if ($0) break block;
+    if ($0) {
+     break block
+    }
    }
    $2_1 = 4;
    break block;
@@ -176,10 +207,14 @@ function asmFunc(global, env, buffer) {
   block : {
    block2 : {
     $2_1 = 8;
-    if ($0) break block;
+    if ($0) {
+     break block
+    }
    }
    $2_1 = 4;
-   if (1) break block;
+   if (1) {
+    break block
+   }
    $2_1 = 16;
   }
   return 1 + $2_1 | 0 | 0;
@@ -191,10 +226,14 @@ function asmFunc(global, env, buffer) {
   block : {
    block3 : {
     $2_1 = 8;
-    if ($0) break block;
+    if ($0) {
+     break block
+    }
    }
    $2_1 = 4;
-   if (1) break block;
+   if (1) {
+    break block
+   }
    $2_1 = 16;
   }
   return 1 + $2_1 | 0 | 0;
@@ -206,7 +245,9 @@ function asmFunc(global, env, buffer) {
   block : {
    block4 : {
     $2_1 = 8;
-    if ($0) break block;
+    if ($0) {
+     break block
+    }
    }
    $2_1 = 4;
    switch (1 | 0) {
@@ -223,7 +264,9 @@ function asmFunc(global, env, buffer) {
   block : {
    block5 : {
     $2_1 = 8;
-    if ($0) break block;
+    if ($0) {
+     break block
+    }
    }
    $2_1 = 4;
    switch (1 | 0) {

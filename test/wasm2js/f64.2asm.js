@@ -1,7 +1,7 @@
 import { __tempMemory__ } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -23,7 +23,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var __tempMemory__ = env.__tempMemory__ | 0;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = +x;
   y = +y;
@@ -138,11 +137,15 @@ function asmFunc(global, env, buffer) {
   var var$1 = 0.0, var$2 = 0.0, wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
   var$1 = Math_floor(var$0);
   var$2 = var$0 - var$1;
-  if ((var$2 < .5 | 0) == (0 | 0)) block : {
-   var$0 = Math_ceil(var$0);
-   if (var$2 > .5) return +var$0;
-   var$2 = var$1 * .5;
-   var$1 = (wasm2js_f64$0 = var$1, wasm2js_f64$1 = var$0, wasm2js_i32$0 = var$2 - Math_floor(var$2) == 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
+  if ((var$2 < .5 | 0) == (0 | 0)) {
+   block : {
+    var$0 = Math_ceil(var$0);
+    if (var$2 > .5) {
+     return +var$0
+    }
+    var$2 = var$1 * .5;
+    var$1 = (wasm2js_f64$0 = var$1, wasm2js_f64$1 = var$0, wasm2js_i32$0 = var$2 - Math_floor(var$2) == 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
+   }
   }
   return +var$1;
  }

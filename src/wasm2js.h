@@ -274,15 +274,12 @@ private:
 
   size_t tableSize;
 
-  bool almostASM = false;
-
   void addBasics(Ref ast);
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
   void addTable(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
-  void setNeedsAlmostASM(const char *reason);
   void addMemoryGrowthFuncs(Ref ast, Module* wasm);
 
   Wasm2JSBuilder() = delete;
@@ -293,6 +290,7 @@ private:
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
+  runner.add("legalize-js-interface");
   // First up remove as many non-JS operations we can, including things like
   // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
   // This may inject intrinsics which use i64 so it needs to be run before the
@@ -306,6 +304,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   runner.add("simplify-locals-notee-nostructure");
   runner.add("reorder-locals");
   runner.add("vacuum");
+  runner.add("remove-unused-module-elements");
   runner.setDebug(flags.debug);
   runner.run();
 
@@ -314,7 +313,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 #ifndef NDEBUG
   if (!WasmValidator().validate(*wasm)) {
     WasmPrinter::printModule(wasm);
-    Fatal() << "error in validating input";
+    Fatal() << "error in validating wasm2js output";
   }
 #endif
 
@@ -324,7 +323,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
-  asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
+  asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(ALMOST_ASM)));
   // add memory import
   if (wasm->memory.exists && wasm->memory.imported()) {
     Ref theVar = ValueBuilder::makeVar();
@@ -566,7 +565,6 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       );
     }
     if (export_->kind == ExternalKind::Memory) {
-      setNeedsAlmostASM("memory export");
       Ref descs = ValueBuilder::makeObject();
       Ref growDesc = ValueBuilder::makeObject();
       ValueBuilder::appendToObject(
@@ -602,9 +600,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         memory);
     }
   }
-  if (almostASM) {
-    // replace "use asm"
-    ast[0] = ValueBuilder::makeStatement(ValueBuilder::makeString(ALMOST_ASM));
+  if (wasm->memory.exists && wasm->memory.max > wasm->memory.initial) {
     addMemoryGrowthFuncs(ast, wasm);
   }
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
@@ -980,6 +976,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       return ValueBuilder::makeLabel(fromName(asmLabel, NameScope::Label), ret);
     }
 
+    Ref makeBreakOrContinue(Name name) {
+      if (continueLabels.count(name)) {
+        return ValueBuilder::makeContinue(fromName(name, NameScope::Label));
+      } else {
+        return ValueBuilder::makeBreak(fromName(name, NameScope::Label));
+      }
+    }
+
     Ref visitBreak(Break* curr) {
       if (curr->condition) {
         // we need an equivalent to an if here, so use that code
@@ -990,13 +994,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         fakeIf.ifTrue = &fakeBreak;
         return visit(&fakeIf, result);
       }
-      Ref theBreak;
-      auto iter = continueLabels.find(curr->name);
-      if (iter == continueLabels.end()) {
-        theBreak = ValueBuilder::makeBreak(fromName(curr->name, NameScope::Label));
-      } else {
-        theBreak = ValueBuilder::makeContinue(fromName(curr->name, NameScope::Label));
-      }
+      Ref theBreak = makeBreakOrContinue(curr->name);
       if (!curr->value) return theBreak;
       // generate the value, including assigning to the result, and then do the break
       Ref ret = visitAndAssign(curr->value, breakResults[curr->name]);
@@ -1023,10 +1021,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       ret[1]->push_back(theSwitch);
       for (size_t i = 0; i < curr->targets.size(); i++) {
         ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
-        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->targets[i], NameScope::Label))), false);
+        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(makeBreakOrContinue(curr->targets[i])), false);
       }
       ValueBuilder::appendDefaultToSwitch(theSwitch);
-      ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->default_, NameScope::Label))), false);
+      ValueBuilder::appendCodeToSwitch(theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
       return ret;
     }
 
@@ -1837,13 +1835,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     Ref visitHost(Host* curr) {
       Ref call;
       if (curr->op == HostOp::GrowMemory) {
-        parent->setNeedsAlmostASM("grow_memory op");
         call = ValueBuilder::makeCall(WASM_GROW_MEMORY,
           makeAsmCoercion(
             visit(curr->operands[0], EXPRESSION_RESULT),
             wasmToAsmType(curr->operands[0]->type)));
       } else if (curr->op == HostOp::CurrentMemory) {
-        parent->setNeedsAlmostASM("current_memory op");
         call = ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
       } else {
         return ValueBuilder::makeCall(ABORT_FUNC);
@@ -1864,13 +1860,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
   };
   return ExpressionProcessor(this, m, func).visit(func->body, result);
-}
-
-void Wasm2JSBuilder::setNeedsAlmostASM(const char *reason) {
-  if (!almostASM) {
-    almostASM = true;
-    std::cerr << "Switching to \"almost asm\" mode, reason: " << reason << std::endl;
-  }
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {

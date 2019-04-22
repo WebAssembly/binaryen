@@ -1,6 +1,7 @@
+import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -21,6 +22,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function const_i32() {
   return 306 | 0;
@@ -275,29 +277,33 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, $8 = 0, $8$hi = 0, i64toi32_i32$3 = 0, $6 = 0, $6$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0;
   i64toi32_i32$0 = $0$hi;
   if (($0 | i64toi32_i32$0 | 0 | 0) == (0 | 0)) {
-   i64toi32_i32$0 = 0;
-   $8 = 1;
-   $8$hi = i64toi32_i32$0;
+   {
+    i64toi32_i32$0 = 0;
+    $8 = 1;
+    $8$hi = i64toi32_i32$0;
+   }
   } else {
-   i64toi32_i32$0 = $0$hi;
-   i64toi32_i32$2 = $0;
-   i64toi32_i32$3 = 1;
-   i64toi32_i32$5 = (i64toi32_i32$2 >>> 0 < i64toi32_i32$3 >>> 0) + 0 | 0;
-   i64toi32_i32$5 = i64toi32_i32$0 - i64toi32_i32$5 | 0;
-   wasm2js_i32$2 = i64toi32_i32$2 - i64toi32_i32$3 | 0;
-   wasm2js_i32$3 = i64toi32_i32$5;
-   wasm2js_i32$1 = 12;
-   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
-   i64toi32_i32$5 = wasm2js_i32$0;
-   i64toi32_i32$2 = i64toi32_i32$HIGH_BITS;
-   $6 = i64toi32_i32$5;
-   $6$hi = i64toi32_i32$2;
-   i64toi32_i32$2 = i64toi32_i32$0;
-   i64toi32_i32$5 = $6$hi;
-   i64toi32_i32$5 = __wasm_i64_mul($0 | 0, i64toi32_i32$0 | 0, $6 | 0, i64toi32_i32$5 | 0) | 0;
-   i64toi32_i32$2 = i64toi32_i32$HIGH_BITS;
-   $8 = i64toi32_i32$5;
-   $8$hi = i64toi32_i32$2;
+   {
+    i64toi32_i32$0 = $0$hi;
+    i64toi32_i32$2 = $0;
+    i64toi32_i32$3 = 1;
+    i64toi32_i32$5 = (i64toi32_i32$2 >>> 0 < i64toi32_i32$3 >>> 0) + 0 | 0;
+    i64toi32_i32$5 = i64toi32_i32$0 - i64toi32_i32$5 | 0;
+    wasm2js_i32$2 = i64toi32_i32$2 - i64toi32_i32$3 | 0;
+    wasm2js_i32$3 = i64toi32_i32$5;
+    wasm2js_i32$1 = 12;
+    wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
+    i64toi32_i32$5 = wasm2js_i32$0;
+    i64toi32_i32$2 = i64toi32_i32$HIGH_BITS;
+    $6 = i64toi32_i32$5;
+    $6$hi = i64toi32_i32$2;
+    i64toi32_i32$2 = i64toi32_i32$0;
+    i64toi32_i32$5 = $6$hi;
+    i64toi32_i32$5 = __wasm_i64_mul($0 | 0, i64toi32_i32$0 | 0, $6 | 0, i64toi32_i32$5 | 0) | 0;
+    i64toi32_i32$2 = i64toi32_i32$HIGH_BITS;
+    $8 = i64toi32_i32$5;
+    $8$hi = i64toi32_i32$2;
+   }
   }
   i64toi32_i32$2 = $8$hi;
   i64toi32_i32$5 = $8;
@@ -314,52 +320,58 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 1;
   if (i64toi32_i32$0 >>> 0 < i64toi32_i32$1 >>> 0 | ((i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) & i64toi32_i32$2 >>> 0 <= i64toi32_i32$3 >>> 0 | 0) | 0) {
-   i64toi32_i32$2 = 0;
-   $10 = 1;
-   $10$hi = i64toi32_i32$2;
+   {
+    i64toi32_i32$2 = 0;
+    $10 = 1;
+    $10$hi = i64toi32_i32$2;
+   }
   } else {
-   i64toi32_i32$2 = $0$hi;
-   i64toi32_i32$3 = $0;
-   i64toi32_i32$0 = 0;
-   i64toi32_i32$1 = 2;
-   i64toi32_i32$4 = i64toi32_i32$3 - i64toi32_i32$1 | 0;
-   i64toi32_i32$6 = i64toi32_i32$3 >>> 0 < i64toi32_i32$1 >>> 0;
-   i64toi32_i32$5 = i64toi32_i32$6 + i64toi32_i32$0 | 0;
-   i64toi32_i32$5 = i64toi32_i32$2 - i64toi32_i32$5 | 0;
-   wasm2js_i32$2 = i64toi32_i32$4;
-   wasm2js_i32$3 = i64toi32_i32$5;
-   wasm2js_i32$1 = 13;
-   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
-   i64toi32_i32$5 = wasm2js_i32$0;
-   i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;
-   $5 = i64toi32_i32$5;
-   $5$hi = i64toi32_i32$3;
-   i64toi32_i32$3 = i64toi32_i32$2;
-   i64toi32_i32$3 = i64toi32_i32$2;
-   i64toi32_i32$2 = $0;
-   i64toi32_i32$5 = 0;
-   i64toi32_i32$1 = 1;
-   i64toi32_i32$0 = i64toi32_i32$2 - i64toi32_i32$1 | 0;
-   i64toi32_i32$6 = i64toi32_i32$2 >>> 0 < i64toi32_i32$1 >>> 0;
-   i64toi32_i32$4 = i64toi32_i32$6 + i64toi32_i32$5 | 0;
-   i64toi32_i32$4 = i64toi32_i32$3 - i64toi32_i32$4 | 0;
-   wasm2js_i32$3 = i64toi32_i32$0;
-   wasm2js_i32$2 = i64toi32_i32$4;
-   wasm2js_i32$1 = 13;
-   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$3 | 0, wasm2js_i32$2 | 0) | 0;
-   i64toi32_i32$4 = wasm2js_i32$0;
-   i64toi32_i32$2 = i64toi32_i32$HIGH_BITS;
-   $8 = i64toi32_i32$4;
-   $8$hi = i64toi32_i32$2;
-   i64toi32_i32$2 = $5$hi;
-   i64toi32_i32$3 = $5;
-   i64toi32_i32$4 = $8$hi;
-   i64toi32_i32$1 = $8;
-   i64toi32_i32$5 = i64toi32_i32$3 + i64toi32_i32$1 | 0;
-   i64toi32_i32$0 = i64toi32_i32$2 + i64toi32_i32$4 | 0;
-   if (i64toi32_i32$5 >>> 0 < i64toi32_i32$1 >>> 0) i64toi32_i32$0 = i64toi32_i32$0 + 1 | 0;
-   $10 = i64toi32_i32$5;
-   $10$hi = i64toi32_i32$0;
+   {
+    i64toi32_i32$2 = $0$hi;
+    i64toi32_i32$3 = $0;
+    i64toi32_i32$0 = 0;
+    i64toi32_i32$1 = 2;
+    i64toi32_i32$4 = i64toi32_i32$3 - i64toi32_i32$1 | 0;
+    i64toi32_i32$6 = i64toi32_i32$3 >>> 0 < i64toi32_i32$1 >>> 0;
+    i64toi32_i32$5 = i64toi32_i32$6 + i64toi32_i32$0 | 0;
+    i64toi32_i32$5 = i64toi32_i32$2 - i64toi32_i32$5 | 0;
+    wasm2js_i32$2 = i64toi32_i32$4;
+    wasm2js_i32$3 = i64toi32_i32$5;
+    wasm2js_i32$1 = 13;
+    wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0, wasm2js_i32$3 | 0) | 0;
+    i64toi32_i32$5 = wasm2js_i32$0;
+    i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;
+    $5 = i64toi32_i32$5;
+    $5$hi = i64toi32_i32$3;
+    i64toi32_i32$3 = i64toi32_i32$2;
+    i64toi32_i32$3 = i64toi32_i32$2;
+    i64toi32_i32$2 = $0;
+    i64toi32_i32$5 = 0;
+    i64toi32_i32$1 = 1;
+    i64toi32_i32$0 = i64toi32_i32$2 - i64toi32_i32$1 | 0;
+    i64toi32_i32$6 = i64toi32_i32$2 >>> 0 < i64toi32_i32$1 >>> 0;
+    i64toi32_i32$4 = i64toi32_i32$6 + i64toi32_i32$5 | 0;
+    i64toi32_i32$4 = i64toi32_i32$3 - i64toi32_i32$4 | 0;
+    wasm2js_i32$3 = i64toi32_i32$0;
+    wasm2js_i32$2 = i64toi32_i32$4;
+    wasm2js_i32$1 = 13;
+    wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$3 | 0, wasm2js_i32$2 | 0) | 0;
+    i64toi32_i32$4 = wasm2js_i32$0;
+    i64toi32_i32$2 = i64toi32_i32$HIGH_BITS;
+    $8 = i64toi32_i32$4;
+    $8$hi = i64toi32_i32$2;
+    i64toi32_i32$2 = $5$hi;
+    i64toi32_i32$3 = $5;
+    i64toi32_i32$4 = $8$hi;
+    i64toi32_i32$1 = $8;
+    i64toi32_i32$5 = i64toi32_i32$3 + i64toi32_i32$1 | 0;
+    i64toi32_i32$0 = i64toi32_i32$2 + i64toi32_i32$4 | 0;
+    if (i64toi32_i32$5 >>> 0 < i64toi32_i32$1 >>> 0) {
+     i64toi32_i32$0 = i64toi32_i32$0 + 1 | 0
+    }
+    $10 = i64toi32_i32$5;
+    $10$hi = i64toi32_i32$0;
+   }
   }
   i64toi32_i32$0 = $10$hi;
   i64toi32_i32$3 = $10;
@@ -370,11 +382,15 @@ function asmFunc(global, env, buffer) {
  function even($0) {
   $0 = $0 | 0;
   var $6 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
-  if (($0 | 0) == (0 | 0)) $6 = 44; else {
-   wasm2js_i32$2 = $0 - 1 | 0;
-   wasm2js_i32$1 = 15;
-   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0) | 0;
-   $6 = wasm2js_i32$0;
+  if (($0 | 0) == (0 | 0)) {
+   $6 = 44
+  } else {
+   {
+    wasm2js_i32$2 = $0 - 1 | 0;
+    wasm2js_i32$1 = 15;
+    wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0) | 0;
+    $6 = wasm2js_i32$0;
+   }
   }
   return $6 | 0;
  }
@@ -382,11 +398,15 @@ function asmFunc(global, env, buffer) {
  function odd($0) {
   $0 = $0 | 0;
   var $6 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
-  if (($0 | 0) == (0 | 0)) $6 = 99; else {
-   wasm2js_i32$2 = $0 - 1 | 0;
-   wasm2js_i32$1 = 14;
-   wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0) | 0;
-   $6 = wasm2js_i32$0;
+  if (($0 | 0) == (0 | 0)) {
+   $6 = 99
+  } else {
+   {
+    wasm2js_i32$2 = $0 - 1 | 0;
+    wasm2js_i32$1 = 14;
+    wasm2js_i32$0 = FUNCTION_TABLE[wasm2js_i32$1](wasm2js_i32$2 | 0) | 0;
+    $6 = wasm2js_i32$0;
+   }
   }
   return $6 | 0;
  }
@@ -409,6 +429,310 @@ function asmFunc(global, env, buffer) {
   FUNCTION_TABLE[wasm2js_i32$0]();
  }
  
+ function legalstub$17() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $17() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
+ }
+ 
+ function legalstub$18() {
+  return +(+Math_fround($18()));
+ }
+ 
+ function legalstub$20() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $20() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
+ }
+ 
+ function legalstub$22() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $22() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
+ }
+ 
+ function legalstub$23() {
+  return +(+Math_fround($23()));
+ }
+ 
+ function legalstub$26() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $26() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
+ }
+ 
+ function legalstub$27() {
+  return +(+Math_fround($27()));
+ }
+ 
+ function legalstub$29($0, $1, $2) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $14 = 0, $15 = 0, $4 = 0, $6 = 0, $6$hi = 0, $9$hi = 0, $3 = 0, $3$hi = 0;
+  $4 = $0;
+  i64toi32_i32$0 = 0;
+  $6 = $1;
+  $6$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$2 = $2;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+    $14 = 0;
+   }
+  } else {
+   {
+    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+    $14 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   }
+  }
+  $9$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $6$hi;
+  i64toi32_i32$0 = $6;
+  i64toi32_i32$2 = $9$hi;
+  i64toi32_i32$3 = $14;
+  i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
+  i64toi32_i32$2 = $29($4 | 0, i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
+  $3 = i64toi32_i32$2;
+  $3$hi = i64toi32_i32$0;
+  i64toi32_i32$1 = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$2 = 0;
+    $15 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$2 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+    $15 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$1 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($15 | 0);
+  i64toi32_i32$2 = $3$hi;
+  return $3 | 0;
+ }
+ 
+ function legalstub$30($0) {
+  $0 = $0 | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $8 = 0, $1 = 0, $1$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $30($0 | 0) | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $1 = i64toi32_i32$0;
+  $1$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $8 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $8 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($8 | 0);
+  i64toi32_i32$0 = $1$hi;
+  return $1 | 0;
+ }
+ 
+ function legalstub$fac($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
+  i64toi32_i32$0 = 0;
+  $4 = $0;
+  $4$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$2 = $1;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+    $12 = 0;
+   }
+  } else {
+   {
+    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+    $12 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   }
+  }
+  $7$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $4$hi;
+  i64toi32_i32$0 = $4;
+  i64toi32_i32$2 = $7$hi;
+  i64toi32_i32$3 = $12;
+  i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
+  i64toi32_i32$2 = fac(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
+  $2 = i64toi32_i32$2;
+  $2$hi = i64toi32_i32$0;
+  i64toi32_i32$1 = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$2 = 0;
+    $13 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$2 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+    $13 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$1 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($13 | 0);
+  i64toi32_i32$2 = $2$hi;
+  return $2 | 0;
+ }
+ 
+ function legalstub$fib($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
+  i64toi32_i32$0 = 0;
+  $4 = $0;
+  $4$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$2 = $1;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+    $12 = 0;
+   }
+  } else {
+   {
+    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+    $12 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   }
+  }
+  $7$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $4$hi;
+  i64toi32_i32$0 = $4;
+  i64toi32_i32$2 = $7$hi;
+  i64toi32_i32$3 = $12;
+  i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
+  i64toi32_i32$2 = fib(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
+  $2 = i64toi32_i32$2;
+  $2$hi = i64toi32_i32$0;
+  i64toi32_i32$1 = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$2 = 0;
+    $13 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$2 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+    $13 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$1 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($13 | 0);
+  i64toi32_i32$2 = $2$hi;
+  return $2 | 0;
+ }
+ 
  function _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0, var$0$hi, var$1, var$1$hi) {
   var$0 = var$0 | 0;
   var$0$hi = var$0$hi | 0;
@@ -428,11 +752,15 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   i64toi32_i32$1 = 0;
-   $21_1 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+   {
+    i64toi32_i32$1 = 0;
+    $21_1 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+   }
   } else {
-   i64toi32_i32$1 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
-   $21_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   {
+    i64toi32_i32$1 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+    $21_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
   }
   $23_1 = $17_1 + Math_imul($18_1, $21_1) | 0;
   i64toi32_i32$1 = var$1$hi;
@@ -441,11 +769,15 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   i64toi32_i32$2 = 0;
-   $22_1 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   {
+    i64toi32_i32$2 = 0;
+    $22_1 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
   } else {
-   i64toi32_i32$2 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
-   $22_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$0 >>> i64toi32_i32$4 | 0) | 0;
+   {
+    i64toi32_i32$2 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $22_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$0 >>> i64toi32_i32$4 | 0) | 0;
+   }
   }
   $29_1 = $23_1 + Math_imul($22_1, var$3) | 0;
   var$2 = var$2 & 65535 | 0;
@@ -460,11 +792,15 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   i64toi32_i32$0 = i64toi32_i32$1 << i64toi32_i32$4 | 0;
-   $24_1 = 0;
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 << i64toi32_i32$4 | 0;
+    $24_1 = 0;
+   }
   } else {
-   i64toi32_i32$0 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$1 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$2 << i64toi32_i32$4 | 0) | 0;
-   $24_1 = i64toi32_i32$1 << i64toi32_i32$4 | 0;
+   {
+    i64toi32_i32$0 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$1 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$2 << i64toi32_i32$4 | 0) | 0;
+    $24_1 = i64toi32_i32$1 << i64toi32_i32$4 | 0;
+   }
   }
   $56$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
@@ -498,22 +834,22 @@ function asmFunc(global, env, buffer) {
  var FUNCTION_TABLE = [const_i32, const_i64, const_f32, const_f64, id_i32, id_i64, id_f32, id_f64, f32_i32, i32_i64, f64_f32, i64_f64, fac, fib, even, odd, runaway, mutual_runaway1, mutual_runaway2, over_i32_duplicate, over_i64_duplicate, over_f32_duplicate, over_f64_duplicate];
  return {
   type_i32: $16, 
-  type_i64: $17, 
-  type_f32: $18, 
+  type_i64: legalstub$17, 
+  type_f32: legalstub$18, 
   type_f64: $19, 
-  type_index: $20, 
+  type_index: legalstub$20, 
   type_first_i32: $21, 
-  type_first_i64: $22, 
-  type_first_f32: $23, 
+  type_first_i64: legalstub$22, 
+  type_first_f32: legalstub$23, 
   type_first_f64: $24, 
   type_second_i32: $25, 
-  type_second_i64: $26, 
-  type_second_f32: $27, 
+  type_second_i64: legalstub$26, 
+  type_second_f32: legalstub$27, 
   type_second_f64: $28, 
-  dispatch: $29, 
-  dispatch_structural: $30, 
-  fac: fac, 
-  fib: fib, 
+  dispatch: legalstub$29, 
+  dispatch_structural: legalstub$30, 
+  fac: legalstub$fac, 
+  fib: legalstub$fib, 
   even: even, 
   odd: odd, 
   runaway: runaway, 
@@ -522,7 +858,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export const type_i32 = retasmFunc.type_i32;
 export const type_i64 = retasmFunc.type_i64;
 export const type_f32 = retasmFunc.type_f32;

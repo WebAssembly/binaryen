@@ -1,6 +1,6 @@
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -21,7 +21,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
   var $0_1 = 0;
   exit : {
@@ -38,8 +37,10 @@ function asmFunc(global, env, buffer) {
    cont : do {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     $6_1 = i;
-     break exit;
+     {
+      $6_1 = i;
+      break exit;
+     }
     }
     continue cont;
     break cont;
@@ -54,10 +55,14 @@ function asmFunc(global, env, buffer) {
   exit : {
    cont : do {
     i = i + 1 | 0;
-    if ((i | 0) == (5 | 0)) continue cont;
+    if ((i | 0) == (5 | 0)) {
+     continue cont
+    }
     if ((i | 0) == (8 | 0)) {
-     $8_1 = i;
-     break exit;
+     {
+      $8_1 = i;
+      break exit;
+     }
     }
     i = i + 1 | 0;
     continue cont;
@@ -74,8 +79,10 @@ function asmFunc(global, env, buffer) {
    cont : do {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     $6_1 = i;
-     break exit;
+     {
+      $6_1 = i;
+      break exit;
+     }
     }
     break cont;
    } while (1);
@@ -92,8 +99,10 @@ function asmFunc(global, env, buffer) {
    cont : do {
     i = i + i | 0;
     if (i >>> 0 > max >>> 0) {
-     $9_1 = i;
-     break exit;
+     {
+      $9_1 = i;
+      break exit;
+     }
     }
     continue cont;
     break cont;
@@ -226,18 +235,26 @@ function asmFunc(global, env, buffer) {
   i = 0;
   outer : {
    inner : {
-    if (0) break inner;
+    if (0) {
+     break inner
+    }
     i = i | 1 | 0;
-    if (1) break inner;
+    if (1) {
+     break inner
+    }
     i = i | 2 | 0;
    }
    i = i | 4 | 0;
    $10_1 = i;
-   if (0) break outer;
+   if (0) {
+    break outer
+   }
    i = i | 8 | 0;
    i = i | 16 | 0;
    $10_1 = i;
-   if (1) break outer;
+   if (1) {
+    break outer
+   }
    i = i | 32 | 0;
    $10_1 = i;
   }
@@ -252,7 +269,9 @@ function asmFunc(global, env, buffer) {
     break l1;
    }
    $2_2 = $0_1;
-   if (1) break l0;
+   if (1) {
+    break l0
+   }
    $2_2 = 1;
   }
   return $2_2 | 0;
@@ -278,7 +297,9 @@ function asmFunc(global, env, buffer) {
    $3_2 = i1;
    i1 = 2;
    $7_1 = $3_2;
-   if (i1) break l0;
+   if (i1) {
+    break l0
+   }
    $7_1 = 0;
   }
   return i1 | 0;

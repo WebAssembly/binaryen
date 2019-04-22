@@ -1,7 +1,7 @@
 import { print } from 'spectest';
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -23,15 +23,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var print = env.print;
- var i64toi32_i32$HIGH_BITS = 0;
- function $1() {
-  
- }
- 
- function $2() {
-  
- }
- 
  function $3() {
   return 13 | 0;
  }
@@ -68,7 +59,7 @@ export const three = retasmFunc.three;
 export const four = retasmFunc.four;
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -89,7 +80,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function t1() {
   return 1 | 0;
  }
@@ -139,7 +129,7 @@ export const callt = retasmFunc.callt;
 export const callu = retasmFunc.callu;
 
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -160,7 +150,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function t1() {
   return 1 | 0;
  }

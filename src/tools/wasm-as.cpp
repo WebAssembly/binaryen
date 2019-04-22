@@ -19,12 +19,12 @@
 //
 
 #include "support/colors.h"
-#include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-io.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
+#include "tool-options.h"
 #include "tool-utils.h"
 
 using namespace cashew;
@@ -35,7 +35,7 @@ int main(int argc, const char *argv[]) {
   std::string symbolMap;
   std::string sourceMapFilename;
   std::string sourceMapUrl;
-  Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
+  ToolOptions options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
   options.extra["validate"] = "wasm";
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -91,7 +91,7 @@ int main(int argc, const char *argv[]) {
     Fatal() << "error in parsing input";
   }
 
-  wasm.features = FeatureSet::All;
+  options.applyFeatures(wasm);
 
   if (options.extra["validate"] != "none") {
     if (options.debug) std::cerr << "Validating..." << std::endl;

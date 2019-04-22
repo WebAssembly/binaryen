@@ -161,11 +161,6 @@ public:
     auto total = STACK_START + STACK_SIZE;
     memorySize = total / Memory::kPageSize;
   }
-
-  // flatten memory into a single segment, return true if successful
-  bool flattenMemory() {
-    return MemoryUtils::flatten(wasm.memory);
-  }
 };
 
 struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
@@ -257,6 +252,9 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   void store32(Address addr, int32_t value) override { doStore<int32_t>(addr, value); }
   void store64(Address addr, int64_t value) override { doStore<int64_t>(addr, value); }
 
+  // called during initialization, but we don't keep track of a table
+  void tableStore(Address addr, Name value) override { }
+
   void growMemory(Address /*oldSize*/, Address newSize) override {
     throw FailToEvalException("grow memory");
   }
@@ -291,6 +289,7 @@ private:
         )
       );
     }
+    // memory should already have been flattened
     assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() == 0);
     auto max = address + sizeof(T);
     auto& data = wasm->memory.segments[0].data;
@@ -318,12 +317,12 @@ private:
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   CtorEvalExternalInterface interface;
   try {
-    // create an instance for evalling
-    EvallingModuleInstance instance(wasm, &interface);
     // flatten memory, so we do not depend on the layout of data segments
-    if (!instance.flattenMemory()) {
+    if (!MemoryUtils::flatten(wasm.memory)) {
       Fatal() << "  ...stopping since could not flatten memory\n";
     }
+    // create an instance for evalling
+    EvallingModuleInstance instance(wasm, &interface);
     // set up the stack area and other environment details
     instance.setupEnvironment();
     // we should not add new globals from here on; as a result, using

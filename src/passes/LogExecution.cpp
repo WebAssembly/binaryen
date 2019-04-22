@@ -16,12 +16,16 @@
 
 //
 // Instruments the build with code to log execution at each function
-// entry and loop header. This can be useful in debugging, to log out
+// entry, loop header, and return. This can be useful in debugging, to log out
 // a trace, and diff it to another (running in another browser, to
 // check for bugs, for example).
 //
 // The logging is performed by calling an ffi with an id for each
 // call site. You need to provide that import on the JS side.
+//
+// This pass is more effective on flat IR (--flatten) since when it
+// instruments say a return, there will be no code run in the return's
+// value.
 //
 
 #include <wasm.h>
@@ -41,9 +45,18 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     curr->body = makeLogCall(curr->body);
   }
 
+  void visitReturn(Return* curr) {
+    replaceCurrent(makeLogCall(curr));
+  }
+
   void visitFunction(Function* curr) {
     if (curr->imported()) {
       return;
+    }
+    if (auto* block = curr->body->dynCast<Block>()) {
+      if (!block->list.empty()) {
+        block->list.back() = makeLogCall(block->list.back());
+      }
     }
     curr->body = makeLogCall(curr->body);
   }
