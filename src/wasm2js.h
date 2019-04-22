@@ -136,10 +136,7 @@ public:
 
   // The second pass on an expression: process it fully, generating
   // JS
-  // @param result Whether the context we are in receives a value,
-  //               and its type, or if not, then we can drop our return,
-  //               if we have one.
-  Ref processFunctionBody(Module* m, Function* func, IString result);
+  Ref processFunctionBody(Module* m, Function* func);
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -665,7 +662,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
+  flattenAppend(ret, processFunctionBody(m, func));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -684,7 +681,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   return ret;
 }
 
-Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString result) {
+Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
     IString result; // TODO: remove
@@ -1587,7 +1584,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
   };
 
-  return ExpressionProcessor(this, m, func).visit(func->body, result);
+  return ExpressionProcessor(this, m, func).visit(func->body, NO_RESULT);
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
