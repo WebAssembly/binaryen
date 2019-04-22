@@ -7,3 +7,5 @@ SpaceAfterTemplateKeyword: false
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 AllowShortBlocksOnASingleLine: true
+BinPackArguments: false
+BinPackParameters: false
