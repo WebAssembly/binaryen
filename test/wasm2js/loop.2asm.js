@@ -293,10 +293,8 @@ function asmFunc(global, env, buffer) {
   $1_1 = $0;
   block : {
    loop_in : do {
-    block54 : {
-     $2_1 = 1;
-     break block;
-    }
+    $2_1 = 1;
+    break block;
     break loop_in;
    } while (1);
   }
@@ -351,7 +349,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $14() {
-  var $0 = 0, $1_1 = 0, $6_1 = 0, $2_1 = 0, $7_1 = 0, $3_1 = 0, $8_1 = 0, $5_1 = 0;
+  var $0 = 0, $1_1 = 0, $2_1 = 0, $3_1 = 0, $5_1 = 0;
   $0 = 0;
   $1_1 = $0;
   loop_in : do {
