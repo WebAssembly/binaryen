@@ -1272,16 +1272,20 @@ private:
       instance.checkLoadAddress(destVal, 0);
       instance.checkLoadAddress(sourceVal, 0);
 
-      // Direction of copy depends on arguments
       size_t start = 0;
       size_t end = sizeVal;
       int step = 1;
-      if (sourceVal < destVal && destVal < sourceVal + sizeVal) {
+      // Reverse direction if source is below dest and they overlap
+      if (sourceVal < destVal &&
+          (sourceVal + sizeVal > destVal || sourceVal + sizeVal < sourceVal)) {
         start = sizeVal - 1;
         end = -1;
         step = -1;
       }
       for (size_t i = start; i != end; i += step) {
+        if (i + destVal >= std::numeric_limits<uint32_t>::max()) {
+          trap("Out of bounds memory access");
+        }
         instance.externalInterface->store8(
           instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1),
           instance.externalInterface->load8s(

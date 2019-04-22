@@ -91,6 +91,16 @@
 (assert_return (invoke "load8_u" (i32.const 15)) (i32.const 0xcc))
 (assert_return (invoke "load8_u" (i32.const 16)) (i32.const 0))
 
+;; Overlap, source < dest but size is out of bounds
+(assert_trap (invoke "copy" (i32.const 13) (i32.const 11) (i32.const -1)))
+(assert_return (invoke "load8_u" (i32.const 10)) (i32.const 0))
+(assert_return (invoke "load8_u" (i32.const 11)) (i32.const 0xaa))
+(assert_return (invoke "load8_u" (i32.const 12)) (i32.const 0xbb))
+(assert_return (invoke "load8_u" (i32.const 13)) (i32.const 0xcc))
+(assert_return (invoke "load8_u" (i32.const 14)) (i32.const 0xdd))
+(assert_return (invoke "load8_u" (i32.const 15)) (i32.const 0xcc))
+(assert_return (invoke "load8_u" (i32.const 16)) (i32.const 0))
+
 ;; Copy ending at memory limit is ok.
 (invoke "copy" (i32.const 0xff00) (i32.const 0) (i32.const 0x100))
 (invoke "copy" (i32.const 0xfe00) (i32.const 0xff00) (i32.const 0x100))
@@ -110,7 +120,6 @@
     "out of bounds memory access")
 (assert_trap (invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0))
     "out of bounds memory access")
-
 
 ;; memory.init
 (module
