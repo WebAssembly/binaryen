@@ -859,7 +859,6 @@ public:
 
   struct Segment {
     bool isPassive = false;
-    Index index = 0;
     Expression* offset = nullptr;
     std::vector<char> data; // TODO: optimize
     Segment() = default;

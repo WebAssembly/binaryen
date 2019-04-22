@@ -39,6 +39,7 @@ enum class ModuleElementKind {
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
 // Finds reachabilities
+// TODO: use Effects to determine if a memory is used
 
 struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
@@ -117,6 +118,18 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     usesMemory = true;
   }
   void visitAtomicNotify(AtomicNotify* curr) {
+    usesMemory = true;
+  }
+  void visitMemoryInit(MemoryInit* curr) {
+    usesMemory = true;
+  }
+  void visitDataDrop(DataDrop* curr) {
+    usesMemory = true;
+  }
+  void visitMemoryCopy(MemoryCopy* curr) {
+    usesMemory = true;
+  }
+  void visitMemoryFill(MemoryFill* curr) {
     usesMemory = true;
   }
   void visitHost(Host* curr) {
