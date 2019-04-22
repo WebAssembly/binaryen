@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v81
+---
+
+- Fix AsmConstWalker handling of string address in arg0 with -fPIC code
+
 v80
 ---
 

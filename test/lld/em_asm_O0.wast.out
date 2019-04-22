@@ -34,16 +34,16 @@
    )
   )
   (local.set $t1
-   (i32.const 2)
+   (i32.const 621)
   )
   (local.set $t2
-   (i32.const 1)
+   (i32.const 601)
   )
   (drop
    (call $emscripten_asm_const_ii
-    (local.get $t1)
+    (i32.const 2)
     (call $emscripten_asm_const_iii
-     (local.get $t2)
+     (i32.const 1)
      (i32.const 13)
      (i32.const 27)
     )
