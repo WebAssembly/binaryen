@@ -19,7 +19,7 @@ import os
 from support import run_command, split_wast
 from shared import (
     WASM2JS, MOZJS, NODEJS, fail_if_not_identical, options, tests,
-    fail_if_not_identical_to_file
+    fail_if_not_identical_to_file, with_pass_debug
 )
 
 # tests with i64s, invokes, etc.
@@ -73,6 +73,8 @@ def test_wasm2js_output():
 
       cmd += ['--allow-asserts']
       out = run_command(cmd)
+      # also verify it passes pass-debug verifications
+      with_pass_debug(lambda: run_command(cmd))
 
       open('a.2asm.asserts.mjs', 'w').write(out)
 

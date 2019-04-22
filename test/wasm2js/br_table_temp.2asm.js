@@ -49977,7 +49977,6 @@ function asmFunc(global, env, buffer) {
     break block;
    };
   }
-  i64toi32_i32$0 = $1$hi;
   return $1_1 | 0;
  }
  
