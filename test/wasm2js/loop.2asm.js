@@ -293,8 +293,10 @@ function asmFunc(global, env, buffer) {
   $1_1 = $0;
   block : {
    loop_in : do {
-    $2_1 = 1;
-    break block;
+    block54 : {
+     $2_1 = 1;
+     break block;
+    }
     break loop_in;
    } while (1);
   }
