@@ -35,31 +35,30 @@ function asmFunc(global, env, buffer) {
  }
  
  function $2() {
-  return abort() | 0;
+  abort();
  }
  
  function $3() {
-  return abort() | 0;
+  abort();
  }
  
  function $4() {
-  return +abort();
+  abort();
  }
  
  function $5() {
-  return +abort();
+  abort();
  }
  
  function $6() {
   var $0 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $7() {
-  var $0 = 0, wasm2js_i32$0 = 0;
+  var $0 = 0;
   dummy();
-  wasm2js_i32$0 = abort();
-  return wasm2js_i32$0 | 0;
+  abort();
  }
  
  function $8() {
@@ -68,22 +67,19 @@ function asmFunc(global, env, buffer) {
  }
  
  function $9() {
-  var wasm2js_i32$0 = 0;
   dummy();
-  wasm2js_i32$0 = abort();
-  return wasm2js_i32$0 | 0;
+  abort();
  }
  
  function $10() {
   var $0 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $11() {
-  var $0 = 0, wasm2js_i32$0 = 0;
+  var $0 = 0;
   dummy();
-  wasm2js_i32$0 = abort();
-  return wasm2js_i32$0 | 0;
+  abort();
  }
  
  function $12() {
@@ -92,10 +88,8 @@ function asmFunc(global, env, buffer) {
  }
  
  function $13() {
-  var wasm2js_i32$0 = 0;
   dummy();
-  wasm2js_i32$0 = abort();
-  return wasm2js_i32$0 | 0;
+  abort();
  }
  
  function $14() {
@@ -109,22 +103,20 @@ function asmFunc(global, env, buffer) {
  }
  
  function $15() {
-  var $0 = 0, $2_1 = 0, wasm2js_i32$0 = 0;
+  var $0 = 0, $2_1 = 0;
   loop_in : do {
    abort();
    break loop_in;
   } while (1);
-  return wasm2js_i32$0 | 0;
  }
  
  function $16() {
-  var $0 = 0, $2_1 = 0, wasm2js_i32$0 = 0;
+  var $0 = 0, $2_1 = 0;
   loop_in : do {
    dummy();
-   wasm2js_i32$0 = abort();
+   abort();
    break loop_in;
   } while (1);
-  return wasm2js_i32$0 | 0;
  }
  
  function $17() {
@@ -149,7 +141,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $19() {
-  return abort() | 0;
+  abort();
  }
  
  function $20() {
@@ -158,12 +150,12 @@ function asmFunc(global, env, buffer) {
  
  function $21() {
   var $0 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $22() {
   var $0 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $23() {
@@ -172,21 +164,21 @@ function asmFunc(global, env, buffer) {
  
  function $24() {
   var $0 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $25() {
   var $1 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $26() {
-  return abort() | 0;
+  abort();
  }
  
  function $27() {
   var $0 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $28($0, $1) {
@@ -217,20 +209,19 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   $1 = $1 | 0;
   var $2_1 = 0, $3_1 = 0;
-  return abort() | 0;
+  abort();
  }
  
  function $31($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
-  var $2_1 = 0, $3_1 = 0, wasm2js_i32$0 = 0;
+  var $2_1 = 0, $3_1 = 0;
   $2_1 = $0;
-  wasm2js_i32$0 = abort();
-  return wasm2js_i32$0 | 0;
+  abort();
  }
  
  function $32() {
-  return abort() | 0;
+  abort();
  }
  
  function $33() {
@@ -266,11 +257,11 @@ function asmFunc(global, env, buffer) {
  }
  
  function $41() {
-  return Math_fround(abort());
+  abort();
  }
  
  function $42() {
-  return abort() | 0;
+  abort();
  }
  
  function $43() {
@@ -290,35 +281,35 @@ function asmFunc(global, env, buffer) {
  }
  
  function $47() {
-  return Math_fround(abort());
+  abort();
  }
  
  function $48() {
-  return abort() | 0;
+  abort();
  }
  
  function $49() {
-  return abort() | 0;
+  abort();
  }
  
  function $50() {
-  return abort() | 0;
+  abort();
  }
  
  function $51() {
-  return abort() | 0;
+  abort();
  }
  
  function $52() {
-  return abort() | 0;
+  abort();
  }
  
  function $53() {
-  return abort() | 0;
+  abort();
  }
  
  function $54() {
-  return abort() | 0;
+  abort();
  }
  
  function legalstub$26() {

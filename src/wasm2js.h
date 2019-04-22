@@ -35,6 +35,7 @@
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
 #include "abi/js.h"
+#include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "ir/module-utils.h"
@@ -69,6 +70,15 @@ void flattenAppend(Ref ast, Ref extra) {
   }
 }
 
+// Appends extra to a chain of sequence elements
+void sequenceAppend(Ref& ast, Ref extra) {
+  if (!ast.get()) {
+    ast = extra;
+    return;
+  }
+  ast = ValueBuilder::makeSeq(ast, extra);
+}
+
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
@@ -99,42 +109,11 @@ static uint64_t constOffset(const T& segment) {
 // is tricky because wasm has statements == expressions, or in
 // other words, things like `break` and `if` can show up
 // in places where JS can't handle them, like inside an
-// a loop's condition check.
+// a loop's condition check. For that reason we use flat IR here.
+// We do optimize it later, to allow some nesting, but we avoid
+// non-JS-compatible nesting like block return values control
+// flow in an if condition, etc.
 //
-// We therefore need the ability to lower an expression into
-// a block of statements, and we keep statementizing until we
-// reach a context in which we can emit those statments. This
-// requires that we create temp variables to store values
-// that would otherwise flow directly into their targets if
-// we were an expression (e.g. if a loop's condition check
-// is a bunch of statements, we execute those statements,
-// then use the computed value in the loop's condition;
-// we might also be able to avoid an assign to a temp var
-// at the end of those statements, and put just that
-// value in the loop's condition).
-//
-// It is possible to do this in a single pass, if we just
-// allocate temp vars freely. However, pathological cases
-// can easily show bad behavior here, with many unnecessary
-// temp vars. We could rely on optimization passes like
-// Emscripten's eliminate/registerize pair, but we want
-// wasm2js to be fairly fast to run, as it might run on
-// the client.
-//
-// The approach taken here therefore performs 2 passes on
-// each function. First, it finds which expression will need to
-// be statementized. It also sees which labels can receive a break
-// with a value. Given that information, in the second pass we can
-// allocate // temp vars in an efficient manner, as we know when we
-// need them and when their use is finished. They are allocated
-// using an RAII class, so that they are automatically freed
-// when the scope ends. This means that a node cannot allocate
-// its own temp var; instead, the parent - which knows the
-// child will return a value in a temp var - allocates it,
-// and tells the child what temp var to emit to. The child
-// can then pass forward that temp var to its children,
-// optimizing away unnecessary forwarding.
-
 
 class Wasm2JSBuilder {
   MixedArena allocator;
@@ -150,12 +129,10 @@ public:
   Wasm2JSBuilder(Flags f) : flags(f) {}
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
-  Ref processFunction(Module* wasm, Function* func);
-
-  // The first pass on an expression: scan it to see whether it will
-  // need to be statementized, and note spooky returns of values at
-  // a distance (aka break with a value).
-  void scanFunctionBody(Expression* curr);
+  Ref processFunction(Module* wasm, Function* func, bool standalone=false);
+  Ref processStandaloneFunction(Module* wasm, Function* func) {
+    return processFunction(wasm, func, true);
+  }
 
   // The second pass on an expression: process it fully, generating
   // JS
@@ -245,14 +222,6 @@ public:
     return ret;
   }
 
-  void setStatement(Expression* curr) {
-    willBeStatement.insert(curr);
-  }
-
-  bool isStatement(Expression* curr) {
-    return curr && willBeStatement.find(curr) != willBeStatement.end();
-  }
-
   size_t getTableSize() {
     return tableSize;
   }
@@ -264,9 +233,6 @@ private:
   std::vector<size_t> temps; // type => num temps
   // Which are currently free to use
   std::vector<std::vector<IString>> frees; // type => list of free names
-
-  // Expressions that will be a statement.
-  std::set<Expression*> willBeStatement;
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
@@ -395,7 +361,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       std::move(params),
       i32,
       std::move(vars),
-      builder.makeGetGlobal(INT64_TO_32_HIGH_BITS, i32)
+      builder.makeReturn(builder.makeGetGlobal(INT64_TO_32_HIGH_BITS, i32))
     )));
     auto e = new Export();
     e->name = WASM_FETCH_HIGH_BITS;
@@ -655,23 +621,21 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
   }
 }
 
-static bool expressionEndsInReturn(Expression *e) {
-  if (e->is<Return>()) {
-    return true;
+Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFunction) {
+  if (standaloneFunction) {
+    // We are only printing a function, not a whole module. Prepare it for
+    // translation now (if there were a module, we'd have done this for all
+    // functions in parallel, earlier).
+    PassRunner runner(m);
+    // We only run a subset of all passes here. TODO: create a full valid module
+    // for each assertion body.
+    runner.add("flatten");
+    runner.add("simplify-locals-notee-nostructure");
+    runner.add("reorder-locals");
+    runner.add("vacuum");
+    runner.runOnFunction(func);
   }
-  if (!e->is<Block>()) {
-    return false;
-  }
-  ExpressionList* stats = &static_cast<Block*>(e)->list;
-  return expressionEndsInReturn((*stats)[stats->size()-1]);
-}
 
-Ref Wasm2JSBuilder::processFunction(Module* m, Function* func) {
-  if (flags.debug) {
-    static int fns = 0;
-    std::cerr << "processFunction " << (fns++) << " " << func->name
-              << std::endl;
-  }
   // We will be symbolically referring to all variables in the function, so make
   // sure that everything has a name and it's unique.
   Names::ensureNames(func);
@@ -701,35 +665,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func) {
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  auto appendFinalReturn = [&] (Ref retVal) {
-    flattenAppend(
-      ret,
-      ValueBuilder::makeReturn(
-        makeAsmCoercion(retVal, wasmToAsmType(func->result))
-      )
-    );
-  };
-  scanFunctionBody(func->body);
-  bool endsInReturn = expressionEndsInReturn(func->body);
-  if (endsInReturn) {
-    // return already taken care of
-    flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
-  } else if (isStatement(func->body)) {
-    // store result in variable then return it
-    IString result =
-      func->result != none ? getTemp(func->result, func) : NO_RESULT;
-    flattenAppend(ret, processFunctionBody(m, func, result));
-    if (func->result != none) {
-      appendFinalReturn(ValueBuilder::makeName(result));
-      freeTemp(func->result, result);
-    }
-  } else if (func->result != none) {
-    // whole thing is an expression, just return body
-    appendFinalReturn(processFunctionBody(m, func, EXPRESSION_RESULT));
-  } else {
-    // func has no return
-    flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
-  }
+  flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -745,95 +681,13 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func) {
   assert(frees[i32].size() == temps[i32]); // all temp vars should be free at the end
   assert(frees[f32].size() == temps[f32]); // all temp vars should be free at the end
   assert(frees[f64].size() == temps[f64]); // all temp vars should be free at the end
-  // cleanups
-  willBeStatement.clear();
   return ret;
-}
-
-void Wasm2JSBuilder::scanFunctionBody(Expression* curr) {
-  struct ExpressionScanner : public PostWalker<ExpressionScanner> {
-    Wasm2JSBuilder* parent;
-
-    ExpressionScanner(Wasm2JSBuilder* parent) : parent(parent) {}
-
-    // Visitors
-
-    void visitBlock(Block* curr) {
-      parent->setStatement(curr);
-    }
-    void visitIf(If* curr) {
-      parent->setStatement(curr);
-    }
-    void visitLoop(Loop* curr) {
-      parent->setStatement(curr);
-    }
-    void visitBreak(Break* curr) {
-      parent->setStatement(curr);
-    }
-    void visitSwitch(Switch* curr) {
-      parent->setStatement(curr);
-    }
-    void visitCall(Call* curr) {
-      for (auto item : curr->operands) {
-        if (parent->isStatement(item)) {
-          parent->setStatement(curr);
-          break;
-        }
-      }
-    }
-    void visitCallIndirect(CallIndirect* curr) {
-      // TODO: this is a pessimization that probably wants to get tweaked in
-      // the future. If none of the arguments have any side effects then we
-      // should be able to safely have tighter codegen.
-      parent->setStatement(curr);
-    }
-    void visitSetLocal(SetLocal* curr) {
-      if (parent->isStatement(curr->value)) {
-        parent->setStatement(curr);
-      }
-    }
-    void visitLoad(Load* curr) {
-      if (parent->isStatement(curr->ptr)) {
-        parent->setStatement(curr);
-      }
-    }
-    void visitStore(Store* curr) {
-      parent->setStatement(curr);
-    }
-    void visitUnary(Unary* curr) {
-      if (parent->isStatement(curr->value)) {
-        parent->setStatement(curr);
-      }
-    }
-    void visitBinary(Binary* curr) {
-      if (parent->isStatement(curr->left) || parent->isStatement(curr->right)) {
-        parent->setStatement(curr);
-      }
-    }
-    void visitSelect(Select* curr) {
-      if (parent->isStatement(curr->ifTrue) || parent->isStatement(curr->ifFalse) || parent->isStatement(curr->condition)) {
-        parent->setStatement(curr);
-      }
-    }
-    void visitReturn(Return* curr) {
-      parent->setStatement(curr);
-    }
-    void visitHost(Host* curr) {
-      for (auto item : curr->operands) {
-        if (parent->isStatement(item)) {
-          parent->setStatement(curr);
-          break;
-        }
-      }
-    }
-  };
-  ExpressionScanner(this).walk(curr);
 }
 
 Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString result) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
-    IString result;
+    IString result; // TODO: remove
     Function* func;
     Module* module;
     MixedArena allocator;
@@ -844,7 +698,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     struct ScopedTemp {
       Wasm2JSBuilder* parent;
       Type type;
-      IString temp;
+      IString temp; // TODO: switch to indexes; avoid names
       bool needFree;
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
@@ -886,22 +740,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       return visit(curr, temp.temp);
     }
 
-    // this result is for an asm expression slot, but it might be a statement
-    Ref visitForExpression(Expression* curr, Type type, IString& tempName) {
-      if (isStatement(curr)) {
-        ScopedTemp temp(type, parent, func);
-        tempName = temp.temp;
-        return visit(curr, temp);
-      } else {
-        return visit(curr, EXPRESSION_RESULT);
-      }
-    }
-
     Ref visitAndAssign(Expression* curr, IString result) {
       Ref ret = visit(curr, result);
       // if it's not already a statement, then it's an expression, and we need to assign it
       // (if it is a statement, it already assigns to the result var)
-      if (!isStatement(curr) && result != NO_RESULT) {
+      if (result != NO_RESULT) {
         ret = ValueBuilder::makeStatement(
             ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
       }
@@ -910,10 +753,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
 
     Ref visitAndAssign(Expression* curr, ScopedTemp& temp) {
       return visitAndAssign(curr, temp.getName());
-    }
-
-    bool isStatement(Expression* curr) {
-      return parent->isStatement(curr);
     }
 
     // Expressions with control flow turn into a block, which we must
@@ -961,7 +800,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
 
     Ref visitIf(If* curr) {
       IString temp;
-      Ref condition = visitForExpression(curr->condition, i32, temp);
+      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
       Ref ifTrue = ValueBuilder::makeStatement(visitAndAssign(curr->ifTrue, result));
       Ref ifFalse;
       if (curr->ifFalse) {
@@ -1017,14 +856,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     Ref visitSwitch(Switch* curr) {
       assert(!curr->value);
       Ref ret = ValueBuilder::makeBlock();
-      Ref condition;
-      if (isStatement(curr->condition)) {
-        ScopedTemp temp(i32, parent, func);
-        flattenAppend(ret[2], visit(curr->condition, temp));
-        condition = temp.getAstName();
-      } else {
-        condition = visit(curr->condition, EXPRESSION_RESULT);
-      }
+      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
       Ref theSwitch =
         ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
       ret[1]->push_back(theSwitch);
@@ -1037,102 +869,52 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       return ret;
     }
 
-    Ref makeStatementizedCall(ExpressionList& operands,
-                              Ref ret,
-                              std::function<Ref()> genTheCall,
-                              IString result,
-                              Type type) {
-      std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
-      for (auto& operand : operands) {
-        temps.push_back(new ScopedTemp(operand->type, parent, func));
-        IString temp = temps.back()->temp;
-        flattenAppend(ret, visitAndAssign(operand, temp));
-      }
-      Ref theCall = genTheCall();
-      for (size_t i = 0; i < temps.size(); i++) {
-        IString temp = temps[i]->temp;
-        auto &operand = operands[i];
-        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
-      }
-      theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
-      if (result != NO_RESULT) {
-        theCall = ValueBuilder::makeStatement(
-            ValueBuilder::makeBinary(
-                ValueBuilder::makeName(result), SET, theCall));
-      }
-      flattenAppend(ret, theCall);
-      for (auto temp : temps) {
-        delete temp;
-      }
-      return ret;
-    }
-
-    Ref visitGenericCall(Expression* curr, Name target,
-                         ExpressionList& operands) {
-      Ref theCall = ValueBuilder::makeCall(fromName(target, NameScope::Top));
-      if (!isStatement(curr)) {
-        // none of our operands is a statement; go right ahead and create a
-        // simple expression
-        for (auto operand : operands) {
-          theCall[2]->push_back(
-            makeAsmCoercion(visit(operand, EXPRESSION_RESULT),
-                            wasmToAsmType(operand->type)));
-        }
-        return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
-      }
-      // we must statementize them all
-      return makeStatementizedCall(operands, ValueBuilder::makeBlock(),
-                                   [&]() { return theCall; },
-                                   result, curr->type);
-    }
-
     Ref visitCall(Call* curr) {
-      return visitGenericCall(curr, curr->target, curr->operands);
+      Ref theCall = ValueBuilder::makeCall(fromName(curr->target, NameScope::Top));
+      for (auto operand : curr->operands) {
+        theCall[2]->push_back(
+          makeAsmCoercion(visit(operand, EXPRESSION_RESULT),
+                          wasmToAsmType(operand->type)));
+      }
+      return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
       // TODO: the codegen here is a pessimization of what the ideal codegen
       // looks like. Eventually if necessary this should be tightened up in the
       // case that the argument expression doesn't have any side effects.
-      assert(isStatement(curr));
-      Ref ret = ValueBuilder::makeBlock();
+      Ref ret;
       ScopedTemp idx(i32, parent, func);
-      return makeStatementizedCall(
-        curr->operands,
-        ret,
-        [&]() {
-          flattenAppend(ret, visitAndAssign(curr->target, idx));
-          return ValueBuilder::makeCall(ValueBuilder::makeSub(
-            ValueBuilder::makeName(FUNCTION_TABLE),
-            idx.getAstName()
-          ));
-        },
-        result,
-        curr->type
-      );
+      std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
+      for (auto& operand : curr->operands) {
+        temps.push_back(new ScopedTemp(operand->type, parent, func));
+        IString temp = temps.back()->temp;
+        sequenceAppend(ret, visitAndAssign(operand, temp));
+      }
+      sequenceAppend(ret, visitAndAssign(curr->target, idx));
+      Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+        ValueBuilder::makeName(FUNCTION_TABLE),
+        idx.getAstName()
+      ));
+      for (size_t i = 0; i < temps.size(); i++) {
+        IString temp = temps[i]->temp;
+        auto &operand = curr->operands[i];
+        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
+      }
+      theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+      sequenceAppend(ret, theCall);
+      for (auto temp : temps) {
+        delete temp;
+      }
+      return ret;
     }
 
+    // TODO: remove
     Ref makeSetVar(Expression* curr, Expression* value, Name name, NameScope scope) {
-      if (!isStatement(curr)) {
-        return ValueBuilder::makeBinary(
-          ValueBuilder::makeName(fromName(name, scope)), SET,
-          visit(value, EXPRESSION_RESULT)
-        );
-      }
-      // if result was provided, our child can just assign there.
-      // Otherwise, allocate a temp for it to assign to.
-      ScopedTemp temp(value->type, parent, func, result);
-      Ref ret = blockify(visit(value, temp));
-      // the output was assigned to result, so we can just assign it to our target
-      ret[1]->push_back(
-        ValueBuilder::makeStatement(
-          ValueBuilder::makeBinary(
-            ValueBuilder::makeName(fromName(name, scope)), SET,
-            temp.getAstName()
-          )
-        )
+      return ValueBuilder::makeBinary(
+        ValueBuilder::makeName(fromName(name, scope)), SET,
+        visit(value, EXPRESSION_RESULT)
       );
-      return ret;
     }
 
     Ref visitGetLocal(GetLocal* curr) {
@@ -1159,16 +941,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitLoad(Load* curr) {
-      if (isStatement(curr)) {
-        ScopedTemp temp(i32, parent, func);
-        GetLocal fakeLocal(allocator);
-        fakeLocal.index = func->getLocalIndex(temp.getName());
-        Load fakeLoad = *curr;
-        fakeLoad.ptr = &fakeLocal;
-        Ref ret = blockify(visitAndAssign(curr->ptr, temp));
-        flattenAppend(ret, visitAndAssign(&fakeLoad, result));
-        return ret;
-      }
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
         ScopedTemp temp(i32, parent, func);
@@ -1248,23 +1020,41 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitStore(Store* curr) {
-      if (isStatement(curr)) {
-        ScopedTemp tempPtr(i32, parent, func);
-        ScopedTemp tempValue(curr->valueType, parent, func);
-        GetLocal fakeLocalPtr(allocator);
-        fakeLocalPtr.index = func->getLocalIndex(tempPtr.getName());
-        fakeLocalPtr.type = curr->ptr->type;
-        GetLocal fakeLocalValue(allocator);
-        fakeLocalValue.index = func->getLocalIndex(tempValue.getName());
-        fakeLocalValue.type = curr->value->type;
-        Store fakeStore = *curr;
-        fakeStore.ptr = &fakeLocalPtr;
-        fakeStore.value = &fakeLocalValue;
-        Ref ret = blockify(visitAndAssign(curr->ptr, tempPtr));
-        flattenAppend(ret, visitAndAssign(curr->value, tempValue));
-        flattenAppend(ret, visitAndAssign(&fakeStore, result));
-        return ret;
+      if (module->memory.initial < module->memory.max && curr->type != unreachable) {
+        // In JS, if memory grows then it is dangerous to write
+        //  HEAP[f()] = ..
+        // or
+        //  HEAP[..] = f()
+        // since if the call swaps HEAP (in a growth operation) then
+        // we will not actually write to the new version (since the
+        // semantics of JS mean we already looked at HEAP and have
+        // decided where to assign to).
+        if (!FindAll<Call>(curr->ptr).list.empty() ||
+            !FindAll<Call>(curr->value).list.empty() ||
+            !FindAll<CallIndirect>(curr->ptr).list.empty() ||
+            !FindAll<CallIndirect>(curr->value).list.empty() ||
+            !FindAll<Host>(curr->ptr).list.empty() ||
+            !FindAll<Host>(curr->value).list.empty()) {
+          Ref ret;
+          ScopedTemp ptr(i32, parent, func);
+          sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
+          ScopedTemp value(curr->value->type, parent, func);
+          sequenceAppend(ret, visitAndAssign(curr->value, value));
+          GetLocal getPtr;
+          getPtr.index = func->getLocalIndex(ptr.getName());
+          getPtr.type = i32;
+          GetLocal getValue;
+          getValue.index = func->getLocalIndex(value.getName());
+          getValue.type = curr->value->type;
+          Store fakeStore = *curr;
+          fakeStore.ptr = &getPtr;
+          fakeStore.value = &getValue;
+          sequenceAppend(ret, visitStore(&fakeStore));
+          return ret;
+        }
       }
+      // FIXME if memory growth, store ptr cannot contain a function call
+      //       also other stores to memory, check them, all makeSub's
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
         ScopedTemp temp(i32, parent, func);
@@ -1351,7 +1141,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitDrop(Drop* curr) {
-      assert(!isStatement(curr));
       return visitAndAssign(curr->value, result);
     }
 
@@ -1390,16 +1179,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitUnary(Unary* curr) {
-      if (isStatement(curr)) {
-        ScopedTemp temp(curr->value->type, parent, func);
-        GetLocal fakeLocal(allocator);
-        fakeLocal.index = func->getLocalIndex(temp.getName());
-        Unary fakeUnary = *curr;
-        fakeUnary.value = &fakeLocal;
-        Ref ret = blockify(visitAndAssign(curr->value, temp));
-        flattenAppend(ret, visitAndAssign(&fakeUnary, result));
-        return ret;
-      }
       // normal unary
       switch (curr->type) {
         case i32: {
@@ -1577,21 +1356,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitBinary(Binary* curr) {
-      if (isStatement(curr)) {
-        ScopedTemp tempLeft(curr->left->type, parent, func);
-        GetLocal fakeLocalLeft(allocator);
-        fakeLocalLeft.index = func->getLocalIndex(tempLeft.getName());
-        ScopedTemp tempRight(curr->right->type, parent, func);
-        GetLocal fakeLocalRight(allocator);
-        fakeLocalRight.index = func->getLocalIndex(tempRight.getName());
-        Binary fakeBinary = *curr;
-        fakeBinary.left = &fakeLocalLeft;
-        fakeBinary.right = &fakeLocalRight;
-        Ref ret = blockify(visitAndAssign(curr->left, tempLeft));
-        flattenAppend(ret, visitAndAssign(curr->right, tempRight));
-        flattenAppend(ret, visitAndAssign(&fakeBinary, result));
-        return ret;
-      }
       // normal binary
       Ref left = visit(curr->left, EXPRESSION_RESULT);
       Ref right = visit(curr->right, EXPRESSION_RESULT);
@@ -1753,26 +1517,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitSelect(Select* curr) {
-      if (isStatement(curr)) {
-        ScopedTemp tempIfTrue(curr->ifTrue->type, parent, func);
-        GetLocal fakeLocalIfTrue(allocator);
-        fakeLocalIfTrue.index = func->getLocalIndex(tempIfTrue.getName());
-        ScopedTemp tempIfFalse(curr->ifFalse->type, parent, func);
-        GetLocal fakeLocalIfFalse(allocator);
-        fakeLocalIfFalse.index = func->getLocalIndex(tempIfFalse.getName());
-        ScopedTemp tempCondition(i32, parent, func);
-        GetLocal fakeCondition(allocator);
-        fakeCondition.index = func->getLocalIndex(tempCondition.getName());
-        Select fakeSelect = *curr;
-        fakeSelect.ifTrue = &fakeLocalIfTrue;
-        fakeSelect.ifFalse = &fakeLocalIfFalse;
-        fakeSelect.condition = &fakeCondition;
-        Ref ret = blockify(visitAndAssign(curr->ifTrue, tempIfTrue));
-        flattenAppend(ret, visitAndAssign(curr->ifFalse, tempIfFalse));
-        flattenAppend(ret, visitAndAssign(curr->condition, tempCondition));
-        flattenAppend(ret, visitAndAssign(&fakeSelect, result));
-        return ret;
-      }
       // normal select
       ScopedTemp tempIfTrue(curr->type, parent, func),
           tempIfFalse(curr->type, parent, func),
@@ -1798,26 +1542,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitReturn(Return* curr) {
-      if (curr->value == nullptr) {
+      if (!curr->value) {
         return ValueBuilder::makeReturn(Ref());
       }
-      if (isStatement(curr->value)) {
-        ScopedTemp temp(curr->value->type, parent, func);
-        Ref ret = ValueBuilder::makeBlock();
-        flattenAppend(ret, visitAndAssign(curr->value, temp));
-        Ref coerced = makeAsmCoercion(
-          temp.getAstName(),
-          wasmToAsmType(curr->value->type)
-        );
-        flattenAppend(ret, ValueBuilder::makeReturn(coerced));
-        return ret;
-      } else {
-        Ref val = makeAsmCoercion(
-          visit(curr->value, NO_RESULT),
-          wasmToAsmType(curr->value->type)
-        );
-        return ValueBuilder::makeReturn(val);
-      }
+      Ref val = makeAsmCoercion(
+        visit(curr->value, EXPRESSION_RESULT),
+        wasmToAsmType(curr->value->type)
+      );
+      return ValueBuilder::makeReturn(val);
     }
 
     Ref visitHost(Host* curr) {
@@ -1832,11 +1564,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       } else {
         return ValueBuilder::makeCall(ABORT_FUNC);
       }
-      if (isStatement(curr)) {
-        return ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, call);
-      } else {
-        return call;
-      }
+      return call;
     }
 
     Ref visitNop(Nop* curr) {
