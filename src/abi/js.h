@@ -18,6 +18,7 @@
 #define wasm_abi_abi_h
 
 #include "wasm.h"
+#include "asmjs/shared-constants.h"
 
 namespace wasm {
 
@@ -35,6 +36,57 @@ inline std::string getLegalizationPass(LegalizationLevel level) {
     return "legalize-js-interface-minimally";
   }
 }
+
+namespace wasm2js {
+
+extern cashew::IString SCRATCH_LOAD_I32,
+                       SCRATCH_STORE_I32,
+                       SCRATCH_LOAD_I64,
+                       SCRATCH_STORE_I64,
+                       SCRATCH_LOAD_F32,
+                       SCRATCH_STORE_F32,
+                       SCRATCH_LOAD_F64,
+                       SCRATCH_STORE_F64;
+
+// The wasm2js scratch memory helpers let us read and write to scratch memory
+// for purposes of implementing things like reinterpret, etc.
+// The optional "specific" parameter is a specific function we want. If not
+// provided, we create them all.
+inline void ensureScratchMemoryHelpers(Module* wasm, cashew::IString specific = cashew::IString()) {
+  auto ensureImport = [&](Name name, const std::vector<Type> params, Type result) {
+    if (wasm->getFunctionOrNull(name)) return;
+    if (specific.is() && name != specific) return;
+    auto func = make_unique<Function>();
+    func->name = name;
+    func->params = params;
+    func->result = result;
+    func->module = ENV;
+    func->base = name;
+    wasm->addFunction(std::move(func));
+  };
+
+  ensureImport(SCRATCH_LOAD_I32, { i32 }, i32);
+  ensureImport(SCRATCH_STORE_I32, { i32, i32 }, none);
+  ensureImport(SCRATCH_LOAD_I64, {}, i64);
+  ensureImport(SCRATCH_STORE_I64, { i64 }, none);
+  ensureImport(SCRATCH_LOAD_F32, {}, f32);
+  ensureImport(SCRATCH_STORE_F32, { f32 }, none);
+  ensureImport(SCRATCH_LOAD_F64, {}, f64);
+  ensureImport(SCRATCH_STORE_F64, { f64 }, none);
+}
+
+inline bool isScratchMemoryHelper(cashew::IString name) {
+  return name == SCRATCH_LOAD_I32 ||
+         name == SCRATCH_STORE_I32 ||
+         name == SCRATCH_LOAD_I64 ||
+         name == SCRATCH_STORE_I64 ||
+         name == SCRATCH_LOAD_F32 ||
+         name == SCRATCH_STORE_F32 ||
+         name == SCRATCH_LOAD_F64 ||
+         name == SCRATCH_STORE_F64;
+}
+
+} // namespace wasm2js
 
 } // namespace ABI
 

@@ -986,6 +986,9 @@ struct JSPrinter {
   }
 
   void printNum(Ref node) {
+    if (node->getNumber() < 0 && buffer[used-1] == '-') {
+      emit(' '); // cannot join - and - to --, looks like the -- operator
+    }
     emit(numToString(node->getNumber(), finalize));
   }
 

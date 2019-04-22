@@ -22,10 +22,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var f = 2882400175;
- var g = f;
  var f$hi = 305419896;
- var g$hi = f$hi;
- var i64toi32_i32$HIGH_BITS = 0;
  function call($0, $0$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;

@@ -1,4 +1,26 @@
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_store_i32(index, value) {
+    i32ScratchView[index] = value;
+  }
+      
+  function wasm2js_scratch_load_f32() {
+    return f32ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_f32(value) {
+    f32ScratchView[0] = value;
+  }
+      
+  function wasm2js_scratch_load_i32(index) {
+    return i32ScratchView[index];
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -21,7 +43,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
@@ -96,7 +117,84 @@ function asmFunc(global, env, buffer) {
  function $13(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
-  return Math_fround((HEAP32[0] = (HEAPF32[0] = x, HEAP32[0] | 0) & 2147483647 | 0 | ((HEAPF32[0] = y, HEAP32[0] | 0) & 2147483648 | 0) | 0, HEAPF32[0]));
+  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & 2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
+ }
+ 
+ function legalstub$0($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +(+Math_fround($0(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
+ }
+ 
+ function legalstub$1($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +(+Math_fround($1(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
+ }
+ 
+ function legalstub$2($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +(+Math_fround($2(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
+ }
+ 
+ function legalstub$3($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +(+Math_fround($3(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
+ }
+ 
+ function legalstub$4($0_1) {
+  $0_1 = +$0_1;
+  return +(+Math_fround($4(Math_fround(Math_fround($0_1)))));
+ }
+ 
+ function legalstub$5($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +(+Math_fround($5(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
+ }
+ 
+ function legalstub$6($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +(+Math_fround($6(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
+ }
+ 
+ function legalstub$7($0_1) {
+  $0_1 = +$0_1;
+  return +(+Math_fround($7(Math_fround(Math_fround($0_1)))));
+ }
+ 
+ function legalstub$8($0_1) {
+  $0_1 = +$0_1;
+  return +(+Math_fround($8(Math_fround(Math_fround($0_1)))));
+ }
+ 
+ function legalstub$9($0_1) {
+  $0_1 = +$0_1;
+  return +(+Math_fround($9(Math_fround(Math_fround($0_1)))));
+ }
+ 
+ function legalstub$10($0_1) {
+  $0_1 = +$0_1;
+  return +(+Math_fround($10(Math_fround(Math_fround($0_1)))));
+ }
+ 
+ function legalstub$11($0_1) {
+  $0_1 = +$0_1;
+  return +(+Math_fround($11(Math_fround(Math_fround($0_1)))));
+ }
+ 
+ function legalstub$12($0_1) {
+  $0_1 = +$0_1;
+  return +(+Math_fround($12(Math_fround(Math_fround($0_1)))));
+ }
+ 
+ function legalstub$13($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +(+Math_fround($13(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
  }
  
  function __wasm_nearest_f32(var$0) {
@@ -125,20 +223,20 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  add: $0, 
-  sub: $1, 
-  mul: $2, 
-  div: $3, 
-  sqrt: $4, 
-  min: $5, 
-  max: $6, 
-  ceil: $7, 
-  floor: $8, 
-  trunc: $9, 
-  nearest: $10, 
-  abs: $11, 
-  neg: $12, 
-  copysign: $13
+  add: legalstub$0, 
+  sub: legalstub$1, 
+  mul: legalstub$2, 
+  div: legalstub$3, 
+  sqrt: legalstub$4, 
+  min: legalstub$5, 
+  max: legalstub$6, 
+  ceil: legalstub$7, 
+  floor: legalstub$8, 
+  trunc: legalstub$9, 
+  nearest: legalstub$10, 
+  abs: legalstub$11, 
+  neg: legalstub$12, 
+  copysign: legalstub$13
  };
 }
 

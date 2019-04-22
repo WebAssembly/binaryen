@@ -52,7 +52,6 @@ function asmFunc0(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
   
  }
@@ -69,16 +68,11 @@ function asmFunc0(global, env, buffer) {
   return (x | 0) / (y | 0) | 0 | 0;
  }
  
- function __wasm_fetch_high_bits() {
-  return i64toi32_i32$HIGH_BITS | 0;
- }
- 
  var FUNCTION_TABLE = [];
  return {
   empty: $0, 
   add: $1, 
-  div_s: $2, 
-  __wasm_fetch_high_bits: __wasm_fetch_high_bits
+  div_s: $2
  };
 }
 

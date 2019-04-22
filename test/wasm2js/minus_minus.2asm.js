@@ -22,27 +22,19 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
-  
+  return ~~- -7094.0 | 0;
  }
  
  function $1() {
-  
- }
- 
- function $2() {
-  
+  $0() | 0;
  }
  
  var FUNCTION_TABLE = [];
  return {
-  br: $0, 
-  br_if: $1, 
-  br_table: $2
+  func_44_invoker: $1
  };
 }
 
 const memasmFunc = new ArrayBuffer(65536);
 const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const br = retasmFunc.br;
-export const br_if = retasmFunc.br_if;
-export const br_table = retasmFunc.br_table;
+export const func_44_invoker = retasmFunc.func_44_invoker;

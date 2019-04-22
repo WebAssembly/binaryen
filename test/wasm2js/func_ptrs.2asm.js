@@ -23,15 +23,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var print = env.print;
- var i64toi32_i32$HIGH_BITS = 0;
- function $1() {
-  
- }
- 
- function $2() {
-  
- }
- 
  function $3() {
   return 13 | 0;
  }
@@ -89,7 +80,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function t1() {
   return 1 | 0;
  }
@@ -160,7 +150,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function t1() {
   return 1 | 0;
  }

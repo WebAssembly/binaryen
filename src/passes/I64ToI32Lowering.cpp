@@ -27,7 +27,9 @@
 #include "emscripten-optimizer/istring.h"
 #include "support/name.h"
 #include "wasm-builder.h"
+#include "abi/js.h"
 #include "ir/flat.h"
+#include "ir/iteration.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -336,25 +338,30 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   template<typename T>
   using BuilderFunc = std::function<T*(std::vector<Expression*>&, Type)>;
 
+  // Fixes up a call. If we performed fixups, returns the call; otherwise returns nullptr;
   template<typename T>
-  void visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
+  T* visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
+    bool fixed = false;
     std::vector<Expression*> args;
     for (auto* e : curr->operands) {
       args.push_back(e);
       if (hasOutParam(e)) {
         TempVar argHighBits = fetchOutParam(e);
         args.push_back(builder->makeGetLocal(argHighBits, i32));
+        fixed =  true;
       }
     }
     if (curr->type != i64) {
-      replaceCurrent(callBuilder(args, curr->type));
-      return;
+      auto* ret = callBuilder(args, curr->type);
+      replaceCurrent(ret);
+      return fixed ? ret : nullptr;
     }
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
+    auto* call = callBuilder(args, i32);
     SetLocal* doCall = builder->makeSetLocal(
       lowBits,
-      callBuilder(args, i32)
+      call
     );
     SetLocal* setHigh = builder->makeSetLocal(
       highBits,
@@ -364,14 +371,21 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     Block* result = builder->blockify(doCall, setHigh, getLow);
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
+    return call;
   }
   void visitCall(Call* curr) {
-    visitGenericCall<Call>(
+    auto* fixedCall = visitGenericCall<Call>(
       curr,
       [&](std::vector<Expression*>& args, Type ty) {
         return builder->makeCall(curr->target, args, ty);
       }
     );
+    // If this was to an import, we need to call the legal version. This assumes
+    // that legalize-js-interface has been run before.
+    if (fixedCall && getModule()->getFunction(fixedCall->target)->imported()) {
+      fixedCall->target = std::string("legalfunc$") + fixedCall->target.str;
+      return;
+    }
   }
 
   void visitCallIndirect(CallIndirect* curr) {
@@ -464,6 +478,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSetGlobal(SetGlobal* curr) {
+    if (handleUnreachable(curr)) return;
     if (!originallyI64Globals.count(curr->name)) return;
     TempVar highBits = fetchOutParam(curr->value);
     auto* setHigh = builder->makeSetGlobal(
@@ -633,17 +648,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // our f64 through memory at address 0
     TempVar highBits = getTemp();
     Block *result = builder->blockify(
-      builder->makeStore(8, 0, 8, makeGetTempMemory(), curr->value, f64),
+      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_F64, { curr->value }, none),
       builder->makeSetLocal(
         highBits,
-        builder->makeLoad(4, true, 4, 4, makeGetTempMemory(), i32)
+        builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32, { builder->makeConst(Literal(int32_t(1))) }, i32)
       ),
-      builder->makeLoad(4, true, 0, 4, makeGetTempMemory(), i32)
+      builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_I32, { builder->makeConst(Literal(int32_t(0))) }, i32)
     );
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
     MemoryUtils::ensureExists(getModule()->memory);
-    ensureTempMemoryGlobal();
+    ABI::wasm2js::ensureScratchMemoryHelpers(getModule());
   }
 
   void lowerReinterpretInt64(Unary* curr) {
@@ -651,33 +666,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // our i64 through memory at address 0
     TempVar highBits = fetchOutParam(curr->value);
     Block *result = builder->blockify(
-      builder->makeStore(4, 0, 4, makeGetTempMemory(), curr->value, i32),
-      builder->makeStore(4, 4, 4, makeGetTempMemory(), builder->makeGetLocal(highBits, i32), i32),
-      builder->makeLoad(8, true, 0, 8, makeGetTempMemory(), f64)
+      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_I32, { builder->makeConst(Literal(int32_t(0))), curr->value }, none),
+      builder->makeCall(ABI::wasm2js::SCRATCH_STORE_I32, { builder->makeConst(Literal(int32_t(1))), builder->makeGetLocal(highBits, i32) }, none),
+      builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_F64, {}, f64)
     );
     replaceCurrent(result);
     MemoryUtils::ensureExists(getModule()->memory);
-    ensureTempMemoryGlobal();
-  }
-
-  Name tempMemory = "__tempMemory__";
-
-  void ensureTempMemoryGlobal() {
-    // Ensure the existence of an imported global, __tempMemory__, which points to 8
-    // bytes of scratch memory we can use for roundtrip purposes.
-    if (!getModule()->getGlobalOrNull(tempMemory)) {
-      auto global = make_unique<Global>();
-      global->name = tempMemory;
-      global->type = i32;
-      global->mutable_ = false;
-      global->module = ENV;
-      global->base = tempMemory;
-      getModule()->addGlobal(global.release());
-    }
-  }
-
-  Expression* makeGetTempMemory() {
-    return builder->makeGetGlobal(tempMemory, i32);
+    ABI::wasm2js::ensureScratchMemoryHelpers(getModule());
   }
 
   void lowerTruncFloatToInt(Unary *curr) {
@@ -1578,6 +1573,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSelect(Select* curr) {
+    if (handleUnreachable(curr)) return;
     if (!hasOutParam(curr->ifTrue)) {
       assert(!hasOutParam(curr->ifFalse));
       return;
@@ -1668,6 +1664,24 @@ private:
     TempVar ret = std::move(outParamIt->second);
     highBitVars.erase(e);
     return ret;
+  }
+
+  // If e.g. a select is unreachable, then one arm may have an out param
+  // but not the other. In this case dce should really have been run
+  // before; handle it in a simple way here.
+  bool handleUnreachable(Expression* curr) {
+    if (curr->type != unreachable) return false;
+    std::vector<Expression*> children;
+    for (auto* child : ChildIterator(curr)) {
+      if (isConcreteType(child->type)) {
+        child = builder->makeDrop(child);
+      }
+      children.push_back(child);
+    }
+    auto* block = builder->makeBlock(children);
+    assert(block->type == unreachable);
+    replaceCurrent(block);
+    return true;
   }
 };
 

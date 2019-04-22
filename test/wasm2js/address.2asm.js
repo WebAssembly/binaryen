@@ -23,7 +23,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var print = env.print;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0(i) {
   i = i | 0;
   var wasm2js_i32$0 = 0;

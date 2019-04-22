@@ -21,7 +21,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  var FUNCTION_TABLE = [];
  return {
   
@@ -29,21 +28,4 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const assignasmFunc = (
-    function(mem) {
-      const _mem = new Uint8Array(mem);
-      return function(offset, s) {
-        if (typeof Buffer === 'undefined') {
-          const bytes = atob(s);
-          for (let i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes.charCodeAt(i);
-        } else {
-          const bytes = Buffer.from(s, 'base64');
-          for (let i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes[i];
-        }
-      }
-    }
-  )(memasmFunc);
-assignasmFunc(2, "AP7/");
 const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
