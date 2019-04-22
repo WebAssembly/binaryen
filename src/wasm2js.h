@@ -738,14 +738,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     }
 
     Ref visitAndAssign(Expression* curr, IString result) {
+      assert(result != NO_RESULT);
       Ref ret = visit(curr, result);
-      // if it's not already a statement, then it's an expression, and we need to assign it
-      // (if it is a statement, it already assigns to the result var)
-      if (result != NO_RESULT) {
-        ret = ValueBuilder::makeStatement(
-            ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
-      }
-      return ret;
+      return ValueBuilder::makeStatement(ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
     }
 
     Ref visitAndAssign(Expression* curr, ScopedTemp& temp) {
@@ -765,10 +760,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
       return ret;
     }
 
-    // For spooky return-at-a-distance/break-with-result, this tells us
-    // what the result var is for a specific label.
-    std::map<Name, IString> breakResults;
-
     // Breaks to the top of a loop should be emitted as continues, to that loop's main label
     std::unordered_set<Name> continueLabels;
 
@@ -779,7 +770,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     // Visitors
 
     Ref visitBlock(Block* curr) {
-      breakResults[curr->name] = result;
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
       auto noResults = result == NO_RESULT ? size : size-1;
@@ -796,20 +786,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     }
 
     Ref visitIf(If* curr) {
-      IString temp;
       Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      Ref ifTrue = ValueBuilder::makeStatement(visitAndAssign(curr->ifTrue, result));
+      Ref ifTrue = visit(curr->ifTrue, NO_RESULT);
       Ref ifFalse;
       if (curr->ifFalse) {
-        ifFalse = ValueBuilder::makeStatement(visitAndAssign(curr->ifFalse, result));
+        ifFalse = visit(curr->ifFalse, NO_RESULT);
       }
-      if (temp.isNull()) {
-        return ValueBuilder::makeIf(condition, ifTrue, ifFalse); // simple if
-      }
-      condition = blockify(condition);
-      // just add an if to the block
-      condition[1]->push_back(ValueBuilder::makeIf(ValueBuilder::makeName(temp), ifTrue, ifFalse));
-      return condition;
+      return ValueBuilder::makeIf(condition, ifTrue, ifFalse); // simple if
     }
 
     Ref visitLoop(Loop* curr) {
@@ -839,13 +822,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
         fakeIf.ifTrue = &fakeBreak;
         return visit(&fakeIf, result);
       }
-      Ref theBreak = makeBreakOrContinue(curr->name);
-      if (!curr->value) return theBreak;
-      // generate the value, including assigning to the result, and then do the break
-      Ref ret = visitAndAssign(curr->value, breakResults[curr->name]);
-      ret = blockify(ret);
-      ret[1]->push_back(theBreak);
-      return ret;
+      return makeBreakOrContinue(curr->name);
     }
 
     Expression* defaultBody = nullptr; // default must be last in asm.js
@@ -1138,7 +1115,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     }
 
     Ref visitDrop(Drop* curr) {
-      return visitAndAssign(curr->value, result);
+      return visit(curr->value, NO_RESULT);
     }
 
     Ref visitConst(Const* curr) {
