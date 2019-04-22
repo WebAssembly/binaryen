@@ -525,30 +525,37 @@ void AsmConstWalker::visitCall(Call* curr) {
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
     auto* arg = curr->operands[0];
-    if (auto* get = arg->dynCast<GetLocal>()) {
-      // The argument may be a local.get, in which case, the last set in this
-      // basic block has the value.
-      auto* set = sets[get->index];
-      if (set) {
-        assert(set->index == get->index);
-        arg = set->value;
+    while (!arg->dynCast<Const>()) {
+      if (auto* get = arg->dynCast<GetLocal>()) {
+        // The argument may be a local.get, in which case, the last set in this
+        // basic block has the value.
+        auto* set = sets[get->index];
+        if (set) {
+          assert(set->index == get->index);
+          arg = set->value;
+        }
+      } else if (auto* value = arg->dynCast<Binary>()) {
+        // In the dynamic linking case the address of the string constant
+        // is the result of adding its offset to __memory_base.
+        // In this case are only looking for the offset with the data segment so
+        // the RHS of the addition is just what we want.
+        assert(value->op == AddInt32);
+        arg = value->right;
+      } else {
+        if (!value) {
+          Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
+              << ") in call to to: " << import->base;
+        }
       }
-    } else if (auto* value = arg->dynCast<Binary>()) {
-      // In the dynamic linking case the address of the string constant
-      // is the result of adding its offset to __memory_base.
-      // In this case are only looking for the offset with the data segment so
-      // the RHS of the addition is just what we want.
-      assert(value->op == AddInt32);
-      arg = value->right;
     }
 
-    auto* value = arg->dynCast<Const>();
-    if (!value)
-      Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
-              << ") in call to to: " << import->base;
+    auto* value = arg->cast<Const>();
     auto code = codeForConstAddr(wasm, segmentOffsets, value);
-    value->value = idLiteralForCode(code);
     sigsForCode[code].insert(sig);
+
+    // Replace the first argument to the call with a Const index
+    Builder builder(wasm);
+    curr->operands[0] = builder.makeConst(idLiteralForCode(code));
   }
 }
 

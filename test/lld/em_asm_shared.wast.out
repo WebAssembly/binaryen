@@ -48,12 +48,7 @@
   )
   (drop
    (call $emscripten_asm_const_iii
-    (i32.add
-     (local.tee $1
-      (global.get $gimport$3)
-     )
-     (i32.const 0)
-    )
+    (i32.const 0)
     (i32.add
      (local.get $0)
      (i32.const 24)
@@ -80,10 +75,7 @@
    )
    (local.tee $2
     (call $emscripten_asm_const_iii
-     (i32.add
-      (local.get $1)
-      (i32.const 1)
-     )
+     (i32.const 1)
      (i32.add
       (local.get $0)
       (i32.const 24)
@@ -101,10 +93,7 @@
   )
   (drop
    (call $emscripten_asm_const_iii
-    (i32.add
-     (local.get $1)
-     (i32.const 2)
-    )
+    (i32.const 2)
     (i32.add
      (local.get $0)
      (i32.const 24)
