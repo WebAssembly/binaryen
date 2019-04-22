@@ -160,7 +160,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (!builder) builder = make_unique<Builder>(*getModule());
     indexMap.clear();
     highBitVars.clear();
-    labelHighBitVars.clear();
     freeTemps.clear();
     Module temp;
     auto* oldFunc = ModuleUtils::copyFunction(func, temp);
@@ -219,124 +218,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       Name tmpName("i64toi32_i32$" + std::to_string(idx++));
       builder->addVar(func, tmpName, tempTypes[i]);
     }
-  }
-
-  void visitBlock(Block* curr) {
-    if (curr->list.size() == 0) return;
-    if (handleUnreachable(curr)) return;
-    if (curr->type == i64) curr->type = i32;
-    auto highBitsIt = labelHighBitVars.find(curr->name);
-    if (!hasOutParam(curr->list.back())) {
-      if (highBitsIt != labelHighBitVars.end()) {
-        setOutParam(curr, std::move(highBitsIt->second));
-      }
-      return;
-    }
-    TempVar lastHighBits = fetchOutParam(curr->list.back());
-    if (highBitsIt == labelHighBitVars.end() ||
-        highBitsIt->second == lastHighBits) {
-      setOutParam(curr, std::move(lastHighBits));
-      if (highBitsIt != labelHighBitVars.end()) {
-        labelHighBitVars.erase(highBitsIt);
-      }
-      return;
-    }
-    TempVar highBits = std::move(highBitsIt->second);
-    TempVar tmp = getTemp();
-    labelHighBitVars.erase(highBitsIt);
-    SetLocal* setLow = builder->makeSetLocal(tmp, curr->list.back());
-    SetLocal* setHigh = builder->makeSetLocal(
-      highBits,
-      builder->makeGetLocal(lastHighBits, i32)
-    );
-    GetLocal* getLow = builder->makeGetLocal(tmp, i32);
-    curr->list.back() = builder->blockify(setLow, setHigh, getLow);
-    setOutParam(curr, std::move(highBits));
-  }
-
-  void visitIf(If* curr) {
-    if (!hasOutParam(curr->ifTrue)) return;
-    assert(curr->ifFalse != nullptr && "Nullable ifFalse found");
-    TempVar highBits = fetchOutParam(curr->ifTrue);
-    TempVar falseBits = fetchOutParam(curr->ifFalse);
-    TempVar tmp = getTemp();
-    curr->type = i32;
-    curr->ifFalse = builder->blockify(
-      builder->makeSetLocal(tmp, curr->ifFalse),
-      builder->makeSetLocal(
-        highBits,
-        builder->makeGetLocal(falseBits, i32)
-      ),
-      builder->makeGetLocal(tmp, i32)
-    );
-    setOutParam(curr, std::move(highBits));
-  }
-
-  void visitLoop(Loop* curr) {
-    // TODO: in flat IR, no chance for an out param
-    assert(labelHighBitVars.find(curr->name) == labelHighBitVars.end());
-    if (curr->type != i64) return;
-    curr->type = i32;
-    setOutParam(curr, fetchOutParam(curr->body));
-  }
-
-  void visitBreak(Break* curr) {
-    // TODO: in flat IR, no chance for an out param
-    if (!hasOutParam(curr->value)) return;
-    assert(curr->value != nullptr);
-    TempVar valHighBits = fetchOutParam(curr->value);
-    auto blockHighBitsIt = labelHighBitVars.find(curr->name);
-    if (blockHighBitsIt == labelHighBitVars.end()) {
-      labelHighBitVars.emplace(curr->name, std::move(valHighBits));
-      curr->type = i32;
-      return;
-    }
-    TempVar blockHighBits = std::move(blockHighBitsIt->second);
-    TempVar tmp = getTemp();
-    SetLocal* setLow = builder->makeSetLocal(tmp, curr->value);
-    SetLocal* setHigh = builder->makeSetLocal(
-      blockHighBits,
-      builder->makeGetLocal(valHighBits, i32)
-    );
-    curr->value = builder->makeGetLocal(tmp, i32);
-    curr->type = i32;
-    replaceCurrent(builder->blockify(setLow, setHigh, curr));
-  }
-
-  void visitSwitch(Switch* curr) {
-    // TODO: in flat IR, no chance for an out param
-    if (!hasOutParam(curr->value)) return;
-    TempVar outParam = fetchOutParam(curr->value);
-    TempVar tmp = getTemp();
-    Expression* result = curr;
-    std::vector<Name> targets;
-    size_t blockID = 0;
-    auto processTarget = [&](Name target) -> Name {
-      auto labelIt = labelHighBitVars.find(target);
-      if (labelIt == labelHighBitVars.end()) {
-        labelHighBitVars.emplace(target, getTemp());
-        labelIt = labelHighBitVars.find(target);
-      }
-      Name newLabel("$i64toi32_" + std::string(target.c_str()) +
-                    "_" + std::to_string(blockID++));
-      Block* trampoline = builder->makeBlock(newLabel, result);
-      trampoline->type = i32;
-      result = builder->blockify(
-        builder->makeSetLocal(tmp, trampoline),
-        builder->makeSetLocal(
-          labelIt->second,
-          builder->makeGetLocal(outParam, i32)
-        ),
-        builder->makeBreak(target, builder->makeGetLocal(tmp, i32))
-      );
-      return newLabel;
-    };
-    for (auto target : curr->targets) {
-      targets.push_back(processTarget(target));
-    }
-    curr->targets.set(targets);
-    curr->default_ = processTarget(curr->default_);
-    replaceCurrent(result);
   }
 
   template<typename T>
@@ -1615,7 +1496,6 @@ private:
   std::unordered_map<Index, Index> indexMap;
   std::unordered_map<int, std::vector<Index>> freeTemps;
   std::unordered_map<Expression*, TempVar> highBitVars;
-  std::unordered_map<Name, TempVar> labelHighBitVars;
   std::unordered_map<Index, Type> tempTypes;
   std::unordered_set<Name> originallyI64Globals;
   Index nextTemp;

@@ -78,18 +78,24 @@ function asmFunc(global, env, buffer) {
  
  function $11() {
   var $0 = 0;
-  dummy();
-  abort();
+  block : {
+   dummy();
+   abort();
+  }
  }
  
  function $12() {
-  dummy();
-  abort();
+  block : {
+   dummy();
+   abort();
+  }
  }
  
  function $13() {
-  dummy();
-  abort();
+  block : {
+   dummy();
+   abort();
+  }
  }
  
  function $14() {
