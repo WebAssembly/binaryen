@@ -19,11 +19,10 @@
 
 #include <string>
 
-
 namespace wasm {
 
-  // Mangles a WebAssembly name to a valid JavaScript identifier.
-  std::string asmangle(std::string name);
+// Mangles a WebAssembly name to a valid JavaScript identifier.
+std::string asmangle(std::string name);
 
 } // namespace wasm
 

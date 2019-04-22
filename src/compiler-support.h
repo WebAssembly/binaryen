@@ -18,26 +18,34 @@
 #define wasm_compiler_support_h
 
 #ifndef __has_feature
-# define __has_feature(x) 0
+#define __has_feature(x) 0
 #endif
 
 #ifndef __has_builtin
-# define __has_builtin(x) 0
+#define __has_builtin(x) 0
 #endif
 
 // If control flow reaches the point of the WASM_UNREACHABLE(), the program is
 // undefined.
 #if __has_builtin(__builtin_unreachable) && defined(NDEBUG)
-# define WASM_UNREACHABLE() __builtin_unreachable()
+#define WASM_UNREACHABLE() __builtin_unreachable()
 #elif defined(_MSC_VER)
-# define WASM_UNREACHABLE() __assume(false)
+#define WASM_UNREACHABLE() __assume(false)
 #elif __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
-# include "sanitizer/common_interface_defs.h"
-# define WASM_UNREACHABLE() do { __sanitizer_print_stack_trace(); __builtin_trap(); } while (0)
+#include "sanitizer/common_interface_defs.h"
+#define WASM_UNREACHABLE()                                                     \
+  do {                                                                         \
+    __sanitizer_print_stack_trace();                                           \
+    __builtin_trap();                                                          \
+  } while (0)
 #else
-# include <assert.h>
-# include <stdlib.h>
-# define WASM_UNREACHABLE() do { assert(false); abort(); } while (0)
+#include <assert.h>
+#include <stdlib.h>
+#define WASM_UNREACHABLE()                                                     \
+  do {                                                                         \
+    assert(false);                                                             \
+    abort();                                                                   \
+  } while (0)
 #endif
 
 #ifdef __GNUC__
@@ -54,7 +62,11 @@
 // The code might contain TODOs or stubs that read some values but do nothing
 // with them. The compiler might fail with [-Werror,-Wunused-variable].
 // The WASM_UNUSED(varible) is a wrapper that helps to suppress the error.
-#define WASM_UNUSED(expr) \
-   do { if (sizeof expr) { (void)0; } } while (0)
+#define WASM_UNUSED(expr)                                                      \
+  do {                                                                         \
+    if (sizeof expr) {                                                         \
+      (void)0;                                                                 \
+    }                                                                          \
+  } while (0)
 
 #endif // wasm_compiler_support_h

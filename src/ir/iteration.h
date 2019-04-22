@@ -17,8 +17,8 @@
 #ifndef wasm_ir_iteration_h
 #define wasm_ir_iteration_h
 
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -39,19 +39,16 @@ class ChildIterator {
     const ChildIterator& parent;
     Index index;
 
-    Iterator(const ChildIterator& parent, Index index) : parent(parent), index(index) {}
+    Iterator(const ChildIterator& parent, Index index)
+      : parent(parent), index(index) {}
 
     bool operator!=(const Iterator& other) const {
       return index != other.index || &parent != &(other.parent);
     }
 
-    void operator++() {
-      index++;
-    }
+    void operator++() { index++; }
 
-    Expression* operator*() {
-      return parent.children[index];
-    }
+    Expression* operator*() { return parent.children[index]; }
   };
 
 public:
@@ -68,7 +65,8 @@ public:
       static void scan(Traverser* self, Expression** currp) {
         if (!self->scanned) {
           self->scanned = true;
-          PostWalker<Traverser, UnifiedExpressionVisitor<Traverser>>::scan(self, currp);
+          PostWalker<Traverser, UnifiedExpressionVisitor<Traverser>>::scan(
+            self, currp);
         } else {
           // This is one of the children. Do not scan further, just note it.
           self->children->push_back(*currp);
@@ -80,15 +78,10 @@ public:
     traverser.walk(parent);
   }
 
-  Iterator begin() const {
-    return Iterator(*this, 0);
-  }
-  Iterator end() const {
-    return Iterator(*this, children.size());
-  }
+  Iterator begin() const { return Iterator(*this, 0); }
+  Iterator end() const { return Iterator(*this, children.size()); }
 };
 
-} // wasm
+} // namespace wasm
 
 #endif // wasm_ir_iteration_h
-

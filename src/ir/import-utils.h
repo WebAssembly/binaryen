@@ -61,18 +61,13 @@ struct ImportInfo {
     return nullptr;
   }
 
-  Index getNumImportedGlobals() {
-    return importedGlobals.size();
-  }
+  Index getNumImportedGlobals() { return importedGlobals.size(); }
 
-  Index getNumImportedFunctions() {
-    return importedFunctions.size();
-  }
+  Index getNumImportedFunctions() { return importedFunctions.size(); }
 
   Index getNumImports() {
     return getNumImportedGlobals() + getNumImportedFunctions() +
-           (wasm.memory.imported() ? 1 : 0) +
-           (wasm.table.imported() ? 1 : 0);
+           (wasm.memory.imported() ? 1 : 0) + (wasm.table.imported() ? 1 : 0);
   }
 
   Index getNumDefinedGlobals() {
@@ -87,4 +82,3 @@ struct ImportInfo {
 } // namespace wasm
 
 #endif // wasm_ir_import_h
-

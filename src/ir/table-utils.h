@@ -17,8 +17,8 @@
 #ifndef wasm_ir_table_h
 #define wasm_ir_table_h
 
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 

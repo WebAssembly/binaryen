@@ -28,8 +28,7 @@
 
 namespace wasm {
 
-template<typename T>
-struct UniqueDeferredQueue {
+template<typename T> struct UniqueDeferredQueue {
   // implemented as an internal queue, plus a map
   // that says how many times an element appears. we
   // can then skip non-final appearances. this lets us

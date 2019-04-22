@@ -17,10 +17,10 @@
 #ifndef wasm_ir_features_h
 #define wasm_ir_features_h
 
-#include <wasm.h>
+#include <ir/iteration.h>
 #include <wasm-binary.h>
 #include <wasm-traversal.h>
-#include <ir/iteration.h>
+#include <wasm.h>
 
 namespace wasm {
 

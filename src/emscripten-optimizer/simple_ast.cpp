@@ -20,37 +20,29 @@ namespace cashew {
 
 // Ref methods
 
-Ref& Ref::operator[](unsigned x) {
-  return (*get())[x];
-}
+Ref& Ref::operator[](unsigned x) { return (*get())[x]; }
 
-Ref& Ref::operator[](IString x) {
-  return (*get())[x];
-}
+Ref& Ref::operator[](IString x) { return (*get())[x]; }
 
-bool Ref::operator==(const char *str) {
+bool Ref::operator==(const char* str) {
   return get()->isString() && !strcmp(get()->str.str, str);
 }
 
-bool Ref::operator!=(const char *str) {
+bool Ref::operator!=(const char* str) {
   return get()->isString() ? !!strcmp(get()->str.str, str) : true;
 }
 
-bool Ref::operator==(const IString &str) {
+bool Ref::operator==(const IString& str) {
   return get()->isString() && get()->str == str;
 }
 
-bool Ref::operator!=(const IString &str) {
+bool Ref::operator!=(const IString& str) {
   return get()->isString() && get()->str != str;
 }
 
-bool Ref::operator==(Ref other) {
-  return **this == *other;
-}
+bool Ref::operator==(Ref other) { return **this == *other; }
 
-bool Ref::operator!() {
-  return !get() || get()->isNull();
-}
+bool Ref::operator!() { return !get() || get()->isNull(); }
 
 // Arena
 
@@ -80,9 +72,13 @@ AssignName* Value::asAssignName() {
   return static_cast<AssignName*>(this);
 }
 
-void Value::stringify(std::ostream &os, bool pretty) {
+void Value::stringify(std::ostream& os, bool pretty) {
   static int indent = 0;
-  #define indentify() { for (int i_ = 0; i_ < indent; i_++) os << "  "; }
+#define indentify()                                                            \
+  {                                                                            \
+    for (int i_ = 0; i_ < indent; i_++)                                        \
+      os << "  ";                                                              \
+  }
   switch (type) {
     case String: {
       if (str.str) {
@@ -93,7 +89,8 @@ void Value::stringify(std::ostream &os, bool pretty) {
       break;
     }
     case Number: {
-      os << std::setprecision(17) << num; // doubles can have 17 digits of precision
+      // doubles can have 17 digits of precision
+      os << std::setprecision(17) << num;
       break;
     }
     case Array: {
@@ -108,8 +105,10 @@ void Value::stringify(std::ostream &os, bool pretty) {
       }
       for (size_t i = 0; i < arr->size(); i++) {
         if (i > 0) {
-          if (pretty) os << "," << std::endl;
-          else os << ", ";
+          if (pretty)
+            os << "," << std::endl;
+          else
+            os << ", ";
         }
         indentify();
         (*arr)[i]->stringify(os, pretty);
@@ -142,7 +141,8 @@ void Value::stringify(std::ostream &os, bool pretty) {
           first = false;
         } else {
           os << ", ";
-          if (pretty) os << std::endl;
+          if (pretty)
+            os << std::endl;
         }
         indentify();
         os << '"' << i.first.c_str() << "\": ";
@@ -176,10 +176,12 @@ void Value::stringify(std::ostream &os, bool pretty) {
 
 // dump
 
-void dump(const char *str, Ref node, bool pretty) {
+void dump(const char* str, Ref node, bool pretty) {
   std::cerr << str << ": ";
-  if (!!node) node->stringify(std::cerr, pretty);
-  else std::cerr << "(nullptr)";
+  if (!!node)
+    node->stringify(std::cerr, pretty);
+  else
+    std::cerr << "(nullptr)";
   std::cerr << std::endl;
 }
 
@@ -217,7 +219,7 @@ private:
 };
 
 // Traverse, calling visit after the children
-void traversePost(Ref node, std::function<void (Ref)> visit) {
+void traversePost(Ref node, std::function<void(Ref)> visit) {
   std::vector<TraverseInfo> stack;
   stack.push_back(TraverseInfo(node));
   while (!stack.empty()) {
