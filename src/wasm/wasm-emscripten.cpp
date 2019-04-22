@@ -525,7 +525,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
     auto* arg = curr->operands[0];
-    while (true) {
+    while (!arg->dynCast<Const>()) {
       if (auto* get = arg->dynCast<GetLocal>()) {
         // The argument may be a local.get, in which case, the last set in this
         // basic block has the value.
@@ -541,8 +541,6 @@ void AsmConstWalker::visitCall(Call* curr) {
         // the RHS of the addition is just what we want.
         assert(value->op == AddInt32);
         arg = value->right;
-      } else if (arg->dynCast<Const>()) {
-        break;
       } else {
         if (!value) {
           Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
