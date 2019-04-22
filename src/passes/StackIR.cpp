@@ -18,11 +18,11 @@
 // Operations on Stack IR.
 //
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-stack.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
+#include "pass.h"
+#include "wasm-stack.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -43,23 +43,16 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
       Module* module;
       Parent(Module* module) : module(module) {}
 
-      Module* getModule() {
-        return module;
-      }
+      Module* getModule() { return module; }
       void writeDebugLocation(Expression* curr, Function* func) {
         WASM_UNREACHABLE();
       }
-      Index getFunctionIndex(Name name) {
-        WASM_UNREACHABLE();
-      }
-      Index getFunctionTypeIndex(Name name) {
-        WASM_UNREACHABLE();
-      }
-      Index getGlobalIndex(Name name) {
-        WASM_UNREACHABLE();
-      }
+      Index getFunctionIndex(Name name) { WASM_UNREACHABLE(); }
+      Index getFunctionTypeIndex(Name name) { WASM_UNREACHABLE(); }
+      Index getGlobalIndex(Name name) { WASM_UNREACHABLE(); }
     } parent(getModule());
-    StackWriter<StackWriterMode::Binaryen2Stack, Parent> stackWriter(parent, buffer, false);
+    StackWriter<StackWriterMode::Binaryen2Stack, Parent> stackWriter(
+      parent, buffer, false);
     stackWriter.setFunction(func);
     stackWriter.visitPossibleBlockContents(func->body);
     func->stackIR = make_unique<StackIR>();
@@ -67,9 +60,7 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   }
 };
 
-Pass* createGenerateStackIRPass() {
-  return new GenerateStackIR();
-}
+Pass* createGenerateStackIRPass() { return new GenerateStackIR(); }
 
 // Optimize
 
@@ -79,8 +70,8 @@ class StackIROptimizer {
   StackIR& insts;
 
 public:
-  StackIROptimizer(Function* func, PassOptions& passOptions) :
-    func(func), passOptions(passOptions), insts(*func->stackIR.get()) {
+  StackIROptimizer(Function* func, PassOptions& passOptions)
+    : func(func), passOptions(passOptions), insts(*func->stackIR.get()) {
     assert(func->stackIR);
   }
 
@@ -155,8 +146,10 @@ private:
       // First, consume values from the stack as required.
       auto consumed = getNumConsumedValues(inst);
 #ifdef STACK_OPT_DEBUG
-      std::cout << "  " << i << " : " << *inst << ", " << values.size() << " on stack, will consume " << consumed << "\n    ";
-      for (auto s : values) std::cout << s << ' ';
+      std::cout << "  " << i << " : " << *inst << ", " << values.size()
+                << " on stack, will consume " << consumed << "\n    ";
+      for (auto s : values)
+        std::cout << s << ' ';
       std::cout << '\n';
 #endif
       // TODO: currently we run dce before this, but if we didn't, we'd need
@@ -272,9 +265,7 @@ private:
       case StackInst::LoopEnd: {
         return true;
       }
-      default: {
-        return false;
-      }
+      default: { return false; }
     }
   }
 
@@ -286,9 +277,7 @@ private:
       case StackInst::LoopBegin: {
         return true;
       }
-      default: {
-        return false;
-      }
+      default: { return false; }
     }
   }
 
@@ -300,15 +289,11 @@ private:
       case StackInst::LoopEnd: {
         return true;
       }
-      default: {
-        return false;
-      }
+      default: { return false; }
     }
   }
 
-  bool isControlFlow(StackInst* inst) {
-    return inst->op != StackInst::Basic;
-  }
+  bool isControlFlow(StackInst* inst) { return inst->op != StackInst::Basic; }
 
   // Remove the instruction at index i. If the instruction
   // is control flow, and so has been expanded to multiple
@@ -334,9 +319,7 @@ private:
   Index getNumConsumedValues(StackInst* inst) {
     if (isControlFlow(inst)) {
       // If consumes 1; that's it.
-      if (inst->op == StackInst::IfBegin) {
-        return 1;
-      }
+      if (inst->op == StackInst::IfBegin) { return 1; }
       return 0;
     }
     // Otherwise, for basic instructions, just count the expression children.
@@ -352,16 +335,11 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
-    if (!func->stackIR) {
-      return;
-    }
+    if (!func->stackIR) { return; }
     StackIROptimizer(func, getPassOptions()).run();
   }
 };
 
-Pass* createOptimizeStackIRPass() {
-  return new OptimizeStackIR();
-}
+Pass* createOptimizeStackIRPass() { return new OptimizeStackIR(); }
 
 } // namespace wasm
-

@@ -17,8 +17,8 @@
 #include "wasm-type.h"
 #include "wasm-features.h"
 
-#include <cstdlib>
 #include "compiler-support.h"
+#include <cstdlib>
 
 namespace wasm {
 
@@ -49,9 +49,7 @@ unsigned getTypeSize(Type type) {
 }
 
 FeatureSet getFeatures(Type type) {
-  if (type == v128) {
-    return FeatureSet::SIMD;
-  }
+  if (type == v128) { return FeatureSet::SIMD; }
   return FeatureSet();
 }
 
@@ -63,13 +61,9 @@ Type getType(unsigned size, bool float_) {
   WASM_UNREACHABLE();
 }
 
-Type getReachableType(Type a, Type b) {
-  return a != unreachable ? a : b;
-}
+Type getReachableType(Type a, Type b) { return a != unreachable ? a : b; }
 
-bool isConcreteType(Type type) {
-  return type != none && type != unreachable;
-}
+bool isConcreteType(Type type) { return type != none && type != unreachable; }
 
 bool isIntegerType(Type type) {
   switch (type) {
@@ -87,8 +81,6 @@ bool isFloatType(Type type) {
   }
 }
 
-bool isVectorType(Type type) {
-  return type == v128;
-}
+bool isVectorType(Type type) { return type == v128; }
 
 } // namespace wasm

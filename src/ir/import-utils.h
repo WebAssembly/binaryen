@@ -32,47 +32,34 @@ struct ImportInfo {
 
   ImportInfo(Module& wasm) : wasm(wasm) {
     for (auto& import : wasm.globals) {
-      if (import->imported()) {
-        importedGlobals.push_back(import.get());
-      }
+      if (import->imported()) { importedGlobals.push_back(import.get()); }
     }
     for (auto& import : wasm.functions) {
-      if (import->imported()) {
-        importedFunctions.push_back(import.get());
-      }
+      if (import->imported()) { importedFunctions.push_back(import.get()); }
     }
   }
 
   Global* getImportedGlobal(Name module, Name base) {
     for (auto* import : importedGlobals) {
-      if (import->module == module && import->base == base) {
-        return import;
-      }
+      if (import->module == module && import->base == base) { return import; }
     }
     return nullptr;
   }
 
   Function* getImportedFunction(Name module, Name base) {
     for (auto* import : importedFunctions) {
-      if (import->module == module && import->base == base) {
-        return import;
-      }
+      if (import->module == module && import->base == base) { return import; }
     }
     return nullptr;
   }
 
-  Index getNumImportedGlobals() {
-    return importedGlobals.size();
-  }
+  Index getNumImportedGlobals() { return importedGlobals.size(); }
 
-  Index getNumImportedFunctions() {
-    return importedFunctions.size();
-  }
+  Index getNumImportedFunctions() { return importedFunctions.size(); }
 
   Index getNumImports() {
     return getNumImportedGlobals() + getNumImportedFunctions() +
-           (wasm.memory.imported() ? 1 : 0) +
-           (wasm.table.imported() ? 1 : 0);
+           (wasm.memory.imported() ? 1 : 0) + (wasm.table.imported() ? 1 : 0);
   }
 
   Index getNumDefinedGlobals() {
@@ -87,4 +74,3 @@ struct ImportInfo {
 } // namespace wasm
 
 #endif // wasm_ir_import_h
-

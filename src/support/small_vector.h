@@ -29,8 +29,7 @@
 
 namespace wasm {
 
-template<typename T, size_t N>
-class SmallVector {
+template<typename T, size_t N> class SmallVector {
   // fixed-space storage
   size_t usedFixed = 0;
   std::array<T, N> fixed;
@@ -65,10 +64,9 @@ public:
     }
   }
 
-  template <typename... ArgTypes>
-  void emplace_back(ArgTypes &&... Args) {
+  template<typename... ArgTypes> void emplace_back(ArgTypes&&... Args) {
     if (usedFixed < N) {
-      new(&fixed[usedFixed++]) T(std::forward<ArgTypes>(Args)...);
+      new (&fixed[usedFixed++]) T(std::forward<ArgTypes>(Args)...);
     } else {
       flexible.emplace_back(std::forward<ArgTypes>(Args)...);
     }
@@ -101,13 +99,9 @@ public:
     }
   }
 
-  size_t size() const {
-    return usedFixed + flexible.size();
-  }
+  size_t size() const { return usedFixed + flexible.size(); }
 
-  bool empty() const {
-    return size() == 0;
-  }
+  bool empty() const { return size() == 0; }
 
   void clear() {
     usedFixed = 0;
@@ -136,15 +130,14 @@ public:
     const SmallVector<T, N>* parent;
     size_t index;
 
-    Iterator(const SmallVector<T, N>* parent, size_t index) : parent(parent), index(index) {}
+    Iterator(const SmallVector<T, N>* parent, size_t index)
+      : parent(parent), index(index) {}
 
     bool operator!=(const Iterator& other) const {
       return index != other.index || parent != other.parent;
     }
 
-    void operator++() {
-      index++;
-    }
+    void operator++() { index++; }
 
     Iterator& operator+=(difference_type off) {
       index += off;
@@ -155,9 +148,7 @@ public:
       return Iterator(*this) += off;
     }
 
-    const value_type operator*() const {
-      return (*parent)[index];
-    }
+    const value_type operator*() const { return (*parent)[index]; }
   };
 
   Iterator begin() const {

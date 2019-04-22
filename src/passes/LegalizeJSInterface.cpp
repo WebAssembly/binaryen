@@ -33,17 +33,17 @@
 // disallow f32s. TODO: an option to not do that, if it matters?
 //
 
-#include <utility>
-#include "wasm.h"
-#include "pass.h"
 #include "asm_v_wasm.h"
-#include "shared-constants.h"
 #include "asmjs/shared-constants.h"
-#include "wasm-builder.h"
 #include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
+#include "pass.h"
+#include "shared-constants.h"
+#include "wasm-builder.h"
+#include "wasm.h"
+#include <utility>
 
 namespace wasm {
 
@@ -74,13 +74,12 @@ struct LegalizeJSInterface : public Pass {
       if (im->imported() && isIllegal(im) && shouldBeLegalized(im)) {
         auto funcName = makeLegalStubForCalledImport(im, module);
         illegalImportsToLegal[im->name] = funcName;
-        // we need to use the legalized version in the table, as the import from JS
-        // is legal for JS. Our stub makes it look like a native wasm function.
+        // we need to use the legalized version in the table, as the import from
+        // JS is legal for JS. Our stub makes it look like a native wasm
+        // function.
         for (auto& segment : module->table.segments) {
           for (auto& name : segment.data) {
-            if (name == im->name) {
-              name = funcName;
-            }
+            if (name == im->name) { name = funcName; }
           }
         }
       }
@@ -90,23 +89,31 @@ struct LegalizeJSInterface : public Pass {
         module->removeFunction(pair.first);
       }
 
-      // fix up imports: call_import of an illegal must be turned to a call of a legal
+      // fix up imports: call_import of an illegal must be turned to a call of a
+      // legal
 
       struct FixImports : public WalkerPass<PostWalker<FixImports>> {
         bool isFunctionParallel() override { return true; }
 
-        Pass* create() override { return new FixImports(illegalImportsToLegal); }
+        Pass* create() override {
+          return new FixImports(illegalImportsToLegal);
+        }
 
         std::map<Name, Name>* illegalImportsToLegal;
 
-        FixImports(std::map<Name, Name>* illegalImportsToLegal) : illegalImportsToLegal(illegalImportsToLegal) {}
+        FixImports(std::map<Name, Name>* illegalImportsToLegal)
+          : illegalImportsToLegal(illegalImportsToLegal) {}
 
         void visitCall(Call* curr) {
           auto iter = illegalImportsToLegal->find(curr->target);
           if (iter == illegalImportsToLegal->end()) return;
 
-          if (iter->second == getFunction()->name) return; // inside the stub function itself, is the one safe place to do the call
-          replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+          if (iter->second == getFunction()->name)
+            // inside the stub function itself, is the one safe place to do the
+            // call
+            return;
+          replaceCurrent(Builder(*getModule())
+                           .makeCall(iter->second, curr->operands, curr->type));
         }
       };
 
@@ -121,8 +128,7 @@ private:
   // map of illegal to legal names for imports
   std::map<Name, Name> illegalImportsToLegal;
 
-  template<typename T>
-  bool isIllegal(T* t) {
+  template<typename T> bool isIllegal(T* t) {
     for (auto param : t->params) {
       if (param == i64 || param == f32) return true;
     }
@@ -143,7 +149,8 @@ private:
     return im->module == ENV && im->base.startsWith("invoke_");
   }
 
-  // JS calls the export, so it must call a legal stub that calls the actual wasm function
+  // JS calls the export, so it must call a legal stub that calls the actual
+  // wasm function
   Name makeLegalStub(Function* func, Module* module) {
     Builder builder(*module);
     auto* legal = new Function();
@@ -155,14 +162,17 @@ private:
 
     for (auto param : func->params) {
       if (param == i64) {
-        call->operands.push_back(I64Utilities::recreateI64(builder, legal->params.size(), legal->params.size() + 1));
+        call->operands.push_back(I64Utilities::recreateI64(
+          builder, legal->params.size(), legal->params.size() + 1));
         legal->params.push_back(i32);
         legal->params.push_back(i32);
       } else if (param == f32) {
-        call->operands.push_back(builder.makeUnary(DemoteFloat64, builder.makeGetLocal(legal->params.size(), f64)));
+        call->operands.push_back(builder.makeUnary(
+          DemoteFloat64, builder.makeGetLocal(legal->params.size(), f64)));
         legal->params.push_back(f64);
       } else {
-        call->operands.push_back(builder.makeGetLocal(legal->params.size(), param));
+        call->operands.push_back(
+          builder.makeGetLocal(legal->params.size(), param));
         legal->params.push_back(param);
       }
     }
@@ -173,7 +183,8 @@ private:
       auto index = Builder::addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
-      block->list.push_back(builder.makeCall(f->name, {I64Utilities::getI64High(builder, index)}, none));
+      block->list.push_back(builder.makeCall(
+        f->name, {I64Utilities::getI64High(builder, index)}, none));
       block->list.push_back(I64Utilities::getI64Low(builder, index));
       block->finalize();
       legal->body = block;
@@ -186,17 +197,16 @@ private:
     }
 
     // a method may be exported multiple times
-    if (!module->getFunctionOrNull(legal->name)) {
-      module->addFunction(legal);
-    }
+    if (!module->getFunctionOrNull(legal->name)) { module->addFunction(legal); }
     return legal->name;
   }
 
-  // wasm calls the import, so it must call a stub that calls the actual legal JS import
+  // wasm calls the import, so it must call a stub that calls the actual legal
+  // JS import
   Name makeLegalStubForCalledImport(Function* im, Module* module) {
     Builder builder(*module);
     auto type = make_unique<FunctionType>();
-    type->name =  Name(std::string("legaltype$") + im->name.str);
+    type->name = Name(std::string("legaltype$") + im->name.str);
     auto legal = make_unique<Function>();
     legal->name = Name(std::string("legalimport$") + im->name.str);
     legal->module = im->module;
@@ -212,15 +222,19 @@ private:
 
     for (auto param : imFunctionType->params) {
       if (param == i64) {
-        call->operands.push_back(I64Utilities::getI64Low(builder, func->params.size()));
-        call->operands.push_back(I64Utilities::getI64High(builder, func->params.size()));
+        call->operands.push_back(
+          I64Utilities::getI64Low(builder, func->params.size()));
+        call->operands.push_back(
+          I64Utilities::getI64High(builder, func->params.size()));
         type->params.push_back(i32);
         type->params.push_back(i32);
       } else if (param == f32) {
-        call->operands.push_back(builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f32)));
+        call->operands.push_back(builder.makeUnary(
+          PromoteFloat32, builder.makeGetLocal(func->params.size(), f32)));
         type->params.push_back(f64);
       } else {
-        call->operands.push_back(builder.makeGetLocal(func->params.size(), param));
+        call->operands.push_back(
+          builder.makeGetLocal(func->params.size(), param));
         type->params.push_back(param);
       }
       func->params.push_back(param);
@@ -257,16 +271,13 @@ private:
     return funcName;
   }
 
-  static Function* getFunctionOrImport(Module* module, Name name, std::string sig) {
+  static Function*
+  getFunctionOrImport(Module* module, Name name, std::string sig) {
     // First look for the function by name
-    if (Function* f = module->getFunctionOrNull(name)) {
-      return f;
-    }
+    if (Function* f = module->getFunctionOrNull(name)) { return f; }
     // Then see if its already imported
     ImportInfo info(*module);
-    if (Function* f = info.getImportedFunction(ENV, name)) {
-      return f;
-    }
+    if (Function* f = info.getImportedFunction(ENV, name)) { return f; }
     // Failing that create a new function import.
     auto import = new Function;
     import->name = name;
@@ -280,13 +291,10 @@ private:
   }
 };
 
-Pass *createLegalizeJSInterfacePass() {
-  return new LegalizeJSInterface(true);
-}
+Pass* createLegalizeJSInterfacePass() { return new LegalizeJSInterface(true); }
 
-Pass *createLegalizeJSInterfaceMinimallyPass() {
+Pass* createLegalizeJSInterfaceMinimallyPass() {
   return new LegalizeJSInterface(false);
 }
 
 } // namespace wasm
-

@@ -17,8 +17,8 @@
 #ifndef wasm_ir_properties_h
 #define wasm_ir_properties_h
 
-#include "wasm.h"
 #include "ir/bits.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -36,7 +36,7 @@ inline bool emitsBoolean(Expression* curr) {
 inline bool isSymmetric(Binary* binary) {
   switch (binary->op) {
     case AddInt32:
-    case MulInt32: 
+    case MulInt32:
     case AndInt32:
     case OrInt32:
     case XorInt32:
@@ -44,7 +44,7 @@ inline bool isSymmetric(Binary* binary) {
     case NeInt32:
 
     case AddInt64:
-    case MulInt64: 
+    case MulInt64:
     case AndInt64:
     case OrInt64:
     case XorInt64:
@@ -105,7 +105,8 @@ inline Expression* getAlmostSignExt(Expression* curr) {
           if (auto* inner = outer->left->dynCast<Binary>()) {
             if (inner->op == ShlInt32) {
               if (auto* innerConst = inner->right->dynCast<Const>()) {
-                if (Bits::getEffectiveShifts(outerConst) <= Bits::getEffectiveShifts(innerConst)) {
+                if (Bits::getEffectiveShifts(outerConst) <=
+                    Bits::getEffectiveShifts(innerConst)) {
                   return inner->left;
                 }
               }
@@ -121,7 +122,8 @@ inline Expression* getAlmostSignExt(Expression* curr) {
 // gets the size of the almost sign-extended value, as well as the
 // extra shifts, if any
 inline Index getAlmostSignExtBits(Expression* curr, Index& extraShifts) {
-  extraShifts = Bits::getEffectiveShifts(curr->cast<Binary>()->left->cast<Binary>()->right) -
+  extraShifts = Bits::getEffectiveShifts(
+                  curr->cast<Binary>()->left->cast<Binary>()->right) -
                 Bits::getEffectiveShifts(curr->cast<Binary>()->right);
   return getSignExtBits(curr);
 }
@@ -132,9 +134,7 @@ inline Expression* getZeroExtValue(Expression* curr) {
   if (auto* binary = curr->dynCast<Binary>()) {
     if (binary->op == AndInt32) {
       if (auto* c = binary->right->dynCast<Const>()) {
-        if (Bits::getMaskedBits(c->value.geti32())) {
-          return binary->right;
-        }
+        if (Bits::getMaskedBits(c->value.geti32())) { return binary->right; }
       }
     }
   }
@@ -143,7 +143,8 @@ inline Expression* getZeroExtValue(Expression* curr) {
 
 // gets the size of the sign-extended value
 inline Index getZeroExtBits(Expression* curr) {
-  return Bits::getMaskedBits(curr->cast<Binary>()->right->cast<Const>()->value.geti32());
+  return Bits::getMaskedBits(
+    curr->cast<Binary>()->right->cast<Const>()->value.geti32());
 }
 
 // Returns a falling-through value, that is, it looks through a local.tee
@@ -151,13 +152,9 @@ inline Index getZeroExtBits(Expression* curr) {
 inline Expression* getFallthrough(Expression* curr) {
   // If the current node is unreachable, there is no value
   // falling through.
-  if (curr->type == unreachable) {
-    return curr;
-  }
+  if (curr->type == unreachable) { return curr; }
   if (auto* set = curr->dynCast<SetLocal>()) {
-    if (set->isTee()) {
-      return getFallthrough(set->value);
-    }
+    if (set->isTee()) { return getFallthrough(set->value); }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
@@ -175,16 +172,13 @@ inline Expression* getFallthrough(Expression* curr) {
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
-    if (br->condition && br->value) {
-      return getFallthrough(br->value);
-    }
+    if (br->condition && br->value) { return getFallthrough(br->value); }
   }
   return curr;
 }
 
-} // Properties
+} // namespace Properties
 
-} // wasm
+} // namespace wasm
 
 #endif // wasm_ir_properties_h
-

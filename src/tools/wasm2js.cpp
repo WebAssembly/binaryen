@@ -18,12 +18,12 @@
 // wasm2js console tool
 //
 
+#include "wasm2js.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "wasm-s-parser.h"
-#include "wasm2js.h"
 #include "tool-options.h"
+#include "wasm-s-parser.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -32,7 +32,8 @@ using namespace wasm;
 
 namespace {
 
-static void emitWasm(Module& wasm, Output& output, Wasm2JSBuilder::Flags flags, Name name) {
+static void
+emitWasm(Module& wasm, Output& output, Wasm2JSBuilder::Flags flags, Name name) {
   Wasm2JSBuilder wasm2js(flags);
   auto js = wasm2js.processWasm(&wasm, name);
   Wasm2JSGlue glue(wasm, output, flags, name);
@@ -48,7 +49,8 @@ public:
   AssertionEmitter(Element& root,
                    SExpressionWasmBuilder& sexpBuilder,
                    Output& out,
-                   Wasm2JSBuilder::Flags flags) : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags) {}
+                   Wasm2JSBuilder::Flags flags)
+    : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags) {}
 
   void emit();
 
@@ -93,11 +95,9 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
-    if  (actual->type == none) {
-      body = wasmBuilder.blockify(
-        actual,
-        wasmBuilder.makeConst(Literal(uint32_t(1)))
-      );
+    if (actual->type == none) {
+      body = wasmBuilder.blockify(actual,
+                                  wasmBuilder.makeConst(Literal(uint32_t(1))));
     } else {
       body = actual;
     }
@@ -106,16 +106,15 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
     Type resType = expected->type;
     actual->type = resType;
     switch (resType) {
-      case i32:
-        body = wasmBuilder.makeBinary(EqInt32, actual, expected);
-        break;
+      case i32: body = wasmBuilder.makeBinary(EqInt32, actual, expected); break;
 
       case i64:
         body = wasmBuilder.makeCall(
           "i64Equal",
-          {actual, wasmBuilder.makeCall(WASM_FETCH_HIGH_BITS, {}, i32), expected},
-          i32
-        );
+          {actual,
+           wasmBuilder.makeCall(WASM_FETCH_HIGH_BITS, {}, i32),
+           expected},
+          i32);
         break;
 
       case f32: {
@@ -136,14 +135,11 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
     assert(false && "Unexpected number of parameters in assert_return");
   }
   std::unique_ptr<Function> testFunc(
-    wasmBuilder.makeFunction(
-      testFuncName,
-      std::vector<NameType>{},
-      body->type,
-      std::vector<NameType>{},
-      body
-    )
-  );
+    wasmBuilder.makeFunction(testFuncName,
+                             std::vector<NameType>{},
+                             body->type,
+                             std::vector<NameType>{},
+                             body));
   Ref jsFunc = processFunction(testFunc.get());
   fixCalls(jsFunc, asmModule);
   emitFunction(jsFunc);
@@ -157,14 +153,11 @@ Ref AssertionEmitter::emitAssertReturnNanFunc(Builder& wasmBuilder,
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = wasmBuilder.makeCall("isNaN", {actual}, i32);
   std::unique_ptr<Function> testFunc(
-    wasmBuilder.makeFunction(
-      testFuncName,
-      std::vector<NameType>{},
-      body->type,
-      std::vector<NameType>{},
-      body
-    )
-  );
+    wasmBuilder.makeFunction(testFuncName,
+                             std::vector<NameType>{},
+                             body->type,
+                             std::vector<NameType>{},
+                             body));
   Ref jsFunc = processFunction(testFunc.get());
   fixCalls(jsFunc, asmModule);
   emitFunction(jsFunc);
@@ -182,8 +175,7 @@ Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
                              std::vector<NameType>{},
                              expr->type,
                              std::vector<NameType>{},
-                             expr)
-  );
+                             expr));
   IString expectedErr = e[2]->str();
   Ref innerFunc = processFunction(exprFunc.get());
   fixCalls(innerFunc, asmModule);
@@ -194,33 +186,25 @@ Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
   Ref catchBlock = ValueBuilder::makeBlock();
   ValueBuilder::appendToBlock(
     catchBlock,
-    ValueBuilder::makeReturn(
-      ValueBuilder::makeCall(
-        ValueBuilder::makeDot(
-          ValueBuilder::makeName(IString("e")),
-          ValueBuilder::makeName(IString("message")),
-          ValueBuilder::makeName(IString("includes"))
-        ),
-        ValueBuilder::makeString(expectedErr)
-      )
-    )
-  );
+    ValueBuilder::makeReturn(ValueBuilder::makeCall(
+      ValueBuilder::makeDot(ValueBuilder::makeName(IString("e")),
+                            ValueBuilder::makeName(IString("message")),
+                            ValueBuilder::makeName(IString("includes"))),
+      ValueBuilder::makeString(expectedErr))));
   outerFunc[3]->push_back(ValueBuilder::makeTry(
-      tryBlock,
-      ValueBuilder::makeName((IString("e"))),
-      catchBlock));
+    tryBlock, ValueBuilder::makeName((IString("e"))), catchBlock));
   outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
   emitFunction(outerFunc);
   return outerFunc;
 }
 
 bool AssertionEmitter::isAssertHandled(Element& e) {
-  return e.isList() && e.size() >= 2 && e[0]->isStr()
-      && (e[0]->str() == Name("assert_return") ||
+  return e.isList() && e.size() >= 2 && e[0]->isStr() &&
+         (e[0]->str() == Name("assert_return") ||
           e[0]->str() == Name("assert_return_nan") ||
-          (flags.pedantic && e[0]->str() == Name("assert_trap")))
-      && e[1]->isList() && e[1]->size() >= 2 && (*e[1])[0]->isStr()
-      && (*e[1])[0]->str() == Name("invoke");
+          (flags.pedantic && e[0]->str() == Name("assert_trap"))) &&
+         e[1]->isList() && e[1]->size() >= 2 && (*e[1])[0]->isStr() &&
+         (*e[1])[0]->str() == Name("invoke");
 }
 
 void AssertionEmitter::fixCalls(Ref asmjs, Name asmModule) {
@@ -229,7 +213,8 @@ void AssertionEmitter::fixCalls(Ref asmjs, Name asmModule) {
     for (Ref& r : arr) {
       fixCalls(r, asmModule);
     }
-    if (arr.size() > 0 && arr[0]->isString() && arr[0]->getIString() == cashew::CALL) {
+    if (arr.size() > 0 && arr[0]->isString() &&
+        arr[0]->getIString() == cashew::CALL) {
       assert(arr.size() >= 2);
       if (arr[1]->getIString() == "f32Equal" ||
           arr[1]->getIString() == "f64Equal" ||
@@ -240,7 +225,7 @@ void AssertionEmitter::fixCalls(Ref asmjs, Name asmModule) {
         arr[1]->setString("Math.fround");
       } else {
         Ref fixed = ValueBuilder::makeDot(ValueBuilder::makeName(asmModule),
-                                             arr[1]->getIString());
+                                          arr[1]->getIString());
         arr[1]->setArray(fixed->getArray());
       }
     }
@@ -305,7 +290,8 @@ void AssertionEmitter::emit() {
   Name asmModule = std::string("ret") + ASM_FUNC.str;
   for (size_t i = 0; i < root.size(); ++i) {
     Element& e = *root[i];
-    if (e.isList() && e.size() >= 1 && e[0]->isStr() && e[0]->str() == Name("module")) {
+    if (e.isList() && e.size() >= 1 && e[0]->isStr() &&
+        e[0]->str() == Name("module")) {
       std::stringstream funcNameS;
       funcNameS << ASM_FUNC.c_str() << i;
       std::stringstream moduleNameS;
@@ -338,10 +324,7 @@ void AssertionEmitter::emit() {
       emitAssertTrapFunc(wasmBuilder, e, testFuncName, asmModule);
     }
 
-    out << "if (!"
-        << testFuncName.str
-        << "()) throw 'assertion failed: "
-        << e
+    out << "if (!" << testFuncName.str << "()) throw 'assertion failed: " << e
         << "';\n";
   }
 }
@@ -350,36 +333,44 @@ void AssertionEmitter::emit() {
 
 // Main
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[]) {
   Wasm2JSBuilder::Flags flags;
   ToolOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
   options
-      .add("--output", "-o", "Output file (stdout if not specified)",
-           Options::Arguments::One,
-           [](Options* o, const std::string& argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
-      .add("--allow-asserts", "", "Allow compilation of .wast testing asserts",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             flags.allowAsserts = true;
-             o->extra["asserts"] = "1";
-           })
-      .add("--pedantic", "", "Emulate WebAssembly trapping behavior",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             flags.pedantic = true;
-           })
-      .add("--emscripten", "", "Emulate the glue in emscripten-compatible form (and not ES6 module form)",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             flags.emscripten = true;
-           })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
+    .add("--output",
+         "-o",
+         "Output file (stdout if not specified)",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["output"] = argument;
+           Colors::disable();
+         })
+    .add("--allow-asserts",
+         "",
+         "Allow compilation of .wast testing asserts",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           flags.allowAsserts = true;
+           o->extra["asserts"] = "1";
+         })
+    .add(
+      "--pedantic",
+      "",
+      "Emulate WebAssembly trapping behavior",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { flags.pedantic = true; })
+    .add(
+      "--emscripten",
+      "",
+      "Emulate the glue in emscripten-compatible form (and not ES6 module "
+      "form)",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { flags.emscripten = true; })
+    .add_positional("INFILE",
+                    Options::Arguments::One,
+                    [](Options* o, const std::string& argument) {
+                      o->extra["infile"] = argument;
+                    });
   options.parse(argc, argv);
   if (options.debug) flags.debug = true;
 
@@ -389,11 +380,11 @@ int main(int argc, const char *argv[]) {
   std::unique_ptr<SExpressionParser> sexprParser;
   std::unique_ptr<SExpressionWasmBuilder> sexprBuilder;
 
-  auto &input = options.extra["infile"];
+  auto& input = options.extra["infile"];
   std::string suffix(".wasm");
   bool binaryInput =
-      input.size() >= suffix.size() &&
-      input.compare(input.size() - suffix.size(), suffix.size(), suffix) == 0;
+    input.size() >= suffix.size() &&
+    input.compare(input.size() - suffix.size(), suffix.size(), suffix) == 0;
 
   try {
     // If the input filename ends in `.wasm`, then parse it in binary form,
@@ -410,8 +401,10 @@ int main(int argc, const char *argv[]) {
       reader.read(input, wasm, "");
       options.applyFeatures(wasm);
     } else {
-      auto input(
-          read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
+      auto input(read_file<std::vector<char>>(options.extra["infile"],
+                                              Flags::Text,
+                                              options.debug ? Flags::Debug
+                                                            : Flags::Release));
       if (options.debug) std::cerr << "s-parsing..." << std::endl;
       sexprParser = make_unique<SExpressionParser>(input.data());
       root = sexprParser->root;
@@ -423,7 +416,8 @@ int main(int argc, const char *argv[]) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
   } catch (std::bad_alloc&) {
-    Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
+    Fatal() << "error in building module, std::bad_alloc (possibly invalid "
+               "request for silly amounts of memory)";
   }
 
   if (options.passOptions.validate) {
@@ -434,7 +428,9 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.debug) std::cerr << "j-printing..." << std::endl;
-  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
+  Output output(options.extra["output"],
+                Flags::Text,
+                options.debug ? Flags::Debug : Flags::Release);
   if (!binaryInput && options.extra["asserts"] == "1") {
     AssertionEmitter(*root, *sexprBuilder, output, flags).emit();
   } else {

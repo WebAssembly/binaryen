@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 //
 // Spills values that might be pointers to the C stack. This allows
 // Boehm-style GC to see them properly.
@@ -26,16 +25,17 @@
 //  * There is currently no check that there is enough stack space.
 //
 
-#include "wasm.h"
-#include "pass.h"
-#include "cfg/liveness-traversal.h"
-#include "wasm-builder.h"
 #include "abi/abi.h"
 #include "abi/stack.h"
+#include "cfg/liveness-traversal.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
-struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<SpillPointers>>> {
+struct SpillPointers
+  : public WalkerPass<LivenessWalker<SpillPointers, Visitor<SpillPointers>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new SpillPointers; }
@@ -48,21 +48,17 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
   std::unordered_map<Expression**, Expression**> actualPointers;
 
   // note calls in basic blocks
-  template<typename T>
-  void visitSpillable(T* curr) {
-     // if in unreachable code, ignore
+  template<typename T> void visitSpillable(T* curr) {
+    // if in unreachable code, ignore
     if (!currBasicBlock) return;
     auto* pointer = getCurrentPointer();
     currBasicBlock->contents.actions.emplace_back(pointer);
-    actualPointers[pointer] = pointer; // starts out as correct, may change later
+    // starts out as correct, may change later
+    actualPointers[pointer] = pointer;
   }
 
-  void visitCall(Call* curr) {
-    visitSpillable(curr);
-  }
-  void visitCallIndirect(CallIndirect* curr) {
-    visitSpillable(curr);
-  }
+  void visitCall(Call* curr) { visitSpillable(curr); }
+  void visitCallIndirect(CallIndirect* curr) { visitSpillable(curr); }
 
   // main entry point
 
@@ -73,7 +69,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
 
   // map pointers to their offset in the spill area
   typedef std::unordered_map<Index, Index> PointerMap;
-  
+
   void spillPointers() {
     // we only care about possible pointers
     auto* func = getFunction();
@@ -94,9 +90,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
       Index lastCall = -1;
       for (Index i = 0; i < actions.size(); i++) {
         auto& action = liveness.actions[i];
-        if (action.isOther()) {
-          lastCall = i;
-        }
+        if (action.isOther()) { lastCall = i; }
       }
       if (lastCall == Index(-1)) continue; // nothing to see here
       // scan through the block, spilling around the calls
@@ -111,20 +105,21 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
         } else if (action.isOther()) {
           std::vector<Index> toSpill;
           for (auto index : live) {
-            if (pointerMap.count(index) > 0) {
-              toSpill.push_back(index);
-            }
+            if (pointerMap.count(index) > 0) { toSpill.push_back(index); }
           }
           if (!toSpill.empty()) {
             // we now have a call + the information about which locals
             // should be spilled
             if (!spilled) {
-              // prepare stack support: get a pointer to stack space big enough for all our data
+              // prepare stack support: get a pointer to stack space big enough
+              // for all our data
               spillLocal = Builder::addVar(func, ABI::PointerType);
               spilled = true;
             }
-            auto* pointer = actualPointers[action.origin]; // the origin was seen at walk, but the thing may have moved
-            spillPointersAroundCall(pointer, toSpill, spillLocal, pointerMap, func, getModule());
+            // the origin was seen at walk, but the thing may have moved
+            auto* pointer = actualPointers[action.origin];
+            spillPointersAroundCall(
+              pointer, toSpill, spillLocal, pointerMap, func, getModule());
           }
         } else {
           WASM_UNREACHABLE();
@@ -133,13 +128,22 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     }
     if (spilled) {
       // get the stack space, and set the local to it
-      ABI::getStackSpace(spillLocal, func, getTypeSize(ABI::PointerType) * pointerMap.size(), *getModule());
+      ABI::getStackSpace(spillLocal,
+                         func,
+                         getTypeSize(ABI::PointerType) * pointerMap.size(),
+                         *getModule());
     }
   }
 
-  void spillPointersAroundCall(Expression** origin, std::vector<Index>& toSpill, Index spillLocal, PointerMap& pointerMap, Function* func, Module* module) {
+  void spillPointersAroundCall(Expression** origin,
+                               std::vector<Index>& toSpill,
+                               Index spillLocal,
+                               PointerMap& pointerMap,
+                               Function* func,
+                               Module* module) {
     auto* call = *origin;
-    if (call->type == unreachable) return; // the call is never reached anyhow, ignore
+    if (call->type == unreachable)
+      return; // the call is never reached anyhow, ignore
     Builder builder(*module);
     auto* block = builder.makeBlock();
     // move the operands into locals, as we must spill after they are executed
@@ -168,14 +172,13 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     }
     // add the spills
     for (auto index : toSpill) {
-      block->list.push_back(builder.makeStore(
-        getTypeSize(ABI::PointerType),
-        pointerMap[index],
-        getTypeSize(ABI::PointerType),
-        builder.makeGetLocal(spillLocal, ABI::PointerType),
-        builder.makeGetLocal(index, ABI::PointerType),
-        ABI::PointerType
-      ));
+      block->list.push_back(
+        builder.makeStore(getTypeSize(ABI::PointerType),
+                          pointerMap[index],
+                          getTypeSize(ABI::PointerType),
+                          builder.makeGetLocal(spillLocal, ABI::PointerType),
+                          builder.makeGetLocal(index, ABI::PointerType),
+                          ABI::PointerType));
     }
     // add the (modified) call
     block->list.push_back(call);
@@ -184,8 +187,6 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
   }
 };
 
-Pass *createSpillPointersPass() {
-  return new SpillPointers();
-}
+Pass* createSpillPointersPass() { return new SpillPointers(); }
 
 } // namespace wasm

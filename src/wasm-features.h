@@ -60,7 +60,9 @@ struct FeatureSet {
   bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
-  void set(Feature f, bool v = true) { features = v ? (features | f) : (features & ~f); }
+  void set(Feature f, bool v = true) {
+    features = v ? (features | f) : (features & ~f);
+  }
   void setAtomics(bool v = true) { set(Atomics, v); }
   void setMutableGlobals(bool v = true) { set(MutableGlobals, v); }
   void setTruncSat(bool v = true) { set(TruncSat, v); }
@@ -74,8 +76,7 @@ struct FeatureSet {
     features = features & ~other.features & All;
   }
 
-  template<typename F>
-  void iterFeatures(F f) {
+  template<typename F> void iterFeatures(F f) {
     if (hasAtomics()) f(Atomics);
     if (hasBulkMemory()) f(BulkMemory);
     if (hasMutableGlobals()) f(MutableGlobals);
@@ -92,9 +93,7 @@ struct FeatureSet {
     return *this <= other && other <= *this;
   }
 
-  bool operator!=(const FeatureSet& other) const {
-    return !(*this == other);
-  }
+  bool operator!=(const FeatureSet& other) const { return !(*this == other); }
 
   FeatureSet& operator|=(const FeatureSet& other) {
     features |= other.features;

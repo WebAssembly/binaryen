@@ -15,9 +15,9 @@
  */
 
 //
-// Optimize added constants into load/store offsets. This requires the assumption
-// that low memory is unused, so that we can replace an add (which might wrap)
-// with a load/store offset (which does not).
+// Optimize added constants into load/store offsets. This requires the
+// assumption that low memory is unused, so that we can replace an add (which
+// might wrap) with a load/store offset (which does not).
 //
 // The propagate option also propagates offsets across set/get local pairs.
 //
@@ -30,20 +30,22 @@
 // speed, and may lead to code size reductions elsewhere by using fewer locals.
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
 #include <ir/local-graph.h>
 #include <ir/local-utils.h>
 #include <ir/parents.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
-template<typename P, typename T>
-class MemoryAccessOptimizer {
+template<typename P, typename T> class MemoryAccessOptimizer {
 public:
-  MemoryAccessOptimizer(P* parent, T* curr, Module* module, LocalGraph* localGraph) :
-    parent(parent), curr(curr), module(module), localGraph(localGraph) {}
+  MemoryAccessOptimizer(P* parent,
+                        T* curr,
+                        Module* module,
+                        LocalGraph* localGraph)
+    : parent(parent), curr(curr), module(module), localGraph(localGraph) {}
 
   // Tries to optimize, and returns whether we propagated a change.
   bool optimize() {
@@ -78,18 +80,20 @@ public:
         auto& sets = localGraph->getSetses[get];
         if (sets.size() == 1) {
           auto* set = *sets.begin();
-          // May be a zero-init (in which case, we can ignore it). Must also be valid
-          // to propagate, as checked earlier in the parent.
+          // May be a zero-init (in which case, we can ignore it). Must also be
+          // valid to propagate, as checked earlier in the parent.
           if (set && parent->isPropagatable(set)) {
             auto* value = set->value;
             if (auto* add = value->template dynCast<Binary>()) {
               if (add->op == AddInt32) {
                 // We can optimize on either side, but only if both we find
                 // a constant *and* the other side cannot change in the middle.
-                // TODO If it could change, we may add a new local to capture the
-                //      old value.
-                if (tryToOptimizePropagatedAdd(add->right, add->left, get, set) ||
-                   tryToOptimizePropagatedAdd(add->left, add->right, get, set)) {
+                // TODO If it could change, we may add a new local to capture
+                //      the old value.
+                if (tryToOptimizePropagatedAdd(
+                      add->right, add->left, get, set) ||
+                    tryToOptimizePropagatedAdd(
+                      add->left, add->right, get, set)) {
                   return true;
                 }
               }
@@ -144,16 +148,17 @@ private:
       if (result.succeeded) {
         curr->offset = result.total;
         curr->ptr = otherSide;
-        if (curr->ptr->template is<Const>()) {
-          optimizeConstantPointer();
-        }
+        if (curr->ptr->template is<Const>()) { optimizeConstantPointer(); }
         return true;
       }
     }
     return false;
   }
 
-  bool tryToOptimizePropagatedAdd(Expression* oneSide, Expression* otherSide, GetLocal* ptr, SetLocal* set) {
+  bool tryToOptimizePropagatedAdd(Expression* oneSide,
+                                  Expression* otherSide,
+                                  GetLocal* ptr,
+                                  SetLocal* set) {
     if (auto* c = oneSide->template dynCast<Const>()) {
       if (otherSide->template is<Const>()) {
         // Both sides are constant - this is not optimized code, ignore.
@@ -171,16 +176,17 @@ private:
         //
         //  load(x, offset=10)
         //
-        // If the other side is a get, we may be able to prove that we can just use that same
-        // local, if both it and the pointer are in SSA form. In that case,
+        // If the other side is a get, we may be able to prove that we can just
+        // use that same local, if both it and the pointer are in SSA form. In
+        // that case,
         //
         //  y = .. // single assignment that dominates all uses
         //  x = y + 10 // single assignment that dominates all uses
         //  [..]
         //  load(x) => load(y, offset=10)
         //
-        // This is valid since dominance is transitive, so y's definition dominates the load,
-        // and it is ok to replace x with y + 10 there.
+        // This is valid since dominance is transitive, so y's definition
+        // dominates the load, and it is ok to replace x with y + 10 there.
         Index index = -1;
         bool canReuseIndex = false;
         if (auto* get = otherSide->template dynCast<GetLocal>()) {
@@ -201,9 +207,7 @@ private:
         //  load(y', offset=10)
         //
         // Often x has no other uses and later passes can remove it.
-        if (!canReuseIndex) {
-          index = parent->getHelperIndex(set);
-        }
+        if (!canReuseIndex) { index = parent->getHelperIndex(set); }
         curr->offset = result.total;
         curr->ptr = Builder(*module).makeGetLocal(index, i32);
         return true;
@@ -220,15 +224,16 @@ private:
       // The total offset must not allow reaching reasonable memory
       // by overflowing.
       auto total = curr->offset + value;
-      if (total < PassOptions::LowMemoryBound) {
-        return Result(total);
-      }
+      if (total < PassOptions::LowMemoryBound) { return Result(total); }
     }
     return Result();
   }
 };
 
-struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConstants, UnifiedExpressionVisitor<OptimizeAddedConstants>>> {
+struct OptimizeAddedConstants
+  : public WalkerPass<
+      PostWalker<OptimizeAddedConstants,
+                 UnifiedExpressionVisitor<OptimizeAddedConstants>>> {
   bool isFunctionParallel() override { return true; }
 
   bool propagate;
@@ -238,25 +243,24 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
   Pass* create() override { return new OptimizeAddedConstants(propagate); }
 
   void visitLoad(Load* curr) {
-    MemoryAccessOptimizer<OptimizeAddedConstants, Load> optimizer(this, curr, getModule(), localGraph.get());
-    if (optimizer.optimize()) {
-      propagated = true;
-    }
+    MemoryAccessOptimizer<OptimizeAddedConstants, Load> optimizer(
+      this, curr, getModule(), localGraph.get());
+    if (optimizer.optimize()) { propagated = true; }
   }
 
   void visitStore(Store* curr) {
-    MemoryAccessOptimizer<OptimizeAddedConstants, Store> optimizer(this, curr, getModule(), localGraph.get());
-    if (optimizer.optimize()) {
-      propagated = true;
-    }
+    MemoryAccessOptimizer<OptimizeAddedConstants, Store> optimizer(
+      this, curr, getModule(), localGraph.get());
+    if (optimizer.optimize()) { propagated = true; }
   }
 
   void doWalkFunction(Function* func) {
     // This pass is only valid under the assumption of unused low memory.
     assert(getPassOptions().lowMemoryUnused);
-    // Multiple passes may be needed if we have x + 4 + 8 etc. (nested structs in C
-    // can cause this, but it's rare). Note that we only need that for the propagation
-    // case (as 4 + 8 would be optimized directly if it were adjacent).
+    // Multiple passes may be needed if we have x + 4 + 8 etc. (nested structs
+    // in C can cause this, but it's rare). Note that we only need that for the
+    // propagation case (as 4 + 8 would be optimized directly if it were
+    // adjacent).
     while (1) {
       propagated = false;
       helperIndexes.clear();
@@ -268,9 +272,7 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
         findPropagatable();
       }
       super::doWalkFunction(func);
-      if (!helperIndexes.empty()) {
-        createHelperIndexes();
-      }
+      if (!helperIndexes.empty()) { createHelperIndexes(); }
       if (propagated) {
         cleanUpAfterPropagation();
       } else {
@@ -279,22 +281,19 @@ struct OptimizeAddedConstants : public WalkerPass<PostWalker<OptimizeAddedConsta
     }
   }
 
-  // For a given expression, store it to a local and return us the local index we can use,
-  // in order to get that value someplace else. We are provided not the expression,
-  // but the set in which it is in, as the arm of an add that is the set's value (the other
-  // arm is a constant, and we are not a constant).
+  // For a given expression, store it to a local and return us the local index
+  // we can use, in order to get that value someplace else. We are provided not
+  // the expression, but the set in which it is in, as the arm of an add that is
+  // the set's value (the other arm is a constant, and we are not a constant).
   // We cache these, that is, use a single one for all requests.
   Index getHelperIndex(SetLocal* set) {
     auto iter = helperIndexes.find(set);
-    if (iter != helperIndexes.end()) {
-      return iter->second;
-    }
-    return helperIndexes[set] = Builder(*getModule()).addVar(getFunction(), i32);
+    if (iter != helperIndexes.end()) { return iter->second; }
+    return helperIndexes[set] =
+             Builder(*getModule()).addVar(getFunction(), i32);
   }
 
-  bool isPropagatable(SetLocal* set) {
-    return propagatable.count(set);
-  }
+  bool isPropagatable(SetLocal* set) { return propagatable.count(set); }
 
 private:
   bool propagated;
@@ -305,15 +304,16 @@ private:
   std::set<SetLocal*> propagatable;
 
   void findPropagatable() {
-    // Conservatively, only propagate if all uses can be removed of the original. That is,
+    // Conservatively, only propagate if all uses can be removed of the
+    // original. That is,
     //  x = a + 10
     //  f(x)
     //  g(x)
     // should be optimized to
     //  f(a, offset=10)
     //  g(a, offset=10)
-    // but if x has other uses, then avoid doing so - we'll be doing that add anyhow, so
-    // the load/store offset trick won't actually help.
+    // but if x has other uses, then avoid doing so - we'll be doing that add
+    // anyhow, so the load/store offset trick won't actually help.
     Parents parents(getFunction()->body);
     for (auto& pair : localGraph->locations) {
       auto* location = pair.first;
@@ -323,17 +323,17 @@ private:
             if (add->left->is<Const>() || add->right->is<Const>()) {
               // Looks like this might be relevant, check all uses.
               bool canPropagate = true;
-              for (auto* get :localGraph->setInfluences[set]) {
+              for (auto* get : localGraph->setInfluences[set]) {
                 auto* parent = parents.getParent(get);
-                assert(parent); // if this is at the top level, it's the whole body - no set can exist!
+                // if this is at the top level, it's the whole body - no set can
+                // exist!
+                assert(parent);
                 if (!(parent->is<Load>() || parent->is<Store>())) {
                   canPropagate = false;
                   break;
                 }
               }
-              if (canPropagate) {
-                propagatable.insert(set);
-              }
+              if (canPropagate) { propagatable.insert(set); }
             }
           }
         }
@@ -342,8 +342,8 @@ private:
   }
 
   void cleanUpAfterPropagation() {
-    // Remove sets that no longer have uses. This allows further propagation by letting
-    // us see the accurate amount of uses of each set.
+    // Remove sets that no longer have uses. This allows further propagation by
+    // letting us see the accurate amount of uses of each set.
     UnneededSetRemover remover(getFunction(), getPassOptions());
   }
 
@@ -354,7 +354,8 @@ private:
       std::map<SetLocal*, Index>& helperIndexes;
       Module* module;
 
-      Creator(std::map<SetLocal*, Index>& helperIndexes) : helperIndexes(helperIndexes) {}
+      Creator(std::map<SetLocal*, Index>& helperIndexes)
+        : helperIndexes(helperIndexes) {}
 
       void visitSetLocal(SetLocal* curr) {
         auto iter = helperIndexes.find(curr);
@@ -372,11 +373,7 @@ private:
           Builder builder(*module);
           *target = builder.makeGetLocal(index, i32);
           replaceCurrent(
-            builder.makeSequence(
-              builder.makeSetLocal(index, value),
-              curr
-            )
-          );
+            builder.makeSequence(builder.makeSetLocal(index, value), curr));
         }
       }
     } creator(helperIndexes);
@@ -385,13 +382,12 @@ private:
   }
 };
 
-Pass *createOptimizeAddedConstantsPass() {
+Pass* createOptimizeAddedConstantsPass() {
   return new OptimizeAddedConstants(false);
 }
 
-Pass *createOptimizeAddedConstantsPropagatePass() {
+Pass* createOptimizeAddedConstantsPropagatePass() {
   return new OptimizeAddedConstants(true);
 }
 
 } // namespace wasm
-

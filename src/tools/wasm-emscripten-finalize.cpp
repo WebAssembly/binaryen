@@ -21,6 +21,7 @@
 
 #include <exception>
 
+#include "abi/js.h"
 #include "ir/trapping.h"
 #include "support/colors.h"
 #include "support/file.h"
@@ -30,12 +31,11 @@
 #include "wasm-io.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
-#include "abi/js.h"
 
 using namespace cashew;
 using namespace wasm;
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[]) {
   const uint64_t INVALID_BASE = -1;
 
   std::string infile;
@@ -53,65 +53,89 @@ int main(int argc, const char *argv[]) {
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
   options
-      .add("--output", "-o", "Output file",
-           Options::Arguments::One,
-           [&outfile](Options*, const std::string& argument) {
-             outfile = argument;
-             Colors::disable();
-           })
-      .add("--debuginfo", "-g",
-           "Emit names section in wasm binary (or full debuginfo in wast)",
-           Options::Arguments::Zero,
-           [&debugInfo](Options *, const std::string &) {
-             debugInfo = true;
-           })
-      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
-           Options::Arguments::Zero,
-           [&emitBinary](Options*, const std::string& ) {
-             emitBinary = false;
-           })
-      .add("--global-base", "", "The address at which static globals were placed",
-           Options::Arguments::One,
-           [&globalBase](Options*, const std::string&argument ) {
-             globalBase = std::stoull(argument);
-           })
-      .add("--initial-stack-pointer", "", "The initial location of the stack pointer",
-           Options::Arguments::One,
-           [&initialStackPointer](Options*, const std::string&argument ) {
-             initialStackPointer = std::stoull(argument);
-           })
-      .add("--side-module", "", "Input is an emscripten side module",
-           Options::Arguments::Zero,
-           [&isSideModule](Options *o, const std::string& argument) {
-             isSideModule = true;
-           })
-      .add("--input-source-map", "-ism", "Consume source map from the specified file",
-           Options::Arguments::One,
-           [&inputSourceMapFilename](Options *o, const std::string& argument) { inputSourceMapFilename = argument; })
-      .add("--no-legalize-javascript-ffi", "-nj", "Do not fully legalize (i64->i32, "
-           "f32->f64) the imports and exports for interfacing with JS",
-           Options::Arguments::Zero,
-           [&legalizeJavaScriptFFI](Options *o, const std::string& ) {
-             legalizeJavaScriptFFI = false;
-           })
-      .add("--output-source-map", "-osm", "Emit source map to the specified file",
-           Options::Arguments::One,
-           [&outputSourceMapFilename](Options *o, const std::string& argument) { outputSourceMapFilename = argument; })
-      .add("--output-source-map-url", "-osu", "Emit specified string as source map URL",
-           Options::Arguments::One,
-           [&outputSourceMapUrl](Options *o, const std::string& argument) { outputSourceMapUrl = argument; })
-      .add("--separate-data-segments", "", "Separate data segments to a file",
-           Options::Arguments::One,
-           [&dataSegmentFile](Options *o, const std::string& argument) { dataSegmentFile = argument;})
-      .add_positional("INFILE", Options::Arguments::One,
-                      [&infile](Options *o, const std::string& argument) {
-                        infile = argument;
-                      });
+    .add("--output",
+         "-o",
+         "Output file",
+         Options::Arguments::One,
+         [&outfile](Options*, const std::string& argument) {
+           outfile = argument;
+           Colors::disable();
+         })
+    .add("--debuginfo",
+         "-g",
+         "Emit names section in wasm binary (or full debuginfo in wast)",
+         Options::Arguments::Zero,
+         [&debugInfo](Options*, const std::string&) { debugInfo = true; })
+    .add("--emit-text",
+         "-S",
+         "Emit text instead of binary for the output file",
+         Options::Arguments::Zero,
+         [&emitBinary](Options*, const std::string&) { emitBinary = false; })
+    .add("--global-base",
+         "",
+         "The address at which static globals were placed",
+         Options::Arguments::One,
+         [&globalBase](Options*, const std::string& argument) {
+           globalBase = std::stoull(argument);
+         })
+    .add("--initial-stack-pointer",
+         "",
+         "The initial location of the stack pointer",
+         Options::Arguments::One,
+         [&initialStackPointer](Options*, const std::string& argument) {
+           initialStackPointer = std::stoull(argument);
+         })
+    .add("--side-module",
+         "",
+         "Input is an emscripten side module",
+         Options::Arguments::Zero,
+         [&isSideModule](Options* o, const std::string& argument) {
+           isSideModule = true;
+         })
+    .add("--input-source-map",
+         "-ism",
+         "Consume source map from the specified file",
+         Options::Arguments::One,
+         [&inputSourceMapFilename](Options* o, const std::string& argument) {
+           inputSourceMapFilename = argument;
+         })
+    .add("--no-legalize-javascript-ffi",
+         "-nj",
+         "Do not fully legalize (i64->i32, "
+         "f32->f64) the imports and exports for interfacing with JS",
+         Options::Arguments::Zero,
+         [&legalizeJavaScriptFFI](Options* o, const std::string&) {
+           legalizeJavaScriptFFI = false;
+         })
+    .add("--output-source-map",
+         "-osm",
+         "Emit source map to the specified file",
+         Options::Arguments::One,
+         [&outputSourceMapFilename](Options* o, const std::string& argument) {
+           outputSourceMapFilename = argument;
+         })
+    .add("--output-source-map-url",
+         "-osu",
+         "Emit specified string as source map URL",
+         Options::Arguments::One,
+         [&outputSourceMapUrl](Options* o, const std::string& argument) {
+           outputSourceMapUrl = argument;
+         })
+    .add("--separate-data-segments",
+         "",
+         "Separate data segments to a file",
+         Options::Arguments::One,
+         [&dataSegmentFile](Options* o, const std::string& argument) {
+           dataSegmentFile = argument;
+         })
+    .add_positional("INFILE",
+                    Options::Arguments::One,
+                    [&infile](Options* o, const std::string& argument) {
+                      infile = argument;
+                    });
   options.parse(argc, argv);
 
-  if (infile == "") {
-    Fatal() << "Need to specify an infile\n";
-  }
+  if (infile == "") { Fatal() << "Need to specify an infile\n"; }
   if (outfile == "" && emitBinary) {
     Fatal() << "Need to specify an outfile, or use text output\n";
   }
@@ -140,20 +164,14 @@ int main(int argc, const char *argv[]) {
   uint32_t dataSize = 0;
 
   if (!isSideModule) {
-    if (globalBase == INVALID_BASE) {
-      Fatal() << "globalBase must be set";
-    }
+    if (globalBase == INVALID_BASE) { Fatal() << "globalBase must be set"; }
     if (initialStackPointer == INVALID_BASE) {
       Fatal() << "initialStackPointer must be set";
     }
     Export* dataEndExport = wasm.getExport("__data_end");
-    if (dataEndExport == nullptr) {
-      Fatal() << "__data_end export not found";
-    }
+    if (dataEndExport == nullptr) { Fatal() << "__data_end export not found"; }
     Global* dataEnd = wasm.getGlobal(dataEndExport->value);
-    if (dataEnd == nullptr) {
-      Fatal() << "__data_end global not found";
-    }
+    if (dataEnd == nullptr) { Fatal() << "__data_end global not found"; }
     if (dataEnd->type != Type::i32) {
       Fatal() << "__data_end global has wrong type";
     }
@@ -204,21 +222,19 @@ int main(int argc, const char *argv[]) {
     passRunner.setDebugInfo(debugInfo);
     passRunner.add(ABI::getLegalizationPass(
       legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
-                            : ABI::LegalizationLevel::Minimal
-    ));
+                            : ABI::LegalizationLevel::Minimal));
     passRunner.run();
   }
 
   // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
+  std::string metadata =
+    generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
   if (!dataSegmentFile.empty()) {
     Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
-    if (globalBase == INVALID_BASE) {
-      Fatal() << "globalBase must be set";
-    }
+    if (globalBase == INVALID_BASE) { Fatal() << "globalBase must be set"; }
     generator.separateDataSegments(&memInitFile, globalBase);
   }
 

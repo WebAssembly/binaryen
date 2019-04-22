@@ -17,8 +17,8 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
-#include "wasm.h"
 #include "ir/utils.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -46,4 +46,3 @@ inline bool equal(Function* left, Function* right) {
 } // namespace wasm
 
 #endif // wasm_ir_function_h
-

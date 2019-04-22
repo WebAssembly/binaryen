@@ -20,19 +20,20 @@
 // identical when finally lowered into concrete wasm code.
 //
 
-#include "wasm.h"
-#include "pass.h"
-#include "ir/utils.h"
 #include "ir/function-utils.h"
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
 struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer>> {
   bool isFunctionParallel() override { return true; }
 
-  FunctionReplacer(std::map<Name, Name>* replacements) : replacements(replacements) {}
+  FunctionReplacer(std::map<Name, Name>* replacements)
+    : replacements(replacements) {}
 
   FunctionReplacer* create() override {
     return new FunctionReplacer(replacements);
@@ -40,9 +41,7 @@ struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer>> {
 
   void visitCall(Call* curr) {
     auto iter = replacements->find(curr->target);
-    if (iter != replacements->end()) {
-      curr->target = iter->second;
-    }
+    if (iter != replacements->end()) { curr->target = iter->second; }
   }
 
 private:
@@ -51,15 +50,17 @@ private:
 
 struct DuplicateFunctionElimination : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    // Multiple iterations may be necessary: A and B may be identical only after we
-    // see the functions C1 and C2 that they call are in fact identical. Rarely, such
-    // "chains" can be very long, so we limit how many we do.
+    // Multiple iterations may be necessary: A and B may be identical only after
+    // we see the functions C1 and C2 that they call are in fact identical.
+    // Rarely, such "chains" can be very long, so we limit how many we do.
     auto& options = runner->options;
     Index limit;
     if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
       limit = module->functions.size(); // no limit
     } else if (options.optimizeLevel >= 2) {
-      limit = 10; // 10 passes usually does most of the work, as this is typically logarithmic
+      // 10 passes usually does most of the work, as this is typically
+      // logarithmic
+      limit = 10;
     } else {
       limit = 1;
     }
@@ -83,9 +84,9 @@ struct DuplicateFunctionElimination : public Pass {
         auto& group = pair.second;
         Index size = group.size();
         if (size == 1) continue;
-        // The groups should be fairly small, and even if a group is large we should
-        // have almost all of them identical, so we should not hit actual O(N^2)
-        // here unless the hash is quite poor.
+        // The groups should be fairly small, and even if a group is large we
+        // should have almost all of them identical, so we should not hit actual
+        // O(N^2) here unless the hash is quite poor.
         for (Index i = 0; i < size - 1; i++) {
           auto* first = group[i];
           if (duplicates.count(first->name)) continue;
@@ -104,9 +105,12 @@ struct DuplicateFunctionElimination : public Pass {
       if (replacements.size() > 0) {
         // remove the duplicates
         auto& v = module->functions;
-        v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Function>& curr) {
-          return duplicates.count(curr->name) > 0;
-        }), v.end());
+        v.erase(std::remove_if(v.begin(),
+                               v.end(),
+                               [&](const std::unique_ptr<Function>& curr) {
+                                 return duplicates.count(curr->name) > 0;
+                               }),
+                v.end());
         module->updateMaps();
         // replace direct calls
         PassRunner replacerRunner(module);
@@ -117,24 +121,18 @@ struct DuplicateFunctionElimination : public Pass {
         for (auto& segment : module->table.segments) {
           for (auto& name : segment.data) {
             auto iter = replacements.find(name);
-            if (iter != replacements.end()) {
-              name = iter->second;
-            }
+            if (iter != replacements.end()) { name = iter->second; }
           }
         }
         // replace in start
         if (module->start.is()) {
           auto iter = replacements.find(module->start);
-          if (iter != replacements.end()) {
-            module->start = iter->second;
-          }
+          if (iter != replacements.end()) { module->start = iter->second; }
         }
         // replace in exports
         for (auto& exp : module->exports) {
           auto iter = replacements.find(exp->value);
-          if (iter != replacements.end()) {
-            exp->value = iter->second;
-          }
+          if (iter != replacements.end()) { exp->value = iter->second; }
         }
       } else {
         break;
@@ -143,7 +141,7 @@ struct DuplicateFunctionElimination : public Pass {
   }
 };
 
-Pass *createDuplicateFunctionEliminationPass() {
+Pass* createDuplicateFunctionEliminationPass() {
   return new DuplicateFunctionElimination();
 }
 

@@ -32,12 +32,12 @@
 #include <string>
 #include <unordered_set>
 
-#include <wasm.h>
-#include <pass.h>
-#include <shared-constants.h>
 #include <asmjs/shared-constants.h>
 #include <ir/import-utils.h>
 #include <ir/module-utils.h>
+#include <pass.h>
+#include <shared-constants.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -45,7 +45,8 @@ struct MinifyImportsAndExports : public Pass {
   bool minifyExports;
 
 public:
-  explicit MinifyImportsAndExports(bool minifyExports):minifyExports(minifyExports) {}
+  explicit MinifyImportsAndExports(bool minifyExports)
+    : minifyExports(minifyExports) {}
 
 private:
   // Generates minified names that are valid in JS.
@@ -53,8 +54,8 @@ private:
   class MinifiedNames {
   public:
     MinifiedNames() {
-      // Reserved words in JS up to size 4 - size 5 and above would mean we use an astronomical
-      // number of symbols, which is not realistic anyhow.
+      // Reserved words in JS up to size 4 - size 5 and above would mean we use
+      // an astronomical number of symbols, which is not realistic anyhow.
       reserved.insert("do");
       reserved.insert("if");
       reserved.insert("in");
@@ -71,7 +72,8 @@ private:
       reserved.insert("this");
       reserved.insert("with");
 
-      validInitialChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
+      validInitialChars =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
       validLaterChars = validInitialChars + "0123456789";
 
       minifiedState.push_back(0);
@@ -113,21 +115,21 @@ private:
           assert(index < validLaterChars.size());
           name += validLaterChars[index];
         }
-        if (reserved.count(name) == 0) {
-          names.push_back(name);
-        }
+        if (reserved.count(name) == 0) { names.push_back(name); }
         // Increment the state.
         size_t i = 0;
         while (1) {
           minifiedState[i]++;
-          if (minifiedState[i] < (i == 0 ? validInitialChars : validLaterChars).size()) {
+          if (minifiedState[i] <
+              (i == 0 ? validInitialChars : validLaterChars).size()) {
             break;
           }
           // Overflow.
           minifiedState[i] = 0;
           i++;
           if (i == minifiedState.size()) {
-            minifiedState.push_back(-1); // will become 0 after increment in next loop head
+            // will become 0 after increment in next loop head
+            minifiedState.push_back(-1);
           }
         }
       }
@@ -141,17 +143,13 @@ private:
     std::map<Name, Name> oldToNew;
     auto process = [&](Name& name) {
       // do not minifiy special imports, they must always exist
-      if (name == MEMORY_BASE || name == TABLE_BASE) {
-        return;
-      }
+      if (name == MEMORY_BASE || name == TABLE_BASE) { return; }
       auto newName = names.getName(soFar++);
       oldToNew[newName] = name;
       name = newName;
     };
     auto processImport = [&](Importable* curr) {
-      if (curr->module == ENV) {
-        process(curr->base);
-      }
+      if (curr->module == ENV) { process(curr->base); }
     };
     ModuleUtils::iterImportedGlobals(*module, processImport);
     ModuleUtils::iterImportedFunctions(*module, processImport);
@@ -170,11 +168,9 @@ private:
   }
 };
 
-Pass *createMinifyImportsPass() {
-  return new MinifyImportsAndExports(false);
-}
+Pass* createMinifyImportsPass() { return new MinifyImportsAndExports(false); }
 
-Pass *createMinifyImportsAndExportsPass() {
+Pass* createMinifyImportsAndExportsPass() {
   return new MinifyImportsAndExports(true);
 }
 

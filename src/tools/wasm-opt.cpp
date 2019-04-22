@@ -21,21 +21,21 @@
 
 #include <memory>
 
-#include "pass.h"
-#include "support/command-line.h"
-#include "support/file.h"
-#include "wasm-printing.h"
-#include "wasm-s-parser.h"
-#include "wasm-validator.h"
-#include "wasm-io.h"
-#include "wasm-interpreter.h"
-#include "wasm-binary.h"
-#include "shell-interface.h"
-#include "optimization-options.h"
 #include "execution-results.h"
 #include "fuzzing.h"
 #include "js-wrapper.h"
+#include "optimization-options.h"
+#include "pass.h"
+#include "shell-interface.h"
 #include "spec-wrapper.h"
+#include "support/command-line.h"
+#include "support/file.h"
+#include "wasm-binary.h"
+#include "wasm-interpreter.h"
+#include "wasm-io.h"
+#include "wasm-printing.h"
+#include "wasm-s-parser.h"
+#include "wasm-validator.h"
 
 using namespace wasm;
 
@@ -45,7 +45,7 @@ std::string runCommand(std::string command) {
   std::string output;
   const int MAX_BUFFER = 1024;
   char buffer[MAX_BUFFER];
-  FILE *stream = popen(command.c_str(), "r");
+  FILE* stream = popen(command.c_str(), "r");
   while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
     output.append(buffer);
   }
@@ -81,64 +81,124 @@ int main(int argc, const char* argv[]) {
 
   OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
-      .add("--output", "-o", "Output file (stdout if not specified)",
-           Options::Arguments::One,
-           [](Options* o, const std::string& argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
-      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& argument) { emitBinary = false; })
-      .add("--debuginfo", "-g", "Emit names section and debug info",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { debugInfo = true; })
-      .add("--converge", "-c", "Run passes to convergence, continuing while binary size decreases",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { converge = true; })
-      .add("--fuzz-exec-before", "-feh", "Execute functions before optimization, helping fuzzing find bugs",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzExecBefore = true; })
-      .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzExecBefore = fuzzExecAfter = true; })
-      .add("--fuzz-binary", "-fb", "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find binary format bugs",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzBinary = true; })
-      .add("--extra-fuzz-command", "-efc", "An extra command to run on the output before and after optimizing. The output is compared between the two, and an error occurs if they are not equal",
-           Options::Arguments::One,
-           [&](Options *o, const std::string& arguments) { extraFuzzCommand = arguments; })
-      .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { translateToFuzz = true; })
-      .add("--fuzz-passes", "-fp", "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz (it picks the passes from the input)",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzPasses = true; })
-      .add("--no-fuzz-nans", "", "don't emit NaNs when fuzzing, and remove them at runtime as well (helps avoid nondeterminism between VMs)",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzNaNs = false; })
-      .add("--no-fuzz-memory", "", "don't emit memory ops when fuzzing",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzMemory = false; })
-      .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
-           Options::Arguments::One,
-           [&](Options *o, const std::string& arguments) { emitJSWrapper = arguments; })
-      .add("--emit-spec-wrapper", "-esw", "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, useful for fuzzing",
-           Options::Arguments::One,
-           [&](Options *o, const std::string& arguments) { emitSpecWrapper = arguments; })
-      .add("--input-source-map", "-ism", "Consume source map from the specified file",
-           Options::Arguments::One,
-           [&inputSourceMapFilename](Options *o, const std::string& argument) { inputSourceMapFilename = argument; })
-      .add("--output-source-map", "-osm", "Emit source map to the specified file",
-           Options::Arguments::One,
-           [&outputSourceMapFilename](Options *o, const std::string& argument) { outputSourceMapFilename = argument; })
-      .add("--output-source-map-url", "-osu", "Emit specified string as source map URL",
-           Options::Arguments::One,
-           [&outputSourceMapUrl](Options *o, const std::string& argument) { outputSourceMapUrl = argument; })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options* o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
+    .add("--output",
+         "-o",
+         "Output file (stdout if not specified)",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["output"] = argument;
+           Colors::disable();
+         })
+    .add("--emit-text",
+         "-S",
+         "Emit text instead of binary for the output file",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { emitBinary = false; })
+    .add("--debuginfo",
+         "-g",
+         "Emit names section and debug info",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { debugInfo = true; })
+    .add("--converge",
+         "-c",
+         "Run passes to convergence, continuing while binary size decreases",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { converge = true; })
+    .add(
+      "--fuzz-exec-before",
+      "-feh",
+      "Execute functions before optimization, helping fuzzing find bugs",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { fuzzExecBefore = true; })
+    .add("--fuzz-exec",
+         "-fe",
+         "Execute functions before and after optimization, helping fuzzing "
+         "find bugs",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) {
+           fuzzExecBefore = fuzzExecAfter = true;
+         })
+    .add("--fuzz-binary",
+         "-fb",
+         "Convert to binary and back after optimizations and before fuzz-exec, "
+         "helping fuzzing find binary format bugs",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { fuzzBinary = true; })
+    .add("--extra-fuzz-command",
+         "-efc",
+         "An extra command to run on the output before and after optimizing. "
+         "The output is compared between the two, and an error occurs if they "
+         "are not equal",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& arguments) {
+           extraFuzzCommand = arguments;
+         })
+    .add(
+      "--translate-to-fuzz",
+      "-ttf",
+      "Translate the input into a valid wasm module *somehow*, useful for "
+      "fuzzing",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { translateToFuzz = true; })
+    .add("--fuzz-passes",
+         "-fp",
+         "Pick a random set of passes to run, useful for fuzzing. this depends "
+         "on translate-to-fuzz (it picks the passes from the input)",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { fuzzPasses = true; })
+    .add("--no-fuzz-nans",
+         "",
+         "don't emit NaNs when fuzzing, and remove them at runtime as well "
+         "(helps avoid nondeterminism between VMs)",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { fuzzNaNs = false; })
+    .add("--no-fuzz-memory",
+         "",
+         "don't emit memory ops when fuzzing",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { fuzzMemory = false; })
+    .add("--emit-js-wrapper",
+         "-ejw",
+         "Emit a JavaScript wrapper file that can run the wasm with some test "
+         "values, useful for fuzzing",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& arguments) {
+           emitJSWrapper = arguments;
+         })
+    .add("--emit-spec-wrapper",
+         "-esw",
+         "Emit a wasm spec interpreter wrapper file that can run the wasm with "
+         "some test values, useful for fuzzing",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& arguments) {
+           emitSpecWrapper = arguments;
+         })
+    .add("--input-source-map",
+         "-ism",
+         "Consume source map from the specified file",
+         Options::Arguments::One,
+         [&inputSourceMapFilename](Options* o, const std::string& argument) {
+           inputSourceMapFilename = argument;
+         })
+    .add("--output-source-map",
+         "-osm",
+         "Emit source map to the specified file",
+         Options::Arguments::One,
+         [&outputSourceMapFilename](Options* o, const std::string& argument) {
+           outputSourceMapFilename = argument;
+         })
+    .add("--output-source-map-url",
+         "-osu",
+         "Emit specified string as source map URL",
+         Options::Arguments::One,
+         [&outputSourceMapUrl](Options* o, const std::string& argument) {
+           outputSourceMapUrl = argument;
+         })
+    .add_positional("INFILE",
+                    Options::Arguments::One,
+                    [](Options* o, const std::string& argument) {
+                      o->extra["infile"] = argument;
+                    });
   options.parse(argc, argv);
 
   Module wasm;
@@ -159,7 +219,8 @@ int main(int argc, const char* argv[]) {
       std::cerr << '\n';
       Fatal() << "error in parsing wasm source map";
     } catch (std::bad_alloc&) {
-      Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
+      Fatal() << "error in building module, std::bad_alloc (possibly invalid "
+                 "request for silly amounts of memory)";
     }
 
     options.applyFeatures(wasm);
@@ -174,9 +235,7 @@ int main(int argc, const char* argv[]) {
     // translate-to-fuzz
     options.applyFeatures(wasm);
     TranslateToFuzzReader reader(wasm, options.extra["infile"]);
-    if (fuzzPasses) {
-      reader.pickPasses(options);
-    }
+    if (fuzzPasses) { reader.pickPasses(options); }
     reader.setAllowNaNs(fuzzNaNs);
     reader.setAllowMemory(fuzzMemory);
     reader.build();
@@ -197,9 +256,7 @@ int main(int argc, const char* argv[]) {
   }
 
   ExecutionResults results;
-  if (fuzzExecBefore) {
-    results.get(wasm);
-  }
+  if (fuzzExecBefore) { results.get(wasm); }
 
   if (emitJSWrapper.size() > 0) {
     std::ofstream outfile;
@@ -218,7 +275,9 @@ int main(int argc, const char* argv[]) {
   std::string firstOutput;
 
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
-    if (options.debug) std::cerr << "writing binary before opts, for extra fuzz command..." << std::endl;
+    if (options.debug)
+      std::cerr << "writing binary before opts, for extra fuzz command..."
+                << std::endl;
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
@@ -243,9 +302,7 @@ int main(int argc, const char* argv[]) {
     options.applyFeatures(other);
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(other);
-      if (!valid) {
-        WasmPrinter::printModule(&other);
-      }
+      if (!valid) { WasmPrinter::printModule(&other); }
       assert(valid);
     }
     curr = &other;
@@ -256,11 +313,8 @@ int main(int argc, const char* argv[]) {
     auto runPasses = [&]() {
       options.runPasses(*curr);
       if (options.passOptions.validate) {
-        bool valid =
-            WasmValidator().validate(*curr);
-        if (!valid) {
-          WasmPrinter::printModule(&*curr);
-        }
+        bool valid = WasmValidator().validate(*curr);
+        if (!valid) { WasmPrinter::printModule(&*curr); }
         assert(valid);
       }
     };
@@ -276,7 +330,9 @@ int main(int argc, const char* argv[]) {
       };
       auto lastSize = getSize();
       while (1) {
-        if (options.debug) std::cerr << "running iteration for convergence (" << lastSize << ")...\n";
+        if (options.debug)
+          std::cerr << "running iteration for convergence (" << lastSize
+                    << ")...\n";
         runPasses();
         auto currSize = getSize();
         if (currSize >= lastSize) break;
@@ -285,9 +341,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (fuzzExecAfter) {
-    results.check(*curr);
-  }
+  if (fuzzExecAfter) { results.check(*curr); }
 
   if (options.extra.count("output") == 0) {
     std::cerr << "(no output file specified, not emitting output)\n";
@@ -305,7 +359,8 @@ int main(int argc, const char* argv[]) {
 
     if (extraFuzzCommand.size() > 0) {
       auto secondOutput = runCommand(extraFuzzCommand);
-      std::cout << "[extra-fuzz-command second output:]\n" << firstOutput << '\n';
+      std::cout << "[extra-fuzz-command second output:]\n"
+                << firstOutput << '\n';
       if (firstOutput != secondOutput) {
         std::cerr << "extra fuzz command output differs\n";
         abort();

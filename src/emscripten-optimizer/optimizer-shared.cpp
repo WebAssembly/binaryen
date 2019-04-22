@@ -23,14 +23,14 @@ using namespace cashew;
 
 IString ASM_FLOAT_ZERO;
 
-IString SIMD_INT8X16_CHECK("SIMD_Int8x16_check"),
-        SIMD_INT16X8_CHECK("SIMD_Int16x8_check"),
-        SIMD_INT32X4_CHECK("SIMD_Int32x4_check"),
-        SIMD_FLOAT32X4_CHECK("SIMD_Float32x4_check"),
-        SIMD_FLOAT64X2_CHECK("SIMD_Float64x2_check"),
-        TEMP_RET0("tempRet0");
+IString SIMD_INT8X16_CHECK("SIMD_Int8x16_check");
+IString SIMD_INT16X8_CHECK("SIMD_Int16x8_check");
+IString SIMD_INT32X4_CHECK("SIMD_Int32x4_check");
+IString SIMD_FLOAT32X4_CHECK("SIMD_Float32x4_check");
+IString SIMD_FLOAT64X2_CHECK("SIMD_Float64x2_check");
+IString TEMP_RET0("tempRet0");
 
-int parseInt(const char *str) {
+int parseInt(const char* str) {
   int ret = *str - '0';
   while (*(++str)) {
     ret *= 10;
@@ -39,7 +39,7 @@ int parseInt(const char *str) {
   return ret;
 }
 
-HeapInfo parseHeap(const char *name) {
+HeapInfo parseHeap(const char* name) {
   HeapInfo ret;
   if (name[0] != 'H' || name[1] != 'E' || name[2] != 'A' || name[3] != 'P') {
     ret.valid = false;
@@ -53,7 +53,11 @@ HeapInfo parseHeap(const char *name) {
   return ret;
 }
 
-AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFround, bool allowI64) {
+AsmType detectType(Ref node,
+                   AsmData* asmData,
+                   bool inVarDef,
+                   IString minifiedFround,
+                   bool allowI64) {
   if (node->isString()) {
     if (asmData) {
       AsmType ret = asmData->getType(node->getCString());
@@ -64,9 +68,12 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
       if (node == TEMP_RET0) return ASM_INT;
       return ASM_NONE;
     }
-    // We are in a variable definition, where Math_fround(0) optimized into a global constant becomes f0 = Math_fround(0)
-    if (ASM_FLOAT_ZERO.isNull()) ASM_FLOAT_ZERO = node->getIString();
-    else assert(node == ASM_FLOAT_ZERO);
+    // We are in a variable definition, where Math_fround(0) optimized into a
+    // global constant becomes f0 = Math_fround(0)
+    if (ASM_FLOAT_ZERO.isNull())
+      ASM_FLOAT_ZERO = node->getIString();
+    else
+      assert(node == ASM_FLOAT_ZERO);
     return ASM_FLOAT;
   }
   if (node->isNumber()) {
@@ -78,8 +85,11 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
       if (node[0] == UNARY_PREFIX) {
         switch (node[1]->getCString()[0]) {
           case '+': return ASM_DOUBLE;
-          case '-': return detectType(node[2], asmData, inVarDef, minifiedFround, allowI64);
-          case '!': case '~': return ASM_INT;
+          case '-':
+            return detectType(
+              node[2], asmData, inVarDef, minifiedFround, allowI64);
+          case '!':
+          case '~': return ASM_INT;
         }
         break;
       }
@@ -89,13 +99,20 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
       if (node[0] == CALL) {
         if (node[1]->isString()) {
           IString name = node[1]->getIString();
-          if (name == MATH_FROUND || name == minifiedFround) return ASM_FLOAT;
-          else if (allowI64 && (name == INT64 || name == INT64_CONST)) return ASM_INT64;
-          else if (name == SIMD_FLOAT32X4 || name == SIMD_FLOAT32X4_CHECK) return ASM_FLOAT32X4;
-          else if (name == SIMD_FLOAT64X2 || name == SIMD_FLOAT64X2_CHECK) return ASM_FLOAT64X2;
-          else if (name == SIMD_INT8X16   || name == SIMD_INT8X16_CHECK) return ASM_INT8X16;
-          else if (name == SIMD_INT16X8   || name == SIMD_INT16X8_CHECK) return ASM_INT16X8;
-          else if (name == SIMD_INT32X4   || name == SIMD_INT32X4_CHECK) return ASM_INT32X4;
+          if (name == MATH_FROUND || name == minifiedFround)
+            return ASM_FLOAT;
+          else if (allowI64 && (name == INT64 || name == INT64_CONST))
+            return ASM_INT64;
+          else if (name == SIMD_FLOAT32X4 || name == SIMD_FLOAT32X4_CHECK)
+            return ASM_FLOAT32X4;
+          else if (name == SIMD_FLOAT64X2 || name == SIMD_FLOAT64X2_CHECK)
+            return ASM_FLOAT64X2;
+          else if (name == SIMD_INT8X16 || name == SIMD_INT8X16_CHECK)
+            return ASM_INT8X16;
+          else if (name == SIMD_INT16X8 || name == SIMD_INT16X8_CHECK)
+            return ASM_INT16X8;
+          else if (name == SIMD_INT32X4 || name == SIMD_INT32X4_CHECK)
+            return ASM_INT32X4;
         }
         return ASM_NONE;
       } else if (node[0] == CONDITIONAL) {
@@ -106,10 +123,20 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
     case 'b': {
       if (node[0] == BINARY) {
         switch (node[1]->getCString()[0]) {
-          case '+': case '-':
-          case '*': case '/': case '%': return detectType(node[2], asmData, inVarDef, minifiedFround, allowI64);
-          case '|': case '&': case '^': case '<': case '>': // handles <<, >>, >>=, <=, >=
-          case '=': case '!': { // handles ==, !=
+          case '+':
+          case '-':
+          case '*':
+          case '/':
+          case '%':
+            return detectType(
+              node[2], asmData, inVarDef, minifiedFround, allowI64);
+          case '|':
+          case '&':
+          case '^':
+          case '<':
+          case '>': // handles <<, >>, >>=, <=, >=
+          case '=':
+          case '!': { // handles ==, !=
             return ASM_INT;
           }
         }
@@ -128,8 +155,8 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
       break;
     }
   }
-  //dump("horrible", node);
-  //assert(0);
+  // dump("horrible", node);
+  // assert(0);
   return ASM_NONE;
 }
 
@@ -140,9 +167,7 @@ static void abort_on(Ref node) {
 }
 
 AsmSign detectSign(Ref node, IString minifiedFround) {
-  if (node->isString()) {
-    return ASM_FLEXIBLE;
-  }
+  if (node->isString()) { return ASM_FLEXIBLE; }
   if (node->isNumber()) {
     double value = node->getNumber();
     if (value < 0) return ASM_SIGNED;
@@ -157,9 +182,17 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
       case '>': {
         if (op == TRSHIFT) return ASM_UNSIGNED;
       } // fallthrough
-      case '|': case '&': case '^': case '<': case '=': case '!': return ASM_SIGNED;
-      case '+': case '-': return ASM_FLEXIBLE;
-      case '*': case '/': case '%': return ASM_NONSIGNED; // without a coercion, these are double
+      case '|':
+      case '&':
+      case '^':
+      case '<':
+      case '=':
+      case '!': return ASM_SIGNED;
+      case '+':
+      case '-': return ASM_FLEXIBLE;
+      case '*':
+      case '/':
+      case '%': return ASM_NONSIGNED; // without a coercion, these are double
       default: abort_on(node);
     }
   } else if (type == UNARY_PREFIX) {
@@ -173,7 +206,9 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
   } else if (type == CONDITIONAL) {
     return detectSign(node[2], minifiedFround);
   } else if (type == CALL) {
-    if (node[1]->isString() && (node[1] == MATH_FROUND || node[1] == minifiedFround)) return ASM_NONSIGNED;
+    if (node[1]->isString() &&
+        (node[1] == MATH_FROUND || node[1] == minifiedFround))
+      return ASM_NONSIGNED;
   } else if (type == SEQ) {
     return detectSign(node[2], minifiedFround);
   }
@@ -184,7 +219,9 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
 Ref makeAsmCoercedZero(AsmType type) {
   switch (type) {
     case ASM_INT: return ValueBuilder::makeNum(0); break;
-    case ASM_DOUBLE: return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeNum(0)); break;
+    case ASM_DOUBLE:
+      return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeNum(0));
+      break;
     case ASM_FLOAT: {
       if (!ASM_FLOAT_ZERO.isNull()) {
         return ValueBuilder::makeName(ASM_FLOAT_ZERO);
@@ -194,23 +231,56 @@ Ref makeAsmCoercedZero(AsmType type) {
       break;
     }
     case ASM_FLOAT32X4: {
-      return ValueBuilder::makeCall(SIMD_FLOAT32X4, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      return ValueBuilder::makeCall(SIMD_FLOAT32X4,
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0));
       break;
     }
     case ASM_FLOAT64X2: {
-      return ValueBuilder::makeCall(SIMD_FLOAT64X2, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      return ValueBuilder::makeCall(
+        SIMD_FLOAT64X2, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
       break;
     }
     case ASM_INT8X16: {
-      return ValueBuilder::makeCall(SIMD_INT8X16, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      return ValueBuilder::makeCall(SIMD_INT8X16,
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0));
       break;
     }
     case ASM_INT16X8: {
-      return ValueBuilder::makeCall(SIMD_INT16X8, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      return ValueBuilder::makeCall(SIMD_INT16X8,
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0));
       break;
     }
     case ASM_INT32X4: {
-      return ValueBuilder::makeCall(SIMD_INT32X4, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
+      return ValueBuilder::makeCall(SIMD_INT32X4,
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0),
+                                    ValueBuilder::makeNum(0));
       break;
     }
     default: assert(0);
@@ -220,20 +290,27 @@ Ref makeAsmCoercedZero(AsmType type) {
 
 Ref makeAsmCoercion(Ref node, AsmType type) {
   switch (type) {
-    case ASM_INT: return ValueBuilder::makeBinary(node, OR, ValueBuilder::makeNum(0));
+    case ASM_INT:
+      return ValueBuilder::makeBinary(node, OR, ValueBuilder::makeNum(0));
     case ASM_DOUBLE: return ValueBuilder::makeUnary(PLUS, node);
     case ASM_FLOAT: return ValueBuilder::makeCall(MATH_FROUND, node);
-    case ASM_FLOAT32X4: return ValueBuilder::makeCall(SIMD_FLOAT32X4_CHECK, node);
-    case ASM_FLOAT64X2: return ValueBuilder::makeCall(SIMD_FLOAT64X2_CHECK, node);
+    case ASM_FLOAT32X4:
+      return ValueBuilder::makeCall(SIMD_FLOAT32X4_CHECK, node);
+    case ASM_FLOAT64X2:
+      return ValueBuilder::makeCall(SIMD_FLOAT64X2_CHECK, node);
     case ASM_INT8X16: return ValueBuilder::makeCall(SIMD_INT8X16_CHECK, node);
     case ASM_INT16X8: return ValueBuilder::makeCall(SIMD_INT16X8_CHECK, node);
     case ASM_INT32X4: return ValueBuilder::makeCall(SIMD_INT32X4_CHECK, node);
     case ASM_NONE:
-    default: return node; // non-validating code, emit nothing XXX this is dangerous, we should only allow this when we know we are not validating
+    default:
+      // non-validating code, emit nothing XXX this is dangerous, we should only
+      // allow this when we know we are not validating
+      return node; 
   }
 }
 
 Ref makeSigning(Ref node, AsmSign sign) {
   assert(sign == ASM_SIGNED || sign == ASM_UNSIGNED);
-  return ValueBuilder::makeBinary(node, sign == ASM_SIGNED ? OR : TRSHIFT, ValueBuilder::makeNum(0));
+  return ValueBuilder::makeBinary(
+    node, sign == ASM_SIGNED ? OR : TRSHIFT, ValueBuilder::makeNum(0));
 }

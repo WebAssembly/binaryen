@@ -35,15 +35,15 @@
 //    directly, without the need for *-propagate techniques.
 //
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
+#include "dataflow/graph.h"
+#include "dataflow/node.h"
+#include "dataflow/utils.h"
 #include "ir/flat.h"
 #include "ir/local-graph.h"
 #include "ir/utils.h"
-#include "dataflow/node.h"
-#include "dataflow/graph.h"
-#include "dataflow/utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -62,10 +62,9 @@ struct UseFinder {
   // (or rather, their values) that contain a get that uses that value.
   // There may also be non-set uses of the value, for example in a drop
   // or a return. We represent those with a nullptr, meaning "other".
-  std::vector<Expression*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
-    if (debug() >= 2) {
-      std::cout << "getUses\n" << origin << '\n';
-    }
+  std::vector<Expression*>
+  getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
+    if (debug() >= 2) { std::cout << "getUses\n" << origin << '\n'; }
     std::vector<Expression*> ret;
     auto* set = graph.getSet(origin);
     if (!set) {
@@ -80,7 +79,10 @@ struct UseFinder {
   // There may be loops of sets with copies between them.
   std::unordered_set<SetLocal*> seenSets;
 
-  void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std::vector<Expression*>& ret) {
+  void addSetUses(SetLocal* set,
+                  Graph& graph,
+                  LocalGraph& localGraph,
+                  std::vector<Expression*>& ret) {
     // If already handled, nothing to do here.
     if (seenSets.count(set)) return;
     seenSets.insert(set);
@@ -104,9 +106,7 @@ struct UseFinder {
           // Just ignore it.
         } else {
           ret.push_back(nullptr);
-          if (debug() >= 2) {
-            std::cout << "add nullptr\n";
-          }
+          if (debug() >= 2) { std::cout << "add nullptr\n"; }
         }
       } else {
         // This get is the child of a set.
@@ -122,9 +122,7 @@ struct UseFinder {
           // Not a copy.
           auto* value = subSet->value;
           ret.push_back(value);
-          if (debug() >= 2) {
-            std::cout << "add a value\n" << value << '\n';
-          }
+          if (debug() >= 2) { std::cout << "add a value\n" << value << '\n'; }
         }
       }
     }
@@ -165,19 +163,20 @@ struct Trace {
   // The local information graph. Used to check if a node has external uses.
   LocalGraph& localGraph;
 
-  Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren, LocalGraph& localGraph) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren), localGraph(localGraph) {
+  Trace(Graph& graph,
+        Node* toInfer,
+        std::unordered_set<Node*>& excludeAsChildren,
+        LocalGraph& localGraph)
+    : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren),
+      localGraph(localGraph) {
     if (debug() >= 2) {
       std::cout << "\nstart a trace (in " << graph.func->name << ")\n";
     }
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
-    if (depthLimitStr) {
-      depthLimit = atoi(depthLimitStr);
-    }
+    if (depthLimitStr) { depthLimit = atoi(depthLimitStr); }
     auto* totalLimitStr = getenv("BINARYEN_SOUPERIFY_TOTAL_LIMIT");
-    if (totalLimitStr) {
-      totalLimit = atoi(totalLimitStr);
-    }
+    if (totalLimitStr) { totalLimit = atoi(totalLimitStr); }
     // Pull in all the dependencies, starting from the value itself.
     add(toInfer, 0);
     if (bad) return;
@@ -209,22 +208,16 @@ struct Trace {
     // if it is inside an if's true branch, we can add a path-condition
     // for that.
     auto iter = graph.nodeParentMap.find(toInfer);
-    if (iter != graph.nodeParentMap.end()) {
-      addPath(toInfer, iter->second);
-    }
+    if (iter != graph.nodeParentMap.end()) { addPath(toInfer, iter->second); }
   }
 
   Node* add(Node* node, size_t depth) {
     depth++;
     // If replaced, return the replacement.
     auto iter = replacements.find(node);
-    if (iter != replacements.end()) {
-      return iter->second.get();
-    }
+    if (iter != replacements.end()) { return iter->second.get(); }
     // If already added, nothing more to do.
-    if (addedNodes.find(node) != addedNodes.end()) {
-      return node;
-    }
+    if (addedNodes.find(node) != addedNodes.end()) { return node; }
     switch (node->type) {
       case Node::Type::Var: {
         break; // nothing more to add
@@ -232,13 +225,12 @@ struct Trace {
       case Node::Type::Expr: {
         // If this is a Const, it's not an instruction - nothing to add,
         // it's just a value.
-        if (node->expr->is<Const>()) {
-          return node;
-        }
+        if (node->expr->is<Const>()) { return node; }
         // If we've gone too deep, emit a var instead.
         // Do the same if this is a node we should exclude from traces.
         if (depth >= depthLimit || nodes.size() >= totalLimit ||
-            (node != toInfer && excludeAsChildren.find(node) != excludeAsChildren.end())) {
+            (node != toInfer &&
+             excludeAsChildren.find(node) != excludeAsChildren.end())) {
           auto type = node->getWasmType();
           assert(isConcreteType(type));
           auto* var = Node::makeVar(type);
@@ -319,7 +311,9 @@ struct Trace {
 
   // curr is a child of parent, and parent has a Block which we are
   // give as 'node'. Add a path condition for reaching the child.
-  void addPathTo(Expression* parent, Expression* curr, std::vector<Node*> conditions) {
+  void addPathTo(Expression* parent,
+                 Expression* curr,
+                 std::vector<Node*> conditions) {
     if (auto* iff = parent->dynCast<If>()) {
       Index index;
       if (curr == iff->ifTrue) {
@@ -340,9 +334,7 @@ struct Trace {
     }
   }
 
-  bool isBad() {
-    return bad;
-  }
+  bool isBad() { return bad; }
 
   static bool isTraceable(Node* node) {
     if (!node->origin) {
@@ -365,9 +357,7 @@ struct Trace {
     std::unordered_set<Expression*> origins;
     for (auto& node : nodes) {
       if (auto* origin = node->origin) {
-        if (debug() >= 2) {
-          std::cout << "note origin " << origin << '\n';
-        }
+        if (debug() >= 2) { std::cout << "note origin " << origin << '\n'; }
         origins.insert(origin);
       }
     }
@@ -407,7 +397,8 @@ struct Printer {
     std::cout << "\n; start LHS (in " << graph.func->name << ")\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
-      if (!node->isCond()) { // pcs and blockpcs are not instructions and do not need to be indexed
+      // pcs and blockpcs are not instructions and do not need to be indexed
+      if (!node->isCond()) {
         auto index = indexing.size();
         indexing[node] = index;
       }
@@ -427,9 +418,7 @@ struct Printer {
 
   Node* getMaybeReplaced(Node* node) {
     auto iter = trace.replacements.find(node);
-    if (iter != trace.replacements.end()) {
-      return iter->second.get();
-    }
+    if (iter != trace.replacements.end()) { return iter->second.get(); }
     return node;
   }
 
@@ -440,7 +429,8 @@ struct Printer {
     assert(node);
     switch (node->type) {
       case Node::Type::Var: {
-        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType) << " = var";
+        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType)
+                  << " = var";
         break; // nothing more to add
       }
       case Node::Type::Expr: {
@@ -464,18 +454,21 @@ struct Printer {
         break;
       }
       case Node::Type::Cond: {
-        std::cout << "blockpc %" << indexing[node->getValue(0)] << ' ' << node->index << ' ';
+        std::cout << "blockpc %" << indexing[node->getValue(0)] << ' '
+                  << node->index << ' ';
         printInternal(node->getValue(1));
         std::cout << " 1:i1";
         break;
       }
       case Node::Type::Block: {
-        std::cout << "%" << indexing[node] << " = block " << node->values.size();
+        std::cout << "%" << indexing[node] << " = block "
+                  << node->values.size();
         break;
       }
       case Node::Type::Zext: {
         auto* child = node->getValue(0);
-        std::cout << "%" << indexing[node] << ':' << printType(child->getWasmType());
+        std::cout << "%" << indexing[node] << ':'
+                  << printType(child->getWasmType());
         std::cout << " = zext ";
         printInternal(child);
         break;
@@ -487,7 +480,8 @@ struct Printer {
       default: WASM_UNREACHABLE();
     }
     if (node->isExpr() || node->isPhi()) {
-      if (node->origin != trace.toInfer->origin && trace.hasExternalUses.count(node) > 0) {
+      if (node->origin != trace.toInfer->origin &&
+          trace.hasExternalUses.count(node) > 0) {
         std::cout << " (hasExternalUses)";
         printedHasExternalUses = true;
       }
@@ -523,9 +517,9 @@ struct Printer {
     } else if (auto* unary = curr->dynCast<Unary>()) {
       switch (unary->op) {
         case ClzInt32:
-        case ClzInt64:    std::cout << "ctlz";  break;
+        case ClzInt64: std::cout << "ctlz"; break;
         case CtzInt32:
-        case CtzInt64:    std::cout << "cttz";  break;
+        case CtzInt64: std::cout << "cttz"; break;
         case PopcntInt32:
         case PopcntInt64: std::cout << "ctpop"; break;
         default: WASM_UNREACHABLE();
@@ -536,11 +530,11 @@ struct Printer {
     } else if (auto* binary = curr->dynCast<Binary>()) {
       switch (binary->op) {
         case AddInt32:
-        case AddInt64:  std::cout << "add";  break;
+        case AddInt64: std::cout << "add"; break;
         case SubInt32:
-        case SubInt64:  std::cout << "sub";  break;
+        case SubInt64: std::cout << "sub"; break;
         case MulInt32:
-        case MulInt64:  std::cout << "mul";  break;
+        case MulInt64: std::cout << "mul"; break;
         case DivSInt32:
         case DivSInt64: std::cout << "sdiv"; break;
         case DivUInt32:
@@ -550,13 +544,13 @@ struct Printer {
         case RemUInt32:
         case RemUInt64: std::cout << "urem"; break;
         case AndInt32:
-        case AndInt64:  std::cout << "and";  break;
+        case AndInt64: std::cout << "and"; break;
         case OrInt32:
-        case OrInt64:   std::cout << "or";   break;
+        case OrInt64: std::cout << "or"; break;
         case XorInt32:
-        case XorInt64:  std::cout << "xor";  break;
+        case XorInt64: std::cout << "xor"; break;
         case ShlInt32:
-        case ShlInt64:  std::cout << "shl";  break;
+        case ShlInt64: std::cout << "shl"; break;
         case ShrUInt32:
         case ShrUInt64: std::cout << "lshr"; break;
         case ShrSInt32:
@@ -566,17 +560,17 @@ struct Printer {
         case RotRInt32:
         case RotRInt64: std::cout << "rotr"; break;
         case EqInt32:
-        case EqInt64:   std::cout << "eq";   break;
+        case EqInt64: std::cout << "eq"; break;
         case NeInt32:
-        case NeInt64:   std::cout << "ne";   break;
+        case NeInt64: std::cout << "ne"; break;
         case LtSInt32:
-        case LtSInt64:  std::cout << "slt";  break;
+        case LtSInt64: std::cout << "slt"; break;
         case LtUInt32:
-        case LtUInt64:  std::cout << "ult";  break;
+        case LtUInt64: std::cout << "ult"; break;
         case LeSInt32:
-        case LeSInt64:  std::cout << "sle";  break;
+        case LeSInt64: std::cout << "sle"; break;
         case LeUInt32:
-        case LeUInt64:  std::cout << "ule";  break;
+        case LeUInt64: std::cout << "ule"; break;
         default: WASM_UNREACHABLE();
       }
       std::cout << ' ';
@@ -611,16 +605,16 @@ struct Printer {
     // If an input was replaced with a var, then we should not
     // look into it, it's not suspiciously trivial.
     for (auto* value : node->values) {
-      if (value != getMaybeReplaced(value)) {
-        return;
-      }
+      if (value != getMaybeReplaced(value)) { return; }
     }
     if (allInputsIdentical(node)) {
-      std::cout << "^^ suspicious identical inputs! missing optimization in " << graph.func->name << "? ^^\n";
+      std::cout << "^^ suspicious identical inputs! missing optimization in "
+                << graph.func->name << "? ^^\n";
       return;
     }
     if (!node->isPhi() && allInputsConstant(node)) {
-      std::cout << "^^ suspicious constant inputs! missing optimization in " << graph.func->name << "? ^^\n";
+      std::cout << "^^ suspicious constant inputs! missing optimization in "
+                << graph.func->name << "? ^^\n";
       return;
     }
   }
@@ -653,14 +647,13 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
         auto* node = nodePtr.get();
         if (node->origin) {
           // TODO: work for identical origins could be saved
-          auto uses = DataFlow::UseFinder().getUses(node->origin, graph, localGraph);
+          auto uses =
+            DataFlow::UseFinder().getUses(node->origin, graph, localGraph);
           if (debug() >= 2) {
             std::cout << "following node has " << uses.size() << " uses\n";
             dump(node, std::cout);
           }
-          if (uses.size() > 1) {
-            excludeAsChildren.insert(node);
-          }
+          if (uses.size() > 1) { excludeAsChildren.insert(node); }
         }
       }
     }
@@ -672,21 +665,15 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
         DataFlow::Trace trace(graph, node, excludeAsChildren, localGraph);
         if (!trace.isBad()) {
           DataFlow::Printer printer(graph, trace);
-          if (singleUseOnly) {
-            assert(!printer.printedHasExternalUses);
-          }
+          if (singleUseOnly) { assert(!printer.printedHasExternalUses); }
         }
       }
     }
   }
 };
 
-Pass *createSouperifyPass() {
-  return new Souperify(false);
-}
+Pass* createSouperifyPass() { return new Souperify(false); }
 
-Pass *createSouperifySingleUsePass() {
-  return new Souperify(true);
-}
+Pass* createSouperifySingleUsePass() { return new Souperify(true); }
 
 } // namespace wasm

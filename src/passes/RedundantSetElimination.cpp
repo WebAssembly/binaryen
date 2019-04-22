@@ -33,13 +33,13 @@
 // here).
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
 #include <cfg/cfg-traversal.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
+#include <pass.h>
 #include <support/unique_deferring_queue.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -57,7 +57,10 @@ struct Info {
   std::vector<Expression**> setps;
 };
 
-struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>> {
+struct RedundantSetElimination
+  : public WalkerPass<CFGWalker<RedundantSetElimination,
+                                Visitor<RedundantSetElimination>,
+                                Info>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RedundantSetElimination(); }
@@ -66,7 +69,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   // cfg traversal work
 
-  static void doVisitSetLocal(RedundantSetElimination* self, Expression** currp) {
+  static void doVisitSetLocal(RedundantSetElimination* self,
+                              Expression** currp) {
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.setps.push_back(currp);
     }
@@ -77,7 +81,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
     // create the CFG by walking the IR
-    CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>::doWalkFunction(func);
+    CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>::
+      doWalkFunction(func);
     // flow values across blocks
     flowValues(func);
     // remove redundant sets
@@ -88,8 +93,10 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   Index nextValue = 1; // 0 is reserved for the "unseen value"
   std::unordered_map<Literal, Index> literalValues; // each constant has a value
-  std::unordered_map<Expression*, Index> expressionValues; // each value can have a value
-  std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>> blockMergeValues; // each block has values for each merge
+  std::unordered_map<Expression*, Index>
+    expressionValues; // each value can have a value
+  std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>>
+    blockMergeValues; // each block has values for each merge
 
   Index getUnseenValue() { // we haven't seen this location yet
     return 0;
@@ -103,9 +110,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   Index getLiteralValue(Literal lit) {
     auto iter = literalValues.find(lit);
-    if (iter != literalValues.end()) {
-      return iter->second;
-    }
+    if (iter != literalValues.end()) { return iter->second; }
 #ifdef RSE_DEBUG
     std::cout << "new literal value for " << lit << '\n';
 #endif
@@ -114,9 +119,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   Index getExpressionValue(Expression* expr) {
     auto iter = expressionValues.find(expr);
-    if (iter != expressionValues.end()) {
-      return iter->second;
-    }
+    if (iter != expressionValues.end()) { return iter->second; }
 #ifdef RSE_DEBUG
     std::cout << "new expr value for " << expr << '\n';
 #endif
@@ -126,11 +129,10 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   Index getBlockMergeValue(BasicBlock* block, Index index) {
     auto& mergeValues = blockMergeValues[block];
     auto iter = mergeValues.find(index);
-    if (iter != mergeValues.end()) {
-      return iter->second;
-    }
+    if (iter != mergeValues.end()) { return iter->second; }
 #ifdef RSE_DEBUG
-    std::cout << "new block-merge value for " << block << " : " << index << '\n';
+    std::cout << "new block-merge value for " << block << " : " << index
+              << '\n';
 #endif
     return mergeValues[index] = getUniqueValue();
   }
@@ -172,7 +174,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 #endif
             start[i] = getUniqueValue();
           } else {
-            start[i] = getLiteralValue(Literal::makeZero(func->getLocalType(i)));
+            start[i] =
+              getLiteralValue(Literal::makeZero(func->getLocalType(i)));
           }
         }
       } else {
@@ -248,9 +251,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             //    Not that we don't trust this proof, but the convergence
             //    property (value numbers at block ends do not decrease) is
             //    verified later down.
-            if (isBlockMergeValue(curr, i, old)) {
-              continue;
-            }
+            if (isBlockMergeValue(curr, i, old)) { continue; }
             auto iter = in.begin();
             auto value = (*iter)->contents.end[i];
             iter++;
@@ -274,7 +275,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 #ifdef RSE_DEBUG
       dump("start", curr->contents.start);
 #endif
-      // flow values through it, then add those we can reach if they need an update.
+      // flow values through it, then add those we can reach if they need an
+      // update.
       auto currValues = curr->contents.start; // we'll modify this as we go
       auto& setps = curr->contents.setps;
       for (auto** setp : setps) {
@@ -351,7 +353,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
       }
     }
     for (Index i = 0; i < block->contents.start.size(); i++) {
-      std::cout << "  start[" << i << "] = " << block->contents.start[i] << '\n';
+      std::cout << "  start[" << i << "] = " << block->contents.start[i]
+                << '\n';
     }
     for (auto** setp : block->contents.setps) {
       std::cout << "  " << *setp << '\n';
@@ -370,7 +373,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
 } // namespace
 
-Pass *createRedundantSetEliminationPass() {
+Pass* createRedundantSetEliminationPass() {
   return new RedundantSetElimination();
 }
 

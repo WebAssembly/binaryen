@@ -17,7 +17,6 @@
 #include "asmjs/asmangle.h"
 #include <assert.h>
 
-
 namespace wasm {
 
 std::string asmangle(std::string name) {
@@ -49,10 +48,7 @@ std::string asmangle(std::string name) {
       break;
     }
     default: {
-      if (
-        !(ch >= 'a' && ch <= 'z') &&
-        !(ch >= 'A' && ch <= 'Z')
-      ) {
+      if (!(ch >= 'a' && ch <= 'z') && !(ch >= 'A' && ch <= 'Z')) {
         name = "$" + name.substr(1);
         mightBeKeyword = false;
       }
@@ -79,10 +75,7 @@ std::string asmangle(std::string name) {
         break;
       }
       default: {
-        if (
-          !(ch >= 'a' && ch <= 'z') &&
-          !(ch >= 'A' && ch <= 'Z')
-        ) {
+        if (!(ch >= 'a' && ch <= 'z') && !(ch >= 'A' && ch <= 'Z')) {
           name = name.substr(0, i) + "_" + name.substr(i + 1);
           mightBeKeyword = false;
         }
@@ -94,156 +87,93 @@ std::string asmangle(std::string name) {
   if (mightBeKeyword && len >= 2 && len <= 10) {
     switch (name[0]) {
       case 'a': {
-        if (name == "arguments") {
-          goto mangleKeyword;
-        }
+        if (name == "arguments") { goto mangleKeyword; }
         break;
       }
       case 'b': {
-        if (name == "break") {
-          goto mangleKeyword;
-        }
+        if (name == "break") { goto mangleKeyword; }
         break;
       }
       case 'c': {
-        if (
-          name == "case" ||
-          name == "continue" ||
-          name == "catch" ||
-          name == "const" ||
-          name == "class"
-        ) {
+        if (name == "case" || name == "continue" || name == "catch" ||
+            name == "const" || name == "class") {
           goto mangleKeyword;
         }
         break;
       }
       case 'd': {
-        if (
-          name == "do" ||
-          name == "default" ||
-          name == "debugger"
-        ) {
+        if (name == "do" || name == "default" || name == "debugger") {
           goto mangleKeyword;
         }
         break;
       }
       case 'e': {
-        if (
-          name == "else" ||
-          name == "enum" ||
-          name == "eval" || // to be sure
-          name == "export" ||
-          name == "extends"
-        ) {
+        if (name == "else" || name == "enum" || name == "eval" || // to be sure
+            name == "export" || name == "extends") {
           goto mangleKeyword;
         }
         break;
       }
       case 'f': {
-        if (
-          name == "for" ||
-          name == "false" ||
-          name == "finally" ||
-          name == "function"
-        ) {
+        if (name == "for" || name == "false" || name == "finally" ||
+            name == "function") {
           goto mangleKeyword;
         }
         break;
       }
       case 'i': {
-        if (
-          name == "if" ||
-          name == "in" ||
-          name == "import" ||
-          name == "interface" ||
-          name == "implements" ||
-          name == "instanceof"
-        ) {
+        if (name == "if" || name == "in" || name == "import" ||
+            name == "interface" || name == "implements" ||
+            name == "instanceof") {
           goto mangleKeyword;
         }
         break;
       }
       case 'l': {
-        if (name == "let") {
-          goto mangleKeyword;
-        }
+        if (name == "let") { goto mangleKeyword; }
         break;
       }
       case 'n': {
-        if (
-          name == "new" ||
-          name == "null"
-        ) {
-          goto mangleKeyword;
-        }
+        if (name == "new" || name == "null") { goto mangleKeyword; }
         break;
       }
       case 'p': {
-        if (
-          name == "public" ||
-          name == "package" ||
-          name == "private" ||
-          name == "protected"
-        ) {
+        if (name == "public" || name == "package" || name == "private" ||
+            name == "protected") {
           goto mangleKeyword;
         }
         break;
       }
       case 'r': {
-        if (name == "return") {
-          goto mangleKeyword;
-        }
+        if (name == "return") { goto mangleKeyword; }
         break;
       }
       case 's': {
-        if (
-          name == "super" ||
-          name == "static" ||
-          name == "switch"
-        ) {
+        if (name == "super" || name == "static" || name == "switch") {
           goto mangleKeyword;
         }
         break;
       }
       case 't': {
-        if (
-          name == "try" ||
-          name == "this" ||
-          name == "true" ||
-          name == "throw" ||
-          name == "typeof"
-        ) {
+        if (name == "try" || name == "this" || name == "true" ||
+            name == "throw" || name == "typeof") {
           goto mangleKeyword;
         }
         break;
       }
       case 'v': {
-        if (
-          name == "var" ||
-          name == "void"
-        ) {
-          goto mangleKeyword;
-        }
+        if (name == "var" || name == "void") { goto mangleKeyword; }
         break;
       }
       case 'w': {
-        if (
-          name == "with" ||
-          name == "while"
-        ) {
-          goto mangleKeyword;
-        }
+        if (name == "with" || name == "while") { goto mangleKeyword; }
         break;
       }
       case 'y': {
-        if (name == "yield") {
-          goto mangleKeyword;
-        }
+        if (name == "yield") { goto mangleKeyword; }
         break;
       }
-      mangleKeyword: {
-        name = name + "_";
-      }
+      mangleKeyword : { name = name + "_"; }
     }
   }
   return name;

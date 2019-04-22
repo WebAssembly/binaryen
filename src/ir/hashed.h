@@ -17,9 +17,9 @@
 #ifndef _wasm_ir_hashed_h
 #define _wasm_ir_hashed_h
 
+#include "ir/utils.h"
 #include "support/hash.h"
 #include "wasm.h"
-#include "ir/utils.h"
 
 namespace wasm {
 
@@ -29,18 +29,15 @@ struct HashedExpression {
   HashType hash;
 
   HashedExpression(Expression* expr) : expr(expr) {
-    if (expr) {
-      hash = ExpressionAnalyzer::hash(expr);
-    }
+    if (expr) { hash = ExpressionAnalyzer::hash(expr); }
   }
 
-  HashedExpression(const HashedExpression& other) : expr(other.expr), hash(other.hash) {}
+  HashedExpression(const HashedExpression& other)
+    : expr(other.expr), hash(other.hash) {}
 };
 
 struct ExpressionHasher {
-  HashType operator()(const HashedExpression value) const {
-    return value.hash;
-  }
+  HashType operator()(const HashedExpression value) const { return value.hash; }
 };
 
 struct ExpressionComparer {
@@ -51,7 +48,9 @@ struct ExpressionComparer {
 };
 
 template<typename T>
-class HashedExpressionMap : public std::unordered_map<HashedExpression, T, ExpressionHasher, ExpressionComparer> {
+class HashedExpressionMap
+  : public std::
+      unordered_map<HashedExpression, T, ExpressionHasher, ExpressionComparer> {
 };
 
 // A pass that hashes all functions
@@ -63,21 +62,19 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
 
   FunctionHasher(Map* output) : output(output) {}
 
-  FunctionHasher* create() override {
-    return new FunctionHasher(output);
-  }
+  FunctionHasher* create() override { return new FunctionHasher(output); }
 
   static Map createMap(Module* module) {
     Map hashes;
     for (auto& func : module->functions) {
-      hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
+      // ensure an entry for each function - we must not modify the map shape in
+      // parallel, just the values
+      hashes[func.get()] = 0;
     }
     return hashes;
   }
 
-  void doWalkFunction(Function* func) {
-    output->at(func) = hashFunction(func);
-  }
+  void doWalkFunction(Function* func) { output->at(func) = hashFunction(func); }
 
   static HashType hashFunction(Function* func) {
     HashType ret = 0;
@@ -90,7 +87,9 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
       ret = rehash(ret, (HashType)type);
     }
     ret = rehash(ret, (HashType)func->result);
-    ret = rehash(ret, HashType(func->type.is() ? std::hash<wasm::Name>{}(func->type) : HashType(0)));
+    ret = rehash(ret,
+                 HashType(func->type.is() ? std::hash<wasm::Name>{}(func->type)
+                                          : HashType(0)));
     ret = rehash(ret, (HashType)ExpressionAnalyzer::hash(func->body));
     return ret;
   }
@@ -102,4 +101,3 @@ private:
 } // namespace wasm
 
 #endif // _wasm_ir_hashed_h
-

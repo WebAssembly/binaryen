@@ -25,11 +25,11 @@
 #ifndef wasm_dataflow_graph_h
 #define wasm_dataflow_graph_h
 
-#include "wasm.h"
+#include "dataflow/node.h"
 #include "ir/abstract.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
-#include "dataflow/node.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -99,7 +99,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   struct FlowState {
     Locals locals;
     Node* condition;
-    FlowState(Locals locals, Node* condition) : locals(locals), condition(condition) {}
+    FlowState(Locals locals, Node* condition)
+      : locals(locals), condition(condition) {}
   };
 
   // API
@@ -141,9 +142,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
 
   Node* makeConst(Literal value) {
     auto iter = constantNodes.find(value);
-    if (iter!= constantNodes.end()) {
-      return iter->second;
-    }
+    if (iter != constantNodes.end()) { return iter->second; }
     // Create one for this literal.
     Builder builder(*module);
     auto* c = builder.makeConst(value);
@@ -152,9 +151,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return ret;
   }
 
-  Node* makeZero(wasm::Type type) {
-    return makeConst(Literal::makeZero(type));
-  }
+  Node* makeZero(wasm::Type type) { return makeConst(Literal::makeZero(type)); }
 
   // Add a new node to our list of owned nodes.
   Node* addNode(Node* node) {
@@ -171,29 +168,20 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     auto* expr = builder.makeBinary(
       Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne),
       makeUse(node),
-      makeUse(zero)
-    );
+      makeUse(zero));
     auto* check = addNode(Node::makeExpr(expr, origin));
     check->addValue(expandFromI1(node, origin));
     check->addValue(zero);
     return check;
   }
 
-  void setInUnreachable() {
-    locals.clear();
-  }
+  void setInUnreachable() { locals.clear(); }
 
-  void setInReachable() {
-    locals.resize(func->getNumLocals());
-  }
+  void setInReachable() { locals.resize(func->getNumLocals()); }
 
-  bool isInUnreachable() {
-    return isInUnreachable(locals);
-  }
+  bool isInUnreachable() { return isInUnreachable(locals); }
 
-  bool isInUnreachable(const Locals& state) {
-    return state.empty();
-  }
+  bool isInUnreachable(const Locals& state) { return state.empty(); }
 
   bool isInUnreachable(const FlowState& state) {
     return isInUnreachable(state.locals);
@@ -250,9 +238,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       if (iter != breakStates.end()) {
         auto& states = iter->second;
         // Add the state flowing out
-        if (!isInUnreachable()) {
-          states.push_back(locals);
-        }
+        if (!isInUnreachable()) { states.push_back(locals); }
         mergeBlock(states, locals);
       }
     }
@@ -345,26 +331,20 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
         // previous value (the value that is all we need instead of a phi).
         for (auto j = firstNodeFromLoop; j < nodes.size(); j++) {
           for (auto*& value : nodes[j].get()->values) {
-            if (value == var) {
-              value = proper;
-            }
+            if (value == var) { value = proper; }
           }
         }
         // Also undo in the current local state, which is flowing out
         // of the loop.
         for (auto*& node : locals) {
-          if (node == var) {
-            node = proper;
-          }
+          if (node == var) { node = proper; }
         }
       }
     }
     return &bad;
   }
   Node* doVisitBreak(Break* curr) {
-    if (!isInUnreachable()) {
-      breakStates[curr->name].push_back(locals);
-    }
+    if (!isInUnreachable()) { breakStates[curr->name].push_back(locals); }
     if (!curr->condition) {
       setInUnreachable();
     } else {
@@ -388,17 +368,13 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return &bad;
   }
   Node* doVisitGetLocal(GetLocal* curr) {
-    if (!isRelevantLocal(curr->index) || isInUnreachable()) {
-      return &bad;
-    }
+    if (!isRelevantLocal(curr->index) || isInUnreachable()) { return &bad; }
     // We now know which IR node this get refers to
     auto* node = locals[curr->index];
     return node;
   }
   Node* doVisitSetLocal(SetLocal* curr) {
-    if (!isRelevantLocal(curr->index) || isInUnreachable()) {
-      return &bad;
-    }
+    if (!isRelevantLocal(curr->index) || isInUnreachable()) { return &bad; }
     assert(isConcreteType(curr->value->type));
     sets.push_back(curr);
     expressionParentMap[curr] = parent;
@@ -413,9 +389,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     }
     return &bad;
   }
-  Node* doVisitConst(Const* curr) {
-    return makeConst(curr->value);
-  }
+  Node* doVisitConst(Const* curr) { return makeConst(curr->value); }
   Node* doVisitUnary(Unary* curr) {
     // First, check if we support this op.
     switch (curr->op) {
@@ -449,7 +423,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       }
     }
   }
-  Node* doVisitBinary(Binary *curr) {
+  Node* doVisitBinary(Binary* curr) {
     // First, check if we support this op.
     switch (curr->op) {
       case AddInt32:
@@ -528,9 +502,10 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
           case GeUInt64: opposite = LeUInt64; break;
           default: WASM_UNREACHABLE();
         }
-        auto* ret = visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
-        // We just created a new binary node, but we need to set the origin properly
-        // to the original.
+        auto* ret =
+          visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
+        // We just created a new binary node, but we need to set the origin
+        // properly to the original.
         ret->origin = curr;
         return ret;
       }
@@ -575,16 +550,18 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
 
   // Helpers.
 
-  bool isRelevantType(wasm::Type type) {
-    return isIntegerType(type);
-  }
+  bool isRelevantType(wasm::Type type) { return isIntegerType(type); }
 
   bool isRelevantLocal(Index index) {
     return isRelevantType(func->getLocalType(index));
   }
 
   // Merge local state for an if, also creating a block and conditions.
-  void mergeIf(Locals& aState, Locals& bState, Node* condition, Expression* expr, Locals& out) {
+  void mergeIf(Locals& aState,
+               Locals& bState,
+               Node* condition,
+               Expression* expr,
+               Locals& out) {
     // Create the conditions (if we can).
     Node* ifTrue;
     Node* ifFalse;
@@ -600,12 +577,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     }
     // Finally, merge the state with that block. TODO optimize
     std::vector<FlowState> states;
-    if (!isInUnreachable(aState)) {
-      states.emplace_back(aState, ifTrue);
-    }
-    if (!isInUnreachable(bState)) {
-      states.emplace_back(bState, ifFalse);
-    }
+    if (!isInUnreachable(aState)) { states.emplace_back(aState, ifTrue); }
+    if (!isInUnreachable(bState)) { states.emplace_back(bState, ifFalse); }
     merge(states, out);
   }
 

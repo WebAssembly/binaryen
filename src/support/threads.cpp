@@ -20,22 +20,28 @@
 #include <iostream>
 #include <string>
 
-#include "threads.h"
 #include "compiler-support.h"
+#include "threads.h"
 #include "utilities.h"
-
 
 // debugging tools
 
 #ifdef BINARYEN_THREAD_DEBUG
 static std::mutex debug;
-#define DEBUG_THREAD(x) { std::lock_guard<std::mutex> lock(debug); std::cerr << "[THREAD " << std::this_thread::get_id() << "] " << x; }
-#define DEBUG_POOL(x)   { std::lock_guard<std::mutex> lock(debug); std::cerr << "[POOL "   << std::this_thread::get_id() << "] " << x; }
+#define DEBUG_THREAD(x)                                                        \
+  {                                                                            \
+    std::lock_guard<std::mutex> lock(debug);                                   \
+    std::cerr << "[THREAD " << std::this_thread::get_id() << "] " << x;        \
+  }
+#define DEBUG_POOL(x)                                                          \
+  {                                                                            \
+    std::lock_guard<std::mutex> lock(debug);                                   \
+    std::cerr << "[POOL " << std::this_thread::get_id() << "] " << x;          \
+  }
 #else
 #define DEBUG_THREAD(x)
 #define DEBUG_POOL(x)
 #endif
-
 
 namespace wasm {
 
@@ -56,7 +62,7 @@ Thread::~Thread() {
   thread->join();
 }
 
-void Thread::work(std::function<ThreadWorkState ()> doWork_) {
+void Thread::work(std::function<ThreadWorkState()> doWork_) {
   // TODO: fancy work stealing
   DEBUG_THREAD("send work to thread\n");
   {
@@ -68,7 +74,7 @@ void Thread::work(std::function<ThreadWorkState ()> doWork_) {
   }
 }
 
-void Thread::mainLoop(void *self_) {
+void Thread::mainLoop(void* self_) {
   auto* self = static_cast<Thread*>(self_);
   while (1) {
     DEBUG_THREAD("checking for work\n");
@@ -110,13 +116,15 @@ void ThreadPool::initialize(size_t num) {
   if (num == 1) return; // no multiple cores, don't create threads
   DEBUG_POOL("initialize()\n");
   std::unique_lock<std::mutex> lock(threadMutex);
-  ready.store(threads.size()); // initial state before first resetThreadsAreReady()
+  ready.store(
+    threads.size()); // initial state before first resetThreadsAreReady()
   resetThreadsAreReady();
   for (size_t i = 0; i < num; i++) {
     try {
       threads.emplace_back(make_unique<Thread>(this));
     } catch (std::system_error&) {
-      // failed to create a thread - don't use multithreading, as if num cores == 1
+      // failed to create a thread - don't use multithreading, as if num cores
+      // == 1
       DEBUG_POOL("could not create thread\n");
       threads.clear();
       return;
@@ -132,9 +140,7 @@ size_t ThreadPool::getNumCores() {
   return 1;
 #else
   size_t num = std::max(1U, std::thread::hardware_concurrency());
-  if (getenv("BINARYEN_CORES")) {
-    num = std::stoi(getenv("BINARYEN_CORES"));
-  }
+  if (getenv("BINARYEN_CORES")) { num = std::stoi(getenv("BINARYEN_CORES")); }
   return num;
 #endif
 }
@@ -154,7 +160,8 @@ ThreadPool* ThreadPool::get() {
   return pool.get();
 }
 
-void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers) {
+void ThreadPool::work(
+  std::vector<std::function<ThreadWorkState()>>& doWorkers) {
   size_t num = threads.size();
   // If no multiple cores, or on a side thread, do not use worker threads
   if (num == 0) {
@@ -187,9 +194,7 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   DEBUG_POOL("work() is done\n");
 }
 
-size_t ThreadPool::size() {
-  return std::max(size_t(1), threads.size());
-}
+size_t ThreadPool::size() { return std::max(size_t(1), threads.size()); }
 
 bool ThreadPool::isRunning() {
   DEBUG_POOL("check if running\n");
@@ -216,4 +221,3 @@ bool ThreadPool::areThreadsReady() {
 }
 
 } // namespace wasm
-

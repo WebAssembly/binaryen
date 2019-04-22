@@ -48,8 +48,11 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
 }
 
 Options::Options(const std::string& command, const std::string& description)
-    : debug(false), positional(Arguments::Zero) {
-  add("--help", "-h", "Show this help message and exit", Arguments::Zero,
+  : debug(false), positional(Arguments::Zero) {
+  add("--help",
+      "-h",
+      "Show this help message and exit",
+      Arguments::Zero,
       [this, command, description](Options* o, const std::string&) {
         std::cout << command;
         if (positional != Arguments::Zero) std::cout << ' ' << positionalName;
@@ -59,7 +62,7 @@ Options::Options(const std::string& command, const std::string& description)
         size_t optionWidth = 0;
         for (const auto& o : options) {
           optionWidth =
-              std::max(optionWidth, o.longName.size() + o.shortName.size());
+            std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
         for (const auto& o : options) {
           bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
@@ -72,20 +75,26 @@ Options::Options(const std::string& command, const std::string& description)
         std::cout << '\n';
         exit(EXIT_SUCCESS);
       });
-  add("--debug", "-d", "Print debug information to stderr", Arguments::Zero,
+  add("--debug",
+      "-d",
+      "Print debug information to stderr",
+      Arguments::Zero,
       [&](Options* o, const std::string& arguments) { debug = true; });
 }
 
 Options::~Options() {}
 
-Options& Options::add(const std::string& longName, const std::string& shortName,
-                      const std::string& description, Arguments arguments,
+Options& Options::add(const std::string& longName,
+                      const std::string& shortName,
+                      const std::string& description,
+                      Arguments arguments,
                       const Action& action) {
   options.push_back({longName, shortName, description, arguments, action, 0});
   return *this;
 }
 
-Options& Options::add_positional(const std::string& name, Arguments arguments,
+Options& Options::add_positional(const std::string& name,
+                                 Arguments arguments,
                                  const Action& action) {
   positional = arguments;
   positionalName = name;

@@ -17,7 +17,6 @@
 #include "asm_v_wasm.h"
 #include "wasm.h"
 
-
 namespace wasm {
 
 Type asmToWasmType(AsmType asmType) {
@@ -51,10 +50,10 @@ AsmType wasmToAsmType(Type type) {
 
 char getSig(Type type) {
   switch (type) {
-    case i32:  return 'i';
-    case i64:  return 'j';
-    case f32:  return 'f';
-    case f64:  return 'd';
+    case i32: return 'i';
+    case i64: return 'j';
+    case f32: return 'f';
+    case f64: return 'd';
     case v128: return 'V';
     case none: return 'v';
     case unreachable: WASM_UNREACHABLE();
@@ -62,7 +61,7 @@ char getSig(Type type) {
   WASM_UNREACHABLE();
 }
 
-std::string getSig(const FunctionType *type) {
+std::string getSig(const FunctionType* type) {
   std::string ret;
   ret += getSig(type->result);
   for (auto param : type->params) {
@@ -71,7 +70,7 @@ std::string getSig(const FunctionType *type) {
   return ret;
 }
 
-std::string getSig(Function *func) {
+std::string getSig(Function* func) {
   std::string ret;
   ret += getSig(func->result);
   for (auto type : func->params) {
@@ -103,9 +102,7 @@ FunctionType sigToFunctionType(std::string sig) {
 
 FunctionType* ensureFunctionType(std::string sig, Module* wasm) {
   cashew::IString name(("FUNCSIG$" + sig).c_str(), false);
-  if (wasm->getFunctionTypeOrNull(name)) {
-    return wasm->getFunctionType(name);
-  }
+  if (wasm->getFunctionTypeOrNull(name)) { return wasm->getFunctionType(name); }
   // add new type
   auto type = make_unique<FunctionType>();
   type->name = name;

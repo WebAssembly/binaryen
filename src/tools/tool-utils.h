@@ -24,9 +24,7 @@ namespace wasm {
 
 // Removes a specific suffix if it is present, otherwise no-op
 inline std::string removeSpecificSuffix(std::string str, std::string suffix) {
-  if (str.size() <= suffix.size()) {
-    return str;
-  }
+  if (str.size() <= suffix.size()) { return str; }
   if (str.substr(str.size() - suffix.size()).compare(suffix) == 0) {
     return str.substr(0, str.size() - suffix.size());
   }
@@ -34,4 +32,3 @@ inline std::string removeSpecificSuffix(std::string str, std::string suffix) {
 }
 
 } // namespace wasm
-

@@ -24,8 +24,6 @@ struct StripTargetFeatures : public Pass {
   }
 };
 
-Pass *createStripTargetFeaturesPass() {
-  return new StripTargetFeatures();
-}
+Pass* createStripTargetFeaturesPass() { return new StripTargetFeatures(); }
 
 } // namespace wasm

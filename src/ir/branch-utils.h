@@ -17,23 +17,24 @@
 #ifndef wasm_ir_branch_h
 #define wasm_ir_branch_h
 
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
 namespace BranchUtils {
 
-// Some branches are obviously not actually reachable (e.g. (br $out (unreachable)))
+// Some branches are obviously not actually reachable (e.g. (br $out
+// (unreachable)))
 
 inline bool isBranchReachable(Break* br) {
-  return !(br->value     && br->value->type     == unreachable) &&
+  return !(br->value && br->value->type == unreachable) &&
          !(br->condition && br->condition->type == unreachable);
 }
 
 inline bool isBranchReachable(Switch* sw) {
-  return !(sw->value && sw->value->type     == unreachable) &&
-                        sw->condition->type != unreachable;
+  return !(sw->value && sw->value->type == unreachable) &&
+         sw->condition->type != unreachable;
 }
 
 inline bool isBranchReachable(Expression* expr) {
@@ -91,9 +92,7 @@ inline std::set<Name> getExitingBranches(Expression* ast) {
   struct Scanner : public PostWalker<Scanner> {
     std::set<Name> targets;
 
-    void visitBreak(Break* curr) {
-      targets.insert(curr->name);
-    }
+    void visitBreak(Break* curr) { targets.insert(curr->name); }
     void visitSwitch(Switch* curr) {
       for (auto target : curr->targets) {
         targets.insert(target);
@@ -101,14 +100,10 @@ inline std::set<Name> getExitingBranches(Expression* ast) {
       targets.insert(curr->default_);
     }
     void visitBlock(Block* curr) {
-      if (curr->name.is()) {
-        targets.erase(curr->name);
-      }
+      if (curr->name.is()) { targets.erase(curr->name); }
     }
     void visitLoop(Loop* curr) {
-      if (curr->name.is()) {
-        targets.erase(curr->name);
-      }
+      if (curr->name.is()) { targets.erase(curr->name); }
     }
   };
   Scanner scanner;
@@ -124,14 +119,10 @@ inline std::set<Name> getBranchTargets(Expression* ast) {
     std::set<Name> targets;
 
     void visitBlock(Block* curr) {
-      if (curr->name.is()) {
-        targets.insert(curr->name);
-      }
+      if (curr->name.is()) { targets.insert(curr->name); }
     }
     void visitLoop(Loop* curr) {
-      if (curr->name.is()) {
-        targets.insert(curr->name);
-      }
+      if (curr->name.is()) { targets.insert(curr->name); }
     }
   };
   Scanner scanner;
@@ -157,11 +148,13 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   void noteFound(Expression* value) {
     found++;
     if (found == 1) valueType = unreachable;
-    if (!value) valueType = none;
-    else if (value->type != unreachable) valueType = value->type;
+    if (!value)
+      valueType = none;
+    else if (value->type != unreachable)
+      valueType = value->type;
   }
 
-  void visitBreak(Break *curr) {
+  void visitBreak(Break* curr) {
     if (!named) {
       // ignore an unreachable break
       if (curr->condition && curr->condition->type == unreachable) return;
@@ -171,7 +164,7 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     if (curr->name == target) noteFound(curr->value);
   }
 
-  void visitSwitch(Switch *curr) {
+  void visitSwitch(Switch* curr) {
     if (!named) {
       // ignore an unreachable switch
       if (curr->condition->type == unreachable) return;
@@ -220,4 +213,3 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 } // namespace wasm
 
 #endif // wasm_ir_branch_h
-

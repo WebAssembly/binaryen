@@ -84,7 +84,8 @@ struct MixedArena {
 
   // Allocate an amount of space with a guaranteed alignment
   void* allocSpace(size_t size, size_t align) {
-    // the bump allocator data should not be modified by multiple threads at once.
+    // the bump allocator data should not be modified by multiple threads at
+    // once.
     auto myId = std::this_thread::get_id();
     if (myId != threadId) {
       MixedArena* curr = this;
@@ -121,22 +122,25 @@ struct MixedArena {
       // Allocate a new chunk.
       auto numChunks = (size + CHUNK_SIZE - 1) / CHUNK_SIZE;
       assert(size <= numChunks * CHUNK_SIZE);
-      auto* allocation = wasm::aligned_malloc(MAX_ALIGN, numChunks * CHUNK_SIZE);
+      auto* allocation =
+        wasm::aligned_malloc(MAX_ALIGN, numChunks * CHUNK_SIZE);
       if (!allocation) abort();
       chunks.push_back(allocation);
       index = 0;
     }
     uint8_t* ret = static_cast<uint8_t*>(chunks.back());
     ret += index;
-    index += size; // TODO: if we allocated more than 1 chunk, reuse the remainder, right now we allocate another next time
+    index += size; // TODO: if we allocated more than 1 chunk, reuse the
+                   // remainder, right now we allocate another next time
     return static_cast<void*>(ret);
   }
 
-  template<class T>
-  T* alloc() {
-    static_assert(alignof(T) <= MAX_ALIGN, "maximum alignment not large enough");
+  template<class T> T* alloc() {
+    static_assert(alignof(T) <= MAX_ALIGN,
+                  "maximum alignment not large enough");
     auto* ret = static_cast<T*>(allocSpace(sizeof(T), alignof(T)));
-    new (ret) T(*this); // allocated objects receive the allocator, so they can allocate more later if necessary
+    new (ret) T(*this); // allocated objects receive the allocator, so they can
+                        // allocate more later if necessary
     return ret;
   }
 
@@ -153,18 +157,15 @@ struct MixedArena {
   }
 };
 
-
 //
 // A vector that allocates in an arena.
 //
 // TODO: specialize on the initial size of the array
 
-template<typename SubType, typename T>
-class ArenaVectorBase {
+template<typename SubType, typename T> class ArenaVectorBase {
 protected:
   T* data = nullptr;
-  size_t usedElements = 0,
-         allocatedElements = 0;
+  size_t usedElements = 0, allocatedElements = 0;
 
   void reallocate(size_t size) {
     T* old = data;
@@ -182,18 +183,12 @@ public:
     return data[index];
   }
 
-  size_t size() const {
-    return usedElements;
-  }
+  size_t size() const { return usedElements; }
 
-  bool empty() const {
-    return size() == 0;
-  }
+  bool empty() const { return size() == 0; }
 
   void resize(size_t size) {
-    if (size > allocatedElements) {
-      reallocate(size);
-    }
+    if (size > allocatedElements) { reallocate(size); }
     // construct new elements
     for (size_t i = usedElements; i < size; i++) {
       new (data + i) T();
@@ -235,22 +230,15 @@ public:
     usedElements -= size;
   }
 
-  void erase(Iterator it) {
-    erase(it, it + 1);
-  }
+  void erase(Iterator it) { erase(it, it + 1); }
 
-  void clear() {
-    usedElements = 0;
-  }
+  void clear() { usedElements = 0; }
 
   void reserve(size_t size) {
-    if (size > allocatedElements) {
-      reallocate(size);
-    }
+    if (size > allocatedElements) { reallocate(size); }
   }
 
-  template<typename ListType>
-  void set(const ListType& list) {
+  template<typename ListType> void set(const ListType& list) {
     size_t size = list.size();
     if (allocatedElements < size) {
       static_cast<SubType*>(this)->allocate(size);
@@ -261,9 +249,7 @@ public:
     usedElements = size;
   }
 
-  void operator=(SubType& other) {
-    set(other);
-  }
+  void operator=(SubType& other) { set(other); }
 
   void swap(SubType& other) {
     data = other.data;
@@ -287,32 +273,25 @@ public:
     size_t index;
 
     Iterator() : parent(nullptr), index(0) {}
-    Iterator(const SubType* parent, size_t index) : parent(parent), index(index) {}
+    Iterator(const SubType* parent, size_t index)
+      : parent(parent), index(index) {}
 
     bool operator==(const Iterator& other) const {
       return index == other.index && parent == other.parent;
     }
 
-    bool operator!=(const Iterator& other) const {
-      return !(*this == other);
-    }
+    bool operator!=(const Iterator& other) const { return !(*this == other); }
 
     bool operator<(const Iterator& other) const {
       assert(parent == other.parent);
       return index < other.index;
     }
 
-    bool operator>(const Iterator& other) const {
-      return other < *this;
-    }
+    bool operator>(const Iterator& other) const { return other < *this; }
 
-    bool operator<=(const Iterator& other) const {
-      return !(other < *this);
-    }
+    bool operator<=(const Iterator& other) const { return !(other < *this); }
 
-    bool operator>=(const Iterator& other) const {
-      return !(*this < other);
-    }
+    bool operator>=(const Iterator& other) const { return !(*this < other); }
 
     Iterator& operator++() {
       index++;
@@ -341,17 +320,13 @@ public:
       return *this;
     }
 
-    Iterator& operator-=(std::ptrdiff_t off) {
-      return *this += -off;
-    }
+    Iterator& operator-=(std::ptrdiff_t off) { return *this += -off; }
 
     Iterator operator+(std::ptrdiff_t off) const {
       return Iterator(*this) += off;
     }
 
-    Iterator operator-(std::ptrdiff_t off) const {
-      return *this + -off;
-    }
+    Iterator operator-(std::ptrdiff_t off) const { return *this + -off; }
 
     std::ptrdiff_t operator-(const Iterator& other) const {
       assert(parent == other.parent);
@@ -362,17 +337,11 @@ public:
       return it + off;
     }
 
-    T& operator*() const {
-      return (*parent)[index];
-    }
+    T& operator*() const { return (*parent)[index]; }
 
-    T& operator[](std::ptrdiff_t off) const {
-      return (*parent)[index + off];
-    }
+    T& operator[](std::ptrdiff_t off) const { return (*parent)[index + off]; }
 
-    T* operator->() const {
-      return &(*parent)[index];
-    }
+    T* operator->() const { return &(*parent)[index]; }
   };
 
   Iterator begin() const {
@@ -407,7 +376,8 @@ public:
 
   void allocate(size_t size) {
     this->allocatedElements = size;
-    this->data = static_cast<T*>(allocator.allocSpace(sizeof(T) * this->allocatedElements, alignof(T)));
+    this->data = static_cast<T*>(
+      allocator.allocSpace(sizeof(T) * this->allocatedElements, alignof(T)));
   }
 };
 

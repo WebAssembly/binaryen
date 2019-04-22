@@ -72,21 +72,23 @@
 // single outside block.
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/utils.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
 // Looks for reasons we can't remove the values from breaks to an origin
-// For example, if there is a switch targeting us, we can't do it - we can't remove the value from other targets
+// For example, if there is a switch targeting us, we can't do it - we can't
+// remove the value from other targets
 struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
   Name origin;
   bool foundProblem = false;
-  // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow value is used, and we can't drop it
+  // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow
+  // value is used, and we can't drop it
   Index brIfs = 0;
   Index droppedBrIfs = 0;
   PassOptions& passOptions;
@@ -95,9 +97,7 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 
   void visitBreak(Break* curr) {
     if (curr->name == origin) {
-      if (curr->condition) {
-        brIfs++;
-      }
+      if (curr->condition) { brIfs++; }
       // if the value has side effects, we can't remove it
       if (EffectAnalyzer(passOptions, curr->value).hasSideEffects()) {
         foundProblem = true;
@@ -107,9 +107,7 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 
   void visitDrop(Drop* curr) {
     if (auto* br = curr->value->dynCast<Break>()) {
-      if (br->name == origin && br->condition) {
-        droppedBrIfs++;
-      }
+      if (br->name == origin && br->condition) { droppedBrIfs++; }
     }
   }
 
@@ -158,19 +156,17 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   }
 
   void visitDrop(Drop* curr) {
-    // if we dropped a br_if whose value we removed, then we are now dropping a (block (drop value) (br_if)) with type none, which does not need a drop
-    // likewise, unreachable does not need to be dropped, so we just leave drops of concrete values
-    if (!isConcreteType(curr->value->type)) {
-      replaceCurrent(curr->value);
-    }
+    // if we dropped a br_if whose value we removed, then we are now dropping a
+    // (block (drop value) (br_if)) with type none, which does not need a drop
+    // likewise, unreachable does not need to be dropped, so we just leave drops
+    // of concrete values
+    if (!isConcreteType(curr->value->type)) { replaceCurrent(curr->value); }
   }
 };
 
 static bool hasUnreachableChild(Block* block) {
   for (auto* test : block->list) {
-    if (test->type == unreachable) {
-      return true;
-    }
+    if (test->type == unreachable) { return true; }
   }
   return false;
 }
@@ -180,15 +176,14 @@ static bool hasDeadCode(Block* block) {
   auto& list = block->list;
   auto size = list.size();
   for (size_t i = 1; i < size; i++) {
-    if (list[i - 1]->type == unreachable) {
-      return true;
-    }
+    if (list[i - 1]->type == unreachable) { return true; }
   }
   return false;
 }
 
 // core block optimizer routine
-static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
+static void
+optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
   auto& list = curr->list;
   // Main merging loop.
   bool more = true;
@@ -205,7 +200,8 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       Loop* loop = nullptr;
       // To to handle a non-block child.
       if (!childBlock) {
-        // if we have a child that is (drop (block ..)) then we can move the drop into the block, and remove br values. this allows more merging,
+        // if we have a child that is (drop (block ..)) then we can move the
+        // drop into the block, and remove br values. this allows more merging,
         if (auto* drop = list[i]->dynCast<Drop>()) {
           childBlock = drop->value->dynCast<Block>();
           if (childBlock) {
@@ -257,8 +253,8 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       auto& childList = childBlock->list;
       auto childSize = childList.size();
       if (childSize == 0) continue;
-      // If the child has items after an unreachable, ignore it - dce should have
-      // been run, and we prefer to not handle the complexity here.
+      // If the child has items after an unreachable, ignore it - dce should
+      // have been run, and we prefer to not handle the complexity here.
       if (hasDeadCode(childBlock)) continue;
       // In some cases we can remove only the head or the tail of the block,
       // and must keep some things in the child block.
@@ -269,9 +265,7 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       if (childBlock->name.is()) {
         // If it has a concrete value, then breaks may be sending it a value,
         // and we'd need to handle that. TODO
-        if (isConcreteType(childBlock->type)) {
-          continue;
-        }
+        if (isConcreteType(childBlock->type)) { continue; }
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
@@ -295,8 +289,9 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
             break;
           }
         }
-        // If we can only do part of the block, and if the block has a flowing value, we
-        // would need special handling for that - not worth it, probably TODO
+        // If we can only do part of the block, and if the block has a flowing
+        // value, we would need special handling for that - not worth it,
+        // probably TODO
         // FIXME is this not handled by the drop later down?
         if (keepEnd < childSize && isConcreteType(childList.back()->type)) {
           continue;
@@ -335,9 +330,7 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
         childList.swap(filtered);
         // We may have removed unreachable items.
         childBlock->finalize();
-        if (loop) {
-          loop->finalize();
-        }
+        if (loop) { loop->finalize(); }
       }
       // Add the rest of the parent block after the child.
       for (size_t j = i + 1; j < list.size(); j++) {
@@ -359,9 +352,7 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       break;
     }
   }
-  if (changed) {
-    curr->finalize(curr->type);
-  }
+  if (changed) { curr->finalize(curr->type); }
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
@@ -393,34 +384,45 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   //   (..other..children..)
   //  )
   // )
-  // at which point the block is on the outside and potentially mergeable with an outer block
-  Block* optimize(Expression* curr, Expression*& child, Block* outer = nullptr, Expression** dependency1 = nullptr, Expression** dependency2 = nullptr) {
+  // at which point the block is on the outside and potentially mergeable with
+  // an outer block
+  Block* optimize(Expression* curr,
+                  Expression*& child,
+                  Block* outer = nullptr,
+                  Expression** dependency1 = nullptr,
+                  Expression** dependency2 = nullptr) {
     if (!child) return outer;
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
-      // there are dependencies, things we must be reordered through. make sure no problems there
+      // there are dependencies, things we must be reordered through. make sure
+      // no problems there
       EffectAnalyzer childEffects(getPassOptions(), child);
-      if (dependency1 && *dependency1 && EffectAnalyzer(getPassOptions(), *dependency1).invalidates(childEffects)) return outer;
-      if (dependency2 && *dependency2 && EffectAnalyzer(getPassOptions(), *dependency2).invalidates(childEffects)) return outer;
+      if (dependency1 && *dependency1 &&
+          EffectAnalyzer(getPassOptions(), *dependency1)
+            .invalidates(childEffects))
+        return outer;
+      if (dependency2 && *dependency2 &&
+          EffectAnalyzer(getPassOptions(), *dependency2)
+            .invalidates(childEffects))
+        return outer;
     }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
-        // if we move around unreachable code, type changes could occur. avoid that, as
-        // anyhow it means we should have run dce before getting here
+        // if we move around unreachable code, type changes could occur. avoid
+        // that, as anyhow it means we should have run dce before getting here
         if (curr->type == none && hasUnreachableChild(block)) {
-          // moving the block to the outside would replace a none with an unreachable
+          // moving the block to the outside would replace a none with an
+          // unreachable
           return outer;
         }
         auto* back = block->list.back();
         if (back->type == unreachable) {
-          // curr is not reachable, dce could remove it; don't try anything fancy
-          // here
+          // curr is not reachable, dce could remove it; don't try anything
+          // fancy here
           return outer;
         }
-        // we are going to replace the block with the final element, so they should
-        // be identically typed
-        if (block->type != back->type) {
-          return outer;
-        }
+        // we are going to replace the block with the final element, so they
+        // should be identically typed
+        if (block->type != back->type) { return outer; }
         child = back;
         if (outer == nullptr) {
           // reuse the block, move it out
@@ -443,18 +445,10 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     return outer;
   }
 
-  void visitUnary(Unary* curr) {
-    optimize(curr, curr->value);
-  }
-  void visitSetLocal(SetLocal* curr) {
-    optimize(curr, curr->value);
-  }
-  void visitLoad(Load* curr) {
-    optimize(curr, curr->ptr);
-  }
-  void visitReturn(Return* curr) {
-    optimize(curr, curr->value);
-  }
+  void visitUnary(Unary* curr) { optimize(curr, curr->value); }
+  void visitSetLocal(SetLocal* curr) { optimize(curr, curr->value); }
+  void visitLoad(Load* curr) { optimize(curr, curr->ptr); }
+  void visitReturn(Return* curr) { optimize(curr, curr->value); }
 
   void visitBinary(Binary* curr) {
     optimize(curr, curr->right, optimize(curr, curr->left), &curr->left);
@@ -466,7 +460,9 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
   }
   void optimizeTernary(Expression* curr,
-		       Expression*& first, Expression*& second, Expression*& third) {
+                       Expression*& first,
+                       Expression*& second,
+                       Expression*& third) {
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
     Block* outer = nullptr;
@@ -485,9 +481,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     optimizeTernary(curr, curr->ifTrue, curr->ifFalse, curr->condition);
   }
 
-  void visitDrop(Drop* curr) {
-    optimize(curr, curr->value);
-  }
+  void visitDrop(Drop* curr) { optimize(curr, curr->value); }
 
   void visitBreak(Break* curr) {
     optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
@@ -496,24 +490,23 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
   }
 
-  template<typename T>
-  void handleCall(T* curr) {
+  template<typename T> void handleCall(T* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i]).hasSideEffects()) return;
+      if (EffectAnalyzer(getPassOptions(), curr->operands[i]).hasSideEffects())
+        return;
       outer = optimize(curr, curr->operands[i], outer);
     }
     return;
   }
 
-  void visitCall(Call* curr) {
-    handleCall(curr);
-  }
+  void visitCall(Call* curr) { handleCall(curr); }
 
   void visitCallIndirect(CallIndirect* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i]).hasSideEffects()) return;
+      if (EffectAnalyzer(getPassOptions(), curr->operands[i]).hasSideEffects())
+        return;
       outer = optimize(curr, curr->operands[i], outer);
     }
     if (EffectAnalyzer(getPassOptions(), curr->target).hasSideEffects()) return;
@@ -521,8 +514,6 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   }
 };
 
-Pass *createMergeBlocksPass() {
-  return new MergeBlocks();
-}
+Pass* createMergeBlocksPass() { return new MergeBlocks(); }
 
 } // namespace wasm

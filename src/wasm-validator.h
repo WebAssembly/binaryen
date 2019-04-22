@@ -43,8 +43,8 @@
 #include <sstream>
 #include <unordered_set>
 
-#include "wasm.h"
 #include "wasm-printing.h"
+#include "wasm.h"
 
 namespace wasm {
 

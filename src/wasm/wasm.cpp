@@ -15,15 +15,14 @@
  */
 
 #include "wasm.h"
-#include "wasm-traversal.h"
 #include "ir/branch-utils.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 
 // shared constants
 
-Name WASM("wasm"),
-     RETURN_FLOW("*return:)*");
+Name WASM("wasm"), RETURN_FLOW("*return:)*");
 
 namespace BinaryConsts {
 namespace UserSections {
@@ -39,48 +38,21 @@ const char* ExceptionHandlingFeature = "exception-handling";
 const char* TruncSatFeature = "nontrapping-fptoint";
 const char* SignExtFeature = "sign-ext";
 const char* SIMD128Feature = "simd128";
-}
-}
+} // namespace UserSections
+} // namespace BinaryConsts
 
-Name GROW_WASM_MEMORY("__growWasmMemory"),
-     WASM_CALL_CTORS("__wasm_call_ctors"),
-     MEMORY_BASE("__memory_base"),
-     TABLE_BASE("__table_base"),
-     GET_TEMP_RET0("getTempRet0"),
-     SET_TEMP_RET0("setTempRet0"),
-     NEW_SIZE("newSize"),
-     MODULE("module"),
-     START("start"),
-     FUNC("func"),
-     PARAM("param"),
-     RESULT("result"),
-     MEMORY("memory"),
-     DATA("data"),
-     PASSIVE("passive"),
-     EXPORT("export"),
-     IMPORT("import"),
-     TABLE("table"),
-     ELEM("elem"),
-     LOCAL("local"),
-     TYPE("type"),
-     CALL("call"),
-     CALL_INDIRECT("call_indirect"),
-     BLOCK("block"),
-     BR_IF("br_if"),
-     THEN("then"),
-     ELSE("else"),
-     _NAN("NaN"),
-     _INFINITY("Infinity"),
-     NEG_INFINITY("-infinity"),
-     NEG_NAN("-nan"),
-     CASE("case"),
-     BR("br"),
-     FUNCREF("funcref"),
-     FAKE_RETURN("fake_return_waka123"),
-     MUT("mut"),
-     SPECTEST("spectest"),
-     PRINT("print"),
-     EXIT("exit");
+Name GROW_WASM_MEMORY("__growWasmMemory"), WASM_CALL_CTORS("__wasm_call_ctors"),
+  MEMORY_BASE("__memory_base"), TABLE_BASE("__table_base"),
+  GET_TEMP_RET0("getTempRet0"), SET_TEMP_RET0("setTempRet0"),
+  NEW_SIZE("newSize"), MODULE("module"), START("start"), FUNC("func"),
+  PARAM("param"), RESULT("result"), MEMORY("memory"), DATA("data"),
+  PASSIVE("passive"), EXPORT("export"), IMPORT("import"), TABLE("table"),
+  ELEM("elem"), LOCAL("local"), TYPE("type"), CALL("call"),
+  CALL_INDIRECT("call_indirect"), BLOCK("block"), BR_IF("br_if"), THEN("then"),
+  ELSE("else"), _NAN("NaN"), _INFINITY("Infinity"), NEG_INFINITY("-infinity"),
+  NEG_NAN("-nan"), CASE("case"), BR("br"), FUNCREF("funcref"),
+  FAKE_RETURN("fake_return_waka123"), MUT("mut"), SPECTEST("spectest"),
+  PRINT("print"), EXIT("exit");
 
 // Expressions
 
@@ -134,8 +106,8 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   Name targetName;
   std::vector<Type> types;
 
-
-  TypeSeeker(Expression* target, Name targetName) : target(target), targetName(targetName) {
+  TypeSeeker(Expression* target, Name targetName)
+    : target(target), targetName(targetName) {
     Expression* temp = target;
     walk(temp);
   }
@@ -148,9 +120,11 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
-      if (name == targetName) types.push_back(curr->value ? curr->value->type : none);
+      if (name == targetName)
+        types.push_back(curr->value ? curr->value->type : none);
     }
-    if (curr->default_ == targetName) types.push_back(curr->value ? curr->value->type : none);
+    if (curr->default_ == targetName)
+      types.push_back(curr->value ? curr->value->type : none);
   }
 
   void visitBlock(Block* curr) {
@@ -161,7 +135,8 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
         types.push_back(none);
       }
     } else if (curr->name == targetName) {
-      types.clear(); // ignore all breaks til now, they were captured by someone with the same name
+      types.clear(); // ignore all breaks til now, they were captured by someone
+                     // with the same name
     }
   }
 
@@ -169,7 +144,8 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
     if (curr == target) {
       types.push_back(curr->body->type);
     } else if (curr->name == targetName) {
-      types.clear(); // ignore all breaks til now, they were captured by someone with the same name
+      types.clear(); // ignore all breaks til now, they were captured by someone
+                     // with the same name
     }
   }
 };
@@ -177,8 +153,8 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 static Type mergeTypes(std::vector<Type>& types) {
   Type type = unreachable;
   for (auto other : types) {
-    // once none, stop. it then indicates a poison value, that must not be consumed
-    // and ignore unreachable
+    // once none, stop. it then indicates a poison value, that must not be
+    // consumed and ignore unreachable
     if (type != none) {
       if (other == none) {
         type = none;
@@ -186,7 +162,8 @@ static Type mergeTypes(std::vector<Type>& types) {
         if (type == unreachable) {
           type = other;
         } else if (type != other) {
-          type = none; // poison value, we saw multiple types; this should not be consumed
+          type = none; // poison value, we saw multiple types; this should not
+                       // be consumed
         }
       }
     }
@@ -196,9 +173,11 @@ static Type mergeTypes(std::vector<Type>& types) {
 
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
-static void handleUnreachable(Block* block, bool breakabilityKnown=false, bool hasBreak=false) {
+static void handleUnreachable(Block* block,
+                              bool breakabilityKnown = false,
+                              bool hasBreak = false) {
   if (block->type == unreachable) return; // nothing to do
-  if (block->list.size() == 0) return; // nothing to do
+  if (block->list.size() == 0) return;    // nothing to do
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
   // or the final child flows out a value)
@@ -206,13 +185,12 @@ static void handleUnreachable(Block* block, bool breakabilityKnown=false, bool h
   // look for an unreachable child
   for (auto* child : block->list) {
     if (child->type == unreachable) {
-      // there is an unreachable child, so we are unreachable, unless we have a break
+      // there is an unreachable child, so we are unreachable, unless we have a
+      // break
       if (!breakabilityKnown) {
         hasBreak = BranchUtils::BranchSeeker::hasNamed(block, block->name);
       }
-      if (!hasBreak) {
-        block->type = unreachable;
-      }
+      if (!hasBreak) { block->type = unreachable; }
       return;
     }
   }
@@ -254,9 +232,7 @@ void Block::finalize() {
 
 void Block::finalize(Type type_) {
   type = type_;
-  if (type == none && list.size() > 0) {
-    handleUnreachable(this);
-  }
+  if (type == none && list.size() > 0) { handleUnreachable(this); }
 }
 
 void Block::finalize(Type type_, bool hasBreak) {
@@ -268,7 +244,9 @@ void Block::finalize(Type type_, bool hasBreak) {
 
 void If::finalize(Type type_) {
   type = type_;
-  if (type == none && (condition->type == unreachable || (ifFalse && ifTrue->type == unreachable && ifFalse->type == unreachable))) {
+  if (type == none && (condition->type == unreachable ||
+                       (ifFalse && ifTrue->type == unreachable &&
+                        ifFalse->type == unreachable))) {
     type = unreachable;
   }
 }
@@ -295,21 +273,15 @@ void If::finalize() {
   //  (i32.const 20
   // )
   // otherwise, if the condition is unreachable, so is the if
-  if (type == none && condition->type == unreachable) {
-    type = unreachable;
-  }
+  if (type == none && condition->type == unreachable) { type = unreachable; }
 }
 
 void Loop::finalize(Type type_) {
   type = type_;
-  if (type == none && body->type == unreachable) {
-    type = unreachable;
-  }
+  if (type == none && body->type == unreachable) { type = unreachable; }
 }
 
-void Loop::finalize() {
-  type = body->type;
-}
+void Loop::finalize() { type = body->type; }
 
 void Break::finalize() {
   if (condition) {
@@ -325,12 +297,9 @@ void Break::finalize() {
   }
 }
 
-void Switch::finalize() {
-  type = unreachable;
-}
+void Switch::finalize() { type = unreachable; }
 
-template<typename T>
-void handleUnreachableOperands(T* curr) {
+template<typename T> void handleUnreachableOperands(T* curr) {
   for (auto* child : curr->operands) {
     if (child->type == unreachable) {
       curr->type = unreachable;
@@ -339,15 +308,11 @@ void handleUnreachableOperands(T* curr) {
   }
 }
 
-void Call::finalize() {
-  handleUnreachableOperands(this);
-}
+void Call::finalize() { handleUnreachableOperands(this); }
 
 void CallIndirect::finalize() {
   handleUnreachableOperands(this);
-  if (target->type == unreachable) {
-    type = unreachable;
-  }
+  if (target->type == unreachable) { type = unreachable; }
 }
 
 bool FunctionType::structuralComparison(FunctionType& b) {
@@ -363,17 +328,15 @@ bool FunctionType::operator==(FunctionType& b) {
   if (name != b.name) return false;
   return structuralComparison(b);
 }
-bool FunctionType::operator!=(FunctionType& b) {
-  return !(*this == b);
-}
+bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
 
-bool SetLocal::isTee() {
-  return type != none;
-}
+bool SetLocal::isTee() { return type != none; }
 
 void SetLocal::setTee(bool is) {
-  if (is) type = value->type;
-  else type = none;
+  if (is)
+    type = value->type;
+  else
+    type = none;
   finalize(); // type may need to be unreachable
 }
 
@@ -388,15 +351,11 @@ void SetLocal::finalize() {
 }
 
 void SetGlobal::finalize() {
-  if (value->type == unreachable) {
-    type = unreachable;
-  }
+  if (value->type == unreachable) { type = unreachable; }
 }
 
 void Load::finalize() {
-  if (ptr->type == unreachable) {
-    type = unreachable;
-  }
+  if (ptr->type == unreachable) { type = unreachable; }
 }
 
 void Store::finalize() {
@@ -415,14 +374,16 @@ void AtomicRMW::finalize() {
 }
 
 void AtomicCmpxchg::finalize() {
-  if (ptr->type == unreachable || expected->type == unreachable || replacement->type == unreachable) {
+  if (ptr->type == unreachable || expected->type == unreachable ||
+      replacement->type == unreachable) {
     type = unreachable;
   }
 }
 
 void AtomicWait::finalize() {
   type = i32;
-  if (ptr->type == unreachable || expected->type == unreachable || timeout->type == unreachable) {
+  if (ptr->type == unreachable || expected->type == unreachable ||
+      timeout->type == unreachable) {
     type = unreachable;
   }
 }
@@ -447,9 +408,7 @@ void SIMDExtract::finalize() {
     case ExtractLaneVecF64x2: type = f64; break;
     default: WASM_UNREACHABLE();
   }
-  if (vec->type == unreachable) {
-    type = unreachable;
-  }
+  if (vec->type == unreachable) { type = unreachable; }
 }
 
 void SIMDReplace::finalize() {
@@ -471,7 +430,8 @@ void SIMDShuffle::finalize() {
 void SIMDBitselect::finalize() {
   assert(left && right && cond);
   type = v128;
-  if (left->type == unreachable || right->type == unreachable || cond->type == unreachable) {
+  if (left->type == unreachable || right->type == unreachable ||
+      cond->type == unreachable) {
     type = unreachable;
   }
 }
@@ -479,19 +439,19 @@ void SIMDBitselect::finalize() {
 void MemoryInit::finalize() {
   assert(dest && offset && size);
   type = none;
-  if (dest->type == unreachable || offset->type == unreachable || size->type == unreachable) {
+  if (dest->type == unreachable || offset->type == unreachable ||
+      size->type == unreachable) {
     type = unreachable;
   }
 }
 
-void DataDrop::finalize() {
-  type = none;
-}
+void DataDrop::finalize() { type = none; }
 
 void MemoryCopy::finalize() {
   assert(dest && source && size);
   type = none;
-  if (dest->type == unreachable || source->type == unreachable || size->type == unreachable) {
+  if (dest->type == unreachable || source->type == unreachable ||
+      size->type == unreachable) {
     type = unreachable;
   }
 }
@@ -499,7 +459,8 @@ void MemoryCopy::finalize() {
 void MemoryFill::finalize() {
   assert(dest && value && size);
   type = none;
-  if (dest->type == unreachable || value->type == unreachable || size->type == unreachable) {
+  if (dest->type == unreachable || value->type == unreachable ||
+      size->type == unreachable) {
     type = unreachable;
   }
 }
@@ -518,13 +479,9 @@ Const* Const::set(Literal value_) {
   return this;
 }
 
-void Const::finalize() {
-  type = value.type;
-}
+void Const::finalize() { type = value.type; }
 
-bool Unary::isRelational() {
-  return op == EqZInt32 || op == EqZInt64;
-}
+bool Unary::isRelational() { return op == EqZInt32 || op == EqZInt64; }
 
 void Unary::finalize() {
   if (value->type == unreachable) {
@@ -554,8 +511,13 @@ void Unary::finalize() {
     case SqrtFloat64: type = value->type; break;
     case EqZInt32:
     case EqZInt64: type = i32; break;
-    case ExtendS8Int32: case ExtendS16Int32: type = i32; break;
-    case ExtendSInt32: case ExtendUInt32: case ExtendS8Int64: case ExtendS16Int64: case ExtendS32Int64: type = i64; break;
+    case ExtendS8Int32:
+    case ExtendS16Int32: type = i32; break;
+    case ExtendSInt32:
+    case ExtendUInt32:
+    case ExtendS8Int64:
+    case ExtendS16Int64:
+    case ExtendS32Int64: type = i64; break;
     case WrapInt64: type = i32; break;
     case PromoteFloat32: type = f64; break;
     case DemoteFloat64: type = f32; break;
@@ -675,7 +637,8 @@ void Binary::finalize() {
 
 void Select::finalize() {
   assert(ifTrue && ifFalse);
-  if (ifTrue->type == unreachable || ifFalse->type == unreachable || condition->type == unreachable) {
+  if (ifTrue->type == unreachable || ifFalse->type == unreachable ||
+      condition->type == unreachable) {
     type = unreachable;
   } else {
     type = ifTrue->type;
@@ -708,48 +671,32 @@ void Host::finalize() {
   }
 }
 
-size_t Function::getNumParams() {
-  return params.size();
-}
+size_t Function::getNumParams() { return params.size(); }
 
-size_t Function::getNumVars() {
-  return vars.size();
-}
+size_t Function::getNumVars() { return vars.size(); }
 
-size_t Function::getNumLocals() {
-  return params.size() + vars.size();
-}
+size_t Function::getNumLocals() { return params.size() + vars.size(); }
 
-bool Function::isParam(Index index) {
-  return index < params.size();
-}
+bool Function::isParam(Index index) { return index < params.size(); }
 
-bool Function::isVar(Index index) {
-  return index >= params.size();
-}
+bool Function::isVar(Index index) { return index >= params.size(); }
 
 bool Function::hasLocalName(Index index) const {
   return localNames.find(index) != localNames.end();
 }
 
-Name Function::getLocalName(Index index) {
-  return localNames.at(index);
-}
+Name Function::getLocalName(Index index) { return localNames.at(index); }
 
 Name Function::getLocalNameOrDefault(Index index) {
   auto nameIt = localNames.find(index);
-  if (nameIt != localNames.end()) {
-    return nameIt->second;
-  }
+  if (nameIt != localNames.end()) { return nameIt->second; }
   // this is an unnamed local
   return Name();
 }
 
 Name Function::getLocalNameOrGeneric(Index index) {
   auto nameIt = localNames.find(index);
-  if (nameIt != localNames.end()) {
-    return nameIt->second;
-  }
+  if (nameIt != localNames.end()) { return nameIt->second; }
   return Name::fromInt(index);
 }
 
@@ -761,9 +708,7 @@ Index Function::getLocalIndex(Name name) {
   return iter->second;
 }
 
-Index Function::getVarIndexBase() {
-  return params.size();
-}
+Index Function::getVarIndexBase() { return params.size(); }
 
 Type Function::getLocalType(Index index) {
   if (isParam(index)) {
@@ -775,9 +720,7 @@ Type Function::getLocalType(Index index) {
   }
 }
 
-void Function::clearNames() {
-  localNames.clear();
-}
+void Function::clearNames() { localNames.clear(); }
 
 void Function::clearDebugInfo() {
   localIndices.clear();
@@ -820,40 +763,30 @@ Global* Module::getGlobal(Name name) {
 
 FunctionType* Module::getFunctionTypeOrNull(Name name) {
   auto iter = functionTypesMap.find(name);
-  if (iter == functionTypesMap.end()) {
-    return nullptr;
-  }
+  if (iter == functionTypesMap.end()) { return nullptr; }
   return iter->second;
 }
 
 Export* Module::getExportOrNull(Name name) {
   auto iter = exportsMap.find(name);
-  if (iter == exportsMap.end()) {
-    return nullptr;
-  }
+  if (iter == exportsMap.end()) { return nullptr; }
   return iter->second;
 }
 
 Function* Module::getFunctionOrNull(Name name) {
   auto iter = functionsMap.find(name);
-  if (iter == functionsMap.end()) {
-    return nullptr;
-  }
+  if (iter == functionsMap.end()) { return nullptr; }
   return iter->second;
 }
 
 Global* Module::getGlobalOrNull(Name name) {
   auto iter = globalsMap.find(name);
-  if (iter == globalsMap.end()) {
-    return nullptr;
-  }
+  if (iter == globalsMap.end()) { return nullptr; }
   return iter->second;
 }
 
 FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addFunctionType: empty name";
-  }
+  if (!curr->name.is()) { Fatal() << "Module::addFunctionType: empty name"; }
   if (getFunctionTypeOrNull(curr->name)) {
     Fatal() << "Module::addFunctionType: " << curr->name << " already exists";
   }
@@ -864,9 +797,7 @@ FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
 }
 
 Export* Module::addExport(Export* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addExport: empty name";
-  }
+  if (!curr->name.is()) { Fatal() << "Module::addExport: empty name"; }
   if (getExportOrNull(curr->name)) {
     Fatal() << "Module::addExport: " << curr->name << " already exists";
   }
@@ -877,9 +808,7 @@ Export* Module::addExport(Export* curr) {
 
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
 Function* Module::addFunction(Function* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addFunction: empty name";
-  }
+  if (!curr->name.is()) { Fatal() << "Module::addFunction: empty name"; }
   if (getFunctionOrNull(curr->name)) {
     Fatal() << "Module::addFunction: " << curr->name << " already exists";
   }
@@ -889,9 +818,7 @@ Function* Module::addFunction(Function* curr) {
 }
 
 Function* Module::addFunction(std::unique_ptr<Function> curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addFunction: empty name";
-  }
+  if (!curr->name.is()) { Fatal() << "Module::addFunction: empty name"; }
   if (getFunctionOrNull(curr->name)) {
     Fatal() << "Module::addFunction: " << curr->name << " already exists";
   }
@@ -901,9 +828,7 @@ Function* Module::addFunction(std::unique_ptr<Function> curr) {
 }
 
 Global* Module::addGlobal(Global* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addGlobal: empty name";
-  }
+  if (!curr->name.is()) { Fatal() << "Module::addGlobal: empty name"; }
   if (getGlobalOrNull(curr->name)) {
     Fatal() << "Module::addGlobal: " << curr->name << " already exists";
   }
@@ -914,9 +839,7 @@ Global* Module::addGlobal(Global* curr) {
   return curr;
 }
 
-void Module::addStart(const Name& s) {
-  start = s;
-}
+void Module::addStart(const Name& s) { start = s; }
 
 void Module::removeFunctionType(Name name) {
   for (size_t i = 0; i < functionTypes.size(); i++) {
@@ -979,8 +902,6 @@ void Module::updateMaps() {
   }
 }
 
-void Module::clearDebugInfo() {
-  debugInfoFileNames.clear();
-}
+void Module::clearDebugInfo() { debugInfoFileNames.clear(); }
 
 } // namespace wasm

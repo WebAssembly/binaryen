@@ -24,16 +24,17 @@
 
 #include <unordered_map>
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
-#include "ir/local-graph.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
+#include "ir/local-graph.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
-struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion>> {
+struct LoopInvariantCodeMotion
+  : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new LoopInvariantCodeMotion; }
@@ -107,9 +108,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       }
       // If this may branch, we are done.
       EffectAnalyzer effects(getPassOptions(), curr);
-      if (effects.branches) {
-        break;
-      }
+      if (effects.branches) { break; }
       if (interestingToMove(curr)) {
         // Let's see if we can move this out.
         // Global side effects would prevent this - we might end up
@@ -128,11 +127,12 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
           // outside of the loop, in which case everything is good -
           // either they are before the loop and constant for us, or
           // they are after and don't matter.
-          if (effects.localsRead.empty() || !hasGetDependingOnLoopSet(curr, loopSets)) {
-            // We have checked if our gets are influenced by sets in the loop, and
-            // must also check if our sets interfere with them. To do so, assume
-            // temporarily that we are moving curr out; see if any sets remain for
-            // its indexes.
+          if (effects.localsRead.empty() ||
+              !hasGetDependingOnLoopSet(curr, loopSets)) {
+            // We have checked if our gets are influenced by sets in the loop,
+            // and must also check if our sets interfere with them. To do so,
+            // assume temporarily that we are moving curr out; see if any sets
+            // remain for its indexes.
             FindAll<SetLocal> currSets(curr);
             for (auto* set : currSets.list) {
               assert(numSetsForIndex[set->index] > 0);
@@ -187,8 +187,8 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
   bool interestingToMove(Expression* curr) {
     // In theory we could consider blocks, but then heavy nesting of
     // switch patterns would be heavy, and almost always pointless.
-    if (curr->type != none || curr->is<Nop>() || curr->is<Block>()
-                           || curr->is<Loop>()) {
+    if (curr->type != none || curr->is<Nop>() || curr->is<Block>() ||
+        curr->is<Loop>()) {
       return false;
     }
     // Don't move copies (set of a get, or set of a tee of a get, etc.),
@@ -229,18 +229,15 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
         // to just outside the loop will preserve those relationships.
         // TODO: this still counts curr's sets as inside the loop, which
         //       might matter in non-flat mode.
-        if (loopSets.count(set)) {
-          return true;
-        }
+        if (loopSets.count(set)) { return true; }
       }
     }
     return false;
   }
 };
 
-Pass *createLoopInvariantCodeMotionPass() {
+Pass* createLoopInvariantCodeMotionPass() {
   return new LoopInvariantCodeMotion();
 }
 
 } // namespace wasm
-

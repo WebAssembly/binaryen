@@ -27,17 +27,17 @@
 // after walking the current module.
 //
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
-#include "asmjs/shared-constants.h"
-#include "wasm-builder.h"
-#include "wasm-s-parser.h"
 #include "abi/js.h"
+#include "asmjs/shared-constants.h"
+#include "ir/find_all.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
-#include "ir/find_all.h"
 #include "passes/intrinsics-module.h"
+#include "wasm-builder.h"
+#include "wasm-s-parser.h"
 
 namespace wasm {
 
@@ -59,9 +59,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     if (!builder) builder = make_unique<Builder>(*module);
     PostWalker<RemoveNonJSOpsPass>::doWalkModule(module);
 
-    if (neededIntrinsics.size() == 0) {
-      return;
-    }
+    if (neededIntrinsics.size() == 0) { return; }
 
     // Parse the wast blob we have at the end of this file.
     //
@@ -86,7 +84,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       // Recursively probe all needed intrinsics for transitively used
       // functions. This is building up a set of functions we'll link into our
       // module.
-      for (auto &name : neededIntrinsics) {
+      for (auto& name : neededIntrinsics) {
         addNeededFunctions(intrinsicsModule, name, neededFunctions);
       }
       neededIntrinsics.clear();
@@ -94,10 +92,11 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       // Link in everything that wasn't already linked in. After we've done the
       // copy we then walk the function to rewrite any non-js operations it has
       // as well.
-      for (auto &name : neededFunctions) {
+      for (auto& name : neededFunctions) {
         auto* func = module->getFunctionOrNull(name);
         if (!func) {
-          func = ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
+          func = ModuleUtils::copyFunction(intrinsicsModule.getFunction(name),
+                                           *module);
         }
         doWalkFunction(func);
       }
@@ -123,10 +122,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     }
   }
 
-  void addNeededFunctions(Module &m, Name name, std::set<Name> &needed) {
-    if (needed.count(name)) {
-      return;
-    }
+  void addNeededFunctions(Module& m, Name name, std::set<Name>& needed) {
+    if (needed.count(name)) { return; }
     needed.insert(name);
 
     auto function = m.getFunction(name);
@@ -145,9 +142,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void visitLoad(Load* curr) {
-    if (curr->align == 0 || curr->align >= curr->bytes) {
-      return;
-    }
+    if (curr->align == 0 || curr->align >= curr->bytes) { return; }
 
     // Switch unaligned loads of floats to unaligned loads of integers (which we
     // can actually implement) and then use reinterpretation to get the float
@@ -161,15 +156,12 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         curr->type = i64;
         replaceCurrent(builder->makeUnary(ReinterpretInt64, curr));
         break;
-      default:
-        break;
+      default: break;
     }
   }
 
   void visitStore(Store* curr) {
-    if (curr->align == 0 || curr->align >= curr->bytes) {
-      return;
-    }
+    if (curr->align == 0 || curr->align >= curr->bytes) { return; }
 
     // Switch unaligned stores of floats to unaligned stores of integers (which
     // we can actually implement) and then use reinterpretation to store the
@@ -183,8 +175,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         curr->valueType = i64;
         curr->value = builder->makeUnary(ReinterpretFloat64, curr->value);
         break;
-      default:
-        break;
+      default: break;
     }
   }
 
@@ -192,42 +183,23 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     Name name;
     switch (curr->op) {
       case CopySignFloat32:
-      case CopySignFloat64:
-        rewriteCopysign(curr);
-        return;
+      case CopySignFloat64: rewriteCopysign(curr); return;
 
-      case RotLInt32:
-        name = WASM_ROTL32;
-        break;
-      case RotRInt32:
-        name = WASM_ROTR32;
-        break;
-      case RotLInt64:
-        name = WASM_ROTL64;
-        break;
-      case RotRInt64:
-        name = WASM_ROTR64;
-        break;
-      case MulInt64:
-        name = WASM_I64_MUL;
-        break;
-      case DivSInt64:
-        name = WASM_I64_SDIV;
-        break;
-      case DivUInt64:
-        name = WASM_I64_UDIV;
-        break;
-      case RemSInt64:
-        name = WASM_I64_SREM;
-        break;
-      case RemUInt64:
-        name = WASM_I64_UREM;
-        break;
+      case RotLInt32: name = WASM_ROTL32; break;
+      case RotRInt32: name = WASM_ROTR32; break;
+      case RotLInt64: name = WASM_ROTL64; break;
+      case RotRInt64: name = WASM_ROTR64; break;
+      case MulInt64: name = WASM_I64_MUL; break;
+      case DivSInt64: name = WASM_I64_SDIV; break;
+      case DivUInt64: name = WASM_I64_UDIV; break;
+      case RemSInt64: name = WASM_I64_SREM; break;
+      case RemUInt64: name = WASM_I64_UREM; break;
 
       default: return;
     }
     neededIntrinsics.insert(name);
-    replaceCurrent(builder->makeCall(name, {curr->left, curr->right}, curr->type));
+    replaceCurrent(
+      builder->makeCall(name, {curr->left, curr->right}, curr->type));
   }
 
   void rewriteCopysign(Binary* curr) {
@@ -256,62 +228,32 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       default: return;
     }
 
-    replaceCurrent(
-      builder->makeUnary(
-        int2float,
-        builder->makeBinary(
-          bitOr,
-          builder->makeBinary(
-            bitAnd,
-            builder->makeUnary(
-              float2int,
-              curr->left
-            ),
-            builder->makeConst(otherBits)
-          ),
-          builder->makeBinary(
-            bitAnd,
-            builder->makeUnary(
-              float2int,
-              curr->right
-            ),
-            builder->makeConst(signBit)
-          )
-        )
-      )
-    );
+    replaceCurrent(builder->makeUnary(
+      int2float,
+      builder->makeBinary(
+        bitOr,
+        builder->makeBinary(bitAnd,
+                            builder->makeUnary(float2int, curr->left),
+                            builder->makeConst(otherBits)),
+        builder->makeBinary(bitAnd,
+                            builder->makeUnary(float2int, curr->right),
+                            builder->makeConst(signBit)))));
   }
 
   void visitUnary(Unary* curr) {
     Name functionCall;
     switch (curr->op) {
-      case NearestFloat32:
-        functionCall = WASM_NEAREST_F32;
-        break;
-      case NearestFloat64:
-        functionCall = WASM_NEAREST_F64;
-        break;
+      case NearestFloat32: functionCall = WASM_NEAREST_F32; break;
+      case NearestFloat64: functionCall = WASM_NEAREST_F64; break;
 
-      case TruncFloat32:
-        functionCall = WASM_TRUNC_F32;
-        break;
-      case TruncFloat64:
-        functionCall = WASM_TRUNC_F64;
-        break;
+      case TruncFloat32: functionCall = WASM_TRUNC_F32; break;
+      case TruncFloat64: functionCall = WASM_TRUNC_F64; break;
 
-      case PopcntInt64:
-        functionCall = WASM_POPCNT64;
-        break;
-      case PopcntInt32:
-        functionCall = WASM_POPCNT32;
-        break;
+      case PopcntInt64: functionCall = WASM_POPCNT64; break;
+      case PopcntInt32: functionCall = WASM_POPCNT32; break;
 
-      case CtzInt64:
-        functionCall = WASM_CTZ64;
-        break;
-      case CtzInt32:
-        functionCall = WASM_CTZ32;
-        break;
+      case CtzInt64: functionCall = WASM_CTZ64; break;
+      case CtzInt32: functionCall = WASM_CTZ32; break;
 
       default: return;
     }
@@ -324,9 +266,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 };
 
-Pass* createRemoveNonJSOpsPass() {
-  return new RemoveNonJSOpsPass();
-}
+Pass* createRemoveNonJSOpsPass() { return new RemoveNonJSOpsPass(); }
 
 } // namespace wasm
-

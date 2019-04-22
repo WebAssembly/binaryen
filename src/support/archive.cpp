@@ -16,19 +16,19 @@
 
 #include "support/archive.h"
 
-#include <cstring>
 #include "support/utilities.h"
+#include <cstring>
 
 static const char* const magic = "!<arch>\n";
 
 class ArchiveMemberHeader {
- public:
+public:
   uint8_t fileName[16];
   uint8_t timestamp[12];
   uint8_t UID[6];
   uint8_t GID[6];
   uint8_t accessMode[8];
-  uint8_t size[10];  // Size of data only, not including padding or header
+  uint8_t size[10]; // Size of data only, not including padding or header
   uint8_t magic[2];
 
   std::string getName() const;
@@ -42,10 +42,10 @@ std::string ArchiveMemberHeader::getName() const {
     // Special name (string table or reference, or symbol table)
     endChar = ' ';
   } else {
-    endChar = '/';  // regular name
+    endChar = '/'; // regular name
   }
   auto* end =
-      static_cast<const uint8_t*>(memchr(fileName, endChar, sizeof(fileName)));
+    static_cast<const uint8_t*>(memchr(fileName, endChar, sizeof(fileName)));
   if (!end) end = fileName + sizeof(fileName);
   return std::string((char*)(fileName), end - fileName);
 }
@@ -60,7 +60,9 @@ uint32_t ArchiveMemberHeader::getSize() const {
   return static_cast<uint32_t>(sizeInt);
 }
 
-Archive::Archive(Buffer& b, bool& error) : data(b), symbolTable({nullptr, 0}), stringTable({nullptr, 0}), firstRegularData(nullptr) {
+Archive::Archive(Buffer& b, bool& error)
+  : data(b), symbolTable({nullptr, 0}), stringTable({nullptr, 0}),
+    firstRegularData(nullptr) {
   error = false;
   if (data.size() < strlen(magic) ||
       memcmp(data.data(), magic, strlen(magic))) {
@@ -78,7 +80,7 @@ Archive::Archive(Buffer& b, bool& error) : data(b), symbolTable({nullptr, 0}), s
     return;
   }
   child_iterator end = child_end();
-  if (it == end) return;  // Empty archive.
+  if (it == end) return; // Empty archive.
 
   const Child* c = &*it;
 
@@ -112,7 +114,7 @@ Archive::Archive(Buffer& b, bool& error) : data(b), symbolTable({nullptr, 0}), s
 }
 
 Archive::Child::Child(const Archive* parent, const uint8_t* data, bool* error)
-    : parent(parent), data(data) {
+  : parent(parent), data(data) {
   if (!data) return;
   len = sizeof(ArchiveMemberHeader) + getHeader()->getSize();
   startOfFile = sizeof(ArchiveMemberHeader);
@@ -129,8 +131,10 @@ std::string Archive::Child::getRawName() const {
 }
 
 Archive::Child Archive::Child::getNext(bool& error) const {
-  uint32_t nextOffset = len + (len & 1); // Members are aligned to even byte boundaries.
-  if ((size_t)(data - (const uint8_t*)parent->data.data() + nextOffset) >= parent->data.size()) {  // End of the archive.
+  uint32_t nextOffset =
+    len + (len & 1); // Members are aligned to even byte boundaries.
+  if ((size_t)(data - (const uint8_t*)parent->data.data() + nextOffset) >=
+      parent->data.size()) { // End of the archive.
     return Child();
   }
   return Child(parent, data + nextOffset, &error);
@@ -140,10 +144,10 @@ std::string Archive::Child::getName() const {
   std::string name = getRawName();
   // Check if it's a special name.
   if (name[0] == '/') {
-    if (name.size() == 1) {  // Linker member.
+    if (name.size() == 1) { // Linker member.
       return name;
     }
-    if (name.size() == 2 && name[1] == '/') {  // String table.
+    if (name.size() == 2 && name[1] == '/') { // String table.
       return name;
     }
     // It's a long name.
@@ -163,9 +167,7 @@ std::string Archive::Child::getName() const {
     return addr.substr(0, end - 1);
   }
   // It's a simple name.
-  if (name[name.size() - 1] == '/') {
-    return name.substr(0, name.size() - 1);
-  }
+  if (name[name.size() - 1] == '/') { return name.substr(0, name.size() - 1); }
   return name;
 }
 
@@ -197,7 +199,7 @@ struct Symbol {
     ++symbolIndex;
   }
 };
-}
+} // namespace
 
 static uint32_t read32be(const uint8_t* buf) {
   return static_cast<uint32_t>(buf[0]) << 24 |
@@ -206,15 +208,20 @@ static uint32_t read32be(const uint8_t* buf) {
 }
 
 void Archive::dump() const {
-  printf("Archive data %p len %zu, firstRegularData %p\n", data.data(),
-         data.size(), firstRegularData);
+  printf("Archive data %p len %zu, firstRegularData %p\n",
+         data.data(),
+         data.size(),
+         firstRegularData);
   printf("Symbol table %p, len %u\n", symbolTable.data, symbolTable.len);
   printf("string table %p, len %u\n", stringTable.data, stringTable.len);
   const uint8_t* buf = symbolTable.data;
   if (!buf) {
     for (auto c = child_begin(), e = child_end(); c != e; ++c) {
-      printf("Child %p, len %u, name %s, size %u\n", c->data, c->len,
-             c->getName().c_str(), c->getSize());
+      printf("Child %p, len %u, name %s, size %u\n",
+             c->data,
+             c->len,
+             c->getName().c_str(),
+             c->getSize());
     }
     return;
   }

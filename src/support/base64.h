@@ -21,20 +21,18 @@
 #include <string>
 #include <vector>
 
-inline std::string base64Encode(std::vector<char> &data) {
+inline std::string base64Encode(std::vector<char>& data) {
   std::string ret;
   size_t i = 0;
 
-  const char* alphabet =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "abcdefghijklmnopqrstuvwxyz"
-    "0123456789+/";
+  const char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                         "abcdefghijklmnopqrstuvwxyz"
+                         "0123456789+/";
 
   while (i + 3 <= data.size()) {
-    uint32_t bits =
-      (((uint32_t)(uint8_t) data[i + 0]) << 16) |
-      (((uint32_t)(uint8_t) data[i + 1]) << 8) |
-      (((uint32_t)(uint8_t) data[i + 2]) << 0);
+    uint32_t bits = (((uint32_t)(uint8_t)data[i + 0]) << 16) |
+                    (((uint32_t)(uint8_t)data[i + 1]) << 8) |
+                    (((uint32_t)(uint8_t)data[i + 2]) << 0);
     ret += alphabet[(bits >> 18) & 0x3f];
     ret += alphabet[(bits >> 12) & 0x3f];
     ret += alphabet[(bits >> 6) & 0x3f];
@@ -43,15 +41,14 @@ inline std::string base64Encode(std::vector<char> &data) {
   }
 
   if (i + 2 == data.size()) {
-    uint32_t bits =
-      (((uint32_t)(uint8_t) data[i + 0]) << 8) |
-      (((uint32_t)(uint8_t) data[i + 1]) << 0);
+    uint32_t bits = (((uint32_t)(uint8_t)data[i + 0]) << 8) |
+                    (((uint32_t)(uint8_t)data[i + 1]) << 0);
     ret += alphabet[(bits >> 10) & 0x3f];
     ret += alphabet[(bits >> 4) & 0x3f];
     ret += alphabet[(bits << 2) & 0x3f];
     ret += '=';
   } else if (i + 1 == data.size()) {
-    uint32_t bits = (uint32_t)(uint8_t) data[i + 0];
+    uint32_t bits = (uint32_t)(uint8_t)data[i + 0];
     ret += alphabet[(bits >> 2) & 0x3f];
     ret += alphabet[(bits << 4) & 0x3f];
     ret += '=';

@@ -25,14 +25,14 @@
 #include <ostream>
 #include <type_traits>
 
-#include "wasm.h"
-#include "wasm-traversal.h"
-#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
+#include "ir/import-utils.h"
 #include "parsing.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
 #include "wasm-validator.h"
-#include "ir/import-utils.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -49,8 +49,7 @@ enum WebLimitations {
   MaxFunctionLocals = 50 * 1000
 };
 
-template<typename T, typename MiniT>
-struct LEB {
+template<typename T, typename MiniT> struct LEB {
   static_assert(sizeof(MiniT) == 1, "MiniT must be a byte");
 
   T value;
@@ -59,8 +58,12 @@ struct LEB {
   LEB(T value) : value(value) {}
 
   bool hasMore(T temp, MiniT byte) {
-    // for signed, we must ensure the last bit has the right sign, as it will zero extend
-    return std::is_signed<T>::value ? (temp != 0 && temp != T(-1)) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)) : (temp != 0);
+    // for signed, we must ensure the last bit has the right sign, as it will
+    // zero extend
+    return std::is_signed<T>::value
+             ? (temp != 0 && temp != T(-1)) || (value >= 0 && (byte & 64)) ||
+                 (value < 0 && !(byte & 64))
+             : (temp != 0);
   }
 
   void write(std::vector<uint8_t>* out) {
@@ -70,9 +73,7 @@ struct LEB {
       uint8_t byte = temp & 127;
       temp >>= 7;
       more = hasMore(temp, byte);
-      if (more) {
-        byte = byte | 128;
-      }
+      if (more) { byte = byte | 128; }
       out->push_back(byte);
     } while (more);
   }
@@ -87,9 +88,7 @@ struct LEB {
       uint8_t byte = temp & 127;
       temp >>= 7;
       more = hasMore(temp, byte) || offset + 1 < minimum;
-      if (more) {
-        byte = byte | 128;
-      }
+      if (more) { byte = byte | 128; }
       (*out)[at + offset] = byte;
       offset++;
     } while (more);
@@ -106,8 +105,8 @@ struct LEB {
       T payload = byte & 127;
       typedef typename std::make_unsigned<T>::type mask_type;
       auto shift_mask = 0 == shift
-                            ? ~mask_type(0)
-                            : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
+                          ? ~mask_type(0)
+                          : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
       T significant_payload = payload & shift_mask;
       if (significant_payload != payload) {
         if (!(std::is_signed<T>::value && last)) {
@@ -130,7 +129,8 @@ struct LEB {
         value <<= sext_bits;
         value >>= sext_bits;
         if (value >= 0) {
-          throw ParseException(" LEBsign-extend should produce a negative value");
+          throw ParseException(
+            " LEBsign-extend should produce a negative value");
         }
       }
     }
@@ -155,33 +155,48 @@ public:
   BufferWithRandomAccess(bool debug = false) : debug(debug) {}
 
   BufferWithRandomAccess& operator<<(int8_t x) {
-    if (debug) std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")" << std::endl;
+    if (debug)
+      std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")"
+                << std::endl;
     push_back(x);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int16_t x) {
-    if (debug) std::cerr << "writeInt16: " << x << " (at " << size() << ")" << std::endl;
+    if (debug)
+      std::cerr << "writeInt16: " << x << " (at " << size() << ")" << std::endl;
     push_back(x & 0xff);
     push_back(x >> 8);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int32_t x) {
-    if (debug) std::cerr << "writeInt32: " << x << " (at " << size() << ")" << std::endl;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
+    if (debug)
+      std::cerr << "writeInt32: " << x << " (at " << size() << ")" << std::endl;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
     push_back(x & 0xff);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int64_t x) {
-    if (debug) std::cerr << "writeInt64: " << x << " (at " << size() << ")" << std::endl;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
+    if (debug)
+      std::cerr << "writeInt64: " << x << " (at " << size() << ")" << std::endl;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
     push_back(x & 0xff);
     return *this;
   }
@@ -189,7 +204,8 @@ public:
     size_t before = -1;
     if (debug) {
       before = size();
-      std::cerr << "writeU32LEB: " << x.value << " (at " << before << ")" << std::endl;
+      std::cerr << "writeU32LEB: " << x.value << " (at " << before << ")"
+                << std::endl;
     }
     x.write(this);
     if (debug) {
@@ -203,7 +219,8 @@ public:
     size_t before = -1;
     if (debug) {
       before = size();
-      std::cerr << "writeU64LEB: " << x.value << " (at " << before << ")" << std::endl;
+      std::cerr << "writeU64LEB: " << x.value << " (at " << before << ")"
+                << std::endl;
     }
     x.write(this);
     if (debug) {
@@ -217,7 +234,8 @@ public:
     size_t before = -1;
     if (debug) {
       before = size();
-      std::cerr << "writeS32LEB: " << x.value << " (at " << before << ")" << std::endl;
+      std::cerr << "writeS32LEB: " << x.value << " (at " << before << ")"
+                << std::endl;
     }
     x.write(this);
     if (debug) {
@@ -231,7 +249,8 @@ public:
     size_t before = -1;
     if (debug) {
       before = size();
-      std::cerr << "writeS64LEB: " << x.value << " (at " << before << ")" << std::endl;
+      std::cerr << "writeS64LEB: " << x.value << " (at " << before << ")"
+                << std::endl;
     }
     x.write(this);
     if (debug) {
@@ -242,57 +261,65 @@ public:
     return *this;
   }
 
-  BufferWithRandomAccess& operator<<(uint8_t x) {
-    return *this << (int8_t)x;
-  }
-  BufferWithRandomAccess& operator<<(uint16_t x) {
-    return *this << (int16_t)x;
-  }
-  BufferWithRandomAccess& operator<<(uint32_t x) {
-    return *this << (int32_t)x;
-  }
-  BufferWithRandomAccess& operator<<(uint64_t x) {
-    return *this << (int64_t)x;
-  }
+  BufferWithRandomAccess& operator<<(uint8_t x) { return *this << (int8_t)x; }
+  BufferWithRandomAccess& operator<<(uint16_t x) { return *this << (int16_t)x; }
+  BufferWithRandomAccess& operator<<(uint32_t x) { return *this << (int32_t)x; }
+  BufferWithRandomAccess& operator<<(uint64_t x) { return *this << (int64_t)x; }
 
   BufferWithRandomAccess& operator<<(float x) {
-    if (debug) std::cerr << "writeFloat32: " << x << " (at " << size() << ")" << std::endl;
+    if (debug)
+      std::cerr << "writeFloat32: " << x << " (at " << size() << ")"
+                << std::endl;
     return *this << Literal(x).reinterpreti32();
   }
   BufferWithRandomAccess& operator<<(double x) {
-    if (debug) std::cerr << "writeFloat64: " << x << " (at " << size() << ")" << std::endl;
+    if (debug)
+      std::cerr << "writeFloat64: " << x << " (at " << size() << ")"
+                << std::endl;
     return *this << Literal(x).reinterpreti64();
   }
 
   void writeAt(size_t i, uint16_t x) {
-    if (debug) std::cerr << "backpatchInt16: " << x << " (at " << i << ")" << std::endl;
+    if (debug)
+      std::cerr << "backpatchInt16: " << x << " (at " << i << ")" << std::endl;
     (*this)[i] = x & 0xff;
-    (*this)[i+1] = x >> 8;
+    (*this)[i + 1] = x >> 8;
   }
   void writeAt(size_t i, uint32_t x) {
-    if (debug) std::cerr << "backpatchInt32: " << x << " (at " << i << ")" << std::endl;
-    (*this)[i] = x & 0xff; x >>= 8;
-    (*this)[i+1] = x & 0xff; x >>= 8;
-    (*this)[i+2] = x & 0xff; x >>= 8;
-    (*this)[i+3] = x & 0xff;
+    if (debug)
+      std::cerr << "backpatchInt32: " << x << " (at " << i << ")" << std::endl;
+    (*this)[i] = x & 0xff;
+    x >>= 8;
+    (*this)[i + 1] = x & 0xff;
+    x >>= 8;
+    (*this)[i + 2] = x & 0xff;
+    x >>= 8;
+    (*this)[i + 3] = x & 0xff;
   }
 
   // writes out an LEB to an arbitrary location. this writes the LEB as a full
   // 5 bytes, the fixed amount that can easily be set aside ahead of time
   void writeAtFullFixedSize(size_t i, U32LEB x) {
-    if (debug) std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")" << std::endl;
-    x.writeAt(this, i, MaxLEB32Bytes); // fill all 5 bytes, we have to do this when backpatching
+    if (debug)
+      std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")"
+                << std::endl;
+    x.writeAt(
+      this,
+      i,
+      MaxLEB32Bytes); // fill all 5 bytes, we have to do this when backpatching
   }
   // writes out an LEB of normal size
   // returns how many bytes were written
   size_t writeAt(size_t i, U32LEB x) {
-    if (debug) std::cerr << "writeAtU32LEB: " << x.value << " (at " << i << ")" << std::endl;
+    if (debug)
+      std::cerr << "writeAtU32LEB: " << x.value << " (at " << i << ")"
+                << std::endl;
     return x.writeAt(this, i);
   }
 
-  template<typename T>
-  void writeTo(T& o) {
-    for (auto c : *this) o << c;
+  template<typename T> void writeTo(T& o) {
+    for (auto c : *this)
+      o << c;
   }
 
   std::vector<char> getAsChars() {
@@ -305,10 +332,7 @@ public:
 
 namespace BinaryConsts {
 
-enum Meta {
-  Magic = 0x6d736100,
-  Version = 0x01
-};
+enum Meta { Magic = 0x6d736100, Version = 0x01 };
 
 enum Section {
   User = 0,
@@ -333,10 +357,10 @@ enum SegmentFlag {
 
 enum EncodedType {
   // value_type
-  i32 = -0x1, // 0x7f
-  i64 = -0x2, // 0x7e
-  f32 = -0x3, // 0x7d
-  f64 = -0x4, // 0x7c
+  i32 = -0x1,  // 0x7f
+  i64 = -0x2,  // 0x7e
+  f32 = -0x3,  // 0x7d
+  f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
   // elem_type
   AnyFunc = -0x10, // 0x70
@@ -393,7 +417,6 @@ enum ASTNodes {
   TeeLocal = 0x22,
   GetGlobal = 0x23,
   SetGlobal = 0x24,
-
 
   I32LoadMem = 0x28,
   I64LoadMem = 0x29,
@@ -809,15 +832,12 @@ enum BulkMemoryOpcodes {
 };
 
 enum MemoryAccess {
-  Offset = 0x10,     // bit 4
-  Alignment = 0x80,  // bit 7
+  Offset = 0x10,    // bit 4
+  Alignment = 0x80, // bit 7
   NaturalAlignment = 0
 };
 
-enum MemoryFlags {
-  HasMaximum = 1 << 0,
-  IsShared = 1 << 1
-};
+enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1 };
 
 enum FeaturePrefix {
   FeatureUsed = '+',
@@ -826,7 +846,6 @@ enum FeaturePrefix {
 };
 
 } // namespace BinaryConsts
-
 
 inline S32LEB binaryType(Type type) {
   int ret = 0;
@@ -847,10 +866,8 @@ inline S32LEB binaryType(Type type) {
 
 class WasmBinaryWriter {
 public:
-  WasmBinaryWriter(Module* input,
-                   BufferWithRandomAccess& o,
-                   bool debug = false) :
-      wasm(input), o(o), debug(debug) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false)
+    : wasm(input), o(o), debug(debug) {
     prepare();
   }
 
@@ -859,8 +876,9 @@ public:
     struct Entry {
       Name name;
       size_t offset; // where the entry starts
-      size_t size; // the size of the entry
-      Entry(Name name, size_t offset, size_t size) : name(name), offset(offset), size(size) {}
+      size_t size;   // the size of the entry
+      Entry(Name name, size_t offset, size_t size)
+        : name(name), offset(offset), size(size) {}
     };
     std::vector<Entry> functionBodies;
   } tableOfContents;
@@ -875,9 +893,11 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum, bool shared);
-  template<typename T>
-  int32_t startSection(T code);
+  void writeResizableLimits(Address initial,
+                            Address maximum,
+                            bool hasMaximum,
+                            bool shared);
+  template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
   void finishSubsection(int32_t start);
@@ -895,8 +915,12 @@ public:
   void writeDataCount();
   void writeDataSegments();
 
-  std::unordered_map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
-  std::unordered_map<Name, uint32_t> mappedGlobals; // name of the Global => index. first imported globals, then internal globals
+  std::unordered_map<Name, Index>
+    mappedFunctions; // name of the Function => index. first imports, then
+                     // internals
+  std::unordered_map<Name, uint32_t>
+    mappedGlobals; // name of the Global => index. first imported globals, then
+                   // internal globals
   uint32_t getFunctionIndex(Name name);
   uint32_t getGlobalIndex(Name name);
 
@@ -925,13 +949,14 @@ public:
     const char* data;
     size_t size;
     size_t pointerLocation;
-    Buffer(const char* data, size_t size, size_t pointerLocation) : data(data), size(size), pointerLocation(pointerLocation) {}
+    Buffer(const char* data, size_t size, size_t pointerLocation)
+      : data(data), size(size), pointerLocation(pointerLocation) {}
   };
 
   std::vector<Buffer> buffersToWrite;
 
   void emitBuffer(const char* data, size_t size);
-  void emitString(const char *str);
+  void emitString(const char* str);
   void finishUp();
 
   Module* getModule() { return wasm; }
@@ -948,9 +973,10 @@ private:
 
   MixedArena allocator;
 
-  // storage of source map locations until the section is placed at its final location
-  // (shrinking LEBs may cause changes there)
-  std::vector<std::pair<size_t, const Function::DebugLocation*>> sourceMapLocations;
+  // storage of source map locations until the section is placed at its final
+  // location (shrinking LEBs may cause changes there)
+  std::vector<std::pair<size_t, const Function::DebugLocation*>>
+    sourceMapLocations;
   size_t sourceMapLocationsSizeAtSectionStart;
   Function::DebugLocation lastDebugLocation;
 
@@ -975,13 +1001,8 @@ class WasmBinaryBuilder {
 
 public:
   WasmBinaryBuilder(Module& wasm, const std::vector<char>& input, bool debug)
-    : wasm(wasm),
-      allocator(wasm.allocator),
-      input(input),
-      debug(debug),
-      sourceMap(nullptr),
-      nextDebugLocation(0, { 0, 0, 0 }),
-      debugLocation() {}
+    : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug),
+      sourceMap(nullptr), nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -993,7 +1014,8 @@ public:
   uint32_t getInt32();
   uint64_t getInt64();
   uint8_t getLaneIndex(size_t lanes);
-  // it is unsafe to return a float directly, due to ABI issues with the signalling bit
+  // it is unsafe to return a float directly, due to ABI issues with the
+  // signalling bit
   Literal getFloat32Literal();
   Literal getFloat64Literal();
   Literal getVec128Literal();
@@ -1016,7 +1038,10 @@ public:
 
   // gets a name in the combined function import+defined function space
   Name getFunctionIndexName(Index i);
-  void getResizableLimits(Address& initial, Address& max, bool& shared, Address defaultIfNoMax);
+  void getResizableLimits(Address& initial,
+                          Address& max,
+                          bool& shared,
+                          Address defaultIfNoMax);
   void readImports();
 
   std::vector<FunctionType*> functionTypes; // types of defined functions
@@ -1026,12 +1051,20 @@ public:
 
   Name getNextLabel();
 
-  // We read functions before we know their names, so we need to backpatch the names later
-  std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
-  std::vector<Function*> functionImports; // we store function imports here before wasm.addFunctionImport after we know their names
-  std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the function i
+  // We read functions before we know their names, so we need to backpatch the
+  // names later
+  std::vector<Function*>
+    functions; // we store functions here before wasm.addFunction after we know
+               // their names
+  std::vector<Function*>
+    functionImports; // we store function imports here before
+                     // wasm.addFunctionImport after we know their names
+  std::map<Index, std::vector<Call*>>
+    functionCalls; // at index i we have all calls to the function i
   Function* currFunction = nullptr;
-  Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
+  Index endOfFunction =
+    -1; // before we see a function (like global init expressions), there is no
+        // end of function to check
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
@@ -1051,23 +1084,24 @@ public:
     BreakTarget(Name name, int arity) : name(name), arity(arity) {}
   };
   std::vector<BreakTarget> breakStack;
-  // the names that breaks target. this lets us know if a block has breaks to it or not.
+  // the names that breaks target. this lets us know if a block has breaks to it
+  // or not.
   std::unordered_set<Name> breakTargetNames;
 
   std::vector<Expression*> expressionStack;
 
-  // set when we know code is unreachable in the sense of the wasm spec: we are in a block
-  // and after an unreachable element.
-  // this helps parse stacky wasm code, which can be unsuitable for our IR when unreachable.
+  // set when we know code is unreachable in the sense of the wasm spec: we are
+  // in a block and after an unreachable element. this helps parse stacky wasm
+  // code, which can be unsuitable for our IR when unreachable.
   bool unreachableInTheWasmSense;
 
-  // set when the current code being processed will not be emitted in the output, which is the
-  // case when it is literally unreachable, for example,
+  // set when the current code being processed will not be emitted in the
+  // output, which is the case when it is literally unreachable, for example,
   // (block $a
   //   (unreachable)
   //   (block $b
-  //     ;; code here is reachable in the wasm sense, even though $b as a whole is not
-  //     (unreachable)
+  //     ;; code here is reachable in the wasm sense, even though $b as a whole
+  //     is not (unreachable)
   //     ;; code here is unreachable in the wasm sense
   //   )
   // )
@@ -1075,14 +1109,17 @@ public:
 
   BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
 
-  // process a block-type scope, until an end or else marker, or the end of the function
+  // process a block-type scope, until an end or else marker, or the end of the
+  // function
   void processExpressions();
   void skipUnreachableCode();
 
   Expression* popExpression();
   Expression* popNonVoidExpression();
 
-  std::map<Index, Name> mappedGlobals; // index of the Global => name. first imported globals, then internal globals
+  std::map<Index, Name>
+    mappedGlobals; // index of the Global => name. first imported globals, then
+                   // internal globals
 
   Name getGlobalName(Index index);
   void validateBinary(); // validations that cannot be performed on the Module
@@ -1102,9 +1139,7 @@ public:
   void readFeatures(size_t);
 
   // Debug information reading helpers
-  void setDebugLocations(std::istream* sourceMap_) {
-      sourceMap = sourceMap_;
-  }
+  void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }
   std::unordered_map<std::string, Index> debugInfoFileIndices;
   void readNextDebugLocation();
   void readSourceMapHeader();
@@ -1122,13 +1157,13 @@ public:
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
   BreakTarget getBreakTarget(int32_t offset);
-  void visitBreak(Break *curr, uint8_t code);
+  void visitBreak(Break* curr, uint8_t code);
   void visitSwitch(Switch* curr);
 
   void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitGetLocal(GetLocal* curr);
-  void visitSetLocal(SetLocal *curr, uint8_t code);
+  void visitSetLocal(SetLocal* curr, uint8_t code);
   void visitGetGlobal(GetGlobal* curr);
   void visitSetGlobal(SetGlobal* curr);
   void readMemoryAccess(Address& alignment, Address& offset);

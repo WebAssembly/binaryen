@@ -43,13 +43,13 @@
 //    )
 //   )
 
-#include <wasm.h>
-#include <wasm-builder.h>
-#include <pass.h>
-#include "shared-constants.h"
-#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
 #include "ir/function-type-utils.h"
+#include "shared-constants.h"
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -77,16 +77,11 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case unreachable: WASM_UNREACHABLE();
     }
     replaceCurrent(
-      builder.makeCall(
-        import,
-        {
-          builder.makeConst(Literal(int32_t(id++))),
-          builder.makeConst(Literal(int32_t(curr->index))),
-          curr
-        },
-        curr->type
-      )
-    );
+      builder.makeCall(import,
+                       {builder.makeConst(Literal(int32_t(id++))),
+                        builder.makeConst(Literal(int32_t(curr->index))),
+                        curr},
+                       curr->type));
   }
 
   void visitSetLocal(SetLocal* curr) {
@@ -101,26 +96,23 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case unreachable: return; // nothing to do here
       case none: WASM_UNREACHABLE();
     }
-    curr->value = builder.makeCall(
-      import,
-      {
-        builder.makeConst(Literal(int32_t(id++))),
-        builder.makeConst(Literal(int32_t(curr->index))),
-        curr->value
-      },
-      curr->value->type
-    );
+    curr->value =
+      builder.makeCall(import,
+                       {builder.makeConst(Literal(int32_t(id++))),
+                        builder.makeConst(Literal(int32_t(curr->index))),
+                        curr->value},
+                       curr->value->type);
   }
 
   void visitModule(Module* curr) {
-    addImport(curr, get_i32,  "iiii");
-    addImport(curr, get_i64,  "jiij");
-    addImport(curr, get_f32,  "fiif");
-    addImport(curr, get_f64,  "diid");
-    addImport(curr, set_i32,  "iiii");
-    addImport(curr, set_i64,  "jiij");
-    addImport(curr, set_f32,  "fiif");
-    addImport(curr, set_f64,  "diid");
+    addImport(curr, get_i32, "iiii");
+    addImport(curr, get_i64, "jiij");
+    addImport(curr, get_f32, "fiif");
+    addImport(curr, get_f64, "diid");
+    addImport(curr, set_i32, "iiii");
+    addImport(curr, set_i64, "jiij");
+    addImport(curr, set_f32, "fiif");
+    addImport(curr, set_f64, "diid");
   }
 
 private:
@@ -138,8 +130,6 @@ private:
   }
 };
 
-Pass* createInstrumentLocalsPass() {
-  return new InstrumentLocals();
-}
+Pass* createInstrumentLocalsPass() { return new InstrumentLocals(); }
 
 } // namespace wasm

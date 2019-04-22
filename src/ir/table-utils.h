@@ -17,8 +17,8 @@
 #ifndef wasm_ir_table_h
 #define wasm_ir_table_h
 
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -37,9 +37,7 @@ struct FlatTable {
       }
       Index start = offset->cast<Const>()->value.geti32();
       Index end = start + segment.data.size();
-      if (end > names.size()) {
-        names.resize(end);
-      }
+      if (end > names.size()) { names.resize(end); }
       for (Index i = 0; i < segment.data.size(); i++) {
         names[start + i] = segment.data[i];
       }

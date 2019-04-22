@@ -41,7 +41,9 @@ struct Name : public cashew::IString {
 
   friend std::ostream& operator<<(std::ostream& o, Name name) {
     if (name.str) {
-      return o << '$' << name.str; // reference interpreter requires we prefix all names
+      return o
+             << '$'
+             << name.str; // reference interpreter requires we prefix all names
     } else {
       return o << "(null Name)";
     }
@@ -63,6 +65,5 @@ namespace std {
 template<> struct hash<wasm::Name> : hash<cashew::IString> {};
 
 } // namespace std
-
 
 #endif // wasm_support_string_h

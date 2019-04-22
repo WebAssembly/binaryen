@@ -17,10 +17,10 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
-#include "wasm-binary.h"
-#include "wasm.h"
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
+#include "wasm-binary.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -41,14 +41,10 @@ struct BinaryIndexes {
       globalIndexes[curr->name] = index;
     };
     for (auto& curr : wasm.globals) {
-      if (curr->imported()) {
-        addGlobal(curr.get());
-      }
+      if (curr->imported()) { addGlobal(curr.get()); }
     }
     for (auto& curr : wasm.globals) {
-      if (!curr->imported()) {
-        addGlobal(curr.get());
-      }
+      if (!curr->imported()) { addGlobal(curr.get()); }
     }
     assert(globalIndexes.size() == wasm.globals.size());
     auto addFunction = [&](Function* curr) {
@@ -56,14 +52,10 @@ struct BinaryIndexes {
       functionIndexes[curr->name] = index;
     };
     for (auto& curr : wasm.functions) {
-      if (curr->imported()) {
-        addFunction(curr.get());
-      }
+      if (curr->imported()) { addFunction(curr.get()); }
     }
     for (auto& curr : wasm.functions) {
-      if (!curr->imported()) {
-        addFunction(curr.get());
-      }
+      if (!curr->imported()) { addFunction(curr.get()); }
     }
     assert(functionIndexes.size() == wasm.functions.size());
   }
@@ -75,7 +67,8 @@ inline Function* copyFunction(Function* func, Module& out) {
   ret->result = func->result;
   ret->params = func->params;
   ret->vars = func->vars;
-  ret->type = Name(); // start with no named type; the names in the other module may differ
+  // start with no named type; the names in the other module may differ
+  ret->type = Name();
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->debugLocations = func->debugLocations;
@@ -138,8 +131,7 @@ inline void copyModule(Module& in, Module& out) {
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
 // call this redirect all of its uses.
-template<typename T>
-inline void renameFunctions(Module& wasm, T& map) {
+template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& pair : map) {
     if (Function* F = wasm.getFunctionOrNull(pair.first)) {
@@ -151,9 +143,7 @@ inline void renameFunctions(Module& wasm, T& map) {
   // Update other global things.
   auto maybeUpdate = [&](Name& name) {
     auto iter = map.find(name);
-    if (iter != map.end()) {
-      name = iter->second;
-    }
+    if (iter != map.end()) { name = iter->second; }
   };
   maybeUpdate(wasm.start);
   for (auto& segment : wasm.table.segments) {
@@ -162,9 +152,7 @@ inline void renameFunctions(Module& wasm, T& map) {
     }
   }
   for (auto& exp : wasm.exports) {
-    if (exp->kind == ExternalKind::Function) {
-      maybeUpdate(exp->value);
-    }
+    if (exp->kind == ExternalKind::Function) { maybeUpdate(exp->value); }
   }
   // Update call instructions.
   for (auto& func : wasm.functions) {
@@ -186,67 +174,44 @@ inline void renameFunction(Module& wasm, Name oldName, Name newName) {
 
 // Convenient iteration over imported/non-imported module elements
 
-template<typename T>
-inline void iterImportedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && wasm.memory.imported()) {
-    visitor(&wasm.memory);
-  }
+template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
+  if (wasm.memory.exists && wasm.memory.imported()) { visitor(&wasm.memory); }
 }
 
-template<typename T>
-inline void iterDefinedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && !wasm.memory.imported()) {
-    visitor(&wasm.memory);
-  }
+template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
+  if (wasm.memory.exists && !wasm.memory.imported()) { visitor(&wasm.memory); }
 }
 
-template<typename T>
-inline void iterImportedTables(Module& wasm, T visitor) {
-  if (wasm.table.exists && wasm.table.imported()) {
-    visitor(&wasm.table);
-  }
+template<typename T> inline void iterImportedTables(Module& wasm, T visitor) {
+  if (wasm.table.exists && wasm.table.imported()) { visitor(&wasm.table); }
 }
 
-template<typename T>
-inline void iterDefinedTables(Module& wasm, T visitor) {
-  if (wasm.table.exists && !wasm.table.imported()) {
-    visitor(&wasm.table);
-  }
+template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
+  if (wasm.table.exists && !wasm.table.imported()) { visitor(&wasm.table); }
 }
 
-template<typename T>
-inline void iterImportedGlobals(Module& wasm, T visitor) {
+template<typename T> inline void iterImportedGlobals(Module& wasm, T visitor) {
   for (auto& import : wasm.globals) {
-    if (import->imported()) {
-      visitor(import.get());
-    }
+    if (import->imported()) { visitor(import.get()); }
   }
 }
 
-template<typename T>
-inline void iterDefinedGlobals(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedGlobals(Module& wasm, T visitor) {
   for (auto& import : wasm.globals) {
-    if (!import->imported()) {
-      visitor(import.get());
-    }
+    if (!import->imported()) { visitor(import.get()); }
   }
 }
 
 template<typename T>
 inline void iterImportedFunctions(Module& wasm, T visitor) {
   for (auto& import : wasm.functions) {
-    if (import->imported()) {
-      visitor(import.get());
-    }
+    if (import->imported()) { visitor(import.get()); }
   }
 }
 
-template<typename T>
-inline void iterDefinedFunctions(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
   for (auto& import : wasm.functions) {
-    if (!import->imported()) {
-      visitor(import.get());
-    }
+    if (!import->imported()) { visitor(import.get()); }
   }
 }
 
