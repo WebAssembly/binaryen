@@ -76,16 +76,13 @@ function asmFunc(global, env, buffer) {
   var i = 0, $6_1 = 0;
   i = 0;
   exit : {
-   cont : do {
-    i = i + 1 | 0;
-    if ((i | 0) == (5 | 0)) {
-     {
-      $6_1 = i;
-      break exit;
-     }
+   i = i + 1 | 0;
+   if ((i | 0) == (5 | 0)) {
+    {
+     $6_1 = i;
+     break exit;
     }
-    break cont;
-   } while (1);
+   }
    $6_1 = i;
   }
   return $6_1 | 0;
@@ -113,66 +110,59 @@ function asmFunc(global, env, buffer) {
  
  function $5() {
   var $0_1 = 0;
-  l : do {
-   $0_1 = 1;
-   break l;
-  } while (1);
+  $0_1 = 1;
   return $0_1 + 1 | 0 | 0;
  }
  
  function $6() {
   var i = 0;
   i = 0;
-  block_1 : {
-   l : {
-    break l;
-   }
-   i = i + 1 | 0;
-   l1 : {
-    break l1;
-   }
-   i = i + 1 | 0;
-   l2 : {
-    break l2;
-   }
-   i = i + 1 | 0;
-   l3 : {
-    break l3;
-   }
-   i = i + 1 | 0;
-   l4 : {
-    break l4;
-   }
-   i = i + 1 | 0;
+  l : {
+   break l;
   }
+  i = i + 1 | 0;
+  l1 : {
+   break l1;
+  }
+  i = i + 1 | 0;
+  l2 : {
+   break l2;
+  }
+  i = i + 1 | 0;
+  l3 : {
+   break l3;
+  }
+  i = i + 1 | 0;
+  l4 : {
+   break l4;
+  }
+  i = i + 1 | 0;
   return i | 0;
  }
  
  function $7() {
   var i = 0;
   i = 0;
-  block_1 : {
-   if_1 : {
-    break if_1;
-   }
-   i = i + 1 | 0;
-   if5 : {
-    break if5;
-   }
-   i = i + 1 | 0;
-   if6 : {
-    break if6;
-   }
-   i = i + 1 | 0;
-   if7 : {
-    break if7;
-   }
-   i = i + 1 | 0;
-   if8 : {
-    break if8;
-   }
-   i = i + 1 | 0;
+  if_1 : {
+   break if_1;
   }
+  i = i + 1 | 0;
+  if5 : {
+   break if5;
+  }
+  i = i + 1 | 0;
+  if6 : {
+   break if6;
+  }
+  i = i + 1 | 0;
+  if7 : {
+   break if7;
+  }
+  i = i + 1 | 0;
+  if8 : {
+   break if8;
+  }
+  i = i + 1 | 0;
   return i | 0;
  }
  
@@ -329,12 +319,10 @@ function asmFunc(global, env, buffer) {
  
  function $16() {
   var $1_2 = 0, $2_2 = 0;
-  l1 : {
-   $1_2 = 2;
-   l113 : {
-    $2_2 = 3;
-    break l113;
-   }
+  $1_2 = 2;
+  l113 : {
+   $2_2 = 3;
+   break l113;
   }
   return $1_2 + $2_2 | 0 | 0;
  }

@@ -103,13 +103,10 @@ function asmFunc(global, env, buffer) {
  function $7($0) {
   $0 = $0 | 0;
   block : {
-   loop_in : do {
-    if ($0) {
-     break block
-    }
-    return 2 | 0;
-    break loop_in;
-   } while (1);
+   if ($0) {
+    break block
+   }
+   return 2 | 0;
   }
   return 3 | 0;
  }
@@ -117,14 +114,11 @@ function asmFunc(global, env, buffer) {
  function $8($0) {
   $0 = $0 | 0;
   block : {
-   loop_in : do {
-    dummy();
-    if ($0) {
-     break block
-    }
-    return 2 | 0;
-    break loop_in;
-   } while (1);
+   dummy();
+   if ($0) {
+    break block
+   }
+   return 2 | 0;
   }
   return 4 | 0;
  }
@@ -132,13 +126,10 @@ function asmFunc(global, env, buffer) {
  function $9($0) {
   $0 = $0 | 0;
   fake_return_waka123 : {
-   loop_in : do {
-    dummy();
-    if ($0) {
-     break fake_return_waka123
-    }
-    break loop_in;
-   } while (1);
+   dummy();
+   if ($0) {
+    break fake_return_waka123
+   }
   }
  }
  
@@ -174,11 +165,9 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   var $2_1 = 0;
   block : {
-   block0 : {
-    $2_1 = 8;
-    if ($0) {
-     break block
-    }
+   $2_1 = 8;
+   if ($0) {
+    break block
    }
    $2_1 = 4 + 16 | 0;
   }
@@ -189,11 +178,9 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   var $2_1 = 0;
   block : {
-   block1 : {
-    $2_1 = 8;
-    if ($0) {
-     break block
-    }
+   $2_1 = 8;
+   if ($0) {
+    break block
    }
    $2_1 = 4;
    break block;
@@ -205,11 +192,9 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   var $2_1 = 0;
   block : {
-   block2 : {
-    $2_1 = 8;
-    if ($0) {
-     break block
-    }
+   $2_1 = 8;
+   if ($0) {
+    break block
    }
    $2_1 = 4;
    if (1) {
@@ -224,11 +209,9 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   var $2_1 = 0;
   block : {
-   block3 : {
-    $2_1 = 8;
-    if ($0) {
-     break block
-    }
+   $2_1 = 8;
+   if ($0) {
+    break block
    }
    $2_1 = 4;
    if (1) {
@@ -243,11 +226,9 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   var $2_1 = 0;
   block : {
-   block4 : {
-    $2_1 = 8;
-    if ($0) {
-     break block
-    }
+   $2_1 = 8;
+   if ($0) {
+    break block
    }
    $2_1 = 4;
    switch (1 | 0) {
@@ -262,11 +243,9 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   var $2_1 = 0;
   block : {
-   block5 : {
-    $2_1 = 8;
-    if ($0) {
-     break block
-    }
+   $2_1 = 8;
+   if ($0) {
+    break block
    }
    $2_1 = 4;
    switch (1 | 0) {

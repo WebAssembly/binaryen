@@ -113,7 +113,7 @@ function asmFunc(global, env, buffer) {
     if ((i64toi32_i32$2 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) | 0) {
      break block
     } else {
-     block0 : {
+     {
       i64toi32_i32$2 = $1$hi;
       i64toi32_i32$2 = $2$hi;
       i64toi32_i32$2 = $1$hi;
@@ -161,7 +161,7 @@ function asmFunc(global, env, buffer) {
     if ((i64toi32_i32$2 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) | 0) {
      break done
     } else {
-     block : {
+     {
       i64toi32_i32$2 = i$hi;
       i64toi32_i32$2 = res$hi;
       i64toi32_i32$2 = i$hi;

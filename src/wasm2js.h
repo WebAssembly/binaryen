@@ -271,6 +271,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   runner.add("flatten");
   runner.add("simplify-locals-notee-nostructure");
   runner.add("reorder-locals");
+  runner.add("remove-unused-names");
   runner.add("vacuum");
   runner.add("remove-unused-module-elements");
   runner.setDebug(flags.debug);
@@ -629,6 +630,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
     runner.add("flatten");
     runner.add("simplify-locals-notee-nostructure");
     runner.add("reorder-locals");
+    runner.add("remove-unused-names");
     runner.add("vacuum");
     runner.runOnFunction(func);
   }
