@@ -1540,7 +1540,7 @@ void WasmBinaryBuilder::readDataSegments() {
     }
     curr.isPassive = flags & BinaryConsts::IsPassive;
     if (flags & BinaryConsts::HasMemIndex) {
-      uint32_t memIndex = getU32LEB();
+      auto memIndex = getU32LEB();
       if (memIndex != 0) {
         throwError("nonzero memory index");
       }

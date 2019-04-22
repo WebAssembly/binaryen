@@ -39,6 +39,7 @@ enum class ModuleElementKind {
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
 // Finds reachabilities
+// TODO: use Effects to determine if a memory is used
 
 struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
