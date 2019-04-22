@@ -8,5 +8,3 @@ export function getTempRet0() {
   return tempRet0;
 }
 
-export const __tempMemory__ = 0;
-

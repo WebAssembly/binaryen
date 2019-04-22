@@ -1,6 +1,35 @@
-import { __tempMemory__ } from 'env';
 import { setTempRet0 } from 'env';
 
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i32(index) {
+    return i32ScratchView[index];
+  }
+      
+  function wasm2js_scratch_store_i32(index, value) {
+    i32ScratchView[index] = value;
+  }
+      
+  function wasm2js_scratch_load_f64() {
+    return f64ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_f64(value) {
+    f64ScratchView[0] = value;
+  }
+      
+  function wasm2js_scratch_load_f32() {
+    return f32ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_f32(value) {
+    f32ScratchView[0] = value;
+  }
+      
 function asmFunc(global, env, buffer) {
  "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -24,7 +53,6 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var setTempRet0 = env.setTempRet0;
- var __tempMemory__ = env.__tempMemory__ | 0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -221,36 +249,30 @@ function asmFunc(global, env, buffer) {
  
  function $21(x) {
   x = x | 0;
-  return Math_fround((HEAP32[0] = x, HEAPF32[0]));
+  return Math_fround((wasm2js_scratch_store_i32(0, x), wasm2js_scratch_load_f32()));
  }
  
  function $22(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
-  var i64toi32_i32$0 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = x$hi;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_i32$1 = x;
-  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_i32$1 = i64toi32_i32$0;
-  HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  return +(+HEAPF64[__tempMemory__ >> 3]);
+  wasm2js_scratch_store_i32(0 | 0, x | 0);
+  wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
+  return +(+wasm2js_scratch_load_f64());
  }
  
  function $23(x) {
   x = Math_fround(x);
-  return (HEAPF32[0] = x, HEAP32[0] | 0) | 0;
+  return (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) | 0;
  }
  
  function $24(x) {
   x = +x;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0;
-  wasm2js_i32$0 = __tempMemory__;
-  wasm2js_f64$0 = x;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(__tempMemory__ + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = HEAP32[__tempMemory__ >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
+  wasm2js_scratch_store_f64(+x);
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }
