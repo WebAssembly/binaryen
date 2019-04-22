@@ -449,15 +449,14 @@ function asmFunc(global, env, buffer) {
  }
  
  function $47() {
-  var i64toi32_i32$0 = 0, $0 = 0, $0$hi = 0;
+  var $0 = 0, $0$hi = 0, i64toi32_i32$1 = 0;
   block : {
-   i64toi32_i32$0 = 0;
    $0 = 45;
-   $0$hi = i64toi32_i32$0;
+   $0$hi = 0;
    break block;
   }
-  i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
+  i64toi32_i32$1 = $0$hi;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
   return $0 | 0;
  }
  
@@ -519,10 +518,8 @@ function asmFunc(global, env, buffer) {
  function $54() {
   var $0 = 0;
   block : {
-   block0 : {
-    $0 = 8;
-    break block;
-   }
+   $0 = 8;
+   break block;
   }
   return 1 + $0 | 0 | 0;
  }

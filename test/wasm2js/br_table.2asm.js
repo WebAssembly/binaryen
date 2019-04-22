@@ -49973,7 +49973,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $54() {
-  var i64toi32_i32$0 = 0, $1_1 = 0, $1$hi = 0;
+  var i64toi32_i32$0 = 0, $1_1 = 0, $1$hi = 0, i64toi32_i32$1 = 0;
   block : {
    i64toi32_i32$0 = 0;
    $1_1 = 45;
@@ -49983,8 +49983,8 @@ function asmFunc(global, env, buffer) {
     break block;
    };
   }
-  i64toi32_i32$0 = $1$hi;
-  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
+  i64toi32_i32$1 = $1$hi;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
   return $1_1 | 0;
  }
  
