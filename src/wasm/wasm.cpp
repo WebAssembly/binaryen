@@ -905,7 +905,6 @@ Global* Module::addGlobal(Global* curr) {
     Fatal() << "Module::addGlobal: empty name";
   }
   if (getGlobalOrNull(curr->name)) {
-    assert(0);
     Fatal() << "Module::addGlobal: " << curr->name << " already exists";
   }
 
