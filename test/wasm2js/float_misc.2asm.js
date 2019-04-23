@@ -93,7 +93,7 @@ function asmFunc(global, env, buffer) {
  function $7(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
-  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & 2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
+  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | (wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & 2147483648 | 0), wasm2js_scratch_load_f32()));
  }
  
  function $8(x) {

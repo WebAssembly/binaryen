@@ -441,7 +441,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return i64toi32_i32$0 >>> 0 < y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 < y >>> 0 | 0) | 0;
+  return i64toi32_i32$0 >>> 0 < y$hi >>> 0 | (i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 < y >>> 0 | 0;
  }
  
  function $23(x, x$hi, y, y$hi) {
@@ -487,7 +487,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return i64toi32_i32$0 >>> 0 < y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 <= y >>> 0 | 0) | 0;
+  return i64toi32_i32$0 >>> 0 < y$hi >>> 0 | (i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 <= y >>> 0 | 0;
  }
  
  function $25(x, x$hi, y, y$hi) {
@@ -533,7 +533,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return i64toi32_i32$0 >>> 0 > y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 > y >>> 0 | 0) | 0;
+  return i64toi32_i32$0 >>> 0 > y$hi >>> 0 | (i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 > y >>> 0 | 0;
  }
  
  function $27(x, x$hi, y, y$hi) {
@@ -579,7 +579,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return i64toi32_i32$0 >>> 0 > y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 >= y >>> 0 | 0) | 0;
+  return i64toi32_i32$0 >>> 0 > y$hi >>> 0 | (i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 >= y >>> 0 | 0;
  }
  
  function legalstub$0($0_1, $1_1, $2_1, $3_1) {
@@ -3150,7 +3150,7 @@ function asmFunc(global, env, buffer) {
             i64toi32_i32$1 = var$1;
             i64toi32_i32$0 = 1;
             i64toi32_i32$3 = 0;
-            if (i64toi32_i32$2 >>> 0 > i64toi32_i32$0 >>> 0 | ((i64toi32_i32$2 | 0) == (i64toi32_i32$0 | 0) & i64toi32_i32$1 >>> 0 >= i64toi32_i32$3 >>> 0 | 0) | 0) {
+            if (i64toi32_i32$2 >>> 0 > i64toi32_i32$0 >>> 0 | (i64toi32_i32$2 | 0) == (i64toi32_i32$0 | 0) & i64toi32_i32$1 >>> 0 >= i64toi32_i32$3 >>> 0 | 0) {
              break label$2
             }
             i64toi32_i32$1 = var$0$hi;
@@ -3963,7 +3963,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0
+   return 31 - Math_clz32(var$0 + 4294967295 ^ var$0 | 0) | 0
   }
   return 32 | 0;
  }

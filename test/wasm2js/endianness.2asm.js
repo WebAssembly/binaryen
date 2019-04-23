@@ -96,12 +96,12 @@ function asmFunc(global, env, buffer) {
  
  function i16_load_little(address) {
   address = address | 0;
-  return HEAPU8[address | 0] | 0 | ((HEAPU8[address + 1 | 0] | 0) << 8 | 0) | 0;
+  return HEAPU8[address | 0] | (HEAPU8[address + 1 | 0] | 0) << 8 | 0;
  }
  
  function i32_load_little(address) {
   address = address | 0;
-  return i16_load_little(address | 0) | 0 | ((i16_load_little(address + 2 | 0) | 0) << 16 | 0) | 0;
+  return i16_load_little(address | 0) | (i16_load_little(address + 2 | 0) | 0) << 16 | 0;
  }
  
  function i64_load_little(address) {

@@ -295,19 +295,19 @@ function asmFunc(global, env, buffer) {
  
  function $42() {
   reset();
-  (i32_left() | 0) & (i32_right() | 0) | 0;
+  i32_left() & i32_right() | 0;
   return get() | 0;
  }
  
  function $43() {
   reset();
-  i32_left() | 0 | (i32_right() | 0) | 0;
+  i32_left() | i32_right() | 0;
   return get() | 0;
  }
  
  function $44() {
   reset();
-  (i32_left() | 0) ^ (i32_right() | 0) | 0;
+  i32_left() ^ i32_right() | 0;
   return get() | 0;
  }
  
@@ -1058,7 +1058,7 @@ function asmFunc(global, env, buffer) {
  
  function $98() {
   reset();
-  (wasm2js_scratch_store_f32(Math_fround(f32_left())), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(Math_fround(f32_right())), wasm2js_scratch_load_i32(0)) & 2147483648 | 0) | 0;
+  (wasm2js_scratch_store_f32(Math_fround(f32_left())), wasm2js_scratch_load_i32(0)) & 2147483647 | (wasm2js_scratch_store_f32(Math_fround(f32_right())), wasm2js_scratch_load_i32(0)) & 2147483648 | 0;
   return get() | 0;
  }
  
@@ -1271,7 +1271,7 @@ function asmFunc(global, env, buffer) {
   block : {
    reset();
    $3 = i32_left() | 0;
-   if ((i32_right() | 0) & 0 | 0) {
+   if (i32_right() & 0 | 0) {
     break block
    }
    $3 = get() | 0;
@@ -1736,7 +1736,7 @@ function asmFunc(global, env, buffer) {
             i64toi32_i32$1 = var$1;
             i64toi32_i32$0 = 1;
             i64toi32_i32$3 = 0;
-            if (i64toi32_i32$2 >>> 0 > i64toi32_i32$0 >>> 0 | ((i64toi32_i32$2 | 0) == (i64toi32_i32$0 | 0) & i64toi32_i32$1 >>> 0 >= i64toi32_i32$3 >>> 0 | 0) | 0) {
+            if (i64toi32_i32$2 >>> 0 > i64toi32_i32$0 >>> 0 | (i64toi32_i32$2 | 0) == (i64toi32_i32$0 | 0) & i64toi32_i32$1 >>> 0 >= i64toi32_i32$3 >>> 0 | 0) {
              break label$2
             }
             i64toi32_i32$1 = var$0$hi;
@@ -2203,7 +2203,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0
+   return 31 - Math_clz32(var$0 + 4294967295 ^ var$0 | 0) | 0
   }
   return 32 | 0;
  }

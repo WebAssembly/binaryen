@@ -285,7 +285,7 @@ function asmFunc(global, env, buffer) {
     i64toi32_i32$0 = $0$hi;
     i64toi32_i32$0 = $2$hi;
     i64toi32_i32$1 = $0$hi;
-    if (i64toi32_i32$0 >>> 0 > i64toi32_i32$1 >>> 0 | ((i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) & $2_1 >>> 0 > $0 >>> 0 | 0) | 0) {
+    if (i64toi32_i32$0 >>> 0 > i64toi32_i32$1 >>> 0 | (i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) & $2_1 >>> 0 > $0 >>> 0 | 0) {
      break block
     }
     i64toi32_i32$0 = $2$hi;
@@ -540,7 +540,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0
+   return 31 - Math_clz32(var$0 + 4294967295 ^ var$0 | 0) | 0
   }
   return 32 | 0;
  }

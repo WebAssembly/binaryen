@@ -44,6 +44,11 @@ static void optimizeJS(Ref ast) {
     return node->isArray() && node[0] == BINARY && node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
   };
 
+  auto isBitwise = [](Ref node) {
+    return node->isArray() && node[0] == BINARY &&
+           (node[1] == OR || node[1] == AND || node[1] == XOR);
+  };
+
   // x >> 0  =>  x | 0
   traversePre(ast, [](Ref node) {
     if (node->isArray() && node[0] == BINARY && node[1] == RSHIFT && node[3]->isNumber()) {
@@ -53,10 +58,21 @@ static void optimizeJS(Ref ast) {
     }
   });
 
-  // x | 0 | 0  =>  x | 0
   traversePre(ast, [&](Ref node) {
-    if (isOrZero(node) && isOrZero(node[2])) {
-      node[2] = node[2][2];
+    // x | 0 | 0  =>  x | 0
+    if (isOrZero(node)) {
+      while (isOrZero(node[2])) {
+        node[2] = node[2][2];
+      }
+    }
+    // x | 0 going into a bitwise op => skip the | 0
+    else if (isBitwise(node)) {
+      while (isOrZero(node[2])) {
+        node[2] = node[2][2];
+      }
+      while (isOrZero(node[3])) {
+        node[3] = node[3][2];
+      }
     }
   });
 }
