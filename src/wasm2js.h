@@ -1529,18 +1529,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     }
 
     Ref visitHost(Host* curr) {
-      Ref call;
       if (curr->op == HostOp::GrowMemory) {
-        call = ValueBuilder::makeCall(WASM_GROW_MEMORY,
-          makeAsmCoercion(
-            visit(curr->operands[0], EXPRESSION_RESULT),
-            wasmToAsmType(curr->operands[0]->type)));
+        if (module->memory.exists && module->memory.max > module->memory.initial) {
+          return ValueBuilder::makeCall(WASM_GROW_MEMORY,
+            makeAsmCoercion(
+              visit(curr->operands[0], EXPRESSION_RESULT),
+              wasmToAsmType(curr->operands[0]->type)));
+        } else {
+          return ValueBuilder::makeCall(ABORT_FUNC);
+        }
       } else if (curr->op == HostOp::CurrentMemory) {
-        call = ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
-      } else {
-        return ValueBuilder::makeCall(ABORT_FUNC);
+        return ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
       }
-      return call;
+      WASM_UNREACHABLE(); // TODO
     }
 
     Ref visitNop(Nop* curr) {

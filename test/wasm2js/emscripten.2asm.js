@@ -47,7 +47,7 @@ function asmFunc(global, env, buffer) {
  
  function __growWasmMemory($0) {
   $0 = $0 | 0;
-  return __wasm_grow_memory($0 | 0) | 0;
+  return abort() | 0;
  }
  
  // EMSCRIPTEN_END_FUNCS;
