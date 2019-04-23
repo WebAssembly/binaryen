@@ -60,17 +60,17 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const writeSegment = (
+var writeSegment = (
     function(mem) {
-      const _mem = new Uint8Array(mem);
+      var _mem = new Uint8Array(mem);
       return function(offset, s) {
         if (typeof Buffer === 'undefined') {
-          const bytes = atob(s);
-          for (let i = 0; i < bytes.length; i++)
+          var bytes = atob(s);
+          for (var i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes.charCodeAt(i);
         } else {
-          const bytes = Buffer.from(s, 'base64');
-          for (let i = 0; i < bytes.length; i++)
+          var bytes = Buffer.from(s, 'base64');
+          for (var i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes[i];
         }
       }

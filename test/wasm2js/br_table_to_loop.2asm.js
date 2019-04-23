@@ -60,7 +60,7 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const exp1 = retasmFunc.exp1;
-export const exp2 = retasmFunc.exp2;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var exp1 = retasmFunc.exp1;
+export var exp2 = retasmFunc.exp2;

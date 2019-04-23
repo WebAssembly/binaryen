@@ -182,11 +182,11 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const select_i32 = retasmFunc.select_i32;
-export const select_i64 = retasmFunc.select_i64;
-export const select_f32 = retasmFunc.select_f32;
-export const select_f64 = retasmFunc.select_f64;
-export const select_trap_l = retasmFunc.select_trap_l;
-export const select_trap_r = retasmFunc.select_trap_r;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var select_i32 = retasmFunc.select_i32;
+export var select_i64 = retasmFunc.select_i64;
+export var select_f32 = retasmFunc.select_f32;
+export var select_f64 = retasmFunc.select_f64;
+export var select_trap_l = retasmFunc.select_trap_l;
+export var select_trap_r = retasmFunc.select_trap_r;

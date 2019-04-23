@@ -41,8 +41,8 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const br = retasmFunc.br;
-export const br_if = retasmFunc.br_if;
-export const br_table = retasmFunc.br_table;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var br = retasmFunc.br;
+export var br_if = retasmFunc.br_if;
+export var br_table = retasmFunc.br_table;

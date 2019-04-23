@@ -651,10 +651,10 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const fac_rec = retasmFunc.fac_rec;
-export const fac_rec_named = retasmFunc.fac_rec_named;
-export const fac_iter = retasmFunc.fac_iter;
-export const fac_iter_named = retasmFunc.fac_iter_named;
-export const fac_opt = retasmFunc.fac_opt;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var fac_rec = retasmFunc.fac_rec;
+export var fac_rec_named = retasmFunc.fac_rec_named;
+export var fac_iter = retasmFunc.fac_iter;
+export var fac_iter_named = retasmFunc.fac_iter_named;
+export var fac_opt = retasmFunc.fac_opt;
