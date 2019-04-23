@@ -95,12 +95,12 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  eq: legalstub$0, 
-  ne: legalstub$1, 
-  lt: legalstub$2, 
-  le: legalstub$3, 
-  gt: legalstub$4, 
-  ge: legalstub$5
+  "eq": legalstub$0, 
+  "ne": legalstub$1, 
+  "lt": legalstub$2, 
+  "le": legalstub$3, 
+  "gt": legalstub$4, 
+  "ge": legalstub$5
  };
 }
 

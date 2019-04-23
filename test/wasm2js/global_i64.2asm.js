@@ -39,7 +39,7 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  exp: $1
+  "exp": $1
  };
 }
 

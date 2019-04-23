@@ -329,23 +329,23 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  block: $0, 
-  loop1: $1, 
-  loop2: $2, 
-  loop3: $3, 
-  loop4: $4, 
-  loop5: $5, 
-  if_: $6, 
-  if2: $7, 
-  switch_: $8, 
-  return_: $9, 
-  br_if0: $10, 
-  br_if1: $11, 
-  br_if2: $12, 
-  br_if3: $13, 
-  br: $14, 
-  shadowing: $15, 
-  redefinition: $16
+  "block": $0, 
+  "loop1": $1, 
+  "loop2": $2, 
+  "loop3": $3, 
+  "loop4": $4, 
+  "loop5": $5, 
+  "if_": $6, 
+  "if2": $7, 
+  "switch_": $8, 
+  "return_": $9, 
+  "br_if0": $10, 
+  "br_if1": $11, 
+  "br_if2": $12, 
+  "br_if3": $13, 
+  "br": $14, 
+  "shadowing": $15, 
+  "redefinition": $16
  };
 }
 

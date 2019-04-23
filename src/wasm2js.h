@@ -531,7 +531,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
   Ref exports = ValueBuilder::makeObject();
   for (auto& export_ : wasm->exports) {
     if (export_->kind == ExternalKind::Function) {
-      ValueBuilder::appendToObject(
+      ValueBuilder::appendToObjectWithQuotes(
         exports,
         fromName(export_->name, NameScope::Top),
         ValueBuilder::makeName(fromName(export_->value, NameScope::Top))
@@ -540,11 +540,11 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
     if (export_->kind == ExternalKind::Memory) {
       Ref descs = ValueBuilder::makeObject();
       Ref growDesc = ValueBuilder::makeObject();
-      ValueBuilder::appendToObject(
+      ValueBuilder::appendToObjectWithQuotes(
         descs,
         IString("grow"),
         growDesc);
-      ValueBuilder::appendToObject(
+      ValueBuilder::appendToObjectWithQuotes(
         growDesc,
         IString("value"),
         ValueBuilder::makeName(WASM_GROW_MEMORY));
@@ -553,11 +553,11 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       bufferGetter[3]->push_back(ValueBuilder::makeReturn(
         ValueBuilder::makeName(BUFFER)
       ));
-      ValueBuilder::appendToObject(
+      ValueBuilder::appendToObjectWithQuotes(
         bufferDesc,
         IString("get"),
         bufferGetter);
-      ValueBuilder::appendToObject(
+      ValueBuilder::appendToObjectWithQuotes(
         descs,
         IString("buffer"),
         bufferDesc);
@@ -567,7 +567,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       ValueBuilder::appendToCall(
         memory,
         descs);
-      ValueBuilder::appendToObject(
+      ValueBuilder::appendToObjectWithQuotes(
         exports,
         fromName(export_->name, NameScope::Top),
         memory);

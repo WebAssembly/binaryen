@@ -31,7 +31,7 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  func_44_invoker: $1
+  "func_44_invoker": $1
  };
 }
 

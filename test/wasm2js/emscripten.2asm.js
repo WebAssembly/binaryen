@@ -54,9 +54,9 @@ function asmFunc(global, env, buffer) {
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
  return {
-  main: main, 
-  other: other, 
-  __growWasmMemory: __growWasmMemory
+  "main": main, 
+  "other": other, 
+  "__growWasmMemory": __growWasmMemory
  };
 }
 
