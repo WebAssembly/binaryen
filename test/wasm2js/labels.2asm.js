@@ -111,7 +111,7 @@ function asmFunc(global, env, buffer) {
  function $5() {
   var $0_1 = 0;
   $0_1 = 1;
-  return $0_1 + 1 | 0 | 0;
+  return $0_1 + 1 | 0;
  }
  
  function $6() {
@@ -324,7 +324,7 @@ function asmFunc(global, env, buffer) {
    $2_2 = 3;
    break l113;
   }
-  return $1_2 + $2_2 | 0 | 0;
+  return $1_2 + $2_2 | 0;
  }
  
  var FUNCTION_TABLE = [];

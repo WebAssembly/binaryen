@@ -161,7 +161,7 @@ function asmFunc(global, env, buffer) {
       $7_1 = $5_1;
       $8 = $5_1;
       $9 = $5_1;
-      switch (3 & i | 0 | 0) {
+      switch (3 & i | 0) {
       case 0:
        break $0_1;
       case 1:

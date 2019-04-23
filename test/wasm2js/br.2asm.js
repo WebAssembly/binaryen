@@ -503,7 +503,7 @@ function asmFunc(global, env, buffer) {
    $0 = 8;
    break block;
   }
-  return 1 + $0 | 0 | 0;
+  return 1 + $0 | 0;
  }
  
  function $54() {
@@ -512,7 +512,7 @@ function asmFunc(global, env, buffer) {
    $0 = 8;
    break block;
   }
-  return 1 + $0 | 0 | 0;
+  return 1 + $0 | 0;
  }
  
  function $55() {
@@ -521,7 +521,7 @@ function asmFunc(global, env, buffer) {
    $0 = 8;
    break block;
   }
-  return 1 + $0 | 0 | 0;
+  return 1 + $0 | 0;
  }
  
  function $56() {
@@ -530,7 +530,7 @@ function asmFunc(global, env, buffer) {
    $0 = 8;
    break block;
   }
-  return 1 + $0 | 0 | 0;
+  return 1 + $0 | 0;
  }
  
  function $57() {
@@ -539,7 +539,7 @@ function asmFunc(global, env, buffer) {
    $0 = 8;
    break block;
   }
-  return 1 + $0 | 0 | 0;
+  return 1 + $0 | 0;
  }
  
  function $58() {
@@ -548,7 +548,7 @@ function asmFunc(global, env, buffer) {
    $0 = 8;
    break block;
   }
-  return 1 + $0 | 0 | 0;
+  return 1 + $0 | 0;
  }
  
  function legalstub$6() {

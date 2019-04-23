@@ -65,7 +65,7 @@ function asmFunc(global, env, buffer) {
   address = address | 0;
   value = value | 0;
   i16_store_little(address | 0, value | 0);
-  i16_store_little(address + 2 | 0 | 0, value >>> 16 | 0 | 0);
+  i16_store_little(address + 2 | 0, value >>> 16 | 0);
  }
  
  function i64_store_little(address, value, value$hi) {
@@ -96,12 +96,12 @@ function asmFunc(global, env, buffer) {
  
  function i16_load_little(address) {
   address = address | 0;
-  return HEAPU8[address >> 0] | 0 | ((HEAPU8[(address + 1 | 0) >> 0] | 0) << 8 | 0) | 0 | 0;
+  return HEAPU8[address | 0] | 0 | ((HEAPU8[address + 1 | 0] | 0) << 8 | 0) | 0;
  }
  
  function i32_load_little(address) {
   address = address | 0;
-  return i16_load_little(address | 0) | 0 | ((i16_load_little(address + 2 | 0 | 0) | 0) << 16 | 0) | 0 | 0;
+  return i16_load_little(address | 0) | 0 | ((i16_load_little(address + 2 | 0) | 0) << 16 | 0) | 0;
  }
  
  function i64_load_little(address) {
@@ -140,19 +140,19 @@ function asmFunc(global, env, buffer) {
  function $6(value) {
   value = value | 0;
   i16_store_little(0 | 0, value | 0);
-  return HEAP16[0 >> 1] | 0 | 0;
+  return HEAP16[0 >> 1] | 0;
  }
  
  function $7(value) {
   value = value | 0;
   i16_store_little(0 | 0, value | 0);
-  return HEAPU16[0 >> 1] | 0 | 0;
+  return HEAPU16[0 >> 1] | 0;
  }
  
  function $8(value) {
   value = value | 0;
   i32_store_little(0 | 0, value | 0);
-  return HEAP32[0 >> 2] | 0 | 0;
+  return HEAP32[0 >> 2] | 0;
  }
  
  function $9(value, value$hi) {
@@ -227,20 +227,20 @@ function asmFunc(global, env, buffer) {
   var i64toi32_i32$0 = 0;
   wasm2js_scratch_store_f64(+value);
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
-  i64_store_little(0 | 0, wasm2js_scratch_load_i32(0 | 0) | 0 | 0, i64toi32_i32$0 | 0);
+  i64_store_little(0 | 0, wasm2js_scratch_load_i32(0 | 0) | 0, i64toi32_i32$0 | 0);
   return +(+HEAPF64[0 >> 3]);
  }
  
  function $16(value) {
   value = value | 0;
   HEAP16[0 >> 1] = value;
-  return i16_load_little(0 | 0) | 0 | 0;
+  return i16_load_little(0 | 0) | 0;
  }
  
  function $17(value) {
   value = value | 0;
   HEAP32[0 >> 2] = value;
-  return i32_load_little(0 | 0) | 0 | 0;
+  return i32_load_little(0 | 0) | 0;
  }
  
  function $18(value, value$hi) {

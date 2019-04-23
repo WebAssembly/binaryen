@@ -40,12 +40,23 @@ static void printJS(Ref ast, T& output) {
 }
 
 static void optimizeJS(Ref ast) {
+  auto isOrZero = [](Ref node) {
+    return node->isArray() && node[0] == BINARY && node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
+  };
+
   // x >> 0  =>  x | 0
   traversePre(ast, [](Ref node) {
     if (node->isArray() && node[0] == BINARY && node[1] == RSHIFT && node[3]->isNumber()) {
       if (node[3]->getNumber() == 0) {
         node[1]->setString(OR);
       }
+    }
+  });
+
+  // x | 0 | 0  =>  x | 0
+  traversePre(ast, [&](Ref node) {
+    if (isOrZero(node) && isOrZero(node[2])) {
+      node[2] = node[2][2];
     }
   });
 }

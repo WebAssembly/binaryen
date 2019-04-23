@@ -704,7 +704,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $14$hi;
   i64toi32_i32$3 = $17;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  return +(+$40(Math_fround($8), $9 | 0, i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0, $4 | 0, +$5, $6 | 0));
+  return +(+$40(Math_fround($8), $9 | 0, i64toi32_i32$0 | i64toi32_i32$3 | 0, i64toi32_i32$2 | 0, $4 | 0, +$5, $6 | 0));
  }
  
  function legalstub$44() {

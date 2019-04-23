@@ -29,12 +29,12 @@ function asmFunc(global, env, buffer) {
  
  function $4($0) {
   $0 = $0 | 0;
-  return $0 + 1 | 0 | 0;
+  return $0 + 1 | 0;
  }
  
  function $5(a) {
   a = a | 0;
-  return a - 2 | 0 | 0;
+  return a - 2 | 0;
  }
  
  function $6($0) {

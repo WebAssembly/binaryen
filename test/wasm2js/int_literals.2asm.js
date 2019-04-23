@@ -49,7 +49,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $6() {
-  return 2147483648 + 1 | 0 | 0;
+  return 2147483648 + 1 | 0;
  }
  
  function $7() {

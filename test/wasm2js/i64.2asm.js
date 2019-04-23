@@ -371,7 +371,7 @@ function asmFunc(global, env, buffer) {
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = x$hi;
-  return (x | i64toi32_i32$0 | 0 | 0) == (0 | 0) | 0;
+  return (x | i64toi32_i32$0 | 0) == (0 | 0) | 0;
  }
  
  function $19(x, x$hi, y, y$hi) {
@@ -383,7 +383,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return (x | 0) == (y | 0) & (i64toi32_i32$0 | 0) == (y$hi | 0) | 0 | 0;
+  return (x | 0) == (y | 0) & (i64toi32_i32$0 | 0) == (y$hi | 0) | 0;
  }
  
  function $20(x, x$hi, y, y$hi) {
@@ -395,7 +395,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return (x | 0) != (y | 0) | (i64toi32_i32$0 | 0) != (y$hi | 0) | 0 | 0;
+  return (x | 0) != (y | 0) | (i64toi32_i32$0 | 0) != (y$hi | 0) | 0;
  }
  
  function $21(x, x$hi, y, y$hi) {
@@ -441,7 +441,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return i64toi32_i32$0 >>> 0 < y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 < y >>> 0 | 0) | 0 | 0;
+  return i64toi32_i32$0 >>> 0 < y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 < y >>> 0 | 0) | 0;
  }
  
  function $23(x, x$hi, y, y$hi) {
@@ -487,7 +487,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return i64toi32_i32$0 >>> 0 < y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 <= y >>> 0 | 0) | 0 | 0;
+  return i64toi32_i32$0 >>> 0 < y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 <= y >>> 0 | 0) | 0;
  }
  
  function $25(x, x$hi, y, y$hi) {
@@ -533,7 +533,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return i64toi32_i32$0 >>> 0 > y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 > y >>> 0 | 0) | 0 | 0;
+  return i64toi32_i32$0 >>> 0 > y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 > y >>> 0 | 0) | 0;
  }
  
  function $27(x, x$hi, y, y$hi) {
@@ -579,7 +579,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  return i64toi32_i32$0 >>> 0 > y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 >= y >>> 0 | 0) | 0 | 0;
+  return i64toi32_i32$0 >>> 0 > y$hi >>> 0 | ((i64toi32_i32$0 | 0) == (y$hi | 0) & x >>> 0 >= y >>> 0 | 0) | 0;
  }
  
  function legalstub$0($0_1, $1_1, $2_1, $3_1) {
@@ -2060,7 +2060,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $6$hi;
   i64toi32_i32$3 = $10_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  return $18(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $18(i64toi32_i32$0 | i64toi32_i32$3 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$19($0_1, $1_1, $2_1, $3_1) {
@@ -2125,7 +2125,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $19($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $19($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$20($0_1, $1_1, $2_1, $3_1) {
@@ -2190,7 +2190,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $20($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $20($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$21($0_1, $1_1, $2_1, $3_1) {
@@ -2255,7 +2255,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $21($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $21($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$22($0_1, $1_1, $2_1, $3_1) {
@@ -2320,7 +2320,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $22($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $22($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$23($0_1, $1_1, $2_1, $3_1) {
@@ -2385,7 +2385,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $23($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $23($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$24($0_1, $1_1, $2_1, $3_1) {
@@ -2450,7 +2450,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $24($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $24($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$25($0_1, $1_1, $2_1, $3_1) {
@@ -2515,7 +2515,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $25($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $25($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$26($0_1, $1_1, $2_1, $3_1) {
@@ -2580,7 +2580,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $26($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $26($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$27($0_1, $1_1, $2_1, $3_1) {
@@ -2645,7 +2645,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $27($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $27($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$28($0_1, $1_1, $2_1, $3_1) {
@@ -2710,7 +2710,7 @@ function asmFunc(global, env, buffer) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $28($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return $28($9_1 | 0, i64toi32_i32$1 | 0, $15_1 | 0, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalfunc$wasm2js_scratch_load_i64() {
@@ -3159,7 +3159,7 @@ function asmFunc(global, env, buffer) {
             var$3 = var$1;
             var$2 = (var$2 >>> 0) / (var$3 >>> 0) | 0;
             i64toi32_i32$1 = 0;
-            legalfunc$wasm2js_scratch_store_i64(var$0 - Math_imul(var$2, var$3) | 0 | 0, i64toi32_i32$1 | 0);
+            legalfunc$wasm2js_scratch_store_i64(var$0 - Math_imul(var$2, var$3) | 0, i64toi32_i32$1 | 0);
             i64toi32_i32$1 = 0;
             i64toi32_i32$2 = var$2;
             i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -3222,14 +3222,14 @@ function asmFunc(global, env, buffer) {
            i64toi32_i32$1 = $65$hi;
            i64toi32_i32$0 = $65;
            i64toi32_i32$1 = i64toi32_i32$2 | i64toi32_i32$1 | 0;
-           legalfunc$wasm2js_scratch_store_i64(i64toi32_i32$3 | i64toi32_i32$0 | 0 | 0, i64toi32_i32$1 | 0);
+           legalfunc$wasm2js_scratch_store_i64(i64toi32_i32$3 | i64toi32_i32$0 | 0, i64toi32_i32$1 | 0);
            i64toi32_i32$1 = 0;
            i64toi32_i32$3 = var$2 >>> ((__wasm_ctz_i32(var$3 | 0) | 0) & 31 | 0) | 0;
            i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
            return i64toi32_i32$3 | 0;
           }
           var$4 = var$3 + 4294967295 | 0;
-          if ((var$4 & var$3 | 0 | 0) == (0 | 0)) {
+          if ((var$4 & var$3 | 0) == (0 | 0)) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
@@ -3271,7 +3271,7 @@ function asmFunc(global, env, buffer) {
       }
       i64toi32_i32$2 = var$0$hi;
       i64toi32_i32$2 = 0;
-      legalfunc$wasm2js_scratch_store_i64(var$4 & var$0 | 0 | 0, i64toi32_i32$2 | 0);
+      legalfunc$wasm2js_scratch_store_i64(var$4 & var$0 | 0, i64toi32_i32$2 | 0);
       if ((var$3 | 0) == (1 | 0)) {
        break label$1
       }
@@ -3537,7 +3537,7 @@ function asmFunc(global, env, buffer) {
   var$0$hi = var$0$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$3 = 0, i64toi32_i32$5 = 0, i64toi32_i32$4 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, $10_1 = 0, $5$hi = 0, $8$hi = 0;
   i64toi32_i32$0 = var$0$hi;
-  if (((var$0 | i64toi32_i32$0 | 0 | 0) == (0 | 0) | 0) == (0 | 0)) {
+  if (((var$0 | i64toi32_i32$0 | 0) == (0 | 0) | 0) == (0 | 0)) {
    {
     i64toi32_i32$0 = var$0$hi;
     i64toi32_i32$2 = var$0;
@@ -3963,7 +3963,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0
+   return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0
   }
   return 32 | 0;
  }
