@@ -258,8 +258,8 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  check_add_i64: legalstub$1, 
-  check_sub_i64: legalstub$2
+  "check_add_i64": legalstub$1, 
+  "check_sub_i64": legalstub$2
  };
 }
 

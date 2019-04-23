@@ -70,7 +70,7 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  check_extend_ui32: legalstub$1
+  "check_extend_ui32": legalstub$1
  };
 }
 

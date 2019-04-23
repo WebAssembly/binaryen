@@ -266,16 +266,16 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  type_local_i32: $0, 
-  type_local_i64: legalstub$1, 
-  type_local_f32: legalstub$2, 
-  type_local_f64: $3, 
-  type_param_i32: $4, 
-  type_param_i64: legalstub$5, 
-  type_param_f32: legalstub$6, 
-  type_param_f64: $7, 
-  type_mixed: legalstub$8, 
-  read: legalstub$9
+  "type_local_i32": $0, 
+  "type_local_i64": legalstub$1, 
+  "type_local_f32": legalstub$2, 
+  "type_local_f64": $3, 
+  "type_param_i32": $4, 
+  "type_param_i64": legalstub$5, 
+  "type_param_f32": legalstub$6, 
+  "type_param_f64": $7, 
+  "type_mixed": legalstub$8, 
+  "read": legalstub$9
  };
 }
 

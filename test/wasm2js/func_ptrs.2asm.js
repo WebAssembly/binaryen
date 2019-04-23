@@ -44,10 +44,10 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  one: $3, 
-  two: $4, 
-  three: $5, 
-  four: $6
+  "one": $3, 
+  "two": $4, 
+  "three": $5, 
+  "four": $6
  };
 }
 
@@ -114,8 +114,8 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [t1, t2, t3, u1, u2, t1, t3];
  return {
-  callt: $5, 
-  callu: $6
+  "callt": $5, 
+  "callu": $6
  };
 }
 
@@ -162,7 +162,7 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [t1, t2];
  return {
-  callt: $2
+  "callt": $2
  };
 }
 

@@ -173,12 +173,12 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  select_i32: $0, 
-  select_i64: legalstub$1, 
-  select_f32: legalstub$2, 
-  select_f64: $3, 
-  select_trap_l: $4, 
-  select_trap_r: $5
+  "select_i32": $0, 
+  "select_i64": legalstub$1, 
+  "select_f32": legalstub$2, 
+  "select_f64": $3, 
+  "select_trap_l": $4, 
+  "select_trap_r": $5
  };
 }
 

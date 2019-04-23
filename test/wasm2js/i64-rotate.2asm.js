@@ -502,8 +502,8 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  rotl: legalstub$1, 
-  rotr: legalstub$2
+  "rotl": legalstub$1, 
+  "rotr": legalstub$2
  };
 }
 

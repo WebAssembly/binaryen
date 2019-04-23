@@ -629,11 +629,11 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  fac_expr: legalstub$0, 
-  fac_stack: legalstub$1, 
-  fac_stack_raw: legalstub$2, 
-  fac_mixed: legalstub$3, 
-  fac_mixed_raw: legalstub$4
+  "fac_expr": legalstub$0, 
+  "fac_stack": legalstub$1, 
+  "fac_stack_raw": legalstub$2, 
+  "fac_mixed": legalstub$3, 
+  "fac_mixed_raw": legalstub$4
  };
 }
 

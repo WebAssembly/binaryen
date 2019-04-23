@@ -761,23 +761,23 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  i32_load16_s: $6, 
-  i32_load16_u: $7, 
-  i32_load: $8, 
-  i64_load16_s: legalstub$9, 
-  i64_load16_u: legalstub$10, 
-  i64_load32_s: legalstub$11, 
-  i64_load32_u: legalstub$12, 
-  i64_load: legalstub$13, 
-  f32_load: legalstub$14, 
-  f64_load: $15, 
-  i32_store16: $16, 
-  i32_store: $17, 
-  i64_store16: legalstub$18, 
-  i64_store32: legalstub$19, 
-  i64_store: legalstub$20, 
-  f32_store: legalstub$21, 
-  f64_store: $22
+  "i32_load16_s": $6, 
+  "i32_load16_u": $7, 
+  "i32_load": $8, 
+  "i64_load16_s": legalstub$9, 
+  "i64_load16_u": legalstub$10, 
+  "i64_load32_s": legalstub$11, 
+  "i64_load32_u": legalstub$12, 
+  "i64_load": legalstub$13, 
+  "f32_load": legalstub$14, 
+  "f64_load": $15, 
+  "i32_store16": $16, 
+  "i32_store": $17, 
+  "i64_store16": legalstub$18, 
+  "i64_store32": legalstub$19, 
+  "i64_store": legalstub$20, 
+  "f32_store": legalstub$21, 
+  "f64_store": $22
  };
 }
 

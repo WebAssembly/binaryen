@@ -881,16 +881,16 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  eq_i64: legalstub$1, 
-  ne_i64: legalstub$2, 
-  ge_s_i64: legalstub$3, 
-  gt_s_i64: legalstub$4, 
-  le_s_i64: legalstub$5, 
-  lt_s_i64: legalstub$6, 
-  ge_u_i64: legalstub$7, 
-  gt_u_i64: legalstub$8, 
-  le_u_i64: legalstub$9, 
-  lt_u_i64: legalstub$10
+  "eq_i64": legalstub$1, 
+  "ne_i64": legalstub$2, 
+  "ge_s_i64": legalstub$3, 
+  "gt_s_i64": legalstub$4, 
+  "le_s_i64": legalstub$5, 
+  "lt_s_i64": legalstub$6, 
+  "ge_u_i64": legalstub$7, 
+  "gt_u_i64": legalstub$8, 
+  "le_u_i64": legalstub$9, 
+  "lt_u_i64": legalstub$10
  };
 }
 

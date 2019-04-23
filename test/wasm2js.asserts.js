@@ -70,9 +70,9 @@ function asmFunc0(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  empty: $0, 
-  add: $1, 
-  div_s: $2
+  "empty": $0, 
+  "add": $1, 
+  "div_s": $2
  };
 }
 

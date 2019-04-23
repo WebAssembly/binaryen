@@ -256,8 +256,8 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  a: legalstub$popcnt64, 
-  b: legalstub$ctz64
+  "a": legalstub$popcnt64, 
+  "b": legalstub$ctz64
  };
 }
 

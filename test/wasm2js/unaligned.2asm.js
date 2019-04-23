@@ -140,14 +140,14 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  i32_load: $0, 
-  i64_load: legalstub$1, 
-  f32_load: legalstub$2, 
-  f64_load: $3, 
-  i32_store: $4, 
-  i64_store: $5, 
-  f32_store: $6, 
-  f64_store: $7
+  "i32_load": $0, 
+  "i64_load": legalstub$1, 
+  "f32_load": legalstub$2, 
+  "f64_load": $3, 
+  "i32_store": $4, 
+  "i64_store": $5, 
+  "f32_store": $6, 
+  "f64_store": $7
  };
 }
 

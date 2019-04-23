@@ -240,10 +240,10 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  stmt: $0, 
-  expr: legalstub$1, 
-  arg: $2, 
-  corner: $3
+  "stmt": $0, 
+  "expr": legalstub$1, 
+  "arg": $2, 
+  "corner": $3
  };
 }
 

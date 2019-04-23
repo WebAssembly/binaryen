@@ -75,8 +75,8 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  good: $0, 
-  bad: $1
+  "good": $0, 
+  "bad": $1
  };
 }
 

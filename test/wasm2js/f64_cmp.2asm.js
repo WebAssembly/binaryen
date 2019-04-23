@@ -59,12 +59,12 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  eq: $0, 
-  ne: $1, 
-  lt: $2, 
-  le: $3, 
-  gt: $4, 
-  ge: $5
+  "eq": $0, 
+  "ne": $1, 
+  "lt": $2, 
+  "le": $3, 
+  "gt": $4, 
+  "ge": $5
  };
 }
 

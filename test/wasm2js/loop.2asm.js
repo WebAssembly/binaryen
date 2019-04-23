@@ -563,24 +563,24 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  empty: $1, 
-  singular: $2, 
-  multi: $3, 
-  nested: $4, 
-  deep: $5, 
-  as_unary_operand: $6, 
-  as_binary_operand: $7, 
-  as_test_operand: $8, 
-  as_compare_operand: $9, 
-  break_bare: $10, 
-  break_value: $11, 
-  break_repeated: $12, 
-  break_inner: $13, 
-  cont_inner: $14, 
-  effects: fx, 
-  while_: legalstub$16, 
-  for_: legalstub$17, 
-  nesting: legalstub$18
+  "empty": $1, 
+  "singular": $2, 
+  "multi": $3, 
+  "nested": $4, 
+  "deep": $5, 
+  "as_unary_operand": $6, 
+  "as_binary_operand": $7, 
+  "as_test_operand": $8, 
+  "as_compare_operand": $9, 
+  "break_bare": $10, 
+  "break_value": $11, 
+  "break_repeated": $12, 
+  "break_inner": $13, 
+  "cont_inner": $14, 
+  "effects": fx, 
+  "while_": legalstub$16, 
+  "for_": legalstub$17, 
+  "nesting": legalstub$18
  };
 }
 

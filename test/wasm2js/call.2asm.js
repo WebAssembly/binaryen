@@ -792,25 +792,25 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  type_i32: $12, 
-  type_i64: legalstub$13, 
-  type_f32: legalstub$14, 
-  type_f64: $15, 
-  type_first_i32: $16, 
-  type_first_i64: legalstub$17, 
-  type_first_f32: legalstub$18, 
-  type_first_f64: $19, 
-  type_second_i32: $20, 
-  type_second_i64: legalstub$21, 
-  type_second_f32: legalstub$22, 
-  type_second_f64: $23, 
-  fac: legalstub$fac, 
-  fac_acc: legalstub$fac_acc, 
-  fib: legalstub$fib, 
-  even: legalstub$even, 
-  odd: legalstub$odd, 
-  runaway: runaway, 
-  mutual_runaway: mutual_runaway1
+  "type_i32": $12, 
+  "type_i64": legalstub$13, 
+  "type_f32": legalstub$14, 
+  "type_f64": $15, 
+  "type_first_i32": $16, 
+  "type_first_i64": legalstub$17, 
+  "type_first_f32": legalstub$18, 
+  "type_first_f64": $19, 
+  "type_second_i32": $20, 
+  "type_second_i64": legalstub$21, 
+  "type_second_f32": legalstub$22, 
+  "type_second_f64": $23, 
+  "fac": legalstub$fac, 
+  "fac_acc": legalstub$fac_acc, 
+  "fib": legalstub$fib, 
+  "even": legalstub$even, 
+  "odd": legalstub$odd, 
+  "runaway": runaway, 
+  "mutual_runaway": mutual_runaway1
  };
 }
 

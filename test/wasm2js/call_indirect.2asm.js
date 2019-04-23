@@ -757,27 +757,27 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [const_i32, const_i64, const_f32, const_f64, id_i32, id_i64, id_f32, id_f64, f32_i32, i32_i64, f64_f32, i64_f64, fac, fib, even, odd, runaway, mutual_runaway1, mutual_runaway2, over_i32_duplicate, over_i64_duplicate, over_f32_duplicate, over_f64_duplicate];
  return {
-  type_i32: $16, 
-  type_i64: legalstub$17, 
-  type_f32: legalstub$18, 
-  type_f64: $19, 
-  type_index: legalstub$20, 
-  type_first_i32: $21, 
-  type_first_i64: legalstub$22, 
-  type_first_f32: legalstub$23, 
-  type_first_f64: $24, 
-  type_second_i32: $25, 
-  type_second_i64: legalstub$26, 
-  type_second_f32: legalstub$27, 
-  type_second_f64: $28, 
-  dispatch: legalstub$29, 
-  dispatch_structural: legalstub$30, 
-  fac: legalstub$fac, 
-  fib: legalstub$fib, 
-  even: even, 
-  odd: odd, 
-  runaway: runaway, 
-  mutual_runaway: mutual_runaway1
+  "type_i32": $16, 
+  "type_i64": legalstub$17, 
+  "type_f32": legalstub$18, 
+  "type_f64": $19, 
+  "type_index": legalstub$20, 
+  "type_first_i32": $21, 
+  "type_first_i64": legalstub$22, 
+  "type_first_f32": legalstub$23, 
+  "type_first_f64": $24, 
+  "type_second_i32": $25, 
+  "type_second_i64": legalstub$26, 
+  "type_second_f32": legalstub$27, 
+  "type_second_f64": $28, 
+  "dispatch": legalstub$29, 
+  "dispatch_structural": legalstub$30, 
+  "fac": legalstub$fac, 
+  "fib": legalstub$fib, 
+  "even": even, 
+  "odd": odd, 
+  "runaway": runaway, 
+  "mutual_runaway": mutual_runaway1
  };
 }
 
