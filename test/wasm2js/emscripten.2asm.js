@@ -42,7 +42,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function bar() {
-  
+  HEAPU8[128 | 0] | 0;
+  HEAP8[128 | 0] | 0;
+  HEAPU16[128 >> 1] | 0;
+  HEAP16[128 >> 1] | 0;
  }
  
  function __growWasmMemory($0) {

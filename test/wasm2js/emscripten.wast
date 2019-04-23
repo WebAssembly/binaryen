@@ -27,7 +27,26 @@
   (unreachable)
  )
  (func $bar
-  (nop)
+  (drop
+   (i32.load8_u
+    (i32.const 128)
+   )
+  )
+  (drop
+   (i32.load8_s
+    (i32.const 128)
+   )
+  )
+  (drop
+   (i32.load16_u
+    (i32.const 128)
+   )
+  )
+  (drop
+   (i32.load16_s
+    (i32.const 128)
+   )
+  )
  )
  (func $__growWasmMemory (param $0 i32) (result i32)
   (grow_memory
