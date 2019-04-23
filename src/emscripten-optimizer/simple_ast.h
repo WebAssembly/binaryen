@@ -1318,9 +1318,18 @@ struct JSPrinter {
         pretty ? emit(", ") : emit(',');
         newline();
       }
-      const char *str = args[i][0]->getCString();
-      const char *check = str;
       bool needQuote = false;
+      const char *str;
+      if (args[i][0]->isArray()) {
+        assert(args[i][0][0] == STRING);
+        // A quoted string.
+        needQuote = true;
+        str = args[i][0][1]->getCString();
+      } else {
+        // Just a raw string, no quotes.
+        str = args[i][0]->getCString();
+      }
+      const char *check = str;
       while (*check) {
         if (!isalnum(*check) && *check != '_' && *check != '$') {
           needQuote = true;
@@ -1641,6 +1650,12 @@ public:
   static void appendToObject(Ref array, IString key, Ref value) {
     assert(array[0] == OBJECT);
     array[1]->push_back(&makeRawArray(2)->push_back(makeRawString(key))
+                                         .push_back(value));
+  }
+
+  static void appendToObjectWithQuotes(Ref array, IString key, Ref value) {
+    assert(array[0] == OBJECT);
+    array[1]->push_back(&makeRawArray(2)->push_back(makeString(key))
                                          .push_back(value));
   }
 
