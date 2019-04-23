@@ -158,6 +158,7 @@ def run_wasm2js(wasm):
     out = IGNORE
   return out
 
+
 def run_vms(prefix):
   wasm = prefix + 'wasm'
   results = []
