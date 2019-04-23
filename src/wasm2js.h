@@ -1847,7 +1847,7 @@ void Wasm2JSGlue::emitPostES6() {
   // can be used for conversions, so make sure there's at least one page.
   {
     auto pages = wasm.memory.initial == 0 ? 1 : wasm.memory.initial.addr;
-    out << "const mem" << moduleName.str << " = new ArrayBuffer("
+    out << "var mem" << moduleName.str << " = new ArrayBuffer("
       << pages * Memory::kPageSize
       << ");\n";
   }
@@ -1857,7 +1857,7 @@ void Wasm2JSGlue::emitPostES6() {
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
-  out << "const ret" << moduleName.str << " = " << moduleName.str << "({"
+  out << "var ret" << moduleName.str << " = " << moduleName.str << "({"
     << "Math,"
     << "Int8Array,"
     << "Uint8Array,"
@@ -1906,7 +1906,7 @@ void Wasm2JSGlue::emitPostES6() {
         export_name << *ptr;
       }
     }
-    out << "export const "
+    out << "export var "
       << asmangle(exp->name.str)
       << " = ret"
       << moduleName.str
@@ -1921,23 +1921,23 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
 
   auto expr = R"(
     function(mem) {
-      const _mem = new Uint8Array(mem);
+      var _mem = new Uint8Array(mem);
       return function(offset, s) {
         if (typeof Buffer === 'undefined') {
-          const bytes = atob(s);
-          for (let i = 0; i < bytes.length; i++)
+          var bytes = atob(s);
+          for (var i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes.charCodeAt(i);
         } else {
-          const bytes = Buffer.from(s, 'base64');
-          for (let i = 0; i < bytes.length; i++)
+          var bytes = Buffer.from(s, 'base64');
+          for (var i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes[i];
         }
       }
     }
   )";
 
-  // const assign$name = ($expr)(mem$name);
-  out << "const " << segmentWriter
+  // var assign$name = ($expr)(mem$name);
+  out << "var " << segmentWriter
       << " = (" << expr << ")(" << buffer << ");\n";
 
   for (auto& seg : wasm.memory.segments) {

@@ -375,16 +375,16 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const type_local_i32 = retasmFunc.type_local_i32;
-export const type_local_i64 = retasmFunc.type_local_i64;
-export const type_local_f32 = retasmFunc.type_local_f32;
-export const type_local_f64 = retasmFunc.type_local_f64;
-export const type_param_i32 = retasmFunc.type_param_i32;
-export const type_param_i64 = retasmFunc.type_param_i64;
-export const type_param_f32 = retasmFunc.type_param_f32;
-export const type_param_f64 = retasmFunc.type_param_f64;
-export const type_mixed = retasmFunc.type_mixed;
-export const write = retasmFunc.write;
-export const result = retasmFunc.result;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var type_local_i32 = retasmFunc.type_local_i32;
+export var type_local_i64 = retasmFunc.type_local_i64;
+export var type_local_f32 = retasmFunc.type_local_f32;
+export var type_local_f64 = retasmFunc.type_local_f64;
+export var type_param_i32 = retasmFunc.type_param_i32;
+export var type_param_i64 = retasmFunc.type_param_i64;
+export var type_param_f32 = retasmFunc.type_param_f32;
+export var type_param_f64 = retasmFunc.type_param_f64;
+export var type_mixed = retasmFunc.type_mixed;
+export var write = retasmFunc.write;
+export var result = retasmFunc.result;

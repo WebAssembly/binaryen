@@ -240,19 +240,19 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const add = retasmFunc.add;
-export const sub = retasmFunc.sub;
-export const mul = retasmFunc.mul;
-export const div = retasmFunc.div;
-export const sqrt = retasmFunc.sqrt;
-export const min = retasmFunc.min;
-export const max = retasmFunc.max;
-export const ceil = retasmFunc.ceil;
-export const floor = retasmFunc.floor;
-export const trunc = retasmFunc.trunc;
-export const nearest = retasmFunc.nearest;
-export const abs = retasmFunc.abs;
-export const neg = retasmFunc.neg;
-export const copysign = retasmFunc.copysign;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var add = retasmFunc.add;
+export var sub = retasmFunc.sub;
+export var mul = retasmFunc.mul;
+export var div = retasmFunc.div;
+export var sqrt = retasmFunc.sqrt;
+export var min = retasmFunc.min;
+export var max = retasmFunc.max;
+export var ceil = retasmFunc.ceil;
+export var floor = retasmFunc.floor;
+export var trunc = retasmFunc.trunc;
+export var nearest = retasmFunc.nearest;
+export var abs = retasmFunc.abs;
+export var neg = retasmFunc.neg;
+export var copysign = retasmFunc.copysign;

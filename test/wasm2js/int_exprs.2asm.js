@@ -259,12 +259,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const i32_no_fold_cmp_s_offset = retasmFunc.i32_no_fold_cmp_s_offset;
-export const i32_no_fold_cmp_u_offset = retasmFunc.i32_no_fold_cmp_u_offset;
-export const i64_no_fold_cmp_s_offset = retasmFunc.i64_no_fold_cmp_s_offset;
-export const i64_no_fold_cmp_u_offset = retasmFunc.i64_no_fold_cmp_u_offset;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var i32_no_fold_cmp_s_offset = retasmFunc.i32_no_fold_cmp_s_offset;
+export var i32_no_fold_cmp_u_offset = retasmFunc.i32_no_fold_cmp_u_offset;
+export var i64_no_fold_cmp_s_offset = retasmFunc.i64_no_fold_cmp_s_offset;
+export var i64_no_fold_cmp_u_offset = retasmFunc.i64_no_fold_cmp_u_offset;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
@@ -361,9 +361,9 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i64_no_fold_wrap_extend_s = retasmFunc.i64_no_fold_wrap_extend_s;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i64_no_fold_wrap_extend_s = retasmFunc.i64_no_fold_wrap_extend_s;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
@@ -459,9 +459,9 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i64_no_fold_wrap_extend_u = retasmFunc.i64_no_fold_wrap_extend_u;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i64_no_fold_wrap_extend_u = retasmFunc.i64_no_fold_wrap_extend_u;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
@@ -693,12 +693,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_no_fold_shl_shr_s = retasmFunc.i32_no_fold_shl_shr_s;
-export const i32_no_fold_shl_shr_u = retasmFunc.i32_no_fold_shl_shr_u;
-export const i64_no_fold_shl_shr_s = retasmFunc.i64_no_fold_shl_shr_s;
-export const i64_no_fold_shl_shr_u = retasmFunc.i64_no_fold_shl_shr_u;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_no_fold_shl_shr_s = retasmFunc.i32_no_fold_shl_shr_s;
+export var i32_no_fold_shl_shr_u = retasmFunc.i32_no_fold_shl_shr_u;
+export var i64_no_fold_shl_shr_s = retasmFunc.i64_no_fold_shl_shr_s;
+export var i64_no_fold_shl_shr_u = retasmFunc.i64_no_fold_shl_shr_u;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
@@ -930,12 +930,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_no_fold_shr_s_shl = retasmFunc.i32_no_fold_shr_s_shl;
-export const i32_no_fold_shr_u_shl = retasmFunc.i32_no_fold_shr_u_shl;
-export const i64_no_fold_shr_s_shl = retasmFunc.i64_no_fold_shr_s_shl;
-export const i64_no_fold_shr_u_shl = retasmFunc.i64_no_fold_shr_u_shl;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_no_fold_shr_s_shl = retasmFunc.i32_no_fold_shr_s_shl;
+export var i32_no_fold_shr_u_shl = retasmFunc.i32_no_fold_shr_u_shl;
+export var i64_no_fold_shr_s_shl = retasmFunc.i64_no_fold_shr_s_shl;
+export var i64_no_fold_shr_u_shl = retasmFunc.i64_no_fold_shr_u_shl;
 import { setTempRet0 } from 'env';
 
 
@@ -1871,12 +1871,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_no_fold_div_s_mul = retasmFunc.i32_no_fold_div_s_mul;
-export const i32_no_fold_div_u_mul = retasmFunc.i32_no_fold_div_u_mul;
-export const i64_no_fold_div_s_mul = retasmFunc.i64_no_fold_div_s_mul;
-export const i64_no_fold_div_u_mul = retasmFunc.i64_no_fold_div_u_mul;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_no_fold_div_s_mul = retasmFunc.i32_no_fold_div_s_mul;
+export var i32_no_fold_div_u_mul = retasmFunc.i32_no_fold_div_u_mul;
+export var i64_no_fold_div_s_mul = retasmFunc.i64_no_fold_div_s_mul;
+export var i64_no_fold_div_u_mul = retasmFunc.i64_no_fold_div_u_mul;
 import { setTempRet0 } from 'env';
 
 
@@ -2812,12 +2812,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_no_fold_mul_div_s = retasmFunc.i32_no_fold_mul_div_s;
-export const i32_no_fold_mul_div_u = retasmFunc.i32_no_fold_mul_div_u;
-export const i64_no_fold_mul_div_s = retasmFunc.i64_no_fold_mul_div_s;
-export const i64_no_fold_mul_div_u = retasmFunc.i64_no_fold_mul_div_u;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_no_fold_mul_div_s = retasmFunc.i32_no_fold_mul_div_s;
+export var i32_no_fold_mul_div_u = retasmFunc.i32_no_fold_mul_div_u;
+export var i64_no_fold_mul_div_s = retasmFunc.i64_no_fold_mul_div_s;
+export var i64_no_fold_mul_div_u = retasmFunc.i64_no_fold_mul_div_u;
 import { setTempRet0 } from 'env';
 
 
@@ -3575,10 +3575,10 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_no_fold_div_s_2 = retasmFunc.i32_no_fold_div_s_2;
-export const i64_no_fold_div_s_2 = retasmFunc.i64_no_fold_div_s_2;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_no_fold_div_s_2 = retasmFunc.i32_no_fold_div_s_2;
+export var i64_no_fold_div_s_2 = retasmFunc.i64_no_fold_div_s_2;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
 
@@ -4353,10 +4353,10 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
-export const i32_no_fold_rem_s_2 = retasmFunc.i32_no_fold_rem_s_2;
-export const i64_no_fold_rem_s_2 = retasmFunc.i64_no_fold_rem_s_2;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
+export var i32_no_fold_rem_s_2 = retasmFunc.i32_no_fold_rem_s_2;
+export var i64_no_fold_rem_s_2 = retasmFunc.i64_no_fold_rem_s_2;
 import { setTempRet0 } from 'env';
 
 
@@ -5186,12 +5186,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_div_s_3 = retasmFunc.i32_div_s_3;
-export const i32_div_u_3 = retasmFunc.i32_div_u_3;
-export const i64_div_s_3 = retasmFunc.i64_div_s_3;
-export const i64_div_u_3 = retasmFunc.i64_div_u_3;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_div_s_3 = retasmFunc.i32_div_s_3;
+export var i32_div_u_3 = retasmFunc.i32_div_u_3;
+export var i64_div_s_3 = retasmFunc.i64_div_s_3;
+export var i64_div_u_3 = retasmFunc.i64_div_u_3;
 import { setTempRet0 } from 'env';
 
 
@@ -6021,12 +6021,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_div_s_3 = retasmFunc.i32_div_s_3;
-export const i32_div_u_3 = retasmFunc.i32_div_u_3;
-export const i64_div_s_3 = retasmFunc.i64_div_s_3;
-export const i64_div_u_3 = retasmFunc.i64_div_u_3;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_div_s_3 = retasmFunc.i32_div_s_3;
+export var i32_div_u_3 = retasmFunc.i32_div_u_3;
+export var i64_div_s_3 = retasmFunc.i64_div_s_3;
+export var i64_div_u_3 = retasmFunc.i64_div_u_3;
 import { setTempRet0 } from 'env';
 
 
@@ -6856,12 +6856,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_div_s_5 = retasmFunc.i32_div_s_5;
-export const i32_div_u_5 = retasmFunc.i32_div_u_5;
-export const i64_div_s_5 = retasmFunc.i64_div_s_5;
-export const i64_div_u_5 = retasmFunc.i64_div_u_5;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_div_s_5 = retasmFunc.i32_div_s_5;
+export var i32_div_u_5 = retasmFunc.i32_div_u_5;
+export var i64_div_s_5 = retasmFunc.i64_div_s_5;
+export var i64_div_u_5 = retasmFunc.i64_div_u_5;
 import { setTempRet0 } from 'env';
 
 
@@ -7691,12 +7691,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const i32_div_s_7 = retasmFunc.i32_div_s_7;
-export const i32_div_u_7 = retasmFunc.i32_div_u_7;
-export const i64_div_s_7 = retasmFunc.i64_div_s_7;
-export const i64_div_u_7 = retasmFunc.i64_div_u_7;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var i32_div_s_7 = retasmFunc.i32_div_s_7;
+export var i32_div_u_7 = retasmFunc.i32_div_u_7;
+export var i64_div_s_7 = retasmFunc.i64_div_s_7;
+export var i64_div_u_7 = retasmFunc.i64_div_u_7;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
 
@@ -8543,12 +8543,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
-export const i32_rem_s_3 = retasmFunc.i32_rem_s_3;
-export const i32_rem_u_3 = retasmFunc.i32_rem_u_3;
-export const i64_rem_s_3 = retasmFunc.i64_rem_s_3;
-export const i64_rem_u_3 = retasmFunc.i64_rem_u_3;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
+export var i32_rem_s_3 = retasmFunc.i32_rem_s_3;
+export var i32_rem_u_3 = retasmFunc.i32_rem_u_3;
+export var i64_rem_s_3 = retasmFunc.i64_rem_s_3;
+export var i64_rem_u_3 = retasmFunc.i64_rem_u_3;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
 
@@ -9395,12 +9395,12 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
-export const i32_rem_s_5 = retasmFunc.i32_rem_s_5;
-export const i32_rem_u_5 = retasmFunc.i32_rem_u_5;
-export const i64_rem_s_5 = retasmFunc.i64_rem_s_5;
-export const i64_rem_u_5 = retasmFunc.i64_rem_u_5;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
+export var i32_rem_s_5 = retasmFunc.i32_rem_s_5;
+export var i32_rem_u_5 = retasmFunc.i32_rem_u_5;
+export var i64_rem_s_5 = retasmFunc.i64_rem_s_5;
+export var i64_rem_u_5 = retasmFunc.i64_rem_u_5;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
 
@@ -10247,9 +10247,9 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
-export const i32_rem_s_7 = retasmFunc.i32_rem_s_7;
-export const i32_rem_u_7 = retasmFunc.i32_rem_u_7;
-export const i64_rem_s_7 = retasmFunc.i64_rem_s_7;
-export const i64_rem_u_7 = retasmFunc.i64_rem_u_7;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
+export var i32_rem_s_7 = retasmFunc.i32_rem_s_7;
+export var i32_rem_u_7 = retasmFunc.i32_rem_u_7;
+export var i64_rem_s_7 = retasmFunc.i64_rem_s_7;
+export var i64_rem_u_7 = retasmFunc.i64_rem_u_7;
