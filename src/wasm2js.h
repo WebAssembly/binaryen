@@ -258,6 +258,18 @@ private:
 };
 
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
+  // Scan the wasm for important things.
+  for (auto& exp : wasm->exports) {
+    if (exp->kind == ExternalKind::Function) {
+      functionsCallableFromOutside.insert(exp->value);
+    }
+  }
+  for (auto& segment : wasm->table.segments) {
+    for (auto name : segment.data) {
+      functionsCallableFromOutside.insert(name);
+    }
+  }
+
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
   ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
@@ -696,11 +708,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     Function* func;
     Module* module;
     bool standaloneFunction;
-    bool optimize;
     MixedArena allocator;
 
-    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func, bool standaloneFunction, bool optimize)
-      : parent(parent), func(func), module(m), standaloneFunction(standaloneFunction), optimize(optimize) {}
+    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func, bool standaloneFunction)
+      : parent(parent), func(func), module(m), standaloneFunction(standaloneFunction) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {
@@ -857,7 +868,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     Ref visitCall(Call* curr) {
       Ref theCall = ValueBuilder::makeCall(fromName(curr->target, NameScope::Top));
       // For wasm => wasm calls, we don't need coercions. TODO: even imports might be safe?
-      bool needCoercions = !optimize || standaloneFunction || module->getFunction(curr->target)->imported();
+      bool needCoercions = parent->options.optimizeLevel == 0 || standaloneFunction || module->getFunction(curr->target)->imported();
       for (auto operand : curr->operands) {
         auto value = visit(operand, EXPRESSION_RESULT);
         if (needCoercions) {
@@ -1580,7 +1591,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     }
   };
 
-  return ExpressionProcessor(this, m, func, standaloneFunction, options.optimizeLevel >= 2).visit(func->body, NO_RESULT);
+  return ExpressionProcessor(this, m, func, standaloneFunction).visit(func->body, NO_RESULT);
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
