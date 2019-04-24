@@ -126,7 +126,7 @@ public:
     bool emscripten = false;
   };
 
-  Wasm2JSBuilder(Flags f) : flags(f) {}
+  Wasm2JSBuilder(Flags f, PassOptions options) : flags(f), options(options) {}
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
   Ref processFunction(Module* wasm, Function* func, bool standalone=false);
@@ -136,7 +136,7 @@ public:
 
   // The second pass on an expression: process it fully, generating
   // JS
-  Ref processFunctionBody(Module* m, Function* func);
+  Ref processFunctionBody(Module* m, Function* func, bool standalone);
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -225,6 +225,7 @@ public:
 
 private:
   Flags flags;
+  PassOptions options;
 
   // How many temp vars we need
   std::vector<size_t> temps; // type => num temps
@@ -237,6 +238,11 @@ private:
   std::unordered_set<IString> allMangledNames;
 
   size_t tableSize;
+
+  // If a function is callable from outside, we'll need to cast the inputs
+  // and our return value. Otherwise, internally, casts are only needed
+  // on operations.
+  std::unordered_set<Name> functionsCallableFromOutside;
 
   void addBasics(Ref ast);
   void addFunctionImport(Ref ast, Function* import);
@@ -252,6 +258,18 @@ private:
 };
 
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
+  // Scan the wasm for important things.
+  for (auto& exp : wasm->exports) {
+    if (exp->kind == ExternalKind::Function) {
+      functionsCallableFromOutside.insert(exp->value);
+    }
+  }
+  for (auto& segment : wasm->table.segments) {
+    for (auto name : segment.data) {
+      functionsCallableFromOutside.insert(name);
+    }
+  }
+
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
   ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
@@ -645,26 +663,29 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   temps.resize(std::max(i32, std::max(f32, f64)) + 1);
   temps[i32] = temps[f32] = temps[f64] = 0;
   // arguments
+  bool needCoercions = options.optimizeLevel == 0 || standaloneFunction || functionsCallableFromOutside.count(func->name);
   for (Index i = 0; i < func->getNumParams(); i++) {
     IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
-    ret[3]->push_back(
-      ValueBuilder::makeStatement(
-        ValueBuilder::makeBinary(
-          ValueBuilder::makeName(name), SET,
-          makeAsmCoercion(
-            ValueBuilder::makeName(name),
-            wasmToAsmType(func->getLocalType(i))
+    if (needCoercions) {
+      ret[3]->push_back(
+        ValueBuilder::makeStatement(
+          ValueBuilder::makeBinary(
+            ValueBuilder::makeName(name), SET,
+            makeAsmCoercion(
+              ValueBuilder::makeName(name),
+              wasmToAsmType(func->getLocalType(i))
+            )
           )
         )
-      )
-    );
+      );
+    }
   }
   Ref theVar = ValueBuilder::makeVar();
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  flattenAppend(ret, processFunctionBody(m, func));
+  flattenAppend(ret, processFunctionBody(m, func, standaloneFunction));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -683,15 +704,17 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   return ret;
 }
 
-Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
+Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standaloneFunction) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
     IString result; // TODO: remove
     Function* func;
     Module* module;
+    bool standaloneFunction;
     MixedArena allocator;
-    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func)
-      : parent(parent), func(func), module(m) {}
+
+    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func, bool standaloneFunction)
+      : parent(parent), func(func), module(m), standaloneFunction(standaloneFunction) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {
@@ -847,12 +870,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
 
     Ref visitCall(Call* curr) {
       Ref theCall = ValueBuilder::makeCall(fromName(curr->target, NameScope::Top));
+      // For wasm => wasm calls, we don't need coercions. TODO: even imports might be safe?
+      bool needCoercions = parent->options.optimizeLevel == 0 || standaloneFunction || module->getFunction(curr->target)->imported();
       for (auto operand : curr->operands) {
-        theCall[2]->push_back(
-          makeAsmCoercion(visit(operand, EXPRESSION_RESULT),
-                          wasmToAsmType(operand->type)));
+        auto value = visit(operand, EXPRESSION_RESULT);
+        if (needCoercions) {
+          value = makeAsmCoercion(value, wasmToAsmType(operand->type));
+        }
+        theCall[2]->push_back(value);
       }
-      return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+      if (needCoercions) {
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+      }
+      return theCall;
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
@@ -992,7 +1022,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
           abort();
         }
       }
-      return makeAsmCoercion(ret, wasmToAsmType(curr->type));
+      // Coercions are not actually needed, as if the user reads beyond valid memory, it's
+      // undefined behavior anyhow, and so we don't care much about slowness of undefined
+      // values etc.
+      bool needCoercions = parent->options.optimizeLevel == 0 || standaloneFunction;
+      if (needCoercions) {
+        ret = makeAsmCoercion(ret, wasmToAsmType(curr->type));
+      }
+      return ret;
     }
 
     Ref visitStore(Store* curr) {
@@ -1521,10 +1558,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
       if (!curr->value) {
         return ValueBuilder::makeReturn(Ref());
       }
-      Ref val = makeAsmCoercion(
-        visit(curr->value, EXPRESSION_RESULT),
-        wasmToAsmType(curr->value->type)
-      );
+      Ref val = visit(curr->value, EXPRESSION_RESULT);
+      bool needCoercion = parent->options.optimizeLevel == 0 || standaloneFunction || parent->functionsCallableFromOutside.count(func->name);
+      if (needCoercion) {
+        val = makeAsmCoercion(val, wasmToAsmType(curr->value->type));
+      }
       return ValueBuilder::makeReturn(val);
     }
 
@@ -1564,7 +1602,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     }
   };
 
-  return ExpressionProcessor(this, m, func).visit(func->body, NO_RESULT);
+  return ExpressionProcessor(this, m, func, standaloneFunction).visit(func->body, NO_RESULT);
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {

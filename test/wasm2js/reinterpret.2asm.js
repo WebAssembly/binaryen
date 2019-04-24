@@ -63,7 +63,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $0$hi;
   wasm2js_scratch_store_i32(0 | 0, $0 | 0);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
-  wasm2js_scratch_store_f64(+(+wasm2js_scratch_load_f64()));
+  wasm2js_scratch_store_f64(+wasm2js_scratch_load_f64());
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;
@@ -72,8 +72,6 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$2($0, $1_1) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10 = 0, $3 = 0, $3$hi = 0, $6$hi = 0;
   i64toi32_i32$0 = 0;
   $3 = $0;
@@ -100,7 +98,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $6$hi;
   i64toi32_i32$3 = $10;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  return $2(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2 | 0) | 0;
+  return $2(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2);
  }
  
  var FUNCTION_TABLE = [];

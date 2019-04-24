@@ -29,12 +29,12 @@ function asmFunc(global, env, buffer) {
  
  function $1() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  (wasm2js_i32$0 = 0, wasm2js_i32$1 = grow() | 0), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
+  (wasm2js_i32$0 = 0, wasm2js_i32$1 = grow()), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
   return HEAP32[0 >> 2] | 0;
  }
  
  function grow() {
-  return __wasm_grow_memory(1 | 0) | 0;
+  return __wasm_grow_memory(1 | 0);
  }
  
  var FUNCTION_TABLE = [];

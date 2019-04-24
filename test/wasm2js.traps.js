@@ -105,7 +105,7 @@ function check3() {
 if (!check3()) throw 'assertion failed: ( assert_trap ( call div_s ( i32.const 0 ) ( i32.const 0 ) ) integer divide by zero )';
 function check4() {
  function f() {
-  retasmFunc0.div_s(2147483648 | 0, 4294967295 | 0);
+  retasmFunc0.div_s(-2147483648 | 0, -1 | 0);
  }
  
  try {

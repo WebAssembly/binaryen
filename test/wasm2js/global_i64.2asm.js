@@ -21,17 +21,16 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var f = 2882400175;
+ var f = -1412567121;
  var f$hi = 305419896;
  function call($0, $0$hi) {
-  $0 = $0 | 0;
-  $0$hi = $0$hi | 0;
+  
  }
  
  function $1() {
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = f$hi;
-  call(f | 0, i64toi32_i32$0 | 0);
+  call(f, i64toi32_i32$0);
   i64toi32_i32$0 = 287454020;
   f = 1432778632;
   f$hi = i64toi32_i32$0;
