@@ -62,12 +62,12 @@ function test_types() {
 }
 
 function test_features() {
-  console.log("BinaryenFeatureAtomics: " + Binaryen.FeatureAtomics);
-  console.log("BinaryenFeatureBulkMemory: " + Binaryen.FeatureBulkMemory);
-  console.log("BinaryenFeatureMutableGlobals: " + Binaryen.FeatureMutableGlobals);
-  console.log("BinaryenFeatureNontrappingFPToInt: " + Binaryen.FeatureNontrappingFPToInt);
-  console.log("BinaryenFeatureSignExt: " + Binaryen.FeatureSignExt);
-  console.log("BinaryenFeatureSIMD128: " + Binaryen.FeatureSIMD128);
+  console.log("BinaryenFeatureAtomics: " + Binaryen.Features.Atomics);
+  console.log("BinaryenFeatureBulkMemory: " + Binaryen.Features.BulkMemory);
+  console.log("BinaryenFeatureMutableGlobals: " + Binaryen.Features.MutableGlobals);
+  console.log("BinaryenFeatureNontrappingFPToInt: " + Binaryen.Features.NontrappingFPToInt);
+  console.log("BinaryenFeatureSignExt: " + Binaryen.Features.SignExt);
+  console.log("BinaryenFeatureSIMD128: " + Binaryen.Features.SIMD128);
 }
 
 function test_ids() {
@@ -457,11 +457,11 @@ function test_core() {
   module.autoDrop();
 
   var features =
-      Binaryen.FeatureAtomics |
-      Binaryen.FeatureBulkMemory |
-      Binaryen.FeatureNontrappingFPToInt |
-      Binaryen.FeatureSignExt |
-      Binaryen.FeatureSIMD128;
+      Binaryen.Features.Atomics |
+      Binaryen.Features.BulkMemory |
+      Binaryen.Features.NontrappingFPToInt |
+      Binaryen.Features.SignExt |
+      Binaryen.Features.SIMD128;
 
   module.setFeatures(features);
   assert(module.getFeatures() == features);

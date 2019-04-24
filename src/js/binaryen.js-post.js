@@ -85,12 +85,14 @@ Module['ExternalMemory'] = Module['_BinaryenExternalMemory']();
 Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
 
 // Features
-Module['FeatureAtomics'] = Module['_BinaryenFeatureAtomics']();
-Module['FeatureBulkMemory'] = Module['_BinaryenFeatureBulkMemory']();
-Module['FeatureMutableGlobals'] = Module['_BinaryenFeatureMutableGlobals']();
-Module['FeatureNontrappingFPToInt'] = Module['_BinaryenFeatureNontrappingFPToInt']();
-Module['FeatureSignExt'] = Module['_BinaryenFeatureSignExt']();
-Module['FeatureSIMD128'] = Module['_BinaryenFeatureSIMD128']();
+Module['Features'] = {
+  'Atomics': Module['_BinaryenFeatureAtomics'](),
+  'BulkMemory': Module['_BinaryenFeatureBulkMemory'](),
+  'MutableGlobals': Module['_BinaryenFeatureMutableGlobals'](),
+  'NontrappingFPToInt': Module['_BinaryenFeatureNontrappingFPToInt'](),
+  'SignExt': Module['_BinaryenFeatureSignExt'](),
+  'SIMD128': Module['_BinaryenFeatureSIMD128'](),
+};
 
 // Operations
 Module['ClzInt32'] = Module['_BinaryenClzInt32']();
