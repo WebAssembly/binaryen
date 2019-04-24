@@ -527,17 +527,8 @@ struct AssignName : public Value {
 
 // AST traversals
 
-// Traverse, calling visit before the children
-void traversePre(Ref node, std::function<void (Ref)> visit);
-
-// Traverse, calling visitPre before the children and visitPost after
-void traversePrePost(Ref node, std::function<void (Ref)> visitPre, std::function<void (Ref)> visitPost);
-
-// Traverse, calling visitPre before the children and visitPost after. If pre returns false, do not traverse children
-void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, std::function<void (Ref)> visitPost);
-
-// Traverses all the top-level functions in the document
-void traverseFunctions(Ref ast, std::function<void (Ref)> visit);
+// Traverse, calling visit after the children
+void traversePost(Ref node, std::function<void (Ref)> visit);
 
 // JS printing support
 

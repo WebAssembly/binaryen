@@ -23,7 +23,7 @@
 #include "support/file.h"
 #include "wasm-s-parser.h"
 #include "wasm2js.h"
-#include "tool-options.h"
+#include "optimization-options.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -32,14 +32,70 @@ using namespace wasm;
 
 namespace {
 
-static void emitWasm(Module& wasm, Output& output, Wasm2JSBuilder::Flags flags, Name name) {
-  Wasm2JSBuilder wasm2js(flags);
-  auto js = wasm2js.processWasm(&wasm, name);
-  Wasm2JSGlue glue(wasm, output, flags, name);
-  glue.emitPre();
-  JSPrinter jser(true, true, js);
+template<typename T>
+static void printJS(Ref ast, T& output) {
+  JSPrinter jser(true, true, ast);
   jser.printAst();
   output << jser.buffer << std::endl;
+}
+
+static void optimizeJS(Ref ast) {
+  // helpers
+  auto isOrZero = [](Ref node) {
+    return node->isArray() && node->size() > 0 && node[0] == BINARY && node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
+  };
+
+  auto isBitwise = [](Ref node) {
+    if (node->isArray() && node->size() > 0 && node[0] == BINARY) {
+      auto op = node[1];
+      return op == OR || op == AND || op == XOR || op == RSHIFT || op == TRSHIFT || op == LSHIFT;
+    }
+    return false;
+  };
+
+  // x >> 0  =>  x | 0
+  traversePost(ast, [](Ref node) {
+    if (node->isArray() && node->size() > 0 && node[0] == BINARY && node[1] == RSHIFT && node[3]->isNumber()) {
+      if (node[3]->getNumber() == 0) {
+        node[1]->setString(OR);
+      }
+    }
+  });
+
+  traversePost(ast, [&](Ref node) {
+    // x | 0 | 0  =>  x | 0
+    if (isOrZero(node)) {
+      while (isOrZero(node[2])) {
+        node[2] = node[2][2];
+      }
+      if (isBitwise(node[2])) {
+        auto child = node[2];
+        node[1] = child[1];
+        node[2] = child[2];
+        node[3] = child[3];
+      }
+    }
+    // x | 0 going into a bitwise op => skip the | 0
+    else if (isBitwise(node)) {
+      while (isOrZero(node[2])) {
+        node[2] = node[2][2];
+      }
+      while (isOrZero(node[3])) {
+        node[3] = node[3][2];
+      }
+    }
+  });
+}
+
+static void emitWasm(Module& wasm, Output& output, Wasm2JSBuilder::Flags flags, Name name, bool optimize=false) {
+  Wasm2JSBuilder wasm2js(flags);
+  auto js = wasm2js.processWasm(&wasm, name);
+  if (optimize) {
+    optimizeJS(js);
+  }
+  Wasm2JSGlue glue(wasm, output, flags, name);
+  glue.emitPre();
+  printJS(js, output);
   glue.emitPost();
 }
 
@@ -352,7 +408,7 @@ void AssertionEmitter::emit() {
 
 int main(int argc, const char *argv[]) {
   Wasm2JSBuilder::Flags flags;
-  ToolOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
+  OptimizationOptions options("wasm2js", "Transform .wasm/.wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -438,7 +494,7 @@ int main(int argc, const char *argv[]) {
   if (!binaryInput && options.extra["asserts"] == "1") {
     AssertionEmitter(*root, *sexprBuilder, output, flags).emit();
   } else {
-    emitWasm(wasm, output, flags, "asmFunc");
+    emitWasm(wasm, output, flags, "asmFunc", options.passOptions.optimizeLevel > 0);
   }
 
   if (options.debug) std::cerr << "done." << std::endl;

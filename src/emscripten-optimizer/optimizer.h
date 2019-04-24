@@ -27,17 +27,6 @@ extern bool preciseF32,
 
 extern cashew::Ref extraInfo;
 
-void eliminateDeadFuncs(cashew::Ref ast);
-void eliminate(cashew::Ref ast, bool memSafe=false);
-void eliminateMemSafe(cashew::Ref ast);
-void simplifyExpressions(cashew::Ref ast);
-void optimizeFrounds(cashew::Ref ast);
-void simplifyIfs(cashew::Ref ast);
-void registerize(cashew::Ref ast);
-void registerizeHarder(cashew::Ref ast);
-void minifyLocals(cashew::Ref ast);
-void asmLastOpts(cashew::Ref ast);
-
 //
 
 enum AsmType {

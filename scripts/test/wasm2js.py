@@ -59,7 +59,7 @@ def test_wasm2js_output():
       with open('split.wast', 'w') as o:
         o.write(module + '\n'.join(asserts))
 
-      cmd = WASM2JS + ['split.wast']
+      cmd = WASM2JS + ['split.wast', '-O']
       if 'emscripten' in wasm:
         cmd += ['--emscripten']
       out = run_command(cmd)
@@ -150,7 +150,7 @@ def update_wasm2js_tests():
       with open('split.wast', 'w') as o:
         o.write(module + '\n'.join(asserts))
 
-      cmd = WASM2JS + ['split.wast']
+      cmd = WASM2JS + ['split.wast', '-O']
       if 'emscripten' in wasm:
         cmd += ['--emscripten']
       out = run_command(cmd)
