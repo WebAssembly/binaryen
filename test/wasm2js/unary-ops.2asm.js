@@ -291,7 +291,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $6$hi;
   i64toi32_i32$3 = $10;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  return $5(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2) | 0;
+  return $5(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2 | 0) | 0;
  }
  
  function legalstub$8($0, $1_1, $2_1, $3_1) {
@@ -427,7 +427,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32(var$0 + 4294967295 ^ var$0) | 0
+   return 31 - Math_clz32(var$0 + -1 ^ var$0) | 0
   }
   return 32 | 0;
  }
@@ -441,8 +441,8 @@ function asmFunc(global, env, buffer) {
    {
     i64toi32_i32$0 = var$0$hi;
     i64toi32_i32$2 = var$0;
-    i64toi32_i32$1 = 4294967295;
-    i64toi32_i32$3 = 4294967295;
+    i64toi32_i32$1 = -1;
+    i64toi32_i32$3 = -1;
     i64toi32_i32$4 = i64toi32_i32$2 + i64toi32_i32$3 | 0;
     i64toi32_i32$5 = i64toi32_i32$0 + i64toi32_i32$1 | 0;
     if (i64toi32_i32$4 >>> 0 < i64toi32_i32$3 >>> 0) {

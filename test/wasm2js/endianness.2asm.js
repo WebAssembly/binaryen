@@ -262,7 +262,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = value$hi;
   HEAP32[0 >> 2] = value;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$1 = i32_load_little(0);
+  i64toi32_i32$1 = i32_load_little(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;
  }

@@ -235,8 +235,8 @@ function asmFunc(global, env, buffer) {
     $1$hi = i64toi32_i32$2;
     i64toi32_i32$2 = $0$hi;
     i64toi32_i32$3 = $0_1;
-    i64toi32_i32$0 = 4294967295;
-    i64toi32_i32$1 = 4294967295;
+    i64toi32_i32$0 = -1;
+    i64toi32_i32$1 = -1;
     i64toi32_i32$4 = $0_1 + i64toi32_i32$1 | 0;
     i64toi32_i32$5 = i64toi32_i32$2 + i64toi32_i32$0 | 0;
     if (i64toi32_i32$4 >>> 0 < i64toi32_i32$1 >>> 0) {

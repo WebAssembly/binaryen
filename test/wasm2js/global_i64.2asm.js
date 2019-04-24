@@ -21,7 +21,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var f = 2882400175;
+ var f = -1412567121;
  var f$hi = 305419896;
  function call($0, $0$hi) {
   $0 = $0 | 0;

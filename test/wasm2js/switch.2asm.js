@@ -139,8 +139,8 @@ function asmFunc(global, env, buffer) {
     $7$hi = i64toi32_i32$5;
     break switch_;
    }
-   i64toi32_i32$5 = 4294967295;
-   $7_1 = 4294967291;
+   i64toi32_i32$5 = -1;
+   $7_1 = -5;
    $7$hi = i64toi32_i32$5;
   }
   i64toi32_i32$5 = $7$hi;

@@ -159,13 +159,13 @@ function asmFunc(global, env, buffer) {
    $0 = Math_imul($0, 7);
    break block;
   }
-  return ($0 | 0) == (4294967282 | 0) | 0;
+  return ($0 | 0) == (-14 | 0) | 0;
  }
  
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32(var$0 + 4294967295 ^ var$0) | 0
+   return 31 - Math_clz32(var$0 + -1 ^ var$0) | 0
   }
   return 32 | 0;
  }

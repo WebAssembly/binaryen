@@ -49544,7 +49544,7 @@ function asmFunc(global, env, buffer) {
   fake_return_waka123 : {
    dummy();
    $1_1 = 4;
-   switch (4294967295 | 0) {
+   switch (-1 | 0) {
    case 0:
     break fake_return_waka123;
    case 1:
@@ -49762,7 +49762,7 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
   $2_1 = $2_1 | 0;
-  return 4294967295 | 0;
+  return -1 | 0;
  }
  
  function $38() {
