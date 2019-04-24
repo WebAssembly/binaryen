@@ -179,7 +179,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $46() {
-  return +(77.77);
+  return 77.77;
  }
  
  function $47() {
@@ -210,7 +210,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $53() {
-  return +(78.78);
+  return 78.78;
  }
  
  function $54() {
@@ -451,7 +451,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$25() {
-  return +(+$25());
+  return +$25();
  }
  
  function legalstub$28() {
@@ -481,7 +481,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$29() {
-  return +(+$29());
+  return +$29();
  }
  
  function legalstub$33($0, $1, $2_1, $3) {
@@ -573,7 +573,7 @@ function asmFunc(global, env, buffer) {
  function legalstub$34($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  return +(+Math_fround($34(Math_fround(Math_fround($0)), Math_fround(Math_fround($1)))));
+  return +Math_fround($34(Math_fround(Math_fround($0)), Math_fround(Math_fround($1))));
  }
  
  function legalstub$37($0, $1, $2_1, $3) {
@@ -665,7 +665,7 @@ function asmFunc(global, env, buffer) {
  function legalstub$38($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  return +(+Math_fround($38(Math_fround(Math_fround($0)), Math_fround(Math_fround($1)))));
+  return +Math_fround($38(Math_fround(Math_fround($0)), Math_fround(Math_fround($1))));
  }
  
  function legalstub$40($0, $1, $2_1, $3, $4, $5, $6) {
@@ -734,7 +734,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$45() {
-  return +(+$45());
+  return +$45();
  }
  
  function legalstub$51() {
@@ -764,7 +764,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$52() {
-  return +(+$52());
+  return +$52();
  }
  
  function legalstub$57() {
@@ -794,7 +794,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$58() {
-  return +(+$58());
+  return +$58();
  }
  
  function legalstub$68() {
@@ -824,7 +824,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$69() {
-  return +(+$69());
+  return +$69();
  }
  
  var FUNCTION_TABLE = [complex_sig_3, empty_sig_2, complex_sig_1, complex_sig_3, empty_sig_1];

@@ -41,8 +41,13 @@ static void printJS(Ref ast, T& output) {
 
 static void optimizeJS(Ref ast) {
   // helpers
+
   auto isOrZero = [](Ref node) {
     return node->isArray() && node->size() > 0 && node[0] == BINARY && node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
+  };
+
+  auto isPlus = [](Ref node) {
+    return node->isArray() && node->size() > 0 && node[0] == UNARY_PREFIX && node[1] == PLUS;
   };
 
   auto isBitwise = [](Ref node) {
@@ -82,6 +87,12 @@ static void optimizeJS(Ref ast) {
       }
       while (isOrZero(node[3])) {
         node[3] = node[3][2];
+      }
+    }
+    // +(+x) => +x
+    else if (isPlus(node)) {
+      while (isPlus(node[2])) {
+        node[2] = node[2][2];
       }
     }
   });

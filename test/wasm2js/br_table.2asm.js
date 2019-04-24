@@ -50216,7 +50216,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$7() {
-  return +(+$7());
+  return +$7();
  }
  
  function legalstub$30() {
@@ -50246,7 +50246,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$46() {
-  return +(+$46());
+  return +$46();
  }
  
  function legalstub$47() {
@@ -50276,7 +50276,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$52() {
-  return +(+$52());
+  return +$52();
  }
  
  function legalstub$54() {

@@ -63,7 +63,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $0$hi;
   wasm2js_scratch_store_i32(0 | 0, $0 | 0);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
-  wasm2js_scratch_store_f64(+(+wasm2js_scratch_load_f64()));
+  wasm2js_scratch_store_f64(+wasm2js_scratch_load_f64());
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;

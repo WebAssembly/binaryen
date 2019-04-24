@@ -228,7 +228,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_scratch_store_f64(+value);
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64_store_little(0 | 0, wasm2js_scratch_load_i32(0 | 0) | 0, i64toi32_i32$0 | 0);
-  return +(+HEAPF64[0 >> 3]);
+  return +HEAPF64[0 >> 3];
  }
  
  function $16(value) {
@@ -295,7 +295,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$0 | 0);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$1 | 0);
-  return +(+wasm2js_scratch_load_f64());
+  return +wasm2js_scratch_load_f64();
  }
  
  function legalstub$9($0, $1) {
@@ -565,7 +565,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$14($0) {
   $0 = +$0;
-  return +(+Math_fround($14(Math_fround(Math_fround($0)))));
+  return +Math_fround($14(Math_fround(Math_fround($0))));
  }
  
  function legalstub$18($0, $1) {
@@ -729,7 +729,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$21($0) {
   $0 = +$0;
-  return +(+Math_fround($21(Math_fround(Math_fround($0)))));
+  return +Math_fround($21(Math_fround(Math_fround($0))));
  }
  
  var FUNCTION_TABLE = [];

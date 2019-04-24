@@ -96,12 +96,12 @@ function asmFunc(global, env, buffer) {
  
  function $9(x) {
   x = +x;
-  return +(+__wasm_trunc_f64(+x));
+  return +__wasm_trunc_f64(+x);
  }
  
  function $10(x) {
   x = +x;
-  return +(+__wasm_nearest_f64(+x));
+  return +__wasm_nearest_f64(+x);
  }
  
  function $11(x) {
@@ -141,7 +141,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0;
   wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$1 | i64toi32_i32$3);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
-  return +(+wasm2js_scratch_load_f64());
+  return +wasm2js_scratch_load_f64();
  }
  
  function __wasm_nearest_f64(var$0) {

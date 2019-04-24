@@ -2160,7 +2160,7 @@ function asmFunc(global, env, buffer) {
  
  function $3(i) {
   i = i | 0;
-  return +(+HEAPF64[i >> 3]);
+  return +HEAPF64[i >> 3];
  }
  
  function legalstub$1($0_1) {
@@ -2192,7 +2192,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$2($0_1) {
   $0_1 = $0_1 | 0;
-  return +(+$2($0_1));
+  return +$2($0_1);
  }
  
  var FUNCTION_TABLE = [];

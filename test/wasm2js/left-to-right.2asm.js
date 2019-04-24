@@ -208,13 +208,13 @@ function asmFunc(global, env, buffer) {
  function f64_left() {
   bump();
   HEAP8[8 | 0] = 1;
-  return +(0.0);
+  return 0.0;
  }
  
  function f64_right() {
   bump();
   HEAP8[8 | 0] = 2;
-  return +(1.0);
+  return 1.0;
  }
  
  function f64_callee() {
@@ -1164,7 +1164,7 @@ function asmFunc(global, env, buffer) {
  function $115() {
   var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $2 = 0, $2$hi = 0, $5 = 0, $5$hi = 0;
   reset();
-  wasm2js_scratch_store_f64(+(+f64_left()));
+  wasm2js_scratch_store_f64(+f64_left());
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$2 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$1 = 2147483647;
@@ -1172,7 +1172,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1;
   $2 = i64toi32_i32$2 & i64toi32_i32$3;
   $2$hi = i64toi32_i32$1;
-  wasm2js_scratch_store_f64(+(+f64_right()));
+  wasm2js_scratch_store_f64(+f64_right());
   i64toi32_i32$1 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$0 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$2 = 2147483648;
@@ -1229,7 +1229,7 @@ function asmFunc(global, env, buffer) {
  
  function $122() {
   reset();
-  Math_min(f64_left(), f64_right());
+  Math_min(+f64_left(), +f64_right());
   return get() | 0;
  }
  

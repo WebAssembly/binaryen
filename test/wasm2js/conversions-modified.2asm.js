@@ -200,7 +200,7 @@ function asmFunc(global, env, buffer) {
  
  function $13(x) {
   x = x | 0;
-  return +(+(x | 0));
+  return +(x | 0);
  }
  
  function $14(x, x$hi) {
@@ -226,7 +226,7 @@ function asmFunc(global, env, buffer) {
  
  function $17(x) {
   x = x | 0;
-  return +(+(x >>> 0));
+  return +(x >>> 0);
  }
  
  function $18(x, x$hi) {
@@ -239,7 +239,7 @@ function asmFunc(global, env, buffer) {
  
  function $19(x) {
   x = Math_fround(x);
-  return +(+x);
+  return +x;
  }
  
  function $20(x) {
@@ -259,7 +259,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   wasm2js_scratch_store_i32(0 | 0, x | 0);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
-  return +(+wasm2js_scratch_load_f64());
+  return +wasm2js_scratch_load_f64();
  }
  
  function $23(x) {
@@ -483,7 +483,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$11($0_1) {
   $0_1 = $0_1 | 0;
-  return +(+$11($0_1));
+  return +$11($0_1);
  }
  
  function legalstub$12($0_1, $1_1) {
@@ -515,7 +515,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $6$hi;
   i64toi32_i32$3 = $10_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  return +(+$12(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2));
+  return +$12(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2);
  }
  
  function legalstub$14($0_1, $1_1) {
@@ -552,7 +552,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$15($0_1) {
   $0_1 = $0_1 | 0;
-  return +(+$15($0_1));
+  return +$15($0_1);
  }
  
  function legalstub$16($0_1, $1_1) {
@@ -584,7 +584,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $6$hi;
   i64toi32_i32$3 = $10_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  return +(+$16(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2));
+  return +$16(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2);
  }
  
  function legalstub$18($0_1, $1_1) {
@@ -621,17 +621,17 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$19($0_1) {
   $0_1 = +$0_1;
-  return +(+$19(Math_fround(Math_fround($0_1))));
+  return +$19(Math_fround(Math_fround($0_1)));
  }
  
  function legalstub$20($0_1) {
   $0_1 = +$0_1;
-  return +(+Math_fround($20(+$0_1)));
+  return +Math_fround($20(+$0_1));
  }
  
  function legalstub$21($0_1) {
   $0_1 = $0_1 | 0;
-  return +(+$21($0_1));
+  return +$21($0_1);
  }
  
  function legalstub$22($0_1, $1_1) {

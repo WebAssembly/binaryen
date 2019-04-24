@@ -168,7 +168,7 @@ function asmFunc(global, env, buffer) {
   $0_1 = +$0_1;
   $1_1 = +$1_1;
   $2_1 = $2_1 | 0;
-  return +(+$2(Math_fround($0_1), Math_fround($1_1), $2_1));
+  return +$2(Math_fround($0_1), Math_fround($1_1), $2_1);
  }
  
  var FUNCTION_TABLE = [];

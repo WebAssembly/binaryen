@@ -38,7 +38,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function const_f64() {
-  return +(3940.0);
+  return 3940.0;
  }
  
  function id_i32($0) {
@@ -380,7 +380,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$18() {
-  return +(+$18());
+  return +$18();
  }
  
  function legalstub$20() {
@@ -436,7 +436,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$23() {
-  return +(+Math_fround($23()));
+  return +$23();
  }
  
  function legalstub$26() {
@@ -466,7 +466,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$27() {
-  return +(+$27());
+  return +$27();
  }
  
  function legalstub$29($0, $1, $2) {

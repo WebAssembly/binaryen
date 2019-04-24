@@ -452,7 +452,7 @@ function asmFunc(global, env, buffer) {
  function legalstub$18($0, $1_1) {
   $0 = +$0;
   $1_1 = +$1_1;
-  return +(+Math_fround($18(Math_fround(Math_fround($0)), Math_fround(Math_fround($1_1)))));
+  return +Math_fround($18(Math_fround(Math_fround($0)), Math_fround(Math_fround($1_1))));
  }
  
  function _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0, var$0$hi, var$1, var$1$hi) {

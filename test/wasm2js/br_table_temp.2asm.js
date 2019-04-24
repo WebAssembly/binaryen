@@ -50182,7 +50182,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$7() {
-  return +(+$7());
+  return +$7();
  }
  
  var FUNCTION_TABLE = [];

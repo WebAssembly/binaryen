@@ -40,7 +40,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $3() {
-  return +(0.0);
+  return 0.0;
  }
  
  function $4($0_1) {
@@ -64,7 +64,7 @@ function asmFunc(global, env, buffer) {
  
  function $7($0_1) {
   $0_1 = +$0_1;
-  return +(12.2);
+  return 12.2;
  }
  
  function $8($0_1, $0$hi, $1_1, $2_1, $3_1, $4_1) {
@@ -169,7 +169,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$2() {
-  return +(+$2());
+  return +$2();
  }
  
  function legalstub$5($0_1, $1_1) {
@@ -227,7 +227,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$6($0_1) {
   $0_1 = +$0_1;
-  return +(+Math_fround($6(Math_fround(Math_fround($0_1)))));
+  return +Math_fround($6(Math_fround(Math_fround($0_1))));
  }
  
  function legalstub$8($0_1, $1_1, $2_1, $3_1, $4_1, $5_1) {
