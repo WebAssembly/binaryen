@@ -262,10 +262,12 @@ struct Asm2WasmPreProcessor {
       // that, we can apply the debug info to the wasm node right
       // before it - this is guaranteed to be correct without opts,
       // and is usually decently accurate with them.
-      const auto SCALE_FACTOR = 1.25; // an upper bound on how much more space
-                                      // we need as a multiple of the original
-      const auto ADD_FACTOR = 100;    // an upper bound on how much we write for
-                                      // each debug info element itself
+
+      // an upper bound on how much more space we need as a multiple of the
+      // original
+      const auto SCALE_FACTOR = 1.25;
+      // an upper bound on how much we write for each debug info element itself
+      const auto ADD_FACTOR = 100;
       auto size = strlen(input);
       auto upperBound = Index(size * SCALE_FACTOR) + ADD_FACTOR;
       char* copy = allocatedCopy = (char*)malloc(upperBound);
