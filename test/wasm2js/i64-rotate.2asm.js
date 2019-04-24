@@ -34,7 +34,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$1 = $1$hi;
-  i64toi32_i32$1 = __wasm_rotl_i64($0 | 0, i64toi32_i32$0 | 0, $1_1 | 0, i64toi32_i32$1 | 0) | 0;
+  i64toi32_i32$1 = __wasm_rotl_i64($0, i64toi32_i32$0, $1_1, i64toi32_i32$1);
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $5$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $2$hi;
@@ -56,7 +56,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$1 = $1$hi;
-  i64toi32_i32$1 = __wasm_rotr_i64($0 | 0, i64toi32_i32$0 | 0, $1_1 | 0, i64toi32_i32$1 | 0) | 0;
+  i64toi32_i32$1 = __wasm_rotr_i64($0, i64toi32_i32$0, $1_1, i64toi32_i32$1);
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $5$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $2$hi;
@@ -158,7 +158,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $11$hi;
   i64toi32_i32$1 = $17$hi;
   i64toi32_i32$2 = $23$hi;
-  return $1($11 | 0, i64toi32_i32$0 | 0, $17 | 0, i64toi32_i32$1 | 0, $23 | 0, i64toi32_i32$2 | 0) | 0;
+  return $1($11, i64toi32_i32$0, $17, i64toi32_i32$1, $23, i64toi32_i32$2) | 0;
  }
  
  function legalstub$2($0, $1_1, $2_1, $3, $4, $5) {
@@ -253,7 +253,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $11$hi;
   i64toi32_i32$1 = $17$hi;
   i64toi32_i32$2 = $23$hi;
-  return $2($11 | 0, i64toi32_i32$0 | 0, $17 | 0, i64toi32_i32$1 | 0, $23 | 0, i64toi32_i32$2 | 0) | 0;
+  return $2($11, i64toi32_i32$0, $17, i64toi32_i32$1, $23, i64toi32_i32$2) | 0;
  }
  
  function __wasm_rotl_i64(var$0, var$0$hi, var$1, var$1$hi) {

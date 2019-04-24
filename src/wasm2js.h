@@ -126,7 +126,7 @@ public:
     bool emscripten = false;
   };
 
-  Wasm2JSBuilder(Flags f) : flags(f) {}
+  Wasm2JSBuilder(Flags f, PassOptions options) : flags(f), options(options) {}
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
   Ref processFunction(Module* wasm, Function* func, bool standalone=false);
@@ -136,7 +136,7 @@ public:
 
   // The second pass on an expression: process it fully, generating
   // JS
-  Ref processFunctionBody(Module* m, Function* func);
+  Ref processFunctionBody(Module* m, Function* func, bool standalone);
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -225,6 +225,7 @@ public:
 
 private:
   Flags flags;
+  PassOptions options;
 
   // How many temp vars we need
   std::vector<size_t> temps; // type => num temps
@@ -664,7 +665,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  flattenAppend(ret, processFunctionBody(m, func));
+  flattenAppend(ret, processFunctionBody(m, func, standaloneFunction));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -683,15 +684,18 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   return ret;
 }
 
-Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
+Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standaloneFunction) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
     IString result; // TODO: remove
     Function* func;
     Module* module;
+    bool standaloneFunction;
+    bool optimize;
     MixedArena allocator;
-    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func)
-      : parent(parent), func(func), module(m) {}
+
+    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func, bool standaloneFunction, bool optimize)
+      : parent(parent), func(func), module(m), standaloneFunction(standaloneFunction) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {
@@ -847,12 +851,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
 
     Ref visitCall(Call* curr) {
       Ref theCall = ValueBuilder::makeCall(fromName(curr->target, NameScope::Top));
+      // For wasm => wasm calls, we don't need coercions. TODO: even imports might be safe?
+      bool needCoercions = !optimize || standaloneFunction || module->getFunction(curr->target)->imported();
       for (auto operand : curr->operands) {
-        theCall[2]->push_back(
-          makeAsmCoercion(visit(operand, EXPRESSION_RESULT),
-                          wasmToAsmType(operand->type)));
+        auto value = visit(operand, EXPRESSION_RESULT);
+        if (needCoercions) {
+          value = makeAsmCoercion(value, wasmToAsmType(operand->type));
+        }
+        theCall[2]->push_back(value);
       }
-      return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+      if (needCoercions) {
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+      }
+      return theCall;
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
@@ -1564,7 +1575,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     }
   };
 
-  return ExpressionProcessor(this, m, func).visit(func->body, NO_RESULT);
+  return ExpressionProcessor(this, m, func, standaloneFunction, options.optimizeLevel >= 2).visit(func->body, NO_RESULT);
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {

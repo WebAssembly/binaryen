@@ -2469,7 +2469,7 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   Wasm2JSBuilder::Flags flags;
-  Wasm2JSBuilder wasm2js(flags);
+  Wasm2JSBuilder wasm2js(flags, globalPassOptions);
   Ref asmjs = wasm2js.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
   Output out("", Flags::Text, Flags::Release); // stdout

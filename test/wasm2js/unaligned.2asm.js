@@ -135,7 +135,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$2() {
-  return +(+Math_fround($2()));
+  return +(+$2());
  }
  
  var FUNCTION_TABLE = [];

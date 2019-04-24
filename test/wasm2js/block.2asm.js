@@ -57,7 +57,7 @@ function asmFunc(global, env, buffer) {
  
  function $6() {
   dummy();
-  return __wasm_ctz_i32(13 | 0) | 0;
+  return __wasm_ctz_i32(13) | 0;
  }
  
  function $7() {

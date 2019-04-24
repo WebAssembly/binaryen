@@ -249,7 +249,7 @@ function asmFunc(global, env, buffer) {
     i64toi32_i32$0 = $1$hi;
     i64toi32_i32$0 = $0$hi;
     i64toi32_i32$1 = $1$hi;
-    i64toi32_i32$1 = __wasm_i64_mul($0 | 0, i64toi32_i32$0 | 0, $1_1 | 0, $1$hi | 0) | 0;
+    i64toi32_i32$1 = __wasm_i64_mul($0, i64toi32_i32$0, $1_1, $1$hi);
     i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
     $1_1 = i64toi32_i32$1;
     $1$hi = i64toi32_i32$0;
@@ -289,7 +289,7 @@ function asmFunc(global, env, buffer) {
      break block
     }
     i64toi32_i32$0 = $2$hi;
-    i64toi32_i32$0 = __wasm_i64_mul($1_1 | 0, $1$hi | 0, $2_1 | 0, i64toi32_i32$0 | 0) | 0;
+    i64toi32_i32$0 = __wasm_i64_mul($1_1, $1$hi, $2_1, i64toi32_i32$0);
     $1_1 = i64toi32_i32$0;
     $1$hi = i64toi32_i32$HIGH_BITS;
     i64toi32_i32$0 = 0;
@@ -372,7 +372,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  i64toi32_i32$2 = $16(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = $16(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2);
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $2_1 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
@@ -425,7 +425,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  i64toi32_i32$2 = $17(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = $17(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2);
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $2_1 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
@@ -555,7 +555,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = var$1$hi;
   i64toi32_i32$0 = var$0$hi;
   i64toi32_i32$1 = var$1$hi;
-  i64toi32_i32$1 = _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0 | 0, i64toi32_i32$0 | 0, var$1 | 0, i64toi32_i32$1 | 0) | 0;
+  i64toi32_i32$1 = _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0, i64toi32_i32$0, var$1, i64toi32_i32$1);
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return i64toi32_i32$1 | 0;

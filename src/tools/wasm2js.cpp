@@ -72,7 +72,8 @@ static void optimizeJS(Ref ast) {
         auto child = node[2];
         node[1] = child[1];
         node[2] = child[2];
-        node[3] = child[3];
+        node[3] = child[
+3];
       }
     }
     // x | 0 going into a bitwise op => skip the | 0
@@ -87,10 +88,10 @@ static void optimizeJS(Ref ast) {
   });
 }
 
-static void emitWasm(Module& wasm, Output& output, Wasm2JSBuilder::Flags flags, Name name, bool optimize=false) {
-  Wasm2JSBuilder wasm2js(flags);
+static void emitWasm(Module& wasm, Output& output, Wasm2JSBuilder::Flags flags, PassOptions options, Name name) {
+  Wasm2JSBuilder wasm2js(flags, options);
   auto js = wasm2js.processWasm(&wasm, name);
-  if (optimize) {
+  if (options.optimizeLevel >= 2) {
     optimizeJS(js);
   }
   Wasm2JSGlue glue(wasm, output, flags, name);
@@ -104,7 +105,8 @@ public:
   AssertionEmitter(Element& root,
                    SExpressionWasmBuilder& sexpBuilder,
                    Output& out,
-                   Wasm2JSBuilder::Flags flags) : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags) {}
+                   Wasm2JSBuilder::Flags flags,
+                   PassOptions options) : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags), options(options) {}
 
   void emit();
 
@@ -113,6 +115,7 @@ private:
   SExpressionWasmBuilder& sexpBuilder;
   Output& out;
   Wasm2JSBuilder::Flags flags;
+  PassOptions options;
   Module tempAllocationModule;
 
   Ref emitAssertReturnFunc(Builder& wasmBuilder,
@@ -131,7 +134,7 @@ private:
   void fixCalls(Ref asmjs, Name asmModule);
 
   Ref processFunction(Function* func) {
-    Wasm2JSBuilder sub(flags);
+    Wasm2JSBuilder sub(flags, options);
     return sub.processStandaloneFunction(&tempAllocationModule, func);
   }
 
@@ -370,7 +373,7 @@ void AssertionEmitter::emit() {
       asmModule = Name(moduleNameS.str().c_str());
       Module wasm;
       SExpressionWasmBuilder builder(wasm, e);
-      emitWasm(wasm, out, flags, funcName);
+      emitWasm(wasm, out, flags, options, funcName);
       continue;
     }
     if (!isAssertHandled(e)) {
@@ -492,9 +495,9 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "j-printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   if (!binaryInput && options.extra["asserts"] == "1") {
-    AssertionEmitter(*root, *sexprBuilder, output, flags).emit();
+    AssertionEmitter(*root, *sexprBuilder, output, flags, options.passOptions).emit();
   } else {
-    emitWasm(wasm, output, flags, "asmFunc", options.passOptions.optimizeLevel > 0);
+    emitWasm(wasm, output, flags, options.passOptions, "asmFunc");
   }
 
   if (options.debug) std::cerr << "done." << std::endl;

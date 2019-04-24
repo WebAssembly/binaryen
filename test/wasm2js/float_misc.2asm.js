@@ -108,12 +108,12 @@ function asmFunc(global, env, buffer) {
  
  function $10(x) {
   x = Math_fround(x);
-  return Math_fround(Math_fround(__wasm_trunc_f32(Math_fround(x))));
+  return Math_fround(__wasm_trunc_f32(x));
  }
  
  function $11(x) {
   x = Math_fround(x);
-  return Math_fround(Math_fround(__wasm_nearest_f32(Math_fround(x))));
+  return Math_fround(__wasm_nearest_f32(x));
  }
  
  function $12(x, y) {

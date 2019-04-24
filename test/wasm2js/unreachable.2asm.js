@@ -327,7 +327,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$41() {
-  return +(+Math_fround($41()));
+  return +(+$41());
  }
  
  function legalstub$42() {
@@ -357,7 +357,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$47() {
-  return +(+Math_fround($47()));
+  return +(+$47());
  }
  
  function legalstub$49() {

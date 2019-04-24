@@ -140,7 +140,7 @@ function asmFunc(global, env, buffer) {
   $17$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $11$hi;
   i64toi32_i32$2 = $17$hi;
-  i64toi32_i32$2 = $1($11 | 0, i64toi32_i32$1 | 0, $17 | 0, i64toi32_i32$2 | 0, $4_1 | 0) | 0;
+  i64toi32_i32$2 = $1($11, i64toi32_i32$1, $17, i64toi32_i32$2, $4_1);
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $5_1 = i64toi32_i32$2;
   $5$hi = i64toi32_i32$1;
@@ -168,7 +168,7 @@ function asmFunc(global, env, buffer) {
   $0_1 = +$0_1;
   $1_1 = +$1_1;
   $2_1 = $2_1 | 0;
-  return +(+Math_fround($2(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)), $2_1 | 0)));
+  return +(+$2(Math_fround($0_1), Math_fround($1_1), $2_1));
  }
  
  var FUNCTION_TABLE = [];
