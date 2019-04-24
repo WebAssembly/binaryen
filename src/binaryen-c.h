@@ -898,7 +898,7 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressi
 
 // Gets the external module name of the specified import.
 const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import);
-const char* BinaryeGlobalImportGetModule(BinaryenGlobalRef import);
+const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import);
 // Gets the external base name of the specified import.
 const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import);
 const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import);
