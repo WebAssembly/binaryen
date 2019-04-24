@@ -12,6 +12,7 @@
  (export "other" (func $other))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "exported" (func $exported))
+ (export "sub-zero" (func $sub-zero))
  (func $main
   (drop (call $syscall$6 (i32.const 1) (i32.const 2)))
   (drop (call $syscall$54 (i32.const 3) (i32.const 4)))
@@ -65,6 +66,9 @@
  )
  (func $exported (param $x i32) (result i32)
   (local.get $x)
+ )
+ (func $sub-zero (param $x i32) (result i32)
+  (i32.sub (local.get $x) (i32.const -5))
  )
 )
 

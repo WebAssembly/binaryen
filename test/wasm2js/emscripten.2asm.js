@@ -70,6 +70,11 @@ function asmFunc(global, env, buffer) {
   return x | 0;
  }
  
+ function sub_zero(x) {
+  x = x | 0;
+  return x + 5 | 0;
+ }
+ 
  // EMSCRIPTEN_END_FUNCS;
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
@@ -78,7 +83,8 @@ function asmFunc(global, env, buffer) {
   "main": main, 
   "other": other, 
   "__growWasmMemory": __growWasmMemory, 
-  "exported": exported
+  "exported": exported, 
+  "sub_zero": sub_zero
  };
 }
 

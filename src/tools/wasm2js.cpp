@@ -24,6 +24,7 @@
 #include "wasm-s-parser.h"
 #include "wasm2js.h"
 #include "optimization-options.h"
+#include "pass.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -31,6 +32,33 @@ using namespace wasm;
 // helpers
 
 namespace {
+
+static void optimizeWasm(Module& wasm, PassOptions options) {
+  // Perform various optimizations that will be good for JS, but would not be great
+  // for wasm in general
+  struct OptimizeForJS : public WalkerPass<PostWalker<OptimizeForJS>> {
+    bool isFunctionParallel() override { return true; }
+
+    Pass* create() override { return new OptimizeForJS; }
+
+    void visitBinary(Binary* curr) {
+      // x - -c (where c is a constant) is larger than x + c, in js (but not
+      // necessarily in wasm, where LEBs prefer negatives).
+      if (curr->op == SubInt32) {
+        if (auto* c = curr->right->dynCast<Const>()) {
+          if (c->value.geti32() < 0) {
+            curr->op = AddInt32;
+            c->value = c->value.neg();
+          }
+        }
+      }
+    }
+  };
+
+  PassRunner runner(&wasm, options);
+  runner.add<OptimizeForJS>();
+  runner.run();
+}
 
 template<typename T>
 static void printJS(Ref ast, T& output) {
@@ -99,6 +127,9 @@ static void optimizeJS(Ref ast) {
 }
 
 static void emitWasm(Module& wasm, Output& output, Wasm2JSBuilder::Flags flags, PassOptions options, Name name) {
+  if (options.optimizeLevel > 0) {
+    optimizeWasm(wasm, options);
+  }
   Wasm2JSBuilder wasm2js(flags, options);
   auto js = wasm2js.processWasm(&wasm, name);
   if (options.optimizeLevel >= 2) {
