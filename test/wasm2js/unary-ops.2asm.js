@@ -291,7 +291,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $6$hi;
   i64toi32_i32$3 = $10;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  return $5(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2 | 0) | 0;
+  return $5(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2) | 0;
  }
  
  function legalstub$8($0, $1_1, $2_1, $3_1) {

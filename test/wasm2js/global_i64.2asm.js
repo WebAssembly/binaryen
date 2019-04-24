@@ -31,7 +31,7 @@ function asmFunc(global, env, buffer) {
  function $1() {
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = f$hi;
-  call(f | 0, i64toi32_i32$0 | 0);
+  call(f, i64toi32_i32$0);
   i64toi32_i32$0 = 287454020;
   f = 1432778632;
   f$hi = i64toi32_i32$0;

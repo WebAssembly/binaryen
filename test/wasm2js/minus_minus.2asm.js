@@ -26,7 +26,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $1() {
-  $0() | 0;
+  $0();
  }
  
  var FUNCTION_TABLE = [];

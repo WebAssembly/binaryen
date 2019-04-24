@@ -239,6 +239,11 @@ private:
 
   size_t tableSize;
 
+  // If a function is callable from outside, we'll need to cast the inputs
+  // and our return value. Otherwise, internally, casts are only needed
+  // on operations.
+  std::unordered_set<Name> functionsCallableFromOutside;
+
   void addBasics(Ref ast);
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
@@ -695,7 +700,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     MixedArena allocator;
 
     ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func, bool standaloneFunction, bool optimize)
-      : parent(parent), func(func), module(m), standaloneFunction(standaloneFunction) {}
+      : parent(parent), func(func), module(m), standaloneFunction(standaloneFunction), optimize(optimize) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {

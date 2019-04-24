@@ -96,12 +96,12 @@ function asmFunc(global, env, buffer) {
  
  function $9(x) {
   x = +x;
-  return +__wasm_trunc_f64(+x);
+  return +__wasm_trunc_f64(x);
  }
  
  function $10(x) {
   x = +x;
-  return +__wasm_nearest_f64(+x);
+  return +__wasm_nearest_f64(x);
  }
  
  function $11(x) {

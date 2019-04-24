@@ -90,7 +90,7 @@ function asmFunc(global, env, buffer) {
   var $2_1 = 0;
   dummy();
   $2_1 = 13;
-  return __wasm_ctz_i32($2_1 | 0) | 0;
+  return __wasm_ctz_i32($2_1) | 0;
  }
  
  function $7() {
@@ -425,7 +425,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12_1;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  i64toi32_i32$2 = $17(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = $17(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2);
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $2_1 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
@@ -452,7 +452,7 @@ function asmFunc(global, env, buffer) {
  function legalstub$18($0, $1_1) {
   $0 = +$0;
   $1_1 = +$1_1;
-  return +Math_fround($18(Math_fround(Math_fround($0)), Math_fround(Math_fround($1_1))));
+  return +$18(Math_fround($0), Math_fround($1_1));
  }
  
  function _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0, var$0$hi, var$1, var$1$hi) {
