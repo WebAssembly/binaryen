@@ -896,10 +896,10 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  no_dce_i32_div_s: $0, 
-  no_dce_i32_div_u: $1, 
-  no_dce_i64_div_s: legalstub$2, 
-  no_dce_i64_div_u: legalstub$3
+  "no_dce_i32_div_s": $0, 
+  "no_dce_i32_div_u": $1, 
+  "no_dce_i64_div_s": legalstub$2, 
+  "no_dce_i64_div_u": legalstub$3
  };
 }
 
@@ -1824,10 +1824,10 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  no_dce_i32_rem_s: $0, 
-  no_dce_i32_rem_u: $1, 
-  no_dce_i64_rem_s: legalstub$2, 
-  no_dce_i64_rem_u: legalstub$3
+  "no_dce_i32_rem_s": $0, 
+  "no_dce_i32_rem_u": $1, 
+  "no_dce_i64_rem_s": legalstub$2, 
+  "no_dce_i64_rem_u": legalstub$3
  };
 }
 
@@ -2091,14 +2091,14 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  no_dce_i32_trunc_s_f32: legalstub$0, 
-  no_dce_i32_trunc_u_f32: legalstub$1, 
-  no_dce_i32_trunc_s_f64: $2, 
-  no_dce_i32_trunc_u_f64: $3, 
-  no_dce_i64_trunc_s_f32: legalstub$4, 
-  no_dce_i64_trunc_u_f32: legalstub$5, 
-  no_dce_i64_trunc_s_f64: legalstub$6, 
-  no_dce_i64_trunc_u_f64: legalstub$7
+  "no_dce_i32_trunc_s_f32": legalstub$0, 
+  "no_dce_i32_trunc_u_f32": legalstub$1, 
+  "no_dce_i32_trunc_s_f64": $2, 
+  "no_dce_i32_trunc_u_f64": $3, 
+  "no_dce_i64_trunc_s_f32": legalstub$4, 
+  "no_dce_i64_trunc_u_f32": legalstub$5, 
+  "no_dce_i64_trunc_s_f64": legalstub$6, 
+  "no_dce_i64_trunc_u_f64": legalstub$7
  };
 }
 
@@ -2224,10 +2224,10 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  no_dce_i32_load: $0, 
-  no_dce_i64_load: legalstub$1, 
-  no_dce_f32_load: legalstub$2, 
-  no_dce_f64_load: $3
+  "no_dce_i32_load": $0, 
+  "no_dce_i64_load": legalstub$1, 
+  "no_dce_f32_load": legalstub$2, 
+  "no_dce_f64_load": $3
  };
 }
 

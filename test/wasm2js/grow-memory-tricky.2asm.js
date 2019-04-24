@@ -66,19 +66,19 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  memory: Object.create(Object.prototype, {
-   grow: {
-    value: __wasm_grow_memory
+  "memory": Object.create(Object.prototype, {
+   "grow": {
+    "value": __wasm_grow_memory
    }, 
-   buffer: {
-    get: function () {
+   "buffer": {
+    "get": function () {
      return buffer;
     }
     
    }
   }), 
-  f1: $0, 
-  f2: $1
+  "f1": $0, 
+  "f2": $1
  };
 }
 

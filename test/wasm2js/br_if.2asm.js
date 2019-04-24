@@ -258,23 +258,23 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  as_block_first: $1, 
-  as_block_mid: $2, 
-  as_block_last: $3, 
-  as_block_first_value: $4, 
-  as_block_mid_value: $5, 
-  as_block_last_value: $6, 
-  as_loop_first: $7, 
-  as_loop_mid: $8, 
-  as_loop_last: $9, 
-  as_if_then: $10, 
-  as_if_else: $11, 
-  nested_block_value: $12, 
-  nested_br_value: $13, 
-  nested_br_if_value: $14, 
-  nested_br_if_value_cond: $15, 
-  nested_br_table_value: $16, 
-  nested_br_table_value_index: $17
+  "as_block_first": $1, 
+  "as_block_mid": $2, 
+  "as_block_last": $3, 
+  "as_block_first_value": $4, 
+  "as_block_mid_value": $5, 
+  "as_block_last_value": $6, 
+  "as_loop_first": $7, 
+  "as_loop_mid": $8, 
+  "as_loop_last": $9, 
+  "as_if_then": $10, 
+  "as_if_else": $11, 
+  "nested_block_value": $12, 
+  "nested_br_value": $13, 
+  "nested_br_if_value": $14, 
+  "nested_br_if_value_cond": $15, 
+  "nested_br_table_value": $16, 
+  "nested_br_table_value_index": $17
  };
 }
 

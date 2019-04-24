@@ -170,20 +170,20 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  add: $0, 
-  sub: $1, 
-  mul: $2, 
-  div: $3, 
-  sqrt: $4, 
-  min: $5, 
-  max: $6, 
-  ceil: $7, 
-  floor: $8, 
-  trunc: $9, 
-  nearest: $10, 
-  abs: $11, 
-  neg: $12, 
-  copysign: $13
+  "add": $0, 
+  "sub": $1, 
+  "mul": $2, 
+  "div": $3, 
+  "sqrt": $4, 
+  "min": $5, 
+  "max": $6, 
+  "ceil": $7, 
+  "floor": $8, 
+  "trunc": $9, 
+  "nearest": $10, 
+  "abs": $11, 
+  "neg": $12, 
+  "copysign": $13
  };
 }
 

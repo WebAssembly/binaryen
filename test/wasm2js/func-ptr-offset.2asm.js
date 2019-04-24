@@ -41,7 +41,7 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [null, t1, t2, t3];
  return {
-  call: $3
+  "call": $3
  };
 }
 

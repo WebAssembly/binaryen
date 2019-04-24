@@ -223,20 +223,20 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  add: legalstub$0, 
-  sub: legalstub$1, 
-  mul: legalstub$2, 
-  div: legalstub$3, 
-  sqrt: legalstub$4, 
-  min: legalstub$5, 
-  max: legalstub$6, 
-  ceil: legalstub$7, 
-  floor: legalstub$8, 
-  trunc: legalstub$9, 
-  nearest: legalstub$10, 
-  abs: legalstub$11, 
-  neg: legalstub$12, 
-  copysign: legalstub$13
+  "add": legalstub$0, 
+  "sub": legalstub$1, 
+  "mul": legalstub$2, 
+  "div": legalstub$3, 
+  "sqrt": legalstub$4, 
+  "min": legalstub$5, 
+  "max": legalstub$6, 
+  "ceil": legalstub$7, 
+  "floor": legalstub$8, 
+  "trunc": legalstub$9, 
+  "nearest": legalstub$10, 
+  "abs": legalstub$11, 
+  "neg": legalstub$12, 
+  "copysign": legalstub$13
  };
 }
 

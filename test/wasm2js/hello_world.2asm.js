@@ -29,7 +29,7 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  add: add
+  "add": add
  };
 }
 

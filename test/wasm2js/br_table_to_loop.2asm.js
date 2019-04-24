@@ -55,8 +55,8 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  exp1: $0, 
-  exp2: $1
+  "exp1": $0, 
+  "exp2": $1
  };
 }
 
