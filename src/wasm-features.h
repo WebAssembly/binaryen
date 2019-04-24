@@ -101,7 +101,6 @@ struct FeatureSet {
     return *this;
   }
 
-private:
   uint32_t features;
 };
 

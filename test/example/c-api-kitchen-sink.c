@@ -159,6 +159,15 @@ void test_types() {
   printf("BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 }
 
+void test_features() {
+  printf("BinaryenFeatureAtomics: %d\n", BinaryenFeatureAtomics());
+  printf("BinaryenFeatureBulkMemory: %d\n", BinaryenFeatureBulkMemory());
+  printf("BinaryenFeatureMutableGlobals: %d\n", BinaryenFeatureMutableGlobals());
+  printf("BinaryenFeatureNontrappingFPToInt: %d\n", BinaryenFeatureNontrappingFPToInt());
+  printf("BinaryenFeatureSignExt: %d\n", BinaryenFeatureSignExt());
+  printf("BinaryenFeatureSIMD128: %d\n", BinaryenFeatureSIMD128());
+}
+
 void test_core() {
 
   // Module creation
@@ -510,6 +519,16 @@ void test_core() {
   // A bunch of our code needs drop(), auto-add it
   BinaryenModuleAutoDrop(module);
 
+  BinaryenFeatures features =
+      BinaryenFeatureAtomics() |
+      BinaryenFeatureBulkMemory() |
+      BinaryenFeatureNontrappingFPToInt() |
+      BinaryenFeatureSignExt() |
+      BinaryenFeatureSIMD128();
+
+  BinaryenSetFeatures(module, features);
+  assert(BinaryenGetFeatures(module) == features);
+
   // Verify it validates
   assert(BinaryenModuleValidate(module));
 
@@ -814,6 +833,7 @@ void test_tracing() {
 
 int main() {
   test_types();
+  test_features();
   test_core();
   test_unreachable();
   test_relooper();

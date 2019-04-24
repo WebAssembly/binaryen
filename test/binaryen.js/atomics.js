@@ -59,5 +59,6 @@ module.addFunction("main", signature, [], module.block("", [
   )
 ]));
 
+module.setFeatures(Binaryen.FeatureAtomics);
 module.validate();
 console.log(module.emitText());

@@ -84,6 +84,14 @@ Module['ExternalTable'] = Module['_BinaryenExternalTable']();
 Module['ExternalMemory'] = Module['_BinaryenExternalMemory']();
 Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
 
+// Features
+Module['FeatureAtomics'] = Module['_BinaryenFeatureAtomics']();
+Module['FeatureBulkMemory'] = Module['_BinaryenFeatureBulkMemory']();
+Module['FeatureMutableGlobals'] = Module['_BinaryenFeatureMutableGlobals']();
+Module['FeatureNontrappingFPToInt'] = Module['_BinaryenFeatureNontrappingFPToInt']();
+Module['FeatureSignExt'] = Module['_BinaryenFeatureSignExt']();
+Module['FeatureSIMD128'] = Module['_BinaryenFeatureSIMD128']();
+
 // Operations
 Module['ClzInt32'] = Module['_BinaryenClzInt32']();
 Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
@@ -1864,6 +1872,12 @@ function wrapModule(module, self) {
   };
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
+  };
+  self['getFeatures'] = function() {
+    return Module['_BinaryenGetFeatures'](module);
+  };
+  self['setFeatures'] = function(features) {
+    Module['_BinaryenSetFeatures'](module, features);
   };
   self['emitText'] = function() {
     var old = out;

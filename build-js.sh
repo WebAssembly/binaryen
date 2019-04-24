@@ -225,6 +225,14 @@ export_function "_BinaryenExternalTable"
 export_function "_BinaryenExternalMemory"
 export_function "_BinaryenExternalGlobal"
 
+# Features
+export_function "_BinaryenFeatureAtomics"
+export_function "_BinaryenFeatureBulkMemory"
+export_function "_BinaryenFeatureMutableGlobals"
+export_function "_BinaryenFeatureNontrappingFPToInt"
+export_function "_BinaryenFeatureSignExt"
+export_function "_BinaryenFeatureSIMD128"
+
 # Literals
 export_function "_BinaryenLiteralInt32"
 export_function "_BinaryenLiteralInt64"
@@ -753,6 +761,8 @@ export_function "_BinaryenRemoveExport"
 export_function "_BinaryenSetFunctionTable"
 export_function "_BinaryenSetMemory"
 export_function "_BinaryenSetStart"
+export_function "_BinaryenGetFeatures"
+export_function "_BinaryenSetFeatures"
 export_function "_BinaryenModuleParse"
 export_function "_BinaryenModulePrint"
 export_function "_BinaryenModulePrintAsmjs"

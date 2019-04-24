@@ -6,6 +6,12 @@ BinaryenTypeFloat64: 4
 BinaryenTypeVec128: 5
 BinaryenTypeUnreachable: 6
 BinaryenTypeAuto: -1
+BinaryenFeatureAtomics: 1
+BinaryenFeatureBulkMemory: 16
+BinaryenFeatureMutableGlobals: 2
+BinaryenFeatureNontrappingFPToInt: 4
+BinaryenFeatureSignExt: 32
+BinaryenFeatureSIMD128: 8
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -3311,6 +3317,8 @@ int main() {
     functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
+  BinaryenSetFeatures(the_module, 61);
+  BinaryenGetFeatures(the_module);
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module
