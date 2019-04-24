@@ -1022,7 +1022,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
           abort();
         }
       }
-      return makeAsmCoercion(ret, wasmToAsmType(curr->type));
+      // Coercions are not actually needed, as if the user reads beyond valid memory, it's
+      // undefined behavior anyhow, and so we don't care much about slowness of undefined
+      // values etc.
+      bool needCoercions = parent->options.optimizeLevel == 0 || standaloneFunction;
+      if (needCoercions) {
+        ret = makeAsmCoercion(ret, wasmToAsmType(curr->type));
+      }
+      return ret;
     }
 
     Ref visitStore(Store* curr) {

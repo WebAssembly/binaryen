@@ -117,14 +117,14 @@ function asmFunc(global, env, buffer) {
  }
  
  function bump() {
-  HEAP8[11 | 0] = HEAPU8[10 | 0] | 0;
-  HEAP8[10 | 0] = HEAPU8[9 | 0] | 0;
-  HEAP8[9 | 0] = HEAPU8[8 | 0] | 0;
+  HEAP8[11 | 0] = HEAPU8[10 | 0];
+  HEAP8[10 | 0] = HEAPU8[9 | 0];
+  HEAP8[9 | 0] = HEAPU8[8 | 0];
   HEAP8[8 | 0] = -3;
  }
  
  function get() {
-  return HEAP32[8 >> 2] | 0;
+  return HEAP32[8 >> 2];
  }
  
  function i32_left() {

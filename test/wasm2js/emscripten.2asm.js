@@ -30,7 +30,7 @@ function asmFunc(global, env, buffer) {
   var wasm2js_i32$0 = 0;
   syscall$6(1 | 0, 2 | 0) | 0;
   syscall$54(3 | 0, 4 | 0) | 0;
-  wasm2js_i32$0 = HEAP32[0 + 1030 >> 2] | 0, FUNCTION_TABLE[wasm2js_i32$0]();
+  wasm2js_i32$0 = HEAP32[0 + 1030 >> 2], FUNCTION_TABLE[wasm2js_i32$0]();
   internal(1);
   tabled(1);
   exported(1);
@@ -45,10 +45,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function bar() {
-  HEAPU8[128 | 0] | 0;
-  HEAP8[128 | 0] | 0;
-  HEAPU16[128 >> 1] | 0;
-  HEAP16[128 >> 1] | 0;
+  HEAPU8[128 | 0];
+  HEAP8[128 | 0];
+  HEAPU16[128 >> 1];
+  HEAP16[128 >> 1];
  }
  
  function __growWasmMemory($0) {
