@@ -34,7 +34,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function grow() {
-  return __wasm_grow_memory(1 | 0) | 0;
+  return __wasm_grow_memory(1 | 0);
  }
  
  var FUNCTION_TABLE = [];

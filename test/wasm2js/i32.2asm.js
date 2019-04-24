@@ -192,15 +192,13 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_ctz_i32(var$0) {
-  var$0 = var$0 | 0;
   if (var$0) {
    return 31 - Math_clz32(var$0 + -1 ^ var$0) | 0
   }
-  return 32 | 0;
+  return 32;
  }
  
  function __wasm_popcnt_i32(var$0) {
-  var$0 = var$0 | 0;
   var var$1 = 0, $5_1 = 0;
   label$1 : {
    label$2 : do {
@@ -214,12 +212,10 @@ function asmFunc(global, env, buffer) {
     break label$2;
    } while (1);
   }
-  return $5_1 | 0;
+  return $5_1;
  }
  
  function __wasm_rotl_i32(var$0, var$1) {
-  var$0 = var$0 | 0;
-  var$1 = var$1 | 0;
   var var$2 = 0;
   var$2 = var$1 & 31;
   var$1 = 0 - var$1 & 31;
@@ -227,8 +223,6 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_rotr_i32(var$0, var$1) {
-  var$0 = var$0 | 0;
-  var$1 = var$1 | 0;
   var var$2 = 0;
   var$2 = var$1 & 31;
   var$1 = 0 - var$1 & 31;

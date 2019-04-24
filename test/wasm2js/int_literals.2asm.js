@@ -153,7 +153,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$12() {
@@ -179,7 +179,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$13() {
@@ -205,7 +205,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$14() {
@@ -231,7 +231,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$15() {
@@ -257,7 +257,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$16() {
@@ -283,7 +283,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$17() {
@@ -309,7 +309,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$18() {
@@ -335,7 +335,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$19() {
@@ -361,7 +361,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$20() {
@@ -387,7 +387,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  function legalstub$21() {
@@ -413,7 +413,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0_1 | 0;
+  return $0_1;
  }
  
  var FUNCTION_TABLE = [];

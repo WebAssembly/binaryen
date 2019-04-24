@@ -663,20 +663,23 @@ Ref Wasm2JSBuilder::processFunction(Module* m, Function* func, bool standaloneFu
   temps.resize(std::max(i32, std::max(f32, f64)) + 1);
   temps[i32] = temps[f32] = temps[f64] = 0;
   // arguments
+  bool needCoercions = options.optimizeLevel == 0 || standaloneFunction || functionsCallableFromOutside.count(func->name);
   for (Index i = 0; i < func->getNumParams(); i++) {
     IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
-    ret[3]->push_back(
-      ValueBuilder::makeStatement(
-        ValueBuilder::makeBinary(
-          ValueBuilder::makeName(name), SET,
-          makeAsmCoercion(
-            ValueBuilder::makeName(name),
-            wasmToAsmType(func->getLocalType(i))
+    if (needCoercions) {
+      ret[3]->push_back(
+        ValueBuilder::makeStatement(
+          ValueBuilder::makeBinary(
+            ValueBuilder::makeName(name), SET,
+            makeAsmCoercion(
+              ValueBuilder::makeName(name),
+              wasmToAsmType(func->getLocalType(i))
+            )
           )
         )
-      )
-    );
+      );
+    }
   }
   Ref theVar = ValueBuilder::makeVar();
   size_t theVarIndex = ret[3]->size();
@@ -1548,10 +1551,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
       if (!curr->value) {
         return ValueBuilder::makeReturn(Ref());
       }
-      Ref val = makeAsmCoercion(
-        visit(curr->value, EXPRESSION_RESULT),
-        wasmToAsmType(curr->value->type)
-      );
+      Ref val = visit(curr->value, EXPRESSION_RESULT);
+      bool needCoercion = parent->options.optimizeLevel == 0 || standaloneFunction || parent->functionsCallableFromOutside.count(func->name);
+      if (needCoercion) {
+        val = makeAsmCoercion(val, wasmToAsmType(curr->value->type));
+      }
       return ValueBuilder::makeReturn(val);
     }
 

@@ -57,8 +57,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function internal(x) {
-  x = x | 0;
-  return x | 0;
+  return x;
  }
  
  function tabled(x) {

@@ -24,8 +24,7 @@ function asmFunc(global, env, buffer) {
  var f = -1412567121;
  var f$hi = 305419896;
  function call($0, $0$hi) {
-  $0 = $0 | 0;
-  $0$hi = $0$hi | 0;
+  
  }
  
  function $1() {

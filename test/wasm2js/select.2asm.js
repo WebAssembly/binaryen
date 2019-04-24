@@ -78,11 +78,6 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$1($0_1, $1_1, $2_1, $3_1, $4_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
-  $4_1 = $4_1 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$3 = 0, $22 = 0, $23 = 0, $24 = 0, $7 = 0, $7$hi = 0, $10$hi = 0, $11 = 0, $11$hi = 0, $13 = 0, $13$hi = 0, $16$hi = 0, $17 = 0, $17$hi = 0, $5_1 = 0, $5$hi = 0;
   i64toi32_i32$0 = 0;
   $7 = $0_1;
@@ -161,13 +156,10 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($24 | 0);
   i64toi32_i32$2 = $5$hi;
-  return $5_1 | 0;
+  return $5_1;
  }
  
  function legalstub$2($0_1, $1_1, $2_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  $2_1 = $2_1 | 0;
   return +$2(Math_fround($0_1), Math_fround($1_1), $2_1);
  }
  

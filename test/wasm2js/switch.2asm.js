@@ -186,8 +186,6 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$1($0_2, $1_2) {
-  $0_2 = $0_2 | 0;
-  $1_2 = $1_2 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4_1 = 0, $4$hi = 0, $7$hi = 0, $2_2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
   $4_1 = $0_2;
@@ -235,7 +233,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_2 | 0;
+  return $2_2;
  }
  
  var FUNCTION_TABLE = [];

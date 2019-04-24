@@ -121,84 +121,62 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$0($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
   return +$0(Math_fround($0_1), Math_fround($1_1));
  }
  
  function legalstub$1($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
   return +$1(Math_fround($0_1), Math_fround($1_1));
  }
  
  function legalstub$2($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
   return +$2(Math_fround($0_1), Math_fround($1_1));
  }
  
  function legalstub$3($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
   return +$3(Math_fround($0_1), Math_fround($1_1));
  }
  
  function legalstub$4($0_1) {
-  $0_1 = +$0_1;
   return +$4(Math_fround($0_1));
  }
  
  function legalstub$5($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
   return +$5(Math_fround($0_1), Math_fround($1_1));
  }
  
  function legalstub$6($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
   return +$6(Math_fround($0_1), Math_fround($1_1));
  }
  
  function legalstub$7($0_1) {
-  $0_1 = +$0_1;
   return +$7(Math_fround($0_1));
  }
  
  function legalstub$8($0_1) {
-  $0_1 = +$0_1;
   return +$8(Math_fround($0_1));
  }
  
  function legalstub$9($0_1) {
-  $0_1 = +$0_1;
   return +$9(Math_fround($0_1));
  }
  
  function legalstub$10($0_1) {
-  $0_1 = +$0_1;
   return +$10(Math_fround($0_1));
  }
  
  function legalstub$11($0_1) {
-  $0_1 = +$0_1;
   return +$11(Math_fround($0_1));
  }
  
  function legalstub$12($0_1) {
-  $0_1 = +$0_1;
   return +$12(Math_fround($0_1));
  }
  
  function legalstub$13($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
   return +$13(Math_fround($0_1), Math_fround($1_1));
  }
  
  function __wasm_nearest_f32(var$0) {
-  var$0 = Math_fround(var$0);
   var var$1 = Math_fround(0), var$2 = Math_fround(0), wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
   var$1 = Math_fround(Math_floor(var$0));
   var$2 = Math_fround(var$0 - var$1);
@@ -206,19 +184,18 @@ function asmFunc(global, env, buffer) {
    {
     var$0 = Math_fround(Math_ceil(var$0));
     if (var$2 > Math_fround(.5)) {
-     return Math_fround(var$0)
+     return var$0
     }
     var$2 = Math_fround(var$1 * Math_fround(.5));
     var$1 = (wasm2js_f32$0 = var$1, wasm2js_f32$1 = var$0, wasm2js_i32$0 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1);
    }
   }
-  return Math_fround(var$1);
+  return var$1;
  }
  
  function __wasm_trunc_f32(var$0) {
-  var$0 = Math_fround(var$0);
   var wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
-  return Math_fround((wasm2js_f32$0 = Math_fround(Math_ceil(var$0)), wasm2js_f32$1 = Math_fround(Math_floor(var$0)), wasm2js_i32$0 = var$0 < Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1));
+  return wasm2js_f32$0 = Math_fround(Math_ceil(var$0)), wasm2js_f32$1 = Math_fround(Math_floor(var$0)), wasm2js_i32$0 = var$0 < Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1;
  }
  
  var FUNCTION_TABLE = [];

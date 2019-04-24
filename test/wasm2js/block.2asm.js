@@ -163,11 +163,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_ctz_i32(var$0) {
-  var$0 = var$0 | 0;
   if (var$0) {
    return 31 - Math_clz32(var$0 + -1 ^ var$0) | 0
   }
-  return 32 | 0;
+  return 32;
  }
  
  var FUNCTION_TABLE = [];
