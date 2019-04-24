@@ -208,7 +208,7 @@ function asmFunc(global, env, buffer) {
     if ((var$0 | 0) == (0 | 0)) {
      break label$1
     }
-    var$0 = var$0 & (var$0 - 1 | 0) | 0;
+    var$0 = var$0 & var$0 - 1 | 0;
     var$1 = var$1 + 1 | 0;
     continue label$2;
     break label$2;
@@ -222,8 +222,8 @@ function asmFunc(global, env, buffer) {
   var$1 = var$1 | 0;
   var var$2 = 0;
   var$2 = var$1 & 31 | 0;
-  var$1 = (0 - var$1 | 0) & 31 | 0;
-  return (4294967295 >>> var$2 & var$0 | 0) << var$2 | (4294967295 << var$1 & var$0 | 0) >>> var$1 | 0;
+  var$1 = 0 - var$1 & 31 | 0;
+  return (4294967295 >>> var$2 & var$0) << var$2 | (4294967295 << var$1 & var$0) >>> var$1 | 0;
  }
  
  function __wasm_rotr_i32(var$0, var$1) {
@@ -231,8 +231,8 @@ function asmFunc(global, env, buffer) {
   var$1 = var$1 | 0;
   var var$2 = 0;
   var$2 = var$1 & 31 | 0;
-  var$1 = (0 - var$1 | 0) & 31 | 0;
-  return (4294967295 << var$2 & var$0 | 0) >>> var$2 | (4294967295 >>> var$1 & var$0 | 0) << var$1 | 0;
+  var$1 = 0 - var$1 & 31 | 0;
+  return (4294967295 << var$2 & var$0) >>> var$2 | (4294967295 >>> var$1 & var$0) << var$1 | 0;
  }
  
  var FUNCTION_TABLE = [];

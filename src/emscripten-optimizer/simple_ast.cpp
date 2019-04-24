@@ -183,189 +183,64 @@ void dump(const char *str, Ref node, bool pretty) {
   std::cerr << std::endl;
 }
 
-// AST traversals
-
 // Traversals
 
 struct TraverseInfo {
   TraverseInfo() = default;
-  TraverseInfo(Ref node, ArrayStorage* arr) : node(node), arr(arr), index(0) {}
+  TraverseInfo(Ref node) : node(node) {
+    assert(node.get());
+    if (node->isArray()) {
+      for (size_t i = 0; i < node->size(); i++) {
+        maybeAdd(node[i]);
+      }
+    } else if (node->isAssign()) {
+      auto assign = node->asAssign();
+      maybeAdd(assign->target());
+      maybeAdd(assign->value());
+    } else if (node->isAssignName()) {
+      auto assign = node->asAssignName();
+      maybeAdd(assign->value());
+    } else {
+      // no children
+    }
+  }
   Ref node;
-  ArrayStorage* arr;
-  int index;
-};
+  size_t index = -1;
+  std::vector<Ref> children;
 
-template<class T, int init>
-struct StackedStack { // a stack, on the stack
-  T stackStorage[init];
-  T* storage;
-  int used = 0;
-  int available = init; // used amount, available amount
-  bool alloced = false;
-
-  StackedStack() {
-    storage = stackStorage;
-  }
-  ~StackedStack() {
-    if (alloced) free(storage);
-  }
-
-  int size() { return used; }
-
-  void push_back(const T& t) {
-    assert(used <= available);
-    if (used == available) {
-      available *= 2;
-      if (!alloced) {
-        T* old = storage;
-        storage = (T*)malloc(sizeof(T)*available);
-        memcpy(storage, old, sizeof(T)*used);
-        alloced = true;
-      } else {
-        T *newStorage = (T*)realloc(storage, sizeof(T)*available);
-        assert(newStorage);
-        storage = newStorage;
-      }
+private:
+  void maybeAdd(Ref child) {
+    if (child.get()) {
+      children.push_back(child);
     }
-    assert(used < available);
-    assert(storage);
-    storage[used++] = t;
-  }
-
-  T& back() {
-    assert(used > 0);
-    return storage[used-1];
-  }
-
-  void pop_back() {
-    assert(used > 0);
-    used--;
   }
 };
 
-#define visitable(node) (node->isArray() && node->size() > 0)
-
-#define TRAV_STACK 40
-
-// Traverse, calling visit before the children
-void traversePre(Ref node, std::function<void (Ref)> visit) {
-  if (!visitable(node)) return;
-  visit(node);
-  StackedStack<TraverseInfo, TRAV_STACK> stack;
-  int index = 0;
-  ArrayStorage* arr = &node->getArray();
-  int arrsize = (int)arr->size();
-  Ref* arrdata = &(*arr)[0];
-  stack.push_back(TraverseInfo(node, arr));
-  while (1) {
-    if (index < arrsize) {
-      Ref sub = *(arrdata+index);
-      index++;
-      if (visitable(sub)) {
-        stack.back().index = index;
-        index = 0;
-        visit(sub);
-        arr = &sub->getArray();
-        arrsize = (int)arr->size();
-        arrdata = &(*arr)[0];
-        stack.push_back(TraverseInfo(sub, arr));
+// Traverse, calling visit after the children
+void traversePost(Ref node, std::function<void (Ref)> visit) {
+  std::vector<TraverseInfo> stack;
+  stack.push_back(TraverseInfo(node));
+  while (!stack.empty()) {
+    TraverseInfo& back = stack.back();
+    if (back.index == size_t(-1)) {
+      // This is the first time we see this. Push its children.
+      back.index = 0;
+      for (auto child : back.children) {
+        stack.emplace_back(child);
       }
-    } else {
-      stack.pop_back();
-      if (stack.size() == 0) break;
-      TraverseInfo& back = stack.back();
-      index = back.index;
-      arr = back.arr;
-      arrsize = (int)arr->size();
-      arrdata = &(*arr)[0];
+      continue;
     }
-  }
-}
-
-// Traverse, calling visitPre before the children and visitPost after
-void traversePrePost(Ref node, std::function<void (Ref)> visitPre, std::function<void (Ref)> visitPost) {
-  if (!visitable(node)) return;
-  visitPre(node);
-  StackedStack<TraverseInfo, TRAV_STACK> stack;
-  int index = 0;
-  ArrayStorage* arr = &node->getArray();
-  int arrsize = (int)arr->size();
-  Ref* arrdata = &(*arr)[0];
-  stack.push_back(TraverseInfo(node, arr));
-  while (1) {
-    if (index < arrsize) {
-      Ref sub = *(arrdata+index);
-      index++;
-      if (visitable(sub)) {
-        stack.back().index = index;
-        index = 0;
-        visitPre(sub);
-        arr = &sub->getArray();
-        arrsize = (int)arr->size();
-        arrdata = &(*arr)[0];
-        stack.push_back(TraverseInfo(sub, arr));
-      }
-    } else {
-      visitPost(stack.back().node);
-      stack.pop_back();
-      if (stack.size() == 0) break;
-      TraverseInfo& back = stack.back();
-      index = back.index;
-      arr = back.arr;
-      arrsize = (int)arr->size();
-      arrdata = &(*arr)[0];
+    if (back.index < back.children.size()) {
+      // Visit this child.
+      back.index++;
+      visit(back.children[back.index - 1]);
+      continue;
     }
-  }
-}
-
-// Traverse, calling visitPre before the children and visitPost after. If pre returns false, do not traverse children
-void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, std::function<void (Ref)> visitPost) {
-  if (!visitable(node)) return;
-  if (!visitPre(node)) return;
-  StackedStack<TraverseInfo, TRAV_STACK> stack;
-  int index = 0;
-  ArrayStorage* arr = &node->getArray();
-  int arrsize = (int)arr->size();
-  Ref* arrdata = &(*arr)[0];
-  stack.push_back(TraverseInfo(node, arr));
-  while (1) {
-    if (index < arrsize) {
-      Ref sub = *(arrdata+index);
-      index++;
-      if (visitable(sub)) {
-        if (visitPre(sub)) {
-          stack.back().index = index;
-          index = 0;
-          arr = &sub->getArray();
-          arrsize = (int)arr->size();
-          arrdata = &(*arr)[0];
-          stack.push_back(TraverseInfo(sub, arr));
-        }
-      }
-    } else {
-      visitPost(stack.back().node);
-      stack.pop_back();
-      if (stack.size() == 0) break;
-      TraverseInfo& back = stack.back();
-      index = back.index;
-      arr = back.arr;
-      arrsize = (int)arr->size();
-      arrdata = &(*arr)[0];
-    }
-  }
-}
-
-// Traverses all the top-level functions in the document
-void traverseFunctions(Ref ast, std::function<void (Ref)> visit) {
-  if (!ast || ast->size() == 0) return;
-  if (ast[0] == TOPLEVEL) {
-    Ref stats = ast[1];
-    for (size_t i = 0; i < stats->size(); i++) {
-      Ref curr = stats[i];
-      if (curr[0] == DEFUN) visit(curr);
-    }
-  } else if (ast[0] == DEFUN) {
-    visit(ast);
+    assert(back.index == back.children.size());
+    // Time to visit the node itself
+    auto node = back.node;
+    stack.pop_back();
+    visit(node);
   }
 }
 
