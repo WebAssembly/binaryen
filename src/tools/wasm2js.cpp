@@ -72,8 +72,7 @@ static void optimizeJS(Ref ast) {
         auto child = node[2];
         node[1] = child[1];
         node[2] = child[2];
-        node[3] = child[
-3];
+        node[3] = child[3];
       }
     }
     // x | 0 going into a bitwise op => skip the | 0
