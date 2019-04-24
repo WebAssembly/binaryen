@@ -68,6 +68,12 @@ static void optimizeJS(Ref ast) {
       while (isOrZero(node[2])) {
         node[2] = node[2][2];
       }
+      if (isBitwise(node[2])) {
+        auto child = node[2];
+        node[1] = child[1];
+        node[2] = child[2];
+        node[3] = child[3];
+      }
     }
     // x | 0 going into a bitwise op => skip the | 0
     else if (isBitwise(node)) {

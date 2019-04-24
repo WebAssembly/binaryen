@@ -66,37 +66,37 @@ function asmFunc(global, env, buffer) {
  function $7(x, y) {
   x = x | 0;
   y = y | 0;
-  return x & y | 0;
+  return x & y;
  }
  
  function $8(x, y) {
   x = x | 0;
   y = y | 0;
-  return x | y | 0;
+  return x | y;
  }
  
  function $9(x, y) {
   x = x | 0;
   y = y | 0;
-  return x ^ y | 0;
+  return x ^ y;
  }
  
  function $10(x, y) {
   x = x | 0;
   y = y | 0;
-  return x << y | 0;
+  return x << y;
  }
  
  function $11(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >> y | 0;
+  return x >> y;
  }
  
  function $12(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >>> y | 0;
+  return x >>> y;
  }
  
  function $13(x, y) {
@@ -194,7 +194,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32(var$0 + 4294967295 ^ var$0 | 0) | 0
+   return 31 - Math_clz32(var$0 + 4294967295 ^ var$0) | 0
   }
   return 32 | 0;
  }
@@ -208,7 +208,7 @@ function asmFunc(global, env, buffer) {
     if ((var$0 | 0) == (0 | 0)) {
      break label$1
     }
-    var$0 = var$0 & var$0 - 1 | 0;
+    var$0 = var$0 & var$0 - 1;
     var$1 = var$1 + 1 | 0;
     continue label$2;
     break label$2;
@@ -221,18 +221,18 @@ function asmFunc(global, env, buffer) {
   var$0 = var$0 | 0;
   var$1 = var$1 | 0;
   var var$2 = 0;
-  var$2 = var$1 & 31 | 0;
-  var$1 = 0 - var$1 & 31 | 0;
-  return (4294967295 >>> var$2 & var$0) << var$2 | (4294967295 << var$1 & var$0) >>> var$1 | 0;
+  var$2 = var$1 & 31;
+  var$1 = 0 - var$1 & 31;
+  return (4294967295 >>> var$2 & var$0) << var$2 | (4294967295 << var$1 & var$0) >>> var$1;
  }
  
  function __wasm_rotr_i32(var$0, var$1) {
   var$0 = var$0 | 0;
   var$1 = var$1 | 0;
   var var$2 = 0;
-  var$2 = var$1 & 31 | 0;
-  var$1 = 0 - var$1 & 31 | 0;
-  return (4294967295 << var$2 & var$0) >>> var$2 | (4294967295 >>> var$1 & var$0) << var$1 | 0;
+  var$2 = var$1 & 31;
+  var$1 = 0 - var$1 & 31;
+  return (4294967295 << var$2 & var$0) >>> var$2 | (4294967295 >>> var$1 & var$0) << var$1;
  }
  
  var FUNCTION_TABLE = [];
