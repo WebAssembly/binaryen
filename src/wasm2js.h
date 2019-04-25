@@ -892,7 +892,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
-      // If the target effects that interact with the operands, we must reorder it to the start.
+      // If the target has effects that interact with the operands, we must reorder it to the start.
       bool mustReorder = false;
       EffectAnalyzer targetEffects(parent->options, curr->target);
       if (targetEffects.hasAnything()) {
@@ -1555,28 +1555,49 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     }
 
     Ref visitSelect(Select* curr) {
-      // normal select
-      ScopedTemp tempIfTrue(curr->type, parent, func),
-          tempIfFalse(curr->type, parent, func),
-          tempCondition(i32, parent, func);
-      Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
-      Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
-      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      return
-        ValueBuilder::makeSeq(
-          ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
+      // If the condition has effects that interact with the operands, we must reorder it to the start.
+      // We must also use locals if the values have side effects, as a JS conditional does not
+      // visit both sides.
+      bool useLocals = false;
+      EffectAnalyzer conditionEffects(parent->options, curr->condition);
+      EffectAnalyzer ifTrueEffects(parent->options, curr->ifTrue);
+      EffectAnalyzer ifFalseEffects(parent->options, curr->ifFalse);
+      if (conditionEffects.invalidates(ifTrueEffects) ||
+          conditionEffects.invalidates(ifFalseEffects) ||
+          ifTrueEffects.hasSideEffects() ||
+          ifFalseEffects.hasSideEffects()) {
+        useLocals = true;
+      }
+      if (useLocals) {
+        ScopedTemp tempIfTrue(curr->type, parent, func),
+            tempIfFalse(curr->type, parent, func),
+            tempCondition(i32, parent, func);
+        Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
+        Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
+        Ref condition = visit(curr->condition, EXPRESSION_RESULT);
+        return
           ValueBuilder::makeSeq(
-            ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+            ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
             ValueBuilder::makeSeq(
-              ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
-              ValueBuilder::makeConditional(
-                tempCondition.getAstName(),
-                tempIfTrue.getAstName(),
-                tempIfFalse.getAstName()
+              ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+              ValueBuilder::makeSeq(
+                ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
+                ValueBuilder::makeConditional(
+                  tempCondition.getAstName(),
+                  tempIfTrue.getAstName(),
+                  tempIfFalse.getAstName()
+                )
               )
             )
-          )
+          );
+      } else {
+        // Simple case without reordering.
+        return ValueBuilder::makeConditional(
+          visit(curr->condition, EXPRESSION_RESULT),
+          visit(curr->ifTrue, EXPRESSION_RESULT),
+          visit(curr->ifFalse, EXPRESSION_RESULT)
         );
+      }
     }
 
     Ref visitReturn(Return* curr) {

@@ -28,8 +28,7 @@ function asmFunc(global, env, buffer) {
   lhs = lhs | 0;
   rhs = rhs | 0;
   cond = cond | 0;
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
-  return (wasm2js_i32$0 = lhs, wasm2js_i32$1 = rhs, wasm2js_i32$2 = cond, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0;
+  return (cond ? lhs : rhs) | 0;
  }
  
  function $1(lhs, lhs$hi, rhs, rhs$hi, cond) {
@@ -38,13 +37,13 @@ function asmFunc(global, env, buffer) {
   rhs = rhs | 0;
   rhs$hi = rhs$hi | 0;
   cond = cond | 0;
-  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$2 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = lhs$hi;
   i64toi32_i32$0 = rhs$hi;
   i64toi32_i32$4 = cond;
   i64toi32_i32$0 = lhs$hi;
-  i64toi32_i32$3 = (wasm2js_i32$0 = lhs, wasm2js_i32$1 = rhs, wasm2js_i32$2 = i64toi32_i32$4, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1);
-  i64toi32_i32$2 = (wasm2js_i32$0 = i64toi32_i32$0, wasm2js_i32$1 = rhs$hi, wasm2js_i32$2 = i64toi32_i32$4, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1);
+  i64toi32_i32$3 = i64toi32_i32$4 ? lhs : rhs;
+  i64toi32_i32$2 = i64toi32_i32$4 ? i64toi32_i32$0 : rhs$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$2;
   return i64toi32_i32$3 | 0;
  }
@@ -53,16 +52,14 @@ function asmFunc(global, env, buffer) {
   lhs = Math_fround(lhs);
   rhs = Math_fround(rhs);
   cond = cond | 0;
-  var wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
-  return Math_fround((wasm2js_f32$0 = lhs, wasm2js_f32$1 = rhs, wasm2js_i32$0 = cond, wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1));
+  return Math_fround(cond ? lhs : rhs);
  }
  
  function $3(lhs, rhs, cond) {
   lhs = +lhs;
   rhs = +rhs;
   cond = cond | 0;
-  var wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
-  return +(wasm2js_f64$0 = lhs, wasm2js_f64$1 = rhs, wasm2js_i32$0 = cond, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
+  return +(cond ? lhs : rhs);
  }
  
  function $4(cond) {

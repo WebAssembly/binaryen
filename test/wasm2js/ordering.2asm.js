@@ -22,11 +22,19 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function main() {
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   FUNCTION_TABLE[foo(2)](1) | 0;
   FUNCTION_TABLE[4](foo(3)) | 0;
   (wasm2js_i32$1 = foo(5), wasm2js_i32$0 = bar(6)), FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0) | 0;
   FUNCTION_TABLE[8](7) | 0;
+  baz(11 ? 9 : 10);
+  baz((wasm2js_i32$0 = foo(12), wasm2js_i32$1 = 13, wasm2js_i32$2 = 14, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1));
+  baz((wasm2js_i32$0 = 15, wasm2js_i32$1 = foo(16), wasm2js_i32$2 = 17, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1));
+  baz(foo(20) ? 18 : 19);
+  baz((wasm2js_i32$0 = foo(21), wasm2js_i32$1 = 22, wasm2js_i32$2 = foo(23), wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1));
+  baz((wasm2js_i32$0 = 24, wasm2js_i32$1 = foo(25), wasm2js_i32$2 = foo(26), wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1));
+  baz((wasm2js_i32$0 = foo(27), wasm2js_i32$1 = foo(28), wasm2js_i32$2 = 29, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1));
+  baz((wasm2js_i32$0 = foo(30), wasm2js_i32$1 = foo(31), wasm2js_i32$2 = foo(32), wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1));
  }
  
  function foo($0) {
@@ -39,14 +47,14 @@ function asmFunc(global, env, buffer) {
   return 2 | 0;
  }
  
- function tabled($0) {
+ function baz($0) {
   $0 = $0 | 0;
   return 3 | 0;
  }
  
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
- FUNCTION_TABLE[3] = tabled;
+ FUNCTION_TABLE[3] = baz;
  return {
   "main": main
  };

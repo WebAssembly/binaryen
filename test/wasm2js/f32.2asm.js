@@ -121,7 +121,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_nearest_f32(var$0) {
-  var var$1 = Math_fround(0), var$2 = Math_fround(0), wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
+  var var$1 = Math_fround(0), var$2 = Math_fround(0);
   var$1 = Math_fround(Math_floor(var$0));
   var$2 = Math_fround(var$0 - var$1);
   if (!(var$2 < Math_fround(.5))) {
@@ -131,15 +131,14 @@ function asmFunc(global, env, buffer) {
      return var$0
     }
     var$2 = Math_fround(var$1 * Math_fround(.5));
-    var$1 = (wasm2js_f32$0 = var$1, wasm2js_f32$1 = var$0, wasm2js_i32$0 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1);
+    var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
    }
   }
   return var$1;
  }
  
  function __wasm_trunc_f32(var$0) {
-  var wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
-  return wasm2js_f32$0 = Math_fround(Math_ceil(var$0)), wasm2js_f32$1 = Math_fround(Math_floor(var$0)), wasm2js_i32$0 = var$0 < Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1;
+  return var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0));
  }
  
  var FUNCTION_TABLE = [];
