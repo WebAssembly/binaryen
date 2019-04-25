@@ -24,8 +24,8 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var memoryBase = env.memoryBase | 0;
- var tableBase = env.tableBase | 0;
+ var import$memoryBase = env.memoryBase | 0;
+ var import$tableBase = env.tableBase | 0;
  function foo() {
   
  }
@@ -38,8 +38,8 @@ function asmFunc(global, env, buffer) {
   
  }
  
- FUNCTION_TABLE[tableBase + 0] = foo;
- FUNCTION_TABLE[tableBase + 1] = bar;
+ FUNCTION_TABLE[import$tableBase + 0] = foo;
+ FUNCTION_TABLE[import$tableBase + 1] = bar;
  return {
   "baz": baz
  };

@@ -1970,12 +1970,14 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
   out << "var " << segmentWriter
       << " = (" << expr << ")(" << buffer << ");\n";
 
-  auto globalOffset = [](const Memory::Segment& segment) {
+  auto globalOffset = [&](const Memory::Segment& segment) {
     if (auto* c = segment.offset->template dynCast<Const>()) {;
       return std::to_string(c->value.getInteger());
     }
     if (auto* get = segment.offset->template dynCast<GetGlobal>()) {;
-      return std::string("asmLibraryArg['") + asmangle(get->name.str) + "']";
+      auto internalName = get->name;
+      auto importedName = wasm.getGlobal(internalName)->base;
+      return std::string("asmLibraryArg['") + asmangle(importedName.str) + "']";
     }
     Fatal() << "non-constant offsets aren't supported yet\n";
   };
