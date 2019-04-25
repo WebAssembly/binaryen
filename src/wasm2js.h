@@ -823,9 +823,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     Ref visitLoop(Loop* curr) {
       Name asmLabel = curr->name;
       continueLabels.insert(asmLabel);
-      Ref body = blockify(visit(curr->body, result));
-      flattenAppend(body, ValueBuilder::makeBreak(fromName(asmLabel, NameScope::Label)));
-      Ref ret = ValueBuilder::makeDo(body, ValueBuilder::makeInt(1));
+      Ref body = visit(curr->body, result);
+      // if we can reach the end of the block, we must leave the while (1) loop
+      if (curr->body->type != unreachable) {
+        assert(curr->body->type == none); // flat IR
+        body = blockify(body);
+        flattenAppend(body, ValueBuilder::makeBreak(fromName(asmLabel, NameScope::Label)));
+      }
+      Ref ret = ValueBuilder::makeWhile(ValueBuilder::makeInt(1), body);
       return ValueBuilder::makeLabel(fromName(asmLabel, NameScope::Label), ret);
     }
 

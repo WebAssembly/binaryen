@@ -1919,7 +1919,7 @@ function asmFunc(global, env, buffer) {
        }
        var$8 = i64toi32_i32$4;
        var$8$hi = i64toi32_i32$5;
-       label$15 : do {
+       label$15 : while (1) {
         i64toi32_i32$5 = var$5$hi;
         i64toi32_i32$2 = var$5;
         i64toi32_i32$1 = 0;
@@ -2048,7 +2048,7 @@ function asmFunc(global, env, buffer) {
          continue label$15
         }
         break label$15;
-       } while (1);
+       };
        break label$13;
       }
      }

@@ -23,7 +23,7 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function $0() {
   block : {
-   loop : do {
+   loop : while (1) {
     switch (1 | 0) {
     case 0:
      break block;
@@ -32,14 +32,13 @@ function asmFunc(global, env, buffer) {
     default:
      break block;
     };
-    break loop;
-   } while (1);
+   };
   }
  }
  
  function $1() {
   block : {
-   loop : do {
+   loop : while (1) {
     switch (1 | 0) {
     case 0:
      continue loop;
@@ -48,8 +47,7 @@ function asmFunc(global, env, buffer) {
     default:
      continue loop;
     };
-    break loop;
-   } while (1);
+   };
   }
  }
  

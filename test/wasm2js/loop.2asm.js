@@ -122,10 +122,7 @@ function asmFunc(global, env, buffer) {
  
  function $10() {
   block : {
-   loop_in : do {
-    break block;
-    break loop_in;
-   } while (1);
+   loop_in : while (1) break block;
   }
   block48 : {
    if (1) {
@@ -155,11 +152,10 @@ function asmFunc(global, env, buffer) {
  function $11() {
   var $0 = 0, $1_1 = 0, $3_1 = 0;
   block : {
-   loop_in : do {
+   loop_in : while (1) {
     $0 = 18;
     break block;
-    break loop_in;
-   } while (1);
+   };
   }
   return $0 | 0;
  }
@@ -214,10 +210,7 @@ function asmFunc(global, env, buffer) {
   var $0 = 0, $1_1 = 0, $2_1 = 0, $3_1 = 0, $5_1 = 0;
   $0 = 0;
   $1_1 = $0;
-  loop_in : do {
-   continue loop_in;
-   break loop_in;
-  } while (1);
+  loop_in : while (1) continue loop_in;
  }
  
  function fx() {
@@ -240,7 +233,7 @@ function asmFunc(global, env, buffer) {
   $1_1 = 1;
   $1$hi = i64toi32_i32$0;
   block : {
-   loop_in : do {
+   loop_in : while (1) {
     i64toi32_i32$0 = $0$hi;
     if (($0 | i64toi32_i32$0) == (0 | 0)) {
      break block
@@ -261,8 +254,7 @@ function asmFunc(global, env, buffer) {
     $0 = $0 - i64toi32_i32$3 | 0;
     $0$hi = i64toi32_i32$5;
     continue loop_in;
-    break loop_in;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = $1$hi;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$5;
@@ -280,7 +272,7 @@ function asmFunc(global, env, buffer) {
   $2_1 = 2;
   $2$hi = i64toi32_i32$0;
   block : {
-   loop_in : do {
+   loop_in : while (1) {
     i64toi32_i32$0 = $2$hi;
     i64toi32_i32$0 = $0$hi;
     i64toi32_i32$0 = $2$hi;
@@ -302,8 +294,7 @@ function asmFunc(global, env, buffer) {
     $2_1 = i64toi32_i32$4;
     $2$hi = i64toi32_i32$5;
     continue loop_in;
-    break loop_in;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = $1$hi;
   i64toi32_i32$HIGH_BITS = $1$hi;
@@ -315,13 +306,13 @@ function asmFunc(global, env, buffer) {
   $1_1 = Math_fround($1_1);
   var $2_1 = Math_fround(0), $3_1 = Math_fround(0);
   block : {
-   loop_in : do {
+   loop_in : while (1) {
     if ($0 == Math_fround(0.0)) {
      break block
     }
     $2_1 = $1_1;
     block71 : {
-     loop_in72 : do {
+     loop_in72 : while (1) {
       if ($2_1 == Math_fround(0.0)) {
        break block71
       }
@@ -331,14 +322,12 @@ function asmFunc(global, env, buffer) {
       $3_1 = Math_fround($3_1 + $2_1);
       $2_1 = Math_fround($2_1 - Math_fround(2.0));
       continue loop_in72;
-      break loop_in72;
-     } while (1);
+     };
     }
     $3_1 = Math_fround($3_1 / $0);
     $0 = Math_fround($0 - Math_fround(1.0));
     continue loop_in;
-    break loop_in;
-   } while (1);
+   };
   }
   return Math_fround($3_1);
  }

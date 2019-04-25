@@ -105,7 +105,7 @@ function asmFunc(global, env, buffer) {
   $2_1 = 1;
   $2$hi = i64toi32_i32$0;
   block : {
-   loop_in : do {
+   loop_in : while (1) {
     i64toi32_i32$0 = $1$hi;
     i64toi32_i32$2 = $1;
     i64toi32_i32$1 = 0;
@@ -133,8 +133,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue loop_in;
-    break loop_in;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = $2$hi;
   i64toi32_i32$3 = $2_1;
@@ -153,7 +152,7 @@ function asmFunc(global, env, buffer) {
   res = 1;
   res$hi = i64toi32_i32$0;
   done : {
-   loop : do {
+   loop : while (1) {
     i64toi32_i32$0 = i$hi;
     i64toi32_i32$2 = i;
     i64toi32_i32$1 = 0;
@@ -181,8 +180,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue loop;
-    break loop;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = res$hi;
   i64toi32_i32$3 = res;
@@ -224,7 +222,7 @@ function asmFunc(global, env, buffer) {
    if ($10) {
     break block
    }
-   loop_in : do {
+   loop_in : while (1) {
     i64toi32_i32$2 = $1$hi;
     i64toi32_i32$2 = $0$hi;
     i64toi32_i32$2 = $1$hi;
@@ -270,7 +268,7 @@ function asmFunc(global, env, buffer) {
      continue loop_in
     }
     break loop_in;
-   } while (1);
+   };
   }
   i64toi32_i32$2 = $1$hi;
   i64toi32_i32$5 = $1;

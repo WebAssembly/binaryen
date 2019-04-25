@@ -462,7 +462,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_popcnt_i32(var$0) {
   var var$1 = 0, $5_1 = 0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     $5_1 = var$1;
     if ((var$0 | 0) == (0 | 0)) {
      break label$1
@@ -470,8 +470,7 @@ function asmFunc(global, env, buffer) {
     var$0 = var$0 & var$0 - 1;
     var$1 = var$1 + 1 | 0;
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
   return $5_1;
  }
@@ -479,7 +478,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_popcnt_i64(var$0, var$0$hi) {
   var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$5 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, var$1$hi = 0, var$1 = 0, $5_1 = 0, $5$hi = 0, $4_1 = 0, $9$hi = 0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$0 = var$0$hi;
     $4_1 = (var$0 | i64toi32_i32$0) == (0 | 0);
@@ -517,8 +516,7 @@ function asmFunc(global, env, buffer) {
     var$1 = i64toi32_i32$1;
     var$1$hi = i64toi32_i32$4;
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
   i64toi32_i32$4 = $5$hi;
   i64toi32_i32$5 = $5_1;
