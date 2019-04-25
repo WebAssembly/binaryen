@@ -1,3 +1,4 @@
+import { FUNCTION_TABLE } from env;
 
 function asmFunc(global, env, buffer) {
  "almost asm";

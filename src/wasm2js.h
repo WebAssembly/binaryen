@@ -1888,6 +1888,10 @@ void Wasm2JSGlue::emitPreES6() {
     noteImport(import->module, import->base);
   });
 
+  if (wasm.table.exists && wasm.table.imported()) {
+    out << "import { FUNCTION_TABLE } from env;\n";
+  }
+
   out << '\n';
 }
 
