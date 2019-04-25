@@ -1212,10 +1212,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
                         << std::endl;
               WASM_UNREACHABLE();
             case EqZInt32:
-              return ValueBuilder::makeBinary(
-                  makeAsmCoercion(visit(curr->value,
-                                        EXPRESSION_RESULT), ASM_INT), EQ,
-                  makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
+              return ValueBuilder::makeUnary(L_NOT, visit(curr->value, EXPRESSION_RESULT));
             case ReinterpretFloat32: {
               ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_STORE_F32);
               ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_LOAD_I32);

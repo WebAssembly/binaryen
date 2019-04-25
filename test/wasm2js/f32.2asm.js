@@ -180,7 +180,7 @@ function asmFunc(global, env, buffer) {
   var var$1 = Math_fround(0), var$2 = Math_fround(0), wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
   var$1 = Math_fround(Math_floor(var$0));
   var$2 = Math_fround(var$0 - var$1);
-  if ((var$2 < Math_fround(.5) | 0) == (0 | 0)) {
+  if (!(var$2 < Math_fround(.5))) {
    {
     var$0 = Math_fround(Math_ceil(var$0));
     if (var$2 > Math_fround(.5)) {

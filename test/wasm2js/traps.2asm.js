@@ -420,7 +420,7 @@ function asmFunc(global, env, buffer) {
              {
               i64toi32_i32$1 = var$1$hi;
               var$3 = var$1;
-              if ((var$3 | 0) == (0 | 0)) {
+              if (!var$3) {
                break label$11
               }
               i64toi32_i32$1 = var$1$hi;
@@ -440,7 +440,7 @@ function asmFunc(global, env, buffer) {
                }
               }
               var$4 = $38;
-              if ((var$4 | 0) == (0 | 0)) {
+              if (!var$4) {
                break label$9
               }
               var$2 = Math_clz32(var$4) - Math_clz32(var$2) | 0;
@@ -487,10 +487,10 @@ function asmFunc(global, env, buffer) {
            }
            var$3 = $39;
            i64toi32_i32$1 = var$0$hi;
-           if ((var$0 | 0) == (0 | 0)) {
+           if (!var$0) {
             break label$7
            }
-           if ((var$3 | 0) == (0 | 0)) {
+           if (!var$3) {
             break label$6
            }
            var$4 = var$3 + -1 | 0;
@@ -533,7 +533,7 @@ function asmFunc(global, env, buffer) {
            return i64toi32_i32$3;
           }
           var$4 = var$3 + -1 | 0;
-          if ((var$4 & var$3) == (0 | 0)) {
+          if (!(var$4 & var$3)) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
@@ -1319,7 +1319,7 @@ function asmFunc(global, env, buffer) {
              {
               i64toi32_i32$1 = var$1$hi;
               var$3 = var$1;
-              if ((var$3 | 0) == (0 | 0)) {
+              if (!var$3) {
                break label$11
               }
               i64toi32_i32$1 = var$1$hi;
@@ -1339,7 +1339,7 @@ function asmFunc(global, env, buffer) {
                }
               }
               var$4 = $38;
-              if ((var$4 | 0) == (0 | 0)) {
+              if (!var$4) {
                break label$9
               }
               var$2 = Math_clz32(var$4) - Math_clz32(var$2) | 0;
@@ -1386,10 +1386,10 @@ function asmFunc(global, env, buffer) {
            }
            var$3 = $39;
            i64toi32_i32$1 = var$0$hi;
-           if ((var$0 | 0) == (0 | 0)) {
+           if (!var$0) {
             break label$7
            }
-           if ((var$3 | 0) == (0 | 0)) {
+           if (!var$3) {
             break label$6
            }
            var$4 = var$3 + -1 | 0;
@@ -1432,7 +1432,7 @@ function asmFunc(global, env, buffer) {
            return i64toi32_i32$3;
           }
           var$4 = var$3 + -1 | 0;
-          if ((var$4 & var$3) == (0 | 0)) {
+          if (!(var$4 & var$3)) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;

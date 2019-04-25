@@ -68,7 +68,7 @@ function asmFunc(global, env, buffer) {
  
  function $8() {
   dummy();
-  return (13 | 0) == (0 | 0) | 0;
+  return !13 | 0;
  }
  
  function $9() {

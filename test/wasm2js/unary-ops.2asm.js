@@ -75,7 +75,7 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = $0$hi;
-  return ($0 | i64toi32_i32$0) == (0 | 0) | 0;
+  return !($0 | i64toi32_i32$0) | 0;
  }
  
  function $6($0) {
@@ -414,7 +414,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_ctz_i64(var$0, var$0$hi) {
   var i64toi32_i32$0 = 0, i64toi32_i32$3 = 0, i64toi32_i32$5 = 0, i64toi32_i32$4 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, $10 = 0, $5$hi = 0, $8$hi = 0;
   i64toi32_i32$0 = var$0$hi;
-  if (((var$0 | i64toi32_i32$0) == (0 | 0) | 0) == (0 | 0)) {
+  if (!!(var$0 | i64toi32_i32$0)) {
    {
     i64toi32_i32$0 = var$0$hi;
     i64toi32_i32$2 = var$0;
@@ -464,7 +464,7 @@ function asmFunc(global, env, buffer) {
   label$1 : {
    label$2 : while (1) {
     $5_1 = var$1;
-    if ((var$0 | 0) == (0 | 0)) {
+    if (!var$0) {
      break label$1
     }
     var$0 = var$0 & var$0 - 1;
@@ -481,7 +481,7 @@ function asmFunc(global, env, buffer) {
    label$2 : while (1) {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$0 = var$0$hi;
-    $4_1 = (var$0 | i64toi32_i32$0) == (0 | 0);
+    $4_1 = !(var$0 | i64toi32_i32$0);
     i64toi32_i32$0 = var$1$hi;
     $5_1 = var$1;
     $5$hi = i64toi32_i32$0;

@@ -107,7 +107,7 @@ function asmFunc(global, env, buffer) {
   var $2_1 = 0;
   dummy();
   $2_1 = 13;
-  return ($2_1 | 0) == (0 | 0) | 0;
+  return !$2_1 | 0;
  }
  
  function $9() {
@@ -235,7 +235,7 @@ function asmFunc(global, env, buffer) {
   block : {
    loop_in : while (1) {
     i64toi32_i32$0 = $0$hi;
-    if (($0 | i64toi32_i32$0) == (0 | 0)) {
+    if (!($0 | i64toi32_i32$0)) {
      break block
     }
     i64toi32_i32$0 = $0$hi;

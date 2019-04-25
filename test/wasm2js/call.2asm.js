@@ -146,7 +146,7 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, $8 = 0, $8$hi = 0, i64toi32_i32$3 = 0, $6 = 0, $6$hi = 0;
   i64toi32_i32$0 = $0$hi;
-  if (($0 | i64toi32_i32$0) == (0 | 0)) {
+  if (!($0 | i64toi32_i32$0)) {
    {
     i64toi32_i32$0 = 0;
     $8 = 1;
@@ -184,7 +184,7 @@ function asmFunc(global, env, buffer) {
   $1$hi = $1$hi | 0;
   var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, $11 = 0, $11$hi = 0, i64toi32_i32$3 = 0, $6 = 0, $6$hi = 0, $9 = 0, $9$hi = 0;
   i64toi32_i32$0 = $0$hi;
-  if (($0 | i64toi32_i32$0) == (0 | 0)) {
+  if (!($0 | i64toi32_i32$0)) {
    {
     i64toi32_i32$0 = $1$hi;
     $11 = $1;
@@ -286,7 +286,7 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, $6 = 0, i64toi32_i32$3 = 0;
   i64toi32_i32$0 = $0$hi;
-  if (($0 | i64toi32_i32$0) == (0 | 0)) {
+  if (!($0 | i64toi32_i32$0)) {
    $6 = 44
   } else {
    {
@@ -305,7 +305,7 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, $6 = 0, i64toi32_i32$3 = 0;
   i64toi32_i32$0 = $0$hi;
-  if (($0 | i64toi32_i32$0) == (0 | 0)) {
+  if (!($0 | i64toi32_i32$0)) {
    $6 = 99
   } else {
    {
