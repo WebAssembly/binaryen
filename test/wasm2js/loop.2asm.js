@@ -445,10 +445,6 @@ function asmFunc(global, env, buffer) {
   return $2_1;
  }
  
- function legalstub$18($0, $1_1) {
-  return +$18(Math_fround($0), Math_fround($1_1));
- }
- 
  function _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0, var$0$hi, var$1, var$1$hi) {
   var i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, var$2 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, var$3 = 0, var$4 = 0, var$5 = 0, $21 = 0, $22 = 0, var$6 = 0, $24 = 0, $17_1 = 0, $18_1 = 0, $23 = 0, $29 = 0, $45 = 0, $56$hi = 0, $62$hi = 0;
   i64toi32_i32$0 = var$1$hi;
@@ -565,7 +561,7 @@ function asmFunc(global, env, buffer) {
   "effects": fx, 
   "while_": legalstub$16, 
   "for_": legalstub$17, 
-  "nesting": legalstub$18
+  "nesting": $18
  };
 }
 

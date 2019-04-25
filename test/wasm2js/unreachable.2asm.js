@@ -326,10 +326,6 @@ function asmFunc(global, env, buffer) {
   return $0;
  }
  
- function legalstub$41() {
-  return +$41();
- }
- 
  function legalstub$42() {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = $42();
@@ -354,10 +350,6 @@ function asmFunc(global, env, buffer) {
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
   return $0;
- }
- 
- function legalstub$47() {
-  return +$47();
  }
  
  function legalstub$49() {
@@ -427,13 +419,13 @@ function asmFunc(global, env, buffer) {
   "as_call_indirect_mid": $38, 
   "as_call_indirect_last": $39, 
   "as_local_set_value": $40, 
-  "as_load_address": legalstub$41, 
+  "as_load_address": $41, 
   "as_loadN_address": legalstub$42, 
   "as_store_address": $43, 
   "as_store_value": $44, 
   "as_storeN_address": $45, 
   "as_storeN_value": $46, 
-  "as_unary_operand": legalstub$47, 
+  "as_unary_operand": $47, 
   "as_binary_left": $48, 
   "as_binary_right": legalstub$49, 
   "as_test_operand": $50, 

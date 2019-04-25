@@ -543,10 +543,6 @@ function asmFunc(global, env, buffer) {
   return $2;
  }
  
- function legalstub$14($0) {
-  return +$14(Math_fround($0));
- }
- 
  function legalstub$18($0, $1) {
   var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12_1 = 0, $13_1 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
@@ -700,10 +696,6 @@ function asmFunc(global, env, buffer) {
   return $2;
  }
  
- function legalstub$21($0) {
-  return +$21(Math_fround($0));
- }
- 
  var FUNCTION_TABLE = [];
  function __wasm_grow_memory(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
@@ -741,14 +733,14 @@ function asmFunc(global, env, buffer) {
   "i64_load32_s": legalstub$11, 
   "i64_load32_u": legalstub$12, 
   "i64_load": legalstub$13, 
-  "f32_load": legalstub$14, 
+  "f32_load": $14, 
   "f64_load": $15, 
   "i32_store16": $16, 
   "i32_store": $17, 
   "i64_store16": legalstub$18, 
   "i64_store32": legalstub$19, 
   "i64_store": legalstub$20, 
-  "f32_store": legalstub$21, 
+  "f32_store": $21, 
   "f64_store": $22
  };
 }

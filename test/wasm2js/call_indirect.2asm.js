@@ -379,10 +379,6 @@ function asmFunc(global, env, buffer) {
   return $0;
  }
  
- function legalstub$18() {
-  return +$18();
- }
- 
  function legalstub$20() {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = $20();
@@ -435,10 +431,6 @@ function asmFunc(global, env, buffer) {
   return $0;
  }
  
- function legalstub$23() {
-  return +$23();
- }
- 
  function legalstub$26() {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = $26();
@@ -463,10 +455,6 @@ function asmFunc(global, env, buffer) {
   setTempRet0($7 | 0);
   i64toi32_i32$0 = $0$hi;
   return $0;
- }
- 
- function legalstub$27() {
-  return +$27();
  }
  
  function legalstub$29($0, $1, $2) {
@@ -743,16 +731,16 @@ function asmFunc(global, env, buffer) {
  return {
   "type_i32": $16, 
   "type_i64": legalstub$17, 
-  "type_f32": legalstub$18, 
+  "type_f32": $18, 
   "type_f64": $19, 
   "type_index": legalstub$20, 
   "type_first_i32": $21, 
   "type_first_i64": legalstub$22, 
-  "type_first_f32": legalstub$23, 
+  "type_first_f32": $23, 
   "type_first_f64": $24, 
   "type_second_i32": $25, 
   "type_second_i64": legalstub$26, 
-  "type_second_f32": legalstub$27, 
+  "type_second_f32": $27, 
   "type_second_f64": $28, 
   "dispatch": legalstub$29, 
   "dispatch_structural": legalstub$30, 

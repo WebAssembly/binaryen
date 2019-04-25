@@ -50181,10 +50181,6 @@ function asmFunc(global, env, buffer) {
   return $3_1 | 0;
  }
  
- function legalstub$7() {
-  return +$7();
- }
- 
  var FUNCTION_TABLE = [];
  return {
   "type_i32": $1, 
@@ -50193,7 +50189,7 @@ function asmFunc(global, env, buffer) {
   "type_f64": $4, 
   "type_i32_value": $5, 
   "type_i64_value": $6, 
-  "type_f32_value": legalstub$7, 
+  "type_f32_value": $7, 
   "type_f64_value": $8, 
   "empty": $9, 
   "empty_value": $10, 

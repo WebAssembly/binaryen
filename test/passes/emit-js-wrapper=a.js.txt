@@ -10,7 +10,7 @@
  (export "add" (func $add))
  (export "no_return" (func $no-return))
  (export "types" (func $legalstub$types))
- (export "types2" (func $legalstub$types2))
+ (export "types2" (func $types2))
  (export "types3" (func $legalstub$types3))
  (func $add (; 1 ;) (type $0) (param $x i32) (param $y i32) (result i32)
   (i32.add
@@ -41,7 +41,7 @@
  (func $types3 (; 6 ;) (type $4) (param $x i32) (param $z f32) (param $w f64) (result i64)
   (i64.const 1)
  )
- (func $legalstub$types (; 7 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64) (param $4 f64)
+ (func $legalstub$types (; 7 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f32) (param $4 f64)
   (call $types
    (local.get $0)
    (i64.or
@@ -55,29 +55,16 @@
      (i64.const 32)
     )
    )
-   (f32.demote_f64
-    (local.get $3)
-   )
+   (local.get $3)
    (local.get $4)
   )
  )
- (func $legalstub$types2 (; 8 ;) (param $0 i32) (param $1 f64) (param $2 f64)
-  (call $types2
-   (local.get $0)
-   (f32.demote_f64
-    (local.get $1)
-   )
-   (local.get $2)
-  )
- )
- (func $legalstub$types3 (; 9 ;) (param $0 i32) (param $1 f64) (param $2 f64) (result i32)
+ (func $legalstub$types3 (; 8 ;) (param $0 i32) (param $1 f32) (param $2 f64) (result i32)
   (local $3 i64)
   (local.set $3
    (call $types3
     (local.get $0)
-    (f32.demote_f64
-     (local.get $1)
-    )
+    (local.get $1)
     (local.get $2)
    )
   )

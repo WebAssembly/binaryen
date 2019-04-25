@@ -229,62 +229,6 @@ function asmFunc(global, env, buffer) {
   return +Math_max(x, y);
  }
  
- function legalstub$0($0_1, $1_1) {
-  return +$0(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$1($0_1, $1_1) {
-  return +$1(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$2($0_1, $1_1) {
-  return +$2(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$3($0_1, $1_1) {
-  return +$3(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$4($0_1) {
-  return +$4(Math_fround($0_1));
- }
- 
- function legalstub$5($0_1) {
-  return +$5(Math_fround($0_1));
- }
- 
- function legalstub$6($0_1) {
-  return +$6(Math_fround($0_1));
- }
- 
- function legalstub$7($0_1, $1_1) {
-  return +$7(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$8($0_1) {
-  return +$8(Math_fround($0_1));
- }
- 
- function legalstub$9($0_1) {
-  return +$9(Math_fround($0_1));
- }
- 
- function legalstub$10($0_1) {
-  return +$10(Math_fround($0_1));
- }
- 
- function legalstub$11($0_1) {
-  return +$11(Math_fround($0_1));
- }
- 
- function legalstub$12($0_1, $1_1) {
-  return +$12(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$13($0_1, $1_1) {
-  return +$13(Math_fround($0_1), Math_fround($1_1));
- }
- 
  function __wasm_nearest_f32(var$0) {
   var var$1 = Math_fround(0), var$2 = Math_fround(0), wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
   var$1 = Math_fround(Math_floor(var$0));
@@ -331,20 +275,20 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  "f32_add": legalstub$0, 
-  "f32_sub": legalstub$1, 
-  "f32_mul": legalstub$2, 
-  "f32_div": legalstub$3, 
-  "f32_sqrt": legalstub$4, 
-  "f32_abs": legalstub$5, 
-  "f32_neg": legalstub$6, 
-  "f32_copysign": legalstub$7, 
-  "f32_ceil": legalstub$8, 
-  "f32_floor": legalstub$9, 
-  "f32_trunc": legalstub$10, 
-  "f32_nearest": legalstub$11, 
-  "f32_min": legalstub$12, 
-  "f32_max": legalstub$13, 
+  "f32_add": $0, 
+  "f32_sub": $1, 
+  "f32_mul": $2, 
+  "f32_div": $3, 
+  "f32_sqrt": $4, 
+  "f32_abs": $5, 
+  "f32_neg": $6, 
+  "f32_copysign": $7, 
+  "f32_ceil": $8, 
+  "f32_floor": $9, 
+  "f32_trunc": $10, 
+  "f32_nearest": $11, 
+  "f32_min": $12, 
+  "f32_max": $13, 
   "f64_add": $14, 
   "f64_sub": $15, 
   "f64_mul": $16, 

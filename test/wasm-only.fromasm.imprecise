@@ -1,17 +1,17 @@
 (module
+ (type $FUNCSIG$ff (func (param f32) (result f32)))
  (type $FUNCSIG$vi (func (param i32)))
  (type $legaltype$illegalImport (func (param f64 i32 i32 i32)))
  (type $FUNCSIG$i (func (result i32)))
- (type $legaltype$_fabsf (func (param f64) (result f64)))
  (import "env" "memory" (memory $memory 256 256))
  (import "env" "table" (table $table 3 3 funcref))
- (elem (global.get $__table_base) $legalfunc$illegalImport $legalfunc$_fabsf $legalfunc$do_i64)
+ (elem (global.get $__table_base) $legalfunc$illegalImport $_fabsf $legalfunc$do_i64)
  (import "env" "__table_base" (global $__table_base i32))
+ (import "env" "_fabsf" (func $_fabsf (param f32) (result f32)))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (import "env" "illegalImport" (func $legalimport$illegalImport (param f64 i32 i32 i32)))
  (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
- (import "env" "_fabsf" (func $legalimport$_fabsf (param f64) (result f64)))
  (import "env" "do_i64" (func $legalimport$do_i64 (result i32)))
  (export "test64" (func $test64))
  (export "illegalParam" (func $legalstub$illegalParam))
@@ -302,16 +302,7 @@
    (local.get $2)
   )
  )
- (func $legalfunc$_fabsf (; 20 ;) (; has Stack IR ;) (param $0 f32) (result f32)
-  (f32.demote_f64
-   (call $legalimport$_fabsf
-    (f64.promote_f32
-     (local.get $0)
-    )
-   )
-  )
- )
- (func $legalfunc$do_i64 (; 21 ;) (; has Stack IR ;) (result i64)
+ (func $legalfunc$do_i64 (; 20 ;) (; has Stack IR ;) (result i64)
   (i64.or
    (i64.extend_i32_u
     (call $legalimport$do_i64)
