@@ -1212,6 +1212,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
                         << std::endl;
               WASM_UNREACHABLE();
             case EqZInt32:
+              // XXX !x does change the type to bool, which is correct, but may be slower?
               return ValueBuilder::makeUnary(L_NOT, visit(curr->value, EXPRESSION_RESULT));
             case ReinterpretFloat32: {
               ABI::wasm2js::ensureScratchMemoryHelpers(module, ABI::wasm2js::SCRATCH_STORE_F32);
