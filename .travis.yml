@@ -59,6 +59,7 @@ jobs:
       script:
         - set -o errexit
         - flake8
+        - clang-format-diff.sh
         # ensure generated parser is up to date
         - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
