@@ -120,62 +120,6 @@ function asmFunc(global, env, buffer) {
   return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | (wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & -2147483648), wasm2js_scratch_load_f32()));
  }
  
- function legalstub$0($0_1, $1_1) {
-  return +$0(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$1($0_1, $1_1) {
-  return +$1(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$2($0_1, $1_1) {
-  return +$2(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$3($0_1, $1_1) {
-  return +$3(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$4($0_1) {
-  return +$4(Math_fround($0_1));
- }
- 
- function legalstub$5($0_1, $1_1) {
-  return +$5(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$6($0_1, $1_1) {
-  return +$6(Math_fround($0_1), Math_fround($1_1));
- }
- 
- function legalstub$7($0_1) {
-  return +$7(Math_fround($0_1));
- }
- 
- function legalstub$8($0_1) {
-  return +$8(Math_fround($0_1));
- }
- 
- function legalstub$9($0_1) {
-  return +$9(Math_fround($0_1));
- }
- 
- function legalstub$10($0_1) {
-  return +$10(Math_fround($0_1));
- }
- 
- function legalstub$11($0_1) {
-  return +$11(Math_fround($0_1));
- }
- 
- function legalstub$12($0_1) {
-  return +$12(Math_fround($0_1));
- }
- 
- function legalstub$13($0_1, $1_1) {
-  return +$13(Math_fround($0_1), Math_fround($1_1));
- }
- 
  function __wasm_nearest_f32(var$0) {
   var var$1 = Math_fround(0), var$2 = Math_fround(0), wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
   var$1 = Math_fround(Math_floor(var$0));
@@ -200,20 +144,20 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  "add": legalstub$0, 
-  "sub": legalstub$1, 
-  "mul": legalstub$2, 
-  "div": legalstub$3, 
-  "sqrt": legalstub$4, 
-  "min": legalstub$5, 
-  "max": legalstub$6, 
-  "ceil": legalstub$7, 
-  "floor": legalstub$8, 
-  "trunc": legalstub$9, 
-  "nearest": legalstub$10, 
-  "abs": legalstub$11, 
-  "neg": legalstub$12, 
-  "copysign": legalstub$13
+  "add": $0, 
+  "sub": $1, 
+  "mul": $2, 
+  "div": $3, 
+  "sqrt": $4, 
+  "min": $5, 
+  "max": $6, 
+  "ceil": $7, 
+  "floor": $8, 
+  "trunc": $9, 
+  "nearest": $10, 
+  "abs": $11, 
+  "neg": $12, 
+  "copysign": $13
  };
 }
 

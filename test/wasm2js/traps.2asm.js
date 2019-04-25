@@ -1917,17 +1917,9 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$2 | 0;
  }
  
- function legalstub$0($0_1) {
-  return $0(Math_fround($0_1));
- }
- 
- function legalstub$1($0_1) {
-  return $1(Math_fround($0_1));
- }
- 
  function legalstub$4($0_1) {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $8 = 0, $1_1 = 0, $1$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $4(Math_fround($0_1));
+  i64toi32_i32$0 = $4($0_1);
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $1_1 = i64toi32_i32$0;
   $1$hi = i64toi32_i32$1;
@@ -1953,7 +1945,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$5($0_1) {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $8 = 0, $1_1 = 0, $1$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $5(Math_fround($0_1));
+  i64toi32_i32$0 = $5($0_1);
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $1_1 = i64toi32_i32$0;
   $1$hi = i64toi32_i32$1;
@@ -2031,8 +2023,8 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  "no_dce_i32_trunc_s_f32": legalstub$0, 
-  "no_dce_i32_trunc_u_f32": legalstub$1, 
+  "no_dce_i32_trunc_s_f32": $0, 
+  "no_dce_i32_trunc_u_f32": $1, 
   "no_dce_i32_trunc_s_f64": $2, 
   "no_dce_i32_trunc_u_f64": $3, 
   "no_dce_i64_trunc_s_f32": legalstub$4, 
@@ -2129,10 +2121,6 @@ function asmFunc(global, env, buffer) {
   return $1_1;
  }
  
- function legalstub$2($0_1) {
-  return +$2($0_1);
- }
- 
  var FUNCTION_TABLE = [];
  function __wasm_grow_memory(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
@@ -2164,7 +2152,7 @@ function asmFunc(global, env, buffer) {
  return {
   "no_dce_i32_load": $0, 
   "no_dce_i64_load": legalstub$1, 
-  "no_dce_f32_load": legalstub$2, 
+  "no_dce_f32_load": $2, 
   "no_dce_f64_load": $3
  };
 }

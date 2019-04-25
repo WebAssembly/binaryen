@@ -159,15 +159,11 @@ function asmFunc(global, env, buffer) {
   return $5_1;
  }
  
- function legalstub$2($0_1, $1_1, $2_1) {
-  return +$2(Math_fround($0_1), Math_fround($1_1), $2_1);
- }
- 
  var FUNCTION_TABLE = [];
  return {
   "select_i32": $0, 
   "select_i64": legalstub$1, 
-  "select_f32": legalstub$2, 
+  "select_f32": $2, 
   "select_f64": $3, 
   "select_trap_l": $4, 
   "select_trap_r": $5

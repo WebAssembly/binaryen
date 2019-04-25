@@ -241,6 +241,9 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     } else {
       ImportInfo info(wasm);
       f = info.getImportedFunction(ENV, g->base);
+      if (!f) {
+        Fatal() << "GOT.func entry with no import/export: " << g->base;
+      }
     }
 
     Name getter((std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f)).c_str());

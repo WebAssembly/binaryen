@@ -168,10 +168,6 @@ function asmFunc(global, env, buffer) {
   return $0_1;
  }
  
- function legalstub$2() {
-  return +$2();
- }
- 
  function legalstub$5($0_1, $1_1) {
   var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4_1 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
@@ -223,10 +219,6 @@ function asmFunc(global, env, buffer) {
   return $2_1;
  }
  
- function legalstub$6($0_1) {
-  return +$6(Math_fround($0_1));
- }
- 
  function legalstub$8($0_1, $1_1, $2_1, $3_1, $4_1, $5_1) {
   var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $14 = 0, $7_1 = 0, $7$hi = 0, $10$hi = 0;
   i64toi32_i32$0 = 0;
@@ -254,7 +246,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $10$hi;
   i64toi32_i32$3 = $14;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  $8(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2, Math_fround($2_1), $3_1, $4_1, $5_1);
+  $8(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2, $2_1, $3_1, $4_1, $5_1);
  }
  
  function legalstub$9($0_1, $1_1, $2_1, $3_1, $4_1, $5_1) {
@@ -284,7 +276,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $11$hi;
   i64toi32_i32$3 = $16;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  i64toi32_i32$2 = $9(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2, Math_fround($2_1), $3_1, $4_1, $5_1);
+  i64toi32_i32$2 = $9(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2, $2_1, $3_1, $4_1, $5_1);
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $6_1 = i64toi32_i32$2;
   $6$hi = i64toi32_i32$0;
@@ -335,18 +327,18 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $10$hi;
   i64toi32_i32$3 = $14;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2;
-  return $10(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2, Math_fround($2_1), $3_1, $4_1, $5_1);
+  return $10(i64toi32_i32$0 | i64toi32_i32$3, i64toi32_i32$2, $2_1, $3_1, $4_1, $5_1);
  }
  
  var FUNCTION_TABLE = [];
  return {
   "type_local_i32": $0, 
   "type_local_i64": legalstub$1, 
-  "type_local_f32": legalstub$2, 
+  "type_local_f32": $2, 
   "type_local_f64": $3, 
   "type_param_i32": $4, 
   "type_param_i64": legalstub$5, 
-  "type_param_f32": legalstub$6, 
+  "type_param_f32": $6, 
   "type_param_f64": $7, 
   "type_mixed": legalstub$8, 
   "write": legalstub$9, 
