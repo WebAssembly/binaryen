@@ -485,9 +485,8 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
 void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   // Emit a simple flat table as a JS array literal. Otherwise,
   // emit assignments separately for each index.
-  if (!wasm->table.imported()) {
-    FlatTable flat(wasm->table);
-    assert(flat.valid); // TODO: non-flat tables
+  FlatTable flat(wasm->table);
+  if (flat.valid && !wasm->table.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     Ref theArray = ValueBuilder::makeArray();
@@ -502,6 +501,12 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
       ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
     }
   } else {
+    if (!wasm->table.imported()) {
+      Ref theVar = ValueBuilder::makeVar();
+      ast->push_back(theVar);
+      ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, ValueBuilder::makeArray());
+    }
+
     // TODO: optimize for size
     for (auto& segment : wasm->table.segments) {
       auto offset = segment.offset;
@@ -1782,7 +1787,7 @@ private:
   void emitPostEmscripten();
   void emitPostES6();
 
-  void emitMemory(std::string buffer, std::string segmentWriter);
+  void emitMemory(std::string buffer, std::string segmentWriter, std::function<std::string (std::string)> accessGlobal);
   void emitScratchMemorySupport();
 };
 
@@ -1845,7 +1850,9 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  emitMemory("wasmMemory.buffer", "writeSegment");
+  emitMemory("wasmMemory.buffer", "writeSegment", [](std::string globalName) {
+    return std::string("asmLibraryArg['") + asmangle(globalName) + "']";
+  });
 
   out << "return asmFunc({\n"
       << "    'Int8Array': Int8Array,\n"
@@ -1883,7 +1890,8 @@ void Wasm2JSGlue::emitPostES6() {
   }
 
   emitMemory(std::string("mem") + moduleName.str,
-             std::string("assign") + moduleName.str);
+             std::string("assign") + moduleName.str,
+             [](std::string globalName) { return globalName; });
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
@@ -1946,7 +1954,7 @@ void Wasm2JSGlue::emitPostES6() {
   }
 }
 
-void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
+void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter, std::function<std::string (std::string)> accessGlobal) {
   if (wasm.memory.segments.empty()) return;
 
   auto expr = R"(
@@ -1974,10 +1982,10 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
     if (auto* c = segment.offset->template dynCast<Const>()) {;
       return std::to_string(c->value.getInteger());
     }
-    if (auto* get = segment.offset->template dynCast<GetGlobal>()) {;
+    if (auto* get = segment.offset->template dynCast<GetGlobal>()) {
       auto internalName = get->name;
       auto importedName = wasm.getGlobal(internalName)->base;
-      return std::string("asmLibraryArg['") + asmangle(importedName.str) + "']";
+      return accessGlobal(asmangle(importedName.str));
     }
     Fatal() << "non-constant offsets aren't supported yet\n";
   };

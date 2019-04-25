@@ -38,6 +38,7 @@ function asmFunc(global, env, buffer) {
   
  }
  
+ var FUNCTION_TABLE = [];
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = bar;
  return {
@@ -62,6 +63,6 @@ var assignasmFunc = (
       }
     }
   )(memasmFunc);
-assignasmFunc(asmLibraryArg['memoryBase'], "ZHluYW1pYyBkYXRh");
+assignasmFunc(memoryBase, "ZHluYW1pYyBkYXRh");
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var baz = retasmFunc.baz;

@@ -6,11 +6,12 @@
  (import "env" "memoryBase" (global $import$memoryBase i32))
  (data (global.get $import$memoryBase) "dynamic data")
 
- (import "env" "table" (table $import$table 10 anyref))
+ (table 10 10 funcref)
  (import "env" "tableBase" (global $import$tableBase i32))
  (elem (global.get $import$tableBase) $foo $bar)
 
  (export "baz" (func $baz))
+ (export "tab" (table 0))
 
  (func $foo)
  (func $bar)
