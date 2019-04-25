@@ -894,16 +894,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     Ref visitCallIndirect(CallIndirect* curr) {
       // If the target effects that interact with the operands, we must reorder it to the start.
       bool mustReorder = false;
-      if (module->memory.initial < module->memory.max) {
-        mustReorder = true;
-      } else {
-        EffectAnalyzer targetEffects(parent->options, curr->target);
-        if (targetEffects.hasAnything()) {
-          for (auto* operand : curr->operands) {
-            if (targetEffects.invalidates(EffectAnalyzer(parent->options, operand))) {
-              mustReorder = true;
-              break;
-            }
+      EffectAnalyzer targetEffects(parent->options, curr->target);
+      if (targetEffects.hasAnything()) {
+        for (auto* operand : curr->operands) {
+          if (targetEffects.invalidates(EffectAnalyzer(parent->options, operand))) {
+            mustReorder = true;
+            break;
           }
         }
       }
