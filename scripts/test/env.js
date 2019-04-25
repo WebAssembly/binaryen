@@ -9,3 +9,4 @@ export function getTempRet0() {
 }
 
 export const memoryBase = 0;
+export const tableBase = 0;
