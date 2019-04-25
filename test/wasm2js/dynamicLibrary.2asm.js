@@ -62,6 +62,6 @@ var assignasmFunc = (
       }
     }
   )(memasmFunc);
-assignasmFunc(memoryBase, "ZHluYW1pYyBkYXRh");
+assignasmFunc(asmLibraryArg['memoryBase'], "ZHluYW1pYyBkYXRh");
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var baz = retasmFunc.baz;

@@ -93,17 +93,6 @@ enum class NameScope {
   Max,
 };
 
-template<typename T>
-static std::string globalOffset(const T& segment) {
-  if (auto* c = segment.offset->template dynCast<Const>()) {;
-    return std::to_string(c->value.getInteger());
-  }
-  if (auto* get = segment.offset->template dynCast<GetGlobal>()) {;
-    return asmangle(get->name.str);
-  }
-  Fatal() << "non-constant offsets aren't supported yet\n";
-}
-
 //
 // Wasm2JSBuilder - converts a WebAssembly module's functions into JS
 //
@@ -1980,6 +1969,16 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
   // var assign$name = ($expr)(mem$name);
   out << "var " << segmentWriter
       << " = (" << expr << ")(" << buffer << ");\n";
+
+  auto globalOffset = [](const Memory::Segment& segment) {
+    if (auto* c = segment.offset->template dynCast<Const>()) {;
+      return std::to_string(c->value.getInteger());
+    }
+    if (auto* get = segment.offset->template dynCast<GetGlobal>()) {;
+      return std::string("asmLibraryArg['") + asmangle(get->name.str) + "']";
+    }
+    Fatal() << "non-constant offsets aren't supported yet\n";
+  };
 
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
