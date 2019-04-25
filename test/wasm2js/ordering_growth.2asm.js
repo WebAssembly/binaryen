@@ -21,29 +21,37 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function t1() {
+ function main() {
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  FUNCTION_TABLE[foo(2)](1) | 0;
+  FUNCTION_TABLE[4](foo(3)) | 0;
+  (wasm2js_i32$1 = foo(5), wasm2js_i32$0 = bar(6)), FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0) | 0;
+  FUNCTION_TABLE[8](7) | 0;
+ }
+ 
+ function foo($0) {
+  $0 = $0 | 0;
   return 1 | 0;
  }
  
- function t2() {
+ function bar($0) {
+  $0 = $0 | 0;
   return 2 | 0;
  }
  
- function t3() {
+ function tabled($0) {
+  $0 = $0 | 0;
   return 3 | 0;
  }
  
- function $3($0) {
-  $0 = $0 | 0;
-  return FUNCTION_TABLE[$0]() | 0;
- }
- 
- var FUNCTION_TABLE = [null, t1, t2, t3];
+ FUNCTION_TABLE[1] = foo;
+ FUNCTION_TABLE[2] = bar;
+ FUNCTION_TABLE[3] = tabled;
  return {
-  "call": $3
+  "main": main
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export var call = retasmFunc.call;
+export var main = retasmFunc.main;

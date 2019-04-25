@@ -35,6 +35,7 @@
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
 #include "abi/js.h"
+#include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
@@ -891,33 +892,58 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
-      // TODO: the codegen here is a pessimization of what the ideal codegen
-      // looks like. Eventually if necessary this should be tightened up in the
-      // case that the argument expression doesn't have any side effects.
-      Ref ret;
-      ScopedTemp idx(i32, parent, func);
-      std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
-      for (auto& operand : curr->operands) {
-        temps.push_back(new ScopedTemp(operand->type, parent, func));
-        IString temp = temps.back()->temp;
-        sequenceAppend(ret, visitAndAssign(operand, temp));
+      // If the target effects that interact with the operands, we must reorder it to the start.
+      bool mustReorder = false;
+      if (module->memory.initial < module->memory.max) {
+        mustReorder = true;
+      } else {
+        EffectAnalyzer targetEffects(parent->options, curr->target);
+        if (targetEffects.hasAnything()) {
+          for (auto* operand : curr->operands) {
+            if (targetEffects.invalidates(EffectAnalyzer(parent->options, operand))) {
+              mustReorder = true;
+              break;
+            }
+          }
+        }
       }
-      sequenceAppend(ret, visitAndAssign(curr->target, idx));
-      Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
-        ValueBuilder::makeName(FUNCTION_TABLE),
-        idx.getAstName()
-      ));
-      for (size_t i = 0; i < temps.size(); i++) {
-        IString temp = temps[i]->temp;
-        auto &operand = curr->operands[i];
-        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
+      if (mustReorder) {
+        Ref ret;
+        ScopedTemp idx(i32, parent, func);
+        std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
+        for (auto* operand : curr->operands) {
+          temps.push_back(new ScopedTemp(operand->type, parent, func));
+          IString temp = temps.back()->temp;
+          sequenceAppend(ret, visitAndAssign(operand, temp));
+        }
+        sequenceAppend(ret, visitAndAssign(curr->target, idx));
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(FUNCTION_TABLE),
+          idx.getAstName()
+        ));
+        for (size_t i = 0; i < temps.size(); i++) {
+          IString temp = temps[i]->temp;
+          auto &operand = curr->operands[i];
+          theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
+        }
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        sequenceAppend(ret, theCall);
+        for (auto temp : temps) {
+          delete temp;
+        }
+        return ret;
+      } else {
+        // Target has no side effects, emit simple code
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(FUNCTION_TABLE),
+          visit(curr->target, EXPRESSION_RESULT)
+        ));
+        for (auto* operand : curr->operands) {
+          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
+        }
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        return theCall;
       }
-      theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
-      sequenceAppend(ret, theCall);
-      for (auto temp : temps) {
-        delete temp;
-      }
-      return ret;
     }
 
     // TODO: remove
