@@ -79,6 +79,10 @@ void sequenceAppend(Ref& ast, Ref extra) {
   ast = ValueBuilder::makeSeq(ast, extra);
 }
 
+IString stringToIString(std::string str) {
+  return IString(str.c_str(), false);
+}
+
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
@@ -90,13 +94,14 @@ enum class NameScope {
 };
 
 template<typename T>
-static uint64_t constOffset(const T& segment) {
-  auto* c = segment.offset->template dynCast<Const>();
-  if (!c) {
-    Fatal() << "non-constant offsets aren't supported yet\n";
-    abort();
+static std::string globalOffset(const T& segment) {
+  if (auto* c = segment.offset->template dynCast<Const>()) {;
+    return std::to_string(c->value.getInteger());
   }
-  return c->value.getInteger();
+  if (auto* get = segment.offset->template dynCast<GetGlobal>()) {;
+    return asmangle(get->name.str);
+  }
+  Fatal() << "non-constant offsets aren't supported yet\n";
 }
 
 //
@@ -196,7 +201,7 @@ public:
         out << "_" << i;
       }
       auto mangled = asmangle(out.str());
-      ret = IString(mangled.c_str(), false);
+      ret = stringToIString(mangled);
       if (!allMangledNames.count(ret)) {
         break;
       }
@@ -219,10 +224,6 @@ public:
     return ret;
   }
 
-  size_t getTableSize() {
-    return tableSize;
-  }
-
 private:
   Flags flags;
   PassOptions options;
@@ -236,8 +237,6 @@ private:
   // Utilizes the usually reused underlying cstring's pointer as the key.
   std::unordered_map<const char*, IString> mangledNames[(int) NameScope::Max];
   std::unordered_set<IString> allMangledNames;
-
-  size_t tableSize;
 
   // If a function is callable from outside, we'll need to cast the inputs
   // and our return value. Otherwise, internally, casts are only needed
@@ -331,17 +330,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* import) {
     addGlobalImport(asmFunc[3], import);
   });
-  // figure out the table size
-  tableSize = std::accumulate(wasm->table.segments.begin(),
-                              wasm->table.segments.end(),
-                              0, [&](size_t size, Table::Segment seg) -> size_t {
-                                return size + seg.data.size() + constOffset(seg);
-                              });
-  size_t pow2ed = 1;
-  while (pow2ed < tableSize) {
-    pow2ed <<= 1;
-  }
-  tableSize = pow2ed;
 
   // make sure exports get their expected names
   for (auto& e : wasm->exports) {
@@ -508,9 +496,9 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
 void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   // Emit a simple flat table as a JS array literal. Otherwise,
   // emit assignments separately for each index.
-  FlatTable flat(wasm->table);
-  assert(flat.valid); // TODO: non-flat tables
   if (!wasm->table.imported()) {
+    FlatTable flat(wasm->table);
+    assert(flat.valid); // TODO: non-flat tables
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     Ref theArray = ValueBuilder::makeArray();
@@ -528,13 +516,24 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     // TODO: optimize for size
     for (auto& segment : wasm->table.segments) {
       auto offset = segment.offset;
-      Index start = offset->cast<Const>()->value.geti32();
       for (Index i = 0; i < segment.data.size(); i++) {
+        Ref index;
+        if (auto* c = offset->dynCast<Const>()) {
+          index = ValueBuilder::makeInt(c->value.geti32() + i);
+        } else if (auto* get = offset->dynCast<GetGlobal>()) {
+          index = ValueBuilder::makeBinary(
+            ValueBuilder::makeName(stringToIString(asmangle(get->name.str))),
+            PLUS,
+            ValueBuilder::makeNum(i)
+          );
+        } else {
+          WASM_UNREACHABLE();
+        }
         ast->push_back(ValueBuilder::makeStatement(
           ValueBuilder::makeBinary(
             ValueBuilder::makeSub(
               ValueBuilder::makeName(FUNCTION_TABLE),
-              ValueBuilder::makeInt(start + i)
+              index
             ),
             SET,
             ValueBuilder::makeName(fromName(segment.data[i], NameScope::Top))
@@ -1985,7 +1984,7 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
     out << segmentWriter << "("
-      << constOffset(seg)
+      << globalOffset(seg)
       << ", \""
       << base64Encode(seg.data)
       << "\");\n";
