@@ -128,7 +128,7 @@ function asmFunc(global, env, buffer) {
  
  function $18(x) {
   x = x | 0;
-  return (x | 0) == (0 | 0) | 0;
+  return !x | 0;
  }
  
  function $19(x, y) {
@@ -201,16 +201,15 @@ function asmFunc(global, env, buffer) {
  function __wasm_popcnt_i32(var$0) {
   var var$1 = 0, $5_1 = 0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     $5_1 = var$1;
-    if ((var$0 | 0) == (0 | 0)) {
+    if (!var$0) {
      break label$1
     }
     var$0 = var$0 & var$0 - 1;
     var$1 = var$1 + 1 | 0;
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
   return $5_1;
  }

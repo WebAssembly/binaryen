@@ -35,7 +35,7 @@ function asmFunc(global, env, buffer) {
   var$2 = 1;
   var$2$hi = i64toi32_i32$0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$2 = var$1;
     i64toi32_i32$1 = 0;
@@ -63,8 +63,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = var$2$hi;
   i64toi32_i32$3 = var$2;
@@ -83,7 +82,7 @@ function asmFunc(global, env, buffer) {
   var$2 = 1;
   var$2$hi = i64toi32_i32$0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$2 = var$1;
     i64toi32_i32$1 = 0;
@@ -111,8 +110,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = var$2$hi;
   i64toi32_i32$3 = var$2;
@@ -131,7 +129,7 @@ function asmFunc(global, env, buffer) {
   var$2 = 1;
   var$2$hi = i64toi32_i32$0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$2 = var$1;
     i64toi32_i32$1 = 0;
@@ -159,8 +157,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = var$2$hi;
   i64toi32_i32$3 = var$2;
@@ -179,7 +176,7 @@ function asmFunc(global, env, buffer) {
   var$2 = 1;
   var$2$hi = i64toi32_i32$0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$2 = var$1;
     i64toi32_i32$1 = 0;
@@ -207,8 +204,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = var$2$hi;
   i64toi32_i32$3 = var$2;
@@ -227,7 +223,7 @@ function asmFunc(global, env, buffer) {
   var$2 = 1;
   var$2$hi = i64toi32_i32$0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$2 = var$1;
     i64toi32_i32$1 = 0;
@@ -255,8 +251,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
   i64toi32_i32$5 = var$2$hi;
   i64toi32_i32$3 = var$2;

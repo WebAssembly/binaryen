@@ -225,7 +225,7 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, $8 = 0, $8$hi = 0, i64toi32_i32$3 = 0, $6 = 0, $6$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   i64toi32_i32$0 = $0$hi;
-  if (($0 | i64toi32_i32$0) == (0 | 0)) {
+  if (!($0 | i64toi32_i32$0)) {
    {
     i64toi32_i32$0 = 0;
     $8 = 1;
@@ -319,7 +319,7 @@ function asmFunc(global, env, buffer) {
  function even($0) {
   $0 = $0 | 0;
   var $6 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  if (($0 | 0) == (0 | 0)) {
+  if (!$0) {
    $6 = 44
   } else {
    $6 = ((wasm2js_i32$1 = $0 - 1 | 0, wasm2js_i32$0 = 15), FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0) | 0)
@@ -330,7 +330,7 @@ function asmFunc(global, env, buffer) {
  function odd($0) {
   $0 = $0 | 0;
   var $6 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  if (($0 | 0) == (0 | 0)) {
+  if (!$0) {
    $6 = 99
   } else {
    $6 = ((wasm2js_i32$1 = $0 - 1 | 0, wasm2js_i32$0 = 14), FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0) | 0)

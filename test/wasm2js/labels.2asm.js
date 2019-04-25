@@ -34,7 +34,7 @@ function asmFunc(global, env, buffer) {
   var i = 0, $6_1 = 0;
   i = 0;
   exit : {
-   cont : do {
+   cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
      {
@@ -43,8 +43,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue cont;
-    break cont;
-   } while (1);
+   };
   }
   return $6_1 | 0;
  }
@@ -53,7 +52,7 @@ function asmFunc(global, env, buffer) {
   var i = 0, $8_1 = 0;
   i = 0;
   exit : {
-   cont : do {
+   cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
      continue cont
@@ -66,8 +65,7 @@ function asmFunc(global, env, buffer) {
     }
     i = i + 1 | 0;
     continue cont;
-    break cont;
-   } while (1);
+   };
   }
   return $8_1 | 0;
  }
@@ -93,7 +91,7 @@ function asmFunc(global, env, buffer) {
   var i = 0, $9_1 = 0;
   i = 1;
   exit : {
-   cont : do {
+   cont : while (1) {
     i = i + i | 0;
     if (i >>> 0 > max >>> 0) {
      {
@@ -102,8 +100,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     continue cont;
-    break cont;
-   } while (1);
+   };
   }
   return $9_1 | 0;
  }
