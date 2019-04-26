@@ -44,8 +44,6 @@ typedef uint32_t Index;
 
 // An address in linear memory. For now only wasm32
 struct Address {
-  int
-      testvar;
   typedef uint32_t address_t;
   address_t addr;
   Address() : addr(0) {}

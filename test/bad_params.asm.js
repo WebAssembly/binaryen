@@ -2,7 +2,7 @@ function asm(global, env, buffer) {
   "use asm";
 
   function missing(x, y) {
-    x = x | 0; a = 3;
+    x = x | 0;
     y = +y;
   }
 
