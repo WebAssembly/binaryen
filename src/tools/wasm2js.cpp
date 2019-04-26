@@ -67,19 +67,79 @@ static void printJS(Ref ast, T& output) {
   output << jser.buffer << std::endl;
 }
 
+
+// Traversals
+
+struct TraverseInfo {
+  TraverseInfo() = default;
+  TraverseInfo(Ref node) : node(node) {
+    assert(node.get());
+    if (node->isArray()) {
+      for (size_t i = 0; i < node->size(); i++) {
+        maybeAdd(node[i]);
+      }
+    } else if (node->isAssign()) {
+      auto assign = node->asAssign();
+      maybeAdd(assign->target());
+      maybeAdd(assign->value());
+    } else if (node->isAssignName()) {
+      auto assign = node->asAssignName();
+      maybeAdd(assign->value());
+    } else {
+      // no children
+    }
+  }
+  Ref node;
+  bool scanned = false;
+  std::vector<Ref> children;
+
+private:
+  void maybeAdd(Ref child) {
+    if (child.get()) {
+      children.push_back(child);
+    }
+  }
+};
+
+// Traverse, calling visit after the children
+static void traversePrePost(Ref node, std::function<void (Ref)> visitPre, std::function<void (Ref)> visitPost) {
+  std::vector<TraverseInfo> stack;
+  stack.push_back(TraverseInfo(node));
+  while (!stack.empty()) {
+    TraverseInfo& back = stack.back();
+    if (!back.scanned) {
+      // This is the first time we see this.
+      visitPre(back.node);
+      for (auto child : back.children) {
+        stack.emplace_back(child);
+      }
+      back.scanned = true;
+      continue;
+    }
+    // Time to post-visit the node itself
+    auto node = back.node;
+    stack.pop_back();
+    visitPost(node);
+  }
+}
+
+static void traversePost(Ref node, std::function<void (Ref)> visit) {
+  traversePrePost(node, [](Ref node) {}, visit);
+}
+
 static void optimizeJS(Ref ast) {
   // helpers
 
   auto isOrZero = [](Ref node) {
-    return node->isArray() && node->size() > 0 && node[0] == BINARY && node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
+    return node->isArray() && !node->empty() && node[0] == BINARY && node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
   };
 
   auto isPlus = [](Ref node) {
-    return node->isArray() && node->size() > 0 && node[0] == UNARY_PREFIX && node[1] == PLUS;
+    return node->isArray() && !node->empty() && node[0] == UNARY_PREFIX && node[1] == PLUS;
   };
 
   auto isBitwise = [](Ref node) {
-    if (node->isArray() && node->size() > 0 && node[0] == BINARY) {
+    if (node->isArray() && !node->empty() && node[0] == BINARY) {
       auto op = node[1];
       return op == OR || op == AND || op == XOR || op == RSHIFT || op == TRSHIFT || op == LSHIFT;
     }
@@ -88,7 +148,7 @@ static void optimizeJS(Ref ast) {
 
   // x >> 0  =>  x | 0
   traversePost(ast, [](Ref node) {
-    if (node->isArray() && node->size() > 0 && node[0] == BINARY && node[1] == RSHIFT && node[3]->isNumber()) {
+    if (node->isArray() && !node->empty() && node[0] == BINARY && node[1] == RSHIFT && node[3]->isNumber()) {
       if (node[3]->getNumber() == 0) {
         node[1]->setString(OR);
       }
@@ -121,6 +181,54 @@ static void optimizeJS(Ref ast) {
     else if (isPlus(node)) {
       while (isPlus(node[2])) {
         node[2] = node[2][2];
+      }
+    }
+  });
+
+  // Remove unnecessary break/continue labels, when referring to the top level.
+
+  // XXX IString invalid("__wasm2js$INVALID_LABEL__");
+  std::vector<Ref> breakCapturers;
+  std::vector<Ref> continueCapturers;
+  std::map<IString, Ref> labelToValue; // maps the label to the loop/etc.
+  Value INVALID;
+  traversePrePost(ast, [&](Ref node) {
+    if (node->isArray() && !node->empty()) {
+      if (node[0] == LABEL) {
+        auto label = node[1]->getIString();
+        labelToValue[label] = node[2];
+      } else if (node[0] == WHILE || node[0] == DO || node[0] == FOR) {
+        breakCapturers.push_back(node);
+        continueCapturers.push_back(node);
+      } else if (node[0] == cashew::BLOCK) {
+        // Cannot break to a block without the label.
+        breakCapturers.push_back(Ref(&INVALID));
+      } else if (node[0] == SWITCH) {
+        breakCapturers.push_back(node);
+      }
+    }
+  }, [&](Ref node) {
+    if (node->isArray() && !node->empty()) {
+      if (node[0] == LABEL) {
+        auto label = node[1]->getIString();
+        labelToValue.erase(label);
+      } else if (node[0] == WHILE || node[0] == DO || node[0] == FOR) {
+        breakCapturers.pop_back();
+        continueCapturers.pop_back();
+      } else if (node[0] == cashew::BLOCK || node[0] == SWITCH) {
+        breakCapturers.pop_back();
+      } else if (node[0] == BREAK || node[0] == CONTINUE) {
+        if (!node[1]->isNull()) {
+          auto label = node[1]->getIString();
+          assert(labelToValue.count(label));
+          auto& capturers = node[0] == BREAK ? breakCapturers : continueCapturers;
+          assert(!capturers.empty());
+          if (capturers.back() == labelToValue[label]) {
+            // Success, the break/continue goes exactly where we would if we
+            // didn't have the label!
+            node[1]->setNull();
+          }
+        }
       }
     }
   });

@@ -394,6 +394,10 @@ struct Value {
     return arr->size();
   }
 
+  bool empty() {
+    return size() == 0;
+  }
+
   void setSize(size_t size) {
     assert(isArray());
     auto old = arr->size();
@@ -524,11 +528,6 @@ struct AssignName : public Value {
     return ref;
   }
 };
-
-// AST traversals
-
-// Traverse, calling visit after the children
-void traversePost(Ref node, std::function<void (Ref)> visit);
 
 // JS printing support
 
