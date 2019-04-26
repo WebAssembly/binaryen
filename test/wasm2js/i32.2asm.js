@@ -102,13 +102,13 @@ function asmFunc(global, env, buffer) {
  function $13(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotl_i32(x | 0, y | 0) | 0;
+  return __wasm_rotl_i32(x, y) | 0;
  }
  
  function $14(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotr_i32(x | 0, y | 0) | 0;
+  return __wasm_rotr_i32(x, y) | 0;
  }
  
  function $15(x) {
@@ -118,17 +118,17 @@ function asmFunc(global, env, buffer) {
  
  function $16(x) {
   x = x | 0;
-  return __wasm_ctz_i32(x | 0) | 0;
+  return __wasm_ctz_i32(x) | 0;
  }
  
  function $17(x) {
   x = x | 0;
-  return __wasm_popcnt_i32(x | 0) | 0;
+  return __wasm_popcnt_i32(x) | 0;
  }
  
  function $18(x) {
   x = x | 0;
-  return (x | 0) == (0 | 0) | 0;
+  return !x | 0;
  }
  
  function $19(x, y) {
@@ -192,47 +192,40 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_ctz_i32(var$0) {
-  var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32(var$0 + 4294967295 ^ var$0) | 0
+   return 31 - Math_clz32(var$0 + -1 ^ var$0) | 0
   }
-  return 32 | 0;
+  return 32;
  }
  
  function __wasm_popcnt_i32(var$0) {
-  var$0 = var$0 | 0;
   var var$1 = 0, $5_1 = 0;
   label$1 : {
-   label$2 : do {
+   label$2 : while (1) {
     $5_1 = var$1;
-    if ((var$0 | 0) == (0 | 0)) {
+    if (!var$0) {
      break label$1
     }
     var$0 = var$0 & var$0 - 1;
     var$1 = var$1 + 1 | 0;
     continue label$2;
-    break label$2;
-   } while (1);
+   };
   }
-  return $5_1 | 0;
+  return $5_1;
  }
  
  function __wasm_rotl_i32(var$0, var$1) {
-  var$0 = var$0 | 0;
-  var$1 = var$1 | 0;
   var var$2 = 0;
   var$2 = var$1 & 31;
   var$1 = 0 - var$1 & 31;
-  return (4294967295 >>> var$2 & var$0) << var$2 | (4294967295 << var$1 & var$0) >>> var$1;
+  return (-1 >>> var$2 & var$0) << var$2 | (-1 << var$1 & var$0) >>> var$1;
  }
  
  function __wasm_rotr_i32(var$0, var$1) {
-  var$0 = var$0 | 0;
-  var$1 = var$1 | 0;
   var var$2 = 0;
   var$2 = var$1 & 31;
   var$1 = 0 - var$1 & 31;
-  return (4294967295 << var$2 & var$0) >>> var$2 | (4294967295 >>> var$1 & var$0) << var$1;
+  return (-1 << var$2 & var$0) >>> var$2 | (-1 >>> var$1 & var$0) << var$1;
  }
  
  var FUNCTION_TABLE = [];

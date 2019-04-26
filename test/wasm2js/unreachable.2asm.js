@@ -302,7 +302,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$26() {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $26() | 0;
+  i64toi32_i32$0 = $26();
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $0 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
@@ -323,16 +323,12 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0 | 0;
- }
- 
- function legalstub$41() {
-  return +(+Math_fround($41()));
+  return $0;
  }
  
  function legalstub$42() {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $42() | 0;
+  i64toi32_i32$0 = $42();
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $0 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
@@ -353,16 +349,12 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0 | 0;
- }
- 
- function legalstub$47() {
-  return +(+Math_fround($47()));
+  return $0;
  }
  
  function legalstub$49() {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $49() | 0;
+  i64toi32_i32$0 = $49();
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $0 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
@@ -383,7 +375,7 @@ function asmFunc(global, env, buffer) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0 | 0;
+  return $0;
  }
  
  var FUNCTION_TABLE = [];
@@ -427,13 +419,13 @@ function asmFunc(global, env, buffer) {
   "as_call_indirect_mid": $38, 
   "as_call_indirect_last": $39, 
   "as_local_set_value": $40, 
-  "as_load_address": legalstub$41, 
+  "as_load_address": $41, 
   "as_loadN_address": legalstub$42, 
   "as_store_address": $43, 
   "as_store_value": $44, 
   "as_storeN_address": $45, 
   "as_storeN_value": $46, 
-  "as_unary_operand": legalstub$47, 
+  "as_unary_operand": $47, 
   "as_binary_left": $48, 
   "as_binary_right": legalstub$49, 
   "as_test_operand": $50, 

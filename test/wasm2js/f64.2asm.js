@@ -96,12 +96,12 @@ function asmFunc(global, env, buffer) {
  
  function $9(x) {
   x = +x;
-  return +(+__wasm_trunc_f64(+x));
+  return +__wasm_trunc_f64(x);
  }
  
  function $10(x) {
   x = +x;
-  return +(+__wasm_nearest_f64(+x));
+  return +__wasm_nearest_f64(x);
  }
  
  function $11(x) {
@@ -122,14 +122,14 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$2 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$1 = 2147483647;
-  i64toi32_i32$3 = 4294967295;
+  i64toi32_i32$3 = -1;
   i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1;
   $4_1 = i64toi32_i32$2 & i64toi32_i32$3;
   $4$hi = i64toi32_i32$1;
   wasm2js_scratch_store_f64(+y);
   i64toi32_i32$1 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$0 = wasm2js_scratch_load_i32(0 | 0) | 0;
-  i64toi32_i32$2 = 2147483648;
+  i64toi32_i32$2 = -2147483648;
   i64toi32_i32$3 = 0;
   i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2;
   $7_1 = i64toi32_i32$0 & i64toi32_i32$3;
@@ -141,31 +141,28 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0;
   wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$1 | i64toi32_i32$3);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
-  return +(+wasm2js_scratch_load_f64());
+  return +wasm2js_scratch_load_f64();
  }
  
  function __wasm_nearest_f64(var$0) {
-  var$0 = +var$0;
-  var var$1 = 0.0, var$2 = 0.0, wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
+  var var$1 = 0.0, var$2 = 0.0;
   var$1 = Math_floor(var$0);
   var$2 = var$0 - var$1;
-  if ((var$2 < .5 | 0) == (0 | 0)) {
+  if (!(var$2 < .5)) {
    {
     var$0 = Math_ceil(var$0);
     if (var$2 > .5) {
-     return +var$0
+     return var$0
     }
     var$2 = var$1 * .5;
-    var$1 = (wasm2js_f64$0 = var$1, wasm2js_f64$1 = var$0, wasm2js_i32$0 = var$2 - Math_floor(var$2) == 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
+    var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
    }
   }
-  return +var$1;
+  return var$1;
  }
  
  function __wasm_trunc_f64(var$0) {
-  var$0 = +var$0;
-  var wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
-  return +(wasm2js_f64$0 = Math_ceil(var$0), wasm2js_f64$1 = Math_floor(var$0), wasm2js_i32$0 = var$0 < 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
+  return var$0 < 0.0 ? Math_ceil(var$0) : Math_floor(var$0);
  }
  
  var FUNCTION_TABLE = [];

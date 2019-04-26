@@ -30,6 +30,7 @@
 #include "asmjs/asmangle.h"
 #include "asmjs/shared-constants.h"
 #include "emscripten-optimizer/optimizer.h"
+#include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
@@ -83,6 +84,8 @@ void sequenceAppend(Ref& ast, Ref extra) {
   ast = ValueBuilder::makeSeq(ast, extra);
 }
 
+IString stringToIString(std::string str) { return IString(str.c_str(), false); }
+
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
@@ -92,15 +95,6 @@ enum class NameScope {
   Label,
   Max,
 };
-
-template<typename T> static uint64_t constOffset(const T& segment) {
-  auto* c = segment.offset->template dynCast<Const>();
-  if (!c) {
-    Fatal() << "non-constant offsets aren't supported yet\n";
-    abort();
-  }
-  return c->value.getInteger();
-}
 
 //
 // Wasm2JSBuilder - converts a WebAssembly module's functions into JS
@@ -129,7 +123,7 @@ public:
     bool emscripten = false;
   };
 
-  Wasm2JSBuilder(Flags f) : flags(f) {}
+  Wasm2JSBuilder(Flags f, PassOptions options) : flags(f), options(options) {}
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
   Ref processFunction(Module* wasm, Function* func, bool standalone = false);
@@ -139,7 +133,7 @@ public:
 
   // The second pass on an expression: process it fully, generating
   // JS
-  Ref processFunctionBody(Module* m, Function* func);
+  Ref processFunctionBody(Module* m, Function* func, bool standalone);
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -199,7 +193,7 @@ public:
         out << "_" << i;
       }
       auto mangled = asmangle(out.str());
-      ret = IString(mangled.c_str(), false);
+      ret = stringToIString(mangled);
       if (!allMangledNames.count(ret)) {
         break;
       }
@@ -224,10 +218,9 @@ public:
     return ret;
   }
 
-  size_t getTableSize() { return tableSize; }
-
 private:
   Flags flags;
+  PassOptions options;
 
   // How many temp vars we need
   std::vector<size_t> temps; // type => num temps
@@ -239,7 +232,10 @@ private:
   std::unordered_map<const char*, IString> mangledNames[(int)NameScope::Max];
   std::unordered_set<IString> allMangledNames;
 
-  size_t tableSize;
+  // If a function is callable from outside, we'll need to cast the inputs
+  // and our return value. Otherwise, internally, casts are only needed
+  // on operations.
+  std::unordered_set<Name> functionsCallableFromOutside;
 
   void addBasics(Ref ast);
   void addFunctionImport(Ref ast, Function* import);
@@ -255,6 +251,18 @@ private:
 };
 
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
+  // Scan the wasm for important things.
+  for (auto& exp : wasm->exports) {
+    if (exp->kind == ExternalKind::Function) {
+      functionsCallableFromOutside.insert(exp->value);
+    }
+  }
+  for (auto& segment : wasm->table.segments) {
+    for (auto name : segment.data) {
+      functionsCallableFromOutside.insert(name);
+    }
+  }
+
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
   ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
@@ -313,19 +321,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     *wasm, [&](Function* import) { addFunctionImport(asmFunc[3], import); });
   ModuleUtils::iterImportedGlobals(
     *wasm, [&](Global* import) { addGlobalImport(asmFunc[3], import); });
-  // figure out the table size
-  tableSize =
-    std::accumulate(wasm->table.segments.begin(),
-                    wasm->table.segments.end(),
-                    0,
-                    [&](size_t size, Table::Segment seg) -> size_t {
-                      return size + seg.data.size() + constOffset(seg);
-                    });
-  size_t pow2ed = 1;
-  while (pow2ed < tableSize) {
-    pow2ed <<= 1;
-  }
-  tableSize = pow2ed;
 
   // make sure exports get their expected names
   for (auto& e : wasm->exports) {
@@ -476,8 +471,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   // Emit a simple flat table as a JS array literal. Otherwise,
   // emit assignments separately for each index.
   FlatTable flat(wasm->table);
-  assert(flat.valid); // TODO: non-flat tables
-  if (!wasm->table.imported()) {
+  if (flat.valid && !wasm->table.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     Ref theArray = ValueBuilder::makeArray();
@@ -492,14 +486,30 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
       ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
     }
   } else {
+    if (!wasm->table.imported()) {
+      Ref theVar = ValueBuilder::makeVar();
+      ast->push_back(theVar);
+      ValueBuilder::appendToVar(
+        theVar, FUNCTION_TABLE, ValueBuilder::makeArray());
+    }
+
     // TODO: optimize for size
     for (auto& segment : wasm->table.segments) {
       auto offset = segment.offset;
-      Index start = offset->cast<Const>()->value.geti32();
       for (Index i = 0; i < segment.data.size(); i++) {
+        Ref index;
+        if (auto* c = offset->dynCast<Const>()) {
+          index = ValueBuilder::makeInt(c->value.geti32() + i);
+        } else if (auto* get = offset->dynCast<GetGlobal>()) {
+          index = ValueBuilder::makeBinary(
+            ValueBuilder::makeName(stringToIString(asmangle(get->name.str))),
+            PLUS,
+            ValueBuilder::makeNum(i));
+        } else {
+          WASM_UNREACHABLE();
+        }
         ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-          ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
-                                ValueBuilder::makeInt(start + i)),
+          ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), index),
           SET,
           ValueBuilder::makeName(fromName(segment.data[i], NameScope::Top)))));
       }
@@ -613,20 +623,24 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   temps.resize(std::max(i32, std::max(f32, f64)) + 1);
   temps[i32] = temps[f32] = temps[f64] = 0;
   // arguments
+  bool needCoercions = options.optimizeLevel == 0 || standaloneFunction ||
+                       functionsCallableFromOutside.count(func->name);
   for (Index i = 0; i < func->getNumParams(); i++) {
     IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
-    ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-      ValueBuilder::makeName(name),
-      SET,
-      makeAsmCoercion(ValueBuilder::makeName(name),
-                      wasmToAsmType(func->getLocalType(i))))));
+    if (needCoercions) {
+      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+        ValueBuilder::makeName(name),
+        SET,
+        makeAsmCoercion(ValueBuilder::makeName(name),
+                        wasmToAsmType(func->getLocalType(i))))));
+    }
   }
   Ref theVar = ValueBuilder::makeVar();
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  flattenAppend(ret, processFunctionBody(m, func));
+  flattenAppend(ret, processFunctionBody(m, func, standaloneFunction));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -644,15 +658,23 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   return ret;
 }
 
-Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
+Ref Wasm2JSBuilder::processFunctionBody(Module* m,
+                                        Function* func,
+                                        bool standaloneFunction) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
     IString result; // TODO: remove
     Function* func;
     Module* module;
+    bool standaloneFunction;
     MixedArena allocator;
-    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func)
-      : parent(parent), func(func), module(m) {}
+
+    ExpressionProcessor(Wasm2JSBuilder* parent,
+                        Module* m,
+                        Function* func,
+                        bool standaloneFunction)
+      : parent(parent), func(func), module(m),
+        standaloneFunction(standaloneFunction) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {
@@ -766,10 +788,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     Ref visitLoop(Loop* curr) {
       Name asmLabel = curr->name;
       continueLabels.insert(asmLabel);
-      Ref body = blockify(visit(curr->body, result));
-      flattenAppend(
-        body, ValueBuilder::makeBreak(fromName(asmLabel, NameScope::Label)));
-      Ref ret = ValueBuilder::makeDo(body, ValueBuilder::makeInt(1));
+      Ref body = visit(curr->body, result);
+      // if we can reach the end of the block, we must leave the while (1) loop
+      if (curr->body->type != unreachable) {
+        assert(curr->body->type == none); // flat IR
+        body = blockify(body);
+        flattenAppend(
+          body, ValueBuilder::makeBreak(fromName(asmLabel, NameScope::Label)));
+      }
+      Ref ret = ValueBuilder::makeWhile(ValueBuilder::makeInt(1), body);
       return ValueBuilder::makeLabel(fromName(asmLabel, NameScope::Label), ret);
     }
 
@@ -817,40 +844,73 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     Ref visitCall(Call* curr) {
       Ref theCall =
         ValueBuilder::makeCall(fromName(curr->target, NameScope::Top));
+      // For wasm => wasm calls, we don't need coercions. TODO: even imports
+      // might be safe?
+      bool needCoercions = parent->options.optimizeLevel == 0 ||
+                           standaloneFunction ||
+                           module->getFunction(curr->target)->imported();
       for (auto operand : curr->operands) {
-        theCall[2]->push_back(makeAsmCoercion(visit(operand, EXPRESSION_RESULT),
-                                              wasmToAsmType(operand->type)));
+        auto value = visit(operand, EXPRESSION_RESULT);
+        if (needCoercions) {
+          value = makeAsmCoercion(value, wasmToAsmType(operand->type));
+        }
+        theCall[2]->push_back(value);
       }
-      return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+      if (needCoercions) {
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+      }
+      return theCall;
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
-      // TODO: the codegen here is a pessimization of what the ideal codegen
-      // looks like. Eventually if necessary this should be tightened up in the
-      // case that the argument expression doesn't have any side effects.
-      Ref ret;
-      ScopedTemp idx(i32, parent, func);
-      std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
-      for (auto& operand : curr->operands) {
-        temps.push_back(new ScopedTemp(operand->type, parent, func));
-        IString temp = temps.back()->temp;
-        sequenceAppend(ret, visitAndAssign(operand, temp));
+      // If the target has effects that interact with the operands, we must
+      // reorder it to the start.
+      bool mustReorder = false;
+      EffectAnalyzer targetEffects(parent->options, curr->target);
+      if (targetEffects.hasAnything()) {
+        for (auto* operand : curr->operands) {
+          if (targetEffects.invalidates(
+                EffectAnalyzer(parent->options, operand))) {
+            mustReorder = true;
+            break;
+          }
+        }
       }
-      sequenceAppend(ret, visitAndAssign(curr->target, idx));
-      Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
-        ValueBuilder::makeName(FUNCTION_TABLE), idx.getAstName()));
-      for (size_t i = 0; i < temps.size(); i++) {
-        IString temp = temps[i]->temp;
-        auto& operand = curr->operands[i];
-        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp),
-                                              wasmToAsmType(operand->type)));
+      if (mustReorder) {
+        Ref ret;
+        ScopedTemp idx(i32, parent, func);
+        std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
+        for (auto* operand : curr->operands) {
+          temps.push_back(new ScopedTemp(operand->type, parent, func));
+          IString temp = temps.back()->temp;
+          sequenceAppend(ret, visitAndAssign(operand, temp));
+        }
+        sequenceAppend(ret, visitAndAssign(curr->target, idx));
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(FUNCTION_TABLE), idx.getAstName()));
+        for (size_t i = 0; i < temps.size(); i++) {
+          IString temp = temps[i]->temp;
+          auto& operand = curr->operands[i];
+          theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp),
+                                                wasmToAsmType(operand->type)));
+        }
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        sequenceAppend(ret, theCall);
+        for (auto temp : temps) {
+          delete temp;
+        }
+        return ret;
+      } else {
+        // Target has no side effects, emit simple code
+        Ref theCall = ValueBuilder::makeCall(
+          ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                visit(curr->target, EXPRESSION_RESULT)));
+        for (auto* operand : curr->operands) {
+          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
+        }
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        return theCall;
       }
-      theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
-      sequenceAppend(ret, theCall);
-      for (auto temp : temps) {
-        delete temp;
-      }
-      return ret;
     }
 
     // TODO: remove
@@ -965,7 +1025,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
           abort();
         }
       }
-      return makeAsmCoercion(ret, wasmToAsmType(curr->type));
+      // Coercions are not actually needed, as if the user reads beyond valid
+      // memory, it's undefined behavior anyhow, and so we don't care much about
+      // slowness of undefined values etc.
+      bool needCoercions =
+        parent->options.optimizeLevel == 0 || standaloneFunction;
+      if (needCoercions) {
+        ret = makeAsmCoercion(ret, wasmToAsmType(curr->type));
+      }
+      return ret;
     }
 
     Ref visitStore(Store* curr) {
@@ -1163,10 +1231,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
                         << std::endl;
               WASM_UNREACHABLE();
             case EqZInt32:
-              return ValueBuilder::makeBinary(
-                makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), ASM_INT),
-                EQ,
-                makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
+              // XXX !x does change the type to bool, which is correct, but may
+              // be slower?
+              return ValueBuilder::makeUnary(
+                L_NOT, visit(curr->value, EXPRESSION_RESULT));
             case ReinterpretFloat32: {
               ABI::wasm2js::ensureScratchMemoryHelpers(
                 module, ABI::wasm2js::SCRATCH_STORE_F32);
@@ -1482,30 +1550,55 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     }
 
     Ref visitSelect(Select* curr) {
-      // normal select
-      ScopedTemp tempIfTrue(curr->type, parent, func),
-        tempIfFalse(curr->type, parent, func), tempCondition(i32, parent, func);
-      Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
-      Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
-      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      return ValueBuilder::makeSeq(
-        ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
-        ValueBuilder::makeSeq(
-          ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+      // If the condition has effects that interact with the operands, we must
+      // reorder it to the start. We must also use locals if the values have
+      // side effects, as a JS conditional does not visit both sides.
+      bool useLocals = false;
+      EffectAnalyzer conditionEffects(parent->options, curr->condition);
+      EffectAnalyzer ifTrueEffects(parent->options, curr->ifTrue);
+      EffectAnalyzer ifFalseEffects(parent->options, curr->ifFalse);
+      if (conditionEffects.invalidates(ifTrueEffects) ||
+          conditionEffects.invalidates(ifFalseEffects) ||
+          ifTrueEffects.hasSideEffects() || ifFalseEffects.hasSideEffects()) {
+        useLocals = true;
+      }
+      if (useLocals) {
+        ScopedTemp tempIfTrue(curr->type, parent, func),
+          tempIfFalse(curr->type, parent, func),
+          tempCondition(i32, parent, func);
+        Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
+        Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
+        Ref condition = visit(curr->condition, EXPRESSION_RESULT);
+        return ValueBuilder::makeSeq(
+          ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
           ValueBuilder::makeSeq(
-            ValueBuilder::makeBinary(
-              tempCondition.getAstName(), SET, condition),
-            ValueBuilder::makeConditional(tempCondition.getAstName(),
-                                          tempIfTrue.getAstName(),
-                                          tempIfFalse.getAstName()))));
+            ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+            ValueBuilder::makeSeq(
+              ValueBuilder::makeBinary(
+                tempCondition.getAstName(), SET, condition),
+              ValueBuilder::makeConditional(tempCondition.getAstName(),
+                                            tempIfTrue.getAstName(),
+                                            tempIfFalse.getAstName()))));
+      } else {
+        // Simple case without reordering.
+        return ValueBuilder::makeConditional(
+          visit(curr->condition, EXPRESSION_RESULT),
+          visit(curr->ifTrue, EXPRESSION_RESULT),
+          visit(curr->ifFalse, EXPRESSION_RESULT));
+      }
     }
 
     Ref visitReturn(Return* curr) {
       if (!curr->value) {
         return ValueBuilder::makeReturn(Ref());
       }
-      Ref val = makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
-                                wasmToAsmType(curr->value->type));
+      Ref val = visit(curr->value, EXPRESSION_RESULT);
+      bool needCoercion =
+        parent->options.optimizeLevel == 0 || standaloneFunction ||
+        parent->functionsCallableFromOutside.count(func->name);
+      if (needCoercion) {
+        val = makeAsmCoercion(val, wasmToAsmType(curr->value->type));
+      }
       return ValueBuilder::makeReturn(val);
     }
 
@@ -1544,7 +1637,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func) {
     }
   };
 
-  return ExpressionProcessor(this, m, func).visit(func->body, NO_RESULT);
+  return ExpressionProcessor(this, m, func, standaloneFunction)
+    .visit(func->body, NO_RESULT);
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
@@ -1699,7 +1793,9 @@ private:
   void emitPostEmscripten();
   void emitPostES6();
 
-  void emitMemory(std::string buffer, std::string segmentWriter);
+  void emitMemory(std::string buffer,
+                  std::string segmentWriter,
+                  std::function<std::string(std::string)> accessGlobal);
   void emitScratchMemorySupport();
 };
 
@@ -1748,6 +1844,10 @@ void Wasm2JSGlue::emitPreES6() {
     noteImport(import->module, import->base);
   });
 
+  if (wasm.table.exists && wasm.table.imported()) {
+    out << "import { FUNCTION_TABLE } from 'env';\n";
+  }
+
   out << '\n';
 }
 
@@ -1760,7 +1860,9 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  emitMemory("wasmMemory.buffer", "writeSegment");
+  emitMemory("wasmMemory.buffer", "writeSegment", [](std::string globalName) {
+    return std::string("asmLibraryArg['") + asmangle(globalName) + "']";
+  });
 
   out << "return asmFunc({\n"
       << "    'Int8Array': Int8Array,\n"
@@ -1797,7 +1899,8 @@ void Wasm2JSGlue::emitPostES6() {
   }
 
   emitMemory(std::string("mem") + moduleName.str,
-             std::string("assign") + moduleName.str);
+             std::string("assign") + moduleName.str,
+             [](std::string globalName) { return globalName; });
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
@@ -1856,7 +1959,10 @@ void Wasm2JSGlue::emitPostES6() {
   }
 }
 
-void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
+void Wasm2JSGlue::emitMemory(
+  std::string buffer,
+  std::string segmentWriter,
+  std::function<std::string(std::string)> accessGlobal) {
   if (wasm.memory.segments.empty())
     return;
 
@@ -1880,9 +1986,22 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
   // var assign$name = ($expr)(mem$name);
   out << "var " << segmentWriter << " = (" << expr << ")(" << buffer << ");\n";
 
+  auto globalOffset = [&](const Memory::Segment& segment) {
+    if (auto* c = segment.offset->template dynCast<Const>()) {
+      ;
+      return std::to_string(c->value.getInteger());
+    }
+    if (auto* get = segment.offset->template dynCast<GetGlobal>()) {
+      auto internalName = get->name;
+      auto importedName = wasm.getGlobal(internalName)->base;
+      return accessGlobal(asmangle(importedName.str));
+    }
+    Fatal() << "non-constant offsets aren't supported yet\n";
+  };
+
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
-    out << segmentWriter << "(" << constOffset(seg) << ", \""
+    out << segmentWriter << "(" << globalOffset(seg) << ", \""
         << base64Encode(seg.data) << "\");\n";
   }
 }

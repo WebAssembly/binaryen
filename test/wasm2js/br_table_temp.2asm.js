@@ -49540,7 +49540,7 @@ function asmFunc(global, env, buffer) {
   fake_return_waka123 : {
    dummy();
    $1_1 = 4;
-   switch (4294967295 | 0) {
+   switch (-1 | 0) {
    case 0:
     break fake_return_waka123;
    case 1:
@@ -49757,7 +49757,7 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
   $2_1 = $2_1 | 0;
-  return 4294967295 | 0;
+  return -1 | 0;
  }
  
  function $38() {
@@ -50181,10 +50181,6 @@ function asmFunc(global, env, buffer) {
   return $3_1 | 0;
  }
  
- function legalstub$7() {
-  return +(+Math_fround($7()));
- }
- 
  var FUNCTION_TABLE = [];
  return {
   "type_i32": $1, 
@@ -50193,7 +50189,7 @@ function asmFunc(global, env, buffer) {
   "type_f64": $4, 
   "type_i32_value": $5, 
   "type_i64_value": $6, 
-  "type_f32_value": legalstub$7, 
+  "type_f32_value": $7, 
   "type_f64_value": $8, 
   "empty": $9, 
   "empty_value": $10, 

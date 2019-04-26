@@ -1525,6 +1525,7 @@ public:
     return &arena.alloc<Value>()->setNumber(num);
   }
   static Ref makeInt(uint32_t num) { return makeDouble(double(num)); }
+  static Ref makeInt(int32_t num) { return makeDouble(double(num)); }
   static Ref makeNum(double num) { return makeDouble(num); }
 
   static Ref makeUnary(IString op, Ref value) {

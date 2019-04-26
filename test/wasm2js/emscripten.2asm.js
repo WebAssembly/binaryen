@@ -27,10 +27,12 @@ function asmFunc(global, env, buffer) {
  var syscall$54 = env.__syscall54;
  // EMSCRIPTEN_START_FUNCS;
  function main() {
-  var wasm2js_i32$0 = 0;
   syscall$6(1 | 0, 2 | 0) | 0;
   syscall$54(3 | 0, 4 | 0) | 0;
-  wasm2js_i32$0 = HEAP32[0 + 1030 >> 2] | 0, FUNCTION_TABLE[wasm2js_i32$0]();
+  FUNCTION_TABLE[HEAP32[0 + 1030 >> 2]]();
+  internal(1);
+  tabled(1);
+  exported(1);
  }
  
  function other() {
@@ -42,10 +44,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function bar() {
-  HEAPU8[128 | 0] | 0;
-  HEAP8[128 | 0] | 0;
-  HEAPU16[128 >> 1] | 0;
-  HEAP16[128 >> 1] | 0;
+  HEAPU8[128 | 0];
+  HEAP8[128 | 0];
+  HEAPU16[128 >> 1];
+  HEAP16[128 >> 1];
  }
  
  function __growWasmMemory($0) {
@@ -53,13 +55,35 @@ function asmFunc(global, env, buffer) {
   return abort() | 0;
  }
  
+ function internal(x) {
+  return x;
+ }
+ 
+ function tabled(x) {
+  x = x | 0;
+  return x | 0;
+ }
+ 
+ function exported(x) {
+  x = x | 0;
+  return x | 0;
+ }
+ 
+ function sub_zero(x) {
+  x = x | 0;
+  return x + 5 | 0;
+ }
+ 
  // EMSCRIPTEN_END_FUNCS;
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
+ FUNCTION_TABLE[3] = tabled;
  return {
   "main": main, 
   "other": other, 
-  "__growWasmMemory": __growWasmMemory
+  "__growWasmMemory": __growWasmMemory, 
+  "exported": exported, 
+  "sub_zero": sub_zero
  };
 }
 

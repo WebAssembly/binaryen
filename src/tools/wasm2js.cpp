@@ -20,6 +20,7 @@
 
 #include "wasm2js.h"
 #include "optimization-options.h"
+#include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
@@ -33,6 +34,33 @@ using namespace wasm;
 
 namespace {
 
+static void optimizeWasm(Module& wasm, PassOptions options) {
+  // Perform various optimizations that will be good for JS, but would not be
+  // great for wasm in general
+  struct OptimizeForJS : public WalkerPass<PostWalker<OptimizeForJS>> {
+    bool isFunctionParallel() override { return true; }
+
+    Pass* create() override { return new OptimizeForJS; }
+
+    void visitBinary(Binary* curr) {
+      // x - -c (where c is a constant) is larger than x + c, in js (but not
+      // necessarily in wasm, where LEBs prefer negatives).
+      if (curr->op == SubInt32) {
+        if (auto* c = curr->right->dynCast<Const>()) {
+          if (c->value.geti32() < 0) {
+            curr->op = AddInt32;
+            c->value = c->value.neg();
+          }
+        }
+      }
+    }
+  };
+
+  PassRunner runner(&wasm, options);
+  runner.add<OptimizeForJS>();
+  runner.run();
+}
+
 template<typename T> static void printJS(Ref ast, T& output) {
   JSPrinter jser(true, true, ast);
   jser.printAst();
@@ -41,9 +69,15 @@ template<typename T> static void printJS(Ref ast, T& output) {
 
 static void optimizeJS(Ref ast) {
   // helpers
+
   auto isOrZero = [](Ref node) {
     return node->isArray() && node->size() > 0 && node[0] == BINARY &&
            node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
+  };
+
+  auto isPlus = [](Ref node) {
+    return node->isArray() && node->size() > 0 && node[0] == UNARY_PREFIX &&
+           node[1] == PLUS;
   };
 
   auto isBitwise = [](Ref node) {
@@ -87,17 +121,26 @@ static void optimizeJS(Ref ast) {
         node[3] = node[3][2];
       }
     }
+    // +(+x) => +x
+    else if (isPlus(node)) {
+      while (isPlus(node[2])) {
+        node[2] = node[2][2];
+      }
+    }
   });
 }
 
 static void emitWasm(Module& wasm,
                      Output& output,
                      Wasm2JSBuilder::Flags flags,
-                     Name name,
-                     bool optimize = false) {
-  Wasm2JSBuilder wasm2js(flags);
+                     PassOptions options,
+                     Name name) {
+  if (options.optimizeLevel > 0) {
+    optimizeWasm(wasm, options);
+  }
+  Wasm2JSBuilder wasm2js(flags, options);
   auto js = wasm2js.processWasm(&wasm, name);
-  if (optimize) {
+  if (options.optimizeLevel >= 2) {
     optimizeJS(js);
   }
   Wasm2JSGlue glue(wasm, output, flags, name);
@@ -111,8 +154,10 @@ public:
   AssertionEmitter(Element& root,
                    SExpressionWasmBuilder& sexpBuilder,
                    Output& out,
-                   Wasm2JSBuilder::Flags flags)
-    : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags) {}
+                   Wasm2JSBuilder::Flags flags,
+                   PassOptions options)
+    : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags),
+      options(options) {}
 
   void emit();
 
@@ -121,6 +166,7 @@ private:
   SExpressionWasmBuilder& sexpBuilder;
   Output& out;
   Wasm2JSBuilder::Flags flags;
+  PassOptions options;
   Module tempAllocationModule;
 
   Ref emitAssertReturnFunc(Builder& wasmBuilder,
@@ -139,7 +185,7 @@ private:
   void fixCalls(Ref asmjs, Name asmModule);
 
   Ref processFunction(Function* func) {
-    Wasm2JSBuilder sub(flags);
+    Wasm2JSBuilder sub(flags, options);
     return sub.processStandaloneFunction(&tempAllocationModule, func);
   }
 
@@ -364,7 +410,7 @@ void AssertionEmitter::emit() {
       asmModule = Name(moduleNameS.str().c_str());
       Module wasm;
       SExpressionWasmBuilder builder(wasm, e);
-      emitWasm(wasm, out, flags, funcName);
+      emitWasm(wasm, out, flags, options, funcName);
       continue;
     }
     if (!isAssertHandled(e)) {
@@ -501,10 +547,10 @@ int main(int argc, const char* argv[]) {
                 Flags::Text,
                 options.debug ? Flags::Debug : Flags::Release);
   if (!binaryInput && options.extra["asserts"] == "1") {
-    AssertionEmitter(*root, *sexprBuilder, output, flags).emit();
+    AssertionEmitter(*root, *sexprBuilder, output, flags, options.passOptions)
+      .emit();
   } else {
-    emitWasm(
-      wasm, output, flags, "asmFunc", options.passOptions.optimizeLevel > 0);
+    emitWasm(wasm, output, flags, options.passOptions, "asmFunc");
   }
 
   if (options.debug)

@@ -1,6 +1,9 @@
+import { memoryBase } from 'env';
+import { tableBase } from 'env';
 
 function asmFunc(global, env, buffer) {
  "almost asm";
+ var memory = env.memory;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -21,17 +24,45 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $1($0) {
-  $0 = $0 | 0;
-  return (($0 | 0) < (0 | 0) ? -1 : ($0 | 0) > (0 | 0) ? 1 : 0) | 0;
+ var import$memoryBase = env.memoryBase | 0;
+ var import$tableBase = env.tableBase | 0;
+ function foo() {
+  
+ }
+ 
+ function bar() {
+  
+ }
+ 
+ function baz() {
+  
  }
  
  var FUNCTION_TABLE = [];
+ FUNCTION_TABLE[import$tableBase + 0] = foo;
+ FUNCTION_TABLE[import$tableBase + 1] = bar;
  return {
-  "sign": $1
+  "baz": baz
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
+var memasmFunc = new ArrayBuffer(16777216);
+var assignasmFunc = (
+    function(mem) {
+      var _mem = new Uint8Array(mem);
+      return function(offset, s) {
+        if (typeof Buffer === 'undefined') {
+          var bytes = atob(s);
+          for (var i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes.charCodeAt(i);
+        } else {
+          var bytes = Buffer.from(s, 'base64');
+          for (var i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes[i];
+        }
+      }
+    }
+  )(memasmFunc);
+assignasmFunc(memoryBase, "ZHluYW1pYyBkYXRh");
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export var sign = retasmFunc.sign;
+export var baz = retasmFunc.baz;

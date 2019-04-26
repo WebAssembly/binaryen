@@ -67,20 +67,22 @@ struct EffectAnalyzer
 
   // Helper functions to check for various effect types
 
-  bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
-  bool accessesGlobal() {
+  bool accessesLocal() const {
+    return localsRead.size() + localsWritten.size() > 0;
+  }
+  bool accessesGlobal() const {
     return globalsRead.size() + globalsWritten.size() > 0;
   }
-  bool accessesMemory() { return calls || readsMemory || writesMemory; }
+  bool accessesMemory() const { return calls || readsMemory || writesMemory; }
 
-  bool hasGlobalSideEffects() {
+  bool hasGlobalSideEffects() const {
     return calls || globalsWritten.size() > 0 || writesMemory || isAtomic;
   }
-  bool hasSideEffects() {
+  bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
            implicitTrap;
   }
-  bool hasAnything() {
+  bool hasAnything() const {
     return branches || calls || accessesLocal() || readsMemory ||
            writesMemory || accessesGlobal() || implicitTrap || isAtomic;
   }
@@ -94,7 +96,7 @@ struct EffectAnalyzer
 
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
-  bool invalidates(EffectAnalyzer& other) {
+  bool invalidates(const EffectAnalyzer& other) {
     if ((branches && other.hasSideEffects()) ||
         (other.branches && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
