@@ -236,7 +236,7 @@ function asmFunc(global, env, buffer) {
     }
     var$1 = i64toi32_i32$1;
     var$1$hi = i64toi32_i32$4;
-    continue label$2;
+    continue;
    };
   }
   i64toi32_i32$4 = $5$hi;

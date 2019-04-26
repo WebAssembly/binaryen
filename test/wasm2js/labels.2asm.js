@@ -42,7 +42,7 @@ function asmFunc(global, env, buffer) {
       break exit;
      }
     }
-    continue cont;
+    continue;
    };
   }
   return $6_1 | 0;
@@ -55,7 +55,7 @@ function asmFunc(global, env, buffer) {
    cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     continue cont
+     continue
     }
     if ((i | 0) == (8 | 0)) {
      {
@@ -64,7 +64,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     i = i + 1 | 0;
-    continue cont;
+    continue;
    };
   }
   return $8_1 | 0;
@@ -99,7 +99,7 @@ function asmFunc(global, env, buffer) {
       break exit;
      }
     }
-    continue cont;
+    continue;
    };
   }
   return $9_1 | 0;
