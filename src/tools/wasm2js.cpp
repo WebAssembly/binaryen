@@ -108,12 +108,12 @@ static void traversePrePost(Ref node, std::function<void (Ref)> visitPre, std::f
   while (!stack.empty()) {
     TraverseInfo& back = stack.back();
     if (!back.scanned) {
+      back.scanned = true;
       // This is the first time we see this.
       visitPre(back.node);
       for (auto child : back.children) {
         stack.emplace_back(child);
       }
-      back.scanned = true;
       continue;
     }
     // Time to post-visit the node itself
