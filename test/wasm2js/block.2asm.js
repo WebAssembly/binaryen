@@ -95,8 +95,6 @@ function asmFunc(global, env, buffer) {
   }
   block46 : {
    switch (1 | 0) {
-   case 0:
-   case 1:
    default:
     break block46;
    };
