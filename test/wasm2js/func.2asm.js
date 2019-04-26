@@ -300,7 +300,6 @@ function asmFunc(global, env, buffer) {
    $3 = 50;
    switch ($0 | 0) {
    case 0:
-    break fake_return_waka123;
    default:
     break fake_return_waka123;
    };
@@ -322,11 +321,10 @@ function asmFunc(global, env, buffer) {
     $4 = $2_1;
     switch ($0 | 0) {
     case 0:
+    default:
      break block;
     case 1:
      break fake_return_waka123;
-    default:
-     break block;
     };
    }
    $4 = $3 + 2 | 0;
