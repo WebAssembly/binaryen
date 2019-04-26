@@ -79,6 +79,10 @@ void sequenceAppend(Ref& ast, Ref extra) {
   ast = ValueBuilder::makeSeq(ast, extra);
 }
 
+IString stringToIString(std::string str) {
+  return IString(str.c_str(), false);
+}
+
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
@@ -88,16 +92,6 @@ enum class NameScope {
   Label,
   Max,
 };
-
-template<typename T>
-static uint64_t constOffset(const T& segment) {
-  auto* c = segment.offset->template dynCast<Const>();
-  if (!c) {
-    Fatal() << "non-constant offsets aren't supported yet\n";
-    abort();
-  }
-  return c->value.getInteger();
-}
 
 //
 // Wasm2JSBuilder - converts a WebAssembly module's functions into JS
@@ -196,7 +190,7 @@ public:
         out << "_" << i;
       }
       auto mangled = asmangle(out.str());
-      ret = IString(mangled.c_str(), false);
+      ret = stringToIString(mangled);
       if (!allMangledNames.count(ret)) {
         break;
       }
@@ -219,10 +213,6 @@ public:
     return ret;
   }
 
-  size_t getTableSize() {
-    return tableSize;
-  }
-
 private:
   Flags flags;
   PassOptions options;
@@ -236,8 +226,6 @@ private:
   // Utilizes the usually reused underlying cstring's pointer as the key.
   std::unordered_map<const char*, IString> mangledNames[(int) NameScope::Max];
   std::unordered_set<IString> allMangledNames;
-
-  size_t tableSize;
 
   // If a function is callable from outside, we'll need to cast the inputs
   // and our return value. Otherwise, internally, casts are only needed
@@ -331,17 +319,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* import) {
     addGlobalImport(asmFunc[3], import);
   });
-  // figure out the table size
-  tableSize = std::accumulate(wasm->table.segments.begin(),
-                              wasm->table.segments.end(),
-                              0, [&](size_t size, Table::Segment seg) -> size_t {
-                                return size + seg.data.size() + constOffset(seg);
-                              });
-  size_t pow2ed = 1;
-  while (pow2ed < tableSize) {
-    pow2ed <<= 1;
-  }
-  tableSize = pow2ed;
 
   // make sure exports get their expected names
   for (auto& e : wasm->exports) {
@@ -509,8 +486,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   // Emit a simple flat table as a JS array literal. Otherwise,
   // emit assignments separately for each index.
   FlatTable flat(wasm->table);
-  assert(flat.valid); // TODO: non-flat tables
-  if (!wasm->table.imported()) {
+  if (flat.valid && !wasm->table.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     Ref theArray = ValueBuilder::makeArray();
@@ -525,16 +501,33 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
       ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
     }
   } else {
+    if (!wasm->table.imported()) {
+      Ref theVar = ValueBuilder::makeVar();
+      ast->push_back(theVar);
+      ValueBuilder::appendToVar(theVar, FUNCTION_TABLE, ValueBuilder::makeArray());
+    }
+
     // TODO: optimize for size
     for (auto& segment : wasm->table.segments) {
       auto offset = segment.offset;
-      Index start = offset->cast<Const>()->value.geti32();
       for (Index i = 0; i < segment.data.size(); i++) {
+        Ref index;
+        if (auto* c = offset->dynCast<Const>()) {
+          index = ValueBuilder::makeInt(c->value.geti32() + i);
+        } else if (auto* get = offset->dynCast<GetGlobal>()) {
+          index = ValueBuilder::makeBinary(
+            ValueBuilder::makeName(stringToIString(asmangle(get->name.str))),
+            PLUS,
+            ValueBuilder::makeNum(i)
+          );
+        } else {
+          WASM_UNREACHABLE();
+        }
         ast->push_back(ValueBuilder::makeStatement(
           ValueBuilder::makeBinary(
             ValueBuilder::makeSub(
               ValueBuilder::makeName(FUNCTION_TABLE),
-              ValueBuilder::makeInt(start + i)
+              index
             ),
             SET,
             ValueBuilder::makeName(fromName(segment.data[i], NameScope::Top))
@@ -1794,7 +1787,7 @@ private:
   void emitPostEmscripten();
   void emitPostES6();
 
-  void emitMemory(std::string buffer, std::string segmentWriter);
+  void emitMemory(std::string buffer, std::string segmentWriter, std::function<std::string (std::string)> accessGlobal);
   void emitScratchMemorySupport();
 };
 
@@ -1857,7 +1850,9 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  emitMemory("wasmMemory.buffer", "writeSegment");
+  emitMemory("wasmMemory.buffer", "writeSegment", [](std::string globalName) {
+    return std::string("asmLibraryArg['") + asmangle(globalName) + "']";
+  });
 
   out << "return asmFunc({\n"
       << "    'Int8Array': Int8Array,\n"
@@ -1895,7 +1890,8 @@ void Wasm2JSGlue::emitPostES6() {
   }
 
   emitMemory(std::string("mem") + moduleName.str,
-             std::string("assign") + moduleName.str);
+             std::string("assign") + moduleName.str,
+             [](std::string globalName) { return globalName; });
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
@@ -1958,7 +1954,7 @@ void Wasm2JSGlue::emitPostES6() {
   }
 }
 
-void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
+void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter, std::function<std::string (std::string)> accessGlobal) {
   if (wasm.memory.segments.empty()) return;
 
   auto expr = R"(
@@ -1982,10 +1978,22 @@ void Wasm2JSGlue::emitMemory(std::string buffer, std::string segmentWriter) {
   out << "var " << segmentWriter
       << " = (" << expr << ")(" << buffer << ");\n";
 
+  auto globalOffset = [&](const Memory::Segment& segment) {
+    if (auto* c = segment.offset->template dynCast<Const>()) {;
+      return std::to_string(c->value.getInteger());
+    }
+    if (auto* get = segment.offset->template dynCast<GetGlobal>()) {
+      auto internalName = get->name;
+      auto importedName = wasm.getGlobal(internalName)->base;
+      return accessGlobal(asmangle(importedName.str));
+    }
+    Fatal() << "non-constant offsets aren't supported yet\n";
+  };
+
   for (auto& seg : wasm.memory.segments) {
     assert(!seg.isPassive && "passive segments not implemented yet");
     out << segmentWriter << "("
-      << constOffset(seg)
+      << globalOffset(seg)
       << ", \""
       << base64Encode(seg.data)
       << "\");\n";
