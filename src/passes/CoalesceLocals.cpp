@@ -188,7 +188,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
 void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
                                           std::vector<Index>& indices,
                                           Index& removedCopies) {
-  // mostly-simple greedy coloring
+// mostly-simple greedy coloring
 #if CFG_DEBUG
   std::cerr << "\npickIndicesFromOrder on " << getFunction()->name << '\n';
   std::cerr << getFunction()->body << '\n';
