@@ -267,7 +267,7 @@ function asmFunc(global, env, buffer) {
     if ($13) {
      continue
     }
-    break loop_in;
+    break;
    };
   }
   i64toi32_i32$2 = $1$hi;

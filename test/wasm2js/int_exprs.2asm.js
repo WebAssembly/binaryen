@@ -1721,7 +1721,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -2631,7 +2631,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -3399,7 +3399,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -4154,7 +4154,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -4952,7 +4952,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -5764,7 +5764,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -6576,7 +6576,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -7388,7 +7388,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -8215,7 +8215,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -9044,7 +9044,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -9873,7 +9873,7 @@ function asmFunc(global, env, buffer) {
         if (var$2) {
          continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }

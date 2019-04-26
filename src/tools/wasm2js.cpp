@@ -190,19 +190,23 @@ static void optimizeJS(Ref ast) {
   // XXX IString invalid("__wasm2js$INVALID_LABEL__");
   std::vector<Ref> breakCapturers;
   std::vector<Ref> continueCapturers;
-  std::map<IString, Ref> labelToValue; // maps the label to the loop/etc.
+  std::unordered_map<IString, Ref> labelToValue; // maps the label to the loop/etc.
+  std::unordered_set<Value*> labelled; // all things with a label on them.
   Value INVALID;
   traversePrePost(ast, [&](Ref node) {
     if (node->isArray() && !node->empty()) {
       if (node[0] == LABEL) {
         auto label = node[1]->getIString();
         labelToValue[label] = node[2];
+        labelled.insert(node[2].get());
       } else if (node[0] == WHILE || node[0] == DO || node[0] == FOR) {
         breakCapturers.push_back(node);
         continueCapturers.push_back(node);
       } else if (node[0] == cashew::BLOCK) {
-        // Cannot break to a block without the label.
-        breakCapturers.push_back(Ref(&INVALID));
+        if (labelled.count(node.get())) {
+          // Cannot break to a block without the label.
+          breakCapturers.push_back(Ref(&INVALID));
+        }
       } else if (node[0] == SWITCH) {
         breakCapturers.push_back(node);
       }
@@ -212,10 +216,15 @@ static void optimizeJS(Ref ast) {
       if (node[0] == LABEL) {
         auto label = node[1]->getIString();
         labelToValue.erase(label);
+        labelled.erase(node[2].get());
       } else if (node[0] == WHILE || node[0] == DO || node[0] == FOR) {
         breakCapturers.pop_back();
         continueCapturers.pop_back();
-      } else if (node[0] == cashew::BLOCK || node[0] == SWITCH) {
+      } else if (node[0] == cashew::BLOCK) {
+        if (labelled.count(node.get())) {
+          breakCapturers.pop_back();
+        }
+      } else if (node[0] == SWITCH) {
         breakCapturers.pop_back();
       } else if (node[0] == BREAK || node[0] == CONTINUE) {
         if (!node[1]->isNull()) {
