@@ -698,7 +698,7 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
 int PassRunner::getPassDebug() {
   static const int passDebug =
     getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
-  return passDebug;
+  return passDebug; 
 }
 
 } // namespace wasm
