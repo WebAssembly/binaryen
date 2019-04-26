@@ -62,7 +62,7 @@ function asmFunc(global, env, buffer) {
       var$1$hi = i64toi32_i32$5;
      }
     }
-    continue label$2;
+    continue;
    };
   }
   i64toi32_i32$5 = var$2$hi;
@@ -109,7 +109,7 @@ function asmFunc(global, env, buffer) {
       var$1$hi = i64toi32_i32$5;
      }
     }
-    continue label$2;
+    continue;
    };
   }
   i64toi32_i32$5 = var$2$hi;
@@ -156,7 +156,7 @@ function asmFunc(global, env, buffer) {
       var$1$hi = i64toi32_i32$5;
      }
     }
-    continue label$2;
+    continue;
    };
   }
   i64toi32_i32$5 = var$2$hi;
@@ -203,7 +203,7 @@ function asmFunc(global, env, buffer) {
       var$1$hi = i64toi32_i32$5;
      }
     }
-    continue label$2;
+    continue;
    };
   }
   i64toi32_i32$5 = var$2$hi;
@@ -250,7 +250,7 @@ function asmFunc(global, env, buffer) {
       var$1$hi = i64toi32_i32$5;
      }
     }
-    continue label$2;
+    continue;
    };
   }
   i64toi32_i32$5 = var$2$hi;

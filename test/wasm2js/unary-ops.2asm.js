@@ -469,7 +469,7 @@ function asmFunc(global, env, buffer) {
     }
     var$0 = var$0 & var$0 - 1;
     var$1 = var$1 + 1 | 0;
-    continue label$2;
+    continue;
    };
   }
   return $5_1;
@@ -515,7 +515,7 @@ function asmFunc(global, env, buffer) {
     }
     var$1 = i64toi32_i32$1;
     var$1$hi = i64toi32_i32$4;
-    continue label$2;
+    continue;
    };
   }
   i64toi32_i32$4 = $5$hi;

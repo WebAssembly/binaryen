@@ -1719,9 +1719,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -2629,9 +2629,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -3397,9 +3397,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -4152,9 +4152,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -4950,9 +4950,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -5762,9 +5762,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -6574,9 +6574,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -7386,9 +7386,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -8213,9 +8213,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -9042,9 +9042,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }
@@ -9871,9 +9871,9 @@ function asmFunc(global, env, buffer) {
         var$7$hi = i64toi32_i32$3;
         var$2 = var$2 + -1 | 0;
         if (var$2) {
-         continue label$15
+         continue
         }
-        break label$15;
+        break;
        };
        break label$13;
       }

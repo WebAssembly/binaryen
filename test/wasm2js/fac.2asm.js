@@ -132,7 +132,7 @@ function asmFunc(global, env, buffer) {
       $1$hi = i64toi32_i32$5;
      }
     }
-    continue loop_in;
+    continue;
    };
   }
   i64toi32_i32$5 = $2$hi;
@@ -179,7 +179,7 @@ function asmFunc(global, env, buffer) {
       i$hi = i64toi32_i32$5;
      }
     }
-    continue loop;
+    continue;
    };
   }
   i64toi32_i32$5 = res$hi;
@@ -265,9 +265,9 @@ function asmFunc(global, env, buffer) {
      }
     }
     if ($13) {
-     continue loop_in
+     continue
     }
-    break loop_in;
+    break;
    };
   }
   i64toi32_i32$2 = $1$hi;

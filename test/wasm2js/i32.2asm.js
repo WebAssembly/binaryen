@@ -208,7 +208,7 @@ function asmFunc(global, env, buffer) {
     }
     var$0 = var$0 & var$0 - 1;
     var$1 = var$1 + 1 | 0;
-    continue label$2;
+    continue;
    };
   }
   return $5_1;
