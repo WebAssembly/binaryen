@@ -993,7 +993,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $92() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $0 = 0, $0$hi = 0, $1 = 0, $1$hi = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0, wasm2js_i32$4 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $0 = 0, $0$hi = 0, $1 = 0, $1$hi = 0;
   reset();
   i64toi32_i32$0 = i64_left();
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
@@ -1005,7 +1005,7 @@ function asmFunc(global, env, buffer) {
   $1$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$1 = $1$hi;
-  ((((wasm2js_i32$1 = $0, wasm2js_i32$2 = i64toi32_i32$0), wasm2js_i32$3 = $1), wasm2js_i32$4 = i64toi32_i32$1), wasm2js_i32$0 = i64_callee()), FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0) | 0;
+  FUNCTION_TABLE[i64_callee()]($0, i64toi32_i32$0, $1, i64toi32_i32$1) | 0;
   return get() | 0;
  }
  

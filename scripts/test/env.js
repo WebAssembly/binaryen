@@ -1,3 +1,6 @@
+
+export const FUNCTION_TABLE = [];
+
 var tempRet0 = 0;
 
 export function setTempRet0(x) {

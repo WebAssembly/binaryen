@@ -23,8 +23,7 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function $1($0) {
   $0 = $0 | 0;
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0, wasm2js_i32$3 = 0, wasm2js_i32$4 = 0, wasm2js_i32$5 = 0;
-  return (wasm2js_i32$0 = -1, wasm2js_i32$1 = (wasm2js_i32$3 = 1, wasm2js_i32$4 = 0, wasm2js_i32$5 = ($0 | 0) > (0 | 0), wasm2js_i32$5 ? wasm2js_i32$3 : wasm2js_i32$4), wasm2js_i32$2 = ($0 | 0) < (0 | 0), wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0;
+  return (($0 | 0) < (0 | 0) ? -1 : ($0 | 0) > (0 | 0) ? 1 : 0) | 0;
  }
  
  var FUNCTION_TABLE = [];

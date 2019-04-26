@@ -35,6 +35,7 @@
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
 #include "abi/js.h"
+#include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
@@ -884,33 +885,54 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
-      // TODO: the codegen here is a pessimization of what the ideal codegen
-      // looks like. Eventually if necessary this should be tightened up in the
-      // case that the argument expression doesn't have any side effects.
-      Ref ret;
-      ScopedTemp idx(i32, parent, func);
-      std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
-      for (auto& operand : curr->operands) {
-        temps.push_back(new ScopedTemp(operand->type, parent, func));
-        IString temp = temps.back()->temp;
-        sequenceAppend(ret, visitAndAssign(operand, temp));
+      // If the target has effects that interact with the operands, we must reorder it to the start.
+      bool mustReorder = false;
+      EffectAnalyzer targetEffects(parent->options, curr->target);
+      if (targetEffects.hasAnything()) {
+        for (auto* operand : curr->operands) {
+          if (targetEffects.invalidates(EffectAnalyzer(parent->options, operand))) {
+            mustReorder = true;
+            break;
+          }
+        }
       }
-      sequenceAppend(ret, visitAndAssign(curr->target, idx));
-      Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
-        ValueBuilder::makeName(FUNCTION_TABLE),
-        idx.getAstName()
-      ));
-      for (size_t i = 0; i < temps.size(); i++) {
-        IString temp = temps[i]->temp;
-        auto &operand = curr->operands[i];
-        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
+      if (mustReorder) {
+        Ref ret;
+        ScopedTemp idx(i32, parent, func);
+        std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
+        for (auto* operand : curr->operands) {
+          temps.push_back(new ScopedTemp(operand->type, parent, func));
+          IString temp = temps.back()->temp;
+          sequenceAppend(ret, visitAndAssign(operand, temp));
+        }
+        sequenceAppend(ret, visitAndAssign(curr->target, idx));
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(FUNCTION_TABLE),
+          idx.getAstName()
+        ));
+        for (size_t i = 0; i < temps.size(); i++) {
+          IString temp = temps[i]->temp;
+          auto &operand = curr->operands[i];
+          theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
+        }
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        sequenceAppend(ret, theCall);
+        for (auto temp : temps) {
+          delete temp;
+        }
+        return ret;
+      } else {
+        // Target has no side effects, emit simple code
+        Ref theCall = ValueBuilder::makeCall(ValueBuilder::makeSub(
+          ValueBuilder::makeName(FUNCTION_TABLE),
+          visit(curr->target, EXPRESSION_RESULT)
+        ));
+        for (auto* operand : curr->operands) {
+          theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
+        }
+        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        return theCall;
       }
-      theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
-      sequenceAppend(ret, theCall);
-      for (auto temp : temps) {
-        delete temp;
-      }
-      return ret;
     }
 
     // TODO: remove
@@ -1526,28 +1548,49 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, bool standalo
     }
 
     Ref visitSelect(Select* curr) {
-      // normal select
-      ScopedTemp tempIfTrue(curr->type, parent, func),
-          tempIfFalse(curr->type, parent, func),
-          tempCondition(i32, parent, func);
-      Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
-      Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
-      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      return
-        ValueBuilder::makeSeq(
-          ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
+      // If the condition has effects that interact with the operands, we must reorder it to the start.
+      // We must also use locals if the values have side effects, as a JS conditional does not
+      // visit both sides.
+      bool useLocals = false;
+      EffectAnalyzer conditionEffects(parent->options, curr->condition);
+      EffectAnalyzer ifTrueEffects(parent->options, curr->ifTrue);
+      EffectAnalyzer ifFalseEffects(parent->options, curr->ifFalse);
+      if (conditionEffects.invalidates(ifTrueEffects) ||
+          conditionEffects.invalidates(ifFalseEffects) ||
+          ifTrueEffects.hasSideEffects() ||
+          ifFalseEffects.hasSideEffects()) {
+        useLocals = true;
+      }
+      if (useLocals) {
+        ScopedTemp tempIfTrue(curr->type, parent, func),
+            tempIfFalse(curr->type, parent, func),
+            tempCondition(i32, parent, func);
+        Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
+        Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
+        Ref condition = visit(curr->condition, EXPRESSION_RESULT);
+        return
           ValueBuilder::makeSeq(
-            ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+            ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
             ValueBuilder::makeSeq(
-              ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
-              ValueBuilder::makeConditional(
-                tempCondition.getAstName(),
-                tempIfTrue.getAstName(),
-                tempIfFalse.getAstName()
+              ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+              ValueBuilder::makeSeq(
+                ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
+                ValueBuilder::makeConditional(
+                  tempCondition.getAstName(),
+                  tempIfTrue.getAstName(),
+                  tempIfFalse.getAstName()
+                )
               )
             )
-          )
+          );
+      } else {
+        // Simple case without reordering.
+        return ValueBuilder::makeConditional(
+          visit(curr->condition, EXPRESSION_RESULT),
+          visit(curr->ifTrue, EXPRESSION_RESULT),
+          visit(curr->ifFalse, EXPRESSION_RESULT)
         );
+      }
     }
 
     Ref visitReturn(Return* curr) {
@@ -1837,6 +1880,10 @@ void Wasm2JSGlue::emitPreES6() {
     }
     noteImport(import->module, import->base);
   });
+
+  if (wasm.table.exists && wasm.table.imported()) {
+    out << "import { FUNCTION_TABLE } from 'env';\n";
+  }
 
   out << '\n';
 }

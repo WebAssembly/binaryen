@@ -230,7 +230,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_nearest_f32(var$0) {
-  var var$1 = Math_fround(0), var$2 = Math_fround(0), wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
+  var var$1 = Math_fround(0), var$2 = Math_fround(0);
   var$1 = Math_fround(Math_floor(var$0));
   var$2 = Math_fround(var$0 - var$1);
   if (!(var$2 < Math_fround(.5))) {
@@ -240,14 +240,14 @@ function asmFunc(global, env, buffer) {
      return var$0
     }
     var$2 = Math_fround(var$1 * Math_fround(.5));
-    var$1 = (wasm2js_f32$0 = var$1, wasm2js_f32$1 = var$0, wasm2js_i32$0 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1);
+    var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
    }
   }
   return var$1;
  }
  
  function __wasm_nearest_f64(var$0) {
-  var var$1 = 0.0, var$2 = 0.0, wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
+  var var$1 = 0.0, var$2 = 0.0;
   var$1 = Math_floor(var$0);
   var$2 = var$0 - var$1;
   if (!(var$2 < .5)) {
@@ -257,20 +257,18 @@ function asmFunc(global, env, buffer) {
      return var$0
     }
     var$2 = var$1 * .5;
-    var$1 = (wasm2js_f64$0 = var$1, wasm2js_f64$1 = var$0, wasm2js_i32$0 = var$2 - Math_floor(var$2) == 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
+    var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
    }
   }
   return var$1;
  }
  
  function __wasm_trunc_f32(var$0) {
-  var wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
-  return wasm2js_f32$0 = Math_fround(Math_ceil(var$0)), wasm2js_f32$1 = Math_fround(Math_floor(var$0)), wasm2js_i32$0 = var$0 < Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1;
+  return var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0));
  }
  
  function __wasm_trunc_f64(var$0) {
-  var wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
-  return wasm2js_f64$0 = Math_ceil(var$0), wasm2js_f64$1 = Math_floor(var$0), wasm2js_i32$0 = var$0 < 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1;
+  return var$0 < 0.0 ? Math_ceil(var$0) : Math_floor(var$0);
  }
  
  var FUNCTION_TABLE = [];
