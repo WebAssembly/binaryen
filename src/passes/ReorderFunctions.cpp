@@ -22,16 +22,15 @@
 // This may incur a tradeoff, though, as while it reduces binary size, it may
 // increase gzip size. This might be because the new order has the functions in
 // a less beneficial position for compression, that is, mutually-compressible
-// functions are no longer together (when they were before, in the original order,
-// the has some natural tendency one way or the other). TODO: investigate
+// functions are no longer together (when they were before, in the original
+// order, the has some natural tendency one way or the other). TODO: investigate
 // similarity ordering here.
 //
 
-
 #include <memory>
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -42,12 +41,11 @@ struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
 
   CallCountScanner(NameCountMap* counts) : counts(counts) {}
 
-  CallCountScanner* create() override {
-    return new CallCountScanner(counts);
-  }
+  CallCountScanner* create() override { return new CallCountScanner(counts); }
 
   void visitCall(Call* curr) {
-    assert(counts->count(curr->target) > 0); // can't add a new element in parallel
+    // can't add a new element in parallel
+    assert(counts->count(curr->target) > 0);
     (*counts)[curr->target]++;
   }
 
@@ -58,7 +56,8 @@ private:
 struct ReorderFunctions : public Pass {
   void run(PassRunner* runner, Module* module) override {
     NameCountMap counts;
-    // fill in info, as we operate on it in parallel (each function to its own entry)
+    // fill in info, as we operate on it in parallel (each function to its own
+    // entry)
     for (auto& func : module->functions) {
       counts[func->name];
     }
@@ -82,19 +81,18 @@ struct ReorderFunctions : public Pass {
       }
     }
     // sort
-    std::sort(module->functions.begin(), module->functions.end(), [&counts](
-      const std::unique_ptr<Function>& a,
-      const std::unique_ptr<Function>& b) -> bool {
-      if (counts[a->name] == counts[b->name]) {
-        return strcmp(a->name.str, b->name.str) > 0;
-      }
-      return counts[a->name] > counts[b->name];
-    });
+    std::sort(module->functions.begin(),
+              module->functions.end(),
+              [&counts](const std::unique_ptr<Function>& a,
+                        const std::unique_ptr<Function>& b) -> bool {
+                if (counts[a->name] == counts[b->name]) {
+                  return strcmp(a->name.str, b->name.str) > 0;
+                }
+                return counts[a->name] > counts[b->name];
+              });
   }
 };
 
-Pass *createReorderFunctionsPass() {
-  return new ReorderFunctions();
-}
+Pass* createReorderFunctionsPass() { return new ReorderFunctions(); }
 
 } // namespace wasm

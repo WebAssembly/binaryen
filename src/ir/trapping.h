@@ -23,11 +23,7 @@
 
 namespace wasm {
 
-enum class TrapMode {
-  Allow,
-  Clamp,
-  JS
-};
+enum class TrapMode { Allow, Clamp, JS };
 
 inline void addTrapModePass(PassRunner& runner, TrapMode trapMode) {
   if (trapMode == TrapMode::Clamp) {
@@ -39,17 +35,13 @@ inline void addTrapModePass(PassRunner& runner, TrapMode trapMode) {
 
 class TrappingFunctionContainer {
 public:
-  TrappingFunctionContainer(TrapMode mode, Module &wasm, bool immediate = false)
-    : mode(mode),
-      wasm(wasm),
-      immediate(immediate) { }
+  TrappingFunctionContainer(TrapMode mode, Module& wasm, bool immediate = false)
+    : mode(mode), wasm(wasm), immediate(immediate) {}
 
   bool hasFunction(Name name) {
     return functions.find(name) != functions.end();
   }
-  bool hasImport(Name name) {
-    return imports.find(name) != imports.end();
-  }
+  bool hasImport(Name name) { return imports.find(name) != imports.end(); }
 
   void addFunction(Function* function) {
     functions[function->name] = function;
@@ -66,10 +58,10 @@ public:
 
   void addToModule() {
     if (!immediate) {
-      for (auto &pair : functions) {
+      for (auto& pair : functions) {
         wasm.addFunction(pair.second);
       }
-      for (auto &pair : imports) {
+      for (auto& pair : imports) {
         wasm.addFunction(pair.second);
       }
     }
@@ -77,17 +69,11 @@ public:
     imports.clear();
   }
 
-  TrapMode getMode() {
-    return mode;
-  }
+  TrapMode getMode() { return mode; }
 
-  Module& getModule() {
-    return wasm;
-  }
+  Module& getModule() { return wasm; }
 
-  std::map<Name, Function*>& getFunctions() {
-    return functions;
-  }
+  std::map<Name, Function*>& getFunctions() { return functions; }
 
 private:
   std::map<Name, Function*> functions;
@@ -98,8 +84,10 @@ private:
   bool immediate;
 };
 
-Expression* makeTrappingBinary(Binary* curr, TrappingFunctionContainer &trappingFunctions);
-Expression* makeTrappingUnary(Unary* curr, TrappingFunctionContainer &trappingFunctions);
+Expression* makeTrappingBinary(Binary* curr,
+                               TrappingFunctionContainer& trappingFunctions);
+Expression* makeTrappingUnary(Unary* curr,
+                              TrappingFunctionContainer& trappingFunctions);
 
 inline TrapMode trapModeFromString(std::string const& str) {
   if (str == "allow") {
@@ -110,11 +98,12 @@ inline TrapMode trapModeFromString(std::string const& str) {
     return TrapMode::JS;
   } else {
     throw std::invalid_argument(
-      "Unsupported trap mode \"" + str + "\". "
+      "Unsupported trap mode \"" + str +
+      "\". "
       "Valid modes are \"allow\", \"js\", and \"clamp\"");
   }
 }
 
-} // wasm
+} // namespace wasm
 
 #endif // wasm_ir_trapping_h
