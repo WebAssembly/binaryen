@@ -536,7 +536,7 @@ def print_header():
   print("// clang-format off\n")
 
 
-def print_footer();
+def print_footer():
   print("// clang-format on\n")
 
 
