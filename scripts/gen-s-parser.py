@@ -537,7 +537,7 @@ def print_header():
 
 
 def print_footer():
-  print("// clang-format on\n")
+  print("\n// clang-format on")
 
 
 def generate_with_guard(generator, guard):

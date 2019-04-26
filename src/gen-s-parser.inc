@@ -2262,5 +2262,5 @@ switch (op[0]) {
 parse_error:
   throw ParseException(std::string(op));
 #endif // INSTRUCTION_PARSER
-// clang-format on
 
+// clang-format on
