@@ -9,4 +9,5 @@ then
   echo
   # Run clang-tidy once again to show the error
   git diff -U0 $MERGE_BASE | $CLANG_TIDY_DIFF -quiet -p1
+  exit 1
 fi
