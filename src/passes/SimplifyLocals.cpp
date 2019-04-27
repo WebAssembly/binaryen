@@ -216,7 +216,7 @@ struct SimplifyLocals
     }
   }
 
-  void handleGetLocal(GetLocal* curr) {
+  void optimizeGetLocal(GetLocal* curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
       auto* set = (*found->second.item)
@@ -263,7 +263,9 @@ struct SimplifyLocals
       ExpressionManipulator::nop(curr);
       sinkables.erase(found);
       anotherCycle = true;
+      return;
     }
+    return;
   }
 
   void visitDrop(Drop* curr) {
@@ -311,9 +313,9 @@ struct SimplifyLocals
   static void
   visitPost(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
             Expression** currp) {
-    // Note the original current node, before we handle a get local, which
-    // may end up replacing the node. This is important for invalidations
-    // later: in the simple case, all current sinkables are compatible with
+    // Handling invalidations in the case where the current node is a get
+    // that we sink into is not trivial in general. In the simple case,
+    // all current sinkables are compatible with
     // each other (otherwise one would have invalidated a previous one, and
     // removed it). Given that, if we sink one of the sinkables, then that
     // new code cannot invalidate any other sinkable. However, a tricky case
@@ -348,12 +350,20 @@ struct SimplifyLocals
     // invalidation on the original node, the local.get $y, which is guaranteed
     // to invalidate the parent whose inner part was removed (since the inner
     // part has a set, and the original node is a get of that same local).
+    //
+    // To implement this, if the current node is a get, note it and use it
+    // for invalidations later down. We must note it since optimizing the get
+    // may perform arbitrary changes to the graph, including reuse the get.
 
-    auto* original = *currp;
+    Expression* original = *currp;
 
-    // No visitor for GetLocal so that we can handle it here.
+    GetLocal originalGet;
+
     if (auto* get = (*currp)->dynCast<GetLocal>()) {
-      self->handleGetLocal(get);
+      // Note: no visitor for GetLocal, so that we can handle it here.
+      originalGet = *get;
+      original = &originalGet;
+      self->optimizeGetLocal(get);
     }
 
     // perform main SetLocal processing here, since we may be the result of
