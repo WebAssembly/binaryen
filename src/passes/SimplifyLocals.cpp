@@ -263,9 +263,7 @@ struct SimplifyLocals
       ExpressionManipulator::nop(curr);
       sinkables.erase(found);
       anotherCycle = true;
-      return;
     }
-    return;
   }
 
   void visitDrop(Drop* curr) {
