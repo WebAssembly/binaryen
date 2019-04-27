@@ -105,12 +105,14 @@ int main(int argc, const char* argv[]) {
   Module wasm;
 
   try {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "s-parsing..." << std::endl;
+    }
     SExpressionParser parser(const_cast<char*>(input.c_str()));
     Element& root = *parser.root;
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "w-parsing..." << std::endl;
+    }
     SExpressionWasmBuilder builder(wasm, *root[0]);
   } catch (ParseException& p) {
     p.dump(std::cerr);
@@ -120,8 +122,9 @@ int main(int argc, const char* argv[]) {
   options.applyFeatures(wasm);
 
   if (options.extra["validate"] != "none") {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "Validating..." << std::endl;
+    }
     if (!wasm::WasmValidator().validate(
           wasm,
           WasmValidator::Globally |
@@ -131,8 +134,9 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "writing..." << std::endl;
+  }
   ModuleWriter writer;
   writer.setBinary(true);
   writer.setDebugInfo(debugInfo);
@@ -145,6 +149,7 @@ int main(int argc, const char* argv[]) {
   }
   writer.write(wasm, options.extra["output"]);
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "Done." << std::endl;
+  }
 }

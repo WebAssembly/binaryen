@@ -208,8 +208,9 @@ struct LoopInvariantCodeMotion
     if (auto* set = curr->dynCast<SetLocal>()) {
       while (1) {
         auto* next = set->value->dynCast<SetLocal>();
-        if (!next)
+        if (!next) {
           break;
+        }
         set = next;
       }
       if (set->value->is<GetLocal>() || set->value->is<Const>()) {
@@ -226,8 +227,9 @@ struct LoopInvariantCodeMotion
       for (auto* set : sets) {
         // nullptr means a parameter or zero-init value;
         // no danger to us.
-        if (!set)
+        if (!set) {
           continue;
+        }
         // Check if the set is in the loop. If not, it's either before,
         // which is fine, or after, which is also fine - moving curr
         // to just outside the loop will preserve those relationships.

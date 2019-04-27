@@ -606,8 +606,9 @@ int main(int argc, const char* argv[]) {
                       o->extra["infile"] = argument;
                     });
   options.parse(argc, argv);
-  if (options.debug)
+  if (options.debug) {
     flags.debug = true;
+  }
 
   Element* root = nullptr;
   Module wasm;
@@ -640,13 +641,15 @@ int main(int argc, const char* argv[]) {
                                               Flags::Text,
                                               options.debug ? Flags::Debug
                                                             : Flags::Release));
-      if (options.debug)
+      if (options.debug) {
         std::cerr << "s-parsing..." << std::endl;
+      }
       sexprParser = make_unique<SExpressionParser>(input.data());
       root = sexprParser->root;
 
-      if (options.debug)
+      if (options.debug) {
         std::cerr << "w-parsing..." << std::endl;
+      }
       sexprBuilder = make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0]);
     }
   } catch (ParseException& p) {
@@ -664,8 +667,9 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "j-printing..." << std::endl;
+  }
   Output output(options.extra["output"],
                 Flags::Text,
                 options.debug ? Flags::Debug : Flags::Release);
@@ -676,6 +680,7 @@ int main(int argc, const char* argv[]) {
     emitWasm(wasm, output, flags, options.passOptions, "asmFunc");
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "done." << std::endl;
+  }
 }

@@ -43,8 +43,9 @@ void PassRegistry::registerPass(const char* name,
 }
 
 Pass* PassRegistry::createPass(std::string name) {
-  if (passInfos.find(name) == passInfos.end())
+  if (passInfos.find(name) == passInfos.end()) {
     return nullptr;
+  }
   auto ret = passInfos[name].create();
   ret->name = name;
   return ret;

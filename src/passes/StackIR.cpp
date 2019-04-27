@@ -94,8 +94,9 @@ private:
     bool inUnreachableCode = false;
     for (Index i = 0; i < insts.size(); i++) {
       auto* inst = insts[i];
-      if (!inst)
+      if (!inst) {
         continue;
+      }
       if (inUnreachableCode) {
         // Does the unreachable code end here?
         if (isControlFlowBarrier(inst)) {
@@ -143,8 +144,9 @@ private:
 #endif
     for (Index i = 0; i < insts.size(); i++) {
       auto* inst = insts[i];
-      if (!inst)
+      if (!inst) {
         continue;
+      }
       // First, consume values from the stack as required.
       auto consumed = getNumConsumedValues(inst);
 #ifdef STACK_OPT_DEBUG
@@ -194,8 +196,9 @@ private:
             while (1) {
               // If there's an actual value in the way, we've failed.
               auto index = values[j];
-              if (index == null)
+              if (index == null) {
                 break;
+              }
               auto* set = insts[index]->origin->cast<SetLocal>();
               if (set->index == get->index) {
                 // This might be a proper set-get pair, where the set is
@@ -224,8 +227,9 @@ private:
                 }
               }
               // We failed here. Can we look some more?
-              if (j == 0)
+              if (j == 0) {
                 break;
+              }
               j--;
             }
           }
@@ -247,8 +251,9 @@ private:
   //       a branch to that if body
   void removeUnneededBlocks() {
     for (auto*& inst : insts) {
-      if (!inst)
+      if (!inst) {
         continue;
+      }
       if (auto* block = inst->origin->dynCast<Block>()) {
         if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
           // TODO optimize, maybe run remove-unused-names

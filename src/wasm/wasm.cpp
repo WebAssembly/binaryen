@@ -185,11 +185,13 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
-      if (name == targetName)
+      if (name == targetName) {
         types.push_back(curr->value ? curr->value->type : none);
+      }
     }
-    if (curr->default_ == targetName)
+    if (curr->default_ == targetName) {
       types.push_back(curr->value ? curr->value->type : none);
+    }
   }
 
   void visitBlock(Block* curr) {
@@ -243,15 +245,18 @@ static Type mergeTypes(std::vector<Type>& types) {
 static void handleUnreachable(Block* block,
                               bool breakabilityKnown = false,
                               bool hasBreak = false) {
-  if (block->type == unreachable)
+  if (block->type == unreachable) {
     return; // nothing to do
-  if (block->list.size() == 0)
+  }
+  if (block->list.size() == 0) {
     return; // nothing to do
+  }
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
   // or the final child flows out a value)
-  if (isConcreteType(block->type))
+  if (isConcreteType(block->type)) {
     return;
+  }
   // look for an unreachable child
   for (auto* child : block->list) {
     if (child->type == unreachable) {
@@ -280,11 +285,13 @@ void Block::finalize() {
       //  (return)
       //  (i32.const 10)
       // )
-      if (isConcreteType(type))
+      if (isConcreteType(type)) {
         return;
+      }
       // if we are unreachable, we are done
-      if (type == unreachable)
+      if (type == unreachable) {
         return;
+      }
       // we may still be unreachable if we have an unreachable
       // child
       for (auto* child : list) {
@@ -398,20 +405,24 @@ void CallIndirect::finalize() {
 }
 
 bool FunctionType::structuralComparison(FunctionType& b) {
-  if (result != b.result)
+  if (result != b.result) {
     return false;
-  if (params.size() != b.params.size())
+  }
+  if (params.size() != b.params.size()) {
     return false;
+  }
   for (size_t i = 0; i < params.size(); i++) {
-    if (params[i] != b.params[i])
+    if (params[i] != b.params[i]) {
       return false;
+    }
   }
   return true;
 }
 
 bool FunctionType::operator==(FunctionType& b) {
-  if (name != b.name)
+  if (name != b.name) {
     return false;
+  }
   return structuralComparison(b);
 }
 bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
@@ -419,10 +430,11 @@ bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
 bool SetLocal::isTee() { return type != none; }
 
 void SetLocal::setTee(bool is) {
-  if (is)
+  if (is) {
     type = value->type;
-  else
+  } else {
     type = none;
+  }
   finalize(); // type may need to be unreachable
 }
 

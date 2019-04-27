@@ -36,8 +36,9 @@ std::string getPathSeparator() {
 
 std::string getBinaryenRoot() {
   auto* envVar = getenv("BINARYEN_ROOT");
-  if (envVar)
+  if (envVar) {
     return envVar;
+  }
   return ".";
 }
 

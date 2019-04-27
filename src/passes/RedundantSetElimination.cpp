@@ -145,12 +145,14 @@ struct RedundantSetElimination
 
   bool isBlockMergeValue(BasicBlock* block, Index index, Index value) {
     auto iter = blockMergeValues.find(block);
-    if (iter == blockMergeValues.end())
+    if (iter == blockMergeValues.end()) {
       return false;
+    }
     auto& mergeValues = iter->second;
     auto iter2 = mergeValues.find(index);
-    if (iter2 == mergeValues.end())
+    if (iter2 == mergeValues.end()) {
       return false;
+    }
     return value == iter2->second;
   }
 
