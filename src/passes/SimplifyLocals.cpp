@@ -313,10 +313,10 @@ struct SimplifyLocals
             Expression** currp) {
     // Handling invalidations in the case where the current node is a get
     // that we sink into is not trivial in general. In the simple case,
-    // all current sinkables are compatible with
-    // each other (otherwise one would have invalidated a previous one, and
-    // removed it). Given that, if we sink one of the sinkables, then that
-    // new code cannot invalidate any other sinkable. However, a tricky case
+    // all current sinkables are compatible with each other (otherwise one
+    // would have invalidated a previous one, and removed it). Given that, if
+    // we sink one of the sinkables, then that new code cannot invalidate any
+    // other sinkable - we've already compared them. However, a tricky case
     // is when a sinkable contains another sinkable,
     //
     //  (local.set $x
