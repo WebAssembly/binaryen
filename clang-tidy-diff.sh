@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # In settings in which build directory is different than binaryen/, we don't
-# don't have this file in binaryen/, so we skip the test.
+# have this file in binaryen/, so we skip the test.
 if [ ! -f compile_commands.json ]
   exit 0
 fi
