@@ -1,4 +1,11 @@
 #!/bin/bash
+
+# In settings in which build directory is different than binaryen/, we don't
+# don't have this file in binaryen/, so we skip the test.
+if [ ! -f compile_commands.json ]
+  exit 0
+fi
+
 CLANG_DIR=$(dirname $(dirname $(which clang-tidy)))
 CLANG_TIDY_DIFF=$CLANG_DIR/share/clang/clang-tidy-diff.py
 MERGE_BASE=$(git merge-base master HEAD)
