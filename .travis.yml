@@ -60,8 +60,7 @@ jobs:
         - set -o errexit
         - flake8
         - ./clang-format-diff.sh
-        - which clang-tidy
-        - ls /usr/local/clang-5.0.0/share/clang/clang-tidy-diff.py
+        - ./clang-tidy-diff.sh
         # ensure generated parser is up to date
         - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
