@@ -59,20 +59,16 @@ jobs:
       script:
         - set -o errexit
         - flake8
-        - pwd
-        - ls
         - ./clang-format-diff.sh
         # ensure generated parser is up to date
         - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
         - mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
         - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_INSTALL_PREFIX=install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        - pwd
-        - ls
-        - ls /home/travis/build/WebAssembly/binaryen
-        - make -j2 install
         - cd ${TRAVIS_BUILD_DIR}
         - ./clang-tidy-diff.sh
+        - cd -
+        - make -j2 install
         - ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
 
     - <<: *test-ubuntu
