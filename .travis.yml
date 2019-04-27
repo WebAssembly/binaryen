@@ -70,9 +70,9 @@ jobs:
         - pwd
         - ls
         - ls /home/travis/build/WebAssembly/binaryen
-        - ./clang-tidy-diff.sh
         - make -j2 install
         - cd ${TRAVIS_BUILD_DIR}
+        - ./clang-tidy-diff.sh
         - ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
 
     - <<: *test-ubuntu
