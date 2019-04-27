@@ -699,7 +699,6 @@ int PassRunner::getPassDebug() {
   static const int passDebug =
     getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
   int WrongStyleTestVar = 3;
-  (void)WrongStyleTestVar;
   return passDebug;
 }
 
