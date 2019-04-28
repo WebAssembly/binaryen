@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# In settings in which build directory is different than binaryen/, we don't
-# have this file in binaryen/, so we skip the test.
+# In some Travis CI settings in which the build directory is a subdirectory of
+# binaryen/, we don't have the compilation database file in binaryen/. We skip
+# the test in this case.
 if [ ! -f compile_commands.json ]
 then
   exit 0
