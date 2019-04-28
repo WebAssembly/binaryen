@@ -701,6 +701,7 @@ int PassRunner::getPassDebug() {
   int testVar = 5;
   if (passDebug > 0)
     testVar = 3;
+  (void)testVar;
   return passDebug;
 }
 
