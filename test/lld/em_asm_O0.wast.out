@@ -34,16 +34,16 @@
    )
   )
   (local.set $t1
-   (i32.const 621)
+   (i32.const 2)
   )
   (local.set $t2
-   (i32.const 601)
+   (i32.const 1)
   )
   (drop
    (call $emscripten_asm_const_ii
-    (i32.const 2)
+    (local.get $t1)
     (call $emscripten_asm_const_iii
-     (i32.const 1)
+     (local.get $t2)
      (i32.const 13)
      (i32.const 27)
     )
@@ -123,6 +123,13 @@
   "invokeFuncs": [
   ],
   "features": [
+    "--mvp-features",
+    "--enable-threads",
+    "--enable-bulk-memory",
+    "--enable-mutable-globals",
+    "--enable-nontrapping-float-to-int",
+    "--enable-sign-ext",
+    "--enable-simd"
   ]
 }
 -- END METADATA --

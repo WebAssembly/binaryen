@@ -57,6 +57,7 @@ SET(passes_SOURCES
   ReorderFunctions.cpp
   TrapMode.cpp
   SafeHeap.cpp
+  SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
   SpillPointers.cpp

@@ -85,6 +85,7 @@ Pass* createReReloopPass();
 Pass* createRedundantSetEliminationPass();
 Pass* createSafeHeapPass();
 Pass* createSimplifyLocalsPass();
+Pass* createSimplifyGlobalsPass();
 Pass* createSimplifyLocalsNoNestingPass();
 Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();
