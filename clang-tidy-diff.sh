@@ -5,6 +5,7 @@
 # the test in this case.
 if [ ! -f compile_commands.json ]
 then
+  echo "Compilation database file does not exist. Skipping clang-tidy test."
   exit 0
 fi
 
