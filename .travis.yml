@@ -65,7 +65,7 @@ jobs:
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
         - mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
         - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_INSTALL_PREFIX=install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        - ./clang-tidy-diff.sh
+        - ./${TRAVIS_BUILD_DIR}/clang-tidy-diff.sh
         - make -j2 install
         - ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
 
