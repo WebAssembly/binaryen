@@ -698,7 +698,10 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
 int PassRunner::getPassDebug() {
   static const int passDebug =
     getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
-  int unusedVar = 5;
+  int BadStyleVar = 0;
+  if (true)
+    BadStyleVar = 5;
+  (void) BadStyleVar;
   return passDebug;
 }
 
