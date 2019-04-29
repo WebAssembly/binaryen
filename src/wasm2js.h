@@ -287,6 +287,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // optimize that a little in a way that keeps flat property.
     runner.add("flatten");
     runner.add("simplify-locals-notee-nostructure");
+    // TODO: coalesce-locals?
     runner.add("reorder-locals");
     runner.add("remove-unused-names");
     runner.add("vacuum");
