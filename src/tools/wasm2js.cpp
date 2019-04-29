@@ -244,6 +244,10 @@ static void optimizeJS(Ref ast) {
     else if (isPlus(node)) {
       node[2] = removePlus(node[2]);
     }
+    // +(+x) => +x
+    else if (isFround(node)) {
+      node[2] = removePlusAndFround(node[2]);
+    }
     // Assignment into a heap coerces.
     else if (node->isAssign()) {
       auto assign = node->asAssign();
