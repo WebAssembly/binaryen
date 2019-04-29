@@ -48,6 +48,9 @@ function asmFunc(global, env, buffer) {
   HEAP8[128 | 0];
   HEAPU16[128 >> 1];
   HEAP16[128 >> 1];
+  HEAP32[16 >> 2] = 1 + 2;
+  HEAPF32[16 >> 2] = Math_fround(3.0) + Math_fround(4.0);
+  HEAPF64[16 >> 3] = 5.0 + 6.0;
  }
  
  function __growWasmMemory($0) {

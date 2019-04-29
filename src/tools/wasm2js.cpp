@@ -129,7 +129,7 @@ static void traversePost(Ref node, std::function<void(Ref)> visit) {
 }
 
 static void optimizeJS(Ref ast) {
-  // helpers
+  // Helpers
 
   auto isOrZero = [](Ref node) {
     return node->isArray() && !node->empty() && node[0] == BINARY &&
@@ -141,6 +141,11 @@ static void optimizeJS(Ref ast) {
            node[1] == PLUS;
   };
 
+  auto isFround = [](Ref node) {
+    return node->isArray() && !node->empty() && node[0] == cashew::CALL &&
+           node[1] == MATH_FROUND;
+  };
+
   auto isBitwise = [](Ref node) {
     if (node->isArray() && !node->empty() && node[0] == BINARY) {
       auto op = node[1];
@@ -149,6 +154,57 @@ static void optimizeJS(Ref ast) {
     }
     return false;
   };
+
+  auto removeOrZero = [&](Ref node) {
+    while (isOrZero(node)) {
+      node = node[2];
+    }
+    return node;
+  };
+
+  auto removePlus = [&](Ref node) {
+    while (isPlus(node)) {
+      node = node[2];
+    }
+    return node;
+  };
+
+  auto removePlusAndFround = [&](Ref node) {
+    while (1) {
+      if (isFround(node)) {
+        node = node[2][0];
+      } else if (isPlus(node)) {
+        node = node[2];
+      } else {
+        break;
+      }
+    }
+    return node;
+  };
+
+  auto getHeapFromAccess = [](Ref node) {
+    return node[1]->getIString();
+  };
+
+  auto isIntegerHeap = [](IString heap) {
+    return heap == HEAP8 || heap == HEAPU8 ||
+           heap == HEAP16 || heap == HEAPU16 ||
+           heap == HEAP32 || heap == HEAPU32;
+  };
+
+  auto isFloatHeap = [](IString heap) {
+    return heap == HEAPF32 || heap == HEAPF64;
+  };
+
+  auto isHeapAccess = [&](Ref node) {
+    if (node->isArray() && !node->empty() && node[0] == SUB && node[1]->isString()) {
+      auto heap = getHeapFromAccess(node);
+      return isIntegerHeap(heap) || isFloatHeap(heap);
+    }
+    return false;
+  };
+
+  // Optimizations
 
   // x >> 0  =>  x | 0
   traversePost(ast, [](Ref node) {
@@ -175,17 +231,28 @@ static void optimizeJS(Ref ast) {
     }
     // x | 0 going into a bitwise op => skip the | 0
     else if (isBitwise(node)) {
-      while (isOrZero(node[2])) {
-        node[2] = node[2][2];
-      }
-      while (isOrZero(node[3])) {
-        node[3] = node[3][2];
-      }
+      node[2] = removeOrZero(node[2]);
+      node[3] = removeOrZero(node[3]);
     }
     // +(+x) => +x
     else if (isPlus(node)) {
-      while (isPlus(node[2])) {
-        node[2] = node[2][2];
+      node[2] = removePlus(node[2]);
+    } else if (node->isAssign()) {
+      // Assignment into a heap coerces.
+      auto assign = node->asAssign();
+      auto target = assign->target();
+      if (isHeapAccess(target)) {
+        auto heap = getHeapFromAccess(target);
+        if (isIntegerHeap(heap)) {
+          assign->value() = removeOrZero(assign->value());
+        } else {
+          assert(isFloatHeap(heap));
+          if (heap == HEAPF32) {
+            assign->value() = removePlusAndFround(assign->value());
+          } else {
+            assign->value() = removePlus(assign->value());
+          }
+        }
       }
     }
   });
