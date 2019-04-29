@@ -21,90 +21,90 @@
 
 namespace wasm {
 
-extern cashew::IString GLOBAL,
-                NAN_,
-                INFINITY_,
-                NAN__,
-                INFINITY__,
-                TOPMOST,
-                INT8ARRAY,
-                INT16ARRAY,
-                INT32ARRAY,
-                UINT8ARRAY,
-                UINT16ARRAY,
-                UINT32ARRAY,
-                FLOAT32ARRAY,
-                FLOAT64ARRAY,
-                ARRAY_BUFFER,
-                ASM_MODULE,
-                IMPOSSIBLE_CONTINUE,
-                MATH,
-                IMUL,
-                CLZ32,
-                FROUND,
-                ASM2WASM,
-                MIN,
-                MAX,
-                F64_REM,
-                F64_TO_INT,
-                F64_TO_UINT,
-                F64_TO_INT64,
-                F64_TO_UINT64,
-                F32_TO_INT,
-                F32_TO_UINT,
-                F32_TO_INT64,
-                F32_TO_UINT64,
-                I32S_DIV,
-                I32U_DIV,
-                I32S_REM,
-                I32U_REM,
-                GLOBAL_MATH,
-                ABS,
-                FLOOR,
-                CEIL,
-                SQRT,
-                POW,
-                I32_TEMP,
-                DEBUGGER,
-                USE_ASM,
-                ALMOST_ASM,
-                BUFFER,
-                ENV,
-                STACKTOP,
-                STACK_MAX,
-                INSTRUMENT,
-                MATH_IMUL,
-                MATH_ABS,
-                MATH_CEIL,
-                MATH_CLZ32,
-                MATH_FLOOR,
-                MATH_TRUNC,
-                MATH_SQRT,
-                MATH_MIN,
-                MATH_MAX,
-                WASM_CTZ32,
-                WASM_CTZ64,
-                WASM_CLZ32,
-                WASM_CLZ64,
-                WASM_POPCNT32,
-                WASM_POPCNT64,
-                WASM_ROTL32,
-                WASM_ROTL64,
-                WASM_ROTR32,
-                WASM_ROTR64,
-                WASM_GROW_MEMORY,
-                WASM_CURRENT_MEMORY,
-                WASM_FETCH_HIGH_BITS,
-                INT64_TO_32_HIGH_BITS,
-                WASM_NEAREST_F32,
-                WASM_NEAREST_F64,
-                WASM_TRUNC_F32,
-                WASM_TRUNC_F64,
-                WASM_I64_MUL,
-                WASM_I64_SDIV,
-                WASM_I64_UDIV,
-                WASM_I64_SREM,
-                WASM_I64_UREM;
-}
+extern cashew::IString GLOBAL;
+extern cashew::IString NAN_;
+extern cashew::IString INFINITY_;
+extern cashew::IString NAN__;
+extern cashew::IString INFINITY__;
+extern cashew::IString TOPMOST;
+extern cashew::IString INT8ARRAY;
+extern cashew::IString INT16ARRAY;
+extern cashew::IString INT32ARRAY;
+extern cashew::IString UINT8ARRAY;
+extern cashew::IString UINT16ARRAY;
+extern cashew::IString UINT32ARRAY;
+extern cashew::IString FLOAT32ARRAY;
+extern cashew::IString FLOAT64ARRAY;
+extern cashew::IString ARRAY_BUFFER;
+extern cashew::IString ASM_MODULE;
+extern cashew::IString IMPOSSIBLE_CONTINUE;
+extern cashew::IString MATH;
+extern cashew::IString IMUL;
+extern cashew::IString CLZ32;
+extern cashew::IString FROUND;
+extern cashew::IString ASM2WASM;
+extern cashew::IString MIN;
+extern cashew::IString MAX;
+extern cashew::IString F64_REM;
+extern cashew::IString F64_TO_INT;
+extern cashew::IString F64_TO_UINT;
+extern cashew::IString F64_TO_INT64;
+extern cashew::IString F64_TO_UINT64;
+extern cashew::IString F32_TO_INT;
+extern cashew::IString F32_TO_UINT;
+extern cashew::IString F32_TO_INT64;
+extern cashew::IString F32_TO_UINT64;
+extern cashew::IString I32S_DIV;
+extern cashew::IString I32U_DIV;
+extern cashew::IString I32S_REM;
+extern cashew::IString I32U_REM;
+extern cashew::IString GLOBAL_MATH;
+extern cashew::IString ABS;
+extern cashew::IString FLOOR;
+extern cashew::IString CEIL;
+extern cashew::IString SQRT;
+extern cashew::IString POW;
+extern cashew::IString I32_TEMP;
+extern cashew::IString DEBUGGER;
+extern cashew::IString USE_ASM;
+extern cashew::IString ALMOST_ASM;
+extern cashew::IString BUFFER;
+extern cashew::IString ENV;
+extern cashew::IString STACKTOP;
+extern cashew::IString STACK_MAX;
+extern cashew::IString INSTRUMENT;
+extern cashew::IString MATH_IMUL;
+extern cashew::IString MATH_ABS;
+extern cashew::IString MATH_CEIL;
+extern cashew::IString MATH_CLZ32;
+extern cashew::IString MATH_FLOOR;
+extern cashew::IString MATH_TRUNC;
+extern cashew::IString MATH_SQRT;
+extern cashew::IString MATH_MIN;
+extern cashew::IString MATH_MAX;
+extern cashew::IString WASM_CTZ32;
+extern cashew::IString WASM_CTZ64;
+extern cashew::IString WASM_CLZ32;
+extern cashew::IString WASM_CLZ64;
+extern cashew::IString WASM_POPCNT32;
+extern cashew::IString WASM_POPCNT64;
+extern cashew::IString WASM_ROTL32;
+extern cashew::IString WASM_ROTL64;
+extern cashew::IString WASM_ROTR32;
+extern cashew::IString WASM_ROTR64;
+extern cashew::IString WASM_GROW_MEMORY;
+extern cashew::IString WASM_CURRENT_MEMORY;
+extern cashew::IString WASM_FETCH_HIGH_BITS;
+extern cashew::IString INT64_TO_32_HIGH_BITS;
+extern cashew::IString WASM_NEAREST_F32;
+extern cashew::IString WASM_NEAREST_F64;
+extern cashew::IString WASM_TRUNC_F32;
+extern cashew::IString WASM_TRUNC_F64;
+extern cashew::IString WASM_I64_MUL;
+extern cashew::IString WASM_I64_SDIV;
+extern cashew::IString WASM_I64_UDIV;
+extern cashew::IString WASM_I64_SREM;
+extern cashew::IString WASM_I64_UREM;
+} // namespace wasm
 
 #endif // wasm_asmjs_shared_constants_h

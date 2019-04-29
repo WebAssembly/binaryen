@@ -22,13 +22,13 @@
 
 #include <unordered_map>
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
-#include "wasm-traversal.h"
 #include "asm_v_wasm.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -64,11 +64,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
         return;
       }
       // Everything looks good!
-      replaceCurrent(Builder(*getModule()).makeCall(
-        name,
-        curr->operands,
-        curr->type
-      ));
+      replaceCurrent(
+        Builder(*getModule()).makeCall(name, curr->operands, curr->type));
     }
   }
 
@@ -88,25 +85,25 @@ private:
     for (auto*& operand : call->operands) {
       operand = builder.makeDrop(operand);
     }
-    replaceCurrent(
-      builder.makeSequence(
-        builder.makeBlock(call->operands),
-        builder.makeUnreachable()
-      )
-    );
+    replaceCurrent(builder.makeSequence(builder.makeBlock(call->operands),
+                                        builder.makeUnreachable()));
     changedTypes = true;
   }
 };
 
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    if (!module->table.exists) return;
-    if (module->table.imported()) return;
+    if (!module->table.exists)
+      return;
+    if (module->table.imported())
+      return;
     for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Table) return;
+      if (ex->kind == ExternalKind::Table)
+        return;
     }
     FlatTable flatTable(module->table);
-    if (!flatTable.valid) return;
+    if (!flatTable.valid)
+      return;
     // The table exists and is constant, so this is possible.
     {
       PassRunner runner(module);
@@ -119,9 +116,6 @@ struct Directize : public Pass {
 
 } // anonymous namespace
 
-Pass *createDirectizePass() {
-  return new Directize();
-}
+Pass* createDirectizePass() { return new Directize(); }
 
 } // namespace wasm
-

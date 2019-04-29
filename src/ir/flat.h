@@ -55,8 +55,9 @@
 #ifndef wasm_ir_flat_h
 #define wasm_ir_flat_h
 
-#include "wasm-traversal.h"
 #include "ir/iteration.h"
+#include "pass.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 
@@ -67,23 +68,29 @@ inline bool isControlFlowStructure(Expression* curr) {
 }
 
 inline void verifyFlatness(Function* func) {
-  struct VerifyFlatness : public PostWalker<VerifyFlatness, UnifiedExpressionVisitor<VerifyFlatness>> {
+  struct VerifyFlatness
+    : public PostWalker<VerifyFlatness,
+                        UnifiedExpressionVisitor<VerifyFlatness>> {
     void visitExpression(Expression* curr) {
       if (isControlFlowStructure(curr)) {
-        verify(!isConcreteType(curr->type), "control flow structures must not flow values");
+        verify(!isConcreteType(curr->type),
+               "control flow structures must not flow values");
       } else if (curr->is<SetLocal>()) {
         verify(!isConcreteType(curr->type), "tees are not allowed, only sets");
       } else {
         for (auto* child : ChildIterator(curr)) {
-          verify(child->is<Const>() || child->is<GetLocal>() || child->is<Unreachable>(),
-                 "instructions must only have const, local.get, or unreachable as children");
+          verify(child->is<Const>() || child->is<GetLocal>() ||
+                   child->is<Unreachable>(),
+                 "instructions must only have const, local.get, or unreachable "
+                 "as children");
         }
       }
     }
 
     void verify(bool condition, const char* message) {
       if (!condition) {
-        Fatal() << "IR must be flat: run --flatten beforehand (" << message << ", in " << getFunction()->name << ')';
+        Fatal() << "IR must be flat: run --flatten beforehand (" << message
+                << ", in " << getFunction()->name << ')';
       }
     }
   };
@@ -91,20 +98,19 @@ inline void verifyFlatness(Function* func) {
   VerifyFlatness verifier;
   verifier.walkFunction(func);
   verifier.setFunction(func);
-  verifier.verify(!isConcreteType(func->body->type), "function bodies must not flow values");
+  verifier.verify(!isConcreteType(func->body->type),
+                  "function bodies must not flow values");
 }
 
 inline void verifyFlatness(Module* module) {
-  struct VerifyFlatness : public WalkerPass<PostWalker<VerifyFlatness, UnifiedExpressionVisitor<VerifyFlatness>>> {
+  struct VerifyFlatness
+    : public WalkerPass<
+        PostWalker<VerifyFlatness, UnifiedExpressionVisitor<VerifyFlatness>>> {
     bool isFunctionParallel() override { return true; }
 
-    VerifyFlatness* create() override {
-      return new VerifyFlatness();
-    }
+    VerifyFlatness* create() override { return new VerifyFlatness(); }
 
-    void doVisitFunction(Function* func) {
-      verifyFlatness(func);
-    }
+    void doVisitFunction(Function* func) { verifyFlatness(func); }
   };
 
   PassRunner runner(module);
@@ -113,7 +119,7 @@ inline void verifyFlatness(Module* module) {
   runner.run();
 }
 
-} // namespace Fkat
+} // namespace Flat
 
 } // namespace wasm
 

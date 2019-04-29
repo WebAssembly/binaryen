@@ -35,10 +35,11 @@ inline void* aligned_malloc(size_t align, size_t size) {
 #if defined(WIN32) || defined(_WIN32)
   _set_errno(0);
   void* ret = _aligned_malloc(size, align);
-  if (errno == ENOMEM) ret = nullptr;
+  if (errno == ENOMEM)
+    ret = nullptr;
   return ret;
 #elif defined(__APPLE__)
-  void *ptr;
+  void* ptr;
   int result = posix_memalign(&ptr, align, size);
   return result == 0 ? ptr : nullptr;
 #else
@@ -56,4 +57,4 @@ inline void aligned_free(void* ptr) {
 
 } // namespace wasm
 
-#endif  // wasm_support_alloc_h
+#endif // wasm_support_alloc_h

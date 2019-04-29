@@ -15,9 +15,9 @@
  */
 
 #include "pass.h"
-#include "wasm.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -57,7 +57,8 @@ struct MemoryPacking : public Pass {
     };
 
     for (auto& segment : module->memory.segments) {
-      if (!isSplittable(segment)) continue;
+      if (!isSplittable(segment))
+        continue;
 
       // skip final zeros
       while (segment.data.size() > 0 && segment.data.back() == 0) {
@@ -81,7 +82,7 @@ struct MemoryPacking : public Pass {
           start++;
         }
         Index end = start; // end of data-containing part
-        Index next = end; // after zeros we can skip. preserves next >= end
+        Index next = end;  // after zeros we can skip. preserves next >= end
         if (!shouldSplit()) {
           next = end = data.size();
         }
@@ -99,7 +100,10 @@ struct MemoryPacking : public Pass {
           }
         }
         if (end != start) {
-          packed.emplace_back(Builder(*module).makeConst(Literal(int32_t(base + start))), &data[start], end - start);
+          packed.emplace_back(
+            Builder(*module).makeConst(Literal(int32_t(base + start))),
+            &data[start],
+            end - start);
         }
         start = next;
       }
@@ -109,8 +113,6 @@ struct MemoryPacking : public Pass {
   }
 };
 
-Pass *createMemoryPackingPass() {
-  return new MemoryPacking();
-}
+Pass* createMemoryPackingPass() { return new MemoryPacking(); }
 
 } // namespace wasm

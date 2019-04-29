@@ -1,3 +1,5 @@
+---
+Language: Cpp
 BasedOnStyle: LLVM
 PointerAlignment: Left
 IndentCaseLabels: true
@@ -6,3 +8,7 @@ ConstructorInitializerIndentWidth: 2
 SpaceAfterTemplateKeyword: false
 BinPackArguments: false
 BinPackParameters: false
+---
+Language: JavaScript
+DisableFormat: true
+---

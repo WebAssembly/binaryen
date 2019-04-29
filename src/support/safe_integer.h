@@ -41,6 +41,6 @@ bool isInRangeI32TruncU(int64_t i);
 bool isInRangeI64TruncS(int64_t i);
 bool isInRangeI64TruncU(int64_t i);
 
-}  // namespace wasm
+} // namespace wasm
 
-#endif  // wasm_safe_integer_h
+#endif // wasm_safe_integer_h

@@ -17,31 +17,31 @@
 #ifndef wasm_abi_stack_h
 #define wasm_abi_stack_h
 
-#include "wasm.h"
-#include "wasm-builder.h"
-#include "shared-constants.h"
+#include "abi.h"
 #include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
 #include "ir/global-utils.h"
-#include "abi.h"
+#include "shared-constants.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
 namespace ABI {
 
-enum {
-  StackAlign = 16
-};
+enum { StackAlign = 16 };
 
 inline Index stackAlign(Index size) {
   return (size + StackAlign - 1) & -StackAlign;
 }
 
 // Allocate some space on the stack, and assign it to a local.
-// The local will have the same constant value in all the function, so you can just
-// local.get it anywhere there.
-inline void getStackSpace(Index local, Function* func, Index size, Module& wasm) {
-  auto* stackPointer = GlobalUtils::getGlobalInitializedToImport(wasm, ENV, "STACKTOP");
+// The local will have the same constant value in all the function, so you can
+// just local.get it anywhere there.
+inline void
+getStackSpace(Index local, Function* func, Index size, Module& wasm) {
+  auto* stackPointer =
+    GlobalUtils::getGlobalInitializedToImport(wasm, ENV, "STACKTOP");
   if (!stackPointer) {
     Fatal() << "getStackSpace: failed to find the stack pointer";
   }
@@ -50,34 +50,21 @@ inline void getStackSpace(Index local, Function* func, Index size, Module& wasm)
   // TODO: find existing stack usage, and add on top of that - carefully
   Builder builder(wasm);
   auto* block = builder.makeBlock();
-  block->list.push_back(
-    builder.makeSetLocal(
-      local,
-      builder.makeGetGlobal(stackPointer->name, PointerType)
-    )
-  );
+  block->list.push_back(builder.makeSetLocal(
+    local, builder.makeGetGlobal(stackPointer->name, PointerType)));
   // TODO: add stack max check
   Expression* added;
   if (PointerType == i32) {
-    added = builder.makeBinary(
-      AddInt32,
-      builder.makeGetLocal(local, PointerType),
-      builder.makeConst(Literal(int32_t(size)))
-    );
+    added = builder.makeBinary(AddInt32,
+                               builder.makeGetLocal(local, PointerType),
+                               builder.makeConst(Literal(int32_t(size))));
   } else {
     WASM_UNREACHABLE();
   }
-  block->list.push_back(
-    builder.makeSetGlobal(
-      stackPointer->name,
-      added
-    )
-  );
+  block->list.push_back(builder.makeSetGlobal(stackPointer->name, added));
   auto makeStackRestore = [&]() {
-    return builder.makeSetGlobal(
-      stackPointer->name,
-      builder.makeGetLocal(local, PointerType)
-    );
+    return builder.makeSetGlobal(stackPointer->name,
+                                 builder.makeGetLocal(local, PointerType));
   };
   // add stack restores to the returns
   FindAllPointers<Return> finder(func->body);
@@ -89,9 +76,8 @@ inline void getStackSpace(Index local, Function* func, Index size, Module& wasm)
       auto temp = builder.addVar(func, ret->value->type);
       block->list.push_back(builder.makeSetLocal(temp, ret->value));
       block->list.push_back(makeStackRestore());
-      block->list.push_back(builder.makeReturn(
-        builder.makeGetLocal(temp, ret->value->type)
-      ));
+      block->list.push_back(
+        builder.makeReturn(builder.makeGetLocal(temp, ret->value->type)));
       block->finalize();
       *ptr = block;
     } else {
