@@ -23,8 +23,8 @@
 //    to allow removal of the copies later.
 //
 
-#include "wasm.h"
 #include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -38,19 +38,14 @@ struct GlobalInfo {
 
 using GlobalInfoMap = std::map<Name, GlobalInfo>;
 
-struct GlobalUseScanner
-  : public WalkerPass<PostWalker<GlobalUseScanner>> {
+struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
   bool isFunctionParallel() override { return true; }
 
   GlobalUseScanner(GlobalInfoMap* infos) : infos(infos) {}
 
-  GlobalUseScanner* create() override {
-    return new GlobalUseScanner(infos);
-  }
+  GlobalUseScanner* create() override { return new GlobalUseScanner(infos); }
 
-  void visitSetGlobal(SetGlobal* curr) {
-    (*infos)[curr->name].written = true;
-  }
+  void visitSetGlobal(SetGlobal* curr) { (*infos)[curr->name].written = true; }
 
 private:
   GlobalInfoMap* infos;
@@ -58,12 +53,11 @@ private:
 
 using NameNameMap = std::map<Name, Name>;
 
-struct GlobalUseModifier
-  : public WalkerPass<PostWalker<GlobalUseModifier>> {
+struct GlobalUseModifier : public WalkerPass<PostWalker<GlobalUseModifier>> {
   bool isFunctionParallel() override { return true; }
 
-  GlobalUseModifier(NameNameMap* copiedParentMap) :
-      copiedParentMap(copiedParentMap) {}
+  GlobalUseModifier(NameNameMap* copiedParentMap)
+    : copiedParentMap(copiedParentMap) {}
 
   GlobalUseModifier* create() override {
     return new GlobalUseModifier(copiedParentMap);
@@ -142,8 +136,6 @@ struct SimplifyGlobals : public Pass {
   }
 };
 
-Pass* createSimplifyGlobalsPass() {
-  return new SimplifyGlobals();
-}
+Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(); }
 
 } // namespace wasm
