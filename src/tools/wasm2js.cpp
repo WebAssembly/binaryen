@@ -155,6 +155,12 @@ static void optimizeJS(Ref ast) {
     return false;
   };
 
+  auto isConstantAnd = [](Ref node, int num) {
+    return node->isArray() && !node->empty() && node[0] == BINARY &&
+           node[1] == AND && node[3]->isNumber() &&
+           node[3]->getNumber() == num;
+  };
+
   auto removeOrZero = [&](Ref node) {
     while (isOrZero(node)) {
       node = node[2];
@@ -237,14 +243,26 @@ static void optimizeJS(Ref ast) {
     // +(+x) => +x
     else if (isPlus(node)) {
       node[2] = removePlus(node[2]);
-    } else if (node->isAssign()) {
-      // Assignment into a heap coerces.
+    }
+    // Assignment into a heap coerces.
+    else if (node->isAssign()) {
       auto assign = node->asAssign();
       auto target = assign->target();
       if (isHeapAccess(target)) {
         auto heap = getHeapFromAccess(target);
         if (isIntegerHeap(heap)) {
-          assign->value() = removeOrZero(assign->value());
+          if (heap == HEAP8 || heap == HEAPU8) {
+            while (isOrZero(assign->value()) || isConstantAnd(assign->value(), 255)) {
+              assign->value() = assign->value()[2];
+            }
+          } else if (heap == HEAP16 || heap == HEAPU16) {
+            while (isOrZero(assign->value()) || isConstantAnd(assign->value(), 65535)) {
+              assign->value() = assign->value()[2];
+            }
+          } else {
+            assert(heap == HEAP32 || heap == HEAPU32);
+            assign->value() = removeOrZero(assign->value());
+          }
         } else {
           assert(isFloatHeap(heap));
           if (heap == HEAPF32) {
