@@ -23,6 +23,8 @@
 //    to allow removal of the copies later.
 //
 
+#include <atomic>
+
 #include "pass.h"
 #include "wasm.h"
 
@@ -33,7 +35,7 @@ namespace {
 struct GlobalInfo {
   bool imported = false;
   bool exported = false;
-  bool written = false;
+  std::atomic<bool> written;
 };
 
 using GlobalInfoMap = std::map<Name, GlobalInfo>;
