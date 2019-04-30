@@ -1,4 +1,5 @@
 (module
+ (memory 1 1)
  (import "env" "func" (func $import (result i64)))
  (func $defined (result i64)
   (i64.add (i64.const 1) (i64.const 2))
@@ -23,6 +24,18 @@
    (i64.const 6)
    (unreachable)
   )
+ )
+ (func $mem
+  (drop (i64.load align=8 (i32.const 0)))
+  (drop (i64.load align=4 (i32.const 0)))
+  (drop (i64.load align=2 (i32.const 0)))
+  (drop (i64.load align=1 (i32.const 0)))
+  (drop (i64.load          (i32.const 0)))
+  (i64.store align=8 (i32.const 0) (i64.const 1))
+  (i64.store align=4 (i32.const 0) (i64.const 2))
+  (i64.store align=2 (i32.const 0) (i64.const 3))
+  (i64.store align=1 (i32.const 0) (i64.const 4))
+  (i64.store         (i32.const 0) (i64.const 5))
  )
 )
 (module
