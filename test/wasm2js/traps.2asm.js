@@ -2077,10 +2077,10 @@ function asmFunc(global, env, buffer) {
  
  function $1(i) {
   i = i | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2js_i32$0 = 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$2 = i;
   i64toi32_i32$0 = HEAP32[i64toi32_i32$2 >> 2];
-  i64toi32_i32$1 = (wasm2js_i32$0 = i64toi32_i32$2, HEAPU8[wasm2js_i32$0 + 4 | 0] | HEAPU8[wasm2js_i32$0 + 5 | 0] << 8 | HEAPU8[wasm2js_i32$0 + 6 | 0] << 16 | HEAPU8[wasm2js_i32$0 + 7 | 0] << 24);
+  i64toi32_i32$1 = HEAP32[i64toi32_i32$2 + 4 >> 2];
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
   return i64toi32_i32$0 | 0;
  }
