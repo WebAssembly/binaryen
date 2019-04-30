@@ -21,109 +21,260 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
+ function dummy() {
+  
+ }
+ 
  function $1($0) {
   $0 = $0 | 0;
-  if (!$0) {
-   return 2 | 0
+  block : {
+   if ($0) {
+    break block
+   }
+   return 2 | 0;
+  }
+  return 3 | 0;
+ }
+ 
+ function $2($0) {
+  $0 = $0 | 0;
+  block : {
+   dummy();
+   if ($0) {
+    break block
+   }
+   return 2 | 0;
   }
   return 3 | 0;
  }
  
  function $3($0) {
   $0 = $0 | 0;
+  block : {
+   dummy();
+   dummy();
+   if ($0) {
+    break block
+   }
+  }
  }
  
  function $4($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
-  $1_1 = 10;
-  if (!$0) {
-   return 11 | 0
+  var $2_1 = 0;
+  block : {
+   $2_1 = 10;
+   if ($0) {
+    break block
+   }
+   return 11 | 0;
   }
-  return $1_1 | 0;
+  return $2_1 | 0;
  }
  
  function $5($0) {
   $0 = $0 | 0;
-  if (!$0) {
-   return 21 | 0
+  var $2_1 = 0;
+  block : {
+   dummy();
+   $2_1 = 20;
+   if ($0) {
+    break block
+   }
+   return 21 | 0;
   }
-  return 20 | 0;
+  return $2_1 | 0;
  }
  
  function $6($0) {
   $0 = $0 | 0;
-  return 11 | 0;
+  var $2_1 = 0;
+  block : {
+   dummy();
+   dummy();
+   $2_1 = 11;
+   if ($0) {
+    break block
+   }
+  }
+  return $2_1 | 0;
+ }
+ 
+ function $7($0) {
+  $0 = $0 | 0;
+  block : {
+   if ($0) {
+    break block
+   }
+   return 2 | 0;
+  }
+  return 3 | 0;
  }
  
  function $8($0) {
   $0 = $0 | 0;
-  if (!$0) {
-   return 2 | 0
+  block : {
+   dummy();
+   if ($0) {
+    break block
+   }
+   return 2 | 0;
   }
   return 4 | 0;
+ }
+ 
+ function $9($0) {
+  $0 = $0 | 0;
+  fake_return_waka123 : {
+   dummy();
+   if ($0) {
+    break fake_return_waka123
+   }
+  }
  }
  
  function $10($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
+  block : {
+   if ($0) {
+    if ($1_1) {
+     break block
+    }
+   } else {
+    dummy()
+   }
+  }
+ }
+ 
+ function $11($0, $1_1) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  block : {
+   if ($0) {
+    dummy()
+   } else {
+    if ($1_1) {
+     break block
+    }
+   }
+  }
  }
  
  function $12($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
-  if ($0) {
-   $1_1 = 8
-  } else {
-   $1_1 = 20
+  var $2_1 = 0;
+  block : {
+   $2_1 = 8;
+   if ($0) {
+    break block
+   }
+   $2_1 = 4 + 16 | 0;
   }
-  return $1_1 + 1 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $13($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
-  if ($0) {
-   $1_1 = 8
-  } else {
-   $1_1 = 4
+  var $2_1 = 0;
+  block : {
+   $2_1 = 8;
+   if ($0) {
+    break block
+   }
+   $2_1 = 4;
+   break block;
   }
-  return $1_1 + 1 | 0;
+  return 1 + $2_1 | 0 | 0;
+ }
+ 
+ function $14($0) {
+  $0 = $0 | 0;
+  var $2_1 = 0;
+  block : {
+   $2_1 = 8;
+   if ($0) {
+    break block
+   }
+   $2_1 = 4;
+   if (1) {
+    break block
+   }
+   $2_1 = 16;
+  }
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $15($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
+  var $2_1 = 0;
   block : {
-   $1_1 = 8;
+   $2_1 = 8;
    if ($0) {
     break block
    }
-   $1_1 = 4;
-   break block;
+   $2_1 = 4;
+   if (1) {
+    break block
+   }
+   $2_1 = 16;
   }
-  return $1_1 + 1 | 0;
+  return 1 + $2_1 | 0 | 0;
+ }
+ 
+ function $16($0) {
+  $0 = $0 | 0;
+  var $2_1 = 0;
+  block : {
+   $2_1 = 8;
+   if ($0) {
+    break block
+   }
+   $2_1 = 4;
+   switch (1 | 0) {
+   default:
+    break block;
+   };
+  }
+  return 1 + $2_1 | 0 | 0;
+ }
+ 
+ function $17($0) {
+  $0 = $0 | 0;
+  var $2_1 = 0;
+  block : {
+   $2_1 = 8;
+   if ($0) {
+    break block
+   }
+   $2_1 = 4;
+   switch (1 | 0) {
+   default:
+    break block;
+   };
+  }
+  return 1 + $2_1 | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];
  return {
   "as_block_first": $1, 
-  "as_block_mid": $1, 
+  "as_block_mid": $2, 
   "as_block_last": $3, 
   "as_block_first_value": $4, 
   "as_block_mid_value": $5, 
   "as_block_last_value": $6, 
-  "as_loop_first": $1, 
+  "as_loop_first": $7, 
   "as_loop_mid": $8, 
-  "as_loop_last": $3, 
+  "as_loop_last": $9, 
   "as_if_then": $10, 
-  "as_if_else": $10, 
+  "as_if_else": $11, 
   "nested_block_value": $12, 
   "nested_br_value": $13, 
-  "nested_br_if_value": $13, 
+  "nested_br_if_value": $14, 
   "nested_br_if_value_cond": $15, 
-  "nested_br_table_value": $13, 
-  "nested_br_table_value_index": $13
+  "nested_br_table_value": $16, 
+  "nested_br_table_value_index": $17
  };
 }
 

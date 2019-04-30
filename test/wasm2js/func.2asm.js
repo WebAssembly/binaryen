@@ -28,25 +28,78 @@ function asmFunc(global, env, buffer) {
   
  }
  
- function $14($0) {
+ function $2() {
+  
+ }
+ 
+ function h() {
   
  }
  
  function $23() {
-  return 0 | 0;
+  var $0 = 0;
+  return $0 | 0;
+ }
+ 
+ function $24() {
+  var i64toi32_i32$0 = 0, $0$hi = 0, $0 = 0;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
+  return $0 | 0;
  }
  
  function $25() {
-  return Math_fround(Math_fround(0.0));
+  var $0 = Math_fround(0);
+  return Math_fround($0);
  }
  
  function $26() {
-  return 0.0;
+  var $0 = 0.0;
+  return +$0;
+ }
+ 
+ function $27() {
+  var $1 = 0;
+  return $1 | 0;
+ }
+ 
+ function $28() {
+  var i64toi32_i32$0 = 0, $1$hi = 0, $1 = 0;
+  i64toi32_i32$0 = $1$hi;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
+  return $1 | 0;
+ }
+ 
+ function $29() {
+  var $1 = Math_fround(0);
+  return Math_fround($1);
+ }
+ 
+ function $30() {
+  var $1 = 0.0;
+  return +$1;
+ }
+ 
+ function $31() {
+  var i64toi32_i32$0 = 0, $4 = 0.0, $0 = Math_fround(0), x = 0, $2$hi = 0, $2_1 = 0, $3 = 0, $5 = 0;
+  i64toi32_i32$0 = $2$hi;
+  return +$4;
  }
  
  function $32($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
+  return $0 | 0;
+ }
+ 
+ function $33($0, $0$hi, $1, $1$hi) {
+  $0 = $0 | 0;
+  $0$hi = $0$hi | 0;
+  $1 = $1 | 0;
+  $1$hi = $1$hi | 0;
+  var i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
   return $0 | 0;
  }
  
@@ -68,6 +121,17 @@ function asmFunc(global, env, buffer) {
   return $1 | 0;
  }
  
+ function $37($0, $0$hi, $1, $1$hi) {
+  $0 = $0 | 0;
+  $0$hi = $0$hi | 0;
+  $1 = $1 | 0;
+  $1$hi = $1$hi | 0;
+  var i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = $1$hi;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
+  return $1 | 0;
+ }
+ 
  function $38($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
@@ -80,8 +144,34 @@ function asmFunc(global, env, buffer) {
   return +$1;
  }
  
+ function $40($0, $1, x, x$hi, $3, $4, $5) {
+  $0 = Math_fround($0);
+  $1 = $1 | 0;
+  x = x | 0;
+  x$hi = x$hi | 0;
+  $3 = $3 | 0;
+  $4 = +$4;
+  $5 = $5 | 0;
+  var i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = x$hi;
+  return +$4;
+ }
+ 
+ function $41() {
+  
+ }
+ 
+ function $42() {
+  dummy();
+ }
+ 
  function $43() {
   return 77 | 0;
+ }
+ 
+ function $44() {
+  i64toi32_i32$HIGH_BITS = 0;
+  return 7777 | 0;
  }
  
  function $45() {
@@ -89,11 +179,30 @@ function asmFunc(global, env, buffer) {
  }
  
  function $46() {
-  return 77.77;
+  return +(77.77);
+ }
+ 
+ function $47() {
+  dummy();
+  dummy();
+ }
+ 
+ function $48() {
+  dummy();
+  return 77 | 0;
+ }
+ 
+ function $49() {
+  return;
  }
  
  function $50() {
   return 78 | 0;
+ }
+ 
+ function $51() {
+  i64toi32_i32$HIGH_BITS = 0;
+  return 7878 | 0;
  }
  
  function $52() {
@@ -101,135 +210,593 @@ function asmFunc(global, env, buffer) {
  }
  
  function $53() {
-  return 78.78;
+  return +(78.78);
+ }
+ 
+ function $54() {
+  dummy();
+  return 77 | 0;
+ }
+ 
+ function $55() {
+  
  }
  
  function $56() {
-  return 79 | 0;
+  var $0 = 0;
+  fake_return_waka123 : {
+   $0 = 79;
+   break fake_return_waka123;
+  }
+  return $0 | 0;
+ }
+ 
+ function $57() {
+  var i64toi32_i32$0 = 0, $0 = 0, $0$hi = 0;
+  fake_return_waka123 : {
+   i64toi32_i32$0 = 0;
+   $0 = 7979;
+   $0$hi = i64toi32_i32$0;
+   break fake_return_waka123;
+  }
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
+  return $0 | 0;
  }
  
  function $58() {
-  return Math_fround(Math_fround(79.9000015258789));
+  var $0 = Math_fround(0);
+  fake_return_waka123 : {
+   $0 = Math_fround(79.9000015258789);
+   break fake_return_waka123;
+  }
+  return Math_fround($0);
  }
  
  function $59() {
-  return 79.79;
+  var $0 = 0.0;
+  fake_return_waka123 : {
+   $0 = 79.79;
+   break fake_return_waka123;
+  }
+  return +$0;
+ }
+ 
+ function $60() {
+  var $2_1 = 0;
+  fake_return_waka123 : {
+   dummy();
+   $2_1 = 77;
+   break fake_return_waka123;
+  }
+  return $2_1 | 0;
+ }
+ 
+ function $61($0) {
+  $0 = $0 | 0;
  }
  
  function $62($0) {
   $0 = $0 | 0;
-  var $1 = 0;
-  if ($0) {
-   $1 = 50
-  } else {
-   $1 = 51
+  var $2_1 = 0;
+  fake_return_waka123 : {
+   $2_1 = 50;
+   if ($0) {
+    break fake_return_waka123
+   }
+   $2_1 = 51;
   }
-  return $1 | 0;
+  return $2_1 | 0;
+ }
+ 
+ function $63($0) {
+  $0 = $0 | 0;
  }
  
  function $64($0) {
   $0 = $0 | 0;
-  return 50 | 0;
+  var $3 = 0;
+  fake_return_waka123 : {
+   $3 = 50;
+   switch ($0 | 0) {
+   default:
+    break fake_return_waka123;
+   };
+  }
+  return $3 | 0;
+ }
+ 
+ function $65($0) {
+  $0 = $0 | 0;
  }
  
  function $66($0) {
   $0 = $0 | 0;
-  var $1 = 0, $2 = 0;
-  $1 = 50;
-  $2 = $1;
-  if ($0 - 1 | 0) {
-   $1 = $2 + 2 | 0
+  var $2_1 = 0, $3 = 0, $4 = 0;
+  fake_return_waka123 : {
+   block : {
+    $2_1 = 50;
+    $3 = $2_1;
+    $4 = $2_1;
+    switch ($0 | 0) {
+    case 1:
+     break fake_return_waka123;
+    default:
+     break block;
+    };
+   }
+   $4 = $3 + 2 | 0;
   }
-  return $1 | 0;
+  return $4 | 0;
  }
  
- function complex_sig_1($0, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10) {
+ function $67() {
+  var $0 = 0;
+  return $0 | 0;
+ }
+ 
+ function $68() {
+  var i64toi32_i32$0 = 0, $0$hi = 0, $0 = 0;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
+  return $0 | 0;
+ }
+ 
+ function $69() {
+  var $0 = Math_fround(0);
+  return Math_fround($0);
+ }
+ 
+ function $70() {
+  var $0 = 0.0;
+  return +$0;
+ }
+ 
+ function empty_sig_1() {
+  
+ }
+ 
+ function complex_sig_1($0, $1, $1$hi, $2_1, $3, $3$hi, $4, $5, $5$hi, $6, $7) {
   $0 = +$0;
   $1 = $1 | 0;
-  $2 = $2 | 0;
-  $3 = +$3;
-  $4 = $4 | 0;
+  $1$hi = $1$hi | 0;
+  $2_1 = +$2_1;
+  $3 = $3 | 0;
+  $3$hi = $3$hi | 0;
+  $4 = +$4;
   $5 = $5 | 0;
-  $6 = +$6;
+  $5$hi = $5$hi | 0;
+  $6 = Math_fround($6);
   $7 = $7 | 0;
-  $8 = $8 | 0;
-  $9 = Math_fround($9);
-  $10 = $10 | 0;
+ }
+ 
+ function empty_sig_2() {
+  
+ }
+ 
+ function complex_sig_3($0, $1, $1$hi, $2_1, $3, $3$hi, $4, $5, $5$hi, $6, $7) {
+  $0 = +$0;
+  $1 = $1 | 0;
+  $1$hi = $1$hi | 0;
+  $2_1 = +$2_1;
+  $3 = $3 | 0;
+  $3$hi = $3$hi | 0;
+  $4 = +$4;
+  $5 = $5 | 0;
+  $5$hi = $5$hi | 0;
+  $6 = Math_fround($6);
+  $7 = $7 | 0;
  }
  
  function $76() {
-  dummy();
-  dummy();
+  FUNCTION_TABLE[1]();
+  FUNCTION_TABLE[4]();
  }
  
  function $77() {
-  complex_sig_1(0.0, 0, 0, 0.0, 0, 0, 0.0, 0, 0, Math_fround(0.0), 0);
-  complex_sig_1(0.0, 0, 0, 0.0, 0, 0, 0.0, 0, 0, Math_fround(0.0), 0);
-  complex_sig_1(0.0, 0, 0, 0.0, 0, 0, 0.0, 0, 0, Math_fround(0.0), 0);
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$2 = 0;
+  FUNCTION_TABLE[0](0.0, 0, i64toi32_i32$0, 0.0, 0, i64toi32_i32$1, 0.0, 0, i64toi32_i32$2, Math_fround(0.0), 0);
+  i64toi32_i32$2 = 0;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$0 = 0;
+  FUNCTION_TABLE[2](0.0, 0, i64toi32_i32$2, 0.0, 0, i64toi32_i32$1, 0.0, 0, i64toi32_i32$0, Math_fround(0.0), 0);
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$2 = 0;
+  FUNCTION_TABLE[3](0.0, 0, i64toi32_i32$0, 0.0, 0, i64toi32_i32$1, 0.0, 0, i64toi32_i32$2, Math_fround(0.0), 0);
  }
  
  function $78() {
-  dummy();
+  FUNCTION_TABLE[1]();
  }
  
  function $79() {
-  complex_sig_1(0.0, 0, 0, 0.0, 0, 0, 0.0, 0, 0, Math_fround(0.0), 0);
+  FUNCTION_TABLE[0](0.0, 0, 0, 0.0, 0, 0, 0.0, 0, 0, Math_fround(0.0), 0);
  }
  
  function legalstub$24() {
-  var $0 = 0;
-  i64toi32_i32$HIGH_BITS = 0;
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $24() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
  }
  
- function legalstub$33($0, $1, $2, $3) {
-  i64toi32_i32$HIGH_BITS = $1;
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0;
+ function legalstub$28() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $28() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
  }
  
- function legalstub$37($0, $1, $2, $3) {
-  i64toi32_i32$HIGH_BITS = $3;
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $2;
+ function legalstub$33($0, $1, $2_1, $3) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2_1 = $2_1 | 0;
+  $3 = $3 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$3 = 0, $21 = 0, $22 = 0, $23_1 = 0, $6 = 0, $6$hi = 0, $9$hi = 0, $10 = 0, $10$hi = 0, $12 = 0, $12$hi = 0, $15$hi = 0, $16 = 0, $16$hi = 0, $4 = 0, $4$hi = 0;
+  i64toi32_i32$0 = 0;
+  $6 = $0;
+  $6$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$2 = $1;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+    $21 = 0;
+   }
+  } else {
+   {
+    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+    $21 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   }
+  }
+  $9$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $6$hi;
+  i64toi32_i32$0 = $6;
+  i64toi32_i32$2 = $9$hi;
+  i64toi32_i32$3 = $21;
+  i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
+  $10 = i64toi32_i32$0 | i64toi32_i32$3 | 0;
+  $10$hi = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  $12 = $2_1;
+  $12$hi = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  i64toi32_i32$1 = $3;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 << i64toi32_i32$4 | 0;
+    $22 = 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$1 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$2 << i64toi32_i32$4 | 0) | 0;
+    $22 = i64toi32_i32$1 << i64toi32_i32$4 | 0;
+   }
+  }
+  $15$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = $12$hi;
+  i64toi32_i32$2 = $12;
+  i64toi32_i32$1 = $15$hi;
+  i64toi32_i32$3 = $22;
+  i64toi32_i32$1 = i64toi32_i32$0 | i64toi32_i32$1 | 0;
+  $16 = i64toi32_i32$2 | i64toi32_i32$3 | 0;
+  $16$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $10$hi;
+  i64toi32_i32$2 = $16$hi;
+  i64toi32_i32$2 = $33($10 | 0, i64toi32_i32$1 | 0, $16 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $4 = i64toi32_i32$2;
+  $4$hi = i64toi32_i32$1;
+  i64toi32_i32$0 = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$2 = 0;
+    $23_1 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$2 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $23_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$0 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($23_1 | 0);
+  i64toi32_i32$2 = $4$hi;
+  return $4 | 0;
  }
  
- function legalstub$40($0, $1, $2, $3, $4, $5, $6) {
-  return $5;
+ function legalstub$37($0, $1, $2_1, $3) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2_1 = $2_1 | 0;
+  $3 = $3 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$3 = 0, $21 = 0, $22 = 0, $23_1 = 0, $6 = 0, $6$hi = 0, $9$hi = 0, $10 = 0, $10$hi = 0, $12 = 0, $12$hi = 0, $15$hi = 0, $16 = 0, $16$hi = 0, $4 = 0, $4$hi = 0;
+  i64toi32_i32$0 = 0;
+  $6 = $0;
+  $6$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$2 = $1;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+    $21 = 0;
+   }
+  } else {
+   {
+    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+    $21 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   }
+  }
+  $9$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $6$hi;
+  i64toi32_i32$0 = $6;
+  i64toi32_i32$2 = $9$hi;
+  i64toi32_i32$3 = $21;
+  i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
+  $10 = i64toi32_i32$0 | i64toi32_i32$3 | 0;
+  $10$hi = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  $12 = $2_1;
+  $12$hi = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  i64toi32_i32$1 = $3;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 << i64toi32_i32$4 | 0;
+    $22 = 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$1 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$2 << i64toi32_i32$4 | 0) | 0;
+    $22 = i64toi32_i32$1 << i64toi32_i32$4 | 0;
+   }
+  }
+  $15$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = $12$hi;
+  i64toi32_i32$2 = $12;
+  i64toi32_i32$1 = $15$hi;
+  i64toi32_i32$3 = $22;
+  i64toi32_i32$1 = i64toi32_i32$0 | i64toi32_i32$1 | 0;
+  $16 = i64toi32_i32$2 | i64toi32_i32$3 | 0;
+  $16$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $10$hi;
+  i64toi32_i32$2 = $16$hi;
+  i64toi32_i32$2 = $37($10 | 0, i64toi32_i32$1 | 0, $16 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $4 = i64toi32_i32$2;
+  $4$hi = i64toi32_i32$1;
+  i64toi32_i32$0 = i64toi32_i32$2;
+  i64toi32_i32$2 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$2 = 0;
+    $23_1 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$2 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $23_1 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$0 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($23_1 | 0);
+  i64toi32_i32$2 = $4$hi;
+  return $4 | 0;
+ }
+ 
+ function legalstub$40($0, $1, $2_1, $3, $4, $5, $6) {
+  $0 = Math_fround($0);
+  $1 = $1 | 0;
+  $2_1 = $2_1 | 0;
+  $3 = $3 | 0;
+  $4 = $4 | 0;
+  $5 = +$5;
+  $6 = $6 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $17 = 0, $7 = Math_fround(0), $8 = 0, $10 = 0, $10$hi = 0, $13$hi = 0;
+  $7 = $0;
+  $8 = $1;
+  i64toi32_i32$0 = 0;
+  $10 = $2_1;
+  $10$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$2 = $3;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+    $17 = 0;
+   }
+  } else {
+   {
+    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+    $17 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   }
+  }
+  $13$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $10$hi;
+  i64toi32_i32$0 = $10;
+  i64toi32_i32$2 = $13$hi;
+  i64toi32_i32$3 = $17;
+  i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
+  return +(+$40(Math_fround($7), $8 | 0, i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0, $4 | 0, +$5, $6 | 0));
  }
  
  function legalstub$44() {
-  i64toi32_i32$HIGH_BITS = 0;
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return 7777;
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $44() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
  }
  
  function legalstub$51() {
-  i64toi32_i32$HIGH_BITS = 0;
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return 7878;
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $51() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
  }
  
  function legalstub$57() {
-  i64toi32_i32$HIGH_BITS = 0;
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return 7979;
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $57() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
  }
  
- var FUNCTION_TABLE = [];
+ function legalstub$68() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $68() | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $0 = i64toi32_i32$0;
+  $0$hi = i64toi32_i32$1;
+  i64toi32_i32$2 = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
+   {
+    i64toi32_i32$0 = 0;
+    $7 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+   }
+  } else {
+   {
+    i64toi32_i32$0 = i64toi32_i32$1 >>> i64toi32_i32$4 | 0;
+    $7 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$1 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$2 >>> i64toi32_i32$4 | 0) | 0;
+   }
+  }
+  setTempRet0($7 | 0);
+  i64toi32_i32$0 = $0$hi;
+  return $0 | 0;
+ }
+ 
+ var FUNCTION_TABLE = [complex_sig_3, empty_sig_2, complex_sig_1, complex_sig_3, empty_sig_1];
  return {
-  "f": dummy, 
-  "g": dummy, 
+  "f": $2, 
+  "g": h, 
   "local_first_i32": $23, 
   "local_first_i64": legalstub$24, 
   "local_first_f32": $25, 
   "local_first_f64": $26, 
-  "local_second_i32": $23, 
-  "local_second_i64": legalstub$24, 
-  "local_second_f32": $25, 
-  "local_second_f64": $26, 
-  "local_mixed": $26, 
+  "local_second_i32": $27, 
+  "local_second_i64": legalstub$28, 
+  "local_second_f32": $29, 
+  "local_second_f64": $30, 
+  "local_mixed": $31, 
   "param_first_i32": $32, 
   "param_first_i64": legalstub$33, 
   "param_first_f32": $34, 
@@ -239,36 +806,36 @@ function asmFunc(global, env, buffer) {
   "param_second_f32": $38, 
   "param_second_f64": $39, 
   "param_mixed": legalstub$40, 
-  "empty": dummy, 
-  "value_void": dummy, 
+  "empty": $41, 
+  "value_void": $42, 
   "value_i32": $43, 
   "value_i64": legalstub$44, 
   "value_f32": $45, 
   "value_f64": $46, 
-  "value_block_void": dummy, 
-  "value_block_i32": $43, 
-  "return_empty": dummy, 
+  "value_block_void": $47, 
+  "value_block_i32": $48, 
+  "return_empty": $49, 
   "return_i32": $50, 
   "return_i64": legalstub$51, 
   "return_f32": $52, 
   "return_f64": $53, 
-  "return_block_i32": $43, 
-  "break_empty": dummy, 
+  "return_block_i32": $54, 
+  "break_empty": $55, 
   "break_i32": $56, 
   "break_i64": legalstub$57, 
   "break_f32": $58, 
   "break_f64": $59, 
-  "break_block_i32": $43, 
-  "break_br_if_empty": $14, 
+  "break_block_i32": $60, 
+  "break_br_if_empty": $61, 
   "break_br_if_num": $62, 
-  "break_br_table_empty": $14, 
+  "break_br_table_empty": $63, 
   "break_br_table_num": $64, 
-  "break_br_table_nested_empty": $14, 
+  "break_br_table_nested_empty": $65, 
   "break_br_table_nested_num": $66, 
-  "init_local_i32": $23, 
-  "init_local_i64": legalstub$24, 
-  "init_local_f32": $25, 
-  "init_local_f64": $26, 
+  "init_local_i32": $67, 
+  "init_local_i64": legalstub$68, 
+  "init_local_f32": $69, 
+  "init_local_f64": $70, 
   "signature_explicit_reused": $76, 
   "signature_implicit_reused": $77, 
   "signature_explicit_duplicate": $78, 

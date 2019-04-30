@@ -53,37 +53,54 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function $1($0) {
   $0 = $0 | 0;
-  return ($0 | 0) == ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(0, $0), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(0)) | 0) | 0;
+  return ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(0, $0), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(0)) | 0) == ($0 | 0) | 0;
  }
  
- function $2($0, $1_1) {
+ function $2($0, $0$hi) {
   $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  var $2_1 = 0;
+  $0$hi = $0$hi | 0;
+  var i64toi32_i32$0 = 0, $3$hi = 0;
+  i64toi32_i32$0 = $0$hi;
   wasm2js_scratch_store_i32(0 | 0, $0 | 0);
-  wasm2js_scratch_store_i32(1 | 0, $1_1 | 0);
-  wasm2js_scratch_store_f64(+wasm2js_scratch_load_f64());
-  $2_1 = wasm2js_scratch_load_i32(1 | 0) | 0;
-  return (wasm2js_scratch_load_i32(0 | 0) | 0) == ($0 | 0) & ($1_1 | 0) == ($2_1 | 0);
+  wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
+  wasm2js_scratch_store_f64(+(+wasm2js_scratch_load_f64()));
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  $3$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$0 = $3$hi;
+  return (wasm2js_scratch_load_i32(0 | 0) | 0 | 0) == ($0 | 0) & (i64toi32_i32$0 | 0) == ($0$hi | 0) | 0 | 0;
  }
  
  function legalstub$2($0, $1_1) {
-  var $2_1 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0;
-  $5 = $0;
-  $3 = 32;
-  $0 = $3 & 31;
-  if (32 >>> 0 <= $3 >>> 0) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $10 = 0, $3 = 0, $3$hi = 0, $6$hi = 0;
+  i64toi32_i32$0 = 0;
+  $3 = $0;
+  $3$hi = i64toi32_i32$0;
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$1 = 0;
+  i64toi32_i32$3 = 32;
+  i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
+  if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
    {
-    $2_1 = $1_1 << $0;
-    $4 = 0;
+    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+    $10 = 0;
    }
   } else {
    {
-    $2_1 = (1 << $0) - 1 & $1_1 >>> 32 - $0 | $2_1 << $0;
-    $4 = $1_1 << $0;
+    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+    $10 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
    }
   }
-  return $2($5 | $4, $2_1 | $6);
+  $6$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $3$hi;
+  i64toi32_i32$0 = $3;
+  i64toi32_i32$2 = $6$hi;
+  i64toi32_i32$3 = $10;
+  i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
+  return $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];

@@ -25,11 +25,19 @@ function asmFunc(global, env, buffer) {
   
  }
  
+ function $1() {
+  
+ }
+ 
+ function $2() {
+  
+ }
+ 
  var FUNCTION_TABLE = [];
  return {
   "br": $0, 
-  "br_if": $0, 
-  "br_table": $0
+  "br_if": $1, 
+  "br_table": $2
  };
 }
 

@@ -24,7 +24,17 @@ function asmFunc(global, env, buffer) {
  function $0() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   (wasm2js_i32$0 = 0, wasm2js_i32$1 = __wasm_grow_memory(1 | 0)), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  return HEAP32[0 >> 2] | 0;
+  return HEAP32[0 >> 2] | 0 | 0;
+ }
+ 
+ function $1() {
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  (wasm2js_i32$0 = 0, wasm2js_i32$1 = grow() | 0), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
+  return HEAP32[0 >> 2] | 0 | 0;
+ }
+ 
+ function grow() {
+  return __wasm_grow_memory(1 | 0) | 0;
  }
  
  var FUNCTION_TABLE = [];
@@ -68,7 +78,7 @@ function asmFunc(global, env, buffer) {
    }
   }), 
   "f1": $0, 
-  "f2": $0
+  "f2": $1
  };
 }
 

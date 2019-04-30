@@ -22,11 +22,29 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
-  loop : while (1) continue;
+  block : {
+   loop : while (1) {
+    switch (1 | 0) {
+    case 1:
+     continue loop;
+    default:
+     break block;
+    };
+   };
+  }
  }
  
  function $1() {
-  
+  block : {
+   loop : while (1) {
+    switch (1 | 0) {
+    case 1:
+     break block;
+    default:
+     continue loop;
+    };
+   };
+  }
  }
  
  var FUNCTION_TABLE = [];
