@@ -125,7 +125,8 @@ static void traversePrePost(Ref node,
 }
 
 static void traversePost(Ref node, std::function<void(Ref)> visit) {
-  traversePrePost(node, [](Ref node) {}, visit);
+  traversePrePost(
+    node, [](Ref node) {}, visit);
 }
 
 static void optimizeJS(Ref ast) {
@@ -157,8 +158,7 @@ static void optimizeJS(Ref ast) {
 
   auto isConstantAnd = [](Ref node, int num) {
     return node->isArray() && !node->empty() && node[0] == BINARY &&
-           node[1] == AND && node[3]->isNumber() &&
-           node[3]->getNumber() == num;
+           node[1] == AND && node[3]->isNumber() && node[3]->getNumber() == num;
   };
 
   auto removeOrZero = [&](Ref node) {
@@ -188,14 +188,11 @@ static void optimizeJS(Ref ast) {
     return node;
   };
 
-  auto getHeapFromAccess = [](Ref node) {
-    return node[1]->getIString();
-  };
+  auto getHeapFromAccess = [](Ref node) { return node[1]->getIString(); };
 
   auto isIntegerHeap = [](IString heap) {
-    return heap == HEAP8 || heap == HEAPU8 ||
-           heap == HEAP16 || heap == HEAPU16 ||
-           heap == HEAP32 || heap == HEAPU32;
+    return heap == HEAP8 || heap == HEAPU8 || heap == HEAP16 ||
+           heap == HEAPU16 || heap == HEAP32 || heap == HEAPU32;
   };
 
   auto isFloatHeap = [](IString heap) {
@@ -203,7 +200,8 @@ static void optimizeJS(Ref ast) {
   };
 
   auto isHeapAccess = [&](Ref node) {
-    if (node->isArray() && !node->empty() && node[0] == SUB && node[1]->isString()) {
+    if (node->isArray() && !node->empty() && node[0] == SUB &&
+        node[1]->isString()) {
       auto heap = getHeapFromAccess(node);
       return isIntegerHeap(heap) || isFloatHeap(heap);
     }
@@ -256,11 +254,13 @@ static void optimizeJS(Ref ast) {
         auto heap = getHeapFromAccess(target);
         if (isIntegerHeap(heap)) {
           if (heap == HEAP8 || heap == HEAPU8) {
-            while (isOrZero(assign->value()) || isConstantAnd(assign->value(), 255)) {
+            while (isOrZero(assign->value()) ||
+                   isConstantAnd(assign->value(), 255)) {
               assign->value() = assign->value()[2];
             }
           } else if (heap == HEAP16 || heap == HEAPU16) {
-            while (isOrZero(assign->value()) || isConstantAnd(assign->value(), 65535)) {
+            while (isOrZero(assign->value()) ||
+                   isConstantAnd(assign->value(), 65535)) {
               assign->value() = assign->value()[2];
             }
           } else {
