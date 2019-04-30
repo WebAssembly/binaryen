@@ -5,7 +5,7 @@ MERGE_BASE=$(git merge-base master HEAD)
 TIDY_MSG=$(git diff -U0 $MERGE_BASE | $CLANG_TIDY_DIFF -quiet -p1 2> /dev/null)
 if [ -n "$TIDY_MSG" -a "$TIDY_MSG" != "No relevant changes found." ]
 then
-  echo "Run clang-tidy before committing!"
+  echo "Fix clang-tidy errors before committing!"
   echo
   # Run clang-tidy once again to show the error
   git diff -U0 $MERGE_BASE | $CLANG_TIDY_DIFF -quiet -p1
