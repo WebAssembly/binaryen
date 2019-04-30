@@ -830,11 +830,30 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref theSwitch =
         ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
       ret[1]->push_back(theSwitch);
+      // First, group the switch targets.
+      std::map<Name, std::vector<Index>> targetIndexes;
       for (size_t i = 0; i < curr->targets.size(); i++) {
-        ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
-        ValueBuilder::appendCodeToSwitch(
-          theSwitch, blockify(makeBreakOrContinue(curr->targets[i])), false);
+        targetIndexes[curr->targets[i]].push_back(i);
       }
+      // Emit group by group.
+      for (auto& pair : targetIndexes) {
+        auto target = pair.first;
+        auto& indexes = pair.second;
+        if (target != curr->default_) {
+          for (auto i : indexes) {
+            ValueBuilder::appendCaseToSwitch(theSwitch,
+                                             ValueBuilder::makeNum(i));
+          }
+          ValueBuilder::appendCodeToSwitch(
+            theSwitch, blockify(makeBreakOrContinue(target)), false);
+        } else {
+          // For the group going to the same place as the default, we can just
+          // emit the default itself, which we do at the end.
+        }
+      }
+      // TODO: if the group the default is in is not the largest, we can turn
+      // the largest into
+      //       the default by using a local and a check on the range
       ValueBuilder::appendDefaultToSwitch(theSwitch);
       ValueBuilder::appendCodeToSwitch(
         theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);

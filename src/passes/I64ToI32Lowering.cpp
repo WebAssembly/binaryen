@@ -366,7 +366,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         builder->makeLoad(4,
                           curr->signed_,
                           curr->offset + 4,
-                          1,
+                          std::min(uint32_t(curr->align), uint32_t(4)),
                           builder->makeGetLocal(ptrTemp, i32),
                           i32));
     } else if (curr->signed_) {
@@ -409,7 +409,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       Store* storeHigh =
         builder->makeStore(4,
                            curr->offset + 4,
-                           1,
+                           std::min(uint32_t(curr->align), uint32_t(4)),
                            builder->makeGetLocal(ptrTemp, i32),
                            builder->makeGetLocal(highBits, i32),
                            i32);
