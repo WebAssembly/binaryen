@@ -43,126 +43,109 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0(x, y) {
-  x = +x;
-  y = +y;
-  return +(x + y);
+ function $0($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +($0_1 + $1_1);
  }
  
- function $1(x, y) {
-  x = +x;
-  y = +y;
-  return +(x - y);
+ function $1($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +($0_1 - $1_1);
  }
  
- function $2(x, y) {
-  x = +x;
-  y = +y;
-  return +(x * y);
+ function $2($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +($0_1 * $1_1);
  }
  
- function $3(x, y) {
-  x = +x;
-  y = +y;
-  return +(x / y);
+ function $3($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +($0_1 / $1_1);
  }
  
- function $4(x) {
-  x = +x;
-  return +Math_sqrt(x);
+ function $4($0_1) {
+  $0_1 = +$0_1;
+  return +Math_sqrt($0_1);
  }
  
- function $5(x, y) {
-  x = +x;
-  y = +y;
-  return +Math_min(x, y);
+ function $5($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +Math_min($0_1, $1_1);
  }
  
- function $6(x, y) {
-  x = +x;
-  y = +y;
-  return +Math_max(x, y);
+ function $6($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  return +Math_max($0_1, $1_1);
  }
  
- function $7(x) {
-  x = +x;
-  return +Math_ceil(x);
+ function $7($0_1) {
+  $0_1 = +$0_1;
+  return +Math_ceil($0_1);
  }
  
- function $8(x) {
-  x = +x;
-  return +Math_floor(x);
+ function $8($0_1) {
+  $0_1 = +$0_1;
+  return +Math_floor($0_1);
  }
  
- function $9(x) {
-  x = +x;
-  return +__wasm_trunc_f64(x);
+ function $9($0_1) {
+  $0_1 = +$0_1;
+  return +($0_1 < 0.0 ? Math_ceil($0_1) : Math_floor($0_1));
  }
  
- function $10(x) {
-  x = +x;
-  return +__wasm_nearest_f64(x);
+ function $10($0_1) {
+  $0_1 = +$0_1;
+  return +__wasm_nearest_f64($0_1);
  }
  
- function $11(x) {
-  x = +x;
-  return +Math_abs(x);
+ function $11($0_1) {
+  $0_1 = +$0_1;
+  return +Math_abs($0_1);
  }
  
- function $12(x) {
-  x = +x;
-  return +-x;
+ function $12($0_1) {
+  $0_1 = +$0_1;
+  return +-$0_1;
  }
  
- function $13(x, y) {
-  x = +x;
-  y = +y;
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0;
-  wasm2js_scratch_store_f64(+x);
-  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
-  i64toi32_i32$2 = wasm2js_scratch_load_i32(0 | 0) | 0;
-  i64toi32_i32$1 = 2147483647;
-  i64toi32_i32$3 = -1;
-  i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1;
-  $4_1 = i64toi32_i32$2 & i64toi32_i32$3;
-  $4$hi = i64toi32_i32$1;
-  wasm2js_scratch_store_f64(+y);
-  i64toi32_i32$1 = wasm2js_scratch_load_i32(1 | 0) | 0;
-  i64toi32_i32$0 = wasm2js_scratch_load_i32(0 | 0) | 0;
-  i64toi32_i32$2 = -2147483648;
-  i64toi32_i32$3 = 0;
-  i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2;
-  $7_1 = i64toi32_i32$0 & i64toi32_i32$3;
-  $7$hi = i64toi32_i32$2;
-  i64toi32_i32$2 = $4$hi;
-  i64toi32_i32$1 = $4_1;
-  i64toi32_i32$0 = $7$hi;
-  i64toi32_i32$3 = $7_1;
-  i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0;
-  wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$1 | i64toi32_i32$3);
-  wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
+ function $13($0_1, $1_1) {
+  $0_1 = +$0_1;
+  $1_1 = +$1_1;
+  var $2_1 = 0, $3_1 = 0, $4_1 = 0;
+  wasm2js_scratch_store_f64(+$0_1);
+  $2_1 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  $3_1 = wasm2js_scratch_load_i32(0 | 0) | 0;
+  wasm2js_scratch_store_f64(+$1_1);
+  $4_1 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  wasm2js_scratch_store_i32(0 | 0, $3_1 | wasm2js_scratch_load_i32(0 | 0) & 0);
+  wasm2js_scratch_store_i32(1 | 0, $2_1 & 2147483647 | $4_1 & -2147483648);
   return +wasm2js_scratch_load_f64();
  }
  
- function __wasm_nearest_f64(var$0) {
-  var var$1 = 0.0, var$2 = 0.0;
-  var$1 = Math_floor(var$0);
-  var$2 = var$0 - var$1;
-  if (!(var$2 < .5)) {
+ function __wasm_nearest_f64($0_1) {
+  var $1_1 = 0.0, $2_1 = 0.0, $3_1 = 0.0, $4_1 = 0.0;
+  $1_1 = Math_floor($0_1);
+  $2_1 = $0_1 - $1_1;
+  if ($2_1 < .5) {
+   $3_1 = $1_1
+  } else {
    {
-    var$0 = Math_ceil(var$0);
-    if (var$2 > .5) {
-     return var$0
+    $0_1 = Math_ceil($0_1);
+    if ($2_1 > .5) {
+     return $0_1
     }
-    var$2 = var$1 * .5;
-    var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
+    $4_1 = $0_1;
+    $0_1 = $1_1 * .5;
+    $3_1 = $0_1 - Math_floor($0_1) == 0.0 ? $1_1 : $4_1;
    }
   }
-  return var$1;
- }
- 
- function __wasm_trunc_f64(var$0) {
-  return var$0 < 0.0 ? Math_ceil(var$0) : Math_floor(var$0);
+  return $3_1;
  }
  
  var FUNCTION_TABLE = [];

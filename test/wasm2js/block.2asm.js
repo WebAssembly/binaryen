@@ -21,10 +21,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function dummy() {
-  
- }
- 
  function $1() {
   
  }
@@ -34,135 +30,39 @@ function asmFunc(global, env, buffer) {
  }
  
  function $3() {
-  dummy();
-  dummy();
-  dummy();
-  dummy();
-  dummy();
-  dummy();
-  dummy();
   return 8 | 0;
  }
  
  function $4() {
-  dummy();
-  dummy();
   return 9 | 0;
  }
  
  function $5() {
-  dummy();
   return 150 | 0;
  }
  
  function $6() {
-  dummy();
-  return __wasm_ctz_i32(13) | 0;
+  return 0 | 0;
  }
  
  function $7() {
-  dummy();
-  dummy();
-  return Math_imul(3, 4) | 0;
- }
- 
- function $8() {
-  dummy();
-  return !13 | 0;
- }
- 
- function $9() {
-  dummy();
-  dummy();
-  return Math_fround(3.0) > Math_fround(3.0) | 0;
+  return 12 | 0;
  }
  
  function $10() {
-  block : {
-   break block;
-  }
-  block44 : {
-   if (1) {
-    break block44
-   }
-   abort();
-  }
-  block45 : {
-   switch (0 | 0) {
-   default:
-    break block45;
-   };
-  }
-  block46 : {
-   switch (1 | 0) {
-   default:
-    break block46;
-   };
-  }
   return 19 | 0;
  }
  
  function $11() {
-  var $0 = 0;
-  block : {
-   $0 = 18;
-   break block;
-  }
-  return $0 | 0;
- }
- 
- function $12() {
-  var $0 = 0;
-  block : {
-   $0 = 18;
-   break block;
-  }
-  return $0 | 0;
+  return 18 | 0;
  }
  
  function $13() {
-  var $0 = 0, $1_1 = 0, $2_1 = 0, $5_1 = 0, $9_1 = 0, $10_1 = 0, $13_1 = 0, $14_1 = 0;
-  $0 = 0;
-  $1_1 = $0;
-  block : {
-   $2_1 = 1;
-   break block;
-  }
-  $0 = $1_1 + $2_1 | 0;
-  $5_1 = $0;
-  $0 = $5_1 + 2 | 0;
-  $9_1 = $0;
-  block50 : {
-   $10_1 = 4;
-   break block50;
-  }
-  $0 = $9_1 + $10_1 | 0;
-  $13_1 = $0;
-  block51 : {
-   $14_1 = 8;
-   break block51;
-  }
-  $0 = $13_1 + $14_1 | 0;
-  return $0 | 0;
+  return 15 | 0;
  }
  
  function $14() {
-  var $0 = 0;
-  block : {
-   $0 = 1;
-   $0 = Math_imul($0, 3);
-   $0 = $0 - 5 | 0;
-   $0 = Math_imul($0, 7);
-   break block;
-  }
-  return ($0 | 0) == (-14 | 0) | 0;
- }
- 
- function __wasm_ctz_i32(var$0) {
-  if (var$0) {
-   return 31 - Math_clz32(var$0 + -1 ^ var$0) | 0
-  }
-  return 32;
+  return 1 | 0;
  }
  
  var FUNCTION_TABLE = [];
@@ -174,11 +74,11 @@ function asmFunc(global, env, buffer) {
   "deep": $5, 
   "as_unary_operand": $6, 
   "as_binary_operand": $7, 
-  "as_test_operand": $8, 
-  "as_compare_operand": $9, 
+  "as_test_operand": $6, 
+  "as_compare_operand": $6, 
   "break_bare": $10, 
   "break_value": $11, 
-  "break_repeated": $12, 
+  "break_repeated": $11, 
   "break_inner": $13, 
   "effects": $14
  };

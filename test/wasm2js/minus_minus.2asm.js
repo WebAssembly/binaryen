@@ -21,12 +21,8 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0() {
-  return ~~- -7094.0;
- }
- 
  function $1() {
-  $0();
+  
  }
  
  var FUNCTION_TABLE = [];

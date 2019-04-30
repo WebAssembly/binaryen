@@ -30,19 +30,11 @@ function asmFunc(global, env, buffer) {
   
  }
  
- function bar() {
-  
- }
- 
- function baz() {
-  
- }
- 
  var FUNCTION_TABLE = [];
  FUNCTION_TABLE[import$tableBase + 0] = foo;
- FUNCTION_TABLE[import$tableBase + 1] = bar;
+ FUNCTION_TABLE[import$tableBase + 1] = foo;
  return {
-  "baz": baz
+  "baz": foo
  };
 }
 
