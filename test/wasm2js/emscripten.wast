@@ -52,6 +52,26 @@
     (i32.const 128)
    )
   )
+  (i32.store
+   (i32.const 16)
+   (i32.add (i32.const 1) (i32.const 2))
+  )
+  (f32.store
+   (i32.const 16)
+   (f32.add (f32.const 3) (f32.const 4))
+  )
+  (f64.store
+   (i32.const 16)
+   (f64.add (f64.const 5) (f64.const 6))
+  )
+  (i32.store8
+   (i32.const 16)
+   (i32.add (i32.const 7) (i32.const 8))
+  )
+  (i32.store16
+   (i32.const 16)
+   (i32.add (i32.const 9) (i32.const 10))
+  )
  )
  (func $__growWasmMemory (param $0 i32) (result i32)
   (grow_memory

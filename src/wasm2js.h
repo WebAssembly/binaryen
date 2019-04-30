@@ -853,15 +853,18 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         auto& indexes = pair.second;
         if (target != curr->default_) {
           for (auto i : indexes) {
-            ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
+            ValueBuilder::appendCaseToSwitch(theSwitch,
+                                             ValueBuilder::makeNum(i));
           }
-          ValueBuilder::appendCodeToSwitch(theSwitch, blockify(makeBreakOrContinue(target)), false);
+          ValueBuilder::appendCodeToSwitch(
+            theSwitch, blockify(makeBreakOrContinue(target)), false);
         } else {
-          // For the group going to the same place as the default, we can just emit
-          // the default itself, which we do at the end.
+          // For the group going to the same place as the default, we can just
+          // emit the default itself, which we do at the end.
         }
       }
-      // TODO: if the group the default is in is not the largest, we can turn the largest into
+      // TODO: if the group the default is in is not the largest, we can turn
+      // the largest into
       //       the default by using a local and a check on the range
       ValueBuilder::appendDefaultToSwitch(theSwitch);
       ValueBuilder::appendCodeToSwitch(
