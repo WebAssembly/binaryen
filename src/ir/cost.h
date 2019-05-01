@@ -33,8 +33,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
 
   Index visitBlock(Block* curr) {
     Index ret = 0;
-    for (auto* child : curr->list)
+    for (auto* child : curr->list) {
       ret += visit(child);
+    }
     return ret;
   }
   Index visitIf(If* curr) {
@@ -52,14 +53,16 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     // XXX this does not take into account if the call is to an import, which
     //     may be costlier in general
     Index ret = 4;
-    for (auto* child : curr->operands)
+    for (auto* child : curr->operands) {
       ret += visit(child);
+    }
     return ret;
   }
   Index visitCallIndirect(CallIndirect* curr) {
     Index ret = 6 + visit(curr->target);
-    for (auto* child : curr->operands)
+    for (auto* child : curr->operands) {
       ret += visit(child);
+    }
     return ret;
   }
   Index visitGetLocal(GetLocal* curr) { return 0; }

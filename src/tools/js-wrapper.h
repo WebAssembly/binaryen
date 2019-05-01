@@ -83,8 +83,9 @@ static std::string generateJSWrapper(Module& wasm) {
          "});\n";
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
-    if (!func)
+    if (!func) {
       continue; // something exported other than a function
+    }
     ret += "if (instance.exports.hangLimitInitializer) "
            "instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";

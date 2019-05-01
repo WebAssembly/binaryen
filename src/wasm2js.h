@@ -60,12 +60,13 @@ IString EXPRESSION_RESULT("wasm2js$expresult");
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
-  if (ast[0] == BLOCK || ast[0] == TOPLEVEL)
+  if (ast[0] == BLOCK || ast[0] == TOPLEVEL) {
     index = 1;
-  else if (ast[0] == DEFUN)
+  } else if (ast[0] == DEFUN) {
     index = 3;
-  else
+  } else {
     abort();
+  }
   if (extra->isArray() && extra[0] == BLOCK) {
     for (size_t i = 0; i < extra[1]->size(); i++) {
       ast[index]->push_back(extra[1][i]);
@@ -740,8 +741,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     bool isBlock(Ref ast) { return !!ast && ast->isArray() && ast[0] == BLOCK; }
 
     Ref blockify(Ref ast) {
-      if (isBlock(ast))
+      if (isBlock(ast)) {
         return ast;
+      }
       Ref ret = ValueBuilder::makeBlock();
       ret[1]->push_back(ValueBuilder::makeStatement(ast));
       return ret;
@@ -1982,8 +1984,9 @@ void Wasm2JSGlue::emitMemory(
   std::string buffer,
   std::string segmentWriter,
   std::function<std::string(std::string)> accessGlobal) {
-  if (wasm.memory.segments.empty())
+  if (wasm.memory.segments.empty()) {
     return;
+  }
 
   auto expr = R"(
     function(mem) {
@@ -2036,8 +2039,9 @@ void Wasm2JSGlue::emitScratchMemorySupport() {
       needScratchMemory = true;
     }
   });
-  if (!needScratchMemory)
+  if (!needScratchMemory) {
     return;
+  }
 
   out << R"(
   var scratchBuffer = new ArrayBuffer(8);

@@ -246,8 +246,9 @@ public:
     this->setFunction(funcInit);
     this->mapLocalsAndEmitHeader();
     for (auto* inst : *funcInit->stackIR) {
-      if (!inst)
+      if (!inst) {
         continue; // a nullptr is just something we can skip
+      }
       switch (inst->op) {
         case StackInst::Basic:
         case StackInst::BlockBegin:
@@ -335,16 +336,21 @@ void StackWriter<Mode, Parent>::mapLocalsAndEmitHeader() {
   o << U32LEB((numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
               (numLocalsByType[f32] ? 1 : 0) + (numLocalsByType[f64] ? 1 : 0) +
               (numLocalsByType[v128] ? 1 : 0));
-  if (numLocalsByType[i32])
+  if (numLocalsByType[i32]) {
     o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
-  if (numLocalsByType[i64])
+  }
+  if (numLocalsByType[i64]) {
     o << U32LEB(numLocalsByType[i64]) << binaryType(i64);
-  if (numLocalsByType[f32])
+  }
+  if (numLocalsByType[f32]) {
     o << U32LEB(numLocalsByType[f32]) << binaryType(f32);
-  if (numLocalsByType[f64])
+  }
+  if (numLocalsByType[f64]) {
     o << U32LEB(numLocalsByType[f64]) << binaryType(f64);
-  if (numLocalsByType[v128])
+  }
+  if (numLocalsByType[v128]) {
     o << U32LEB(numLocalsByType[v128]) << binaryType(v128);
+  }
 }
 
 template<StackWriterMode Mode, typename Parent>
@@ -570,8 +576,9 @@ void StackWriter<Mode, Parent>::visitBreak(Break* curr) {
   if (curr->value) {
     visitChild(curr->value);
   }
-  if (curr->condition)
+  if (curr->condition) {
     visitChild(curr->condition);
+  }
   if (!justAddToStack(curr)) {
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
       << U32LEB(getBreakIndex(curr->name));
@@ -601,8 +608,9 @@ void StackWriter<Mode, Parent>::visitSwitch(Switch* curr) {
     emitExtraUnreachable();
     return;
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
   for (auto target : curr->targets) {
     o << U32LEB(getBreakIndex(target));
@@ -643,8 +651,9 @@ void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitGetLocal(GetLocal* curr) {
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->index]);
 }
 
@@ -662,8 +671,9 @@ void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitGetGlobal(GetGlobal* curr) {
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::GetGlobal)
     << U32LEB(parent.getGlobalIndex(curr->name));
 }
@@ -671,8 +681,9 @@ void StackWriter<Mode, Parent>::visitGetGlobal(GetGlobal* curr) {
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSetGlobal(SetGlobal* curr) {
   visitChild(curr->value);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::SetGlobal)
     << U32LEB(parent.getGlobalIndex(curr->name));
 }
@@ -685,8 +696,9 @@ void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
     emitExtraUnreachable();
     return;
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   if (!curr->isAtomic) {
     switch (curr->type) {
       case i32: {
@@ -801,8 +813,9 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
     emitExtraUnreachable();
     return;
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   if (!curr->isAtomic) {
     switch (curr->valueType) {
       case i32: {
@@ -903,18 +916,21 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicRMW(AtomicRMW* curr) {
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
-  if (curr->ptr->type == unreachable)
+  if (curr->ptr->type == unreachable) {
     return;
+  }
   visitChild(curr->value);
-  if (curr->value->type == unreachable)
+  if (curr->value->type == unreachable) {
     return;
+  }
   if (curr->type == unreachable) {
     // don't even emit it; we don't know the right type
     emitExtraUnreachable();
     return;
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix);
 
@@ -978,21 +994,25 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
-  if (curr->ptr->type == unreachable)
+  if (curr->ptr->type == unreachable) {
     return;
+  }
   visitChild(curr->expected);
-  if (curr->expected->type == unreachable)
+  if (curr->expected->type == unreachable) {
     return;
+  }
   visitChild(curr->replacement);
-  if (curr->replacement->type == unreachable)
+  if (curr->replacement->type == unreachable) {
     return;
+  }
   if (curr->type == unreachable) {
     // don't even emit it; we don't know the right type
     emitExtraUnreachable();
     return;
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->type) {
@@ -1039,16 +1059,20 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicWait(AtomicWait* curr) {
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
-  if (curr->ptr->type == unreachable)
+  if (curr->ptr->type == unreachable) {
     return;
+  }
   visitChild(curr->expected);
-  if (curr->expected->type == unreachable)
+  if (curr->expected->type == unreachable) {
     return;
+  }
   visitChild(curr->timeout);
-  if (curr->timeout->type == unreachable)
+  if (curr->timeout->type == unreachable) {
     return;
-  if (justAddToStack(curr))
+  }
+  if (justAddToStack(curr)) {
     return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->expectedType) {
@@ -1071,13 +1095,16 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitAtomicNotify(AtomicNotify* curr) {
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
-  if (curr->ptr->type == unreachable)
+  if (curr->ptr->type == unreachable) {
     return;
+  }
   visitChild(curr->notifyCount);
-  if (curr->notifyCount->type == unreachable)
+  if (curr->notifyCount->type == unreachable) {
     return;
-  if (justAddToStack(curr))
+  }
+  if (justAddToStack(curr)) {
     return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
   emitMemoryAccess(4, 4, 0);
@@ -1086,8 +1113,9 @@ void StackWriter<Mode, Parent>::visitAtomicNotify(AtomicNotify* curr) {
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSIMDExtract(SIMDExtract* curr) {
   visitChild(curr->vec);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case ExtractLaneSVecI8x16:
@@ -1122,8 +1150,9 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSIMDReplace(SIMDReplace* curr) {
   visitChild(curr->vec);
   visitChild(curr->value);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case ReplaceLaneVecI8x16:
@@ -1153,8 +1182,9 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSIMDShuffle(SIMDShuffle* curr) {
   visitChild(curr->left);
   visitChild(curr->right);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V8x16Shuffle);
   for (uint8_t m : curr->mask) {
     o << m;
@@ -1166,8 +1196,9 @@ void StackWriter<Mode, Parent>::visitSIMDBitselect(SIMDBitselect* curr) {
   visitChild(curr->left);
   visitChild(curr->right);
   visitChild(curr->cond);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Bitselect);
 }
 
@@ -1175,8 +1206,9 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSIMDShift(SIMDShift* curr) {
   visitChild(curr->vec);
   visitChild(curr->shift);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case ShlVecI8x16:
@@ -1223,8 +1255,9 @@ void StackWriter<Mode, Parent>::visitMemoryInit(MemoryInit* curr) {
   visitChild(curr->dest);
   visitChild(curr->offset);
   visitChild(curr->size);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryInit);
   o << U32LEB(curr->segment) << int8_t(0);
@@ -1232,8 +1265,9 @@ void StackWriter<Mode, Parent>::visitMemoryInit(MemoryInit* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitDataDrop(DataDrop* curr) {
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::DataDrop);
   o << U32LEB(curr->segment);
@@ -1244,8 +1278,9 @@ void StackWriter<Mode, Parent>::visitMemoryCopy(MemoryCopy* curr) {
   visitChild(curr->dest);
   visitChild(curr->source);
   visitChild(curr->size);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryCopy);
   o << int8_t(0) << int8_t(0);
@@ -1256,8 +1291,9 @@ void StackWriter<Mode, Parent>::visitMemoryFill(MemoryFill* curr) {
   visitChild(curr->dest);
   visitChild(curr->value);
   visitChild(curr->size);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryFill);
   o << int8_t(0);
@@ -1265,8 +1301,9 @@ void StackWriter<Mode, Parent>::visitMemoryFill(MemoryFill* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitConst(Const* curr) {
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   switch (curr->type) {
     case i32: {
       o << int8_t(BinaryConsts::I32Const) << S32LEB(curr->value.geti32());
@@ -1305,8 +1342,9 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
     emitExtraUnreachable();
     return;
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   switch (curr->op) {
     case ClzInt32:
       o << int8_t(BinaryConsts::I32Clz);
@@ -1624,8 +1662,9 @@ void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
     emitExtraUnreachable();
     return;
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   switch (curr->op) {
     case AddInt32:
       o << int8_t(BinaryConsts::I32Add);
@@ -2111,8 +2150,9 @@ void StackWriter<Mode, Parent>::visitSelect(Select* curr) {
     emitExtraUnreachable();
     return;
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::Select);
 }
 
@@ -2121,8 +2161,9 @@ void StackWriter<Mode, Parent>::visitReturn(Return* curr) {
   if (curr->value) {
     visitChild(curr->value);
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
 
   o << int8_t(BinaryConsts::Return);
 }
@@ -2138,8 +2179,9 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
       break;
     }
   }
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   switch (curr->op) {
     case CurrentMemory: {
       o << int8_t(BinaryConsts::CurrentMemory);
@@ -2155,23 +2197,26 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitNop(Nop* curr) {
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::Nop);
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitUnreachable(Unreachable* curr) {
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::Unreachable);
 }
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitDrop(Drop* curr) {
   visitChild(curr->value);
-  if (justAddToStack(curr))
+  if (justAddToStack(curr)) {
     return;
+  }
   o << int8_t(BinaryConsts::Drop);
 }
 
