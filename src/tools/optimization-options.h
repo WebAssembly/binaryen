@@ -177,8 +177,9 @@ struct OptimizationOptions : public ToolOptions {
 
   void runPasses(Module& wasm) {
     PassRunner passRunner(&wasm, passOptions);
-    if (debug)
+    if (debug) {
       passRunner.setDebug(true);
+    }
     for (auto& pass : passes) {
       if (pass == DEFAULT_OPT_PASSES) {
         passRunner.addDefaultOptimizationPasses();

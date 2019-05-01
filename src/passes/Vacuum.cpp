@@ -56,8 +56,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
     auto type = curr->type;
     // An unreachable node must not be changed.
-    if (type == unreachable)
+    if (type == unreachable) {
       return curr;
+    }
     // We iterate on possible replacements. If a replacement changes the type,
     // stop and go back.
     auto* prev = curr;
@@ -104,8 +105,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         case Expression::Id::ConstId:
         case Expression::Id::GetLocalId:
         case Expression::Id::GetGlobalId: {
-          if (!resultUsed)
+          if (!resultUsed) {
             return nullptr;
+          }
           return curr;
         }
 
@@ -326,8 +328,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   void visitLoop(Loop* curr) {
-    if (curr->body->is<Nop>())
+    if (curr->body->is<Nop>()) {
       ExpressionManipulator::nop(curr);
+    }
   }
 
   void visitDrop(Drop* curr) {

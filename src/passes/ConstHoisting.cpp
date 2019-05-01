@@ -72,8 +72,9 @@ struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
 
 private:
   bool worthHoisting(Literal value, Index num) {
-    if (num < MIN_USES)
+    if (num < MIN_USES) {
       return false;
+    }
     // measure the size of the constant
     Index size = 0;
     switch (value.type) {

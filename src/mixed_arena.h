@@ -113,8 +113,9 @@ struct MixedArena {
         // otherwise, the cmpxchg updated seen, and we continue to loop
         curr = seen;
       }
-      if (allocated)
+      if (allocated) {
         delete allocated;
+      }
       return curr->allocSpace(size, align);
     }
     // First, move the current index in the last chunk to an aligned position.
@@ -125,8 +126,9 @@ struct MixedArena {
       assert(size <= numChunks * CHUNK_SIZE);
       auto* allocation =
         wasm::aligned_malloc(MAX_ALIGN, numChunks * CHUNK_SIZE);
-      if (!allocation)
+      if (!allocation) {
         abort();
+      }
       chunks.push_back(allocation);
       index = 0;
     }
@@ -155,8 +157,9 @@ struct MixedArena {
 
   ~MixedArena() {
     clear();
-    if (next.load())
+    if (next.load()) {
       delete next.load();
+    }
   }
 };
 

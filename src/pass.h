@@ -133,8 +133,9 @@ struct PassRunner {
 
   void add(std::string passName) {
     auto pass = PassRegistry::get()->createPass(passName);
-    if (!pass)
+    if (!pass) {
       Fatal() << "Could not find pass: " << passName << "\n";
+    }
     doAdd(pass);
   }
 

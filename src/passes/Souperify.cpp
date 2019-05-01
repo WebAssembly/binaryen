@@ -86,8 +86,9 @@ struct UseFinder {
                   LocalGraph& localGraph,
                   std::vector<Expression*>& ret) {
     // If already handled, nothing to do here.
-    if (seenSets.count(set))
+    if (seenSets.count(set)) {
       return;
+    }
     seenSets.insert(set);
     // Find all the uses of that set.
     auto& gets = localGraph.setInfluences[set];
@@ -190,8 +191,9 @@ struct Trace {
     }
     // Pull in all the dependencies, starting from the value itself.
     add(toInfer, 0);
-    if (bad)
+    if (bad) {
       return;
+    }
     // If we are trivial before adding pcs, we are still trivial, and
     // can ignore this.
     auto sizeBeforePathConditions = nodes.size();
@@ -385,8 +387,9 @@ struct Trace {
       }
     }
     for (auto& node : nodes) {
-      if (node == toInfer)
+      if (node == toInfer) {
         continue;
+      }
       if (auto* origin = node->origin) {
         auto uses = UseFinder().getUses(origin, graph, localGraph);
         for (auto* use : uses) {
@@ -715,8 +718,9 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     // Build the data-flow IR.
     DataFlow::Graph graph;
     graph.build(func, getModule());
-    if (debug() >= 2)
+    if (debug() >= 2) {
       dump(graph, std::cout);
+    }
     // Build the local graph data structure.
     LocalGraph localGraph(func);
     localGraph.computeInfluences();

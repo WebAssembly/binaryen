@@ -91,8 +91,9 @@ void ReFinalize::visitBlock(Block* curr) {
       return;
     }
   }
-  if (curr->type == unreachable)
+  if (curr->type == unreachable) {
     return;
+  }
   // type is none, but we might be unreachable
   if (curr->type == none) {
     for (auto* child : curr->list) {

@@ -307,8 +307,9 @@ struct DAE : public Pass {
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
-      if (numParams == 0)
+      if (numParams == 0) {
         continue;
+      }
       // Iterate downwards, as we may remove more than one.
       Index i = numParams - 1;
       while (1) {
@@ -331,8 +332,9 @@ struct DAE : public Pass {
             changed.insert(func);
           }
         }
-        if (i == 0)
+        if (i == 0) {
           break;
+        }
         i--;
       }
     }

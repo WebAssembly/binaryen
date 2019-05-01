@@ -155,47 +155,57 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 
   void noteFound(Expression* value) {
     found++;
-    if (found == 1)
+    if (found == 1) {
       valueType = unreachable;
-    if (!value)
+    }
+    if (!value) {
       valueType = none;
-    else if (value->type != unreachable)
+    } else if (value->type != unreachable) {
       valueType = value->type;
+    }
   }
 
   void visitBreak(Break* curr) {
     if (!named) {
       // ignore an unreachable break
-      if (curr->condition && curr->condition->type == unreachable)
+      if (curr->condition && curr->condition->type == unreachable) {
         return;
-      if (curr->value && curr->value->type == unreachable)
+      }
+      if (curr->value && curr->value->type == unreachable) {
         return;
+      }
     }
     // check the break
-    if (curr->name == target)
+    if (curr->name == target) {
       noteFound(curr->value);
+    }
   }
 
   void visitSwitch(Switch* curr) {
     if (!named) {
       // ignore an unreachable switch
-      if (curr->condition->type == unreachable)
+      if (curr->condition->type == unreachable) {
         return;
-      if (curr->value && curr->value->type == unreachable)
+      }
+      if (curr->value && curr->value->type == unreachable) {
         return;
+      }
     }
     // check the switch
     for (auto name : curr->targets) {
-      if (name == target)
+      if (name == target) {
         noteFound(curr->value);
+      }
     }
-    if (curr->default_ == target)
+    if (curr->default_ == target) {
       noteFound(curr->value);
+    }
   }
 
   static bool hasReachable(Expression* tree, Name target) {
-    if (!target.is())
+    if (!target.is()) {
       return false;
+    }
     BranchSeeker seeker(target);
     seeker.named = false;
     seeker.walk(tree);
@@ -203,8 +213,9 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 
   static Index countReachable(Expression* tree, Name target) {
-    if (!target.is())
+    if (!target.is()) {
       return 0;
+    }
     BranchSeeker seeker(target);
     seeker.named = false;
     seeker.walk(tree);
@@ -212,16 +223,18 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 
   static bool hasNamed(Expression* tree, Name target) {
-    if (!target.is())
+    if (!target.is()) {
       return false;
+    }
     BranchSeeker seeker(target);
     seeker.walk(tree);
     return seeker.found > 0;
   }
 
   static Index countNamed(Expression* tree, Name target) {
-    if (!target.is())
+    if (!target.is()) {
       return 0;
+    }
     BranchSeeker seeker(target);
     seeker.walk(tree);
     return seeker.found;

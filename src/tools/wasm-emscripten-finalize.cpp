@@ -193,12 +193,14 @@ int main(int argc, const char* argv[]) {
   std::vector<Name> initializerFunctions;
 
   if (wasm.table.imported()) {
-    if (wasm.table.base != "table")
+    if (wasm.table.base != "table") {
       wasm.table.base = Name("table");
+    }
   }
   if (wasm.memory.imported()) {
-    if (wasm.table.base != "memory")
+    if (wasm.table.base != "memory") {
       wasm.memory.base = Name("memory");
+    }
   }
   wasm.updateMaps();
 

@@ -49,8 +49,9 @@ struct DeadCodeElimination
 
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
-    if (old == expression)
+    if (old == expression) {
       return expression;
+    }
     super::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
@@ -333,8 +334,9 @@ struct DeadCodeElimination
 
   // we don't need to drop unreachable nodes
   Expression* drop(Expression* toDrop) {
-    if (toDrop->type == unreachable)
+    if (toDrop->type == unreachable) {
       return toDrop;
+    }
     return Builder(*getModule()).makeDrop(toDrop);
   }
 
@@ -362,8 +364,9 @@ struct DeadCodeElimination
   void visitCall(Call* curr) { handleCall(curr); }
 
   void visitCallIndirect(CallIndirect* curr) {
-    if (handleCall(curr) != curr)
+    if (handleCall(curr) != curr) {
       return;
+    }
     if (isUnreachable(curr->target)) {
       auto* block = getModule()->allocator.alloc<Block>();
       for (auto* operand : curr->operands) {

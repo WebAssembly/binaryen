@@ -141,8 +141,9 @@ struct SSAify : public Pass {
         }
         continue;
       }
-      if (!allowMerges)
+      if (!allowMerges) {
         continue;
+      }
       // more than 1 set, need a phi: a new local written to at each of the sets
       auto new_ = addLocal(get->type);
       auto old = get->index;
