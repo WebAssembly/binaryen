@@ -294,7 +294,11 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.add("remove-unused-names");
     runner.add("merge-blocks");
     runner.add("simplify-locals-notee-nostructure");
-    runner.add("coalesce-locals");
+    // Coalescing is slow if we didn't run full optimizations earlier, so don't
+    // run it automatically.
+    if (options.optimizeLevel > 0) {
+      runner.add("coalesce-locals");
+    }
     runner.add("reorder-locals");
     runner.add("vacuum");
     runner.add("remove-unused-module-elements");
