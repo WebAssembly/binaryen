@@ -14,3 +14,4 @@ CheckOptions:
     value:           camelBack
   - key:             readability-identifier-naming.VariableCase
     value:           camelBack
+HeaderFilterRegex: src/*
