@@ -13,6 +13,7 @@
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "exported" (func $exported))
  (export "sub-zero" (func $sub-zero))
+ (export "select" (func $select))
  (func $main
   (drop (call $syscall$6 (i32.const 1) (i32.const 2)))
   (drop (call $syscall$54 (i32.const 3) (i32.const 4)))
@@ -89,6 +90,13 @@
  )
  (func $sub-zero (param $x i32) (result i32)
   (i32.sub (local.get $x) (i32.const -5))
+ )
+ (func $select (param $x i32) (result i32)
+  (select
+   (local.get $x)
+   (i32.load (i32.const 16)) ;; we can ignore this implicit trap, no side effects
+   (local.get $x)
+  )
  )
 )
 

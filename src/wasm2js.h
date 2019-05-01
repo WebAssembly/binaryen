@@ -124,7 +124,15 @@ public:
     bool emscripten = false;
   };
 
-  Wasm2JSBuilder(Flags f, PassOptions options) : flags(f), options(options) {}
+  Wasm2JSBuilder(Flags f, PassOptions options_) : flags(f), options(options_) {
+    // We don't try to model wasm's trapping precisely - if we did, each load
+    // and store would need to do a check. Given that, we can just ignore
+    // implicit traps like those when optimizing. (When not optimizing, it's
+    // nice to see codegen that matches wasm more precisely.)
+    if (options.optimizeLevel > 0) {
+      options.ignoreImplicitTraps = true;
+    }
+  }
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
   Ref processFunction(Module* wasm, Function* func, bool standalone = false);

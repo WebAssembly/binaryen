@@ -41,10 +41,6 @@ function asmFunc(global, env, buffer) {
  }
  
  function bar() {
-  HEAPU8[128 | 0];
-  HEAP8[128 | 0];
-  HEAPU16[128 >> 1];
-  HEAP16[128 >> 1];
   HEAP32[16 >> 2] = 3;
   HEAPF32[16 >> 2] = 7;
   HEAPF64[16 >> 3] = 11;
@@ -66,6 +62,11 @@ function asmFunc(global, env, buffer) {
   return $0 + 5 | 0;
  }
  
+ function select($0) {
+  $0 = $0 | 0;
+  return ($0 ? $0 : HEAP32[16 >> 2]) | 0;
+ }
+ 
  // EMSCRIPTEN_END_FUNCS;
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
@@ -75,7 +76,8 @@ function asmFunc(global, env, buffer) {
   "other": other, 
   "__growWasmMemory": __growWasmMemory, 
   "exported": internal, 
-  "sub_zero": sub_zero
+  "sub_zero": sub_zero, 
+  "select": select
  };
 }
 

@@ -80,6 +80,12 @@ function asmFunc(global, env, buffer) {
   return $0 - -5 | 0 | 0;
  }
  
+ function select($0) {
+  $0 = $0 | 0;
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
+  return (wasm2js_i32$0 = $0, wasm2js_i32$1 = HEAP32[16 >> 2] | 0, wasm2js_i32$2 = $0, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0;
+ }
+ 
  // EMSCRIPTEN_END_FUNCS;
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
@@ -89,7 +95,8 @@ function asmFunc(global, env, buffer) {
   "other": other, 
   "__growWasmMemory": __growWasmMemory, 
   "exported": exported, 
-  "sub_zero": sub_zero
+  "sub_zero": sub_zero, 
+  "select": select
  };
 }
 
