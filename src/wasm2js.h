@@ -268,8 +268,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
 
   // Process the code, and optimize if relevant.
+  // First, do the lowering to a JS-friendly subset.
   {
-    // First, do the lowering to a JS-friendly subset.
     PassRunner runner(wasm, options);
     runner.add<AutoDrop>();
     runner.add("legalize-js-interface");
@@ -285,20 +285,17 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // Next, optimize that as best we can. This should not generate non-JS-friendly
     // things.
     if (options.optimizeLevel > 0) {
-      // Run the full normal optimizations, to clean up the previous flattening
-      // and changes made by the lowering passes.
       runner.addDefaultOptimizationPasses();
-      // Finally, get the code into the flat form we need for wasm2js itself, and
-      // optimize that a little in a way that keeps the flat property.
-      runner.add("flatten");
-      runner.add("remove-unused-names");
-      runner.add("merge-blocks");
-      runner.add("simplify-locals-notee-nostructure");
-      runner.add("coalesce-locals");
-      runner.add("reorder-locals");
-      runner.add("vacuum");
-      runner.add("remove-unused-module-elements");
     }
+    // Finally, get the code into the flat form we need for wasm2js itself, and
+    // optimize that a little in a way that keeps flat property.
+    runner.add("flatten");
+    runner.add("simplify-locals-notee-nostructure");
+    // TODO: coalesce-locals?
+    runner.add("reorder-locals");
+    runner.add("remove-unused-names");
+    runner.add("vacuum");
+    runner.add("remove-unused-module-elements");
     runner.setDebug(flags.debug);
     runner.run();
   }
