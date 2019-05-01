@@ -5,6 +5,7 @@ add_custom_command(
 
 SET(passes_SOURCES
   pass.cpp
+  AlignmentLowering.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
