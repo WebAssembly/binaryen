@@ -310,8 +310,7 @@ struct Value {
   }
 
   char* parse(char* curr) {
-    /* space, tab, linefeed/newline, or return */
-
+  /* space, tab, linefeed/newline, or return */
 #define is_json_space(x) (x == 32 || x == 9 || x == 10 || x == 13)
 #define skip()                                                                 \
   {                                                                            \

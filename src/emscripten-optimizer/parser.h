@@ -203,9 +203,8 @@ template<class NodeRef, class Builder> class Parser {
   };
 
   struct Frag {
-    // MSVC does not allow unrestricted unions:
-    // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
-
+  // MSVC does not allow unrestricted unions:
+  // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
 #ifndef _MSC_VER
     union {
 #endif
