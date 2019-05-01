@@ -102,8 +102,9 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case ShrSInt32: {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          if (maxBits == 32)
+          if (maxBits == 32) {
             return 32;
+          }
           auto shifts =
             std::min(Index(Bits::getEffectiveShifts(shift)),
                      maxBits); // can ignore more shifts than zero us out
@@ -227,11 +228,13 @@ struct LocalScanner : PostWalker<LocalScanner> {
 
   void visitSetLocal(SetLocal* curr) {
     auto* func = getFunction();
-    if (func->isParam(curr->index))
+    if (func->isParam(curr->index)) {
       return;
+    }
     auto type = getFunction()->getLocalType(curr->index);
-    if (type != i32 && type != i64)
+    if (type != i32 && type != i64) {
       return;
+    }
     // an integer var, worth processing
     auto* value = Properties::getFallthrough(curr->value);
     auto& info = localInfo[curr->index];
@@ -501,12 +504,14 @@ struct OptimizeInstructions
           }
         }
         auto* ret = optimizeAddedConstants(binary);
-        if (ret)
+        if (ret) {
           return ret;
+        }
       } else if (binary->op == SubInt32) {
         auto* ret = optimizeAddedConstants(binary);
-        if (ret)
+        if (ret) {
           return ret;
+        }
       }
       // a bunch of operations on a constant right side can be simplified
       if (auto* right = binary->right->dynCast<Const>()) {
@@ -532,8 +537,9 @@ struct OptimizeInstructions
         }
         // some math operations have trivial results
         Expression* ret = optimizeWithConstantOnRight(binary);
-        if (ret)
+        if (ret) {
           return ret;
+        }
         // the square of some operations can be merged
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == binary->op) {
@@ -575,8 +581,9 @@ struct OptimizeInstructions
       // a bunch of operations on a constant left side can be simplified
       if (binary->left->is<Const>()) {
         Expression* ret = optimizeWithConstantOnLeft(binary);
-        if (ret)
+        if (ret) {
           return ret;
+        }
       }
       // bitwise operations
       if (binary->op == AndInt32) {
@@ -895,8 +902,9 @@ private:
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
       return swap();
     }
-    if (binary->right->is<Const>())
+    if (binary->right->is<Const>()) {
       return;
+    }
     // Prefer a get on the right.
     if (binary->left->is<GetLocal>() && !binary->right->is<GetLocal>()) {
       return maybeSwap();
@@ -1085,8 +1093,9 @@ private:
     };
     Expression* walked = binary;
     ZeroRemover(getPassOptions()).walk(walked);
-    if (constant == 0)
+    if (constant == 0) {
       return walked; // nothing more to do
+    }
     if (auto* c = walked->dynCast<Const>()) {
       assert(c->value.geti32() == 0);
       c->value = Literal(constant);
@@ -1103,40 +1112,48 @@ private:
   Expression* conditionalizeExpensiveOnBitwise(Binary* binary) {
     // this operation can increase code size, so don't always do it
     auto& options = getPassRunner()->options;
-    if (options.optimizeLevel < 2 || options.shrinkLevel > 0)
+    if (options.optimizeLevel < 2 || options.shrinkLevel > 0) {
       return nullptr;
+    }
     const auto MIN_COST = 7;
     assert(binary->op == AndInt32 || binary->op == OrInt32);
-    if (binary->right->is<Const>())
+    if (binary->right->is<Const>()) {
       return nullptr; // trivial
+    }
     // bitwise logical operator on two non-numerical values, check if they are
     // boolean
     auto* left = binary->left;
     auto* right = binary->right;
-    if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right))
+    if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) {
       return nullptr;
+    }
     auto leftEffects = EffectAnalyzer(getPassOptions(), left);
     auto rightEffects = EffectAnalyzer(getPassOptions(), right);
     auto leftHasSideEffects = leftEffects.hasSideEffects();
     auto rightHasSideEffects = rightEffects.hasSideEffects();
-    if (leftHasSideEffects && rightHasSideEffects)
+    if (leftHasSideEffects && rightHasSideEffects) {
       return nullptr; // both must execute
+    }
     // canonicalize with side effects, if any, happening on the left
     if (rightHasSideEffects) {
-      if (CostAnalyzer(left).cost < MIN_COST)
+      if (CostAnalyzer(left).cost < MIN_COST) {
         return nullptr; // avoidable code is too cheap
-      if (leftEffects.invalidates(rightEffects))
+      }
+      if (leftEffects.invalidates(rightEffects)) {
         return nullptr; // cannot reorder
+      }
       std::swap(left, right);
     } else if (leftHasSideEffects) {
-      if (CostAnalyzer(right).cost < MIN_COST)
+      if (CostAnalyzer(right).cost < MIN_COST) {
         return nullptr; // avoidable code is too cheap
+      }
     } else {
       // no side effects, reorder based on cost estimation
       auto leftCost = CostAnalyzer(left).cost;
       auto rightCost = CostAnalyzer(right).cost;
-      if (std::max(leftCost, rightCost) < MIN_COST)
+      if (std::max(leftCost, rightCost) < MIN_COST) {
         return nullptr; // avoidable code is too cheap
+      }
       // canonicalize with expensive code on the right
       if (leftCost > rightCost) {
         std::swap(left, right);
@@ -1240,8 +1257,9 @@ private:
     auto* outerConst = outer->right->cast<Const>();
     auto* innerConst = inner->right->cast<Const>();
     auto* value = inner->left;
-    if (outerConst->value == innerConst->value)
+    if (outerConst->value == innerConst->value) {
       return value;
+    }
     // add a shift, by reusing the existing node
     innerConst->value = innerConst->value.sub(outerConst->value);
     return inner;

@@ -194,8 +194,9 @@ struct TypeUpdater
   // alters the type of a node to a new type.
   // this propagates the type change through all the parents.
   void changeTypeTo(Expression* curr, Type newType) {
-    if (curr->type == newType)
+    if (curr->type == newType) {
       return; // nothing to do
+    }
     curr->type = newType;
     propagateTypesUp(curr);
   }
@@ -208,13 +209,15 @@ struct TypeUpdater
   // the one thing we need to do here is propagate unreachability,
   // no other change is possible
   void propagateTypesUp(Expression* curr) {
-    if (curr->type != unreachable)
+    if (curr->type != unreachable) {
       return;
+    }
     while (1) {
       auto* child = curr;
       curr = parents[child];
-      if (!curr)
+      if (!curr) {
         return;
+      }
       // get ready to apply unreachability to this node
       if (curr->type == unreachable) {
         return; // already unreachable, stop here

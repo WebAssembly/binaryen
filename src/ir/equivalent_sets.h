@@ -67,8 +67,9 @@ struct EquivalentSets {
 
   // Checks whether two indexes contain the same data.
   bool check(Index a, Index b) {
-    if (a == b)
+    if (a == b) {
       return true;
+    }
     if (auto* set = getEquivalents(a)) {
       if (set->find(b) != set->end()) {
         return true;

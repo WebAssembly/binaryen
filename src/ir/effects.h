@@ -30,8 +30,9 @@ struct EffectAnalyzer
   EffectAnalyzer(PassOptions& passOptions, Expression* ast = nullptr) {
     ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
     debugInfo = passOptions.debugInfo;
-    if (ast)
+    if (ast) {
       analyze(ast);
+    }
   }
 
   bool ignoreImplicitTraps;
@@ -41,8 +42,9 @@ struct EffectAnalyzer
     breakNames.clear();
     walk(ast);
     // if we are left with breaks, they are external
-    if (breakNames.size() > 0)
+    if (breakNames.size() > 0) {
       branches = true;
+    }
   }
 
   // Core effect tracking
@@ -115,8 +117,9 @@ struct EffectAnalyzer
       }
     }
     for (auto local : localsRead) {
-      if (other.localsWritten.count(local))
+      if (other.localsWritten.count(local)) {
         return true;
+      }
     }
     if ((accessesGlobal() && other.calls) ||
         (other.accessesGlobal() && calls)) {
@@ -129,8 +132,9 @@ struct EffectAnalyzer
       }
     }
     for (auto global : globalsRead) {
-      if (other.globalsWritten.count(global))
+      if (other.globalsWritten.count(global)) {
         return true;
+      }
     }
     // we are ok to reorder implicit traps, but not conditionalize them
     if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
@@ -151,14 +155,18 @@ struct EffectAnalyzer
     writesMemory = writesMemory || other.writesMemory;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
-    for (auto i : other.localsRead)
+    for (auto i : other.localsRead) {
       localsRead.insert(i);
-    for (auto i : other.localsWritten)
+    }
+    for (auto i : other.localsWritten) {
       localsWritten.insert(i);
-    for (auto i : other.globalsRead)
+    }
+    for (auto i : other.globalsRead) {
       globalsRead.insert(i);
-    for (auto i : other.globalsWritten)
+    }
+    for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
+    }
   }
 
   // the checks above happen after the node's children were processed, in the
@@ -183,13 +191,15 @@ struct EffectAnalyzer
   std::set<Name> breakNames;
 
   void visitBlock(Block* curr) {
-    if (curr->name.is())
+    if (curr->name.is()) {
       breakNames.erase(curr->name); // these were internal breaks
+    }
   }
   void visitIf(If* curr) {}
   void visitLoop(Loop* curr) {
-    if (curr->name.is())
+    if (curr->name.is()) {
       breakNames.erase(curr->name); // these were internal breaks
+    }
     // if the loop is unreachable, then there is branching control flow:
     //  (1) if the body is unreachable because of a (return), uncaught (br)
     //      etc., then we already noted branching, so it is ok to mark it again
@@ -228,28 +238,32 @@ struct EffectAnalyzer
   void visitLoad(Load* curr) {
     readsMemory = true;
     isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitStore(Store* curr) {
     writesMemory = true;
     isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitAtomicRMW(AtomicRMW* curr) {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitAtomicWait(AtomicWait* curr) {
     readsMemory = true;
@@ -258,8 +272,9 @@ struct EffectAnalyzer
     // write.
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitAtomicNotify(AtomicNotify* curr) {
     // AtomicNotify doesn't strictly write memory, but it does modify the
@@ -268,8 +283,9 @@ struct EffectAnalyzer
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   };
   void visitSIMDExtract(SIMDExtract* curr) {}
   void visitSIMDReplace(SIMDReplace* curr) {}
@@ -278,25 +294,29 @@ struct EffectAnalyzer
   void visitSIMDShift(SIMDShift* curr) {}
   void visitMemoryInit(MemoryInit* curr) {
     writesMemory = true;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitDataDrop(DataDrop* curr) {
     // prevent reordering with memory.init
     readsMemory = true;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitMemoryCopy(MemoryCopy* curr) {
     readsMemory = true;
     writesMemory = true;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitMemoryFill(MemoryFill* curr) {
     writesMemory = true;
-    if (!ignoreImplicitTraps)
+    if (!ignoreImplicitTraps) {
       implicitTrap = true;
+    }
   }
   void visitConst(Const* curr) {}
   void visitUnary(Unary* curr) {

@@ -61,9 +61,9 @@ struct SortedVector : public std::vector<Index> {
 
   void insert(Index x) {
     auto it = std::lower_bound(begin(), end(), x);
-    if (it == end())
+    if (it == end()) {
       push_back(x);
-    else if (*it > x) {
+    } else if (*it > x) {
       Index i = it - begin();
       resize(size() + 1);
       std::move_backward(begin() + i, begin() + size() - 1, end());
@@ -107,8 +107,9 @@ struct SortedVector : public std::vector<Index> {
 
   void dump(const char* str = nullptr) const {
     std::cout << "SortedVector " << (str ? str : "") << ": ";
-    for (auto x : *this)
+    for (auto x : *this) {
       std::cout << x << " ";
+    }
     std::cout << '\n';
   }
 };

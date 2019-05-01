@@ -50,8 +50,9 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
     std::fill(sfa.begin() + func->getNumParams(), sfa.end(), true);
     walk(func->body);
     for (Index i = 0; i < num; i++) {
-      if (numSets[i] == 0)
+      if (numSets[i] == 0) {
         sfa[i] = false;
+      }
     }
   }
 
@@ -117,8 +118,9 @@ public:
 private:
   SetLocal* isPushable(Expression* curr) {
     auto* set = curr->dynCast<SetLocal>();
-    if (!set)
+    if (!set) {
       return nullptr;
+    }
     auto index = set->index;
     // to be pushable, this must be SFA and the right # of gets,
     // but also have no side effects, as it may not execute if pushed.
@@ -137,8 +139,9 @@ private:
     if (auto* drop = curr->dynCast<Drop>()) {
       curr = drop->value;
     }
-    if (curr->is<If>())
+    if (curr->is<If>()) {
       return true;
+    }
     if (auto* br = curr->dynCast<Break>()) {
       return !!br->condition;
     }
@@ -249,8 +252,9 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
     // Pushing code only makes sense if we are size 3 or above: we need
     // one element to push, an element to push it past, and an element to use
     // what we pushed.
-    if (curr->list.size() < 3)
+    if (curr->list.size() < 3) {
       return;
+    }
     // At this point in the postorder traversal we have gone through all our
     // children. Therefore any variable whose gets seen so far is equal to the
     // total gets must have no further users after this block. And therefore

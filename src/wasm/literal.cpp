@@ -144,10 +144,12 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  if (type != other.type)
+  if (type != other.type) {
     return false;
-  if (type == none)
+  }
+  if (type == none) {
     return true;
+  }
   uint8_t bits[16], other_bits[16];
   getBits(bits);
   other.getBits(other_bits);
@@ -238,8 +240,9 @@ void Literal::printDouble(std::ostream& o, double d) {
 void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
   o << std::hex;
   for (auto i = 0; i < 16; i += 4) {
-    if (i)
+    if (i) {
       o << " ";
+    }
     o << "0x" << std::setfill('0') << std::setw(8)
       << uint32_t(v[i] | (v[i + 1] << 8) | (v[i + 2] << 16) | (v[i + 3] << 24));
   }
@@ -276,26 +279,32 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
 }
 
 Literal Literal::countLeadingZeroes() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal((int32_t)CountLeadingZeroes(i32));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal((int64_t)CountLeadingZeroes(i64));
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::countTrailingZeroes() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal((int32_t)CountTrailingZeroes(i32));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal((int64_t)CountTrailingZeroes(i64));
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::popCount() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal((int32_t)PopCount(i32));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal((int64_t)PopCount(i64));
+  }
   WASM_UNREACHABLE();
 }
 
@@ -315,24 +324,29 @@ Literal Literal::extendToF64() const {
 }
 
 Literal Literal::extendS8() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal(int32_t(int8_t(geti32() & 0xFF)));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal(int64_t(int8_t(geti64() & 0xFF)));
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::extendS16() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal(int32_t(int16_t(geti32() & 0xFFFF)));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal(int64_t(int16_t(geti64() & 0xFFFF)));
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::extendS32() const {
-  if (type == Type::i64)
+  if (type == Type::i64) {
     return Literal(int64_t(int32_t(geti64() & 0xFFFFFFFF)));
+  }
   WASM_UNREACHABLE();
 }
 
@@ -342,34 +356,42 @@ Literal Literal::wrapToI32() const {
 }
 
 Literal Literal::convertSIToF32() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal(float(i32));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal(float(i64));
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::convertUIToF32() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal(float(uint32_t(i32)));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal(float(uint64_t(i64)));
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::convertSIToF64() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal(double(i32));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal(double(i64));
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::convertUIToF64() const {
-  if (type == Type::i32)
+  if (type == Type::i32) {
     return Literal(double(uint32_t(i32)));
-  if (type == Type::i64)
+  }
+  if (type == Type::i64) {
     return Literal(double(uint64_t(i64)));
+  }
   WASM_UNREACHABLE();
 }
 
@@ -551,23 +573,29 @@ Literal Literal::sqrt() const {
 
 Literal Literal::demote() const {
   auto f64 = getf64();
-  if (std::isnan(f64))
+  if (std::isnan(f64)) {
     return Literal(float(f64));
-  if (std::isinf(f64))
+  }
+  if (std::isinf(f64)) {
     return Literal(float(f64));
+  }
   // when close to the limit, but still truncatable to a valid value, do that
   // see
   // https://github.com/WebAssembly/sexpr-wasm-prototype/blob/2d375e8d502327e814d62a08f22da9d9b6b675dc/src/wasm-interpreter.c#L247
   uint64_t bits = reinterpreti64();
-  if (bits > 0x47efffffe0000000ULL && bits < 0x47effffff0000000ULL)
+  if (bits > 0x47efffffe0000000ULL && bits < 0x47effffff0000000ULL) {
     return Literal(std::numeric_limits<float>::max());
-  if (bits > 0xc7efffffe0000000ULL && bits < 0xc7effffff0000000ULL)
+  }
+  if (bits > 0xc7efffffe0000000ULL && bits < 0xc7effffff0000000ULL) {
     return Literal(-std::numeric_limits<float>::max());
+  }
   // when we must convert to infinity, do that
-  if (f64 < -std::numeric_limits<float>::max())
+  if (f64 < -std::numeric_limits<float>::max()) {
     return Literal(-std::numeric_limits<float>::infinity());
-  if (f64 > std::numeric_limits<float>::max())
+  }
+  if (f64 > std::numeric_limits<float>::max()) {
     return Literal(std::numeric_limits<float>::infinity());
+  }
   return Literal(float(getf64()));
 }
 
@@ -1067,14 +1095,17 @@ Literal Literal::min(const Literal& other) const {
   switch (type) {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
-      if (l == r && l == 0)
+      if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
+      }
       auto result = std::min(l, r);
       bool lnan = std::isnan(l), rnan = std::isnan(r);
-      if (!std::isnan(result) && !lnan && !rnan)
+      if (!std::isnan(result) && !lnan && !rnan) {
         return Literal(result);
-      if (!lnan && !rnan)
+      }
+      if (!lnan && !rnan) {
         return Literal((int32_t)0x7fc00000).castToF32();
+      }
       return Literal(lnan ? l : r)
         .castToI32()
         .or_(Literal(0xc00000))
@@ -1082,14 +1113,17 @@ Literal Literal::min(const Literal& other) const {
     }
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
-      if (l == r && l == 0)
+      if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
+      }
       auto result = std::min(l, r);
       bool lnan = std::isnan(l), rnan = std::isnan(r);
-      if (!std::isnan(result) && !lnan && !rnan)
+      if (!std::isnan(result) && !lnan && !rnan) {
         return Literal(result);
-      if (!lnan && !rnan)
+      }
+      if (!lnan && !rnan) {
         return Literal((int64_t)0x7ff8000000000000LL).castToF64();
+      }
       return Literal(lnan ? l : r)
         .castToI64()
         .or_(Literal(int64_t(0x8000000000000LL)))
@@ -1104,14 +1138,17 @@ Literal Literal::max(const Literal& other) const {
   switch (type) {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
-      if (l == r && l == 0)
+      if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
+      }
       auto result = std::max(l, r);
       bool lnan = std::isnan(l), rnan = std::isnan(r);
-      if (!std::isnan(result) && !lnan && !rnan)
+      if (!std::isnan(result) && !lnan && !rnan) {
         return Literal(result);
-      if (!lnan && !rnan)
+      }
+      if (!lnan && !rnan) {
         return Literal((int32_t)0x7fc00000).castToF32();
+      }
       return Literal(lnan ? l : r)
         .castToI32()
         .or_(Literal(0xc00000))
@@ -1119,14 +1156,17 @@ Literal Literal::max(const Literal& other) const {
     }
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
-      if (l == r && l == 0)
+      if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
+      }
       auto result = std::max(l, r);
       bool lnan = std::isnan(l), rnan = std::isnan(r);
-      if (!std::isnan(result) && !lnan && !rnan)
+      if (!std::isnan(result) && !lnan && !rnan) {
         return Literal(result);
-      if (!lnan && !rnan)
+      }
+      if (!lnan && !rnan) {
         return Literal((int64_t)0x7ff8000000000000LL).castToF64();
+      }
       return Literal(lnan ? l : r)
         .castToI64()
         .or_(Literal(int64_t(0x8000000000000LL)))

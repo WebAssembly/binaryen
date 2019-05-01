@@ -66,8 +66,9 @@ struct ValidationInfo {
   std::ostringstream& getStream(Function* func) {
     std::unique_lock<std::mutex> lock(mutex);
     auto iter = outputs.find(func);
-    if (iter != outputs.end())
+    if (iter != outputs.end()) {
       return *(iter->second.get());
+    }
     auto& ret = outputs[func] = make_unique<std::ostringstream>();
     return *ret.get();
   }
@@ -78,8 +79,9 @@ struct ValidationInfo {
   std::ostream& fail(S text, T curr, Function* func) {
     valid.store(false);
     auto& stream = getStream(func);
-    if (quiet)
+    if (quiet) {
       return stream;
+    }
     auto& ret = printFailureHeader(func);
     ret << text << ", on \n";
     return printModuleComponent(curr, ret);
@@ -87,8 +89,9 @@ struct ValidationInfo {
 
   std::ostream& printFailureHeader(Function* func) {
     auto& stream = getStream(func);
-    if (quiet)
+    if (quiet) {
       return stream;
+    }
     Colors::red(stream);
     if (func) {
       stream << "[wasm-validator error in function ";
@@ -220,16 +223,18 @@ public:
 
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
-    if (curr->name.is())
+    if (curr->name.is()) {
       self->breakInfos[curr->name];
+    }
   }
 
   void visitBlock(Block* curr);
 
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
-    if (curr->name.is())
+    if (curr->name.is()) {
       self->breakInfos[curr->name];
+    }
   }
 
   void visitLoop(Loop* curr);
@@ -240,10 +245,12 @@ public:
     PostWalker<FunctionValidator>::scan(self, currp);
 
     auto* curr = *currp;
-    if (curr->is<Block>())
+    if (curr->is<Block>()) {
       self->pushTask(visitPreBlock, currp);
-    if (curr->is<Loop>())
+    }
+    if (curr->is<Loop>()) {
       self->pushTask(visitPreLoop, currp);
+    }
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
@@ -319,8 +326,9 @@ private:
 };
 
 void FunctionValidator::noteLabelName(Name name) {
-  if (!name.is())
+  if (!name.is()) {
     return;
+  }
   bool inserted;
   std::tie(std::ignore, inserted) = labelNames.insert(name);
   shouldBeTrue(
@@ -520,8 +528,9 @@ void FunctionValidator::noteBreak(Name name,
   }
   auto iter = breakInfos.find(name);
   if (!shouldBeTrue(
-        iter != breakInfos.end(), curr, "all break targets must be valid"))
+        iter != breakInfos.end(), curr, "all break targets must be valid")) {
     return;
+  }
   auto& info = iter->second;
   if (!info.hasBeenSet()) {
     info = BreakInfo(valueType, arity);
@@ -560,15 +569,18 @@ void FunctionValidator::visitSwitch(Switch* curr) {
 }
 
 void FunctionValidator::visitCall(Call* curr) {
-  if (!info.validateGlobally)
+  if (!info.validateGlobally) {
     return;
+  }
   auto* target = getModule()->getFunctionOrNull(curr->target);
-  if (!shouldBeTrue(!!target, curr, "call target must exist"))
+  if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
+  }
   if (!shouldBeTrue(curr->operands.size() == target->params.size(),
                     curr,
-                    "call param number must match"))
+                    "call param number must match")) {
     return;
+  }
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
                                            target->params[i],
@@ -581,17 +593,20 @@ void FunctionValidator::visitCall(Call* curr) {
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
-  if (!info.validateGlobally)
+  if (!info.validateGlobally) {
     return;
+  }
   auto* type = getModule()->getFunctionTypeOrNull(curr->fullType);
-  if (!shouldBeTrue(!!type, curr, "call_indirect type must exist"))
+  if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) {
     return;
+  }
   shouldBeEqualOrFirstIsUnreachable(
     curr->target->type, i32, curr, "indirect call target must be an i32");
   if (!shouldBeTrue(curr->operands.size() == type->params.size(),
                     curr,
-                    "call param number must match"))
+                    "call param number must match")) {
     return;
+  }
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
                                            type->params[i],
@@ -639,16 +654,18 @@ void FunctionValidator::visitSetLocal(SetLocal* curr) {
 }
 
 void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
-  if (!info.validateGlobally)
+  if (!info.validateGlobally) {
     return;
+  }
   shouldBeTrue(getModule()->getGlobalOrNull(curr->name),
                curr,
                "global.get name must be valid");
 }
 
 void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
-  if (!info.validateGlobally)
+  if (!info.validateGlobally) {
     return;
+  }
   auto* global = getModule()->getGlobalOrNull(curr->name);
   if (shouldBeTrue(global,
                    curr,
@@ -674,10 +691,11 @@ void FunctionValidator::visitLoad(Load* curr) {
                  curr,
                  "Atomic load should be i32 or i64");
   }
-  if (curr->type == v128)
+  if (curr->type == v128) {
     shouldBeTrue(getModule()->features.hasSIMD(),
                  curr,
                  "SIMD operation (SIMD is disabled)");
+  }
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
                 curr,
                 "Atomic operation with non-shared memory");
@@ -704,10 +722,11 @@ void FunctionValidator::visitStore(Store* curr) {
                  curr,
                  "Atomic store should be i32 or i64");
   }
-  if (curr->valueType == v128)
+  if (curr->valueType == v128) {
     shouldBeTrue(getModule()->features.hasSIMD(),
                  curr,
                  "SIMD operation (SIMD is disabled)");
+  }
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
                 curr,
                 "Atomic operation with non-shared memory");
@@ -1232,8 +1251,9 @@ void FunctionValidator::visitUnary(Unary* curr) {
                   none,
                   curr,
                   "unaries must not receive a none as their input");
-  if (curr->value->type == unreachable)
+  if (curr->value->type == unreachable) {
     return; // nothing to check
+  }
   switch (curr->op) {
     case ClzInt32:
     case CtzInt32:
@@ -1542,11 +1562,13 @@ void FunctionValidator::visitFunction(Function* curr) {
 }
 
 static bool checkOffset(Expression* curr, Address add, Address max) {
-  if (curr->is<GetGlobal>())
+  if (curr->is<GetGlobal>()) {
     return true;
+  }
   auto* c = curr->dynCast<Const>();
-  if (!c)
+  if (!c) {
     return false;
+  }
   uint64_t raw = c->value.getInteger();
   if (raw > std::numeric_limits<Address::address_t>::max()) {
     return false;
@@ -1763,10 +1785,11 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   info.shouldBeTrue(!curr.shared || curr.hasMax(),
                     "memory",
                     "shared memory must have max size");
-  if (curr.shared)
+  if (curr.shared) {
     info.shouldBeTrue(module.features.hasAtomics(),
                       "memory",
                       "memory is shared, but atomics are disabled");
+  }
   for (auto& segment : curr.segments) {
     Index size = segment.data.size();
     if (segment.isPassive) {
@@ -1781,8 +1804,9 @@ static void validateMemory(Module& module, ValidationInfo& info) {
       if (!info.shouldBeEqual(segment.offset->type,
                               i32,
                               segment.offset,
-                              "segment offset should be i32"))
+                              "segment offset should be i32")) {
         continue;
+      }
       info.shouldBeTrue(checkOffset(segment.offset,
                                     segment.data.size(),
                                     curr.initial * Memory::kPageSize),

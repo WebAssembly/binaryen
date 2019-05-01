@@ -170,8 +170,9 @@ struct Node {
   }
 
   bool operator==(const Node& other) {
-    if (type != other.type)
+    if (type != other.type) {
       return false;
+    }
     switch (type) {
       case Var:
       case Block:
@@ -183,15 +184,18 @@ struct Node {
         break;
       }
       case Cond:
-        if (index != other.index)
+        if (index != other.index) {
           return false;
+        }
       default: {}
     }
-    if (values.size() != other.values.size())
+    if (values.size() != other.values.size()) {
       return false;
+    }
     for (Index i = 0; i < values.size(); i++) {
-      if (*(values[i]) != *(other.values[i]))
+      if (*(values[i]) != *(other.values[i])) {
         return false;
+      }
     }
     return true;
   }

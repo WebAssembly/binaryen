@@ -54,10 +54,12 @@ ensureScratchMemoryHelpers(Module* wasm,
                            cashew::IString specific = cashew::IString()) {
   auto ensureImport =
     [&](Name name, const std::vector<Type> params, Type result) {
-      if (wasm->getFunctionOrNull(name))
+      if (wasm->getFunctionOrNull(name)) {
         return;
-      if (specific.is() && name != specific)
+      }
+      if (specific.is() && name != specific) {
         return;
+      }
       auto func = make_unique<Function>();
       func->name = name;
       func->params = params;

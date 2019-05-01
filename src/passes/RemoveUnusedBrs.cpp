@@ -36,13 +36,16 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
                               Expression* brValue,
                               PassOptions& options) {
   // if the if isn't even reached, this is all dead code anyhow
-  if (ifCondition->type == unreachable)
+  if (ifCondition->type == unreachable) {
     return false;
-  if (!brValue)
+  }
+  if (!brValue) {
     return true;
+  }
   EffectAnalyzer value(options, brValue);
-  if (value.hasSideEffects())
+  if (value.hasSideEffects()) {
     return false;
+  }
   return !EffectAnalyzer(options, ifCondition).invalidates(value);
 }
 
@@ -219,8 +222,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
     // when there isn't a value, we can do some trivial optimizations without
     // worrying about the value being executed before the condition
-    if (curr->value)
+    if (curr->value) {
       return;
+    }
     if (curr->targets.size() == 0) {
       // a switch with just a default always goes there
       Builder builder(*getModule());
@@ -344,19 +348,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     // helpful, as it shortens the logical loop. it is also good to generate
     // an if-else instead of an if, as it might allow an eqz to be removed
     // by flipping arms)
-    if (!loop->name.is())
+    if (!loop->name.is()) {
       return false;
+    }
     auto* block = loop->body->dynCast<Block>();
-    if (!block)
+    if (!block) {
       return false;
+    }
     // does the last element break to the top of the loop?
     auto& list = block->list;
-    if (list.size() <= 1)
+    if (list.size() <= 1) {
       return false;
+    }
     auto* last = list.back()->dynCast<Break>();
     if (!last || !ExpressionAnalyzer::isSimple(last) ||
-        last->name != loop->name)
+        last->name != loop->name) {
       return false;
+    }
     // last is a simple break to the top of the loop. if we can conditionalize
     // it, it won't block things from flowing out and not needing breaks to do
     // so.
@@ -391,8 +399,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto blockifyMerge = [&](Expression* any,
                                    Expression* append) -> Block* {
             Block* block = nullptr;
-            if (any)
+            if (any) {
               block = any->dynCast<Block>();
+            }
             // if the first isn't a block, or it's a block with a name (so we
             // might branch to the end, and so can't append to it, we might skip
             // that code!) then make a new block
@@ -468,8 +477,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       if (EffectAnalyzer(getPassOptions(), curr).branches) {
         return false;
       }
-      if (i == 0)
+      if (i == 0) {
         return false;
+      }
       i--;
     }
   }
@@ -560,8 +570,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // optimized
       for (Index i = 0; i < flows.size(); i++) {
         auto* flow = (*flows[i])->dynCast<Return>();
-        if (!flow)
+        if (!flow) {
           continue;
+        }
         if (!flow->value) {
           // return => nop
           ExpressionManipulator::nop(flow);
@@ -689,10 +700,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto& list = curr->list;
         for (Index i = 0; i < list.size(); i++) {
           auto* iff = list[i]->dynCast<If>();
-          if (!iff || !iff->ifFalse)
+          if (!iff || !iff->ifFalse) {
             // if it lacked an if-false, it would already be a br_if, as that's
             // the easy case
             continue;
+          }
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
           if (ifTrueBreak && !ifTrueBreak->condition &&
               canTurnIfIntoBrIf(
@@ -724,12 +736,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             auto* br1 = list[i]->dynCast<Break>();
             // avoid unreachable brs, as they are dead code anyhow, and after
             // merging them the outer scope could need type changes
-            if (!br1 || !br1->condition || br1->type == unreachable)
+            if (!br1 || !br1->condition || br1->type == unreachable) {
               continue;
+            }
             assert(!br1->value);
             auto* br2 = list[i + 1]->dynCast<Break>();
-            if (!br2 || br1->name != br2->name)
+            if (!br2 || br1->name != br2->name) {
               continue;
+            }
             assert(!br2->value); // same target as previous, which has no value
             // a br_if and then a br[_if] with the same target right after it
             if (br2->condition) {
@@ -862,8 +876,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           const auto MAX_COST = 7;
           auto total =
             CostAnalyzer(iff->ifTrue).cost + CostAnalyzer(iff->ifFalse).cost;
-          if (total >= MAX_COST)
+          if (total >= MAX_COST) {
             return nullptr;
+          }
         }
         // Check if side effects allow this.
         EffectAnalyzer condition(passOptions, iff->condition);
@@ -889,10 +904,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       void optimizeSetIf(Expression** currp) {
-        if (optimizeSetIfWithBrArm(currp))
+        if (optimizeSetIfWithBrArm(currp)) {
           return;
-        if (optimizeSetIfWithCopyArm(currp))
+        }
+        if (optimizeSetIfWithCopyArm(currp)) {
           return;
+        }
       }
 
       // If one arm is a br, we prefer a br_if and the set later:
@@ -1003,8 +1020,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             get = nullptr;
           }
         }
-        if (!get)
+        if (!get) {
           return false;
+        }
         // We can do it!
         bool tee = set->isTee();
         assert(set->index == get->index);
@@ -1045,8 +1063,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // TODO: consider also looking at <= etc. and not just eq
       void tablify(Block* block) {
         auto& list = block->list;
-        if (list.size() <= 1)
+        if (list.size() <= 1) {
           return;
+        }
 
         // Heuristics. These are slightly inspired by the constants from the
         // asm.js backend.
@@ -1065,25 +1084,32 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // or nullptr otherwise
         auto getProperBrIf = [](Expression* curr) -> Break* {
           auto* br = curr->dynCast<Break>();
-          if (!br)
+          if (!br) {
             return nullptr;
-          if (!br->condition || br->value)
+          }
+          if (!br->condition || br->value) {
             return nullptr;
-          if (br->type != none)
+          }
+          if (br->type != none) {
             // no value, so can be unreachable or none. ignore unreachable ones,
             // dce will clean it up
             return nullptr;
+          }
           auto* binary = br->condition->dynCast<Binary>();
-          if (!binary)
+          if (!binary) {
             return nullptr;
-          if (binary->op != EqInt32)
+          }
+          if (binary->op != EqInt32) {
             return nullptr;
+          }
           auto* c = binary->right->dynCast<Const>();
-          if (!c)
+          if (!c) {
             return nullptr;
+          }
           uint32_t value = c->value.geti32();
-          if (value >= uint32_t(std::numeric_limits<int32_t>::max()))
+          if (value >= uint32_t(std::numeric_limits<int32_t>::max())) {
             return nullptr;
+          }
           return br;
         };
 
@@ -1092,8 +1118,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto getProperBrIfConditionValue =
           [&getProperBrIf](Expression* curr) -> Expression* {
           auto* br = getProperBrIf(curr);
-          if (!br)
+          if (!br) {
             return nullptr;
+          }
           return br->condition->cast<Binary>()->left;
         };
 
@@ -1160,8 +1187,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               Index i = 0;
               while (1) {
                 defaultName = "tablify|" + std::to_string(i++);
-                if (usedNames.count(defaultName) == 0)
+                if (usedNames.count(defaultName) == 0) {
                   break;
+                }
               }
               std::vector<Name> table;
               for (Index i = start; i < end; i++) {

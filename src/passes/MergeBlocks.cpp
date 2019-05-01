@@ -259,16 +259,19 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         }
       }
       // If no block, we can't do anything.
-      if (!childBlock)
+      if (!childBlock) {
         continue;
+      }
       auto& childList = childBlock->list;
       auto childSize = childList.size();
-      if (childSize == 0)
+      if (childSize == 0) {
         continue;
+      }
       // If the child has items after an unreachable, ignore it - dce should
       // have been run, and we prefer to not handle the complexity here.
-      if (hasDeadCode(childBlock))
+      if (hasDeadCode(childBlock)) {
         continue;
+      }
       // In some cases we can remove only the head or the tail of the block,
       // and must keep some things in the child block.
       Index keepStart = childSize;
@@ -314,8 +317,9 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
       }
       // Maybe there's nothing to do, if we must keep it all in the
       // child anyhow.
-      if (keepStart == 0 && keepEnd == childSize)
+      if (keepStart == 0 && keepEnd == childSize) {
         continue;
+      }
       // There is something to do!
       bool keepingPart = keepStart < keepEnd;
       // Create a new merged list, and fill in the code before the
@@ -411,20 +415,23 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
                   Block* outer = nullptr,
                   Expression** dependency1 = nullptr,
                   Expression** dependency2 = nullptr) {
-    if (!child)
+    if (!child) {
       return outer;
+    }
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
       // there are dependencies, things we must be reordered through. make sure
       // no problems there
       EffectAnalyzer childEffects(getPassOptions(), child);
       if (dependency1 && *dependency1 &&
           EffectAnalyzer(getPassOptions(), *dependency1)
-            .invalidates(childEffects))
+            .invalidates(childEffects)) {
         return outer;
+      }
       if (dependency2 && *dependency2 &&
           EffectAnalyzer(getPassOptions(), *dependency2)
-            .invalidates(childEffects))
+            .invalidates(childEffects)) {
         return outer;
+      }
     }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
@@ -489,14 +496,17 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
     Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), first).hasSideEffects())
+    if (EffectAnalyzer(getPassOptions(), first).hasSideEffects()) {
       return;
+    }
     outer = optimize(curr, first, outer);
-    if (EffectAnalyzer(getPassOptions(), second).hasSideEffects())
+    if (EffectAnalyzer(getPassOptions(), second).hasSideEffects()) {
       return;
+    }
     outer = optimize(curr, second, outer);
-    if (EffectAnalyzer(getPassOptions(), third).hasSideEffects())
+    if (EffectAnalyzer(getPassOptions(), third).hasSideEffects()) {
       return;
+    }
     optimize(curr, third, outer);
   }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
@@ -519,8 +529,10 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   template<typename T> void handleCall(T* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i]).hasSideEffects())
+      if (EffectAnalyzer(getPassOptions(), curr->operands[i])
+            .hasSideEffects()) {
         return;
+      }
       outer = optimize(curr, curr->operands[i], outer);
     }
     return;
@@ -531,12 +543,15 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitCallIndirect(CallIndirect* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i]).hasSideEffects())
+      if (EffectAnalyzer(getPassOptions(), curr->operands[i])
+            .hasSideEffects()) {
         return;
+      }
       outer = optimize(curr, curr->operands[i], outer);
     }
-    if (EffectAnalyzer(getPassOptions(), curr->target).hasSideEffects())
+    if (EffectAnalyzer(getPassOptions(), curr->target).hasSideEffects()) {
       return;
+    }
     optimize(curr, curr->target, outer);
   }
 };

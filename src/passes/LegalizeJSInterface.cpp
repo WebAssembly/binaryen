@@ -105,13 +105,15 @@ struct LegalizeJSInterface : public Pass {
 
         void visitCall(Call* curr) {
           auto iter = illegalImportsToLegal->find(curr->target);
-          if (iter == illegalImportsToLegal->end())
+          if (iter == illegalImportsToLegal->end()) {
             return;
+          }
 
-          if (iter->second == getFunction()->name)
+          if (iter->second == getFunction()->name) {
             // inside the stub function itself, is the one safe place to do the
             // call
             return;
+          }
           replaceCurrent(Builder(*getModule())
                            .makeCall(iter->second, curr->operands, curr->type));
         }
@@ -130,24 +132,27 @@ private:
 
   template<typename T> bool isIllegal(T* t) {
     for (auto param : t->params) {
-      if (param == i64)
+      if (param == i64) {
         return true;
+      }
     }
     return t->result == i64;
   }
 
   // Check if an export should be legalized.
   bool shouldBeLegalized(Export* ex, Function* func) {
-    if (full)
+    if (full) {
       return true;
+    }
     // We are doing minimal legalization - just what JS needs.
     return ex->name.startsWith("dynCall_");
   }
 
   // Check if an import should be legalized.
   bool shouldBeLegalized(Function* im) {
-    if (full)
+    if (full) {
       return true;
+    }
     // We are doing minimal legalization - just what JS needs.
     return im->module == ENV && im->base.startsWith("invoke_");
   }

@@ -128,9 +128,10 @@ struct Flatten
           rep = builder.makeGetLocal(temp, type);
         }
         iff->ifTrue = getPreludesWithExpression(originalIfTrue, iff->ifTrue);
-        if (iff->ifFalse)
+        if (iff->ifFalse) {
           iff->ifFalse =
             getPreludesWithExpression(originalIfFalse, iff->ifFalse);
+        }
         iff->finalize();
         if (prelude) {
           ReFinalizeNode().visit(prelude);
@@ -284,8 +285,9 @@ private:
   Expression* getPreludesWithExpression(Expression* preluder,
                                         Expression* after) {
     auto iter = preludes.find(preluder);
-    if (iter == preludes.end())
+    if (iter == preludes.end()) {
       return after;
+    }
     // we have preludes
     auto& thePreludes = iter->second;
     auto* ret = Builder(*getModule()).makeBlock(thePreludes);

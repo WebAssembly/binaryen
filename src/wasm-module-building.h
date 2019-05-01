@@ -169,8 +169,9 @@ public:
   // Add a function to the module, and to be optimized
   void addFunction(Function* func) {
     wasm->addFunction(func);
-    if (!useWorkers())
+    if (!useWorkers()) {
       return; // we optimize at the end in that case
+    }
     queueFunction(func);
     // notify workers if needed
     auto notify = availableFuncs.load();
@@ -240,8 +241,9 @@ private:
       }
     }
     DEBUG_THREAD("joining");
-    for (auto& thread : threads)
+    for (auto& thread : threads) {
       thread->join();
+    }
     DEBUG_THREAD("joined");
   }
 
