@@ -22,6 +22,7 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
+#include "ir/bits.h"
 
 namespace wasm {
 
@@ -36,7 +37,6 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return;
     }
     assert(curr->type == i32);      // TODO: i64, f32, f64
-    assert(curr->signed_ == false); // TODO: sign extending
     auto temp = builder.addVar(getFunction(), i32);
     Expression* ret;
     if (curr->bytes == 2) {
@@ -52,6 +52,9 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                             builder.makeGetLocal(temp, i32),
                                             i32),
                            builder.makeConst(Literal(int32_t(8)))));
+      if (curr->signed_) {
+        ret = Bits::makeSignExt(ret, 2, *getModule());
+      }
     } else if (curr->bytes == 4) {
       if (curr->align == 1) {
         ret = builder.makeBinary(

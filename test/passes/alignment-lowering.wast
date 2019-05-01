@@ -51,4 +51,13 @@
   (i32.store8 offset=100 align=1 (unreachable) (i32.const 8))
   (i32.store8 offset=100 align=1 (i32.const 4) (unreachable))
  )
+ (func $func_signed
+  (drop (i32.load16_s (i32.const 4)))
+  (drop (i32.load16_s align=1 (i32.const 4)))
+  (drop (i32.load16_s align=2 (i32.const 4)))
+  (drop (i32.load16_s offset=100 (i32.const 4)))
+  (drop (i32.load16_s offset=100 align=1 (i32.const 4)))
+  (drop (i32.load16_s offset=100 align=2 (i32.const 4)))
+  (drop (i32.load16_s offset=100 align=1 (unreachable)))
+ )
 )
