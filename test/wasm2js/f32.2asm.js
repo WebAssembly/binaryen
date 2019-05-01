@@ -43,104 +43,104 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround(Math_fround(x + y));
+ function $0($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0_1 + $1_1));
  }
  
- function $1(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround(Math_fround(x - y));
+ function $1($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0_1 - $1_1));
  }
  
- function $2(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround(Math_fround(x * y));
+ function $2($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0_1 * $1_1));
  }
  
- function $3(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround(Math_fround(x / y));
+ function $3($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0_1 / $1_1));
  }
  
- function $4(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(Math_sqrt(x)));
+ function $4($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(Math_sqrt($0_1)));
  }
  
- function $5(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround(Math_fround(Math_min(x, y)));
+ function $5($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround(Math_min($0_1, $1_1)));
  }
  
- function $6(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround(Math_fround(Math_max(x, y)));
+ function $6($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround(Math_max($0_1, $1_1)));
  }
  
- function $7(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(Math_ceil(x)));
+ function $7($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(Math_ceil($0_1)));
  }
  
- function $8(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(Math_floor(x)));
+ function $8($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(Math_floor($0_1)));
  }
  
- function $9(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(__wasm_trunc_f32(Math_fround(x))));
+ function $9($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(__wasm_trunc_f32(Math_fround($0_1))));
  }
  
- function $10(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(__wasm_nearest_f32(Math_fround(x))));
+ function $10($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(__wasm_nearest_f32(Math_fround($0_1))));
  }
  
- function $11(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(Math_abs(x)));
+ function $11($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(Math_abs($0_1)));
  }
  
- function $12(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(-x));
+ function $12($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(-$0_1));
  }
  
- function $13(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & -2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
+ function $13($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
+  $1_1 = Math_fround($1_1);
+  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32($0_1), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32($1_1), wasm2js_scratch_load_i32(0)) & -2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
  }
  
- function __wasm_nearest_f32(var$0) {
-  var$0 = Math_fround(var$0);
-  var var$1 = Math_fround(0), var$2 = Math_fround(0);
-  var$1 = Math_fround(Math_floor(var$0));
-  var$2 = Math_fround(var$0 - var$1);
-  if (!(var$2 < Math_fround(.5))) {
+ function __wasm_nearest_f32($0_1) {
+  $0_1 = Math_fround($0_1);
+  var $1_1 = Math_fround(0), $2_1 = Math_fround(0);
+  $1_1 = Math_fround(Math_floor($0_1));
+  $2_1 = Math_fround($0_1 - $1_1);
+  if (!($2_1 < Math_fround(.5))) {
    {
-    var$0 = Math_fround(Math_ceil(var$0));
-    if (var$2 > Math_fround(.5)) {
-     return Math_fround(var$0)
+    $0_1 = Math_fround(Math_ceil($0_1));
+    if ($2_1 > Math_fround(.5)) {
+     return Math_fround($0_1)
     }
-    var$2 = Math_fround(var$1 * Math_fround(.5));
-    var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
+    $2_1 = Math_fround($1_1 * Math_fround(.5));
+    $1_1 = Math_fround($2_1 - Math_fround(Math_floor($2_1))) == Math_fround(0.0) ? $1_1 : $0_1;
    }
   }
-  return Math_fround(var$1);
+  return Math_fround($1_1);
  }
  
- function __wasm_trunc_f32(var$0) {
-  var$0 = Math_fround(var$0);
-  return Math_fround(var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0)));
+ function __wasm_trunc_f32($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround($0_1 < Math_fround(0.0) ? Math_fround(Math_ceil($0_1)) : Math_fround(Math_floor($0_1)));
  }
  
  var FUNCTION_TABLE = [];

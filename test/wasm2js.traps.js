@@ -56,16 +56,16 @@ function asmFunc0(global, env, buffer) {
   
  }
  
- function $1(x, y) {
-  x = x | 0;
-  y = y | 0;
-  return x + y | 0 | 0;
+ function $1($0_1, $1_1) {
+  $0_1 = $0_1 | 0;
+  $1_1 = $1_1 | 0;
+  return $0_1 + $1_1 | 0 | 0;
  }
  
- function $2(x, y) {
-  x = x | 0;
-  y = y | 0;
-  return (x | 0) / (y | 0) | 0 | 0;
+ function $2($0_1, $1_1) {
+  $0_1 = $0_1 | 0;
+  $1_1 = $1_1 | 0;
+  return ($0_1 | 0) / ($1_1 | 0) | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];
