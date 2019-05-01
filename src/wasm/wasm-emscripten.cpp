@@ -1015,7 +1015,12 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
                                                    Address base) {
   size_t lastEnd = 0;
   for (Memory::Segment& seg : wasm.memory.segments) {
-    assert(!seg.isPassive && "separating passive segments not implemented");
+    if (seg.isPassive) {
+      Fatal() << "separating passive segments not implemented";
+    }
+    if (!seg.offset->is<Const>()) {
+      Fatal() << "separating relocatable segments not implemented";
+    }
     size_t offset = seg.offset->cast<Const>()->value.geti32();
     offset -= base;
     size_t fill = offset - lastEnd;

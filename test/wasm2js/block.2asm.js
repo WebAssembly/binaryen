@@ -121,28 +121,27 @@ function asmFunc(global, env, buffer) {
  }
  
  function $13() {
-  var $0 = 0, $1_1 = 0, $2_1 = 0, $5_1 = 0, $9_1 = 0, $10_1 = 0, $13_1 = 0, $14_1 = 0;
+  var $0 = 0, $1_1 = 0;
   $0 = 0;
-  $1_1 = $0;
   block : {
-   $2_1 = 1;
+   $1_1 = 1;
    break block;
   }
-  $0 = $1_1 + $2_1 | 0;
-  $5_1 = $0;
-  $0 = $5_1 + 2 | 0;
-  $9_1 = $0;
+  $0 = $0 + $1_1 | 0;
+  block49 : {
+   break block49;
+  }
+  $0 = $0 + 2 | 0;
   block50 : {
-   $10_1 = 4;
+   $1_1 = 4;
    break block50;
   }
-  $0 = $9_1 + $10_1 | 0;
-  $13_1 = $0;
+  $0 = $0 + $1_1 | 0;
   block51 : {
-   $14_1 = 8;
+   $1_1 = 8;
    break block51;
   }
-  $0 = $13_1 + $14_1 | 0;
+  $0 = $0 + $1_1 | 0;
   return $0 | 0;
  }
  
@@ -158,10 +157,10 @@ function asmFunc(global, env, buffer) {
   return ($0 | 0) == (-14 | 0) | 0;
  }
  
- function __wasm_ctz_i32(var$0) {
-  var$0 = var$0 | 0;
-  if (var$0) {
-   return 31 - Math_clz32((var$0 + -1 | 0) ^ var$0 | 0) | 0 | 0
+ function __wasm_ctz_i32($0) {
+  $0 = $0 | 0;
+  if ($0) {
+   return 31 - Math_clz32(($0 + -1 | 0) ^ $0 | 0) | 0 | 0
   }
   return 32 | 0;
  }

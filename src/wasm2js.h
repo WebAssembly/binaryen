@@ -292,10 +292,11 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // Finally, get the code into the flat form we need for wasm2js itself, and
     // optimize that a little in a way that keeps flat property.
     runner.add("flatten");
-    runner.add("simplify-locals-notee-nostructure");
-    // TODO: coalesce-locals?
-    runner.add("reorder-locals");
     runner.add("remove-unused-names");
+    runner.add("merge-blocks");
+    runner.add("simplify-locals-notee-nostructure");
+    runner.add("coalesce-locals");
+    runner.add("reorder-locals");
     runner.add("vacuum");
     runner.add("remove-unused-module-elements");
     runner.setDebug(flags.debug);

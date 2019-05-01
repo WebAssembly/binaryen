@@ -21,9 +21,9 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0(var$0) {
-  var$0 = var$0 | 0;
-  return __wasm_grow_memory(var$0 | 0) | 0;
+ function $0($0_1) {
+  $0_1 = $0_1 | 0;
+  return __wasm_grow_memory($0_1 | 0) | 0;
  }
  
  function $1() {
