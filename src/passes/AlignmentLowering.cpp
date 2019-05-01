@@ -115,10 +115,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     }
     Builder builder(*getModule());
     if (curr->type == unreachable) {
-      replaceCurrent(builder.makeBlock({
-        builder.makeDrop(curr->ptr),
-        builder.makeDrop(curr->value)
-      }));
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->ptr), builder.makeDrop(curr->value)}));
       return;
     }
     assert(curr->value->type == i32); // TODO: i64, f32, f64
