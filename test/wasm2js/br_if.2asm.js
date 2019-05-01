@@ -61,43 +61,43 @@ function asmFunc(global, env, buffer) {
  
  function $4($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
+  var $2_1 = 0;
   block : {
-   $1_1 = 10;
+   $2_1 = 10;
    if ($0) {
     break block
    }
    return 11 | 0;
   }
-  return $1_1 | 0;
+  return $2_1 | 0;
  }
  
  function $5($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
+  var $2_1 = 0;
   block : {
    dummy();
-   $1_1 = 20;
+   $2_1 = 20;
    if ($0) {
     break block
    }
    return 21 | 0;
   }
-  return $1_1 | 0;
+  return $2_1 | 0;
  }
  
  function $6($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
+  var $2_1 = 0;
   dummy();
   dummy();
-  $1_1 = 11;
+  $2_1 = 11;
   block : {
    if ($0) {
     break block
    }
   }
-  return $1_1 | 0;
+  return $2_1 | 0;
  }
  
  function $7($0) {
@@ -163,97 +163,97 @@ function asmFunc(global, env, buffer) {
  
  function $12($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
-  $1_1 = 8;
+  var $2_1 = 0;
+  $2_1 = 8;
   block : {
    if ($0) {
     break block
    }
-   $1_1 = 4 + 16 | 0;
+   $2_1 = 4 + 16 | 0;
   }
-  return 1 + $1_1 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $13($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
+  var $2_1 = 0;
   block : {
-   $1_1 = 8;
+   $2_1 = 8;
    if ($0) {
     break block
    }
-   $1_1 = 4;
+   $2_1 = 4;
    break block;
   }
-  return 1 + $1_1 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $14($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
-  $1_1 = 8;
+  var $2_1 = 0;
+  $2_1 = 8;
   block : {
    if ($0) {
     break block
    }
-   $1_1 = 4;
+   $2_1 = 4;
    if (1) {
     break block
    }
-   $1_1 = 16;
+   $2_1 = 16;
   }
-  return 1 + $1_1 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $15($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
-  $1_1 = 8;
+  var $2_1 = 0;
+  $2_1 = 8;
   block : {
    if ($0) {
     break block
    }
-   $1_1 = 4;
+   $2_1 = 4;
    if (1) {
     break block
    }
-   $1_1 = 16;
+   $2_1 = 16;
   }
-  return 1 + $1_1 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $16($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
+  var $2_1 = 0;
   block : {
-   $1_1 = 8;
+   $2_1 = 8;
    if ($0) {
     break block
    }
-   $1_1 = 4;
+   $2_1 = 4;
    switch (1 | 0) {
    default:
     break block;
    };
   }
-  return 1 + $1_1 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $17($0) {
   $0 = $0 | 0;
-  var $1_1 = 0;
+  var $2_1 = 0;
   block : {
-   $1_1 = 8;
+   $2_1 = 8;
    if ($0) {
     break block
    }
-   $1_1 = 4;
+   $2_1 = 4;
    switch (1 | 0) {
    default:
     break block;
    };
   }
-  return 1 + $1_1 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];
