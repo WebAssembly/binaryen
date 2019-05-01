@@ -171,7 +171,7 @@ function asmFunc(global, env, buffer) {
    }
    $2_1 = 4 + 16 | 0;
   }
-  return 1 + $2_1 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $13($0) {
@@ -185,7 +185,7 @@ function asmFunc(global, env, buffer) {
    $2_1 = 4;
    break block;
   }
-  return 1 + $2_1 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $14($0) {
@@ -202,7 +202,7 @@ function asmFunc(global, env, buffer) {
    }
    $2_1 = 16;
   }
-  return 1 + $2_1 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $15($0) {
@@ -219,7 +219,7 @@ function asmFunc(global, env, buffer) {
    }
    $2_1 = 16;
   }
-  return 1 + $2_1 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $16($0) {
@@ -236,7 +236,7 @@ function asmFunc(global, env, buffer) {
     break block;
    };
   }
-  return 1 + $2_1 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $17($0) {
@@ -253,7 +253,7 @@ function asmFunc(global, env, buffer) {
     break block;
    };
   }
-  return 1 + $2_1 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];

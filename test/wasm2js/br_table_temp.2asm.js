@@ -205,19 +205,19 @@ function asmFunc(global, env, buffer) {
        };
       }
       $1_1 = $8_1;
-      return $1_1 + 10 | 0;
+      return $1_1 + 10 | 0 | 0;
      }
      $1_1 = $7_1;
-     return $1_1 + 11 | 0;
+     return $1_1 + 11 | 0 | 0;
     }
     $1_1 = $6_1;
-    return $1_1 + 12 | 0;
+    return $1_1 + 12 | 0 | 0;
    }
    $1_1 = $5_1;
-   return $1_1 + 13 | 0;
+   return $1_1 + 13 | 0 | 0;
   }
   $1_1 = $4_1;
-  return $1_1 + 14 | 0;
+  return $1_1 + 14 | 0 | 0;
  }
  
  function $15($0) {

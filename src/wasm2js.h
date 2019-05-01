@@ -268,29 +268,40 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // If later on they aren't needed, we'll clean them up.
   ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
 
-  PassRunner runner(wasm);
-  runner.add<AutoDrop>();
-  runner.add("legalize-js-interface");
-  // First up remove as many non-JS operations we can, including things like
-  // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
-  // This may inject intrinsics which use i64 so it needs to be run before the
-  // i64-to-i32 lowering pass.
-  runner.add("remove-non-js-ops");
-  // Currently the i64-to-32 lowering pass requires that `flatten` be run before
-  // it to produce correct code. For some more details about this see #1480
-  runner.add("flatten");
-  runner.add("i64-to-i32-lowering");
-  runner.add("flatten");
-  runner.add("simplify-locals-notee-nostructure");
-  runner.add("reorder-locals");
-  runner.add("remove-unused-names");
-  runner.add("vacuum");
-  runner.add("remove-unused-module-elements");
-  runner.setDebug(flags.debug);
-  runner.run();
+  // Process the code, and optimize if relevant.
+  // First, do the lowering to a JS-friendly subset.
+  {
+    PassRunner runner(wasm, options);
+    runner.add<AutoDrop>();
+    runner.add("legalize-js-interface");
+    // First up remove as many non-JS operations we can, including things like
+    // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
+    // This may inject intrinsics which use i64 so it needs to be run before the
+    // i64-to-i32 lowering pass.
+    runner.add("remove-non-js-ops");
+    // Currently the i64-to-32 lowering pass requires that `flatten` be run
+    // before it to produce correct code. For some more details about this see
+    // #1480
+    runner.add("flatten");
+    runner.add("i64-to-i32-lowering");
+    // Next, optimize that as best we can. This should not generate
+    // non-JS-friendly things.
+    if (options.optimizeLevel > 0) {
+      runner.addDefaultOptimizationPasses();
+    }
+    // Finally, get the code into the flat form we need for wasm2js itself, and
+    // optimize that a little in a way that keeps flat property.
+    runner.add("flatten");
+    runner.add("simplify-locals-notee-nostructure");
+    // TODO: coalesce-locals?
+    runner.add("reorder-locals");
+    runner.add("remove-unused-names");
+    runner.add("vacuum");
+    runner.add("remove-unused-module-elements");
+    runner.setDebug(flags.debug);
+    runner.run();
+  }
 
-  // Make sure we didn't corrupt anything if we're in --allow-asserts mode (aka
-  // tests)
 #ifndef NDEBUG
   if (!WasmValidator().validate(*wasm)) {
     WasmPrinter::printModule(wasm);
