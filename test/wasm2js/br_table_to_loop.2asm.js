@@ -26,7 +26,7 @@ function asmFunc(global, env, buffer) {
    loop : while (1) {
     switch (1 | 0) {
     case 1:
-     continue;
+     continue loop;
     default:
      break block;
     };
@@ -41,7 +41,7 @@ function asmFunc(global, env, buffer) {
     case 1:
      break block;
     default:
-     continue;
+     continue loop;
     };
    };
   }

@@ -29,12 +29,12 @@ function asmFunc(global, env, buffer) {
  
  function $4($0) {
   $0 = $0 | 0;
-  return $0 + 1 | 0;
+  return $0 + 1 | 0 | 0;
  }
  
  function $5(a) {
   a = a | 0;
-  return a - 2 | 0;
+  return a - 2 | 0 | 0;
  }
  
  function $6($0) {
@@ -102,12 +102,12 @@ function asmFunc(global, env, buffer) {
  
  function $5(i) {
   i = i | 0;
-  return FUNCTION_TABLE[i]() | 0;
+  return FUNCTION_TABLE[i]() | 0 | 0;
  }
  
  function $6(i) {
   i = i | 0;
-  return FUNCTION_TABLE[i]() | 0;
+  return FUNCTION_TABLE[i]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [t1, t2, t3, u1, u2, t1, t3];
@@ -154,7 +154,7 @@ function asmFunc(global, env, buffer) {
  
  function $2(i) {
   i = i | 0;
-  return FUNCTION_TABLE[i]() | 0;
+  return FUNCTION_TABLE[i]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [t1, t2];

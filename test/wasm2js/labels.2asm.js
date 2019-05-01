@@ -42,7 +42,7 @@ function asmFunc(global, env, buffer) {
       break exit;
      }
     }
-    continue;
+    continue cont;
    };
   }
   return $6_1 | 0;
@@ -55,7 +55,7 @@ function asmFunc(global, env, buffer) {
    cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     continue
+     continue cont
     }
     if ((i | 0) == (8 | 0)) {
      {
@@ -64,7 +64,7 @@ function asmFunc(global, env, buffer) {
      }
     }
     i = i + 1 | 0;
-    continue;
+    continue cont;
    };
   }
   return $8_1 | 0;
@@ -99,7 +99,7 @@ function asmFunc(global, env, buffer) {
       break exit;
      }
     }
-    continue;
+    continue cont;
    };
   }
   return $9_1 | 0;
@@ -108,7 +108,7 @@ function asmFunc(global, env, buffer) {
  function $5() {
   var $0_1 = 0;
   $0_1 = 1;
-  return $0_1 + 1 | 0;
+  return $0_1 + 1 | 0 | 0;
  }
  
  function $6() {
@@ -225,24 +225,24 @@ function asmFunc(global, env, buffer) {
     if (0) {
      break inner
     }
-    i = i | 1;
+    i = i | 1 | 0;
     if (1) {
      break inner
     }
-    i = i | 2;
+    i = i | 2 | 0;
    }
-   i = i | 4;
+   i = i | 4 | 0;
    $10_1 = i;
    if (0) {
     break outer
    }
-   i = i | 8;
-   i = i | 16;
+   i = i | 8 | 0;
+   i = i | 16 | 0;
    $10_1 = i;
    if (1) {
     break outer
    }
-   i = i | 32;
+   i = i | 32 | 0;
    $10_1 = i;
   }
   return $10_1 | 0;
@@ -321,7 +321,7 @@ function asmFunc(global, env, buffer) {
    $2_2 = 3;
    break l113;
   }
-  return $1_2 + $2_2 | 0;
+  return $1_2 + $2_2 | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];

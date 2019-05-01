@@ -93,7 +93,7 @@ function asmFunc(global, env, buffer) {
  function $7(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
-  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | (wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & -2147483648), wasm2js_scratch_load_f32()));
+  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & -2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
  }
  
  function $8(x) {
@@ -108,12 +108,12 @@ function asmFunc(global, env, buffer) {
  
  function $10(x) {
   x = Math_fround(x);
-  return Math_fround(__wasm_trunc_f32(x));
+  return Math_fround(Math_fround(__wasm_trunc_f32(Math_fround(x))));
  }
  
  function $11(x) {
   x = Math_fround(x);
-  return Math_fround(__wasm_nearest_f32(x));
+  return Math_fround(Math_fround(__wasm_nearest_f32(Math_fround(x))));
  }
  
  function $12(x, y) {
@@ -176,25 +176,25 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$1 = 2147483647;
   i64toi32_i32$3 = -1;
-  i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1;
-  $4_1 = i64toi32_i32$2 & i64toi32_i32$3;
+  i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1 | 0;
+  $4_1 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
   $4$hi = i64toi32_i32$1;
   wasm2js_scratch_store_f64(+y);
   i64toi32_i32$1 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$0 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$2 = -2147483648;
   i64toi32_i32$3 = 0;
-  i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2;
-  $7_1 = i64toi32_i32$0 & i64toi32_i32$3;
+  i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2 | 0;
+  $7_1 = i64toi32_i32$0 & i64toi32_i32$3 | 0;
   $7$hi = i64toi32_i32$2;
   i64toi32_i32$2 = $4$hi;
   i64toi32_i32$1 = $4_1;
   i64toi32_i32$0 = $7$hi;
   i64toi32_i32$3 = $7_1;
-  i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0;
-  wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$1 | i64toi32_i32$3);
+  i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
+  wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$1 | i64toi32_i32$3 | 0 | 0);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
-  return +wasm2js_scratch_load_f64();
+  return +(+wasm2js_scratch_load_f64());
  }
  
  function $22(x) {
@@ -209,12 +209,12 @@ function asmFunc(global, env, buffer) {
  
  function $24(x) {
   x = +x;
-  return +__wasm_trunc_f64(x);
+  return +(+__wasm_trunc_f64(+x));
  }
  
  function $25(x) {
   x = +x;
-  return +__wasm_nearest_f64(x);
+  return +(+__wasm_nearest_f64(+x));
  }
  
  function $26(x, y) {
@@ -230,6 +230,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_nearest_f32(var$0) {
+  var$0 = Math_fround(var$0);
   var var$1 = Math_fround(0), var$2 = Math_fround(0);
   var$1 = Math_fround(Math_floor(var$0));
   var$2 = Math_fround(var$0 - var$1);
@@ -237,16 +238,17 @@ function asmFunc(global, env, buffer) {
    {
     var$0 = Math_fround(Math_ceil(var$0));
     if (var$2 > Math_fround(.5)) {
-     return var$0
+     return Math_fround(var$0)
     }
     var$2 = Math_fround(var$1 * Math_fround(.5));
     var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
    }
   }
-  return var$1;
+  return Math_fround(var$1);
  }
  
  function __wasm_nearest_f64(var$0) {
+  var$0 = +var$0;
   var var$1 = 0.0, var$2 = 0.0;
   var$1 = Math_floor(var$0);
   var$2 = var$0 - var$1;
@@ -254,21 +256,23 @@ function asmFunc(global, env, buffer) {
    {
     var$0 = Math_ceil(var$0);
     if (var$2 > .5) {
-     return var$0
+     return +var$0
     }
     var$2 = var$1 * .5;
     var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
    }
   }
-  return var$1;
+  return +var$1;
  }
  
  function __wasm_trunc_f32(var$0) {
-  return var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0));
+  var$0 = Math_fround(var$0);
+  return Math_fround(var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0)));
  }
  
  function __wasm_trunc_f64(var$0) {
-  return var$0 < 0.0 ? Math_ceil(var$0) : Math_floor(var$0);
+  var$0 = +var$0;
+  return +(var$0 < 0.0 ? Math_ceil(var$0) : Math_floor(var$0));
  }
  
  var FUNCTION_TABLE = [];
