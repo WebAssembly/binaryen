@@ -278,12 +278,13 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // This may inject intrinsics which use i64 so it needs to be run before the
     // i64-to-i32 lowering pass.
     runner.add("remove-non-js-ops");
-    // Currently the i64-to-32 lowering pass requires that `flatten` be run before
-    // it to produce correct code. For some more details about this see #1480
+    // Currently the i64-to-32 lowering pass requires that `flatten` be run
+    // before it to produce correct code. For some more details about this see
+    // #1480
     runner.add("flatten");
     runner.add("i64-to-i32-lowering");
-    // Next, optimize that as best we can. This should not generate non-JS-friendly
-    // things.
+    // Next, optimize that as best we can. This should not generate
+    // non-JS-friendly things.
     if (options.optimizeLevel > 0) {
       runner.addDefaultOptimizationPasses();
     }
@@ -301,8 +302,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.run();
   }
 
-  // Make sure we didn't corrupt anything if we're in --allow-asserts mode (aka
-  // tests)
 #ifndef NDEBUG
   if (!WasmValidator().validate(*wasm)) {
     WasmPrinter::printModule(wasm);
