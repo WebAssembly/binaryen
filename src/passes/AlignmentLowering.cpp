@@ -30,9 +30,13 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     if (curr->align == 0 || curr->align == curr->bytes) {
       return;
     }
+    Builder builder(*getModule());
+    if (curr->type == unreachable) {
+      replaceCurrent(curr->ptr);
+      return;
+    }
     assert(curr->type == i32);      // TODO: i64, f32, f64
     assert(curr->signed_ == false); // TODO: sign extending
-    Builder builder(*getModule());
     auto temp = builder.addVar(getFunction(), i32);
     Expression* ret;
     if (curr->bytes == 2) {
@@ -109,8 +113,15 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     if (curr->align == 0 || curr->align == curr->bytes) {
       return;
     }
-    assert(curr->type == i32); // TODO: i64, f32, f64
     Builder builder(*getModule());
+    if (curr->type == unreachable) {
+      replaceCurrent(builder.makeBlock({
+        builder.makeDrop(curr->ptr),
+        builder.makeDrop(curr->value)
+      }));
+      return;
+    }
+    assert(curr->value->type == i32); // TODO: i64, f32, f64
     auto tempPtr = builder.addVar(getFunction(), i32);
     auto tempValue = builder.addVar(getFunction(), i32);
     auto* block =
