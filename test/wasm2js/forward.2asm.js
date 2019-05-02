@@ -21,24 +21,26 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function even($0) {
-  $0 = $0 | 0;
-  if (($0 | 0) == (0 | 0)) {
-   $0 = 1
+ function even(n) {
+  n = n | 0;
+  var $6 = 0;
+  if ((n | 0) == (0 | 0)) {
+   $6 = 1
   } else {
-   $0 = odd($0 - 1 | 0 | 0) | 0
+   $6 = odd(n - 1 | 0 | 0) | 0
   }
-  return $0 | 0;
+  return $6 | 0;
  }
  
- function odd($0) {
-  $0 = $0 | 0;
-  if (($0 | 0) == (0 | 0)) {
-   $0 = 0
+ function odd(n) {
+  n = n | 0;
+  var $6 = 0;
+  if ((n | 0) == (0 | 0)) {
+   $6 = 0
   } else {
-   $0 = even($0 - 1 | 0 | 0) | 0
+   $6 = even(n - 1 | 0 | 0) | 0
   }
-  return $0 | 0;
+  return $6 | 0;
  }
  
  var FUNCTION_TABLE = [];

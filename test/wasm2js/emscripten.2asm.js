@@ -60,24 +60,24 @@ function asmFunc(global, env, buffer) {
   return abort() | 0;
  }
  
- function internal($0) {
-  $0 = $0 | 0;
-  return $0 | 0;
+ function internal(x) {
+  x = x | 0;
+  return x | 0;
  }
  
- function tabled($0) {
-  $0 = $0 | 0;
-  return $0 | 0;
+ function tabled(x) {
+  x = x | 0;
+  return x | 0;
  }
  
- function exported($0) {
-  $0 = $0 | 0;
-  return $0 | 0;
+ function exported(x) {
+  x = x | 0;
+  return x | 0;
  }
  
- function sub_zero($0) {
-  $0 = $0 | 0;
-  return $0 - -5 | 0 | 0;
+ function sub_zero(x) {
+  x = x | 0;
+  return x - -5 | 0 | 0;
  }
  
  function select($0) {
