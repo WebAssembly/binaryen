@@ -7,7 +7,6 @@
  (import "env" "memoryBase" (global $memoryBase$asm2wasm$import i32))
  (import "env" "abortStackOverflow" (func $abortStackOverflow (param i32)))
  (import "env" "_puts" (func $_puts (param i32) (result i32)))
- (global $memoryBase (mut i32) (global.get $memoryBase$asm2wasm$import))
  (global $STACKTOP (mut i32) (i32.const 0))
  (global $STACK_MAX (mut i32) (i32.const 0))
  (global $_global i32 (i32.const 5242912))
@@ -36,7 +35,7 @@
   )
   (drop
    (call $_puts
-    (global.get $memoryBase)
+    (global.get $memoryBase$asm2wasm$import)
    )
   )
   (global.set $STACKTOP
@@ -49,7 +48,7 @@
  (func $__post_instantiate (; 4 ;) (; has Stack IR ;)
   (global.set $STACKTOP
    (i32.add
-    (global.get $memoryBase)
+    (global.get $memoryBase$asm2wasm$import)
     (i32.const 32)
    )
   )
@@ -61,7 +60,7 @@
   )
   (call $__ZN3FooC2Ev
    (i32.add
-    (global.get $memoryBase)
+    (global.get $memoryBase$asm2wasm$import)
     (i32.const 5242912)
    )
   )

@@ -244,6 +244,9 @@ void PassRegistry::registerPasses() {
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
+  registerPass("simplify-globals",
+               "miscellaneous globals-related optimizations",
+               createSimplifyGlobalsPass);
   registerPass("simplify-locals",
                "miscellaneous locals-related optimizations",
                createSimplifyLocalsPass);
@@ -392,6 +395,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
   // optimizations show more functions as duplicate
   add("duplicate-function-elimination");
+  add("simplify-globals");
   add("remove-unused-module-elements");
   add("memory-packing");
   // may allow more inlining/dae/etc., need --converge for that

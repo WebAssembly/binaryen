@@ -1813,10 +1813,6 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
       ex->kind = ExternalKind::Table;
     } else if (inner[0]->str() == GLOBAL) {
       ex->kind = ExternalKind::Global;
-      if (wasm.getGlobalOrNull(ex->value) &&
-          wasm.getGlobal(ex->value)->mutable_) {
-        throw ParseException("cannot export a mutable global", s.line, s.col);
-      }
     } else {
       throw ParseException("invalid export");
     }
