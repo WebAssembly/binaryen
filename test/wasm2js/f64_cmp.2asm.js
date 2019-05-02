@@ -21,40 +21,40 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $0($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return $0_1 == $1_1 | 0;
+ function $0(x, y) {
+  x = +x;
+  y = +y;
+  return x == y | 0;
  }
  
- function $1($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return $0_1 != $1_1 | 0;
+ function $1(x, y) {
+  x = +x;
+  y = +y;
+  return x != y | 0;
  }
  
- function $2($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return $0_1 < $1_1 | 0;
+ function $2(x, y) {
+  x = +x;
+  y = +y;
+  return x < y | 0;
  }
  
- function $3($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return $0_1 <= $1_1 | 0;
+ function $3(x, y) {
+  x = +x;
+  y = +y;
+  return x <= y | 0;
  }
  
- function $4($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return $0_1 > $1_1 | 0;
+ function $4(x, y) {
+  x = +x;
+  y = +y;
+  return x > y | 0;
  }
  
- function $5($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return $0_1 >= $1_1 | 0;
+ function $5(x, y) {
+  x = +x;
+  y = +y;
+  return x >= y | 0;
  }
  
  var FUNCTION_TABLE = [];

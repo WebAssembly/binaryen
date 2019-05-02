@@ -21,10 +21,10 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function add($0, $1) {
-  $0 = $0 | 0;
-  $1 = $1 | 0;
-  return $0 + $1 | 0 | 0;
+ function add(x, y) {
+  x = x | 0;
+  y = y | 0;
+  return x + y | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];
