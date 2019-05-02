@@ -1332,6 +1332,10 @@ struct JSPrinter {
     }
   }
 
+  static bool isBlock(Ref node) {
+    return node->isArray() && !node->empty() && node[0] == BLOCK;
+  }
+
   static bool ifHasElse(Ref node) {
     assert(node->isArray() && node[0] == IF);
     return node->size() >= 4 && !!node[3];
@@ -1344,24 +1348,34 @@ struct JSPrinter {
     print(node[1]);
     emit(')');
     space();
-    emit('{');
-    indent++;
-    newline();
+    bool emitsBracesAnyhow = isBlock(node[2]);
+    if (!emitsBracesAnyhow) {
+      emit('{');
+      indent++;
+      newline();
+    }
     print(node[2]);
-    indent--;
-    newline();
-    emit('}');
+    if (!emitsBracesAnyhow) {
+      indent--;
+      newline();
+      emit('}');
+    }
     if (ifHasElse(node)) {
       space();
       emit("else");
       safeSpace();
-      emit('{');
-      indent++;
-      newline();
+      bool emitsBracesAnyhow = isBlock(node[3]);
+      if (!emitsBracesAnyhow) {
+        emit('{');
+        indent++;
+        newline();
+      }
       print(node[3]);
-      indent--;
-      newline();
-      emit('}');
+      if (!emitsBracesAnyhow) {
+        indent--;
+        newline();
+        emit('}');
+      }
     }
   }
 
