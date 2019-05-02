@@ -36,20 +36,18 @@ function asmFunc(global, env, buffer) {
   var oldPages = __wasm_current_memory() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
-   {
-    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
-    var newHEAP8 = new global.Int8Array(newBuffer);
-    newHEAP8.set(HEAP8);
-    HEAP8 = newHEAP8;
-    HEAP16 = new global.Int16Array(newBuffer);
-    HEAP32 = new global.Int32Array(newBuffer);
-    HEAPU8 = new global.Uint8Array(newBuffer);
-    HEAPU16 = new global.Uint16Array(newBuffer);
-    HEAPU32 = new global.Uint32Array(newBuffer);
-    HEAPF32 = new global.Float32Array(newBuffer);
-    HEAPF64 = new global.Float64Array(newBuffer);
-    buffer = newBuffer;
-   }
+   var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
+   var newHEAP8 = new global.Int8Array(newBuffer);
+   newHEAP8.set(HEAP8);
+   HEAP8 = newHEAP8;
+   HEAP16 = new global.Int16Array(newBuffer);
+   HEAP32 = new global.Int32Array(newBuffer);
+   HEAPU8 = new global.Uint8Array(newBuffer);
+   HEAPU16 = new global.Uint16Array(newBuffer);
+   HEAPU32 = new global.Uint32Array(newBuffer);
+   HEAPF32 = new global.Float32Array(newBuffer);
+   HEAPF64 = new global.Float64Array(newBuffer);
+   buffer = newBuffer;
   }
   return oldPages;
  }

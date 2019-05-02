@@ -37,10 +37,8 @@ function asmFunc(global, env, buffer) {
    cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     {
-      $6_1 = i;
-      break exit;
-     }
+     $6_1 = i;
+     break exit;
     }
     continue cont;
    };
@@ -58,10 +56,8 @@ function asmFunc(global, env, buffer) {
      continue cont
     }
     if ((i | 0) == (8 | 0)) {
-     {
-      $8_1 = i;
-      break exit;
-     }
+     $8_1 = i;
+     break exit;
     }
     i = i + 1 | 0;
     continue cont;
@@ -76,10 +72,8 @@ function asmFunc(global, env, buffer) {
   i = i + 1 | 0;
   exit : {
    if ((i | 0) == (5 | 0)) {
-    {
-     $6_1 = i;
-     break exit;
-    }
+    $6_1 = i;
+    break exit;
    }
    $6_1 = i;
   }
@@ -94,10 +88,8 @@ function asmFunc(global, env, buffer) {
    cont : while (1) {
     i = i + i | 0;
     if (i >>> 0 > max >>> 0) {
-     {
-      $9_1 = i;
-      break exit;
-     }
+     $9_1 = i;
+     break exit;
     }
     continue cont;
    };
