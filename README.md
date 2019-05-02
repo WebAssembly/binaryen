@@ -224,9 +224,50 @@ Some more notes:
  * See `bin/wasm-opt --help` for the full list of options and passes.
  * Passing `--debug` will emit some debugging info.
 
+### wasm2js
+
+Run
+
+```
+bin/wasm2js [input.wasm file]
+```
+
+This will print out JavaScript to the console.
+
+For example, try
+
+```
+$ bin/wasm2js test/hello_world.wast
+```
+
+That output contains
+
+```
+ function add(x, y) {
+  x = x | 0;
+  y = y | 0;
+  return x + y | 0 | 0;
+ }
+```
+
+as a translation of
+
+```
+ (func $add (; 0 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (i32.add
+   (local.get $x)
+   (local.get $y)
+  )
+ )
+```
+
+You can also tell wasm2js to optimize, using the normal optimization flags
+wasm-opt and other tools receive (such as `-Os`). For optimal code size,
+you should both optimize and run a JavaScript minifier afterwards.
+
 ### asm2wasm
 
-run
+Run
 
 ```
 bin/asm2wasm [input.asm.js file]
