@@ -182,12 +182,6 @@ function asmFunc(global, env, buffer) {
  }
  
  function $3() {
-  block : {
-   switch (0 | 0) {
-   default:
-    break block;
-   };
-  }
   return 1 | 0;
  }
  
