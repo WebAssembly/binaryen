@@ -95,6 +95,8 @@ private:
         // v128 not implemented yet
         return false;
       }
+      case except_ref: // except_ref cannot have literal
+        return false;
       case none:
       case unreachable: {
         WASM_UNREACHABLE();
