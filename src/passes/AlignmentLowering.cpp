@@ -19,10 +19,10 @@
 // that are smaller. This leaves only aligned operations.
 //
 
+#include "ir/bits.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
-#include "ir/bits.h"
 
 namespace wasm {
 
@@ -36,7 +36,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       replaceCurrent(curr->ptr);
       return;
     }
-    assert(curr->type == i32);      // TODO: i64, f32, f64
+    assert(curr->type == i32); // TODO: i64, f32, f64
     auto temp = builder.addVar(getFunction(), i32);
     Expression* ret;
     if (curr->bytes == 2) {
