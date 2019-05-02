@@ -27,25 +27,38 @@
 using namespace cashew;
 using namespace wasm;
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[]) {
   std::string sourceMapFilename;
-  Options options("wasm-dis", "Un-assemble a .wasm (WebAssembly binary format) into a .wast (WebAssembly text format)");
-  options.add("--output", "-o", "Output file (stdout if not specified)",
-              Options::Arguments::One,
-              [](Options *o, const std::string& argument) {
-                o->extra["output"] = argument;
-                Colors::disable();
-              })
-      .add("--source-map", "-sm", "Consume source map from the specified file to add location information",
-           Options::Arguments::One,
-           [&sourceMapFilename](Options *o, const std::string& argument) { sourceMapFilename = argument; })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
+  Options options("wasm-dis",
+                  "Un-assemble a .wasm (WebAssembly binary format) into a "
+                  ".wast (WebAssembly text format)");
+  options
+    .add("--output",
+         "-o",
+         "Output file (stdout if not specified)",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["output"] = argument;
+           Colors::disable();
+         })
+    .add(
+      "--source-map",
+      "-sm",
+      "Consume source map from the specified file to add location information",
+      Options::Arguments::One,
+      [&sourceMapFilename](Options* o, const std::string& argument) {
+        sourceMapFilename = argument;
+      })
+    .add_positional("INFILE",
+                    Options::Arguments::One,
+                    [](Options* o, const std::string& argument) {
+                      o->extra["infile"] = argument;
+                    });
   options.parse(argc, argv);
 
-  if (options.debug) std::cerr << "parsing binary..." << std::endl;
+  if (options.debug) {
+    std::cerr << "parsing binary..." << std::endl;
+  }
   Module wasm;
   try {
     ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
@@ -59,10 +72,16 @@ int main(int argc, const char *argv[]) {
     Fatal() << "error in parsing wasm source mapping";
   }
 
-  if (options.debug) std::cerr << "Printing..." << std::endl;
-  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
+  if (options.debug) {
+    std::cerr << "Printing..." << std::endl;
+  }
+  Output output(options.extra["output"],
+                Flags::Text,
+                options.debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&wasm, output.getStream());
   output << '\n';
 
-  if (options.debug) std::cerr << "Done." << std::endl;
+  if (options.debug) {
+    std::cerr << "Done." << std::endl;
+  }
 }

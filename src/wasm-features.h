@@ -36,13 +36,20 @@ struct FeatureSet {
 
   static std::string toString(Feature f) {
     switch (f) {
-      case Atomics: return "threads";
-      case MutableGlobals: return "mutable-globals";
-      case TruncSat: return "nontrapping-float-to-int";
-      case SIMD: return "simd";
-      case BulkMemory: return "bulk-memory";
-      case SignExt: return "sign-ext";
-      default: WASM_UNREACHABLE();
+      case Atomics:
+        return "threads";
+      case MutableGlobals:
+        return "mutable-globals";
+      case TruncSat:
+        return "nontrapping-float-to-int";
+      case SIMD:
+        return "simd";
+      case BulkMemory:
+        return "bulk-memory";
+      case SignExt:
+        return "sign-ext";
+      default:
+        WASM_UNREACHABLE();
     }
   }
 
@@ -60,7 +67,9 @@ struct FeatureSet {
   bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
-  void set(Feature f, bool v = true) { features = v ? (features | f) : (features & ~f); }
+  void set(Feature f, bool v = true) {
+    features = v ? (features | f) : (features & ~f);
+  }
   void setAtomics(bool v = true) { set(Atomics, v); }
   void setMutableGlobals(bool v = true) { set(MutableGlobals, v); }
   void setTruncSat(bool v = true) { set(TruncSat, v); }
@@ -74,14 +83,25 @@ struct FeatureSet {
     features = features & ~other.features & All;
   }
 
-  template<typename F>
-  void iterFeatures(F f) {
-    if (hasAtomics()) f(Atomics);
-    if (hasBulkMemory()) f(BulkMemory);
-    if (hasMutableGlobals()) f(MutableGlobals);
-    if (hasTruncSat()) f(TruncSat);
-    if (hasSignExt()) f(SignExt);
-    if (hasSIMD()) f(SIMD);
+  template<typename F> void iterFeatures(F f) {
+    if (hasAtomics()) {
+      f(Atomics);
+    }
+    if (hasBulkMemory()) {
+      f(BulkMemory);
+    }
+    if (hasMutableGlobals()) {
+      f(MutableGlobals);
+    }
+    if (hasTruncSat()) {
+      f(TruncSat);
+    }
+    if (hasSignExt()) {
+      f(SignExt);
+    }
+    if (hasSIMD()) {
+      f(SIMD);
+    }
   }
 
   bool operator<=(const FeatureSet& other) const {
@@ -92,9 +112,7 @@ struct FeatureSet {
     return *this <= other && other <= *this;
   }
 
-  bool operator!=(const FeatureSet& other) const {
-    return !(*this == other);
-  }
+  bool operator!=(const FeatureSet& other) const { return !(*this == other); }
 
   FeatureSet& operator|=(const FeatureSet& other) {
     features |= other.features;

@@ -28,7 +28,8 @@ static std::string generateJSWrapper(Module& wasm) {
          "}\n"
          "var tempRet0;\n"
          "var binary;\n"
-         "if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {\n"
+         "if (typeof process === 'object' && typeof require === 'function' /* "
+         "node.js detection */) {\n"
          "  var args = process.argv.slice(2);\n"
          "  binary = require('fs').readFileSync(args[0]);\n"
          "  if (!binary.buffer) binary = new Uint8Array(binary);\n"
@@ -59,12 +60,21 @@ static std::string generateJSWrapper(Module& wasm) {
          "  }\n"
          "  return ret;\n"
          "}\n"
-         "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {\n"
+         "var instance = new WebAssembly.Instance(new "
+         "WebAssembly.Module(binary), {\n"
          "  'fuzzing-support': {\n"
-         "    'log-i32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ']') },\n"
-         "    'log-i64': function(x, y) { console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') + ' ' + literal(y, 'i32') + ']') },\n" // legalization: two i32s
-         "    'log-f32': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },\n" // legalization: an f64
-         "    'log-f64': function(x)    { console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') + ']') },\n"
+         "    'log-i32': function(x)    { "
+         "console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') "
+         "+ ']') },\n"
+         "    'log-i64': function(x, y) { "
+         "console.log('[LoggingExternalInterface logging ' + literal(x, 'i32') "
+         "+ ' ' + literal(y, 'i32') + ']') },\n" // legalization: two i32s
+         "    'log-f32': function(x)    { "
+         "console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') "
+         "+ ']') },\n" // legalization: an f64
+         "    'log-f64': function(x)    { "
+         "console.log('[LoggingExternalInterface logging ' + literal(x, 'f64') "
+         "+ ']') },\n"
          "  },\n"
          "  'env': {\n"
          "    'setTempRet0': function(x) { tempRet0 = x },\n"
@@ -73,12 +83,17 @@ static std::string generateJSWrapper(Module& wasm) {
          "});\n";
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
-    if (!func) continue; // something exported other than a function
-    ret += "if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();\n";
+    if (!func) {
+      continue; // something exported other than a function
+    }
+    ret += "if (instance.exports.hangLimitInitializer) "
+           "instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
-    ret += std::string("  console.log('[fuzz-exec] calling $") + exp->name.str + "');\n";
+    ret += std::string("  console.log('[fuzz-exec] calling $") + exp->name.str +
+           "');\n";
     if (func->result != none) {
-      ret += std::string("  console.log('[fuzz-exec] note result: $") + exp->name.str + " => ' + literal(";
+      ret += std::string("  console.log('[fuzz-exec] note result: $") +
+             exp->name.str + " => ' + literal(";
     } else {
       ret += "  ";
     }
@@ -110,4 +125,3 @@ static std::string generateJSWrapper(Module& wasm) {
 }
 
 } // namespace wasm
-

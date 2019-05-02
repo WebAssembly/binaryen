@@ -32,14 +32,14 @@
 
 #include <atomic>
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "parsing.h"
+#include "pass.h"
 #include "passes/opt-utils.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -79,25 +79,33 @@ struct FunctionInfo {
 
   bool worthInlining(PassOptions& options) {
     // if it's big, it's just not worth doing (TODO: investigate more)
-    if (size > FLEXIBLE_SIZE_LIMIT) return false;
+    if (size > FLEXIBLE_SIZE_LIMIT) {
+      return false;
+    }
     // if it's so small we have a guarantee that after we optimize the
     // size will not increase, inline it
-    if (size <= INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT) return true;
+    if (size <= INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT) {
+      return true;
+    }
     // if it has one use, then inlining it would likely reduce code size
     // since we are just moving code around, + optimizing, so worth it
     // if small enough that we are pretty sure its ok
-    if (calls == 1 && !usedGlobally && size <= CAREFUL_SIZE_LIMIT) return true;
+    if (calls == 1 && !usedGlobally && size <= CAREFUL_SIZE_LIMIT) {
+      return true;
+    }
     // more than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
     // about size, and if it's lightweight so a good candidate for
     // speeding us up.
-    return options.optimizeLevel >= 3 && options.shrinkLevel == 0 && lightweight;
+    return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
+           lightweight;
   }
 };
 
 typedef std::unordered_map<Name, FunctionInfo> NameInfoMap;
 
-struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> {
+struct FunctionInfoScanner
+  : public WalkerPass<PostWalker<FunctionInfoScanner>> {
   bool isFunctionParallel() override { return true; }
 
   FunctionInfoScanner(NameInfoMap* infos) : infos(infos) {}
@@ -112,7 +120,8 @@ struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> 
   }
 
   void visitCall(Call* curr) {
-    assert(infos->count(curr->target) > 0); // can't add a new element in parallel
+    // can't add a new element in parallel
+    assert(infos->count(curr->target) > 0);
     (*infos)[curr->target].calls++;
     // having a call is not lightweight
     (*infos)[getFunction()->name].lightweight = false;
@@ -130,12 +139,14 @@ struct InliningAction {
   Expression** callSite;
   Function* contents;
 
-  InliningAction(Expression** callSite, Function* contents) : callSite(callSite), contents(contents) {}
+  InliningAction(Expression** callSite, Function* contents)
+    : callSite(callSite), contents(contents) {}
 };
 
 struct InliningState {
   std::unordered_set<Name> worthInlining;
-  std::unordered_map<Name, std::vector<InliningAction>> actionsForFunction; // function name => actions that can be performed in it
+  // function name => actions that can be performed in it
+  std::unordered_map<Name, std::vector<InliningAction>> actionsForFunction;
 };
 
 struct Planner : public WalkerPass<PostWalker<Planner>> {
@@ -143,30 +154,27 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
 
   Planner(InliningState* state) : state(state) {}
 
-  Planner* create() override {
-    return new Planner(state);
-  }
+  Planner* create() override { return new Planner(state); }
 
   void visitCall(Call* curr) {
     // plan to inline if we know this is valid to inline, and if the call is
     // actually performed - if it is dead code, it's pointless to inline.
     // we also cannot inline ourselves.
-    if (state->worthInlining.count(curr->target) &&
-        curr->type != unreachable &&
+    if (state->worthInlining.count(curr->target) && curr->type != unreachable &&
         curr->target != getFunction()->name) {
-      // nest the call in a block. that way the location of the pointer to the call will not
-      // change even if we inline multiple times into the same function, otherwise
-      // call1(call2()) might be a problem
+      // nest the call in a block. that way the location of the pointer to the
+      // call will not change even if we inline multiple times into the same
+      // function, otherwise call1(call2()) might be a problem
       auto* block = Builder(*getModule()).makeBlock(curr);
       replaceCurrent(block);
-      assert(state->actionsForFunction.count(getFunction()->name) > 0); // can't add a new element in parallel
-      state->actionsForFunction[getFunction()->name].emplace_back(&block->list[0], getModule()->getFunction(curr->target));
+      // can't add a new element in parallel
+      assert(state->actionsForFunction.count(getFunction()->name) > 0);
+      state->actionsForFunction[getFunction()->name].emplace_back(
+        &block->list[0], getModule()->getFunction(curr->target));
     }
   }
 
-  void doWalkFunction(Function* func) {
-    walk(func->body);
-  }
+  void doWalkFunction(Function* func) { walk(func->body); }
 
 private:
   InliningState* state;
@@ -174,7 +182,8 @@ private:
 
 // Core inlining logic. Modifies the outside function (adding locals as
 // needed), and returns the inlined code.
-static Expression* doInlining(Module* module, Function* into, InliningAction& action) {
+static Expression*
+doInlining(Module* module, Function* into, InliningAction& action) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
   Builder builder(*module);
@@ -204,11 +213,15 @@ static Expression* doInlining(Module* module, Function* into, InliningAction& ac
   }
   // assign the operands into the params
   for (Index i = 0; i < from->params.size(); i++) {
-    block->list.push_back(builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
+    block->list.push_back(
+      builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
   }
-  // zero out the vars (as we may be in a loop, and may depend on their zero-init value
+  // zero out the vars (as we may be in a loop, and may depend on their
+  // zero-init value
   for (Index i = 0; i < from->vars.size(); i++) {
-    block->list.push_back(builder.makeSetLocal(updater.localMapping[from->getVarIndexBase() + i], LiteralUtils::makeZero(from->vars[i], *module)));
+    block->list.push_back(
+      builder.makeSetLocal(updater.localMapping[from->getVarIndexBase() + i],
+                           LiteralUtils::makeZero(from->vars[i], *module)));
   }
   // generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
@@ -246,7 +259,8 @@ struct Inlining : public Pass {
     // can look like it is worth inlining)
     while (iterationNumber <= numFunctions) {
 #ifdef INLINING_DEBUG
-      std::cout << "inlining loop iter " << iterationNumber << " (numFunctions: " << numFunctions << ")\n";
+      std::cout << "inlining loop iter " << iterationNumber
+                << " (numFunctions: " << numFunctions << ")\n";
 #endif
       calculateInfos(module);
       if (!iteration(runner, module)) {
@@ -258,7 +272,8 @@ struct Inlining : public Pass {
 
   void calculateInfos(Module* module) {
     infos.clear();
-    // fill in info, as we operate on it in parallel (each function to its own entry)
+    // fill in info, as we operate on it in parallel (each function to its own
+    // entry)
     for (auto& func : module->functions) {
       infos[func->name];
     }
@@ -288,8 +303,11 @@ struct Inlining : public Pass {
         state.worthInlining.insert(func->name);
       }
     });
-    if (state.worthInlining.size() == 0) return false;
-    // fill in actionsForFunction, as we operate on it in parallel (each function to its own entry)
+    if (state.worthInlining.size() == 0) {
+      return false;
+    }
+    // fill in actionsForFunction, as we operate on it in parallel (each
+    // function to its own entry)
     for (auto& func : module->functions) {
       state.actionsForFunction[func->name];
     }
@@ -302,20 +320,25 @@ struct Inlining : public Pass {
     }
     // perform inlinings TODO: parallelize
     std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined
-    std::unordered_set<Function*> inlinedInto; // which functions were inlined into
+    // which functions were inlined into
+    std::unordered_set<Function*> inlinedInto;
     for (auto& func : module->functions) {
       // if we've inlined a function, don't inline into it in this iteration,
       // avoid risk of races
       // note that we do not risk stalling progress, as each iteration() will
       // inline at least one call before hitting this
-      if (inlinedUses.count(func->name)) continue;
+      if (inlinedUses.count(func->name)) {
+        continue;
+      }
       for (auto& action : state.actionsForFunction[func->name]) {
         auto* inlinedFunction = action.contents;
         // if we've inlined into a function, don't inline it in this iteration,
         // avoid risk of races
         // note that we do not risk stalling progress, as each iteration() will
         // inline at least one call before hitting this
-        if (inlinedInto.count(inlinedFunction)) continue;
+        if (inlinedInto.count(inlinedFunction)) {
+          continue;
+        }
         Name inlinedName = inlinedFunction->name;
 #ifdef INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
@@ -335,23 +358,28 @@ struct Inlining : public Pass {
     }
     // remove functions that we no longer need after inlining
     auto& funcs = module->functions;
-    funcs.erase(std::remove_if(funcs.begin(), funcs.end(), [&](const std::unique_ptr<Function>& curr) {
-      auto name = curr->name;
-      auto& info = infos[name];
-      bool canRemove = inlinedUses.count(name) && inlinedUses[name] == info.calls && !info.usedGlobally;
+    funcs.erase(std::remove_if(funcs.begin(),
+                               funcs.end(),
+                               [&](const std::unique_ptr<Function>& curr) {
+                                 auto name = curr->name;
+                                 auto& info = infos[name];
+                                 bool canRemove =
+                                   inlinedUses.count(name) &&
+                                   inlinedUses[name] == info.calls &&
+                                   !info.usedGlobally;
 #ifdef INLINING_DEBUG
-      if (canRemove) std::cout << "removing " << name << '\n';
+                                 if (canRemove)
+                                   std::cout << "removing " << name << '\n';
 #endif
-      return canRemove;
-    }), funcs.end());
+                                 return canRemove;
+                               }),
+                funcs.end());
     // return whether we did any work
     return inlinedUses.size() > 0;
   }
 };
 
-Pass* createInliningPass() {
-  return new Inlining();
-}
+Pass* createInliningPass() { return new Inlining(); }
 
 Pass* createInliningOptimizingPass() {
   auto* ret = new Inlining();
@@ -360,4 +388,3 @@ Pass* createInliningOptimizingPass() {
 }
 
 } // namespace wasm
-

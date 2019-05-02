@@ -18,6 +18,7 @@
 #define wasm_ir_local_utils_h
 
 #include <ir/effects.h>
+#include <ir/manipulation.h>
 
 namespace wasm {
 
@@ -25,25 +26,17 @@ struct GetLocalCounter : public PostWalker<GetLocalCounter> {
   std::vector<Index> num;
 
   GetLocalCounter() = default;
-  GetLocalCounter(Function* func) {
-    analyze(func, func->body);
-  }
-  GetLocalCounter(Function* func, Expression* ast) {
-    analyze(func, ast);
-  }
+  GetLocalCounter(Function* func) { analyze(func, func->body); }
+  GetLocalCounter(Function* func, Expression* ast) { analyze(func, ast); }
 
-  void analyze(Function* func) {
-    analyze(func, func->body);
-  }
+  void analyze(Function* func) { analyze(func, func->body); }
   void analyze(Function* func, Expression* ast) {
     num.resize(func->getNumLocals());
     std::fill(num.begin(), num.end(), 0);
     walk(ast);
   }
 
-  void visitGetLocal(GetLocal *curr) {
-    num[curr->index]++;
-  }
+  void visitGetLocal(GetLocal* curr) { num[curr->index]++; }
 };
 
 // Removes trivially unneeded sets: sets for whom there is no possible get, and
@@ -53,19 +46,23 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
 
   GetLocalCounter* getLocalCounter = nullptr;
 
-  UnneededSetRemover(Function* func, PassOptions& passOptions) : passOptions(passOptions) {
+  UnneededSetRemover(Function* func, PassOptions& passOptions)
+    : passOptions(passOptions) {
     GetLocalCounter counter(func);
     UnneededSetRemover inner(counter, func, passOptions);
     removed = inner.removed;
   }
 
-  UnneededSetRemover(GetLocalCounter& getLocalCounter, Function* func, PassOptions& passOptions) : passOptions(passOptions), getLocalCounter(&getLocalCounter) {
+  UnneededSetRemover(GetLocalCounter& getLocalCounter,
+                     Function* func,
+                     PassOptions& passOptions)
+    : passOptions(passOptions), getLocalCounter(&getLocalCounter) {
     walk(func->body);
   }
 
   bool removed = false;
 
-  void visitSetLocal(SetLocal *curr) {
+  void visitSetLocal(SetLocal* curr) {
     // If no possible uses, remove.
     if (getLocalCounter->num[curr->index] == 0) {
       remove(curr);
@@ -108,4 +105,3 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
 } // namespace wasm
 
 #endif // wasm_ir_local_utils_h
-

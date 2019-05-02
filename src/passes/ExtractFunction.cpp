@@ -18,14 +18,16 @@
 // with (mostly) just the code you want to debug (function-parallel,
 // non-lto) passes on.
 
-#include "wasm.h"
 #include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
 struct ExtractFunction : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    Name name = runner->options.getArgument("extract", "ExtractFunction usage:  wasm-opt --pass-arg=extract:FUNCTION_NAME");
+    Name name = runner->options.getArgument(
+      "extract",
+      "ExtractFunction usage:  wasm-opt --pass-arg=extract:FUNCTION_NAME");
     std::cerr << "extracting " << name << "\n";
     bool found = false;
     for (auto& func : module->functions) {
@@ -58,9 +60,6 @@ struct ExtractFunction : public Pass {
 
 // declare pass
 
-Pass *createExtractFunctionPass() {
-  return new ExtractFunction();
-}
+Pass* createExtractFunctionPass() { return new ExtractFunction(); }
 
 } // namespace wasm
-

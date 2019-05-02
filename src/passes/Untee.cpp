@@ -22,9 +22,9 @@
 // more effective.
 //
 
-#include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -33,7 +33,7 @@ struct Untee : public WalkerPass<PostWalker<Untee>> {
 
   Pass* create() override { return new Untee; }
 
-  void visitSetLocal(SetLocal *curr) {
+  void visitSetLocal(SetLocal* curr) {
     if (curr->isTee()) {
       if (curr->value->type == unreachable) {
         // we don't reach the tee, just remove it
@@ -41,21 +41,14 @@ struct Untee : public WalkerPass<PostWalker<Untee>> {
       } else {
         // a normal tee. replace with set and get
         Builder builder(*getModule());
-        replaceCurrent(
-          builder.makeSequence(
-            curr,
-            builder.makeGetLocal(curr->index, curr->value->type)
-          )
-        );
+        replaceCurrent(builder.makeSequence(
+          curr, builder.makeGetLocal(curr->index, curr->value->type)));
         curr->setTee(false);
       }
     }
   }
 };
 
-Pass *createUnteePass() {
-  return new Untee();
-}
+Pass* createUnteePass() { return new Untee(); }
 
 } // namespace wasm
-

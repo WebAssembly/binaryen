@@ -19,11 +19,11 @@
 // emscripten output.
 //
 
-#include <wasm.h>
+#include <asmjs/shared-constants.h>
+#include <ir/localize.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ir/localize.h>
-#include <asmjs/shared-constants.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -35,7 +35,9 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   void visitCall(Call* curr) {
     // special asm.js imports can be optimized
     auto* func = getModule()->getFunction(curr->target);
-    if (!func->imported()) return;
+    if (!func->imported()) {
+      return;
+    }
     if (func->module == GLOBAL_MATH) {
       if (func->base == POW) {
         if (auto* exponent = curr->operands[1]->dynCast<Const>()) {
@@ -43,10 +45,14 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
             // This is just a square operation, do a multiply
             Localizer localizer(curr->operands[0], getFunction(), getModule());
             Builder builder(*getModule());
-            replaceCurrent(builder.makeBinary(MulFloat64, localizer.expr, builder.makeGetLocal(localizer.index, localizer.expr->type)));
+            replaceCurrent(builder.makeBinary(
+              MulFloat64,
+              localizer.expr,
+              builder.makeGetLocal(localizer.index, localizer.expr->type)));
           } else if (exponent->value == Literal(double(0.5))) {
             // This is just a square root operation
-            replaceCurrent(Builder(*getModule()).makeUnary(SqrtFloat64, curr->operands[0]));
+            replaceCurrent(
+              Builder(*getModule()).makeUnary(SqrtFloat64, curr->operands[0]));
           }
         }
       }
@@ -54,8 +60,6 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   }
 };
 
-Pass *createPostEmscriptenPass() {
-  return new PostEmscripten();
-}
+Pass* createPostEmscriptenPass() { return new PostEmscripten(); }
 
 } // namespace wasm

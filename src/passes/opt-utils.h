@@ -19,8 +19,8 @@
 
 #include <unordered_set>
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -28,7 +28,9 @@ namespace OptUtils {
 
 // Run useful optimizations after inlining new code into a set
 // of functions.
-inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs, Module* module, PassRunner* parentRunner) {
+inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs,
+                                  Module* module,
+                                  PassRunner* parentRunner) {
   // save the full list of functions on the side
   std::vector<std::unique_ptr<Function>> all;
   all.swap(module->functions);
@@ -39,7 +41,8 @@ inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs, Module* 
   PassRunner runner(module, parentRunner->options);
   runner.setIsNested(true);
   runner.setValidateGlobally(false); // not a full valid module
-  runner.add("precompute-propagate"); // this is especially useful after inlining
+  // this is especially useful after inlining
+  runner.add("precompute-propagate");
   runner.addDefaultFunctionOptimizationPasses(); // do all the usual stuff
   runner.run();
   // restore all the funcs

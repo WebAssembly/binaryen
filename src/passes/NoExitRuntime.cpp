@@ -20,10 +20,10 @@
 // run.
 //
 
-#include <pass.h>
-#include <wasm.h>
-#include <wasm-builder.h>
 #include <asmjs/shared-constants.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 using namespace std;
 
@@ -34,27 +34,24 @@ struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
 
   Pass* create() override { return new NoExitRuntime; }
 
-  // Remove all possible manifestations of atexit, across asm2wasm and llvm wasm backend.
-  std::array<Name, 4> ATEXIT_NAMES = {{ "___cxa_atexit",
-                                        "__cxa_atexit",
-                                        "_atexit",
-                                        "atexit" }};
+  // Remove all possible manifestations of atexit, across asm2wasm and llvm wasm
+  // backend.
+  std::array<Name, 4> ATEXIT_NAMES = {
+    {"___cxa_atexit", "__cxa_atexit", "_atexit", "atexit"}};
 
   void visitCall(Call* curr) {
     auto* import = getModule()->getFunctionOrNull(curr->target);
-    if (!import || !import->imported() || import->module != ENV) return;
+    if (!import || !import->imported() || import->module != ENV) {
+      return;
+    }
     for (auto name : ATEXIT_NAMES) {
       if (name == import->base) {
-        replaceCurrent(
-          Builder(*getModule()).replaceWithIdenticalType(curr)
-        );
+        replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
       }
     }
   }
 };
 
-Pass* createNoExitRuntimePass() {
-  return new NoExitRuntime();
-}
+Pass* createNoExitRuntimePass() { return new NoExitRuntime(); }
 
 } // namespace wasm

@@ -28,7 +28,7 @@
 //   (i32.const 100)
 //   (local.get $x)
 //  )
-// 
+//
 // If that assignment of $y is never used again, everything is fine. But if
 // if is, then the live range of $y does not end in that get, and will
 // necessarily overlap with that of $x - making them appear to interfere
@@ -46,14 +46,16 @@
 // TODO: investigate more
 //
 
-#include <wasm.h>
+#include <ir/local-graph.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ir/local-graph.h>
+#include <wasm.h>
 
 namespace wasm {
 
-struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpressionVisitor<MergeLocals>>> {
+struct MergeLocals
+  : public WalkerPass<
+      PostWalker<MergeLocals, UnifiedExpressionVisitor<MergeLocals>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new MergeLocals(); }
@@ -94,12 +96,15 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
   }
 
   void optimizeCopies() {
-    if (copies.empty()) return;
+    if (copies.empty()) {
+      return;
+    }
     // compute all dependencies
     LocalGraph preGraph(getFunction());
     preGraph.computeInfluences();
     // optimize each copy
-    std::unordered_map<SetLocal*, SetLocal*> optimizedToCopy, optimizedToTrivial;
+    std::unordered_map<SetLocal*, SetLocal*> optimizedToCopy,
+      optimizedToTrivial;
     for (auto* copy : copies) {
       auto* trivial = copy->value->cast<SetLocal>();
       bool canOptimizeToCopy = false;
@@ -108,8 +113,8 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
         canOptimizeToCopy = true;
         for (auto* influencedGet : trivialInfluences) {
           // this get uses the trivial write, so it uses the value in the copy.
-          // however, it may depend on other writes too, if there is a merge/phi,
-          // and in that case we can't do anything
+          // however, it may depend on other writes too, if there is a
+          // merge/phi, and in that case we can't do anything
           assert(influencedGet->index == trivial->index);
           if (preGraph.getSetses[influencedGet].size() == 1) {
             // this is ok
@@ -127,14 +132,17 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
         }
         optimizedToCopy[copy] = trivial;
       } else {
-        // alternatively, we can try to remove the conflict in the opposite way: given
+        // alternatively, we can try to remove the conflict in the opposite way:
+        // given
         //   (local.set $x
         //    (local.get $y)
         //   )
-        // we can look for uses of $x that could instead be uses of $y. this extends
-        // $y's live range, but if it removes the conflict between $x and $y, it may be
-        // worth it
-        if (!trivialInfluences.empty()) { // if the trivial set we added has influences, it means $y lives on
+        // we can look for uses of $x that could instead be uses of $y. this
+        // extends $y's live range, but if it removes the conflict between $x
+        // and $y, it may be worth it
+
+        // if the trivial set we added has influences, it means $y lives on
+        if (!trivialInfluences.empty()) {
           auto& copyInfluences = preGraph.setInfluences[copy];
           if (!copyInfluences.empty()) {
             bool canOptimizeToTrivial = true;
@@ -212,9 +220,6 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
   }
 };
 
-Pass *createMergeLocalsPass() {
-  return new MergeLocals();
-}
+Pass* createMergeLocalsPass() { return new MergeLocals(); }
 
 } // namespace wasm
-

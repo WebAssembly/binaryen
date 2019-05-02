@@ -27,17 +27,17 @@
 // after walking the current module.
 //
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
-#include "asmjs/shared-constants.h"
-#include "wasm-builder.h"
-#include "wasm-s-parser.h"
 #include "abi/js.h"
+#include "asmjs/shared-constants.h"
+#include "ir/find_all.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
-#include "ir/find_all.h"
 #include "passes/intrinsics-module.h"
+#include "wasm-builder.h"
+#include "wasm-s-parser.h"
 
 namespace wasm {
 
@@ -56,7 +56,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
     // Discover all of the intrinsics that we need to inject, lowering all
     // operations to intrinsic calls while we're at it.
-    if (!builder) builder = make_unique<Builder>(*module);
+    if (!builder) {
+      builder = make_unique<Builder>(*module);
+    }
     PostWalker<RemoveNonJSOpsPass>::doWalkModule(module);
 
     if (neededIntrinsics.size() == 0) {
@@ -86,7 +88,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       // Recursively probe all needed intrinsics for transitively used
       // functions. This is building up a set of functions we'll link into our
       // module.
-      for (auto &name : neededIntrinsics) {
+      for (auto& name : neededIntrinsics) {
         addNeededFunctions(intrinsicsModule, name, neededFunctions);
       }
       neededIntrinsics.clear();
@@ -94,10 +96,11 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       // Link in everything that wasn't already linked in. After we've done the
       // copy we then walk the function to rewrite any non-js operations it has
       // as well.
-      for (auto &name : neededFunctions) {
+      for (auto& name : neededFunctions) {
         auto* func = module->getFunctionOrNull(name);
         if (!func) {
-          func = ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
+          func = ModuleUtils::copyFunction(intrinsicsModule.getFunction(name),
+                                           *module);
         }
         doWalkFunction(func);
       }
@@ -123,7 +126,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     }
   }
 
-  void addNeededFunctions(Module &m, Name name, std::set<Name> &needed) {
+  void addNeededFunctions(Module& m, Name name, std::set<Name>& needed) {
     if (needed.count(name)) {
       return;
     }
@@ -140,7 +143,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void doWalkFunction(Function* func) {
-    if (!builder) builder = make_unique<Builder>(*getModule());
+    if (!builder) {
+      builder = make_unique<Builder>(*getModule());
+    }
     PostWalker<RemoveNonJSOpsPass>::doWalkFunction(func);
   }
 
@@ -224,10 +229,12 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         name = WASM_I64_UREM;
         break;
 
-      default: return;
+      default:
+        return;
     }
     neededIntrinsics.insert(name);
-    replaceCurrent(builder->makeCall(name, {curr->left, curr->right}, curr->type));
+    replaceCurrent(
+      builder->makeCall(name, {curr->left, curr->right}, curr->type));
   }
 
   void rewriteCopysign(Binary* curr) {
@@ -253,33 +260,20 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         otherBits = Literal((uint64_t(1) << 63) - 1);
         break;
 
-      default: return;
+      default:
+        return;
     }
 
-    replaceCurrent(
-      builder->makeUnary(
-        int2float,
-        builder->makeBinary(
-          bitOr,
-          builder->makeBinary(
-            bitAnd,
-            builder->makeUnary(
-              float2int,
-              curr->left
-            ),
-            builder->makeConst(otherBits)
-          ),
-          builder->makeBinary(
-            bitAnd,
-            builder->makeUnary(
-              float2int,
-              curr->right
-            ),
-            builder->makeConst(signBit)
-          )
-        )
-      )
-    );
+    replaceCurrent(builder->makeUnary(
+      int2float,
+      builder->makeBinary(
+        bitOr,
+        builder->makeBinary(bitAnd,
+                            builder->makeUnary(float2int, curr->left),
+                            builder->makeConst(otherBits)),
+        builder->makeBinary(bitAnd,
+                            builder->makeUnary(float2int, curr->right),
+                            builder->makeConst(signBit)))));
   }
 
   void visitUnary(Unary* curr) {
@@ -313,7 +307,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         functionCall = WASM_CTZ32;
         break;
 
-      default: return;
+      default:
+        return;
     }
     neededIntrinsics.insert(functionCall);
     replaceCurrent(builder->makeCall(functionCall, {curr->value}, curr->type));
@@ -324,9 +319,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 };
 
-Pass* createRemoveNonJSOpsPass() {
-  return new RemoveNonJSOpsPass();
-}
+Pass* createRemoveNonJSOpsPass() { return new RemoveNonJSOpsPass(); }
 
 } // namespace wasm
-

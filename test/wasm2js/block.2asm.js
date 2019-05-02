@@ -57,7 +57,7 @@ function asmFunc(global, env, buffer) {
  
  function $6() {
   dummy();
-  return __wasm_ctz_i32(13) | 0;
+  return __wasm_ctz_i32(13 | 0) | 0 | 0;
  }
  
  function $7() {
@@ -95,10 +95,6 @@ function asmFunc(global, env, buffer) {
   }
   block46 : {
    switch (1 | 0) {
-   case 0:
-    break block46;
-   case 1:
-    break block46;
    default:
     break block46;
    };
@@ -134,6 +130,9 @@ function asmFunc(global, env, buffer) {
   }
   $0 = $1_1 + $2_1 | 0;
   $5_1 = $0;
+  block49 : {
+   break block49;
+  }
   $0 = $5_1 + 2 | 0;
   $9_1 = $0;
   block50 : {
@@ -163,10 +162,11 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_ctz_i32(var$0) {
+  var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32(var$0 + -1 ^ var$0) | 0
+   return 31 - Math_clz32((var$0 + -1 | 0) ^ var$0 | 0) | 0 | 0
   }
-  return 32;
+  return 32 | 0;
  }
  
  var FUNCTION_TABLE = [];

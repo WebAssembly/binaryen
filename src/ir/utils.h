@@ -17,22 +17,21 @@
 #ifndef wasm_ir_utils_h
 #define wasm_ir_utils_h
 
-#include "wasm.h"
-#include "wasm-traversal.h"
-#include "wasm-builder.h"
-#include "pass.h"
 #include "ir/branch-utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
 // Measure the size of an AST
 
-struct Measurer : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>> {
+struct Measurer
+  : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>> {
   Index size = 0;
 
-  void visitExpression(Expression* curr) {
-    size++;
-  }
+  void visitExpression(Expression* curr) { size++; }
 
   static Index measure(Expression* tree) {
     Measurer measurer;
@@ -43,26 +42,24 @@ struct Measurer : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>
 
 struct ExpressionAnalyzer {
   // Given a stack of expressions, checks if the topmost is used as a result.
-  // For example, if the parent is a block and the node is before the last position,
-  // it is not used.
+  // For example, if the parent is a block and the node is before the last
+  // position, it is not used.
   static bool isResultUsed(ExpressionStack& stack, Function* func);
 
   // Checks if a value is dropped.
   static bool isResultDropped(ExpressionStack& stack);
 
-  // Checks if a break is a simple - no condition, no value, just a plain branching
-  static bool isSimple(Break* curr) {
-    return !curr->condition && !curr->value;
-  }
+  // Checks if a break is a simple - no condition, no value, just a plain
+  // branching
+  static bool isSimple(Break* curr) { return !curr->condition && !curr->value; }
 
   using ExprComparer = std::function<bool(Expression*, Expression*)>;
-  static bool flexibleEqual(Expression* left, Expression* right, ExprComparer comparer);
+  static bool
+  flexibleEqual(Expression* left, Expression* right, ExprComparer comparer);
 
   // Compares two expressions for equivalence.
   static bool equal(Expression* left, Expression* right) {
-    auto comparer = [](Expression* left, Expression* right) {
-      return false;
-    };
+    auto comparer = [](Expression* left, Expression* right) { return false; };
     return flexibleEqual(left, right, comparer);
   }
 
@@ -79,7 +76,8 @@ struct ExpressionAnalyzer {
     return flexibleEqual(left, right, comparer);
   }
 
-  // hash an expression, ignoring superficial details like specific internal names
+  // hash an expression, ignoring superficial details like specific internal
+  // names
   static HashType hash(Expression* curr);
 };
 
@@ -100,15 +98,16 @@ struct ExpressionAnalyzer {
 // exist, but the breaks don't declare the type, rather everything
 // depends on the block. To avoid looking at the parent or something
 // else, just remove such un-taken branches.
-struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>> {
+struct ReFinalize
+  : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new ReFinalize; }
 
   ReFinalize() { name = "refinalize"; }
 
-  // block finalization is O(bad) if we do each block by itself, so do it in bulk,
-  // tracking break value types so we just do a linear pass
+  // block finalization is O(bad) if we do each block by itself, so do it in
+  // bulk, tracking break value types so we just do a linear pass
 
   std::map<Name, Type> breakValues;
 
@@ -220,10 +219,10 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   }
 };
 
-// Adds drop() operations where necessary. This lets you not worry about adding drop when
-// generating code.
-// This also refinalizes before and after, as dropping can change types, and depends
-// on types being cleaned up - no unnecessary block/if/loop types (see refinalize)
+// Adds drop() operations where necessary. This lets you not worry about adding
+// drop when generating code. This also refinalizes before and after, as
+// dropping can change types, and depends on types being cleaned up - no
+// unnecessary block/if/loop types (see refinalize)
 // TODO: optimize that, interleave them
 struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   bool isFunctionParallel() override { return true; }
@@ -236,7 +235,8 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     bool acted = false;
     if (isConcreteType(child->type)) {
       expressionStack.push_back(child);
-      if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) && !ExpressionAnalyzer::isResultDropped(expressionStack)) {
+      if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) &&
+          !ExpressionAnalyzer::isResultDropped(expressionStack)) {
         child = Builder(*getModule()).makeDrop(child);
         acted = true;
       }
@@ -245,12 +245,12 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     return acted;
   }
 
-  void reFinalize() {
-    ReFinalizeNode::updateStack(expressionStack);
-  }
+  void reFinalize() { ReFinalizeNode::updateStack(expressionStack); }
 
   void visitBlock(Block* curr) {
-    if (curr->list.size() == 0) return;
+    if (curr->list.size() == 0) {
+      return;
+    }
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       auto* child = curr->list[i];
       if (isConcreteType(child->type)) {
@@ -265,9 +265,13 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
 
   void visitIf(If* curr) {
     bool acted = false;
-    if (maybeDrop(curr->ifTrue)) acted = true;
+    if (maybeDrop(curr->ifTrue)) {
+      acted = true;
+    }
     if (curr->ifFalse) {
-      if (maybeDrop(curr->ifFalse)) acted = true;
+      if (maybeDrop(curr->ifFalse)) {
+        acted = true;
+      }
     }
     if (acted) {
       reFinalize();
@@ -286,50 +290,31 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
 };
 
 struct I64Utilities {
-  static Expression* recreateI64(Builder& builder, Expression* low, Expression* high) {
-    return
-      builder.makeBinary(
-        OrInt64,
-        builder.makeUnary(
-          ExtendUInt32,
-          low
-        ),
-        builder.makeBinary(
-          ShlInt64,
-          builder.makeUnary(
-            ExtendUInt32,
-            high
-          ),
-          builder.makeConst(Literal(int64_t(32)))
-        )
-      )
-    ;
+  static Expression*
+  recreateI64(Builder& builder, Expression* low, Expression* high) {
+    return builder.makeBinary(
+      OrInt64,
+      builder.makeUnary(ExtendUInt32, low),
+      builder.makeBinary(ShlInt64,
+                         builder.makeUnary(ExtendUInt32, high),
+                         builder.makeConst(Literal(int64_t(32)))));
   };
 
   static Expression* recreateI64(Builder& builder, Index low, Index high) {
-    return recreateI64(builder, builder.makeGetLocal(low, i32), builder.makeGetLocal(high, i32));
+    return recreateI64(
+      builder, builder.makeGetLocal(low, i32), builder.makeGetLocal(high, i32));
   };
 
   static Expression* getI64High(Builder& builder, Index index) {
-    return
-      builder.makeUnary(
-        WrapInt64,
-        builder.makeBinary(
-          ShrUInt64,
-          builder.makeGetLocal(index, i64),
-          builder.makeConst(Literal(int64_t(32)))
-        )
-      )
-    ;
+    return builder.makeUnary(
+      WrapInt64,
+      builder.makeBinary(ShrUInt64,
+                         builder.makeGetLocal(index, i64),
+                         builder.makeConst(Literal(int64_t(32)))));
   }
 
   static Expression* getI64Low(Builder& builder, Index index) {
-    return
-      builder.makeUnary(
-        WrapInt64,
-        builder.makeGetLocal(index, i64)
-      )
-    ;
+    return builder.makeUnary(WrapInt64, builder.makeGetLocal(index, i64));
   }
 };
 

@@ -24,16 +24,17 @@
 
 #include <unordered_map>
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
-#include "ir/local-graph.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
+#include "ir/local-graph.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
-struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion>> {
+struct LoopInvariantCodeMotion
+  : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new LoopInvariantCodeMotion; }
@@ -128,11 +129,12 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
           // outside of the loop, in which case everything is good -
           // either they are before the loop and constant for us, or
           // they are after and don't matter.
-          if (effects.localsRead.empty() || !hasGetDependingOnLoopSet(curr, loopSets)) {
-            // We have checked if our gets are influenced by sets in the loop, and
-            // must also check if our sets interfere with them. To do so, assume
-            // temporarily that we are moving curr out; see if any sets remain for
-            // its indexes.
+          if (effects.localsRead.empty() ||
+              !hasGetDependingOnLoopSet(curr, loopSets)) {
+            // We have checked if our gets are influenced by sets in the loop,
+            // and must also check if our sets interfere with them. To do so,
+            // assume temporarily that we are moving curr out; see if any sets
+            // remain for its indexes.
             FindAll<SetLocal> currSets(curr);
             for (auto* set : currSets.list) {
               assert(numSetsForIndex[set->index] > 0);
@@ -187,8 +189,8 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
   bool interestingToMove(Expression* curr) {
     // In theory we could consider blocks, but then heavy nesting of
     // switch patterns would be heavy, and almost always pointless.
-    if (curr->type != none || curr->is<Nop>() || curr->is<Block>()
-                           || curr->is<Loop>()) {
+    if (curr->type != none || curr->is<Nop>() || curr->is<Block>() ||
+        curr->is<Loop>()) {
       return false;
     }
     // Don't move copies (set of a get, or set of a tee of a get, etc.),
@@ -206,7 +208,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     if (auto* set = curr->dynCast<SetLocal>()) {
       while (1) {
         auto* next = set->value->dynCast<SetLocal>();
-        if (!next) break;
+        if (!next) {
+          break;
+        }
         set = next;
       }
       if (set->value->is<GetLocal>() || set->value->is<Const>()) {
@@ -223,7 +227,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       for (auto* set : sets) {
         // nullptr means a parameter or zero-init value;
         // no danger to us.
-        if (!set) continue;
+        if (!set) {
+          continue;
+        }
         // Check if the set is in the loop. If not, it's either before,
         // which is fine, or after, which is also fine - moving curr
         // to just outside the loop will preserve those relationships.
@@ -238,9 +244,8 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
   }
 };
 
-Pass *createLoopInvariantCodeMotionPass() {
+Pass* createLoopInvariantCodeMotionPass() {
   return new LoopInvariantCodeMotion();
 }
 
 } // namespace wasm
-

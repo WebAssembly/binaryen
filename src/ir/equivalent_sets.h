@@ -31,9 +31,7 @@ struct EquivalentSets {
   std::unordered_map<Index, std::shared_ptr<Set>> indexSets;
 
   // Clears the state completely, removing all equivalences.
-  void clear() {
-    indexSets.clear();
-  }
+  void clear() { indexSets.clear(); }
 
   // Resets an index, removing any equivalences between it and others.
   void reset(Index index) {
@@ -69,7 +67,9 @@ struct EquivalentSets {
 
   // Checks whether two indexes contain the same data.
   bool check(Index a, Index b) {
-    if (a == b) return true;
+    if (a == b) {
+      return true;
+    }
     if (auto* set = getEquivalents(a)) {
       if (set->find(b) != set->end()) {
         return true;
@@ -91,4 +91,3 @@ struct EquivalentSets {
 } // namespace wasm
 
 #endif // wasm_ir_equivalent_sets_h
-

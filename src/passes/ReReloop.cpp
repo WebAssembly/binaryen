@@ -23,13 +23,13 @@
 
 #include <memory>
 
-#include "wasm.h"
-#include "wasm-builder.h"
-#include "wasm-traversal.h"
-#include "pass.h"
 #include "cfg/Relooper.h"
 #include "ir/flat.h"
 #include "ir/utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 #ifdef RERELOOP_DEBUG
 #include <wasm-printing.h>
@@ -62,21 +62,13 @@ struct ReReloop final : public Pass {
     return currCFGBlock = curr;
   }
 
-  CFG::Block* startCFGBlock() {
-    return setCurrCFGBlock(makeCFGBlock());
-  }
+  CFG::Block* startCFGBlock() { return setCurrCFGBlock(makeCFGBlock()); }
 
-  CFG::Block* getCurrCFGBlock() {
-    return currCFGBlock;
-  }
+  CFG::Block* getCurrCFGBlock() { return currCFGBlock; }
 
-  Block* getCurrBlock() {
-    return currCFGBlock->Code->cast<Block>();
-  }
+  Block* getCurrBlock() { return currCFGBlock->Code->cast<Block>(); }
 
-  void finishBlock() {
-    getCurrBlock()->finalize();
-  }
+  void finishBlock() { getCurrBlock()->finalize(); }
 
   // break handling
 
@@ -86,19 +78,22 @@ struct ReReloop final : public Pass {
     breakTargets[name] = target;
   }
 
-  CFG::Block* getBreakTarget(Name name) {
-    return breakTargets[name];
-  }
+  CFG::Block* getBreakTarget(Name name) { return breakTargets[name]; }
 
   // branch handling
 
-  void addBranch(CFG::Block* from, CFG::Block* to, Expression* condition = nullptr) {
+  void
+  addBranch(CFG::Block* from, CFG::Block* to, Expression* condition = nullptr) {
     from->AddBranchTo(to, condition);
   }
 
-  void addSwitchBranch(CFG::Block* from, CFG::Block* to, const std::set<Index>& values) {
+  void addSwitchBranch(CFG::Block* from,
+                       CFG::Block* to,
+                       const std::set<Index>& values) {
     std::vector<Index> list;
-    for (auto i : values) list.push_back(i);
+    for (auto i : values) {
+      list.push_back(i);
+    }
     from->AddSwitchBranchTo(to, std::move(list));
   }
 
@@ -107,9 +102,7 @@ struct ReReloop final : public Pass {
   struct Task {
     ReReloop& parent;
     Task(ReReloop& parent) : parent(parent) {}
-    virtual void run() {
-      WASM_UNREACHABLE();
-    }
+    virtual void run() { WASM_UNREACHABLE(); }
   };
 
   typedef std::shared_ptr<Task> TaskPtr;
@@ -120,9 +113,7 @@ struct ReReloop final : public Pass {
 
     TriageTask(ReReloop& parent, Expression* curr) : Task(parent), curr(curr) {}
 
-    void run() override {
-      parent.triage(curr);
-    }
+    void run() override { parent.triage(curr); }
   };
 
   struct BlockTask final : public Task {
@@ -183,10 +174,12 @@ struct ReReloop final : public Pass {
       parent.addBranch(task->condition, ifTrueBegin, curr->condition);
       if (curr->ifFalse) {
         parent.stack.push_back(task);
-        parent.stack.push_back(std::make_shared<TriageTask>(parent, curr->ifFalse));
+        parent.stack.push_back(
+          std::make_shared<TriageTask>(parent, curr->ifFalse));
       }
       parent.stack.push_back(task);
-      parent.stack.push_back(std::make_shared<TriageTask>(parent, curr->ifTrue));
+      parent.stack.push_back(
+        std::make_shared<TriageTask>(parent, curr->ifTrue));
     }
 
     void run() override {
@@ -194,7 +187,8 @@ struct ReReloop final : public Pass {
         // end of ifTrue
         ifTrueEnd = parent.getCurrCFGBlock();
         auto* after = parent.startCFGBlock();
-        parent.addBranch(condition, after); // if condition was false, go after the ifTrue, to ifFalse or outside
+        // if condition was false, go after the ifTrue, to ifFalse or outside
+        parent.addBranch(condition, after);
         if (!curr->ifFalse) {
           parent.addBranch(ifTrueEnd, after);
         }
@@ -213,9 +207,11 @@ struct ReReloop final : public Pass {
 
   struct BreakTask : public Task {
     static void handle(ReReloop& parent, Break* curr) {
-      // add the branch. note how if the condition is false, it is the right value there as well
+      // add the branch. note how if the condition is false, it is the right
+      // value there as well
       auto* before = parent.getCurrCFGBlock();
-      parent.addBranch(before, parent.getBreakTarget(curr->name), curr->condition);
+      parent.addBranch(
+        before, parent.getBreakTarget(curr->name), curr->condition);
       if (curr->condition) {
         auto* after = parent.startCFGBlock();
         parent.addBranch(before, after);
@@ -238,12 +234,14 @@ struct ReReloop final : public Pass {
         targetValues[targets[i]].insert(i);
       }
       for (auto& iter : targetValues) {
-        parent.addSwitchBranch(before, parent.getBreakTarget(iter.first), iter.second);
+        parent.addSwitchBranch(
+          before, parent.getBreakTarget(iter.first), iter.second);
       }
-      // the default may be among the targets, in which case, we can't add it simply as
-      // it would be a duplicate, so create a temp block
+      // the default may be among the targets, in which case, we can't add it
+      // simply as it would be a duplicate, so create a temp block
       if (targetValues.count(curr->default_) == 0) {
-        parent.addSwitchBranch(before, parent.getBreakTarget(curr->default_), std::set<Index>());
+        parent.addSwitchBranch(
+          before, parent.getBreakTarget(curr->default_), std::set<Index>());
       } else {
         auto* temp = parent.startCFGBlock();
         parent.addSwitchBranch(before, temp, std::set<Index>());
@@ -297,7 +295,9 @@ struct ReReloop final : public Pass {
     // TODO: optimize with this?
   }
 
-  void runOnFunction(PassRunner* runner, Module* module, Function* function) override {
+  void runOnFunction(PassRunner* runner,
+                     Module* module,
+                     Function* function) override {
     Flat::verifyFlatness(function);
 
     // since control flow is flattened, this is pretty simple
@@ -316,15 +316,14 @@ struct ReReloop final : public Pass {
     // finish the current block
     finishBlock();
     // blocks that do not have any exits are dead ends in the relooper. we need
-    // to make sure that are in fact dead ends, and do not flow control anywhere.
-    // add a return as needed
+    // to make sure that are in fact dead ends, and do not flow control
+    // anywhere. add a return as needed
     for (auto* cfgBlock : relooper->Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
       if (cfgBlock->BranchesOut.empty() && block->type != unreachable) {
-        block->list.push_back(
-          function->result == none ? (Expression*)builder->makeReturn()
-                                   : (Expression*)builder->makeUnreachable()
-        );
+        block->list.push_back(function->result == none
+                                ? (Expression*)builder->makeReturn()
+                                : (Expression*)builder->makeUnreachable());
         block->finalize();
       }
     }
@@ -356,10 +355,8 @@ struct ReReloop final : public Pass {
       // code, for example, which could be optimized out later
       // but isn't yet), then make sure it has a proper type
       if (function->result != none && function->body->type == none) {
-        function->body = builder.makeSequence(
-          function->body,
-          builder.makeUnreachable()
-        );
+        function->body =
+          builder.makeSequence(function->body, builder.makeUnreachable());
       }
     }
     // TODO: should this be in the relooper itself?
@@ -367,8 +364,6 @@ struct ReReloop final : public Pass {
   }
 };
 
-Pass *createReReloopPass() {
-  return new ReReloop();
-}
+Pass* createReReloopPass() { return new ReReloop(); }
 
 } // namespace wasm
