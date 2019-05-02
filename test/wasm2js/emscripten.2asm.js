@@ -80,10 +80,10 @@ function asmFunc(global, env, buffer) {
   return x - -5 | 0 | 0;
  }
  
- function select($0) {
-  $0 = $0 | 0;
+ function select(x) {
+  x = x | 0;
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
-  return (wasm2js_i32$0 = $0, wasm2js_i32$1 = HEAP32[16 >> 2] | 0, wasm2js_i32$2 = $0, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0;
+  return (wasm2js_i32$0 = x, wasm2js_i32$1 = HEAP32[16 >> 2] | 0, wasm2js_i32$2 = x, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0;
  }
  
  // EMSCRIPTEN_END_FUNCS;
