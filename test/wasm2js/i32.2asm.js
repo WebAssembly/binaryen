@@ -24,13 +24,13 @@ function asmFunc(global, env, buffer) {
  function $0(x, y) {
   x = x | 0;
   y = y | 0;
-  return x + y | 0;
+  return x + y | 0 | 0;
  }
  
  function $1(x, y) {
   x = x | 0;
   y = y | 0;
-  return x - y | 0;
+  return x - y | 0 | 0;
  }
  
  function $2(x, y) {
@@ -42,73 +42,73 @@ function asmFunc(global, env, buffer) {
  function $3(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) / (y | 0) | 0;
+  return (x | 0) / (y | 0) | 0 | 0;
  }
  
  function $4(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x >>> 0) / (y >>> 0) | 0;
+  return (x >>> 0) / (y >>> 0) | 0 | 0;
  }
  
  function $5(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) % (y | 0) | 0;
+  return (x | 0) % (y | 0) | 0 | 0;
  }
  
  function $6(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x >>> 0) % (y >>> 0) | 0;
+  return (x >>> 0) % (y >>> 0) | 0 | 0;
  }
  
  function $7(x, y) {
   x = x | 0;
   y = y | 0;
-  return x & y;
+  return x & y | 0 | 0;
  }
  
  function $8(x, y) {
   x = x | 0;
   y = y | 0;
-  return x | y;
+  return x | y | 0 | 0;
  }
  
  function $9(x, y) {
   x = x | 0;
   y = y | 0;
-  return x ^ y;
+  return x ^ y | 0 | 0;
  }
  
  function $10(x, y) {
   x = x | 0;
   y = y | 0;
-  return x << y;
+  return x << y | 0 | 0;
  }
  
  function $11(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >> y;
+  return x >> y | 0 | 0;
  }
  
  function $12(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >>> y;
+  return x >>> y | 0 | 0;
  }
  
  function $13(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotl_i32(x, y) | 0;
+  return __wasm_rotl_i32(x | 0, y | 0) | 0 | 0;
  }
  
  function $14(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotr_i32(x, y) | 0;
+  return __wasm_rotr_i32(x | 0, y | 0) | 0 | 0;
  }
  
  function $15(x) {
@@ -118,12 +118,12 @@ function asmFunc(global, env, buffer) {
  
  function $16(x) {
   x = x | 0;
-  return __wasm_ctz_i32(x) | 0;
+  return __wasm_ctz_i32(x | 0) | 0 | 0;
  }
  
  function $17(x) {
   x = x | 0;
-  return __wasm_popcnt_i32(x) | 0;
+  return __wasm_popcnt_i32(x | 0) | 0 | 0;
  }
  
  function $18(x) {
@@ -192,13 +192,15 @@ function asmFunc(global, env, buffer) {
  }
  
  function __wasm_ctz_i32(var$0) {
+  var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32(var$0 + -1 ^ var$0) | 0
+   return 31 - Math_clz32((var$0 + -1 | 0) ^ var$0 | 0) | 0 | 0
   }
-  return 32;
+  return 32 | 0;
  }
  
  function __wasm_popcnt_i32(var$0) {
+  var$0 = var$0 | 0;
   var var$1 = 0, $5_1 = 0;
   label$1 : {
    label$2 : while (1) {
@@ -206,26 +208,30 @@ function asmFunc(global, env, buffer) {
     if (!var$0) {
      break label$1
     }
-    var$0 = var$0 & var$0 - 1;
+    var$0 = var$0 & (var$0 - 1 | 0) | 0;
     var$1 = var$1 + 1 | 0;
-    continue;
+    continue label$2;
    };
   }
-  return $5_1;
+  return $5_1 | 0;
  }
  
  function __wasm_rotl_i32(var$0, var$1) {
+  var$0 = var$0 | 0;
+  var$1 = var$1 | 0;
   var var$2 = 0;
-  var$2 = var$1 & 31;
-  var$1 = 0 - var$1 & 31;
-  return (-1 >>> var$2 & var$0) << var$2 | (-1 << var$1 & var$0) >>> var$1;
+  var$2 = var$1 & 31 | 0;
+  var$1 = (0 - var$1 | 0) & 31 | 0;
+  return ((-1 >>> var$2 | 0) & var$0 | 0) << var$2 | 0 | (((-1 << var$1 | 0) & var$0 | 0) >>> var$1 | 0) | 0 | 0;
  }
  
  function __wasm_rotr_i32(var$0, var$1) {
+  var$0 = var$0 | 0;
+  var$1 = var$1 | 0;
   var var$2 = 0;
-  var$2 = var$1 & 31;
-  var$1 = 0 - var$1 & 31;
-  return (-1 << var$2 & var$0) >>> var$2 | (-1 >>> var$1 & var$0) << var$1;
+  var$2 = var$1 & 31 | 0;
+  var$1 = (0 - var$1 | 0) & 31 | 0;
+  return ((-1 << var$2 | 0) & var$0 | 0) >>> var$2 | 0 | (((-1 >>> var$1 | 0) & var$0 | 0) << var$1 | 0) | 0 | 0;
  }
  
  var FUNCTION_TABLE = [];

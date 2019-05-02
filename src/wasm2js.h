@@ -60,12 +60,13 @@ IString EXPRESSION_RESULT("wasm2js$expresult");
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
-  if (ast[0] == BLOCK || ast[0] == TOPLEVEL)
+  if (ast[0] == BLOCK || ast[0] == TOPLEVEL) {
     index = 1;
-  else if (ast[0] == DEFUN)
+  } else if (ast[0] == DEFUN) {
     index = 3;
-  else
+  } else {
     abort();
+  }
   if (extra->isArray() && extra[0] == BLOCK) {
     for (size_t i = 0; i < extra[1]->size(); i++) {
       ast[index]->push_back(extra[1][i]);
@@ -267,29 +268,45 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // If later on they aren't needed, we'll clean them up.
   ABI::wasm2js::ensureScratchMemoryHelpers(wasm);
 
-  PassRunner runner(wasm);
-  runner.add<AutoDrop>();
-  runner.add("legalize-js-interface");
-  // First up remove as many non-JS operations we can, including things like
-  // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
-  // This may inject intrinsics which use i64 so it needs to be run before the
-  // i64-to-i32 lowering pass.
-  runner.add("remove-non-js-ops");
-  // Currently the i64-to-32 lowering pass requires that `flatten` be run before
-  // it to produce correct code. For some more details about this see #1480
-  runner.add("flatten");
-  runner.add("i64-to-i32-lowering");
-  runner.add("flatten");
-  runner.add("simplify-locals-notee-nostructure");
-  runner.add("reorder-locals");
-  runner.add("remove-unused-names");
-  runner.add("vacuum");
-  runner.add("remove-unused-module-elements");
-  runner.setDebug(flags.debug);
-  runner.run();
+  // Process the code, and optimize if relevant.
+  // First, do the lowering to a JS-friendly subset.
+  {
+    PassRunner runner(wasm, options);
+    runner.add<AutoDrop>();
+    runner.add("legalize-js-interface");
+    // First up remove as many non-JS operations we can, including things like
+    // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
+    // This may inject intrinsics which use i64 so it needs to be run before the
+    // i64-to-i32 lowering pass.
+    runner.add("remove-non-js-ops");
+    // Currently the i64-to-32 lowering pass requires that `flatten` be run
+    // before it to produce correct code. For some more details about this see
+    // #1480
+    runner.add("flatten");
+    runner.add("i64-to-i32-lowering");
+    // Next, optimize that as best we can. This should not generate
+    // non-JS-friendly things.
+    if (options.optimizeLevel > 0) {
+      runner.addDefaultOptimizationPasses();
+    }
+    // Finally, get the code into the flat form we need for wasm2js itself, and
+    // optimize that a little in a way that keeps flat property.
+    runner.add("flatten");
+    runner.add("remove-unused-names");
+    runner.add("merge-blocks");
+    runner.add("simplify-locals-notee-nostructure");
+    // Coalescing is slow if we didn't run full optimizations earlier, so don't
+    // run it automatically.
+    if (options.optimizeLevel > 0) {
+      runner.add("coalesce-locals");
+    }
+    runner.add("reorder-locals");
+    runner.add("vacuum");
+    runner.add("remove-unused-module-elements");
+    runner.setDebug(flags.debug);
+    runner.run();
+  }
 
-  // Make sure we didn't corrupt anything if we're in --allow-asserts mode (aka
-  // tests)
 #ifndef NDEBUG
   if (!WasmValidator().validate(*wasm)) {
     WasmPrinter::printModule(wasm);
@@ -740,8 +757,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     bool isBlock(Ref ast) { return !!ast && ast->isArray() && ast[0] == BLOCK; }
 
     Ref blockify(Ref ast) {
-      if (isBlock(ast))
+      if (isBlock(ast)) {
         return ast;
+      }
       Ref ret = ValueBuilder::makeBlock();
       ret[1]->push_back(ValueBuilder::makeStatement(ast));
       return ret;
@@ -830,11 +848,30 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       Ref theSwitch =
         ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
       ret[1]->push_back(theSwitch);
+      // First, group the switch targets.
+      std::map<Name, std::vector<Index>> targetIndexes;
       for (size_t i = 0; i < curr->targets.size(); i++) {
-        ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
-        ValueBuilder::appendCodeToSwitch(
-          theSwitch, blockify(makeBreakOrContinue(curr->targets[i])), false);
+        targetIndexes[curr->targets[i]].push_back(i);
       }
+      // Emit group by group.
+      for (auto& pair : targetIndexes) {
+        auto target = pair.first;
+        auto& indexes = pair.second;
+        if (target != curr->default_) {
+          for (auto i : indexes) {
+            ValueBuilder::appendCaseToSwitch(theSwitch,
+                                             ValueBuilder::makeNum(i));
+          }
+          ValueBuilder::appendCodeToSwitch(
+            theSwitch, blockify(makeBreakOrContinue(target)), false);
+        } else {
+          // For the group going to the same place as the default, we can just
+          // emit the default itself, which we do at the end.
+        }
+      }
+      // TODO: if the group the default is in is not the largest, we can turn
+      // the largest into
+      //       the default by using a local and a check on the range
       ValueBuilder::appendDefaultToSwitch(theSwitch);
       ValueBuilder::appendCodeToSwitch(
         theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
@@ -1963,8 +2000,9 @@ void Wasm2JSGlue::emitMemory(
   std::string buffer,
   std::string segmentWriter,
   std::function<std::string(std::string)> accessGlobal) {
-  if (wasm.memory.segments.empty())
+  if (wasm.memory.segments.empty()) {
     return;
+  }
 
   auto expr = R"(
     function(mem) {
@@ -2017,8 +2055,9 @@ void Wasm2JSGlue::emitScratchMemorySupport() {
       needScratchMemory = true;
     }
   });
-  if (!needScratchMemory)
+  if (!needScratchMemory) {
     return;
+  }
 
   out << R"(
   var scratchBuffer = new ArrayBuffer(8);

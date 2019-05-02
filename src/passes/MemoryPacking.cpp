@@ -57,8 +57,9 @@ struct MemoryPacking : public Pass {
     };
 
     for (auto& segment : module->memory.segments) {
-      if (!isSplittable(segment))
+      if (!isSplittable(segment)) {
         continue;
+      }
 
       // skip final zeros
       while (segment.data.size() > 0 && segment.data.back() == 0) {

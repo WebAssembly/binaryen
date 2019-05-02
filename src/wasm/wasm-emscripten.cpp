@@ -86,8 +86,9 @@ Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
       /* type   =*/i32);
   }
   Global* stackPointer = getStackPointerGlobal();
-  if (!stackPointer)
+  if (!stackPointer) {
     Fatal() << "stack pointer global not found";
+  }
   return builder.makeGetGlobal(stackPointer->name, i32);
 }
 
@@ -103,8 +104,9 @@ EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
       /* type   =*/i32);
   }
   Global* stackPointer = getStackPointerGlobal();
-  if (!stackPointer)
+  if (!stackPointer) {
     Fatal() << "stack pointer global not found";
+  }
   return builder.makeSetGlobal(stackPointer->name, value);
 }
 
@@ -312,8 +314,9 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
 void EmscriptenGlueGenerator::generateStackInitialization(Address addr) {
   auto* stackPointer = getStackPointerGlobal();
   assert(!stackPointer->imported());
-  if (!stackPointer->init || !stackPointer->init->is<Const>())
+  if (!stackPointer->init || !stackPointer->init->is<Const>()) {
     Fatal() << "stack pointer global is not assignable";
+  }
   stackPointer->init->cast<Const>()->value = Literal(int32_t(addr));
 }
 
@@ -322,8 +325,9 @@ inline void exportFunction(Module& wasm, Name name, bool must_export) {
     assert(!must_export);
     return;
   }
-  if (wasm.getExportOrNull(name))
+  if (wasm.getExportOrNull(name)) {
     return; // Already exported
+  }
   auto exp = new Export;
   exp->name = exp->value = name;
   exp->kind = ExternalKind::Function;
@@ -350,8 +354,9 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     std::vector<NameType> params;
     params.emplace_back("fptr", i32); // function pointer param
     int p = 0;
-    for (const auto& ty : funcType->params)
+    for (const auto& ty : funcType->params) {
       params.emplace_back(std::to_string(p++), ty);
+    }
     Function* f =
       builder.makeFunction(name, std::move(params), funcType->result, {});
     Expression* fptr = builder.makeGetLocal(0, i32);
@@ -373,8 +378,9 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
   void visitGetGlobal(GetGlobal* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       needStackSave = true;
-      if (!builder)
+      if (!builder) {
         builder = make_unique<Builder>(*getModule());
+      }
       replaceCurrent(builder->makeCall(STACK_SAVE, {}, i32));
     }
   }
@@ -382,8 +388,9 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
   void visitSetGlobal(SetGlobal* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       needStackRestore = true;
-      if (!builder)
+      if (!builder) {
         builder = make_unique<Builder>(*getModule());
+      }
       replaceCurrent(builder->makeCall(STACK_RESTORE, {curr->value}, none));
     }
   }
@@ -398,8 +405,9 @@ private:
 
 void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   Global* stackPointer = getStackPointerGlobal();
-  if (!stackPointer)
+  if (!stackPointer) {
     return;
+  }
 
   // Replace all uses of stack pointer global
   RemoveStackPointer walker(stackPointer);
@@ -796,8 +804,9 @@ struct FixInvokeFunctionNamesWalker
   }
 
   static Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
-    if (name == "emscripten_longjmp_jmpbuf")
+    if (name == "emscripten_longjmp_jmpbuf") {
       return "emscripten_longjmp";
+    }
     return fixEmExceptionInvoke(name, sig);
   }
 
@@ -840,10 +849,11 @@ template<class C> void printSet(std::ostream& o, C& c) {
   o << "[";
   bool first = true;
   for (auto& item : c) {
-    if (first)
+    if (first) {
       first = false;
-    else
+    } else {
       o << ",";
+    }
     o << '"' << item << '"';
   }
   o << "]";
@@ -1005,7 +1015,12 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
                                                    Address base) {
   size_t lastEnd = 0;
   for (Memory::Segment& seg : wasm.memory.segments) {
-    assert(!seg.isPassive && "separating passive segments not implemented");
+    if (seg.isPassive) {
+      Fatal() << "separating passive segments not implemented";
+    }
+    if (!seg.offset->is<Const>()) {
+      Fatal() << "separating relocatable segments not implemented";
+    }
     size_t offset = seg.offset->cast<Const>()->value.geti32();
     offset -= base;
     size_t fill = offset - lastEnd;

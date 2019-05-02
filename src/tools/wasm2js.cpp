@@ -129,7 +129,7 @@ static void traversePost(Ref node, std::function<void(Ref)> visit) {
 }
 
 static void optimizeJS(Ref ast) {
-  // helpers
+  // Helpers
 
   auto isOrZero = [](Ref node) {
     return node->isArray() && !node->empty() && node[0] == BINARY &&
@@ -141,6 +141,11 @@ static void optimizeJS(Ref ast) {
            node[1] == PLUS;
   };
 
+  auto isFround = [](Ref node) {
+    return node->isArray() && !node->empty() && node[0] == cashew::CALL &&
+           node[1] == MATH_FROUND;
+  };
+
   auto isBitwise = [](Ref node) {
     if (node->isArray() && !node->empty() && node[0] == BINARY) {
       auto op = node[1];
@@ -149,6 +154,60 @@ static void optimizeJS(Ref ast) {
     }
     return false;
   };
+
+  auto isConstantAnd = [](Ref node, int num) {
+    return node->isArray() && !node->empty() && node[0] == BINARY &&
+           node[1] == AND && node[3]->isNumber() && node[3]->getNumber() == num;
+  };
+
+  auto removeOrZero = [&](Ref node) {
+    while (isOrZero(node)) {
+      node = node[2];
+    }
+    return node;
+  };
+
+  auto removePlus = [&](Ref node) {
+    while (isPlus(node)) {
+      node = node[2];
+    }
+    return node;
+  };
+
+  auto removePlusAndFround = [&](Ref node) {
+    while (1) {
+      if (isFround(node)) {
+        node = node[2][0];
+      } else if (isPlus(node)) {
+        node = node[2];
+      } else {
+        break;
+      }
+    }
+    return node;
+  };
+
+  auto getHeapFromAccess = [](Ref node) { return node[1]->getIString(); };
+
+  auto isIntegerHeap = [](IString heap) {
+    return heap == HEAP8 || heap == HEAPU8 || heap == HEAP16 ||
+           heap == HEAPU16 || heap == HEAP32 || heap == HEAPU32;
+  };
+
+  auto isFloatHeap = [](IString heap) {
+    return heap == HEAPF32 || heap == HEAPF64;
+  };
+
+  auto isHeapAccess = [&](Ref node) {
+    if (node->isArray() && !node->empty() && node[0] == SUB &&
+        node[1]->isString()) {
+      auto heap = getHeapFromAccess(node);
+      return isIntegerHeap(heap) || isFloatHeap(heap);
+    }
+    return false;
+  };
+
+  // Optimizations
 
   // x >> 0  =>  x | 0
   traversePost(ast, [](Ref node) {
@@ -175,17 +234,46 @@ static void optimizeJS(Ref ast) {
     }
     // x | 0 going into a bitwise op => skip the | 0
     else if (isBitwise(node)) {
-      while (isOrZero(node[2])) {
-        node[2] = node[2][2];
-      }
-      while (isOrZero(node[3])) {
-        node[3] = node[3][2];
-      }
+      node[2] = removeOrZero(node[2]);
+      node[3] = removeOrZero(node[3]);
     }
     // +(+x) => +x
     else if (isPlus(node)) {
-      while (isPlus(node[2])) {
-        node[2] = node[2][2];
+      node[2] = removePlus(node[2]);
+    }
+    // +(+x) => +x
+    else if (isFround(node)) {
+      node[2] = removePlusAndFround(node[2]);
+    }
+    // Assignment into a heap coerces.
+    else if (node->isAssign()) {
+      auto assign = node->asAssign();
+      auto target = assign->target();
+      if (isHeapAccess(target)) {
+        auto heap = getHeapFromAccess(target);
+        if (isIntegerHeap(heap)) {
+          if (heap == HEAP8 || heap == HEAPU8) {
+            while (isOrZero(assign->value()) ||
+                   isConstantAnd(assign->value(), 255)) {
+              assign->value() = assign->value()[2];
+            }
+          } else if (heap == HEAP16 || heap == HEAPU16) {
+            while (isOrZero(assign->value()) ||
+                   isConstantAnd(assign->value(), 65535)) {
+              assign->value() = assign->value()[2];
+            }
+          } else {
+            assert(heap == HEAP32 || heap == HEAPU32);
+            assign->value() = removeOrZero(assign->value());
+          }
+        } else {
+          assert(isFloatHeap(heap));
+          if (heap == HEAPF32) {
+            assign->value() = removePlusAndFround(assign->value());
+          } else {
+            assign->value() = removePlus(assign->value());
+          }
+        }
       }
     }
   });
@@ -606,8 +694,9 @@ int main(int argc, const char* argv[]) {
                       o->extra["infile"] = argument;
                     });
   options.parse(argc, argv);
-  if (options.debug)
+  if (options.debug) {
     flags.debug = true;
+  }
 
   Element* root = nullptr;
   Module wasm;
@@ -640,13 +729,15 @@ int main(int argc, const char* argv[]) {
                                               Flags::Text,
                                               options.debug ? Flags::Debug
                                                             : Flags::Release));
-      if (options.debug)
+      if (options.debug) {
         std::cerr << "s-parsing..." << std::endl;
+      }
       sexprParser = make_unique<SExpressionParser>(input.data());
       root = sexprParser->root;
 
-      if (options.debug)
+      if (options.debug) {
         std::cerr << "w-parsing..." << std::endl;
+      }
       sexprBuilder = make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0]);
     }
   } catch (ParseException& p) {
@@ -664,8 +755,9 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "j-printing..." << std::endl;
+  }
   Output output(options.extra["output"],
                 Flags::Text,
                 options.debug ? Flags::Debug : Flags::Release);
@@ -676,6 +768,7 @@ int main(int argc, const char* argv[]) {
     emitWasm(wasm, output, flags, options.passOptions, "asmFunc");
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "done." << std::endl;
+  }
 }

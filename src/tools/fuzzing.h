@@ -463,8 +463,9 @@ private:
   }
 
   Expression* makeDeNanOp(Expression* expr) {
-    if (allowNaNs)
+    if (allowNaNs) {
       return expr;
+    }
     if (expr->type == f32) {
       return builder.makeCall("deNan32", {expr}, f32);
     } else if (expr->type == f64) {
@@ -566,8 +567,9 @@ private:
 
   void recombine(Function* func) {
     // Don't always do this.
-    if (oneIn(2))
+    if (oneIn(2)) {
       return;
+    }
     // First, scan and group all expressions by type.
     struct Scanner
       : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
@@ -583,8 +585,9 @@ private:
     // Potentially trim the list of possible picks, so replacements are more
     // likely to collide.
     for (auto& pair : scanner.exprsByType) {
-      if (oneIn(2))
+      if (oneIn(2)) {
         continue;
+      }
       auto& list = pair.second;
       std::vector<Expression*> trimmed;
       size_t num = upToSquared(list.size());
@@ -630,8 +633,9 @@ private:
 
   void mutate(Function* func) {
     // Don't always do this.
-    if (oneIn(2))
+    if (oneIn(2)) {
       return;
+    }
     struct Modder
       : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
       Module& wasm;
@@ -688,8 +692,9 @@ private:
 
       void visitSwitch(Switch* curr) {
         for (auto name : curr->targets) {
-          if (replaceIfInvalid(name))
+          if (replaceIfInvalid(name)) {
             return;
+          }
         }
         replaceIfInvalid(curr->default_);
       }
@@ -708,23 +713,27 @@ private:
       void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
 
       bool hasBreakTarget(Name name) {
-        if (controlFlowStack.empty())
+        if (controlFlowStack.empty()) {
           return false;
+        }
         Index i = controlFlowStack.size() - 1;
         while (1) {
           auto* curr = controlFlowStack[i];
           if (Block* block = curr->template dynCast<Block>()) {
-            if (name == block->name)
+            if (name == block->name) {
               return true;
+            }
           } else if (Loop* loop = curr->template dynCast<Loop>()) {
-            if (name == loop->name)
+            if (name == loop->name) {
               return true;
+            }
           } else {
             // an if, ignorable
             assert(curr->template is<If>());
           }
-          if (i == 0)
+          if (i == 0) {
             return false;
+          }
           i--;
         }
       }
@@ -754,8 +763,9 @@ private:
         invocations.push_back(makeMemoryHashLogging());
       }
     }
-    if (invocations.empty())
+    if (invocations.empty()) {
       return;
+    }
     auto* invoker = new Function;
     invoker->name = func->name.str + std::string("_invoker");
     invoker->result = none;
@@ -821,20 +831,27 @@ private:
 
   Expression* _makeConcrete(Type type) {
     auto choice = upTo(100);
-    if (choice < 10)
+    if (choice < 10) {
       return makeConst(type);
-    if (choice < 30)
+    }
+    if (choice < 30) {
       return makeSetLocal(type);
-    if (choice < 50)
+    }
+    if (choice < 50) {
       return makeGetLocal(type);
-    if (choice < 60)
+    }
+    if (choice < 60) {
       return makeBlock(type);
-    if (choice < 70)
+    }
+    if (choice < 70) {
       return makeIf(type);
-    if (choice < 80)
+    }
+    if (choice < 80) {
       return makeLoop(type);
-    if (choice < 90)
+    }
+    if (choice < 90) {
       return makeBreak(type);
+    }
     using Self = TranslateToFuzzReader;
     auto options = FeatureOptions<Expression* (Self::*)(Type)>()
                      .add(FeatureSet::MVP,
@@ -869,16 +886,21 @@ private:
       }
     }
     choice = upTo(100);
-    if (choice < 50)
+    if (choice < 50) {
       return makeSetLocal(none);
-    if (choice < 60)
+    }
+    if (choice < 60) {
       return makeBlock(none);
-    if (choice < 70)
+    }
+    if (choice < 70) {
       return makeIf(none);
-    if (choice < 80)
+    }
+    if (choice < 80) {
       return makeLoop(none);
-    if (choice < 90)
+    }
+    if (choice < 90) {
       return makeBreak(none);
+    }
     using Self = TranslateToFuzzReader;
     auto options = FeatureOptions<Expression* (Self::*)(Type)>()
                      .add(FeatureSet::MVP,
@@ -1056,8 +1078,9 @@ private:
   }
 
   Expression* makeBreak(Type type) {
-    if (breakableStack.empty())
+    if (breakableStack.empty()) {
       return makeTrivial(type);
+    }
     Expression* condition = nullptr;
     if (type != unreachable) {
       hangStack.push_back(nullptr);
@@ -1110,18 +1133,21 @@ private:
         }
         switch (conditions) {
           case 0: {
-            if (!oneIn(4))
+            if (!oneIn(4)) {
               continue;
+            }
             break;
           }
           case 1: {
-            if (!oneIn(2))
+            if (!oneIn(2)) {
               continue;
+            }
             break;
           }
           default: {
-            if (oneIn(conditions + 1))
+            if (oneIn(conditions + 1)) {
               continue;
+            }
           }
         }
         return builder.makeBreak(name);
@@ -1142,8 +1168,9 @@ private:
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
         target = vectorPick(wasm.functions).get();
       }
-      if (target->result != type)
+      if (target->result != type) {
         continue;
+      }
       // we found one!
       std::vector<Expression*> args;
       for (auto argType : target->params) {
@@ -1157,8 +1184,9 @@ private:
 
   Expression* makeCallIndirect(Type type) {
     auto& data = wasm.table.segments[0].data;
-    if (data.empty())
+    if (data.empty()) {
       return make(type);
+    }
     // look for a call target with the right type
     Index start = upTo(data.size());
     Index i = start;
@@ -1170,10 +1198,12 @@ private:
         break;
       }
       i++;
-      if (i == data.size())
+      if (i == data.size()) {
         i = 0;
-      if (i == start)
+      }
+      if (i == start) {
         return make(type);
+      }
     }
     // with high probability, make sure the type is valid  otherwise, most are
     // going to trap
@@ -1193,8 +1223,9 @@ private:
 
   Expression* makeGetLocal(Type type) {
     auto& locals = typeLocals[type];
-    if (locals.empty())
+    if (locals.empty()) {
       return makeConst(type);
+    }
     return builder.makeGetLocal(vectorPick(locals), type);
   }
 
@@ -1207,8 +1238,9 @@ private:
       valueType = getConcreteType();
     }
     auto& locals = typeLocals[valueType];
-    if (locals.empty())
+    if (locals.empty()) {
       return makeTrivial(type);
+    }
     auto* value = make(valueType);
     if (tee) {
       return builder.makeTeeLocal(vectorPick(locals), value);
@@ -1219,8 +1251,9 @@ private:
 
   Expression* makeGetGlobal(Type type) {
     auto& globals = globalsByType[type];
-    if (globals.empty())
+    if (globals.empty()) {
       return makeConst(type);
+    }
     return builder.makeGetGlobal(vectorPick(globals), type);
   }
 
@@ -1228,8 +1261,9 @@ private:
     assert(type == none);
     type = getConcreteType();
     auto& globals = globalsByType[type];
-    if (globals.empty())
+    if (globals.empty()) {
       return makeTrivial(none);
+    }
     auto* value = make(type);
     return builder.makeSetGlobal(vectorPick(globals), value);
   }
@@ -1300,13 +1334,16 @@ private:
   }
 
   Expression* makeLoad(Type type) {
-    if (!allowMemory)
+    if (!allowMemory) {
       return makeTrivial(type);
+    }
     auto* ret = makeNonAtomicLoad(type);
-    if (type != i32 && type != i64)
+    if (type != i32 && type != i64) {
       return ret;
-    if (!wasm.features.hasAtomics() || oneIn(2))
+    }
+    if (!wasm.features.hasAtomics() || oneIn(2)) {
       return ret;
+    }
     // make it atomic
     auto* load = ret->cast<Load>();
     wasm.memory.shared = true;
@@ -1321,8 +1358,9 @@ private:
       // make a normal store, then make it unreachable
       auto* ret = makeNonAtomicStore(getConcreteType());
       auto* store = ret->dynCast<Store>();
-      if (!store)
+      if (!store) {
         return ret;
+      }
       switch (upTo(3)) {
         case 0:
           store->ptr = make(unreachable);
@@ -1395,16 +1433,20 @@ private:
   }
 
   Expression* makeStore(Type type) {
-    if (!allowMemory)
+    if (!allowMemory) {
       return makeTrivial(type);
+    }
     auto* ret = makeNonAtomicStore(type);
     auto* store = ret->dynCast<Store>();
-    if (!store)
+    if (!store) {
       return ret;
-    if (store->value->type != i32 && store->value->type != i64)
+    }
+    if (store->value->type != i32 && store->value->type != i64) {
       return store;
-    if (!wasm.features.hasAtomics() || oneIn(2))
+    }
+    if (!wasm.features.hasAtomics() || oneIn(2)) {
       return store;
+    }
     // make it atomic
     wasm.memory.shared = true;
     store->isAtomic = true;
@@ -2051,8 +2093,9 @@ private:
 
   Expression* makeSwitch(Type type) {
     assert(type == unreachable);
-    if (breakableStack.empty())
+    if (breakableStack.empty()) {
       return make(type);
+    }
     // we need to find proper targets to break to; try a bunch
     int tries = TRIES;
     std::vector<Name> names;
@@ -2103,8 +2146,9 @@ private:
 
   Expression* makeAtomic(Type type) {
     assert(wasm.features.hasAtomics());
-    if (!allowMemory)
+    if (!allowMemory) {
       return makeTrivial(type);
+    }
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {
@@ -2330,8 +2374,9 @@ private:
   }
 
   Expression* makeBulkMemory(Type type) {
-    if (!allowMemory)
+    if (!allowMemory) {
       return makeTrivial(type);
+    }
     assert(wasm.features.hasBulkMemory());
     assert(type == none);
     switch (upTo(4)) {
@@ -2348,8 +2393,9 @@ private:
   }
 
   Expression* makeMemoryInit() {
-    if (!allowMemory)
+    if (!allowMemory) {
       return makeTrivial(none);
+    }
     uint32_t segment = upTo(wasm.memory.segments.size());
     size_t totalSize = wasm.memory.segments[segment].data.size();
     size_t offsetVal = upTo(totalSize);
@@ -2361,14 +2407,16 @@ private:
   }
 
   Expression* makeDataDrop() {
-    if (!allowMemory)
+    if (!allowMemory) {
       return makeTrivial(none);
+    }
     return builder.makeDataDrop(upTo(wasm.memory.segments.size()));
   }
 
   Expression* makeMemoryCopy() {
-    if (!allowMemory)
+    if (!allowMemory) {
       return makeTrivial(none);
+    }
     Expression* dest = makePointer();
     Expression* source = makePointer();
     Expression* size = make(i32);
@@ -2376,8 +2424,9 @@ private:
   }
 
   Expression* makeMemoryFill() {
-    if (!allowMemory)
+    if (!allowMemory) {
       return makeTrivial(none);
+    }
     Expression* dest = makePointer();
     Expression* value = makePointer();
     Expression* size = make(i32);
@@ -2428,8 +2477,9 @@ private:
   // this isn't a perfectly uniform distribution, but it's fast
   // and reasonable
   Index upTo(Index x) {
-    if (x == 0)
+    if (x == 0) {
       return 0;
+    }
     Index raw;
     if (x <= 255) {
       raw = get();
@@ -2486,8 +2536,9 @@ private:
 
   template<typename T, typename... Args>
   T pickGivenNum(size_t num, T first, Args... args) {
-    if (num == 0)
+    if (num == 0) {
       return first;
+    }
     return pickGivenNum<T>(num - 1, args...);
   }
 

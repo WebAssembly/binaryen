@@ -91,8 +91,9 @@ struct ReReloop final : public Pass {
                        CFG::Block* to,
                        const std::set<Index>& values) {
     std::vector<Index> list;
-    for (auto i : values)
+    for (auto i : values) {
       list.push_back(i);
+    }
     from->AddSwitchBranchTo(to, std::move(list));
   }
 

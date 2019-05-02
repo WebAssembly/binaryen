@@ -216,7 +216,7 @@ struct SimplifyLocals
     }
   }
 
-  void visitGetLocal(GetLocal* curr) {
+  void optimizeGetLocal(GetLocal* curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
       auto* set = (*found->second.item)
@@ -311,8 +311,61 @@ struct SimplifyLocals
   static void
   visitPost(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
             Expression** currp) {
+    // Handling invalidations in the case where the current node is a get
+    // that we sink into is not trivial in general. In the simple case,
+    // all current sinkables are compatible with each other (otherwise one
+    // would have invalidated a previous one, and removed it). Given that, if
+    // we sink one of the sinkables, then that new code cannot invalidate any
+    // other sinkable - we've already compared them. However, a tricky case
+    // is when a sinkable contains another sinkable,
+    //
+    //  (local.set $x
+    //   (block (result i32)
+    //    (A (local.get $y))
+    //    (local.set $y B)
+    //   )
+    //  )
+    //  (C (local.get $y))
+    //  (D (local.get $x))
+    //
+    // If we sink the set of $y, we have
+    //
+    //  (local.set $x
+    //   (block (result i32)
+    //    (A (local.get $y))
+    //    (nop)
+    //   )
+    //  )
+    //  (C B)
+    //  (D (local.get $x))
+    //
+    // There is now a risk that the set of $x should be invalidated, because
+    // if we sink it then A may happen after B (imagine that B contains
+    // something dangerous for that). To verify the risk, we could recursively
+    // scan all of B, but that is less efficient. Instead, the key thing is
+    // that if we sink out an inner part of a set, we should just leave further
+    // work on it to a later iteration. This is achieved by checking for
+    // invalidation on the original node, the local.get $y, which is guaranteed
+    // to invalidate the parent whose inner part was removed (since the inner
+    // part has a set, and the original node is a get of that same local).
+    //
+    // To implement this, if the current node is a get, note it and use it
+    // for invalidations later down. We must note it since optimizing the get
+    // may perform arbitrary changes to the graph, including reuse the get.
+
+    Expression* original = *currp;
+
+    GetLocal originalGet;
+
+    if (auto* get = (*currp)->dynCast<GetLocal>()) {
+      // Note: no visitor for GetLocal, so that we can handle it here.
+      originalGet = *get;
+      original = &originalGet;
+      self->optimizeGetLocal(get);
+    }
+
     // perform main SetLocal processing here, since we may be the result of
-    // replaceCurrent, i.e., the visitor was not called.
+    // replaceCurrent, i.e., no visitor for SetLocal, like GetLocal above.
     auto* set = (*currp)->dynCast<SetLocal>();
 
     if (set) {
@@ -332,7 +385,7 @@ struct SimplifyLocals
     }
 
     EffectAnalyzer effects(self->getPassOptions());
-    if (effects.checkPost(*currp)) {
+    if (effects.checkPost(original)) {
       self->checkInvalidations(effects);
     }
 
@@ -350,12 +403,14 @@ struct SimplifyLocals
 
   bool canSink(SetLocal* set) {
     // we can never move a tee
-    if (set->isTee())
+    if (set->isTee()) {
       return false;
+    }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1
     // use as that would make a tee
-    if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1)
+    if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1) {
       return false;
+    }
     return true;
   }
 
@@ -366,10 +421,12 @@ struct SimplifyLocals
   void optimizeLoopReturn(Loop* loop) {
     // If there is a sinkable thing in an eligible loop, we can optimize
     // it in a trivial way to the outside of the loop.
-    if (loop->type != none)
+    if (loop->type != none) {
       return;
-    if (sinkables.empty())
+    }
+    if (sinkables.empty()) {
       return;
+    }
     Index goodIndex = sinkables.begin()->first;
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
@@ -402,9 +459,10 @@ struct SimplifyLocals
     }
     auto breaks = std::move(blockBreaks[block->name]);
     blockBreaks.erase(block->name);
-    if (breaks.size() == 0)
+    if (breaks.size() == 0) {
       // block has no branches TODO we might optimize trivial stuff here too
       return;
+    }
     // block does not already have a return value (if one break has one, they
     // all do)
     assert(!(*breaks[0].brp)->template cast<Break>()->value);
@@ -426,8 +484,9 @@ struct SimplifyLocals
         break;
       }
     }
-    if (!found)
+    if (!found) {
       return;
+    }
     // If one of our brs is a br_if, then we will give it a value. since
     // the value executes before the condition, it is dangerous if we are
     // moving code out of the condition,
@@ -525,8 +584,9 @@ struct SimplifyLocals
     assert(iff->ifFalse);
     // if this if already has a result, or is unreachable code, we have
     // nothing to do
-    if (iff->type != none)
+    if (iff->type != none) {
       return;
+    }
     // We now have the sinkables from both sides of the if, and can look
     // for something to sink. That is either a shared index on both sides,
     // *or* if one side is unreachable, we can sink anything from the other,
@@ -569,8 +629,9 @@ struct SimplifyLocals
         }
       }
     }
-    if (!found)
+    if (!found) {
       return;
+    }
     // great, we can optimize!
     // ensure we have a place to write the return values for, if not, we
     // need another cycle
@@ -642,11 +703,13 @@ struct SimplifyLocals
   // arm into a one-sided if.
   void optimizeIfReturn(If* iff, Expression** currp) {
     // If this if is unreachable code, we have nothing to do.
-    if (iff->type != none || iff->ifTrue->type != none)
+    if (iff->type != none || iff->ifTrue->type != none) {
       return;
+    }
     // Anything sinkable is good for us.
-    if (sinkables.empty())
+    if (sinkables.empty()) {
       return;
+    }
     Index goodIndex = sinkables.begin()->first;
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.

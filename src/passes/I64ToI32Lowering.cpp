@@ -53,8 +53,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     TempVar& operator=(TempVar&& rhs) {
       assert(!rhs.moved);
       // free overwritten idx
-      if (!moved)
+      if (!moved) {
         freeIdx();
+      }
       idx = rhs.idx;
       rhs.moved = true;
       moved = false;
@@ -62,8 +63,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     }
 
     ~TempVar() {
-      if (!moved)
+      if (!moved) {
         freeIdx();
+      }
     }
 
     bool operator==(const TempVar& rhs) {
@@ -101,13 +103,15 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   Pass* create() override { return new I64ToI32Lowering; }
 
   void doWalkModule(Module* module) {
-    if (!builder)
+    if (!builder) {
       builder = make_unique<Builder>(*module);
+    }
     // add new globals for high bits
     for (size_t i = 0, globals = module->globals.size(); i < globals; ++i) {
       auto* curr = module->globals[i].get();
-      if (curr->type != i64)
+      if (curr->type != i64) {
         continue;
+      }
       originallyI64Globals.insert(curr->name);
       curr->type = i32;
       auto* high = builder->makeGlobal(makeHighName(curr->name),
@@ -162,8 +166,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void doWalkFunction(Function* func) {
     Flat::verifyFlatness(func);
     // create builder here if this is first entry to module for this object
-    if (!builder)
+    if (!builder) {
       builder = make_unique<Builder>(*getModule());
+    }
     indexMap.clear();
     highBitVars.clear();
     freeTemps.clear();
@@ -327,10 +332,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitGetGlobal(GetGlobal* curr) {
-    if (!getFunction())
+    if (!getFunction()) {
       return; // if in a global init, skip - we already handled that.
-    if (!originallyI64Globals.count(curr->name))
+    }
+    if (!originallyI64Globals.count(curr->name)) {
       return;
+    }
     curr->type = i32;
     TempVar highBits = getTemp();
     SetLocal* setHighBits = builder->makeSetLocal(
@@ -341,10 +348,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSetGlobal(SetGlobal* curr) {
-    if (!originallyI64Globals.count(curr->name))
+    if (!originallyI64Globals.count(curr->name)) {
       return;
-    if (handleUnreachable(curr))
+    }
+    if (handleUnreachable(curr)) {
       return;
+    }
     TempVar highBits = fetchOutParam(curr->value);
     auto* setHigh = builder->makeSetGlobal(
       makeHighName(curr->name), builder->makeGetLocal(highBits, i32));
@@ -352,8 +361,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitLoad(Load* curr) {
-    if (curr->type != i64)
+    if (curr->type != i64) {
       return;
+    }
     assert(!curr->isAtomic && "atomic load not implemented");
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
@@ -366,7 +376,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         builder->makeLoad(4,
                           curr->signed_,
                           curr->offset + 4,
-                          1,
+                          std::min(uint32_t(curr->align), uint32_t(4)),
                           builder->makeGetLocal(ptrTemp, i32),
                           i32));
     } else if (curr->signed_) {
@@ -392,8 +402,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitStore(Store* curr) {
-    if (!hasOutParam(curr->value))
+    if (!hasOutParam(curr->value)) {
       return;
+    }
     assert(curr->offset + 4 > curr->offset);
     assert(!curr->isAtomic && "atomic store not implemented");
     TempVar highBits = fetchOutParam(curr->value);
@@ -409,7 +420,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       Store* storeHigh =
         builder->makeStore(4,
                            curr->offset + 4,
-                           1,
+                           std::min(uint32_t(curr->align), uint32_t(4)),
                            builder->makeGetLocal(ptrTemp, i32),
                            builder->makeGetLocal(highBits, i32),
                            i32);
@@ -426,10 +437,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitConst(Const* curr) {
-    if (!getFunction())
+    if (!getFunction()) {
       return; // if in a global init, skip - we already handled that.
-    if (curr->type != i64)
+    }
+    if (curr->type != i64) {
       return;
+    }
     TempVar highBits = getTemp();
     Const* lowVal =
       builder->makeConst(Literal(int32_t(curr->value.geti64() & 0xffffffff)));
@@ -763,10 +776,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitUnary(Unary* curr) {
-    if (!unaryNeedsLowering(curr->op))
+    if (!unaryNeedsLowering(curr->op)) {
       return;
-    if (handleUnreachable(curr))
+    }
+    if (handleUnreachable(curr)) {
       return;
+    }
     assert(hasOutParam(curr->value) || curr->type == i64 || curr->type == f64);
     switch (curr->op) {
       case ClzInt64:
@@ -1265,10 +1280,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitBinary(Binary* curr) {
-    if (handleUnreachable(curr))
+    if (handleUnreachable(curr)) {
       return;
-    if (!binaryNeedsLowering(curr->op))
+    }
+    if (!binaryNeedsLowering(curr->op)) {
       return;
+    }
     // left and right reachable, lower normally
     TempVar leftLow = getTemp();
     TempVar leftHigh = fetchOutParam(curr->left);
@@ -1374,8 +1391,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSelect(Select* curr) {
-    if (handleUnreachable(curr))
+    if (handleUnreachable(curr)) {
       return;
+    }
     if (!hasOutParam(curr->ifTrue)) {
       assert(!hasOutParam(curr->ifFalse));
       return;
@@ -1402,15 +1420,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitDrop(Drop* curr) {
-    if (!hasOutParam(curr->value))
+    if (!hasOutParam(curr->value)) {
       return;
+    }
     // free temp var
     fetchOutParam(curr->value);
   }
 
   void visitReturn(Return* curr) {
-    if (!hasOutParam(curr->value))
+    if (!hasOutParam(curr->value)) {
       return;
+    }
     TempVar lowBits = getTemp();
     TempVar highBits = fetchOutParam(curr->value);
     SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);
@@ -1468,8 +1488,9 @@ private:
   // unconditionally before themselves, so it is not valid for an if,
   // in particular.
   bool handleUnreachable(Expression* curr) {
-    if (curr->type != unreachable)
+    if (curr->type != unreachable) {
       return false;
+    }
     std::vector<Expression*> children;
     bool hasUnreachable = false;
     for (auto* child : ChildIterator(curr)) {
@@ -1480,8 +1501,9 @@ private:
       }
       children.push_back(child);
     }
-    if (!hasUnreachable)
+    if (!hasUnreachable) {
       return false;
+    }
     // This has an unreachable child, so we can replace it with
     // the children.
     auto* block = builder->makeBlock(children);

@@ -38,8 +38,9 @@ getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
       imported = import->name;
     }
   });
-  if (imported.isNull())
+  if (imported.isNull()) {
     return nullptr;
+  }
   // find a global inited to it
   Global* ret = nullptr;
   ModuleUtils::iterDefinedGlobals(wasm, [&](Global* defined) {

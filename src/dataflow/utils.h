@@ -35,8 +35,9 @@ namespace DataFlow {
 
 inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
   auto doIndent = [&]() {
-    for (size_t i = 0; i < indent; i++)
+    for (size_t i = 0; i < indent; i++) {
       o << ' ';
+    }
   };
   doIndent();
   o << '[' << node << ' ';

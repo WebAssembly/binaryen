@@ -153,8 +153,9 @@ struct Value {
   void free() {
     if (type == Array) {
       arr->clear();
-    } else if (type == Object)
+    } else if (type == Object) {
       delete obj;
+    }
     type = Null;
     num = 0;
   }
@@ -286,8 +287,9 @@ struct Value {
   }
 
   bool operator==(const Value& other) {
-    if (type != other.type)
+    if (type != other.type) {
       return false;
+    }
     switch (other.type) {
       case String:
         return str == other.str;
@@ -334,8 +336,9 @@ struct Value {
         arr->push_back(temp);
         curr = temp->parse(curr);
         skip();
-        if (*curr == ']')
+        if (*curr == ']') {
           break;
+        }
         assert(*curr == ',');
         curr++;
         skip();
@@ -377,8 +380,9 @@ struct Value {
         curr = value->parse(curr);
         (*obj)[key] = value;
         skip();
-        if (*curr == '}')
+        if (*curr == '}') {
           break;
+        }
         assert(*curr == ',');
         curr++;
         skip();
@@ -411,8 +415,9 @@ struct Value {
   void setSize(size_t size) {
     assert(isArray());
     auto old = arr->size();
-    if (old != size)
+    if (old != size) {
       arr->resize(size);
+    }
     if (old < size) {
       for (auto i = old; i < size; i++) {
         (*arr)[i] = arena.alloc<Value>();
@@ -439,8 +444,9 @@ struct Value {
 
   Ref back() {
     assert(isArray());
-    if (arr->size() == 0)
+    if (arr->size() == 0) {
       return nullptr;
+    }
     return arr->back();
   }
 
@@ -452,8 +458,9 @@ struct Value {
   int indexOf(Ref other) {
     assert(isArray());
     for (size_t i = 0; i < arr->size(); i++) {
-      if (other == (*arr)[i])
+      if (other == (*arr)[i]) {
         return i;
+      }
     }
     return -1;
   }
@@ -474,8 +481,9 @@ struct Value {
     ret->setArray();
     for (size_t i = 0; i < arr->size(); i++) {
       Ref curr = (*arr)[i];
-      if (func(curr))
+      if (func(curr)) {
         ret->push_back(curr);
+      }
     }
     return ret;
   }
@@ -586,8 +594,9 @@ struct JSPrinter {
 
   void emit(char c) {
     maybeSpace(c);
-    if (!pretty && c == '}' && buffer[used - 1] == ';')
+    if (!pretty && c == '}' && buffer[used - 1] == ';') {
       used--; // optimize ;} into }, the ; is not separating anything
+    }
     ensure(1);
     buffer[used++] = c;
   }
@@ -601,30 +610,35 @@ struct JSPrinter {
   }
 
   void newline() {
-    if (!pretty)
+    if (!pretty) {
       return;
+    }
     emit('\n');
-    for (int i = 0; i < indent; i++)
+    for (int i = 0; i < indent; i++) {
       emit(' ');
+    }
   }
 
   void space() {
-    if (pretty)
+    if (pretty) {
       emit(' ');
+    }
   }
 
   void safeSpace() {
-    if (pretty)
+    if (pretty) {
       emit(' ');
-    else
+    } else {
       possibleSpace = true;
+    }
   }
 
   void maybeSpace(char s) {
     if (possibleSpace) {
       possibleSpace = false;
-      if (isIdentPart(s))
+      if (isIdentPart(s)) {
         emit(' ');
+      }
     }
   }
 
@@ -635,15 +649,18 @@ struct JSPrinter {
   bool isDefun(Ref node) { return node->isArray() && node[0] == DEFUN; }
 
   bool endsInBlock(Ref node) {
-    if (node->isArray() && node[0] == BLOCK)
+    if (node->isArray() && node[0] == BLOCK) {
       return true;
+    }
     // Check for a label on a block
-    if (node->isArray() && node[0] == LABEL && endsInBlock(node[2]))
+    if (node->isArray() && node[0] == LABEL && endsInBlock(node[2])) {
       return true;
+    }
     // Check for an if
     if (node->isArray() && node[0] == IF &&
-        endsInBlock(ifHasElse(node) ? node[3] : node[2]))
+        endsInBlock(ifHasElse(node) ? node[3] : node[2])) {
       return true;
+    }
     return false;
   }
 
@@ -670,119 +687,133 @@ struct JSPrinter {
     IString type = node[0]->getIString();
     switch (type.str[0]) {
       case 'a': {
-        if (type == ARRAY)
+        if (type == ARRAY) {
           printArray(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'b': {
-        if (type == BINARY)
+        if (type == BINARY) {
           printBinary(node);
-        else if (type == BLOCK)
+        } else if (type == BLOCK) {
           printBlock(node);
-        else if (type == BREAK)
+        } else if (type == BREAK) {
           printBreak(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'c': {
-        if (type == CALL)
+        if (type == CALL) {
           printCall(node);
-        else if (type == CONDITIONAL)
+        } else if (type == CONDITIONAL) {
           printConditional(node);
-        else if (type == CONTINUE)
+        } else if (type == CONTINUE) {
           printContinue(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'd': {
-        if (type == DEFUN)
+        if (type == DEFUN) {
           printDefun(node);
-        else if (type == DO)
+        } else if (type == DO) {
           printDo(node);
-        else if (type == DOT)
+        } else if (type == DOT) {
           printDot(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'i': {
-        if (type == IF)
+        if (type == IF) {
           printIf(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'l': {
-        if (type == LABEL)
+        if (type == LABEL) {
           printLabel(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'n': {
-        if (type == NEW)
+        if (type == NEW) {
           printNew(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'o': {
-        if (type == OBJECT)
+        if (type == OBJECT) {
           printObject(node);
+        }
         break;
       }
       case 'r': {
-        if (type == RETURN)
+        if (type == RETURN) {
           printReturn(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 's': {
-        if (type == SUB)
+        if (type == SUB) {
           printSub(node);
-        else if (type == SEQ)
+        } else if (type == SEQ) {
           printSeq(node);
-        else if (type == SWITCH)
+        } else if (type == SWITCH) {
           printSwitch(node);
-        else if (type == STRING)
+        } else if (type == STRING) {
           printString(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 't': {
-        if (type == TOPLEVEL)
+        if (type == TOPLEVEL) {
           printToplevel(node);
-        else if (type == TRY)
+        } else if (type == TRY) {
           printTry(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'u': {
-        if (type == UNARY_PREFIX)
+        if (type == UNARY_PREFIX) {
           printUnaryPrefix(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'v': {
-        if (type == VAR)
+        if (type == VAR) {
           printVar(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       case 'w': {
-        if (type == WHILE)
+        if (type == WHILE) {
           printWhile(node);
-        else
+        } else {
           abort();
+        }
         break;
       }
       default: {
@@ -796,8 +827,9 @@ struct JSPrinter {
   void print(Ref node, const char* otherwise) {
     auto last = used;
     print(node);
-    if (used == last)
+    if (used == last) {
       emit(otherwise);
+    }
   }
 
   void printStats(Ref stats) {
@@ -805,10 +837,11 @@ struct JSPrinter {
     for (size_t i = 0; i < stats->size(); i++) {
       Ref curr = stats[i];
       if (!isNothing(curr)) {
-        if (first)
+        if (first) {
           first = false;
-        else
+        } else {
           newline();
+        }
         print(curr);
         if (!isDefun(curr) && !endsInBlock(curr) && !isIf(curr)) {
           emit(';');
@@ -843,8 +876,9 @@ struct JSPrinter {
     emit('(');
     Ref args = node[2];
     for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0)
+      if (i > 0) {
         (pretty ? emit(", ") : emit(','));
+      }
       emit(args[i]->getCString());
     }
     emit(')');
@@ -906,8 +940,9 @@ struct JSPrinter {
       }
     }
     bool neg = d < 0;
-    if (neg)
+    if (neg) {
       d = -d;
+    }
     // try to emit the fewest necessary characters
     bool integer = fmod(d, 1) == 0;
 #define BUFFERSIZE 1000
@@ -940,8 +975,9 @@ struct JSPrinter {
           sscanf(buffer, "%lf", &temp);
           // errv("%.18f, %.18e   =>   %s   =>   %.18f, %.18e   (%d), ", d, d,
           // buffer, temp, temp, temp == d);
-          if (temp == d)
+          if (temp == d) {
             break;
+          }
         }
       } else {
         // integer
@@ -973,8 +1009,9 @@ struct JSPrinter {
       if (dot) {
         // remove trailing zeros
         char* end = dot + 1;
-        while (*end >= '0' && *end <= '9')
+        while (*end >= '0' && *end <= '9') {
           end++;
+        }
         end--;
         while (*end == '0') {
           char* copy = end;
@@ -999,8 +1036,9 @@ struct JSPrinter {
         char* test = end;
         // remove zeros, and also doubles can use at most 24 digits, we can
         // truncate any extras even if not zero
-        while ((*test == '0' || test - buffer > 24) && test > buffer)
+        while ((*test == '0' || test - buffer > 24) && test > buffer) {
           test--;
+        }
         int num = end - test;
         if (num >= 3) {
           test++;
@@ -1092,10 +1130,12 @@ struct JSPrinter {
     int parentPrecedence = getPrecedence(parent, true);
     int childPrecedence = getPrecedence(child, false);
 
-    if (childPrecedence > parentPrecedence)
+    if (childPrecedence > parentPrecedence) {
       return true; // child is definitely a danger
-    if (childPrecedence < parentPrecedence)
+    }
+    if (childPrecedence < parentPrecedence) {
       return false; //          definitely cool
+    }
     // equal precedence, so associativity (rtl/ltr) is what matters
     // (except for some exceptions, where multiple operators can combine into
     // confusion)
@@ -1106,24 +1146,29 @@ struct JSPrinter {
         return true;
       }
     }
-    if (childPosition == 0)
+    if (childPosition == 0) {
       return true; // child could be anywhere, so always paren
-    if (childPrecedence < 0)
+    }
+    if (childPrecedence < 0) {
       return false; // both precedences are safe
+    }
     // check if child is on the dangerous side
-    if (OperatorClass::getRtl(parentPrecedence))
+    if (OperatorClass::getRtl(parentPrecedence)) {
       return childPosition < 0;
-    else
+    } else {
       return childPosition > 0;
+    }
   }
 
   void printChild(Ref child, Ref parent, int childPosition = 0) {
     bool parens = needParens(parent, child, childPosition);
-    if (parens)
+    if (parens) {
       emit('(');
+    }
     print(child);
-    if (parens)
+    if (parens) {
       emit(')');
+    }
   }
 
   void printBinary(Ref node) {
@@ -1145,12 +1190,15 @@ struct JSPrinter {
       ensure(1);                  // we temporarily append a 0
       char* curr = buffer + last; // ensure might invalidate
       buffer[used] = 0;
-      if (strstr(curr, "infinity"))
+      if (strstr(curr, "infinity")) {
         return;
-      if (strstr(curr, "nan"))
+      }
+      if (strstr(curr, "nan")) {
         return;
-      if (strchr(curr, '.'))
+      }
+      if (strchr(curr, '.')) {
         return; // already a decimal point, all good
+      }
       char* e = strchr(curr, 'e');
       if (!e) {
         emit(".0");
@@ -1193,8 +1241,9 @@ struct JSPrinter {
     emit('(');
     Ref args = node[2];
     for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0)
+      if (i > 0) {
         (pretty ? emit(", ") : emit(','));
+      }
       printChild(args[i], node, 0);
     }
     emit(')');
@@ -1238,10 +1287,11 @@ struct JSPrinter {
         auto curr = used;
         printStats(c[1]);
         indent--;
-        if (curr != used)
+        if (curr != used) {
           newline();
-        else
+        } else {
           used--; // avoid the extra indentation we added tentatively
+        }
       } else {
         newline();
       }
@@ -1269,8 +1319,9 @@ struct JSPrinter {
     emit("var ");
     Ref args = node[1];
     for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0)
+      if (i > 0) {
         (pretty ? emit(", ") : emit(','));
+      }
       emit(args[i][0]->getCString());
       if (args[i]->size() > 1) {
         space();
@@ -1377,8 +1428,9 @@ struct JSPrinter {
     emit('[');
     Ref args = node[1];
     for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0)
+      if (i > 0) {
         (pretty ? emit(", ") : emit(','));
+      }
       print(args[i]);
     }
     emit(']');
@@ -1413,11 +1465,13 @@ struct JSPrinter {
         }
         check++;
       }
-      if (needQuote)
+      if (needQuote) {
         emit('"');
+      }
       emit(str);
-      if (needQuote)
+      if (needQuote) {
         emit('"');
+      }
       emit(":");
       space();
       print(args[i][1]);
@@ -1467,8 +1521,9 @@ public:
       target[1]->setArray(block[1]->getArray());
     } else if (target[0] == DEFUN) {
       target[3]->setArray(block[1]->getArray());
-    } else
+    } else {
       abort();
+    }
   }
 
   static void appendToBlock(Ref block, Ref element) {
@@ -1583,8 +1638,9 @@ public:
   static void appendToVar(Ref var, IString name, Ref value) {
     assert(var[0] == VAR);
     Ref array = &makeRawArray(1)->push_back(makeRawString(name));
-    if (!!value)
+    if (!!value) {
       array->push_back(value);
+    }
     var[1]->push_back(array);
   }
 

@@ -105,10 +105,11 @@ void Value::stringify(std::ostream& os, bool pretty) {
       }
       for (size_t i = 0; i < arr->size(); i++) {
         if (i > 0) {
-          if (pretty)
+          if (pretty) {
             os << "," << std::endl;
-          else
+          } else {
             os << ", ";
+          }
         }
         indentify();
         (*arr)[i]->stringify(os, pretty);
@@ -141,8 +142,9 @@ void Value::stringify(std::ostream& os, bool pretty) {
           first = false;
         } else {
           os << ", ";
-          if (pretty)
+          if (pretty) {
             os << std::endl;
+          }
         }
         indentify();
         os << '"' << i.first.c_str() << "\": ";
@@ -178,10 +180,11 @@ void Value::stringify(std::ostream& os, bool pretty) {
 
 void dump(const char* str, Ref node, bool pretty) {
   std::cerr << str << ": ";
-  if (!!node)
+  if (!!node) {
     node->stringify(std::cerr, pretty);
-  else
+  } else {
     std::cerr << "(nullptr)";
+  }
   std::cerr << std::endl;
 }
 

@@ -58,8 +58,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   static void doVisitGetLocal(Flower* self, Expression** currp) {
     auto* curr = (*currp)->cast<GetLocal>();
     // if in unreachable code, skip
-    if (!self->currBasicBlock)
+    if (!self->currBasicBlock) {
       return;
+    }
     self->currBasicBlock->contents.actions.emplace_back(curr);
     self->locations[curr] = currp;
   }
@@ -67,8 +68,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   static void doVisitSetLocal(Flower* self, Expression** currp) {
     auto* curr = (*currp)->cast<SetLocal>();
     // if in unreachable code, skip
-    if (!self->currBasicBlock)
+    if (!self->currBasicBlock) {
       return;
+    }
     self->currBasicBlock->contents.actions.emplace_back(curr);
     self->currBasicBlock->contents.lastSets[curr->index] = curr;
     self->locations[curr] = currp;
@@ -119,8 +121,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       auto& block = basicBlocks[i];
       auto& flowBlock = flowBlocks[i];
       // Get the equivalent block to entry in the flow list
-      if (block.get() == entry)
+      if (block.get() == entry) {
         entryFlowBlock = &flowBlock;
+      }
       flowBlock.lastTraversedIteration = NULL_ITERATION;
       flowBlock.actions.swap(block->contents.actions);
       // Map in block to flow blocks
@@ -171,8 +174,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // can do that for all gets as a whole, they will get the same results.
       for (Index index = 0; index < numLocals; index++) {
         auto& gets = allGets[index];
-        if (gets.empty())
+        if (gets.empty()) {
           continue;
+        }
         work.push_back(&block);
         // Note that we may need to revisit the later parts of this initial
         // block, if we are in a loop, so don't mark it as seen.

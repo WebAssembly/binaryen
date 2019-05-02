@@ -224,8 +224,9 @@ struct Value {
   }
 
   bool operator==(const Value& other) {
-    if (type != other.type)
+    if (type != other.type) {
       return false;
+    }
     switch (other.type) {
       case String:
         return str == other.str;
@@ -273,8 +274,9 @@ struct Value {
         arr->push_back(temp);
         curr = temp->parse(curr);
         skip();
-        if (*curr == ']')
+        if (*curr == ']') {
           break;
+        }
         assert(*curr == ',');
         curr++;
         skip();
@@ -316,8 +318,9 @@ struct Value {
         curr = value->parse(curr);
         (*obj)[key] = value;
         skip();
-        if (*curr == '}')
+        if (*curr == '}') {
           break;
+        }
         assert(*curr == ',');
         curr++;
         skip();
@@ -348,8 +351,9 @@ struct Value {
   void setSize(size_t size) {
     assert(isArray());
     auto old = arr->size();
-    if (old != size)
+    if (old != size) {
       arr->resize(size);
+    }
     if (old < size) {
       for (auto i = old; i < size; i++) {
         (*arr)[i] = Ref(new Value());
@@ -376,8 +380,9 @@ struct Value {
 
   Ref back() {
     assert(isArray());
-    if (arr->size() == 0)
+    if (arr->size() == 0) {
       return nullptr;
+    }
     return arr->back();
   }
 

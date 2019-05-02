@@ -248,8 +248,9 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void reFinalize() { ReFinalizeNode::updateStack(expressionStack); }
 
   void visitBlock(Block* curr) {
-    if (curr->list.size() == 0)
+    if (curr->list.size() == 0) {
       return;
+    }
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       auto* child = curr->list[i];
       if (isConcreteType(child->type)) {
@@ -264,11 +265,13 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
 
   void visitIf(If* curr) {
     bool acted = false;
-    if (maybeDrop(curr->ifTrue))
+    if (maybeDrop(curr->ifTrue)) {
       acted = true;
+    }
     if (curr->ifFalse) {
-      if (maybeDrop(curr->ifFalse))
+      if (maybeDrop(curr->ifFalse)) {
         acted = true;
+      }
     }
     if (acted) {
       reFinalize();
