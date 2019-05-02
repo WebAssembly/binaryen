@@ -265,6 +265,15 @@ You can also tell wasm2js to optimize, using the normal optimization flags
 wasm-opt and other tools receive (such as `-Os`). For optimal code size,
 you should both optimize and run a JavaScript minifier afterwards.
 
+Things to keep in mind with wasm2js's output:
+
+ * It is not possible to match WebAssemblty semantics 100% precisely with fast
+   JavaScript code. For example, every load and store may trap, and to make
+   JavaScript do the same we'd need to add checks everywhere, which would be
+   large and slow. Instead, wasm2js assumes loads and stores do not trap, that
+   int/float conversions do not trap, and so forth. There may also be slight
+   differences in corner cases of conversions, like non-trapping float to int.
+
 ### asm2wasm
 
 Run
