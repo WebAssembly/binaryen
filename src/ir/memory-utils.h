@@ -29,16 +29,18 @@ namespace wasm {
 namespace MemoryUtils {
 // flattens memory into a single data segment. returns true if successful
 inline bool flatten(Memory& memory) {
-  if (memory.segments.size() == 0)
+  if (memory.segments.size() == 0) {
     return true;
+  }
   std::vector<char> data;
   for (auto& segment : memory.segments) {
     if (segment.isPassive) {
       return false;
     }
     auto* offset = segment.offset->dynCast<Const>();
-    if (!offset)
+    if (!offset) {
       return false;
+    }
   }
   for (auto& segment : memory.segments) {
     auto* offset = segment.offset->dynCast<Const>();
@@ -121,10 +123,12 @@ inline bool ensureLimitedSegments(Module& module) {
 
   // drop empty segments and pass through dynamic-offset segments
   for (auto& segment : memory.segments) {
-    if (isEmpty(segment))
+    if (isEmpty(segment)) {
       continue;
-    if (isConstantOffset(segment))
+    }
+    if (isConstantOffset(segment)) {
       continue;
+    }
     mergedSegments.push_back(segment);
   }
 
@@ -135,8 +139,9 @@ inline bool ensureLimitedSegments(Module& module) {
   };
   for (Index i = 0; i < memory.segments.size(); i++) {
     auto& segment = memory.segments[i];
-    if (!isRelevant(segment))
+    if (!isRelevant(segment)) {
       continue;
+    }
     if (mergedSegments.size() + 2 < WebLimitations::MaxDataSegments) {
       mergedSegments.push_back(segment);
       continue;
@@ -146,8 +151,9 @@ inline bool ensureLimitedSegments(Module& module) {
     auto start = segment.offset->cast<Const>()->value.getInteger();
     for (Index j = i + 1; j < memory.segments.size(); j++) {
       auto& segment = memory.segments[j];
-      if (!isRelevant(segment))
+      if (!isRelevant(segment)) {
         continue;
+      }
       auto offset = segment.offset->cast<Const>()->value.getInteger();
       start = std::min(start, offset);
     }
@@ -159,8 +165,9 @@ inline bool ensureLimitedSegments(Module& module) {
     Memory::Segment combined(c);
     for (Index j = i; j < memory.segments.size(); j++) {
       auto& segment = memory.segments[j];
-      if (!isRelevant(segment))
+      if (!isRelevant(segment)) {
         continue;
+      }
       auto offset = segment.offset->cast<Const>()->value.getInteger();
       auto needed = offset + segment.data.size() - start;
       if (combined.data.size() < needed) {

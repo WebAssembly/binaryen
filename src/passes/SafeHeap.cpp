@@ -69,8 +69,9 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   AccessInstrumenter* create() override { return new AccessInstrumenter; }
 
   void visitLoad(Load* curr) {
-    if (curr->type == unreachable)
+    if (curr->type == unreachable) {
       return;
+    }
     Builder builder(*getModule());
     replaceCurrent(
       builder.makeCall(getLoadName(curr),
@@ -82,8 +83,9 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (curr->type == unreachable)
+    if (curr->type == unreachable) {
       return;
+    }
     Builder builder(*getModule());
     replaceCurrent(
       builder.makeCall(getStoreName(curr),
@@ -161,22 +163,26 @@ struct SafeHeap : public Pass {
     // load funcs
     Load load;
     for (auto type : {i32, i64, f32, f64, v128}) {
-      if (type == v128 && !features.hasSIMD())
+      if (type == v128 && !features.hasSIMD()) {
         continue;
+      }
       load.type = type;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         load.bytes = bytes;
         if (bytes > getTypeSize(type) || (type == f32 && bytes != 4) ||
-            (type == f64 && bytes != 8) || (type == v128 && bytes != 16))
+            (type == f64 && bytes != 8) || (type == v128 && bytes != 16)) {
           continue;
+        }
         for (auto signed_ : {true, false}) {
           load.signed_ = signed_;
-          if (isFloatType(type) && signed_)
+          if (isFloatType(type) && signed_) {
             continue;
+          }
           for (Index align : {1, 2, 4, 8, 16}) {
             load.align = align;
-            if (align > bytes)
+            if (align > bytes) {
               continue;
+            }
             for (auto isAtomic : {true, false}) {
               load.isAtomic = isAtomic;
               if (isAtomic && !isPossibleAtomicOperation(
@@ -192,8 +198,9 @@ struct SafeHeap : public Pass {
     // store funcs
     Store store;
     for (auto valueType : {i32, i64, f32, f64, v128}) {
-      if (valueType == v128 && !features.hasSIMD())
+      if (valueType == v128 && !features.hasSIMD()) {
         continue;
+      }
       store.valueType = valueType;
       store.type = none;
       for (Index bytes : {1, 2, 4, 8, 16}) {
@@ -201,12 +208,14 @@ struct SafeHeap : public Pass {
         if (bytes > getTypeSize(valueType) ||
             (valueType == f32 && bytes != 4) ||
             (valueType == f64 && bytes != 8) ||
-            (valueType == v128 && bytes != 16))
+            (valueType == v128 && bytes != 16)) {
           continue;
+        }
         for (Index align : {1, 2, 4, 8, 16}) {
           store.align = align;
-          if (align > bytes)
+          if (align > bytes) {
             continue;
+          }
           for (auto isAtomic : {true, false}) {
             store.isAtomic = isAtomic;
             if (isAtomic && !isPossibleAtomicOperation(
@@ -223,8 +232,9 @@ struct SafeHeap : public Pass {
   // creates a function for a particular style of load
   void addLoadFunc(Load style, Module* module) {
     auto name = getLoadName(&style);
-    if (module->getFunctionOrNull(name))
+    if (module->getFunctionOrNull(name)) {
       return;
+    }
     auto* func = new Function;
     func->name = name;
     func->params.push_back(i32); // pointer
@@ -262,8 +272,9 @@ struct SafeHeap : public Pass {
   // creates a function for a particular type of store
   void addStoreFunc(Store style, Module* module) {
     auto name = getStoreName(&style);
-    if (module->getFunctionOrNull(name))
+    if (module->getFunctionOrNull(name)) {
       return;
+    }
     auto* func = new Function;
     func->name = name;
     func->params.push_back(i32);             // pointer

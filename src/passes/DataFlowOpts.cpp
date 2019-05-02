@@ -81,11 +81,13 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   }
 
   void workOn(DataFlow::Node* node) {
-    if (node->isConst())
+    if (node->isConst()) {
       return;
+    }
     // If there are no uses, there is no point to work.
-    if (nodeUsers.getNumUses(node) == 0)
+    if (nodeUsers.getNumUses(node) == 0) {
       return;
+    }
     // Optimize: Look for nodes that we can easily convert into
     // something simpler.
     // TODO: we can expressionify and run full normal opts on that,
@@ -144,8 +146,9 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // Get the optimized thing
     auto* result = func->body;
     // It may not be a constant, e.g. 0 / 0 does not optimize to 0
-    if (!result->is<Const>())
+    if (!result->is<Const>()) {
       return;
+    }
     // All good, copy it.
     node->expr = Builder(*getModule()).makeConst(result->cast<Const>()->value);
     assert(node->isConst());

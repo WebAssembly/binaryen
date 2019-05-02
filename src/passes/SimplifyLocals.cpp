@@ -403,12 +403,14 @@ struct SimplifyLocals
 
   bool canSink(SetLocal* set) {
     // we can never move a tee
-    if (set->isTee())
+    if (set->isTee()) {
       return false;
+    }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1
     // use as that would make a tee
-    if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1)
+    if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1) {
       return false;
+    }
     return true;
   }
 
@@ -419,10 +421,12 @@ struct SimplifyLocals
   void optimizeLoopReturn(Loop* loop) {
     // If there is a sinkable thing in an eligible loop, we can optimize
     // it in a trivial way to the outside of the loop.
-    if (loop->type != none)
+    if (loop->type != none) {
       return;
-    if (sinkables.empty())
+    }
+    if (sinkables.empty()) {
       return;
+    }
     Index goodIndex = sinkables.begin()->first;
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
@@ -455,9 +459,10 @@ struct SimplifyLocals
     }
     auto breaks = std::move(blockBreaks[block->name]);
     blockBreaks.erase(block->name);
-    if (breaks.size() == 0)
+    if (breaks.size() == 0) {
       // block has no branches TODO we might optimize trivial stuff here too
       return;
+    }
     // block does not already have a return value (if one break has one, they
     // all do)
     assert(!(*breaks[0].brp)->template cast<Break>()->value);
@@ -479,8 +484,9 @@ struct SimplifyLocals
         break;
       }
     }
-    if (!found)
+    if (!found) {
       return;
+    }
     // If one of our brs is a br_if, then we will give it a value. since
     // the value executes before the condition, it is dangerous if we are
     // moving code out of the condition,
@@ -578,8 +584,9 @@ struct SimplifyLocals
     assert(iff->ifFalse);
     // if this if already has a result, or is unreachable code, we have
     // nothing to do
-    if (iff->type != none)
+    if (iff->type != none) {
       return;
+    }
     // We now have the sinkables from both sides of the if, and can look
     // for something to sink. That is either a shared index on both sides,
     // *or* if one side is unreachable, we can sink anything from the other,
@@ -622,8 +629,9 @@ struct SimplifyLocals
         }
       }
     }
-    if (!found)
+    if (!found) {
       return;
+    }
     // great, we can optimize!
     // ensure we have a place to write the return values for, if not, we
     // need another cycle
@@ -695,11 +703,13 @@ struct SimplifyLocals
   // arm into a one-sided if.
   void optimizeIfReturn(If* iff, Expression** currp) {
     // If this if is unreachable code, we have nothing to do.
-    if (iff->type != none || iff->ifTrue->type != none)
+    if (iff->type != none || iff->ifTrue->type != none) {
       return;
+    }
     // Anything sinkable is good for us.
-    if (sinkables.empty())
+    if (sinkables.empty()) {
       return;
+    }
     Index goodIndex = sinkables.begin()->first;
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.

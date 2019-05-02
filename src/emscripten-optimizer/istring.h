@@ -136,12 +136,15 @@ struct IString {
   const char* stripPrefix(const char* prefix) const {
     const char* ptr = str;
     while (true) {
-      if (*prefix == 0)
+      if (*prefix == 0) {
         return ptr;
-      if (*ptr == 0)
+      }
+      if (*ptr == 0) {
         return nullptr;
-      if (*ptr++ != *prefix++)
+      }
+      if (*ptr++ != *prefix++) {
         return nullptr;
+      }
     }
   }
 
@@ -191,11 +194,13 @@ public:
     strncpy(curr, init, size);
     while (1) {
       char* end = strchr(curr, ' ');
-      if (end)
+      if (end) {
         *end = 0;
+      }
       insert(curr);
-      if (!end)
+      if (!end) {
         break;
+      }
       curr = end + 1;
     }
   }

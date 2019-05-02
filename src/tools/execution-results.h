@@ -62,8 +62,9 @@ struct ExecutionResults {
       // execute all exported methods (that are therefore preserved through
       // opts)
       for (auto& exp : wasm.exports) {
-        if (exp->kind != ExternalKind::Function)
+        if (exp->kind != ExternalKind::Function) {
           continue;
+        }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
         if (func->result != none) {

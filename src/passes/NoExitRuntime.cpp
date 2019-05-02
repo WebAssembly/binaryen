@@ -41,8 +41,9 @@ struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
 
   void visitCall(Call* curr) {
     auto* import = getModule()->getFunctionOrNull(curr->target);
-    if (!import || !import->imported() || import->module != ENV)
+    if (!import || !import->imported() || import->module != ENV) {
       return;
+    }
     for (auto name : ATEXIT_NAMES) {
       if (name == import->base) {
         replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));

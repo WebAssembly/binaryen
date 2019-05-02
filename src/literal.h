@@ -412,10 +412,12 @@ template<> struct hash<wasm::Literal> {
 };
 template<> struct less<wasm::Literal> {
   bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
-    if (a.type < b.type)
+    if (a.type < b.type) {
       return true;
-    if (a.type > b.type)
+    }
+    if (a.type > b.type) {
       return false;
+    }
     switch (a.type) {
       case wasm::Type::i32:
         return a.geti32() < b.geti32();

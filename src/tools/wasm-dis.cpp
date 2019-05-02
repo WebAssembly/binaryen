@@ -56,8 +56,9 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "parsing binary..." << std::endl;
+  }
   Module wasm;
   try {
     ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
@@ -71,14 +72,16 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error in parsing wasm source mapping";
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "Printing..." << std::endl;
+  }
   Output output(options.extra["output"],
                 Flags::Text,
                 options.debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&wasm, output.getStream());
   output << '\n';
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "Done." << std::endl;
+  }
 }

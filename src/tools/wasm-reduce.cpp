@@ -285,10 +285,12 @@ struct Reducer
         // TODO(tlively): -all should be replaced with an option to use the
         // existing feature set, once implemented.
         currCommand += working + " -all -o " + test + " " + pass;
-        if (debugInfo)
+        if (debugInfo) {
           currCommand += " -g ";
-        if (verbose)
+        }
+        if (verbose) {
           std::cerr << "|    trying pass command: " << currCommand << "\n";
+        }
         if (!ProgramResult(currCommand).failed()) {
           auto newSize = file_size(test);
           if (newSize < oldSize) {
@@ -306,8 +308,9 @@ struct Reducer
         }
       }
     }
-    if (verbose)
+    if (verbose) {
       std::cerr << "|    done with passes for now\n";
+    }
   }
 
   // does one pass of slow and destructive reduction. returns whether it
@@ -400,10 +403,12 @@ struct Reducer
     }
     auto* curr = getCurrent();
     // std::cerr << "try " << curr << " => " << with << '\n';
-    if (curr->type != with->type)
+    if (curr->type != with->type) {
       return false;
-    if (!shouldTryToReduce())
+    }
+    if (!shouldTryToReduce()) {
       return false;
+    }
     replaceCurrent(with);
     if (!writeAndTestReduction()) {
       replaceCurrent(curr);
@@ -425,10 +430,12 @@ struct Reducer
     if (!isOkReplacement(with)) {
       return false;
     }
-    if (child->type != with->type)
+    if (child->type != with->type) {
       return false;
-    if (!shouldTryToReduce())
+    }
+    if (!shouldTryToReduce()) {
       return false;
+    }
     auto* before = child;
     child = with;
     if (!writeAndTestReduction()) {
@@ -443,8 +450,9 @@ struct Reducer
   }
 
   std::string getLocation() {
-    if (getFunction())
+    if (getFunction()) {
       return getFunction()->name.str;
+    }
     return "(non-function context)";
   }
 
@@ -455,15 +463,18 @@ struct Reducer
   void visitExpression(Expression* curr) {
     // type-based reductions
     if (curr->type == none) {
-      if (tryToReduceCurrentToNop())
+      if (tryToReduceCurrentToNop()) {
         return;
+      }
     } else if (isConcreteType(curr->type)) {
-      if (tryToReduceCurrentToConst())
+      if (tryToReduceCurrentToConst()) {
         return;
+      }
     } else {
       assert(curr->type == unreachable);
-      if (tryToReduceCurrentToUnreachable())
+      if (tryToReduceCurrentToUnreachable()) {
         return;
+      }
     }
     // specific reductions
     if (auto* iff = curr->dynCast<If>()) {
@@ -500,14 +511,16 @@ struct Reducer
         }
       }
     } else if (auto* block = curr->dynCast<Block>()) {
-      if (!shouldTryToReduce())
+      if (!shouldTryToReduce()) {
         return;
+      }
       // replace a singleton
       auto& list = block->list;
       if (list.size() == 1 &&
           !BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
-        if (tryToReplaceCurrent(block->list[0]))
+        if (tryToReplaceCurrent(block->list[0])) {
           return;
+        }
       }
       // try to get rid of nops
       Index i = 0;
@@ -544,21 +557,25 @@ struct Reducer
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
       if (isConcreteType(child->type) && curr->type == none) {
-        if (tryToReplaceCurrent(builder->makeDrop(child)))
+        if (tryToReplaceCurrent(builder->makeDrop(child))) {
           return;
+        }
       } else {
-        if (tryToReplaceCurrent(child))
+        if (tryToReplaceCurrent(child)) {
           return;
+        }
       }
     }
     // If that didn't work, try to replace with a child + a unary conversion
     if (isConcreteType(curr->type) &&
         !curr->is<Unary>()) { // but not if it's already unary
       for (auto* child : ChildIterator(curr)) {
-        if (child->type == curr->type)
+        if (child->type == curr->type) {
           continue; // already tried
-        if (!isConcreteType(child->type))
+        }
+        if (!isConcreteType(child->type)) {
           continue; // no conversion
+        }
         Expression* fixed = nullptr;
         switch (curr->type) {
           case i32: {
@@ -652,8 +669,9 @@ struct Reducer
             WASM_UNREACHABLE();
         }
         assert(fixed->type == curr->type);
-        if (tryToReplaceCurrent(fixed))
+        if (tryToReplaceCurrent(fixed)) {
           return;
+        }
       }
     }
   }
@@ -684,8 +702,9 @@ struct Reducer
         first = item;
         break;
       }
-      if (!first.isNull())
+      if (!first.isNull()) {
         break;
+      }
     }
     visitSegmented(curr, first, 100);
   }
@@ -706,12 +725,14 @@ struct Reducer
       // when we succeed, try to shrink by more and more, similar to bisection
       size_t skip = 1;
       for (size_t i = 0; i < data.size() && !data.empty(); i++) {
-        if (!justShrank && !shouldTryToReduce(bonus))
+        if (!justShrank && !shouldTryToReduce(bonus)) {
           continue;
+        }
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
-          if (!data.empty())
+          if (!data.empty()) {
             data.pop_back();
+          }
         }
         auto justShrank = writeAndTestReduction();
         if (justShrank) {
@@ -727,13 +748,16 @@ struct Reducer
     }
     // the "opposite" of shrinking: copy a 'zero' element
     for (auto& segment : curr->segments) {
-      if (segment.data.empty())
+      if (segment.data.empty()) {
         continue;
+      }
       for (auto& item : segment.data) {
-        if (!shouldTryToReduce(bonus))
+        if (!shouldTryToReduce(bonus)) {
           continue;
-        if (item == zero)
+        }
+        if (item == zero) {
           continue;
+        }
         auto save = item;
         item = zero;
         if (writeAndTestReduction()) {
@@ -766,8 +790,9 @@ struct Reducer
     for (size_t i = 0; i < functionNames.size(); i++) {
       if (!justRemoved &&
           functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
-          !shouldTryToReduce(std::max((factor / 100) + 1, 1000)))
+          !shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
         continue;
+      }
       std::vector<Name> names;
       for (size_t j = 0; names.size() < skip && i + j < functionNames.size();
            j++) {
@@ -777,8 +802,9 @@ struct Reducer
           functionsWeTriedToRemove.insert(name);
         }
       }
-      if (names.size() == 0)
+      if (names.size() == 0) {
         continue;
+      }
       std::cout << "|    try to remove " << names.size()
                 << " functions (skip: " << skip << ")\n";
       justRemoved = tryToRemoveFunctions(names);
@@ -798,8 +824,9 @@ struct Reducer
     }
     skip = 1;
     for (size_t i = 0; i < exports.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000)))
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
         continue;
+      }
       std::vector<Export> currExports;
       for (size_t j = 0; currExports.size() < skip && i + j < exports.size();
            j++) {
@@ -891,11 +918,13 @@ struct Reducer
               break;
             }
           }
-          if (!other.isNull())
+          if (!other.isNull()) {
             break;
+          }
         }
-        if (other.isNull())
+        if (other.isNull()) {
           return; // we failed to find a replacement
+        }
         for (auto& segment : curr->segments) {
           for (auto& name : segment.data) {
             if (names.count(name)) {
@@ -929,10 +958,12 @@ struct Reducer
 
   // try to replace condition with always true and always false
   void handleCondition(Expression*& condition) {
-    if (!condition)
+    if (!condition) {
       return;
-    if (condition->is<Const>())
+    }
+    if (condition->is<Const>()) {
       return;
+    }
     auto* c = builder->makeConst(Literal(int32_t(0)));
     if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
@@ -942,8 +973,9 @@ struct Reducer
 
   bool tryToReduceCurrentToNop() {
     auto* curr = getCurrent();
-    if (curr->is<Nop>())
+    if (curr->is<Nop>()) {
       return false;
+    }
     // try to replace with a trivial value
     Nop nop;
     if (tryToReplaceCurrent(&nop)) {
@@ -956,12 +988,14 @@ struct Reducer
   // try to replace a concrete value with a trivial constant
   bool tryToReduceCurrentToConst() {
     auto* curr = getCurrent();
-    if (curr->is<Const>())
+    if (curr->is<Const>()) {
       return false;
+    }
     // try to replace with a trivial value
     Const* c = builder->makeConst(Literal(int32_t(0)));
-    if (tryToReplaceCurrent(c))
+    if (tryToReplaceCurrent(c)) {
       return true;
+    }
     c->value = Literal::makeFromInt32(1, curr->type);
     c->type = curr->type;
     return tryToReplaceCurrent(c);
@@ -969,8 +1003,9 @@ struct Reducer
 
   bool tryToReduceCurrentToUnreachable() {
     auto* curr = getCurrent();
-    if (curr->is<Unreachable>())
+    if (curr->is<Unreachable>()) {
       return false;
+    }
     // try to replace with a trivial value
     Unreachable un;
     if (tryToReplaceCurrent(&un)) {
@@ -1065,10 +1100,12 @@ int main(int argc, const char* argv[]) {
       [&](Options* o, const std::string& argument) { input = argument; });
   options.parse(argc, argv);
 
-  if (test.size() == 0)
+  if (test.size() == 0) {
     Fatal() << "test file not provided\n";
-  if (working.size() == 0)
+  }
+  if (working.size() == 0) {
     Fatal() << "working file not provided\n";
+  }
 
   if (!binary) {
     Colors::disable();
@@ -1124,8 +1161,9 @@ int main(int argc, const char* argv[]) {
     // feature set, once implemented.
     auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input +
                " -all -o " + test;
-    if (!binary)
+    if (!binary) {
       cmd += " -S";
+    }
     ProgramResult readWrite(cmd);
     if (readWrite.failed()) {
       stopIfNotForced("failed to read and write the binary", readWrite);
@@ -1166,8 +1204,9 @@ int main(int argc, const char* argv[]) {
     std::cerr << "|  after pass reduction: " << newSize << "\n";
 
     // always stop after a pass reduction attempt, for final cleanup
-    if (stopping)
+    if (stopping) {
       break;
+    }
 
     // check if the full cycle (destructive/passes) has helped or not
     if (lastPostPassesSize && newSize >= lastPostPassesSize) {
@@ -1208,8 +1247,9 @@ int main(int argc, const char* argv[]) {
     while (1) {
       std::cerr << "|  reduce destructively... (factor: " << factor << ")\n";
       lastDestructiveReductions = reducer.reduceDestructively(factor);
-      if (lastDestructiveReductions > 0)
+      if (lastDestructiveReductions > 0) {
         break;
+      }
       // we failed to reduce destructively
       if (factor == 1) {
         stopping = true;

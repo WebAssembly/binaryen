@@ -132,8 +132,9 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   }
   void visitLoad(Load* curr) {
     prepareColor(o) << printType(curr->type);
-    if (curr->isAtomic)
+    if (curr->isAtomic) {
       o << ".atomic";
+    }
     o << ".load";
     if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
       if (curr->bytes == 1) {
@@ -157,8 +158,9 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   }
   void visitStore(Store* curr) {
     prepareColor(o) << printType(curr->valueType);
-    if (curr->isAtomic)
+    if (curr->isAtomic) {
       o << ".atomic";
+    }
     o << ".store";
     if (curr->bytes < 4 || (curr->valueType == i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
@@ -1174,8 +1176,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
-    if (!full)
+    if (!full) {
       full = isFullForced();
+    }
   }
 
   void printDebugLocation(const Function::DebugLocation& location) {
@@ -1214,8 +1217,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void setFull(bool full_) { full = full_; }
 
   void incIndent() {
-    if (minify)
+    if (minify) {
       return;
+    }
     o << '\n';
     indent++;
   }
@@ -1352,8 +1356,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
       incIndent();
     }
-    if (curr->value && !curr->value->is<Nop>())
+    if (curr->value && !curr->value->is<Nop>()) {
       printFullLine(curr->value);
+    }
     if (curr->condition) {
       printFullLine(curr->condition);
     }
@@ -1363,8 +1368,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
-    if (curr->value && !curr->value->is<Nop>())
+    if (curr->value && !curr->value->is<Nop>()) {
       printFullLine(curr->value);
+    }
     printFullLine(curr->condition);
     decIndent();
   }
@@ -1618,8 +1624,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   // Module-level visitors
   void visitFunctionType(FunctionType* curr, Name* internalName = nullptr) {
     o << "(func";
-    if (internalName)
+    if (internalName) {
       o << ' ' << *internalName;
+    }
     if (curr->params.size() > 0) {
       o << maybeSpace;
       o << '(';
@@ -1803,13 +1810,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printMedium(o, "table") << ' ';
     printName(curr->name, o) << ' ';
     o << curr->initial;
-    if (curr->hasMax())
+    if (curr->hasMax()) {
       o << ' ' << curr->max;
+    }
     o << " funcref)";
   }
   void visitTable(Table* curr) {
-    if (!curr->exists)
+    if (!curr->exists) {
       return;
+    }
     if (curr->imported()) {
       doIndent(o, indent);
       o << '(';
@@ -1823,8 +1832,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto& segment : curr->segments) {
       // Don't print empty segments
-      if (segment.data.empty())
+      if (segment.data.empty()) {
         continue;
+      }
       doIndent(o, indent);
       o << '(';
       printMajor(o, "elem ");
@@ -1845,15 +1855,18 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printMedium(o, "shared ");
     }
     o << curr->initial;
-    if (curr->hasMax())
+    if (curr->hasMax()) {
       o << ' ' << curr->max;
-    if (curr->shared)
+    }
+    if (curr->shared) {
       o << ")";
+    }
     o << ")";
   }
   void visitMemory(Memory* curr) {
-    if (!curr->exists)
+    if (!curr->exists) {
       return;
+    }
     if (curr->imported()) {
       doIndent(o, indent);
       o << '(';
@@ -2104,8 +2117,9 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
   };
   for (Index i = 0; i < (*ir).size(); i++) {
     auto* inst = (*ir)[i];
-    if (!inst)
+    if (!inst) {
       continue;
+    }
     switch (inst->op) {
       case StackInst::Basic: {
         doIndent();

@@ -212,13 +212,15 @@ int main(int argc, const char* argv[]) {
                                                         : Flags::Release));
   char* start = pre.process(input.data());
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "parsing..." << std::endl;
+  }
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(start);
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "wasming..." << std::endl;
+  }
   Module wasm;
 
   // set up memory
@@ -294,8 +296,9 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "emitting..." << std::endl;
+  }
   ModuleWriter writer;
   writer.setDebug(options.debug);
   writer.setDebugInfo(options.passOptions.debugInfo);
@@ -307,6 +310,7 @@ int main(int argc, const char* argv[]) {
   }
   writer.write(wasm, options.extra["output"]);
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "done." << std::endl;
+  }
 }

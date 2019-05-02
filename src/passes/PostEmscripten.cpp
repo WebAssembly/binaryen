@@ -35,8 +35,9 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   void visitCall(Call* curr) {
     // special asm.js imports can be optimized
     auto* func = getModule()->getFunction(curr->target);
-    if (!func->imported())
+    if (!func->imported()) {
       return;
+    }
     if (func->module == GLOBAL_MATH) {
       if (func->base == POW) {
         if (auto* exponent = curr->operands[1]->dynCast<Const>()) {

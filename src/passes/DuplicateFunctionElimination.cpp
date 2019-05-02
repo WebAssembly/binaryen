@@ -85,19 +85,22 @@ struct DuplicateFunctionElimination : public Pass {
       for (auto& pair : hashGroups) {
         auto& group = pair.second;
         Index size = group.size();
-        if (size == 1)
+        if (size == 1) {
           continue;
+        }
         // The groups should be fairly small, and even if a group is large we
         // should have almost all of them identical, so we should not hit actual
         // O(N^2) here unless the hash is quite poor.
         for (Index i = 0; i < size - 1; i++) {
           auto* first = group[i];
-          if (duplicates.count(first->name))
+          if (duplicates.count(first->name)) {
             continue;
+          }
           for (Index j = i + 1; j < size; j++) {
             auto* second = group[j];
-            if (duplicates.count(second->name))
+            if (duplicates.count(second->name)) {
               continue;
+            }
             if (FunctionUtils::equal(first, second)) {
               // great, we can replace the second with the first!
               replacements[second->name] = first->name;

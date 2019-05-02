@@ -28,18 +28,23 @@ namespace FunctionUtils {
 // everything but their name (which can't be the same, in the same
 // module!) - same params, vars, body, result, etc.
 inline bool equal(Function* left, Function* right) {
-  if (left->getNumParams() != right->getNumParams())
+  if (left->getNumParams() != right->getNumParams()) {
     return false;
-  if (left->getNumVars() != right->getNumVars())
-    return false;
-  for (Index i = 0; i < left->getNumLocals(); i++) {
-    if (left->getLocalType(i) != right->getLocalType(i))
-      return false;
   }
-  if (left->result != right->result)
+  if (left->getNumVars() != right->getNumVars()) {
     return false;
-  if (left->type != right->type)
+  }
+  for (Index i = 0; i < left->getNumLocals(); i++) {
+    if (left->getLocalType(i) != right->getLocalType(i)) {
+      return false;
+    }
+  }
+  if (left->result != right->result) {
     return false;
+  }
+  if (left->type != right->type) {
+    return false;
+  }
   if (!left->imported() && !right->imported()) {
     return ExpressionAnalyzer::equal(left->body, right->body);
   }

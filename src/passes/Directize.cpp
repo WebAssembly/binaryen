@@ -93,17 +93,21 @@ private:
 
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    if (!module->table.exists)
+    if (!module->table.exists) {
       return;
-    if (module->table.imported())
+    }
+    if (module->table.imported()) {
       return;
+    }
     for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Table)
+      if (ex->kind == ExternalKind::Table) {
         return;
+      }
     }
     FlatTable flatTable(module->table);
-    if (!flatTable.valid)
+    if (!flatTable.valid) {
       return;
+    }
     // The table exists and is constant, so this is possible.
     {
       PassRunner runner(module);

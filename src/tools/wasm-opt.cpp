@@ -203,8 +203,9 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "reading...\n";
+  }
 
   if (!translateToFuzz) {
     ModuleReader reader;
@@ -280,9 +281,10 @@ int main(int argc, const char* argv[]) {
   std::string firstOutput;
 
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "writing binary before opts, for extra fuzz command..."
                 << std::endl;
+    }
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
@@ -316,8 +318,9 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.runningPasses()) {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "running passes...\n";
+    }
     auto runPasses = [&]() {
       options.runPasses(*curr);
       if (options.passOptions.validate) {
@@ -340,13 +343,15 @@ int main(int argc, const char* argv[]) {
       };
       auto lastSize = getSize();
       while (1) {
-        if (options.debug)
+        if (options.debug) {
           std::cerr << "running iteration for convergence (" << lastSize
                     << ")...\n";
+        }
         runPasses();
         auto currSize = getSize();
-        if (currSize >= lastSize)
+        if (currSize >= lastSize) {
           break;
+        }
         lastSize = currSize;
       }
     }
@@ -359,8 +364,9 @@ int main(int argc, const char* argv[]) {
   if (options.extra.count("output") == 0) {
     std::cerr << "(no output file specified, not emitting output)\n";
   } else {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "writing..." << std::endl;
+    }
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);

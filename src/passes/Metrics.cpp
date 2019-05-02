@@ -179,8 +179,9 @@ struct Metrics
     o << title << "\n";
     for (auto* key : keys) {
       auto value = counts[key];
-      if (value == 0 && key[0] != '[')
+      if (value == 0 && key[0] != '[') {
         continue;
+      }
       o << " " << left << setw(15) << key << ": " << setw(8) << value;
       if (lastCounts.count(key)) {
         int before = lastCounts[key];

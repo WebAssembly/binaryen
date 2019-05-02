@@ -110,13 +110,15 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     module = moduleInit;
 
     auto numLocals = func->getNumLocals();
-    if (numLocals == 0)
+    if (numLocals == 0) {
       return; // nothing to do
+    }
     // Set up initial local state IR.
     setInReachable();
     for (Index i = 0; i < numLocals; i++) {
-      if (!isRelevantType(func->getLocalType(i)))
+      if (!isRelevantType(func->getLocalType(i))) {
         continue;
+      }
       Node* node;
       auto type = func->getLocalType(i);
       if (func->isParam(i)) {
@@ -167,8 +169,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     assert(!node->isBad());
     Builder builder(*module);
     auto type = node->getWasmType();
-    if (!isConcreteType(type))
+    if (!isConcreteType(type)) {
       return &bad;
+    }
     auto* zero = makeZero(type);
     auto* expr = builder.makeBinary(
       Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne),
@@ -313,8 +316,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     auto& breaks = breakStates[curr->name];
     // Phis are possible, check for them.
     for (Index i = 0; i < numLocals; i++) {
-      if (!isRelevantType(func->getLocalType(i)))
+      if (!isRelevantType(func->getLocalType(i))) {
         continue;
+      }
       bool needPhi = false;
       // We replaced the proper value with a Var. If it's still that
       // Var - or it's the original proper value, which can happen with
@@ -420,8 +424,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
         // These are ok as-is.
         // Check if our child is supported.
         auto* value = expandFromI1(visit(curr->value), curr);
-        if (value->isBad())
+        if (value->isBad()) {
           return value;
+        }
         // Great, we are supported!
         auto* ret = addNode(Node::makeExpr(curr, curr));
         ret->addValue(value);
@@ -432,8 +437,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
         // These can be implemented using a binary.
         // Check if our child is supported.
         auto* value = expandFromI1(visit(curr->value), curr);
-        if (value->isBad())
+        if (value->isBad()) {
           return value;
+        }
         // Great, we are supported!
         return makeZeroComp(value, true, curr);
       }
@@ -491,11 +497,13 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
         // These are ok as-is.
         // Check if our children are supported.
         auto* left = expandFromI1(visit(curr->left), curr);
-        if (left->isBad())
+        if (left->isBad()) {
           return left;
+        }
         auto* right = expandFromI1(visit(curr->right), curr);
-        if (right->isBad())
+        if (right->isBad()) {
           return right;
+        }
         // Great, we are supported!
         auto* ret = addNode(Node::makeExpr(curr, curr));
         ret->addValue(left);
@@ -556,14 +564,17 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   }
   Node* doVisitSelect(Select* curr) {
     auto* ifTrue = expandFromI1(visit(curr->ifTrue), curr);
-    if (ifTrue->isBad())
+    if (ifTrue->isBad()) {
       return ifTrue;
+    }
     auto* ifFalse = expandFromI1(visit(curr->ifFalse), curr);
-    if (ifFalse->isBad())
+    if (ifFalse->isBad()) {
       return ifFalse;
+    }
     auto* condition = ensureI1(visit(curr->condition), curr);
-    if (condition->isBad())
+    if (condition->isBad()) {
       return condition;
+    }
     // Great, we are supported!
     auto* ret = addNode(Node::makeExpr(curr, curr));
     ret->addValue(condition);
@@ -661,8 +672,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     Index numLocals = func->getNumLocals();
     Node* block = nullptr;
     for (Index i = 0; i < numLocals; i++) {
-      if (!isRelevantType(func->getLocalType(i)))
+      if (!isRelevantType(func->getLocalType(i))) {
         continue;
+      }
       // Process the inputs. If any is bad, the phi is bad.
       bool bad = false;
       for (auto& state : states) {
@@ -673,8 +685,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
           break;
         }
       }
-      if (bad)
+      if (bad) {
         continue;
+      }
       // Nothing is bad, proceed.
       Node* first = nullptr;
       for (auto& state : states) {
@@ -724,16 +737,18 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // the set.
   SetLocal* getSet(Node* node) {
     auto iter = nodeParentMap.find(node);
-    if (iter == nodeParentMap.end())
+    if (iter == nodeParentMap.end()) {
       return nullptr;
+    }
     return iter->second->dynCast<SetLocal>();
   }
 
   // Given an expression, return the parent if such exists.
   Expression* getParent(Expression* curr) {
     auto iter = expressionParentMap.find(curr);
-    if (iter == expressionParentMap.end())
+    if (iter == expressionParentMap.end()) {
       return nullptr;
+    }
     return iter->second;
   }
 

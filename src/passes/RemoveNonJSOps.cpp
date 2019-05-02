@@ -56,8 +56,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
     // Discover all of the intrinsics that we need to inject, lowering all
     // operations to intrinsic calls while we're at it.
-    if (!builder)
+    if (!builder) {
       builder = make_unique<Builder>(*module);
+    }
     PostWalker<RemoveNonJSOpsPass>::doWalkModule(module);
 
     if (neededIntrinsics.size() == 0) {
@@ -142,8 +143,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void doWalkFunction(Function* func) {
-    if (!builder)
+    if (!builder) {
       builder = make_unique<Builder>(*getModule());
+    }
     PostWalker<RemoveNonJSOpsPass>::doWalkFunction(func);
   }
 

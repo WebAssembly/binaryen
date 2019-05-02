@@ -109,11 +109,13 @@ public:
   }
 
   bool operator==(const SmallVector<T, N>& other) const {
-    if (usedFixed != other.usedFixed)
+    if (usedFixed != other.usedFixed) {
       return false;
+    }
     for (size_t i = 0; i < usedFixed; i++) {
-      if (fixed[i] != other.fixed[i])
+      if (fixed[i] != other.fixed[i]) {
         return false;
+      }
     }
     return flexible == other.flexible;
   }
