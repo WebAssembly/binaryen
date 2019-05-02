@@ -374,6 +374,11 @@ struct EffectAnalyzer
     // Atomics are also sequentially consistent with memory.grow.
     isAtomic = true;
   }
+  void visitTry(Try* curr) {}
+  // We safely model throws as branches
+  void visitThrow(Throw* curr) { branches = true; }
+  void visitRethrow(Rethrow* curr) { branches = true; }
+  void visitBrOnExn(BrOnExn* curr) { breakNames.insert(curr->name); }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branches = true; }
   void visitPush(Push* curr) { calls = true; }

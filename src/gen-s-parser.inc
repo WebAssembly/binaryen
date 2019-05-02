@@ -25,6 +25,9 @@ switch (op[0]) {
               case 'i':
                 if (strcmp(op, "br_if") == 0) { return makeBreak(s); }
                 goto parse_error;
+              case 'o':
+                if (strcmp(op, "br_on_exn") == 0) { return makeBrOnExn(s); }
+                goto parse_error;
               case 't':
                 if (strcmp(op, "br_table") == 0) { return makeBreakTable(s); }
                 goto parse_error;
@@ -38,12 +41,20 @@ switch (op[0]) {
     }
   }
   case 'c': {
-    switch (op[4]) {
-      case '\0':
-        if (strcmp(op, "call") == 0) { return makeCall(s, /*isReturn=*/false); }
-        goto parse_error;
-      case '_':
-        if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
+    switch (op[2]) {
+      case 'l': {
+        switch (op[4]) {
+          case '\0':
+            if (strcmp(op, "call") == 0) { return makeCall(s, /*isReturn=*/false); }
+            goto parse_error;
+          case '_':
+            if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      case 't':
+        if (strcmp(op, "catch") == 0) { return makeCatch(s); }
         goto parse_error;
       default: goto parse_error;
     }
@@ -2237,18 +2248,26 @@ switch (op[0]) {
     if (strcmp(op, "push") == 0) { return makePush(s); }
     goto parse_error;
   case 'r': {
-    switch (op[6]) {
-      case '\0':
-        if (strcmp(op, "return") == 0) { return makeReturn(s); }
+    switch (op[3]) {
+      case 'h':
+        if (strcmp(op, "rethrow") == 0) { return makeRethrow(s); }
         goto parse_error;
-      case '_': {
-        switch (op[11]) {
+      case 'u': {
+        switch (op[6]) {
           case '\0':
-            if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+            if (strcmp(op, "return") == 0) { return makeReturn(s); }
             goto parse_error;
-          case '_':
-            if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
-            goto parse_error;
+          case '_': {
+            switch (op[11]) {
+              case '\0':
+                if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+                goto parse_error;
+              case '_':
+                if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           default: goto parse_error;
         }
       }
@@ -2258,9 +2277,25 @@ switch (op[0]) {
   case 's':
     if (strcmp(op, "select") == 0) { return makeSelect(s); }
     goto parse_error;
-  case 't':
-    if (strcmp(op, "then") == 0) { return makeThenOrElse(s); }
-    goto parse_error;
+  case 't': {
+    switch (op[1]) {
+      case 'h': {
+        switch (op[2]) {
+          case 'e':
+            if (strcmp(op, "then") == 0) { return makeThenOrElse(s); }
+            goto parse_error;
+          case 'r':
+            if (strcmp(op, "throw") == 0) { return makeThrow(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      case 'r':
+        if (strcmp(op, "try") == 0) { return makeTry(s); }
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
   case 'u':
     if (strcmp(op, "unreachable") == 0) { return makeUnreachable(); }
     goto parse_error;

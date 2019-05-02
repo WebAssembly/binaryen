@@ -1396,6 +1396,32 @@ void BinaryInstWriter::visitHost(Host* curr) {
   o << U32LEB(0); // Reserved flags field
 }
 
+void BinaryInstWriter::visitTry(Try* curr) {
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  o << int8_t(BinaryConsts::Try);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
+}
+
+void BinaryInstWriter::emitCatch() {
+  assert(!breakStack.empty());
+  breakStack.pop_back();
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  o << int8_t(BinaryConsts::Catch);
+}
+
+void BinaryInstWriter::visitThrow(Throw* curr) {
+  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getEventIndex(curr->event));
+}
+
+void BinaryInstWriter::visitRethrow(Rethrow* curr) {
+  o << int8_t(BinaryConsts::Rethrow);
+}
+
+void BinaryInstWriter::visitBrOnExn(BrOnExn* curr) {
+  o << int8_t(BinaryConsts::BrOnExn) << U32LEB(getBreakIndex(curr->name))
+    << U32LEB(parent.getEventIndex(curr->event));
+}
+
 void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }
 
 void BinaryInstWriter::visitUnreachable(Unreachable* curr) {
@@ -1466,12 +1492,18 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       mappedLocals[i] = index + currLocalsByType[v128] - 1;
       continue;
     }
+    index += numLocalsByType[v128];
+    if (type == exnref) {
+      mappedLocals[i] = index + currLocalsByType[exnref] - 1;
+      continue;
+    }
     WASM_UNREACHABLE();
   }
   // Emit them.
   o << U32LEB((numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
               (numLocalsByType[f32] ? 1 : 0) + (numLocalsByType[f64] ? 1 : 0) +
-              (numLocalsByType[v128] ? 1 : 0));
+              (numLocalsByType[v128] ? 1 : 0) +
+              (numLocalsByType[exnref] ? 1 : 0));
   if (numLocalsByType[i32]) {
     o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
   }
@@ -1486,6 +1518,9 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   }
   if (numLocalsByType[v128]) {
     o << U32LEB(numLocalsByType[v128]) << binaryType(v128);
+  }
+  if (numLocalsByType[exnref]) {
+    o << U32LEB(numLocalsByType[exnref]) << binaryType(exnref);
   }
 }
 
@@ -1579,6 +1614,10 @@ void StackIRToBinaryWriter::write() {
       }
       case StackInst::IfElse: {
         writer.emitIfElse();
+        break;
+      }
+      case StackInst::Catch: {
+        writer.emitCatch();
         break;
       }
       default:

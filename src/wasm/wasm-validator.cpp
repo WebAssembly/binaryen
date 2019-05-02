@@ -254,6 +254,7 @@ public:
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
+  void noteBreak(Name name, Type valueType, Expression* curr);
   void visitBreak(Break* curr);
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
@@ -284,6 +285,10 @@ public:
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -336,6 +341,82 @@ void FunctionValidator::noteLabelName(Name name) {
     name,
     "names in Binaryen IR must be unique - IR generators must ensure that");
 }
+
+void FunctionValidator::visitLoop(Loop* curr) {
+  if (curr->name.is()) {
+    noteLabelName(curr->name);
+    auto iter = breakInfos.find(curr->name);
+    assert(iter != breakInfos.end()); // we set it ourselves
+    auto& info = iter->second;
+    if (info.hasBeenSet()) {
+      shouldBeEqual(
+        info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
+    }
+    breakInfos.erase(iter);
+  }
+  if (curr->type == none) {
+    shouldBeFalse(isConcreteType(curr->body->type),
+                  curr,
+                  "bad body for a loop that has no value");
+  }
+}
+
+// Validate correctness related to br_on_exn. br_on_exn is special: its argument
+// is an exnref value, and when it is taken, it pushes extracted values from
+// exnref, and if not, it re-pushes the exnref value onto the stack. To model
+// this value in binaryen AST, we calculate br_on_exn's type based on its
+// extracted event type, and the next instruction that takes re-pushed exnref
+// will get it from exnref.pop instruction instead. So within a block, if there
+// is a top-level br_on_exn (which is not dropped) and there is no exnref.pop
+// after that, that's a validation failure.
+struct BrOnExnValidator : public ExpressionStackWalker<BrOnExnValidator> {
+  BrOnExnValidator(Block* block) : block(block) {}
+
+  bool validate() {
+    bool brOnExnExists = false;
+    // To save time, scan first before going into full walking
+    for (Index i = 0, e = block->list.size(); i < e; i++) {
+      Expression* child = block->list[i];
+      if (child->is<BrOnExn>()) {
+        brOnExnExists = true;
+        break;
+      }
+    }
+    if (!brOnExnExists) {
+      return true;
+    }
+    Expression* exp = block;
+    walk(exp);
+    return missingDrops == 0;
+  }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    // Only check for top-level br_on_exns
+    if (getParent() == block) {
+      missingDrops++;
+    }
+  }
+
+  void visitPop(Pop* curr) {
+    // If this is nested within another block or loop, don't count it, because
+    // currently without multi-value we don't support block/loop taking a value
+    // from stack.
+    // TODO Fix it after multi-value support
+    for (int i = expressionStack.size() - 2; i >= 0; i--) {
+      Expression* exp = expressionStack[i];
+      if ((exp->is<Block>() || exp->is<Loop>()) && exp != block) {
+        return;
+      }
+    }
+    // We don't check for the case when there are more pops than necessary here
+    if (curr->type == exnref && missingDrops > 0) {
+      missingDrops--;
+    }
+  }
+
+  Block* block = nullptr;
+  unsigned missingDrops = 0;
+};
 
 void FunctionValidator::visitBlock(Block* curr) {
   // if we are break'ed to, then the value must be right for us
@@ -393,6 +474,10 @@ void FunctionValidator::visitBlock(Block* curr) {
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
+      // We validate br_on_exn later
+      if (curr->list[i]->is<BrOnExn>()) {
+        continue;
+      }
       if (!shouldBeTrue(
             !isConcreteType(curr->list[i]->type),
             curr,
@@ -400,8 +485,7 @@ void FunctionValidator::visitBlock(Block* curr) {
             "(binaryen's autodrop option might help you)") &&
           !info.quiet) {
         getStream() << "(on index " << i << ":\n"
-                    << curr->list[i] << "\n), type: " << curr->list[i]->type
-                    << "\n";
+                    << curr->list[i] << "\n), type: " << curr->list[i] << "\n";
       }
     }
   }
@@ -432,25 +516,12 @@ void FunctionValidator::visitBlock(Block* curr) {
     shouldBeTrue(
       curr->list.size() > 0, curr, "block with a value must not be empty");
   }
-}
 
-void FunctionValidator::visitLoop(Loop* curr) {
-  if (curr->name.is()) {
-    noteLabelName(curr->name);
-    auto iter = breakInfos.find(curr->name);
-    assert(iter != breakInfos.end()); // we set it ourselves
-    auto& info = iter->second;
-    if (info.hasBeenSet()) {
-      shouldBeEqual(
-        info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
-    }
-    breakInfos.erase(iter);
-  }
-  if (curr->type == none) {
-    shouldBeFalse(isConcreteType(curr->body->type),
-                  curr,
-                  "bad body for a loop that has no value");
-  }
+  BrOnExnValidator brOnExnVal(curr);
+  shouldBeTrue(brOnExnVal.validate(),
+               curr,
+               "br_on_exn's exnref value must be drop()ed "
+               "(binaryen's autodrop option might help you)");
 }
 
 void FunctionValidator::visitIf(If* curr) {
@@ -519,11 +590,15 @@ void FunctionValidator::visitIf(If* curr) {
 void FunctionValidator::noteBreak(Name name,
                                   Expression* value,
                                   Expression* curr) {
-  Type valueType = none;
-  Index arity = 0;
   if (value) {
-    valueType = value->type;
-    shouldBeUnequal(valueType, none, curr, "breaks must have a valid value");
+    shouldBeUnequal(value->type, none, curr, "breaks must have a valid value");
+  }
+  noteBreak(name, value ? value->type : none, curr);
+}
+
+void FunctionValidator::noteBreak(Name name, Type valueType, Expression* curr) {
+  Index arity = 0;
+  if (valueType != none) {
     arity = 1;
   }
   auto iter = breakInfos.find(name);
@@ -1579,6 +1654,83 @@ void FunctionValidator::visitHost(Host* curr) {
     case MemorySize:
       break;
   }
+}
+
+void FunctionValidator::visitTry(Try* curr) {
+  if (curr->type != unreachable) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->body->type,
+      curr->type,
+      curr->body,
+      "try's type does not match try body's type");
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->catchBody->type,
+      curr->type,
+      curr->catchBody,
+      "try's type does not match catch's body type");
+  }
+  if (isConcreteType(curr->body->type)) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->catchBody->type,
+      curr->body->type,
+      curr->catchBody,
+      "try's body type must match catch's body type");
+  }
+  if (isConcreteType(curr->catchBody->type)) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->body->type,
+      curr->catchBody->type,
+      curr->body,
+      "try's body type must match catch's body type");
+  }
+}
+
+void FunctionValidator::visitThrow(Throw* curr) {
+  if (!info.validateGlobally) {
+    return;
+  }
+  shouldBeEqual(
+    curr->type, unreachable, curr, "throw's type must be unreachable");
+  auto* event = getModule()->getEventOrNull(curr->event);
+  if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
+    return;
+  }
+  if (!shouldBeTrue(curr->operands.size() == event->params.size(),
+                    curr,
+                    "event's param numbers must match")) {
+    return;
+  }
+  for (size_t i = 0; i < curr->operands.size(); i++) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
+                                           event->params[i],
+                                           curr->operands[i],
+                                           "event param types must match") &&
+        !info.quiet) {
+      getStream() << "(on argument " << i << ")\n";
+    }
+  }
+}
+
+void FunctionValidator::visitRethrow(Rethrow* curr) {
+  shouldBeEqual(
+    curr->type, unreachable, curr, "rethrow's type must be unreachable");
+  shouldBeEqual(curr->exnref->type,
+                exnref,
+                curr->exnref,
+                "rethrow's argument must be exnref type");
+}
+
+void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
+  Event* event = getModule()->getEventOrNull(curr->event);
+  shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
+  shouldBeTrue(event->params == curr->eventParams,
+               curr,
+               "br_on_exn's event params and event's params are different");
+  noteBreak(curr->name, curr->getSingleEventType(), curr);
+  shouldBeTrue(curr->exnref->type == unreachable ||
+                 curr->exnref->type == exnref,
+               curr,
+               "br_on_exn's argument must be exnref type");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

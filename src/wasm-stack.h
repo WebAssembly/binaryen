@@ -67,6 +67,9 @@ public:
     IfEnd,      // the ending of a if
     LoopBegin,  // the beginning of a loop
     LoopEnd,    // the ending of a loop
+    TryBegin,   // the beginning of a try
+    Catch,      // the catch within a try
+    TryEnd      // the ending of a try
   } op;
 
   Expression* origin; // the expression this originates from
@@ -115,6 +118,10 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
@@ -122,7 +129,8 @@ public:
   void visitPop(Pop* curr);
 
   void emitIfElse();
-  void emitScopeEnd();    // emit an end at the end of a block/loop/if
+  void emitCatch();
+  void emitScopeEnd();    // emit an end at the end of a block/loop/if/try
   void emitFunctionEnd(); // emit an end at the end of a function
   void emitUnreachable();
   void mapLocalsAndEmitHeader();
@@ -185,6 +193,10 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
@@ -198,6 +210,7 @@ private:
   void emit(Expression* curr) { static_cast<SubType*>(this)->emit(curr); }
   void emitHeader() { static_cast<SubType*>(this)->emitHeader(); }
   void emitIfElse(If* curr) { static_cast<SubType*>(this)->emitIfElse(curr); }
+  void emitCatch(Try* curr) { static_cast<SubType*>(this)->emitCatch(curr); }
   void emitScopeEnd(Expression* curr) {
     static_cast<SubType*>(this)->emitScopeEnd(curr);
   }
@@ -657,6 +670,41 @@ void BinaryenIRWriter<SubType>::visitHost(Host* curr) {
   emit(curr);
 }
 
+template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
+  emit(curr);
+  // TODO: emit block contents directly, if possible
+  visitPossibleBlockContents(curr->body);
+  emitCatch(curr);
+  visitPossibleBlockContents(curr->catchBody);
+  emitScopeEnd(curr);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+  }
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitThrow(Throw* curr) {
+  for (auto* operand : curr->operands) {
+    visit(operand);
+  }
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRethrow(Rethrow* curr) {
+  visit(curr->exnref);
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitBrOnExn(BrOnExn* curr) {
+  visit(curr->exnref);
+  emit(curr);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+  }
+}
+
 template<typename SubType> void BinaryenIRWriter<SubType>::visitNop(Nop* curr) {
   emit(curr);
 }
@@ -707,6 +755,7 @@ public:
     writer.mapLocalsAndEmitHeader();
   }
   void emitIfElse(If* curr) { writer.emitIfElse(); }
+  void emitCatch(Try* curr) { writer.emitCatch(); }
   void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(); }
   void emitFunctionEnd() {
     if (func->epilogLocation.size()) {
@@ -739,6 +788,9 @@ public:
   void emitHeader() {}
   void emitIfElse(If* curr) {
     stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
+  }
+  void emitCatch(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::Catch, curr));
   }
   void emitFunctionEnd() {}
   void emitUnreachable() {

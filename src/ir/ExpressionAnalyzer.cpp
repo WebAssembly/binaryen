@@ -211,6 +211,13 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitInt(curr->op);
       visitor.visitNonScopeName(curr->nameOperand);
     }
+    void visitTry(Try* curr) {}
+    void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
+    void visitRethrow(Rethrow* curr) {}
+    void visitBrOnExn(BrOnExn* curr) {
+      visitor.visitScopeName(curr->name);
+      visitor.visitNonScopeName(curr->event);
+    }
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) {}
     void visitPush(Push* curr) {}

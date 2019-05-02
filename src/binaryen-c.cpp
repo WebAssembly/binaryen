@@ -354,6 +354,14 @@ BinaryenExpressionId BinaryenMemoryCopyId(void) {
 BinaryenExpressionId BinaryenMemoryFillId(void) {
   return Expression::Id::MemoryFillId;
 }
+BinaryenExpressionId BinaryenTryId(void) { return Expression::Id::TryId; }
+BinaryenExpressionId BinaryenThrowId(void) { return Expression::Id::ThrowId; }
+BinaryenExpressionId BinaryenRethrowId(void) {
+  return Expression::Id::RethrowId;
+}
+BinaryenExpressionId BinaryenBrOnExnId(void) {
+  return Expression::Id::BrOnExnId;
+}
 BinaryenExpressionId BinaryenPushId(void) { return Expression::Id::PushId; }
 BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
 
@@ -1591,6 +1599,73 @@ BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
   return static_cast<Expression*>(ret);
 }
 
+BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
+                                  BinaryenExpressionRef body,
+                                  BinaryenExpressionRef catchBody) {
+  auto* ret = Builder(*(Module*)module)
+                .makeTry((Expression*)body, (Expression*)catchBody);
+  if (tracing) {
+    traceExpression(ret, "BinaryenTry", body, catchBody);
+  }
+  return static_cast<Expression*>(ret);
+}
+
+BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
+                                    const char* event,
+                                    BinaryenExpressionRef* operands,
+                                    BinaryenIndex numOperands) {
+  std::vector<Expression*> args;
+  for (BinaryenIndex i = 0; i < numOperands; i++) {
+    args.push_back((Expression*)operands[i]);
+  }
+  auto* ret = Builder(*(Module*)module).makeThrow(event, args);
+
+  if (tracing) {
+    std::cout << "  {\n";
+    std::cout << "    BinaryenExpressionRef operands[] = { ";
+    for (BinaryenIndex i = 0; i < numOperands; i++) {
+      if (i > 0) {
+        std::cout << ", ";
+      }
+      std::cout << "expressions[" << expressions[operands[i]] << "]";
+    }
+    if (numOperands == 0) {
+      // ensure the array is not empty, otherwise a compiler error on VS
+      std::cout << "0";
+    }
+    std::cout << " };\n  ";
+    traceExpression(
+      ret, "BinaryenThrow", StringLit(event), "operands", numOperands);
+    std::cout << "  }\n";
+  }
+  return static_cast<Expression*>(ret);
+}
+
+BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
+                                      BinaryenExpressionRef exnref) {
+  auto* ret = Builder(*(Module*)module).makeRethrow((Expression*)exnref);
+  if (tracing) {
+    traceExpression(ret, "BinaryenRethrow", exnref);
+  }
+  return static_cast<Expression*>(ret);
+}
+
+BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
+                                      const char* name,
+                                      const char* eventName,
+                                      BinaryenExpressionRef exnref) {
+  Module* wasm = (Module*)module;
+  Event* event = wasm->getEventOrNull(eventName);
+  assert(event && "br_on_exn's event must exist");
+  auto* ret = Builder(*wasm).makeBrOnExn(name, event, (Expression*)exnref);
+
+  if (tracing) {
+    traceExpression(
+      ret, "BinaryenBrOnExn", StringLit(name), StringLit(eventName), exnref);
+  }
+  return static_cast<Expression*>(ret);
+}
+
 // Expression utility
 
 BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr) {
@@ -2721,6 +2796,7 @@ BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryFill>());
   return static_cast<MemoryFill*>(expression)->size;
 }
+// Push
 BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenPushGetValue(expressions[" << expressions[expr]
@@ -2730,6 +2806,102 @@ BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Push>());
   return static_cast<Push*>(expression)->value;
+}
+// Try
+BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenTryGetBody(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->body;
+}
+BinaryenExpressionRef BinaryenTryGetCatchBody(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenTryGetCatchBody(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->catchBody;
+}
+// Throw
+const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenThrowGetEvent(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Throw>());
+  return static_cast<Throw*>(expression)->event.c_str();
+}
+BinaryenExpressionRef BinaryenThrowGetOperand(BinaryenExpressionRef expr,
+                                              BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenThrowGetOperand(expressions[" << expressions[expr]
+              << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Throw>());
+  assert(index < static_cast<Throw*>(expression)->operands.size());
+  return static_cast<Throw*>(expression)->operands[index];
+}
+BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenThrowGetNumOperands(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Throw>());
+  return static_cast<Throw*>(expression)->operands.size();
+}
+// Rethrow
+BinaryenExpressionRef BinaryenRethrowGetExnref(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenRethrowGetExnref(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Rethrow>());
+  return static_cast<Rethrow*>(expression)->exnref;
+}
+// BrOnExn
+const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBrOnExnGetEvent(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<BrOnExn>());
+  return static_cast<BrOnExn*>(expression)->event.c_str();
+}
+const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBrOnExnGetName(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<BrOnExn>());
+  return static_cast<BrOnExn*>(expression)->name.c_str();
+}
+BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBrOnExnGetExnref(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<BrOnExn>());
+  return static_cast<BrOnExn*>(expression)->exnref;
 }
 
 // Functions

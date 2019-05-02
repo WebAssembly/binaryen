@@ -1048,6 +1048,10 @@ public:
   Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
   Flow visitPush(Push*) { WASM_UNREACHABLE(); }
   Flow visitPop(Pop*) { WASM_UNREACHABLE(); }
+  Flow visitTry(Try*) { WASM_UNREACHABLE(); }
+  Flow visitThrow(Throw*) { WASM_UNREACHABLE(); }
+  Flow visitRethrow(Rethrow*) { WASM_UNREACHABLE(); }
+  Flow visitBrOnExn(BrOnExn*) { WASM_UNREACHABLE(); }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE(); }
 };

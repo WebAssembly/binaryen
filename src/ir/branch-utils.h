@@ -37,11 +37,18 @@ inline bool isBranchReachable(Switch* sw) {
          sw->condition->type != unreachable;
 }
 
+inline bool isBranchReachable(BrOnExn* br) {
+  assert(br->exnref && "br_on_exn always has an exnref argument");
+  return br->exnref->type != unreachable;
+}
+
 inline bool isBranchReachable(Expression* expr) {
   if (auto* br = expr->dynCast<Break>()) {
     return isBranchReachable(br);
   } else if (auto* sw = expr->dynCast<Switch>()) {
     return isBranchReachable(sw);
+  } else if (auto* br = expr->dynCast<BrOnExn>()) {
+    return isBranchReachable(br);
   }
   WASM_UNREACHABLE();
 }
@@ -58,6 +65,12 @@ inline std::set<Name> getUniqueTargets(Switch* sw) {
     ret.insert(target);
   }
   ret.insert(sw->default_);
+  return ret;
+}
+
+inline std::set<Name> getUniqueTargets(BrOnExn* br) {
+  std::set<Name> ret;
+  ret.insert(br->name);
   return ret;
 }
 
@@ -80,6 +93,11 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
       sw->default_ = to;
       worked = true;
     }
+  } else if (auto* br = branch->dynCast<BrOnExn>()) {
+    if (br->name == from) {
+      br->name = to;
+      worked = true;
+    }
   } else {
     WASM_UNREACHABLE();
   }
@@ -99,6 +117,7 @@ inline std::set<Name> getExitingBranches(Expression* ast) {
       }
       targets.insert(curr->default_);
     }
+    void visitBrOnExn(BrOnExn* curr) { targets.insert(curr->name); }
     void visitBlock(Block* curr) {
       if (curr->name.is()) {
         targets.erase(curr->name);
@@ -153,15 +172,15 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 
   BranchSeeker(Name target) : target(target) {}
 
-  void noteFound(Expression* value) {
+  void noteFound(Expression* value) { noteFound(value ? value->type : none); }
+
+  void noteFound(Type type) {
     found++;
     if (found == 1) {
       valueType = unreachable;
     }
-    if (!value) {
-      valueType = none;
-    } else if (value->type != unreachable) {
-      valueType = value->type;
+    if (type != unreachable) {
+      valueType = type;
     }
   }
 
@@ -199,6 +218,19 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     }
     if (curr->default_ == target) {
       noteFound(curr->value);
+    }
+  }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    if (!named) {
+      // ignore an unreachable br_on_exn
+      if (curr->exnref->type == unreachable) {
+        return;
+      }
+    }
+    // check the br_on_exn
+    if (curr->name == target) {
+      noteFound(curr->getSingleEventType());
     }
   }
 

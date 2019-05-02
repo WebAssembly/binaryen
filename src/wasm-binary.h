@@ -613,12 +613,14 @@ enum ASTNodes {
   I64ExtendS16 = 0xc3,
   I64ExtendS32 = 0xc4,
 
+  // prefixes
+
   MiscPrefix = 0xfc,
   SIMDPrefix = 0xfd,
-  AtomicPrefix = 0xfe
-};
+  AtomicPrefix = 0xfe,
 
-enum AtomicOpcodes {
+  // atomic opcodes
+
   AtomicNotify = 0x00,
   I32AtomicWait = 0x01,
   I64AtomicWait = 0x02,
@@ -691,10 +693,10 @@ enum AtomicOpcodes {
   I64AtomicCmpxchg8U = 0x4c,
   I64AtomicCmpxchg16U = 0x4d,
   I64AtomicCmpxchg32U = 0x4e,
-  AtomicCmpxchgOps_End = 0x4e
-};
+  AtomicCmpxchgOps_End = 0x4e,
 
-enum TruncSatOpcodes {
+  // truncsat opcodes
+
   I32STruncSatF32 = 0x00,
   I32UTruncSatF32 = 0x01,
   I32STruncSatF64 = 0x02,
@@ -703,9 +705,9 @@ enum TruncSatOpcodes {
   I64UTruncSatF32 = 0x05,
   I64STruncSatF64 = 0x06,
   I64UTruncSatF64 = 0x07,
-};
 
-enum SIMDOpcodes {
+  // SIMD opcodes
+
   V128Load = 0x00,
   V128Store = 0x01,
   V128Const = 0x02,
@@ -845,14 +847,22 @@ enum SIMDOpcodes {
   F32x4ConvertSI32x4 = 0xaf,
   F32x4ConvertUI32x4 = 0xb0,
   F64x2ConvertSI64x2 = 0xb1,
-  F64x2ConvertUI64x2 = 0xb2
-};
+  F64x2ConvertUI64x2 = 0xb2,
 
-enum BulkMemoryOpcodes {
+  // bulk memory opcodes
+
   MemoryInit = 0x08,
   DataDrop = 0x09,
   MemoryCopy = 0x0a,
-  MemoryFill = 0x0b
+  MemoryFill = 0x0b,
+
+  // exception handling opcodes
+
+  Try = 0x06,
+  Catch = 0x07,
+  Throw = 0x08,
+  Rethrow = 0x09,
+  BrOnExn = 0x0a
 };
 
 enum MemoryAccess {
@@ -1184,6 +1194,8 @@ public:
   void readNextDebugLocation();
   void readSourceMapHeader();
 
+  void handleBrOnExnNotTaken(Expression* curr);
+
   // AST reading
   int depth = 0; // only for debugging
 
@@ -1238,6 +1250,10 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
 
   void throwError(std::string text);
 };

@@ -145,6 +145,27 @@ class FeatureValidationTest(BinaryenTestCase):
     '''
     self.check_tail_call(module, 'return_call_indirect requires tail calls to be enabled')
 
+  def test_exnref_local(self):
+    module = '''
+    (module
+     (func $foo
+      (local exnref)
+     )
+    )
+    '''
+    self.check_exception_handling(module, 'all used types should be allowed')
+
+  def test_event(self):
+    module = '''
+    (module
+     (event $e (attr 0) (param i32))
+     (func $foo
+      (throw $e (i32.const 0))
+     )
+    )
+    '''
+    self.check_exception_handling(module, 'Module has events')
+
 
 class TargetFeaturesSectionTest(BinaryenTestCase):
   def test_atomics(self):
@@ -190,6 +211,12 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
     self.check_features(filename, ['tail-call'])
     self.assertIn('return_call', self.disassemble(filename))
 
+  def test_exception_handling(self):
+    filename = 'exception_handling_target_feature.wasm'
+    self.roundtrip(filename)
+    self.check_features(filename, ['exception-handling'])
+    self.assertIn('throw', self.disassemble(filename))
+
   def test_incompatible_features(self):
     path = self.input_path('signext_target_feature.wasm')
     p = run_process(
@@ -230,5 +257,5 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
         '--enable-nontrapping-float-to-int',
         '--enable-sign-ext',
         '--enable-simd',
-        '--enable-tail-call'
+        '--enable-tail-call',
     ], p2.stdout.split())

@@ -423,7 +423,13 @@ instructions = [
     ("f32x4.convert_i32x4_s",   "makeUnary(s, UnaryOp::ConvertSVecI32x4ToVecF32x4)"),
     ("f32x4.convert_i32x4_u",   "makeUnary(s, UnaryOp::ConvertUVecI32x4ToVecF32x4)"),
     ("f64x2.convert_i64x2_s",   "makeUnary(s, UnaryOp::ConvertSVecI64x2ToVecF64x2)"),
-    ("f64x2.convert_i64x2_u",   "makeUnary(s, UnaryOp::ConvertUVecI64x2ToVecF64x2)")
+    ("f64x2.convert_i64x2_u",   "makeUnary(s, UnaryOp::ConvertUVecI64x2ToVecF64x2)"),
+    # exception handling instructions
+    ("try",                  "makeTry(s)"),
+    ("throw",                "makeThrow(s)"),
+    ("catch",                "makeCatch(s)"),
+    ("rethrow",              "makeRethrow(s)"),
+    ("br_on_exn",            "makeBrOnExn(s)"),
 ]
 
 

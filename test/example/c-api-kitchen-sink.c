@@ -206,6 +206,12 @@ void test_core() {
                         temp13 = makeInt32(module, 10), temp14 = makeInt32(module, 11),
                         temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
 
+  // Events
+  BinaryenType eparams[1] = {BinaryenTypeInt32()};
+  BinaryenFunctionTypeRef vi =
+    BinaryenAddFunctionType(module, "vi", BinaryenTypeNone(), eparams, 1);
+  BinaryenAddEvent(module, "a-event", 0, vi);
+
   BinaryenExpressionRef valueList[] = {
     // Unary
     makeUnary(module, BinaryenClzInt32(), 1),
@@ -441,19 +447,27 @@ void test_core() {
     BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3)),
     BinaryenBreak(module, "the-nothing", NULL, NULL),
     BinaryenSwitch(module, switchValueNames, 1, "the-value", temp8, temp9),
-    BinaryenSwitch(module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
-    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenCall(module, "kitchen()sinker", callOperands4, 4, BinaryenTypeInt32())
-    ),
-    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenUnary(module,
-        BinaryenTruncSFloat32ToInt32(),
-        BinaryenCall(module, "an-imported", callOperands2, 2, BinaryenTypeFloat32())
-      )
-    ),
-    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF")
-    ),
+    BinaryenSwitch(
+      module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
+    BinaryenUnary(
+      module,
+      BinaryenEqZInt32(), // check the output type of the call node
+      BinaryenCall(
+        module, "kitchen()sinker", callOperands4, 4, BinaryenTypeInt32())),
+    BinaryenUnary(module,
+                  BinaryenEqZInt32(), // check the output type of the call node
+                  BinaryenUnary(module,
+                                BinaryenTruncSFloat32ToInt32(),
+                                BinaryenCall(module,
+                                             "an-imported",
+                                             callOperands2,
+                                             2,
+                                             BinaryenTypeFloat32()))),
+    BinaryenUnary(
+      module,
+      BinaryenEqZInt32(), // check the output type of the call node
+      BinaryenCallIndirect(
+        module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF")),
     BinaryenDrop(module, BinaryenLocalGet(module, 0, BinaryenTypeInt32())),
     BinaryenLocalSet(module, 0, makeInt32(module, 101)),
     BinaryenDrop(module, BinaryenLocalTee(module, 0, makeInt32(module, 102))),
@@ -473,6 +487,49 @@ void test_core() {
     BinaryenReturnCallIndirect(
       module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF"),
 
+    // Exception handling
+
+    // (try
+    //   (throw $e (i32.const 0))
+    //   (catch
+    //     ;; We don't support multi-value yet. Use locals instead.
+    //     (local.set 0 (exnref.pop))
+    //     (drop
+    //       (block $l (result i32)
+    //         (br_on_exn $l $e (local.get 0))
+    //         (rethrow (exnref.pop))
+    //       )
+    //     )
+    //   )
+    // )
+    BinaryenTry(
+      module,
+      BinaryenThrow(
+        module, "a-event", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1),
+      BinaryenBlock(
+        module,
+        NULL,
+        (BinaryenExpressionRef[]){
+          BinaryenLocalSet(
+            module, 5, BinaryenPop(module, BinaryenTypeExnref())),
+          BinaryenDrop(
+            module,
+            BinaryenBlock(
+              module,
+              "try-block",
+              (BinaryenExpressionRef[]){
+                BinaryenBrOnExn(
+                  module,
+                  "try-block",
+                  "a-event",
+                  BinaryenLocalGet(module, 5, BinaryenTypeExnref())),
+                BinaryenRethrow(module,
+                                BinaryenPop(module, BinaryenTypeExnref()))},
+              2,
+              BinaryenTypeInt32()))},
+        2,
+        BinaryenTypeNone())),
+
     // TODO: Host
     BinaryenNop(module),
     BinaryenUnreachable(module),
@@ -488,18 +545,14 @@ void test_core() {
   BinaryenExpressionRef body = BinaryenBlock(module, "the-body", bodyList, 2, -1);
 
   // Create the function
-  BinaryenType localTypes[] = { BinaryenTypeInt32() };
-  BinaryenFunctionRef sinker = BinaryenAddFunction(module, "kitchen()sinker", iiIfF, localTypes, 1, body);
+  BinaryenType localTypes[] = {BinaryenTypeInt32(), BinaryenTypeExnref()};
+  BinaryenFunctionRef sinker =
+    BinaryenAddFunction(module, "kitchen()sinker", iiIfF, localTypes, 2, body);
 
   // Globals
 
   BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, 7));
   BinaryenAddGlobal(module, "a-mutable-global", BinaryenTypeFloat32(), 1, makeFloat32(module, 7.5));
-
-  // Events
-  BinaryenType eparams[1] = { BinaryenTypeInt32() };
-  BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenTypeNone(), eparams, 1);
-  BinaryenAddEvent(module, "a-event", 0, vi);
 
   // Imports
 

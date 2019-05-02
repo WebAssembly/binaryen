@@ -78,6 +78,10 @@ Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
 Module['DataDropId'] = Module['_BinaryenDataDropId']();
 Module['MemoryCopyId'] = Module['_BinaryenMemoryCopyId']();
 Module['MemoryFillId'] = Module['_BinaryenMemoryFillId']();
+Module['TryId'] = Module['_BinaryenTryId']();
+Module['ThrowId'] = Module['_BinaryenThrowId']();
+Module['RethrowId'] = Module['_BinaryenRethrowId']();
+Module['BrOnExnId'] = Module['_BinaryenBrOnExnId']();
 Module['PushId'] = Module['_BinaryenPushId']();
 Module['PopId'] = Module['_BinaryenPopId']();
 
@@ -1771,6 +1775,22 @@ function wrapModule(module, self) {
   self['notify'] = function(ptr, notifyCount) {
     return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
   };
+  self['try'] = function(body, catchBody) {
+    return Module['_BinaryenTry'](module, body, catchBody);
+  };
+  self['throw'] = function(event_, operands) {
+    return preserveStack(function() {
+      return Module['_BinaryenThrow'](module, strToStack(event_), i32sToStack(operands), operands.length);
+    });
+  };
+  self['rethrow'] = function(exnref) {
+    return Module['_BinaryenRethrow'](module, exnref);
+  };
+  self['br_on_exn'] = function(label, event_, exnref) {
+    return preserveStack(function() {
+      return Module['_BinaryenBrOnExn'](module, strToStack(label), strToStack(event_), exnref);
+    });
+  };
   self['push'] = function(value) {
     return Module['_BinaryenPush'](module, value);
   };
@@ -2375,6 +2395,34 @@ Module['getExpressionInfo'] = function(expr) {
         'dest': Module['_BinaryenMemoryFillGetDest'](expr),
         'value': Module['_BinaryenMemoryFillGetValue'](expr),
         'size': Module['_BinaryenMemoryFillGetSize'](expr)
+      };
+    case Module['TryId']:
+      return {
+        'id': id,
+        'type': type,
+        'body': Module['_BinaryenTryGetBody'](expr),
+        'catchBody': Module['_BinaryenTryGetCatchBody'](expr)
+      };
+    case Module['ThrowId']:
+      return {
+        'id': id,
+        'type': type,
+        'event': UTF8ToString(Module['_BinaryenThrowGetEvent'](expr)),
+        'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperand'])
+      };
+    case Module['RethrowId']:
+      return {
+        'id': id,
+        'type': type,
+        'exnref': Module['_BinaryenRethrowGetExnref'](expr)
+      };
+    case Module['BrOnExnId']:
+      return {
+        'id': id,
+        'type': type,
+        'name': UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr)),
+        'event': UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr)),
+        'exnref': Module['_BinaryenBrOnExnGetExnref'](expr)
       };
     case Module['PushId']:
       return {

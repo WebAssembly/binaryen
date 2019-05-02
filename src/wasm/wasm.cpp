@@ -168,6 +168,14 @@ const char* getExpressionName(Expression* curr) {
       return "push";
     case Expression::Id::PopId:
       return "pop";
+    case Expression::TryId:
+      return "try";
+    case Expression::ThrowId:
+      return "throw";
+    case Expression::RethrowId:
+      return "rethrow";
+    case Expression::BrOnExnId:
+      return "br_on_exn";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE();
   }
@@ -201,6 +209,12 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
     }
     if (curr->default_ == targetName) {
       types.push_back(curr->value ? curr->value->type : none);
+    }
+  }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    if (curr->name == targetName) {
+      types.push_back(curr->getSingleEventType());
     }
   }
 
@@ -834,6 +848,45 @@ void Host::finalize() {
       break;
     }
   }
+}
+
+void Try::finalize() {
+  if (body->type == catchBody->type) {
+    type = body->type;
+  } else if (isConcreteType(body->type) && catchBody->type == unreachable) {
+    type = body->type;
+  } else if (isConcreteType(catchBody->type) && body->type == unreachable) {
+    type = catchBody->type;
+  } else {
+    type = none;
+  }
+}
+
+void Try::finalize(Type type_) {
+  type = type_;
+  if (type == none && body->type == unreachable &&
+      catchBody->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void Throw::finalize() { type = unreachable; }
+
+void Rethrow::finalize() { type = unreachable; }
+
+void BrOnExn::finalize() {
+  if (exnref->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = getSingleEventType();
+  }
+}
+
+// Currently we don't support multi value return from a block, we pick the
+// type of the first param from the event.
+// TODO Renove this function and generalize event type after multi-value support
+Type BrOnExn::getSingleEventType() {
+  return eventParams.empty() ? none : eventParams.front();
 }
 
 void Push::finalize() {

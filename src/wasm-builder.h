@@ -270,6 +270,7 @@ public:
                  unsigned align,
                  Expression* ptr,
                  Type type) {
+    assert(!isReferenceType(type));
     auto* ret = allocator.alloc<Load>();
     ret->isAtomic = false;
     ret->bytes = bytes;
@@ -315,6 +316,7 @@ public:
                    Expression* ptr,
                    Expression* value,
                    Type type) {
+    assert(!isReferenceType(type));
     auto* ret = allocator.alloc<Store>();
     ret->isAtomic = false;
     ret->bytes = bytes;
@@ -453,7 +455,7 @@ public:
     return ret;
   }
   Const* makeConst(Literal value) {
-    assert(isConcreteType(value.type));
+    assert(isConcreteType(value.type) && !isReferenceType(value.type));
     auto* ret = allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;
@@ -494,6 +496,53 @@ public:
     ret->op = op;
     ret->nameOperand = nameOperand;
     ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
+  Try* makeTry(Expression* body, Expression* catchBody) {
+    auto* ret = allocator.alloc<Try>();
+    ret->body = body;
+    ret->catchBody = catchBody;
+    ret->finalize();
+    return ret;
+  }
+  Try* makeTry(Expression* body, Expression* catchBody, Type type) {
+    auto* ret = allocator.alloc<Try>();
+    ret->body = body;
+    ret->catchBody = catchBody;
+    ret->finalize(type);
+    return ret;
+  }
+  Throw* makeThrow(Event* event, const std::vector<Expression*>& args) {
+    return makeThrow(event->name, args);
+  }
+  Throw* makeThrow(Name event, const std::vector<Expression*>& args) {
+    auto* ret = allocator.alloc<Throw>();
+    ret->event = event;
+    ret->operands.set(args);
+    ret->finalize();
+    return ret;
+  }
+  Rethrow* makeRethrow(Expression* exnref) {
+    auto* ret = allocator.alloc<Rethrow>();
+    ret->exnref = exnref;
+    ret->finalize();
+    return ret;
+  }
+  BrOnExn* makeBrOnExn(Name name, Event* event, Expression* exnref) {
+    return makeBrOnExn(name, event->name, exnref, event->params);
+  }
+  BrOnExn* makeBrOnExn(Name name,
+                       Name event,
+                       Expression* exnref,
+                       std::vector<Type>& eventParams) {
+    auto* ret = allocator.alloc<BrOnExn>();
+    ret->name = name;
+    ret->event = event;
+    ret->exnref = exnref;
+    // Copy params info into BrOnExn, because it is necessary when BrOnExn is
+    // refinalized without the module.
+    ret->eventParams = eventParams;
     ret->finalize();
     return ret;
   }

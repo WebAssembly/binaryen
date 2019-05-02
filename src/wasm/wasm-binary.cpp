@@ -1725,6 +1725,17 @@ void WasmBinaryBuilder::readGlobals() {
   }
 }
 
+// If not taken, it re-pushes the exnref value onto the expression stack. To
+// simulate this behavior, we create a pseudo-insruction pop and push it onto
+// the stack.
+void WasmBinaryBuilder::handleBrOnExnNotTaken(Expression* curr) {
+  Builder builder(wasm);
+  if (curr->is<BrOnExn>()) {
+    auto* pop = builder.makePop(exnref);
+    expressionStack.push_back(pop);
+  }
+}
+
 void WasmBinaryBuilder::processExpressions() {
   if (debug) {
     std::cerr << "== processExpressions" << std::endl;
@@ -1741,6 +1752,7 @@ void WasmBinaryBuilder::processExpressions() {
       return;
     }
     expressionStack.push_back(curr);
+    handleBrOnExnNotTaken(curr);
     if (curr->type == unreachable) {
       // once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
@@ -1754,7 +1766,8 @@ void WasmBinaryBuilder::processExpressions() {
         throwError("unexpected end of input");
       }
       auto peek = input[pos];
-      if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
+      if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
+          peek == BinaryConsts::Catch) {
         if (debug) {
           std::cerr << "== processExpressions finished with unreachable"
                     << std::endl;
@@ -1804,6 +1817,7 @@ void WasmBinaryBuilder::skipUnreachableCode() {
       return;
     }
     expressionStack.push_back(curr);
+    handleBrOnExnNotTaken(curr);
   }
 }
 
@@ -2260,7 +2274,20 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::End:
     case BinaryConsts::Else:
+    case BinaryConsts::Catch:
       curr = nullptr;
+      break;
+    case BinaryConsts::Try:
+      visitTry((curr = allocator.alloc<Try>())->cast<Try>());
+      break;
+    case BinaryConsts::Throw:
+      visitThrow((curr = allocator.alloc<Throw>())->cast<Throw>());
+      break;
+    case BinaryConsts::Rethrow:
+      visitRethrow((curr = allocator.alloc<Rethrow>())->cast<Rethrow>());
+      break;
+    case BinaryConsts::BrOnExn:
+      visitBrOnExn((curr = allocator.alloc<BrOnExn>())->cast<BrOnExn>());
       break;
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
@@ -2420,6 +2447,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
   if (debug) {
     std::cerr << "zz node: Block" << std::endl;
   }
+
   // special-case Block and de-recurse nested blocks in their first position, as
   // that is a common pattern that can be very highly nested.
   std::vector<Block*> stack;
@@ -4344,6 +4372,104 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
     std::cerr << "zz node: Drop" << std::endl;
   }
   curr->value = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitTry(Try* curr) {
+  if (debug) {
+    std::cerr << "zz node: Try" << std::endl;
+  }
+  // For simplicity of implementation, like if scopes, we create a hidden block
+  // within each try-body and catch-body, and let branches target those inner
+  // blocks instead.
+  curr->type = getType();
+  curr->body = getBlockOrSingleton(curr->type);
+  if (lastSeparator != BinaryConsts::Catch) {
+    throwError("No catch instruction within a try scope");
+  }
+
+  // Parse instructions within (catch ...)
+  Name label = getNextLabel();
+  breakStack.push_back(
+    {label, curr->type != none && curr->type != unreachable});
+  auto start = expressionStack.size();
+  // catch instruction pushes an exnref value onto the stack, but because we
+  // model catch as not an instruction but a barrier within a try scope for
+  // readability, we assume that after catch there is an exnref value on top of
+  // the stack, and create a pop instruction that pops the exnref value from the
+  // stack. This is only for binaryen internal representation and will not be
+  // printed.
+  Builder builder(wasm);
+  auto* pop = builder.makePop(exnref);
+  expressionStack.push_back(pop);
+  processExpressions();
+  size_t end = expressionStack.size();
+  breakStack.pop_back();
+  auto* block = allocator.alloc<Block>();
+  pushBlockElements(block, start, end);
+  block->name = label;
+  block->finalize(curr->type);
+  curr->catchBody = block;
+  // maybe we don't need a block here?
+  if (breakTargetNames.find(block->name) == breakTargetNames.end()) {
+    block->name = Name();
+    if (block->list.size() == 1) {
+      curr->catchBody = block->list[0];
+    }
+  }
+  breakTargetNames.erase(block->name);
+
+  curr->finalize(curr->type);
+  if (lastSeparator != BinaryConsts::End) {
+    throwError("try should end with end");
+  }
+}
+
+void WasmBinaryBuilder::visitThrow(Throw* curr) {
+  if (debug) {
+    std::cerr << "zz node: Throw" << std::endl;
+  }
+  auto index = getU32LEB();
+  if (index >= wasm.events.size()) {
+    throwError("bad event index");
+  }
+  auto* event = wasm.events[index].get();
+  curr->event = event->name;
+  size_t num = event->params.size();
+  curr->operands.resize(num);
+  for (size_t i = 0; i < num; i++) {
+    curr->operands[num - i - 1] = popNonVoidExpression();
+  }
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
+  if (debug) {
+    std::cerr << "zz node: Rethrow" << std::endl;
+  }
+  curr->exnref = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
+  if (debug) {
+    std::cerr << "zz node: BrOnExn" << std::endl;
+  }
+  BreakTarget target = getBreakTarget(getU32LEB());
+  curr->name = target.name;
+  auto index = getU32LEB();
+  if (index >= wasm.events.size()) {
+    throwError("bad event index");
+  }
+  curr->event = wasm.events[index]->name;
+  curr->exnref = popNonVoidExpression();
+
+  Event* event = wasm.getEventOrNull(curr->event);
+  assert(event && "br_on_exn's event must exist");
+
+  // Copy params info into BrOnExn, because it is necessary when BrOnExn is
+  // refinalized without the module.
+  curr->eventParams = event->params;
   curr->finalize();
 }
 

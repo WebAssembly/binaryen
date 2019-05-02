@@ -479,6 +479,10 @@ public:
     MemoryFillId,
     PushId,
     PopId,
+    TryId,
+    ThrowId,
+    RethrowId,
+    BrOnExnId,
     NumExpressionIds
   };
   Id _id;
@@ -1001,6 +1005,53 @@ class Pop : public SpecificExpression<Expression::PopId> {
 public:
   Pop() = default;
   Pop(MixedArena& allocator) {}
+};
+
+class Try : public SpecificExpression<Expression::TryId> {
+public:
+  Try(MixedArena& allocator) {}
+
+  Name name;
+  Expression* body;
+  Expression* catchBody;
+
+  void finalize();
+  void finalize(Type type_);
+};
+
+class Throw : public SpecificExpression<Expression::ThrowId> {
+public:
+  Throw(MixedArena& allocator) : operands(allocator) {}
+
+  Name event;
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class Rethrow : public SpecificExpression<Expression::RethrowId> {
+public:
+  Rethrow(MixedArena& allocator) {}
+
+  Expression* exnref = nullptr;
+
+  void finalize();
+};
+
+class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
+public:
+  BrOnExn() { type = unreachable; }
+  BrOnExn(MixedArena& allocator) : BrOnExn() {}
+
+  Name name;
+  Name event;
+  Expression* exnref = nullptr;
+  // This is duplicate info of param types stored in Event, but this is required
+  // when BrOnExn expression is refinalized independently without modules.
+  std::vector<Type> eventParams;
+
+  void finalize();
+  Type getSingleEventType();
 };
 
 // Globals
