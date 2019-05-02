@@ -33,7 +33,6 @@
  (import "env" "___syscall146" (func $___syscall146 (param i32 i32) (result i32)))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (global $STACK_MAX (mut i32) (global.get $STACK_MAX$asm2wasm$import))
- (global $tempDoublePtr (mut i32) (global.get $tempDoublePtr$asm2wasm$import))
  (global $__THREW__ (mut i32) (i32.const 0))
  (global $threwValue (mut i32) (i32.const 0))
  (global $tempRet0 (mut i32) (i32.const 0))
@@ -160,7 +159,7 @@
   (local $4 i32)
   (local $5 i32)
   (f64.store
-   (global.get $tempDoublePtr)
+   (global.get $tempDoublePtr$asm2wasm$import)
    (local.get $0)
   )
   (block $switch
@@ -172,12 +171,12 @@
         (call $_bitshift64Lshr
          (local.tee $2
           (i32.load
-           (global.get $tempDoublePtr)
+           (global.get $tempDoublePtr$asm2wasm$import)
           )
          )
          (local.tee $3
           (i32.load offset=4
-           (global.get $tempDoublePtr)
+           (global.get $tempDoublePtr$asm2wasm$import)
           )
          )
          (i32.const 52)
@@ -232,11 +231,11 @@
     )
    )
    (i32.store
-    (global.get $tempDoublePtr)
+    (global.get $tempDoublePtr$asm2wasm$import)
     (local.get $2)
    )
    (i32.store offset=4
-    (global.get $tempDoublePtr)
+    (global.get $tempDoublePtr$asm2wasm$import)
     (i32.or
      (i32.and
       (local.get $3)
@@ -247,7 +246,7 @@
    )
    (local.set $0
     (f64.load
-     (global.get $tempDoublePtr)
+     (global.get $tempDoublePtr$asm2wasm$import)
     )
    )
   )
@@ -3602,14 +3601,14 @@
                           (i32.const 0)
                          )
                          (f64.store
-                          (global.get $tempDoublePtr)
+                          (global.get $tempDoublePtr$asm2wasm$import)
                           (local.get $14)
                          )
                          (local.set $32
                           (if (result i32)
                            (i32.lt_s
                             (i32.load offset=4
-                             (global.get $tempDoublePtr)
+                             (global.get $tempDoublePtr$asm2wasm$import)
                             )
                             (i32.const 0)
                            )
@@ -3654,7 +3653,7 @@
                           )
                          )
                          (f64.store
-                          (global.get $tempDoublePtr)
+                          (global.get $tempDoublePtr$asm2wasm$import)
                           (local.get $14)
                          )
                          (local.set $5
@@ -3662,7 +3661,7 @@
                            (i32.lt_u
                             (i32.and
                              (i32.load offset=4
-                              (global.get $tempDoublePtr)
+                              (global.get $tempDoublePtr$asm2wasm$import)
                              )
                              (i32.const 2146435072)
                             )

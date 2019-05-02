@@ -292,6 +292,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // #1480
     runner.add("flatten");
     runner.add("i64-to-i32-lowering");
+    runner.add("alignment-lowering");
     // Next, optimize that as best we can. This should not generate
     // non-JS-friendly things.
     if (options.optimizeLevel > 0) {
@@ -990,41 +991,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitLoad(Load* curr) {
-      if (curr->align != 0 && curr->align < curr->bytes) {
-        // set the pointer to a local
-        ScopedTemp temp(i32, parent, func);
-        SetLocal set(allocator);
-        set.index = func->getLocalIndex(temp.getName());
-        set.value = curr->ptr;
-        Ref ptrSet = visit(&set, NO_RESULT);
-        GetLocal get(allocator);
-        get.index = func->getLocalIndex(temp.getName());
-        // fake loads
-        Load load = *curr;
-        load.ptr = &get;
-        load.bytes = 1; // do the worst
-        load.signed_ = false;
-        Ref rest;
-        switch (curr->type) {
-          case i32: {
-            rest = makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
-            for (size_t i = 1; i < curr->bytes; i++) {
-              ++load.offset;
-              Ref add =
-                makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
-              add = ValueBuilder::makeBinary(
-                add, LSHIFT, ValueBuilder::makeNum(8 * i));
-              rest = ValueBuilder::makeBinary(rest, OR, add);
-            }
-            break;
-          }
-          default: {
-            std::cerr << "Unhandled type in load: " << curr->type << std::endl;
-            abort();
-          }
-        }
-        return ValueBuilder::makeSeq(ptrSet, rest);
-      }
+      // Unaligned loads and stores must have been fixed up already.
+      assert(curr->align == 0 || curr->align == curr->bytes);
       // normal load
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref ret;
@@ -1118,68 +1086,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       }
       // FIXME if memory growth, store ptr cannot contain a function call
       //       also other stores to memory, check them, all makeSub's
-      if (curr->align != 0 && curr->align < curr->bytes) {
-        // set the pointer to a local
-        ScopedTemp temp(i32, parent, func);
-        SetLocal set(allocator);
-        set.index = func->getLocalIndex(temp.getName());
-        set.value = curr->ptr;
-        Ref ptrSet = visit(&set, NO_RESULT);
-        GetLocal get(allocator);
-        get.index = func->getLocalIndex(temp.getName());
-        // set the value to a local
-        ScopedTemp tempValue(curr->value->type, parent, func);
-        SetLocal setValue(allocator);
-        setValue.index = func->getLocalIndex(tempValue.getName());
-        setValue.value = curr->value;
-        Ref valueSet = visit(&setValue, NO_RESULT);
-        GetLocal getValue(allocator);
-        getValue.index = func->getLocalIndex(tempValue.getName());
-        // fake stores
-        Store store = *curr;
-        store.ptr = &get;
-        store.bytes = 1; // do the worst
-        Ref rest;
-        switch (curr->valueType) {
-          case i32: {
-            Const _255(allocator);
-            _255.value = Literal(int32_t(255));
-            _255.type = i32;
-            for (size_t i = 0; i < curr->bytes; i++) {
-              Const shift(allocator);
-              shift.value = Literal(int32_t(8 * i));
-              shift.type = i32;
-              Binary shifted(allocator);
-              shifted.op = ShrUInt32;
-              shifted.left = &getValue;
-              shifted.right = &shift;
-              shifted.type = i32;
-              Binary anded(allocator);
-              anded.op = AndInt32;
-              anded.left = i > 0 ? static_cast<Expression*>(&shifted)
-                                 : static_cast<Expression*>(&getValue);
-              anded.right = &_255;
-              anded.type = i32;
-              store.value = &anded;
-              Ref part = visit(&store, NO_RESULT);
-              if (i == 0) {
-                rest = part;
-              } else {
-                rest = ValueBuilder::makeSeq(rest, part);
-              }
-              ++store.offset;
-            }
-            break;
-          }
-          default: {
-            std::cerr << "Unhandled type in store: " << curr->valueType
-                      << std::endl;
-            abort();
-          }
-        }
-        return ValueBuilder::makeSeq(ValueBuilder::makeSeq(ptrSet, valueSet),
-                                     rest);
-      }
+      // Unaligned loads and stores must have been fixed up already.
+      assert(curr->align == 0 || curr->align == curr->bytes);
       // normal store
       Ref ptr = makePointer(curr->ptr, curr->offset);
       Ref value = visit(curr->value, EXPRESSION_RESULT);

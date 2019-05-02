@@ -22,6 +22,7 @@ namespace wasm {
 class Pass;
 
 // All passes:
+Pass* createAlignmentLoweringPass();
 Pass* createCoalesceLocalsPass();
 Pass* createCoalesceLocalsWithLearningPass();
 Pass* createCodeFoldingPass();
@@ -85,6 +86,7 @@ Pass* createReReloopPass();
 Pass* createRedundantSetEliminationPass();
 Pass* createSafeHeapPass();
 Pass* createSimplifyLocalsPass();
+Pass* createSimplifyGlobalsPass();
 Pass* createSimplifyLocalsNoNestingPass();
 Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();

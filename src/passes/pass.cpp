@@ -69,6 +69,9 @@ std::string PassRegistry::getPassDescription(std::string name) {
 void PassRegistry::registerPasses() {
   registerPass(
     "dae", "removes arguments to calls in an lto-like manner", createDAEPass);
+  registerPass("alignment-lowering",
+               "lower unaligned loads and stores to smaller aligned ones",
+               createAlignmentLoweringPass);
   registerPass("dae-optimizing",
                "removes arguments to calls in an lto-like manner, and "
                "optimizes where we removed",
@@ -241,6 +244,9 @@ void PassRegistry::registerPasses() {
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
+  registerPass("simplify-globals",
+               "miscellaneous globals-related optimizations",
+               createSimplifyGlobalsPass);
   registerPass("simplify-locals",
                "miscellaneous locals-related optimizations",
                createSimplifyLocalsPass);
@@ -389,6 +395,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
   // optimizations show more functions as duplicate
   add("duplicate-function-elimination");
+  add("simplify-globals");
   add("remove-unused-module-elements");
   add("memory-packing");
   // may allow more inlining/dae/etc., need --converge for that

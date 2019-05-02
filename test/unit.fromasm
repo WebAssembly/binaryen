@@ -24,8 +24,7 @@
  (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
  (global $Int (mut i32) (i32.const 0))
- (global $Double (mut f64) (f64.const 0))
- (global $n (mut i32) (global.get $n$asm2wasm$import))
+ (global $Double f64 (f64.const 0))
  (global $nonZero (mut i32) (i32.const 1337))
  (global $exportedNumber i32 (i32.const 42))
  (export "big_negative" (func $big_negative))
@@ -123,7 +122,7 @@
   )
   (if
    (i32.gt_s
-    (global.get $n)
+    (global.get $n$asm2wasm$import)
     (i32.const 0)
    )
    (return
@@ -445,7 +444,7 @@
   (i32.store
    (local.get $0)
    (i32.add
-    (global.get $n)
+    (global.get $n$asm2wasm$import)
     (i32.const 144)
    )
   )

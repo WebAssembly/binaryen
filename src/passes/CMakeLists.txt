@@ -5,6 +5,7 @@ add_custom_command(
 
 SET(passes_SOURCES
   pass.cpp
+  AlignmentLowering.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
@@ -57,6 +58,7 @@ SET(passes_SOURCES
   ReorderFunctions.cpp
   TrapMode.cpp
   SafeHeap.cpp
+  SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
   SpillPointers.cpp

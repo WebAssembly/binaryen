@@ -91,6 +91,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/ir/LocalGraph.cpp \
   $BINARYEN_SRC/ir/ReFinalize.cpp \
   $BINARYEN_SRC/passes/pass.cpp \
+  $BINARYEN_SRC/passes/AlignmentLowering.cpp \
   $BINARYEN_SRC/passes/CoalesceLocals.cpp \
   $BINARYEN_SRC/passes/DeadArgumentElimination.cpp \
   $BINARYEN_SRC/passes/CodeFolding.cpp \
@@ -139,6 +140,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/ReorderLocals.cpp \
   $BINARYEN_SRC/passes/ReReloop.cpp \
   $BINARYEN_SRC/passes/SafeHeap.cpp \
+  $BINARYEN_SRC/passes/SimplifyGlobals.cpp \
   $BINARYEN_SRC/passes/SimplifyLocals.cpp \
   $BINARYEN_SRC/passes/Souperify.cpp \
   $BINARYEN_SRC/passes/SpillPointers.cpp \
