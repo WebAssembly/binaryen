@@ -155,9 +155,26 @@ static void optimizeJS(Ref ast) {
     return false;
   };
 
-  auto isConstantAnd = [](Ref node, int num) {
+  auto isUnary = [](Ref node, IString op) {
+    return node->isArray() && !node->empty() && node[0] == UNARY_PREFIX &&
+           node[1] == op;
+  };
+
+  auto isConstantBitwise = [](Ref node, IString op, int num) {
     return node->isArray() && !node->empty() && node[0] == BINARY &&
-           node[1] == AND && node[3]->isNumber() && node[3]->getNumber() == num;
+           node[1] == op && node[3]->isNumber() && node[3]->getNumber() == num;
+  };
+
+  auto isWhile = [](Ref node) {
+    return node->isArray() && !node->empty() && node[0] == WHILE;
+  };
+
+  auto isDo = [](Ref node) {
+    return node->isArray() && !node->empty() && node[0] == DO;
+  };
+
+  auto isIf = [](Ref node) {
+    return node->isArray() && !node->empty() && node[0] == IF;
   };
 
   auto removeOrZero = [&](Ref node) {
@@ -211,35 +228,40 @@ static void optimizeJS(Ref ast) {
     return false;
   };
 
+  auto optimizeBoolean = [&](Ref node) {
+    // x ^ 1  =>  !x
+    if (isConstantBitwise(node, XOR, 1)) {
+      node[0]->setString(UNARY_PREFIX);
+      node[1]->setString(L_NOT);
+      node[3]->setNull();
+    }
+    return node;
+  };
+
   // Optimizations
 
-  // x >> 0  =>  x | 0
-  traversePost(ast, [](Ref node) {
-    if (node->isArray() && !node->empty() && node[0] == BINARY &&
-        node[1] == RSHIFT && node[3]->isNumber()) {
-      if (node[3]->getNumber() == 0) {
-        node[1]->setString(OR);
-      }
+  // Pre-simplification
+  traversePost(ast, [&](Ref node) {
+    // x >> 0  =>  x | 0
+    if (isConstantBitwise(node, RSHIFT, 0)) {
+      node[1]->setString(OR);
     }
   });
 
   traversePost(ast, [&](Ref node) {
-    // x | 0 | 0  =>  x | 0
-    if (isOrZero(node)) {
-      while (isOrZero(node[2])) {
-        node[2] = node[2][2];
-      }
-      if (isBitwise(node[2])) {
-        auto child = node[2];
-        node[1] = child[1];
-        node[2] = child[2];
-        node[3] = child[3];
-      }
-    }
-    // x | 0 going into a bitwise op => skip the | 0
-    else if (isBitwise(node)) {
+    if (isBitwise(node)) {
+      // x | 0 going into a bitwise op => skip the | 0
       node[2] = removeOrZero(node[2]);
       node[3] = removeOrZero(node[3]);
+      // x | 0 | 0  =>  x | 0
+      if (isOrZero(node)) {
+        if (isBitwise(node[2])) {
+          auto child = node[2];
+          node[1] = child[1];
+          node[2] = child[2];
+          node[3] = child[3];
+        }
+      }
       // A load into an & may allow using a simpler heap, e.g. HEAPU8[..] & 1
       // (a load of a boolean) may be HEAP8[..] & 1. The signed heaps are more
       // commonly used, so it compresses better, and also they seem to have
@@ -247,7 +269,7 @@ static void optimizeJS(Ref ast) {
       // smallint).
       if (node[1] == AND && isHeapAccess(node[2])) {
         auto heap = getHeapFromAccess(node[2]);
-        if (isConstantAnd(node, 1)) {
+        if (isConstantBitwise(node, AND, 1)) {
           if (heap == HEAPU8) {
             setHeapOnAccess(node[2], HEAP8);
           } else if (heap == HEAPU16) {
@@ -264,6 +286,9 @@ static void optimizeJS(Ref ast) {
     else if (isFround(node)) {
       node[2] = removePlusAndFround(node[2]);
     }
+    else if (isUnary(node, L_NOT)) {
+      node[2] = optimizeBoolean(node[2]);
+    }
     // Assignment into a heap coerces.
     else if (node->isAssign()) {
       auto assign = node->asAssign();
@@ -273,12 +298,12 @@ static void optimizeJS(Ref ast) {
         if (isIntegerHeap(heap)) {
           if (heap == HEAP8 || heap == HEAPU8) {
             while (isOrZero(assign->value()) ||
-                   isConstantAnd(assign->value(), 255)) {
+                   isConstantBitwise(assign->value(), AND, 255)) {
               assign->value() = assign->value()[2];
             }
           } else if (heap == HEAP16 || heap == HEAPU16) {
             while (isOrZero(assign->value()) ||
-                   isConstantAnd(assign->value(), 65535)) {
+                   isConstantBitwise(assign->value(), AND, 65535)) {
               assign->value() = assign->value()[2];
             }
           } else {
@@ -294,6 +319,8 @@ static void optimizeJS(Ref ast) {
           }
         }
       }
+    } else if (isWhile(node) || isDo(node) || isIf(node)) {
+      node[1] = optimizeBoolean(node[1]);
     }
   });
 

@@ -93,6 +93,14 @@ function asmFunc(global, env, buffer) {
   bools((HEAP16[0 >> 1] | 0) & 1 | 0 | 0) | 0;
   bools((HEAP32[0 >> 2] | 0) & 1 | 0 | 0) | 0;
   bools((HEAPU8[0 >> 0] | 0) & 2 | 0 | 0) | 0;
+  bools(x ^ 1 | 0 | 0) | 0;
+  if (x ^ 1 | 0) {
+   bools(2 | 0) | 0
+  }
+  if (x ^ 2 | 0) {
+   bools(2 | 0) | 0
+  }
+  bools(!(x ^ 1 | 0) | 0) | 0;
   abort();
  }
  

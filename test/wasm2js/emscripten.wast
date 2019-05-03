@@ -106,6 +106,16 @@
   (drop (call $bools (i32.and (i32.load16_s (i32.const 0)) (i32.const 1))))
   (drop (call $bools (i32.and (i32.load (i32.const 0)) (i32.const 1))))
   (drop (call $bools (i32.and (i32.load8_u (i32.const 0)) (i32.const 2))))
+  (drop (call $bools (i32.xor (local.get $x) (i32.const 1))))
+  (if
+    (i32.xor (local.get $x) (i32.const 1))
+    (drop (call $bools (i32.const 2)))
+  )
+  (if
+    (i32.xor (local.get $x) (i32.const 2))
+    (drop (call $bools (i32.const 2)))
+  )
+  (drop (call $bools (i32.eqz (i32.xor (local.get $x) (i32.const 1)))))
   (unreachable)
  )
 )
