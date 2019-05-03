@@ -1045,11 +1045,12 @@
     (i32.const 224)
    )
   )
-  (local.set $5
-   (i32.add
-    (local.get $3)
-    (i32.const 120)
+  (if
+   (i32.ge_s
+    (global.get $STACKTOP)
+    (global.get $STACK_MAX)
    )
+   (call $abort)
   )
   (local.set $8
    (i32.add
@@ -1070,12 +1071,11 @@
     (i32.const 136)
    )
   )
-  (if
-   (i32.ge_s
-    (global.get $STACKTOP)
-    (global.get $STACK_MAX)
+  (local.set $5
+   (i32.add
+    (local.get $3)
+    (i32.const 120)
    )
-   (call $abort)
   )
   (loop $do-in
    (i32.store
@@ -2179,10 +2179,17 @@
     (i32.const 624)
    )
   )
-  (local.set $21
+  (if
+   (i32.ge_s
+    (global.get $STACKTOP)
+    (global.get $STACK_MAX)
+   )
+   (call $abort)
+  )
+  (local.set $33
    (i32.add
     (local.get $13)
-    (i32.const 16)
+    (i32.const 528)
    )
   )
   (local.set $37
@@ -2251,10 +2258,10 @@
     (i32.const 0)
    )
   )
-  (local.set $33
+  (local.set $21
    (i32.add
     (local.get $13)
-    (i32.const 528)
+    (i32.const 16)
    )
   )
   (local.set $44
@@ -2262,13 +2269,6 @@
     (i32.const -2)
     (local.get $34)
    )
-  )
-  (if
-   (i32.ge_s
-    (global.get $STACKTOP)
-    (global.get $STACK_MAX)
-   )
-   (call $abort)
   )
   (local.set $41
    (local.tee $29
@@ -3661,17 +3661,17 @@
                                     )
                                    )
                                   )
-                                  (i32.store offset=4
-                                   (local.get $13)
-                                   (local.tee $7
-                                    (global.get $tempRet0)
-                                   )
-                                  )
                                   (local.set $9
                                    (i32.const 4091)
                                   )
                                   (local.set $8
                                    (i32.const 1)
+                                  )
+                                  (i32.store offset=4
+                                   (local.get $13)
+                                   (local.tee $7
+                                    (global.get $tempRet0)
+                                   )
                                   )
                                   (br $__rjti$4)
                                  )
@@ -4027,6 +4027,12 @@
                                 )
                                )
                               )
+                              (local.set $11
+                               (i32.or
+                                (local.get $27)
+                                (i32.const 2)
+                               )
+                              )
                               (if
                                (i32.eq
                                 (local.tee $5
@@ -4099,12 +4105,6 @@
                                (i32.add
                                 (local.get $16)
                                 (i32.const 15)
-                               )
-                              )
-                              (local.set $11
-                               (i32.or
-                                (local.get $27)
-                                (i32.const 2)
                                )
                               )
                               (local.set $16
