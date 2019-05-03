@@ -285,8 +285,7 @@ static void optimizeJS(Ref ast) {
     // +(+x) => +x
     else if (isFround(node)) {
       node[2] = removePlusAndFround(node[2]);
-    }
-    else if (isUnary(node, L_NOT)) {
+    } else if (isUnary(node, L_NOT)) {
       node[2] = optimizeBoolean(node[2]);
     }
     // Assignment into a heap coerces.
