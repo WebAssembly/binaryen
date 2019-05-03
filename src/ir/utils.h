@@ -76,9 +76,11 @@ struct ExpressionAnalyzer {
     return flexibleEqual(left, right, comparer);
   }
 
-  // hash an expression, ignoring superficial details like specific internal
-  // names
-  static HashType hash(Expression* curr);
+  // Hash an expression, ignoring superficial details like specific internal
+  // names.
+  // @param deterministic whether to do additional work to make the results
+  //                      deterministic between runs
+  static HashType hash(Expression* curr, bool deterministic=false);
 };
 
 // Re-Finalizes all node types. This can be run after code was modified in
