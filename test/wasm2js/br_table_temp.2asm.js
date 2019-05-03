@@ -12722,13 +12722,11 @@ function asmFunc(global, env, buffer) {
   var $4_1 = 0, $6_1 = 0;
   block : {
    if ($0) {
-    {
-     $4_1 = 3;
-     switch (0 | 0) {
-     default:
-      break block;
-     };
-    }
+    $4_1 = 3;
+    switch (0 | 0) {
+    default:
+     break block;
+    };
    } else {
     $6_1 = $1_1
    }
@@ -12746,17 +12744,15 @@ function asmFunc(global, env, buffer) {
     if ($0) {
      $7_1 = $1_1
     } else {
-     {
-      $4_1 = 4;
-      $5_1 = $4_1;
-      $6_1 = $4_1;
-      switch (0 | 0) {
-      case 0:
-       break block;
-      default:
-       break if_;
-      };
-     }
+     $4_1 = 4;
+     $5_1 = $4_1;
+     $6_1 = $4_1;
+     switch (0 | 0) {
+     case 0:
+      break block;
+     default:
+      break if_;
+     };
     }
     $6_1 = $7_1;
    }
