@@ -62,23 +62,29 @@ struct SortBlocks : public WalkerPass<PostWalker<SortBlocks>> {
     // Do the sorting, by bubbling to the front and back (which is
     // where optimizations typically look). We pick the order of
     // lower hashes earlier.
-    for (Index i = 0; i < numSortable; i++) {
-      // Bubble forward.
-      Index j = i;
-      while (j < numSortable - 1 &&
-             hashes[list[j]] > hashes[list[j + 1]] &&
-             !effects.at(list[j]).invalidates(effects.at(list[j + 1]))) {
-        std::swap(list[j], list[j + 1]);
-        j++;
-      }
-      // Bubble backward, if we didn't move forward (if we did, there
-      // is no possibility to reverse).
-      if (j == i) {
-        while (j > 0 &&
-               hashes[list[j]] < hashes[list[j - 1]] &&
-               !effects.at(list[j]).invalidates(effects.at(list[j - 1]))) {
-          std::swap(list[j], list[j - 1]);
+    bool more = true;
+    while (more) {
+      more = false;
+      for (Index i = 0; i < numSortable; i++) {
+        // Bubble forward.
+        Index j = i;
+        while (j < numSortable - 1 &&
+               hashes[list[j]] > hashes[list[j + 1]] &&
+               !effects.at(list[j]).invalidates(effects.at(list[j + 1]))) {
+          std::swap(list[j], list[j + 1]);
           j++;
+          more = true;
+        }
+        // Bubble backward, if we didn't move forward (if we did, there
+        // is no possibility to reverse).
+        if (j == i) {
+          while (j > 0 &&
+                 hashes[list[j]] < hashes[list[j - 1]] &&
+                 !effects.at(list[j]).invalidates(effects.at(list[j - 1]))) {
+            std::swap(list[j], list[j - 1]);
+            j--;
+            more = true;
+          }
         }
       }
     }

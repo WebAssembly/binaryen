@@ -424,11 +424,6 @@ total
                       (br $label$6)
                      )
                     )
-                    (local.set $4
-                     (i32.load offset=36
-                      (local.get $3)
-                     )
-                    )
                     (local.set $6
                      (i32.load offset=16
                       (local.get $3)
@@ -436,6 +431,11 @@ total
                     )
                     (local.set $8
                      (i32.load offset=44
+                      (local.get $3)
+                     )
+                    )
+                    (local.set $4
+                     (i32.load offset=36
                       (local.get $3)
                      )
                     )
