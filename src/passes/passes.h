@@ -94,6 +94,7 @@ Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createStripDebugPass();
 Pass* createStripProducersPass();
 Pass* createStripTargetFeaturesPass();
+Pass* createSortBlocksPass();
 Pass* createSouperifyPass();
 Pass* createSouperifySingleUsePass();
 Pass* createSpillPointersPass();

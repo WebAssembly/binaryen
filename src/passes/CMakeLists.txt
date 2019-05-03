@@ -60,6 +60,7 @@ SET(passes_SOURCES
   SafeHeap.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp
+  SortBlocks.cpp
   Souperify.cpp
   SpillPointers.cpp
   SSAify.cpp
