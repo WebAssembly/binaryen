@@ -189,6 +189,10 @@ static void optimizeJS(Ref ast) {
 
   auto getHeapFromAccess = [](Ref node) { return node[1]->getIString(); };
 
+  auto setHeapOnAccess = [](Ref node, IString heap) {
+    node[1] = ValueBuilder::makeName(heap);
+  };
+
   auto isIntegerHeap = [](IString heap) {
     return heap == HEAP8 || heap == HEAPU8 || heap == HEAP16 ||
            heap == HEAPU16 || heap == HEAP32 || heap == HEAPU32;
@@ -236,6 +240,21 @@ static void optimizeJS(Ref ast) {
     else if (isBitwise(node)) {
       node[2] = removeOrZero(node[2]);
       node[3] = removeOrZero(node[3]);
+      // A load into an & may allow using a simpler heap, e.g. HEAPU8[..] & 1
+      // (a load of a boolean) may be HEAP8[..] & 1. The signed heaps are more
+      // commonly used, so it compresses better, and also they seem to have
+      // better performance (perhaps since HEAPU32 is at risk of not being a
+      // smallint).
+      if (node[1] == AND && isHeapAccess(node[2])) {
+        auto heap = getHeapFromAccess(node[2]);
+        if (isConstantAnd(node, 1)) {
+          if (heap == HEAPU8) {
+            setHeapOnAccess(node[2], HEAP8);
+          } else if (heap == HEAPU16) {
+            setHeapOnAccess(node[2], HEAP16);
+          }
+        }
+      }
     }
     // +(+x) => +x
     else if (isPlus(node)) {
@@ -280,7 +299,6 @@ static void optimizeJS(Ref ast) {
 
   // Remove unnecessary break/continue labels, when referring to the top level.
 
-  // XXX IString invalid("__wasm2js$INVALID_LABEL__");
   std::vector<Ref> breakCapturers;
   std::vector<Ref> continueCapturers;
   std::unordered_map<IString, Ref>
