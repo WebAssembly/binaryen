@@ -647,6 +647,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return "bulk-memory";
       case FeatureSet::SignExt:
         return "sign-ext";
+      case FeatureSet::ExceptionHandling:
+        return "exception-handling";
       default:
         WASM_UNREACHABLE();
     }
@@ -2079,7 +2081,7 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
     } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
       wasm.features.setBulkMemory();
     } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
-      WASM_UNREACHABLE(); // TODO: exception handling
+      wasm.features.setExceptionHandling();
     } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
       wasm.features.setTruncSat();
     } else if (name == BinaryConsts::UserSections::SignExtFeature) {

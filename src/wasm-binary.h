@@ -399,6 +399,7 @@ extern const char* ExceptionHandlingFeature;
 extern const char* TruncSatFeature;
 extern const char* SignExtFeature;
 extern const char* SIMD128Feature;
+extern const char* ExceptionHandlingFeature;
 
 enum Subsection {
   NameFunction = 1,
@@ -844,6 +845,10 @@ enum BulkMemoryOpcodes {
   DataDrop = 0x09,
   MemoryCopy = 0x0a,
   MemoryFill = 0x0b
+};
+
+enum ExceptionHandlingOpcodes {
+  // TODO
 };
 
 enum MemoryAccess {

@@ -31,7 +31,9 @@ struct FeatureSet {
     SIMD = 1 << 3,
     BulkMemory = 1 << 4,
     SignExt = 1 << 5,
-    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory | SignExt
+    ExceptionHandling = 1 << 6,
+    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory | SignExt |
+          ExceptionHandling
   };
 
   static std::string toString(Feature f) {
@@ -48,6 +50,8 @@ struct FeatureSet {
         return "bulk-memory";
       case SignExt:
         return "sign-ext";
+      case ExceptionHandling:
+        return "exception-handling";
       default:
         WASM_UNREACHABLE();
     }
@@ -64,6 +68,7 @@ struct FeatureSet {
   bool hasSIMD() const { return features & SIMD; }
   bool hasBulkMemory() const { return features & BulkMemory; }
   bool hasSignExt() const { return features & SignExt; }
+  bool hasExceptionHandling() const { return features & ExceptionHandling; }
   bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
@@ -76,6 +81,7 @@ struct FeatureSet {
   void setSIMD(bool v = true) { set(SIMD, v); }
   void setBulkMemory(bool v = true) { set(BulkMemory, v); }
   void setSignExt(bool v = true) { set(SignExt, v); }
+  void setExceptionHandling(bool v = true) { set(ExceptionHandling, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   void enable(const FeatureSet& other) { features |= other.features; }
@@ -101,6 +107,9 @@ struct FeatureSet {
     }
     if (hasSIMD()) {
       f(SIMD);
+    }
+    if (hasExceptionHandling()) {
+      f(ExceptionHandling);
     }
   }
 
