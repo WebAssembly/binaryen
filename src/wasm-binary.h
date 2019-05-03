@@ -888,6 +888,7 @@ inline S32LEB binaryType(Type type) {
       break;
     case except_ref:
       ret = BinaryConsts::EncodedType::ExceptRef;
+      break;
     case unreachable:
       WASM_UNREACHABLE();
   }
