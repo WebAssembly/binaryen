@@ -301,12 +301,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // Finally, get the code into the flat form we need for wasm2js itself, and
     // optimize that a little in a way that keeps flat property.
     runner.add("flatten");
-    runner.add("remove-unused-names");
-    runner.add("merge-blocks");
+    // Regardless of optimization level, run some simple optimizations to undo
+    // some of the effects of flattening.
     runner.add("simplify-locals-notee-nostructure");
-    // Coalescing is slow if we didn't run full optimizations earlier, so don't
-    // run it automatically.
+    // Some operations can be very slow if we didn't run full optimizations
+    // earlier, so don't run them automatically.
     if (options.optimizeLevel > 0) {
+      runner.add("remove-unused-names");
+      runner.add("merge-blocks");
       runner.add("coalesce-locals");
     }
     runner.add("reorder-locals");

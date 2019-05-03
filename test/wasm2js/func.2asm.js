@@ -182,8 +182,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function $47() {
-  dummy();
-  dummy();
+  block : {
+   dummy();
+   dummy();
+  }
  }
  
  function $48() {
@@ -278,8 +280,8 @@ function asmFunc(global, env, buffer) {
  function $62($0) {
   $0 = $0 | 0;
   var $2_1 = 0;
-  $2_1 = 50;
   fake_return_waka123 : {
+   $2_1 = 50;
    if ($0) {
     break fake_return_waka123
    }

@@ -114,8 +114,10 @@ function asmFunc(global, env, buffer) {
  function $13() {
   var $0 = 0, $1_1 = 0, $3_1 = 0;
   block : {
-   $0 = 3;
-   break block;
+   loop_in : while (1) {
+    $0 = 3;
+    break block;
+   };
   }
   return $0 | 0;
  }
@@ -123,9 +125,11 @@ function asmFunc(global, env, buffer) {
  function $14() {
   var $0 = 0, $1_1 = 0, $3_1 = 0;
   block : {
-   dummy();
-   $0 = 4;
-   break block;
+   loop_in : while (1) {
+    dummy();
+    $0 = 4;
+    break block;
+   };
   }
   return $0 | 0;
  }
@@ -133,9 +137,11 @@ function asmFunc(global, env, buffer) {
  function $15() {
   var $0 = 0;
   block : {
-   dummy();
-   $0 = 5;
-   break block;
+   loop_in : while (1) {
+    dummy();
+    $0 = 5;
+    break block;
+   };
   }
   return $0 | 0;
  }
@@ -504,8 +510,10 @@ function asmFunc(global, env, buffer) {
  function $54() {
   var $0 = 0;
   block : {
-   $0 = 8;
-   break block;
+   block0 : {
+    $0 = 8;
+    break block;
+   }
   }
   return 1 + $0 | 0 | 0;
  }
