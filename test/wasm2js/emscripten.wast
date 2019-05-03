@@ -14,6 +14,7 @@
  (export "exported" (func $exported))
  (export "sub-zero" (func $sub-zero))
  (export "select" (func $select))
+ (export "bools" (func $bools))
  (func $main
   (drop (call $syscall$6 (i32.const 1) (i32.const 2)))
   (drop (call $syscall$54 (i32.const 3) (i32.const 4)))
@@ -97,6 +98,15 @@
    (i32.load (i32.const 16)) ;; we can ignore this implicit trap, no side effects
    (local.get $x)
   )
+ )
+ (func $bools (param $x i32) (result i32)
+  (drop (call $bools (i32.and (i32.load8_u (i32.const 0)) (i32.const 1))))
+  (drop (call $bools (i32.and (i32.load8_s (i32.const 0)) (i32.const 1))))
+  (drop (call $bools (i32.and (i32.load16_u (i32.const 0)) (i32.const 1))))
+  (drop (call $bools (i32.and (i32.load16_s (i32.const 0)) (i32.const 1))))
+  (drop (call $bools (i32.and (i32.load (i32.const 0)) (i32.const 1))))
+  (drop (call $bools (i32.and (i32.load8_u (i32.const 0)) (i32.const 2))))
+  (unreachable)
  )
 )
 
