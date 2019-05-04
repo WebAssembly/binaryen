@@ -68,6 +68,8 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::TruncSat, "nontrapping float-to-int operations")
       .addFeature(FeatureSet::SIMD, "SIMD operations and types")
       .addFeature(FeatureSet::BulkMemory, "bulk memory operations")
+      .addFeature(FeatureSet::ExceptionHandling,
+                  "exception handling operations")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",

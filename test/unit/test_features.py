@@ -24,6 +24,9 @@ class FeatureValidationTest(BinaryenTestCase):
   def check_bulk_mem(self, module, error):
     self.check_feature(module, error, '--enable-bulk-memory')
 
+  def check_exception_handling(self, module, error):
+    self.check_feature(module, error, '--enable-exception-handling')
+
   def test_v128_signature(self):
     module = '''
     (module

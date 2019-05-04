@@ -399,6 +399,7 @@ extern const char* ExceptionHandlingFeature;
 extern const char* TruncSatFeature;
 extern const char* SignExtFeature;
 extern const char* SIMD128Feature;
+extern const char* ExceptionHandlingFeature;
 
 enum Subsection {
   NameFunction = 1,
