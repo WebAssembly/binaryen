@@ -8,6 +8,6 @@ then
   echo "Fix clang-tidy errors before committing!"
   echo
   # Run clang-tidy once again to show the error
-  git diff -U0 $MERGE_BASE | $CLANG_TIDY_DIFF -quiet -p1
+  git diff -U0 $MERGE_BASE | $CLANG_TIDY_DIFF -quiet -p1 2> /dev/null
   exit 1
 fi
