@@ -28,7 +28,6 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -150,12 +149,14 @@ function asmFunc(global, env, buffer) {
   var$1 = Math_floor(var$0);
   var$2 = var$0 - var$1;
   if (!(var$2 < .5)) {
-   var$0 = Math_ceil(var$0);
-   if (var$2 > .5) {
-    return +var$0
+   block : {
+    var$0 = Math_ceil(var$0);
+    if (var$2 > .5) {
+     return +var$0
+    }
+    var$2 = var$1 * .5;
+    var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
    }
-   var$2 = var$1 * .5;
-   var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
   }
   return +var$1;
  }

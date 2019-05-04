@@ -8,7 +8,6 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -86,6 +85,17 @@ function asmFunc(global, env, buffer) {
   return (wasm2js_i32$0 = x, wasm2js_i32$1 = HEAP32[16 >> 2] | 0, wasm2js_i32$2 = x, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0;
  }
  
+ function bools(x) {
+  x = x | 0;
+  bools((HEAPU8[0 >> 0] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAP8[0 >> 0] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAPU16[0 >> 1] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAP16[0 >> 1] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAP32[0 >> 2] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAPU8[0 >> 0] | 0) & 2 | 0 | 0) | 0;
+  abort();
+ }
+ 
  // EMSCRIPTEN_END_FUNCS;
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
@@ -96,7 +106,8 @@ function asmFunc(global, env, buffer) {
   "__growWasmMemory": __growWasmMemory, 
   "exported": exported, 
   "sub_zero": sub_zero, 
-  "select": select
+  "select": select, 
+  "bools": bools
  };
 }
 

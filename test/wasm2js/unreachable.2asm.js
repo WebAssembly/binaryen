@@ -7,7 +7,6 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -78,18 +77,24 @@ function asmFunc(global, env, buffer) {
  
  function $11() {
   var $0 = 0;
-  dummy();
-  abort();
+  block : {
+   dummy();
+   abort();
+  }
  }
  
  function $12() {
-  dummy();
-  abort();
+  block : {
+   dummy();
+   abort();
+  }
  }
  
  function $13() {
-  dummy();
-  abort();
+  block : {
+   dummy();
+   abort();
+  }
  }
  
  function $14() {
@@ -104,26 +109,32 @@ function asmFunc(global, env, buffer) {
  
  function $15() {
   var $0 = 0, $2_1 = 0;
-  abort();
+  loop_in : while (1) abort();
  }
  
  function $16() {
   var $0 = 0, $2_1 = 0;
-  dummy();
-  abort();
+  loop_in : while (1) {
+   dummy();
+   abort();
+  };
  }
  
  function $17() {
-  dummy();
-  abort();
+  loop_in : while (1) {
+   dummy();
+   abort();
+  };
  }
  
  function $18() {
   var $0 = 0;
   block : {
-   dummy();
-   $0 = 1;
-   break block;
+   loop_in : while (1) {
+    dummy();
+    $0 = 1;
+    break block;
+   };
   }
   return $0 | 0;
  }

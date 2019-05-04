@@ -7,7 +7,6 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -33,51 +32,193 @@ function asmFunc(global, env, buffer) {
  }
  
  function $2() {
-  return 7 | 0;
+  var $0 = 0;
+  loop_in0 : while (1) {
+   $0 = 7;
+   break loop_in0;
+  };
+  return $0 | 0;
  }
  
  function $3() {
-  dummy();
-  dummy();
-  dummy();
-  dummy();
-  dummy();
-  dummy();
-  dummy();
-  return 8 | 0;
+  var $2_1 = 0;
+  loop_in : while (1) {
+   dummy();
+   dummy();
+   dummy();
+   dummy();
+   break loop_in;
+  };
+  loop_in1 : while (1) {
+   dummy();
+   dummy();
+   dummy();
+   $2_1 = 8;
+   break loop_in1;
+  };
+  return $2_1 | 0;
  }
  
  function $4() {
-  dummy();
-  dummy();
-  return 9 | 0;
+  var $2_1 = 0;
+  loop_in : while (1) {
+   loop_in2 : while (1) {
+    dummy();
+    break loop_in2;
+   };
+   loop_in3 : while (1) {
+    dummy();
+    $2_1 = 9;
+    break loop_in3;
+   };
+   break loop_in;
+  };
+  return $2_1 | 0;
  }
  
  function $5() {
-  dummy();
-  return 150 | 0;
+  var $2_1 = 0, $6_1 = 0, $10_1 = 0, $14_1 = 0, $18_1 = 0, $22 = 0, $26 = 0, $30 = 0, $34 = 0, $38 = 0, $42 = 0, $46 = 0, $50 = 0, $54 = 0, $58 = 0, $62 = 0, $66 = 0, $70 = 0, $74 = 0, $78 = 0, $82 = 0;
+  loop_in : while (1) {
+   loop_in4 : while (1) {
+    loop_in6 : while (1) {
+     loop_in8 : while (1) {
+      loop_in10 : while (1) {
+       loop_in12 : while (1) {
+        loop_in14 : while (1) {
+         loop_in16 : while (1) {
+          loop_in18 : while (1) {
+           loop_in20 : while (1) {
+            loop_in22 : while (1) {
+             loop_in24 : while (1) {
+              loop_in26 : while (1) {
+               loop_in28 : while (1) {
+                loop_in30 : while (1) {
+                 loop_in32 : while (1) {
+                  loop_in34 : while (1) {
+                   loop_in36 : while (1) {
+                    loop_in38 : while (1) {
+                     loop_in40 : while (1) {
+                      loop_in42 : while (1) {
+                       loop_in44 : while (1) {
+                        dummy();
+                        $2_1 = 150;
+                        break loop_in44;
+                       };
+                       $6_1 = $2_1;
+                       break loop_in42;
+                      };
+                      $10_1 = $6_1;
+                      break loop_in40;
+                     };
+                     $14_1 = $10_1;
+                     break loop_in38;
+                    };
+                    $18_1 = $14_1;
+                    break loop_in36;
+                   };
+                   $22 = $18_1;
+                   break loop_in34;
+                  };
+                  $26 = $22;
+                  break loop_in32;
+                 };
+                 $30 = $26;
+                 break loop_in30;
+                };
+                $34 = $30;
+                break loop_in28;
+               };
+               $38 = $34;
+               break loop_in26;
+              };
+              $42 = $38;
+              break loop_in24;
+             };
+             $46 = $42;
+             break loop_in22;
+            };
+            $50 = $46;
+            break loop_in20;
+           };
+           $54 = $50;
+           break loop_in18;
+          };
+          $58 = $54;
+          break loop_in16;
+         };
+         $62 = $58;
+         break loop_in14;
+        };
+        $66 = $62;
+        break loop_in12;
+       };
+       $70 = $66;
+       break loop_in10;
+      };
+      $74 = $70;
+      break loop_in8;
+     };
+     $78 = $74;
+     break loop_in6;
+    };
+    $82 = $78;
+    break loop_in4;
+   };
+   break loop_in;
+  };
+  return $82 | 0;
  }
  
  function $6() {
-  dummy();
-  return __wasm_ctz_i32(13 | 0) | 0 | 0;
+  var $2_1 = 0;
+  loop_in : while (1) {
+   dummy();
+   $2_1 = 13;
+   break loop_in;
+  };
+  return __wasm_ctz_i32($2_1 | 0) | 0 | 0;
  }
  
  function $7() {
-  dummy();
-  dummy();
-  return Math_imul(3, 4) | 0;
+  var $2_1 = 0, $3_1 = 0, $6_1 = 0;
+  loop_in : while (1) {
+   dummy();
+   $2_1 = 3;
+   break loop_in;
+  };
+  $3_1 = $2_1;
+  loop_in46 : while (1) {
+   dummy();
+   $6_1 = 4;
+   break loop_in46;
+  };
+  return Math_imul($3_1, $6_1) | 0;
  }
  
  function $8() {
-  dummy();
-  return !13 | 0;
+  var $2_1 = 0;
+  loop_in : while (1) {
+   dummy();
+   $2_1 = 13;
+   break loop_in;
+  };
+  return !$2_1 | 0;
  }
  
  function $9() {
-  dummy();
-  dummy();
-  return Math_fround(3.0) > Math_fround(3.0) | 0;
+  var $2_1 = Math_fround(0), $3_1 = Math_fround(0), $6_1 = Math_fround(0);
+  loop_in : while (1) {
+   dummy();
+   $2_1 = Math_fround(3.0);
+   break loop_in;
+  };
+  $3_1 = $2_1;
+  loop_in47 : while (1) {
+   dummy();
+   $6_1 = Math_fround(3.0);
+   break loop_in47;
+  };
+  return $3_1 > $6_1 | 0;
  }
  
  function $10() {
@@ -85,21 +226,27 @@ function asmFunc(global, env, buffer) {
    loop_in : while (1) break block;
   }
   block48 : {
-   if (1) {
-    break block48
-   }
-   abort();
+   loop_in49 : while (1) {
+    if (1) {
+     break block48
+    }
+    abort();
+   };
   }
   block50 : {
-   switch (0 | 0) {
-   default:
-    break block50;
+   loop_in51 : while (1) {
+    switch (0 | 0) {
+    default:
+     break block50;
+    };
    };
   }
   block52 : {
-   switch (1 | 0) {
-   default:
-    break block52;
+   loop_in53 : while (1) {
+    switch (1 | 0) {
+    default:
+     break block52;
+    };
    };
   }
   return 19 | 0;
@@ -119,43 +266,59 @@ function asmFunc(global, env, buffer) {
  function $12() {
   var $0 = 0, $5_1 = 0, $7_1 = 0;
   block : {
-   $0 = 18;
-   break block;
+   loop_in : while (1) {
+    $0 = 18;
+    break block;
+   };
   }
   return $0 | 0;
  }
  
  function $13() {
-  var $0 = 0, $1_1 = 0, $2_1 = 0, $5_1 = 0, $6_1 = 0, $9_1 = 0, $10_1 = 0, $17_1 = 0, $18_1 = 0, $21 = 0, $22 = 0;
+  var $0 = 0, $1_1 = 0, $2_1 = 0, $5_1 = 0, $6_1 = 0, $9_1 = 0, $10_1 = 0, $12_1 = 0, $17_1 = 0, $18_1 = 0, $21 = 0, $22 = 0;
   $0 = 0;
   $1_1 = $0;
   block : {
-   $2_1 = 1;
-   break block;
+   loop_in : while (1) block54 : {
+    $2_1 = 1;
+    break block;
+   };
   }
   $0 = $1_1 + $2_1 | 0;
   $5_1 = $0;
   block55 : {
-   $6_1 = 2;
-   break block55;
+   loop_in56 : while (1) loop_in57 : while (1) {
+    $6_1 = 2;
+    break block55;
+   };
   }
   $0 = $5_1 + $6_1 | 0;
   $9_1 = $0;
-  block60 : {
-   $10_1 = 4;
-   break block60;
-  }
-  $0 = $9_1 + $10_1 | 0;
+  loop_in59 : while (1) {
+   block60 : {
+    loop_in61 : while (1) {
+     $10_1 = 4;
+     break block60;
+    };
+   }
+   $12_1 = $10_1;
+   break loop_in59;
+  };
+  $0 = $9_1 + $12_1 | 0;
   $17_1 = $0;
   block62 : {
-   $18_1 = 8;
-   break block62;
+   loop_in63 : while (1) {
+    $18_1 = 8;
+    break block62;
+   };
   }
   $0 = $17_1 + $18_1 | 0;
   $21 = $0;
   block64 : {
-   $22 = 16;
-   break block64;
+   loop_in65 : while (1) loop_in66 : while (1) {
+    $22 = 16;
+    break block64;
+   };
   }
   $0 = $21 + $22 | 0;
   return $0 | 0;
@@ -165,17 +328,19 @@ function asmFunc(global, env, buffer) {
   var $0 = 0, $1_1 = 0, $2_1 = 0, $3_1 = 0, $5_1 = 0;
   $0 = 0;
   $1_1 = $0;
-  loop_in : while (1) continue loop_in;
+  loop_in : while (1) loop_in67 : while (1) continue loop_in;
  }
  
  function fx() {
   var $0 = 0;
   block : {
-   $0 = 1;
-   $0 = Math_imul($0, 3);
-   $0 = $0 - 5 | 0;
-   $0 = Math_imul($0, 7);
-   break block;
+   loop_in : while (1) {
+    $0 = 1;
+    $0 = Math_imul($0, 3);
+    $0 = $0 - 5 | 0;
+    $0 = Math_imul($0, 7);
+    break block;
+   };
   }
   return ($0 | 0) == (-14 | 0) | 0;
  }

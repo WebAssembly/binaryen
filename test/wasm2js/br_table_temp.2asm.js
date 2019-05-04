@@ -6,7 +6,6 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -94,12 +93,6 @@ function asmFunc(global, env, buffer) {
  
  function $9($0) {
   $0 = $0 | 0;
-  block : {
-   switch ($0 | 0) {
-   default:
-    break block;
-   };
-  }
   return 22 | 0;
  }
  
@@ -12589,10 +12582,12 @@ function asmFunc(global, env, buffer) {
  function $20() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
   fake_return_waka123 : {
-   $1_1 = 3;
-   switch (0 | 0) {
-   default:
-    break fake_return_waka123;
+   loop_in : while (1) {
+    $1_1 = 3;
+    switch (0 | 0) {
+    default:
+     break fake_return_waka123;
+    };
    };
   }
   return $1_1 | 0;
@@ -12601,11 +12596,13 @@ function asmFunc(global, env, buffer) {
  function $21() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
   fake_return_waka123 : {
-   dummy();
-   $1_1 = 4;
-   switch (-1 | 0) {
-   default:
-    break fake_return_waka123;
+   loop_in : while (1) {
+    dummy();
+    $1_1 = 4;
+    switch (-1 | 0) {
+    default:
+     break fake_return_waka123;
+    };
    };
   }
   return $1_1 | 0;
@@ -12614,11 +12611,13 @@ function asmFunc(global, env, buffer) {
  function $22() {
   var $1_1 = 0;
   fake_return_waka123 : {
-   dummy();
-   $1_1 = 5;
-   switch (1 | 0) {
-   default:
-    break fake_return_waka123;
+   loop_in : while (1) {
+    dummy();
+    $1_1 = 5;
+    switch (1 | 0) {
+    default:
+     break fake_return_waka123;
+    };
    };
   }
   return $1_1 | 0;

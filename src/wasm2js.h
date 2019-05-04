@@ -301,12 +301,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // Finally, get the code into the flat form we need for wasm2js itself, and
     // optimize that a little in a way that keeps flat property.
     runner.add("flatten");
-    runner.add("remove-unused-names");
-    runner.add("merge-blocks");
+    // Regardless of optimization level, run some simple optimizations to undo
+    // some of the effects of flattening.
     runner.add("simplify-locals-notee-nostructure");
-    // Coalescing is slow if we didn't run full optimizations earlier, so don't
-    // run it automatically.
+    // Some operations can be very slow if we didn't run full optimizations
+    // earlier, so don't run them automatically.
     if (options.optimizeLevel > 0) {
+      runner.add("remove-unused-names");
+      runner.add("merge-blocks");
       runner.add("coalesce-locals");
     }
     runner.add("reorder-locals");
@@ -418,7 +420,6 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
   addHeap(HEAP32, INT32ARRAY);
   addHeap(HEAPU8, UINT8ARRAY);
   addHeap(HEAPU16, UINT16ARRAY);
-  addHeap(HEAPU32, UINT32ARRAY);
   addHeap(HEAPF32, FLOAT32ARRAY);
   addHeap(HEAPF64, FLOAT64ARRAY);
   // core asm.js imports
@@ -1685,7 +1686,6 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
   setHeap(HEAP32, INT32ARRAY);
   setHeap(HEAPU8, UINT8ARRAY);
   setHeap(HEAPU16, UINT16ARRAY);
-  setHeap(HEAPU32, UINT32ARRAY);
   setHeap(HEAPF32, FLOAT32ARRAY);
   setHeap(HEAPF64, FLOAT64ARRAY);
 
