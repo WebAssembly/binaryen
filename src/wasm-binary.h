@@ -886,7 +886,7 @@ inline S32LEB binaryType(Type type) {
     case v128:
       ret = BinaryConsts::EncodedType::v128;
       break;
-    case except_ref:
+    case ExceptRef:
       ret = BinaryConsts::EncodedType::ExceptRef;
       break;
     case unreachable:

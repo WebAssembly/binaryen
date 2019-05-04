@@ -57,13 +57,11 @@ Name get_i32("get_i32");
 Name get_i64("get_i64");
 Name get_f32("get_f32");
 Name get_f64("get_f64");
-Name get_except_ref("get_except_ref");
 
 Name set_i32("set_i32");
 Name set_i64("set_i64");
 Name set_f32("set_f32");
 Name set_f64("set_f64");
-Name set_except_ref("set_except_ref");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitGetLocal(GetLocal* curr) {
@@ -83,9 +81,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case v128:
         assert(false && "v128 not implemented yet");
-      case except_ref:
-        import = get_except_ref;
-        break;
+      case ExceptRef:
+        assert(false && "not implemented yet");
       case none:
         WASM_UNREACHABLE();
       case unreachable:
@@ -116,9 +113,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case v128:
         assert(false && "v128 not implemented yet");
-      case except_ref:
-        import = set_except_ref;
-        break;
+      case ExceptRef:
+        assert(false && "ExceptRef not implemented yet");
       case unreachable:
         return; // nothing to do here
       case none:
@@ -137,12 +133,10 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     addImport(curr, get_i64, "jiij");
     addImport(curr, get_f32, "fiif");
     addImport(curr, get_f64, "diid");
-    addImport(curr, get_except_ref, "eiie");
     addImport(curr, set_i32, "iiii");
     addImport(curr, set_i64, "jiij");
     addImport(curr, set_f32, "fiif");
     addImport(curr, set_f64, "diid");
-    addImport(curr, set_except_ref, "eiie");
   }
 
 private:

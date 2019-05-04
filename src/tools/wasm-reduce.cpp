@@ -592,7 +592,7 @@ struct Reducer
                 fixed = builder->makeUnary(TruncSFloat64ToInt32, child);
                 break;
               case v128:
-              case except_ref:
+              case ExceptRef:
                 continue; // not implemented yet
               case none:
               case unreachable:
@@ -614,7 +614,7 @@ struct Reducer
                 fixed = builder->makeUnary(TruncSFloat64ToInt64, child);
                 break;
               case v128:
-              case except_ref:
+              case ExceptRef:
                 continue; // not implemented yet
               case none:
               case unreachable:
@@ -636,7 +636,7 @@ struct Reducer
                 fixed = builder->makeUnary(DemoteFloat64, child);
                 break;
               case v128:
-              case except_ref:
+              case ExceptRef:
                 continue; // not implemented yet
               case none:
               case unreachable:
@@ -658,7 +658,7 @@ struct Reducer
               case f64:
                 WASM_UNREACHABLE();
               case v128:
-              case except_ref:
+              case ExceptRef:
                 continue; // not implemented yet
               case none:
               case unreachable:
@@ -667,7 +667,7 @@ struct Reducer
             break;
           }
           case v128:
-          case except_ref:
+          case ExceptRef:
             continue; // not implemented yet
           case none:
           case unreachable:

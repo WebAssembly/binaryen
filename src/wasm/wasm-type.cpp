@@ -36,7 +36,7 @@ const char* printType(Type type) {
       return "f64";
     case Type::v128:
       return "v128";
-    case Type::except_ref:
+    case Type::ExceptRef:
       return "except_ref";
     case Type::unreachable:
       return "unreachable";
@@ -56,7 +56,7 @@ unsigned getTypeSize(Type type) {
       return 8;
     case Type::v128:
       return 16;
-    case Type::except_ref: // except_ref type is opaque
+    case Type::ExceptRef: // ExceptRef type is opaque
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE();
@@ -112,5 +112,10 @@ bool isFloatType(Type type) {
 }
 
 bool isVectorType(Type type) { return type == v128; }
+
+bool isReferenceType(Type type) {
+  // TODO Add other reference types later
+  return type == ExceptRef;
+}
 
 } // namespace wasm
