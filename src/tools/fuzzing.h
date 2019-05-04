@@ -815,7 +815,7 @@ private:
       case f32:
       case f64:
       case v128:
-      case ExceptRef:
+      case except_ref:
         ret = _makeConcrete(type);
         break;
       case none:
@@ -1327,7 +1327,7 @@ private:
         return builder.makeLoad(
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
-      case ExceptRef: // ExceptRef cannot be loaded from memory
+      case except_ref: // except_ref cannot be loaded from memory
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -1336,8 +1336,8 @@ private:
   }
 
   Expression* makeLoad(Type type) {
-    // ExceptRef type cannot be stored in memory
-    if (!allowMemory || type == ExceptRef) {
+    // except_ref type cannot be stored in memory
+    if (!allowMemory || type == except_ref) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicLoad(type);
@@ -1428,7 +1428,7 @@ private:
         return builder.makeStore(
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
-      case ExceptRef: // ExceptRef cannot be stored in memory
+      case except_ref: // except_ref cannot be stored in memory
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -1437,8 +1437,8 @@ private:
   }
 
   Expression* makeStore(Type type) {
-    // ExceptRef type cannot be stored in memory
-    if (!allowMemory || type == ExceptRef) {
+    // except_ref type cannot be stored in memory
+    if (!allowMemory || type == except_ref) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicStore(type);
@@ -1523,7 +1523,7 @@ private:
           case f64:
             return Literal(getDouble());
           case v128:
-          case ExceptRef: // ExceptRef cannot have literals
+          case except_ref: // except_ref cannot have literals
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1565,7 +1565,7 @@ private:
           case f64:
             return Literal(double(small));
           case v128:
-          case ExceptRef: // ExceptRef cannot have literals
+          case except_ref: // except_ref cannot have literals
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1630,7 +1630,7 @@ private:
                                          std::numeric_limits<uint64_t>::max()));
             break;
           case v128:
-          case ExceptRef: // ExceptRef cannot have literals
+          case except_ref: // except_ref cannot have literals
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1661,7 +1661,7 @@ private:
             value = Literal(double(int64_t(1) << upTo(64)));
             break;
           case v128:
-          case ExceptRef: // ExceptRef cannot have literals
+          case except_ref: // except_ref cannot have literals
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1685,11 +1685,11 @@ private:
   }
 
   Expression* makeConst(Type type) {
-    if (type == ExceptRef) {
-      // There's no ExceptRef.const.
+    if (type == except_ref) {
+      // There's no except_ref.const.
       // TODO We should return a nullref once we implement instructions for
       // reference types proposal.
-      assert(false && "ExceptRef const is not implemented yet");
+      assert(false && "except_ref const is not implemented yet");
     }
     auto* ret = wasm.allocator.alloc<Const>();
     ret->value = makeLiteral(type);
@@ -1709,8 +1709,8 @@ private:
       // give up
       return makeTrivial(type);
     }
-    // There's no binary ops for ExceptRef
-    if (type == ExceptRef) {
+    // There's no binary ops for except_ref
+    if (type == except_ref) {
       makeTrivial(type);
     }
 
@@ -1759,7 +1759,7 @@ private:
                                     AllTrueVecI64x2),
                                make(v128)});
           }
-          case ExceptRef: // there's no unary ops for ExceptRef
+          case except_ref: // there's no unary ops for except_ref
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1890,7 +1890,7 @@ private:
         }
         WASM_UNREACHABLE();
       }
-      case ExceptRef: // there's no unary ops for ExceptRef
+      case except_ref: // there's no unary ops for except_ref
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -1911,8 +1911,8 @@ private:
       // give up
       return makeTrivial(type);
     }
-    // There's no binary ops for ExceptRef
-    if (type == ExceptRef) {
+    // There's no binary ops for except_ref
+    if (type == except_ref) {
       makeTrivial(type);
     }
 
@@ -2103,7 +2103,7 @@ private:
                             make(v128),
                             make(v128)});
       }
-      case ExceptRef: // there's no binary ops for ExceptRef
+      case except_ref: // there's no binary ops for except_ref
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -2297,7 +2297,7 @@ private:
         op = ExtractLaneVecF64x2;
         break;
       case v128:
-      case ExceptRef:
+      case except_ref:
       case none:
       case unreachable:
         WASM_UNREACHABLE();

@@ -95,8 +95,8 @@ private:
         // v128 not implemented yet
         return false;
       }
-      case ExceptRef: {
-        // ExceptRef cannot have literals
+      case except_ref: {
+        // except_ref cannot have literals
         return false;
       }
       case none:

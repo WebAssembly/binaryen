@@ -28,7 +28,7 @@ enum Type {
   f32,
   f64,
   v128,
-  ExceptRef,
+  except_ref,
   unreachable // none means no type, e.g. a block can have no return type. but
               // unreachable is different, as it can be "ignored" when doing
               // type checking across branches

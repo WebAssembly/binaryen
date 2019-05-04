@@ -791,7 +791,7 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     }
   }
   if (strncmp(str, "except_ref", 10) == 0 && (prefix || str[10] == 0)) {
-    return ExceptRef;
+    return except_ref;
   }
   if (allowError) {
     return none;

@@ -67,7 +67,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       break;
     }
 
-    case Type::ExceptRef: // there's no ExceptRef literals
+    case Type::except_ref: // there's no except_ref literals
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE();
@@ -87,7 +87,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.i64).castToF64();
     case Type::v128:
       return Literal(x.v128);
-    case Type::ExceptRef: // there's no ExceptRef literals
+    case Type::except_ref: // there's no except_ref literals
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE();
@@ -206,7 +206,7 @@ void printArg(std::ostream& setup, std::ostream& out, BinaryenLiteral arg) {
       out << "BinaryenLiteralVec128(" << array << ")";
       break;
     }
-    case Type::ExceptRef: // there's no ExceptRef literals
+    case Type::except_ref: // there's no except_ref literals
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE();
@@ -261,7 +261,7 @@ BinaryenType BinaryenTypeInt64(void) { return i64; }
 BinaryenType BinaryenTypeFloat32(void) { return f32; }
 BinaryenType BinaryenTypeFloat64(void) { return f64; }
 BinaryenType BinaryenTypeVec128(void) { return v128; }
-BinaryenType BinaryenTypeExceptRef(void) { return ExceptRef; }
+BinaryenType BinaryenTypeExceptRef(void) { return except_ref; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 
