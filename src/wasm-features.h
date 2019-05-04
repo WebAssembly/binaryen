@@ -96,6 +96,9 @@ struct FeatureSet {
     if (hasBulkMemory()) {
       f(BulkMemory);
     }
+    if (hasExceptionHandling()) {
+      f(ExceptionHandling);
+    }
     if (hasMutableGlobals()) {
       f(MutableGlobals);
     }
@@ -107,9 +110,6 @@ struct FeatureSet {
     }
     if (hasSIMD()) {
       f(SIMD);
-    }
-    if (hasExceptionHandling()) {
-      f(ExceptionHandling);
     }
   }
 
