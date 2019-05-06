@@ -1176,19 +1176,22 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       switch (curr->type) {
         case i32: {
           switch (curr->op) {
-            case ClzInt32:
+            case ClzInt32: {
               return ValueBuilder::makeCall(
                 MATH_CLZ32, visit(curr->value, EXPRESSION_RESULT));
+            }
             case CtzInt32:
-            case PopcntInt32:
+            case PopcntInt32: {
               std::cerr << "i32 unary should have been removed: " << curr
                         << std::endl;
               WASM_UNREACHABLE();
-            case EqZInt32:
+            }
+            case EqZInt32: {
               // XXX !x does change the type to bool, which is correct, but may
               // be slower?
               return ValueBuilder::makeUnary(
                 L_NOT, visit(curr->value, EXPRESSION_RESULT));
+            }
             case ReinterpretFloat32: {
               ABI::wasm2js::ensureScratchMemoryHelpers(
                 module, ABI::wasm2js::SCRATCH_STORE_F32);
@@ -1205,14 +1208,18 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             // generate (~~expr), what Emscripten does
             case TruncSFloat32ToInt32:
             case TruncSFloat64ToInt32:
+            case TruncSatSFloat32ToInt32:
+            case TruncSatSFloat64ToInt32: {
               return ValueBuilder::makeUnary(
                 B_NOT,
                 ValueBuilder::makeUnary(B_NOT,
                                         visit(curr->value, EXPRESSION_RESULT)));
-
+            }
             // generate (~~expr >>> 0), what Emscripten does
             case TruncUFloat32ToInt32:
             case TruncUFloat64ToInt32:
+            case TruncSatUFloat32ToInt32:
+            case TruncSatUFloat64ToInt32: {
               return ValueBuilder::makeBinary(
                 ValueBuilder::makeUnary(
                   B_NOT,
@@ -1220,7 +1227,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                     B_NOT, visit(curr->value, EXPRESSION_RESULT))),
                 TRSHIFT,
                 ValueBuilder::makeNum(0));
-
+            }
             default: {
               std::cerr << "Unhandled unary i32 operator: " << curr
                         << std::endl;
