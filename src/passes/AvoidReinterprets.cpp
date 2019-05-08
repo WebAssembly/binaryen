@@ -20,6 +20,7 @@
 // beneficial, unless reinterprets are very costly.
 
 #include <ir/local-graph.h>
+#include <ir/properties.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm.h>
@@ -32,7 +33,8 @@ static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
     return nullptr;
   }
   auto* set = *sets.begin();
-  return set->value->dynCast<Load>();
+  if (!set) return nullptr;
+  return Properties::getFallthrough(set->value)->dynCast<Load>();
 }
 
 static bool isReinterpret(Unary* curr) {
@@ -115,8 +117,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
         if (isReinterpret(curr)) {
           if (auto* load = curr->value->dynCast<Load>()) {
             // A reinterpret of a load - flip it right here.
-            replaceCurrent(
-              makeReinterpretedLoad(load, load->ptr, Builder(*module)));
+            replaceCurrent(makeReinterpretedLoad(load, load->ptr));
           } else if (auto* get = curr->value->dynCast<GetLocal>()) {
             if (auto* load = getSingleLoad(localGraph, get)) {
               auto iter = infos.find(load);
@@ -146,20 +147,20 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
             {builder.makeSetLocal(info.ptrLocal, ptr),
              builder.makeSetLocal(
                info.reinterpretedLocal,
-               makeReinterpretedLoad(
-                 curr, builder.makeGetLocal(info.ptrLocal, i32), builder)),
+               makeReinterpretedLoad(curr,
+                                     builder.makeGetLocal(info.ptrLocal, i32))),
              curr}));
         }
       }
 
-      Load*
-      makeReinterpretedLoad(Load* load, Expression* ptr, const Builder& builder) {
-        return makeLoad(load->bytes,
-                        false,
-                        load->offset,
-                        load->align,
-                        ptr,
-                        reinterpretType(load->type));
+      Load* makeReinterpretedLoad(Load* load, Expression* ptr) {
+        Builder builder(*module);
+        return builder.makeLoad(load->bytes,
+                                false,
+                                load->offset,
+                                load->align,
+                                ptr,
+                                reinterpretType(load->type));
       }
     } finalOptimizer(infos, localGraph, getModule());
 
