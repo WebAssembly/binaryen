@@ -67,6 +67,9 @@ std::string PassRegistry::getPassDescription(std::string name) {
 // PassRunner
 
 void PassRegistry::registerPasses() {
+  registerpass("avoid-reinterprets",
+               "Tries to avoid reinterpret operations via more loads,
+               createAvoidReinterpretsPass);
   registerPass(
     "dae", "removes arguments to calls in an lto-like manner", createDAEPass);
   registerPass("alignment-lowering",

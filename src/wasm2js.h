@@ -293,6 +293,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.add("flatten");
     runner.add("i64-to-i32-lowering");
     runner.add("alignment-lowering");
+    runner.add("avoid-reinterprets");
     // Next, optimize that as best we can. This should not generate
     // non-JS-friendly things.
     if (options.optimizeLevel > 0) {
