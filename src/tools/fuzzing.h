@@ -25,6 +25,9 @@ high chance for set at start of loop
     high chance of a tee in that case => loop var
 */
 
+// TODO Complete except_ref type support. Its support is partialy implemented
+// and the type is currently not generated in fuzzed programs yet.
+
 #include "ir/memory-utils.h"
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
