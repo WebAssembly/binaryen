@@ -29,9 +29,10 @@ enum Type {
   f64,
   v128,
   except_ref,
-  unreachable // none means no type, e.g. a block can have no return type. but
-              // unreachable is different, as it can be "ignored" when doing
-              // type checking across branches
+  // none means no type, e.g. a block can have no return type. but unreachable
+  // is different, as it can be "ignored" when doing type checking across
+  // branches
+  unreachable
 };
 
 const char* printType(Type type);

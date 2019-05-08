@@ -498,7 +498,7 @@ def instruction_parser():
   printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
 
   def print_leaf(expr, inst):
-    printer.print_line("if (strcmp(op, \"{inst}\") == 0) return {expr};"
+    printer.print_line("if (strcmp(op, \"{inst}\") == 0) {{ return {expr}; }}"
                        .format(inst=inst, expr=expr))
     printer.print_line("goto parse_error;")
 
