@@ -49,8 +49,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
   struct Info {
     // Info used when analyzing.
-    Index reinterpretUsages = 0;
-    Index totalUsages = 0;
+    bool reinterpreted;
     // Info used when optimizing.
     Index ptrLocal;
     Index reinterpretedLocal;
@@ -74,15 +73,10 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
       if (auto* get = curr->value->dynCast<GetLocal>()) {
         if (auto* load = getSingleLoad(localGraph, get)) {
           auto& info = infos[load];
-          info.reinterpretUsages++;
+          info.reinterpreted = true;
         }
       }
     }
-  }
-
-  void visitLoad(Load* curr) {
-    auto& info = infos[curr];
-    info.totalUsages++;
   }
 
   void optimize(Function* func) {
@@ -90,7 +84,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
     for (auto& pair : infos) {
       auto* load = pair.first;
       auto& info = pair.second;
-      if (info.reinterpretUsages > 0 && load->type != unreachable) {
+      if (info.reinterpreted && load->type != unreachable) {
         // We should use another load here, to avoid reinterprets.
         info.ptrLocal = Builder::addVar(func, i32);
         info.reinterpretedLocal =
