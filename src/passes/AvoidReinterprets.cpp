@@ -28,13 +28,25 @@
 namespace wasm {
 
 static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
-  auto& sets = localGraph->getSetses[get];
-  if (sets.size() != 1) {
+  while (1) {
+    auto& sets = localGraph->getSetses[get];
+    if (sets.size() != 1) {
+      return nullptr;
+    }
+    auto* set = *sets.begin();
+    if (!set) {
+      return nullptr;
+    }
+    auto* value = Properties::getFallthrough(set->value);
+    if (auto* parentGet = value->dynCast<GetLocal>()) {
+      get = parentGet;
+      continue;
+    }
+    if (auto* load = value->dynCast<Load>()) {
+      return load;
+    }
     return nullptr;
   }
-  auto* set = *sets.begin();
-  if (!set) return nullptr;
-  return Properties::getFallthrough(set->value)->dynCast<Load>();
 }
 
 static bool isReinterpret(Unary* curr) {
