@@ -278,6 +278,10 @@ struct DeadCodeElimination
           DELEGATE(Return);
         case Expression::Id::HostId:
           DELEGATE(Host);
+        case Expression::Id::PushId:
+          DELEGATE(Push);
+        case Expression::Id::PopId:
+          DELEGATE(Pop);
         case Expression::Id::NopId:
           DELEGATE(Nop);
         case Expression::Id::UnreachableId:

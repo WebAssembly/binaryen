@@ -155,6 +155,8 @@ void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
 void ReFinalize::visitHost(Host* curr) { curr->finalize(); }
+void ReFinalize::visitPush(Push* curr) { curr->finalize(); }
+void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 

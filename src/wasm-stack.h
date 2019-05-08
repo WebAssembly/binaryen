@@ -156,6 +156,8 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitPush(Push* curr);
+  void visitPop(Pop* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
@@ -2196,6 +2198,17 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
     }
   }
   o << U32LEB(0); // Reserved flags field
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitPush(Push* curr) {
+  visitChild(curr->value);
+  // No effect on either StackIR or binary output
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitPop(Pop* curr) {
+  // No effect on either StackIR or binary output
 }
 
 template<StackWriterMode Mode, typename Parent>

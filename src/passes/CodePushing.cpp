@@ -178,6 +178,7 @@ private:
         auto& effects = iter->second;
         if (cumulativeEffects.invalidates(effects)) {
           // we can't push this, so further pushables must pass it
+          // TODO: create a position-aware mergeIn to restore stack neutrality
           cumulativeEffects.mergeIn(effects);
         } else {
           // we can push this, great!

@@ -210,6 +210,11 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
   std::unordered_map<Name, BreakInfo> breakInfos;
 
+  std::vector<Expression*> ancestors;
+
+  // Track explicitly pushed and popped types
+  std::vector<Type> sideStack;
+
   Type returnType = unreachable; // type used in returns
 
   // Binaryen IR requires that label names must be unique - IR generators must
@@ -220,6 +225,14 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
 public:
   // visitors
+
+  static void pushAncestor(FunctionValidator* self, Expression** currp) {
+    self->ancestors.push_back(*currp);
+  }
+
+  static void popAncestor(FunctionValidator* self, Expression** currp) {
+    self->ancestors.pop_back();
+  }
 
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
@@ -242,6 +255,8 @@ public:
 
   // override scan to add a pre and a post check task to all nodes
   static void scan(FunctionValidator* self, Expression** currp) {
+    self->pushTask(popAncestor, currp);
+
     PostWalker<FunctionValidator>::scan(self, currp);
 
     auto* curr = *currp;
@@ -251,6 +266,8 @@ public:
     if (curr->is<Loop>()) {
       self->pushTask(visitPreLoop, currp);
     }
+
+    self->pushTask(pushAncestor, currp);
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
@@ -284,6 +301,8 @@ public:
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitPush(Push* curr);
+  void visitPop(Pop* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -432,6 +451,7 @@ void FunctionValidator::visitBlock(Block* curr) {
     shouldBeTrue(
       curr->list.size() > 0, curr, "block with a value must not be empty");
   }
+  // TODO: check that multivalue blocks are children of pushes
 }
 
 void FunctionValidator::visitLoop(Loop* curr) {
@@ -451,6 +471,7 @@ void FunctionValidator::visitLoop(Loop* curr) {
                   curr,
                   "bad body for a loop that has no value");
   }
+  // TODO: check that multivalue loops are children of pushes
 }
 
 void FunctionValidator::visitIf(If* curr) {
@@ -514,6 +535,7 @@ void FunctionValidator::visitIf(If* curr) {
         "other arm must match concrete ifFalse");
     }
   }
+  // TODO: check that multivalue calls are children of pushes
 }
 
 void FunctionValidator::noteBreak(Name name,
@@ -555,6 +577,7 @@ void FunctionValidator::visitBreak(Break* curr) {
                  curr,
                  "break condition must be i32");
   }
+  // TODO: check that breaks to multivalue blocks/loops have compatible stacks
 }
 
 void FunctionValidator::visitSwitch(Switch* curr) {
@@ -566,6 +589,7 @@ void FunctionValidator::visitSwitch(Switch* curr) {
                  curr->condition->type == i32,
                curr,
                "br_table condition must be i32");
+  // TODO: check that multivalue switches are children of pushes
 }
 
 void FunctionValidator::visitCall(Call* curr) {
@@ -590,6 +614,7 @@ void FunctionValidator::visitCall(Call* curr) {
       getStream() << "(on argument " << i << ")\n";
     }
   }
+  // TODO: check that multivalue calls are children of pushes
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -616,6 +641,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
       getStream() << "(on argument " << i << ")\n";
     }
   }
+  // TODO: check that multivalue calls are children of pushes
 }
 
 void FunctionValidator::visitConst(Const* curr) {
@@ -1504,6 +1530,50 @@ void FunctionValidator::visitHost(Host* curr) {
     }
     case CurrentMemory:
       break;
+  }
+}
+
+void FunctionValidator::visitPush(Push* curr) {
+  if (curr->type != unreachable) {
+    sideStack.push_back(curr->value->type);
+  }
+}
+
+void FunctionValidator::visitPop(Pop* curr) {
+  if (curr->type == unreachable) {
+    return;
+  }
+  shouldBeTrue(sideStack.size() > curr->depth, curr,
+               "Cannot pop an empty stack");
+  if (sideStack.size() <= curr->depth) {
+    return;
+  }
+  auto it = sideStack.end() - 1 - curr->depth;
+  shouldBeEqual(*it, curr->type, curr,
+                "Popped type does not match pushed type");
+  sideStack.erase(it);
+  // Pops must be the children of blocks or grandchildren of blocks or pushes
+  shouldBeTrue((ancestors.size() >= 2 && ancestors.back()->is<Block>()) ||
+               (ancestors.size() >= 3 &&
+                ((*(ancestors.end() - 3))->is<Block>() ||
+                 (*(ancestors.end() - 3))->is<Push>())),
+               curr,
+               "Pop must be child of block or grandchild of block or push");
+  // Check that pop's siblings are pops
+  if (ancestors.size() >= 2) {
+    Expression* parent = *(ancestors.end() - 2);
+    ChildIterator children(parent);
+    if (children.children.size() > 1) {
+      // Only check once, instead of for every child
+      shouldBeTrue((*children.begin())->is<Pop>(), parent,
+                   "Siblings of pops must be pops");
+      if (*children.begin() == static_cast<Expression*>(curr)) {
+        for (auto* child : children) {
+          shouldBeTrue(!isConcreteType(child->type) || child->is<Pop>(),
+                       parent, "Siblings of pops must be pops");
+        }
+      }
+    }
   }
 }
 

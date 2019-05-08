@@ -90,7 +90,20 @@ public:
 
   // IR nodes
 
-  Nop* makeNop() { return allocator.alloc<Nop>(); }
+  Push* makePush(Expression* value ) {
+    auto* ret = allocator.alloc<Push>();
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  Pop* makePop(Type type, Index depth) {
+    auto* ret = allocator.alloc<Pop>(type, depth);
+    ret->finalize();
+    return ret;
+  }
+  Nop* makeNop() {
+    return allocator.alloc<Nop>();
+  }
   Block* makeBlock(Expression* first = nullptr) {
     auto* ret = allocator.alloc<Block>();
     if (first) {

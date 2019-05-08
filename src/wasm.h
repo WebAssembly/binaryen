@@ -462,6 +462,8 @@ public:
     DropId,
     ReturnId,
     HostId,
+    PushId,
+    PopId,
     NopId,
     UnreachableId,
     AtomicRMWId,
@@ -971,6 +973,28 @@ class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
   Unreachable() { type = unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
+};
+
+class Push : public SpecificExpression<Expression::PushId> {
+public:
+  Push() = default;
+  Push(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class Pop : public SpecificExpression<Expression::PopId> {
+public:
+  Pop(Type type, Index depth) : depth(depth) { this->type = type; }
+  Pop(MixedArena& allocator, Type type, Index depth) : depth(depth) {
+    this->type = type;
+  }
+
+  Index depth;
+
+  void finalize();
 };
 
 // Globals

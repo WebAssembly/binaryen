@@ -139,12 +139,14 @@ struct MixedArena {
     return static_cast<void*>(ret);
   }
 
-  template<class T> T* alloc() {
+  template<class T, typename... Ts> T* alloc(Ts... args) {
     static_assert(alignof(T) <= MAX_ALIGN,
                   "maximum alignment not large enough");
     auto* ret = static_cast<T*>(allocSpace(sizeof(T), alignof(T)));
-    new (ret) T(*this); // allocated objects receive the allocator, so they can
-                        // allocate more later if necessary
+    // allocated objects receive the allocator, so they can allocate more later
+    // if necessary
+    new (ret) T(*this, args...);
+
     return ret;
   }
 

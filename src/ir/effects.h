@@ -66,6 +66,9 @@ struct EffectAnalyzer
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. grow_memory)
   bool isAtomic = false;
+  // Prior values popped and pushed values that are left on the stack
+  size_t stackPops = 0;
+  size_t stackPushes = 0;
 
   // Helper functions to check for various effect types
 
@@ -75,18 +78,23 @@ struct EffectAnalyzer
   bool accessesGlobal() const {
     return globalsRead.size() + globalsWritten.size() > 0;
   }
-  bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-
+  bool accessesMemory() const {
+    return calls || readsMemory || writesMemory;
+  }
+  bool isStackNeutral() const {
+    return stackPops == 0 && stackPushes == 0;
+  }
   bool hasGlobalSideEffects() const {
     return calls || globalsWritten.size() > 0 || writesMemory || isAtomic;
   }
   bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
-           implicitTrap;
+        implicitTrap || !isStackNeutral();
   }
   bool hasAnything() const {
     return branches || calls || accessesLocal() || readsMemory ||
-           writesMemory || accessesGlobal() || implicitTrap || isAtomic;
+        writesMemory || accessesGlobal() || implicitTrap || isAtomic ||
+        !isStackNeutral();
   }
 
   bool noticesGlobalSideEffects() {
@@ -102,7 +110,8 @@ struct EffectAnalyzer
     if ((branches && other.hasSideEffects()) ||
         (other.branches && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
-        (accessesMemory() && (other.writesMemory || other.calls))) {
+        (accessesMemory() && (other.writesMemory || other.calls)) ||
+        !isStackNeutral() || !other.isStackNeutral()) {
       return true;
     }
     // All atomics are sequentially consistent for now, and ordered wrt other
@@ -155,6 +164,11 @@ struct EffectAnalyzer
     writesMemory = writesMemory || other.writesMemory;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
+    // Conservatively update stack state, since we don't know the relative
+    // position of the merged code
+    // TODO: less conservative position-aware merging
+    stackPops = std::max(stackPops, other.stackPops);
+    stackPushes = std::max(stackPushes, other.stackPushes);
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -365,6 +379,18 @@ struct EffectAnalyzer
     writesMemory = true;
     // Atomics are also sequentially consistent with grow_memory.
     isAtomic = true;
+  }
+  void visitPush(Push* curr) {
+    // Pushes cannot fill earlier pops
+    ++stackPushes;
+  }
+  void visitPop(Pop* curr) {
+    // But pops can negate earlier pushes
+    if (stackPushes > 0) {
+      --stackPushes;
+    } else {
+      ++stackPops;
+    }
   }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branches = true; }

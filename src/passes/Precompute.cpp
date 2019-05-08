@@ -122,6 +122,8 @@ public:
   Flow visitDataDrop(DataDrop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryFill(MemoryFill* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitPush(Push* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitPop(Pop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitHost(Host* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
 
   void trap(const char* why) override { throw NonstandaloneException(); }

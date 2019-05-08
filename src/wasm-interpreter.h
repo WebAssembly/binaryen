@@ -1027,6 +1027,8 @@ public:
   Flow visitSetGlobal(SetGlobal*) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE(); }
+  Flow visitPush(Push* curr) { WASM_UNREACHABLE(); }
+  Flow visitPop(Pop* curr) { WASM_UNREACHABLE(); }
   Flow visitHost(Host* curr) { WASM_UNREACHABLE(); }
   Flow visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE(); }
   Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE(); }
@@ -1376,6 +1378,7 @@ private:
     : public ExpressionRunner<RuntimeExpressionRunner> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
+    std::vector<Literal> sideStack;
 
   public:
     RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope)
@@ -1431,7 +1434,24 @@ private:
       return instance.externalInterface->callTable(
         index, arguments, curr->type, *instance.self());
     }
-
+    Flow visitPush(Push* curr) {
+      NOTE_ENTER("Push");
+      Flow flow = this->visit(curr->value);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow.value);
+      sideStack.push_back(flow.value);
+      return {};
+    }
+    Flow visitPop(Pop* curr) {
+      NOTE_ENTER("Pop");
+      assert(sideStack.size() > curr->depth);
+      auto it = sideStack.end() - 1 - curr->depth;
+      Flow flow(*it);
+      sideStack.erase(it);
+      return flow;
+    }
     Flow visitGetLocal(GetLocal* curr) {
       NOTE_ENTER("GetLocal");
       auto index = curr->index;

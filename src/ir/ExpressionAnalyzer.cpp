@@ -207,6 +207,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitInt(curr->op);
       visitor.visitNonScopeName(curr->nameOperand);
     }
+    void visitPush(Push* curr) {}
+    void visitPop(Pop* curr) {}
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) {}
   } singleton(curr, visitor);

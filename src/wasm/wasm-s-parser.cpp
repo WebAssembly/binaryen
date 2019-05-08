@@ -682,7 +682,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
       if (!currFunction) {
         makeFunction();
       }
-      Expression* ex = parseExpression(curr);
+      Expression* ex = parseExpression(curr, 0);
       if (!body) {
         body = ex;
       } else {
@@ -835,15 +835,15 @@ SExpressionWasmBuilder::getDebugLocation(const SourceLocation& loc) {
   return {fileIndex, loc.line, loc.column};
 }
 
-Expression* SExpressionWasmBuilder::parseExpression(Element& s) {
-  Expression* result = makeExpression(s);
+Expression* SExpressionWasmBuilder::parseExpression(Element& s, Index depth) {
+  Expression* result = makeExpression(s, depth);
   if (s.startLoc && currFunction) {
     currFunction->debugLocations[result] = getDebugLocation(*s.startLoc);
   }
   return result;
 }
 
-Expression* SExpressionWasmBuilder::makeExpression(Element& s){
+Expression* SExpressionWasmBuilder::makeExpression(Element& s, Index depth) {
 #define INSTRUCTION_PARSER
 #include "gen-s-parser.inc"
 }
@@ -857,8 +857,8 @@ Expression* SExpressionWasmBuilder::makeNop() { return allocator.alloc<Nop>(); }
 Expression* SExpressionWasmBuilder::makeBinary(Element& s, BinaryOp op) {
   auto ret = allocator.alloc<Binary>();
   ret->op = op;
-  ret->left = parseExpression(s[1]);
-  ret->right = parseExpression(s[2]);
+  ret->left = parseExpression(s[1], 1);
+  ret->right = parseExpression(s[2], 0);
   ret->finalize();
   return ret;
 }
@@ -866,23 +866,23 @@ Expression* SExpressionWasmBuilder::makeBinary(Element& s, BinaryOp op) {
 Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op) {
   auto ret = allocator.alloc<Unary>();
   ret->op = op;
-  ret->value = parseExpression(s[1]);
+  ret->value = parseExpression(s[1], 0);
   ret->finalize();
   return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeSelect(Element& s) {
   auto ret = allocator.alloc<Select>();
-  ret->ifTrue = parseExpression(s[1]);
-  ret->ifFalse = parseExpression(s[2]);
-  ret->condition = parseExpression(s[3]);
+  ret->ifTrue = parseExpression(s[1], 2);
+  ret->ifFalse = parseExpression(s[2], 1);
+  ret->condition = parseExpression(s[3], 0);
   ret->finalize();
   return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeDrop(Element& s) {
   auto ret = allocator.alloc<Drop>();
-  ret->value = parseExpression(s[1]);
+  ret->value = parseExpression(s[1], 0);
   ret->finalize();
   return ret;
 }
@@ -890,7 +890,7 @@ Expression* SExpressionWasmBuilder::makeDrop(Element& s) {
 Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
   auto ret = allocator.alloc<Host>();
   ret->op = op;
-  parseCallOperands(s, 1, s.size(), ret);
+  parseCallOperands(s, 1, s.size(), ret, 0);
   if (ret->op == HostOp::GrowMemory) {
     if (ret->operands.size() != 1) {
       throw ParseException("grow_memory needs one operand");
@@ -900,6 +900,25 @@ Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
       throw ParseException("host needs zero operands");
     }
   }
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makePush(Element &s) {
+  auto ret = allocator.alloc<Push>();
+  ret->value = parseExpression(s[1], 0);
+  ret->finalize();
+  sideStack.push_back(ret->value->type);
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makePop(Index depth) {
+  if (sideStack.size() <= depth) {
+    throw ParseException("pop without push");
+  }
+  auto it = sideStack.end() - 1 - depth;
+  auto ret = allocator.alloc<Pop>(*it, depth);
+  sideStack.erase(it);
   ret->finalize();
   return ret;
 }
@@ -933,7 +952,7 @@ Expression* SExpressionWasmBuilder::makeGetLocal(Element& s) {
 Expression* SExpressionWasmBuilder::makeTeeLocal(Element& s) {
   auto ret = allocator.alloc<SetLocal>();
   ret->index = getLocalIndex(*s[1]);
-  ret->value = parseExpression(s[2]);
+  ret->value = parseExpression(s[2], 0);
   ret->setTee(true);
   ret->finalize();
   return ret;
@@ -942,7 +961,7 @@ Expression* SExpressionWasmBuilder::makeTeeLocal(Element& s) {
 Expression* SExpressionWasmBuilder::makeSetLocal(Element& s) {
   auto ret = allocator.alloc<SetLocal>();
   ret->index = getLocalIndex(*s[1]);
-  ret->value = parseExpression(s[2]);
+  ret->value = parseExpression(s[2], 0);
   ret->setTee(false);
   ret->finalize();
   return ret;
@@ -966,7 +985,7 @@ Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
       !wasm.getGlobalOrNull(ret->name)->mutable_) {
     throw ParseException("global.set of immutable", s.line, s.col);
   }
-  ret->value = parseExpression(s[2]);
+  ret->value = parseExpression(s[2], 0);
   ret->finalize();
   return ret;
 }
@@ -1033,7 +1052,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
         i++;
       }
       for (; i < s.size(); i++) {
-        curr->list.push_back(parseExpression(s[i]));
+        curr->list.push_back(parseExpression(s[i], 0));
       }
     }
     nameMapper.popLabelName(curr->name);
@@ -1051,7 +1070,7 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
     i++;
   }
   for (; i < s.size(); i++) {
-    ret->list.push_back(parseExpression(s[i]));
+    ret->list.push_back(parseExpression(s[i], 0));
   }
   ret->finalize();
   return ret;
@@ -1208,7 +1227,7 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   ret->bytes = parseMemBytes(extra, getTypeSize(type));
   ret->signed_ = extra[0] && extra[1] == 's';
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
-  ret->ptr = parseExpression(s[i]);
+  ret->ptr = parseExpression(s[i], 0);
   ret->finalize();
   return ret;
 }
@@ -1221,8 +1240,8 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   ret->valueType = type;
   ret->bytes = parseMemBytes(extra, getTypeSize(type));
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
-  ret->ptr = parseExpression(s[i]);
-  ret->value = parseExpression(s[i + 1]);
+  ret->ptr = parseExpression(s[i], 1);
+  ret->value = parseExpression(s[i + 1], 0);
   ret->finalize();
   return ret;
 }
@@ -1270,8 +1289,8 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
   if (align != ret->bytes) {
     throw ParseException("Align of Atomic RMW must match size");
   }
-  ret->ptr = parseExpression(s[i]);
-  ret->value = parseExpression(s[i + 1]);
+  ret->ptr = parseExpression(s[i], 1);
+  ret->value = parseExpression(s[i + 1], 0);
   ret->finalize();
   return ret;
 }
@@ -1288,9 +1307,9 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
   if (align != ret->bytes) {
     throw ParseException("Align of Atomic Cmpxchg must match size");
   }
-  ret->ptr = parseExpression(s[i]);
-  ret->expected = parseExpression(s[i + 1]);
-  ret->replacement = parseExpression(s[i + 2]);
+  ret->ptr = parseExpression(s[i], 2);
+  ret->expected = parseExpression(s[i + 1], 1);
+  ret->replacement = parseExpression(s[i + 2], 0);
   ret->finalize();
   return ret;
 }
@@ -1299,9 +1318,9 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   auto ret = allocator.alloc<AtomicWait>();
   ret->type = i32;
   ret->expectedType = type;
-  ret->ptr = parseExpression(s[1]);
-  ret->expected = parseExpression(s[2]);
-  ret->timeout = parseExpression(s[3]);
+  ret->ptr = parseExpression(s[1], 2);
+  ret->expected = parseExpression(s[2], 1);
+  ret->timeout = parseExpression(s[3], 0);
   ret->finalize();
   return ret;
 }
@@ -1309,8 +1328,8 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
 Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   auto ret = allocator.alloc<AtomicNotify>();
   ret->type = i32;
-  ret->ptr = parseExpression(s[1]);
-  ret->notifyCount = parseExpression(s[2]);
+  ret->ptr = parseExpression(s[1], 1);
+  ret->notifyCount = parseExpression(s[2], 0);
   ret->finalize();
   return ret;
 }
@@ -1335,7 +1354,7 @@ Expression* SExpressionWasmBuilder::makeSIMDExtract(Element& s,
   auto ret = allocator.alloc<SIMDExtract>();
   ret->op = op;
   ret->index = parseLaneIndex(s[1], lanes);
-  ret->vec = parseExpression(s[2]);
+  ret->vec = parseExpression(s[2], 0);
   ret->finalize();
   return ret;
 }
@@ -1346,8 +1365,8 @@ Expression* SExpressionWasmBuilder::makeSIMDReplace(Element& s,
   auto ret = allocator.alloc<SIMDReplace>();
   ret->op = op;
   ret->index = parseLaneIndex(s[1], lanes);
-  ret->vec = parseExpression(s[2]);
-  ret->value = parseExpression(s[3]);
+  ret->vec = parseExpression(s[2], 1);
+  ret->value = parseExpression(s[3], 0);
   ret->finalize();
   return ret;
 }
@@ -1357,17 +1376,17 @@ Expression* SExpressionWasmBuilder::makeSIMDShuffle(Element& s) {
   for (size_t i = 0; i < 16; ++i) {
     ret->mask[i] = parseLaneIndex(s[i + 1], 32);
   }
-  ret->left = parseExpression(s[17]);
-  ret->right = parseExpression(s[18]);
+  ret->left = parseExpression(s[17], 1);
+  ret->right = parseExpression(s[18], 0);
   ret->finalize();
   return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeSIMDBitselect(Element& s) {
   auto ret = allocator.alloc<SIMDBitselect>();
-  ret->left = parseExpression(s[1]);
-  ret->right = parseExpression(s[2]);
-  ret->cond = parseExpression(s[3]);
+  ret->left = parseExpression(s[1], 2);
+  ret->right = parseExpression(s[2], 1);
+  ret->cond = parseExpression(s[3], 0);
   ret->finalize();
   return ret;
 }
@@ -1375,8 +1394,8 @@ Expression* SExpressionWasmBuilder::makeSIMDBitselect(Element& s) {
 Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
   auto ret = allocator.alloc<SIMDShift>();
   ret->op = op;
-  ret->vec = parseExpression(s[1]);
-  ret->shift = parseExpression(s[2]);
+  ret->vec = parseExpression(s[1], 1);
+  ret->shift = parseExpression(s[2], 0);
   ret->finalize();
   return ret;
 }
@@ -1384,9 +1403,9 @@ Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
 Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
   auto ret = allocator.alloc<MemoryInit>();
   ret->segment = atoi(s[1]->str().c_str());
-  ret->dest = parseExpression(s[2]);
-  ret->offset = parseExpression(s[3]);
-  ret->size = parseExpression(s[4]);
+  ret->dest = parseExpression(s[2], 2);
+  ret->offset = parseExpression(s[3], 1);
+  ret->size = parseExpression(s[4], 0);
   ret->finalize();
   return ret;
 }
@@ -1400,18 +1419,18 @@ Expression* SExpressionWasmBuilder::makeDataDrop(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeMemoryCopy(Element& s) {
   auto ret = allocator.alloc<MemoryCopy>();
-  ret->dest = parseExpression(s[1]);
-  ret->source = parseExpression(s[2]);
-  ret->size = parseExpression(s[3]);
+  ret->dest = parseExpression(s[1], 2);
+  ret->source = parseExpression(s[2], 1);
+  ret->size = parseExpression(s[3], 0);
   ret->finalize();
   return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeMemoryFill(Element& s) {
   auto ret = allocator.alloc<MemoryFill>();
-  ret->dest = parseExpression(s[1]);
-  ret->value = parseExpression(s[2]);
-  ret->size = parseExpression(s[3]);
+  ret->dest = parseExpression(s[1], 2);
+  ret->value = parseExpression(s[2], 1);
+  ret->size = parseExpression(s[3], 0);
   ret->finalize();
   return ret;
 }
@@ -1429,10 +1448,10 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   auto label = nameMapper.pushLabelName(sName);
   // if signature
   Type type = parseOptionalResultType(s, i);
-  ret->condition = parseExpression(s[i++]);
-  ret->ifTrue = parseExpression(*s[i++]);
+  ret->condition = parseExpression(s[i++], 0);
+  ret->ifTrue = parseExpression(*s[i++], 0);
   if (i < s.size()) {
-    ret->ifFalse = parseExpression(*s[i++]);
+    ret->ifFalse = parseExpression(*s[i++], 0);
   }
   ret->finalize(type);
   nameMapper.popLabelName(label);
@@ -1454,11 +1473,11 @@ SExpressionWasmBuilder::makeMaybeBlock(Element& s, size_t i, Type type) {
     return allocator.alloc<Nop>();
   }
   if (s.size() == i + 1) {
-    return parseExpression(s[i]);
+    return parseExpression(s[i], 0);
   }
   auto ret = allocator.alloc<Block>();
   for (; i < s.size() && i < stopAt; i++) {
-    ret->list.push_back(parseExpression(s[i]));
+    ret->list.push_back(parseExpression(s[i], 0));
   }
   ret->finalize(type);
   // Note that we do not name these implicit/synthetic blocks. They
@@ -1510,7 +1529,7 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s) {
   auto ret = allocator.alloc<Call>();
   ret->target = target;
   ret->type = functionTypes[ret->target];
-  parseCallOperands(s, 2, s.size(), ret);
+  parseCallOperands(s, 2, s.size(), ret, 0);
   ret->finalize();
   return ret;
 }
@@ -1550,8 +1569,8 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
     ret->fullType = ensureFunctionType(getSig(&type), &wasm)->name;
   }
   ret->type = wasm.getFunctionType(ret->fullType)->result;
-  parseCallOperands(s, i, s.size() - 1, ret);
-  ret->target = parseExpression(s[s.size() - 1]);
+  parseCallOperands(s, i, s.size() - 1, ret, 1);
+  ret->target = parseExpression(s[s.size() - 1], 0);
   ret->finalize();
   return ret;
 }
@@ -1592,12 +1611,12 @@ Expression* SExpressionWasmBuilder::makeBreak(Element& s) {
   }
   if (s[0]->str() == BR_IF) {
     if (i + 1 < s.size()) {
-      ret->value = parseExpression(s[i]);
+      ret->value = parseExpression(s[i], 1);
       i++;
     }
-    ret->condition = parseExpression(s[i]);
+    ret->condition = parseExpression(s[i], 0);
   } else {
-    ret->value = parseExpression(s[i]);
+    ret->value = parseExpression(s[i], 0);
   }
   ret->finalize();
   return ret;
@@ -1614,10 +1633,12 @@ Expression* SExpressionWasmBuilder::makeBreakTable(Element& s) {
   }
   ret->default_ = ret->targets.back();
   ret->targets.pop_back();
-  ret->condition = parseExpression(s[i++]);
-  if (i < s.size()) {
-    ret->value = ret->condition;
-    ret->condition = parseExpression(s[i++]);
+  if (i + 1 < s.size()) {
+    ret->value = parseExpression(s[i++], 1);
+    ret->condition = parseExpression(s[i++], 0);
+  } else {
+    ret->value = nullptr;
+    ret->condition = parseExpression(s[i++], 0);
   }
   return ret;
 }
@@ -1625,7 +1646,7 @@ Expression* SExpressionWasmBuilder::makeBreakTable(Element& s) {
 Expression* SExpressionWasmBuilder::makeReturn(Element& s) {
   auto ret = allocator.alloc<Return>();
   if (s.size() >= 2) {
-    ret->value = parseExpression(s[1]);
+    ret->value = parseExpression(s[1], 0);
   }
   return ret;
 }
@@ -1779,7 +1800,7 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     i++;
   }
   if (!isPassive) {
-    offset = parseExpression(s[i]);
+    offset = parseExpression(s[i], 0);
   }
   if (s.size() != 3 && s.size() != 4) {
     throw ParseException("Unexpected data items");
@@ -2075,7 +2096,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   }
   global->type = type;
   if (i < s.size()) {
-    global->init = parseExpression(s[i++]);
+    global->init = parseExpression(s[i++], 0);
   } else {
     throw ParseException("global without init", s.line, s.col);
   }
@@ -2172,7 +2193,7 @@ void SExpressionWasmBuilder::parseElem(Element& s) {
     // the table is named
     i++;
   }
-  auto* offset = parseExpression(s[i++]);
+  auto* offset = parseExpression(s[i++], 0);
   parseInnerElem(s, i, offset);
 }
 

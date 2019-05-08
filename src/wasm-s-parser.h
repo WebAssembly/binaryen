@@ -161,15 +161,22 @@ private:
   Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) { return stringToType(str, true) != none; }
 
+  // Track explicitly pushed types
+  std::vector<Type> sideStack;
+
 public:
-  Expression* parseExpression(Element* s) { return parseExpression(*s); }
-  Expression* parseExpression(Element& s);
+  Expression* parseExpression(Element* s, Index depth = 0) {
+    return parseExpression(*s, depth);
+  }
+  Expression* parseExpression(Element& s, Index depth = 0);
 
   MixedArena& getAllocator() { return allocator; }
 
 private:
-  Expression* makeExpression(Element& s);
+  Expression* makeExpression(Element& s, Index depth);
   Expression* makeUnreachable();
+  Expression* makePush(Element& s);
+  Expression* makePop(Index depth);
   Expression* makeNop();
   Expression* makeBinary(Element& s, BinaryOp op);
   Expression* makeUnary(Element& s, UnaryOp op);
@@ -209,9 +216,9 @@ private:
   Expression* makeCall(Element& s);
   Expression* makeCallIndirect(Element& s);
   template<class T>
-  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+  void parseCallOperands(Element& s, Index i, Index j, T* call, Index depth) {
     while (i < j) {
-      call->operands.push_back(parseExpression(s[i]));
+      call->operands.push_back(parseExpression(s[i], j - 1 - i - depth));
       i++;
     }
   }

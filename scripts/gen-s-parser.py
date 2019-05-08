@@ -18,6 +18,8 @@ import sys
 
 instructions = [
     ("unreachable",    "makeUnreachable()"),
+    ("push",           "makePush(s)"),
+    ("pop",            "makePop(depth)"),
     ("nop",            "makeNop()"),
     ("block",          "makeBlock(s)"),
     ("loop",           "makeLoop(s)"),

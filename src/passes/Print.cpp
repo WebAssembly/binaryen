@@ -1148,6 +1148,8 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
         break;
     }
   }
+  void visitPush(Push* curr) { printMedium(o, "push"); }
+  void visitPop(Pop* curr) { printMedium(o, "pop"); }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
 };
@@ -1610,6 +1612,18 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         o << ')';
       }
     }
+  }
+  void visitPush(Push* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitPop(Pop* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
   }
   void visitNop(Nop* curr) {
     o << '(';

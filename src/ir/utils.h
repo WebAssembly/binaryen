@@ -144,6 +144,8 @@ struct ReFinalize
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitPush(Push* curr);
+  void visitPop(Pop* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
 
@@ -200,6 +202,8 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitDrop(Drop* curr) { curr->finalize(); }
   void visitReturn(Return* curr) { curr->finalize(); }
   void visitHost(Host* curr) { curr->finalize(); }
+  void visitPush(Push* curr) { curr->finalize(); }
+  void visitPop(Pop* curr) { curr->finalize(); }
   void visitNop(Nop* curr) { curr->finalize(); }
   void visitUnreachable(Unreachable* curr) { curr->finalize(); }
 

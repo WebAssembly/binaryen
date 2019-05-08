@@ -166,6 +166,7 @@ struct LoopInvariantCodeMotion
         }
       }
       // We did not move this item. Accumulate its effects.
+      // TODO: create a position-aware mergeIn to restore stack neutrality
       effectsSoFar.mergeIn(effects);
     }
     // If we moved the code out, finish up by emitting it

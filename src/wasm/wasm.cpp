@@ -128,6 +128,10 @@ const char* getExpressionName(Expression* curr) {
       return "return";
     case Expression::Id::HostId:
       return "host";
+    case Expression::Id::PushId:
+      return "push";
+    case Expression::Id::PopId:
+      return "pop";
     case Expression::Id::NopId:
       return "nop";
     case Expression::Id::UnreachableId:
@@ -794,6 +798,17 @@ void Drop::finalize() {
     type = none;
   }
 }
+
+void Push::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = none;
+  }
+}
+
+// Pop must be constructed with the correct type and it must not change
+void Pop::finalize() {}
 
 void Host::finalize() {
   switch (op) {

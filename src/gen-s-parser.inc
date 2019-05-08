@@ -2208,6 +2208,17 @@ switch (op[0]) {
   case 'n':
     if (strcmp(op, "nop") == 0) { return makeNop(); }
     goto parse_error;
+  case 'p': {
+    switch (op[1]) {
+      case 'o':
+        if (strcmp(op, "pop") == 0) { return makePop(depth); }
+        goto parse_error;
+      case 'u':
+        if (strcmp(op, "push") == 0) { return makePush(s); }
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
   case 'r':
     if (strcmp(op, "return") == 0) { return makeReturn(s); }
     goto parse_error;
