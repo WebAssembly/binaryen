@@ -27,7 +27,7 @@
 namespace wasm {
 
 static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
-  auto& sets = localGraph->getSetses[curr];
+  auto& sets = localGraph->getSetses[get];
   if (sets.size() != 1) {
     return nullptr;
   }
@@ -36,13 +36,11 @@ static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
 }
 
 static bool isReinterpret(Unary* curr) {
-  if (curr->op == ReinterpretInt32 || curr->op == ReinterpretInt64 ||
-      curr->op == ReinterpretFloat32 ||
-      curr->op == ReinterpretFloat64) {
+  return curr->op == ReinterpretInt32 || curr->op == ReinterpretInt64 ||
+         curr->op == ReinterpretFloat32 || curr->op == ReinterpretFloat64;
 }
 
-struct AvoidReinterprets
-  : public WalkerPass<PostWalker<AvoidReinterprets>> {
+struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new AvoidReinterprets; }
@@ -64,7 +62,7 @@ struct AvoidReinterprets
     LocalGraph localGraph_(func);
     localGraph = &localGraph_;
     // walk
-    ExpressionStackWalker<AvoidReinterprets>::doWalkFunction(func);
+    PostWalker<AvoidReinterprets>::doWalkFunction(func);
     // optimize
     optimize(func);
   }
@@ -72,17 +70,17 @@ struct AvoidReinterprets
   void visitUnary(Unary* curr) {
     if (isReinterpret(curr)) {
       if (auto* get = curr->value->dynCast<GetLocal>()) {
-        if (auto* load = getSingleLoad(localGraph, curr->value)) {
+        if (auto* load = getSingleLoad(localGraph, get)) {
           auto& info = infos[load];
-          info.totalUsages++;
-            if (auto* unary = parent->dynCast<Unary>()) {
-                info.reinterpretUsages++;
-              }
-            }
-          }
+          info.reinterpretUsages++;
         }
       }
     }
+  }
+
+  void visitLoad(Load* curr) {
+    auto& info = infos[curr];
+    info.totalUsages++;
   }
 
   void optimize(Function* func) {
@@ -93,7 +91,8 @@ struct AvoidReinterprets
       if (info.reinterpretUsages > 0 && load->type != unreachable) {
         // We should use another load here, to avoid reinterprets.
         info.ptrLocal = Builder::addVar(func, i32);
-        info.reinterpretedLocal = Builder::addVar(func, reinterpretType(load->type));
+        info.reinterpretedLocal =
+          Builder::addVar(func, reinterpretType(load->type));
       } else {
         unoptimizables.insert(load);
       }
@@ -108,23 +107,25 @@ struct AvoidReinterprets
       Module* module;
 
       FinalOptimizer(std::map<Load*, Info>& infos,
-               LocalGraph* localGraph,
-               Module* module)
+                     LocalGraph* localGraph,
+                     Module* module)
         : infos(infos), localGraph(localGraph), module(module) {}
 
       void visitUnary(Unary* curr) {
         if (isReinterpret(curr)) {
           if (auto* load = curr->value->dynCast<Load>()) {
             // A reinterpret of a load - flip it right here.
-            replaceCurrent(makeReinterpretedLoad(load, load->ptr, Builder(*module)));
+            replaceCurrent(
+              makeReinterpretedLoad(load, load->ptr, Builder(*module)));
           } else if (auto* get = curr->value->dynCast<GetLocal>()) {
-            if (auto* load = getSingleLoad(localGraph, curr->value)) {
-              auto iter = infos.find(curr);
+            if (auto* load = getSingleLoad(localGraph, get)) {
+              auto iter = infos.find(load);
               if (iter != infos.end()) {
                 auto& info = iter->second;
                 // A reinterpret of a get of a load - use the new local.
                 Builder builder(*module);
-                replaceCurrent(builder.makeGetLocal(info.reinterpretedLocal, info.reinterpretType(load->type)));
+                replaceCurrent(builder.makeGetLocal(
+                  info.reinterpretedLocal, reinterpretType(load->type)));
               }
             }
           }
@@ -141,18 +142,27 @@ struct AvoidReinterprets
           // Note that the other load can have its sign set to false - if the
           // original were an integer, the other is a float anyhow; and if
           // original were a float, we don't know what sign to use.
-          replaceCurrent(builder.makeBlock({
-            builder.makeSetLocal(info.ptrLocal, ptr),
-            builder.makeSetLocal(info.reinterpretedLocal, makeReinterpretedLoad(curr, builder.makeGetLocal(info.ptrLocal, i32), builder)),
-            curr
-          }));
+          replaceCurrent(builder.makeBlock(
+            {builder.makeSetLocal(info.ptrLocal, ptr),
+             builder.makeSetLocal(
+               info.reinterpretedLocal,
+               makeReinterpretedLoad(
+                 curr, builder.makeGetLocal(info.ptrLocal, i32), builder)),
+             curr}));
         }
       }
 
-      Load* makeReinterpretedLoad(Load* load, Expression* ptr, Builder& builder) {
-        return makeLoad(curr->bytes, false, curr->offset, curr->align, ptr, reinterpretType(load->type));
+      Load*
+      makeReinterpretedLoad(Load* load, Expression* ptr, const Builder& builder) {
+        return makeLoad(load->bytes,
+                        false,
+                        load->offset,
+                        load->align,
+                        ptr,
+                        reinterpretType(load->type));
       }
     } finalOptimizer(infos, localGraph, getModule());
+
     finalOptimizer.walk(func->body);
   }
 };
