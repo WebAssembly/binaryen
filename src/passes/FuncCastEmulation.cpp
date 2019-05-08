@@ -66,6 +66,10 @@ static Expression* toABI(Expression* value, Module* module) {
       assert(false && "v128 not implemented yet");
       WASM_UNREACHABLE();
     }
+    case except_ref: {
+      assert(false && "except_ref cannot be converted to i64");
+      WASM_UNREACHABLE();
+    }
     case none: {
       // the value is none, but we need a value here
       value = builder.makeSequence(value, LiteralUtils::makeZero(i64, *module));
@@ -102,6 +106,10 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     }
     case v128: {
       assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE();
+    }
+    case except_ref: {
+      assert(false && "except_ref cannot be converted from i64");
       WASM_UNREACHABLE();
     }
     case none: {

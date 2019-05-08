@@ -659,6 +659,9 @@ public:
         value = Literal(bytes.data());
         break;
       }
+      case except_ref:
+        // TODO Implement and return nullref
+        assert(false && "except_ref not implemented yet");
       case none:
         return ExpressionManipulator::nop(curr);
       case unreachable:

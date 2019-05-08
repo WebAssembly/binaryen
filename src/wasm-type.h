@@ -28,6 +28,7 @@ enum Type {
   f32,
   f64,
   v128,
+  except_ref,
   // none means no type, e.g. a block can have no return type. but unreachable
   // is different, as it can be "ignored" when doing type checking across
   // branches
@@ -43,6 +44,7 @@ bool isConcreteType(Type type);
 bool isFloatType(Type type);
 bool isIntegerType(Type type);
 bool isVectorType(Type type);
+bool isReferenceType(Type type);
 
 } // namespace wasm
 

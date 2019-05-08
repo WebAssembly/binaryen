@@ -754,6 +754,7 @@ void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
+      case except_ref: // except_ref cannot be loaded from memory
       case none:
         WASM_UNREACHABLE();
     }
@@ -863,6 +864,7 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
+      case except_ref: // except_ref cannot be stored in memory
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -1329,6 +1331,7 @@ void StackWriter<Mode, Parent>::visitConst(Const* curr) {
       }
       break;
     }
+    case except_ref: // there's no except_ref.const
     case none:
     case unreachable:
       WASM_UNREACHABLE();

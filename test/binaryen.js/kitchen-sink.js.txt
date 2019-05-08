@@ -4,7 +4,8 @@ BinaryenTypeInt64: 2
 BinaryenTypeFloat32: 3
 BinaryenTypeFloat64: 4
 BinaryenTypeVec128: 5
-BinaryenTypeUnreachable: 6
+BinaryenTypeExceptRef: 6
+BinaryenTypeUnreachable: 7
 BinaryenTypeAuto: -1
 BinaryenInvalidId: 0
 BinaryenBlockId: 1
