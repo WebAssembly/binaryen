@@ -11,6 +11,11 @@
     (local.set $x (i32.load (i32.const 1024)))
     (drop (f32.reinterpret_i32 (local.get $x)))
   )
+  (func $one-b
+    (local $x f32)
+    (local.set $x (f32.load (i32.const 1024)))
+    (drop (i32.reinterpret_f32 (local.get $x)))
+  )
   (func $both
     (local $x i32)
     (local.set $x (i32.load (i32.const 1024)))

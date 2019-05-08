@@ -46,7 +46,30 @@
    (local.get $2)
   )
  )
- (func $both (; 2 ;) (type $0)
+ (func $one-b (; 2 ;) (type $0)
+  (local $x f32)
+  (local $1 i32)
+  (local $2 i32)
+  (local.set $x
+   (block (result f32)
+    (local.set $1
+     (i32.const 1024)
+    )
+    (local.set $2
+     (i32.load
+      (local.get $1)
+     )
+    )
+    (f32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $both (; 3 ;) (type $0)
   (local $x i32)
   (local $1 i32)
   (local $2 f32)
@@ -72,7 +95,7 @@
    (local.get $2)
   )
  )
- (func $half (; 3 ;) (type $0)
+ (func $half (; 4 ;) (type $0)
   (local $x i32)
   (local $1 i32)
   (local $2 f32)
