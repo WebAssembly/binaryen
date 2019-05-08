@@ -121,4 +121,31 @@
    (local.get $2)
   )
  )
+ (func $copy (; 5 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (local $2 i32)
+  (local $3 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $2
+     (i32.const 1024)
+    )
+    (local.set $3
+     (f32.load
+      (local.get $2)
+     )
+    )
+    (i32.load
+     (local.get $2)
+    )
+   )
+  )
+  (local.set $y
+   (local.get $x)
+  )
+  (drop
+   (local.get $3)
+  )
+ )
 )

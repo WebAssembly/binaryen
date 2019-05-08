@@ -28,4 +28,11 @@
     (drop (local.get $x))
     (drop (f32.reinterpret_i32 (local.get $x)))
   )
+  (func $copy
+    (local $x i32)
+    (local $y i32)
+    (local.set $x (i32.load (i32.const 1024)))
+    (local.set $y (local.get $x))
+    (drop (f32.reinterpret_i32 (local.get $y)))
+  )
 )
