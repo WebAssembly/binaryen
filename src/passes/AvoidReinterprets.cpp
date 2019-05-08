@@ -35,7 +35,7 @@ struct AvoidReinterprets
   struct Info {
     // Info used when analyzing.
     Index reinterpretUsages = 0;
-    Index totalInfos = 0;
+    Index totalUsages = 0;
     // Info used when optimizing.
     Type reinterpretedType;
     Index ptrLocal;
@@ -66,7 +66,7 @@ struct AvoidReinterprets
       return;
     }
     auto& info = infos[load];
-    info.totalinfos++;
+    info.totalUsages++;
     if (expressionStack.size() >= 1) {
       auto* parent = expressionStack[expressionStack.size() - 1];
       if (auto* unary = parent->dynCast<Unary>()) {
@@ -97,7 +97,7 @@ struct AvoidReinterprets
       infos.erase(load);
     }
     // We now know which we can optimize, and how.
-    if (!optimizables.empty()) {
+    if (!infos.empty()) {
       struct AddLoads : public PostWalker<AddLoads> {
         std::map<Load*, Info>& infos;
         LocalGraph* localGraph;
@@ -119,10 +119,10 @@ struct AvoidReinterprets
             // original were an integer, the other is a float anyhow; and if
             // original were a float, we don't know what sign to use.
             replaceCurrent(builder.makeBlock({
-              builder.makeSetLocal(info.ptrlocal, ptr),
-              builder.makeSetLocal(info.reinterpretedLocal, builder.makeLoad(curr->byte, false, curr->offset, curr->align, builder.makeGetLocal(info.ptrLocal, i32), info.reinterpretedType),
+              builder.makeSetLocal(info.ptrLocal, ptr),
+              builder.makeSetLocal(info.reinterpretedLocal, builder.makeLoad(curr->bytes, false, curr->offset, curr->align, builder.makeGetLocal(info.ptrLocal, i32), info.reinterpretedType)),
               curr
-            });
+            }));
           }
         }
       } adder(infos, localGraph, getModule());
