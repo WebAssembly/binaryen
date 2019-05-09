@@ -1,0 +1,8 @@
+(module
+ (type $0 (func (param except_ref) (result except_ref)))
+ (memory $0 1 1)
+ (func $except_ref_test (; 0 ;) (type $0) (param $0 except_ref) (result except_ref)
+  (local.get $0)
+ )
+)
+

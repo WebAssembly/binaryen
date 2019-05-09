@@ -1124,6 +1124,7 @@ public:
           return Literal(load64u(addr)).castToF64();
         case v128:
           return Literal(load128(addr).data());
+        case except_ref: // except_ref cannot be loaded from memory
         case none:
         case unreachable:
           WASM_UNREACHABLE();
@@ -1177,6 +1178,7 @@ public:
         case v128:
           store128(addr, value.getv128());
           break;
+        case except_ref: // except_ref cannot be stored in memory
         case none:
         case unreachable:
           WASM_UNREACHABLE();

@@ -25,6 +25,9 @@ high chance for set at start of loop
     high chance of a tee in that case => loop var
 */
 
+// TODO Complete except_ref type support. Its support is partialy implemented
+// and the type is currently not generated in fuzzed programs yet.
+
 #include "ir/memory-utils.h"
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
@@ -815,6 +818,7 @@ private:
       case f32:
       case f64:
       case v128:
+      case except_ref:
         ret = _makeConcrete(type);
         break;
       case none:
@@ -1326,6 +1330,7 @@ private:
         return builder.makeLoad(
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
+      case except_ref: // except_ref cannot be loaded from memory
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -1334,7 +1339,8 @@ private:
   }
 
   Expression* makeLoad(Type type) {
-    if (!allowMemory) {
+    // except_ref type cannot be stored in memory
+    if (!allowMemory || type == except_ref) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicLoad(type);
@@ -1425,6 +1431,7 @@ private:
         return builder.makeStore(
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
+      case except_ref: // except_ref cannot be stored in memory
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -1433,7 +1440,8 @@ private:
   }
 
   Expression* makeStore(Type type) {
-    if (!allowMemory) {
+    // except_ref type cannot be stored in memory
+    if (!allowMemory || type == except_ref) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicStore(type);
@@ -1518,6 +1526,7 @@ private:
           case f64:
             return Literal(getDouble());
           case v128:
+          case except_ref: // except_ref cannot have literals
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1559,6 +1568,7 @@ private:
           case f64:
             return Literal(double(small));
           case v128:
+          case except_ref: // except_ref cannot have literals
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1623,6 +1633,7 @@ private:
                                          std::numeric_limits<uint64_t>::max()));
             break;
           case v128:
+          case except_ref: // except_ref cannot have literals
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1653,6 +1664,7 @@ private:
             value = Literal(double(int64_t(1) << upTo(64)));
             break;
           case v128:
+          case except_ref: // except_ref cannot have literals
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1676,6 +1688,12 @@ private:
   }
 
   Expression* makeConst(Type type) {
+    if (type == except_ref) {
+      // There's no except_ref.const.
+      // TODO We should return a nullref once we implement instructions for
+      // reference types proposal.
+      assert(false && "except_ref const is not implemented yet");
+    }
     auto* ret = wasm.allocator.alloc<Const>();
     ret->value = makeLiteral(type);
     ret->type = type;
@@ -1694,6 +1712,11 @@ private:
       // give up
       return makeTrivial(type);
     }
+    // There's no binary ops for except_ref
+    if (type == except_ref) {
+      makeTrivial(type);
+    }
+
     switch (type) {
       case i32: {
         switch (getConcreteType()) {
@@ -1739,6 +1762,7 @@ private:
                                     AllTrueVecI64x2),
                                make(v128)});
           }
+          case except_ref: // there's no unary ops for except_ref
           case none:
           case unreachable:
             WASM_UNREACHABLE();
@@ -1869,6 +1893,7 @@ private:
         }
         WASM_UNREACHABLE();
       }
+      case except_ref: // there's no unary ops for except_ref
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -1889,6 +1914,11 @@ private:
       // give up
       return makeTrivial(type);
     }
+    // There's no binary ops for except_ref
+    if (type == except_ref) {
+      makeTrivial(type);
+    }
+
     switch (type) {
       case i32: {
         switch (upTo(4)) {
@@ -2076,6 +2106,7 @@ private:
                             make(v128),
                             make(v128)});
       }
+      case except_ref: // there's no binary ops for except_ref
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -2269,6 +2300,7 @@ private:
         op = ExtractLaneVecF64x2;
         break;
       case v128:
+      case except_ref:
       case none:
       case unreachable:
         WASM_UNREACHABLE();

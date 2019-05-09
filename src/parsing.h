@@ -263,6 +263,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       break;
     }
     case v128:
+    case except_ref: // there's no except_ref.const
       WASM_UNREACHABLE();
     case none:
     case unreachable: {

@@ -379,6 +379,8 @@ enum EncodedType {
   v128 = -0x5, // 0x7b
   // elem_type
   AnyFunc = -0x10, // 0x70
+  // reference type
+  except_ref = -0x18, // 0x68
   // func_type form
   Func = -0x20, // 0x60
   // block_type
@@ -884,6 +886,9 @@ inline S32LEB binaryType(Type type) {
       break;
     case v128:
       ret = BinaryConsts::EncodedType::v128;
+      break;
+    case except_ref:
+      ret = BinaryConsts::EncodedType::except_ref;
       break;
     case unreachable:
       WASM_UNREACHABLE();
