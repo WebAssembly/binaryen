@@ -21,9 +21,9 @@
 #ifndef wasm_wasm_io_h
 #define wasm_wasm_io_h
 
-#include "wasm.h"
 #include "parsing.h"
 #include "support/file.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -40,13 +40,18 @@ public:
   // read text
   void readText(std::string filename, Module& wasm);
   // read binary
-  void readBinary(std::string filename, Module& wasm,
-                  std::string sourceMapFilename="");
-  // read text or binary, checking the contents for what it is
-  void read(std::string filename, Module& wasm,
-            std::string sourceMapFilename="");
+  void readBinary(std::string filename,
+                  Module& wasm,
+                  std::string sourceMapFilename = "");
+  // read text or binary, checking the contents for what it is. If `filename` is
+  // empty, read from stdin.
+  void
+  read(std::string filename, Module& wasm, std::string sourceMapFilename = "");
   // check whether a file is a wasm binary
   bool isBinaryFile(std::string filename);
+
+private:
+  void readStdin(Module& wasm, std::string sourceMapFilename);
 };
 
 class ModuleWriter : public ModuleIO {
@@ -60,8 +65,12 @@ public:
   void setBinary(bool binary_) { binary = binary_; }
   void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
   void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }
-  void setSourceMapFilename(std::string sourceMapFilename_) { sourceMapFilename = sourceMapFilename_; }
-  void setSourceMapUrl(std::string sourceMapUrl_) { sourceMapUrl = sourceMapUrl_; }
+  void setSourceMapFilename(std::string sourceMapFilename_) {
+    sourceMapFilename = sourceMapFilename_;
+  }
+  void setSourceMapUrl(std::string sourceMapUrl_) {
+    sourceMapUrl = sourceMapUrl_;
+  }
 
   // write text
   void writeText(Module& wasm, Output& output);
@@ -76,6 +85,6 @@ public:
   void write(Module& wasm, std::string filename);
 };
 
-}
+} // namespace wasm
 
 #endif // wasm_wasm_io_h

@@ -1,6 +1,7 @@
 (module
  (type $0 (func))
  (type $1 (func (result i32)))
+ (memory $0 1)
  (func $push1 (; 0 ;) (type $0)
   (local $x i32)
   (block $out

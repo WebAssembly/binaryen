@@ -37,14 +37,15 @@
 #include <algorithm>
 #include <memory>
 
-#include <wasm.h>
-#include <wasm-builder.h>
-#include <wasm-traversal.h>
-#include <pass.h>
-#include <ir/effects.h>
+#include "ir/flat.h"
 #include <ir/cost.h>
+#include <ir/effects.h>
 #include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm-traversal.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -59,7 +60,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     Index index; // the local we are assigned to, local.get that to reuse us
     EffectAnalyzer effects;
 
-    UsableInfo(Expression* value, Index index, PassOptions& passOptions) : value(value), index(index), effects(passOptions, value) {}
+    UsableInfo(Expression* value, Index index, PassOptions& passOptions)
+      : value(value), index(index), effects(passOptions, value) {}
   };
 
   // a list of usables in a linear execution trace
@@ -75,6 +77,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   bool anotherPass;
 
   void doWalkFunction(Function* func) {
+    Flat::verifyFlatness(func);
     anotherPass = true;
     // we may need multiple rounds
     while (anotherPass) {
@@ -181,11 +184,13 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         if (iter != usables.end()) {
           // already exists in the table, this is good to reuse
           auto& info = iter->second;
-          set->value = Builder(*getModule()).makeGetLocal(info.index, value->type);
+          set->value =
+            Builder(*getModule()).makeGetLocal(info.index, value->type);
           anotherPass = true;
         } else {
           // not in table, add this, maybe we can help others later
-          usables.emplace(std::make_pair(hashed, UsableInfo(value, set->index, getPassOptions())));
+          usables.emplace(std::make_pair(
+            hashed, UsableInfo(value, set->index, getPassOptions())));
         }
       }
     } else if (auto* get = curr->dynCast<GetLocal>()) {
@@ -225,8 +230,6 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   }
 };
 
-Pass *createLocalCSEPass() {
-  return new LocalCSE();
-}
+Pass* createLocalCSEPass() { return new LocalCSE(); }
 
 } // namespace wasm

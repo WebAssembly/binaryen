@@ -27,6 +27,7 @@
 //    If so, we can avoid even sending and receiving it. (Note how if
 //    the previous point was true for an argument, then the second
 //    must as well.)
+//  * Find return values ("return arguments" ;) that are never used.
 //
 // This pass does not depend on flattening, but it may be more effective,
 // as then call arguments never have side effects (which we need to
@@ -36,14 +37,14 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "ir/module-utils.h"
+#include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -53,6 +54,9 @@ struct DAEFunctionInfo {
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
   std::unordered_map<Name, std::vector<Call*>> calls;
+  // Map of all calls that are dropped, to their drops' locations (so that
+  // if we can optimize out the drop, we can replace the drop there).
+  std::unordered_map<Call*, Expression**> droppedCalls;
   // Whether the function can be called from places that
   // affect what we can do. For now, any call we don't
   // see inhibits our optimizations, but TODO: an export
@@ -69,14 +73,13 @@ struct DAEBlockInfo {
   // If it is both read and written, we just care about the first
   // action (if it is read first, that's all the info we are
   // looking for; if it is written first, it can't be read later).
-  enum LocalUse {
-    Read,
-    Written
-  };
+  enum LocalUse { Read, Written };
   std::unordered_map<Index, LocalUse> localUses;
 };
 
-struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>> {
+struct DAEScanner
+  : public WalkerPass<
+      CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DAEScanner(infoMap); }
@@ -116,12 +119,19 @@ struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>,
     }
   }
 
+  void visitDrop(Drop* curr) {
+    if (auto* call = curr->value->dynCast<Call>()) {
+      info->droppedCalls[call] = getCurrentPointer();
+    }
+  }
+
   // main entry point
 
   void doWalkFunction(Function* func) {
     numParams = func->getNumParams();
     info = &((*infoMap)[func->name]);
-    CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(func);
+    CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(
+      func);
     // If there are relevant params, check if they are used. (If
     // we can't optimize the function anyhow, there's no point.)
     if (numParams > 0 && !info->hasUnseenCalls) {
@@ -172,7 +182,8 @@ struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>,
           if (use == DAEBlockInfo::Read) {
             usedParams.insert(i);
           }
-          // Whether it was a read or a write, we can stop looking at that local here.
+          // Whether it was a read or a write, we can stop looking at that local
+          // here.
         } else {
           remainingIndexes.insert(i);
         }
@@ -197,11 +208,20 @@ struct DAE : public Pass {
   bool optimize = false;
 
   void run(PassRunner* runner, Module* module) override {
+    // Iterate to convergence.
+    while (1) {
+      if (!iteration(runner, module)) {
+        break;
+      }
+    }
+  }
+
+  bool iteration(PassRunner* runner, Module* module) {
     DAEFunctionInfoMap infoMap;
-    // Ensure they all exist so the parallel threads don't modify the data structure.
-    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      infoMap[func->name];
-    });
+    // Ensure they all exist so the parallel threads don't modify the data
+    // structure.
+    ModuleUtils::iterDefinedFunctions(
+      *module, [&](Function* func) { infoMap[func->name]; });
     // Check the influence of the table and exports.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
@@ -230,6 +250,9 @@ struct DAE : public Pass {
         auto& allCallsToName = allCalls[name];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
       }
+      for (auto& pair : info.droppedCalls) {
+        allDroppedCalls[pair.first] = pair.second;
+      }
     }
     // We now have a mapping of all call sites for each function. Check which
     // are always passed the same constant for a particular argument.
@@ -237,7 +260,9 @@ struct DAE : public Pass {
       auto name = pair.first;
       // We can only optimize if we see all the calls and can modify
       // them.
-      if (infoMap[name].hasUnseenCalls) continue;
+      if (infoMap[name].hasUnseenCalls) {
+        continue;
+      }
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
@@ -263,13 +288,11 @@ struct DAE : public Pass {
           }
         }
         if (value.type != none) {
-          // Success! We can just apply the constant in the function, which makes
-          // the parameter value unused, which lets us remove it later.
+          // Success! We can just apply the constant in the function, which
+          // makes the parameter value unused, which lets us remove it later.
           Builder builder(*module);
           func->body = builder.makeSequence(
-            builder.makeSetLocal(i, builder.makeConst(value)),
-            func->body
-          );
+            builder.makeSetLocal(i, builder.makeConst(value)), func->body);
           // Mark it as unused, which we know it now is (no point to
           // re-scan just for that).
           infoMap[name].unusedParams.insert(i);
@@ -284,14 +307,16 @@ struct DAE : public Pass {
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
-      if (numParams == 0) continue;
+      if (numParams == 0) {
+        continue;
+      }
       // Iterate downwards, as we may remove more than one.
       Index i = numParams - 1;
       while (1) {
         if (infoMap[name].unusedParams.has(i)) {
-          // Great, it's not used. Check if none of the calls has a param with side
-          // effects, as that would prevent us removing them (flattening should
-          // have been done earlier).
+          // Great, it's not used. Check if none of the calls has a param with
+          // side effects, as that would prevent us removing them (flattening
+          // should have been done earlier).
           bool canRemove = true;
           for (auto* call : calls) {
             auto* operand = call->operands[i];
@@ -307,17 +332,56 @@ struct DAE : public Pass {
             changed.insert(func);
           }
         }
-        if (i == 0) break;
+        if (i == 0) {
+          break;
+        }
         i--;
       }
     }
-    if (optimize && changed.size() > 0) {
+    // We can also tell which calls have all their return values dropped. Note
+    // that we can't do this if we changed anything so far, as we may have
+    // modified allCalls (we can't modify a call site twice in one iteration,
+    // once to remove a param, once to drop the return value).
+    if (changed.empty()) {
+      for (auto& func : module->functions) {
+        if (func->result == none) {
+          continue;
+        }
+        auto name = func->name;
+        if (infoMap[name].hasUnseenCalls) {
+          continue;
+        }
+        auto iter = allCalls.find(name);
+        if (iter == allCalls.end()) {
+          continue;
+        }
+        auto& calls = iter->second;
+        bool allDropped = true;
+        for (auto* call : calls) {
+          if (!allDroppedCalls.count(call)) {
+            allDropped = false;
+            break;
+          }
+        }
+        if (!allDropped) {
+          continue;
+        }
+        removeReturnValue(func.get(), calls, module);
+        // TODO Removing a drop may also open optimization opportunities in the
+        // callers.
+        changed.insert(func.get());
+      }
+    }
+    if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, runner);
     }
+    return !changed.empty();
   }
 
 private:
-  void removeParameter(Function* func, Index i, std::vector<Call*> calls) {
+  std::unordered_map<Call*, Expression**> allDroppedCalls;
+
+  void removeParameter(Function* func, Index i, std::vector<Call*>& calls) {
     // Clear the type, which is no longer accurate.
     func->type = Name();
     // It's cumbersome to adjust local names - TODO don't clear them?
@@ -332,15 +396,12 @@ private:
     struct LocalUpdater : public PostWalker<LocalUpdater> {
       Index removedIndex;
       Index newIndex;
-      LocalUpdater(Function* func, Index removedIndex, Index newIndex) : removedIndex(removedIndex), newIndex(newIndex) {
+      LocalUpdater(Function* func, Index removedIndex, Index newIndex)
+        : removedIndex(removedIndex), newIndex(newIndex) {
         walk(func->body);
       }
-      void visitGetLocal(GetLocal* curr) {
-        updateIndex(curr->index);
-      }
-      void visitSetLocal(SetLocal* curr) {
-        updateIndex(curr->index);
-      }
+      void visitGetLocal(GetLocal* curr) { updateIndex(curr->index); }
+      void visitSetLocal(SetLocal* curr) { updateIndex(curr->index); }
       void updateIndex(Index& index) {
         if (index == removedIndex) {
           index = newIndex;
@@ -354,17 +415,51 @@ private:
       call->operands.erase(call->operands.begin() + i);
     }
   }
+
+  void
+  removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
+    // Clear the type, which is no longer accurate.
+    func->type = Name();
+    func->result = none;
+    Builder builder(*module);
+    // Remove any return values.
+    struct ReturnUpdater : public PostWalker<ReturnUpdater> {
+      Module* module;
+      ReturnUpdater(Function* func, Module* module) : module(module) {
+        walk(func->body);
+      }
+      void visitReturn(Return* curr) {
+        auto* value = curr->value;
+        assert(value);
+        curr->value = nullptr;
+        Builder builder(*module);
+        replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
+      }
+    } returnUpdater(func, module);
+    // Remove any value flowing out.
+    if (isConcreteType(func->body->type)) {
+      func->body = builder.makeDrop(func->body);
+    }
+    // Remove the drops on the calls.
+    for (auto* call : calls) {
+      auto iter = allDroppedCalls.find(call);
+      assert(iter != allDroppedCalls.end());
+      Expression** location = iter->second;
+      *location = call;
+      // Update the call's type.
+      if (call->type != unreachable) {
+        call->type = none;
+      }
+    }
+  }
 };
 
-Pass *createDAEPass() {
-  return new DAE();
-}
+Pass* createDAEPass() { return new DAE(); }
 
-Pass *createDAEOptimizingPass() {
+Pass* createDAEOptimizingPass() {
   auto* ret = new DAE();
   ret->optimize = true;
   return ret;
 }
 
 } // namespace wasm
-

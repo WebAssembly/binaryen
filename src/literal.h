@@ -17,12 +17,12 @@
 #ifndef wasm_literal_h
 #define wasm_literal_h
 
-#include <iostream>
 #include <array>
+#include <iostream>
 
+#include "compiler-support.h"
 #include "support/hash.h"
 #include "support/utilities.h"
-#include "compiler-support.h"
 #include "wasm-type.h"
 
 namespace wasm {
@@ -40,14 +40,16 @@ public:
   Type type;
 
 public:
-  Literal()                       : v128(),                       type(Type::none) {}
-  explicit Literal(Type type)     : v128(),                       type(type)       {}
-  explicit Literal(int32_t  init) : i32(init),                    type(Type::i32)  {}
-  explicit Literal(uint32_t init) : i32(init),                    type(Type::i32)  {}
-  explicit Literal(int64_t  init) : i64(init),                    type(Type::i64)  {}
-  explicit Literal(uint64_t init) : i64(init),                    type(Type::i64)  {}
-  explicit Literal(float    init) : i32(bit_cast<int32_t>(init)), type(Type::f32)  {}
-  explicit Literal(double   init) : i64(bit_cast<int64_t>(init)), type(Type::f64)  {}
+  Literal() : v128(), type(Type::none) {}
+  explicit Literal(Type type) : v128(), type(type) {}
+  explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
+  explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
+  explicit Literal(int64_t init) : i64(init), type(Type::i64) {}
+  explicit Literal(uint64_t init) : i64(init), type(Type::i64) {}
+  explicit Literal(float init)
+    : i32(bit_cast<int32_t>(init)), type(Type::f32) {}
+  explicit Literal(double init)
+    : i64(bit_cast<int64_t>(init)), type(Type::f64) {}
   // v128 literal from bytes
   explicit Literal(const uint8_t init[16]);
   // v128 literal from lane value literals
@@ -61,45 +63,86 @@ public:
 
   inline static Literal makeFromInt32(int32_t x, Type type) {
     switch (type) {
-      case Type::i32: return Literal(int32_t(x)); break;
-      case Type::i64: return Literal(int64_t(x)); break;
-      case Type::f32: return Literal(float(x)); break;
-      case Type::f64: return Literal(double(x)); break;
-      case Type::v128: return Literal(
-        std::array<Literal, 4>{{
-          Literal(x), Literal(int32_t(0)), Literal(int32_t(0)), Literal(int32_t(0))
-        }}
-      );
+      case Type::i32:
+        return Literal(int32_t(x));
+        break;
+      case Type::i64:
+        return Literal(int64_t(x));
+        break;
+      case Type::f32:
+        return Literal(float(x));
+        break;
+      case Type::f64:
+        return Literal(double(x));
+        break;
+      case Type::v128:
+        return Literal(std::array<Literal, 4>{{Literal(x),
+                                               Literal(int32_t(0)),
+                                               Literal(int32_t(0)),
+                                               Literal(int32_t(0))}});
+      case Type::except_ref: // there's no except_ref literals
       case none:
-      case unreachable: WASM_UNREACHABLE();
+      case unreachable:
+        WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }
 
-  inline static Literal makeZero(Type type) {
-    return makeFromInt32(0, type);
-  }
+  inline static Literal makeZero(Type type) { return makeFromInt32(0, type); }
 
   Literal castToF32();
   Literal castToF64();
   Literal castToI32();
   Literal castToI64();
 
-  int32_t geti32() const { assert(type == Type::i32); return i32; }
-  int64_t geti64() const { assert(type == Type::i64); return i64; }
-  float   getf32() const { assert(type == Type::f32); return bit_cast<float>(i32); }
-  double  getf64() const { assert(type == Type::f64); return bit_cast<double>(i64); }
+  int32_t geti32() const {
+    assert(type == Type::i32);
+    return i32;
+  }
+  int64_t geti64() const {
+    assert(type == Type::i64);
+    return i64;
+  }
+  float getf32() const {
+    assert(type == Type::f32);
+    return bit_cast<float>(i32);
+  }
+  double getf64() const {
+    assert(type == Type::f64);
+    return bit_cast<double>(i64);
+  }
   std::array<uint8_t, 16> getv128() const;
 
   // careful!
-  int32_t* geti32Ptr() { assert(type == Type::i32); return &i32; }
-  uint8_t* getv128Ptr() { assert(type == Type::v128); return v128; }
-  const uint8_t* getv128Ptr() const { assert(type == Type::v128); return v128; }
+  int32_t* geti32Ptr() {
+    assert(type == Type::i32);
+    return &i32;
+  }
+  uint8_t* getv128Ptr() {
+    assert(type == Type::v128);
+    return v128;
+  }
+  const uint8_t* getv128Ptr() const {
+    assert(type == Type::v128);
+    return v128;
+  }
 
-  int32_t reinterpreti32() const { assert(type == Type::f32); return i32; }
-  int64_t reinterpreti64() const { assert(type == Type::f64); return i64; }
-  float   reinterpretf32() const { assert(type == Type::i32); return bit_cast<float>(i32); }
-  double  reinterpretf64() const { assert(type == Type::i64); return bit_cast<double>(i64); }
+  int32_t reinterpreti32() const {
+    assert(type == Type::f32);
+    return i32;
+  }
+  int64_t reinterpreti64() const {
+    assert(type == Type::f64);
+    return i64;
+  }
+  float reinterpretf32() const {
+    assert(type == Type::i32);
+    return bit_cast<float>(i32);
+  }
+  double reinterpretf64() const {
+    assert(type == Type::i64);
+    return bit_cast<double>(i64);
+  }
 
   int64_t getInteger() const;
   double getFloat() const;
@@ -117,7 +160,7 @@ public:
   static float setQuietNaN(float f);
   static double setQuietNaN(double f);
 
-  static void printFloat(std::ostream &o, float f);
+  static void printFloat(std::ostream& o, float f);
   static void printDouble(std::ostream& o, double d);
   static void printVec128(std::ostream& o, const std::array<uint8_t, 16>& v);
 
@@ -204,7 +247,8 @@ public:
   std::array<Literal, 4> getLanesF32x4() const;
   std::array<Literal, 2> getLanesF64x2() const;
 
-  Literal shuffleV8x16(const Literal& other, const std::array<uint8_t, 16>& mask) const;
+  Literal shuffleV8x16(const Literal& other,
+                       const std::array<uint8_t, 16>& mask) const;
   Literal splatI8x16() const;
   Literal extractLaneSI8x16(uint8_t index) const;
   Literal extractLaneUI8x16(uint8_t index) const;
@@ -342,7 +386,7 @@ public:
   Literal convertSToF64x2() const;
   Literal convertUToF64x2() const;
 
- private:
+private:
   Literal addSatSI8(const Literal& other) const;
   Literal addSatUI8(const Literal& other) const;
   Literal addSatSI16(const Literal& other) const;
@@ -362,31 +406,38 @@ template<> struct hash<wasm::Literal> {
     a.getBits(bytes);
     int64_t chunks[2];
     memcpy(chunks, bytes, sizeof(chunks));
-    return wasm::rehash(
-      wasm::rehash(
-        uint64_t(hash<size_t>()(size_t(a.type))),
-        uint64_t(hash<int64_t>()(chunks[0]))
-      ),
-      uint64_t(hash<int64_t>()(chunks[1]))
-    );
+    return wasm::rehash(wasm::rehash(uint64_t(hash<size_t>()(size_t(a.type))),
+                                     uint64_t(hash<int64_t>()(chunks[0]))),
+                        uint64_t(hash<int64_t>()(chunks[1])));
   }
 };
 template<> struct less<wasm::Literal> {
   bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
-    if (a.type < b.type) return true;
-    if (a.type > b.type) return false;
+    if (a.type < b.type) {
+      return true;
+    }
+    if (a.type > b.type) {
+      return false;
+    }
     switch (a.type) {
-      case wasm::Type::i32: return a.geti32() < b.geti32();
-      case wasm::Type::f32: return a.reinterpreti32() < b.reinterpreti32();
-      case wasm::Type::i64: return a.geti64() < b.geti64();
-      case wasm::Type::f64: return a.reinterpreti64() < b.reinterpreti64();
-      case wasm::Type::v128: return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
+      case wasm::Type::i32:
+        return a.geti32() < b.geti32();
+      case wasm::Type::f32:
+        return a.reinterpreti32() < b.reinterpreti32();
+      case wasm::Type::i64:
+        return a.geti64() < b.geti64();
+      case wasm::Type::f64:
+        return a.reinterpreti64() < b.reinterpreti64();
+      case wasm::Type::v128:
+        return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
+      case wasm::Type::except_ref: // except_ref is an opaque value
       case wasm::Type::none:
-      case wasm::Type::unreachable: return false;
+      case wasm::Type::unreachable:
+        return false;
     }
     WASM_UNREACHABLE();
   }
 };
-}
+} // namespace std
 
 #endif // wasm_literal_h

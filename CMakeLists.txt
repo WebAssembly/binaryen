@@ -92,6 +92,11 @@ IF(MSVC)
         CMAKE_C_FLAGS_MINSIZEREL)
       string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
         "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+
+      # Compile with `/MT` to link against `libcmt.lib`, removing a dependency
+      # on `msvcrt.dll`. May result in slightly larger binaries but they should
+      # be more portable across systems.
+      string(REPLACE "/MD" "/MT" ${flags_var_to_scrub} "${${flags_var_to_scrub}}")
     endforeach()
   endif()
 
@@ -197,16 +202,6 @@ TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ir cfg sup
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-SET(wasm-merge_SOURCES
-  src/tools/wasm-merge.cpp
-)
-ADD_EXECUTABLE(wasm-merge
-               ${wasm-merge_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD 11)
-SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD_REQUIRED ON)
-INSTALL(TARGETS wasm-merge DESTINATION bin)
 
 SET(wasm-metadce_SOURCES
   src/tools/wasm-metadce.cpp

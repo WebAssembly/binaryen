@@ -762,3 +762,82 @@
   (nop)
  )
 )
+(module
+ (type $0 (func (result i64)))
+ (type $1 (func))
+ (global $glob (mut i32) (i32.const 1))
+ (func $i64-shifts (; 0 ;) (type $0) (result i64)
+  (local $temp i64)
+  (local $1 i64)
+  (local $2 i64)
+  (local $3 i64)
+  (local $4 i64)
+  (local $5 i64)
+  (block
+   (local.set $1
+    (i64.add
+     (i64.const 1)
+     (i64.const 2)
+    )
+   )
+   (local.set $temp
+    (local.get $1)
+   )
+   (nop)
+   (local.set $temp
+    (i64.const 9999)
+   )
+   (nop)
+   (local.set $2
+    (local.get $1)
+   )
+   (local.set $temp
+    (local.get $1)
+   )
+   (nop)
+   (local.set $3
+    (local.get $temp)
+   )
+   (local.set $4
+    (local.get $temp)
+   )
+  )
+  (local.set $5
+   (local.get $temp)
+  )
+  (return
+   (local.get $temp)
+  )
+ )
+ (func $global (; 1 ;) (type $1)
+  (local $x i32)
+  (local $y i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (block
+   (local.set $2
+    (global.get $glob)
+   )
+   (local.set $x
+    (local.get $2)
+   )
+   (nop)
+   (local.set $3
+    (local.get $x)
+   )
+   (local.set $y
+    (local.get $x)
+   )
+   (nop)
+   (local.set $4
+    (local.get $x)
+   )
+   (local.set $y
+    (local.get $x)
+   )
+   (nop)
+  )
+  (nop)
+ )
+)

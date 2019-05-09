@@ -17,8 +17,8 @@
 #ifndef wasm_ir_label_h
 #define wasm_ir_label_h
 
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -28,9 +28,7 @@ namespace LabelUtils {
 // ones without duplicates
 class LabelManager : public PostWalker<LabelManager> {
 public:
-  LabelManager(Function* func) {
-    walkFunction(func);
-  }
+  LabelManager(Function* func) { walkFunction(func); }
 
   Name getUnique(std::string prefix) {
     while (1) {
@@ -42,12 +40,8 @@ public:
     }
   }
 
-  void visitBlock(Block* curr) {
-    labels.insert(curr->name);
-  }
-  void visitLoop(Loop* curr) {
-    labels.insert(curr->name);
-  }
+  void visitBlock(Block* curr) { labels.insert(curr->name); }
+  void visitLoop(Loop* curr) { labels.insert(curr->name); }
 
 private:
   std::set<Name> labels;
@@ -59,4 +53,3 @@ private:
 } // namespace wasm
 
 #endif // wasm_ir_label_h
-

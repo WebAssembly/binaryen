@@ -3,6 +3,7 @@
  (type $1 (func (param i32) (result i32)))
  (type $2 (func (param i32 i32) (result i32)))
  (type $3 (func (param i32 i32 i32) (result i32)))
+ (memory $0 10 10)
  (func $basic (; 0 ;) (type $0) (param $p i32)
   (local $x i32)
   (local.set $x

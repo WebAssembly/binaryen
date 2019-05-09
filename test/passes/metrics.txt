@@ -1,5 +1,7 @@
 total
+ [exports]      : 0       
  [funcs]        : 1       
+ [imports]      : 0       
  [memory-data]  : 9       
  [table-data]   : 3       
  [total]        : 27      
@@ -57,5 +59,10 @@ total
  )
 )
 total
+ [exports]      : 0       
+ [funcs]        : 0       
+ [imports]      : 0       
+ [total]        : 0       
+ [vars]         : 0       
 (module
 )

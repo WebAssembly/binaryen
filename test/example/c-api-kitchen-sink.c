@@ -155,6 +155,7 @@ void test_types() {
   printf("BinaryenTypeFloat32: %d\n", BinaryenTypeFloat32());
   printf("BinaryenTypeFloat64: %d\n", BinaryenTypeFloat64());
   printf("BinaryenTypeVec128: %d\n", BinaryenTypeVec128());
+  printf("BinaryenTypeExceptRef: %d\n", BinaryenTypeExceptRef());
   printf("BinaryenTypeUnreachable: %d\n", BinaryenTypeUnreachable());
   printf("BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 }
@@ -491,10 +492,11 @@ void test_core() {
 
   // Memory. One per module
 
-  const char* segments[] = { "hello, world" };
-  BinaryenExpressionRef segmentOffsets[] = { BinaryenConst(module, BinaryenLiteralInt32(10)) };
-  BinaryenIndex segmentSizes[] = { 12 };
-  BinaryenSetMemory(module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1, 0);
+  const char* segments[] = { "hello, world", "I am passive" };
+  int8_t segmentPassive[] = { 0, 1 };
+  BinaryenExpressionRef segmentOffsets[] = { BinaryenConst(module, BinaryenLiteralInt32(10)), NULL };
+  BinaryenIndex segmentSizes[] = { 12, 12 };
+  BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 0);
 
   // Start function. One per module
 

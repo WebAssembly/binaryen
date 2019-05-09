@@ -37,6 +37,7 @@ Module['i64'] = Module['_BinaryenTypeInt64']();
 Module['f32'] = Module['_BinaryenTypeFloat32']();
 Module['f64'] = Module['_BinaryenTypeFloat64']();
 Module['v128'] = Module['_BinaryenTypeVec128']();
+Module['except_ref'] = Module['_BinaryenTypeExceptRef']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
@@ -67,7 +68,7 @@ Module['UnreachableId'] = Module['_BinaryenUnreachableId']();
 Module['AtomicCmpxchgId'] = Module['_BinaryenAtomicCmpxchgId']();
 Module['AtomicRMWId'] = Module['_BinaryenAtomicRMWId']();
 Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
-Module['AtomicWakeId'] = Module['_BinaryenAtomicWakeId']();
+Module['AtomicNotifyId'] = Module['_BinaryenAtomicNotifyId']();
 Module['SIMDExtractId'] = Module['_BinaryenSIMDExtractId']();
 Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
 Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
@@ -365,6 +366,13 @@ Module['ConvertUVecI32x4ToVecF32x4'] = Module['_BinaryenConvertUVecI32x4ToVecF32
 Module['ConvertSVecI64x2ToVecF64x2'] = Module['_BinaryenConvertSVecI64x2ToVecF64x2']();
 Module['ConvertUVecI64x2ToVecF64x2'] = Module['_BinaryenConvertUVecI64x2ToVecF64x2']();
 
+// The size of a single literal in memory as used in Const creation,
+// which is a little different: we don't want users to need to make
+// their own Literals, as the C API handles them by value, which means
+// we would leak them. Instead, Const creation is fused together with
+// an intermediate stack allocation of this size to pass the value.
+var sizeOfLiteral = _BinaryenSizeofLiteral();
+
 // 'Module' interface
 Module['Module'] = function(module) {
   assert(!module); // guard against incorrect old API usage
@@ -482,13 +490,6 @@ function wrapModule(module, self) {
     }
   }
 
-  // The Const creation API is a little different: we don't want users to
-  // need to make their own Literals, as the C API handles them by value,
-  // which means we would leak them. Instead, this is the only API that
-  // accepts Literals, so fuse it with Literal creation
-  var temp = _malloc(Module['_BinaryenSizeofLiteral']()); // a single literal in memory. the LLVM C ABI
-                                                          // makes us pass pointers to this.
-
   self['i32'] = {
     'load': function(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i32'], ptr);
@@ -515,8 +516,11 @@ function wrapModule(module, self) {
       return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i32']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralInt32'](temp, x);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralInt32'](tempLiteral, x);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'clz': function(value) {
       return Module['_BinaryenUnary'](module, Module['ClzInt32'], value);
@@ -778,8 +782,11 @@ function wrapModule(module, self) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64']);
     },
     'const': function(x, y) {
-      Module['_BinaryenLiteralInt64'](temp, x, y);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralInt64'](tempLiteral, x, y);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'clz': function(value) {
       return Module['_BinaryenUnary'](module, Module['ClzInt64'], value);
@@ -1049,12 +1056,18 @@ function wrapModule(module, self) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['f32']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralFloat32'](temp, x);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralFloat32'](tempLiteral, x);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'const_bits': function(x) {
-      Module['_BinaryenLiteralFloat32Bits'](temp, x);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralFloat32Bits'](tempLiteral, x);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegFloat32'], value);
@@ -1148,12 +1161,18 @@ function wrapModule(module, self) {
       return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['f64']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralFloat64'](temp, x);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralFloat64'](tempLiteral, x);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'const_bits': function(x, y) {
-      Module['_BinaryenLiteralFloat64Bits'](temp, x, y);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralFloat64Bits'](tempLiteral, x, y);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegFloat64'], value);
@@ -1248,8 +1267,9 @@ function wrapModule(module, self) {
     },
     'const': function(i8s) {
       return preserveStack(function() {
-        Module['_BinaryenLiteralVec128'](temp, i8sToStack(i8s));
-        return Module['_BinaryenConst'](module, temp);
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralVec128'](tempLiteral, i8sToStack(i8s));
+        return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
     'not': function(value) {
@@ -1709,8 +1729,8 @@ function wrapModule(module, self) {
   self['unreachable'] = function() {
     return Module['_BinaryenUnreachable'](module);
   };
-  self['wake'] = function(ptr, wakeCount) {
-    return Module['_BinaryenAtomicWake'](module, ptr, wakeCount);
+  self['notify'] = function(ptr, notifyCount) {
+    return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
   };
 
   // 'Module' operations
@@ -1729,7 +1749,7 @@ function wrapModule(module, self) {
     });
   };
   self['removeFunctionType'] = function(name) {
-    return preserveStack(function () {
+    return preserveStack(function() {
       return Module['_BinaryenRemoveFunctionType'](module, strToStack(name));
     });
   };
@@ -1754,7 +1774,7 @@ function wrapModule(module, self) {
     });
   }
   self['removeGlobal'] = function(name) {
-    return preserveStack(function () {
+    return preserveStack(function() {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
     });
   }
@@ -1812,8 +1832,8 @@ function wrapModule(module, self) {
       );
     });
   };
-  self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
-    // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
+  self['setMemory'] = function(initial, maximum, exportName, segments, flags, shared) {
+    // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
     return preserveStack(function() {
       return Module['_BinaryenSetMemory'](
@@ -1821,6 +1841,11 @@ function wrapModule(module, self) {
         i32sToStack(
           segments.map(function(segment) {
             return allocate(segment.data, 'i8', ALLOC_STACK);
+          })
+        ),
+        i8sToStack(
+          segments.map(function(segment) {
+            return segment.passive;
           })
         ),
         i32sToStack(
@@ -1900,10 +1925,11 @@ function wrapModule(module, self) {
   };
   self['emitBinary'] = function(sourceMapUrl) {
     return preserveStack(function() {
-      Module['_BinaryenModuleAllocateAndWrite'](temp, module, strToStack(sourceMapUrl));
-      var binaryPtr    = HEAPU32[ temp >>> 2     ];
-      var binaryBytes  = HEAPU32[(temp >>> 2) + 1];
-      var sourceMapPtr = HEAPU32[(temp >>> 2) + 2];
+      var tempBuffer = stackAlloc(_BinaryenSizeofAllocateAndWriteResult());
+      Module['_BinaryenModuleAllocateAndWrite'](tempBuffer, module, strToStack(sourceMapUrl));
+      var binaryPtr    = HEAPU32[ tempBuffer >>> 2     ];
+      var binaryBytes  = HEAPU32[(tempBuffer >>> 2) + 1];
+      var sourceMapPtr = HEAPU32[(tempBuffer >>> 2) + 2];
       try {
         var buffer = new Uint8Array(binaryBytes);
         buffer.set(HEAPU8.subarray(binaryPtr, binaryPtr + binaryBytes));
@@ -2090,7 +2116,18 @@ Module['getExpressionInfo'] = function(expr) {
         case Module['i32']: value = Module['_BinaryenConstGetValueI32'](expr); break;
         case Module['i64']: value = { 'low': Module['_BinaryenConstGetValueI64Low'](expr), 'high': Module['_BinaryenConstGetValueI64High'](expr) }; break;
         case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
-        case Module['f64']: value =  Module['_BinaryenConstGetValueF64'](expr); break;
+        case Module['f64']: value = Module['_BinaryenConstGetValueF64'](expr); break;
+        case Module['v128']: {
+          preserveStack(function() {
+            var tempBuffer = stackAlloc(16);
+            Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
+            value = new Array(16);
+            for (var i = 0 ; i < 16; i++) {
+              value[i] = HEAPU8[tempBuffer + i];
+            }
+          });
+          break;
+        }
         default: throw Error('unexpected type: ' + type);
       }
       return {
@@ -2177,12 +2214,12 @@ Module['getExpressionInfo'] = function(expr) {
         'timeout': Module['_BinaryenAtomicWaitGetTimeout'](expr),
         'expectedType': Module['_BinaryenAtomicWaitGetExpectedType'](expr)
       };
-    case Module['AtomicWakeId']:
+    case Module['AtomicNotifyId']:
       return {
         'id': id,
         'type': type,
-        'ptr': Module['_BinaryenAtomicWakeGetPtr'](expr),
-        'wakeCount': Module['_BinaryenAtomicWakeGetWakeCount'](expr)
+        'ptr': Module['_BinaryenAtomicNotifyGetPtr'](expr),
+        'notifyCount': Module['_BinaryenAtomicNotifyGetNotifyCount'](expr)
       };
     case Module['SIMDExtractId']:
       return {
@@ -2203,11 +2240,11 @@ Module['getExpressionInfo'] = function(expr) {
       };
     case Module['SIMDShuffleId']:
       return preserveStack(function() {
-        var ret = stackAlloc(16);
-        Module['_BinaryenSIMDShuffleGetMask'](expr, ret);
-        var mask = [];
+        var tempBuffer = stackAlloc(16);
+        Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
+        var mask = new Array(16);
         for (var i = 0 ; i < 16; i++) {
-          mask[i] = HEAP8[ret + i];
+          mask[i] = HEAPU8[tempBuffer + i];
         }
         return {
           'id': id,

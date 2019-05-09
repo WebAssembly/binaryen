@@ -28,7 +28,9 @@ namespace wasm {
 //     reaches it
 //   * altering the type of a child to unreachable can make the parent
 //     unreachable
-struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpressionVisitor<TypeUpdater>> {
+struct TypeUpdater
+  : public ExpressionStackWalker<TypeUpdater,
+                                 UnifiedExpressionVisitor<TypeUpdater>> {
   // Part 1: Scanning
 
   // track names to their blocks, so that when we remove a break to
@@ -75,10 +77,13 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
 
   // note the replacement of one node with another. this should be called
   // after performing the replacement.
-  // this does *not* look into the node by default. see noteReplacementWithRecursiveRemoval
-  // (we don't support recursive addition because in practice we do not create
-  // new trees in the passes that use this, they just move around children)
-  void noteReplacement(Expression* from, Expression* to, bool recursivelyRemove=false) {
+  // this does *not* look into the node by default. see
+  // noteReplacementWithRecursiveRemoval (we don't support recursive addition
+  // because in practice we do not create new trees in the passes that use this,
+  // they just move around children)
+  void noteReplacement(Expression* from,
+                       Expression* to,
+                       bool recursivelyRemove = false) {
     auto parent = parents[from];
     if (recursivelyRemove) {
       noteRecursiveRemoval(from);
@@ -109,22 +114,23 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
 
   // note the removal of a node and all its children
   void noteRecursiveRemoval(Expression* curr) {
-    struct Recurser : public PostWalker<Recurser, UnifiedExpressionVisitor<Recurser>> {
+    struct Recurser
+      : public PostWalker<Recurser, UnifiedExpressionVisitor<Recurser>> {
       TypeUpdater& parent;
 
       Recurser(TypeUpdater& parent, Expression* root) : parent(parent) {
         walk(root);
       }
 
-      void visitExpression(Expression* curr) {
-        parent.noteRemoval(curr);
-      }
+      void visitExpression(Expression* curr) { parent.noteRemoval(curr); }
     };
 
     Recurser(*this, curr);
   }
 
-  void noteAddition(Expression* curr, Expression* parent, Expression* previous = nullptr) {
+  void noteAddition(Expression* curr,
+                    Expression* parent,
+                    Expression* previous = nullptr) {
     assert(parents.find(curr) == parents.end()); // must not already exist
     noteRemovalOrAddition(curr, parent);
     // if we didn't replace with the exact same type, propagate types up
@@ -188,7 +194,9 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
   // alters the type of a node to a new type.
   // this propagates the type change through all the parents.
   void changeTypeTo(Expression* curr, Type newType) {
-    if (curr->type == newType) return; // nothing to do
+    if (curr->type == newType) {
+      return; // nothing to do
+    }
     curr->type = newType;
     propagateTypesUp(curr);
   }
@@ -201,11 +209,15 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
   // the one thing we need to do here is propagate unreachability,
   // no other change is possible
   void propagateTypesUp(Expression* curr) {
-    if (curr->type != unreachable) return;
+    if (curr->type != unreachable) {
+      return;
+    }
     while (1) {
       auto* child = curr;
       curr = parents[child];
-      if (!curr) return;
+      if (!curr) {
+        return;
+      }
       // get ready to apply unreachability to this node
       if (curr->type == unreachable) {
         return; // already unreachable, stop here
@@ -254,9 +266,9 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     if (curr->type == unreachable) {
       return; // no change possible
     }
-    if (!curr->list.empty() &&
-        isConcreteType(curr->list.back()->type)) {
-      return; // should keep type due to fallthrough, even if has an unreachable child
+    if (!curr->list.empty() && isConcreteType(curr->list.back()->type)) {
+      // should keep type due to fallthrough, even if has an unreachable child
+      return;
     }
     for (auto* child : curr->list) {
       if (child->type == unreachable) {

@@ -169,7 +169,6 @@ ASM2WASM = [os.path.join(options.binaryen_bin, 'asm2wasm')]
 WASM2JS = [os.path.join(options.binaryen_bin, 'wasm2js')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
-WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
@@ -281,6 +280,57 @@ def delete_from_orbit(filename):
     pass
 
 
+# This is a workaround for https://bugs.python.org/issue9400
+class Py2CalledProcessError(subprocess.CalledProcessError):
+  def __init__(self, returncode, cmd, output=None, stderr=None):
+    super(Exception, self).__init__(returncode, cmd, output, stderr)
+    self.returncode = returncode
+    self.cmd = cmd
+    self.output = output
+    self.stderr = stderr
+
+
+# https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess
+class Py2CompletedProcess:
+  def __init__(self, args, returncode, stdout, stderr):
+    self.args = args
+    self.returncode = returncode
+    self.stdout = stdout
+    self.stderr = stderr
+
+  def __repr__(self):
+    _repr = ['args=%s, returncode=%s' % (self.args, self.returncode)]
+    if self.stdout is not None:
+      _repr += 'stdout=' + repr(self.stdout)
+    if self.stderr is not None:
+      _repr += 'stderr=' + repr(self.stderr)
+    return 'CompletedProcess(%s)' % ', '.join(_repr)
+
+  def check_returncode(self):
+    if self.returncode != 0:
+      raise Py2CalledProcessError(returncode=self.returncode, cmd=self.args,
+                                  output=self.stdout, stderr=self.stderr)
+
+
+def run_process(cmd, check=True, input=None, capture_output=False, *args, **kw):
+  if hasattr(subprocess, "run"):
+    ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
+    return ret
+
+  # Python 2 compatibility: Introduce Python 3 subprocess.run-like behavior
+  if input is not None:
+    kw['stdin'] = subprocess.PIPE
+  if capture_output:
+    kw['stdout'] = subprocess.PIPE
+    kw['stderr'] = subprocess.PIPE
+  proc = subprocess.Popen(cmd, *args, **kw)
+  stdout, stderr = proc.communicate(input)
+  result = Py2CompletedProcess(cmd, proc.returncode, stdout, stderr)
+  if check:
+    result.check_returncode()
+  return result
+
+
 def fail_with_error(msg):
   global num_failures
   try:
@@ -334,7 +384,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   # checks we can convert the wast to binary and back
 
   print '     (binary format check)'
-  cmd = WASM_AS + [wast, '-o', 'a.wasm'] + wasm_as_args
+  cmd = WASM_AS + [wast, '-o', 'a.wasm', '-all'] + wasm_as_args
   print '      ', ' '.join(cmd)
   if os.path.exists('a.wasm'):
     os.unlink('a.wasm')
@@ -349,7 +399,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   assert os.path.exists('ab.wast')
 
   # make sure it is a valid wast
-  cmd = WASM_OPT + ['ab.wast']
+  cmd = WASM_OPT + ['ab.wast', '-all']
   print '      ', ' '.join(cmd)
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
@@ -364,14 +414,12 @@ def minify_check(wast, verify_final_result=True):
   # checks we can parse minified output
 
   print '     (minify check)'
-  cmd = WASM_OPT + [wast, '--print-minified']
+  cmd = WASM_OPT + [wast, '--print-minified', '-all']
   print '      ', ' '.join(cmd)
-  subprocess.check_call(
-      WASM_OPT + [wast, '--print-minified'],
-      stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call(cmd, stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wast')
   subprocess.check_call(
-      WASM_OPT + ['a.wast', '--print-minified'],
+      WASM_OPT + ['a.wast', '--print-minified', '-all'],
       stdout=open('b.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('b.wast')
   if verify_final_result:
@@ -387,3 +435,17 @@ def minify_check(wast, verify_final_result=True):
 
 def files_with_pattern(*path_pattern):
   return sorted(glob.glob(os.path.join(*path_pattern)))
+
+
+# run a check with BINARYEN_PASS_DEBUG set, to do full validation
+def with_pass_debug(check):
+  old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
+  try:
+    os.environ['BINARYEN_PASS_DEBUG'] = '1'
+    check()
+  finally:
+    if old_pass_debug is not None:
+      os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
+    else:
+      if 'BINARYEN_PASS_DEBUG' in os.environ:
+        del os.environ['BINARYEN_PASS_DEBUG']

@@ -25,9 +25,9 @@
 #ifndef wasm_dataflow_utils_h
 #define wasm_dataflow_utils_h
 
-#include "wasm.h"
-#include "wasm-printing.h"
 #include "dataflow/node.h"
+#include "wasm-printing.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -35,27 +35,40 @@ namespace DataFlow {
 
 inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
   auto doIndent = [&]() {
-    for (size_t i = 0; i < indent; i++) o << ' ';
+    for (size_t i = 0; i < indent; i++) {
+      o << ' ';
+    }
   };
   doIndent();
   o << '[' << node << ' ';
   switch (node->type) {
-    case Node::Type::Var:   o << "var " << printType(node->wasmType) << ' ' << node; break;
-    case Node::Type::Expr:  {
+    case Node::Type::Var:
+      o << "var " << printType(node->wasmType) << ' ' << node;
+      break;
+    case Node::Type::Expr: {
       o << "expr ";
       WasmPrinter::printExpression(node->expr, o, true);
       break;
     }
-    case Node::Type::Phi:   o << "phi " << node->index; break;
-    case Node::Type::Cond:  o << "cond " << node->index; break;
+    case Node::Type::Phi:
+      o << "phi " << node->index;
+      break;
+    case Node::Type::Cond:
+      o << "cond " << node->index;
+      break;
     case Node::Type::Block: {
       // don't print the conds - they would recurse
       o << "block (" << node->values.size() << " conds)]\n";
       return o;
     }
-    case Node::Type::Zext:  o << "zext"; break;
-    case Node::Type::Bad:   o << "bad"; break;
-    default: WASM_UNREACHABLE();
+    case Node::Type::Zext:
+      o << "zext";
+      break;
+    case Node::Type::Bad:
+      o << "bad";
+      break;
+    default:
+      WASM_UNREACHABLE();
   }
   if (!node->values.empty()) {
     o << '\n';
@@ -115,11 +128,9 @@ inline bool allInputsConstant(Node* node) {
       if (node->expr->is<Unary>()) {
         return node->getValue(0)->isConst();
       } else if (node->expr->is<Binary>()) {
-        return node->getValue(0)->isConst() &&
-               node->getValue(1)->isConst();
+        return node->getValue(0)->isConst() && node->getValue(1)->isConst();
       } else if (node->expr->is<Select>()) {
-        return node->getValue(0)->isConst() &&
-               node->getValue(1)->isConst() &&
+        return node->getValue(0)->isConst() && node->getValue(1)->isConst() &&
                node->getValue(2)->isConst();
       }
       break;

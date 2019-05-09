@@ -1,0 +1,252 @@
+(module
+ (type $0 (func (param i32)))
+ (type $1 (func (result i32)))
+ (type $2 (func))
+ (type $3 (func (result f64)))
+ (type $4 (func (result v128)))
+ (memory $0 512 512)
+ (data (i32.const 0) "passive")
+ (global $global i32 (i32.const 1))
+ (global $global-mut (mut i32) (i32.const 2))
+ (func $x (; 0 ;) (type $0) (param $x i32)
+  (call $x
+   (i32.const 2300)
+  )
+  (nop)
+  (drop
+   (i32.add
+    (i32.const 1)
+    (local.get $x)
+   )
+  )
+  (nop)
+  (nop)
+  (nop)
+  (loop $in
+   (br $in)
+  )
+  (nop)
+  (block $c
+   (nop)
+   (call $x
+    (i32.const 4)
+   )
+   (br $c)
+   (br $c)
+  )
+  (drop
+   (block $val (result i32)
+    (nop)
+    (call $x
+     (i32.const 4)
+    )
+    (br $val
+     (i32.const 101)
+    )
+    (br $val
+     (i32.const 102)
+    )
+   )
+  )
+  (nop)
+  (drop
+   (block $d0 (result i32)
+    (call $x
+     (i32.const 5)
+    )
+    (nop)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (block $d2 (result i32)
+    (call $x
+     (i32.const 6)
+    )
+    (nop)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (block $d4 (result i32)
+    (call $x
+     (i32.const 7)
+    )
+    (nop)
+    (i32.const 2)
+   )
+  )
+  (call $x
+   (i32.const 2)
+  )
+  (call $x
+   (i32.const 1)
+  )
+  (call $x
+   (i32.const 0)
+  )
+  (call $x
+   (i32.const 0)
+  )
+ )
+ (func $ret (; 1 ;) (type $1) (result i32)
+  (if
+   (call $ret)
+   (return
+    (i32.const 0)
+   )
+  )
+  (if
+   (call $ret)
+   (return
+    (i32.const 1)
+   )
+  )
+  (i32.const 1)
+ )
+ (func $noret (; 2 ;) (type $2)
+  (if
+   (call $ret)
+   (return)
+  )
+ )
+ (func $refinalize-br-condition-unreachable (; 3 ;) (type $2)
+  (block $label$1
+   (drop
+    (br_if $label$1
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky (; 4 ;) (type $2)
+  (drop
+   (block $label$1 (result i32)
+    (drop
+     (br_if $label$1
+      (i32.const 100)
+      (block $label$3
+       (unreachable)
+      )
+     )
+    )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $reuse-br-value (; 5 ;) (type $3) (result f64)
+  (block $label$0 (result f64)
+   (i32.store8
+    (i32.const 1919623207)
+    (if (result i32)
+     (i32.const 1)
+     (block $label$2
+      (drop
+       (i64.and
+        (i64.trunc_f32_u
+         (f32.const 70847791997969805621592064)
+        )
+        (i64.const 729618461987467893)
+       )
+      )
+      (br $label$0
+       (f64.const 6.134856208230095e-154)
+      )
+     )
+     (i32.load offset=3 align=2
+      (i32.const 169901344)
+     )
+    )
+   )
+   (f64.const 4776014875438170098655851e156)
+  )
+ )
+ (func $refinalize-two-breaks-one-unreachable (; 6 ;) (type $2)
+  (drop
+   (block $label$0 (result i64)
+    (block
+     (select
+      (i64.const 1)
+      (block $block
+       (global.set $global-mut
+        (i32.const 1)
+       )
+       (br $label$0
+        (i64.const -22)
+       )
+      )
+      (i32.const 0)
+     )
+     (drop
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
+ (func $one-break-value-and-it-is-unreachable (; 7 ;) (type $3) (result f64)
+  (local $var$0 i32)
+  (block $label$6
+   (block
+    (unreachable)
+    (drop
+     (i32.const 0)
+    )
+   )
+  )
+ )
+ (func $global-notprecomputable (; 8 ;) (type $1) (result i32)
+  (i32.add
+   (i32.const 1)
+   (global.get $global-mut)
+  )
+ )
+ (func $global-precomputable (; 9 ;) (type $1) (result i32)
+  (i32.const 2)
+ )
+ (func $global-partiallyprecomputable (; 10 ;) (type $1) (result i32)
+  (i32.sub
+   (i32.add
+    (i32.const 1)
+    (global.get $global-mut)
+   )
+   (i32.const 2)
+  )
+ )
+ (func $no-simd-precompute (; 11 ;) (type $4) (result v128)
+  (i32x4.splat
+   (i32.const 0)
+  )
+ )
+ (func $no-simd-precompute-if (; 12 ;) (type $4) (result v128)
+  (return
+   (i32x4.splat
+    (i32.const 0)
+   )
+  )
+ )
+ (func $no-memory-init-precompute (; 13 ;) (type $2)
+  (memory.init 0
+   (i32.const 512)
+   (i32.const 0)
+   (i32.const 12)
+  )
+ )
+ (func $no-data-drop-precompute (; 14 ;) (type $2)
+  (data.drop 0)
+ )
+ (func $no-memory-copy-precompute (; 15 ;) (type $2)
+  (memory.copy
+   (i32.const 512)
+   (i32.const 0)
+   (i32.const 12)
+  )
+ )
+ (func $no-memory-fill-precompute (; 16 ;) (type $2)
+  (memory.fill
+   (i32.const 512)
+   (i32.const 0)
+   (i32.const 12)
+  )
+ )
+)

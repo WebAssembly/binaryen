@@ -27,12 +27,12 @@
 // This should work even with dynamic linking, however, the number of
 // params must be identical, i.e., the "ABI" must match.
 
-#include <wasm.h>
-#include <wasm-builder.h>
 #include <asm_v_wasm.h>
-#include <pass.h>
-#include <wasm-emscripten.h>
 #include <ir/literal-utils.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm-emscripten.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -54,10 +54,8 @@ static Expression* toABI(Expression* value, Module* module) {
       break;
     }
     case f32: {
-      value = builder.makeUnary(
-        ExtendUInt32,
-        builder.makeUnary(ReinterpretFloat32, value)
-      );
+      value = builder.makeUnary(ExtendUInt32,
+                                builder.makeUnary(ReinterpretFloat32, value));
       break;
     }
     case f64: {
@@ -68,12 +66,13 @@ static Expression* toABI(Expression* value, Module* module) {
       assert(false && "v128 not implemented yet");
       WASM_UNREACHABLE();
     }
+    case except_ref: {
+      assert(false && "except_ref cannot be converted to i64");
+      WASM_UNREACHABLE();
+    }
     case none: {
       // the value is none, but we need a value here
-      value = builder.makeSequence(
-        value,
-        LiteralUtils::makeZero(i64, *module)
-      );
+      value = builder.makeSequence(value, LiteralUtils::makeZero(i64, *module));
       break;
     }
     case unreachable: {
@@ -97,10 +96,8 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
       break;
     }
     case f32: {
-      value = builder.makeUnary(
-        ReinterpretInt32,
-        builder.makeUnary(WrapInt64, value)
-      );
+      value = builder.makeUnary(ReinterpretInt32,
+                                builder.makeUnary(WrapInt64, value));
       break;
     }
     case f64: {
@@ -109,6 +106,10 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     }
     case v128: {
       assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE();
+    }
+    case except_ref: {
+      assert(false && "except_ref cannot be converted from i64");
       WASM_UNREACHABLE();
     }
     case none: {
@@ -122,7 +123,8 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
   return value;
 }
 
-struct ParallelFuncCastEmulation : public WalkerPass<PostWalker<ParallelFuncCastEmulation>> {
+struct ParallelFuncCastEmulation
+  : public WalkerPass<PostWalker<ParallelFuncCastEmulation>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new ParallelFuncCastEmulation(ABIType); }
@@ -131,8 +133,8 @@ struct ParallelFuncCastEmulation : public WalkerPass<PostWalker<ParallelFuncCast
 
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->operands.size() > NUM_PARAMS) {
-      Fatal() << "FuncCastEmulation::NUM_PARAMS needs to be at least " <<
-                 curr->operands.size();
+      Fatal() << "FuncCastEmulation::NUM_PARAMS needs to be at least "
+              << curr->operands.size();
     }
     for (Expression*& operand : curr->operands) {
       operand = toABI(operand, getModule());
@@ -197,7 +199,8 @@ private:
   Name makeThunk(Name name, Module* module) {
     Name thunk = std::string("byn$fpcast-emu$") + name.str;
     if (module->getFunctionOrNull(thunk)) {
-      Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in use. Was the pass already run on this code?";
+      Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in "
+                 "use. Was the pass already run on this code?";
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
@@ -206,28 +209,25 @@ private:
     Builder builder(*module);
     std::vector<Expression*> callOperands;
     for (Index i = 0; i < params.size(); i++) {
-      callOperands.push_back(fromABI(builder.makeGetLocal(i, i64), params[i], module));
+      callOperands.push_back(
+        fromABI(builder.makeGetLocal(i, i64), params[i], module));
     }
     auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;
     for (Index i = 0; i < NUM_PARAMS; i++) {
       thunkParams.push_back(i64);
     }
-    auto* thunkFunc = builder.makeFunction(
-      thunk,
-      std::move(thunkParams),
-      i64,
-      {}, // no vars
-      toABI(call, module)
-    );
+    auto* thunkFunc = builder.makeFunction(thunk,
+                                           std::move(thunkParams),
+                                           i64,
+                                           {}, // no vars
+                                           toABI(call, module));
     thunkFunc->type = ABIType;
     module->addFunction(thunkFunc);
     return thunk;
   }
 };
 
-Pass* createFuncCastEmulationPass() {
-  return new FuncCastEmulation();
-}
+Pass* createFuncCastEmulationPass() { return new FuncCastEmulation(); }
 
 } // namespace wasm

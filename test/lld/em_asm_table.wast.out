@@ -80,7 +80,6 @@
     "_dynCall_iiii"
   ],
   "exports": [
-    "__data_end",
     "stackSave",
     "stackAlloc",
     "stackRestore",
@@ -88,7 +87,12 @@
     "dynCall_vii",
     "dynCall_iiii"
   ],
+  "namedGlobals": {
+    "__data_end" : "1048"
+  },
   "invokeFuncs": [
+  ],
+  "features": [
   ]
 }
 -- END METADATA --

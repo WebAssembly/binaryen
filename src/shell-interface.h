@@ -21,12 +21,12 @@
 #ifndef wasm_shell_interface_h
 #define wasm_shell_interface_h
 
-#include "shared-constants.h"
 #include "asmjs/shared-constants.h"
-#include "support/name.h"
-#include "wasm.h"
-#include "wasm-interpreter.h"
 #include "ir/module-utils.h"
+#include "shared-constants.h"
+#include "support/name.h"
+#include "wasm-interpreter.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -44,15 +44,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   class Memory {
     // Use char because it doesn't run afoul of aliasing rules.
     std::vector<char> memory;
-    template<typename T>
-    static bool aligned(const char* address) {
+    template<typename T> static bool aligned(const char* address) {
       static_assert(!(sizeof(T) & (sizeof(T) - 1)), "must be a power of 2");
       return 0 == (reinterpret_cast<uintptr_t>(address) & (sizeof(T) - 1));
     }
     Memory(Memory&) = delete;
     Memory& operator=(const Memory&) = delete;
 
-   public:
+  public:
     Memory() = default;
     void resize(size_t newSize) {
       // Ensure the smallest allocation is large enough that most allocators
@@ -68,16 +67,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         std::memset(&memory[newSize], 0, minSize - newSize);
       }
     }
-    template<typename T>
-    void set(size_t address, T value) {
+    template<typename T> void set(size_t address, T value) {
       if (aligned<T>(&memory[address])) {
         *reinterpret_cast<T*>(&memory[address]) = value;
       } else {
         std::memcpy(&memory[address], &value, sizeof(T));
       }
     }
-    template<typename T>
-    T get(size_t address) {
+    template<typename T> T get(size_t address) {
       if (aligned<T>(&memory[address])) {
         return *reinterpret_cast<T*>(&memory[address]);
       } else {
@@ -95,27 +92,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   void init(Module& wasm, ModuleInstance& instance) override {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
-    // apply memory segments
-    for (auto& segment : wasm.memory.segments) {
-      Address offset = (uint32_t)ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
-      if (offset + segment.data.size() > wasm.memory.initial * wasm::Memory::kPageSize) {
-        trap("invalid offset when initializing memory");
-      }
-      for (size_t i = 0; i != segment.data.size(); ++i) {
-        memory.set(offset + i, segment.data[i]);
-      }
-    }
-
     table.resize(wasm.table.initial);
-    for (auto& segment : wasm.table.segments) {
-      Address offset = (uint32_t)ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
-      if (offset + segment.data.size() > wasm.table.initial) {
-        trap("invalid offset when initializing table");
-      }
-      for (size_t i = 0; i != segment.data.size(); ++i) {
-        table[offset + i] = segment.data[i];
-      }
-    }
   }
 
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
@@ -123,17 +100,30 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == SPECTEST && import->base == GLOBAL) {
         switch (import->type) {
-          case i32: globals[import->name] = Literal(int32_t(666)); break;
-          case i64: globals[import->name] = Literal(int64_t(666)); break;
-          case f32: globals[import->name] = Literal(float(666.6)); break;
-          case f64: globals[import->name] = Literal(double(666.6)); break;
-          case v128: assert(false && "v128 not implemented yet");
+          case i32:
+            globals[import->name] = Literal(int32_t(666));
+            break;
+          case i64:
+            globals[import->name] = Literal(int64_t(666));
+            break;
+          case f32:
+            globals[import->name] = Literal(float(666.6));
+            break;
+          case f64:
+            globals[import->name] = Literal(double(666.6));
+            break;
+          case v128:
+            assert(false && "v128 not implemented yet");
+          case except_ref:
+            assert(false && "except_ref not implemented yet");
           case none:
-          case unreachable: WASM_UNREACHABLE();
+          case unreachable:
+            WASM_UNREACHABLE();
         }
       }
     });
-    if (wasm.memory.imported() && wasm.memory.module == SPECTEST && wasm.memory.base == MEMORY) {
+    if (wasm.memory.imported() && wasm.memory.module == SPECTEST &&
+        wasm.memory.base == MEMORY) {
       // imported memory has initial 1 and max 2
       wasm.memory.initial = 1;
       wasm.memory.max = 2;
@@ -155,11 +145,20 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             << import->name.str;
   }
 
-  Literal callTable(Index index, LiteralList& arguments, Type result, ModuleInstance& instance) override {
-    if (index >= table.size()) trap("callTable overflow");
+  Literal callTable(Index index,
+                    LiteralList& arguments,
+                    Type result,
+                    ModuleInstance& instance) override {
+    if (index >= table.size()) {
+      trap("callTable overflow");
+    }
     auto* func = instance.wasm.getFunctionOrNull(table[index]);
-    if (!func) trap("uninitialized table element");
-    if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
+    if (!func) {
+      trap("uninitialized table element");
+    }
+    if (func->params.size() != arguments.size()) {
+      trap("callIndirect: bad # of arguments");
+    }
     for (size_t i = 0; i < func->params.size(); i++) {
       if (func->params[i] != arguments[i].type) {
         trap("callIndirect: bad argument type");
@@ -187,13 +186,23 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     return memory.get<std::array<uint8_t, 16>>(addr);
   }
 
-  void store8(Address addr, int8_t value) override { memory.set<int8_t>(addr, value); }
-  void store16(Address addr, int16_t value) override { memory.set<int16_t>(addr, value); }
-  void store32(Address addr, int32_t value) override { memory.set<int32_t>(addr, value); }
-  void store64(Address addr, int64_t value) override { memory.set<int64_t>(addr, value); }
+  void store8(Address addr, int8_t value) override {
+    memory.set<int8_t>(addr, value);
+  }
+  void store16(Address addr, int16_t value) override {
+    memory.set<int16_t>(addr, value);
+  }
+  void store32(Address addr, int32_t value) override {
+    memory.set<int32_t>(addr, value);
+  }
+  void store64(Address addr, int64_t value) override {
+    memory.set<int64_t>(addr, value);
+  }
   void store128(Address addr, const std::array<uint8_t, 16>& value) override {
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
+
+  void tableStore(Address addr, Name entry) override { table[addr] = entry; }
 
   void growMemory(Address /*oldSize*/, Address newSize) override {
     memory.resize(newSize);
@@ -205,6 +214,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 };
 
-}
+} // namespace wasm
 
 #endif // wasm_shell_interface_h

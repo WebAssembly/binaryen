@@ -21,15 +21,30 @@ import re
 import shutil
 import time
 
-from test.shared import options
+from test.shared import options, NODEJS
 
 
 # parameters
 
+NANS = True
 
-FUZZ_OPTS = ['--mvp-features']  # may want to add '--no-fuzz-nans' for cross-VM testing
+FEATURE_OPTS = []  # '--all-features' etc
 
-INPUT_SIZE_LIMIT = 250 * 1024
+FUZZ_OPTS = []
+
+V8_OPTS = [
+  '--experimental-wasm-eh',
+  '--experimental-wasm-mv',
+  '--experimental-wasm-sat-f2i-conversions',
+  '--experimental-wasm-se',
+  '--experimental-wasm-threads',
+  '--experimental-wasm-simd',
+  '--experimental-wasm-anyref',
+  '--experimental-wasm-bulk-memory',
+  '--experimental-wasm-return-call'
+]
+
+INPUT_SIZE_LIMIT = 150 * 1024
 
 LOG_LIMIT = 125
 
@@ -77,55 +92,82 @@ def compare(x, y, comment):
     ))
 
 
+def fix_output(out):
+  # large doubles may print slightly different on different VMs
+  def fix_double(x):
+    x = x.group(1)
+    if 'nan' in x or 'NaN' in x:
+      x = 'nan'
+    else:
+      x = x.replace('Infinity', 'inf')
+      x = str(float(x))
+    return 'f64.const ' + x
+  out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
+
+  # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
+  out = out.replace('[trap ', 'exception: [trap ')
+
+  # exceptions may differ when optimizing, but an exception should occur. so ignore their types
+  # also js engines print them out slightly differently
+  return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
+
+
+def fix_spec_output(out):
+  out = fix_output(out)
+  # spec shows a pointer when it traps, remove that
+  out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.split('\n')))
+  # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
+  out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
+  return out
+
+
+def run_vm(cmd):
+  # ignore some vm assertions, if bugs have already been filed
+  known_issues = [
+    'local count too large',  # ignore this; can be caused by flatten, ssa, etc. passes
+    'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
+    'liftoff-assembler.cc, line 245\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
+    'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
+  ]
+  try:
+    return run(cmd)
+  except:
+    output = run_unchecked(cmd)
+    for issue in known_issues:
+      if issue in output:
+        return IGNORE
+    raise
+
+
+def run_bynterp(wasm):
+  return fix_output(run_vm([in_bin('wasm-opt'), wasm, '--fuzz-exec-before'] + FEATURE_OPTS))
+
+
+def run_wasm2js(wasm):
+  wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
+  main = run([in_bin('wasm2js'), wasm, '--emscripten'] + FEATURE_OPTS)
+  with open(os.path.join(options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
+    glue = f.read()
+  with open('js.js', 'w') as f:
+    f.write(glue)
+    f.write(main)
+    f.write(wrapper)
+  out = fix_output(run_vm([NODEJS, 'js.js', 'a.wasm']))
+  if 'exception' in out:
+    # exception, so ignoring - wasm2js does not have normal wasm trapping, so opts can eliminate a trap
+    out = IGNORE
+  return out
+
+
 def run_vms(prefix):
-  def fix_output(out):
-    # large doubles may print slightly different on different VMs
-    def fix_double(x):
-      x = x.group(1)
-      if 'nan' in x or 'NaN' in x:
-        x = 'nan'
-      else:
-        x = x.replace('Infinity', 'inf')
-        x = str(float(x))
-      return 'f64.const ' + x
-    out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
-
-    # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
-    out = out.replace('[trap ', 'exception: [trap ')
-
-    # exceptions may differ when optimizing, but an exception should occur. so ignore their types
-    # also js engines print them out slightly differently
-    return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
-
-  def fix_spec_output(out):
-    out = fix_output(out)
-    # spec shows a pointer when it traps, remove that
-    out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.split('\n')))
-    # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
-    out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
-    return out
-
-  def run_vm(cmd):
-    # ignore some vm assertions, if bugs have already been filed
-    known_issues = [
-      'local count too large',  # ignore this; can be caused by flatten, ssa, etc. passes
-      'liftoff-assembler.cc, line 239\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-      'liftoff-assembler.cc, line 245\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8631
-      'liftoff-register.h, line 86\n',  # https://bugs.chromium.org/p/v8/issues/detail?id=8632
-    ]
-    try:
-      return run(cmd)
-    except:
-      output = run_unchecked(cmd)
-      for issue in known_issues:
-        if issue in output:
-          return IGNORE
-      raise
-
+  wasm = prefix + 'wasm'
   results = []
-  # append to this list to add results from VMs
-  results += [fix_output(run_vm([in_bin('wasm-opt'), prefix + 'wasm', '--fuzz-exec-before']))]
-  results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js', '--', prefix + 'wasm']))]
+  results.append(run_bynterp(wasm))
+  results.append(fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', wasm])))
+  # results.append(run_wasm2js(wasm))
+
+  # append to add results from VMs
+  # results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
   # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
   # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
   # run(['../spec/interpreter/wasm', prefix + 'wasm'])
@@ -134,9 +176,11 @@ def run_vms(prefix):
   if len(results) == 0:
     results = [0]
 
-  first = results[0]
-  for i in range(len(results)):
-    compare(first, results[i], 'comparing between vms at ' + str(i))
+  # NaNs are a source of nondeterminism between VMs; don't compare them
+  if not NANS:
+    first = results[0]
+    for i in range(len(results)):
+      compare(first, results[i], 'comparing between vms at ' + str(i))
 
   return results
 
@@ -148,14 +192,14 @@ def test_one(infile, opts):
 
   # fuzz vms
   # gather VM outputs on input file
-  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'] + FUZZ_OPTS)
+  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
   before = run_vms('a.')
   print('----------------')
   # gather VM outputs on processed file
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
   wasm_size = os.stat('b.wasm').st_size
   bytes += wasm_size
   print('post js size:', os.stat('a.js').st_size, ' wasm size:', wasm_size)
@@ -163,11 +207,14 @@ def test_one(infile, opts):
   after = run_vms('b.')
   for i in range(len(before)):
     compare(before[i], after[i], 'comparing between builds at ' + str(i))
+    # with nans, we can only compare the binaryen interpreter to itself
+    if NANS:
+      break
   # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
-  run([in_bin('wasm-opt'), 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts)
+  run([in_bin('wasm-opt'), 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts + FUZZ_OPTS + FEATURE_OPTS)
   # check for determinism
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts)
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm'] + opts)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
   assert open('b.wasm').read() == open('c.wasm').read(), 'output must be deterministic'
 
   return bytes
@@ -186,6 +233,7 @@ opt_choices = [
   ["--dae"],
   ["--dae-optimizing"],
   ["--dce"],
+  ["--directize"],
   ["--flatten", "--dfo"],
   ["--duplicate-function-elimination"],
   ["--flatten"],
@@ -241,6 +289,9 @@ def get_multiple_opt_choices():
 
 # main
 
+if not NANS:
+  FUZZ_OPTS += ['--no-fuzz-nans']
+
 if __name__ == '__main__':
   print('checking infinite random inputs')
   random.seed(time.time() * os.getpid())
@@ -252,7 +303,8 @@ if __name__ == '__main__':
     counter += 1
     f = open(temp, 'w')
     size = random_size()
-    print('\nITERATION:', counter, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
+    print('')
+    print('ITERATION:', counter, 'size:', size, 'speed:', counter / (time.time() - start_time), 'iters/sec, ', bytes / (time.time() - start_time), 'bytes/sec\n')
     for x in range(size):
       f.write(chr(random.randint(0, 255)))
     f.close()

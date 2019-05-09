@@ -17,10 +17,9 @@
 #ifndef wasm_wasm_emscripten_h
 #define wasm_wasm_emscripten_h
 
-#include "wasm.h"
-#include "wasm-builder.h"
 #include "support/file.h"
-
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -29,14 +28,14 @@ namespace wasm {
 class EmscriptenGlueGenerator {
 public:
   EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset = Address(0))
-    : wasm(wasm),
-      builder(wasm),
-      stackPointerOffset(stackPointerOffset),
-      useStackPointerGlobal(stackPointerOffset == 0) { }
+    : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
+      useStackPointerGlobal(stackPointerOffset == 0) {}
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
+  Function* generateAssignGOTEntriesFunction();
   void generateStackInitialization(Address addr);
+  void generatePostInstantiateFunction();
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.
@@ -46,20 +45,16 @@ public:
   // and restore functions.
   void replaceStackPointerGlobal();
 
-  // Create thunks to support emscripten's addFunction functionality. Creates (#
-  // of reserved function pointers) thunks for each indirectly called function
-  // signature.
-  void generateJSCallThunks(unsigned numReservedFunctionPointers);
-
-  std::string generateEmscriptenMetadata(
-      Address staticBump, std::vector<Name> const& initializerFunctions,
-      unsigned numReservedFunctionPointers);
+  std::string
+  generateEmscriptenMetadata(Address staticBump,
+                             std::vector<Name> const& initializerFunctions);
 
   void fixInvokeFunctionNames();
 
   // Emits the data segments to a file. The file contains data from address base
-  // onwards (we must pass in base, as we can't tell it from the wasm - the first
-  // segment may start after a run of zeros, but we need those zeros in the file).
+  // onwards (we must pass in base, as we can't tell it from the wasm - the
+  // first segment may start after a run of zeros, but we need those zeros in
+  // the file).
   void separateDataSegments(Output* outfile, Address base);
 
 private:

@@ -29,17 +29,28 @@ enum Op {
   // Unary
   Neg,
   // Binary
-  Add, Sub, Mul, DivU, DivS, Rem, RemU, RemS,
-  Shl, ShrU, ShrS,
-  And, Or, Xor,
+  Add,
+  Sub,
+  Mul,
+  DivU,
+  DivS,
+  Rem,
+  RemU,
+  RemS,
+  Shl,
+  ShrU,
+  ShrS,
+  And,
+  Or,
+  Xor,
   // Relational
-  Eq, Ne,
+  Eq,
+  Ne,
 };
 
-// Provide a wasm type and an abstract op and get the concrete one. For example, you can
-// provide i32 and Add and receive the specific opcode for a 32-bit addition,
-// AddInt32.
-// If the op does not exist, it returns Invalid.
+// Provide a wasm type and an abstract op and get the concrete one. For example,
+// you can provide i32 and Add and receive the specific opcode for a 32-bit
+// addition, AddInt32. If the op does not exist, it returns Invalid.
 inline UnaryOp getUnary(Type type, Op op) {
   switch (type) {
     case i32: {
@@ -50,15 +61,19 @@ inline UnaryOp getUnary(Type type, Op op) {
     }
     case f32: {
       switch (op) {
-        case Neg: return NegFloat32;
-        default:  return InvalidUnary;
+        case Neg:
+          return NegFloat32;
+        default:
+          return InvalidUnary;
       }
       break;
     }
     case f64: {
       switch (op) {
-        case Neg: return NegFloat64;
-        default:  return InvalidUnary;
+        case Neg:
+          return NegFloat64;
+        default:
+          return InvalidUnary;
       }
       break;
     }
@@ -66,6 +81,7 @@ inline UnaryOp getUnary(Type type, Op op) {
       assert(false && "v128 not implemented yet");
       WASM_UNREACHABLE();
     }
+    case except_ref: // there's no unary instructions for except_ref
     case none:
     case unreachable: {
       return InvalidUnary;
@@ -78,69 +94,117 @@ inline BinaryOp getBinary(Type type, Op op) {
   switch (type) {
     case i32: {
       switch (op) {
-        case Add:  return AddInt32;
-        case Sub:  return SubInt32;
-        case Mul:  return MulInt32;
-        case DivU: return DivUInt32;
-        case DivS: return DivSInt32;
-        case RemU: return RemUInt32;
-        case RemS: return RemSInt32;
-        case Shl:  return ShlInt32;
-        case ShrU: return ShrUInt32;
-        case ShrS: return ShrSInt32;
-        case And:  return AndInt32;
-        case Or:   return OrInt32;
-        case Xor:  return XorInt32;
-        case Eq:   return EqInt32;
-        case Ne:   return NeInt32;
-        default:   return InvalidBinary;
+        case Add:
+          return AddInt32;
+        case Sub:
+          return SubInt32;
+        case Mul:
+          return MulInt32;
+        case DivU:
+          return DivUInt32;
+        case DivS:
+          return DivSInt32;
+        case RemU:
+          return RemUInt32;
+        case RemS:
+          return RemSInt32;
+        case Shl:
+          return ShlInt32;
+        case ShrU:
+          return ShrUInt32;
+        case ShrS:
+          return ShrSInt32;
+        case And:
+          return AndInt32;
+        case Or:
+          return OrInt32;
+        case Xor:
+          return XorInt32;
+        case Eq:
+          return EqInt32;
+        case Ne:
+          return NeInt32;
+        default:
+          return InvalidBinary;
       }
       break;
     }
     case i64: {
       switch (op) {
-        case Add:  return AddInt64;
-        case Sub:  return SubInt64;
-        case Mul:  return MulInt64;
-        case DivU: return DivUInt64;
-        case DivS: return DivSInt64;
-        case RemU: return RemUInt64;
-        case RemS: return RemSInt64;
-        case Shl:  return ShlInt64;
-        case ShrU: return ShrUInt64;
-        case ShrS: return ShrSInt64;
-        case And:  return AndInt64;
-        case Or:   return OrInt64;
-        case Xor:  return XorInt64;
-        case Eq:   return EqInt64;
-        case Ne:   return NeInt64;
-        default:   return InvalidBinary;
+        case Add:
+          return AddInt64;
+        case Sub:
+          return SubInt64;
+        case Mul:
+          return MulInt64;
+        case DivU:
+          return DivUInt64;
+        case DivS:
+          return DivSInt64;
+        case RemU:
+          return RemUInt64;
+        case RemS:
+          return RemSInt64;
+        case Shl:
+          return ShlInt64;
+        case ShrU:
+          return ShrUInt64;
+        case ShrS:
+          return ShrSInt64;
+        case And:
+          return AndInt64;
+        case Or:
+          return OrInt64;
+        case Xor:
+          return XorInt64;
+        case Eq:
+          return EqInt64;
+        case Ne:
+          return NeInt64;
+        default:
+          return InvalidBinary;
       }
       break;
     }
     case f32: {
       switch (op) {
-        case Add:  return AddFloat32;
-        case Sub:  return SubFloat32;
-        case Mul:  return MulFloat32;
-        case DivU: return DivFloat32;
-        case DivS: return DivFloat32;
-        case Eq:   return EqFloat32;
-        case Ne:   return NeFloat32;
-        default:   return InvalidBinary;
+        case Add:
+          return AddFloat32;
+        case Sub:
+          return SubFloat32;
+        case Mul:
+          return MulFloat32;
+        case DivU:
+          return DivFloat32;
+        case DivS:
+          return DivFloat32;
+        case Eq:
+          return EqFloat32;
+        case Ne:
+          return NeFloat32;
+        default:
+          return InvalidBinary;
       }
       break;
     }
     case f64: {
       switch (op) {
-        case Add:  return AddFloat64;
-        case Sub:  return SubFloat64;
-        case Mul:  return MulFloat64;
-        case DivU: return DivFloat64;
-        case DivS: return DivFloat64;
-        case Eq:   return EqFloat64;
-        case Ne:   return NeFloat64;
-        default:   return InvalidBinary;
+        case Add:
+          return AddFloat64;
+        case Sub:
+          return SubFloat64;
+        case Mul:
+          return MulFloat64;
+        case DivU:
+          return DivFloat64;
+        case DivS:
+          return DivFloat64;
+        case Eq:
+          return EqFloat64;
+        case Ne:
+          return NeFloat64;
+        default:
+          return InvalidBinary;
       }
       break;
     }
@@ -148,6 +212,7 @@ inline BinaryOp getBinary(Type type, Op op) {
       assert(false && "v128 not implemented yet");
       WASM_UNREACHABLE();
     }
+    case except_ref: // there's no binary instructions for except_ref
     case none:
     case unreachable: {
       return InvalidBinary;

@@ -1245,4 +1245,27 @@
   )
   (local.get $0)
  )
+ (func $reuse-param (; 57 ;) (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
+  (i32.add
+   (local.tee $0
+    (i32.xor
+     (i32.shr_s
+      (i32.shl
+       (local.get $0)
+       (i32.const 16)
+      )
+      (i32.const 16)
+     )
+     (i32.shr_s
+      (i32.shl
+       (local.get $1)
+       (i32.const 16)
+      )
+      (i32.const 16)
+     )
+    )
+   )
+   (local.get $0)
+  )
+ )
 )

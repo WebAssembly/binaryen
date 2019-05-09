@@ -17,52 +17,75 @@
 #include "asm_v_wasm.h"
 #include "wasm.h"
 
-
 namespace wasm {
 
 Type asmToWasmType(AsmType asmType) {
   switch (asmType) {
-    case ASM_INT: return Type::i32;
-    case ASM_DOUBLE: return Type::f64;
-    case ASM_FLOAT: return Type::f32;
-    case ASM_INT64: return Type::i64;
-    case ASM_NONE: return Type::none;
+    case ASM_INT:
+      return Type::i32;
+    case ASM_DOUBLE:
+      return Type::f64;
+    case ASM_FLOAT:
+      return Type::f32;
+    case ASM_INT64:
+      return Type::i64;
+    case ASM_NONE:
+      return Type::none;
     case ASM_FLOAT32X4:
     case ASM_FLOAT64X2:
     case ASM_INT8X16:
     case ASM_INT16X8:
-    case ASM_INT32X4: return Type::v128;
+    case ASM_INT32X4:
+      return Type::v128;
   }
   WASM_UNREACHABLE();
 }
 
 AsmType wasmToAsmType(Type type) {
   switch (type) {
-    case i32: return ASM_INT;
-    case f32: return ASM_FLOAT;
-    case f64: return ASM_DOUBLE;
-    case i64: return ASM_INT64;
-    case v128: assert(false && "v128 not implemented yet");
-    case none: return ASM_NONE;
-    case unreachable: WASM_UNREACHABLE();
+    case i32:
+      return ASM_INT;
+    case f32:
+      return ASM_FLOAT;
+    case f64:
+      return ASM_DOUBLE;
+    case i64:
+      return ASM_INT64;
+    case v128:
+      assert(false && "v128 not implemented yet");
+    case except_ref:
+      assert(false && "except_ref is not in asm2wasm");
+    case none:
+      return ASM_NONE;
+    case unreachable:
+      WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }
 
 char getSig(Type type) {
   switch (type) {
-    case i32:  return 'i';
-    case i64:  return 'j';
-    case f32:  return 'f';
-    case f64:  return 'd';
-    case v128: return 'V';
-    case none: return 'v';
-    case unreachable: WASM_UNREACHABLE();
+    case i32:
+      return 'i';
+    case i64:
+      return 'j';
+    case f32:
+      return 'f';
+    case f64:
+      return 'd';
+    case v128:
+      return 'V';
+    case except_ref:
+      return 'e';
+    case none:
+      return 'v';
+    case unreachable:
+      WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }
 
-std::string getSig(const FunctionType *type) {
+std::string getSig(const FunctionType* type) {
   std::string ret;
   ret += getSig(type->result);
   for (auto param : type->params) {
@@ -71,7 +94,7 @@ std::string getSig(const FunctionType *type) {
   return ret;
 }
 
-std::string getSig(Function *func) {
+std::string getSig(Function* func) {
   std::string ret;
   ret += getSig(func->result);
   for (auto type : func->params) {
@@ -82,13 +105,22 @@ std::string getSig(Function *func) {
 
 Type sigToType(char sig) {
   switch (sig) {
-    case 'i': return i32;
-    case 'j': return i64;
-    case 'f': return f32;
-    case 'd': return f64;
-    case 'V': return v128;
-    case 'v': return none;
-    default: abort();
+    case 'i':
+      return i32;
+    case 'j':
+      return i64;
+    case 'f':
+      return f32;
+    case 'd':
+      return f64;
+    case 'V':
+      return v128;
+    case 'e':
+      return except_ref;
+    case 'v':
+      return none;
+    default:
+      abort();
   }
 }
 

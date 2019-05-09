@@ -1,11 +1,11 @@
+
 function asmFunc(global, env, buffer) {
- "use asm";
+ "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -20,7 +20,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
@@ -57,21 +56,22 @@ function asmFunc(global, env, buffer) {
   return x >= y | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
-  eq: $0, 
-  ne: $1, 
-  lt: $2, 
-  le: $3, 
-  gt: $4, 
-  ge: $5
+  "eq": $0, 
+  "ne": $1, 
+  "lt": $2, 
+  "le": $3, 
+  "gt": $4, 
+  "ge": $5
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const eq = retasmFunc.eq;
-export const ne = retasmFunc.ne;
-export const lt = retasmFunc.lt;
-export const le = retasmFunc.le;
-export const gt = retasmFunc.gt;
-export const ge = retasmFunc.ge;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var eq = retasmFunc.eq;
+export var ne = retasmFunc.ne;
+export var lt = retasmFunc.lt;
+export var le = retasmFunc.le;
+export var gt = retasmFunc.gt;
+export var ge = retasmFunc.ge;

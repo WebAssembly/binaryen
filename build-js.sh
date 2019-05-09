@@ -40,7 +40,7 @@ fi
 EMCC_ARGS="-std=c++11 --memory-init-file 0"
 EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
 EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
-EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=1"
+EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=0"
 EMCC_ARGS="$EMCC_ARGS -s WASM=0"
 EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
 EMCC_ARGS="$EMCC_ARGS -s BINARYEN_ASYNC_COMPILATION=0"
@@ -91,6 +91,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/ir/LocalGraph.cpp \
   $BINARYEN_SRC/ir/ReFinalize.cpp \
   $BINARYEN_SRC/passes/pass.cpp \
+  $BINARYEN_SRC/passes/AlignmentLowering.cpp \
   $BINARYEN_SRC/passes/CoalesceLocals.cpp \
   $BINARYEN_SRC/passes/DeadArgumentElimination.cpp \
   $BINARYEN_SRC/passes/CodeFolding.cpp \
@@ -98,6 +99,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/ConstHoisting.cpp \
   $BINARYEN_SRC/passes/DataFlowOpts.cpp \
   $BINARYEN_SRC/passes/DeadCodeElimination.cpp \
+  $BINARYEN_SRC/passes/Directize.cpp \
   $BINARYEN_SRC/passes/DuplicateFunctionElimination.cpp \
   $BINARYEN_SRC/passes/ExtractFunction.cpp \
   $BINARYEN_SRC/passes/Flatten.cpp \
@@ -107,6 +109,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/InstrumentLocals.cpp \
   $BINARYEN_SRC/passes/InstrumentMemory.cpp \
   $BINARYEN_SRC/passes/LegalizeJSInterface.cpp \
+  $BINARYEN_SRC/passes/LimitSegments.cpp \
   $BINARYEN_SRC/passes/LocalCSE.cpp \
   $BINARYEN_SRC/passes/LogExecution.cpp \
   $BINARYEN_SRC/passes/LoopInvariantCodeMotion.cpp \
@@ -117,11 +120,13 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/MinifyImportsAndExports.cpp \
   $BINARYEN_SRC/passes/NameList.cpp \
   $BINARYEN_SRC/passes/NoExitRuntime.cpp \
+  $BINARYEN_SRC/passes/OptimizeAddedConstants.cpp \
   $BINARYEN_SRC/passes/OptimizeInstructions.cpp \
   $BINARYEN_SRC/passes/PickLoadSigns.cpp \
   $BINARYEN_SRC/passes/PostEmscripten.cpp \
   $BINARYEN_SRC/passes/Precompute.cpp \
   $BINARYEN_SRC/passes/Print.cpp \
+  $BINARYEN_SRC/passes/PrintFeatures.cpp \
   $BINARYEN_SRC/passes/PrintCallGraph.cpp \
   $BINARYEN_SRC/passes/RedundantSetElimination.cpp \
   $BINARYEN_SRC/passes/RelooperJumpThreading.cpp \
@@ -135,12 +140,14 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/ReorderLocals.cpp \
   $BINARYEN_SRC/passes/ReReloop.cpp \
   $BINARYEN_SRC/passes/SafeHeap.cpp \
+  $BINARYEN_SRC/passes/SimplifyGlobals.cpp \
   $BINARYEN_SRC/passes/SimplifyLocals.cpp \
   $BINARYEN_SRC/passes/Souperify.cpp \
   $BINARYEN_SRC/passes/SpillPointers.cpp \
   $BINARYEN_SRC/passes/SSAify.cpp \
   $BINARYEN_SRC/passes/StackIR.cpp \
   $BINARYEN_SRC/passes/Strip.cpp \
+  $BINARYEN_SRC/passes/StripTargetFeatures.cpp \
   $BINARYEN_SRC/passes/TrapMode.cpp \
   $BINARYEN_SRC/passes/Untee.cpp \
   $BINARYEN_SRC/passes/Vacuum.cpp \
@@ -173,6 +180,7 @@ export_function "_BinaryenTypeInt64"
 export_function "_BinaryenTypeFloat32"
 export_function "_BinaryenTypeFloat64"
 export_function "_BinaryenTypeVec128"
+export_function "_BinaryenTypeExceptRef"
 export_function "_BinaryenTypeUnreachable"
 export_function "_BinaryenTypeAuto"
 
@@ -203,7 +211,7 @@ export_function "_BinaryenUnreachableId"
 export_function "_BinaryenAtomicCmpxchgId"
 export_function "_BinaryenAtomicRMWId"
 export_function "_BinaryenAtomicWaitId"
-export_function "_BinaryenAtomicWakeId"
+export_function "_BinaryenAtomicNotifyId"
 export_function "_BinaryenSIMDExtractId"
 export_function "_BinaryenSIMDReplaceId"
 export_function "_BinaryenSIMDShuffleId"
@@ -539,7 +547,7 @@ export_function "_BinaryenAtomicStore"
 export_function "_BinaryenAtomicRMW"
 export_function "_BinaryenAtomicCmpxchg"
 export_function "_BinaryenAtomicWait"
-export_function "_BinaryenAtomicWake"
+export_function "_BinaryenAtomicNotify"
 export_function "_BinaryenSIMDExtract"
 export_function "_BinaryenSIMDReplace"
 export_function "_BinaryenSIMDShuffle"
@@ -634,6 +642,7 @@ export_function "_BinaryenConstGetValueI64Low"
 export_function "_BinaryenConstGetValueI64High"
 export_function "_BinaryenConstGetValueF32"
 export_function "_BinaryenConstGetValueF64"
+export_function "_BinaryenConstGetValueV128"
 
 # 'Unary' expression operations
 export_function "_BinaryenUnaryGetOp"
@@ -675,9 +684,9 @@ export_function "_BinaryenAtomicWaitGetExpected"
 export_function "_BinaryenAtomicWaitGetTimeout"
 export_function "_BinaryenAtomicWaitGetExpectedType"
 
-# 'AtomicWake' expression operations
-export_function "_BinaryenAtomicWakeGetPtr"
-export_function "_BinaryenAtomicWakeGetWakeCount"
+# 'AtomicNotify' expression operations
+export_function "_BinaryenAtomicNotifyGetPtr"
+export_function "_BinaryenAtomicNotifyGetNotifyCount"
 
 # 'SIMDExtract' expression operations
 export_function "_BinaryenSIMDExtractGetOp"

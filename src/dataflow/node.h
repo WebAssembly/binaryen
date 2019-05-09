@@ -25,6 +25,7 @@
 #ifndef wasm_dataflow_node_h
 #define wasm_dataflow_node_h
 
+#include "ir/utils.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -34,11 +35,11 @@ namespace DataFlow {
 //
 // The core IR representation in DataFlow: a Node.
 //
-// We reuse the Binaryen IR as much as possible: when things are identical between
-// the two IRs, we just create an Expr node, which stores the opcode and other
-// details, and we can emit them to Souper by reading the Binaryen Expression.
-// Other node types here are special things from Souper IR that we can't
-// represent that way.
+// We reuse the Binaryen IR as much as possible: when things are identical
+// between the two IRs, we just create an Expr node, which stores the opcode and
+// other details, and we can emit them to Souper by reading the Binaryen
+// Expression. Other node types here are special things from Souper IR that we
+// can't represent that way.
 //
 // * Souper comparisons return an i1. We extend them immediately if they are
 //   going to be used as i32s or i64s.
@@ -52,15 +53,17 @@ namespace DataFlow {
 
 struct Node {
   enum Type {
-    Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
-    Expr,  // a value represented by a Binaryen Expression
-    Phi,   // a phi from converging control flow
-    Cond,  // a blockpc, representing one of the branchs for a Block
+    Var,  // an unknown variable number (not to be confused with var/param/local
+          // in wasm)
+    Expr, // a value represented by a Binaryen Expression
+    Phi,  // a phi from converging control flow
+    Cond, // a blockpc, representing one of the branchs for a Block
     Block, // a source of phis
-    Zext,  // zero-extend an i1 (from an op where Souper returns i1 but wasm does not,
-           // and so we need a special way to get back to an i32/i64 if we operate
-           // on that value instead of just passing it straight to Souper).
-    Bad    // something we can't handle and should ignore
+    Zext, // zero-extend an i1 (from an op where Souper returns i1 but wasm does
+          // not, and so we need a special way to get back to an i32/i64 if we
+          // operate on that value instead of just passing it straight to
+          // Souper).
+    Bad   // something we can't handle and should ignore
   } type;
 
   Node(Type type) : type(type) {}
@@ -144,50 +147,60 @@ struct Node {
 
   // Helpers
 
-  void addValue(Node* value) {
-    values.push_back(value);
-  }
-  Node* getValue(Index i) {
-    return values.at(i);
-  }
+  void addValue(Node* value) { values.push_back(value); }
+  Node* getValue(Index i) { return values.at(i); }
 
   // Gets the wasm type of the node. If there isn't a valid one,
   // return unreachable.
   wasm::Type getWasmType() {
     switch (type) {
-      case Var:   return wasmType;
-      case Expr:  return expr->type;
-      case Phi:   return getValue(1)->getWasmType();
-      case Zext:  return getValue(0)->getWasmType();
-      case Bad:   return unreachable;
-      default:    WASM_UNREACHABLE();
+      case Var:
+        return wasmType;
+      case Expr:
+        return expr->type;
+      case Phi:
+        return getValue(1)->getWasmType();
+      case Zext:
+        return getValue(0)->getWasmType();
+      case Bad:
+        return unreachable;
+      default:
+        WASM_UNREACHABLE();
     }
   }
 
   bool operator==(const Node& other) {
-    if (type != other.type) return false;
+    if (type != other.type) {
+      return false;
+    }
     switch (type) {
       case Var:
-      case Block: return this == &other;
+      case Block:
+        return this == &other;
       case Expr: {
         if (!ExpressionAnalyzer::equal(expr, other.expr)) {
           return false;
         }
         break;
       }
-      case Cond:  if (index != other.index) return false;
+      case Cond:
+        if (index != other.index) {
+          return false;
+        }
       default: {}
     }
-    if (values.size() != other.values.size()) return false;
+    if (values.size() != other.values.size()) {
+      return false;
+    }
     for (Index i = 0; i < values.size(); i++) {
-      if (*(values[i]) != *(other.values[i])) return false;
+      if (*(values[i]) != *(other.values[i])) {
+        return false;
+      }
     }
     return true;
   }
 
-  bool operator!=(const Node& other) {
-    return !(*this == other);
-  }
+  bool operator!=(const Node& other) { return !(*this == other); }
 
   // As mentioned above, comparisons return i1. This checks
   // if an operation is of that sort.

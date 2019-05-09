@@ -1,4 +1,5 @@
 total
+ [exports]      : 2       
  [funcs]        : 8       
  [imports]      : 3       
  [memory-data]  : 28      
@@ -240,6 +241,7 @@ total
  )
 )
 total
+ [exports]      : 2       
  [funcs]        : 8       
  [imports]      : 3       
  [memory-data]  : 28      
@@ -482,6 +484,7 @@ total
  )
 )
 total
+ [exports]      : 2       
  [funcs]        : 8       
  [imports]      : 3       
  [memory-data]  : 28      

@@ -18,38 +18,28 @@ import os
 import shutil
 import subprocess
 import sys
+import unittest
 
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
-    BIN_DIR, MOZJS, NATIVECC, NATIVEXX, NODEJS, BINARYEN_JS,
-    WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_METADCE,
-    WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
+    BIN_DIR, MOZJS, NATIVECC, NATIVEXX, NODEJS, BINARYEN_JS, WASM_AS,
+    WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_METADCE, WASM_DIS, WASM_REDUCE,
+    binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
-    has_vanilla_llvm, minify_check, num_failures, options, tests,
-    requested, warnings, has_shell_timeout, fail_if_not_identical_to_file
+    has_vanilla_llvm, minify_check, options, tests, requested, warnings,
+    has_shell_timeout, fail_if_not_identical_to_file, with_pass_debug
 )
 
-import scripts.test.asm2wasm as asm2wasm
-import scripts.test.lld as lld
-import scripts.test.wasm2js as wasm2js
+# For shared.num_failures. Cannot import directly because modifications made in
+# shared.py would not affect the version imported here.
+from scripts.test import shared
+from scripts.test import asm2wasm
+from scripts.test import lld
+from scripts.test import wasm2js
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
   assert os.path.exists(options.interpreter), 'interpreter not found'
-
-
-# run a check with BINARYEN_PASS_DEBUG set, to do full validation
-def with_pass_debug(check):
-  old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
-  try:
-    os.environ['BINARYEN_PASS_DEBUG'] = '1'
-    check()
-  finally:
-    if old_pass_debug is not None:
-      os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
-    else:
-      if 'BINARYEN_PASS_DEBUG' in os.environ:
-        del os.environ['BINARYEN_PASS_DEBUG']
 
 
 def run_help_tests():
@@ -136,12 +126,12 @@ def run_wasm_opt_tests():
     if t.endswith('.wast'):
       print '..', t
       wasm = os.path.basename(t).replace('.wast', '')
-      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print']
+      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print', '-all']
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
       expected_file = os.path.join(options.binaryen_test, 'print', wasm + '.txt')
       fail_if_not_identical_to_file(actual, expected_file)
-      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified']
+      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified', '-all']
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
       fail_if_not_identical(actual.strip(), open(os.path.join(options.binaryen_test, 'print', wasm + '.minified.txt')).read().strip())
@@ -153,7 +143,7 @@ def run_wasm_opt_tests():
       print '..', t
       t = os.path.join(options.binaryen_test, t)
       f = t + '.from-wast'
-      cmd = WASM_OPT + [t, '--print']
+      cmd = WASM_OPT + [t, '--print', '-all']
       actual = run_command(cmd)
       actual = actual.replace('printing before:\n', '')
 
@@ -193,37 +183,10 @@ def run_wasm_dis_tests():
 
       # also verify there are no validation errors
       def check():
-        cmd = WASM_OPT + [t]
+        cmd = WASM_OPT + [t, '-all']
         run_command(cmd)
 
       with_pass_debug(check)
-
-
-def run_wasm_merge_tests():
-  print '\n[ checking wasm-merge... ]\n'
-
-  test_dir = os.path.join(options.binaryen_test, 'merge')
-  for t in os.listdir(test_dir):
-    if t.endswith(('.wast', '.wasm')):
-      print '..', t
-      t = os.path.join(test_dir, t)
-      u = t + '.toMerge'
-      for finalize in [0, 1]:
-        for opt in [0, 1]:
-          cmd = WASM_MERGE + [t, u, '-o', 'a.wast', '-S', '--verbose']
-          if finalize:
-            cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
-          if opt:
-            cmd += ['-O']
-          stdout = run_command(cmd)
-          actual = open('a.wast').read()
-          out = t + '.combined'
-          if finalize:
-            out += '.finalized'
-          if opt:
-            out += '.opt'
-          fail_if_not_identical_to_file(actual, out)
-          fail_if_not_identical_to_file(stdout, out + '.stdout')
 
 
 def run_crash_tests():
@@ -298,7 +261,7 @@ def run_wasm_reduce_tests():
       t = os.path.join(test_dir, t)
       # convert to wasm
       run_command(WASM_AS + [t, '-o', 'a.wasm'])
-      run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+      run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
       expected = t + '.txt'
       run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
       with open('a.wast') as seen:
@@ -309,9 +272,9 @@ def run_wasm_reduce_tests():
   if 'fsanitize=thread' not in str(os.environ):
     print '\n[ checking wasm-reduce fuzz testcase ]\n'
 
-    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
+    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm', '-all'])
     before = os.stat('a.wasm').st_size
-    run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+    run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
     after = os.stat('c.wasm').st_size
     assert after < 0.6 * before, [before, after]
 
@@ -321,7 +284,7 @@ def run_spec_tests():
 
   if len(requested) == 0:
     # FIXME we support old and new memory formats, for now, until 0xc, and so can't pass this old-style test.
-    BLACKLIST = ['memory.wast', 'binary.wast']
+    BLACKLIST = ['binary.wast']
     # FIXME to update the spec to 0xd, we need to implement (register "name") for import.wast
     spec_tests = [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'spec'))) if t not in BLACKLIST]
   else:
@@ -346,7 +309,7 @@ def run_spec_tests():
 
       def run_opt_test(wast):
         # check optimization validation
-        cmd = WASM_OPT + [wast, '-O']
+        cmd = WASM_OPT + [wast, '-O', '-all']
         run_command(cmd)
 
       def check_expected(actual, expected):
@@ -592,6 +555,17 @@ def run_gcc_tests():
       fail_if_not_identical_to_file(actual, expected)
 
 
+def run_unittest():
+  print '\n[ checking unit tests...]\n'
+
+  # equivalent to `python -m unittest discover -s ./test -v`
+  suite = unittest.defaultTestLoader.discover(os.path.dirname(options.binaryen_test))
+  result = unittest.TextTestRunner(verbosity=2, failfast=options.abort_on_first_failure).run(suite)
+  shared.num_failures += len(result.errors) + len(result.failures)
+  if options.abort_on_first_failure and shared.num_failures:
+    raise Exception("unittest failed")
+
+
 # Run all the tests
 def main():
   run_help_tests()
@@ -599,7 +573,6 @@ def main():
   asm2wasm.test_asm2wasm()
   asm2wasm.test_asm2wasm_binary()
   run_wasm_dis_tests()
-  run_wasm_merge_tests()
   run_crash_tests()
   run_dylink_tests()
   run_ctor_eval_tests()
@@ -618,17 +591,20 @@ def main():
   if options.run_gcc_tests:
     run_gcc_tests()
 
+  run_unittest()
+
   # Check/display the results
-  if num_failures == 0:
+  if shared.num_failures == 0:
     print '\n[ success! ]'
 
   if warnings:
     print '\n' + '\n'.join(warnings)
 
-  if num_failures > 0:
-    print '\n[ ' + str(num_failures) + ' failures! ]'
+  if shared.num_failures > 0:
+    print '\n[ ' + str(shared.num_failures) + ' failures! ]'
+    return 1
 
-  return num_failures
+  return 0
 
 
 if __name__ == '__main__':

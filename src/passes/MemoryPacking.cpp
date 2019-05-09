@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
+#include "pass.h"
+#include "wasm-binary.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -27,56 +28,92 @@ struct MemoryPacking : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
-    if (!module->memory.exists) return;
+    // Conservatively refuse to change segments if bulk memory is enabled to
+    // avoid invalidating segment indices or segment contents referenced from
+    // memory.init instructions.
+    // TODO: optimize in the presence of memory.init instructions
+    if (!module->memory.exists || module->features.hasBulkMemory()) {
+      return;
+    }
+
     std::vector<Memory::Segment> packed;
+
+    // we can only handle a constant offset for splitting
+    auto isSplittable = [&](const Memory::Segment& segment) {
+      return segment.offset->is<Const>();
+    };
+
     for (auto& segment : module->memory.segments) {
+      if (!isSplittable(segment)) {
+        packed.push_back(segment);
+      }
+    }
+
+    size_t numRemaining = module->memory.segments.size() - packed.size();
+
+    // Split only if we have room for more segments
+    auto shouldSplit = [&]() {
+      return WebLimitations::MaxDataSegments > packed.size() + numRemaining;
+    };
+
+    for (auto& segment : module->memory.segments) {
+      if (!isSplittable(segment)) {
+        continue;
+      }
+
       // skip final zeros
       while (segment.data.size() > 0 && segment.data.back() == 0) {
         segment.data.pop_back();
       }
-      // we can only handle a constant offset for splitting
-      if (auto* offset = segment.offset->dynCast<Const>()) {
-        // Find runs of zeros, and split
-        auto& data = segment.data;
-        auto base = offset->value.geti32();
-        Index start = 0;
-        // create new segments
-        while (start < data.size()) {
-          // skip initial zeros
-          while (start < data.size() && data[start] == 0) {
-            start++;
-          }
-          Index end = start; // end of data-containing part
-          Index next = end; // after zeros we can skip. preserves next >= end
-          while (next < data.size() && (next - end < OVERHEAD)) {
-            if (data[end] != 0) {
-              end++;
-              next = end; // we can try to skip zeros from here
+
+      if (!shouldSplit()) {
+        packed.push_back(segment);
+        continue;
+      }
+
+      auto* offset = segment.offset->cast<Const>();
+      // Find runs of zeros, and split
+      auto& data = segment.data;
+      auto base = offset->value.geti32();
+      Index start = 0;
+      // create new segments
+      while (start < data.size()) {
+        // skip initial zeros
+        while (start < data.size() && data[start] == 0) {
+          start++;
+        }
+        Index end = start; // end of data-containing part
+        Index next = end;  // after zeros we can skip. preserves next >= end
+        if (!shouldSplit()) {
+          next = end = data.size();
+        }
+        while (next < data.size() && (next - end < OVERHEAD)) {
+          if (data[end] != 0) {
+            end++;
+            next = end; // we can try to skip zeros from here
+          } else {
+            // end is on a zero, we are looking to skip
+            if (data[next] != 0) {
+              end = next; // we must extend the segment, including some zeros
             } else {
-              // end is on a zero, we are looking to skip
-              if (data[next] != 0) {
-                end = next; // we must extend the segment, including some zeros
-              } else {
-                next++;
-              }
+              next++;
             }
           }
-          if (end != start) {
-            packed.emplace_back(Builder(*module).makeConst(Literal(int32_t(base + start))), &data[start], end - start);
-          }
-          start = next;
         }
-      } else {
-        packed.push_back(segment);
+        if (end != start) {
+          packed.emplace_back(
+            Builder(*module).makeConst(Literal(int32_t(base + start))),
+            &data[start],
+            end - start);
+        }
+        start = next;
       }
+      numRemaining--;
     }
     module->memory.segments.swap(packed);
   }
 };
 
-Pass *createMemoryPackingPass() {
-  return new MemoryPacking();
-}
+Pass* createMemoryPackingPass() { return new MemoryPacking(); }
 
 } // namespace wasm
-

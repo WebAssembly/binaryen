@@ -21,9 +21,9 @@
 
 #include <functional>
 
-#include "wasm.h"
-#include "wasm-binary.h"
 #include "pass.h"
+#include "wasm-binary.h"
+#include "wasm.h"
 
 using namespace std;
 
@@ -31,7 +31,7 @@ namespace wasm {
 
 struct Strip : public Pass {
   // A function that returns true if the method should be removed.
-  typedef std::function<bool (UserSection&)> Decider;
+  typedef std::function<bool(UserSection&)> Decider;
   Decider decider;
 
   Strip(Decider decider) : decider(decider) {}
@@ -39,33 +39,30 @@ struct Strip : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // Remove name and debug sections.
     auto& sections = module->userSections;
-    sections.erase(
-      std::remove_if(
-        sections.begin(),
-        sections.end(),
-        decider
-      ),
-      sections.end()
-    );
-    // Clean up internal data structures.
-    module->clearDebugInfo();
-    for (auto& func : module->functions) {
-      func->clearNames();
-      func->clearDebugInfo();
+    sections.erase(std::remove_if(sections.begin(), sections.end(), decider),
+                   sections.end());
+    // If we're cleaning up debug info, clear on the function and module too.
+    UserSection temp;
+    temp.name = BinaryConsts::UserSections::Name;
+    if (decider(temp)) {
+      module->clearDebugInfo();
+      for (auto& func : module->functions) {
+        func->clearNames();
+        func->clearDebugInfo();
+      }
     }
   }
 };
 
-Pass *createStripDebugPass() {
+Pass* createStripDebugPass() {
   return new Strip([&](const UserSection& curr) {
     return curr.name == BinaryConsts::UserSections::Name ||
            curr.name == BinaryConsts::UserSections::SourceMapUrl ||
-           curr.name.find(".debug") == 0 ||
-           curr.name.find("reloc..debug") == 0;
+           curr.name.find(".debug") == 0 || curr.name.find("reloc..debug") == 0;
   });
 }
 
-Pass *createStripProducersPass() {
+Pass* createStripProducersPass() {
   return new Strip([&](const UserSection& curr) {
     return curr.name == BinaryConsts::UserSections::Producers;
   });

@@ -43,13 +43,13 @@
 //    )
 //   )
 
-#include <wasm.h>
-#include <wasm-builder.h>
-#include <pass.h>
-#include "shared-constants.h"
-#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
 #include "ir/function-type-utils.h"
+#include "shared-constants.h"
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -68,59 +68,75 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     Builder builder(*getModule());
     Name import;
     switch (curr->type) {
-      case i32: import = get_i32; break;
-      case i64: return; // TODO
-      case f32: import = get_f32; break;
-      case f64: import = get_f64; break;
-      case v128: assert(false && "v128 not implemented yet");
-      case none: WASM_UNREACHABLE();
-      case unreachable: WASM_UNREACHABLE();
+      case i32:
+        import = get_i32;
+        break;
+      case i64:
+        return; // TODO
+      case f32:
+        import = get_f32;
+        break;
+      case f64:
+        import = get_f64;
+        break;
+      case v128:
+        assert(false && "v128 not implemented yet");
+      case except_ref:
+        assert(false && "not implemented yet");
+      case none:
+        WASM_UNREACHABLE();
+      case unreachable:
+        WASM_UNREACHABLE();
     }
     replaceCurrent(
-      builder.makeCall(
-        import,
-        {
-          builder.makeConst(Literal(int32_t(id++))),
-          builder.makeConst(Literal(int32_t(curr->index))),
-          curr
-        },
-        curr->type
-      )
-    );
+      builder.makeCall(import,
+                       {builder.makeConst(Literal(int32_t(id++))),
+                        builder.makeConst(Literal(int32_t(curr->index))),
+                        curr},
+                       curr->type));
   }
 
   void visitSetLocal(SetLocal* curr) {
     Builder builder(*getModule());
     Name import;
     switch (curr->value->type) {
-      case i32: import = set_i32; break;
-      case i64: return; // TODO
-      case f32: import = set_f32; break;
-      case f64: import = set_f64; break;
-      case v128: assert(false && "v128 not implemented yet");
-      case unreachable: return; // nothing to do here
-      case none: WASM_UNREACHABLE();
+      case i32:
+        import = set_i32;
+        break;
+      case i64:
+        return; // TODO
+      case f32:
+        import = set_f32;
+        break;
+      case f64:
+        import = set_f64;
+        break;
+      case v128:
+        assert(false && "v128 not implemented yet");
+      case except_ref:
+        assert(false && "except_ref not implemented yet");
+      case unreachable:
+        return; // nothing to do here
+      case none:
+        WASM_UNREACHABLE();
     }
-    curr->value = builder.makeCall(
-      import,
-      {
-        builder.makeConst(Literal(int32_t(id++))),
-        builder.makeConst(Literal(int32_t(curr->index))),
-        curr->value
-      },
-      curr->value->type
-    );
+    curr->value =
+      builder.makeCall(import,
+                       {builder.makeConst(Literal(int32_t(id++))),
+                        builder.makeConst(Literal(int32_t(curr->index))),
+                        curr->value},
+                       curr->value->type);
   }
 
   void visitModule(Module* curr) {
-    addImport(curr, get_i32,  "iiii");
-    addImport(curr, get_i64,  "jiij");
-    addImport(curr, get_f32,  "fiif");
-    addImport(curr, get_f64,  "diid");
-    addImport(curr, set_i32,  "iiii");
-    addImport(curr, set_i64,  "jiij");
-    addImport(curr, set_f32,  "fiif");
-    addImport(curr, set_f64,  "diid");
+    addImport(curr, get_i32, "iiii");
+    addImport(curr, get_i64, "jiij");
+    addImport(curr, get_f32, "fiif");
+    addImport(curr, get_f64, "diid");
+    addImport(curr, set_i32, "iiii");
+    addImport(curr, set_i64, "jiij");
+    addImport(curr, set_f32, "fiif");
+    addImport(curr, set_f64, "diid");
   }
 
 private:
@@ -129,7 +145,7 @@ private:
   void addImport(Module* wasm, Name name, std::string sig) {
     auto import = new Function;
     import->name = name;
-    import->module = INSTRUMENT;
+    import->module = ENV;
     import->base = name;
     auto* functionType = ensureFunctionType(sig, wasm);
     import->type = functionType->name;
@@ -138,8 +154,6 @@ private:
   }
 };
 
-Pass* createInstrumentLocalsPass() {
-  return new InstrumentLocals();
-}
+Pass* createInstrumentLocalsPass() { return new InstrumentLocals(); }
 
 } // namespace wasm

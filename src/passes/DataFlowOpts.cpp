@@ -24,14 +24,15 @@
 //    --flatten --dfo -Os
 //
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
-#include "ir/utils.h"
-#include "dataflow/node.h"
 #include "dataflow/graph.h"
+#include "dataflow/node.h"
 #include "dataflow/users.h"
 #include "dataflow/utils.h"
+#include "ir/flat.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -48,6 +49,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   DataFlow::Graph graph;
 
   void doWalkFunction(Function* func) {
+    Flat::verifyFlatness(func);
     // Build the data-flow IR.
     graph.build(func, getModule());
     nodeUsers.build(graph);
@@ -57,8 +59,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       workLeft.insert(node.get()); // we should try to optimize each node
     }
     while (!workLeft.empty()) {
-      //std::cout << "\n\ndump before work iter\n";
-      //dump(graph, std::cout);
+      // std::cout << "\n\ndump before work iter\n";
+      // dump(graph, std::cout);
       auto iter = workLeft.begin();
       auto* node = *iter;
       workLeft.erase(iter);
@@ -79,9 +81,13 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   }
 
   void workOn(DataFlow::Node* node) {
-    if (node->isConst()) return;
+    if (node->isConst()) {
+      return;
+    }
     // If there are no uses, there is no point to work.
-    if (nodeUsers.getNumUses(node) == 0) return;
+    if (nodeUsers.getNumUses(node) == 0) {
+      return;
+    }
     // Optimize: Look for nodes that we can easily convert into
     // something simpler.
     // TODO: we can expressionify and run full normal opts on that,
@@ -108,8 +114,9 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   void optimizeExprToConstant(DataFlow::Node* node) {
     assert(node->isExpr());
     assert(!node->isConst());
-    //std::cout << "will optimize an Expr of all constant inputs. before" << '\n';
-    //dump(node, std::cout);
+    // std::cout << "will optimize an Expr of all constant inputs. before" <<
+    //              '\n';
+    // dump(node, std::cout);
     auto* expr = node->expr;
     // First, note that some of the expression's children may be
     // local.gets that we inferred during SSA analysis as constant.
@@ -130,7 +137,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     Module temp;
     // XXX we should copy expr here, in principle, and definitely will need to
     //     when we do arbitrarily regenerated expressions
-    auto* func = Builder(temp).makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, expr);
+    auto* func = Builder(temp).makeFunction(
+      "temp", std::vector<Type>{}, none, std::vector<Type>{}, expr);
     PassRunner runner(&temp);
     runner.setIsNested(true);
     runner.add("precompute");
@@ -138,7 +146,9 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // Get the optimized thing
     auto* result = func->body;
     // It may not be a constant, e.g. 0 / 0 does not optimize to 0
-    if (!result->is<Const>()) return;
+    if (!result->is<Const>()) {
+      return;
+    }
     // All good, copy it.
     node->expr = Builder(*getModule()).makeConst(result->cast<Const>()->value);
     assert(node->isConst());
@@ -204,7 +214,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
           // should look into TODO
           break;
         }
-        default: WASM_UNREACHABLE();
+        default:
+          WASM_UNREACHABLE();
       }
     }
     // No one is a user of this node after we replaced all the uses.
@@ -242,9 +253,6 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   }
 };
 
-Pass *createDataFlowOptsPass() {
-  return new DataFlowOpts();
-}
+Pass* createDataFlowOptsPass() { return new DataFlowOpts(); }
 
 } // namespace wasm
-

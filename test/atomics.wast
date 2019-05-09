@@ -134,24 +134,24 @@
    )
   )
  )
- (func $atomic-wait-wake (type $0)
+ (func $atomic-wait-notify (type $0)
   (local $0 i32)
   (local $1 i64)
   (drop
-   (i32.wait
+   (i32.atomic.wait
     (local.get $0)
     (local.get $0)
     (local.get $1)
    )
   )
   (drop
-   (wake
+   (atomic.notify
     (local.get $0)
     (local.get $0)
    )
   )
   (drop
-   (i64.wait
+   (i64.atomic.wait
     (local.get $0)
     (local.get $1)
     (local.get $1)
