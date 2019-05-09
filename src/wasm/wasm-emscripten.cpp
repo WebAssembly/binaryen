@@ -334,8 +334,36 @@ inline void exportFunction(Module& wasm, Name name, bool must_export) {
   wasm.addExport(exp);
 }
 
+void EmscriptenGlueGenerator::generateDynCallThunk(std::string sig) {
+  auto* funcType = ensureFunctionType(sig, &wasm);
+  if (!sigs.insert(sig).second) {
+    return; // sig is already in the set
+  }
+  Name name = std::string("dynCall_") + sig;
+  if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
+    return; // module already contains this dyncall
+  }
+  std::vector<NameType> params;
+  params.emplace_back("fptr", i32); // function pointer param
+  int p = 0;
+  for (const auto& ty : funcType->params) {
+    params.emplace_back(std::to_string(p++), ty);
+  }
+  Function* f =
+    builder.makeFunction(name, std::move(params), funcType->result, {});
+  Expression* fptr = builder.makeGetLocal(0, i32);
+  std::vector<Expression*> args;
+  for (unsigned i = 0; i < funcType->params.size(); ++i) {
+    args.push_back(builder.makeGetLocal(i + 1, funcType->params[i]));
+  }
+  Expression* call = builder.makeCallIndirect(funcType, fptr, args);
+  f->body = call;
+
+  wasm.addFunction(f);
+  exportFunction(wasm, f->name, true);
+}
+
 void EmscriptenGlueGenerator::generateDynCallThunks() {
-  std::unordered_set<std::string> sigs;
   Builder builder(wasm);
   std::vector<Name> tableSegmentData;
   if (wasm.table.segments.size() > 0) {
@@ -343,32 +371,7 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
   }
   for (const auto& indirectFunc : tableSegmentData) {
     std::string sig = getSig(wasm.getFunction(indirectFunc));
-    auto* funcType = ensureFunctionType(sig, &wasm);
-    if (!sigs.insert(sig).second) {
-      continue; // sig is already in the set
-    }
-    Name name = std::string("dynCall_") + sig;
-    if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
-      continue; // module already contains this dyncall
-    }
-    std::vector<NameType> params;
-    params.emplace_back("fptr", i32); // function pointer param
-    int p = 0;
-    for (const auto& ty : funcType->params) {
-      params.emplace_back(std::to_string(p++), ty);
-    }
-    Function* f =
-      builder.makeFunction(name, std::move(params), funcType->result, {});
-    Expression* fptr = builder.makeGetLocal(0, i32);
-    std::vector<Expression*> args;
-    for (unsigned i = 0; i < funcType->params.size(); ++i) {
-      args.push_back(builder.makeGetLocal(i + 1, funcType->params[i]));
-    }
-    Expression* call = builder.makeCallIndirect(funcType, fptr, args);
-    f->body = call;
-
-    wasm.addFunction(f);
-    exportFunction(wasm, f->name, true);
+    generateDynCallThunk(sig);
   }
 }
 
@@ -769,6 +772,7 @@ struct FixInvokeFunctionNamesWalker
   std::map<Name, Name> importRenames;
   std::vector<Name> toRemove;
   std::set<Name> newImports;
+  std::set<std::string> invokeSigs;
 
   FixInvokeFunctionNamesWalker(Module& _wasm) : wasm(_wasm) {}
 
@@ -791,7 +795,7 @@ struct FixInvokeFunctionNamesWalker
   // This function converts the names of invoke wrappers based on their lowered
   // argument types and a return type. In the example above, the resulting new
   // wrapper name becomes "invoke_vii".
-  static Name fixEmExceptionInvoke(const Name& name, const std::string& sig) {
+  Name fixEmExceptionInvoke(const Name& name, const std::string& sig) {
     std::string nameStr = name.c_str();
     if (nameStr.front() == '"' && nameStr.back() == '"') {
       nameStr = nameStr.substr(1, nameStr.size() - 2);
@@ -800,10 +804,11 @@ struct FixInvokeFunctionNamesWalker
       return name;
     }
     std::string sigWoOrigFunc = sig.front() + sig.substr(2, sig.size() - 2);
+    invokeSigs.insert(sigWoOrigFunc);
     return Name("invoke_" + sigWoOrigFunc);
   }
 
-  static Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
+  Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
     if (name == "emscripten_longjmp_jmpbuf") {
       return "emscripten_longjmp";
     }
@@ -843,6 +848,9 @@ struct FixInvokeFunctionNamesWalker
 void EmscriptenGlueGenerator::fixInvokeFunctionNames() {
   FixInvokeFunctionNamesWalker walker(wasm);
   walker.walkModule(&wasm);
+  for (auto sig : walker.invokeSigs) {
+    generateDynCallThunk(sig);
+  }
 }
 
 template<class C> void printSet(std::ostream& o, C& c) {

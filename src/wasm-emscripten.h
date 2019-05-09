@@ -66,9 +66,12 @@ private:
   Global* getStackPointerGlobal();
   Expression* generateLoadStackPointer();
   Expression* generateStoreStackPointer(Expression* value);
+  void generateDynCallThunk(std::string sig);
   void generateStackSaveFunction();
   void generateStackAllocFunction();
   void generateStackRestoreFunction();
+
+  std::unordered_set<std::string> sigs;
 };
 
 } // namespace wasm
