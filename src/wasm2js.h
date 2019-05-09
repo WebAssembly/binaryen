@@ -293,11 +293,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.add("flatten");
     runner.add("i64-to-i32-lowering");
     runner.add("alignment-lowering");
-    runner.add("avoid-reinterprets");
     // Next, optimize that as best we can. This should not generate
     // non-JS-friendly things.
     if (options.optimizeLevel > 0) {
+      // It is especially import to propagate constants after the lowering.
+      runner.add("precompute-propagate");
+      runner.add("avoid-reinterprets");
       runner.addDefaultOptimizationPasses();
+      runner.add("avoid-reinterprets");
     }
     // Finally, get the code into the flat form we need for wasm2js itself, and
     // optimize that a little in a way that keeps flat property.
