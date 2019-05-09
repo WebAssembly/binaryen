@@ -154,5 +154,21 @@
    )
    (local.get $2)
   )
+  (func $through-fallthrough (param $x i32) (param $y i32) (result i32)
+    (local.set $x
+      (block (result i32)
+        (nop)
+        (local.tee $y
+          (i32.const 7)
+        )
+      )
+    )
+    (return
+      (i32.add
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+  )
 )
 
