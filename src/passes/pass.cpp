@@ -421,6 +421,7 @@ static void dumpWast(Name name, Module* wasm) {
   }
   auto fullName = std::string("byn-");
 #ifdef __linux__
+  // TODO: use _getpid() on windows, elsewhere?
   fullName += std::to_string(getpid()) + '-';
 #endif
   fullName += numstr + "-" + name.str + ".wasm";
