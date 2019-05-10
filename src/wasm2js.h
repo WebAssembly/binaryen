@@ -297,8 +297,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // non-JS-friendly things.
     if (options.optimizeLevel > 0) {
       // It is especially import to propagate constants after the lowering.
-      runner.add("precompute-propagate");
-      runner.add("avoid-reinterprets");
+      // However, this can be a slow operation, especially after flattening;
+      // some local simplification helps.
+      if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+        runner.add("simplify-locals-nonesting");
+        runner.add("precompute-propagate");
+        // Avoiding reinterpretation is helped by propagation. We also run
+        // it later down as default optimizations help as well.
+        runner.add("avoid-reinterprets");
+      }
       runner.addDefaultOptimizationPasses();
       runner.add("avoid-reinterprets");
     }
