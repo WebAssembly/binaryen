@@ -17,6 +17,10 @@
 #include <chrono>
 #include <sstream>
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
 #include "pass.h"
@@ -415,7 +419,12 @@ static void dumpWast(Name name, Module* wasm) {
   while (numstr.size() < 3) {
     numstr = '0' + numstr;
   }
-  auto fullName = std::string("byn-") + numstr + "-" + name.str + ".wasm";
+  auto fullName = std::string("byn-");
+#ifdef __linux__
+  // TODO: use _getpid() on windows, elsewhere?
+  fullName += std::to_string(getpid()) + '-';
+#endif
+  fullName += numstr + "-" + name.str + ".wasm";
   Colors::disable();
   ModuleWriter writer;
   writer.setBinary(false); // TODO: add an option for binary
