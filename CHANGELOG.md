@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v84
+---
+
+- Generate dynCall thunks for any signatures used in "invoke" calls.
+
 v81
 ---
 

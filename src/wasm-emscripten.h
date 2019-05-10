@@ -62,10 +62,14 @@ private:
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
+  // Used by generateDynCallThunk to track all the dynCall functions created
+  // so far.
+  std::unordered_set<std::string> sigs;
 
   Global* getStackPointerGlobal();
   Expression* generateLoadStackPointer();
   Expression* generateStoreStackPointer(Expression* value);
+  void generateDynCallThunk(std::string sig);
   void generateStackSaveFunction();
   void generateStackAllocFunction();
   void generateStackRestoreFunction();
