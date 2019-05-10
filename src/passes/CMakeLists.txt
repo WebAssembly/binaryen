@@ -6,6 +6,7 @@ add_custom_command(
 SET(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
+  AvoidReinterprets.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
