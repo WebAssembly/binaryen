@@ -34,7 +34,7 @@ function asmFunc(global, env, buffer) {
  function $7($0) {
   $0 = $0 | 0;
   if ($0) {
-   $0 = 31 - Math_clz32($0 ^ $0 + -1) | 0
+   $0 = 31 - Math_clz32($0 + -1 ^ $0) | 0
   } else {
    $0 = 32
   }

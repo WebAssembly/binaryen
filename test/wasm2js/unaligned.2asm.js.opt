@@ -78,11 +78,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function $5() {
-  var $0_1 = 0;
   HEAP8[0 | 0] = 0;
-  HEAP8[1 | 0] = $0_1 >>> 8;
-  HEAP8[2 | 0] = $0_1 >>> 16;
-  HEAP8[3 | 0] = $0_1 >>> 24;
+  HEAP8[1 | 0] = 0;
+  HEAP8[2 | 0] = 0;
+  HEAP8[3 | 0] = 0;
   HEAP8[4 | 0] = 0;
   HEAP8[5 | 0] = 0;
   HEAP8[6 | 0] = 0;
