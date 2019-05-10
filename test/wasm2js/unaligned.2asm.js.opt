@@ -104,13 +104,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$1() {
-  var $0_1 = 0, $1_1 = 0, $2_1 = 0, $3_1 = 0;
-  $1_1 = $1();
-  $2_1 = i64toi32_i32$HIGH_BITS;
-  $3_1 = 32;
-  $0_1 = $3_1 & 31;
-  setTempRet0((32 >>> 0 <= $3_1 >>> 0 ? $2_1 >>> $0_1 : ((1 << $0_1) - 1 & $2_1) << 32 - $0_1 | $1_1 >>> $0_1) | 0);
-  return $1_1;
+  var $0_1 = 0;
+  $0_1 = $1();
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $0_1;
  }
  
  var FUNCTION_TABLE = [];
