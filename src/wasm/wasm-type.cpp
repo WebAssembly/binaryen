@@ -118,4 +118,23 @@ bool isReferenceType(Type type) {
   return type == except_ref;
 }
 
+Type reinterpretType(Type type) {
+  switch (type) {
+    case Type::i32:
+      return f32;
+    case Type::i64:
+      return f64;
+    case Type::f32:
+      return i32;
+    case Type::f64:
+      return i64;
+    case Type::v128:
+    case Type::except_ref:
+    case Type::none:
+    case Type::unreachable:
+      WASM_UNREACHABLE();
+  }
+  WASM_UNREACHABLE();
+}
+
 } // namespace wasm
