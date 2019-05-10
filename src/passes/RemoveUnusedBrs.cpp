@@ -856,6 +856,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       void visitIf(If* curr) {
+      	if(!shrink) return;
         // we may have simplified ifs enough to turn them into selects
         if (auto* select = selectify(curr)) {
           replaceCurrent(select);
