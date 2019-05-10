@@ -30,6 +30,7 @@
 #include <ir/literal-utils.h>
 #include <ir/local-graph.h>
 #include <ir/manipulation.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -308,7 +309,8 @@ private:
         if (setValues[set].isConcrete()) {
           continue; // already known constant
         }
-        auto value = setValues[set] = precomputeValue(set->value);
+        auto value = setValues[set] =
+          precomputeValue(Properties::getFallthrough(set->value));
         if (value.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
             work.insert(get);

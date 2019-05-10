@@ -241,4 +241,17 @@
   (nop)
   (local.get $2)
  )
+ (func $through-fallthrough (; 16 ;) (type $2) (param $x i32) (param $y i32) (result i32)
+  (local.set $x
+   (block $block (result i32)
+    (nop)
+    (local.tee $y
+     (i32.const 7)
+    )
+   )
+  )
+  (return
+   (i32.const 14)
+  )
+ )
 )
