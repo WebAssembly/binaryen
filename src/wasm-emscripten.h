@@ -62,6 +62,9 @@ private:
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
+  // Used by generateDynCallThunk to track all the dynCall functions created
+  // so far.
+  std::unordered_set<std::string> sigs;
 
   Global* getStackPointerGlobal();
   Expression* generateLoadStackPointer();
@@ -70,8 +73,6 @@ private:
   void generateStackSaveFunction();
   void generateStackAllocFunction();
   void generateStackRestoreFunction();
-
-  std::unordered_set<std::string> sigs;
 };
 
 } // namespace wasm
