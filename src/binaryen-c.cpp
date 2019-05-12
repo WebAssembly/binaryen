@@ -2699,19 +2699,24 @@ void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
   wasm->removeFunction(name);
 }
 
+// Globals
+
 BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                     const char* name,
                                     BinaryenType type,
                                     int8_t mutable_,
                                     BinaryenExpressionRef init) {
-  if (tracing) {
-    std::cout << "  BinaryenAddGlobal(the_module, \"" << name << "\", " << type
-              << ", " << int(mutable_) << ", expressions[" << expressions[init]
-              << "]);\n";
-  }
-
   auto* wasm = (Module*)module;
   auto* ret = new Global();
+
+  if (tracing) {
+    auto id = globals.size();
+    globals[ret] = id;
+    std::cout << "  globals[" << id << "] = BinaryenAddGlobal(the_module, \""
+              << name << "\", " << type << ", " << int(mutable_)
+              << ", expressions[" << expressions[init] << "]);\n";
+  }
+
   ret->name = name;
   ret->type = Type(type);
   ret->mutable_ = !!mutable_;
@@ -3515,6 +3520,43 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
   loc.columnNumber = columnNumber;
 
   fn->debugLocations[ex] = loc;
+}
+
+//
+// =========== Global operations ===========
+//
+
+const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetName(globals[" << globals[global]
+              << "]);\n";
+  }
+
+  return ((Global*)global)->name.c_str();
+}
+BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetType(globals[" << globals[global]
+              << "]);\n";
+  }
+
+  return ((Global*)global)->type;
+}
+int BinaryenGlobalIsMutable(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalIsMutable(globals[" << globals[global]
+              << "]);\n";
+  }
+
+  return ((Global*)global)->mutable_;
+}
+BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetInitExpr(globals[" << globals[global]
+              << "]);\n";
+  }
+
+  return ((Global*)global)->init;
 }
 
 //

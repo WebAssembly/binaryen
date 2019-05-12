@@ -1105,6 +1105,21 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
                                       BinaryenIndex columnNumber);
 
 //
+// ========== Global Operations ==========
+//
+
+// Gets the name of the specified `Global`.
+const char* BinaryenGlobalGetName(BinaryenGlobalRef global);
+// Gets the name of the `GlobalType` associated with the specified `Global`. May
+// be `NULL` if the signature is implicit.
+BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global);
+// Returns true if the specified `Global` is mutable.
+int BinaryenGlobalIsMutable(BinaryenGlobalRef global);
+// Gets the initialization expression of the specified `Global`.
+BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global);
+
+//
+//
 // ========== Import Operations ==========
 //
 

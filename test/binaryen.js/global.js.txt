@@ -1,0 +1,14 @@
+getGlobalInfo={"module":"","base":"","mutable":false}
+getExpressionInfo(init)={"id":14,"value":1}
+(i32.const 1)
+
+(module
+ (import "module" "base" (global $a-global-imp i32))
+ (global $a-global i32 (i32.const 1))
+ (export "a-global-exp" (global $a-global))
+)
+
+(module
+ (import "module" "base" (global $a-global-imp i32))
+)
+

@@ -795,6 +795,12 @@ export_function "_BinaryenFunctionOptimize"
 export_function "_BinaryenFunctionRunPasses"
 export_function "_BinaryenFunctionSetDebugLocation"
 
+# 'Global' operations
+export_function "_BinaryenGlobalGetName"
+export_function "_BinaryenGlobalGetType"
+export_function "_BinaryenGlobalIsMutable"
+export_function "_BinaryenGlobalGetInitExpr"
+
 # 'Import' operations
 export_function "_BinaryenGlobalImportGetModule"
 export_function "_BinaryenGlobalImportGetBase"

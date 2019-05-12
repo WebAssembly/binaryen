@@ -2327,12 +2327,14 @@ Module['getFunctionInfo'] = function(func) {
 };
 
 // Obtains information about a 'Global'
-Module['getGlobalInfo'] = function(func) {
+Module['getGlobalInfo'] = function(global) {
   return {
-    'name': UTF8ToString(Module['_BinaryenGlobalGetName'](func)),
-    'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](func)),
-    'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](func)),
-    'type': UTF8ToString(Module['_BinaryenGlobalGetType'](func))
+    'name': UTF8ToString(Module['_BinaryenGlobalGetName'](global)),
+    'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global)),
+    'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global)),
+    'type': Module['_BinaryenGlobalGetType'](global),
+    'mutable': Boolean(Module['_BinaryenGlobalIsMutable'](global)),
+    'init': Module['_BinaryenGlobalGetInitExpr'](global)
   };
 };
 
