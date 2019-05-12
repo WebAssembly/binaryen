@@ -1068,8 +1068,10 @@ public:
   void readMemory();
   void readSignatures();
 
-  // gets a name in the combined function import+defined function space
-  Name getFunctionIndexName(Index i);
+  // gets a name in the combined import+defined space
+  Name getFunctionName(Index index);
+  Name getGlobalName(Index index);
+
   void getResizableLimits(Address& initial,
                           Address& max,
                           bool& shared,
@@ -1150,10 +1152,6 @@ public:
   Expression* popExpression();
   Expression* popNonVoidExpression();
 
-  // index of the Global => name. first imported globals, then internal globals
-  std::map<Index, Name> mappedGlobals;
-
-  Name getGlobalName(Index index);
   void validateBinary(); // validations that cannot be performed on the Module
   void processFunctions();
 
