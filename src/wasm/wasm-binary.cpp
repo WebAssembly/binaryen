@@ -818,11 +818,6 @@ void WasmBinaryBuilder::read() {
         break;
       case BinaryConsts::Section::Global: {
         readGlobals();
-        // imports can read global imports, so we run getGlobalName and create
-        // the mapping but after we read globals, we need to add the internal
-        // globals too, so do that here
-        mappedGlobals.clear(); // wipe the mapping
-        getGlobalName(-1);     // force rebuild
         break;
       }
       case BinaryConsts::Section::Data:
@@ -1202,11 +1197,18 @@ void WasmBinaryBuilder::readSignatures() {
   }
 }
 
-Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
-  if (i >= wasm.functions.size()) {
+Name WasmBinaryBuilder::getFunctionName(Index index) {
+  if (index >= wasm.functions.size()) {
     throwError("invalid function index");
   }
-  return wasm.functions[i]->name;
+  return wasm.functions[index]->name;
+}
+
+Name WasmBinaryBuilder::getGlobalName(Index index) {
+  if (index >= wasm.globals.size()) {
+    throwError("invalid global index");
+  }
+  return wasm.globals[index]->name;
 }
 
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
@@ -1807,25 +1809,6 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   return block;
 }
 
-Name WasmBinaryBuilder::getGlobalName(Index index) {
-  if (!mappedGlobals.size()) {
-    // Create name => index mapping.
-    auto add = [&](Global* curr) {
-      auto index = mappedGlobals.size();
-      mappedGlobals[index] = curr->name;
-    };
-    ModuleUtils::iterImportedGlobals(wasm, add);
-    ModuleUtils::iterDefinedGlobals(wasm, add);
-  }
-  if (index == Index(-1)) {
-    return Name("null"); // just a force-rebuild
-  }
-  if (mappedGlobals.count(index) == 0) {
-    throwError("bad global index");
-  }
-  return mappedGlobals[index];
-}
-
 void WasmBinaryBuilder::validateBinary() {
   if (hasDataCount && wasm.memory.segments.size() != dataCount) {
     throwError("Number of segments does not agree with DataCount section");
@@ -1840,14 +1823,14 @@ void WasmBinaryBuilder::processFunctions() {
   // now that we have names for each function, apply things
 
   if (startIndex != static_cast<Index>(-1)) {
-    wasm.start = getFunctionIndexName(startIndex);
+    wasm.start = getFunctionName(startIndex);
   }
 
   for (auto* curr : exportOrder) {
     auto index = exportIndexes[curr];
     switch (curr->kind) {
       case ExternalKind::Function: {
-        curr->value = getFunctionIndexName(index);
+        curr->value = getFunctionName(index);
         break;
       }
       case ExternalKind::Table:
@@ -1869,7 +1852,7 @@ void WasmBinaryBuilder::processFunctions() {
     size_t index = iter.first;
     auto& calls = iter.second;
     for (auto* call : calls) {
-      call->target = getFunctionIndexName(index);
+      call->target = getFunctionName(index);
     }
   }
 
@@ -1877,7 +1860,7 @@ void WasmBinaryBuilder::processFunctions() {
     auto i = pair.first;
     auto& indexes = pair.second;
     for (auto j : indexes) {
-      wasm.table.segments[i].data.push_back(getFunctionIndexName(j));
+      wasm.table.segments[i].data.push_back(getFunctionName(j));
     }
   }
 
