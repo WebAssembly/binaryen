@@ -344,7 +344,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
   asmFunc[3]->push_back(
     ValueBuilder::makeStatement(ValueBuilder::makeString(ALMOST_ASM)));
-  // add memory import
+  // add memory and table imports
   if (wasm->memory.exists && wasm->memory.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     asmFunc[3]->push_back(theVar);
@@ -353,6 +353,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       "memory",
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
                             ValueBuilder::makeName("memory")));
+  }
+  if (wasm->table.exists && wasm->table.imported()) {
+    Ref theVar = ValueBuilder::makeVar();
+    asmFunc[3]->push_back(theVar);
+    ValueBuilder::appendToVar(
+      theVar,
+      FUNCTION_TABLE,
+      ValueBuilder::makeName("wasmTable"));
   }
   // create heaps, etc
   addBasics(asmFunc[3]);
@@ -1782,7 +1790,7 @@ void Wasm2JSGlue::emitPre() {
 
 void Wasm2JSGlue::emitPreEmscripten() {
   out
-    << "function instantiate(asmLibraryArg, wasmMemory, FUNCTION_TABLE) {\n\n";
+    << "function instantiate(asmLibraryArg, wasmMemory, wasmTable) {\n\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {
