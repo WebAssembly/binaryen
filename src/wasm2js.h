@@ -344,7 +344,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
   asmFunc[3]->push_back(
     ValueBuilder::makeStatement(ValueBuilder::makeString(ALMOST_ASM)));
-  // add memory and table imports
+  // add memory import
   if (wasm->memory.exists && wasm->memory.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     asmFunc[3]->push_back(theVar);
@@ -354,7 +354,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
                             ValueBuilder::makeName("memory")));
   }
-  if (wasm->table.exists && wasm->table.imported()) {
+  // for emscripten, add a table import - otherwise we would have
+  // FUNCTION_TABLE be an upvar, and not as easy to be minified.
+  if (flags.emscripten && wasm->table.exists && wasm->table.imported()) {
     Ref theVar = ValueBuilder::makeVar();
     asmFunc[3]->push_back(theVar);
     ValueBuilder::appendToVar(
