@@ -360,9 +360,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     Ref theVar = ValueBuilder::makeVar();
     asmFunc[3]->push_back(theVar);
     ValueBuilder::appendToVar(
-      theVar,
-      FUNCTION_TABLE,
-      ValueBuilder::makeName("wasmTable"));
+      theVar, FUNCTION_TABLE, ValueBuilder::makeName("wasmTable"));
   }
   // create heaps, etc
   addBasics(asmFunc[3]);
@@ -1791,8 +1789,7 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
-  out
-    << "function instantiate(asmLibraryArg, wasmMemory, wasmTable) {\n\n";
+  out << "function instantiate(asmLibraryArg, wasmMemory, wasmTable) {\n\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {
