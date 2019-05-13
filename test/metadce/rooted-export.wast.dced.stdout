@@ -1,2 +1,4 @@
-unused: export$wasm_func_a$2
+unused: event$a_wasm_event$2
+unused: export$wasm_event_a$5
+unused: export$wasm_func_a$4
 unused: func$a_wasm_func$0

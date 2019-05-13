@@ -79,6 +79,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
+  ReturnType visitEvent(Event* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
 
   ReturnType visit(Expression* curr) {
@@ -223,6 +224,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Function);
   UNIMPLEMENTED(Table);
   UNIMPLEMENTED(Memory);
+  UNIMPLEMENTED(Event);
   UNIMPLEMENTED(Module);
 
 #undef UNIMPLEMENTED
@@ -486,6 +488,10 @@ struct Walker : public VisitorType {
     setFunction(nullptr);
   }
 
+  void walkEvent(Event* event) {
+    static_cast<SubType*>(this)->visitEvent(event);
+  }
+
   void walkFunctionInModule(Function* func, Module* module) {
     setModule(module);
     setFunction(func);
@@ -543,6 +549,13 @@ struct Walker : public VisitorType {
         self->visitFunction(curr.get());
       } else {
         self->walkFunction(curr.get());
+      }
+    }
+    for (auto& curr : module->events) {
+      if (curr->imported()) {
+        self->visitEvent(curr.get());
+      } else {
+        self->walkEvent(curr.get());
       }
     }
     self->walkTable(&module->table);

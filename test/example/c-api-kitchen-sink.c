@@ -488,6 +488,11 @@ void test_core() {
   BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, 7));
   BinaryenAddGlobal(module, "a-mutable-global", BinaryenTypeFloat32(), 1, makeFloat32(module, 7.5));
 
+  // Events
+  BinaryenType eparams[1] = { BinaryenTypeInt32() };
+  BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenTypeNone(), eparams, 1);
+  BinaryenAddEvent(module, "a-event", 0, vi);
+
   // Imports
 
   BinaryenType iparams[2] = { BinaryenTypeInt32(), BinaryenTypeFloat64() };

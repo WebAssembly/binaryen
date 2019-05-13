@@ -1063,6 +1063,7 @@ enum class ExternalKind {
   Table = 1,
   Memory = 2,
   Global = 3,
+  Event = 4,
   Invalid = -1
 };
 
@@ -1156,6 +1157,24 @@ public:
   bool mutable_ = false;
 };
 
+// Kinds of event attributes.
+enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
+
+class Event : public Importable {
+public:
+  Name name;
+  // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
+  uint32_t attribute;
+  // Type string in the format of function type. Return type is considered as a
+  // void type. So if you have an event whose type is (i32, i32), the type
+  // string will be "vii".
+  Name type;
+  // This is duplicate info of 'Name type', but we store this anyway because
+  // we plan to remove FunctionType in future.
+  // TODO remove either this or FunctionType
+  std::vector<Type> params;
+};
+
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.
 // May be parsed/handled by utility code elsewhere, but not in wasm.h
 class UserSection {
@@ -1172,6 +1191,7 @@ public:
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
+  std::vector<std::unique_ptr<Event>> events;
 
   Table table;
   Memory memory;
@@ -1197,6 +1217,7 @@ private:
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
   std::map<Name, Global*> globalsMap;
+  std::map<Name, Event*> eventsMap;
 
 public:
   Module() = default;
@@ -1205,17 +1226,20 @@ public:
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
+  Event* getEvent(Name name);
 
   FunctionType* getFunctionTypeOrNull(Name name);
   Export* getExportOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
+  Event* getEventOrNull(Name name);
 
   FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
   Function* addFunction(std::unique_ptr<Function> curr);
   Global* addGlobal(Global* curr);
+  Event* addEvent(Event* curr);
 
   void addStart(const Name& s);
 
@@ -1223,6 +1247,7 @@ public:
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeGlobal(Name name);
+  void removeEvent(Name name);
 
   void updateMaps();
 

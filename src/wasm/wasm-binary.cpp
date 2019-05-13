@@ -37,6 +37,7 @@ void WasmBinaryWriter::prepare() {
   ModuleUtils::BinaryIndexes indexes(*wasm);
   mappedFunctions = std::move(indexes.functionIndexes);
   mappedGlobals = std::move(indexes.globalIndexes);
+  mappedEvents = std::move(indexes.eventIndexes);
 
   importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
@@ -63,6 +64,7 @@ void WasmBinaryWriter::write() {
   writeDataCount();
   writeFunctions();
   writeDataSegments();
+  writeEvents();
   if (debugInfo) {
     writeNames();
   }
@@ -245,6 +247,15 @@ void WasmBinaryWriter::writeImports() {
     o << binaryType(global->type);
     o << U32LEB(global->mutable_);
   });
+  ModuleUtils::iterImportedEvents(*wasm, [&](Event* event) {
+    if (debug) {
+      std::cerr << "write one event" << std::endl;
+    }
+    writeImportHeader(event);
+    o << U32LEB(int32_t(ExternalKind::Event));
+    o << U32LEB(event->attribute);
+    o << U32LEB(getFunctionTypeIndex(event->type));
+  });
   if (wasm->memory.imported()) {
     if (debug) {
       std::cerr << "write one memory" << std::endl;
@@ -401,6 +412,9 @@ void WasmBinaryWriter::writeExports() {
       case ExternalKind::Global:
         o << U32LEB(getGlobalIndex(curr->value));
         break;
+      case ExternalKind::Event:
+        o << U32LEB(getEventIndex(curr->value));
+        break;
       default:
         WASM_UNREACHABLE();
     }
@@ -453,6 +467,11 @@ uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
   return mappedGlobals[name];
 }
 
+uint32_t WasmBinaryWriter::getEventIndex(Name name) {
+  assert(mappedEvents.count(name));
+  return mappedEvents[name];
+}
+
 void WasmBinaryWriter::writeFunctionTableDeclaration() {
   if (!wasm->table.exists || wasm->table.imported()) {
     return;
@@ -490,6 +509,27 @@ void WasmBinaryWriter::writeTableElements() {
       o << U32LEB(getFunctionIndex(name));
     }
   }
+  finishSection(start);
+}
+
+void WasmBinaryWriter::writeEvents() {
+  if (importInfo->getNumDefinedEvents() == 0) {
+    return;
+  }
+  if (debug) {
+    std::cerr << "== writeEvents" << std::endl;
+  }
+  auto start = startSection(BinaryConsts::Section::Event);
+  auto num = importInfo->getNumDefinedEvents();
+  o << U32LEB(num);
+  ModuleUtils::iterDefinedEvents(*wasm, [&](Event* event) {
+    if (debug) {
+      std::cerr << "write one" << std::endl;
+    }
+    o << U32LEB(event->attribute);
+    o << U32LEB(getFunctionTypeIndex(event->type));
+  });
+
   finishSection(start);
 }
 
@@ -827,6 +867,9 @@ void WasmBinaryBuilder::read() {
         break;
       case BinaryConsts::Section::Table:
         readFunctionTableDeclaration();
+        break;
+      case BinaryConsts::Section::Event:
+        readEvents();
         break;
       default: {
         readUserSection(payloadLen);
@@ -1210,6 +1253,13 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
   return wasm.globals[index]->name;
 }
 
+Name WasmBinaryBuilder::getEventName(Index index) {
+  if (index >= wasm.events.size()) {
+    throwError("invalid event index");
+  }
+  return wasm.events[index]->name;
+}
+
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
                                            Address& max,
                                            bool& shared,
@@ -1308,6 +1358,23 @@ void WasmBinaryBuilder::readImports() {
         curr->module = module;
         curr->base = base;
         wasm.addGlobal(curr);
+        break;
+      }
+      case ExternalKind::Event: {
+        auto name = Name(std::string("eimport$") + std::to_string(i));
+        auto attribute = getU32LEB();
+        auto index = getU32LEB();
+        if (index >= wasm.functionTypes.size()) {
+          throwError("invalid event index " + std::to_string(index) + " / " +
+                     std::to_string(wasm.functionTypes.size()));
+        }
+        Name type = wasm.functionTypes[index]->name;
+        std::vector<Type> params = wasm.functionTypes[index]->params;
+        auto* curr =
+          builder.makeEvent(name, attribute, type, std::move(params));
+        curr->module = module;
+        curr->base = base;
+        wasm.addEvent(curr);
         break;
       }
       default: { throwError("bad import kind"); }
@@ -1841,6 +1908,9 @@ void WasmBinaryBuilder::processFunctions() {
       case ExternalKind::Global:
         curr->value = getGlobalName(index);
         break;
+      case ExternalKind::Event:
+        curr->value = getEventName(index);
+        break;
       default:
         throwError("bad export kind");
     }
@@ -1951,6 +2021,31 @@ void WasmBinaryBuilder::readTableElements() {
     for (Index j = 0; j < size; j++) {
       indexSegment.push_back(getU32LEB());
     }
+  }
+}
+
+void WasmBinaryBuilder::readEvents() {
+  if (debug) {
+    std::cerr << "== readEvents" << std::endl;
+  }
+  size_t numEvents = getU32LEB();
+  if (debug) {
+    std::cerr << "num: " << numEvents << std::endl;
+  }
+  for (size_t i = 0; i < numEvents; i++) {
+    if (debug) {
+      std::cerr << "read one" << std::endl;
+    }
+    auto attribute = getU32LEB();
+    auto typeIndex = getU32LEB();
+    if (typeIndex >= wasm.functionTypes.size()) {
+      throwError("invalid event index " + std::to_string(typeIndex) + " / " +
+                 std::to_string(wasm.functionTypes.size()));
+    }
+    Name type = wasm.functionTypes[typeIndex]->name;
+    std::vector<Type> params = wasm.functionTypes[typeIndex]->params;
+    wasm.addEvent(Builder::makeEvent(
+      "event$" + std::to_string(i), attribute, type, std::move(params)));
   }
 }
 

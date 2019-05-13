@@ -1,0 +1,12 @@
+(module
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$vif (func (param i32 f32)))
+ (import "env" "im0" (event $e-import (attr 0) (param i32)))
+ (import "env" "im1" (event $import$event1 (attr 0) (param i32 f32)))
+ (event $2 (attr 0) (param i32))
+ (event $e (attr 0) (param i32 f32))
+ (event $e-params0 (attr 0) (param i32 f32))
+ (event $e-params1 (attr 0) (param i32 f32))
+ (event $e-export (attr 0) (param i32))
+ (export "ex1" (event $e))
+)

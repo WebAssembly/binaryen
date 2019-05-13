@@ -1,4 +1,5 @@
 global
+ [events]       : 0       
  [exports]      : 0       
  [funcs]        : 3       
  [globals]      : 1       
@@ -89,6 +90,7 @@ func: ifs
  )
 )
 global
+ [events]       : 0       
  [exports]      : 0       
  [funcs]        : 0       
  [globals]      : 0       
@@ -97,6 +99,7 @@ global
 (module
 )
 global
+ [events]       : 0       
  [exports]      : 2       
  [funcs]        : 3       
  [globals]      : 0       
@@ -171,6 +174,7 @@ export: b (func_b)
  )
 )
 global
+ [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 0       
@@ -202,6 +206,7 @@ start: func_a
  )
 )
 global
+ [events]       : 0       
  [exports]      : 0       
  [funcs]        : 1       
  [globals]      : 0       
@@ -229,6 +234,7 @@ start: func_a
  )
 )
 global
+ [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 1       

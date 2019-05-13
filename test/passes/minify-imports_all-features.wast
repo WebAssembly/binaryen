@@ -5002,9 +5002,11 @@
   (import "env" "__memory_base" (global i32))
   (import "env" "__table_base" (global i32))
   (import "other" "anything" (func $internalInfinity))
+  (import "env" "eventname1" (event $eventname1 (attr 0) (param i32)))
   (export "foo1" (func $foo1))
   (export "foo2" (func $foo2))
+  (export "event1" (event $event1))
   (func $foo1)
   (func $foo2)
+  (event $event1 (attr 0) (param i32 i32))
 )
-

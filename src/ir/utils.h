@@ -154,6 +154,7 @@ struct ReFinalize
   void visitGlobal(Global* curr);
   void visitTable(Table* curr);
   void visitMemory(Memory* curr);
+  void visitEvent(Event* curr);
   void visitModule(Module* curr);
 
 private:
@@ -208,6 +209,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
   void visitTable(Table* curr) { WASM_UNREACHABLE(); }
   void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
+  void visitEvent(Event* curr) { WASM_UNREACHABLE(); }
   void visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
   // given a stack of nested expressions, update them all from child to parent

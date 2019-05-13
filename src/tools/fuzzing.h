@@ -197,6 +197,9 @@ public:
     }
     setupTable();
     setupGlobals();
+    if (wasm.features.hasExceptionHandling()) {
+      setupEvents();
+    }
     addImportLoggingSupport();
     // keep adding functions until we run out of input
     while (!finishedInput) {
@@ -394,6 +397,28 @@ private:
         wasm.addGlobal(glob);
         globalsByType[type].push_back(glob->name);
       }
+    }
+  }
+
+  void setupEvents() {
+    Index num = upTo(3);
+    for (size_t i = 0; i < num; i++) {
+      // Events should have void return type and at least one param type
+      Type type = pick(i32, i64, f32, f64);
+      std::string sig = std::string("v") + getSig(type);
+      std::vector<Type> params;
+      params.push_back(type);
+      Index numValues = upToSquared(MAX_PARAMS - 1);
+      for (Index i = 0; i < numValues; i++) {
+        type = pick(i32, i64, f32, f64);
+        sig += getSig(type);
+        params.push_back(type);
+      }
+      auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
+                                      WASM_EVENT_ATTRIBUTE_EXCEPTION,
+                                      ensureFunctionType(sig, &wasm)->name,
+                                      std::move(params));
+      wasm.addEvent(event);
     }
   }
 

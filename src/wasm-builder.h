@@ -683,6 +683,19 @@ public:
     glob->mutable_ = mutable_ == Mutable;
     return glob;
   }
+
+  // TODO Remove 'type' parameter once we remove FunctionType
+  static Event* makeEvent(Name name,
+                          uint32_t attribute,
+                          Name type,
+                          std::vector<Type>&& params) {
+    auto* event = new Event;
+    event->name = name;
+    event->attribute = attribute;
+    event->type = type;
+    event->params = params;
+    return event;
+  }
 };
 
 } // namespace wasm

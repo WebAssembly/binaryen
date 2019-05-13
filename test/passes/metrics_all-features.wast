@@ -5,6 +5,8 @@
   (data (i32.const 0) "\ff\ef\0f\1f\20\30\40\50\99")
   (type $0 (func (param i32)))
   (global $glob i32 (i32.const 1337))
+  (event $e0 (attr 0) (param i32))
+  (event $e1 (attr 0) (param i32 i32))
   (func $ifs (type $0) (param $x i32)
     (local $y f32)
     (block $block0

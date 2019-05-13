@@ -63,19 +63,23 @@ getExpressionInfo(f32.const)={"id":14,"type":3,"value":8.5}
 getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $vi (func (param i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $3 (func))
+ (type $4 (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
  (table $0 1 funcref)
  (elem (i32.const 0) "$kitchen()sinker")
  (global $a-global i32 (i32.const 1))
+ (event $a-event (attr 0) (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "a-global-exp" (global $a-global))
+ (export "a-event-exp" (event $a-event))
  (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
@@ -1898,7 +1902,9 @@ optimized:
 module loaded from binary form:
 (module
  (type $0 (func (param i32 i32) (result i32)))
+ (type $1 (func (param i32 i32)))
  (global $global$0 i32 (i32.const 3))
+ (event $event$0 (attr 0) (param i32 i32))
  (func $adder (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -1944,6 +1950,7 @@ int main() {
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
   std::map<size_t, BinaryenGlobalRef> globals;
+  std::map<size_t, BinaryenEventRef> events;
   std::map<size_t, BinaryenExportRef> exports;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
@@ -3343,13 +3350,20 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions[656] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[656]);
   {
-    BinaryenType paramTypes[] = { 1, 4 };
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
+    BinaryenType paramTypes[] = { 1 };
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
-  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
+  BinaryenAddEvent(the_module, "a-event", 0, functionTypes[1]);
+  {
+    BinaryenType paramTypes[] = { 1, 4 };
+    functionTypes[2] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
+  }
+  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[2]);
   BinaryenAddGlobalImport(the_module, "a-global-imp", "module", "base", 1);
+  BinaryenAddEventImport(the_module, "a-event-imp", "module", "base", 0, functionTypes[1]);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   exports[1] = BinaryenAddGlobalExport(the_module, "a-global", "a-global-exp");
+  exports[2] = BinaryenAddEventExport(the_module, "a-event", "a-event-exp");
   BinaryenFunctionGetName(functions[0]);
   BinaryenFunctionImportGetModule(functions[0]);
   BinaryenFunctionImportGetBase(functions[0]);
@@ -3379,17 +3393,17 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   }
   {
     BinaryenType paramTypes[] = { 0 };
-    functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
+    functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
   expressions[658] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[658]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[658]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
     BinaryenType paramTypes[] = { 0 };
-    functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
+    functionTypes[4] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
   BinaryenModuleSetFeatures(the_module, 127);
@@ -3398,19 +3412,23 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   BinaryenModulePrint(the_module);
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $vi (func (param i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $3 (func))
+ (type $4 (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
  (table $0 1 funcref)
  (elem (i32.const 0) "$kitchen()sinker")
  (global $a-global i32 (i32.const 1))
+ (event $a-event (attr 0) (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "a-global-exp" (global $a-global))
+ (export "a-event-exp" (event $a-event))
  (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
@@ -4765,6 +4783,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions.clear();
   functions.clear();
   globals.clear();
+  events.clear();
   exports.clear();
   relooperBlocks.clear();
   the_module = BinaryenModuleCreate();
@@ -5706,6 +5725,7 @@ optimized:
   expressions.clear();
   functions.clear();
   globals.clear();
+  events.clear();
   exports.clear();
   relooperBlocks.clear();
   return 0;
@@ -5713,7 +5733,9 @@ optimized:
 test_parsing text:
 (module
  (type $iii (func (param i32 i32) (result i32)))
+ (type $vi (func (param i32)))
  (global $a-global i32 (i32.const 3))
+ (event $a-event (attr 0) (param i32))
  (func $adder (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -5725,7 +5747,9 @@ test_parsing text:
 module loaded from text form:
 (module
  (type $iii (func (param i32 i32) (result i32)))
+ (type $vi (func (param i32)))
  (global $a-global i32 (i32.const 3))
+ (event $a-event (attr 0) (param i32))
  (func $ADD_ER (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)

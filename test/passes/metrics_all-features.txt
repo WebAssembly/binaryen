@@ -1,4 +1,5 @@
 total
+ [events]       : 2       
  [exports]      : 0       
  [funcs]        : 1       
  [globals]      : 1       
@@ -14,11 +15,14 @@ total
  if             : 4       
 (module
  (type $0 (func (param i32)))
+ (type $FUNCSIG$vii (func (param i32 i32)))
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
  (table $0 256 256 funcref)
  (elem (i32.const 0) $ifs $ifs $ifs)
  (global $glob i32 (i32.const 1337))
+ (event $e0 (attr 0) (param i32))
+ (event $e1 (attr 0) (param i32 i32))
  (func $ifs (; 0 ;) (type $0) (param $x i32)
   (local $y f32)
   (block $block0
@@ -60,6 +64,7 @@ total
  )
 )
 total
+ [events]       : 0       
  [exports]      : 0       
  [funcs]        : 0       
  [globals]      : 0       
