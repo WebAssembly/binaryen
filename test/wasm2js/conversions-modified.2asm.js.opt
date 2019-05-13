@@ -172,16 +172,16 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$22($0, $1) {
-  wasm2js_scratch_store_i32(0 | 0, $0 | 0);
-  wasm2js_scratch_store_i32(1 | 0, $1 | 0);
+  wasm2js_scratch_store_i32(0, $0 | 0);
+  wasm2js_scratch_store_i32(1, $1 | 0);
   return +wasm2js_scratch_load_f64();
  }
  
  function legalstub$24($0) {
   var $1 = 0, $2 = 0;
   wasm2js_scratch_store_f64(+$0);
-  $1 = wasm2js_scratch_load_i32(1 | 0) | 0;
-  $2 = wasm2js_scratch_load_i32(0 | 0) | 0;
+  $1 = wasm2js_scratch_load_i32(1) | 0;
+  $2 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $1;
   $1 = $2;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);

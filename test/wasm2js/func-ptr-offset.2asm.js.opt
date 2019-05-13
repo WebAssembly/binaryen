@@ -21,15 +21,15 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function t1() {
-  return 1 | 0;
+  return 1;
  }
  
  function t2() {
-  return 2 | 0;
+  return 2;
  }
  
  function t3() {
-  return 3 | 0;
+  return 3;
  }
  
  function $3($0) {
