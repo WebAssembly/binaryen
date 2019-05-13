@@ -3273,9 +3273,9 @@ int main() {
     functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[652]);
   }
   expressions[653] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
-  BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[653]);
+  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[653]);
   expressions[654] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
-  BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[654]);
+  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[654]);
   {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);

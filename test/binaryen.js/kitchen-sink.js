@@ -407,14 +407,20 @@ function test_core() {
   // Create the function
   var sinker = module.addFunction("kitchen()sinker", iiIfF, [ Binaryen.i32 ], body);
 
+  // Create a global
+  var initExpr = module.i32.const(1);
+  var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
+
   // Imports
 
   var fiF = module.addFunctionType("fiF", Binaryen.f32, [ Binaryen.i32, Binaryen.f64 ]);
   module.addFunctionImport("an-imported", "module", "base", fiF);
+  module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32);
 
   // Exports
 
   module.addFunctionExport("kitchen()sinker", "kitchen_sinker");
+  module.addGlobalExport("a-global", "a-global-exp");
 
   // Function table. One per module
 
@@ -666,6 +672,8 @@ function test_binaries() {
         y = module.getLocal(1, Binaryen.i32);
     var add = module.i32.add(x, y);
     var adder = module.addFunction("adder", iii, [], add);
+    var initExpr = module.i32.const(3);
+    var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
     Binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
     Binaryen.setDebugInfo(false);
@@ -736,6 +744,8 @@ function test_parsing() {
       y = module.getLocal(1, Binaryen.i32);
   var add = module.i32.add(x, y);
   var adder = module.addFunction("adder", iii, [], add);
+  var initExpr = module.i32.const(3);
+  var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
   text = module.emitText();
   module.dispose();
   module = null;

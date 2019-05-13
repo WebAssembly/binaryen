@@ -33,8 +33,6 @@ console.log(Binaryen.emitText(funcInfo.body));
 
 module.removeFunction("a-function");
 
-module.addGlobal("a-global", Binaryen.i32, false, funcInfo.body);
-
 module.validate();
 
 console.log(module.emitText());
