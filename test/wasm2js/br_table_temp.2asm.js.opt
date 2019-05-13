@@ -25,11 +25,11 @@ function asmFunc(global, env, buffer) {
  }
  
  function $5() {
-  return 1 | 0;
+  return 1;
  }
  
  function $6() {
-  return 2 | 0;
+  return 2;
  }
  
  function $7() {
@@ -42,20 +42,20 @@ function asmFunc(global, env, buffer) {
  
  function $9($0) {
   $0 = $0 | 0;
-  return 22 | 0;
+  return 22;
  }
  
  function $10($0) {
   $0 = $0 | 0;
-  return 33 | 0;
+  return 33;
  }
  
  function $11($0) {
   $0 = $0 | 0;
   if ($0) {
-   return 20 | 0
+   return 20
   }
-  return 22 | 0;
+  return 22;
  }
  
  function $12($0) {
@@ -88,15 +88,15 @@ function asmFunc(global, env, buffer) {
         break block;
        };
       }
-      return 100 | 0;
+      return 100;
      }
-     return 101 | 0;
+     return 101;
     }
-    return 102 | 0;
+    return 102;
    }
-   return 103 | 0;
+   return 103;
   }
-  return 104 | 0;
+  return 104;
  }
  
  function $14($0) {
@@ -119,15 +119,15 @@ function asmFunc(global, env, buffer) {
         break block;
        };
       }
-      return 210 | 0;
+      return 210;
      }
-     return 211 | 0;
+     return 211;
     }
-    return 212 | 0;
+    return 212;
    }
-   return 213 | 0;
+   return 213;
   }
-  return 214 | 0;
+  return 214;
  }
  
  function $15($0) {
@@ -12448,41 +12448,41 @@ function asmFunc(global, env, buffer) {
      break block;
     };
    }
-   return 0 | 0;
+   return 0;
   }
-  return 1 | 0;
+  return 1;
  }
  
  function $20() {
-  return 3 | 0;
+  return 3;
  }
  
  function $21() {
-  return 4 | 0;
+  return 4;
  }
  
  function $22() {
-  return 5 | 0;
+  return 5;
  }
  
  function $23() {
-  return 9 | 0;
+  return 9;
  }
  
  function $25() {
-  return 8 | 0;
+  return 8;
  }
  
  function $28() {
-  return 10 | 0;
+  return 10;
  }
  
  function $29() {
-  return 11 | 0;
+  return 11;
  }
  
  function $30() {
-  return 7 | 0;
+  return 7;
  }
  
  function $32($0, $1) {
@@ -12506,85 +12506,85 @@ function asmFunc(global, env, buffer) {
  function $34($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
-  return 5 | 0;
+  return 5;
  }
  
  function $35($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
-  return 6 | 0;
+  return 6;
  }
  
  function $38() {
-  return 12 | 0;
+  return 12;
  }
  
  function $39() {
-  return 13 | 0;
+  return 13;
  }
  
  function $40() {
-  return 14 | 0;
+  return 14;
  }
  
  function $41() {
-  return 20 | 0;
+  return 20;
  }
  
  function $42() {
-  return 21 | 0;
+  return 21;
  }
  
  function $43() {
-  return 22 | 0;
+  return 22;
  }
  
  function $44() {
-  return 23 | 0;
+  return 23;
  }
  
  function $45() {
-  return 17 | 0;
+  return 17;
  }
  
  function $47() {
-  return 30 | 0;
+  return 30;
  }
  
  function $49() {
-  return 31 | 0;
+  return 31;
  }
  
  function $50() {
-  return 32 | 0;
+  return 32;
  }
  
  function $51() {
-  return 33 | 0;
+  return 33;
  }
  
  function $54() {
-  return 45 | 0;
+  return 45;
  }
  
  function $55() {
-  return 44 | 0;
+  return 44;
  }
  
  function $56() {
-  return 43 | 0;
+  return 43;
  }
  
  function $57() {
-  return 42 | 0;
+  return 42;
  }
  
  function $58() {
-  return 41 | 0;
+  return 41;
  }
  
  function $59() {
-  return 40 | 0;
+  return 40;
  }
  
  function $60($0) {

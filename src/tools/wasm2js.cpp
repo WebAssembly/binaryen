@@ -128,6 +128,16 @@ static void traversePost(Ref node, std::function<void(Ref)> visit) {
   traversePrePost(node, [](Ref node) {}, visit);
 }
 
+#if 0
+static void replaceInPlace(Ref target, Ref value) {
+  assert(target->isArray() && value->isArray());
+  target->resize(value->size());
+  for (size_t i = 0; i < value->size(); i++) {
+    target[i] = value[i];
+  }
+}
+#endif
+
 static void optimizeJS(Ref ast) {
   // Helpers
 
@@ -276,6 +286,26 @@ static void optimizeJS(Ref ast) {
             setHeapOnAccess(node[2], HEAP16);
           }
         }
+      }
+      // Pre-compute constant [op] constant, which the lowering can generate
+      // in loads etc.
+      if (node[2]->isNumber() && node[3]->isNumber()) {
+        int32_t left = node[2]->getNumber();
+        int32_t right = node[3]->getNumber();
+        if (node[1] == OR) {
+          node->setNumber(left | right);
+        } else if (node[1] == AND) {
+          node->setNumber(left & right);
+        } else if (node[1] == XOR) {
+          node->setNumber(left ^ right);
+        } else if (node[1] == LSHIFT) {
+          node->setNumber(left << (right & 31));
+        } else if (node[1] == RSHIFT) {
+          node->setNumber(int32_t(left) >> int32_t(right & 31));
+        } else if (node[1] == TRSHIFT) {
+          node->setNumber(uint32_t(left) >> uint32_t(right & 31));
+        }
+        return;
       }
     }
     // +(+x) => +x

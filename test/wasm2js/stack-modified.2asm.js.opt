@@ -35,7 +35,7 @@ function asmFunc(global, env, buffer) {
     $4 = i64toi32_i32$HIGH_BITS;
     $1 = $0_1;
     $0_1 = $0_1 - 1 | 0;
-    $2 = $2 - ($1 >>> 0 < 1 >>> 0) | 0;
+    $2 = $2 - ($1 >>> 0 < 1) | 0;
     continue;
    }
    break;

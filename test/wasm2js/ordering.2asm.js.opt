@@ -30,17 +30,17 @@ function asmFunc(global, env, buffer) {
  
  function foo($0) {
   $0 = $0 | 0;
-  return 1 | 0;
+  return 1;
  }
  
  function bar($0) {
   $0 = $0 | 0;
-  return 2 | 0;
+  return 2;
  }
  
  function baz($0) {
   $0 = $0 | 0;
-  return 3 | 0;
+  return 3;
  }
  
  FUNCTION_TABLE[1] = foo;
