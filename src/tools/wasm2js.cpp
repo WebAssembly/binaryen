@@ -128,15 +128,13 @@ static void traversePost(Ref node, std::function<void(Ref)> visit) {
   traversePrePost(node, [](Ref node) {}, visit);
 }
 
-#if 0
 static void replaceInPlace(Ref target, Ref value) {
   assert(target->isArray() && value->isArray());
-  target->resize(value->size());
+  target->setSize(value->size());
   for (size_t i = 0; i < value->size(); i++) {
     target[i] = value[i];
   }
 }
-#endif
 
 static void optimizeJS(Ref ast) {
   // Helpers
@@ -272,18 +270,40 @@ static void optimizeJS(Ref ast) {
           node[3] = child[3];
         }
       }
-      // A load into an & may allow using a simpler heap, e.g. HEAPU8[..] & 1
-      // (a load of a boolean) may be HEAP8[..] & 1. The signed heaps are more
-      // commonly used, so it compresses better, and also they seem to have
-      // better performance (perhaps since HEAPU32 is at risk of not being a
-      // smallint).
-      if (node[1] == AND && isHeapAccess(node[2])) {
+      if (isHeapAccess(node[2])) {
         auto heap = getHeapFromAccess(node[2]);
-        if (isConstantBitwise(node, AND, 1)) {
-          if (heap == HEAPU8) {
-            setHeapOnAccess(node[2], HEAP8);
-          } else if (heap == HEAPU16) {
-            setHeapOnAccess(node[2], HEAP16);
+        IString newHeap;
+        // We can avoid a cast of a load by using the load to do it instead.
+        if (isOrZero(node)) {
+          if (heap == HEAP32 || heap == HEAPU32) {
+            newHeap = HEAP32;
+          } else if (heap == HEAP16 || heap == HEAPU16) {
+            newHeap = HEAP16;
+          } else if (heap == HEAP8 || heap == HEAPU8) {
+            newHeap = HEAP8;
+          }
+        } else if (isConstantBitwise(node, TRSHIFT, 0)) {
+          if (heap == HEAP32 || heap == HEAPU32) {
+            newHeap = HEAPU32;
+          }
+        }
+        if (!newHeap.isNull()) {
+          setHeapOnAccess(node[2], newHeap);
+          replaceInPlace(node, node[2]);
+          return;
+        }
+        // A load into an & may allow using a simpler heap, e.g. HEAPU8[..] & 1
+        // (a load of a boolean) may be HEAP8[..] & 1. The signed heaps are more
+        // commonly used, so it compresses better, and also they seem to have
+        // better performance (perhaps since HEAPU32 is at risk of not being a
+        // smallint).
+        if (node[1] == AND) {
+          if (isConstantBitwise(node, AND, 1)) {
+            if (heap == HEAPU8) {
+              setHeapOnAccess(node[2], HEAP8);
+            } else if (heap == HEAPU16) {
+              setHeapOnAccess(node[2], HEAP16);
+            }
           }
         }
       }
