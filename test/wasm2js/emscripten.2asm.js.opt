@@ -67,7 +67,7 @@ function asmFunc(global, env, buffer) {
   if (HEAP16[62] >>> 0 < 3) {
    bar()
   }
-  if (HEAPU16[64] >>> 0 < 3) {
+  if (HEAPU16[64] < 3) {
    bar()
   }
   if (HEAP8[132] < 2) {
@@ -79,7 +79,7 @@ function asmFunc(global, env, buffer) {
   if (HEAP8[140] >>> 0 < 3) {
    bar()
   }
-  if (HEAPU8[144] >>> 0 < 3) {
+  if (HEAPU8[144] < 3) {
    bar()
   }
  }

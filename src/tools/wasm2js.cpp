@@ -272,23 +272,30 @@ static void optimizeJS(Ref ast) {
       }
       if (isHeapAccess(node[2])) {
         auto heap = getHeapFromAccess(node[2]);
-        IString newHeap;
+        IString replacementHeap;
         // We can avoid a cast of a load by using the load to do it instead.
         if (isOrZero(node)) {
           if (heap == HEAP32 || heap == HEAPU32) {
-            newHeap = HEAP32;
+            replacementHeap = HEAP32;
           } else if (heap == HEAP16 || heap == HEAPU16) {
-            newHeap = HEAP16;
+            replacementHeap = HEAP16;
           } else if (heap == HEAP8 || heap == HEAPU8) {
-            newHeap = HEAP8;
+            replacementHeap = HEAP8;
           }
         } else if (isConstantBitwise(node, TRSHIFT, 0)) {
+          // For signed or unsigned loads smaller than 32 bits, doing an |0
+          // was safe either way - they aren't in the range an |0 can affect.
+          // For >>>0 however, a negative value would change.
           if (heap == HEAP32 || heap == HEAPU32) {
-            newHeap = HEAPU32;
+            replacementHeap = HEAPU32;
+          } else if (heap == HEAPU16) {
+            replacementHeap = HEAPU16;
+          } else if (heap == HEAPU8) {
+            replacementHeap = HEAPU8;
           }
         }
-        if (!newHeap.isNull()) {
-          setHeapOnAccess(node[2], newHeap);
+        if (!replacementHeap.isNull()) {
+          setHeapOnAccess(node[2], replacementHeap);
           replaceInPlace(node, node[2]);
           return;
         }
