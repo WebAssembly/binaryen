@@ -354,6 +354,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
                             ValueBuilder::makeName("memory")));
   }
+  // for emscripten, add a table import - otherwise we would have
+  // FUNCTION_TABLE be an upvar, and not as easy to be minified.
+  if (flags.emscripten && wasm->table.exists && wasm->table.imported()) {
+    Ref theVar = ValueBuilder::makeVar();
+    asmFunc[3]->push_back(theVar);
+    ValueBuilder::appendToVar(
+      theVar, FUNCTION_TABLE, ValueBuilder::makeName("wasmTable"));
+  }
   // create heaps, etc
   addBasics(asmFunc[3]);
   ModuleUtils::iterImportedFunctions(
@@ -1781,8 +1789,7 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
-  out
-    << "function instantiate(asmLibraryArg, wasmMemory, FUNCTION_TABLE) {\n\n";
+  out << "function instantiate(asmLibraryArg, wasmMemory, wasmTable) {\n\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {
