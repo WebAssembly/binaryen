@@ -96,16 +96,16 @@ function asmFunc(global, env, buffer) {
   if ((bools(314159 | 0) | 0) >> 8 | 0) {
    bar()
   }
-  if (Math_fround(getf32()) >>> 0) {
+  if (~~Math_fround(getf32()) >>> 0) {
    bar()
   }
-  if (Math_fround(getf32()) | 0) {
+  if (~~Math_fround(getf32())) {
    bar()
   }
-  if (+getf64() >>> 0) {
+  if (~~+getf64() >>> 0) {
    bar()
   }
-  if (+getf64() | 0) {
+  if (~~+getf64()) {
    bar()
   }
   if (((geti32() | 0) + (geti32() | 0) | 0) + (geti32() | 0) | 0) {

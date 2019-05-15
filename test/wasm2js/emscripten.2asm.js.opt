@@ -89,16 +89,16 @@ function asmFunc(global, env, buffer) {
   if (bools(314159) >> 8) {
    bar()
   }
-  if (getf32()) {
+  if (~~getf32()) {
    bar()
   }
-  if (getf32()) {
+  if (~~getf32()) {
    bar()
   }
-  if (getf64()) {
+  if (~~getf64()) {
    bar()
   }
-  if (getf64()) {
+  if (~~getf64()) {
    bar()
   }
   if ((geti32() + geti32() | 0) + geti32()) {

@@ -22,7 +22,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function $0() {
-  return - -7094.0 | 0 | 0;
+  return ~~- -7094.0 | 0;
  }
  
  function $1() {
