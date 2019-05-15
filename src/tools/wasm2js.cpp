@@ -275,17 +275,14 @@ static void optimizeJS(Ref ast) {
         IString replacementHeap;
         // We can avoid a cast of a load by using the load to do it instead.
         if (isOrZero(node)) {
-          if (heap == HEAP32 || heap == HEAPU32) {
-            replacementHeap = HEAP32;
-          } else if (heap == HEAP16 || heap == HEAPU16) {
-            replacementHeap = HEAP16;
-          } else if (heap == HEAP8 || heap == HEAPU8) {
-            replacementHeap = HEAP8;
+          if (isIntegerHeap(heap)) {
+            replacementHeap = heap;
           }
         } else if (isConstantBitwise(node, TRSHIFT, 0)) {
-          // For signed or unsigned loads smaller than 32 bits, doing an |0
-          // was safe either way - they aren't in the range an |0 can affect.
-          // For >>>0 however, a negative value would change.
+          // For signed or unsigned loads smaller than 32 bits, doing an | 0
+          // was safe either way - they aren't in the range an | 0 can affect.
+          // For >>> 0 however, a negative value would change, so we still
+          // need the cast.
           if (heap == HEAP32 || heap == HEAPU32) {
             replacementHeap = HEAPU32;
           } else if (heap == HEAPU16) {
