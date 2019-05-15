@@ -1959,7 +1959,7 @@ validation: 0
 // beginning a Binaryen API trace
 #include <math.h>
 #include <map>
-#include "src/binaryen-c.h"
+#include "binaryen-c.h"
 int main() {
   std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
