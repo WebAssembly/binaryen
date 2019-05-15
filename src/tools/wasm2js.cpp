@@ -149,9 +149,7 @@ static void optimizeJS(Ref ast) {
            node[3]->getNumber() == num;
   };
 
-  auto isOrZero = [&](Ref node) {
-    return isConstantBinary(node, OR, 0);
-  };
+  auto isOrZero = [&](Ref node) { return isConstantBinary(node, OR, 0); };
 
   auto isTrshiftZero = [&](Ref node) {
     return isConstantBinary(node, TRSHIFT, 0);
