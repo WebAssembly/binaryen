@@ -69,7 +69,7 @@ BINARYEN_SRC="$(dirname $0)/src"
 BINARYEN_SCRIPTS="$(dirname $0)/scripts"
 
 # output binaries relative to current working directory
-BINARYEN_BIN="$PWD/bin"
+OUT="$PWD/out"
 
 echo "generate embedded intrinsics module"
 
@@ -77,6 +77,7 @@ python $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast 
 
 echo "building shared bitcode"
 
+mkdir -p ${OUT}
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/asmjs/asm_v_wasm.cpp \
@@ -168,7 +169,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/wasm/wasm-validator.cpp \
   $BINARYEN_SRC/wasm/wasm.cpp \
   -I$BINARYEN_SRC \
-  -o shared.bc
+  -o ${OUT}/shared.bc
 
 echo "building binaryen.js"
 
@@ -820,10 +821,10 @@ export_function "_BinaryenSetAPITracing"
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/binaryen-c.cpp \
-  shared.bc \
+  $OUT/shared.bc \
   -I$BINARYEN_SRC/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
-  -o $BINARYEN_BIN/binaryen${OUT_FILE_SUFFIX}.js \
+  -o $OUT/binaryen${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
   --post-js $BINARYEN_SRC/js/binaryen.js-post.js
