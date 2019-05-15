@@ -125,7 +125,8 @@ static void traversePrePost(Ref node,
 }
 
 static void traversePost(Ref node, std::function<void(Ref)> visit) {
-  traversePrePost(node, [](Ref node) {}, visit);
+  traversePrePost(
+    node, [](Ref node) {}, visit);
 }
 
 static void replaceInPlace(Ref target, Ref value) {
@@ -449,27 +450,25 @@ static void optimizeJS(Ref ast) {
 
   std::set<IString> usedLabelNames;
 
-  traversePost(
-    ast,
-    [&](Ref node) {
-      if (node->isArray() && !node->empty()) {
-        if (node[0] == BREAK || node[0] == CONTINUE) {
-          if (!node[1]->isNull()) {
-            auto label = node[1]->getIString();
-            usedLabelNames.insert(label);
-          }
-        } else if (node[0] == LABEL) {
+  traversePost(ast, [&](Ref node) {
+    if (node->isArray() && !node->empty()) {
+      if (node[0] == BREAK || node[0] == CONTINUE) {
+        if (!node[1]->isNull()) {
           auto label = node[1]->getIString();
-          if (usedLabelNames.count(label)) {
-            // It's used; just erase it from the data structure.
-            usedLabelNames.erase(label);
-          } else {
-            // It's not used - get rid of it.
-            replaceInPlaceIfPossible(node, node[2]);
-          }
+          usedLabelNames.insert(label);
+        }
+      } else if (node[0] == LABEL) {
+        auto label = node[1]->getIString();
+        if (usedLabelNames.count(label)) {
+          // It's used; just erase it from the data structure.
+          usedLabelNames.erase(label);
+        } else {
+          // It's not used - get rid of it.
+          replaceInPlaceIfPossible(node, node[2]);
         }
       }
-    });
+    }
+  });
 }
 
 static void emitWasm(Module& wasm,
