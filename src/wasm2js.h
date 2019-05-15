@@ -1225,17 +1225,28 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                                 ValueBuilder::makeInt(0));
               return ValueBuilder::makeSeq(store, load);
             }
+            // generate (~~expr), what Emscripten does
             case TruncSFloat32ToInt32:
             case TruncSFloat64ToInt32:
             case TruncSatSFloat32ToInt32:
             case TruncSatSFloat64ToInt32: {
-              return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), ASM_INT);
+              return ValueBuilder::makeUnary(
+                B_NOT,
+                ValueBuilder::makeUnary(B_NOT,
+                                        visit(curr->value, EXPRESSION_RESULT)));
             }
+            // generate (~~expr >>> 0), what Emscripten does
             case TruncUFloat32ToInt32:
             case TruncUFloat64ToInt32:
             case TruncSatUFloat32ToInt32:
             case TruncSatUFloat64ToInt32: {
-              return makeSigning(visit(curr->value, EXPRESSION_RESULT), ASM_UNSIGNED);
+              return ValueBuilder::makeBinary(
+                ValueBuilder::makeUnary(
+                  B_NOT,
+                  ValueBuilder::makeUnary(
+                    B_NOT, visit(curr->value, EXPRESSION_RESULT))),
+                TRSHIFT,
+                ValueBuilder::makeNum(0));
             }
             default: {
               std::cerr << "Unhandled unary i32 operator: " << curr
