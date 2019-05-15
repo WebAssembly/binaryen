@@ -139,9 +139,17 @@ static void replaceInPlace(Ref target, Ref value) {
 static void optimizeJS(Ref ast) {
   // Helpers
 
-  auto isOrZero = [](Ref node) {
+  auto isConstantBitwise = [](Ref node, IString op, int num) {
     return node->isArray() && !node->empty() && node[0] == BINARY &&
-           node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
+           node[1] == op && node[3]->isNumber() && node[3]->getNumber() == num;
+  };
+
+  auto isOrZero = [&](Ref node) {
+    return isConstantBitwise(node, OR, 0);
+  };
+
+  auto isTrshiftZero = [&](Ref node) {
+    return isConstantBitwise(node, TRSHIFT, 0);
   };
 
   auto isPlus = [](Ref node) {
@@ -166,11 +174,6 @@ static void optimizeJS(Ref ast) {
   auto isUnary = [](Ref node, IString op) {
     return node->isArray() && !node->empty() && node[0] == UNARY_PREFIX &&
            node[1] == op;
-  };
-
-  auto isConstantBitwise = [](Ref node, IString op, int num) {
-    return node->isArray() && !node->empty() && node[0] == BINARY &&
-           node[1] == op && node[3]->isNumber() && node[3]->getNumber() == num;
   };
 
   auto isWhile = [](Ref node) {
@@ -237,11 +240,14 @@ static void optimizeJS(Ref ast) {
   };
 
   auto optimizeBoolean = [&](Ref node) {
-    // x ^ 1  =>  !x
     if (isConstantBitwise(node, XOR, 1)) {
+      // x ^ 1  =>  !x
       node[0]->setString(UNARY_PREFIX);
       node[1]->setString(L_NOT);
       node[3]->setNull();
+    } else if (isOrZero(node) || isTrshiftZero(node)) {
+      // Just being different from 0 is enough, casts don't matter.
+      return node[2];
     }
     return node;
   };
@@ -264,10 +270,9 @@ static void optimizeJS(Ref ast) {
       // x | 0 | 0  =>  x | 0
       if (isOrZero(node)) {
         if (isBitwise(node[2])) {
-          auto child = node[2];
-          node[1] = child[1];
-          node[2] = child[2];
-          node[3] = child[3];
+          replaceInPlace(child, node[2]);
+        } else if (isBitwise(node[3])) {
+          replaceInPlace(child, node[3]);
         }
       }
       if (isHeapAccess(node[2])) {
@@ -278,7 +283,7 @@ static void optimizeJS(Ref ast) {
           if (isIntegerHeap(heap)) {
             replacementHeap = heap;
           }
-        } else if (isConstantBitwise(node, TRSHIFT, 0)) {
+        } else if (isTrshiftZero(node)) {
           // For signed or unsigned loads smaller than 32 bits, doing an | 0
           // was safe either way - they aren't in the range an | 0 can affect.
           // For >>> 0 however, a negative value would change, so we still

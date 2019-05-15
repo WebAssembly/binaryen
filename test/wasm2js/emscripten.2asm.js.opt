@@ -83,6 +83,32 @@ function asmFunc(global, env, buffer) {
   if (HEAPU8[144] < 3) {
    bar()
   }
+  if (bools(314159) >>> 7) {
+   bar()
+  }
+  if (bools(314159) >> 8) {
+   bar()
+  }
+  if (getf32()) {
+   bar()
+  }
+  if (getf32()) {
+   bar()
+  }
+  if (getf64()) {
+   bar()
+  }
+  if (getf64()) {
+   bar()
+  }
+ }
+ 
+ function getf32() {
+  return getf32();
+ }
+ 
+ function getf64() {
+  return getf64();
  }
  
  function __growWasmMemory($0) {
