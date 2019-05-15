@@ -3312,6 +3312,21 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
   return {binary, buffer.size(), sourceMap};
 }
 
+char* BinaryenModuleAllocateAndWriteSExpr(BinaryenModuleRef* module) {
+  if (tracing) {
+    std::cout << " // BinaryenModuleAllocateAndWriteSExpr(the_module);";
+  }
+
+  std::stringstream ss;
+  WasmPrinter::printModule((Module*)module, ss);
+
+  std::string out = ss.str();
+  const int l = out.length() + 1;
+  char* cout = (char*)malloc(l);
+  strncpy(cout, out.c_str(), l);
+  return cout;
+}
+
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   if (tracing) {
     std::cout << "  // BinaryenModuleRead\n";

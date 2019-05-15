@@ -1033,6 +1033,11 @@ BinaryenModuleAllocateAndWriteResult
 BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
                                const char* sourceMapUrl);
 
+// Serialize a module in s-expression form. Implicity allocates the returned
+// char* with malloc(), and expects the user to free() them manually
+// once not needed anymore.
+char* BinaryenModuleAllocateAndWriteSExpr(BinaryenModuleRef* module);
+
 // Deserialize a module from binary form.
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 
