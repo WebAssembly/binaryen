@@ -57,7 +57,7 @@ function asmFunc(global, env, buffer) {
  
  function __wasm_popcnt_i64($0, $1) {
   var $2 = 0, $3 = 0, $4 = 0, $5 = 0;
-  label$2 : while (1) {
+  while (1) {
    $5 = $3;
    $2 = $4;
    if ($0 | $1) {

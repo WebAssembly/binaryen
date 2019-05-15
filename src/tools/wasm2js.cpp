@@ -136,6 +136,12 @@ static void replaceInPlace(Ref target, Ref value) {
   }
 }
 
+static void replaceInPlaceIfPossible(Ref target, Ref value) {
+  if (target->isArray() && value->isArray()) {
+    replaceInPlace(target, value);
+  }
+}
+
 static void optimizeJS(Ref ast) {
   // Helpers
 
@@ -377,7 +383,8 @@ static void optimizeJS(Ref ast) {
     }
   });
 
-  // Remove unnecessary break/continue labels, when referring to the top level.
+  // Remove unnecessary break/continue labels, when the name is that of the
+  // highest target anyhow, which we would reach without the name.
 
   std::vector<Ref> breakCapturers;
   std::vector<Ref> continueCapturers;
@@ -433,6 +440,32 @@ static void optimizeJS(Ref ast) {
               // didn't have the label!
               node[1]->setNull();
             }
+          }
+        }
+      }
+    });
+
+  // Remove unnecessary block/loop labels.
+
+  std::set<IString> usedLabelNames;
+
+  traversePost(
+    ast,
+    [&](Ref node) {
+      if (node->isArray() && !node->empty()) {
+        if (node[0] == BREAK || node[0] == CONTINUE) {
+          if (!node[1]->isNull()) {
+            auto label = node[1]->getIString();
+            usedLabelNames.insert(label);
+          }
+        } else if (node[0] == LABEL) {
+          auto label = node[1]->getIString();
+          if (usedLabelNames.count(label)) {
+            // It's used; just erase it from the data structure.
+            usedLabelNames.erase(label);
+          } else {
+            // It's not used - get rid of it.
+            replaceInPlaceIfPossible(node, node[2]);
           }
         }
       }
