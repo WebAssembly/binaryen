@@ -34,6 +34,8 @@
 #include "wasm-validator.h"
 #include "wasm.h"
 #include "wasm2js.h"
+#include <iostream>
+#include <sstream>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -3243,6 +3245,26 @@ BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize) {
 
   return writeModule((Module*)module, output, outputSize, nullptr, nullptr, 0)
     .outputBytes;
+}
+
+size_t BinaryenModuleWriteSExpr(BinaryenModuleRef module,
+                                char* output,
+                                size_t outputSize) {
+
+  if (tracing) {
+    std::cout << "  // BinaryenModuleWriteSExpr\n";
+  }
+
+  // use a stringstream as an std::ostream. Extract the std::string
+  // representation, and then store in the output.
+  std::stringstream ss;
+  WasmPrinter::printModule((Module*)module, ss);
+
+  const std::string temp = ss.str();
+  const char* ctemp = temp.c_str();
+
+  strncpy(output, ctemp, outputSize);
+  return std::min(outputSize, temp.size());
 }
 
 BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module,
