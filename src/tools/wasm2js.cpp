@@ -139,17 +139,22 @@ static void replaceInPlace(Ref target, Ref value) {
 static void optimizeJS(Ref ast) {
   // Helpers
 
-  auto isConstantBitwise = [](Ref node, IString op, int num) {
+  auto isBinary = [](Ref node, IString op) {
     return node->isArray() && !node->empty() && node[0] == BINARY &&
-           node[1] == op && node[3]->isNumber() && node[3]->getNumber() == num;
+           node[1] == op;
+  };
+
+  auto isConstantBinary = [&](Ref node, IString op, int num) {
+    return isBinary(node, op) && node[3]->isNumber() &&
+           node[3]->getNumber() == num;
   };
 
   auto isOrZero = [&](Ref node) {
-    return isConstantBitwise(node, OR, 0);
+    return isConstantBinary(node, OR, 0);
   };
 
   auto isTrshiftZero = [&](Ref node) {
-    return isConstantBitwise(node, TRSHIFT, 0);
+    return isConstantBinary(node, TRSHIFT, 0);
   };
 
   auto isPlus = [](Ref node) {
@@ -240,7 +245,7 @@ static void optimizeJS(Ref ast) {
   };
 
   auto optimizeBoolean = [&](Ref node) {
-    if (isConstantBitwise(node, XOR, 1)) {
+    if (isConstantBinary(node, XOR, 1)) {
       // x ^ 1  =>  !x
       node[0]->setString(UNARY_PREFIX);
       node[1]->setString(L_NOT);
@@ -257,7 +262,7 @@ static void optimizeJS(Ref ast) {
   // Pre-simplification
   traversePost(ast, [&](Ref node) {
     // x >> 0  =>  x | 0
-    if (isConstantBitwise(node, RSHIFT, 0)) {
+    if (isConstantBinary(node, RSHIFT, 0)) {
       node[1]->setString(OR);
     }
   });
@@ -271,8 +276,6 @@ static void optimizeJS(Ref ast) {
       if (isOrZero(node)) {
         if (isBitwise(node[2])) {
           replaceInPlace(node, node[2]);
-        } else if (isBitwise(node[3])) {
-          replaceInPlace(node, node[3]);
         }
       }
       if (isHeapAccess(node[2])) {
@@ -307,7 +310,7 @@ static void optimizeJS(Ref ast) {
         // better performance (perhaps since HEAPU32 is at risk of not being a
         // smallint).
         if (node[1] == AND) {
-          if (isConstantBitwise(node, AND, 1)) {
+          if (isConstantBinary(node, AND, 1)) {
             if (heap == HEAPU8) {
               setHeapOnAccess(node[2], HEAP8);
             } else if (heap == HEAPU16) {
@@ -347,6 +350,15 @@ static void optimizeJS(Ref ast) {
     } else if (isUnary(node, L_NOT)) {
       node[2] = optimizeBoolean(node[2]);
     }
+    // Add/subtract can merge coercions up.
+    else if (isBinary(node, PLUS) || isBinary(node, MINUS)) {
+      auto left = node[2];
+      auto right = node[3];
+      if (isOrZero(left) && isOrZero(right)) {
+        node[2] = left[2];
+        node[3] = right[2];
+      }
+    }
     // Assignment into a heap coerces.
     else if (node->isAssign()) {
       auto assign = node->asAssign();
@@ -356,12 +368,12 @@ static void optimizeJS(Ref ast) {
         if (isIntegerHeap(heap)) {
           if (heap == HEAP8 || heap == HEAPU8) {
             while (isOrZero(assign->value()) ||
-                   isConstantBitwise(assign->value(), AND, 255)) {
+                   isConstantBinary(assign->value(), AND, 255)) {
               assign->value() = assign->value()[2];
             }
           } else if (heap == HEAP16 || heap == HEAPU16) {
             while (isOrZero(assign->value()) ||
-                   isConstantBitwise(assign->value(), AND, 65535)) {
+                   isConstantBinary(assign->value(), AND, 65535)) {
               assign->value() = assign->value()[2];
             }
           } else {

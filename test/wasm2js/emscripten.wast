@@ -161,6 +161,31 @@
     )
     (call $bar)
   )
+  (if
+    (i32.add
+      (i32.add
+        (i32.add
+          (call $geti32)
+          (call $geti32)
+        )
+        (i32.add
+          (call $geti32)
+          (call $geti32)
+        )
+      )
+      (i32.add
+        (i32.add
+          (call $geti32)
+          (call $geti32)
+        )
+        (i32.add
+          (call $geti32)
+          (call $geti32)
+        )
+      )
+    )
+    (call $bar)
+  )
  )
  (func $geti32 (result i32)
   (call $geti32)
