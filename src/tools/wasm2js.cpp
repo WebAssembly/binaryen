@@ -359,8 +359,14 @@ static void optimizeJS(Ref ast) {
       auto left = node[2];
       auto right = node[3];
       if (isOrZero(left) && isOrZero(right)) {
-        node[2] = left[2];
-        node[3] = right[2];
+        auto op = node[1]->getIString();
+        // Add a coercion on top.
+        node[1]->setString(OR);
+        node[2] = left;
+        node[3] = ValueBuilder::makeNum(0);
+        // Add/subtract the inner uncoerced values.
+        left[1]->setString(op);
+        left[3] = right[2];
       }
     }
     // Assignment into a heap coerces.
