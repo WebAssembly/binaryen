@@ -270,9 +270,9 @@ static void optimizeJS(Ref ast) {
       // x | 0 | 0  =>  x | 0
       if (isOrZero(node)) {
         if (isBitwise(node[2])) {
-          replaceInPlace(child, node[2]);
+          replaceInPlace(node, node[2]);
         } else if (isBitwise(node[3])) {
-          replaceInPlace(child, node[3]);
+          replaceInPlace(node, node[3]);
         }
       }
       if (isHeapAccess(node[2])) {

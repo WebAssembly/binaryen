@@ -108,6 +108,19 @@ function asmFunc(global, env, buffer) {
   if (+getf64() | 0) {
    bar()
   }
+  if (((geti32() | 0) + (geti32() | 0) | 0) + (geti32() | 0) | 0) {
+   bar()
+  }
+  if ((geti32() | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) {
+   bar()
+  }
+  if (((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) {
+   bar()
+  }
+ }
+ 
+ function geti32() {
+  return geti32() | 0 | 0;
  }
  
  function getf32() {

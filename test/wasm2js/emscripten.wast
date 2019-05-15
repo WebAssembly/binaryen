@@ -128,6 +128,42 @@
   (if (i32.trunc_f64_s (call $getf64))
    (call  $bar)
   )
+  (if
+    (i32.add
+      (i32.add
+        (call $geti32)
+        (call $geti32)
+      )
+      (call $geti32)
+    )
+    (call $bar)
+  )
+  (if
+    (i32.add
+      (call $geti32)
+      (i32.add
+        (call $geti32)
+        (call $geti32)
+      )
+    )
+    (call $bar)
+  )
+  (if
+    (i32.add
+      (i32.add
+        (call $geti32)
+        (call $geti32)
+      )
+      (i32.add
+        (call $geti32)
+        (call $geti32)
+      )
+    )
+    (call $bar)
+  )
+ )
+ (func $geti32 (result i32)
+  (call $geti32)
  )
  (func $getf32 (result f32)
   (call $getf32)
