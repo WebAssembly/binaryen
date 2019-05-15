@@ -26,7 +26,7 @@ from test.shared import options, NODEJS
 
 # parameters
 
-NANS = False
+NANS = True
 
 FEATURE_OPTS = []  # '--all-features' etc
 
@@ -44,7 +44,7 @@ V8_OPTS = [
   '--experimental-wasm-return-call'
 ]
 
-INPUT_SIZE_LIMIT = 50 * 1024
+INPUT_SIZE_LIMIT = 150 * 1024
 
 LOG_LIMIT = 125
 
@@ -145,10 +145,7 @@ def run_bynterp(wasm):
 
 def run_wasm2js(wasm):
   wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
-  cmd = [in_bin('wasm2js'), wasm, '--emscripten']
-  if random.random() < 0.5:
-    cmd += ['-O']
-  main = run(cmd + FEATURE_OPTS)
+  main = run([in_bin('wasm2js'), wasm, '--emscripten'] + FEATURE_OPTS)
   with open(os.path.join(options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
     glue = f.read()
   with open('js.js', 'w') as f:
@@ -165,9 +162,9 @@ def run_wasm2js(wasm):
 def run_vms(prefix):
   wasm = prefix + 'wasm'
   results = []
-  # results.append(run_bynterp(wasm))
-  # results.append(fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', wasm])))
-  results.append(run_wasm2js(wasm))
+  results.append(run_bynterp(wasm))
+  results.append(fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', wasm])))
+  # results.append(run_wasm2js(wasm))
 
   # append to add results from VMs
   # results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
