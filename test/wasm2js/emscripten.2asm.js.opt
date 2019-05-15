@@ -9,6 +9,7 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
+ var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -46,6 +47,42 @@ function asmFunc(global, env, buffer) {
   HEAPF64[2] = 11;
   HEAP8[16] = 15;
   HEAP16[8] = 19;
+  if (HEAP32[25] == 1) {
+   bar()
+  }
+  if (HEAP32[26] < 2) {
+   bar()
+  }
+  if (HEAPU32[27] < 3) {
+   bar()
+  }
+  if (HEAP16[56] == 1) {
+   bar()
+  }
+  if (HEAP16[58] < 2) {
+   bar()
+  }
+  if (HEAPU16[60] < 2) {
+   bar()
+  }
+  if (HEAP16[62] >>> 0 < 3) {
+   bar()
+  }
+  if (HEAPU16[64] < 3) {
+   bar()
+  }
+  if (HEAP8[132] < 2) {
+   bar()
+  }
+  if (HEAPU8[136] < 2) {
+   bar()
+  }
+  if (HEAP8[140] >>> 0 < 3) {
+   bar()
+  }
+  if (HEAPU8[144] < 3) {
+   bar()
+  }
  }
  
  function __growWasmMemory($0) {

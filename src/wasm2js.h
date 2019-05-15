@@ -439,6 +439,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
   addHeap(HEAP32, INT32ARRAY);
   addHeap(HEAPU8, UINT8ARRAY);
   addHeap(HEAPU16, UINT16ARRAY);
+  addHeap(HEAPU32, UINT32ARRAY);
   addHeap(HEAPF32, FLOAT32ARRAY);
   addHeap(HEAPF64, FLOAT64ARRAY);
   // core asm.js imports
@@ -1708,10 +1709,12 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
           ValueBuilder::makeName(IString("newBuffer"))))));
   };
 
+  setHeap(HEAP8, INT8ARRAY);
   setHeap(HEAP16, INT16ARRAY);
   setHeap(HEAP32, INT32ARRAY);
   setHeap(HEAPU8, UINT8ARRAY);
   setHeap(HEAPU16, UINT16ARRAY);
+  setHeap(HEAPU32, UINT32ARRAY);
   setHeap(HEAPF32, FLOAT32ARRAY);
   setHeap(HEAPF64, FLOAT64ARRAY);
 
