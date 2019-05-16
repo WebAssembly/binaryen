@@ -106,11 +106,10 @@ if not options.binaryen_bin:
   else:
     options.binaryen_bin = 'bin'
 
-# ensure BINARYEN_ROOT is set up
-os.environ['BINARYEN_ROOT'] = os.path.dirname(os.path.abspath(
-    options.binaryen_bin))
+options.binaryen_bin = os.path.normpath(os.path.abspath(options.binaryen_bin))
 
-options.binaryen_bin = os.path.normpath(options.binaryen_bin)
+# ensure BINARYEN_ROOT is set up
+os.environ['BINARYEN_ROOT'] = os.path.dirname(options.binaryen_bin)
 
 wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
 if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
@@ -173,7 +172,7 @@ WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
-BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen.js')
+BINARYEN_JS = os.path.join(options.binaryen_root, 'out', 'binaryen.js')
 
 
 def wrap_with_valgrind(cmd):
