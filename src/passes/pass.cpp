@@ -428,7 +428,7 @@ static void dumpWast(Name name, Module* wasm) {
   fullName += std::to_string(getpid()) + '-';
 #endif
   fullName += numstr + "-" + name.str + ".wasm";
-  Colors::disable();
+  Colors::setEnabled(false);
   ModuleWriter writer;
   writer.setBinary(false); // TODO: add an option for binary
   writer.write(*wasm, fullName);

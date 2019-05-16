@@ -26,6 +26,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "shell-interface.h"
+#include "support/colors.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -3823,6 +3824,10 @@ BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module,
 
   return NULL;
 }
+
+void BinaryenSetColorsEnabled(int enabled) { Colors::setEnabled(enabled); }
+
+int BinaryenAreColorsEnabled() { return Colors::isEnabled(); }
 
 #ifdef __EMSCRIPTEN__
 // Override atexit - we don't need any global ctors to actually run, and
