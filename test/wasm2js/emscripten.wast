@@ -110,6 +110,91 @@
   (if (i32.lt_u (i32.load8_u (i32.const 144)) (i32.const 3))
    (call  $bar)
   )
+  (if (i32.shr_u (call $bools (i32.const 314159)) (i32.const 7))
+   (call  $bar)
+  )
+  (if (i32.shr_s (call $bools (i32.const 314159)) (i32.const 8))
+   (call  $bar)
+  )
+  (if (i32.trunc_f32_u (call $getf32))
+   (call  $bar)
+  )
+  (if (i32.trunc_f32_s (call $getf32))
+   (call  $bar)
+  )
+  (if (i32.trunc_f64_u (call $getf64))
+   (call  $bar)
+  )
+  (if (i32.trunc_f64_s (call $getf64))
+   (call  $bar)
+  )
+  (if
+    (i32.add
+      (i32.add
+        (call $geti32)
+        (call $geti32)
+      )
+      (call $geti32)
+    )
+    (call $bar)
+  )
+  (if
+    (i32.add
+      (call $geti32)
+      (i32.add
+        (call $geti32)
+        (call $geti32)
+      )
+    )
+    (call $bar)
+  )
+  (if
+    (i32.add
+      (i32.add
+        (call $geti32)
+        (call $geti32)
+      )
+      (i32.add
+        (call $geti32)
+        (call $geti32)
+      )
+    )
+    (call $bar)
+  )
+  (if
+    (i32.add
+      (i32.add
+        (i32.add
+          (call $geti32)
+          (call $geti32)
+        )
+        (i32.add
+          (call $geti32)
+          (call $geti32)
+        )
+      )
+      (i32.add
+        (i32.add
+          (call $geti32)
+          (call $geti32)
+        )
+        (i32.add
+          (call $geti32)
+          (call $geti32)
+        )
+      )
+    )
+    (call $bar)
+  )
+ )
+ (func $geti32 (result i32)
+  (call $geti32)
+ )
+ (func $getf32 (result f32)
+  (call $getf32)
+ )
+ (func $getf64 (result f64)
+  (call $getf64)
  )
  (func $__growWasmMemory (param $0 i32) (result i32)
   (grow_memory

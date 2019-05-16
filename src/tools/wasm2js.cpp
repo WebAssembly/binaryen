@@ -145,9 +145,20 @@ static void replaceInPlaceIfPossible(Ref target, Ref value) {
 static void optimizeJS(Ref ast) {
   // Helpers
 
-  auto isOrZero = [](Ref node) {
+  auto isBinary = [](Ref node, IString op) {
     return node->isArray() && !node->empty() && node[0] == BINARY &&
-           node[1] == OR && node[3]->isNumber() && node[3]->getNumber() == 0;
+           node[1] == op;
+  };
+
+  auto isConstantBinary = [&](Ref node, IString op, int num) {
+    return isBinary(node, op) && node[3]->isNumber() &&
+           node[3]->getNumber() == num;
+  };
+
+  auto isOrZero = [&](Ref node) { return isConstantBinary(node, OR, 0); };
+
+  auto isTrshiftZero = [&](Ref node) {
+    return isConstantBinary(node, TRSHIFT, 0);
   };
 
   auto isPlus = [](Ref node) {
@@ -172,11 +183,6 @@ static void optimizeJS(Ref ast) {
   auto isUnary = [](Ref node, IString op) {
     return node->isArray() && !node->empty() && node[0] == UNARY_PREFIX &&
            node[1] == op;
-  };
-
-  auto isConstantBitwise = [](Ref node, IString op, int num) {
-    return node->isArray() && !node->empty() && node[0] == BINARY &&
-           node[1] == op && node[3]->isNumber() && node[3]->getNumber() == num;
   };
 
   auto isWhile = [](Ref node) {
@@ -243,11 +249,14 @@ static void optimizeJS(Ref ast) {
   };
 
   auto optimizeBoolean = [&](Ref node) {
-    // x ^ 1  =>  !x
-    if (isConstantBitwise(node, XOR, 1)) {
+    if (isConstantBinary(node, XOR, 1)) {
+      // x ^ 1  =>  !x
       node[0]->setString(UNARY_PREFIX);
       node[1]->setString(L_NOT);
       node[3]->setNull();
+    } else if (isOrZero(node) || isTrshiftZero(node)) {
+      // Just being different from 0 is enough, casts don't matter.
+      return node[2];
     }
     return node;
   };
@@ -257,7 +266,7 @@ static void optimizeJS(Ref ast) {
   // Pre-simplification
   traversePost(ast, [&](Ref node) {
     // x >> 0  =>  x | 0
-    if (isConstantBitwise(node, RSHIFT, 0)) {
+    if (isConstantBinary(node, RSHIFT, 0)) {
       node[1]->setString(OR);
     }
   });
@@ -270,10 +279,7 @@ static void optimizeJS(Ref ast) {
       // x | 0 | 0  =>  x | 0
       if (isOrZero(node)) {
         if (isBitwise(node[2])) {
-          auto child = node[2];
-          node[1] = child[1];
-          node[2] = child[2];
-          node[3] = child[3];
+          replaceInPlace(node, node[2]);
         }
       }
       if (isHeapAccess(node[2])) {
@@ -284,7 +290,7 @@ static void optimizeJS(Ref ast) {
           if (isIntegerHeap(heap)) {
             replacementHeap = heap;
           }
-        } else if (isConstantBitwise(node, TRSHIFT, 0)) {
+        } else if (isTrshiftZero(node)) {
           // For signed or unsigned loads smaller than 32 bits, doing an | 0
           // was safe either way - they aren't in the range an | 0 can affect.
           // For >>> 0 however, a negative value would change, so we still
@@ -308,7 +314,7 @@ static void optimizeJS(Ref ast) {
         // better performance (perhaps since HEAPU32 is at risk of not being a
         // smallint).
         if (node[1] == AND) {
-          if (isConstantBitwise(node, AND, 1)) {
+          if (isConstantBinary(node, AND, 1)) {
             if (heap == HEAPU8) {
               setHeapOnAccess(node[2], HEAP8);
             } else if (heap == HEAPU16) {
@@ -348,6 +354,21 @@ static void optimizeJS(Ref ast) {
     } else if (isUnary(node, L_NOT)) {
       node[2] = optimizeBoolean(node[2]);
     }
+    // Add/subtract can merge coercions up.
+    else if (isBinary(node, PLUS) || isBinary(node, MINUS)) {
+      auto left = node[2];
+      auto right = node[3];
+      if (isOrZero(left) && isOrZero(right)) {
+        auto op = node[1]->getIString();
+        // Add a coercion on top.
+        node[1]->setString(OR);
+        node[2] = left;
+        node[3] = ValueBuilder::makeNum(0);
+        // Add/subtract the inner uncoerced values.
+        left[1]->setString(op);
+        left[3] = right[2];
+      }
+    }
     // Assignment into a heap coerces.
     else if (node->isAssign()) {
       auto assign = node->asAssign();
@@ -357,12 +378,12 @@ static void optimizeJS(Ref ast) {
         if (isIntegerHeap(heap)) {
           if (heap == HEAP8 || heap == HEAPU8) {
             while (isOrZero(assign->value()) ||
-                   isConstantBitwise(assign->value(), AND, 255)) {
+                   isConstantBinary(assign->value(), AND, 255)) {
               assign->value() = assign->value()[2];
             }
           } else if (heap == HEAP16 || heap == HEAPU16) {
             while (isOrZero(assign->value()) ||
-                   isConstantBitwise(assign->value(), AND, 65535)) {
+                   isConstantBinary(assign->value(), AND, 65535)) {
               assign->value() = assign->value()[2];
             }
           } else {

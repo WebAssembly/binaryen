@@ -90,6 +90,48 @@ function asmFunc(global, env, buffer) {
   if ((HEAPU8[144 >> 0] | 0) >>> 0 < 3 >>> 0) {
    bar()
   }
+  if ((bools(314159 | 0) | 0) >>> 7 | 0) {
+   bar()
+  }
+  if ((bools(314159 | 0) | 0) >> 8 | 0) {
+   bar()
+  }
+  if (~~Math_fround(getf32()) >>> 0) {
+   bar()
+  }
+  if (~~Math_fround(getf32())) {
+   bar()
+  }
+  if (~~+getf64() >>> 0) {
+   bar()
+  }
+  if (~~+getf64()) {
+   bar()
+  }
+  if (((geti32() | 0) + (geti32() | 0) | 0) + (geti32() | 0) | 0) {
+   bar()
+  }
+  if ((geti32() | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) {
+   bar()
+  }
+  if (((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) {
+   bar()
+  }
+  if ((((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) + (((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) | 0) {
+   bar()
+  }
+ }
+ 
+ function geti32() {
+  return geti32() | 0 | 0;
+ }
+ 
+ function getf32() {
+  return Math_fround(Math_fround(getf32()));
+ }
+ 
+ function getf64() {
+  return +(+getf64());
  }
  
  function __growWasmMemory($0) {
