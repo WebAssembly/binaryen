@@ -189,6 +189,8 @@ public:
 
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
 
+  void setAllowOOB(bool allowOOB_) { allowOOB = allowOOB_; }
+
   void build() {
     if (allowMemory) {
       setupMemory();
@@ -251,6 +253,10 @@ private:
 
   // Whether to emit memory operations like loads and stores.
   bool allowMemory = true;
+
+  // Whether to emit loads, stores, and call_indirects that may be out
+  // of bounds (which traps in wasm, and is undefined behavior in C).
+  bool allowOOB = true;
 
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
@@ -1212,7 +1218,7 @@ private:
     // with high probability, make sure the type is valid  otherwise, most are
     // going to trap
     Expression* target;
-    if (!oneIn(10)) {
+    if (!allowOOB || !oneIn(10)) {
       target = builder.makeConst(Literal(int32_t(i)));
     } else {
       target = make(i32);
@@ -1277,7 +1283,7 @@ private:
     // with high probability, mask the pointer so it's in a reasonable
     // range. otherwise, most pointers are going to be out of range and
     // most memory ops will just trap
-    if (!oneIn(10)) {
+    if (!allowOOB || !oneIn(10)) {
       ret = builder.makeBinary(
         AndInt32, ret, builder.makeConst(Literal(int32_t(USABLE_MEMORY - 1))));
     }
