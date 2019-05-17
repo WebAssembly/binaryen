@@ -23,44 +23,38 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function $0() {
   block : {
-   loop : do {
+   loop : while (1) {
     switch (1 | 0) {
-    case 0:
-     break block;
     case 1:
      continue loop;
     default:
      break block;
     };
-    break loop;
-   } while (1);
+   };
   }
  }
  
  function $1() {
   block : {
-   loop : do {
+   loop : while (1) {
     switch (1 | 0) {
-    case 0:
-     continue loop;
     case 1:
      break block;
     default:
      continue loop;
     };
-    break loop;
-   } while (1);
+   };
   }
  }
  
  var FUNCTION_TABLE = [];
  return {
-  exp1: $0, 
-  exp2: $1
+  "exp1": $0, 
+  "exp2": $1
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const exp1 = retasmFunc.exp1;
-export const exp2 = retasmFunc.exp2;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var exp1 = retasmFunc.exp1;
+export var exp2 = retasmFunc.exp2;

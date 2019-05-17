@@ -19,8 +19,8 @@
 // merge names when possible (by merging their blocks)
 //
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -33,11 +33,9 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
   // a parent block, we know if it was branched to
   std::map<Name, std::set<Expression*>> branchesSeen;
 
-  void visitBreak(Break *curr) {
-    branchesSeen[curr->name].insert(curr);
-  }
+  void visitBreak(Break* curr) { branchesSeen[curr->name].insert(curr); }
 
-  void visitSwitch(Switch *curr) {
+  void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
       branchesSeen[name].insert(curr);
     }
@@ -54,20 +52,27 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
     }
   }
 
-  void visitBlock(Block *curr) {
+  void visitBlock(Block* curr) {
     if (curr->name.is() && curr->list.size() == 1) {
       auto* child = curr->list[0]->dynCast<Block>();
       if (child && child->name.is() && child->type == curr->type) {
-        // we have just one child, this block, so breaking out of it goes to the same place as breaking out of us, we just need one name (and block)
+        // we have just one child, this block, so breaking out of it goes to the
+        // same place as breaking out of us, we just need one name (and block)
         auto& branches = branchesSeen[curr->name];
         for (auto* branch : branches) {
           if (Break* br = branch->dynCast<Break>()) {
-            if (br->name == curr->name) br->name = child->name;
+            if (br->name == curr->name) {
+              br->name = child->name;
+            }
           } else if (Switch* sw = branch->dynCast<Switch>()) {
             for (auto& target : sw->targets) {
-              if (target == curr->name) target = child->name;
+              if (target == curr->name) {
+                target = child->name;
+              }
             }
-            if (sw->default_ == curr->name) sw->default_ = child->name;
+            if (sw->default_ == curr->name) {
+              sw->default_ = child->name;
+            }
           } else {
             WASM_UNREACHABLE();
           }
@@ -79,20 +84,16 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
     handleBreakTarget(curr->name);
   }
 
-  void visitLoop(Loop *curr) {
+  void visitLoop(Loop* curr) {
     handleBreakTarget(curr->name);
     if (!curr->name.is()) {
       replaceCurrent(curr->body);
     }
   }
 
-  void visitFunction(Function *curr) {
-    assert(branchesSeen.empty());
-  }
+  void visitFunction(Function* curr) { assert(branchesSeen.empty()); }
 };
 
-Pass *createRemoveUnusedNamesPass() {
-  return new RemoveUnusedNames();
-}
+Pass* createRemoveUnusedNamesPass() { return new RemoveUnusedNames(); }
 
 } // namespace wasm

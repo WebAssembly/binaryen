@@ -21,7 +21,7 @@
 
 namespace {
 bool colors_disabled = false;
-}  // anonymous namespace
+} // anonymous namespace
 
 void Colors::disable() { colors_disabled = true; }
 
@@ -30,25 +30,28 @@ void Colors::disable() { colors_disabled = true; }
 
 void Colors::outputColorCode(std::ostream& stream, const char* colorCode) {
   const static bool has_color = []() {
-    return (getenv("COLORS") && getenv("COLORS")[0] == '1') ||  // forced
+    return (getenv("COLORS") && getenv("COLORS")[0] == '1') || // forced
            (isatty(STDOUT_FILENO) &&
-            (!getenv("COLORS") || getenv("COLORS")[0] != '0'));  // implicit
+            (!getenv("COLORS") || getenv("COLORS")[0] != '0')); // implicit
   }();
-  if (has_color && !colors_disabled) stream << colorCode;
+  if (has_color && !colors_disabled) {
+    stream << colorCode;
+  }
 }
 #elif defined(_WIN32)
-#include <windows.h>
 #include <io.h>
 #include <iostream>
+#include <windows.h>
 
-void Colors::outputColorCode(std::ostream&stream, const WORD &colorCode) {
+void Colors::outputColorCode(std::ostream& stream, const WORD& colorCode) {
   const static bool has_color = []() {
     return _isatty(_fileno(stdout)) &&
-            (!getenv("COLORS") || getenv("COLORS")[0] != '0');  // implicit
+           (!getenv("COLORS") || getenv("COLORS")[0] != '0'); // implicit
   }();
   static HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
   static HANDLE hStderr = GetStdHandle(STD_ERROR_HANDLE);
   if (has_color && !colors_disabled)
-    SetConsoleTextAttribute(&stream == &std::cout ? hStdout : hStderr, colorCode);
+    SetConsoleTextAttribute(&stream == &std::cout ? hStdout : hStderr,
+                            colorCode);
 }
 #endif

@@ -18,26 +18,34 @@
 // Removes branches for which we go to where they go anyhow
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <parsing.h>
 #include <ir/branch-utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
 #include <ir/utils.h>
+#include <parsing.h>
+#include <pass.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
 // to turn an if into a br-if, we must be able to reorder the
 // condition and possible value, and the possible value must
 // not have side effects (as they would run unconditionally)
-static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue, PassOptions& options) {
+static bool canTurnIfIntoBrIf(Expression* ifCondition,
+                              Expression* brValue,
+                              PassOptions& options) {
   // if the if isn't even reached, this is all dead code anyhow
-  if (ifCondition->type == unreachable) return false;
-  if (!brValue) return true;
+  if (ifCondition->type == unreachable) {
+    return false;
+  }
+  if (!brValue) {
+    return true;
+  }
   EffectAnalyzer value(options, brValue);
-  if (value.hasSideEffects()) return false;
+  if (value.hasSideEffects()) {
+    return false;
+  }
   return !EffectAnalyzer(options, ifCondition).invalidates(value);
 }
 
@@ -50,8 +58,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   typedef std::vector<Expression**> Flows;
 
-  // list of breaks that are currently flowing. if they reach their target without
-  // interference, they can be removed (or their value forwarded TODO)
+  // list of breaks that are currently flowing. if they reach their target
+  // without interference, they can be removed (or their value forwarded TODO)
   Flows flows;
 
   // a stack for if-else contents, we merge their outputs
@@ -160,23 +168,22 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
   }
 
-  void stopFlow() {
-    flows.clear();
-  }
+  void stopFlow() { flows.clear(); }
 
   void removeValueFlow(Flows& currFlows) {
-    currFlows.erase(std::remove_if(currFlows.begin(), currFlows.end(), [&](Expression** currp) {
-      auto* curr = *currp;
-      if (auto* ret = curr->dynCast<Return>()) {
-        return ret->value;
-      }
-      return curr->cast<Break>()->value;
-    }), currFlows.end());
+    currFlows.erase(std::remove_if(currFlows.begin(),
+                                   currFlows.end(),
+                                   [&](Expression** currp) {
+                                     auto* curr = *currp;
+                                     if (auto* ret = curr->dynCast<Return>()) {
+                                       return ret->value;
+                                     }
+                                     return curr->cast<Break>()->value;
+                                   }),
+                    currFlows.end());
   }
 
-  void stopValueFlow() {
-    removeValueFlow(flows);
-  }
+  void stopValueFlow() { removeValueFlow(flows); }
 
   static void clear(RemoveUnusedBrs* self, Expression** currp) {
     self->flows.clear();
@@ -186,20 +193,20 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     self->ifStack.push_back(std::move(self->flows));
   }
 
-  void visitLoop(Loop* curr) {
-    loops.push_back(curr);
-  }
+  void visitLoop(Loop* curr) { loops.push_back(curr); }
 
   void optimizeSwitch(Switch* curr) {
     // if the final element is the default, we don't need it
     while (!curr->targets.empty() && curr->targets.back() == curr->default_) {
       curr->targets.pop_back();
     }
-    // if the first element is the default, we can remove it by shifting everything (which
-    // does add a subtraction of a constant, but often that is worth it as the constant can
-    // be folded away and/or we remove multiple elements here)
+    // if the first element is the default, we can remove it by shifting
+    // everything (which does add a subtraction of a constant, but often that is
+    // worth it as the constant can be folded away and/or we remove multiple
+    // elements here)
     Index removable = 0;
-    while (removable < curr->targets.size() && curr->targets[removable] == curr->default_) {
+    while (removable < curr->targets.size() &&
+           curr->targets[removable] == curr->default_) {
       removable++;
     }
     if (removable > 0) {
@@ -208,50 +215,48 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
       curr->targets.resize(curr->targets.size() - removable);
       Builder builder(*getModule());
-      curr->condition = builder.makeBinary(SubInt32,
-        curr->condition,
-        builder.makeConst(Literal(int32_t(removable)))
-      );
+      curr->condition =
+        builder.makeBinary(SubInt32,
+                           curr->condition,
+                           builder.makeConst(Literal(int32_t(removable))));
     }
-    // when there isn't a value, we can do some trivial optimizations without worrying about
-    // the value being executed before the condition
-    if (curr->value) return;
+    // when there isn't a value, we can do some trivial optimizations without
+    // worrying about the value being executed before the condition
+    if (curr->value) {
+      return;
+    }
     if (curr->targets.size() == 0) {
       // a switch with just a default always goes there
       Builder builder(*getModule());
-      replaceCurrent(builder.makeSequence(
-        builder.makeDrop(curr->condition),
-        builder.makeBreak(curr->default_)
-      ));
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->condition),
+                                          builder.makeBreak(curr->default_)));
     } else if (curr->targets.size() == 1) {
       // a switch with two options is basically an if
       Builder builder(*getModule());
-      replaceCurrent(builder.makeIf(
-        curr->condition,
-        builder.makeBreak(curr->default_),
-        builder.makeBreak(curr->targets.front())
-      ));
+      replaceCurrent(builder.makeIf(curr->condition,
+                                    builder.makeBreak(curr->default_),
+                                    builder.makeBreak(curr->targets.front())));
     } else {
-      // there are also some other cases where we want to convert a switch into ifs,
-      // especially if the switch is large and we are focusing on size.
-      // an especially egregious case is a switch like this:
-      // [a b b [..] b b c] with default b
-      // (which may be arrived at after we trim away excess default values on both
-      // sides). in this case, we really have 3 values in a simple form, so it is the
-      // next logical case after handling 1 and 2 values right above here.
-      // to optimize this, we must add a local + a bunch of nodes (if*2, tee, eq,
-      // get, const, break*3), so the table must be big enough for it to make sense
+      // there are also some other cases where we want to convert a switch into
+      // ifs, especially if the switch is large and we are focusing on size. an
+      // especially egregious case is a switch like this: [a b b [..] b b c]
+      // with default b (which may be arrived at after we trim away excess
+      // default values on both sides). in this case, we really have 3 values in
+      // a simple form, so it is the next logical case after handling 1 and 2
+      // values right above here. to optimize this, we must add a local + a
+      // bunch of nodes (if*2, tee, eq, get, const, break*3), so the table must
+      // be big enough for it to make sense
 
-      // How many targets we need when shrinking. This is literally the size at which
-      // the transformation begins to be smaller.
+      // How many targets we need when shrinking. This is literally the size at
+      // which the transformation begins to be smaller.
       const uint32_t MIN_SHRINK = 13;
-      // How many targets we need when not shrinking, in which case, 2 ifs may be slower,
-      // so we do this when the table is ridiculously large for one with just 3 values
-      // in it.
+      // How many targets we need when not shrinking, in which case, 2 ifs may
+      // be slower, so we do this when the table is ridiculously large for one
+      // with just 3 values in it.
       const uint32_t MIN_GENERAL = 128;
 
       auto shrink = getPassRunner()->options.shrinkLevel > 0;
-      if ((curr->targets.size() >= MIN_SHRINK  &&  shrink) ||
+      if ((curr->targets.size() >= MIN_SHRINK && shrink) ||
           (curr->targets.size() >= MIN_GENERAL && !shrink)) {
         for (Index i = 1; i < curr->targets.size() - 1; i++) {
           if (curr->targets[i] != curr->default_) {
@@ -262,25 +267,24 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         auto temp = builder.addVar(getFunction(), i32);
         Expression* z;
-        replaceCurrent(z = builder.makeIf(
-          builder.makeTeeLocal(temp, curr->condition),
-          builder.makeIf(
-            builder.makeBinary(EqInt32,
-              builder.makeGetLocal(temp, i32),
-              builder.makeConst(Literal(int32_t(curr->targets.size() - 1)))
-            ),
-            builder.makeBreak(curr->targets.back()),
-            builder.makeBreak(curr->default_)
-          ),
-          builder.makeBreak(curr->targets.front())
-        ));
+        replaceCurrent(
+          z = builder.makeIf(
+            builder.makeTeeLocal(temp, curr->condition),
+            builder.makeIf(builder.makeBinary(EqInt32,
+                                              builder.makeGetLocal(temp, i32),
+                                              builder.makeConst(Literal(int32_t(
+                                                curr->targets.size() - 1)))),
+                           builder.makeBreak(curr->targets.back()),
+                           builder.makeBreak(curr->default_)),
+            builder.makeBreak(curr->targets.front())));
       }
     }
   }
 
   void visitIf(If* curr) {
     if (!curr->ifFalse) {
-      // if without an else. try to reduce   if (condition) br  =>  br_if (condition)
+      // if without an else. try to reduce   if (condition) br  =>  br_if
+      // (condition)
       Break* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
         if (canTurnIfIntoBrIf(curr->condition, br->value, getPassOptions())) {
@@ -291,9 +295,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
       }
     }
-    // TODO: if-else can be turned into a br_if as well, if one of the sides is a dead end
-    //       we handle the case of a returned value to a local.set later down, see
-    //       visitSetLocal.
+    // TODO: if-else can be turned into a br_if as well, if one of the sides is
+    //       a dead end we handle the case of a returned value to a local.set
+    //       later down, see visitSetLocal.
   }
 
   // override scan to add a pre and a post check task to all nodes
@@ -309,9 +313,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
       self->pushTask(doVisitIf, currp);
       if (iff->ifFalse) {
-      // we need to join up if-else control flow, and clear after the condition
+        // we need to join up if-else control flow, and clear after the
+        // condition
         self->pushTask(scan, &iff->ifFalse);
-        self->pushTask(saveIfTrue, currp); // safe the ifTrue flow, we'll join it later
+        // safe the ifTrue flow, we'll join it later
+        self->pushTask(saveIfTrue, currp);
       }
       self->pushTask(scan, &iff->ifTrue);
       self->pushTask(clear, currp); // clear all flow after the condition
@@ -342,24 +348,36 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     // helpful, as it shortens the logical loop. it is also good to generate
     // an if-else instead of an if, as it might allow an eqz to be removed
     // by flipping arms)
-    if (!loop->name.is()) return false;
+    if (!loop->name.is()) {
+      return false;
+    }
     auto* block = loop->body->dynCast<Block>();
-    if (!block) return false;
+    if (!block) {
+      return false;
+    }
     // does the last element break to the top of the loop?
     auto& list = block->list;
-    if (list.size() <= 1) return false;
+    if (list.size() <= 1) {
+      return false;
+    }
     auto* last = list.back()->dynCast<Break>();
-    if (!last || !ExpressionAnalyzer::isSimple(last) || last->name != loop->name) return false;
-    // last is a simple break to the top of the loop. if we can conditionalize it,
-    // it won't block things from flowing out and not needing breaks to do so.
+    if (!last || !ExpressionAnalyzer::isSimple(last) ||
+        last->name != loop->name) {
+      return false;
+    }
+    // last is a simple break to the top of the loop. if we can conditionalize
+    // it, it won't block things from flowing out and not needing breaks to do
+    // so.
     Index i = list.size() - 2;
     Builder builder(*getModule());
     while (1) {
       auto* curr = list[i];
       if (auto* iff = curr->dynCast<If>()) {
-        // let's try to move the code going to the top of the loop into the if-else
+        // let's try to move the code going to the top of the loop into the
+        // if-else
         if (!iff->ifFalse) {
-          // we need the ifTrue to break, so it cannot reach the code we want to move
+          // we need the ifTrue to break, so it cannot reach the code we want to
+          // move
           if (iff->ifTrue->type == unreachable) {
             iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
             iff->finalize();
@@ -367,20 +385,26 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             return true;
           }
         } else {
-          // this is already an if-else. if one side is a dead end, we can append to the other, if
-          // there is no returned value to concern us
-          assert(!isConcreteType(iff->type)); // can't be, since in the middle of a block
+          // this is already an if-else. if one side is a dead end, we can
+          // append to the other, if there is no returned value to concern us
 
-          // ensures the first node is a block, if it isn't already, and merges in the second,
-          // either as a single element or, if a block, by appending to the first block. this
-          // keeps the order of operations in place, that is, the appended element will be
-          // executed after the first node's elements
-          auto blockifyMerge = [&](Expression* any, Expression* append) -> Block* {
+          // can't be, since in the middle of a block
+          assert(!isConcreteType(iff->type));
+
+          // ensures the first node is a block, if it isn't already, and merges
+          // in the second, either as a single element or, if a block, by
+          // appending to the first block. this keeps the order of operations in
+          // place, that is, the appended element will be executed after the
+          // first node's elements
+          auto blockifyMerge = [&](Expression* any,
+                                   Expression* append) -> Block* {
             Block* block = nullptr;
-            if (any) block = any->dynCast<Block>();
-            // if the first isn't a block, or it's a block with a name (so we might
-            // branch to the end, and so can't append to it, we might skip that code!)
-            // then make a new block
+            if (any) {
+              block = any->dynCast<Block>();
+            }
+            // if the first isn't a block, or it's a block with a name (so we
+            // might branch to the end, and so can't append to it, we might skip
+            // that code!) then make a new block
             if (!block || block->name.is()) {
               block = builder.makeBlock(any);
             } else {
@@ -399,12 +423,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           };
 
           if (iff->ifTrue->type == unreachable) {
-            iff->ifFalse = blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            iff->ifFalse = blockifyMerge(
+              iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
             iff->finalize();
             block->finalize();
             return true;
           } else if (iff->ifFalse->type == unreachable) {
-            iff->ifTrue = blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            iff->ifTrue = blockifyMerge(
+              iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
             iff->finalize();
             block->finalize();
             return true;
@@ -415,7 +441,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // br_if is similar to if.
         if (brIf->condition && !brIf->value && brIf->name != loop->name) {
           if (i == list.size() - 2) {
-            // there is the br_if, and then the br to the top, so just flip them and the condition
+            // there is the br_if, and then the br to the top, so just flip them
+            // and the condition
             brIf->condition = builder.makeUnary(EqZInt32, brIf->condition);
             last->name = brIf->name;
             brIf->name = loop->name;
@@ -428,11 +455,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // we can convert the br_if to an if. this has a cost, though,
             // so only do it if it looks useful, which it definitely is if
             //  (a) $somewhere is straight out (so the br out vanishes), and
-            //  (b) this br_if is the only branch to that block (so the block will vanish)
-            if (brIf->name == block->name && BranchUtils::BranchSeeker::countNamed(block, block->name) == 1) {
-              // note that we could drop the last element here, it is a br we know for sure is removable,
-              // but telling stealSlice to steal all to the end is more efficient, it can just truncate.
-              list[i] = builder.makeIf(brIf->condition, builder.makeBreak(brIf->name), builder.stealSlice(block, i + 1, list.size()));
+            //  (b) this br_if is the only branch to that block (so the block
+            //      will vanish)
+            if (brIf->name == block->name &&
+                BranchUtils::BranchSeeker::countNamed(block, block->name) ==
+                  1) {
+              // note that we could drop the last element here, it is a br we
+              // know for sure is removable, but telling stealSlice to steal all
+              // to the end is more efficient, it can just truncate.
+              list[i] =
+                builder.makeIf(brIf->condition,
+                               builder.makeBreak(brIf->name),
+                               builder.stealSlice(block, i + 1, list.size()));
               return true;
             }
           }
@@ -443,7 +477,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       if (EffectAnalyzer(getPassOptions(), curr).branches) {
         return false;
       }
-      if (i == 0) return false;
+      if (i == 0) {
+        return false;
+      }
       i--;
     }
   }
@@ -453,11 +489,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       bool worked = false;
 
       void visitBlock(Block* curr) {
-        // If the block has a single child which is a loop, and the block is named,
-        // then it is the exit for the loop. It's better to move it into the loop,
-        // where it can be better optimized by other passes.
-        // Similar logic for ifs: if the block is an exit for the if, we can
-        // move the block in, consider for example:
+        // If the block has a single child which is a loop, and the block is
+        // named, then it is the exit for the loop. It's better to move it into
+        // the loop, where it can be better optimized by other passes. Similar
+        // logic for ifs: if the block is an exit for the if, we can move the
+        // block in, consider for example:
         //    (block $label
         //     (if (..condition1..)
         //      (block
@@ -484,27 +520,31 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             worked = true;
           } else if (auto* iff = curr->list[0]->dynCast<If>()) {
             // The label can't be used in the condition.
-            if (BranchUtils::BranchSeeker::countNamed(iff->condition, curr->name) == 0) {
-              // We can move the block into either arm, if there are no uses in the other.
+            if (BranchUtils::BranchSeeker::countNamed(iff->condition,
+                                                      curr->name) == 0) {
+              // We can move the block into either arm, if there are no uses in
+              // the other.
               Expression** target = nullptr;
-              if (!iff->ifFalse ||
-                  BranchUtils::BranchSeeker::countNamed(iff->ifFalse, curr->name) == 0) {
+              if (!iff->ifFalse || BranchUtils::BranchSeeker::countNamed(
+                                     iff->ifFalse, curr->name) == 0) {
                 target = &iff->ifTrue;
-              } else if (BranchUtils::BranchSeeker::countNamed(iff->ifTrue, curr->name) == 0) {
+              } else if (BranchUtils::BranchSeeker::countNamed(
+                           iff->ifTrue, curr->name) == 0) {
                 target = &iff->ifFalse;
               }
               if (target) {
                 curr->list[0] = *target;
                 *target = curr;
-                // The block used to contain the if, and may have changed type from unreachable
-                // to none, for example, if the if has an unreachable condition but the arm
-                // is not unreachable.
+                // The block used to contain the if, and may have changed type
+                // from unreachable to none, for example, if the if has an
+                // unreachable condition but the arm is not unreachable.
                 curr->finalize();
                 iff->finalize();
                 replaceCurrent(iff);
                 worked = true;
-                // Note that the type might change, e.g. if the if condition is unreachable
-                // but the block that was on the outside had a break.
+                // Note that the type might change, e.g. if the if condition is
+                // unreachable but the block that was on the outside had a
+                // break.
               }
             }
           }
@@ -526,10 +566,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       anotherCycle = false;
       super::doWalkFunction(func);
       assert(ifStack.empty());
-      // flows may contain returns, which are flowing out and so can be optimized
+      // flows may contain returns, which are flowing out and so can be
+      // optimized
       for (Index i = 0; i < flows.size(); i++) {
         auto* flow = (*flows[i])->dynCast<Return>();
-        if (!flow) continue;
+        if (!flow) {
+          continue;
+        }
         if (!flow->value) {
           // return => nop
           ExpressionManipulator::nop(flow);
@@ -541,7 +584,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
       }
       flows.clear();
-      // optimize loops (we don't do it while tracking flows, as they can interfere)
+      // optimize loops (we don't do it while tracking flows, as they can
+      // interfere)
       for (auto* loop : loops) {
         anotherCycle |= optimizeLoop(loop);
       }
@@ -557,7 +601,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     // thread trivial jumps
     struct JumpThreader : public ControlFlowWalker<JumpThreader> {
-      // map of all value-less breaks and switches going to a block (and not a loop)
+      // map of all value-less breaks and switches going to a block (and not a
+      // loop)
       std::map<Block*, std::vector<Expression*>> branchesToBlock;
 
       bool worked = false;
@@ -582,19 +627,25 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       void visitBlock(Block* curr) {
         auto& list = curr->list;
         if (list.size() == 1 && curr->name.is()) {
-          // if this block has just one child, a sub-block, then jumps to the former are jumps to us, really
+          // if this block has just one child, a sub-block, then jumps to the
+          // former are jumps to us, really
           if (auto* child = list[0]->dynCast<Block>()) {
-            // the two blocks must have the same type for us to update the branch, as otherwise
-            // one block may be unreachable and the other concrete, so one might lack a value
-            if (child->name.is() && child->name != curr->name && child->type == curr->type) {
+            // the two blocks must have the same type for us to update the
+            // branch, as otherwise one block may be unreachable and the other
+            // concrete, so one might lack a value
+            if (child->name.is() && child->name != curr->name &&
+                child->type == curr->type) {
               redirectBranches(child, curr->name);
             }
           }
         } else if (list.size() == 2) {
-          // if this block has two children, a child-block and a simple jump, then jumps to child-block can be replaced with jumps to the new target
+          // if this block has two children, a child-block and a simple jump,
+          // then jumps to child-block can be replaced with jumps to the new
+          // target
           auto* child = list[0]->dynCast<Block>();
           auto* jump = list[1]->dynCast<Break>();
-          if (child && child->name.is() && jump && ExpressionAnalyzer::isSimple(jump)) {
+          if (child && child->name.is() && jump &&
+              ExpressionAnalyzer::isSimple(jump)) {
             redirectBranches(child, jump->name);
           }
         }
@@ -607,7 +658,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             worked = true;
           }
         }
-        // if the jump is to another block then we can update the list, and maybe push it even more later
+        // if the jump is to another block then we can update the list, and
+        // maybe push it even more later
         if (auto* newTarget = findBreakTarget(to)->dynCast<Block>()) {
           for (auto* branch : branches) {
             branchesToBlock[newTarget].push_back(branch);
@@ -637,18 +689,28 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       FinalOptimizer(PassOptions& passOptions) : passOptions(passOptions) {}
 
       void visitBlock(Block* curr) {
-        // if a block has an if br else br, we can un-conditionalize the latter, allowing
-        // the if to become a br_if.
-        // * note that if not in a block already, then we need to create a block for this, so not useful otherwise
-        // * note that this only happens at the end of a block, as code after the if is dead
-        // * note that we do this at the end, because un-conditionalizing can interfere with optimizeLoop()ing.
+        // if a block has an if br else br, we can un-conditionalize the latter,
+        // allowing the if to become a br_if.
+        // * note that if not in a block already, then we need to create a block
+        //   for this, so not useful otherwise
+        // * note that this only happens at the end of a block, as code after
+        //   the if is dead
+        // * note that we do this at the end, because un-conditionalizing can
+        //   interfere with optimizeLoop()ing.
         auto& list = curr->list;
         for (Index i = 0; i < list.size(); i++) {
           auto* iff = list[i]->dynCast<If>();
-          if (!iff || !iff->ifFalse) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
+          if (!iff || !iff->ifFalse) {
+            // if it lacked an if-false, it would already be a br_if, as that's
+            // the easy case
+            continue;
+          }
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
-          if (ifTrueBreak && !ifTrueBreak->condition && canTurnIfIntoBrIf(iff->condition, ifTrueBreak->value, passOptions)) {
-            // we are an if-else where the ifTrue is a break without a condition, so we can do this
+          if (ifTrueBreak && !ifTrueBreak->condition &&
+              canTurnIfIntoBrIf(
+                iff->condition, ifTrueBreak->value, passOptions)) {
+            // we are an if-else where the ifTrue is a break without a
+            // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
             ifTrueBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifTrueBreak);
@@ -657,8 +719,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
           // otherwise, perhaps we can flip the if
           auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
-          if (ifFalseBreak && !ifFalseBreak->condition && canTurnIfIntoBrIf(iff->condition, ifFalseBreak->value, passOptions)) {
-            ifFalseBreak->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+          if (ifFalseBreak && !ifFalseBreak->condition &&
+              canTurnIfIntoBrIf(
+                iff->condition, ifFalseBreak->value, passOptions)) {
+            ifFalseBreak->condition =
+              Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ifFalseBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
@@ -669,22 +734,28 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // combine/optimize adjacent br_ifs + a br (maybe _if) right after it
           for (Index i = 0; i < list.size() - 1; i++) {
             auto* br1 = list[i]->dynCast<Break>();
-            // avoid unreachable brs, as they are dead code anyhow, and after merging
-            // them the outer scope could need type changes
-            if (!br1 || !br1->condition || br1->type == unreachable) continue;
+            // avoid unreachable brs, as they are dead code anyhow, and after
+            // merging them the outer scope could need type changes
+            if (!br1 || !br1->condition || br1->type == unreachable) {
+              continue;
+            }
             assert(!br1->value);
             auto* br2 = list[i + 1]->dynCast<Break>();
-            if (!br2 || br1->name != br2->name) continue;
+            if (!br2 || br1->name != br2->name) {
+              continue;
+            }
             assert(!br2->value); // same target as previous, which has no value
             // a br_if and then a br[_if] with the same target right after it
             if (br2->condition) {
               if (shrink && br2->type != unreachable) {
-                // Join adjacent br_ifs to the same target, making one br_if with
-                // a "selectified" condition that executes both.
-                if (!EffectAnalyzer(passOptions, br2->condition).hasSideEffects()) {
+                // Join adjacent br_ifs to the same target, making one br_if
+                // with a "selectified" condition that executes both.
+                if (!EffectAnalyzer(passOptions, br2->condition)
+                       .hasSideEffects()) {
                   // it's ok to execute them both, do it
                   Builder builder(*getModule());
-                  br1->condition = builder.makeBinary(OrInt32, br1->condition, br2->condition);
+                  br1->condition =
+                    builder.makeBinary(OrInt32, br1->condition, br2->condition);
                   ExpressionManipulator::nop(br2);
                 }
               }
@@ -706,12 +777,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (BranchUtils::getUniqueTargets(curr).size() == 1) {
           // This switch has just one target no matter what; replace with a br.
           Builder builder(*getModule());
-          replaceCurrent(
-            builder.makeSequence(
-              builder.makeDrop(curr->condition), // might have side effects
-              builder.makeBreak(curr->default_, curr->value)
-            )
-          );
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(curr->condition), // might have side effects
+            builder.makeBreak(curr->default_, curr->value)));
         }
       }
 
@@ -754,36 +822,32 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           } else {
             br = list[0]->dynCast<Break>();
           }
-          // Check if the br is conditional and goes to the block. It may or may not have
-          // a value, depending on if it was dropped or not.
-          // If the type is unreachable that means it is not actually reached,
-          // which we can ignore.
-          if (br && br->condition && br->name == curr->name && br->type != unreachable) {
+          // Check if the br is conditional and goes to the block. It may or may
+          // not have a value, depending on if it was dropped or not. If the
+          // type is unreachable that means it is not actually reached, which we
+          // can ignore.
+          if (br && br->condition && br->name == curr->name &&
+              br->type != unreachable) {
             if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
               // no other breaks to that name, so we can do this
               if (!drop) {
                 assert(!br->value);
                 Builder builder(*getModule());
                 replaceCurrent(builder.makeIf(
-                  builder.makeUnary(EqZInt32, br->condition),
-                  curr
-                ));
+                  builder.makeUnary(EqZInt32, br->condition), curr));
                 ExpressionManipulator::nop(br);
                 curr->finalize(curr->type);
               } else {
-                // If the items we move around have side effects, we can't do this.
+                // If the items we move around have side effects, we can't do
+                // this.
                 // TODO: we could use a select, in some cases..?
                 if (!EffectAnalyzer(passOptions, br->value).hasSideEffects() &&
-                    !EffectAnalyzer(passOptions, br->condition).hasSideEffects()) {
+                    !EffectAnalyzer(passOptions, br->condition)
+                       .hasSideEffects()) {
                   ExpressionManipulator::nop(list[0]);
                   Builder builder(*getModule());
                   replaceCurrent(
-                    builder.makeIf(
-                      br->condition,
-                      br->value,
-                      curr
-                    )
-                  );
+                    builder.makeIf(br->condition, br->value, curr));
                 }
               }
             }
@@ -800,20 +864,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Convert an if into a select, if possible and beneficial to do so.
       Select* selectify(If* iff) {
-        if (!iff->ifFalse ||
-            !isConcreteType(iff->ifTrue->type) ||
+        if (!iff->ifFalse || !isConcreteType(iff->ifTrue->type) ||
             !isConcreteType(iff->ifFalse->type)) {
           return nullptr;
         }
-        // This is always helpful for code size, but can be a tradeoff with performance
-        // as we run both code paths. So when shrinking we always try to do this, but
-        // otherwise must consider more carefully.
+        // This is always helpful for code size, but can be a tradeoff with
+        // performance as we run both code paths. So when shrinking we always
+        // try to do this, but otherwise must consider more carefully.
         if (!passOptions.shrinkLevel) {
           // Consider the cost of executing all the code unconditionally
           const auto MAX_COST = 7;
-          auto total = CostAnalyzer(iff->ifTrue).cost +
-                       CostAnalyzer(iff->ifFalse).cost;
-          if (total >= MAX_COST) return nullptr;
+          auto total =
+            CostAnalyzer(iff->ifTrue).cost + CostAnalyzer(iff->ifFalse).cost;
+          if (total >= MAX_COST) {
+            return nullptr;
+          }
         }
         // Check if side effects allow this.
         EffectAnalyzer condition(passOptions, iff->condition);
@@ -822,11 +887,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!ifTrue.hasSideEffects()) {
             EffectAnalyzer ifFalse(passOptions, iff->ifFalse);
             if (!ifFalse.hasSideEffects()) {
-              return Builder(*getModule()).makeSelect(
-                iff->condition,
-                iff->ifTrue,
-                iff->ifFalse
-              );
+              return Builder(*getModule())
+                .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
             }
           }
         }
@@ -842,8 +904,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       void optimizeSetIf(Expression** currp) {
-        if (optimizeSetIfWithBrArm(currp)) return;
-        if (optimizeSetIfWithCopyArm(currp)) return;
+        if (optimizeSetIfWithBrArm(currp)) {
+          return;
+        }
+        if (optimizeSetIfWithCopyArm(currp)) {
+          return;
+        }
       }
 
       // If one arm is a br, we prefer a br_if and the set later:
@@ -865,33 +931,33 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       bool optimizeSetIfWithBrArm(Expression** currp) {
         auto* set = (*currp)->cast<SetLocal>();
         auto* iff = set->value->dynCast<If>();
-        if (!iff ||
-            !isConcreteType(iff->type) ||
+        if (!iff || !isConcreteType(iff->type) ||
             !isConcreteType(iff->condition->type)) {
           return false;
         }
-        auto tryToOptimize = [&](Expression* one, Expression* two, bool flipCondition) {
-          if (one->type == unreachable && two->type != unreachable) {
-            if (auto* br = one->dynCast<Break>()) {
-              if (ExpressionAnalyzer::isSimple(br)) {
-                // Wonderful, do it!
-                Builder builder(*getModule());
-                if (flipCondition) {
-                  builder.flip(iff);
+        auto tryToOptimize =
+          [&](Expression* one, Expression* two, bool flipCondition) {
+            if (one->type == unreachable && two->type != unreachable) {
+              if (auto* br = one->dynCast<Break>()) {
+                if (ExpressionAnalyzer::isSimple(br)) {
+                  // Wonderful, do it!
+                  Builder builder(*getModule());
+                  if (flipCondition) {
+                    builder.flip(iff);
+                  }
+                  br->condition = iff->condition;
+                  br->finalize();
+                  set->value = two;
+                  auto* block = builder.makeSequence(br, set);
+                  *currp = block;
+                  // Recurse on the set, which now has a new value.
+                  optimizeSetIf(&block->list[1]);
+                  return true;
                 }
-                br->condition = iff->condition;
-                br->finalize();
-                set->value = two;
-                auto* block = builder.makeSequence(br, set);
-                *currp = block;
-                // Recurse on the set, which now has a new value.
-                optimizeSetIf(&block->list[1]);
-                return true;
               }
             }
-          }
-          return false;
-        };
+            return false;
+          };
         return tryToOptimize(iff->ifTrue, iff->ifFalse, false) ||
                tryToOptimize(iff->ifFalse, iff->ifTrue, true);
       }
@@ -940,8 +1006,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       bool optimizeSetIfWithCopyArm(Expression** currp) {
         auto* set = (*currp)->cast<SetLocal>();
         auto* iff = set->value->dynCast<If>();
-        if (!iff ||
-            !isConcreteType(iff->type) ||
+        if (!iff || !isConcreteType(iff->type) ||
             !isConcreteType(iff->condition->type)) {
           return false;
         }
@@ -955,7 +1020,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             get = nullptr;
           }
         }
-        if (!get) return false;
+        if (!get) {
+          return false;
+        }
         // We can do it!
         bool tee = set->isTee();
         assert(set->index == get->index);
@@ -969,9 +1036,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (tee) {
           set->setTee(false);
           // We need a block too.
-          replacement = builder.makeSequence(
-            iff,
-            get // reuse the get
+          replacement = builder.makeSequence(iff,
+                                             get // reuse the get
           );
         }
         *currp = replacement;
@@ -996,10 +1062,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       //  )
       // TODO: consider also looking at <= etc. and not just eq
       void tablify(Block* block) {
-        auto &list = block->list;
-        if (list.size() <= 1) return;
+        auto& list = block->list;
+        if (list.size() <= 1) {
+          return;
+        }
 
-        // Heuristics. These are slightly inspired by the constants from the asm.js backend.
+        // Heuristics. These are slightly inspired by the constants from the
+        // asm.js backend.
 
         // How many br_ifs we need to see to consider doing this
         const uint32_t MIN_NUM = 3;
@@ -1009,35 +1078,59 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // this is high, we allow larger ranges.
         const uint32_t NUM_TO_RANGE_FACTOR = 3;
 
-        // check if the input is a proper br_if on an i32.eq of a condition value to a const,
-        // and the const is in the proper range, [0-int32_max), to avoid overflow concerns.
-        // returns the br_if if so, or nullptr otherwise
-        auto getProperBrIf = [](Expression* curr) -> Break*{
+        // check if the input is a proper br_if on an i32.eq of a condition
+        // value to a const, and the const is in the proper range,
+        // [0-int32_max), to avoid overflow concerns. returns the br_if if so,
+        // or nullptr otherwise
+        auto getProperBrIf = [](Expression* curr) -> Break* {
           auto* br = curr->dynCast<Break>();
-          if (!br) return nullptr;
-          if (!br->condition || br->value) return nullptr;
-          if (br->type != none) return nullptr; // no value, so can be unreachable or none. ignore unreachable ones, dce will clean it up
+          if (!br) {
+            return nullptr;
+          }
+          if (!br->condition || br->value) {
+            return nullptr;
+          }
+          if (br->type != none) {
+            // no value, so can be unreachable or none. ignore unreachable ones,
+            // dce will clean it up
+            return nullptr;
+          }
           auto* binary = br->condition->dynCast<Binary>();
-          if (!binary) return nullptr;
-          if (binary->op != EqInt32) return nullptr;
+          if (!binary) {
+            return nullptr;
+          }
+          if (binary->op != EqInt32) {
+            return nullptr;
+          }
           auto* c = binary->right->dynCast<Const>();
-          if (!c) return nullptr;
+          if (!c) {
+            return nullptr;
+          }
           uint32_t value = c->value.geti32();
-          if (value >= uint32_t(std::numeric_limits<int32_t>::max())) return nullptr;
+          if (value >= uint32_t(std::numeric_limits<int32_t>::max())) {
+            return nullptr;
+          }
           return br;
         };
 
         // check if the input is a proper br_if
         // and returns the condition if so, or nullptr otherwise
-        auto getProperBrIfConditionValue = [&getProperBrIf](Expression* curr) -> Expression* {
+        auto getProperBrIfConditionValue =
+          [&getProperBrIf](Expression* curr) -> Expression* {
           auto* br = getProperBrIf(curr);
-          if (!br) return nullptr;
+          if (!br) {
+            return nullptr;
+          }
           return br->condition->cast<Binary>()->left;
         };
 
         // returns the constant value, as a uint32_t
-        auto getProperBrIfConstant = [&getProperBrIf](Expression* curr) -> uint32_t {
-          return getProperBrIf(curr)->condition->cast<Binary>()->right->cast<Const>()->value.geti32();
+        auto getProperBrIfConstant =
+          [&getProperBrIf](Expression* curr) -> uint32_t {
+          return getProperBrIf(curr)
+            ->condition->cast<Binary>()
+            ->right->cast<Const>()
+            ->value.geti32();
         };
         Index start = 0;
         while (start < list.size() - 1) {
@@ -1046,23 +1139,25 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             start++;
             continue;
           }
-          // if the condition has side effects, we can't replace many appearances of it
-          // with a single one
+          // if the condition has side effects, we can't replace many
+          // appearances of it with a single one
           if (EffectAnalyzer(passOptions, conditionValue).hasSideEffects()) {
             start++;
             continue;
           }
-          // look for a "run" of br_ifs with all the same conditionValue, and having
-          // unique constants (an overlapping constant could be handled, just the first
-          // branch is taken, but we can't remove the other br_if (it may be the only
-          // branch keeping a block reachable), which may make this bad for code size.
+          // look for a "run" of br_ifs with all the same conditionValue, and
+          // having unique constants (an overlapping constant could be handled,
+          // just the first branch is taken, but we can't remove the other br_if
+          // (it may be the only branch keeping a block reachable), which may
+          // make this bad for code size.
           Index end = start + 1;
           std::unordered_set<uint32_t> usedConstants;
           usedConstants.insert(getProperBrIfConstant(list[start]));
           while (end < list.size() &&
-                 ExpressionAnalyzer::equal(getProperBrIfConditionValue(list[end]),
-                                           conditionValue)) {
-            if (!usedConstants.insert(getProperBrIfConstant(list[end])).second) {
+                 ExpressionAnalyzer::equal(
+                   getProperBrIfConditionValue(list[end]), conditionValue)) {
+            if (!usedConstants.insert(getProperBrIfConstant(list[end]))
+                   .second) {
               // this constant already appeared
               break;
             }
@@ -1081,8 +1176,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
             uint32_t range = max - min;
             // decision time
-            if (range <= MAX_RANGE &&
-                range <= num * NUM_TO_RANGE_FACTOR) {
+            if (range <= MAX_RANGE && range <= num * NUM_TO_RANGE_FACTOR) {
               // great! let's do this
               std::unordered_set<Name> usedNames;
               for (Index i = start; i < end; i++) {
@@ -1093,7 +1187,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               Index i = 0;
               while (1) {
                 defaultName = "tablify|" + std::to_string(i++);
-                if (usedNames.count(defaultName) == 0) break;
+                if (usedNames.count(defaultName) == 0) {
+                  break;
+                }
               }
               std::vector<Name> table;
               for (Index i = start; i < end; i++) {
@@ -1103,26 +1199,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 while (table.size() <= index) {
                   table.push_back(defaultName);
                 }
-                assert(table[index] == defaultName); // we should have made sure there are no overlaps
+                // we should have made sure there are no overlaps
+                assert(table[index] == defaultName);
                 table[index] = name;
               }
               Builder builder(*getModule());
               // the table and condition are offset by the min
               if (min != 0) {
-                conditionValue = builder.makeBinary(
-                  SubInt32,
-                  conditionValue,
-                  builder.makeConst(Literal(int32_t(min)))
-                );
+                conditionValue =
+                  builder.makeBinary(SubInt32,
+                                     conditionValue,
+                                     builder.makeConst(Literal(int32_t(min))));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,
-                builder.makeSwitch(
-                  table,
-                  defaultName,
-                  conditionValue
-                )
-              );
+                builder.makeSwitch(table, defaultName, conditionValue));
               for (Index i = start; i < end - 1; i++) {
                 ExpressionManipulator::nop(list[i]);
               }
@@ -1145,8 +1236,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 };
 
-Pass *createRemoveUnusedBrsPass() {
-  return new RemoveUnusedBrs();
-}
+Pass* createRemoveUnusedBrsPass() { return new RemoveUnusedBrs(); }
 
 } // namespace wasm

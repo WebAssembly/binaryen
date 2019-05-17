@@ -35,16 +35,15 @@ function asmFunc(global, env, buffer) {
  
  function $3($0) {
   $0 = $0 | 0;
-  var wasm2js_i32$0 = 0;
-  return (wasm2js_i32$0 = $0, FUNCTION_TABLE[wasm2js_i32$0]() | 0) | 0;
+  return FUNCTION_TABLE[$0]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [null, t1, t2, t3];
  return {
-  call: $3
+  "call": $3
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const call = retasmFunc.call;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var call = retasmFunc.call;

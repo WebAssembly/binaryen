@@ -27,7 +27,7 @@
     }
 
     function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
-       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
+       return (actual_lo | 0) == (expected_lo | 0) && (actual_hi | 0) == (expected_hi | 0);
     }
   
 function asmFunc0(global, env, buffer) {
@@ -70,14 +70,14 @@ function asmFunc0(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  empty: $0, 
-  add: $1, 
-  div_s: $2
+  "empty": $0, 
+  "add": $1, 
+  "div_s": $2
  };
 }
 
-const memasmFunc0 = new ArrayBuffer(65536);
-const retasmFunc0 = asmFunc0({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc0);
+var memasmFunc0 = new ArrayBuffer(65536);
+var retasmFunc0 = asmFunc0({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc0);
 function check1() {
  retasmFunc0.empty();
  return 1 | 0;

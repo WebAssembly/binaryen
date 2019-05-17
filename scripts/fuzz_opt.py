@@ -28,7 +28,9 @@ from test.shared import options, NODEJS
 
 NANS = True
 
-FUZZ_OPTS = []  # '--all-features' etc
+FEATURE_OPTS = []  # '--all-features' etc
+
+FUZZ_OPTS = []
 
 V8_OPTS = [
   '--experimental-wasm-eh',
@@ -45,6 +47,8 @@ V8_OPTS = [
 INPUT_SIZE_LIMIT = 150 * 1024
 
 LOG_LIMIT = 125
+
+WASM2JS = False
 
 
 # utilities
@@ -138,19 +142,26 @@ def run_vm(cmd):
 
 
 def run_bynterp(wasm):
-  return fix_output(run_vm([in_bin('wasm-opt'), wasm, '--fuzz-exec-before'] + FUZZ_OPTS))
+  return fix_output(run_vm([in_bin('wasm-opt'), wasm, '--fuzz-exec-before'] + FEATURE_OPTS))
 
 
 def run_wasm2js(wasm):
-  wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FUZZ_OPTS)
-  main = run([in_bin('wasm2js'), wasm, '--emscripten'] + FUZZ_OPTS)
+  wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
+  cmd = [in_bin('wasm2js'), wasm, '--emscripten']
+  if random.random() < 0.5:
+    cmd += ['-O']
+  main = run(cmd + FEATURE_OPTS)
   with open(os.path.join(options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
     glue = f.read()
   with open('js.js', 'w') as f:
     f.write(glue)
     f.write(main)
     f.write(wrapper)
-  return fix_output(run_vm([NODEJS, 'js.js', 'a.wasm']))
+  out = fix_output(run_vm([NODEJS, 'js.js', 'a.wasm']))
+  if 'exception' in out:
+    # exception, so ignoring - wasm2js does not have normal wasm trapping, so opts can eliminate a trap
+    out = IGNORE
+  return out
 
 
 def run_vms(prefix):
@@ -158,7 +169,8 @@ def run_vms(prefix):
   results = []
   results.append(run_bynterp(wasm))
   results.append(fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', wasm])))
-  # results.append(run_wasm2js(wasm))
+  if WASM2JS:
+    results.append(run_wasm2js(wasm))
 
   # append to add results from VMs
   # results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
@@ -186,14 +198,14 @@ def test_one(infile, opts):
 
   # fuzz vms
   # gather VM outputs on input file
-  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'] + FUZZ_OPTS)
+  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
   before = run_vms('a.')
   print('----------------')
   # gather VM outputs on processed file
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
   wasm_size = os.stat('b.wasm').st_size
   bytes += wasm_size
   print('post js size:', os.stat('a.js').st_size, ' wasm size:', wasm_size)
@@ -205,10 +217,10 @@ def test_one(infile, opts):
     if NANS:
       break
   # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
-  run([in_bin('wasm-opt'), 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts + FUZZ_OPTS)
+  run([in_bin('wasm-opt'), 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts + FUZZ_OPTS + FEATURE_OPTS)
   # check for determinism
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS)
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm'] + opts + FUZZ_OPTS)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
   assert open('b.wasm').read() == open('c.wasm').read(), 'output must be deterministic'
 
   return bytes
@@ -285,6 +297,12 @@ def get_multiple_opt_choices():
 
 if not NANS:
   FUZZ_OPTS += ['--no-fuzz-nans']
+
+if WASM2JS:
+  # wasm2js does not handle nans precisely, and does not
+  # handle oob loads etc. with traps
+  FUZZ_OPTS += ['--no-fuzz-nans']
+  FUZZ_OPTS += ['--no-fuzz-oob']
 
 if __name__ == '__main__':
   print('checking infinite random inputs')

@@ -18,9 +18,9 @@
 // Print out the feature options corresponding to enabled features
 //
 
-#include "wasm.h"
-#include "wasm-features.h"
 #include "pass.h"
+#include "wasm-features.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -32,8 +32,6 @@ struct PrintFeatures : public Pass {
   }
 };
 
-Pass* createPrintFeaturesPass() {
-  return new PrintFeatures();
-}
+Pass* createPrintFeaturesPass() { return new PrintFeatures(); }
 
 } // namespace wasm

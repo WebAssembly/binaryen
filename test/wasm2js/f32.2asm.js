@@ -117,99 +117,22 @@ function asmFunc(global, env, buffer) {
  function $13(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
-  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & 2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
- }
- 
- function legalstub$0($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return +(+Math_fround($0(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
- }
- 
- function legalstub$1($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return +(+Math_fround($1(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
- }
- 
- function legalstub$2($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return +(+Math_fround($2(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
- }
- 
- function legalstub$3($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return +(+Math_fround($3(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
- }
- 
- function legalstub$4($0_1) {
-  $0_1 = +$0_1;
-  return +(+Math_fround($4(Math_fround(Math_fround($0_1)))));
- }
- 
- function legalstub$5($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return +(+Math_fround($5(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
- }
- 
- function legalstub$6($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return +(+Math_fround($6(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
- }
- 
- function legalstub$7($0_1) {
-  $0_1 = +$0_1;
-  return +(+Math_fround($7(Math_fround(Math_fround($0_1)))));
- }
- 
- function legalstub$8($0_1) {
-  $0_1 = +$0_1;
-  return +(+Math_fround($8(Math_fround(Math_fround($0_1)))));
- }
- 
- function legalstub$9($0_1) {
-  $0_1 = +$0_1;
-  return +(+Math_fround($9(Math_fround(Math_fround($0_1)))));
- }
- 
- function legalstub$10($0_1) {
-  $0_1 = +$0_1;
-  return +(+Math_fround($10(Math_fround(Math_fround($0_1)))));
- }
- 
- function legalstub$11($0_1) {
-  $0_1 = +$0_1;
-  return +(+Math_fround($11(Math_fround(Math_fround($0_1)))));
- }
- 
- function legalstub$12($0_1) {
-  $0_1 = +$0_1;
-  return +(+Math_fround($12(Math_fround(Math_fround($0_1)))));
- }
- 
- function legalstub$13($0_1, $1_1) {
-  $0_1 = +$0_1;
-  $1_1 = +$1_1;
-  return +(+Math_fround($13(Math_fround(Math_fround($0_1)), Math_fround(Math_fround($1_1)))));
+  return Math_fround((wasm2js_scratch_store_i32(0, (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(y), wasm2js_scratch_load_i32(0)) & -2147483648 | 0) | 0), wasm2js_scratch_load_f32()));
  }
  
  function __wasm_nearest_f32(var$0) {
   var$0 = Math_fround(var$0);
-  var var$1 = Math_fround(0), var$2 = Math_fround(0), wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
+  var var$1 = Math_fround(0), var$2 = Math_fround(0);
   var$1 = Math_fround(Math_floor(var$0));
   var$2 = Math_fround(var$0 - var$1);
-  if ((var$2 < Math_fround(.5) | 0) == (0 | 0)) {
-   {
+  if (!(var$2 < Math_fround(.5))) {
+   block : {
     var$0 = Math_fround(Math_ceil(var$0));
     if (var$2 > Math_fround(.5)) {
      return Math_fround(var$0)
     }
     var$2 = Math_fround(var$1 * Math_fround(.5));
-    var$1 = (wasm2js_f32$0 = var$1, wasm2js_f32$1 = var$0, wasm2js_i32$0 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1);
+    var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
    }
   }
   return Math_fround(var$1);
@@ -217,42 +140,41 @@ function asmFunc(global, env, buffer) {
  
  function __wasm_trunc_f32(var$0) {
   var$0 = Math_fround(var$0);
-  var wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
-  return Math_fround((wasm2js_f32$0 = Math_fround(Math_ceil(var$0)), wasm2js_f32$1 = Math_fround(Math_floor(var$0)), wasm2js_i32$0 = var$0 < Math_fround(0.0), wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1));
+  return Math_fround(var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0)));
  }
  
  var FUNCTION_TABLE = [];
  return {
-  add: legalstub$0, 
-  sub: legalstub$1, 
-  mul: legalstub$2, 
-  div: legalstub$3, 
-  sqrt: legalstub$4, 
-  min: legalstub$5, 
-  max: legalstub$6, 
-  ceil: legalstub$7, 
-  floor: legalstub$8, 
-  trunc: legalstub$9, 
-  nearest: legalstub$10, 
-  abs: legalstub$11, 
-  neg: legalstub$12, 
-  copysign: legalstub$13
+  "add": $0, 
+  "sub": $1, 
+  "mul": $2, 
+  "div": $3, 
+  "sqrt": $4, 
+  "min": $5, 
+  "max": $6, 
+  "ceil": $7, 
+  "floor": $8, 
+  "trunc": $9, 
+  "nearest": $10, 
+  "abs": $11, 
+  "neg": $12, 
+  "copysign": $13
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const add = retasmFunc.add;
-export const sub = retasmFunc.sub;
-export const mul = retasmFunc.mul;
-export const div = retasmFunc.div;
-export const sqrt = retasmFunc.sqrt;
-export const min = retasmFunc.min;
-export const max = retasmFunc.max;
-export const ceil = retasmFunc.ceil;
-export const floor = retasmFunc.floor;
-export const trunc = retasmFunc.trunc;
-export const nearest = retasmFunc.nearest;
-export const abs = retasmFunc.abs;
-export const neg = retasmFunc.neg;
-export const copysign = retasmFunc.copysign;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var add = retasmFunc.add;
+export var sub = retasmFunc.sub;
+export var mul = retasmFunc.mul;
+export var div = retasmFunc.div;
+export var sqrt = retasmFunc.sqrt;
+export var min = retasmFunc.min;
+export var max = retasmFunc.max;
+export var ceil = retasmFunc.ceil;
+export var floor = retasmFunc.floor;
+export var trunc = retasmFunc.trunc;
+export var nearest = retasmFunc.nearest;
+export var abs = retasmFunc.abs;
+export var neg = retasmFunc.neg;
+export var copysign = retasmFunc.copysign;

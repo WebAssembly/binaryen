@@ -88,16 +88,14 @@ function asmFunc(global, env, buffer) {
   $21 = +(i64toi32_i32$1 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0);
   i64toi32_i32$0 = $7$hi;
   i64toi32_i32$1 = $7_1;
-  i64toi32_i32$3 = $10 + (+Math_fround(-.30000001192092896) + ($2_1 + (+(40 >>> 0) + (+(4294967289 | 0) + (+Math_fround(5.5) + ($21 + (+(i64toi32_i32$1 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0) + 8.0)))))));
+  i64toi32_i32$3 = $10 + (+Math_fround(-.30000001192092896) + ($2_1 + (+(40 >>> 0) + (+(-7 | 0) + (+Math_fround(5.5) + ($21 + (+(i64toi32_i32$1 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0) + 8.0)))))));
   if (Math_abs(i64toi32_i32$3) >= 1.0) {
-   {
-    if (i64toi32_i32$3 > 0.0) {
-     $14 = ~~Math_min(Math_floor(i64toi32_i32$3 / 4294967296.0), 4294967296.0 - 1.0) >>> 0
-    } else {
-     $14 = ~~Math_ceil((i64toi32_i32$3 - +(~~i64toi32_i32$3 >>> 0 >>> 0)) / 4294967296.0) >>> 0
-    }
-    $15 = $14;
+   if (i64toi32_i32$3 > 0.0) {
+    $14 = ~~Math_min(Math_floor(i64toi32_i32$3 / 4294967296.0), 4294967296.0 - 1.0) >>> 0
+   } else {
+    $14 = ~~Math_ceil((i64toi32_i32$3 - +(~~i64toi32_i32$3 >>> 0 >>> 0)) / 4294967296.0) >>> 0
    }
+   $15 = $14;
   } else {
    $15 = 0
   }
@@ -120,15 +118,11 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   {
-    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-    $10 = 0;
-   }
+   i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   $10 = 0;
   } else {
-   {
-    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
-    $10 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-   }
+   i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+   $10 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
   }
   $6$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $3$hi;
@@ -139,15 +133,10 @@ function asmFunc(global, env, buffer) {
   $5(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0);
  }
  
- function legalstub$6($0_1) {
-  $0_1 = +$0_1;
-  $6(Math_fround(Math_fround($0_1)));
- }
- 
  function legalstub$8($0_1, $1_1, $2_1, $3_1, $4_1, $5_1) {
   $0_1 = $0_1 | 0;
   $1_1 = $1_1 | 0;
-  $2_1 = +$2_1;
+  $2_1 = Math_fround($2_1);
   $3_1 = +$3_1;
   $4_1 = $4_1 | 0;
   $5_1 = $5_1 | 0;
@@ -161,15 +150,11 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   {
-    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-    $14 = 0;
-   }
+   i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   $14 = 0;
   } else {
-   {
-    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
-    $14 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-   }
+   i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+   $14 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
   }
   $10$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $7$hi;
@@ -177,13 +162,13 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $10$hi;
   i64toi32_i32$3 = $14;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  $8(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0, Math_fround(Math_fround($2_1)), +$3_1, $4_1 | 0, $5_1 | 0);
+  $8(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0, Math_fround($2_1), +$3_1, $4_1 | 0, $5_1 | 0);
  }
  
  function legalstub$9($0_1, $1_1, $2_1, $3_1, $4_1, $5_1) {
   $0_1 = $0_1 | 0;
   $1_1 = $1_1 | 0;
-  $2_1 = +$2_1;
+  $2_1 = Math_fround($2_1);
   $3_1 = +$3_1;
   $4_1 = $4_1 | 0;
   $5_1 = $5_1 | 0;
@@ -197,15 +182,11 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   {
-    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-    $16 = 0;
-   }
+   i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
+   $16 = 0;
   } else {
-   {
-    i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
-    $16 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
-   }
+   i64toi32_i32$1 = ((1 << i64toi32_i32$4 | 0) - 1 | 0) & (i64toi32_i32$2 >>> (32 - i64toi32_i32$4 | 0) | 0) | 0 | (i64toi32_i32$0 << i64toi32_i32$4 | 0) | 0;
+   $16 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
   }
   $11$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $8$hi;
@@ -213,7 +194,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$2 = $11$hi;
   i64toi32_i32$3 = $16;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $9(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0, Math_fround(Math_fround($2_1)), +$3_1, $4_1 | 0, $5_1 | 0) | 0;
+  i64toi32_i32$2 = $9(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0, Math_fround($2_1), +$3_1, $4_1 | 0, $5_1 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $6_1 = i64toi32_i32$2;
   $6$hi = i64toi32_i32$0;
@@ -222,15 +203,11 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
-   {
-    i64toi32_i32$2 = 0;
-    $17 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
-   }
+   i64toi32_i32$2 = 0;
+   $17 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
   } else {
-   {
-    i64toi32_i32$2 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
-    $17 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$1 >>> i64toi32_i32$4 | 0) | 0;
-   }
+   i64toi32_i32$2 = i64toi32_i32$0 >>> i64toi32_i32$4 | 0;
+   $17 = (((1 << i64toi32_i32$4 | 0) - 1 | 0) & i64toi32_i32$0 | 0) << (32 - i64toi32_i32$4 | 0) | 0 | (i64toi32_i32$1 >>> i64toi32_i32$4 | 0) | 0;
   }
   setTempRet0($17 | 0);
   i64toi32_i32$2 = $6$hi;
@@ -239,28 +216,28 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  type_local_i32: $0, 
-  type_local_i64: $1, 
-  type_local_f32: $2, 
-  type_local_f64: $3, 
-  type_param_i32: $4, 
-  type_param_i64: legalstub$5, 
-  type_param_f32: legalstub$6, 
-  type_param_f64: $7, 
-  type_mixed: legalstub$8, 
-  write: legalstub$9
+  "type_local_i32": $0, 
+  "type_local_i64": $1, 
+  "type_local_f32": $2, 
+  "type_local_f64": $3, 
+  "type_param_i32": $4, 
+  "type_param_i64": legalstub$5, 
+  "type_param_f32": $6, 
+  "type_param_f64": $7, 
+  "type_mixed": legalstub$8, 
+  "write": legalstub$9
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
-export const type_local_i32 = retasmFunc.type_local_i32;
-export const type_local_i64 = retasmFunc.type_local_i64;
-export const type_local_f32 = retasmFunc.type_local_f32;
-export const type_local_f64 = retasmFunc.type_local_f64;
-export const type_param_i32 = retasmFunc.type_param_i32;
-export const type_param_i64 = retasmFunc.type_param_i64;
-export const type_param_f32 = retasmFunc.type_param_f32;
-export const type_param_f64 = retasmFunc.type_param_f64;
-export const type_mixed = retasmFunc.type_mixed;
-export const write = retasmFunc.write;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+export var type_local_i32 = retasmFunc.type_local_i32;
+export var type_local_i64 = retasmFunc.type_local_i64;
+export var type_local_f32 = retasmFunc.type_local_f32;
+export var type_local_f64 = retasmFunc.type_local_f64;
+export var type_param_i32 = retasmFunc.type_param_i32;
+export var type_param_i64 = retasmFunc.type_param_i64;
+export var type_param_f32 = retasmFunc.type_param_f32;
+export var type_param_f64 = retasmFunc.type_param_f64;
+export var type_mixed = retasmFunc.type_mixed;
+export var write = retasmFunc.write;

@@ -40,7 +40,7 @@ fi
 EMCC_ARGS="-std=c++11 --memory-init-file 0"
 EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
 EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
-EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=1"
+EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=0"
 EMCC_ARGS="$EMCC_ARGS -s WASM=0"
 EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
 EMCC_ARGS="$EMCC_ARGS -s BINARYEN_ASYNC_COMPILATION=0"
@@ -69,7 +69,7 @@ BINARYEN_SRC="$(dirname $0)/src"
 BINARYEN_SCRIPTS="$(dirname $0)/scripts"
 
 # output binaries relative to current working directory
-BINARYEN_BIN="$PWD/bin"
+OUT="$PWD/out"
 
 echo "generate embedded intrinsics module"
 
@@ -77,6 +77,7 @@ python $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast 
 
 echo "building shared bitcode"
 
+mkdir -p ${OUT}
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/asmjs/asm_v_wasm.cpp \
@@ -91,6 +92,8 @@ echo "building shared bitcode"
   $BINARYEN_SRC/ir/LocalGraph.cpp \
   $BINARYEN_SRC/ir/ReFinalize.cpp \
   $BINARYEN_SRC/passes/pass.cpp \
+  $BINARYEN_SRC/passes/AlignmentLowering.cpp \
+  $BINARYEN_SRC/passes/AvoidReinterprets.cpp \
   $BINARYEN_SRC/passes/CoalesceLocals.cpp \
   $BINARYEN_SRC/passes/DeadArgumentElimination.cpp \
   $BINARYEN_SRC/passes/CodeFolding.cpp \
@@ -139,6 +142,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/ReorderLocals.cpp \
   $BINARYEN_SRC/passes/ReReloop.cpp \
   $BINARYEN_SRC/passes/SafeHeap.cpp \
+  $BINARYEN_SRC/passes/SimplifyGlobals.cpp \
   $BINARYEN_SRC/passes/SimplifyLocals.cpp \
   $BINARYEN_SRC/passes/Souperify.cpp \
   $BINARYEN_SRC/passes/SpillPointers.cpp \
@@ -165,7 +169,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/wasm/wasm-validator.cpp \
   $BINARYEN_SRC/wasm/wasm.cpp \
   -I$BINARYEN_SRC \
-  -o shared.bc
+  -o ${OUT}/shared.bc
 
 echo "building binaryen.js"
 
@@ -178,6 +182,7 @@ export_function "_BinaryenTypeInt64"
 export_function "_BinaryenTypeFloat32"
 export_function "_BinaryenTypeFloat64"
 export_function "_BinaryenTypeVec128"
+export_function "_BinaryenTypeExceptRef"
 export_function "_BinaryenTypeUnreachable"
 export_function "_BinaryenTypeAuto"
 
@@ -801,6 +806,12 @@ export_function "_BinaryenFunctionOptimize"
 export_function "_BinaryenFunctionRunPasses"
 export_function "_BinaryenFunctionSetDebugLocation"
 
+# 'Global' operations
+export_function "_BinaryenGlobalGetName"
+export_function "_BinaryenGlobalGetType"
+export_function "_BinaryenGlobalIsMutable"
+export_function "_BinaryenGlobalGetInitExpr"
+
 # 'Import' operations
 export_function "_BinaryenGlobalImportGetModule"
 export_function "_BinaryenGlobalImportGetBase"
@@ -826,10 +837,10 @@ export_function "_BinaryenSetAPITracing"
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/binaryen-c.cpp \
-  shared.bc \
+  $OUT/shared.bc \
   -I$BINARYEN_SRC/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
-  -o $BINARYEN_BIN/binaryen${OUT_FILE_SUFFIX}.js \
+  -o $OUT/binaryen${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
   --post-js $BINARYEN_SRC/js/binaryen.js-post.js

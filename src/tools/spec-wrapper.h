@@ -25,18 +25,33 @@ static std::string generateSpecWrapper(Module& wasm) {
   std::string ret;
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
-    if (!func) continue; // something exported other than a function
-    ret += std::string("(invoke \"hangLimitInitializer\") (invoke \"") + exp->name.str + "\" ";
+    if (!func) {
+      continue; // something exported other than a function
+    }
+    ret += std::string("(invoke \"hangLimitInitializer\") (invoke \"") +
+           exp->name.str + "\" ";
     for (Type param : func->params) {
       // zeros in arguments TODO more?
       switch (param) {
-        case i32: ret += "(i32.const 0)"; break;
-        case i64: ret += "(i64.const 0)"; break;
-        case f32: ret += "(f32.const 0)"; break;
-        case f64: ret += "(f64.const 0)"; break;
-        case v128: ret += "(v128.const i32x4 0 0 0 0)"; break;
+        case i32:
+          ret += "(i32.const 0)";
+          break;
+        case i64:
+          ret += "(i64.const 0)";
+          break;
+        case f32:
+          ret += "(f32.const 0)";
+          break;
+        case f64:
+          ret += "(f64.const 0)";
+          break;
+        case v128:
+          ret += "(v128.const i32x4 0 0 0 0)";
+          break;
+        case except_ref: // there's no except_ref.const
         case none:
-        case unreachable: WASM_UNREACHABLE();
+        case unreachable:
+          WASM_UNREACHABLE();
       }
       ret += " ";
     }

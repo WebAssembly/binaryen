@@ -17,14 +17,20 @@
 #ifndef wasm_wasm_module_building_h
 #define wasm_wasm_module_building_h
 
-#include <wasm.h>
 #include <support/threads.h>
+#include <wasm.h>
 
 namespace wasm {
 
 #ifdef BINARYEN_THREAD_DEBUG
 static std::mutex debug;
-#define DEBUG_THREAD(x) { std::lock_guard<std::mutex> lock(debug); std::cerr << "[OptimizingIncrementalModuleBuilder Threading (thread: " << std::this_thread::get_id()  << ")] " << x; std::cerr << '\n'; }
+#define DEBUG_THREAD(x)                                                        \
+  {                                                                            \
+    std::lock_guard<std::mutex> lock(debug);                                   \
+    std::cerr << "[OptimizingIncrementalModuleBuilder Threading (thread: "     \
+              << std::this_thread::get_id() << ")] " << x;                     \
+    std::cerr << '\n';                                                         \
+  }
 #else
 #define DEBUG_THREAD(x)
 #endif
@@ -81,13 +87,14 @@ class OptimizingIncrementalModuleBuilder {
   Module* wasm;
   uint32_t numFunctions;
   PassOptions passOptions;
-  std::function<void (PassRunner&)> addPrePasses;
+  std::function<void(PassRunner&)> addPrePasses;
   Function* endMarker;
   std::atomic<Function*>* list;
   uint32_t nextFunction; // only used on main thread
   uint32_t numWorkers;
   std::vector<std::unique_ptr<std::thread>> threads;
-  std::atomic<uint32_t> liveWorkers, activeWorkers, availableFuncs, finishedFuncs;
+  std::atomic<uint32_t> liveWorkers, activeWorkers, availableFuncs,
+    finishedFuncs;
   std::mutex mutex;
   std::condition_variable condition;
   bool finishing;
@@ -95,16 +102,20 @@ class OptimizingIncrementalModuleBuilder {
   bool validateGlobally;
 
 public:
-  // numFunctions must be equal to the number of functions allocated, or higher. Knowing
-  // this bounds helps avoid locking.
-  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, PassOptions passOptions,
-      std::function<void (PassRunner&)> addPrePasses,
-      bool debug, bool validateGlobally)
-      : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions),
-        addPrePasses(addPrePasses),
-        endMarker(nullptr), list(nullptr), nextFunction(0),
-        numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
-        finishing(false), debug(debug), validateGlobally(validateGlobally) {
+  // numFunctions must be equal to the number of functions allocated, or higher.
+  // Knowing this bounds helps avoid locking.
+  OptimizingIncrementalModuleBuilder(
+    Module* wasm,
+    Index numFunctions,
+    PassOptions passOptions,
+    std::function<void(PassRunner&)> addPrePasses,
+    bool debug,
+    bool validateGlobally)
+    : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions),
+      addPrePasses(addPrePasses), endMarker(nullptr), list(nullptr),
+      nextFunction(0), numWorkers(0), liveWorkers(0), activeWorkers(0),
+      availableFuncs(0), finishedFuncs(0), finishing(false), debug(debug),
+      validateGlobally(validateGlobally) {
 
     if (!useWorkers()) {
       // if we shouldn't use threads, don't
@@ -112,7 +123,8 @@ public:
     }
 
     // Before parallelism, create all passes on the main thread here, to ensure
-    // prepareToRun() is called for each pass before we start to optimize functions.
+    // prepareToRun() is called for each pass before we start to optimize
+    // functions.
     {
       PassRunner passRunner(wasm, passOptions);
       addPrePasses(passRunner);
@@ -132,7 +144,9 @@ public:
     // worth it to use threads
     liveWorkers.store(0);
     activeWorkers.store(0);
-    for (uint32_t i = 0; i < numWorkers; i++) { // TODO: one less, and add it at the very end, to not compete with main thread?
+    // TODO: one less, and add it at the very end, to not compete with main
+    // thread?
+    for (uint32_t i = 0; i < numWorkers; i++) {
       createWorker();
     }
     waitUntilAllReady();
@@ -148,13 +162,16 @@ public:
   }
 
   bool useWorkers() {
-    return numFunctions > 0 && !debug && ThreadPool::getNumCores() > 1 && !PassRunner::getPassDebug();
+    return numFunctions > 0 && !debug && ThreadPool::getNumCores() > 1 &&
+           !PassRunner::getPassDebug();
   }
 
   // Add a function to the module, and to be optimized
   void addFunction(Function* func) {
     wasm->addFunction(func);
-    if (!useWorkers()) return; // we optimize at the end in that case
+    if (!useWorkers()) {
+      return; // we optimize at the end in that case
+    }
     queueFunction(func);
     // notify workers if needed
     auto notify = availableFuncs.load();
@@ -183,7 +200,8 @@ public:
       notifyAllWorkers();
       waitUntilAllFinished();
     }
-    // TODO: clear side thread allocators from module allocator, as these threads were transient
+    // TODO: clear side thread allocators from module allocator, as these
+    // threads were transient
   }
 
 private:
@@ -208,7 +226,8 @@ private:
     DEBUG_THREAD("wait until all workers are ready");
     std::unique_lock<std::mutex> lock(mutex);
     if (liveWorkers.load() < numWorkers) {
-      condition.wait(lock, [this]() { return liveWorkers.load() == numWorkers; });
+      condition.wait(lock,
+                     [this]() { return liveWorkers.load() == numWorkers; });
     }
   }
 
@@ -222,13 +241,16 @@ private:
       }
     }
     DEBUG_THREAD("joining");
-    for (auto& thread : threads) thread->join();
+    for (auto& thread : threads) {
+      thread->join();
+    }
     DEBUG_THREAD("joined");
   }
 
   void queueFunction(Function* func) {
     DEBUG_THREAD("queue function");
-    assert(nextFunction < numFunctions); // TODO: if we are given more than we expected, use a slower work queue?
+    // TODO: if we are given more than we expected, use a slower work queue?
+    assert(nextFunction < numFunctions);
     list[nextFunction++].store(func);
     availableFuncs++;
   }
@@ -264,7 +286,8 @@ private:
         self->activeWorkers--;
         {
           std::unique_lock<std::mutex> lock(self->mutex);
-          if (!self->finishing) { // while waiting for the lock, things may have ended
+          // while waiting for the lock, things may have ended
+          if (!self->finishing) {
             self->condition.wait(lock);
           }
         }

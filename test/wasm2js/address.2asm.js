@@ -25,20 +25,19 @@ function asmFunc(global, env, buffer) {
  var print = env.print;
  function $0(i) {
   i = i | 0;
-  var wasm2js_i32$0 = 0;
   print(HEAPU8[i >> 0] | 0 | 0);
   print(HEAPU8[(i + 1 | 0) >> 0] | 0 | 0);
   print(HEAPU8[(i + 2 | 0) >> 0] | 0 | 0);
   print(HEAPU8[(i + 25 | 0) >> 0] | 0 | 0);
   print(HEAPU16[i >> 1] | 0 | 0);
-  print((wasm2js_i32$0 = i, HEAPU8[wasm2js_i32$0 >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 1 | 0) >> 0] | 0 | 0) << 8) | 0);
-  print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 1 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 2 | 0) >> 0] | 0 | 0) << 8) | 0);
+  print(HEAPU8[i >> 0] | 0 | ((HEAPU8[(i + 1 | 0) >> 0] | 0) << 8 | 0) | 0 | 0);
+  print(HEAPU8[(i + 1 | 0) >> 0] | 0 | ((HEAPU8[(i + 2 | 0) >> 0] | 0) << 8 | 0) | 0 | 0);
   print(HEAPU16[(i + 2 | 0) >> 1] | 0 | 0);
-  print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 25 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 26 | 0) >> 0] | 0 | 0) << 8) | 0);
+  print(HEAPU8[(i + 25 | 0) >> 0] | 0 | ((HEAPU8[(i + 26 | 0) >> 0] | 0) << 8 | 0) | 0 | 0);
   print(HEAP32[i >> 2] | 0 | 0);
-  print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 1 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 2 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 3 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 4 | 0) >> 0] | 0 | 0) << 24) | 0);
-  print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 2 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 3 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 4 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 5 | 0) >> 0] | 0 | 0) << 24) | 0);
-  print((wasm2js_i32$0 = i, HEAPU8[(wasm2js_i32$0 + 25 | 0) >> 0] | 0 | 0 | (HEAPU8[(wasm2js_i32$0 + 26 | 0) >> 0] | 0 | 0) << 8 | (HEAPU8[(wasm2js_i32$0 + 27 | 0) >> 0] | 0 | 0) << 16 | (HEAPU8[(wasm2js_i32$0 + 28 | 0) >> 0] | 0 | 0) << 24) | 0);
+  print(HEAPU8[(i + 1 | 0) >> 0] | 0 | ((HEAPU8[(i + 2 | 0) >> 0] | 0) << 8 | 0) | 0 | ((HEAPU8[(i + 3 | 0) >> 0] | 0) << 16 | 0 | ((HEAPU8[(i + 4 | 0) >> 0] | 0) << 24 | 0) | 0) | 0 | 0);
+  print(HEAPU16[(i + 2 | 0) >> 1] | 0 | ((HEAPU16[(i + 4 | 0) >> 1] | 0) << 16 | 0) | 0 | 0);
+  print(HEAPU8[(i + 25 | 0) >> 0] | 0 | ((HEAPU8[(i + 26 | 0) >> 0] | 0) << 8 | 0) | 0 | ((HEAPU8[(i + 27 | 0) >> 0] | 0) << 16 | 0 | ((HEAPU8[(i + 28 | 0) >> 0] | 0) << 24 | 0) | 0) | 0 | 0);
  }
  
  function $1(i) {
@@ -52,20 +51,19 @@ function asmFunc(global, env, buffer) {
   var oldPages = __wasm_current_memory() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
-   {
-    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
-    var newHEAP8 = new global.Int8Array(newBuffer);
-    newHEAP8.set(HEAP8);
-    HEAP8 = newHEAP8;
-    HEAP16 = new global.Int16Array(newBuffer);
-    HEAP32 = new global.Int32Array(newBuffer);
-    HEAPU8 = new global.Uint8Array(newBuffer);
-    HEAPU16 = new global.Uint16Array(newBuffer);
-    HEAPU32 = new global.Uint32Array(newBuffer);
-    HEAPF32 = new global.Float32Array(newBuffer);
-    HEAPF64 = new global.Float64Array(newBuffer);
-    buffer = newBuffer;
-   }
+   var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
+   var newHEAP8 = new global.Int8Array(newBuffer);
+   newHEAP8.set(HEAP8);
+   HEAP8 = newHEAP8;
+   HEAP8 = new global.Int8Array(newBuffer);
+   HEAP16 = new global.Int16Array(newBuffer);
+   HEAP32 = new global.Int32Array(newBuffer);
+   HEAPU8 = new global.Uint8Array(newBuffer);
+   HEAPU16 = new global.Uint16Array(newBuffer);
+   HEAPU32 = new global.Uint32Array(newBuffer);
+   HEAPF32 = new global.Float32Array(newBuffer);
+   HEAPF64 = new global.Float64Array(newBuffer);
+   buffer = newBuffer;
   }
   return oldPages;
  }
@@ -75,29 +73,29 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  good: $0, 
-  bad: $1
+  "good": $0, 
+  "bad": $1
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const assignasmFunc = (
+var memasmFunc = new ArrayBuffer(65536);
+var assignasmFunc = (
     function(mem) {
-      const _mem = new Uint8Array(mem);
+      var _mem = new Uint8Array(mem);
       return function(offset, s) {
         if (typeof Buffer === 'undefined') {
-          const bytes = atob(s);
-          for (let i = 0; i < bytes.length; i++)
+          var bytes = atob(s);
+          for (var i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes.charCodeAt(i);
         } else {
-          const bytes = Buffer.from(s, 'base64');
-          for (let i = 0; i < bytes.length; i++)
+          var bytes = Buffer.from(s, 'base64');
+          for (var i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes[i];
         }
       }
     }
   )(memasmFunc);
 assignasmFunc(0, "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=");
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print},memasmFunc);
-export const good = retasmFunc.good;
-export const bad = retasmFunc.bad;
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print},memasmFunc);
+export var good = retasmFunc.good;
+export var bad = retasmFunc.bad;

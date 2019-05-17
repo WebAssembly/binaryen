@@ -1,0 +1,151 @@
+(module
+ (type $0 (func))
+ (memory $0 1)
+ (func $simple (; 0 ;) (type $0)
+  (drop
+   (f32.load
+    (i32.const 1024)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 1024)
+   )
+  )
+  (drop
+   (f64.load
+    (i32.const 1024)
+   )
+  )
+  (drop
+   (i64.load
+    (i32.const 1024)
+   )
+  )
+ )
+ (func $one (; 1 ;) (type $0)
+  (local $x i32)
+  (local $1 i32)
+  (local $2 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $1
+     (i32.const 1024)
+    )
+    (local.set $2
+     (f32.load
+      (local.get $1)
+     )
+    )
+    (i32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $one-b (; 2 ;) (type $0)
+  (local $x f32)
+  (local $1 i32)
+  (local $2 i32)
+  (local.set $x
+   (block (result f32)
+    (local.set $1
+     (i32.const 1024)
+    )
+    (local.set $2
+     (i32.load
+      (local.get $1)
+     )
+    )
+    (f32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $both (; 3 ;) (type $0)
+  (local $x i32)
+  (local $1 i32)
+  (local $2 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $1
+     (i32.const 1024)
+    )
+    (local.set $2
+     (f32.load
+      (local.get $1)
+     )
+    )
+    (i32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $2)
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $half (; 4 ;) (type $0)
+  (local $x i32)
+  (local $1 i32)
+  (local $2 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $1
+     (i32.const 1024)
+    )
+    (local.set $2
+     (f32.load
+      (local.get $1)
+     )
+    )
+    (i32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $copy (; 5 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (local $2 i32)
+  (local $3 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $2
+     (i32.const 1024)
+    )
+    (local.set $3
+     (f32.load
+      (local.get $2)
+     )
+    )
+    (i32.load
+     (local.get $2)
+    )
+   )
+  )
+  (local.set $y
+   (local.get $x)
+  )
+  (drop
+   (local.get $3)
+  )
+ )
+)

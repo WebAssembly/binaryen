@@ -51,10 +51,10 @@ void ReFinalize::visitBlock(Block* curr) {
   // if concrete, it doesn't matter if we have an unreachable child, and we
   // don't need to look at breaks
   if (isConcreteType(curr->type)) {
-    // make sure our branches make sense for us - we may have just made ourselves
-    // concrete for a value flowing out, while branches did not send a value. such
-    // branches could not have been actually taken before, that is, there were in
-    // unreachable code, but we do still need to fix them up here.
+    // make sure our branches make sense for us - we may have just made
+    // ourselves concrete for a value flowing out, while branches did not send a
+    // value. such branches could not have been actually taken before, that is,
+    // there were in unreachable code, but we do still need to fix them up here.
     if (!isConcreteType(old)) {
       auto iter = breakValues.find(curr->name);
       if (iter != breakValues.end()) {
@@ -91,7 +91,9 @@ void ReFinalize::visitBlock(Block* curr) {
       return;
     }
   }
-  if (curr->type == unreachable) return;
+  if (curr->type == unreachable) {
+    return;
+  }
   // type is none, but we might be unreachable
   if (curr->type == none) {
     for (auto* child : curr->list) {

@@ -20,37 +20,40 @@
 #include <algorithm>
 #include <vector>
 
+#include "ir/module-utils.h"
 #include "literal.h"
 #include "wasm.h"
-#include "ir/module-utils.h"
 
 namespace wasm {
 
 namespace GlobalUtils {
-  // find a global initialized to the value of an import, or null if no such global
-  inline Global* getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
-    // find the import
-    Name imported;
-    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (import->module == module && import->base == base) {
-        imported = import->name;
-      }
-    });
-    if (imported.isNull()) return nullptr;
-    // find a global inited to it
-    Global* ret = nullptr;
-    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* defined) {
-      if (auto* init = defined->init->dynCast<GetGlobal>()) {
-        if (init->name == imported) {
-          ret = defined;
-        }
-      }
-    });
-    return ret;
+// find a global initialized to the value of an import, or null if no such
+// global
+inline Global*
+getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
+  // find the import
+  Name imported;
+  ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
+    if (import->module == module && import->base == base) {
+      imported = import->name;
+    }
+  });
+  if (imported.isNull()) {
+    return nullptr;
   }
+  // find a global inited to it
+  Global* ret = nullptr;
+  ModuleUtils::iterDefinedGlobals(wasm, [&](Global* defined) {
+    if (auto* init = defined->init->dynCast<GetGlobal>()) {
+      if (init->name == imported) {
+        ret = defined;
+      }
+    }
+  });
+  return ret;
 }
+} // namespace GlobalUtils
 
 } // namespace wasm
 
 #endif // wasm_ir_global_h
-

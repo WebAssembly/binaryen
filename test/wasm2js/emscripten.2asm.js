@@ -1,8 +1,9 @@
-function instantiate(asmLibraryArg, wasmMemory, FUNCTION_TABLE) {
+function instantiate(asmLibraryArg, wasmMemory, wasmTable) {
 
 function asmFunc(global, env, buffer) {
  "almost asm";
  var memory = env.memory;
+ var FUNCTION_TABLE = wasmTable;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -27,10 +28,12 @@ function asmFunc(global, env, buffer) {
  var syscall$54 = env.__syscall54;
  // EMSCRIPTEN_START_FUNCS;
  function main() {
-  var wasm2js_i32$0 = 0;
   syscall$6(1 | 0, 2 | 0) | 0;
   syscall$54(3 | 0, 4 | 0) | 0;
-  wasm2js_i32$0 = HEAP32[(0 + 1030 | 0) >> 2] | 0, FUNCTION_TABLE[wasm2js_i32$0]();
+  FUNCTION_TABLE[HEAP32[(0 + 1030 | 0) >> 2] | 0]();
+  internal(1 | 0) | 0;
+  tabled(1 | 0) | 0;
+  exported(1 | 0) | 0;
  }
  
  function other() {
@@ -42,35 +45,171 @@ function asmFunc(global, env, buffer) {
  }
  
  function bar() {
-  
+  HEAPU8[128 >> 0] | 0;
+  HEAP8[128 >> 0] | 0;
+  HEAPU16[128 >> 1] | 0;
+  HEAP16[128 >> 1] | 0;
+  HEAP32[16 >> 2] = 1 + 2 | 0;
+  HEAPF32[16 >> 2] = Math_fround(Math_fround(3.0) + Math_fround(4.0));
+  HEAPF64[16 >> 3] = 5.0 + 6.0;
+  HEAP8[16 >> 0] = 7 + 8 | 0;
+  HEAP16[16 >> 1] = 9 + 10 | 0;
+  if ((HEAP32[100 >> 2] | 0 | 0) == (1 | 0)) {
+   bar()
+  }
+  if ((HEAP32[104 >> 2] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAP32[108 >> 2] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((HEAP16[112 >> 1] | 0 | 0) == (1 | 0)) {
+   bar()
+  }
+  if ((HEAP16[116 >> 1] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAPU16[120 >> 1] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAP16[124 >> 1] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((HEAPU16[128 >> 1] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((HEAP8[132 >> 0] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAPU8[136 >> 0] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAP8[140 >> 0] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((HEAPU8[144 >> 0] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((bools(314159 | 0) | 0) >>> 7 | 0) {
+   bar()
+  }
+  if ((bools(314159 | 0) | 0) >> 8 | 0) {
+   bar()
+  }
+  if (~~Math_fround(getf32()) >>> 0) {
+   bar()
+  }
+  if (~~Math_fround(getf32())) {
+   bar()
+  }
+  if (~~+getf64() >>> 0) {
+   bar()
+  }
+  if (~~+getf64()) {
+   bar()
+  }
+  if (((geti32() | 0) + (geti32() | 0) | 0) + (geti32() | 0) | 0) {
+   bar()
+  }
+  if ((geti32() | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) {
+   bar()
+  }
+  if (((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) {
+   bar()
+  }
+  if ((((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) + (((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) | 0) {
+   bar()
+  }
+ }
+ 
+ function geti32() {
+  return geti32() | 0 | 0;
+ }
+ 
+ function getf32() {
+  return Math_fround(Math_fround(getf32()));
+ }
+ 
+ function getf64() {
+  return +(+getf64());
  }
  
  function __growWasmMemory($0) {
   $0 = $0 | 0;
-  return __wasm_grow_memory($0 | 0) | 0;
+  return abort() | 0;
+ }
+ 
+ function internal(x) {
+  x = x | 0;
+  return x | 0;
+ }
+ 
+ function tabled(x) {
+  x = x | 0;
+  return x | 0;
+ }
+ 
+ function exported(x) {
+  x = x | 0;
+  return x | 0;
+ }
+ 
+ function sub_zero(x) {
+  x = x | 0;
+  return x - -5 | 0 | 0;
+ }
+ 
+ function select(x) {
+  x = x | 0;
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
+  return (wasm2js_i32$0 = x, wasm2js_i32$1 = HEAP32[16 >> 2] | 0, wasm2js_i32$2 = x, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0;
+ }
+ 
+ function bools(x) {
+  x = x | 0;
+  bools((HEAPU8[0 >> 0] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAP8[0 >> 0] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAPU16[0 >> 1] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAP16[0 >> 1] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAP32[0 >> 2] | 0) & 1 | 0 | 0) | 0;
+  bools((HEAPU8[0 >> 0] | 0) & 2 | 0 | 0) | 0;
+  bools(x ^ 1 | 0 | 0) | 0;
+  if (x ^ 1 | 0) {
+   bools(2 | 0) | 0
+  }
+  if (x ^ 2 | 0) {
+   bools(2 | 0) | 0
+  }
+  bools(!(x ^ 1 | 0) | 0) | 0;
+  abort();
  }
  
  // EMSCRIPTEN_END_FUNCS;
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
+ FUNCTION_TABLE[3] = tabled;
  return {
-  main: main, 
-  other: other, 
-  __growWasmMemory: __growWasmMemory
+  "main": main, 
+  "other": other, 
+  "__growWasmMemory": __growWasmMemory, 
+  "exported": exported, 
+  "sub_zero": sub_zero, 
+  "select": select, 
+  "bools": bools
  };
 }
 
-const writeSegment = (
+var writeSegment = (
     function(mem) {
-      const _mem = new Uint8Array(mem);
+      var _mem = new Uint8Array(mem);
       return function(offset, s) {
         if (typeof Buffer === 'undefined') {
-          const bytes = atob(s);
-          for (let i = 0; i < bytes.length; i++)
+          var bytes = atob(s);
+          for (var i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes.charCodeAt(i);
         } else {
-          const bytes = Buffer.from(s, 'base64');
-          for (let i = 0; i < bytes.length; i++)
+          var bytes = Buffer.from(s, 'base64');
+          for (var i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes[i];
         }
       }

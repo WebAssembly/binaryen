@@ -37,14 +37,14 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "ir/module-utils.h"
+#include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -73,14 +73,13 @@ struct DAEBlockInfo {
   // If it is both read and written, we just care about the first
   // action (if it is read first, that's all the info we are
   // looking for; if it is written first, it can't be read later).
-  enum LocalUse {
-    Read,
-    Written
-  };
+  enum LocalUse { Read, Written };
   std::unordered_map<Index, LocalUse> localUses;
 };
 
-struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>> {
+struct DAEScanner
+  : public WalkerPass<
+      CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DAEScanner(infoMap); }
@@ -131,7 +130,8 @@ struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>,
   void doWalkFunction(Function* func) {
     numParams = func->getNumParams();
     info = &((*infoMap)[func->name]);
-    CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(func);
+    CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(
+      func);
     // If there are relevant params, check if they are used. (If
     // we can't optimize the function anyhow, there's no point.)
     if (numParams > 0 && !info->hasUnseenCalls) {
@@ -182,7 +182,8 @@ struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>,
           if (use == DAEBlockInfo::Read) {
             usedParams.insert(i);
           }
-          // Whether it was a read or a write, we can stop looking at that local here.
+          // Whether it was a read or a write, we can stop looking at that local
+          // here.
         } else {
           remainingIndexes.insert(i);
         }
@@ -217,10 +218,10 @@ struct DAE : public Pass {
 
   bool iteration(PassRunner* runner, Module* module) {
     DAEFunctionInfoMap infoMap;
-    // Ensure they all exist so the parallel threads don't modify the data structure.
-    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      infoMap[func->name];
-    });
+    // Ensure they all exist so the parallel threads don't modify the data
+    // structure.
+    ModuleUtils::iterDefinedFunctions(
+      *module, [&](Function* func) { infoMap[func->name]; });
     // Check the influence of the table and exports.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
@@ -287,13 +288,11 @@ struct DAE : public Pass {
           }
         }
         if (value.type != none) {
-          // Success! We can just apply the constant in the function, which makes
-          // the parameter value unused, which lets us remove it later.
+          // Success! We can just apply the constant in the function, which
+          // makes the parameter value unused, which lets us remove it later.
           Builder builder(*module);
           func->body = builder.makeSequence(
-            builder.makeSetLocal(i, builder.makeConst(value)),
-            func->body
-          );
+            builder.makeSetLocal(i, builder.makeConst(value)), func->body);
           // Mark it as unused, which we know it now is (no point to
           // re-scan just for that).
           infoMap[name].unusedParams.insert(i);
@@ -308,14 +307,16 @@ struct DAE : public Pass {
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
-      if (numParams == 0) continue;
+      if (numParams == 0) {
+        continue;
+      }
       // Iterate downwards, as we may remove more than one.
       Index i = numParams - 1;
       while (1) {
         if (infoMap[name].unusedParams.has(i)) {
-          // Great, it's not used. Check if none of the calls has a param with side
-          // effects, as that would prevent us removing them (flattening should
-          // have been done earlier).
+          // Great, it's not used. Check if none of the calls has a param with
+          // side effects, as that would prevent us removing them (flattening
+          // should have been done earlier).
           bool canRemove = true;
           for (auto* call : calls) {
             auto* operand = call->operands[i];
@@ -331,13 +332,16 @@ struct DAE : public Pass {
             changed.insert(func);
           }
         }
-        if (i == 0) break;
+        if (i == 0) {
+          break;
+        }
         i--;
       }
     }
-    // We can also tell which calls have all their return values dropped. Note that we can't do this
-    // if we changed anything so far, as we may have modified allCalls (we can't modify a call site
-    // twice in one iteration, once to remove a param, once to drop the return value).
+    // We can also tell which calls have all their return values dropped. Note
+    // that we can't do this if we changed anything so far, as we may have
+    // modified allCalls (we can't modify a call site twice in one iteration,
+    // once to remove a param, once to drop the return value).
     if (changed.empty()) {
       for (auto& func : module->functions) {
         if (func->result == none) {
@@ -363,7 +367,8 @@ struct DAE : public Pass {
           continue;
         }
         removeReturnValue(func.get(), calls, module);
-        // TODO Removing a drop may also open optimization opportunities in the callers.
+        // TODO Removing a drop may also open optimization opportunities in the
+        // callers.
         changed.insert(func.get());
       }
     }
@@ -391,15 +396,12 @@ private:
     struct LocalUpdater : public PostWalker<LocalUpdater> {
       Index removedIndex;
       Index newIndex;
-      LocalUpdater(Function* func, Index removedIndex, Index newIndex) : removedIndex(removedIndex), newIndex(newIndex) {
+      LocalUpdater(Function* func, Index removedIndex, Index newIndex)
+        : removedIndex(removedIndex), newIndex(newIndex) {
         walk(func->body);
       }
-      void visitGetLocal(GetLocal* curr) {
-        updateIndex(curr->index);
-      }
-      void visitSetLocal(SetLocal* curr) {
-        updateIndex(curr->index);
-      }
+      void visitGetLocal(GetLocal* curr) { updateIndex(curr->index); }
+      void visitSetLocal(SetLocal* curr) { updateIndex(curr->index); }
       void updateIndex(Index& index) {
         if (index == removedIndex) {
           index = newIndex;
@@ -414,7 +416,8 @@ private:
     }
   }
 
-  void removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
+  void
+  removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
     // Clear the type, which is no longer accurate.
     func->type = Name();
     func->result = none;
@@ -430,10 +433,7 @@ private:
         assert(value);
         curr->value = nullptr;
         Builder builder(*module);
-        replaceCurrent(builder.makeSequence(
-          builder.makeDrop(value),
-          curr
-        ));
+        replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
       }
     } returnUpdater(func, module);
     // Remove any value flowing out.
@@ -454,15 +454,12 @@ private:
   }
 };
 
-Pass *createDAEPass() {
-  return new DAE();
-}
+Pass* createDAEPass() { return new DAE(); }
 
-Pass *createDAEOptimizingPass() {
+Pass* createDAEOptimizingPass() {
   auto* ret = new DAE();
   ret->optimize = true;
   return ret;
 }
 
 } // namespace wasm
-

@@ -17,6 +17,11 @@ Current Trunk
 
 - Add feature handling to the C/JS API with no feature enabled by default.
 
+v84
+---
+
+- Generate dynCall thunks for any signatures used in "invoke" calls.
+
 v81
 ---
 

@@ -44,19 +44,19 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  one: $3, 
-  two: $4, 
-  three: $5, 
-  four: $6
+  "one": $3, 
+  "two": $4, 
+  "three": $5, 
+  "four": $6
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print},memasmFunc);
-export const one = retasmFunc.one;
-export const two = retasmFunc.two;
-export const three = retasmFunc.three;
-export const four = retasmFunc.four;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print},memasmFunc);
+export var one = retasmFunc.one;
+export var two = retasmFunc.two;
+export var three = retasmFunc.three;
+export var four = retasmFunc.four;
 
 function asmFunc(global, env, buffer) {
  "almost asm";
@@ -102,27 +102,25 @@ function asmFunc(global, env, buffer) {
  
  function $5(i) {
   i = i | 0;
-  var wasm2js_i32$0 = 0;
-  return (wasm2js_i32$0 = i, FUNCTION_TABLE[wasm2js_i32$0]() | 0) | 0;
+  return FUNCTION_TABLE[i]() | 0 | 0;
  }
  
  function $6(i) {
   i = i | 0;
-  var wasm2js_i32$0 = 0;
-  return (wasm2js_i32$0 = i, FUNCTION_TABLE[wasm2js_i32$0]() | 0) | 0;
+  return FUNCTION_TABLE[i]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [t1, t2, t3, u1, u2, t1, t3];
  return {
-  callt: $5, 
-  callu: $6
+  "callt": $5, 
+  "callu": $6
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const callt = retasmFunc.callt;
-export const callu = retasmFunc.callu;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var callt = retasmFunc.callt;
+export var callu = retasmFunc.callu;
 
 function asmFunc(global, env, buffer) {
  "almost asm";
@@ -156,16 +154,15 @@ function asmFunc(global, env, buffer) {
  
  function $2(i) {
   i = i | 0;
-  var wasm2js_i32$0 = 0;
-  return (wasm2js_i32$0 = i, FUNCTION_TABLE[wasm2js_i32$0]() | 0) | 0;
+  return FUNCTION_TABLE[i]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [t1, t2];
  return {
-  callt: $2
+  "callt": $2
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const callt = retasmFunc.callt;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var callt = retasmFunc.callt;

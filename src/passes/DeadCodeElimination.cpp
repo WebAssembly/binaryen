@@ -28,17 +28,18 @@
 // have no side effects.
 //
 
-#include <vector>
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
 #include <ir/block-utils.h>
 #include <ir/branch-utils.h>
 #include <ir/type-updating.h>
+#include <pass.h>
+#include <vector>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
-struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> {
+struct DeadCodeElimination
+  : public WalkerPass<PostWalker<DeadCodeElimination>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DeadCodeElimination; }
@@ -48,7 +49,9 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
-    if (old == expression) return expression;
+    if (old == expression) {
+      return expression;
+    }
     super::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
@@ -79,20 +82,17 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   // if a child exists and is unreachable, we can replace ourselves with it
-  bool isDead(Expression* child) {
-    return child && child->type == unreachable;
-  }
+  bool isDead(Expression* child) { return child && child->type == unreachable; }
 
   // a similar check, assumes the child exists
-  bool isUnreachable(Expression* child) {
-    return child->type == unreachable;
-  }
+  bool isUnreachable(Expression* child) { return child->type == unreachable; }
 
   // things that stop control flow
 
   void visitBreak(Break* curr) {
     if (isDead(curr->value)) {
-      // the condition is evaluated last, so if the value was unreachable, the whole thing is
+      // the condition is evaluated last, so if the value was unreachable, the
+      // whole thing is
       replaceCurrent(curr->value);
       return;
     }
@@ -152,9 +152,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     reachable = false;
   }
 
-  void visitUnreachable(Unreachable* curr) {
-    reachable = false;
-  }
+  void visitUnreachable(Unreachable* curr) { reachable = false; }
 
   void visitBlock(Block* curr) {
     auto& list = curr->list;
@@ -175,9 +173,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       reachableBreaks.erase(curr->name);
     }
     if (list.size() == 1 && isUnreachable(list[0])) {
-      replaceCurrent(BlockUtils::simplifyToContentsWithPossibleTypeChange(curr, this));
+      replaceCurrent(
+        BlockUtils::simplifyToContentsWithPossibleTypeChange(curr, this));
     } else {
-      // the block may have had a type, but can now be unreachable, which allows more reduction outside
+      // the block may have had a type, but can now be unreachable, which allows
+      // more reduction outside
       typeUpdater.maybeUpdateTypeToUnreachable(curr);
     }
   }
@@ -186,7 +186,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (curr->name.is()) {
       reachableBreaks.erase(curr->name);
     }
-    if (isUnreachable(curr->body) && !BranchUtils::BranchSeeker::hasNamed(curr->body, curr->name)) {
+    if (isUnreachable(curr->body) &&
+        !BranchUtils::BranchSeeker::hasNamed(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }
@@ -194,9 +195,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   // ifs need special handling
 
-  std::vector<bool> ifStack; // stack of reachable state, for forking and joining
+  // stack of reachable state, for forking and joining
+  std::vector<bool> ifStack;
 
-  static void doAfterIfCondition(DeadCodeElimination* self, Expression** currp) {
+  static void doAfterIfCondition(DeadCodeElimination* self,
+                                 Expression** currp) {
     self->ifStack.push_back(self->reachable);
   }
 
@@ -209,67 +212,108 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitIf(If* curr) {
-    // the ifStack has the branch that joins us, either from before if just an if, or the ifTrue if an if-else
+    // the ifStack has the branch that joins us, either from before if just an
+    // if, or the ifTrue if an if-else
     reachable = reachable || ifStack.back();
     ifStack.pop_back();
     if (isUnreachable(curr->condition)) {
       replaceCurrent(curr->condition);
     }
-    // the if may have had a type, but can now be unreachable, which allows more reduction outside
+    // the if may have had a type, but can now be unreachable, which allows more
+    // reduction outside
     typeUpdater.maybeUpdateTypeToUnreachable(curr);
   }
 
   static void scan(DeadCodeElimination* self, Expression** currp) {
     auto* curr = *currp;
     if (!self->reachable) {
-      // convert to an unreachable safely
-      #define DELEGATE(CLASS_TO_VISIT) { \
-        auto* parent = self->typeUpdater.parents[curr]; \
-        self->typeUpdater.noteRecursiveRemoval(curr); \
-        ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(curr)); \
-        self->typeUpdater.noteAddition(curr, parent); \
-        break; \
-      }
+// convert to an unreachable safely
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  {                                                                            \
+    auto* parent = self->typeUpdater.parents[curr];                            \
+    self->typeUpdater.noteRecursiveRemoval(curr);                              \
+    ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(               \
+      static_cast<CLASS_TO_VISIT*>(curr));                                     \
+    self->typeUpdater.noteAddition(curr, parent);                              \
+    break;                                                                     \
+  }
       switch (curr->_id) {
-        case Expression::Id::BlockId: DELEGATE(Block);
-        case Expression::Id::IfId: DELEGATE(If);
-        case Expression::Id::LoopId: DELEGATE(Loop);
-        case Expression::Id::BreakId: DELEGATE(Break);
-        case Expression::Id::SwitchId: DELEGATE(Switch);
-        case Expression::Id::CallId: DELEGATE(Call);
-        case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
-        case Expression::Id::GetLocalId: DELEGATE(GetLocal);
-        case Expression::Id::SetLocalId: DELEGATE(SetLocal);
-        case Expression::Id::GetGlobalId: DELEGATE(GetGlobal);
-        case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
-        case Expression::Id::LoadId: DELEGATE(Load);
-        case Expression::Id::StoreId: DELEGATE(Store);
-        case Expression::Id::ConstId: DELEGATE(Const);
-        case Expression::Id::UnaryId: DELEGATE(Unary);
-        case Expression::Id::BinaryId: DELEGATE(Binary);
-        case Expression::Id::SelectId: DELEGATE(Select);
-        case Expression::Id::DropId: DELEGATE(Drop);
-        case Expression::Id::ReturnId: DELEGATE(Return);
-        case Expression::Id::HostId: DELEGATE(Host);
-        case Expression::Id::NopId: DELEGATE(Nop);
-        case Expression::Id::UnreachableId: break;
-        case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
-        case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
-        case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
-        case Expression::Id::AtomicNotifyId: DELEGATE(AtomicNotify);
-        case Expression::Id::SIMDExtractId: DELEGATE(SIMDExtract);
-        case Expression::Id::SIMDReplaceId: DELEGATE(SIMDReplace);
-        case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
-        case Expression::Id::SIMDBitselectId: DELEGATE(SIMDBitselect);
-        case Expression::Id::SIMDShiftId: DELEGATE(SIMDShift);
-        case Expression::Id::MemoryInitId: DELEGATE(MemoryInit);
-        case Expression::Id::DataDropId: DELEGATE(DataDrop);
-        case Expression::Id::MemoryCopyId: DELEGATE(MemoryCopy);
-        case Expression::Id::MemoryFillId: DELEGATE(MemoryFill);
-        case Expression::Id::InvalidId: WASM_UNREACHABLE();
-        case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
+        case Expression::Id::BlockId:
+          DELEGATE(Block);
+        case Expression::Id::IfId:
+          DELEGATE(If);
+        case Expression::Id::LoopId:
+          DELEGATE(Loop);
+        case Expression::Id::BreakId:
+          DELEGATE(Break);
+        case Expression::Id::SwitchId:
+          DELEGATE(Switch);
+        case Expression::Id::CallId:
+          DELEGATE(Call);
+        case Expression::Id::CallIndirectId:
+          DELEGATE(CallIndirect);
+        case Expression::Id::GetLocalId:
+          DELEGATE(GetLocal);
+        case Expression::Id::SetLocalId:
+          DELEGATE(SetLocal);
+        case Expression::Id::GetGlobalId:
+          DELEGATE(GetGlobal);
+        case Expression::Id::SetGlobalId:
+          DELEGATE(SetGlobal);
+        case Expression::Id::LoadId:
+          DELEGATE(Load);
+        case Expression::Id::StoreId:
+          DELEGATE(Store);
+        case Expression::Id::ConstId:
+          DELEGATE(Const);
+        case Expression::Id::UnaryId:
+          DELEGATE(Unary);
+        case Expression::Id::BinaryId:
+          DELEGATE(Binary);
+        case Expression::Id::SelectId:
+          DELEGATE(Select);
+        case Expression::Id::DropId:
+          DELEGATE(Drop);
+        case Expression::Id::ReturnId:
+          DELEGATE(Return);
+        case Expression::Id::HostId:
+          DELEGATE(Host);
+        case Expression::Id::NopId:
+          DELEGATE(Nop);
+        case Expression::Id::UnreachableId:
+          break;
+        case Expression::Id::AtomicCmpxchgId:
+          DELEGATE(AtomicCmpxchg);
+        case Expression::Id::AtomicRMWId:
+          DELEGATE(AtomicRMW);
+        case Expression::Id::AtomicWaitId:
+          DELEGATE(AtomicWait);
+        case Expression::Id::AtomicNotifyId:
+          DELEGATE(AtomicNotify);
+        case Expression::Id::SIMDExtractId:
+          DELEGATE(SIMDExtract);
+        case Expression::Id::SIMDReplaceId:
+          DELEGATE(SIMDReplace);
+        case Expression::Id::SIMDShuffleId:
+          DELEGATE(SIMDShuffle);
+        case Expression::Id::SIMDBitselectId:
+          DELEGATE(SIMDBitselect);
+        case Expression::Id::SIMDShiftId:
+          DELEGATE(SIMDShift);
+        case Expression::Id::MemoryInitId:
+          DELEGATE(MemoryInit);
+        case Expression::Id::DataDropId:
+          DELEGATE(DataDrop);
+        case Expression::Id::MemoryCopyId:
+          DELEGATE(MemoryCopy);
+        case Expression::Id::MemoryFillId:
+          DELEGATE(MemoryFill);
+        case Expression::Id::InvalidId:
+          WASM_UNREACHABLE();
+        case Expression::Id::NumExpressionIds:
+          WASM_UNREACHABLE();
       }
-      #undef DELEGATE
+#undef DELEGATE
       return;
     }
     if (curr->is<If>()) {
@@ -290,12 +334,13 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   // we don't need to drop unreachable nodes
   Expression* drop(Expression* toDrop) {
-    if (toDrop->type == unreachable) return toDrop;
+    if (toDrop->type == unreachable) {
+      return toDrop;
+    }
     return Builder(*getModule()).makeDrop(toDrop);
   }
 
-  template<typename T>
-  Expression* handleCall(T* curr) {
+  template<typename T> Expression* handleCall(T* curr) {
     for (Index i = 0; i < curr->operands.size(); i++) {
       if (isUnreachable(curr->operands[i])) {
         if (i > 0) {
@@ -316,12 +361,12 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     return curr;
   }
 
-  void visitCall(Call* curr) {
-    handleCall(curr);
-  }
+  void visitCall(Call* curr) { handleCall(curr); }
 
   void visitCallIndirect(CallIndirect* curr) {
-    if (handleCall(curr) != curr) return;
+    if (handleCall(curr) != curr) {
+      return;
+    }
     if (isUnreachable(curr->target)) {
       auto* block = getModule()->allocator.alloc<Block>();
       for (auto* operand : curr->operands) {
@@ -356,56 +401,52 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitSetLocal(SetLocal* curr) {
-    blockifyReachableOperands({ curr->value }, curr->type);
+    blockifyReachableOperands({curr->value}, curr->type);
   }
 
   void visitSetGlobal(SetGlobal* curr) {
-    blockifyReachableOperands({ curr->value }, curr->type);
+    blockifyReachableOperands({curr->value}, curr->type);
   }
 
   void visitLoad(Load* curr) {
-    blockifyReachableOperands({ curr->ptr }, curr->type);
+    blockifyReachableOperands({curr->ptr}, curr->type);
   }
 
   void visitStore(Store* curr) {
-    blockifyReachableOperands({ curr->ptr, curr->value }, curr->type);
+    blockifyReachableOperands({curr->ptr, curr->value}, curr->type);
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {
-    blockifyReachableOperands({ curr->ptr, curr->value }, curr->type);
+    blockifyReachableOperands({curr->ptr, curr->value}, curr->type);
   }
 
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    blockifyReachableOperands({ curr->ptr, curr->expected, curr->replacement }, curr->type);
+    blockifyReachableOperands({curr->ptr, curr->expected, curr->replacement},
+                              curr->type);
   }
 
   void visitUnary(Unary* curr) {
-    blockifyReachableOperands({ curr->value }, curr->type);
+    blockifyReachableOperands({curr->value}, curr->type);
   }
 
   void visitBinary(Binary* curr) {
-    blockifyReachableOperands({ curr->left, curr->right }, curr->type);
+    blockifyReachableOperands({curr->left, curr->right}, curr->type);
   }
 
   void visitSelect(Select* curr) {
-    blockifyReachableOperands({ curr->ifTrue, curr->ifFalse, curr->condition }, curr->type);
+    blockifyReachableOperands({curr->ifTrue, curr->ifFalse, curr->condition},
+                              curr->type);
   }
 
   void visitDrop(Drop* curr) {
-    blockifyReachableOperands({ curr->value }, curr->type);
+    blockifyReachableOperands({curr->value}, curr->type);
   }
 
-  void visitHost(Host* curr) {
-    handleCall(curr);
-  }
+  void visitHost(Host* curr) { handleCall(curr); }
 
-  void visitFunction(Function* curr) {
-    assert(reachableBreaks.size() == 0);
-  }
+  void visitFunction(Function* curr) { assert(reachableBreaks.size() == 0); }
 };
 
-Pass *createDeadCodeEliminationPass() {
-  return new DeadCodeElimination();
-}
+Pass* createDeadCodeEliminationPass() { return new DeadCodeElimination(); }
 
 } // namespace wasm

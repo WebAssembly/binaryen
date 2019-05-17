@@ -33,10 +33,7 @@ namespace wasm {
 
 // The work state of a helper thread - is there more to do,
 // or are we finished for now.
-enum class ThreadWorkState {
-  More,
-  Finished
-};
+enum class ThreadWorkState { More, Finished };
 
 class ThreadPool;
 
@@ -52,7 +49,7 @@ class Thread {
   std::mutex mutex;
   std::condition_variable condition;
   bool done = false;
-  std::function<ThreadWorkState ()> doWork = nullptr;
+  std::function<ThreadWorkState()> doWork = nullptr;
 
 public:
   Thread(ThreadPool* parent);
@@ -60,10 +57,10 @@ public:
 
   // Start to do work, calling doWork() until
   // it returns false.
-  void work(std::function<ThreadWorkState ()> doWork);
+  void work(std::function<ThreadWorkState()> doWork);
 
 private:
-  static void mainLoop(void *self);
+  static void mainLoop(void* self);
 };
 
 //
@@ -100,7 +97,7 @@ public:
   // getTask() (in a thread-safe manner) to get tasks, and
   // sends them to workers to be executed. This method
   // blocks until all tasks are complete.
-  void work(std::vector<std::function<ThreadWorkState ()>>& doWorkers);
+  void work(std::vector<std::function<ThreadWorkState()>>& doWorkers);
 
   size_t size();
 
@@ -123,9 +120,7 @@ class OnlyOnce {
   std::atomic<int> created;
 
 public:
-  OnlyOnce() {
-    created.store(0);
-  }
+  OnlyOnce() { created.store(0); }
 
   void verify() {
     auto before = created.fetch_add(1);
@@ -135,4 +130,4 @@ public:
 
 } // namespace wasm
 
-#endif  // wasm_support_threads_h
+#endif // wasm_support_threads_h

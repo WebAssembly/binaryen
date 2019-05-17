@@ -17,7 +17,6 @@
 #ifndef wasm_ir_function_type_utils_h
 #define wasm_ir_function_type_utils_h
 
-
 namespace wasm {
 
 namespace FunctionTypeUtils {

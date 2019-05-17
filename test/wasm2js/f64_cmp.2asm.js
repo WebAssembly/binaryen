@@ -59,20 +59,20 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  eq: $0, 
-  ne: $1, 
-  lt: $2, 
-  le: $3, 
-  gt: $4, 
-  ge: $5
+  "eq": $0, 
+  "ne": $1, 
+  "lt": $2, 
+  "le": $3, 
+  "gt": $4, 
+  "ge": $5
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const eq = retasmFunc.eq;
-export const ne = retasmFunc.ne;
-export const lt = retasmFunc.lt;
-export const le = retasmFunc.le;
-export const gt = retasmFunc.gt;
-export const ge = retasmFunc.ge;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var eq = retasmFunc.eq;
+export var ne = retasmFunc.ne;
+export var lt = retasmFunc.lt;
+export var le = retasmFunc.le;
+export var gt = retasmFunc.gt;
+export var ge = retasmFunc.ge;

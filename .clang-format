@@ -1,11 +1,14 @@
+---
+Language: Cpp
 BasedOnStyle: LLVM
 PointerAlignment: Left
 IndentCaseLabels: true
 ContinuationIndentWidth: 2
 ConstructorInitializerIndentWidth: 2
 SpaceAfterTemplateKeyword: false
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: true
-AllowShortBlocksOnASingleLine: true
 BinPackArguments: false
 BinPackParameters: false
+---
+Language: JavaScript
+DisableFormat: true
+---

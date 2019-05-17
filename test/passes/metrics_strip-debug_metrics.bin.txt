@@ -1,6 +1,7 @@
 total
  [exports]      : 1       
  [funcs]        : 1       
+ [globals]      : 0       
  [imports]      : 0       
  [total]        : 1       
  [vars]         : 0       
@@ -8,6 +9,7 @@ total
 total
  [exports]      : 1       
  [funcs]        : 1       
+ [globals]      : 0       
  [imports]      : 0       
  [total]        : 1       
  [vars]         : 0       
