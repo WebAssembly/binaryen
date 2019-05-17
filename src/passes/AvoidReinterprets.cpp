@@ -28,6 +28,8 @@
 namespace wasm {
 
 static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
+  std::set<GetLocal*> seen;
+  seen.insert(get);
   while (1) {
     auto& sets = localGraph->getSetses[get];
     if (sets.size() != 1) {
@@ -39,7 +41,12 @@ static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
     }
     auto* value = Properties::getFallthrough(set->value);
     if (auto* parentGet = value->dynCast<GetLocal>()) {
+      if (seen.count(parentGet)) {
+        // We are in a cycle of gets, in unreachable code.
+        return nullptr;
+      }
       get = parentGet;
+      seen.insert(get);
       continue;
     }
     if (auto* load = value->dynCast<Load>()) {
