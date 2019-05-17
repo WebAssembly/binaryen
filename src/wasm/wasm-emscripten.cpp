@@ -193,16 +193,16 @@ ensureFunctionImport(Module* module, Name name, std::string sig) {
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
 Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
-  std::vector<Global*> got_entries_func;
-  std::vector<Global*> got_entries_mem;
+  std::vector<Global*> gotFuncEntries;
+  std::vector<Global*> gotMemEntries;
   for (auto& g : wasm.globals) {
     if (!g->imported()) {
       continue;
     }
     if (g->module == "GOT.func") {
-      got_entries_func.push_back(g.get());
+      gotFuncEntries.push_back(g.get());
     } else if (g->module == "GOT.mem") {
-      got_entries_mem.push_back(g.get());
+      gotMemEntries.push_back(g.get());
     } else {
       continue;
     }
@@ -211,24 +211,24 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     g->init = Builder(wasm).makeConst(Literal(0));
   }
 
-  if (!got_entries_func.size() && !got_entries_mem.size()) {
+  if (!gotFuncEntries.size() && !gotMemEntries.size()) {
     return nullptr;
   }
 
-  Function* assign_func =
+  Function* assignFunc =
     builder.makeFunction(ASSIGN_GOT_ENTIRES, std::vector<NameType>{}, none, {});
   Block* block = builder.makeBlock();
-  assign_func->body = block;
+  assignFunc->body = block;
 
-  for (Global* g : got_entries_mem) {
+  for (Global* g : gotMemEntries) {
     Name getter(std::string("g$") + g->base.c_str());
     ensureFunctionImport(&wasm, getter, "i");
     Expression* call = builder.makeCall(getter, {}, i32);
-    SetGlobal* set_global = builder.makeSetGlobal(g->name, call);
-    block->list.push_back(set_global);
+    SetGlobal* setGlobal = builder.makeSetGlobal(g->name, call);
+    block->list.push_back(setGlobal);
   }
 
-  for (Global* g : got_entries_func) {
+  for (Global* g : gotFuncEntries) {
     Function* f = nullptr;
     // The function has to exist either as export or an import.
     // Note that we don't search for the function by name since its internal
@@ -250,12 +250,12 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
         .c_str());
     ensureFunctionImport(&wasm, getter, "i");
     Expression* call = builder.makeCall(getter, {}, i32);
-    SetGlobal* set_global = builder.makeSetGlobal(g->name, call);
-    block->list.push_back(set_global);
+    SetGlobal* setGlobal = builder.makeSetGlobal(g->name, call);
+    block->list.push_back(setGlobal);
   }
 
-  wasm.addFunction(assign_func);
-  return assign_func;
+  wasm.addFunction(assignFunc);
+  return assignFunc;
 }
 
 // For emscripten SIDE_MODULE we generate a single exported function called
