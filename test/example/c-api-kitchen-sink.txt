@@ -1905,6 +1905,7 @@ int main() {
   RelooperRef the_relooper = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
+  BinaryenModuleSetFeatures(the_module, 29);
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt64(2));
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralFloat32(3.14));

@@ -165,6 +165,10 @@ void test_core() {
   // Module creation
 
   BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetFeatures(module, BinaryenFeatureAtomics()
+                                  | BinaryenFeatureSIMD()
+                                  | BinaryenFeatureTruncSat()
+                                  | BinaryenFeatureBulkMemory());
 
   // Literals and consts
 
