@@ -3152,8 +3152,8 @@ BinaryenFeatureFlags BinaryenModuleGetFeatures(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   BinaryenFeatureFlags featureFlags = 0;
-  wasm->features.iterFeatures([&featureFlags](FeatureSet::Feature flag) {
-    featureFlags |= flag; });
+  wasm->features.iterFeatures(
+    [&featureFlags](FeatureSet::Feature flag) { featureFlags |= flag; });
   return featureFlags;
 }
 
