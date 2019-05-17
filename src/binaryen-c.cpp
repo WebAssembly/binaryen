@@ -3320,10 +3320,10 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module) {
   std::stringstream ss;
   WasmPrinter::printModule((Module*)module, ss);
 
-  std::string out = ss.str();
-  const int l = out.length() + 1;
-  char* cout = (char*)malloc(l);
-  strncpy(cout, out.c_str(), l);
+  const std::string out = ss.str();
+  const int len = out.length() + 1;
+  char* cout = (char*)malloc(len);
+  strncpy(cout, out.c_str(), len);
   return cout;
 }
 
