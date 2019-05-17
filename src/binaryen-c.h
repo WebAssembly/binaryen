@@ -966,7 +966,8 @@ void BinaryenModuleOptimize(BinaryenModuleRef module);
 BinaryenFeatureFlags BinaryenModuleGetFeatures(BinaryenModuleRef module);
 
 // Set the enabled features for this module.
-void BinaryenModuleSetFeatures(BinaryenModuleRef module, BinaryenFeatureFlags featureFlags);
+void BinaryenModuleSetFeatures(BinaryenModuleRef module,
+                               BinaryenFeatureFlags featureFlags);
 
 // Gets the currently set optimize level. Applies to all modules, globally.
 // 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.

@@ -387,7 +387,8 @@ BinaryenFeatureFlags BinaryenFeatureSignExt(void) {
   return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::SignExt);
 }
 BinaryenFeatureFlags BinaryenFeatureExceptionHandling(void) {
-  return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::ExceptionHandling);
+  return static_cast<BinaryenFeatureFlags>(
+    FeatureSet::Feature::ExceptionHandling);
 }
 
 // Modules
@@ -3152,19 +3153,22 @@ BinaryenFeatureFlags BinaryenModuleGetFeatures(BinaryenModuleRef module) {
   Module* wasm = (Module*)module;
   BinaryenFeatureFlags featureFlags = 0;
   wasm->features.iterFeatures([&featureFlags](FeatureSet::Feature flag) {
-    featureFlags |= flag;
-  });
+    featureFlags |= flag; });
   return featureFlags;
 }
 
-void BinaryenModuleSetFeatures(BinaryenModuleRef module, BinaryenFeatureFlags featureFlags) {
+void BinaryenModuleSetFeatures(BinaryenModuleRef module,
+                               BinaryenFeatureFlags featureFlags) {
   if (tracing) {
-    std::cout << "  BinaryenModuleSetFeatures(the_module, " << featureFlags << ");\n";
+    std::cout << "  BinaryenModuleSetFeatures(the_module, " << featureFlags
+              << ");\n";
   }
 
   Module* wasm = (Module*)module;
-  for (BinaryenFeatureFlags flag = 1; flag < FeatureSet::Feature::All; flag <<= 1) {
-    wasm->features.set((FeatureSet::Feature)flag, (featureFlags & flag) == flag);
+  for (BinaryenFeatureFlags flag = 1; flag < FeatureSet::Feature::All;
+       flag <<= 1) {
+    wasm->features.set((FeatureSet::Feature)flag,
+                       (featureFlags & flag) == flag);
   }
 }
 
