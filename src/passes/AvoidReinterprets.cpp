@@ -27,6 +27,15 @@
 
 namespace wasm {
 
+static bool canReplaceWithReinterpret(Load* load) {
+  // We can replace a full-size load with a valid pointer with
+  // a reinterpret of the same address. A partial load would see
+  // more bytes and possibly invalid data, and an unreachable
+  // pointer is just not interesting to handle.
+  return load->type != unreachable &&
+         load->bytes == getTypeSize(load->type);
+}
+
 static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
   std::set<GetLocal*> seen;
   seen.insert(get);
@@ -104,7 +113,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
     for (auto& pair : infos) {
       auto* load = pair.first;
       auto& info = pair.second;
-      if (info.reinterpreted && load->type != unreachable) {
+      if (info.reinterpreted && canReplaceWithReinterpret(load)) {
         // We should use another load here, to avoid reinterprets.
         info.ptrLocal = Builder::addVar(func, i32);
         info.reinterpretedLocal =
@@ -131,8 +140,10 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
         if (isReinterpret(curr)) {
           auto* value = Properties::getFallthrough(curr->value);
           if (auto* load = value->dynCast<Load>()) {
-            // A reinterpret of a load - flip it right here.
-            replaceCurrent(makeReinterpretedLoad(load, load->ptr));
+            // A reinterpret of a load - flip it right here if we can.
+            if (canReplaceWithReinterpret(load)) {
+              replaceCurrent(makeReinterpretedLoad(load, load->ptr));
+            }
           } else if (auto* get = value->dynCast<GetLocal>()) {
             if (auto* load = getSingleLoad(localGraph, get)) {
               auto iter = infos.find(load);

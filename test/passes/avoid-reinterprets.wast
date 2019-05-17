@@ -35,4 +35,18 @@
     (local.set $y (local.get $x))
     (drop (f32.reinterpret_i32 (local.get $y)))
   )
+  (func $partial1 (result f32)
+   (f32.reinterpret_i32
+    (i32.load16_u
+     (i32.const 3)
+    )
+   )
+  )
+  (func $partial2 (result f32)
+   (f32.reinterpret_i32
+    (i32.load8_u
+     (i32.const 3)
+    )
+   )
+  )
 )
