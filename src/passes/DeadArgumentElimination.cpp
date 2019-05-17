@@ -217,6 +217,8 @@ struct DAE : public Pass {
   }
 
   bool iteration(PassRunner* runner, Module* module) {
+    allDroppedCalls.clear();
+
     DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data
     // structure.
