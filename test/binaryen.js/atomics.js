@@ -4,9 +4,9 @@ var module = Binaryen.parseText(`
 )
 `);
 
-assert(module.getFeatures() == 0);
+console.log("// features before: " + module.getFeatures());
 module.setFeature(Binaryen.Feature.Atomics, true);
-assert(module.getFeatures() == Binaryen.Feature.Atomics);
+console.log("// features after: " + module.getFeatures());
 
 var signature = module.addFunctionType("v", Binaryen.none, []);
 

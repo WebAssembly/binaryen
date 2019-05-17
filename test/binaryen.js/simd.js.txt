@@ -1,3 +1,5 @@
+// features before: 0
+// features after: 8
 (module
  (type $V (func (result v128)))
  (func $main (; 0 ;) (type $V) (result v128)

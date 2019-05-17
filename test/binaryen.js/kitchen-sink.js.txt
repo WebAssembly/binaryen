@@ -39,10 +39,19 @@ BinaryenSIMDReplaceId: 28
 BinaryenSIMDShuffleId: 29
 BinaryenSIMDBitselectId: 30
 BinaryenSIMDShiftId: 31
-MemoryInitId: 32
-DataDropId: 33
-MemoryCopyId: 34
-MemoryFillId: 35
+BinaryenMemoryInitId: 32
+BinaryenDataDropId: 33
+BinaryenMemoryCopyId: 34
+BinaryenMemoryFillId: 35
+BinaryenFeatureAtomics: 1
+BinaryenFeatureMutableGlobals: 2
+BinaryenFeatureTruncSat: 4
+BinaryenFeatureSIMD: 8
+BinaryenFeatureBulkMemory: 16
+BinaryenFeatureSignExt: 32
+BinaryenFeatureExceptionHandling: 64
+// features before: 0
+// features after: 28
 getExpressionInfo={"id":15,"type":3,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1941,7 +1950,11 @@ int main() {
   RelooperRef the_relooper = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
+  BinaryenModuleGetFeatures(the_module);
+// features before: 0
   BinaryenModuleSetFeatures(the_module, 28);
+  BinaryenModuleGetFeatures(the_module);
+// features after: 28
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt64(2));
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralFloat32(3.14));

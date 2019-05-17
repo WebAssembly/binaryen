@@ -119,9 +119,9 @@ function test_core() {
   var features = Binaryen.Feature.SIMD
                | Binaryen.Feature.TruncSat
                | Binaryen.Feature.BulkMemory;
-  assert(module.getFeatures() == 0);
+  console.log("// features before: " + module.getFeatures());
   module.setFeatures(features);
-  assert(module.getFeatures() == features);
+  console.log("// features after: " + module.getFeatures());
 
   // Literals and consts
 

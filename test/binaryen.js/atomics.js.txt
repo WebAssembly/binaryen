@@ -1,3 +1,5 @@
+// features before: 0
+// features after: 1
 (module
  (type $v (func))
  (memory $0 (shared 1 1))
