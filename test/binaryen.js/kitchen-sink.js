@@ -62,6 +62,16 @@ function test_types() {
   console.log("BinaryenTypeAuto: " + Binaryen.auto);
 }
 
+function test_features() {
+  console.log("Binaryen.Features.Atomics: " + Binaryen.Features.Atomics);
+  console.log("Binaryen.Features.BulkMemory: " + Binaryen.Features.BulkMemory);
+  console.log("Binaryen.Features.MutableGlobals: " + Binaryen.Features.MutableGlobals);
+  console.log("Binaryen.Features.NontrappingFPToInt: " + Binaryen.Features.NontrappingFPToInt);
+  console.log("Binaryen.Features.SignExt: " + Binaryen.Features.SignExt);
+  console.log("Binaryen.Features.SIMD128: " + Binaryen.Features.SIMD128);
+  console.log("Binaryen.Features.ExceptionHandling: " + Binaryen.Features.ExceptionHandling);
+}
+
 function test_ids() {
   console.log("BinaryenInvalidId: " + Binaryen.InvalidId);
   console.log("BinaryenBlockId: " + Binaryen.BlockId);
@@ -454,6 +464,16 @@ function test_core() {
   // A bunch of our code needs drop, auto-add it
   module.autoDrop();
 
+  var features =
+      Binaryen.Features.Atomics |
+      Binaryen.Features.BulkMemory |
+      Binaryen.Features.NontrappingFPToInt |
+      Binaryen.Features.SignExt |
+      Binaryen.Features.SIMD128;
+
+  module.setFeatures(features);
+  assert(module.getFeatures() == features);
+
   // Verify it validates
   assert(module.validate());
 
@@ -766,6 +786,7 @@ function test_internals() {
 
 function main() {
   test_types();
+  test_features();
   test_ids();
   test_core();
   test_relooper();

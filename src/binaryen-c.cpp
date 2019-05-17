@@ -367,6 +367,30 @@ BinaryenExternalKind BinaryenExternalGlobal(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Global);
 }
 
+// Features
+
+BinaryenFeatures BinaryenFeatureAtomics(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::Atomics);
+}
+BinaryenFeatures BinaryenFeatureBulkMemory(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::BulkMemory);
+}
+BinaryenFeatures BinaryenFeatureMutableGlobals(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::MutableGlobals);
+}
+BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::TruncSat);
+}
+BinaryenFeatures BinaryenFeatureSignExt(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::SignExt);
+}
+BinaryenFeatures BinaryenFeatureSIMD128(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::SIMD);
+}
+BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::ExceptionHandling);
+}
+
 // Modules
 
 BinaryenModuleRef BinaryenModuleCreate(void) {
@@ -3053,6 +3077,24 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
   wasm->addStart(((Function*)start)->name);
 }
 
+// Features
+
+BinaryenFeatures BinaryenGetFeatures(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFeatures(the_module);\n";
+  }
+  auto* wasm = static_cast<Module*>(module);
+  return wasm->features.features;
+}
+
+void BinaryenSetFeatures(BinaryenModuleRef module, BinaryenFeatures features) {
+  if (tracing) {
+    std::cout << "  BinaryenSetFeatures(the_module, " << features << ");\n";
+  }
+  auto* wasm = static_cast<Module*>(module);
+  wasm->features.features = features;
+}
+
 //
 // ========== Module Operations ==========
 //
@@ -3106,8 +3148,6 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  // TODO(tlively): Add C API for managing features
-  wasm->features = FeatureSet::All;
   return WasmValidator().validate(*wasm) ? 1 : 0;
 }
 

@@ -137,6 +137,19 @@ BinaryenExternalKind BinaryenExternalTable(void);
 BinaryenExternalKind BinaryenExternalMemory(void);
 BinaryenExternalKind BinaryenExternalGlobal(void);
 
+// Features. Call to get the value of each; you can cache them. Use bitwise
+// operators to combine and test particular features.
+
+typedef uint32_t BinaryenFeatures;
+
+BinaryenFeatures BinaryenFeatureAtomics(void);
+BinaryenFeatures BinaryenFeatureBulkMemory(void);
+BinaryenFeatures BinaryenFeatureMutableGlobals(void);
+BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void);
+BinaryenFeatures BinaryenFeatureSignExt(void);
+BinaryenFeatures BinaryenFeatureSIMD128(void);
+BinaryenFeatures BinaryenFeatureExceptionHandling(void);
+
 // Modules
 //
 // Modules contain lists of functions, imports, exports, function types. The
@@ -928,6 +941,12 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 // Start function. One per module
 
 void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
+
+// Features
+
+// These control what features are allowed when validation and in passes.
+BinaryenFeatures BinaryenGetFeatures(BinaryenModuleRef module);
+void BinaryenSetFeatures(BinaryenModuleRef module, BinaryenFeatures features);
 
 //
 // ========== Module Operations ==========
