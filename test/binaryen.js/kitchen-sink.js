@@ -106,6 +106,11 @@ function test_core() {
   // Module creation
 
   module = new Binaryen.Module();
+  module.setFeatures(
+    Binaryen.FeatureSIMD |
+    Binaryen.FeatureTruncSat |
+    Binaryen.FeatureBulkMemory
+  );
 
   // Literals and consts
 
