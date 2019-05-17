@@ -813,6 +813,21 @@ void test_tracing() {
   BinaryenSetAPITracing(0);
 }
 
+void test_color_status() {
+    int i;
+
+    // save old state
+    const int old_state = BinaryenAreColorsEnabled();
+
+    // Check that we can set the state to both {0, 1}
+    for(i = 0; i <= 1; i++){
+        BinaryenSetColorsEnabled(i);
+        assert(BinaryenAreColorsEnabled() == i);
+    }
+
+    BinaryenSetColorsEnabled(old_state);
+}
+
 int main() {
   test_types();
   test_core();
@@ -822,6 +837,7 @@ int main() {
   test_interpret();
   test_nonvalid();
   test_tracing();
+  test_color_status();
 
   return 0;
 }

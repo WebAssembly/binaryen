@@ -59,7 +59,7 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&outfile](Options*, const std::string& argument) {
            outfile = argument;
-           Colors::disable();
+           Colors::setEnabled(false);
          })
     .add("--debuginfo",
          "-g",

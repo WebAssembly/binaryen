@@ -1113,7 +1113,7 @@ int main(int argc, const char* argv[]) {
   }
 
   if (!binary) {
-    Colors::disable();
+    Colors::setEnabled(false);
   }
 
   std::cerr << "|wasm-reduce\n";

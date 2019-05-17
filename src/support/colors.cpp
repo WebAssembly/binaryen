@@ -20,10 +20,11 @@
 #include <ostream>
 
 namespace {
-bool colors_disabled = false;
+bool colors_enabled = true;
 } // anonymous namespace
 
-void Colors::disable() { colors_disabled = true; }
+void Colors::setEnabled(bool enabled) { colors_enabled = enabled; }
+bool Colors::isEnabled() { return colors_enabled; }
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <unistd.h>
@@ -34,7 +35,7 @@ void Colors::outputColorCode(std::ostream& stream, const char* colorCode) {
            (isatty(STDOUT_FILENO) &&
             (!getenv("COLORS") || getenv("COLORS")[0] != '0')); // implicit
   }();
-  if (has_color && !colors_disabled) {
+  if (has_color && colors_enabled) {
     stream << colorCode;
   }
 }
@@ -50,7 +51,7 @@ void Colors::outputColorCode(std::ostream& stream, const WORD& colorCode) {
   }();
   static HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
   static HANDLE hStderr = GetStdHandle(STD_ERROR_HANDLE);
-  if (has_color && !colors_disabled)
+  if (has_color && colors_enabled)
     SetConsoleTextAttribute(&stream == &std::cout ? hStdout : hStderr,
                             colorCode);
 }
