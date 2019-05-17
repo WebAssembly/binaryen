@@ -167,6 +167,7 @@ void test_features() {
   printf("BinaryenFeatureNontrappingFPToInt: %d\n", BinaryenFeatureNontrappingFPToInt());
   printf("BinaryenFeatureSignExt: %d\n", BinaryenFeatureSignExt());
   printf("BinaryenFeatureSIMD128: %d\n", BinaryenFeatureSIMD128());
+  printf("BinaryenFeatureExceptionHandling: %d\n", BinaryenFeatureExceptionHandling());
 }
 
 void test_core() {

@@ -148,6 +148,7 @@ BinaryenFeatures BinaryenFeatureMutableGlobals(void);
 BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void);
 BinaryenFeatures BinaryenFeatureSignExt(void);
 BinaryenFeatures BinaryenFeatureSIMD128(void);
+BinaryenFeatures BinaryenFeatureExceptionHandling(void);
 
 // Modules
 //

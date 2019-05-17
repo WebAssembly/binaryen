@@ -63,12 +63,13 @@ function test_types() {
 }
 
 function test_features() {
-  console.log("BinaryenFeatureAtomics: " + Binaryen.Features.Atomics);
-  console.log("BinaryenFeatureBulkMemory: " + Binaryen.Features.BulkMemory);
-  console.log("BinaryenFeatureMutableGlobals: " + Binaryen.Features.MutableGlobals);
-  console.log("BinaryenFeatureNontrappingFPToInt: " + Binaryen.Features.NontrappingFPToInt);
-  console.log("BinaryenFeatureSignExt: " + Binaryen.Features.SignExt);
-  console.log("BinaryenFeatureSIMD128: " + Binaryen.Features.SIMD128);
+  console.log("Binaryen.Features.Atomics: " + Binaryen.Features.Atomics);
+  console.log("Binaryen.Features.BulkMemory: " + Binaryen.Features.BulkMemory);
+  console.log("Binaryen.Features.MutableGlobals: " + Binaryen.Features.MutableGlobals);
+  console.log("Binaryen.Features.NontrappingFPToInt: " + Binaryen.Features.NontrappingFPToInt);
+  console.log("Binaryen.Features.SignExt: " + Binaryen.Features.SignExt);
+  console.log("Binaryen.Features.SIMD128: " + Binaryen.Features.SIMD128);
+  console.log("Binaryen.Features.ExceptionHandling: " + Binaryen.Features.ExceptionHandling);
 }
 
 function test_ids() {

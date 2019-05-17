@@ -237,6 +237,7 @@ export_function "_BinaryenFeatureMutableGlobals"
 export_function "_BinaryenFeatureNontrappingFPToInt"
 export_function "_BinaryenFeatureSignExt"
 export_function "_BinaryenFeatureSIMD128"
+export_function "_BinaryenFeatureExceptionHandling"
 
 # Literals
 export_function "_BinaryenLiteralInt32"

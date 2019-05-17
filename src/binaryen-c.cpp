@@ -386,6 +386,9 @@ BinaryenFeatures BinaryenFeatureSignExt(void) {
 BinaryenFeatures BinaryenFeatureSIMD128(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::SIMD);
 }
+BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::ExceptionHandling);
+}
 
 // Modules
 
@@ -3079,7 +3082,7 @@ BinaryenFeatures BinaryenGetFeatures(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenGetFeatures(the_module);\n";
   }
-  auto* wasm = (Module*)module;
+  auto* wasm = static_cast<Module*>(module);
   return wasm->features.features;
 }
 
@@ -3087,7 +3090,7 @@ void BinaryenSetFeatures(BinaryenModuleRef module, BinaryenFeatures features) {
   if (tracing) {
     std::cout << "  BinaryenSetFeatures(the_module, " << features << ");\n";
   }
-  auto* wasm = (Module*)module;
+  auto* wasm = static_cast<Module*>(module);
   wasm->features.features = features;
 }
 

@@ -93,6 +93,7 @@ Module['Features'] = {
   'NontrappingFPToInt': Module['_BinaryenFeatureNontrappingFPToInt'](),
   'SignExt': Module['_BinaryenFeatureSignExt'](),
   'SIMD128': Module['_BinaryenFeatureSIMD128'](),
+  'ExceptionHandling': Module['_BinaryenFeatureExceptionHandling'](),
 };
 
 // Operations
