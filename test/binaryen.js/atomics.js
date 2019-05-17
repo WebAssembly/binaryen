@@ -4,6 +4,8 @@ var module = Binaryen.parseText(`
 )
 `);
 
+module.enableFeature(Binaryen.FeatureAtomics);
+
 var signature = module.addFunctionType("v", Binaryen.none, []);
 
 // i32/i64.atomic.load/store
@@ -59,5 +61,5 @@ module.addFunction("main", signature, [], module.block("", [
   )
 ]));
 
-module.validate();
+if (!module.validate()) throw 'did not validate :(';
 console.log(module.emitText());

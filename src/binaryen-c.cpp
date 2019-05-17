@@ -366,6 +366,30 @@ BinaryenExternalKind BinaryenExternalGlobal(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Global);
 }
 
+// Features
+
+BinaryenFeatureFlags BinaryenFeatureAtomics(void) {
+  return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::Atomics);
+}
+BinaryenFeatureFlags BinaryenFeatureMutableGlobals(void) {
+  return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::MutableGlobals);
+}
+BinaryenFeatureFlags BinaryenFeatureTruncSat(void) {
+  return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::TruncSat);
+}
+BinaryenFeatureFlags BinaryenFeatureSIMD(void) {
+  return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::SIMD);
+}
+BinaryenFeatureFlags BinaryenFeatureBulkMemory(void) {
+  return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::BulkMemory);
+}
+BinaryenFeatureFlags BinaryenFeatureSignExt(void) {
+  return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::SignExt);
+}
+BinaryenFeatureFlags BinaryenFeatureExceptionHandling(void) {
+  return static_cast<BinaryenFeatureFlags>(FeatureSet::Feature::ExceptionHandling);
+}
+
 // Modules
 
 BinaryenModuleRef BinaryenModuleCreate(void) {
@@ -3105,8 +3129,6 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  // TODO(tlively): Add C API for managing features
-  wasm->features = FeatureSet::All;
   return WasmValidator().validate(*wasm) ? 1 : 0;
 }
 
@@ -3120,6 +3142,30 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
+}
+
+BinaryenFeatureFlags BinaryenModuleGetFeatures(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenModuleGetFeatures(the_module);\n";
+  }
+
+  Module* wasm = (Module*)module;
+  BinaryenFeatureFlags featureFlags = 0;
+  wasm->features.iterFeatures([&featureFlags](FeatureSet::Feature flag) {
+    featureFlags |= flag;
+  });
+  return featureFlags;
+}
+
+void BinaryenModuleSetFeatures(BinaryenModuleRef module, BinaryenFeatureFlags featureFlags) {
+  if (tracing) {
+    std::cout << "  BinaryenModuleSetFeatures(the_module, " << featureFlags << ");\n";
+  }
+
+  Module* wasm = (Module*)module;
+  for (BinaryenFeatureFlags flag = 1; flag < FeatureSet::Feature::All; flag <<= 1) {
+    wasm->features.set((FeatureSet::Feature)flag, (featureFlags & flag) == flag);
+  }
 }
 
 int BinaryenGetOptimizeLevel(void) {

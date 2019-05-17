@@ -85,6 +85,15 @@ Module['ExternalTable'] = Module['_BinaryenExternalTable']();
 Module['ExternalMemory'] = Module['_BinaryenExternalMemory']();
 Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
 
+// Features
+Module['FeatureAtomics'] = Module['_BinaryenFeatureAtomics']();
+Module['FeatureMutableGlobals'] = Module['_BinaryenFeatureMutableGlobals']();
+Module['FeatureTruncSat'] = Module['_BinaryenFeatureTruncSat']();
+Module['FeatureSIMD'] = Module['_BinaryenFeatureSIMD']();
+Module['FeatureBulkMemory'] = Module['_BinaryenFeatureBulkMemory']();
+Module['FeatureSignExt'] = Module['_BinaryenFeatureSignExt']();
+Module['FeatureExceptionHandling'] = Module['_BinaryenFeatureExceptionHandling']();
+
 // Operations
 Module['ClzInt32'] = Module['_BinaryenClzInt32']();
 Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
@@ -1891,6 +1900,22 @@ function wrapModule(module, self) {
     Module['_BinaryenModulePrintAsmjs'](module);
     out = old;
     return ret;
+  };
+  self['getFeatures'] = function() {
+    return Module['_BinaryenModuleGetFeatures'](module);
+  };
+  self['setFeatures'] = function(flags) {
+    Module['_BinaryenModuleSetFeatures'](module, flags);
+  };
+  self['setFeature'] = function(flag, on) {
+    var flags = self['getFeatures']();
+    self['setFeatures'](on ? flags | flag : flags & ~flag);
+  };
+  self['enableFeature'] = function(flag) {
+    self['setFeature'](flag, true);
+  };
+  self['disableFeature'] = function(flag) {
+    self['setFeature'](flag, false);
   };
   self['validate'] = function() {
     return Module['_BinaryenModuleValidate'](module);

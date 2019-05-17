@@ -137,6 +137,18 @@ BinaryenExternalKind BinaryenExternalTable(void);
 BinaryenExternalKind BinaryenExternalMemory(void);
 BinaryenExternalKind BinaryenExternalGlobal(void);
 
+// Feature flags (call to get the value of each; you can cache them)
+
+typedef uint32_t BinaryenFeatureFlags;
+
+BinaryenFeatureFlags BinaryenFeatureAtomics(void);
+BinaryenFeatureFlags BinaryenFeatureMutableGlobals(void);
+BinaryenFeatureFlags BinaryenFeatureTruncSat(void);
+BinaryenFeatureFlags BinaryenFeatureSIMD(void);
+BinaryenFeatureFlags BinaryenFeatureBulkMemory(void);
+BinaryenFeatureFlags BinaryenFeatureSignExt(void);
+BinaryenFeatureFlags BinaryenFeatureExceptionHandling(void);
+
 // Modules
 //
 // Modules contain lists of functions, imports, exports, function types. The
@@ -949,6 +961,12 @@ int BinaryenModuleValidate(BinaryenModuleRef module);
 // Runs the standard optimization passes on the module. Uses the currently set
 // global optimize and shrink level.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
+
+// Get the enabled features for this module.
+BinaryenFeatureFlags BinaryenModuleGetFeatures(BinaryenModuleRef module);
+
+// Set the enabled features for this module.
+void BinaryenModuleSetFeatures(BinaryenModuleRef module, BinaryenFeatureFlags featureFlags);
 
 // Gets the currently set optimize level. Applies to all modules, globally.
 // 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
