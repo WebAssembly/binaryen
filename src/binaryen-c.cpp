@@ -3247,12 +3247,12 @@ BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize) {
     .outputBytes;
 }
 
-size_t BinaryenModuleWriteSExpr(BinaryenModuleRef module,
-                                char* output,
-                                size_t outputSize) {
+size_t BinaryenModuleWriteText(BinaryenModuleRef module,
+                               char* output,
+                               size_t outputSize) {
 
   if (tracing) {
-    std::cout << "  // BinaryenModuleWriteSExpr\n";
+    std::cout << "  // BinaryenModuleWriteTextr\n";
   }
 
   // use a stringstream as an std::ostream. Extract the std::string
@@ -3312,9 +3312,9 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
   return {binary, buffer.size(), sourceMap};
 }
 
-char* BinaryenModuleAllocateAndWriteSExpr(BinaryenModuleRef* module) {
+char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module) {
   if (tracing) {
-    std::cout << " // BinaryenModuleAllocateAndWriteSExpr(the_module);";
+    std::cout << " // BinaryenModuleAllocateAndWriteText(the_module);";
   }
 
   std::stringstream ss;
