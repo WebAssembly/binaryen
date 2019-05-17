@@ -353,7 +353,7 @@ public:
         std::cout << "  is function " << DCENodeToFunction[name] << '\n';
       }
       if (DCENodeToGlobal.find(name) != DCENodeToGlobal.end()) {
-        std::cout << "  is function " << DCENodeToGlobal[name] << '\n';
+        std::cout << "  is global " << DCENodeToGlobal[name] << '\n';
       }
       for (auto target : node.reaches) {
         std::cout << "  reaches: " << target.str << '\n';

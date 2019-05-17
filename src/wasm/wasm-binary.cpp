@@ -816,10 +816,9 @@ void WasmBinaryBuilder::read() {
       case BinaryConsts::Section::Element:
         readTableElements();
         break;
-      case BinaryConsts::Section::Global: {
+      case BinaryConsts::Section::Global:
         readGlobals();
         break;
-      }
       case BinaryConsts::Section::Data:
         readDataSegments();
         break;
