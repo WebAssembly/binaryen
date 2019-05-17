@@ -86,13 +86,15 @@ Module['ExternalMemory'] = Module['_BinaryenExternalMemory']();
 Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
 
 // Features
-Module['FeatureAtomics'] = Module['_BinaryenFeatureAtomics']();
-Module['FeatureMutableGlobals'] = Module['_BinaryenFeatureMutableGlobals']();
-Module['FeatureTruncSat'] = Module['_BinaryenFeatureTruncSat']();
-Module['FeatureSIMD'] = Module['_BinaryenFeatureSIMD']();
-Module['FeatureBulkMemory'] = Module['_BinaryenFeatureBulkMemory']();
-Module['FeatureSignExt'] = Module['_BinaryenFeatureSignExt']();
-Module['FeatureExceptionHandling'] = Module['_BinaryenFeatureExceptionHandling']();
+Module['Feature'] = {
+  'Atomics': Module['_BinaryenFeatureAtomics'](),
+  'MutableGlobals': Module['_BinaryenFeatureMutableGlobals'](),
+  'TruncSat': Module['_BinaryenFeatureTruncSat'](),
+  'SIMD': Module['_BinaryenFeatureSIMD'](),
+  'BulkMemory': Module['_BinaryenFeatureBulkMemory'](),
+  'SignExt': Module['_BinaryenFeatureSignExt'](),
+  'ExceptionHandling': Module['_BinaryenFeatureExceptionHandling']()
+};
 
 // Operations
 Module['ClzInt32'] = Module['_BinaryenClzInt32']();
@@ -1910,12 +1912,6 @@ function wrapModule(module, self) {
   self['setFeature'] = function(flag, on) {
     var flags = self['getFeatures']();
     self['setFeatures'](on ? flags | flag : flags & ~flag);
-  };
-  self['enableFeature'] = function(flag) {
-    self['setFeature'](flag, true);
-  };
-  self['disableFeature'] = function(flag) {
-    self['setFeature'](flag, false);
   };
   self['validate'] = function() {
     return Module['_BinaryenModuleValidate'](module);

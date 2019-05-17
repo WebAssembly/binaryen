@@ -95,10 +95,20 @@ function test_ids() {
   console.log("BinaryenSIMDShuffleId: " + Binaryen.SIMDShuffleId);
   console.log("BinaryenSIMDBitselectId: " + Binaryen.SIMDBitselectId);
   console.log("BinaryenSIMDShiftId: " + Binaryen.SIMDShiftId);
-  console.log("MemoryInitId: " + Binaryen.MemoryInitId);
-  console.log("DataDropId: " + Binaryen.DataDropId);
-  console.log("MemoryCopyId: " + Binaryen.MemoryCopyId);
-  console.log("MemoryFillId: " + Binaryen.MemoryFillId);
+  console.log("BinaryenMemoryInitId: " + Binaryen.MemoryInitId);
+  console.log("BinaryenDataDropId: " + Binaryen.DataDropId);
+  console.log("BinaryenMemoryCopyId: " + Binaryen.MemoryCopyId);
+  console.log("BinaryenMemoryFillId: " + Binaryen.MemoryFillId);
+}
+
+function test_features() {
+  console.log("BinaryenFeatureAtomics: " + Binaryen.Feature.Atomics);
+  console.log("BinaryenFeatureMutableGlobals: " + Binaryen.Feature.MutableGlobals);
+  console.log("BinaryenFeatureTruncSat: " + Binaryen.Feature.TruncSat);
+  console.log("BinaryenFeatureSIMD: " + Binaryen.Feature.SIMD);
+  console.log("BinaryenFeatureBulkMemory: " + Binaryen.Feature.BulkMemory);
+  console.log("BinaryenFeatureSignExt: " + Binaryen.Feature.SignExt);
+  console.log("BinaryenFeatureExceptionHandling: " + Binaryen.Feature.ExceptionHandling);
 }
 
 function test_core() {
@@ -106,11 +116,12 @@ function test_core() {
   // Module creation
 
   module = new Binaryen.Module();
-  module.setFeatures(
-    Binaryen.FeatureSIMD |
-    Binaryen.FeatureTruncSat |
-    Binaryen.FeatureBulkMemory
-  );
+  var features = Binaryen.Feature.SIMD
+               | Binaryen.Feature.TruncSat
+               | Binaryen.Feature.BulkMemory;
+  assert(module.getFeatures() == 0);
+  module.setFeatures(features);
+  assert(module.getFeatures() == features);
 
   // Literals and consts
 
@@ -772,6 +783,7 @@ function test_internals() {
 function main() {
   test_types();
   test_ids();
+  test_features();
   test_core();
   test_relooper();
   test_binaries();

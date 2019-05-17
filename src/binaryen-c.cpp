@@ -3165,11 +3165,10 @@ void BinaryenModuleSetFeatures(BinaryenModuleRef module,
   }
 
   Module* wasm = (Module*)module;
-  for (BinaryenFeatureFlags flag = 1; flag < FeatureSet::Feature::All;
-       flag <<= 1) {
-    wasm->features.set((FeatureSet::Feature)flag,
-                       (featureFlags & flag) == flag);
-  }
+  FeatureSet(FeatureSet::Feature::All)
+    .iterFeatures([wasm, featureFlags](FeatureSet::Feature flag) {
+      wasm->features.set(flag, (featureFlags & flag) == flag);
+    });
 }
 
 int BinaryenGetOptimizeLevel(void) {
