@@ -767,8 +767,15 @@ void test_binaries() {
   BinaryenModulePrint(module);
 
   // write the s-expr representation of the module.
-  BinaryenModuleWriteSExpr(module, buffer, 1024);
+  BinaryenModuleWriteText(module, buffer, 1024);
   printf("module s-expr printed (in memory):\n%s\n", buffer);
+
+
+  // writ the s-expr representation to a pointer which is managed by the
+  // caller
+  char *text = BinaryenModuleAllocateAndWriteText(module);
+  printf("module s-expr printed (in memory, caller-owned):\n%s\n", text);
+  free(text);
 
 
   BinaryenModuleDispose(module);
