@@ -287,17 +287,17 @@ BinaryenExpressionId BinaryenCallId(void) { return Expression::Id::CallId; }
 BinaryenExpressionId BinaryenCallIndirectId(void) {
   return Expression::Id::CallIndirectId;
 }
-BinaryenExpressionId BinaryenGetLocalId(void) {
-  return Expression::Id::GetLocalId;
+BinaryenExpressionId BinaryenLocalGetId(void) {
+  return Expression::Id::LocalGetId;
 }
-BinaryenExpressionId BinaryenSetLocalId(void) {
-  return Expression::Id::SetLocalId;
+BinaryenExpressionId BinaryenLocalSetId(void) {
+  return Expression::Id::LocalSetId;
 }
-BinaryenExpressionId BinaryenGetGlobalId(void) {
-  return Expression::Id::GetGlobalId;
+BinaryenExpressionId BinaryenGlobalGetId(void) {
+  return Expression::Id::GlobalGetId;
 }
-BinaryenExpressionId BinaryenSetGlobalId(void) {
-  return Expression::Id::SetGlobalId;
+BinaryenExpressionId BinaryenGlobalSetId(void) {
+  return Expression::Id::GlobalSetId;
 }
 BinaryenExpressionId BinaryenLoadId(void) { return Expression::Id::LoadId; }
 BinaryenExpressionId BinaryenStoreId(void) { return Expression::Id::StoreId; }
@@ -1041,13 +1041,13 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<GetLocal>();
+  auto* ret = ((Module*)module)->allocator.alloc<LocalGet>();
 
   if (tracing) {
-    traceExpression(ret, "BinaryenGetLocal", index, type);
+    traceExpression(ret, "BinaryenLocalGet", index, type);
   }
 
   ret->index = index;
@@ -1055,13 +1055,13 @@ BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenLocalSet(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<SetLocal>();
+  auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
 
   if (tracing) {
-    traceExpression(ret, "BinaryenSetLocal", index, value);
+    traceExpression(ret, "BinaryenLocalSet", index, value);
   }
 
   ret->index = index;
@@ -1070,13 +1070,13 @@ BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<SetLocal>();
+  auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
 
   if (tracing) {
-    traceExpression(ret, "BinaryenTeeLocal", index, value);
+    traceExpression(ret, "BinaryenLocalTee", index, value);
   }
 
   ret->index = index;
@@ -1085,13 +1085,13 @@ BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<GetGlobal>();
+  auto* ret = ((Module*)module)->allocator.alloc<GlobalGet>();
 
   if (tracing) {
-    traceExpression(ret, "BinaryenGetGlobal", StringLit(name), type);
+    traceExpression(ret, "BinaryenGlobalGet", StringLit(name), type);
   }
 
   ret->name = name;
@@ -1099,13 +1099,13 @@ BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenGlobalSet(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<SetGlobal>();
+  auto* ret = ((Module*)module)->allocator.alloc<GlobalSet>();
 
   if (tracing) {
-    traceExpression(ret, "BinaryenSetGlobal", StringLit(name), value);
+    traceExpression(ret, "BinaryenGlobalSet", StringLit(name), value);
   }
 
   ret->name = name;
@@ -1787,79 +1787,79 @@ BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr,
   assert(index < static_cast<CallIndirect*>(expression)->operands.size());
   return static_cast<CallIndirect*>(expression)->operands[index];
 }
-// GetLocal
-BinaryenIndex BinaryenGetLocalGetIndex(BinaryenExpressionRef expr) {
+// LocalGet
+BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenGetLocalGetIndex(expressions[" << expressions[expr]
+    std::cout << "  BinaryenLocalGetGetIndex(expressions[" << expressions[expr]
               << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<GetLocal>());
-  return static_cast<GetLocal*>(expression)->index;
+  assert(expression->is<LocalGet>());
+  return static_cast<LocalGet*>(expression)->index;
 }
-// SetLocal
-int BinaryenSetLocalIsTee(BinaryenExpressionRef expr) {
+// LocalSet
+int BinaryenLocalSetIsTee(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSetLocalIsTee(expressions[" << expressions[expr]
+    std::cout << "  BinaryenLocalSetIsTee(expressions[" << expressions[expr]
               << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<SetLocal>());
-  return static_cast<SetLocal*>(expression)->isTee();
+  assert(expression->is<LocalSet>());
+  return static_cast<LocalSet*>(expression)->isTee();
 }
-BinaryenIndex BinaryenSetLocalGetIndex(BinaryenExpressionRef expr) {
+BinaryenIndex BinaryenLocalSetGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSetLocalGetIndex(expressions[" << expressions[expr]
+    std::cout << "  BinaryenLocalSetGetIndex(expressions[" << expressions[expr]
               << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<SetLocal>());
-  return static_cast<SetLocal*>(expression)->index;
+  assert(expression->is<LocalSet>());
+  return static_cast<LocalSet*>(expression)->index;
 }
-BinaryenExpressionRef BinaryenSetLocalGetValue(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenLocalSetGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSetLocalGetValue(expressions[" << expressions[expr]
+    std::cout << "  BinaryenLocalSetGetValue(expressions[" << expressions[expr]
               << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<SetLocal>());
-  return static_cast<SetLocal*>(expression)->value;
+  assert(expression->is<LocalSet>());
+  return static_cast<LocalSet*>(expression)->value;
 }
-// GetGlobal
-const char* BinaryenGetGlobalGetName(BinaryenExpressionRef expr) {
+// GlobalGet
+const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenGetGlobalGetName(expressions[" << expressions[expr]
+    std::cout << "  BinaryenGlobalGetGetName(expressions[" << expressions[expr]
               << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<GetGlobal>());
-  return static_cast<GetGlobal*>(expression)->name.c_str();
+  assert(expression->is<GlobalGet>());
+  return static_cast<GlobalGet*>(expression)->name.c_str();
 }
-// SetGlobal
-const char* BinaryenSetGlobalGetName(BinaryenExpressionRef expr) {
+// GlobalSet
+const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSetGlobalGetName(expressions[" << expressions[expr]
+    std::cout << "  BinaryenGlobalSetGetName(expressions[" << expressions[expr]
               << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<SetGlobal>());
-  return static_cast<SetGlobal*>(expression)->name.c_str();
+  assert(expression->is<GlobalSet>());
+  return static_cast<GlobalSet*>(expression)->name.c_str();
 }
-BinaryenExpressionRef BinaryenSetGlobalGetValue(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenGlobalSetGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSetGlobalGetValue(expressions[" << expressions[expr]
+    std::cout << "  BinaryenGlobalSetGetValue(expressions[" << expressions[expr]
               << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<SetGlobal>());
-  return static_cast<SetGlobal*>(expression)->value;
+  assert(expression->is<GlobalSet>());
+  return static_cast<GlobalSet*>(expression)->value;
 }
 // Host
 BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr) {

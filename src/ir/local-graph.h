@@ -36,9 +36,9 @@ struct LocalGraph {
   LocalGraph(Function* func);
 
   // the local.sets relevant for an index or a get.
-  typedef std::set<SetLocal*> Sets;
+  typedef std::set<LocalSet*> Sets;
 
-  typedef std::map<GetLocal*, Sets> GetSetses;
+  typedef std::map<LocalGet*, Sets> GetSetses;
 
   typedef std::map<Expression*, Expression**> Locations;
 
@@ -54,9 +54,9 @@ struct LocalGraph {
   void computeInfluences();
 
   // for each get, the sets whose values are influenced by that get
-  std::unordered_map<GetLocal*, std::unordered_set<SetLocal*>> getInfluences;
+  std::unordered_map<LocalGet*, std::unordered_set<LocalSet*>> getInfluences;
   // for each set, the gets whose values are influenced by that set
-  std::unordered_map<SetLocal*, std::unordered_set<GetLocal*>> setInfluences;
+  std::unordered_map<LocalSet*, std::unordered_set<LocalGet*>> setInfluences;
 
   // Optional: Compute the local indexes that are SSA, in the sense of
   //  * a single set for all the gets for that local index

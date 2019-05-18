@@ -452,9 +452,9 @@ void test_core() {
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF")
     ),
-    BinaryenDrop(module, BinaryenGetLocal(module, 0, BinaryenTypeInt32())),
-    BinaryenSetLocal(module, 0, makeInt32(module, 101)),
-    BinaryenDrop(module, BinaryenTeeLocal(module, 0, makeInt32(module, 102))),
+    BinaryenDrop(module, BinaryenLocalGet(module, 0, BinaryenTypeInt32())),
+    BinaryenLocalSet(module, 0, makeInt32(module, 101)),
+    BinaryenDrop(module, BinaryenLocalTee(module, 0, makeInt32(module, 102))),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1)),
     BinaryenLoad(module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8)),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2)),
@@ -765,8 +765,8 @@ void test_binaries() {
     BinaryenModuleRef module = BinaryenModuleCreate();
     BinaryenType params[2] = { BinaryenTypeInt32(), BinaryenTypeInt32() };
     BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenTypeInt32(), params, 2);
-    BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
-                          y = BinaryenGetLocal(module, 1, BinaryenTypeInt32());
+    BinaryenExpressionRef x = BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
+                          y = BinaryenLocalGet(module, 1, BinaryenTypeInt32());
     BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
     BinaryenFunctionRef adder = BinaryenAddFunction(module, "adder", iii, NULL, 0, add);
     BinaryenSetDebugInfo(1); // include names section
@@ -816,7 +816,7 @@ void test_nonvalid() {
     BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
     BinaryenType localTypes[] = { BinaryenTypeInt32() };
     BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, localTypes, 1,
-      BinaryenSetLocal(module, 0, makeInt64(module, 1234)) // wrong type!
+      BinaryenLocalSet(module, 0, makeInt64(module, 1234)) // wrong type!
     );
 
     BinaryenModulePrint(module);

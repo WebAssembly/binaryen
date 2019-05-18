@@ -35,7 +35,7 @@ namespace wasm {
 // may be a great many potential elements but actual sets
 // may be fairly small. Specifically, we use a sorted
 // vector.
-typedef SortedVector LocalSet;
+typedef SortedVector SetOfLocals;
 
 // A liveness-relevant action. Supports a get, a set, or an
 // "other" which can be used for other purposes, to mark
@@ -51,10 +51,10 @@ struct LivenessAction {
     : what(what), index(index), origin(origin), effective(false) {
     assert(what != Other);
     if (what == Get) {
-      assert((*origin)->is<GetLocal>());
+      assert((*origin)->is<LocalGet>());
     }
     if (what == Set) {
-      assert((*origin)->is<SetLocal>());
+      assert((*origin)->is<LocalSet>());
     }
   }
   LivenessAction(Expression** origin) : what(Other), origin(origin) {}
@@ -66,9 +66,9 @@ struct LivenessAction {
   // Helper to remove a set that is a copy we know is not needed. This
   // updates both the IR and the action.
   void removeCopy() {
-    auto* set = (*origin)->cast<SetLocal>();
+    auto* set = (*origin)->cast<LocalSet>();
     if (set->isTee()) {
-      *origin = set->value->cast<GetLocal>();
+      *origin = set->value->cast<LocalGet>();
     } else {
       ExpressionManipulator::nop(set);
     }
@@ -81,7 +81,7 @@ struct LivenessAction {
 
 // information about liveness in a basic block
 struct Liveness {
-  LocalSet start, end;                 // live locals at the start and end
+  SetOfLocals start, end;              // live locals at the start and end
   std::vector<LivenessAction> actions; // actions occurring in this block
 
 #if LIVENESS_DEBUG
@@ -114,8 +114,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   // cfg traversal work
 
-  static void doVisitGetLocal(SubType* self, Expression** currp) {
-    auto* curr = (*currp)->cast<GetLocal>();
+  static void doVisitLocalGet(SubType* self, Expression** currp) {
+    auto* curr = (*currp)->cast<LocalGet>();
     // if in unreachable code, ignore
     if (!self->currBasicBlock) {
       *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
@@ -125,8 +125,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
       LivenessAction::Get, curr->index, currp);
   }
 
-  static void doVisitSetLocal(SubType* self, Expression** currp) {
-    auto* curr = (*currp)->cast<SetLocal>();
+  static void doVisitLocalSet(SubType* self, Expression** currp) {
+    auto* curr = (*currp)->cast<LocalSet>();
     // if in unreachable code, we don't need the tee (but might need the value,
     // if it has side effects)
     if (!self->currBasicBlock) {
@@ -154,16 +154,16 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   // recurse into nested ifs, and block return values? Those cases are trickier,
   // need to count to see if worth it.
   // TODO: an if can have two copies
-  GetLocal* getCopy(SetLocal* set) {
-    if (auto* get = set->value->dynCast<GetLocal>()) {
+  LocalGet* getCopy(LocalSet* set) {
+    if (auto* get = set->value->dynCast<LocalGet>()) {
       return get;
     }
     if (auto* iff = set->value->dynCast<If>()) {
-      if (auto* get = iff->ifTrue->dynCast<GetLocal>()) {
+      if (auto* get = iff->ifTrue->dynCast<LocalGet>()) {
         return get;
       }
       if (iff->ifFalse) {
-        if (auto* get = iff->ifFalse->dynCast<GetLocal>()) {
+        if (auto* get = iff->ifFalse->dynCast<LocalGet>()) {
           return get;
         }
       }
@@ -208,7 +208,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
       auto iter = queue.begin();
       auto* curr = *iter;
       queue.erase(iter);
-      LocalSet live;
+      SetOfLocals live;
       if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live)) {
         continue;
       }
@@ -232,8 +232,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   // whether anything changed vs an old state (which indicates further
   // processing is necessary).
   bool mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks,
-                                 LocalSet& old,
-                                 LocalSet& ret) {
+                                 SetOfLocals& old,
+                                 SetOfLocals& ret) {
     if (blocks.size() == 0) {
       return false;
     }
@@ -248,7 +248,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   }
 
   void scanLivenessThroughActions(std::vector<LivenessAction>& actions,
-                                  LocalSet& live) {
+                                  SetOfLocals& live) {
     // move towards the front
     for (int i = int(actions.size()) - 1; i >= 0; i--) {
       auto& action = actions[i];

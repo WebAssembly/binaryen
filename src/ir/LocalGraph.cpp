@@ -31,7 +31,7 @@ struct Info {
   // actions occurring in this block: local.gets and local.sets
   std::vector<Expression*> actions;
   // for each index, the last local.set for it
-  std::unordered_map<Index, SetLocal*> lastSets;
+  std::unordered_map<Index, LocalSet*> lastSets;
 };
 
 // flow helper class. flows the gets to their sets
@@ -55,8 +55,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   // cfg traversal work
 
-  static void doVisitGetLocal(Flower* self, Expression** currp) {
-    auto* curr = (*currp)->cast<GetLocal>();
+  static void doVisitLocalGet(Flower* self, Expression** currp) {
+    auto* curr = (*currp)->cast<LocalGet>();
     // if in unreachable code, skip
     if (!self->currBasicBlock) {
       return;
@@ -65,8 +65,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     self->locations[curr] = currp;
   }
 
-  static void doVisitSetLocal(Flower* self, Expression** currp) {
-    auto* curr = (*currp)->cast<SetLocal>();
+  static void doVisitLocalSet(Flower* self, Expression** currp) {
+    auto* curr = (*currp)->cast<LocalSet>();
     // if in unreachable code, skip
     if (!self->currBasicBlock) {
       return;
@@ -95,11 +95,11 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // scanning them linearly is efficient, avoiding hash computations (while
       // in Info, it's convenient to have a map so we can assign them easily,
       // where the last one seen overwrites the previous; and, we do that O(1)).
-      std::vector<std::pair<Index, SetLocal*>> lastSets;
+      std::vector<std::pair<Index, LocalSet*>> lastSets;
     };
 
     auto numLocals = func->getNumLocals();
-    std::vector<std::vector<GetLocal*>> allGets;
+    std::vector<std::vector<LocalGet*>> allGets;
     allGets.resize(numLocals);
     std::vector<FlowBlock*> work;
 
@@ -158,11 +158,11 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // move towards the front, handling things as we go
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto* action = actions[i];
-        if (auto* get = action->dynCast<GetLocal>()) {
+        if (auto* get = action->dynCast<LocalGet>()) {
           allGets[get->index].push_back(get);
         } else {
           // This set is the only set for all those gets.
-          auto* set = action->cast<SetLocal>();
+          auto* set = action->cast<LocalSet>();
           auto& gets = allGets[set->index];
           for (auto* get : gets) {
             getSetses[get].insert(set);
@@ -202,7 +202,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
               auto lastSet =
                 std::find_if(pred->lastSets.begin(),
                              pred->lastSets.end(),
-                             [&](std::pair<Index, SetLocal*>& value) {
+                             [&](std::pair<Index, LocalSet*>& value) {
                                return value.first == index;
                              });
               if (lastSet != pred->lastSets.end()) {
@@ -248,13 +248,13 @@ LocalGraph::LocalGraph(Function* func) {
 void LocalGraph::computeInfluences() {
   for (auto& pair : locations) {
     auto* curr = pair.first;
-    if (auto* set = curr->dynCast<SetLocal>()) {
-      FindAll<GetLocal> findAll(set->value);
+    if (auto* set = curr->dynCast<LocalSet>()) {
+      FindAll<LocalGet> findAll(set->value);
       for (auto* get : findAll.list) {
         getInfluences[get].insert(set);
       }
     } else {
-      auto* get = curr->cast<GetLocal>();
+      auto* get = curr->cast<LocalGet>();
       for (auto* set : getSetses[get]) {
         setInfluences[set].insert(get);
       }
@@ -263,7 +263,7 @@ void LocalGraph::computeInfluences() {
 }
 
 void LocalGraph::computeSSAIndexes() {
-  std::unordered_map<Index, std::set<SetLocal*>> indexSets;
+  std::unordered_map<Index, std::set<LocalSet*>> indexSets;
   for (auto& pair : getSetses) {
     auto* get = pair.first;
     auto& sets = pair.second;
@@ -273,7 +273,7 @@ void LocalGraph::computeSSAIndexes() {
   }
   for (auto& pair : locations) {
     auto* curr = pair.first;
-    if (auto* set = curr->dynCast<SetLocal>()) {
+    if (auto* set = curr->dynCast<LocalSet>()) {
       auto& sets = indexSets[set->index];
       if (sets.size() == 1 && *sets.begin() != curr) {
         // While it has just one set, it is not the right one (us),

@@ -225,34 +225,34 @@ public:
     return call;
   }
   // FunctionType
-  GetLocal* makeGetLocal(Index index, Type type) {
-    auto* ret = allocator.alloc<GetLocal>();
+  LocalGet* makeLocalGet(Index index, Type type) {
+    auto* ret = allocator.alloc<LocalGet>();
     ret->index = index;
     ret->type = type;
     return ret;
   }
-  SetLocal* makeSetLocal(Index index, Expression* value) {
-    auto* ret = allocator.alloc<SetLocal>();
+  LocalSet* makeLocalSet(Index index, Expression* value) {
+    auto* ret = allocator.alloc<LocalSet>();
     ret->index = index;
     ret->value = value;
     ret->finalize();
     return ret;
   }
-  SetLocal* makeTeeLocal(Index index, Expression* value) {
-    auto* ret = allocator.alloc<SetLocal>();
+  LocalSet* makeLocalTee(Index index, Expression* value) {
+    auto* ret = allocator.alloc<LocalSet>();
     ret->index = index;
     ret->value = value;
     ret->setTee(true);
     return ret;
   }
-  GetGlobal* makeGetGlobal(Name name, Type type) {
-    auto* ret = allocator.alloc<GetGlobal>();
+  GlobalGet* makeGlobalGet(Name name, Type type) {
+    auto* ret = allocator.alloc<GlobalGet>();
     ret->name = name;
     ret->type = type;
     return ret;
   }
-  SetGlobal* makeSetGlobal(Name name, Expression* value) {
-    auto* ret = allocator.alloc<SetGlobal>();
+  GlobalSet* makeGlobalSet(Name name, Expression* value) {
+    auto* ret = allocator.alloc<GlobalSet>();
     ret->name = name;
     ret->value = value;
     ret->finalize();

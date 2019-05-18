@@ -103,7 +103,7 @@ struct SpillPointers
       }
       // scan through the block, spilling around the calls
       // TODO: we can filter on pointerMap everywhere
-      LocalSet live = liveness.end;
+      SetOfLocals live = liveness.end;
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto& action = actions[i];
         if (action.isGet()) {
@@ -160,14 +160,14 @@ struct SpillPointers
     // move the operands into locals, as we must spill after they are executed
     auto handleOperand = [&](Expression*& operand) {
       auto temp = builder.addVar(func, operand->type);
-      auto* set = builder.makeSetLocal(temp, operand);
+      auto* set = builder.makeLocalSet(temp, operand);
       block->list.push_back(set);
       block->finalize();
       if (actualPointers.count(&operand) > 0) {
         // this is something we track, and it's moving - update
         actualPointers[&operand] = &set->value;
       }
-      operand = builder.makeGetLocal(temp, operand->type);
+      operand = builder.makeLocalGet(temp, operand->type);
     };
     if (call->is<Call>()) {
       for (auto*& operand : call->cast<Call>()->operands) {
@@ -187,8 +187,8 @@ struct SpillPointers
         builder.makeStore(getTypeSize(ABI::PointerType),
                           pointerMap[index],
                           getTypeSize(ABI::PointerType),
-                          builder.makeGetLocal(spillLocal, ABI::PointerType),
-                          builder.makeGetLocal(index, ABI::PointerType),
+                          builder.makeLocalGet(spillLocal, ABI::PointerType),
+                          builder.makeLocalGet(index, ABI::PointerType),
                           ABI::PointerType));
     }
     // add the (modified) call

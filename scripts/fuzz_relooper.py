@@ -216,7 +216,7 @@ int main() {
     };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
 ''' % (i, printed_ids[i])
@@ -226,7 +226,7 @@ int main() {
       BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()),
       BinaryenBinary(module,
         BinaryenRemUInt32(),
-        BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+        BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
         BinaryenConst(module, BinaryenLiteralInt32(%d))
       )
     );
@@ -279,7 +279,7 @@ int main() {
     BinaryenEqInt32(),
     BinaryenBinary(module,
       BinaryenRemUInt32(),
-      BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(%d))
     ),
     BinaryenConst(module, BinaryenLiteralInt32(%d))

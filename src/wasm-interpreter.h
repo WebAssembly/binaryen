@@ -1022,9 +1022,9 @@ public:
 
   Flow visitCall(Call*) { WASM_UNREACHABLE(); }
   Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE(); }
-  Flow visitGetLocal(GetLocal*) { WASM_UNREACHABLE(); }
-  Flow visitSetLocal(SetLocal*) { WASM_UNREACHABLE(); }
-  Flow visitSetGlobal(SetGlobal*) { WASM_UNREACHABLE(); }
+  Flow visitLocalGet(LocalGet*) { WASM_UNREACHABLE(); }
+  Flow visitLocalSet(LocalSet*) { WASM_UNREACHABLE(); }
+  Flow visitGlobalSet(GlobalSet*) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE(); }
   Flow visitHost(Host* curr) { WASM_UNREACHABLE(); }
@@ -1049,7 +1049,7 @@ class ConstantExpressionRunner
 public:
   ConstantExpressionRunner(GlobalManager& globals) : globals(globals) {}
 
-  Flow visitGetGlobal(GetGlobal* curr) { return Flow(globals[curr->name]); }
+  Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
 };
 
 //
@@ -1432,15 +1432,15 @@ private:
         index, arguments, curr->type, *instance.self());
     }
 
-    Flow visitGetLocal(GetLocal* curr) {
-      NOTE_ENTER("GetLocal");
+    Flow visitLocalGet(LocalGet* curr) {
+      NOTE_ENTER("LocalGet");
       auto index = curr->index;
       NOTE_EVAL1(index);
       NOTE_EVAL1(scope.locals[index]);
       return scope.locals[index];
     }
-    Flow visitSetLocal(SetLocal* curr) {
-      NOTE_ENTER("SetLocal");
+    Flow visitLocalSet(LocalSet* curr) {
+      NOTE_ENTER("LocalSet");
       auto index = curr->index;
       Flow flow = this->visit(curr->value);
       if (flow.breaking()) {
@@ -1453,16 +1453,16 @@ private:
       return curr->isTee() ? flow : Flow();
     }
 
-    Flow visitGetGlobal(GetGlobal* curr) {
-      NOTE_ENTER("GetGlobal");
+    Flow visitGlobalGet(GlobalGet* curr) {
+      NOTE_ENTER("GlobalGet");
       auto name = curr->name;
       NOTE_EVAL1(name);
       assert(instance.globals.find(name) != instance.globals.end());
       NOTE_EVAL1(instance.globals[name]);
       return instance.globals[name];
     }
-    Flow visitSetGlobal(SetGlobal* curr) {
-      NOTE_ENTER("SetGlobal");
+    Flow visitGlobalSet(GlobalSet* curr) {
+      NOTE_ENTER("GlobalSet");
       auto name = curr->name;
       Flow flow = this->visit(curr->value);
       if (flow.breaking()) {

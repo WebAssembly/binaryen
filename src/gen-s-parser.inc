@@ -609,10 +609,10 @@ switch (op[0]) {
       case 'l': {
         switch (op[7]) {
           case 'g':
-            if (strcmp(op, "global.get") == 0) { return makeGetGlobal(s); }
+            if (strcmp(op, "global.get") == 0) { return makeGlobalGet(s); }
             goto parse_error;
           case 's':
-            if (strcmp(op, "global.set") == 0) { return makeSetGlobal(s); }
+            if (strcmp(op, "global.set") == 0) { return makeGlobalSet(s); }
             goto parse_error;
           default: goto parse_error;
         }
@@ -2174,13 +2174,13 @@ switch (op[0]) {
       case 'c': {
         switch (op[6]) {
           case 'g':
-            if (strcmp(op, "local.get") == 0) { return makeGetLocal(s); }
+            if (strcmp(op, "local.get") == 0) { return makeLocalGet(s); }
             goto parse_error;
           case 's':
-            if (strcmp(op, "local.set") == 0) { return makeSetLocal(s); }
+            if (strcmp(op, "local.set") == 0) { return makeLocalSet(s); }
             goto parse_error;
           case 't':
-            if (strcmp(op, "local.tee") == 0) { return makeTeeLocal(s); }
+            if (strcmp(op, "local.tee") == 0) { return makeLocalTee(s); }
             goto parse_error;
           default: goto parse_error;
         }

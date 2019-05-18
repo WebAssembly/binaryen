@@ -199,10 +199,10 @@ doInlining(Module* module, Function* into, InliningAction& action) {
     void visitReturn(Return* curr) {
       replaceCurrent(builder->makeBreak(returnName, curr->value));
     }
-    void visitGetLocal(GetLocal* curr) {
+    void visitLocalGet(LocalGet* curr) {
       curr->index = localMapping[curr->index];
     }
-    void visitSetLocal(SetLocal* curr) {
+    void visitLocalSet(LocalSet* curr) {
       curr->index = localMapping[curr->index];
     }
   } updater;
@@ -214,13 +214,13 @@ doInlining(Module* module, Function* into, InliningAction& action) {
   // assign the operands into the params
   for (Index i = 0; i < from->params.size(); i++) {
     block->list.push_back(
-      builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
+      builder.makeLocalSet(updater.localMapping[i], call->operands[i]));
   }
   // zero out the vars (as we may be in a loop, and may depend on their
   // zero-init value
   for (Index i = 0; i < from->vars.size(); i++) {
     block->list.push_back(
-      builder.makeSetLocal(updater.localMapping[from->getVarIndexBase() + i],
+      builder.makeLocalSet(updater.localMapping[from->getVarIndexBase() + i],
                            LiteralUtils::makeZero(from->vars[i], *module)));
   }
   // generate and update the inlined contents

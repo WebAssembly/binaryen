@@ -195,10 +195,10 @@ export_function "_BinaryenBreakId"
 export_function "_BinaryenSwitchId"
 export_function "_BinaryenCallId"
 export_function "_BinaryenCallIndirectId"
-export_function "_BinaryenGetLocalId"
-export_function "_BinaryenSetLocalId"
-export_function "_BinaryenGetGlobalId"
-export_function "_BinaryenSetGlobalId"
+export_function "_BinaryenLocalGetId"
+export_function "_BinaryenLocalSetId"
+export_function "_BinaryenGlobalGetId"
+export_function "_BinaryenGlobalSetId"
 export_function "_BinaryenLoadId"
 export_function "_BinaryenStoreId"
 export_function "_BinaryenConstId"
@@ -537,11 +537,11 @@ export_function "_BinaryenBreak"
 export_function "_BinaryenSwitch"
 export_function "_BinaryenCall"
 export_function "_BinaryenCallIndirect"
-export_function "_BinaryenGetLocal"
-export_function "_BinaryenSetLocal"
-export_function "_BinaryenTeeLocal"
-export_function "_BinaryenGetGlobal"
-export_function "_BinaryenSetGlobal"
+export_function "_BinaryenLocalGet"
+export_function "_BinaryenLocalSet"
+export_function "_BinaryenLocalTee"
+export_function "_BinaryenGlobalGet"
+export_function "_BinaryenGlobalSet"
 export_function "_BinaryenLoad"
 export_function "_BinaryenStore"
 export_function "_BinaryenConst"
@@ -610,20 +610,20 @@ export_function "_BinaryenCallIndirectGetTarget"
 export_function "_BinaryenCallIndirectGetNumOperands"
 export_function "_BinaryenCallIndirectGetOperand"
 
-# 'GetLocal' expression operations
-export_function "_BinaryenGetLocalGetIndex"
+# 'LocalGet' expression operations
+export_function "_BinaryenLocalGetGetIndex"
 
-# 'SetLocal' expression operations
-export_function "_BinaryenSetLocalIsTee"
-export_function "_BinaryenSetLocalGetIndex"
-export_function "_BinaryenSetLocalGetValue"
+# 'LocalSet' expression operations
+export_function "_BinaryenLocalSetIsTee"
+export_function "_BinaryenLocalSetGetIndex"
+export_function "_BinaryenLocalSetGetValue"
 
-# 'GetGlobal' expression operations
-export_function "_BinaryenGetGlobalGetName"
+# 'GlobalGet' expression operations
+export_function "_BinaryenGlobalGetGetName"
 
-# 'SetGlobal' expression operations
-export_function "_BinaryenSetGlobalGetName"
-export_function "_BinaryenSetGlobalGetValue"
+# 'GlobalSet' expression operations
+export_function "_BinaryenGlobalSetGetName"
+export_function "_BinaryenGlobalSetGetValue"
 
 # 'Host' expression operations
 export_function "_BinaryenHostGetOp"

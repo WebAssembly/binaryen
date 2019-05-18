@@ -101,13 +101,13 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
       ReIndexer(Function* func, std::vector<Index>& oldToNew)
         : func(func), oldToNew(oldToNew) {}
 
-      void visitGetLocal(GetLocal* curr) {
+      void visitLocalGet(LocalGet* curr) {
         if (func->isVar(curr->index)) {
           curr->index = oldToNew[curr->index];
         }
       }
 
-      void visitSetLocal(SetLocal* curr) {
+      void visitLocalSet(LocalSet* curr) {
         if (func->isVar(curr->index)) {
           curr->index = oldToNew[curr->index];
         }
@@ -129,14 +129,14 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     }
   }
 
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     counts[curr->index]++;
     if (firstUses.count(curr->index) == 0) {
       firstUses[curr->index] = firstUses.size();
     }
   }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     counts[curr->index]++;
     if (firstUses.count(curr->index) == 0) {
       firstUses[curr->index] = firstUses.size();

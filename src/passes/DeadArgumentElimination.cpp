@@ -93,7 +93,7 @@ struct DAEScanner
 
   // cfg traversal work
 
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     if (currBasicBlock) {
       auto& localUses = currBasicBlock->contents.localUses;
       auto index = curr->index;
@@ -103,7 +103,7 @@ struct DAEScanner
     }
   }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     if (currBasicBlock) {
       auto& localUses = currBasicBlock->contents.localUses;
       auto index = curr->index;
@@ -294,7 +294,7 @@ struct DAE : public Pass {
           // makes the parameter value unused, which lets us remove it later.
           Builder builder(*module);
           func->body = builder.makeSequence(
-            builder.makeSetLocal(i, builder.makeConst(value)), func->body);
+            builder.makeLocalSet(i, builder.makeConst(value)), func->body);
           // Mark it as unused, which we know it now is (no point to
           // re-scan just for that).
           infoMap[name].unusedParams.insert(i);
@@ -402,8 +402,8 @@ private:
         : removedIndex(removedIndex), newIndex(newIndex) {
         walk(func->body);
       }
-      void visitGetLocal(GetLocal* curr) { updateIndex(curr->index); }
-      void visitSetLocal(SetLocal* curr) { updateIndex(curr->index); }
+      void visitLocalGet(LocalGet* curr) { updateIndex(curr->index); }
+      void visitLocalSet(LocalSet* curr) { updateIndex(curr->index); }
       void updateIndex(Index& index) {
         if (index == removedIndex) {
           index = newIndex;

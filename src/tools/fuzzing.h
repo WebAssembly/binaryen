@@ -350,22 +350,22 @@ private:
     // }
     std::vector<Expression*> contents;
     contents.push_back(
-      builder.makeSetLocal(0, builder.makeConst(Literal(uint32_t(5381)))));
+      builder.makeLocalSet(0, builder.makeConst(Literal(uint32_t(5381)))));
     for (Index i = 0; i < USABLE_MEMORY; i++) {
-      contents.push_back(builder.makeSetLocal(
+      contents.push_back(builder.makeLocalSet(
         0,
         builder.makeBinary(
           XorInt32,
           builder.makeBinary(
             AddInt32,
             builder.makeBinary(ShlInt32,
-                               builder.makeGetLocal(0, i32),
+                               builder.makeLocalGet(0, i32),
                                builder.makeConst(Literal(uint32_t(5)))),
-            builder.makeGetLocal(0, i32)),
+            builder.makeLocalGet(0, i32)),
           builder.makeLoad(
             1, false, i, 1, builder.makeConst(Literal(uint32_t(0))), i32))));
     }
-    contents.push_back(builder.makeGetLocal(0, i32));
+    contents.push_back(builder.makeLocalGet(0, i32));
     auto* body = builder.makeBlock(contents);
     auto* hasher = wasm.addFunction(builder.makeFunction(
       "hashMemory", std::vector<Type>{}, i32, {i32}, body));
@@ -416,7 +416,7 @@ private:
     auto* func = new Function;
     func->name = "hangLimitInitializer";
     func->result = none;
-    func->body = builder.makeSetGlobal(
+    func->body = builder.makeGlobalSet(
       glob->name, builder.makeConst(Literal(int32_t(HANG_LIMIT))));
     wasm.addFunction(func);
 
@@ -445,12 +445,12 @@ private:
     return builder.makeSequence(
       builder.makeIf(
         builder.makeUnary(UnaryOp::EqZInt32,
-                          builder.makeGetGlobal(HANG_LIMIT_GLOBAL, i32)),
+                          builder.makeGlobalGet(HANG_LIMIT_GLOBAL, i32)),
         makeTrivial(unreachable)),
-      builder.makeSetGlobal(
+      builder.makeGlobalSet(
         HANG_LIMIT_GLOBAL,
         builder.makeBinary(BinaryOp::SubInt32,
-                           builder.makeGetGlobal(HANG_LIMIT_GLOBAL, i32),
+                           builder.makeGlobalGet(HANG_LIMIT_GLOBAL, i32),
                            builder.makeConst(Literal(int32_t(1))))));
   }
 
@@ -462,8 +462,8 @@ private:
       func->result = type;
       func->body = builder.makeIf(
         builder.makeBinary(
-          op, builder.makeGetLocal(0, type), builder.makeGetLocal(0, type)),
-        builder.makeGetLocal(0, type),
+          op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
+        builder.makeLocalGet(0, type),
         builder.makeConst(literal));
       wasm.addFunction(func);
     };
@@ -804,13 +804,13 @@ private:
         if (oneIn(2)) {
           return makeConst(type);
         } else {
-          return makeGetLocal(type);
+          return makeLocalGet(type);
         }
       } else if (type == none) {
         if (oneIn(2)) {
           return makeNop(type);
         } else {
-          return makeSetLocal(type);
+          return makeLocalSet(type);
         }
       }
       assert(type == unreachable);
@@ -845,10 +845,10 @@ private:
       return makeConst(type);
     }
     if (choice < 30) {
-      return makeSetLocal(type);
+      return makeLocalSet(type);
     }
     if (choice < 50) {
-      return makeGetLocal(type);
+      return makeLocalGet(type);
     }
     if (choice < 60) {
       return makeBlock(type);
@@ -871,14 +871,14 @@ private:
                           &Self::makeBreak,
                           &Self::makeCall,
                           &Self::makeCallIndirect,
-                          &Self::makeGetLocal,
-                          &Self::makeSetLocal,
+                          &Self::makeLocalGet,
+                          &Self::makeLocalSet,
                           &Self::makeLoad,
                           &Self::makeConst,
                           &Self::makeUnary,
                           &Self::makeBinary,
                           &Self::makeSelect,
-                          &Self::makeGetGlobal)
+                          &Self::makeGlobalGet)
                      .add(FeatureSet::SIMD, &Self::makeSIMD);
     if (type == i32 || type == i64) {
       options.add(FeatureSet::Atomics, &Self::makeAtomic);
@@ -897,7 +897,7 @@ private:
     }
     choice = upTo(100);
     if (choice < 50) {
-      return makeSetLocal(none);
+      return makeLocalSet(none);
     }
     if (choice < 60) {
       return makeBlock(none);
@@ -920,11 +920,11 @@ private:
                           &Self::makeBreak,
                           &Self::makeCall,
                           &Self::makeCallIndirect,
-                          &Self::makeSetLocal,
+                          &Self::makeLocalSet,
                           &Self::makeStore,
                           &Self::makeDrop,
                           &Self::makeNop,
-                          &Self::makeSetGlobal)
+                          &Self::makeGlobalSet)
                      .add(FeatureSet::BulkMemory, &Self::makeBulkMemory);
     return (this->*pick(options))(none);
   }
@@ -944,7 +944,7 @@ private:
       case 5:
         return makeCallIndirect(unreachable);
       case 6:
-        return makeSetLocal(unreachable);
+        return makeLocalSet(unreachable);
       case 7:
         return makeStore(unreachable);
       case 8:
@@ -969,7 +969,7 @@ private:
   Expression* makeTrivial(Type type) {
     if (isConcreteType(type)) {
       if (oneIn(2)) {
-        return makeGetLocal(type);
+        return makeLocalGet(type);
       } else {
         return makeConst(type);
       }
@@ -1231,15 +1231,15 @@ private:
     return builder.makeCallIndirect(func->type, target, args, func->result);
   }
 
-  Expression* makeGetLocal(Type type) {
+  Expression* makeLocalGet(Type type) {
     auto& locals = typeLocals[type];
     if (locals.empty()) {
       return makeConst(type);
     }
-    return builder.makeGetLocal(vectorPick(locals), type);
+    return builder.makeLocalGet(vectorPick(locals), type);
   }
 
-  Expression* makeSetLocal(Type type) {
+  Expression* makeLocalSet(Type type) {
     bool tee = type != none;
     Type valueType;
     if (tee) {
@@ -1253,21 +1253,21 @@ private:
     }
     auto* value = make(valueType);
     if (tee) {
-      return builder.makeTeeLocal(vectorPick(locals), value);
+      return builder.makeLocalTee(vectorPick(locals), value);
     } else {
-      return builder.makeSetLocal(vectorPick(locals), value);
+      return builder.makeLocalSet(vectorPick(locals), value);
     }
   }
 
-  Expression* makeGetGlobal(Type type) {
+  Expression* makeGlobalGet(Type type) {
     auto& globals = globalsByType[type];
     if (globals.empty()) {
       return makeConst(type);
     }
-    return builder.makeGetGlobal(vectorPick(globals), type);
+    return builder.makeGlobalGet(vectorPick(globals), type);
   }
 
-  Expression* makeSetGlobal(Type type) {
+  Expression* makeGlobalSet(Type type) {
     assert(type == none);
     type = getConcreteType();
     auto& globals = globalsByType[type];
@@ -1275,7 +1275,7 @@ private:
       return makeTrivial(none);
     }
     auto* value = make(type);
-    return builder.makeSetGlobal(vectorPick(globals), value);
+    return builder.makeGlobalSet(vectorPick(globals), value);
   }
 
   Expression* makePointer() {

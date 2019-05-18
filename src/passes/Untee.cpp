@@ -33,7 +33,7 @@ struct Untee : public WalkerPass<PostWalker<Untee>> {
 
   Pass* create() override { return new Untee; }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     if (curr->isTee()) {
       if (curr->value->type == unreachable) {
         // we don't reach the tee, just remove it
@@ -42,7 +42,7 @@ struct Untee : public WalkerPass<PostWalker<Untee>> {
         // a normal tee. replace with set and get
         Builder builder(*getModule());
         replaceCurrent(builder.makeSequence(
-          curr, builder.makeGetLocal(curr->index, curr->value->type)));
+          curr, builder.makeLocalGet(curr->index, curr->value->type)));
         curr->setTee(false);
       }
     }

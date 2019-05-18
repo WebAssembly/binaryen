@@ -44,10 +44,10 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitSwitch(Switch* curr) { return ReturnType(); }
   ReturnType visitCall(Call* curr) { return ReturnType(); }
   ReturnType visitCallIndirect(CallIndirect* curr) { return ReturnType(); }
-  ReturnType visitGetLocal(GetLocal* curr) { return ReturnType(); }
-  ReturnType visitSetLocal(SetLocal* curr) { return ReturnType(); }
-  ReturnType visitGetGlobal(GetGlobal* curr) { return ReturnType(); }
-  ReturnType visitSetGlobal(SetGlobal* curr) { return ReturnType(); }
+  ReturnType visitLocalGet(LocalGet* curr) { return ReturnType(); }
+  ReturnType visitLocalSet(LocalSet* curr) { return ReturnType(); }
+  ReturnType visitGlobalGet(GlobalGet* curr) { return ReturnType(); }
+  ReturnType visitGlobalSet(GlobalSet* curr) { return ReturnType(); }
   ReturnType visitLoad(Load* curr) { return ReturnType(); }
   ReturnType visitStore(Store* curr) { return ReturnType(); }
   ReturnType visitAtomicRMW(AtomicRMW* curr) { return ReturnType(); }
@@ -103,14 +103,14 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Call);
       case Expression::Id::CallIndirectId:
         DELEGATE(CallIndirect);
-      case Expression::Id::GetLocalId:
-        DELEGATE(GetLocal);
-      case Expression::Id::SetLocalId:
-        DELEGATE(SetLocal);
-      case Expression::Id::GetGlobalId:
-        DELEGATE(GetGlobal);
-      case Expression::Id::SetGlobalId:
-        DELEGATE(SetGlobal);
+      case Expression::Id::LocalGetId:
+        DELEGATE(LocalGet);
+      case Expression::Id::LocalSetId:
+        DELEGATE(LocalSet);
+      case Expression::Id::GlobalGetId:
+        DELEGATE(GlobalGet);
+      case Expression::Id::GlobalSetId:
+        DELEGATE(GlobalSet);
       case Expression::Id::LoadId:
         DELEGATE(Load);
       case Expression::Id::StoreId:
@@ -189,10 +189,10 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Switch);
   UNIMPLEMENTED(Call);
   UNIMPLEMENTED(CallIndirect);
-  UNIMPLEMENTED(GetLocal);
-  UNIMPLEMENTED(SetLocal);
-  UNIMPLEMENTED(GetGlobal);
-  UNIMPLEMENTED(SetGlobal);
+  UNIMPLEMENTED(LocalGet);
+  UNIMPLEMENTED(LocalSet);
+  UNIMPLEMENTED(GlobalGet);
+  UNIMPLEMENTED(GlobalSet);
   UNIMPLEMENTED(Load);
   UNIMPLEMENTED(Store);
   UNIMPLEMENTED(AtomicRMW);
@@ -249,14 +249,14 @@ struct OverriddenVisitor {
         DELEGATE(Call);
       case Expression::Id::CallIndirectId:
         DELEGATE(CallIndirect);
-      case Expression::Id::GetLocalId:
-        DELEGATE(GetLocal);
-      case Expression::Id::SetLocalId:
-        DELEGATE(SetLocal);
-      case Expression::Id::GetGlobalId:
-        DELEGATE(GetGlobal);
-      case Expression::Id::SetGlobalId:
-        DELEGATE(SetGlobal);
+      case Expression::Id::LocalGetId:
+        DELEGATE(LocalGet);
+      case Expression::Id::LocalSetId:
+        DELEGATE(LocalSet);
+      case Expression::Id::GlobalGetId:
+        DELEGATE(GlobalGet);
+      case Expression::Id::GlobalSetId:
+        DELEGATE(GlobalSet);
       case Expression::Id::LoadId:
         DELEGATE(Load);
       case Expression::Id::StoreId:
@@ -344,16 +344,16 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitCallIndirect(CallIndirect* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitGetLocal(GetLocal* curr) {
+  ReturnType visitLocalGet(LocalGet* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitSetLocal(SetLocal* curr) {
+  ReturnType visitLocalSet(LocalSet* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitGetGlobal(GetGlobal* curr) {
+  ReturnType visitGlobalGet(GlobalGet* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitSetGlobal(SetGlobal* curr) {
+  ReturnType visitGlobalSet(GlobalSet* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitLoad(Load* curr) {
@@ -614,17 +614,17 @@ struct Walker : public VisitorType {
   static void doVisitCallIndirect(SubType* self, Expression** currp) {
     self->visitCallIndirect((*currp)->cast<CallIndirect>());
   }
-  static void doVisitGetLocal(SubType* self, Expression** currp) {
-    self->visitGetLocal((*currp)->cast<GetLocal>());
+  static void doVisitLocalGet(SubType* self, Expression** currp) {
+    self->visitLocalGet((*currp)->cast<LocalGet>());
   }
-  static void doVisitSetLocal(SubType* self, Expression** currp) {
-    self->visitSetLocal((*currp)->cast<SetLocal>());
+  static void doVisitLocalSet(SubType* self, Expression** currp) {
+    self->visitLocalSet((*currp)->cast<LocalSet>());
   }
-  static void doVisitGetGlobal(SubType* self, Expression** currp) {
-    self->visitGetGlobal((*currp)->cast<GetGlobal>());
+  static void doVisitGlobalGet(SubType* self, Expression** currp) {
+    self->visitGlobalGet((*currp)->cast<GlobalGet>());
   }
-  static void doVisitSetGlobal(SubType* self, Expression** currp) {
-    self->visitSetGlobal((*currp)->cast<SetGlobal>());
+  static void doVisitGlobalSet(SubType* self, Expression** currp) {
+    self->visitGlobalSet((*currp)->cast<GlobalSet>());
   }
   static void doVisitLoad(SubType* self, Expression** currp) {
     self->visitLoad((*currp)->cast<Load>());
@@ -772,23 +772,23 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         }
         break;
       }
-      case Expression::Id::GetLocalId: {
+      case Expression::Id::LocalGetId: {
         // TODO: optimize leaves with a direct call?
-        self->pushTask(SubType::doVisitGetLocal, currp);
+        self->pushTask(SubType::doVisitLocalGet, currp);
         break;
       }
-      case Expression::Id::SetLocalId: {
-        self->pushTask(SubType::doVisitSetLocal, currp);
-        self->pushTask(SubType::scan, &curr->cast<SetLocal>()->value);
+      case Expression::Id::LocalSetId: {
+        self->pushTask(SubType::doVisitLocalSet, currp);
+        self->pushTask(SubType::scan, &curr->cast<LocalSet>()->value);
         break;
       }
-      case Expression::Id::GetGlobalId: {
-        self->pushTask(SubType::doVisitGetGlobal, currp);
+      case Expression::Id::GlobalGetId: {
+        self->pushTask(SubType::doVisitGlobalGet, currp);
         break;
       }
-      case Expression::Id::SetGlobalId: {
-        self->pushTask(SubType::doVisitSetGlobal, currp);
-        self->pushTask(SubType::scan, &curr->cast<SetGlobal>()->value);
+      case Expression::Id::GlobalSetId: {
+        self->pushTask(SubType::doVisitGlobalSet, currp);
+        self->pushTask(SubType::scan, &curr->cast<GlobalSet>()->value);
         break;
       }
       case Expression::Id::LoadId: {

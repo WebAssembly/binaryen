@@ -60,14 +60,14 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
 
   Index getNumGets(Index i) { return numGets[i]; }
 
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     if (numSets[curr->index] == 0) {
       sfa[curr->index] = false;
     }
     numGets[curr->index]++;
   }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     numSets[curr->index]++;
     if (numSets[curr->index] > 1) {
       sfa[curr->index] = false;
@@ -116,8 +116,8 @@ public:
   }
 
 private:
-  SetLocal* isPushable(Expression* curr) {
-    auto* set = curr->dynCast<SetLocal>();
+  LocalSet* isPushable(Expression* curr) {
+    auto* set = curr->dynCast<LocalSet>();
     if (!set) {
       return nullptr;
     }
@@ -162,7 +162,7 @@ private:
     // it is ok to ignore the branching here, that is the crucial point of this
     // opt
     cumulativeEffects.branches = false;
-    std::vector<SetLocal*> toPush;
+    std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {
       auto* pushable = isPushable(list[i]);
@@ -223,7 +223,7 @@ private:
   }
 
   // Pushables may need to be scanned more than once, so cache their effects.
-  std::unordered_map<SetLocal*, EffectAnalyzer> pushableEffects;
+  std::unordered_map<LocalSet*, EffectAnalyzer> pushableEffects;
 };
 
 struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
@@ -246,7 +246,7 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
     walk(func->body);
   }
 
-  void visitGetLocal(GetLocal* curr) { numGetsSoFar[curr->index]++; }
+  void visitLocalGet(LocalGet* curr) { numGetsSoFar[curr->index]++; }
 
   void visitBlock(Block* curr) {
     // Pushing code only makes sense if we are size 3 or above: we need

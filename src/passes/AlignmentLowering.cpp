@@ -43,13 +43,13 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       ret = builder.makeBinary(
         OrInt32,
         builder.makeLoad(
-          1, false, curr->offset, 1, builder.makeGetLocal(temp, i32), i32),
+          1, false, curr->offset, 1, builder.makeLocalGet(temp, i32), i32),
         builder.makeBinary(ShlInt32,
                            builder.makeLoad(1,
                                             false,
                                             curr->offset + 1,
                                             1,
-                                            builder.makeGetLocal(temp, i32),
+                                            builder.makeLocalGet(temp, i32),
                                             i32),
                            builder.makeConst(Literal(int32_t(8)))));
       if (curr->signed_) {
@@ -62,13 +62,13 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeBinary(
             OrInt32,
             builder.makeLoad(
-              1, false, curr->offset, 1, builder.makeGetLocal(temp, i32), i32),
+              1, false, curr->offset, 1, builder.makeLocalGet(temp, i32), i32),
             builder.makeBinary(ShlInt32,
                                builder.makeLoad(1,
                                                 false,
                                                 curr->offset + 1,
                                                 1,
-                                                builder.makeGetLocal(temp, i32),
+                                                builder.makeLocalGet(temp, i32),
                                                 i32),
                                builder.makeConst(Literal(int32_t(8))))),
           builder.makeBinary(
@@ -78,7 +78,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                                 false,
                                                 curr->offset + 2,
                                                 1,
-                                                builder.makeGetLocal(temp, i32),
+                                                builder.makeLocalGet(temp, i32),
                                                 i32),
                                builder.makeConst(Literal(int32_t(16)))),
             builder.makeBinary(ShlInt32,
@@ -86,20 +86,20 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                                 false,
                                                 curr->offset + 3,
                                                 1,
-                                                builder.makeGetLocal(temp, i32),
+                                                builder.makeLocalGet(temp, i32),
                                                 i32),
                                builder.makeConst(Literal(int32_t(24))))));
       } else if (curr->align == 2) {
         ret = builder.makeBinary(
           OrInt32,
           builder.makeLoad(
-            2, false, curr->offset, 2, builder.makeGetLocal(temp, i32), i32),
+            2, false, curr->offset, 2, builder.makeLocalGet(temp, i32), i32),
           builder.makeBinary(ShlInt32,
                              builder.makeLoad(2,
                                               false,
                                               curr->offset + 2,
                                               2,
-                                              builder.makeGetLocal(temp, i32),
+                                              builder.makeLocalGet(temp, i32),
                                               i32),
                              builder.makeConst(Literal(int32_t(16)))));
       } else {
@@ -109,7 +109,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       WASM_UNREACHABLE();
     }
     replaceCurrent(
-      builder.makeBlock({builder.makeSetLocal(temp, curr->ptr), ret}));
+      builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret}));
   }
 
   void visitStore(Store* curr) {
@@ -126,23 +126,23 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     auto tempPtr = builder.addVar(getFunction(), i32);
     auto tempValue = builder.addVar(getFunction(), i32);
     auto* block =
-      builder.makeBlock({builder.makeSetLocal(tempPtr, curr->ptr),
-                         builder.makeSetLocal(tempValue, curr->value)});
+      builder.makeBlock({builder.makeLocalSet(tempPtr, curr->ptr),
+                         builder.makeLocalSet(tempValue, curr->value)});
     if (curr->bytes == 2) {
       block->list.push_back(
         builder.makeStore(1,
                           curr->offset,
                           1,
-                          builder.makeGetLocal(tempPtr, i32),
-                          builder.makeGetLocal(tempValue, i32),
+                          builder.makeLocalGet(tempPtr, i32),
+                          builder.makeLocalGet(tempValue, i32),
                           i32));
       block->list.push_back(builder.makeStore(
         1,
         curr->offset + 1,
         1,
-        builder.makeGetLocal(tempPtr, i32),
+        builder.makeLocalGet(tempPtr, i32),
         builder.makeBinary(ShrUInt32,
-                           builder.makeGetLocal(tempValue, i32),
+                           builder.makeLocalGet(tempValue, i32),
                            builder.makeConst(Literal(int32_t(8)))),
         i32));
     } else if (curr->bytes == 4) {
@@ -151,34 +151,34 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeStore(1,
                             curr->offset,
                             1,
-                            builder.makeGetLocal(tempPtr, i32),
-                            builder.makeGetLocal(tempValue, i32),
+                            builder.makeLocalGet(tempPtr, i32),
+                            builder.makeLocalGet(tempValue, i32),
                             i32));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 1,
           1,
-          builder.makeGetLocal(tempPtr, i32),
+          builder.makeLocalGet(tempPtr, i32),
           builder.makeBinary(ShrUInt32,
-                             builder.makeGetLocal(tempValue, i32),
+                             builder.makeLocalGet(tempValue, i32),
                              builder.makeConst(Literal(int32_t(8)))),
           i32));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 2,
           1,
-          builder.makeGetLocal(tempPtr, i32),
+          builder.makeLocalGet(tempPtr, i32),
           builder.makeBinary(ShrUInt32,
-                             builder.makeGetLocal(tempValue, i32),
+                             builder.makeLocalGet(tempValue, i32),
                              builder.makeConst(Literal(int32_t(16)))),
           i32));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 3,
           1,
-          builder.makeGetLocal(tempPtr, i32),
+          builder.makeLocalGet(tempPtr, i32),
           builder.makeBinary(ShrUInt32,
-                             builder.makeGetLocal(tempValue, i32),
+                             builder.makeLocalGet(tempValue, i32),
                              builder.makeConst(Literal(int32_t(24)))),
           i32));
       } else if (curr->align == 2) {
@@ -186,16 +186,16 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeStore(2,
                             curr->offset,
                             2,
-                            builder.makeGetLocal(tempPtr, i32),
-                            builder.makeGetLocal(tempValue, i32),
+                            builder.makeLocalGet(tempPtr, i32),
+                            builder.makeLocalGet(tempValue, i32),
                             i32));
         block->list.push_back(builder.makeStore(
           2,
           curr->offset + 2,
           2,
-          builder.makeGetLocal(tempPtr, i32),
+          builder.makeLocalGet(tempPtr, i32),
           builder.makeBinary(ShrUInt32,
-                             builder.makeGetLocal(tempValue, i32),
+                             builder.makeLocalGet(tempValue, i32),
                              builder.makeConst(Literal(int32_t(16)))),
           i32));
       } else {

@@ -210,7 +210,7 @@ private:
     std::vector<Expression*> callOperands;
     for (Index i = 0; i < params.size(); i++) {
       callOperands.push_back(
-        fromABI(builder.makeGetLocal(i, i64), params[i], module));
+        fromABI(builder.makeLocalGet(i, i64), params[i], module));
     }
     auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;

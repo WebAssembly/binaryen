@@ -95,11 +95,11 @@ struct Flatten
           }
           auto*& last = block->list.back();
           if (isConcreteType(last->type)) {
-            last = builder.makeSetLocal(temp, last);
+            last = builder.makeLocalSet(temp, last);
           }
           block->finalize(none);
           // and we leave just a get of the value
-          auto* rep = builder.makeGetLocal(temp, type);
+          auto* rep = builder.makeLocalGet(temp, type);
           replaceCurrent(rep);
           // the whole block is now a prelude
           ourPreludes.push_back(block);
@@ -117,15 +117,15 @@ struct Flatten
         if (isConcreteType(type)) {
           Index temp = builder.addVar(getFunction(), type);
           if (isConcreteType(iff->ifTrue->type)) {
-            iff->ifTrue = builder.makeSetLocal(temp, iff->ifTrue);
+            iff->ifTrue = builder.makeLocalSet(temp, iff->ifTrue);
           }
           if (iff->ifFalse && isConcreteType(iff->ifFalse->type)) {
-            iff->ifFalse = builder.makeSetLocal(temp, iff->ifFalse);
+            iff->ifFalse = builder.makeLocalSet(temp, iff->ifFalse);
           }
           // the whole if (+any preludes from the condition) is now a prelude
           prelude = rep;
           // and we leave just a get of the value
-          rep = builder.makeGetLocal(temp, type);
+          rep = builder.makeLocalGet(temp, type);
         }
         iff->ifTrue = getPreludesWithExpression(originalIfTrue, iff->ifTrue);
         if (iff->ifFalse) {
@@ -145,9 +145,9 @@ struct Flatten
         auto type = loop->type;
         if (isConcreteType(type)) {
           Index temp = builder.addVar(getFunction(), type);
-          loop->body = builder.makeSetLocal(temp, loop->body);
+          loop->body = builder.makeLocalSet(temp, loop->body);
           // and we leave just a get of the value
-          rep = builder.makeGetLocal(temp, type);
+          rep = builder.makeLocalGet(temp, type);
           // the whole if is now a prelude
           ourPreludes.push_back(loop);
           loop->type = none;
@@ -165,7 +165,7 @@ struct Flatten
         ourPreludes.swap(iter->second);
       }
       // special handling
-      if (auto* set = curr->dynCast<SetLocal>()) {
+      if (auto* set = curr->dynCast<LocalSet>()) {
         if (set->isTee()) {
           // we disallow local.tee
           if (set->value->type == unreachable) {
@@ -174,7 +174,7 @@ struct Flatten
             // use a set in a prelude + a get
             set->setTee(false);
             ourPreludes.push_back(set);
-            replaceCurrent(builder.makeGetLocal(set->index, set->value->type));
+            replaceCurrent(builder.makeLocalGet(set->index, set->value->type));
           }
         }
       } else if (auto* br = curr->dynCast<Break>()) {
@@ -183,12 +183,12 @@ struct Flatten
           if (isConcreteType(type)) {
             // we are sending a value. use a local instead
             Index temp = getTempForBreakTarget(br->name, type);
-            ourPreludes.push_back(builder.makeSetLocal(temp, br->value));
+            ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
               if (isConcreteType(br->type)) {
-                replaceCurrent(builder.makeGetLocal(temp, type));
+                replaceCurrent(builder.makeLocalGet(temp, type));
               } else {
                 assert(br->type == unreachable);
                 replaceCurrent(builder.makeUnreachable());
@@ -208,13 +208,13 @@ struct Flatten
           if (isConcreteType(type)) {
             // we are sending a value. use a local instead
             Index temp = builder.addVar(getFunction(), type);
-            ourPreludes.push_back(builder.makeSetLocal(temp, sw->value));
+            ourPreludes.push_back(builder.makeLocalSet(temp, sw->value));
             // we don't know which break target will be hit - assign to them all
             auto names = BranchUtils::getUniqueTargets(sw);
             for (auto name : names) {
               ourPreludes.push_back(
-                builder.makeSetLocal(getTempForBreakTarget(name, type),
-                                     builder.makeGetLocal(temp, type)));
+                builder.makeLocalSet(getTempForBreakTarget(name, type),
+                                     builder.makeLocalGet(temp, type)));
             }
             sw->value = nullptr;
             sw->finalize();
@@ -244,8 +244,8 @@ struct Flatten
         // use a local
         auto type = curr->type;
         Index temp = builder.addVar(getFunction(), type);
-        ourPreludes.push_back(builder.makeSetLocal(temp, curr));
-        replaceCurrent(builder.makeGetLocal(temp, type));
+        ourPreludes.push_back(builder.makeLocalSet(temp, curr));
+        replaceCurrent(builder.makeLocalGet(temp, type));
       }
     }
     // next, finish up: migrate our preludes if we can

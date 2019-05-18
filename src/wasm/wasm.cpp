@@ -102,13 +102,13 @@ const char* getExpressionName(Expression* curr) {
       return "call";
     case Expression::Id::CallIndirectId:
       return "call_indirect";
-    case Expression::Id::GetLocalId:
+    case Expression::Id::LocalGetId:
       return "local.get";
-    case Expression::Id::SetLocalId:
+    case Expression::Id::LocalSetId:
       return "local.set";
-    case Expression::Id::GetGlobalId:
+    case Expression::Id::GlobalGetId:
       return "global.get";
-    case Expression::Id::SetGlobalId:
+    case Expression::Id::GlobalSetId:
       return "global.set";
     case Expression::Id::LoadId:
       return "load";
@@ -427,9 +427,9 @@ bool FunctionType::operator==(FunctionType& b) {
 }
 bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
 
-bool SetLocal::isTee() { return type != none; }
+bool LocalSet::isTee() { return type != none; }
 
-void SetLocal::setTee(bool is) {
+void LocalSet::setTee(bool is) {
   if (is) {
     type = value->type;
   } else {
@@ -438,7 +438,7 @@ void SetLocal::setTee(bool is) {
   finalize(); // type may need to be unreachable
 }
 
-void SetLocal::finalize() {
+void LocalSet::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
   } else if (isTee()) {
@@ -448,7 +448,7 @@ void SetLocal::finalize() {
   }
 }
 
-void SetGlobal::finalize() {
+void GlobalSet::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
   }

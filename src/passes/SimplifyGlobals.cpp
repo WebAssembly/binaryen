@@ -47,7 +47,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
 
   GlobalUseScanner* create() override { return new GlobalUseScanner(infos); }
 
-  void visitSetGlobal(SetGlobal* curr) { (*infos)[curr->name].written = true; }
+  void visitGlobalSet(GlobalSet* curr) { (*infos)[curr->name].written = true; }
 
 private:
   GlobalInfoMap* infos;
@@ -65,7 +65,7 @@ struct GlobalUseModifier : public WalkerPass<PostWalker<GlobalUseModifier>> {
     return new GlobalUseModifier(copiedParentMap);
   }
 
-  void visitGetGlobal(GetGlobal* curr) {
+  void visitGlobalGet(GlobalGet* curr) {
     auto iter = copiedParentMap->find(curr->name);
     if (iter != copiedParentMap->end()) {
       curr->name = iter->second;
@@ -112,7 +112,7 @@ struct SimplifyGlobals : public Pass {
     for (auto& global : module->globals) {
       auto child = global->name;
       if (!global->mutable_ && !global->imported()) {
-        if (auto* get = global->init->dynCast<GetGlobal>()) {
+        if (auto* get = global->init->dynCast<GlobalGet>()) {
           auto parent = get->name;
           if (!module->getGlobal(get->name)->mutable_) {
             copiedParentMap[child] = parent;

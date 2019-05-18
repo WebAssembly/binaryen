@@ -22,10 +22,10 @@ BinaryenBreakId: 4
 BinaryenSwitchId: 5
 BinaryenCallId: 6
 BinaryenCallIndirectId: 7
-BinaryenGetLocalId: 8
-BinaryenSetLocalId: 9
-BinaryenGetGlobalId: 10
-BinaryenSetGlobalId: 11
+BinaryenLocalGetId: 8
+BinaryenLocalSetId: 9
+BinaryenGlobalGetId: 10
+BinaryenGlobalSetId: 11
 BinaryenLoadId: 12
 BinaryenStoreId: 13
 BinaryenConstId: 14
@@ -3227,12 +3227,12 @@ int main() {
     expressions[623] = BinaryenCallIndirect(the_module, expressions[618], operands, 4, "iiIfF");
   }
   expressions[624] = BinaryenUnary(the_module, 20, expressions[623]);
-  expressions[625] = BinaryenGetLocal(the_module, 0, 1);
+  expressions[625] = BinaryenLocalGet(the_module, 0, 1);
   expressions[626] = BinaryenDrop(the_module, expressions[625]);
   expressions[627] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
-  expressions[628] = BinaryenSetLocal(the_module, 0, expressions[627]);
+  expressions[628] = BinaryenLocalSet(the_module, 0, expressions[627]);
   expressions[629] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
-  expressions[630] = BinaryenTeeLocal(the_module, 0, expressions[629]);
+  expressions[630] = BinaryenLocalTee(the_module, 0, expressions[629]);
   expressions[631] = BinaryenDrop(the_module, expressions[630]);
   expressions[632] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[633] = BinaryenLoad(the_module, 4, 1, 0, 0, 1, expressions[632]);

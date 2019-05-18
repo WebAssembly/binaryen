@@ -1025,7 +1025,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           wasm.addGlobal(
             builder.makeGlobal(name,
                                type,
-                               builder.makeGetGlobal(import->name, type),
+                               builder.makeGlobalGet(import->name, type),
                                Builder::Mutable));
         }
       }
@@ -1262,7 +1262,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           //       when function pointer casts are emulated.
           if (wasm.table.segments.size() == 0) {
             wasm.table.segments.emplace_back(
-              builder.makeGetGlobal(Name(TABLE_BASE), i32));
+              builder.makeGlobalGet(Name(TABLE_BASE), i32));
           }
           auto& segment = wasm.table.segments[0];
           functionTableStarts[name] =
@@ -1732,7 +1732,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       if (curr->is<Return>()) {
         curr = curr->cast<Return>()->value;
       }
-      auto* get = curr->cast<GetGlobal>();
+      auto* get = curr->cast<GlobalGet>();
       tempRet0 = get->name;
     }
     // udivmoddi4 receives xl, xh, yl, yl, r, and
@@ -1750,26 +1750,26 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           y64 = Builder::addVar(func, "y64", i64);
     auto* body = allocator.alloc<Block>();
     body->list.push_back(
-      builder.makeSetLocal(x64, I64Utilities::recreateI64(builder, xl, xh)));
+      builder.makeLocalSet(x64, I64Utilities::recreateI64(builder, xl, xh)));
     body->list.push_back(
-      builder.makeSetLocal(y64, I64Utilities::recreateI64(builder, yl, yh)));
+      builder.makeLocalSet(y64, I64Utilities::recreateI64(builder, yl, yh)));
     body->list.push_back(builder.makeIf(
-      builder.makeGetLocal(r, i32),
+      builder.makeLocalGet(r, i32),
       builder.makeStore(8,
                         0,
                         8,
-                        builder.makeGetLocal(r, i32),
+                        builder.makeLocalGet(r, i32),
                         builder.makeBinary(RemUInt64,
-                                           builder.makeGetLocal(x64, i64),
-                                           builder.makeGetLocal(y64, i64)),
+                                           builder.makeLocalGet(x64, i64),
+                                           builder.makeLocalGet(y64, i64)),
                         i64)));
     body->list.push_back(
-      builder.makeSetLocal(x64,
+      builder.makeLocalSet(x64,
                            builder.makeBinary(DivUInt64,
-                                              builder.makeGetLocal(x64, i64),
-                                              builder.makeGetLocal(y64, i64))));
+                                              builder.makeLocalGet(x64, i64),
+                                              builder.makeLocalGet(y64, i64))));
     body->list.push_back(
-      builder.makeSetGlobal(tempRet0, I64Utilities::getI64High(builder, x64)));
+      builder.makeGlobalSet(tempRet0, I64Utilities::getI64High(builder, x64)));
     body->list.push_back(I64Utilities::getI64Low(builder, x64));
     body->finalize();
     func->body = body;
@@ -1855,7 +1855,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       IString name = ast->getIString();
       if (functionVariables.has(name)) {
         // var in scope
-        auto ret = allocator.alloc<GetLocal>();
+        auto ret = allocator.alloc<LocalGet>();
         ret->index = function->getLocalIndex(name);
         ret->type = asmToWasmType(asmData.getType(name));
         return ret;
@@ -1883,7 +1883,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                ? true
                : (std::cerr << name.str << '\n', false));
       MappedGlobal& global = mappedGlobals[name];
-      return builder.makeGetGlobal(name, global.type);
+      return builder.makeGlobalGet(name, global.type);
     }
     if (ast->isNumber()) {
       auto ret = allocator.alloc<Const>();
@@ -1902,7 +1902,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto* assign = ast->asAssignName();
       IString name = assign->target();
       if (functionVariables.has(name)) {
-        auto ret = allocator.alloc<SetLocal>();
+        auto ret = allocator.alloc<LocalSet>();
         ret->index = function->getLocalIndex(assign->target());
         ret->value = process(assign->value());
         ret->setTee(false);
@@ -1913,7 +1913,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       if (mappedGlobals.find(name) == mappedGlobals.end()) {
         Fatal() << "error: access of a non-existent global var " << name.str;
       }
-      auto* ret = builder.makeSetGlobal(name, process(assign->value()));
+      auto* ret = builder.makeGlobalSet(name, process(assign->value()));
       // global.set does not return; if our value is trivially not used, don't
       // emit a load (if nontrivially not used, opts get it later)
       auto parent = astStackHelper.getParent();
@@ -1921,7 +1921,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       }
       return builder.makeSequence(
-        ret, builder.makeGetGlobal(name, ret->value->type));
+        ret, builder.makeGlobalGet(name, ret->value->type));
     }
     if (ast->isAssign()) {
       auto* assign = ast->asAssign();
@@ -2155,13 +2155,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           if (value->type == i32) {
             // No wasm support, so use a temp local
             ensureI32Temp();
-            auto set = allocator.alloc<SetLocal>();
+            auto set = allocator.alloc<LocalSet>();
             set->index = function->getLocalIndex(I32_TEMP);
             set->value = value;
             set->setTee(false);
             set->finalize();
             auto get = [&]() {
-              auto ret = allocator.alloc<GetLocal>();
+              auto ret = allocator.alloc<LocalGet>();
               ret->index = function->getLocalIndex(I32_TEMP);
               ret->type = i32;
               return ret;
@@ -2264,9 +2264,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 view.bytes,
                 0,
                 processUnshifted(ast[2][1], view.bytes),
-                builder.makeTeeLocal(temp, process(ast[2][2])),
+                builder.makeLocalTee(temp, process(ast[2][2])),
                 type),
-              builder.makeGetLocal(temp, type));
+              builder.makeLocalGet(temp, type));
           } else if (name == Atomics_exchange) {
             return builder.makeAtomicRMW(
               AtomicRMWOp::Xchg,
@@ -3092,7 +3092,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // bits, then we can just look at the lower 32 bits
           auto temp = Builder::addVar(function, i64);
           auto* block = builder.makeBlock();
-          block->list.push_back(builder.makeSetLocal(temp, offsetor));
+          block->list.push_back(builder.makeLocalSet(temp, offsetor));
           // if high bits, we can break to the default (we'll fill in the name
           // later)
           breakWhenNotMatching = builder.makeBreak(
@@ -3101,10 +3101,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             builder.makeUnary(
               UnaryOp::WrapInt64,
               builder.makeBinary(BinaryOp::ShrUInt64,
-                                 builder.makeGetLocal(temp, i64),
+                                 builder.makeLocalGet(temp, i64),
                                  builder.makeConst(Literal(int64_t(32))))));
           block->list.push_back(breakWhenNotMatching);
-          block->list.push_back(builder.makeGetLocal(temp, i64));
+          block->list.push_back(builder.makeLocalGet(temp, i64));
           block->finalize();
           br->condition = builder.makeUnary(UnaryOp::WrapInt64, block);
         }
@@ -3158,7 +3158,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else {
         // we can't switch, make an if-chain instead of br_table
         auto var = Builder::addVar(function, br->condition->type);
-        top->list.push_back(builder.makeSetLocal(var, br->condition));
+        top->list.push_back(builder.makeLocalSet(var, br->condition));
         auto* brHolder = top;
         If* chain = nullptr;
         If* first = nullptr;
@@ -3175,7 +3175,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             name = nameMapper.pushLabelName("switch-case");
             auto* iff = builder.makeIf(
               builder.makeBinary(br->condition->type == i32 ? EqInt32 : EqInt64,
-                                 builder.makeGetLocal(var, br->condition->type),
+                                 builder.makeLocalGet(var, br->condition->type),
                                  builder.makeConst(getLiteral(condition))),
               builder.makeBreak(name),
               chain);

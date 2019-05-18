@@ -50,10 +50,10 @@ Module['BreakId'] = Module['_BinaryenBreakId']();
 Module['SwitchId'] = Module['_BinaryenSwitchId']();
 Module['CallId'] = Module['_BinaryenCallId']();
 Module['CallIndirectId'] = Module['_BinaryenCallIndirectId']();
-Module['GetLocalId'] = Module['_BinaryenGetLocalId']();
-Module['SetLocalId'] = Module['_BinaryenSetLocalId']();
-Module['GetGlobalId'] = Module['_BinaryenGetGlobalId']();
-Module['SetGlobalId'] = Module['_BinaryenSetGlobalId']();
+Module['LocalGetId'] = Module['_BinaryenLocalGetId']();
+Module['LocalSetId'] = Module['_BinaryenLocalSetId']();
+Module['GlobalGetId'] = Module['_BinaryenGlobalGetId']();
+Module['GlobalSetId'] = Module['_BinaryenGlobalSetId']();
 Module['LoadId'] = Module['_BinaryenLoadId']();
 Module['StoreId'] = Module['_BinaryenStoreId']();
 Module['ConstId'] = Module['_BinaryenConstId']();
@@ -450,31 +450,31 @@ function wrapModule(module, self) {
 
   self['local'] = {
     'get': function(index, type) {
-      return Module['_BinaryenGetLocal'](module, index, type);
+      return Module['_BinaryenLocalGet'](module, index, type);
     },
     'set': function(index, value) {
-      return Module['_BinaryenSetLocal'](module, index, value);
+      return Module['_BinaryenLocalSet'](module, index, value);
     },
     'tee': function(index, value) {
-      return Module['_BinaryenTeeLocal'](module, index, value);
+      return Module['_BinaryenLocalTee'](module, index, value);
     }
   }
 
-  self['getLocal'] = self['local']['get'];
-  self['setLocal'] = self['local']['set'];
-  self['teeLocal'] = self['local']['tee'];
+  self['localGet'] = self['local']['get'];
+  self['localSet'] = self['local']['set'];
+  self['localTee'] = self['local']['tee'];
 
   self['global'] = {
     'get': function(name, type) {
-      return Module['_BinaryenGetGlobal'](module, strToStack(name), type);
+      return Module['_BinaryenGlobalGet'](module, strToStack(name), type);
     },
     'set': function(name, value) {
-      return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
+      return Module['_BinaryenGlobalSet'](module, strToStack(name), value);
     }
   }
 
-  self['getGlobal'] = self['global']['get'];
-  self['setGlobal'] = self['global']['set'];
+  self['globalGet'] = self['global']['get'];
+  self['globalSet'] = self['global']['set'];
 
   self['currentMemory'] = self['current_memory'] = function() {
     return Module['_BinaryenHost'](module, Module['CurrentMemory']);
@@ -2078,32 +2078,32 @@ Module['getExpressionInfo'] = function(expr) {
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
         'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperand'])
       };
-    case Module['GetLocalId']:
+    case Module['LocalGetId']:
       return {
         'id': id,
         'type': type,
-        'index': Module['_BinaryenGetLocalGetIndex'](expr)
+        'index': Module['_BinaryenLocalGetGetIndex'](expr)
       };
-    case Module['SetLocalId']:
+    case Module['LocalSetId']:
       return {
         'id': id,
         'type': type,
-        'isTee': Boolean(Module['_BinaryenSetLocalIsTee'](expr)),
-        'index': Module['_BinaryenSetLocalGetIndex'](expr),
-        'value': Module['_BinaryenSetLocalGetValue'](expr)
+        'isTee': Boolean(Module['_BinaryenLocalSetIsTee'](expr)),
+        'index': Module['_BinaryenLocalSetGetIndex'](expr),
+        'value': Module['_BinaryenLocalSetGetValue'](expr)
       };
-    case Module['GetGlobalId']:
+    case Module['GlobalGetId']:
       return {
         'id': id,
         'type': type,
-        'name': UTF8ToString(Module['_BinaryenGetGlobalGetName'](expr))
+        'name': UTF8ToString(Module['_BinaryenGlobalGetGetName'](expr))
       };
-    case Module['SetGlobalId']:
+    case Module['GlobalSetId']:
       return {
         'id': id,
         'type': type,
-        'name': UTF8ToString(Module['_BinaryenSetGlobalGetName'](expr)),
-        'value': Module['_BinaryenSetGlobalGetValue'](expr)
+        'name': UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr)),
+        'value': Module['_BinaryenGlobalSetGetValue'](expr)
       };
     case Module['LoadId']:
       return {

@@ -59,8 +59,8 @@
  (export "phi" (func $phi))
  (export "smallIf" (func $smallIf))
  (export "dropCall" (func $dropCall))
- (export "useSetGlobal" (func $useSetGlobal))
- (export "usesSetGlobal2" (func $usesSetGlobal2))
+ (export "useGlobalSet" (func $useGlobalSet))
+ (export "usesGlobalSet2" (func $usesGlobalSet2))
  (export "breakThroughMany" (func $breakThroughMany))
  (export "ifChainEmpty" (func $ifChainEmpty))
  (export "heap8NoShift" (func $heap8NoShift))
@@ -1081,7 +1081,7 @@
    (call $phi)
   )
  )
- (func $useSetGlobal (; 46 ;) (result i32)
+ (func $useGlobalSet (; 46 ;) (result i32)
   (local $x i32)
   (local.set $x
    (block (result i32)
@@ -1103,7 +1103,7 @@
    )
   )
  )
- (func $usesSetGlobal2 (; 47 ;) (result i32)
+ (func $usesGlobalSet2 (; 47 ;) (result i32)
   (return
    (block (result i32)
     (block

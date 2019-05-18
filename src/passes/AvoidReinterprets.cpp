@@ -35,8 +35,8 @@ static bool canReplaceWithReinterpret(Load* load) {
   return load->type != unreachable && load->bytes == getTypeSize(load->type);
 }
 
-static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
-  std::set<GetLocal*> seen;
+static Load* getSingleLoad(LocalGraph* localGraph, LocalGet* get) {
+  std::set<LocalGet*> seen;
   seen.insert(get);
   while (1) {
     auto& sets = localGraph->getSetses[get];
@@ -48,7 +48,7 @@ static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
       return nullptr;
     }
     auto* value = Properties::getFallthrough(set->value);
-    if (auto* parentGet = value->dynCast<GetLocal>()) {
+    if (auto* parentGet = value->dynCast<LocalGet>()) {
       if (seen.count(parentGet)) {
         // We are in a cycle of gets, in unreachable code.
         return nullptr;
@@ -98,7 +98,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
   void visitUnary(Unary* curr) {
     if (isReinterpret(curr)) {
       if (auto* get =
-            Properties::getFallthrough(curr->value)->dynCast<GetLocal>()) {
+            Properties::getFallthrough(curr->value)->dynCast<LocalGet>()) {
         if (auto* load = getSingleLoad(localGraph, get)) {
           auto& info = infos[load];
           info.reinterpreted = true;
@@ -143,14 +143,14 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
             if (canReplaceWithReinterpret(load)) {
               replaceCurrent(makeReinterpretedLoad(load, load->ptr));
             }
-          } else if (auto* get = value->dynCast<GetLocal>()) {
+          } else if (auto* get = value->dynCast<LocalGet>()) {
             if (auto* load = getSingleLoad(localGraph, get)) {
               auto iter = infos.find(load);
               if (iter != infos.end()) {
                 auto& info = iter->second;
                 // A reinterpret of a get of a load - use the new local.
                 Builder builder(*module);
-                replaceCurrent(builder.makeGetLocal(
+                replaceCurrent(builder.makeLocalGet(
                   info.reinterpretedLocal, reinterpretType(load->type)));
               }
             }
@@ -164,16 +164,16 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
           auto& info = iter->second;
           Builder builder(*module);
           auto* ptr = curr->ptr;
-          curr->ptr = builder.makeGetLocal(info.ptrLocal, i32);
+          curr->ptr = builder.makeLocalGet(info.ptrLocal, i32);
           // Note that the other load can have its sign set to false - if the
           // original were an integer, the other is a float anyhow; and if
           // original were a float, we don't know what sign to use.
           replaceCurrent(builder.makeBlock(
-            {builder.makeSetLocal(info.ptrLocal, ptr),
-             builder.makeSetLocal(
+            {builder.makeLocalSet(info.ptrLocal, ptr),
+             builder.makeLocalSet(
                info.reinterpretedLocal,
                makeReinterpretedLoad(curr,
-                                     builder.makeGetLocal(info.ptrLocal, i32))),
+                                     builder.makeLocalGet(info.ptrLocal, i32))),
              curr}));
         }
       }

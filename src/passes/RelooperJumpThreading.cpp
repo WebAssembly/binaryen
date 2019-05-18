@@ -48,7 +48,7 @@ static If* isLabelCheckingIf(Expression* curr, Index labelIndex) {
   if (!(condition && condition->op == EqInt32)) {
     return nullptr;
   }
-  auto* left = condition->left->dynCast<GetLocal>();
+  auto* left = condition->left->dynCast<LocalGet>();
   if (!(left && left->index == labelIndex)) {
     return nullptr;
   }
@@ -59,11 +59,11 @@ static Index getCheckedLabelValue(If* iff) {
   return iff->condition->cast<Binary>()->right->cast<Const>()->value.geti32();
 }
 
-static SetLocal* isLabelSettingSetLocal(Expression* curr, Index labelIndex) {
+static LocalSet* isLabelSettingLocalSet(Expression* curr, Index labelIndex) {
   if (!curr) {
     return nullptr;
   }
-  auto* set = curr->dynCast<SetLocal>();
+  auto* set = curr->dynCast<LocalSet>();
   if (!set) {
     return nullptr;
   }
@@ -73,7 +73,7 @@ static SetLocal* isLabelSettingSetLocal(Expression* curr, Index labelIndex) {
   return set;
 }
 
-static Index getSetLabelValue(SetLocal* set) {
+static Index getSetLabelValue(LocalSet* set) {
   return set->value->cast<Const>()->value.geti32();
 }
 
@@ -93,8 +93,8 @@ struct LabelUseFinder : public PostWalker<LabelUseFinder> {
     }
   }
 
-  void visitSetLocal(SetLocal* curr) {
-    if (isLabelSettingSetLocal(curr, labelIndex)) {
+  void visitLocalSet(LocalSet* curr) {
+    if (isLabelSettingLocalSet(curr, labelIndex)) {
       sets[getSetLabelValue(curr)]++;
     }
   }
@@ -247,7 +247,7 @@ private:
       Index targetNum;
       Name targetName;
 
-      void visitSetLocal(SetLocal* curr) {
+      void visitLocalSet(LocalSet* curr) {
         if (curr->index == labelIndex) {
           if (Index(curr->value->cast<Const>()->value.geti32()) == targetNum) {
             replaceCurrent(Builder(*getModule()).makeBreak(targetName));

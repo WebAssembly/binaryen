@@ -404,7 +404,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
                            std::move(params),
                            i32,
                            std::move(vars),
-                           builder.makeReturn(builder.makeGetGlobal(
+                           builder.makeReturn(builder.makeGlobalGet(
                              INT64_TO_32_HIGH_BITS, i32)))));
     auto e = new Export();
     e->name = WASM_FETCH_HIGH_BITS;
@@ -547,7 +547,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
         Ref index;
         if (auto* c = offset->dynCast<Const>()) {
           index = ValueBuilder::makeInt(c->value.geti32() + i);
-        } else if (auto* get = offset->dynCast<GetGlobal>()) {
+        } else if (auto* get = offset->dynCast<GlobalGet>()) {
           index = ValueBuilder::makeBinary(
             ValueBuilder::makeName(stringToIString(asmangle(get->name.str))),
             PLUS,
@@ -630,7 +630,7 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
     ast->push_back(theVar);
     ValueBuilder::appendToVar(
       theVar, fromName(global->name, NameScope::Top), theValue);
-  } else if (auto* get = global->init->dynCast<GetGlobal>()) {
+  } else if (auto* get = global->init->dynCast<GlobalGet>()) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     ValueBuilder::appendToVar(
@@ -991,23 +991,23 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         visit(value, EXPRESSION_RESULT));
     }
 
-    Ref visitGetLocal(GetLocal* curr) {
+    Ref visitLocalGet(LocalGet* curr) {
       return ValueBuilder::makeName(
         fromName(func->getLocalNameOrGeneric(curr->index), NameScope::Local));
     }
 
-    Ref visitSetLocal(SetLocal* curr) {
+    Ref visitLocalSet(LocalSet* curr) {
       return makeSetVar(curr,
                         curr->value,
                         func->getLocalNameOrGeneric(curr->index),
                         NameScope::Local);
     }
 
-    Ref visitGetGlobal(GetGlobal* curr) {
+    Ref visitGlobalGet(GlobalGet* curr) {
       return ValueBuilder::makeName(fromName(curr->name, NameScope::Top));
     }
 
-    Ref visitSetGlobal(SetGlobal* curr) {
+    Ref visitGlobalSet(GlobalSet* curr) {
       return makeSetVar(curr, curr->value, curr->name, NameScope::Top);
     }
 
@@ -1092,10 +1092,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           sequenceAppend(ret, visitAndAssign(curr->ptr, ptr));
           ScopedTemp value(curr->value->type, parent, func);
           sequenceAppend(ret, visitAndAssign(curr->value, value));
-          GetLocal getPtr;
+          LocalGet getPtr;
           getPtr.index = func->getLocalIndex(ptr.getName());
           getPtr.type = i32;
-          GetLocal getValue;
+          LocalGet getValue;
           getValue.index = func->getLocalIndex(value.getName());
           getValue.type = curr->value->type;
           Store fakeStore = *curr;
@@ -1973,7 +1973,7 @@ void Wasm2JSGlue::emitMemory(
       ;
       return std::to_string(c->value.getInteger());
     }
-    if (auto* get = segment.offset->template dynCast<GetGlobal>()) {
+    if (auto* get = segment.offset->template dynCast<GlobalGet>()) {
       auto internalName = get->name;
       auto importedName = wasm.getGlobal(internalName)->base;
       return accessGlobal(asmangle(importedName.str));

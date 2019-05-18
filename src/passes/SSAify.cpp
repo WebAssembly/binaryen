@@ -61,7 +61,7 @@
 namespace wasm {
 
 // A set we know is impossible / not in the ast
-static SetLocal IMPOSSIBLE_SET;
+static LocalSet IMPOSSIBLE_SET;
 
 // Tracks assignments to locals, assuming single-assignment form, i.e.,
 // each assignment creates a new variable.
@@ -97,7 +97,7 @@ struct SSAify : public Pass {
   }
 
   void createNewIndexes(LocalGraph& graph) {
-    FindAll<SetLocal> sets(func->body);
+    FindAll<LocalSet> sets(func->body);
     for (auto* set : sets.list) {
       // Indexes already in SSA form do not need to be modified - there is
       // already just one set for that index. Otherwise, use a new index, unless
@@ -108,7 +108,7 @@ struct SSAify : public Pass {
     }
   }
 
-  bool hasMerges(SetLocal* set, LocalGraph& graph) {
+  bool hasMerges(LocalSet* set, LocalGraph& graph) {
     for (auto* get : graph.setInfluences[set]) {
       if (graph.getSetses[get].size() > 1) {
         return true;
@@ -118,7 +118,7 @@ struct SSAify : public Pass {
   }
 
   void computeGetsAndPhis(LocalGraph& graph) {
-    FindAll<GetLocal> gets(func->body);
+    FindAll<LocalGet> gets(func->body);
     for (auto* get : gets.list) {
       auto& sets = graph.getSetses[get];
       if (sets.size() == 0) {
@@ -154,7 +154,7 @@ struct SSAify : public Pass {
         if (set) {
           // a set exists, just add a tee of its value
           auto* value = set->value;
-          auto* tee = builder.makeTeeLocal(new_, value);
+          auto* tee = builder.makeLocalTee(new_, value);
           set->value = tee;
           // the value may have been something we tracked the location
           // of. if so, update that, since we moved it into the tee
@@ -167,8 +167,8 @@ struct SSAify : public Pass {
           if (func->isParam(old)) {
             // we add a set with the proper
             // param value at the beginning of the function
-            auto* set = builder.makeSetLocal(
-              new_, builder.makeGetLocal(old, func->getLocalType(old)));
+            auto* set = builder.makeLocalSet(
+              new_, builder.makeLocalGet(old, func->getLocalType(old)));
             functionPrepends.push_back(set);
           } else {
             // this is a zero init, so we don't need to do anything actually

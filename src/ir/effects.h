@@ -231,10 +231,10 @@ struct EffectAnalyzer
     }
   }
   void visitCallIndirect(CallIndirect* curr) { calls = true; }
-  void visitGetLocal(GetLocal* curr) { localsRead.insert(curr->index); }
-  void visitSetLocal(SetLocal* curr) { localsWritten.insert(curr->index); }
-  void visitGetGlobal(GetGlobal* curr) { globalsRead.insert(curr->name); }
-  void visitSetGlobal(SetGlobal* curr) { globalsWritten.insert(curr->name); }
+  void visitLocalGet(LocalGet* curr) { localsRead.insert(curr->index); }
+  void visitLocalSet(LocalSet* curr) { localsWritten.insert(curr->index); }
+  void visitGlobalGet(GlobalGet* curr) { globalsRead.insert(curr->name); }
+  void visitGlobalSet(GlobalSet* curr) { globalsWritten.insert(curr->name); }
   void visitLoad(Load* curr) {
     readsMemory = true;
     isAtomic |= curr->isAtomic;

@@ -89,7 +89,7 @@ Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
   if (!stackPointer) {
     Fatal() << "stack pointer global not found";
   }
-  return builder.makeGetGlobal(stackPointer->name, i32);
+  return builder.makeGlobalGet(stackPointer->name, i32);
 }
 
 Expression*
@@ -107,7 +107,7 @@ EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
   if (!stackPointer) {
     Fatal() << "stack pointer global not found";
   }
-  return builder.makeSetGlobal(stackPointer->name, value);
+  return builder.makeGlobalSet(stackPointer->name, value);
 }
 
 void EmscriptenGlueGenerator::generateStackSaveFunction() {
@@ -125,18 +125,18 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
   Function* function =
     builder.makeFunction(STACK_ALLOC, std::move(params), i32, {{"1", i32}});
   Expression* loadStack = generateLoadStackPointer();
-  GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
+  LocalGet* getSizeArg = builder.makeLocalGet(0, i32);
   Binary* sub = builder.makeBinary(SubInt32, loadStack, getSizeArg);
   const static uint32_t bitAlignment = 16;
   const static uint32_t bitMask = bitAlignment - 1;
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  SetLocal* teeStackLocal = builder.makeTeeLocal(1, maskedSub);
+  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub);
   Expression* storeStack = generateStoreStackPointer(teeStackLocal);
 
   Block* block = builder.makeBlock();
   block->list.push_back(storeStack);
-  GetLocal* getStackLocal2 = builder.makeGetLocal(1, i32);
+  LocalGet* getStackLocal2 = builder.makeLocalGet(1, i32);
   block->list.push_back(getStackLocal2);
   block->type = i32;
   function->body = block;
@@ -148,7 +148,7 @@ void EmscriptenGlueGenerator::generateStackRestoreFunction() {
   std::vector<NameType> params{{"0", i32}};
   Function* function =
     builder.makeFunction(STACK_RESTORE, std::move(params), none, {});
-  GetLocal* getArg = builder.makeGetLocal(0, i32);
+  LocalGet* getArg = builder.makeLocalGet(0, i32);
   Expression* store = generateStoreStackPointer(getArg);
 
   function->body = store;
@@ -224,8 +224,8 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     Name getter(std::string("g$") + g->base.c_str());
     ensureFunctionImport(&wasm, getter, "i");
     Expression* call = builder.makeCall(getter, {}, i32);
-    SetGlobal* setGlobal = builder.makeSetGlobal(g->name, call);
-    block->list.push_back(setGlobal);
+    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+    block->list.push_back(globalSet);
   }
 
   for (Global* g : gotFuncEntries) {
@@ -250,8 +250,8 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
         .c_str());
     ensureFunctionImport(&wasm, getter, "i");
     Expression* call = builder.makeCall(getter, {}, i32);
-    SetGlobal* setGlobal = builder.makeSetGlobal(g->name, call);
-    block->list.push_back(setGlobal);
+    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+    block->list.push_back(globalSet);
   }
 
   wasm.addFunction(assignFunc);
@@ -304,7 +304,7 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   Function* growFunction =
     builder.makeFunction(name, std::move(params), i32, {});
   growFunction->body =
-    builder.makeHost(GrowMemory, Name(), {builder.makeGetLocal(0, i32)});
+    builder.makeHost(GrowMemory, Name(), {builder.makeLocalGet(0, i32)});
 
   addExportedFunction(wasm, growFunction);
 
@@ -351,10 +351,10 @@ void EmscriptenGlueGenerator::generateDynCallThunk(std::string sig) {
   }
   Function* f =
     builder.makeFunction(name, std::move(params), funcType->result, {});
-  Expression* fptr = builder.makeGetLocal(0, i32);
+  Expression* fptr = builder.makeLocalGet(0, i32);
   std::vector<Expression*> args;
   for (unsigned i = 0; i < funcType->params.size(); ++i) {
-    args.push_back(builder.makeGetLocal(i + 1, funcType->params[i]));
+    args.push_back(builder.makeLocalGet(i + 1, funcType->params[i]));
   }
   Expression* call = builder.makeCallIndirect(funcType, fptr, args);
   f->body = call;
@@ -378,7 +378,7 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
 struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
   RemoveStackPointer(Global* stackPointer) : stackPointer(stackPointer) {}
 
-  void visitGetGlobal(GetGlobal* curr) {
+  void visitGlobalGet(GlobalGet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       needStackSave = true;
       if (!builder) {
@@ -388,7 +388,7 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
     }
   }
 
-  void visitSetGlobal(SetGlobal* curr) {
+  void visitGlobalSet(GlobalSet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       needStackRestore = true;
       if (!builder) {
@@ -505,14 +505,14 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   std::map<std::string, Address> ids;
   std::set<std::string> allSigs;
   // last sets in the current basic block, per index
-  std::map<Index, SetLocal*> sets;
+  std::map<Index, LocalSet*> sets;
 
   AsmConstWalker(Module& _wasm)
     : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
 
   void noteNonLinear(Expression* curr);
 
-  void visitSetLocal(SetLocal* curr);
+  void visitLocalSet(LocalSet* curr);
   void visitCall(Call* curr);
   void visitTable(Table* curr);
 
@@ -534,7 +534,7 @@ void AsmConstWalker::noteNonLinear(Expression* curr) {
   sets.clear();
 }
 
-void AsmConstWalker::visitSetLocal(SetLocal* curr) { sets[curr->index] = curr; }
+void AsmConstWalker::visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
 
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
@@ -545,7 +545,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     auto sig = fixupNameWithSig(curr->target, baseSig);
     auto* arg = curr->operands[0];
     while (!arg->dynCast<Const>()) {
-      if (auto* get = arg->dynCast<GetLocal>()) {
+      if (auto* get = arg->dynCast<LocalGet>()) {
         // The argument may be a local.get, in which case, the last set in this
         // basic block has the value.
         auto* set = sets[get->index];
@@ -697,7 +697,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       if (block && block->list.size() > 0) {
         value = block->list[0];
         // first item may be a set of a local that we get later
-        auto* set = value->dynCast<SetLocal>();
+        auto* set = value->dynCast<LocalSet>();
         if (set) {
           value = block->list[1];
         }
@@ -706,7 +706,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
           value = ret->value;
         }
         // if it's a get of that set, use that value
-        if (auto* get = value->dynCast<GetLocal>()) {
+        if (auto* get = value->dynCast<LocalGet>()) {
           if (set && get->index == set->index) {
             value = set->value;
           }

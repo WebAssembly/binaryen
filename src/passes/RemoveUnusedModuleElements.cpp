@@ -87,13 +87,13 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   }
   void visitCallIndirect(CallIndirect* curr) { usesTable = true; }
 
-  void visitGetGlobal(GetGlobal* curr) {
+  void visitGlobalGet(GlobalGet* curr) {
     if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) ==
         0) {
       queue.emplace_back(ModuleElementKind::Global, curr->name);
     }
   }
-  void visitSetGlobal(SetGlobal* curr) {
+  void visitGlobalSet(GlobalSet* curr) {
     if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) ==
         0) {
       queue.emplace_back(ModuleElementKind::Global, curr->name);

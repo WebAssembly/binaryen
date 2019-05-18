@@ -269,9 +269,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Expression* z;
         replaceCurrent(
           z = builder.makeIf(
-            builder.makeTeeLocal(temp, curr->condition),
+            builder.makeLocalTee(temp, curr->condition),
             builder.makeIf(builder.makeBinary(EqInt32,
-                                              builder.makeGetLocal(temp, i32),
+                                              builder.makeLocalGet(temp, i32),
                                               builder.makeConst(Literal(int32_t(
                                                 curr->targets.size() - 1)))),
                            builder.makeBreak(curr->targets.back()),
@@ -297,7 +297,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
     // TODO: if-else can be turned into a br_if as well, if one of the sides is
     //       a dead end we handle the case of a returned value to a local.set
-    //       later down, see visitSetLocal.
+    //       later down, see visitLocalSet.
   }
 
   // override scan to add a pre and a post check task to all nodes
@@ -895,7 +895,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         return nullptr;
       }
 
-      void visitSetLocal(SetLocal* curr) {
+      void visitLocalSet(LocalSet* curr) {
         // Sets of an if can be optimized in various ways that remove part of
         // the if branching, or all of it.
         // The optimizations we can do here can recurse and call each
@@ -929,7 +929,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       //  )
       // TODO: handle a condition in the br? need to watch for side effects
       bool optimizeSetIfWithBrArm(Expression** currp) {
-        auto* set = (*currp)->cast<SetLocal>();
+        auto* set = (*currp)->cast<LocalSet>();
         auto* iff = set->value->dynCast<If>();
         if (!iff || !isConcreteType(iff->type) ||
             !isConcreteType(iff->condition->type)) {
@@ -1004,18 +1004,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // merged or eliminated given the outside scope, and we
       // removed one of the if branches.
       bool optimizeSetIfWithCopyArm(Expression** currp) {
-        auto* set = (*currp)->cast<SetLocal>();
+        auto* set = (*currp)->cast<LocalSet>();
         auto* iff = set->value->dynCast<If>();
         if (!iff || !isConcreteType(iff->type) ||
             !isConcreteType(iff->condition->type)) {
           return false;
         }
         Builder builder(*getModule());
-        GetLocal* get = iff->ifTrue->dynCast<GetLocal>();
+        LocalGet* get = iff->ifTrue->dynCast<LocalGet>();
         if (get && get->index == set->index) {
           builder.flip(iff);
         } else {
-          get = iff->ifFalse->dynCast<GetLocal>();
+          get = iff->ifFalse->dynCast<LocalGet>();
           if (get && get->index != set->index) {
             get = nullptr;
           }

@@ -103,7 +103,7 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
   bool isI64 = type == i64;
   Builder builder(wasm);
   Expression* result = builder.makeBinary(
-    op, builder.makeGetLocal(0, type), builder.makeGetLocal(1, type));
+    op, builder.makeLocalGet(0, type), builder.makeLocalGet(1, type));
   BinaryOp divSIntOp = isI64 ? DivSInt64 : DivSInt32;
   UnaryOp eqZOp = isI64 ? EqZInt64 : EqZInt32;
   Literal minLit = isI64 ? Literal(std::numeric_limits<int64_t>::min())
@@ -117,9 +117,9 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
       builder.makeBinary(
         AndInt32,
         builder.makeBinary(
-          eqOp, builder.makeGetLocal(0, type), builder.makeConst(minLit)),
+          eqOp, builder.makeLocalGet(0, type), builder.makeConst(minLit)),
         builder.makeBinary(
-          eqOp, builder.makeGetLocal(1, type), builder.makeConst(negLit))),
+          eqOp, builder.makeLocalGet(1, type), builder.makeConst(negLit))),
       builder.makeConst(zeroLit),
       result);
   }
@@ -129,7 +129,7 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
   func->params.push_back(type);
   func->result = type;
   func->body =
-    builder.makeIf(builder.makeUnary(eqZOp, builder.makeGetLocal(1, type)),
+    builder.makeIf(builder.makeUnary(eqZOp, builder.makeLocalGet(1, type)),
                    builder.makeConst(zeroLit),
                    result);
   return func;
@@ -190,25 +190,25 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
   func->name = getUnaryFuncName(curr);
   func->params.push_back(type);
   func->result = retType;
-  func->body = builder.makeUnary(truncOp, builder.makeGetLocal(0, type));
+  func->body = builder.makeUnary(truncOp, builder.makeLocalGet(0, type));
   // too small XXX this is different than asm.js, which does frem. here we
   // clamp, which is much simpler/faster, and similar to native builds
   func->body = builder.makeIf(builder.makeBinary(leOp,
-                                                 builder.makeGetLocal(0, type),
+                                                 builder.makeLocalGet(0, type),
                                                  builder.makeConst(fMin)),
                               builder.makeConst(iMin),
                               func->body);
   // too big XXX see above
   func->body = builder.makeIf(
     builder.makeBinary(
-      geOp, builder.makeGetLocal(0, type), builder.makeConst(fMax)),
+      geOp, builder.makeLocalGet(0, type), builder.makeConst(fMax)),
     // NB: min here as well. anything out of range => to the min
     builder.makeConst(iMin),
     func->body);
   // nan
   func->body = builder.makeIf(
     builder.makeBinary(
-      neOp, builder.makeGetLocal(0, type), builder.makeGetLocal(0, type)),
+      neOp, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
     // NB: min here as well. anything invalid => to the min
     builder.makeConst(iMin),
     func->body);

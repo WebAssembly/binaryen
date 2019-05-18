@@ -114,7 +114,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       // the loop above - just the values. So here we must check that
       // sets do not interfere. (Note that due to flattening we
       // have no risk of tees etc.)
-      if (auto* set = curr->dynCast<SetLocal>()) {
+      if (auto* set = curr->dynCast<LocalSet>()) {
         for (auto& sinkable : usables) {
           // Check if the index is the same. Make sure to ignore
           // our own value, which we may have just added!
@@ -170,10 +170,10 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   }
 
   void handle(Expression* curr) {
-    if (auto* set = curr->dynCast<SetLocal>()) {
+    if (auto* set = curr->dynCast<LocalSet>()) {
       // Calculate equivalences
       equivalences.reset(set->index);
-      if (auto* get = set->value->dynCast<GetLocal>()) {
+      if (auto* get = set->value->dynCast<LocalGet>()) {
         equivalences.add(set->index, get->index);
       }
       // consider the value
@@ -185,7 +185,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
           // already exists in the table, this is good to reuse
           auto& info = iter->second;
           set->value =
-            Builder(*getModule()).makeGetLocal(info.index, value->type);
+            Builder(*getModule()).makeLocalGet(info.index, value->type);
           anotherPass = true;
         } else {
           // not in table, add this, maybe we can help others later
@@ -193,7 +193,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
             hashed, UsableInfo(value, set->index, getPassOptions())));
         }
       }
-    } else if (auto* get = curr->dynCast<GetLocal>()) {
+    } else if (auto* get = curr->dynCast<LocalGet>()) {
       if (auto* set = equivalences.getEquivalents(get->index)) {
         // Canonicalize to the lowest index. This lets hashing and comparisons
         // "just work".
@@ -205,7 +205,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // A relevant value is a non-trivial one, something we may want to reuse
   // and are able to.
   bool isRelevant(Expression* value) {
-    if (value->is<GetLocal>()) {
+    if (value->is<LocalGet>()) {
       return false; // trivial, this is what we optimize to!
     }
     if (!isConcreteType(value->type)) {

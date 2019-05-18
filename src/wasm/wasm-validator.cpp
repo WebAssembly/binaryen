@@ -259,10 +259,10 @@ public:
   void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitConst(Const* curr);
-  void visitGetLocal(GetLocal* curr);
-  void visitSetLocal(SetLocal* curr);
-  void visitGetGlobal(GetGlobal* curr);
-  void visitSetGlobal(SetGlobal* curr);
+  void visitLocalGet(LocalGet* curr);
+  void visitLocalSet(LocalSet* curr);
+  void visitGlobalGet(GlobalGet* curr);
+  void visitGlobalSet(GlobalSet* curr);
   void visitLoad(Load* curr);
   void visitStore(Store* curr);
   void visitAtomicRMW(AtomicRMW* curr);
@@ -624,7 +624,7 @@ void FunctionValidator::visitConst(Const* curr) {
                "all used features should be allowed");
 }
 
-void FunctionValidator::visitGetLocal(GetLocal* curr) {
+void FunctionValidator::visitLocalGet(LocalGet* curr) {
   shouldBeTrue(curr->index < getFunction()->getNumLocals(),
                curr,
                "local.get index must be small enough");
@@ -637,7 +637,7 @@ void FunctionValidator::visitGetLocal(GetLocal* curr) {
                "local.get must have proper type");
 }
 
-void FunctionValidator::visitSetLocal(SetLocal* curr) {
+void FunctionValidator::visitLocalSet(LocalSet* curr) {
   shouldBeTrue(curr->index < getFunction()->getNumLocals(),
                curr,
                "local.set index must be small enough");
@@ -653,7 +653,7 @@ void FunctionValidator::visitSetLocal(SetLocal* curr) {
   }
 }
 
-void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
+void FunctionValidator::visitGlobalGet(GlobalGet* curr) {
   if (!info.validateGlobally) {
     return;
   }
@@ -662,7 +662,7 @@ void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
                "global.get name must be valid");
 }
 
-void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
+void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
   if (!info.validateGlobally) {
     return;
   }
@@ -1563,7 +1563,7 @@ void FunctionValidator::visitFunction(Function* curr) {
 }
 
 static bool checkOffset(Expression* curr, Address add, Address max) {
-  if (curr->is<GetGlobal>()) {
+  if (curr->is<GlobalGet>()) {
     return true;
   }
   auto* c = curr->dynCast<Const>();
@@ -1761,7 +1761,8 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
                       "all used types should be allowed");
     info.shouldBeTrue(
       curr->init != nullptr, curr->name, "global init must be non-null");
-    info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(),
+    assert(curr->init);
+    info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GlobalGet>(),
                       curr->name,
                       "global init must be valid");
     if (!info.shouldBeEqual(curr->type,

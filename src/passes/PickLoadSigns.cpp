@@ -51,7 +51,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
     optimize();
   }
 
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     // this is a use. check from the context what it is, signed or unsigned,
     // etc.
     auto& usage = usages[curr->index];
@@ -81,7 +81,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
     }
   }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     if (curr->isTee()) {
       // we can't modify a tee, the value is used elsewhere
       return;
