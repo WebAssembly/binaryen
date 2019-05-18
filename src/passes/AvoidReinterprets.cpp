@@ -32,8 +32,7 @@ static bool canReplaceWithReinterpret(Load* load) {
   // a reinterpret of the same address. A partial load would see
   // more bytes and possibly invalid data, and an unreachable
   // pointer is just not interesting to handle.
-  return load->type != unreachable &&
-         load->bytes == getTypeSize(load->type);
+  return load->type != unreachable && load->bytes == getTypeSize(load->type);
 }
 
 static Load* getSingleLoad(LocalGraph* localGraph, GetLocal* get) {
