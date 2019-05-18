@@ -1,5 +1,6 @@
 (module
  (type $0 (func))
+ (type $1 (func (result f32)))
  (memory $0 1)
  (func $simple (; 0 ;) (type $0)
   (drop
@@ -146,6 +147,20 @@
   )
   (drop
    (local.get $3)
+  )
+ )
+ (func $partial1 (; 6 ;) (type $1) (result f32)
+  (f32.reinterpret_i32
+   (i32.load16_u
+    (i32.const 3)
+   )
+  )
+ )
+ (func $partial2 (; 7 ;) (type $1) (result f32)
+  (f32.reinterpret_i32
+   (i32.load8_u
+    (i32.const 3)
+   )
   )
  )
 )
