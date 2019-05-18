@@ -96,9 +96,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // it is ok to remove a load if the result is not used, and it has no
           // side effects (the load itself may trap, if we are not ignoring such
           // things)
+          auto* load = curr->cast<Load>();
           if (!resultUsed &&
               !EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
-            return curr->cast<Load>()->ptr;
+            if (!typeMatters || load->ptr->type == type) {
+              return load->ptr;
+            }
           }
           return curr;
         }
