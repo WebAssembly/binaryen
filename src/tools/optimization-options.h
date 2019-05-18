@@ -123,6 +123,36 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options* o, const std::string& argument) {
              passOptions.shrinkLevel = atoi(argument.c_str());
            })
+      .add("--always-inline-max-function-size",
+           "-aimfs",
+           "Max size of functions that are always inlined (default 2, which "
+           "is safe for use with -Os builds)",
+           Options::Arguments::One,
+           [this](Options* o, const std::string& argument) {
+             passOptions.alwaysInlineMaxSize =
+               static_cast<Index>(atoi(argument.c_str()));
+           })
+      .add("--flexible-inline-max-function-size",
+           "-fimfs",
+           "Max size of functions that are inlined when lightweight (no loops "
+           "or function calls) when optimizing aggressively for speed (-O3). "
+           "Default: 20",
+           Options::Arguments::One,
+           [this](Options* o, const std::string& argument) {
+             passOptions.flexibleInlineMaxSize =
+               static_cast<Index>(atoi(argument.c_str()));
+           })
+      .add("--one-caller-inline-max-function-size",
+           "-ocimfs",
+           "Max size of functions that are inlined when there is only one "
+           "caller (default 100). Reason this is not unbounded is that some "
+           "implementations may have a hard time optimizing really large "
+           "functions",
+           Options::Arguments::One,
+           [this](Options* o, const std::string& argument) {
+             passOptions.oneCallerInlineMaxSize =
+               static_cast<Index>(atoi(argument.c_str()));
+           })
       .add("--ignore-implicit-traps",
            "-iit",
            "Optimize under the helpful assumption that no surprising traps "
