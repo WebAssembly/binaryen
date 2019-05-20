@@ -136,7 +136,6 @@ private:
 
   // function parsing state
   std::unique_ptr<Function> currFunction;
-  size_t localIndex; // params and vars
   bool brokeToAutoBlock;
 
   UniqueNameMapper nameMapper;

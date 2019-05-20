@@ -657,7 +657,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     wasm.addExport(ex.release());
   }
   Expression* body = nullptr;
-  localIndex = 0;
+  size_t localIndex = 0; // params and vars
   brokeToAutoBlock = false;
   // we may have both params and a type. store the type info here
   std::vector<NameType> typeParams;
