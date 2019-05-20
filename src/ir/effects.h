@@ -78,23 +78,19 @@ struct EffectAnalyzer
   bool accessesGlobal() const {
     return globalsRead.size() + globalsWritten.size() > 0;
   }
-  bool accessesMemory() const {
-    return calls || readsMemory || writesMemory;
-  }
-  bool isStackNeutral() const {
-    return stackPops == 0 && stackPushes == 0;
-  }
+  bool accessesMemory() const { return calls || readsMemory || writesMemory; }
+  bool isStackNeutral() const { return stackPops == 0 && stackPushes == 0; }
   bool hasGlobalSideEffects() const {
     return calls || globalsWritten.size() > 0 || writesMemory || isAtomic;
   }
   bool hasSideEffects() const {
     return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
-        implicitTrap || !isStackNeutral();
+           implicitTrap || !isStackNeutral();
   }
   bool hasAnything() const {
     return branches || calls || accessesLocal() || readsMemory ||
-        writesMemory || accessesGlobal() || implicitTrap || isAtomic ||
-        !isStackNeutral();
+           writesMemory || accessesGlobal() || implicitTrap || isAtomic ||
+           !isStackNeutral();
   }
 
   bool noticesGlobalSideEffects() {

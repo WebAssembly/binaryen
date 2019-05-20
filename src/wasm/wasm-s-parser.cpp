@@ -843,7 +843,7 @@ Expression* SExpressionWasmBuilder::parseExpression(Element& s, Index depth) {
   return result;
 }
 
-Expression* SExpressionWasmBuilder::makeExpression(Element& s, Index depth) {
+Expression* SExpressionWasmBuilder::makeExpression(Element& s, Index depth){
 #define INSTRUCTION_PARSER
 #include "gen-s-parser.inc"
 }
@@ -904,7 +904,7 @@ Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makePush(Element &s) {
+Expression* SExpressionWasmBuilder::makePush(Element& s) {
   auto ret = allocator.alloc<Push>();
   ret->value = parseExpression(s[1], 0);
   ret->finalize();

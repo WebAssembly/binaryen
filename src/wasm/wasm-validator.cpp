@@ -1543,34 +1543,36 @@ void FunctionValidator::visitPop(Pop* curr) {
   if (curr->type == unreachable) {
     return;
   }
-  shouldBeTrue(sideStack.size() > curr->depth, curr,
-               "Cannot pop an empty stack");
+  shouldBeTrue(
+    sideStack.size() > curr->depth, curr, "Cannot pop an empty stack");
   if (sideStack.size() <= curr->depth) {
     return;
   }
   auto it = sideStack.end() - 1 - curr->depth;
-  shouldBeEqual(*it, curr->type, curr,
-                "Popped type does not match pushed type");
+  shouldBeEqual(
+    *it, curr->type, curr, "Popped type does not match pushed type");
   sideStack.erase(it);
   // Pops must be the children of blocks or grandchildren of blocks or pushes
-  shouldBeTrue((ancestors.size() >= 2 && ancestors.back()->is<Block>()) ||
-               (ancestors.size() >= 3 &&
-                ((*(ancestors.end() - 3))->is<Block>() ||
-                 (*(ancestors.end() - 3))->is<Push>())),
-               curr,
-               "Pop must be child of block or grandchild of block or push");
+  shouldBeTrue(
+    (ancestors.size() >= 2 && ancestors.back()->is<Block>()) ||
+      (ancestors.size() >= 3 && ((*(ancestors.end() - 3))->is<Block>() ||
+                                 (*(ancestors.end() - 3))->is<Push>())),
+    curr,
+    "Pop must be child of block or grandchild of block or push");
   // Check that pop's siblings are pops
   if (ancestors.size() >= 2) {
     Expression* parent = *(ancestors.end() - 2);
     ChildIterator children(parent);
     if (children.children.size() > 1) {
       // Only check once, instead of for every child
-      shouldBeTrue((*children.begin())->is<Pop>(), parent,
+      shouldBeTrue((*children.begin())->is<Pop>(),
+                   parent,
                    "Siblings of pops must be pops");
       if (*children.begin() == static_cast<Expression*>(curr)) {
         for (auto* child : children) {
           shouldBeTrue(!isConcreteType(child->type) || child->is<Pop>(),
-                       parent, "Siblings of pops must be pops");
+                       parent,
+                       "Siblings of pops must be pops");
         }
       }
     }
