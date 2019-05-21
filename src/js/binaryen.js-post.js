@@ -460,10 +460,6 @@ function wrapModule(module, self) {
     }
   }
 
-  self['localGet'] = self['local']['get'];
-  self['localSet'] = self['local']['set'];
-  self['localTee'] = self['local']['tee'];
-
   self['global'] = {
     'get': function(name, type) {
       return Module['_BinaryenGlobalGet'](module, strToStack(name), type);
@@ -472,9 +468,6 @@ function wrapModule(module, self) {
       return Module['_BinaryenGlobalSet'](module, strToStack(name), value);
     }
   }
-
-  self['globalGet'] = self['global']['get'];
-  self['globalSet'] = self['global']['set'];
 
   self['currentMemory'] = self['current_memory'] = function() {
     return Module['_BinaryenHost'](module, Module['CurrentMemory']);
