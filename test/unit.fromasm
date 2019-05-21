@@ -53,8 +53,8 @@
  (export "phi" (func $phi))
  (export "smallIf" (func $smallIf))
  (export "dropCall" (func $dropCall))
- (export "useSetGlobal" (func $useSetGlobal))
- (export "usesSetGlobal2" (func $usesSetGlobal2))
+ (export "useGlobalSet" (func $useGlobalSet))
+ (export "usesGlobalSet2" (func $usesGlobalSet2))
  (export "breakThroughMany" (func $breakThroughMany))
  (export "ifChainEmpty" (func $ifChainEmpty))
  (export "heap8NoShift" (func $heap8NoShift))
@@ -520,7 +520,7 @@
   )
   (call $phi)
  )
- (func $useSetGlobal (; 35 ;) (; has Stack IR ;) (result i32)
+ (func $useGlobalSet (; 35 ;) (; has Stack IR ;) (result i32)
   (global.set $Int
    (i32.const 10)
   )
@@ -532,7 +532,7 @@
   )
   (global.get $Int)
  )
- (func $usesSetGlobal2 (; 36 ;) (; has Stack IR ;) (result i32)
+ (func $usesGlobalSet2 (; 36 ;) (; has Stack IR ;) (result i32)
   (global.set $Int
    (i32.const 40)
   )

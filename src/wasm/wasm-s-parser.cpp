@@ -917,9 +917,9 @@ Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
   auto ret = allocator.alloc<Host>();
   ret->op = op;
   parseCallOperands(s, 1, s.size(), ret);
-  if (ret->op == HostOp::GrowMemory) {
+  if (ret->op == HostOp::MemoryGrow) {
     if (ret->operands.size() != 1) {
-      throw ParseException("grow_memory needs one operand");
+      throw ParseException("memory.grow needs one operand");
     }
   } else {
     if (ret->operands.size() != 0) {
@@ -949,15 +949,15 @@ Index SExpressionWasmBuilder::getLocalIndex(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeGetLocal(Element& s) {
-  auto ret = allocator.alloc<GetLocal>();
+Expression* SExpressionWasmBuilder::makeLocalGet(Element& s) {
+  auto ret = allocator.alloc<LocalGet>();
   ret->index = getLocalIndex(*s[1]);
   ret->type = currFunction->getLocalType(ret->index);
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeTeeLocal(Element& s) {
-  auto ret = allocator.alloc<SetLocal>();
+Expression* SExpressionWasmBuilder::makeLocalTee(Element& s) {
+  auto ret = allocator.alloc<LocalSet>();
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
   ret->setTee(true);
@@ -965,8 +965,8 @@ Expression* SExpressionWasmBuilder::makeTeeLocal(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeSetLocal(Element& s) {
-  auto ret = allocator.alloc<SetLocal>();
+Expression* SExpressionWasmBuilder::makeLocalSet(Element& s) {
+  auto ret = allocator.alloc<LocalSet>();
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
   ret->setTee(false);
@@ -974,8 +974,8 @@ Expression* SExpressionWasmBuilder::makeSetLocal(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
-  auto ret = allocator.alloc<GetGlobal>();
+Expression* SExpressionWasmBuilder::makeGlobalGet(Element& s) {
+  auto ret = allocator.alloc<GlobalGet>();
   ret->name = getGlobalName(*s[1]);
   auto* global = wasm.getGlobalOrNull(ret->name);
   if (!global) {
@@ -985,8 +985,8 @@ Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
-  auto ret = allocator.alloc<SetGlobal>();
+Expression* SExpressionWasmBuilder::makeGlobalSet(Element& s) {
+  auto ret = allocator.alloc<GlobalSet>();
   ret->name = getGlobalName(*s[1]);
   if (wasm.getGlobalOrNull(ret->name) &&
       !wasm.getGlobalOrNull(ret->name)->mutable_) {

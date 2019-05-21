@@ -117,7 +117,7 @@ struct SimplifyLocals
   bool firstCycle;
 
   // local => # of local.gets for it
-  GetLocalCounter getCounter;
+  LocalGetCounter getCounter;
 
   static void
   doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
@@ -216,14 +216,14 @@ struct SimplifyLocals
     }
   }
 
-  void optimizeGetLocal(GetLocal* curr) {
+  void optimizeLocalGet(LocalGet* curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
       auto* set = (*found->second.item)
-                    ->template cast<SetLocal>(); // the set we may be sinking
+                    ->template cast<LocalSet>(); // the set we may be sinking
       bool oneUse = firstCycle || getCounter.num[curr->index] == 1;
       // the set's value may be a get (i.e., the set is a copy)
-      auto* get = set->value->template dynCast<GetLocal>();
+      auto* get = set->value->template dynCast<LocalGet>();
       // if nesting is not allowed, and this might cause nesting, check if the
       // sink would cause such a thing
       if (!allowNesting) {
@@ -232,7 +232,7 @@ struct SimplifyLocals
           assert(expressionStack.size() >= 2);
           assert(expressionStack[expressionStack.size() - 1] == curr);
           auto* parent = expressionStack[expressionStack.size() - 2];
-          bool parentIsSet = parent->template is<SetLocal>();
+          bool parentIsSet = parent->template is<LocalSet>();
           // if the parent of this get is a set, we can sink into the set's
           // value, it would not be nested.
           if (!parentIsSet) {
@@ -258,7 +258,7 @@ struct SimplifyLocals
         assert(!set->isTee());
         set->setTee(true);
       }
-      // reuse the getlocal that is dying
+      // reuse the local.get that is dying
       *found->second.item = curr;
       ExpressionManipulator::nop(curr);
       sinkables.erase(found);
@@ -268,7 +268,7 @@ struct SimplifyLocals
 
   void visitDrop(Drop* curr) {
     // collapse drop-tee into set, which can occur if a get was sunk into a tee
-    auto* set = curr->value->dynCast<SetLocal>();
+    auto* set = curr->value->dynCast<LocalSet>();
     if (set) {
       assert(set->isTee());
       set->setTee(false);
@@ -355,28 +355,28 @@ struct SimplifyLocals
 
     Expression* original = *currp;
 
-    GetLocal originalGet;
+    LocalGet originalGet;
 
-    if (auto* get = (*currp)->dynCast<GetLocal>()) {
-      // Note: no visitor for GetLocal, so that we can handle it here.
+    if (auto* get = (*currp)->dynCast<LocalGet>()) {
+      // Note: no visitor for LocalGet, so that we can handle it here.
       originalGet = *get;
       original = &originalGet;
-      self->optimizeGetLocal(get);
+      self->optimizeLocalGet(get);
     }
 
-    // perform main SetLocal processing here, since we may be the result of
-    // replaceCurrent, i.e., no visitor for SetLocal, like GetLocal above.
-    auto* set = (*currp)->dynCast<SetLocal>();
+    // perform main LocalSet processing here, since we may be the result of
+    // replaceCurrent, i.e., no visitor for LocalSet, like LocalGet above.
+    auto* set = (*currp)->dynCast<LocalSet>();
 
     if (set) {
       // if we see a set that was already potentially-sinkable, then the
       // previous store is dead, leave just the value
       auto found = self->sinkables.find(set->index);
       if (found != self->sinkables.end()) {
-        auto* previous = (*found->second.item)->template cast<SetLocal>();
+        auto* previous = (*found->second.item)->template cast<LocalSet>();
         assert(!previous->isTee());
         auto* previousValue = previous->value;
-        Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(previous);
+        Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(previous);
         drop->value = previousValue;
         drop->finalize();
         self->sinkables.erase(found);
@@ -401,7 +401,7 @@ struct SimplifyLocals
     }
   }
 
-  bool canSink(SetLocal* set) {
+  bool canSink(LocalSet* set) {
     // we can never move a tee
     if (set->isTee()) {
       return false;
@@ -438,7 +438,7 @@ struct SimplifyLocals
     }
     Builder builder(*this->getModule());
     auto** item = sinkables.at(goodIndex).item;
-    auto* set = (*item)->template cast<SetLocal>();
+    auto* set = (*item)->template cast<LocalSet>();
     block->list[block->list.size() - 1] = set->value;
     *item = builder.makeNop();
     block->finalize();
@@ -506,23 +506,23 @@ struct SimplifyLocals
     // so we must check for that.
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
-      auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
+      auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->template cast<Break>();
-      auto* set = (*breakSetLocalPointer)->template cast<SetLocal>();
+      auto* set = (*breakLocalSetPointer)->template cast<LocalSet>();
       if (br->condition) {
         // TODO: optimize
-        FindAll<SetLocal> findAll(br->condition);
+        FindAll<LocalSet> findAll(br->condition);
         for (auto* otherSet : findAll.list) {
           if (otherSet == set) {
             // the set is indeed in the condition, so we can't just move it
             // but maybe there are no effects? see if, ignoring the set
             // itself, there is any risk
             Nop nop;
-            *breakSetLocalPointer = &nop;
+            *breakLocalSetPointer = &nop;
             EffectAnalyzer condition(this->getPassOptions(), br->condition);
             EffectAnalyzer value(this->getPassOptions(), set);
-            *breakSetLocalPointer = set;
+            *breakLocalSetPointer = set;
             if (condition.invalidates(value)) {
               // indeed, we can't do this, stop
               return;
@@ -543,24 +543,24 @@ struct SimplifyLocals
     }
     // move block local.set's value to the end, in return position, and nop the
     // set
-    auto* blockSetLocalPointer = sinkables.at(sharedIndex).item;
-    auto* value = (*blockSetLocalPointer)->template cast<SetLocal>()->value;
+    auto* blockLocalSetPointer = sinkables.at(sharedIndex).item;
+    auto* value = (*blockLocalSetPointer)->template cast<LocalSet>()->value;
     block->list[block->list.size() - 1] = value;
     block->type = value->type;
-    ExpressionManipulator::nop(*blockSetLocalPointer);
+    ExpressionManipulator::nop(*blockLocalSetPointer);
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
-      auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
+      auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->template cast<Break>();
       assert(!br->value);
       // if the break is conditional, then we must set the value here - if the
       // break is not reached, we must still have the new value in the local
-      auto* set = (*breakSetLocalPointer)->template cast<SetLocal>();
+      auto* set = (*breakLocalSetPointer)->template cast<LocalSet>();
       if (br->condition) {
         br->value = set;
         set->setTee(true);
-        *breakSetLocalPointer =
+        *breakLocalSetPointer =
           this->getModule()->allocator.template alloc<Nop>();
         // in addition, as this is a conditional br that now has a value, it now
         // returns a value, so it must be dropped
@@ -572,9 +572,9 @@ struct SimplifyLocals
       }
     }
     // finally, create a local.set on the block itself
-    auto* newSetLocal =
-      Builder(*this->getModule()).makeSetLocal(sharedIndex, block);
-    this->replaceCurrent(newSetLocal);
+    auto* newLocalSet =
+      Builder(*this->getModule()).makeLocalSet(sharedIndex, block);
+    this->replaceCurrent(newLocalSet);
     sinkables.clear();
     anotherCycle = true;
   }
@@ -657,7 +657,7 @@ struct SimplifyLocals
     if (iff->ifTrue->type != unreachable) {
       auto* ifTrueItem = ifTrue.at(goodIndex).item;
       ifTrueBlock->list[ifTrueBlock->list.size() - 1] =
-        (*ifTrueItem)->template cast<SetLocal>()->value;
+        (*ifTrueItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifTrueItem);
       ifTrueBlock->finalize();
       assert(ifTrueBlock->type != none);
@@ -665,7 +665,7 @@ struct SimplifyLocals
     if (iff->ifFalse->type != unreachable) {
       auto* ifFalseItem = ifFalse.at(goodIndex).item;
       ifFalseBlock->list[ifFalseBlock->list.size() - 1] =
-        (*ifFalseItem)->template cast<SetLocal>()->value;
+        (*ifFalseItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifFalseItem);
       ifFalseBlock->finalize();
       assert(ifFalseBlock->type != none);
@@ -673,9 +673,9 @@ struct SimplifyLocals
     iff->finalize(); // update type
     assert(iff->type != none);
     // finally, create a local.set on the iff itself
-    auto* newSetLocal =
-      Builder(*this->getModule()).makeSetLocal(goodIndex, iff);
-    *currp = newSetLocal;
+    auto* newLocalSet =
+      Builder(*this->getModule()).makeLocalSet(goodIndex, iff);
+    *currp = newLocalSet;
     anotherCycle = true;
   }
 
@@ -722,13 +722,13 @@ struct SimplifyLocals
     // Update the ifTrue side.
     Builder builder(*this->getModule());
     auto** item = sinkables.at(goodIndex).item;
-    auto* set = (*item)->template cast<SetLocal>();
+    auto* set = (*item)->template cast<LocalSet>();
     ifTrueBlock->list[ifTrueBlock->list.size() - 1] = set->value;
     *item = builder.makeNop();
     ifTrueBlock->finalize();
     assert(ifTrueBlock->type != none);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeGetLocal(set->index, set->value->type);
+    iff->ifFalse = builder.makeLocalGet(set->index, set->value->type);
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;
@@ -895,7 +895,7 @@ struct SimplifyLocals
     // will inhibit us creating an if return value.
     struct EquivalentOptimizer
       : public LinearExecutionWalker<EquivalentOptimizer> {
-      std::vector<Index>* numGetLocals;
+      std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;
       Module* module;
 
@@ -911,13 +911,13 @@ struct SimplifyLocals
         self->equivalences.clear();
       }
 
-      void visitSetLocal(SetLocal* curr) {
+      void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
         auto* value = curr->value;
-        while (auto* subSet = value->dynCast<SetLocal>()) {
+        while (auto* subSet = value->dynCast<LocalSet>()) {
           value = subSet->value;
         }
-        if (auto* get = value->dynCast<GetLocal>()) {
+        if (auto* get = value->dynCast<LocalGet>()) {
           if (equivalences.check(curr->index, get->index)) {
             // This is an unnecessary copy!
             if (removeEquivalentSets) {
@@ -939,7 +939,7 @@ struct SimplifyLocals
         }
       }
 
-      void visitGetLocal(GetLocal* curr) {
+      void visitLocalGet(LocalGet* curr) {
         // Canonicalize gets: if some are equivalent, then we can pick more
         // then one, and other passes may benefit from having more uniformity.
         if (auto* set = equivalences.getEquivalents(curr->index)) {
@@ -949,7 +949,7 @@ struct SimplifyLocals
           // get*, as we want to see what is best overall, treating this one as
           // to be decided upon.
           auto getNumGetsIgnoringCurr = [&](Index index) {
-            auto ret = (*numGetLocals)[index];
+            auto ret = (*numLocalGets)[index];
             if (index == curr->index) {
               assert(ret >= 1);
               ret--;
@@ -969,9 +969,9 @@ struct SimplifyLocals
           if (best != curr->index && getNumGetsIgnoringCurr(best) >
                                        getNumGetsIgnoringCurr(curr->index)) {
             // Update the get counts.
-            (*numGetLocals)[best]++;
-            assert((*numGetLocals)[curr->index] >= 1);
-            (*numGetLocals)[curr->index]--;
+            (*numLocalGets)[best]++;
+            assert((*numLocalGets)[curr->index] >= 1);
+            (*numLocalGets)[curr->index]--;
             // Make the change.
             curr->index = best;
             anotherCycle = true;
@@ -982,7 +982,7 @@ struct SimplifyLocals
 
     EquivalentOptimizer eqOpter;
     eqOpter.module = this->getModule();
-    eqOpter.numGetLocals = &getCounter.num;
+    eqOpter.numLocalGets = &getCounter.num;
     eqOpter.removeEquivalentSets = allowStructure;
     eqOpter.walkFunction(func);
 

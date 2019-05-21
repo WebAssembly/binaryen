@@ -23,14 +23,14 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function $0() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  (wasm2js_i32$0 = 0, wasm2js_i32$1 = __wasm_grow_memory(1)), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
+  (wasm2js_i32$0 = 0, wasm2js_i32$1 = __wasm_memory_grow(1)), HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
   return HEAP32[0];
  }
  
  var FUNCTION_TABLE = [];
- function __wasm_grow_memory(pagesToAdd) {
+ function __wasm_memory_grow(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
-  var oldPages = __wasm_current_memory() | 0;
+  var oldPages = __wasm_memory_size() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
@@ -50,14 +50,14 @@ function asmFunc(global, env, buffer) {
   return oldPages;
  }
  
- function __wasm_current_memory() {
+ function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
  
  return {
   "memory": Object.create(Object.prototype, {
    "grow": {
-    "value": __wasm_grow_memory
+    "value": __wasm_memory_grow
    }, 
    "buffer": {
     "get": function () {

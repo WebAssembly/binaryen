@@ -48,7 +48,7 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
             replaceCurrent(builder.makeBinary(
               MulFloat64,
               localizer.expr,
-              builder.makeGetLocal(localizer.index, localizer.expr->type)));
+              builder.makeLocalGet(localizer.index, localizer.expr->type)));
           } else if (exponent->value == Literal(double(0.5))) {
             // This is just a square root operation
             replaceCurrent(

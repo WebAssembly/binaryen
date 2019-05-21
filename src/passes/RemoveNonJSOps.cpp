@@ -314,7 +314,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     replaceCurrent(builder->makeCall(functionCall, {curr->value}, curr->type));
   }
 
-  void visitGetGlobal(GetGlobal* curr) {
+  void visitGlobalGet(GlobalGet* curr) {
     neededImportedGlobals.insert(std::make_pair(curr->name, curr->type));
   }
 };

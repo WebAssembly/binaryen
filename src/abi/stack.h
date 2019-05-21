@@ -50,21 +50,21 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   // TODO: find existing stack usage, and add on top of that - carefully
   Builder builder(wasm);
   auto* block = builder.makeBlock();
-  block->list.push_back(builder.makeSetLocal(
-    local, builder.makeGetGlobal(stackPointer->name, PointerType)));
+  block->list.push_back(builder.makeLocalSet(
+    local, builder.makeGlobalGet(stackPointer->name, PointerType)));
   // TODO: add stack max check
   Expression* added;
   if (PointerType == i32) {
     added = builder.makeBinary(AddInt32,
-                               builder.makeGetLocal(local, PointerType),
+                               builder.makeLocalGet(local, PointerType),
                                builder.makeConst(Literal(int32_t(size))));
   } else {
     WASM_UNREACHABLE();
   }
-  block->list.push_back(builder.makeSetGlobal(stackPointer->name, added));
+  block->list.push_back(builder.makeGlobalSet(stackPointer->name, added));
   auto makeStackRestore = [&]() {
-    return builder.makeSetGlobal(stackPointer->name,
-                                 builder.makeGetLocal(local, PointerType));
+    return builder.makeGlobalSet(stackPointer->name,
+                                 builder.makeLocalGet(local, PointerType));
   };
   // add stack restores to the returns
   FindAllPointers<Return> finder(func->body);
@@ -74,10 +74,10 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
       // handle the returned value
       auto* block = builder.makeBlock();
       auto temp = builder.addVar(func, ret->value->type);
-      block->list.push_back(builder.makeSetLocal(temp, ret->value));
+      block->list.push_back(builder.makeLocalSet(temp, ret->value));
       block->list.push_back(makeStackRestore());
       block->list.push_back(
-        builder.makeReturn(builder.makeGetLocal(temp, ret->value->type)));
+        builder.makeReturn(builder.makeLocalGet(temp, ret->value->type)));
       block->finalize();
       *ptr = block;
     } else {
@@ -95,9 +95,9 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   } else {
     // save the return value
     auto temp = builder.addVar(func, func->result);
-    block->list.push_back(builder.makeSetLocal(temp, func->body));
+    block->list.push_back(builder.makeLocalSet(temp, func->body));
     block->list.push_back(makeStackRestore());
-    block->list.push_back(builder.makeGetLocal(temp, func->result));
+    block->list.push_back(builder.makeLocalGet(temp, func->result));
   }
   block->finalize();
   func->body = block;

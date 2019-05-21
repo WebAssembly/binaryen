@@ -159,7 +159,7 @@ inline Expression* getFallthrough(Expression* curr) {
   if (curr->type == unreachable) {
     return curr;
   }
-  if (auto* set = curr->dynCast<SetLocal>()) {
+  if (auto* set = curr->dynCast<LocalSet>()) {
     if (set->isTee()) {
       return getFallthrough(set->value);
     }

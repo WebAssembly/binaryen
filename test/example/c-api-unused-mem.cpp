@@ -26,7 +26,7 @@ int main() {
     expressions[1] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[1]);
-  expressions[2] = BinaryenGetLocal(the_module, 0, 1);
+  expressions[2] = BinaryenLocalGet(the_module, 0, 1);
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[4] = BinaryenStore(the_module, 4, 0, 0, expressions[3], expressions[2], 1);
   expressions[5] = BinaryenReturn(the_module, expressions[0]);
@@ -42,7 +42,7 @@ int main() {
   }
   expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[8] = BinaryenLoad(the_module, 4, 0, 0, 0, 1, expressions[7]);
-  expressions[9] = BinaryenSetLocal(the_module, 0, expressions[8]);
+  expressions[9] = BinaryenLocalSet(the_module, 0, expressions[8]);
   relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[9]);
   RelooperAddBranch(relooperBlocks[2], relooperBlocks[0], expressions[0], expressions[0]);
   expressions[10] = RelooperRenderAndDispose(the_relooper, relooperBlocks[2], 1);

@@ -378,7 +378,7 @@ enum BinaryOp {
   InvalidBinary
 };
 
-enum HostOp { CurrentMemory, GrowMemory };
+enum HostOp { MemorySize, MemoryGrow };
 
 enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
 
@@ -449,10 +449,10 @@ public:
     SwitchId,
     CallId,
     CallIndirectId,
-    GetLocalId,
-    SetLocalId,
-    GetGlobalId,
-    SetGlobalId,
+    LocalGetId,
+    LocalSetId,
+    GlobalGetId,
+    GlobalSetId,
     LoadId,
     StoreId,
     ConstId,
@@ -648,18 +648,18 @@ public:
   void finalize();
 };
 
-class GetLocal : public SpecificExpression<Expression::GetLocalId> {
+class LocalGet : public SpecificExpression<Expression::LocalGetId> {
 public:
-  GetLocal() = default;
-  GetLocal(MixedArena& allocator) {}
+  LocalGet() = default;
+  LocalGet(MixedArena& allocator) {}
 
   Index index;
 };
 
-class SetLocal : public SpecificExpression<Expression::SetLocalId> {
+class LocalSet : public SpecificExpression<Expression::LocalSetId> {
 public:
-  SetLocal() = default;
-  SetLocal(MixedArena& allocator) {}
+  LocalSet() = default;
+  LocalSet(MixedArena& allocator) {}
 
   void finalize();
 
@@ -670,18 +670,18 @@ public:
   void setTee(bool is);
 };
 
-class GetGlobal : public SpecificExpression<Expression::GetGlobalId> {
+class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
 public:
-  GetGlobal() = default;
-  GetGlobal(MixedArena& allocator) {}
+  GlobalGet() = default;
+  GlobalGet(MixedArena& allocator) {}
 
   Name name;
 };
 
-class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
+class GlobalSet : public SpecificExpression<Expression::GlobalSetId> {
 public:
-  SetGlobal() = default;
-  SetGlobal(MixedArena& allocator) {}
+  GlobalSet() = default;
+  GlobalSet(MixedArena& allocator) {}
 
   Name name;
   Expression* value;

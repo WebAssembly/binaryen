@@ -69,7 +69,7 @@ struct RedundantSetElimination
 
   // cfg traversal work
 
-  static void doVisitSetLocal(RedundantSetElimination* self,
+  static void doVisitLocalSet(RedundantSetElimination* self,
                               Expression** currp) {
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.setps.push_back(currp);
@@ -160,7 +160,7 @@ struct RedundantSetElimination
     if (auto* c = value->dynCast<Const>()) {
       // a constant
       return getLiteralValue(c->value);
-    } else if (auto* get = value->dynCast<GetLocal>()) {
+    } else if (auto* get = value->dynCast<LocalGet>()) {
       // a copy of whatever that was
       return currValues[get->index];
     } else {
@@ -292,7 +292,7 @@ struct RedundantSetElimination
       auto currValues = curr->contents.start; // we'll modify this as we go
       auto& setps = curr->contents.setps;
       for (auto** setp : setps) {
-        auto* set = (*setp)->cast<SetLocal>();
+        auto* set = (*setp)->cast<LocalSet>();
         currValues[set->index] = getValue(set->value, currValues);
       }
       if (currValues == curr->contents.end) {
@@ -328,7 +328,7 @@ struct RedundantSetElimination
       auto currValues = block->contents.start; // we'll modify this as we go
       auto& setps = block->contents.setps;
       for (auto** setp : setps) {
-        auto* set = (*setp)->cast<SetLocal>();
+        auto* set = (*setp)->cast<LocalSet>();
         auto oldValue = currValues[set->index];
         auto newValue = getValue(set->value, currValues);
         auto index = set->index;
@@ -343,10 +343,10 @@ struct RedundantSetElimination
   }
 
   void remove(Expression** setp) {
-    auto* set = (*setp)->cast<SetLocal>();
+    auto* set = (*setp)->cast<LocalSet>();
     auto* value = set->value;
     if (!set->isTee()) {
-      auto* drop = ExpressionManipulator::convert<SetLocal, Drop>(set);
+      auto* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
       drop->value = value;
       drop->finalize();
     } else {

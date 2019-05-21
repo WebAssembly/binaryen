@@ -7,13 +7,13 @@
   (if
    (i32.lt_u
     (i32.mul
-     (current_memory)
+     (memory.size)
      (i32.const 65536)
     )
     (local.get $0)
    )
    (drop
-    (grow_memory
+    (memory.grow
      (i32.sub
       (i32.div_u
        (i32.add
@@ -22,7 +22,7 @@
        )
        (i32.const 65536)
       )
-      (current_memory)
+      (memory.size)
      )
     )
    )
@@ -65,13 +65,13 @@ optimized:
   (if
    (i32.lt_u
     (i32.shl
-     (current_memory)
+     (memory.size)
      (i32.const 16)
     )
     (local.get $0)
    )
    (drop
-    (grow_memory
+    (memory.grow
      (i32.sub
       (i32.div_u
        (i32.add
@@ -80,7 +80,7 @@ optimized:
        )
        (i32.const 65536)
       )
-      (current_memory)
+      (memory.size)
      )
     )
    )

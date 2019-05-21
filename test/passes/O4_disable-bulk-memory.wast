@@ -224,7 +224,7 @@
    )
   )
   (local.set $5
-   (current_memory)
+   (memory.size)
   )
   (if
    (i32.gt_u
@@ -269,14 +269,14 @@
     )
     (if
      (i32.lt_s
-      (grow_memory
+      (memory.grow
        (local.get $3)
       )
       (i32.const 0)
      )
      (if
       (i32.lt_s
-       (grow_memory
+       (memory.grow
         (local.get $2)
        )
        (i32.const 0)

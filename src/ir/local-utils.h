@@ -22,12 +22,12 @@
 
 namespace wasm {
 
-struct GetLocalCounter : public PostWalker<GetLocalCounter> {
+struct LocalGetCounter : public PostWalker<LocalGetCounter> {
   std::vector<Index> num;
 
-  GetLocalCounter() = default;
-  GetLocalCounter(Function* func) { analyze(func, func->body); }
-  GetLocalCounter(Function* func, Expression* ast) { analyze(func, ast); }
+  LocalGetCounter() = default;
+  LocalGetCounter(Function* func) { analyze(func, func->body); }
+  LocalGetCounter(Function* func, Expression* ast) { analyze(func, ast); }
 
   void analyze(Function* func) { analyze(func, func->body); }
   void analyze(Function* func, Expression* ast) {
@@ -36,7 +36,7 @@ struct GetLocalCounter : public PostWalker<GetLocalCounter> {
     walk(ast);
   }
 
-  void visitGetLocal(GetLocal* curr) { num[curr->index]++; }
+  void visitLocalGet(LocalGet* curr) { num[curr->index]++; }
 };
 
 // Removes trivially unneeded sets: sets for whom there is no possible get, and
@@ -44,33 +44,33 @@ struct GetLocalCounter : public PostWalker<GetLocalCounter> {
 struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
   PassOptions& passOptions;
 
-  GetLocalCounter* getLocalCounter = nullptr;
+  LocalGetCounter* localGetCounter = nullptr;
 
   UnneededSetRemover(Function* func, PassOptions& passOptions)
     : passOptions(passOptions) {
-    GetLocalCounter counter(func);
+    LocalGetCounter counter(func);
     UnneededSetRemover inner(counter, func, passOptions);
     removed = inner.removed;
   }
 
-  UnneededSetRemover(GetLocalCounter& getLocalCounter,
+  UnneededSetRemover(LocalGetCounter& localGetCounter,
                      Function* func,
                      PassOptions& passOptions)
-    : passOptions(passOptions), getLocalCounter(&getLocalCounter) {
+    : passOptions(passOptions), localGetCounter(&localGetCounter) {
     walk(func->body);
   }
 
   bool removed = false;
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     // If no possible uses, remove.
-    if (getLocalCounter->num[curr->index] == 0) {
+    if (localGetCounter->num[curr->index] == 0) {
       remove(curr);
     }
     // If setting the same value as we already have, remove.
     auto* value = curr->value;
     while (true) {
-      if (auto* set = value->dynCast<SetLocal>()) {
+      if (auto* set = value->dynCast<LocalSet>()) {
         if (set->index == curr->index) {
           remove(curr);
         } else {
@@ -78,7 +78,7 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
           value = set->value;
           continue;
         }
-      } else if (auto* get = value->dynCast<GetLocal>()) {
+      } else if (auto* get = value->dynCast<LocalGet>()) {
         if (get->index == curr->index) {
           remove(curr);
         }
@@ -87,12 +87,12 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
     }
   }
 
-  void remove(SetLocal* set) {
+  void remove(LocalSet* set) {
     auto* value = set->value;
     if (set->isTee()) {
       replaceCurrent(value);
     } else if (EffectAnalyzer(passOptions, set->value).hasSideEffects()) {
-      Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(set);
+      Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
       drop->value = value;
       drop->finalize();
     } else {

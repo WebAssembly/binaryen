@@ -51,7 +51,7 @@ struct CoalesceLocals
 
   void calculateInterferences();
 
-  void calculateInterferences(const LocalSet& locals);
+  void calculateInterferences(const SetOfLocals& locals);
 
   void pickIndicesFromOrder(std::vector<Index>& order,
                             std::vector<Index>& indices);
@@ -120,7 +120,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
       }
       for (auto& action : arrivingBlock->contents.actions) {
         if (action.isSet()) {
-          auto* set = (*action.origin)->cast<SetLocal>();
+          auto* set = (*action.origin)->cast<LocalSet>();
           if (auto* get = getCopy(set)) {
             // this is indeed a copy, add to the cost (default cost is 2, so
             // this adds 50%, and can mostly break ties)
@@ -163,7 +163,7 @@ void CoalesceLocals::calculateInterferences() {
   }
   // Params have a value on entry, so mark them as live, as variables
   // live at the entry expect their zero-init value.
-  LocalSet start = entry->contents.start;
+  SetOfLocals start = entry->contents.start;
   auto numParams = getFunction()->getNumParams();
   for (Index i = 0; i < numParams; i++) {
     start.insert(i);
@@ -171,7 +171,7 @@ void CoalesceLocals::calculateInterferences() {
   calculateInterferences(start);
 }
 
-void CoalesceLocals::calculateInterferences(const LocalSet& locals) {
+void CoalesceLocals::calculateInterferences(const SetOfLocals& locals) {
   Index size = locals.size();
   for (Index i = 0; i < size; i++) {
     for (Index j = i + 1; j < size; j++) {
@@ -358,15 +358,15 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
     auto& actions = curr->contents.actions;
     for (auto& action : actions) {
       if (action.isGet()) {
-        auto* get = (*action.origin)->cast<GetLocal>();
+        auto* get = (*action.origin)->cast<LocalGet>();
         get->index = indices[get->index];
       } else if (action.isSet()) {
-        auto* set = (*action.origin)->cast<SetLocal>();
+        auto* set = (*action.origin)->cast<LocalSet>();
         set->index = indices[set->index];
         // in addition, we can optimize out redundant copies and ineffective
         // sets
-        GetLocal* get;
-        if ((get = set->value->dynCast<GetLocal>()) &&
+        LocalGet* get;
+        if ((get = set->value->dynCast<LocalGet>()) &&
             get->index == set->index) {
           action.removeCopy();
           continue;
@@ -378,7 +378,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
           *action.origin = set->value;
           if (!set->isTee()) {
             // we need to drop it
-            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(set);
+            Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
             drop->value = *action.origin;
             *action.origin = drop;
           }

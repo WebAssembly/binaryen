@@ -243,10 +243,10 @@ struct SafeHeap : public Pass {
     func->result = style.type;
     Builder builder(*module);
     auto* block = builder.makeBlock();
-    block->list.push_back(builder.makeSetLocal(
+    block->list.push_back(builder.makeLocalSet(
       2,
       builder.makeBinary(
-        AddInt32, builder.makeGetLocal(0, i32), builder.makeGetLocal(1, i32))));
+        AddInt32, builder.makeLocalGet(0, i32), builder.makeLocalGet(1, i32))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(makeBoundsCheck(style.type, builder, 2, style.bytes));
     // check proper alignment
@@ -256,7 +256,7 @@ struct SafeHeap : public Pass {
     // do the load
     auto* load = module->allocator.alloc<Load>();
     *load = style; // basically the same as the template we are given!
-    load->ptr = builder.makeGetLocal(2, i32);
+    load->ptr = builder.makeLocalGet(2, i32);
     Expression* last = load;
     if (load->isAtomic && load->signed_) {
       // atomic loads cannot be signed, manually sign it
@@ -284,10 +284,10 @@ struct SafeHeap : public Pass {
     func->result = none;
     Builder builder(*module);
     auto* block = builder.makeBlock();
-    block->list.push_back(builder.makeSetLocal(
+    block->list.push_back(builder.makeLocalSet(
       3,
       builder.makeBinary(
-        AddInt32, builder.makeGetLocal(0, i32), builder.makeGetLocal(1, i32))));
+        AddInt32, builder.makeLocalGet(0, i32), builder.makeLocalGet(1, i32))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
       makeBoundsCheck(style.valueType, builder, 3, style.bytes));
@@ -298,8 +298,8 @@ struct SafeHeap : public Pass {
     // do the store
     auto* store = module->allocator.alloc<Store>();
     *store = style; // basically the same as the template we are given!
-    store->ptr = builder.makeGetLocal(3, i32);
-    store->value = builder.makeGetLocal(2, style.valueType);
+    store->ptr = builder.makeLocalGet(3, i32);
+    store->value = builder.makeLocalGet(2, style.valueType);
     block->list.push_back(store);
     block->finalize(none);
     func->body = block;
@@ -309,7 +309,7 @@ struct SafeHeap : public Pass {
   Expression* makeAlignCheck(Address align, Builder& builder, Index local) {
     return builder.makeIf(
       builder.makeBinary(AndInt32,
-                         builder.makeGetLocal(local, i32),
+                         builder.makeLocalGet(local, i32),
                          builder.makeConst(Literal(int32_t(align - 1)))),
       builder.makeCall(alignfault, {}, none));
   }
@@ -322,15 +322,15 @@ struct SafeHeap : public Pass {
       builder.makeBinary(
         OrInt32,
         builder.makeBinary(upperOp,
-                           builder.makeGetLocal(local, i32),
+                           builder.makeLocalGet(local, i32),
                            builder.makeConst(Literal(int32_t(upperBound)))),
         builder.makeBinary(
           GtUInt32,
           builder.makeBinary(AddInt32,
-                             builder.makeGetLocal(local, i32),
+                             builder.makeLocalGet(local, i32),
                              builder.makeConst(Literal(int32_t(bytes)))),
           builder.makeLoad(
-            4, false, 0, 4, builder.makeGetGlobal(dynamicTopPtr, i32), i32))),
+            4, false, 0, 4, builder.makeGlobalGet(dynamicTopPtr, i32), i32))),
       builder.makeCall(segfault, {}, none));
   }
 };

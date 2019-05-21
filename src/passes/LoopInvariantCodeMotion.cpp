@@ -39,7 +39,7 @@ struct LoopInvariantCodeMotion
 
   Pass* create() override { return new LoopInvariantCodeMotion; }
 
-  typedef std::unordered_set<SetLocal*> LoopSets;
+  typedef std::unordered_set<LocalSet*> LoopSets;
 
   // main entry point
 
@@ -78,7 +78,7 @@ struct LoopInvariantCodeMotion
     std::fill(numSetsForIndex.begin(), numSetsForIndex.end(), 0);
     LoopSets loopSets;
     {
-      FindAll<SetLocal> finder(loop);
+      FindAll<LocalSet> finder(loop);
       for (auto* set : finder.list) {
         numSetsForIndex[set->index]++;
         loopSets.insert(set);
@@ -135,7 +135,7 @@ struct LoopInvariantCodeMotion
             // and must also check if our sets interfere with them. To do so,
             // assume temporarily that we are moving curr out; see if any sets
             // remain for its indexes.
-            FindAll<SetLocal> currSets(curr);
+            FindAll<LocalSet> currSets(curr);
             for (auto* set : currSets.list) {
               assert(numSetsForIndex[set->index] > 0);
               numSetsForIndex[set->index]--;
@@ -205,15 +205,15 @@ struct LoopInvariantCodeMotion
     // it is beneficial to run this pass later on (but that has downsides
     // too, as with more nesting moving code is harder - so something
     // like -O --flatten --licm -O may be best).
-    if (auto* set = curr->dynCast<SetLocal>()) {
+    if (auto* set = curr->dynCast<LocalSet>()) {
       while (1) {
-        auto* next = set->value->dynCast<SetLocal>();
+        auto* next = set->value->dynCast<LocalSet>();
         if (!next) {
           break;
         }
         set = next;
       }
-      if (set->value->is<GetLocal>() || set->value->is<Const>()) {
+      if (set->value->is<LocalGet>() || set->value->is<Const>()) {
         return false;
       }
     }
@@ -221,7 +221,7 @@ struct LoopInvariantCodeMotion
   }
 
   bool hasGetDependingOnLoopSet(Expression* curr, LoopSets& loopSets) {
-    FindAll<GetLocal> gets(curr);
+    FindAll<LocalGet> gets(curr);
     for (auto* get : gets.list) {
       auto& sets = localGraph->getSetses[get];
       for (auto* set : sets) {

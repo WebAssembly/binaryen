@@ -44,7 +44,7 @@ getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
   // find a global inited to it
   Global* ret = nullptr;
   ModuleUtils::iterDefinedGlobals(wasm, [&](Global* defined) {
-    if (auto* init = defined->init->dynCast<GetGlobal>()) {
+    if (auto* init = defined->init->dynCast<GlobalGet>()) {
       if (init->name == imported) {
         ret = defined;
       }

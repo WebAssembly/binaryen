@@ -81,10 +81,10 @@ function test_ids() {
   console.log("BinaryenSwitchId: " + Binaryen.SwitchId);
   console.log("BinaryenCallId: " + Binaryen.CallId);
   console.log("BinaryenCallIndirectId: " + Binaryen.CallIndirectId);
-  console.log("BinaryenGetLocalId: " + Binaryen.GetLocalId);
-  console.log("BinaryenSetLocalId: " + Binaryen.SetLocalId);
-  console.log("BinaryenGetGlobalId: " + Binaryen.GetGlobalId);
-  console.log("BinaryenSetGlobalId: " + Binaryen.SetGlobalId);
+  console.log("BinaryenLocalGetId: " + Binaryen.LocalGetId);
+  console.log("BinaryenLocalSetId: " + Binaryen.LocalSetId);
+  console.log("BinaryenGlobalGetId: " + Binaryen.GlobalGetId);
+  console.log("BinaryenGlobalSetId: " + Binaryen.GlobalSetId);
   console.log("BinaryenLoadId: " + Binaryen.LoadId);
   console.log("BinaryenStoreId: " + Binaryen.StoreId);
   console.log("BinaryenConstId: " + Binaryen.ConstId);
@@ -383,9 +383,9 @@ function test_core() {
     module.i32.eqz( // check the output type of the call node
       module.callIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF")
     ),
-    module.drop(module.getLocal(0, Binaryen.i32)),
-    module.setLocal(0, makeInt32(101)),
-    module.drop(module.teeLocal(0, makeInt32(102))),
+    module.drop(module.local.get(0, Binaryen.i32)),
+    module.local.set(0, makeInt32(101)),
+    module.drop(module.local.tee(0, makeInt32(102))),
     module.i32.load(0, 0, makeInt32(1)),
     module.i64.load16_s(2, 1, makeInt32(8)),
     module.f32.load(0, 0, makeInt32(2)),
@@ -688,8 +688,8 @@ function test_binaries() {
   { // create a module and write it to binary
     module = new Binaryen.Module();
     var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
-    var x = module.getLocal(0, Binaryen.i32),
-        y = module.getLocal(1, Binaryen.i32);
+    var x = module.local.get(0, Binaryen.i32),
+        y = module.local.get(1, Binaryen.i32);
     var add = module.i32.add(x, y);
     var adder = module.addFunction("adder", iii, [], add);
     var initExpr = module.i32.const(3);
@@ -738,7 +738,7 @@ function test_nonvalid() {
 
   var v = module.addFunctionType("v", Binaryen.None, []);
   var func = module.addFunction("func", v, [ Binaryen.i32 ],
-    module.setLocal(0, makeInt64(1234, 0)) // wrong type!
+    module.local.set(0, makeInt64(1234, 0)) // wrong type!
   );
 
   console.log(module.emitText());
@@ -760,8 +760,8 @@ function test_parsing() {
   // create a module and write it to text
   module = new Binaryen.Module();
   var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
-  var x = module.getLocal(0, Binaryen.i32),
-      y = module.getLocal(1, Binaryen.i32);
+  var x = module.local.get(0, Binaryen.i32),
+      y = module.local.get(1, Binaryen.i32);
   var add = module.i32.add(x, y);
   var adder = module.addFunction("adder", iii, [], add);
   var initExpr = module.i32.const(3);

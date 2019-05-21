@@ -70,7 +70,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(0)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b0 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -80,7 +80,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(1)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b1 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -90,7 +90,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(2)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b2 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -100,7 +100,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(3)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b3 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -110,7 +110,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(4)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b4 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -120,7 +120,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(5)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b5 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -130,7 +130,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(6)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b6 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -140,7 +140,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(7)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b7 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -150,7 +150,7 @@ int main() {
     BinaryenExpressionRef args[] = { BinaryenConst(module, BinaryenLiteralInt32(8)) };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))
     };
     b8 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeAuto()));
   }
@@ -159,7 +159,7 @@ int main() {
     BinaryenEqInt32(),
     BinaryenBinary(module,
       BinaryenRemUInt32(),
-      BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(2))
     ),
     BinaryenConst(module, BinaryenLiteralInt32(0))
@@ -175,7 +175,7 @@ int main() {
     BinaryenEqInt32(),
     BinaryenBinary(module,
       BinaryenRemUInt32(),
-      BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(2))
     ),
     BinaryenConst(module, BinaryenLiteralInt32(0))
@@ -187,7 +187,7 @@ int main() {
     BinaryenEqInt32(),
     BinaryenBinary(module,
       BinaryenRemUInt32(),
-      BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(3))
     ),
     BinaryenConst(module, BinaryenLiteralInt32(0))
@@ -197,7 +197,7 @@ int main() {
     BinaryenEqInt32(),
     BinaryenBinary(module,
       BinaryenRemUInt32(),
-      BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(3))
     ),
     BinaryenConst(module, BinaryenLiteralInt32(1))
@@ -209,7 +209,7 @@ int main() {
     BinaryenEqInt32(),
     BinaryenBinary(module,
       BinaryenRemUInt32(),
-      BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(2))
     ),
     BinaryenConst(module, BinaryenLiteralInt32(0))

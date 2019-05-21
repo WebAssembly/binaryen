@@ -175,11 +175,11 @@ private:
   Expression* makeDrop(Element& s);
   Expression* makeHost(Element& s, HostOp op);
   Index getLocalIndex(Element& s);
-  Expression* makeGetLocal(Element& s);
-  Expression* makeTeeLocal(Element& s);
-  Expression* makeSetLocal(Element& s);
-  Expression* makeGetGlobal(Element& s);
-  Expression* makeSetGlobal(Element& s);
+  Expression* makeLocalGet(Element& s);
+  Expression* makeLocalTee(Element& s);
+  Expression* makeLocalSet(Element& s);
+  Expression* makeGlobalGet(Element& s);
+  Expression* makeGlobalSet(Element& s);
   Expression* makeBlock(Element& s);
   Expression* makeThenOrElse(Element& s);
   Expression* makeConst(Element& s, Type type);

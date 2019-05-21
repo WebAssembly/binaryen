@@ -76,7 +76,7 @@ public:
       //  load(y, offset=10)
       //
       // This is only valid if y does not change in the middle!
-      if (auto* get = curr->ptr->template dynCast<GetLocal>()) {
+      if (auto* get = curr->ptr->template dynCast<LocalGet>()) {
         auto& sets = localGraph->getSetses[get];
         if (sets.size() == 1) {
           auto* set = *sets.begin();
@@ -159,8 +159,8 @@ private:
 
   bool tryToOptimizePropagatedAdd(Expression* oneSide,
                                   Expression* otherSide,
-                                  GetLocal* ptr,
-                                  SetLocal* set) {
+                                  LocalGet* ptr,
+                                  LocalSet* set) {
     if (auto* c = oneSide->template dynCast<Const>()) {
       if (otherSide->template is<Const>()) {
         // Both sides are constant - this is not optimized code, ignore.
@@ -191,7 +191,7 @@ private:
         // dominates the load, and it is ok to replace x with y + 10 there.
         Index index = -1;
         bool canReuseIndex = false;
-        if (auto* get = otherSide->template dynCast<GetLocal>()) {
+        if (auto* get = otherSide->template dynCast<LocalGet>()) {
           if (localGraph->isSSA(get->index) && localGraph->isSSA(ptr->index)) {
             index = get->index;
             canReuseIndex = true;
@@ -213,7 +213,7 @@ private:
           index = parent->getHelperIndex(set);
         }
         curr->offset = result.total;
-        curr->ptr = Builder(*module).makeGetLocal(index, i32);
+        curr->ptr = Builder(*module).makeLocalGet(index, i32);
         return true;
       }
     }
@@ -298,7 +298,7 @@ struct OptimizeAddedConstants
   // the expression, but the set in which it is in, as the arm of an add that is
   // the set's value (the other arm is a constant, and we are not a constant).
   // We cache these, that is, use a single one for all requests.
-  Index getHelperIndex(SetLocal* set) {
+  Index getHelperIndex(LocalSet* set) {
     auto iter = helperIndexes.find(set);
     if (iter != helperIndexes.end()) {
       return iter->second;
@@ -307,7 +307,7 @@ struct OptimizeAddedConstants
              Builder(*getModule()).addVar(getFunction(), i32);
   }
 
-  bool isPropagatable(SetLocal* set) { return propagatable.count(set); }
+  bool isPropagatable(LocalSet* set) { return propagatable.count(set); }
 
 private:
   bool propagated;
@@ -315,7 +315,7 @@ private:
   std::unique_ptr<LocalGraph> localGraph;
 
   // Whether a set is propagatable.
-  std::set<SetLocal*> propagatable;
+  std::set<LocalSet*> propagatable;
 
   void findPropagatable() {
     // Conservatively, only propagate if all uses can be removed of the
@@ -331,7 +331,7 @@ private:
     Parents parents(getFunction()->body);
     for (auto& pair : localGraph->locations) {
       auto* location = pair.first;
-      if (auto* set = location->dynCast<SetLocal>()) {
+      if (auto* set = location->dynCast<LocalSet>()) {
         if (auto* add = set->value->dynCast<Binary>()) {
           if (add->op == AddInt32) {
             if (add->left->is<Const>() || add->right->is<Const>()) {
@@ -363,17 +363,17 @@ private:
     UnneededSetRemover remover(getFunction(), getPassOptions());
   }
 
-  std::map<SetLocal*, Index> helperIndexes;
+  std::map<LocalSet*, Index> helperIndexes;
 
   void createHelperIndexes() {
     struct Creator : public PostWalker<Creator> {
-      std::map<SetLocal*, Index>& helperIndexes;
+      std::map<LocalSet*, Index>& helperIndexes;
       Module* module;
 
-      Creator(std::map<SetLocal*, Index>& helperIndexes)
+      Creator(std::map<LocalSet*, Index>& helperIndexes)
         : helperIndexes(helperIndexes) {}
 
-      void visitSetLocal(SetLocal* curr) {
+      void visitLocalSet(LocalSet* curr) {
         auto iter = helperIndexes.find(curr);
         if (iter != helperIndexes.end()) {
           auto index = iter->second;
@@ -387,9 +387,9 @@ private:
           }
           auto* value = *target;
           Builder builder(*module);
-          *target = builder.makeGetLocal(index, i32);
+          *target = builder.makeLocalGet(index, i32);
           replaceCurrent(
-            builder.makeSequence(builder.makeSetLocal(index, value), curr));
+            builder.makeSequence(builder.makeLocalSet(index, value), curr));
         }
       }
     } creator(helperIndexes);

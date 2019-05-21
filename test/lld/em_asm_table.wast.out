@@ -41,7 +41,7 @@
   )
  )
  (func $__growWasmMemory (; 5 ;) (param $newSize i32) (result i32)
-  (grow_memory
+  (memory.grow
    (local.get $newSize)
   )
  )

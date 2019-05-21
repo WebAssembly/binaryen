@@ -197,7 +197,7 @@
   (call $getf64)
  )
  (func $__growWasmMemory (param $0 i32) (result i32)
-  (grow_memory
+  (memory.grow
    (local.get $0)
   )
  )

@@ -85,21 +85,21 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       }
       return ret;
     }
-    Expression* visitGetLocal(GetLocal* curr) {
-      return builder.makeGetLocal(curr->index, curr->type);
+    Expression* visitLocalGet(LocalGet* curr) {
+      return builder.makeLocalGet(curr->index, curr->type);
     }
-    Expression* visitSetLocal(SetLocal* curr) {
+    Expression* visitLocalSet(LocalSet* curr) {
       if (curr->isTee()) {
-        return builder.makeTeeLocal(curr->index, copy(curr->value));
+        return builder.makeLocalTee(curr->index, copy(curr->value));
       } else {
-        return builder.makeSetLocal(curr->index, copy(curr->value));
+        return builder.makeLocalSet(curr->index, copy(curr->value));
       }
     }
-    Expression* visitGetGlobal(GetGlobal* curr) {
-      return builder.makeGetGlobal(curr->name, curr->type);
+    Expression* visitGlobalGet(GlobalGet* curr) {
+      return builder.makeGlobalGet(curr->name, curr->type);
     }
-    Expression* visitSetGlobal(SetGlobal* curr) {
-      return builder.makeSetGlobal(curr->name, copy(curr->value));
+    Expression* visitGlobalSet(GlobalSet* curr) {
+      return builder.makeGlobalSet(curr->name, copy(curr->value));
     }
     Expression* visitLoad(Load* curr) {
       if (curr->isAtomic) {

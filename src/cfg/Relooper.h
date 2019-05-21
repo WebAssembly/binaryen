@@ -49,11 +49,11 @@ public:
   RelooperBuilder(wasm::Module& wasm, wasm::Index labelHelper)
     : wasm::Builder(wasm), labelHelper(labelHelper) {}
 
-  wasm::GetLocal* makeGetLabel() {
-    return makeGetLocal(labelHelper, wasm::i32);
+  wasm::LocalGet* makeGetLabel() {
+    return makeLocalGet(labelHelper, wasm::i32);
   }
-  wasm::SetLocal* makeSetLabel(wasm::Index value) {
-    return makeSetLocal(labelHelper, makeConst(wasm::Literal(int32_t(value))));
+  wasm::LocalSet* makeSetLabel(wasm::Index value) {
+    return makeLocalSet(labelHelper, makeConst(wasm::Literal(int32_t(value))));
   }
   wasm::Binary* makeCheckLabel(wasm::Index value) {
     return makeBinary(

@@ -166,10 +166,10 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
         return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
       default: {}
     }
-  } else if (auto* set = curr->dynCast<SetLocal>()) {
+  } else if (auto* set = curr->dynCast<LocalSet>()) {
     // a tee passes through the value
     return getMaxBits(set->value, localInfoProvider);
-  } else if (auto* get = curr->dynCast<GetLocal>()) {
+  } else if (auto* get = curr->dynCast<LocalGet>()) {
     return localInfoProvider->getMaxBitsForLocal(get);
   } else if (auto* load = curr->dynCast<Load>()) {
     // if signed, then the sign-extension might fill all the bits
@@ -226,7 +226,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     }
   }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     auto* func = getFunction();
     if (func->isParam(curr->index)) {
       return;
@@ -257,7 +257,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
 
   // define this for the templated getMaxBits method. we know nothing here yet
   // about locals, so return the maxes
-  Index getMaxBitsForLocal(GetLocal* get) { return getBitsForType(get->type); }
+  Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
 
   Index getBitsForType(Type type) {
     switch (type) {
@@ -728,9 +728,9 @@ struct OptimizeInstructions
           return unary;
         }
       }
-    } else if (auto* set = curr->dynCast<SetGlobal>()) {
+    } else if (auto* set = curr->dynCast<GlobalSet>()) {
       // optimize out a set of a get
-      auto* get = set->value->dynCast<GetGlobal>();
+      auto* get = set->value->dynCast<GlobalGet>();
       if (get && get->name == set->name) {
         ExpressionManipulator::nop(curr);
       }
@@ -874,7 +874,7 @@ struct OptimizeInstructions
     return nullptr;
   }
 
-  Index getMaxBitsForLocal(GetLocal* get) {
+  Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
     return localInfo[get->index].maxBits;
   }
@@ -906,7 +906,7 @@ private:
       return;
     }
     // Prefer a get on the right.
-    if (binary->left->is<GetLocal>() && !binary->right->is<GetLocal>()) {
+    if (binary->left->is<LocalGet>() && !binary->right->is<LocalGet>()) {
       return maybeSwap();
     }
     // Sort by the node id type, if different.
@@ -929,8 +929,8 @@ private:
         return maybeSwap();
       }
     }
-    if (auto* left = binary->left->dynCast<GetLocal>()) {
-      auto* right = binary->right->cast<GetLocal>();
+    if (auto* left = binary->left->dynCast<LocalGet>()) {
+      auto* right = binary->right->cast<LocalGet>();
       if (left->index > right->index) {
         return maybeSwap();
       }
@@ -1270,7 +1270,7 @@ private:
     if (Properties::getSignExtValue(curr)) {
       return Properties::getSignExtBits(curr) == bits;
     }
-    if (auto* get = curr->dynCast<GetLocal>()) {
+    if (auto* get = curr->dynCast<LocalGet>()) {
       // check what we know about the local
       return localInfo[get->index].signExtedBits == bits;
     }

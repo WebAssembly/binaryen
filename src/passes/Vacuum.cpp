@@ -84,10 +84,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         case Expression::Id::SwitchId:
         case Expression::Id::CallId:
         case Expression::Id::CallIndirectId:
-        case Expression::Id::SetLocalId:
+        case Expression::Id::LocalSetId:
         case Expression::Id::StoreId:
         case Expression::Id::ReturnId:
-        case Expression::Id::SetGlobalId:
+        case Expression::Id::GlobalSetId:
         case Expression::Id::HostId:
         case Expression::Id::UnreachableId:
           return curr; // always needed
@@ -106,8 +106,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           return curr;
         }
         case Expression::Id::ConstId:
-        case Expression::Id::GetLocalId:
-        case Expression::Id::GetGlobalId: {
+        case Expression::Id::LocalGetId:
+        case Expression::Id::GlobalGetId: {
           if (!resultUsed) {
             return nullptr;
           }
@@ -344,7 +344,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return;
     }
     // a drop of a tee is a set
-    if (auto* set = curr->value->dynCast<SetLocal>()) {
+    if (auto* set = curr->value->dynCast<LocalSet>()) {
       assert(set->isTee());
       set->setTee(false);
       replaceCurrent(set);

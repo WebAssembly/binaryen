@@ -476,7 +476,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   }
 
   void visitUnary(Unary* curr) { optimize(curr, curr->value); }
-  void visitSetLocal(SetLocal* curr) { optimize(curr, curr->value); }
+  void visitLocalSet(LocalSet* curr) { optimize(curr, curr->value); }
   void visitLoad(Load* curr) { optimize(curr, curr->ptr); }
   void visitReturn(Return* curr) { optimize(curr, curr->value); }
 
