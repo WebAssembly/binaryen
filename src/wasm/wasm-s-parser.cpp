@@ -26,7 +26,6 @@
 #include "ir/function-type-utils.h"
 #include "shared-constants.h"
 #include "wasm-binary.h"
-#include "wasm-builder.h"
 
 #define abort_on(str)                                                          \
   { throw ParseException(std::string("abort_on ") + str); }
@@ -470,6 +469,78 @@ Name SExpressionWasmBuilder::getGlobalName(Element& s) {
   }
 }
 
+// Parse various forms of (param ...) or (local ...) element. This ignores all
+// parameter or local names when specified.
+std::vector<Type> SExpressionWasmBuilder::parseParamOrLocal(Element& s) {
+  size_t fakeIndex = 0;
+  std::vector<NameType> namedParams = parseNamedParamOrLocal(s, fakeIndex);
+  std::vector<Type> params;
+  for (auto& nameType : namedParams) {
+    params.push_back(nameType.type);
+  }
+  return params;
+}
+
+// Parses various forms of (param ...) or (local ...) element:
+// (param $name type) (e.g. (param $a i32))
+// (param type+)      (e.g. (param i32 f64))
+// (local $name type) (e.g. (local $a i32))
+// (local type+)      (e.g. (local i32 f64))
+// If the name is unspecified, it will create one using localIndex.
+std::vector<NameType>
+SExpressionWasmBuilder::parseNamedParamOrLocal(Element& s, size_t& localIndex) {
+  assert(s.isList() && (s[0]->str() == PARAM || s[0]->str() == LOCAL));
+  std::vector<NameType> namedParams;
+  if (s.size() == 1) { // (param) or (local)
+    return namedParams;
+  }
+
+  for (size_t i = 1; i < s.size(); i++) {
+    IString name;
+    if (s[i]->dollared()) {
+      if (i != 1) {
+        throw ParseException("invalid wasm type", s[i]->line, s[i]->col);
+      }
+      if (i + 1 >= s.size()) {
+        throw ParseException("invalid param entry", s.line, s.col);
+      }
+      name = s[i]->str();
+      i++;
+    } else {
+      name = Name::fromInt(localIndex);
+    }
+    localIndex++;
+    Type type = stringToType(s[i]->str());
+    namedParams.emplace_back(name, type);
+  }
+  return namedParams;
+}
+
+// Parses (result type) element. (e.g. (result i32))
+Type SExpressionWasmBuilder::parseResult(Element& s) {
+  assert(s.isList() && s[0]->str() == RESULT);
+  if (s.size() != 2) {
+    throw ParseException("invalid result arity", s.line, s.col);
+  }
+  return stringToType(s[1]->str());
+}
+
+// Parses an element that references an entry in the type section. The element
+// should be in the form of (type name) or (type index).
+// (e.g. (type $a), (type 0))
+FunctionType* SExpressionWasmBuilder::parseTypeRef(Element& s) {
+  assert(s.isList() && s[0]->str() == TYPE);
+  if (s.size() != 2) {
+    throw ParseException("invalid type reference", s.line, s.col);
+  }
+  IString name = getFunctionTypeName(*s[1]);
+  FunctionType* ft = wasm.getFunctionTypeOrNull(name);
+  if (!ft) {
+    throw ParseException("bad function type for import", s[1]->line, s[1]->col);
+  }
+  return ft;
+}
+
 void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   IString id = s[0]->str();
   if (id == TYPE) {
@@ -494,27 +565,12 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
     Element& curr = *s[i];
     IString id = curr[0]->str();
     if (id == RESULT) {
-      if (curr.size() > 2) {
-        throw ParseException("invalid result arity", curr.line, curr.col);
-      }
-      functionTypes[name] = stringToType(curr[1]->str());
+      functionTypes[name] = parseResult(curr);
     } else if (id == TYPE) {
-      Name typeName = getFunctionTypeName(*curr[1]);
-      if (!wasm.getFunctionTypeOrNull(typeName)) {
-        throw ParseException("unknown function type", curr.line, curr.col);
-      }
-      type = wasm.getFunctionType(typeName);
-      functionTypes[name] = type->result;
+      functionTypes[name] = parseTypeRef(curr)->result;
     } else if (id == PARAM && curr.size() > 1) {
-      Index j = 1;
-      if (curr[j]->dollared()) {
-        // dollared input symbols cannot be types
-        params.push_back(stringToType(curr[j + 1]->str(), true));
-      } else {
-        while (j < curr.size()) {
-          params.push_back(stringToType(curr[j++]->str(), true));
-        }
-      }
+      auto newParams = parseParamOrLocal(curr);
+      params.insert(params.end(), newParams.begin(), newParams.end());
     }
   }
   if (!type) {
@@ -601,8 +657,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     wasm.addExport(ex.release());
   }
   Expression* body = nullptr;
-  localIndex = 0;
-  otherIndex = 0;
+  size_t localIndex = 0; // params and vars
   brokeToAutoBlock = false;
   // we may have both params and a type. store the type info here
   std::vector<NameType> typeParams;
@@ -627,49 +682,22 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   for (; i < s.size(); i++) {
     Element& curr = *s[i];
     IString id = curr[0]->str();
-    if (id == PARAM || id == LOCAL) {
-      size_t j = 1;
-      while (j < curr.size()) {
-        IString name;
-        Type type = none;
-        if (!curr[j]->dollared()) { // dollared input symbols cannot be types
-          type = stringToType(curr[j]->str(), true);
-        }
-        if (type != none) {
-          // a type, so an unnamed parameter
-          name = Name::fromInt(localIndex);
-        } else {
-          name = curr[j]->str();
-          type = stringToType(curr[j + 1]->str());
-          j++;
-        }
-        j++;
-        if (id == PARAM) {
-          params.emplace_back(name, type);
-        } else {
-          vars.emplace_back(name, type);
-        }
-        localIndex++;
-        currLocalTypes[name] = type;
-      }
+    if (id == PARAM) {
+      auto newParams = parseNamedParamOrLocal(curr, localIndex);
+      params.insert(params.end(), newParams.begin(), newParams.end());
+    } else if (id == LOCAL) {
+      auto newVars = parseNamedParamOrLocal(curr, localIndex);
+      vars.insert(vars.end(), newVars.begin(), newVars.end());
     } else if (id == RESULT) {
-      if (curr.size() > 2) {
-        throw ParseException("invalid result arity", curr.line, curr.col);
-      }
-      result = stringToType(curr[1]->str());
+      result = parseResult(curr);
     } else if (id == TYPE) {
-      Name name = getFunctionTypeName(*curr[1]);
-      type = name;
-      if (!wasm.getFunctionTypeOrNull(name)) {
-        throw ParseException("unknown function type");
-      }
-      FunctionType* type = wasm.getFunctionType(name);
-      result = type->result;
-      for (size_t j = 0; j < type->params.size(); j++) {
+      FunctionType* ft = parseTypeRef(curr);
+      type = ft->name;
+      result = ft->result;
+      for (size_t j = 0; j < ft->params.size(); j++) {
         IString name = Name::fromInt(j);
-        Type currType = type->params[j];
+        Type currType = ft->params[j];
         typeParams.emplace_back(name, currType);
-        currLocalTypes[name] = currType;
       }
     } else if (id == IMPORT) {
       importModule = curr[1]->str();
@@ -728,7 +756,6 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     if (currFunction) {
       throw ParseException("import module inside function dec");
     }
-    currLocalTypes.clear();
     nameMapper.clear();
     return;
   }
@@ -761,7 +788,6 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     throw ParseException("duplicate function", s.line, s.col);
   }
   wasm.addFunction(currFunction.release());
-  currLocalTypes.clear();
   nameMapper.clear();
 }
 
@@ -1537,11 +1563,11 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
     while (1) {
       Element& curr = *s[i];
       if (curr[0]->str() == PARAM) {
-        for (size_t j = 1; j < curr.size(); j++) {
-          type.params.push_back(stringToType(curr[j]->str()));
-        }
+        auto newParams = parseParamOrLocal(curr);
+        type.params.insert(
+          type.params.end(), newParams.begin(), newParams.end());
       } else if (curr[0]->str() == RESULT) {
-        type.result = stringToType(curr[1]->str());
+        type.result = parseResult(curr);
       } else {
         break;
       }
@@ -1921,20 +1947,16 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   if (kind == ExternalKind::Function) {
     std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
     if (inner.size() > j) {
-      Element& params = *inner[j];
-      IString id = params[0]->str();
+      Element& elems = *inner[j];
+      IString id = elems[0]->str();
       if (id == PARAM) {
-        for (size_t k = 1; k < params.size(); k++) {
-          type->params.push_back(stringToType(params[k]->str()));
-        }
+        auto newParams = parseParamOrLocal(elems);
+        type->params.insert(
+          type->params.end(), newParams.begin(), newParams.end());
       } else if (id == RESULT) {
-        type->result = stringToType(params[1]->str());
+        type->result = parseResult(elems);
       } else if (id == TYPE) {
-        IString name = params[1]->str();
-        if (!wasm.getFunctionTypeOrNull(name)) {
-          throw ParseException("bad function type for import");
-        }
-        *type = *wasm.getFunctionType(name);
+        type.reset(parseTypeRef(elems));
       } else {
         throw ParseException("bad import element");
       }
@@ -1943,7 +1965,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
         if (result[0]->str() != RESULT) {
           throw ParseException("expected result");
         }
-        type->result = stringToType(result[1]->str());
+        type->result = parseResult(result);
       }
     }
     auto func = make_unique<Function>();
@@ -2203,14 +2225,11 @@ void SExpressionWasmBuilder::parseType(Element& s) {
   for (size_t k = 1; k < func.size(); k++) {
     Element& curr = *func[k];
     if (curr[0]->str() == PARAM) {
-      for (size_t j = 1; j < curr.size(); j++) {
-        type->params.push_back(stringToType(curr[j]->str()));
-      }
+      auto newParams = parseParamOrLocal(curr);
+      type->params.insert(
+        type->params.end(), newParams.begin(), newParams.end());
     } else if (curr[0]->str() == RESULT) {
-      if (curr.size() > 2) {
-        throw ParseException("invalid result arity", curr.line, curr.col);
-      }
-      type->result = stringToType(curr[1]->str());
+      type->result = parseResult(curr);
     }
   }
   if (!type->name.is()) {

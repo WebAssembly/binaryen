@@ -24,6 +24,7 @@
 
 #include "mixed_arena.h"
 #include "parsing.h" // for UniqueNameMapper. TODO: move dependency to cpp file?
+#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -135,9 +136,6 @@ private:
 
   // function parsing state
   std::unique_ptr<Function> currFunction;
-  std::map<Name, Type> currLocalTypes;
-  size_t localIndex; // params and vars
-  size_t otherIndex;
   bool brokeToAutoBlock;
 
   UniqueNameMapper nameMapper;
@@ -220,8 +218,13 @@ private:
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
 
+  // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
+  std::vector<Type> parseParamOrLocal(Element& s);
+  std::vector<NameType> parseNamedParamOrLocal(Element& s, size_t& localIndex);
+  Type parseResult(Element& s);
+  FunctionType* parseTypeRef(Element& s);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
