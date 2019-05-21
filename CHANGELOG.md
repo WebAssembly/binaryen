@@ -15,8 +15,17 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
-- Removed APIs with deprecated instruction names in Binaryen.js:
-  `getLocal`, `setLocal`, `teeLocal`, `getGlobal` and `setGlobal`.
+- Removed APIs related to deprecated instruction names in Binaryen.js:
+  - `get_local` / `getLocal`
+  - `set_local` / `setLocal`
+  - `tee_local` / `teeLocal`
+  - `get_global` / `getGlobal`
+  - `set_global` / `setGlobal`
+  - `current_memory` / `currentMemory`
+  - `grow_memory` / `growMemory`
+  They are now available as their new instruction names:
+  `local.get`, `local.set`, `local.tee`, `global.get`, `global.set`,
+  `memory.size`, and `memory.grow`.
 - Add feature handling to the C/JS API with no feature enabled by default.
 
 v84

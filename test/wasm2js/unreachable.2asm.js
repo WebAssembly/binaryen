@@ -432,7 +432,7 @@ function asmFunc(global, env, buffer) {
   "as_compare_left": $51, 
   "as_compare_right": $52, 
   "as_convert_operand": $53, 
-  "as_grow_memory_size": $54
+  "as_memory_grow_size": $54
  };
 }
 
@@ -490,4 +490,4 @@ export var as_test_operand = retasmFunc.as_test_operand;
 export var as_compare_left = retasmFunc.as_compare_left;
 export var as_compare_right = retasmFunc.as_compare_right;
 export var as_convert_operand = retasmFunc.as_convert_operand;
-export var as_grow_memory_size = retasmFunc.as_grow_memory_size;
+export var as_memory_grow_size = retasmFunc.as_memory_grow_size;
