@@ -4239,6 +4239,8 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
 }
 
 void WasmBinaryBuilder::throwError(std::string text) {
+  if (true)
+    ;
   throw ParseException(text, 0, pos);
 }
 
