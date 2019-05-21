@@ -129,7 +129,7 @@ struct OptimizationOptions : public ToolOptions {
            "is safe for use with -Os builds)",
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
-             passOptions.alwaysInlineMaxSize =
+             passOptions.inlining.alwaysInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
            })
       .add("--flexible-inline-max-function-size",
@@ -139,7 +139,7 @@ struct OptimizationOptions : public ToolOptions {
            "Default: 20",
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
-             passOptions.flexibleInlineMaxSize =
+             passOptions.inlining.flexibleInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
            })
       .add("--one-caller-inline-max-function-size",
@@ -150,7 +150,7 @@ struct OptimizationOptions : public ToolOptions {
            "functions",
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
-             passOptions.oneCallerInlineMaxSize =
+             passOptions.inlining.oneCallerInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
            })
       .add("--ignore-implicit-traps",

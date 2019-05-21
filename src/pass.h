@@ -56,17 +56,7 @@ private:
   std::map<std::string, PassInfo> passInfos;
 };
 
-struct PassOptions {
-  // Run passes in debug mode, doing extra validation and timing checks.
-  bool debug = false;
-  // Whether to run the validator to check for errors.
-  bool validate = true;
-  // When validating validate globally and not just locally
-  bool validateGlobally = false;
-  // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
-  int optimizeLevel = 0;
-  // 0, 1, 2 correspond to -O0, -Os, -Oz
-  int shrinkLevel = 0;
+struct InliningOptions {
   // Function size at which we allways inline.
   // Typically a size so small that after optimizations, the inlined code will
   // be smaller than the call instruction itself. 2 is a safe number because
@@ -85,7 +75,23 @@ struct PassOptions {
   // functions (i32s-div, f64-to-int, etc.), that can affect perf.
   Index flexibleInlineMaxSize = 20;
   // Function size which we inline when there is only one caller.
-  Index oneCallerInlineMaxSize = 100;
+  // FIXME: this should logically be higher than flexibleInlineMaxSize.
+  Index oneCallerInlineMaxSize = 15;
+};
+
+struct PassOptions {
+  // Run passes in debug mode, doing extra validation and timing checks.
+  bool debug = false;
+  // Whether to run the validator to check for errors.
+  bool validate = true;
+  // When validating validate globally and not just locally
+  bool validateGlobally = false;
+  // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+  int optimizeLevel = 0;
+  // 0, 1, 2 correspond to -O0, -Os, -Oz
+  int shrinkLevel = 0;
+  // Tweak thresholds for the Inlining pass.
+  InliningOptions inlining;
   // Optimize assuming things like div by 0, bad load/store, will not trap.
   bool ignoreImplicitTraps = false;
   // Optimize assuming that the low 1K of memory is not valid memory for the
