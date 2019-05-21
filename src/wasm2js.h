@@ -30,6 +30,7 @@
 #include "asmjs/asmangle.h"
 #include "asmjs/shared-constants.h"
 #include "emscripten-optimizer/optimizer.h"
+#include "ir/branch-utils.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/import-utils.h"
@@ -708,6 +709,120 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
 Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                         Function* func,
                                         bool standaloneFunction) {
+  // Switches are tricky to handle - in wasm they often come with
+  // massively-nested "towers" of blocks, which if naively translated
+  // to JS may exceed parse recursion limits of VMs. Therefore even when
+  // not optimizing we work hard to emit minimal and minimally-nested
+  // switches.
+  // We do so by pre-scanning for br_tables and noting which of their
+  // targets can be hoisted up into them, e.g.
+  //
+  // (block $a
+  //  (block $b
+  //   (block $c
+  //    (block $d
+  //     (block $e
+  //      (br_table $a $b $c $d $e (..))
+  //     )
+  //     ;; code X (for block $e)
+  //     ;; implicit fallthrough - can be done in the switch too
+  //    )
+  //    ;; code Y
+  //    (br $c) ;; branch which is identical to a fallthrough
+  //   )
+  //   ;; code Z
+  //   (br $a) ;; skip some blocks - can't do this in a switch!
+  //  )
+  //  ;; code W
+  // )
+  //
+  // Every branch we see is a potential hazard - all targets must not
+  // be optimized into the switch, since they must be reached normally,
+  // unless they happen to be right after us, in which case it's just
+  // a fallthrough anyhow.
+  struct SwitchProcessor : public ExpressionStackWalker<SwitchProcessor> {
+    // A list of expressions we don't need to emit, as we are handling them
+    // in another way.
+    std::set<Expression*> unneededExpressions;
+
+    struct SwitchCase {
+      Name target;
+      std::vector<Expression*> code;
+      SwitchCase(Name target) : target(target) {}
+    };
+
+    // The switch cases we found that we can hoist up.
+    std::map<Switch*, std::vector<SwitchCase>> hoistedSwitchCases;
+
+    void visitSwitch(Switch* brTable) {
+      Index i = expressionStack.size() - 1;
+      assert(expressionStack[i] == brTable);
+      // A set of names we must stop at, since we've seen branches to them.
+      std::set<Name> namesBranchedTo;
+      while (1) {
+        // Stop if we are at the top level.
+        if (i == 0) {
+          break;
+        }
+        i--;
+        auto* child = expressionStack[i + 1];
+        auto* curr = expressionStack[i];
+        // Stop if the current node is not a block with the child in the
+        // first position, i.e., the classic switch pattern.
+        auto* block = curr->dynCast<Block>();
+        if (!block || block->list[0] != child) {
+          break;
+        }
+        // Ignore the case of a name-less block for simplicity (merge-blocks
+        // would have removed it).
+        if (!block->name.is()) {
+          break;
+        }
+        auto& list = block->list;
+        if (child == brTable) {
+          // Nothing more to do here (we can in fact skip any code til
+          // the parent block).
+          continue;
+        }
+        // Ok, we are a block and our child in the first position is a
+        // block, and the neither is branched to - unless maybe the child
+        // branches to the parent, check that. Note how we treat the
+        // final element which may be a break that is a fallthrough.
+        for (Index j = 1; j < list.size() ; j++) {
+          auto* item = list[j];
+          auto newBranches = BranchUtils::getExitingBranches(item);
+          if (auto* br = item->dynCast<Break>()) {
+            if (j == list.size() - 1) {
+              if (!br->condition && br->name == block->name) {
+                // This is a natural, unnecessary-to-emit fallthrough.
+                unneededExpressions.insert(br);
+                break;
+              }
+            }
+          }
+          namesBranchedTo.insert(newBranches.begin(), newBranches.end());
+        }
+        if (namesBranchedTo.count(block->name)) {
+          break;
+        }
+        // We can move code after the child (reached by branching on the
+        // child) into the switch.
+        auto* childBlock = child->cast<Block>();
+        hoistedSwitchCases[brTable].emplace_back(childBlock->name);
+        SwitchCase& case_ = hoistedSwitchCases[brTable].back();
+        for (Index j = 1; j < list.size() ; j++) {
+          auto* item = list[j];
+          if (!unneededExpressions.count(item)) {
+            case_.code.push_back(item);
+          }
+        }
+        // Finally, mark the block as unneeded outside the switch.
+        unneededExpressions.insert(block);
+        assert(unneededExpressions.count(child));
+      }
+    }
+  };
+
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
     IString result; // TODO: remove
@@ -716,12 +831,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     bool standaloneFunction;
     MixedArena allocator;
 
+    SwitchProcessor switchProcessor;
+
     ExpressionProcessor(Wasm2JSBuilder* parent,
                         Module* m,
                         Function* func,
                         bool standaloneFunction)
       : parent(parent), func(func), module(m),
         standaloneFunction(standaloneFunction) {}
+
+    Ref process() {
+      switchProcessor.walk(func->body);
+      return visit(func->body, NO_RESULT);
+    }
 
     // A scoped temporary variable.
     struct ScopedTemp {
@@ -806,6 +928,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     // Visitors
 
     Ref visitBlock(Block* curr) {
+      if (switchProcessor.unneededExpressions.count(curr)) {
+        // We have had our tail hoisted into a switch that is nested in our
+        // first position, so we don't need to emit that code again, or
+        // ourselves in fact.
+        return visit(curr->list[0], NO_RESULT);
+      }
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
       auto noResults = result == NO_RESULT ? size : size - 1;
@@ -872,7 +1000,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Expression* defaultBody = nullptr; // default must be last in asm.js
 
     Ref visitSwitch(Switch* curr) {
-      assert(!curr->value);
+#if 0
+      // Simple switch emitting. This is valid but may lead to block nesting of a size
+      // that JS engines can't handle.
       Ref ret = ValueBuilder::makeBlock();
       Ref condition = visit(curr->condition, EXPRESSION_RESULT);
       Ref theSwitch =
@@ -906,6 +1036,68 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       ValueBuilder::appendCodeToSwitch(
         theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
       return ret;
+#else
+      // Even without optimizations, we work hard here to emit minimal and
+      // especially minimally-nested code, since otherwise we may get block
+      // nesting of a size that JS engines can't handle.
+      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
+      Ref theSwitch =
+        ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
+      // First, group the switch targets.
+      std::map<Name, std::vector<Index>> targetIndexes;
+      for (size_t i = 0; i < curr->targets.size(); i++) {
+        targetIndexes[curr->targets[i]].push_back(i);
+      }
+      // Emit first any hoisted groups.
+      auto& hoistedCases = switchProcessor.hoistedSwitchCases[curr];
+      std::set<Name> emittedTargets;
+      for (auto& case_ : hoistedCases) {
+        auto target = case_.target;
+        auto& code = case_.code;
+        emittedTargets.insert(target);
+        if (target != curr->default_) {
+          auto& indexes = targetIndexes[target];
+          for (auto i : indexes) {
+            ValueBuilder::appendCaseToSwitch(theSwitch,
+                                             ValueBuilder::makeNum(i));
+          }
+        } else {
+          ValueBuilder::appendDefaultToSwitch(theSwitch);
+        }
+        for (auto* c : code) {
+          ValueBuilder::appendCodeToSwitch(theSwitch, visit(c, NO_RESULT), false);
+        }
+      }
+      // Emit any remaining groups by just emitting branches to their code,
+      // which will appear outside the switch.
+      for (auto& pair : targetIndexes) {
+        auto target = pair.first;
+        auto& indexes = pair.second;
+        if (emittedTargets.count(target)) {
+          continue;
+        }
+        if (target != curr->default_) {
+          for (auto i : indexes) {
+            ValueBuilder::appendCaseToSwitch(theSwitch,
+                                             ValueBuilder::makeNum(i));
+          }
+          ValueBuilder::appendCodeToSwitch(
+            theSwitch, blockify(makeBreakOrContinue(target)), false);
+        } else {
+          // For the group going to the same place as the default, we can just
+          // emit the default itself, which we do at the end.
+        }
+      }
+      // TODO: if the group the default is in is not the largest, we can turn
+      // the largest into
+      //       the default by using a local and a check on the range
+      if (!emittedTargets.count(curr->default_)) { 
+        ValueBuilder::appendDefaultToSwitch(theSwitch);
+        ValueBuilder::appendCodeToSwitch(
+          theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
+      }
+      return theSwitch;
+#endif
     }
 
     Ref visitCall(Call* curr) {
@@ -1618,8 +1810,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
   };
 
-  return ExpressionProcessor(this, m, func, standaloneFunction)
-    .visit(func->body, NO_RESULT);
+  return ExpressionProcessor(this, m, func, standaloneFunction).process();
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
