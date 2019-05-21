@@ -782,6 +782,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         if (child == brTable) {
           // Nothing more to do here (we can in fact skip any code til
           // the parent block).
+          unneededExpressions.insert(block);
           continue;
         }
         // Ok, we are a block and our child in the first position is a
@@ -1065,7 +1066,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           ValueBuilder::appendDefaultToSwitch(theSwitch);
         }
         for (auto* c : code) {
-          ValueBuilder::appendCodeToSwitch(theSwitch, visit(c, NO_RESULT), false);
+          ValueBuilder::appendCodeToSwitch(theSwitch, blockify(visit(c, NO_RESULT)), false);
         }
       }
       // Emit any remaining groups by just emitting branches to their code,
