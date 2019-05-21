@@ -1845,20 +1845,6 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
     } else {
       throw ParseException("invalid export");
     }
-  } else if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
-    ex->value = s[3]->str();
-    if (s[2]->str() == MEMORY) {
-      if (!wasm.memory.exists) {
-        throw ParseException("memory exported but no memory");
-      }
-      ex->kind = ExternalKind::Memory;
-    } else if (s[2]->str() == TABLE) {
-      ex->kind = ExternalKind::Table;
-    } else if (s[2]->str() == GLOBAL) {
-      ex->kind = ExternalKind::Global;
-    } else {
-      throw ParseException("invalid ext export");
-    }
   } else {
     // function
     ex->value = s[2]->str();
@@ -1919,18 +1905,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       throw ParseException("invalid import");
     }
   }
-  if (!s[i]->quoted()) {
-    if (s[i]->str() == MEMORY) {
-      kind = ExternalKind::Memory;
-    } else if (s[i]->str() == TABLE) {
-      kind = ExternalKind::Table;
-    } else if (s[i]->str() == GLOBAL) {
-      kind = ExternalKind::Global;
-    } else {
-      throw ParseException("invalid ext import");
-    }
-    i++;
-  } else if (!newStyle) {
+  if (!newStyle) {
     kind = ExternalKind::Function;
   }
   auto module = s[i++]->str();
