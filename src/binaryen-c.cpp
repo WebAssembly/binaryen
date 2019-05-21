@@ -3260,8 +3260,8 @@ size_t BinaryenModuleWriteText(BinaryenModuleRef module,
   std::stringstream ss;
   WasmPrinter::printModule((Module*)module, ss);
 
-  const std::string temp = ss.str();
-  const char* ctemp = temp.c_str();
+  const auto temp = ss.str();
+  const auto ctemp = temp.c_str();
 
   strncpy(output, ctemp, outputSize);
   return std::min(outputSize, temp.size());
