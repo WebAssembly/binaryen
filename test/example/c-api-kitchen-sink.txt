@@ -3319,8 +3319,8 @@ int main() {
     functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
-  BinaryenSetFeatures(the_module, 61);
-  BinaryenGetFeatures(the_module);
+  BinaryenModuleSetFeatures(the_module, 61);
+  BinaryenModuleGetFeatures(the_module);
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module

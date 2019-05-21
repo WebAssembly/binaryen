@@ -378,7 +378,7 @@ enum BinaryOp {
   InvalidBinary
 };
 
-enum HostOp { CurrentMemory, GrowMemory };
+enum HostOp { MemorySize, MemoryGrow };
 
 enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
 

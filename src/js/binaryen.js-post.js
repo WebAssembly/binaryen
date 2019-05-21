@@ -233,8 +233,8 @@ Module['LtFloat64'] = Module['_BinaryenLtFloat64']();
 Module['LeFloat64'] = Module['_BinaryenLeFloat64']();
 Module['GtFloat64'] = Module['_BinaryenGtFloat64']();
 Module['GeFloat64'] = Module['_BinaryenGeFloat64']();
-Module['CurrentMemory'] = Module['_BinaryenCurrentMemory']();
-Module['GrowMemory'] = Module['_BinaryenGrowMemory']();
+Module['MemorySize'] = Module['_BinaryenMemorySize']();
+Module['MemoryGrow'] = Module['_BinaryenMemoryGrow']();
 Module['AtomicRMWAdd'] = Module['_BinaryenAtomicRMWAdd']();
 Module['AtomicRMWSub'] = Module['_BinaryenAtomicRMWSub']();
 Module['AtomicRMWAnd'] = Module['_BinaryenAtomicRMWAnd']();
@@ -469,14 +469,13 @@ function wrapModule(module, self) {
     }
   }
 
-  self['currentMemory'] = self['current_memory'] = function() {
-    return Module['_BinaryenHost'](module, Module['CurrentMemory']);
-  }
-  self['growMemory'] = self['grow_memory'] = function(value) {
-    return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
-  }
-
   self['memory'] = {
+    'size': function() {
+      return Module['_BinaryenHost'](module, Module['MemorySize']);
+    },
+    'grow': function(value) {
+      return Module['_BinaryenHost'](module, Module['MemoryGrow'], null, i32sToStack([value]), 1);
+    },
     'init': function(segment, dest, offset, size) {
       return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size);
     },
@@ -1871,10 +1870,10 @@ function wrapModule(module, self) {
     return Module['_BinaryenSetStart'](module, start);
   };
   self['getFeatures'] = function() {
-    return Module['_BinaryenGetFeatures'](module);
+    return Module['_BinaryenModuleGetFeatures'](module);
   };
   self['setFeatures'] = function(features) {
-    Module['_BinaryenSetFeatures'](module, features);
+    Module['_BinaryenModuleSetFeatures'](module, features);
   };
   self['emitText'] = function() {
     var old = out;

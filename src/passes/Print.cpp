@@ -1140,11 +1140,11 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   void visitReturn(Return* curr) { printMedium(o, "return"); }
   void visitHost(Host* curr) {
     switch (curr->op) {
-      case CurrentMemory:
-        printMedium(o, "current_memory");
+      case MemorySize:
+        printMedium(o, "memory.size");
         break;
-      case GrowMemory:
-        printMedium(o, "grow_memory");
+      case MemoryGrow:
+        printMedium(o, "memory.grow");
         break;
     }
   }
@@ -1600,13 +1600,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     switch (curr->op) {
-      case GrowMemory: {
+      case MemoryGrow: {
         incIndent();
         printFullLine(curr->operands[0]);
         decIndent();
         break;
       }
-      case CurrentMemory: {
+      case MemorySize: {
         o << ')';
       }
     }

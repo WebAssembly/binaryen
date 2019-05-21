@@ -111,7 +111,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemoryCopy(MemoryCopy* curr) { usesMemory = true; }
   void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
   void visitHost(Host* curr) {
-    if (curr->op == CurrentMemory || curr->op == GrowMemory) {
+    if (curr->op == MemorySize || curr->op == MemoryGrow) {
       usesMemory = true;
     }
   }

@@ -38,20 +38,12 @@ switch (op[0]) {
     }
   }
   case 'c': {
-    switch (op[1]) {
-      case 'a': {
-        switch (op[4]) {
-          case '\0':
-            if (strcmp(op, "call") == 0) { return makeCall(s); }
-            goto parse_error;
-          case '_':
-            if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s); }
-            goto parse_error;
-          default: goto parse_error;
-        }
-      }
-      case 'u':
-        if (strcmp(op, "current_memory") == 0) { return makeHost(s, HostOp::CurrentMemory); }
+    switch (op[4]) {
+      case '\0':
+        if (strcmp(op, "call") == 0) { return makeCall(s); }
+        goto parse_error;
+      case '_':
+        if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s); }
         goto parse_error;
       default: goto parse_error;
     }
@@ -605,20 +597,12 @@ switch (op[0]) {
     }
   }
   case 'g': {
-    switch (op[1]) {
-      case 'l': {
-        switch (op[7]) {
-          case 'g':
-            if (strcmp(op, "global.get") == 0) { return makeGlobalGet(s); }
-            goto parse_error;
-          case 's':
-            if (strcmp(op, "global.set") == 0) { return makeGlobalSet(s); }
-            goto parse_error;
-          default: goto parse_error;
-        }
-      }
-      case 'r':
-        if (strcmp(op, "grow_memory") == 0) { return makeHost(s, HostOp::GrowMemory); }
+    switch (op[7]) {
+      case 'g':
+        if (strcmp(op, "global.get") == 0) { return makeGlobalGet(s); }
+        goto parse_error;
+      case 's':
+        if (strcmp(op, "global.set") == 0) { return makeGlobalSet(s); }
         goto parse_error;
       default: goto parse_error;
     }
@@ -2199,8 +2183,14 @@ switch (op[0]) {
       case 'f':
         if (strcmp(op, "memory.fill") == 0) { return makeMemoryFill(s); }
         goto parse_error;
+      case 'g':
+        if (strcmp(op, "memory.grow") == 0) { return makeHost(s, HostOp::MemoryGrow); }
+        goto parse_error;
       case 'i':
         if (strcmp(op, "memory.init") == 0) { return makeMemoryInit(s); }
+        goto parse_error;
+      case 's':
+        if (strcmp(op, "memory.size") == 0) { return makeHost(s, HostOp::MemorySize); }
         goto parse_error;
       default: goto parse_error;
     }

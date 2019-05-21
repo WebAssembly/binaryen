@@ -23,17 +23,17 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function $0(var$0) {
   var$0 = var$0 | 0;
-  return __wasm_grow_memory(var$0 | 0) | 0;
+  return __wasm_memory_grow(var$0 | 0) | 0;
  }
  
  function $1() {
-  return __wasm_current_memory() | 0;
+  return __wasm_memory_size() | 0;
  }
  
  var FUNCTION_TABLE = [];
- function __wasm_grow_memory(pagesToAdd) {
+ function __wasm_memory_grow(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
-  var oldPages = __wasm_current_memory() | 0;
+  var oldPages = __wasm_memory_size() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
@@ -53,14 +53,14 @@ function asmFunc(global, env, buffer) {
   return oldPages;
  }
  
- function __wasm_current_memory() {
+ function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
  
  return {
   "memory": Object.create(Object.prototype, {
    "grow": {
-    "value": __wasm_grow_memory
+    "value": __wasm_memory_grow
    }, 
    "buffer": {
     "get": function () {

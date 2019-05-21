@@ -1616,9 +1616,9 @@ private:
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");
       switch (curr->op) {
-        case CurrentMemory:
+        case MemorySize:
           return Literal(int32_t(instance.memorySize));
-        case GrowMemory: {
+        case MemoryGrow: {
           auto fail = Literal(int32_t(-1));
           Flow flow = this->visit(curr->operands[0]);
           if (flow.breaking()) {

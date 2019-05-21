@@ -70,7 +70,7 @@
   )
  )
  (func $__growWasmMemory (; 8 ;) (param $newSize i32) (result i32)
-  (grow_memory
+  (memory.grow
    (local.get $newSize)
   )
  )

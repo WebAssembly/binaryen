@@ -891,9 +891,9 @@ Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
   auto ret = allocator.alloc<Host>();
   ret->op = op;
   parseCallOperands(s, 1, s.size(), ret);
-  if (ret->op == HostOp::GrowMemory) {
+  if (ret->op == HostOp::MemoryGrow) {
     if (ret->operands.size() != 1) {
-      throw ParseException("grow_memory needs one operand");
+      throw ParseException("memory.grow needs one operand");
     }
   } else {
     if (ret->operands.size() != 0) {

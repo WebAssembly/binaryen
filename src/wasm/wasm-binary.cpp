@@ -4191,14 +4191,14 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
 bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
   Host* curr;
   switch (code) {
-    case BinaryConsts::CurrentMemory: {
+    case BinaryConsts::MemorySize: {
       curr = allocator.alloc<Host>();
-      curr->op = CurrentMemory;
+      curr->op = MemorySize;
       break;
     }
-    case BinaryConsts::GrowMemory: {
+    case BinaryConsts::MemoryGrow: {
       curr = allocator.alloc<Host>();
-      curr->op = GrowMemory;
+      curr->op = MemoryGrow;
       curr->operands.resize(1);
       curr->operands[0] = popNonVoidExpression();
       break;
@@ -4211,7 +4211,7 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
   }
   auto reserved = getU32LEB();
   if (reserved != 0) {
-    throwError("Invalid reserved field on grow_memory/current_memory");
+    throwError("Invalid reserved field on memory.grow/memory.size");
   }
   curr->finalize();
   out = curr;

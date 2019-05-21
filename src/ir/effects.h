@@ -64,7 +64,7 @@ struct EffectAnalyzer
   // side effects
   bool implicitTrap = false;
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
-  // wrt atomics (e.g. grow_memory)
+  // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
 
   // Helper functions to check for various effect types
@@ -360,10 +360,10 @@ struct EffectAnalyzer
   void visitReturn(Return* curr) { branches = true; }
   void visitHost(Host* curr) {
     calls = true;
-    // grow_memory modifies the set of valid addresses, and thus can be modeled
+    // memory.grow modifies the set of valid addresses, and thus can be modeled
     // as modifying memory
     writesMemory = true;
-    // Atomics are also sequentially consistent with grow_memory.
+    // Atomics are also sequentially consistent with memory.grow.
     isAtomic = true;
   }
   void visitNop(Nop* curr) {}

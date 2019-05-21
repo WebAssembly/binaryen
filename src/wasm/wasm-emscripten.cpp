@@ -304,7 +304,7 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   Function* growFunction =
     builder.makeFunction(name, std::move(params), i32, {});
   growFunction->body =
-    builder.makeHost(GrowMemory, Name(), {builder.makeLocalGet(0, i32)});
+    builder.makeHost(MemoryGrow, Name(), {builder.makeLocalGet(0, i32)});
 
   addExportedFunction(wasm, growFunction);
 

@@ -345,8 +345,8 @@ BinaryenOp BinaryenLtFloat64(void);
 BinaryenOp BinaryenLeFloat64(void);
 BinaryenOp BinaryenGtFloat64(void);
 BinaryenOp BinaryenGeFloat64(void);
-BinaryenOp BinaryenCurrentMemory(void);
-BinaryenOp BinaryenGrowMemory(void);
+BinaryenOp BinaryenMemorySize(void);
+BinaryenOp BinaryenMemoryGrow(void);
 BinaryenOp BinaryenAtomicRMWAdd(void);
 BinaryenOp BinaryenAtomicRMWSub(void);
 BinaryenOp BinaryenAtomicRMWAnd(void);
@@ -945,8 +945,9 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
 // Features
 
 // These control what features are allowed when validation and in passes.
-BinaryenFeatures BinaryenGetFeatures(BinaryenModuleRef module);
-void BinaryenSetFeatures(BinaryenModuleRef module, BinaryenFeatures features);
+BinaryenFeatures BinaryenModuleGetFeatures(BinaryenModuleRef module);
+void BinaryenModuleSetFeatures(BinaryenModuleRef module,
+                               BinaryenFeatures features);
 
 //
 // ========== Module Operations ==========

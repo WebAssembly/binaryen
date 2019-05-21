@@ -578,7 +578,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       Ref growDesc = ValueBuilder::makeObject();
       ValueBuilder::appendToObjectWithQuotes(descs, IString("grow"), growDesc);
       ValueBuilder::appendToObjectWithQuotes(
-        growDesc, IString("value"), ValueBuilder::makeName(WASM_GROW_MEMORY));
+        growDesc, IString("value"), ValueBuilder::makeName(WASM_MEMORY_GROW));
       Ref bufferDesc = ValueBuilder::makeObject();
       Ref bufferGetter = ValueBuilder::makeFunction(IString(""));
       bufferGetter[3]->push_back(
@@ -1584,18 +1584,18 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitHost(Host* curr) {
-      if (curr->op == HostOp::GrowMemory) {
+      if (curr->op == HostOp::MemoryGrow) {
         if (module->memory.exists &&
             module->memory.max > module->memory.initial) {
           return ValueBuilder::makeCall(
-            WASM_GROW_MEMORY,
+            WASM_MEMORY_GROW,
             makeAsmCoercion(visit(curr->operands[0], EXPRESSION_RESULT),
                             wasmToAsmType(curr->operands[0]->type)));
         } else {
           return ValueBuilder::makeCall(ABORT_FUNC);
         }
-      } else if (curr->op == HostOp::CurrentMemory) {
-        return ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
+      } else if (curr->op == HostOp::MemorySize) {
+        return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
       }
       WASM_UNREACHABLE(); // TODO
     }
@@ -1623,10 +1623,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
-  Ref growMemoryFunc = ValueBuilder::makeFunction(WASM_GROW_MEMORY);
-  ValueBuilder::appendArgumentToFunction(growMemoryFunc, IString("pagesToAdd"));
+  Ref memoryGrowFunc = ValueBuilder::makeFunction(WASM_MEMORY_GROW);
+  ValueBuilder::appendArgumentToFunction(memoryGrowFunc, IString("pagesToAdd"));
 
-  growMemoryFunc[3]->push_back(
+  memoryGrowFunc[3]->push_back(
     ValueBuilder::makeStatement(ValueBuilder::makeBinary(
       ValueBuilder::makeName(IString("pagesToAdd")),
       SET,
@@ -1634,15 +1634,15 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
                       AsmType::ASM_INT))));
 
   Ref oldPages = ValueBuilder::makeVar();
-  growMemoryFunc[3]->push_back(oldPages);
+  memoryGrowFunc[3]->push_back(oldPages);
   ValueBuilder::appendToVar(
     oldPages,
     IString("oldPages"),
-    makeAsmCoercion(ValueBuilder::makeCall(WASM_CURRENT_MEMORY),
+    makeAsmCoercion(ValueBuilder::makeCall(WASM_MEMORY_SIZE),
                     AsmType::ASM_INT));
 
   Ref newPages = ValueBuilder::makeVar();
-  growMemoryFunc[3]->push_back(newPages);
+  memoryGrowFunc[3]->push_back(newPages);
   ValueBuilder::appendToVar(
     newPages,
     IString("newPages"),
@@ -1653,7 +1653,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
       AsmType::ASM_INT));
 
   Ref block = ValueBuilder::makeBlock();
-  growMemoryFunc[3]->push_back(ValueBuilder::makeIf(
+  memoryGrowFunc[3]->push_back(ValueBuilder::makeIf(
     ValueBuilder::makeBinary(
       ValueBuilder::makeBinary(ValueBuilder::makeName(IString("oldPages")),
                                LT,
@@ -1735,19 +1735,19 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
         ValueBuilder::makeName(IString("newBuffer"))));
   }
 
-  growMemoryFunc[3]->push_back(
+  memoryGrowFunc[3]->push_back(
     ValueBuilder::makeReturn(ValueBuilder::makeName(IString("oldPages"))));
 
-  Ref currentMemoryFunc = ValueBuilder::makeFunction(WASM_CURRENT_MEMORY);
-  currentMemoryFunc[3]->push_back(ValueBuilder::makeReturn(
+  Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
+  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
     makeAsmCoercion(ValueBuilder::makeBinary(
                       ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
                                             IString("byteLength")),
                       DIV,
                       ValueBuilder::makeInt(Memory::kPageSize)),
                     AsmType::ASM_INT)));
-  ast->push_back(growMemoryFunc);
-  ast->push_back(currentMemoryFunc);
+  ast->push_back(memoryGrowFunc);
+  ast->push_back(memorySizeFunc);
 }
 
 // Wasm2JSGlue emits the core of the module - the functions etc. that would

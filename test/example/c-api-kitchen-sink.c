@@ -528,8 +528,8 @@ void test_core() {
       BinaryenFeatureSignExt() |
       BinaryenFeatureSIMD128();
 
-  BinaryenSetFeatures(module, features);
-  assert(BinaryenGetFeatures(module) == features);
+  BinaryenModuleSetFeatures(module, features);
+  assert(BinaryenModuleGetFeatures(module) == features);
 
   // Verify it validates
   assert(BinaryenModuleValidate(module));

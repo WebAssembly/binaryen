@@ -797,11 +797,11 @@ void Drop::finalize() {
 
 void Host::finalize() {
   switch (op) {
-    case CurrentMemory: {
+    case MemorySize: {
       type = i32;
       break;
     }
-    case GrowMemory: {
+    case MemoryGrow: {
       // if the single operand is not reachable, so are we
       if (operands[0]->type == unreachable) {
         type = unreachable;

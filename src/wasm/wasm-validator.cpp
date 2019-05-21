@@ -1490,19 +1490,21 @@ void FunctionValidator::visitReturn(Return* curr) {
 }
 
 void FunctionValidator::visitHost(Host* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
   switch (curr->op) {
-    case GrowMemory: {
+    case MemoryGrow: {
       shouldBeEqual(curr->operands.size(),
                     size_t(1),
                     curr,
-                    "grow_memory must have 1 operand");
+                    "memory.grow must have 1 operand");
       shouldBeEqualOrFirstIsUnreachable(curr->operands[0]->type,
                                         i32,
                                         curr,
-                                        "grow_memory must have i32 operand");
+                                        "memory.grow must have i32 operand");
       break;
     }
-    case CurrentMemory:
+    case MemorySize:
       break;
   }
 }

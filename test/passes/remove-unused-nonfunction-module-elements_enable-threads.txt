@@ -196,7 +196,7 @@
  (memory $0 23 256)
  (export "user" (func $user))
  (func $user (; 0 ;) (type $0) (result i32)
-  (grow_memory
+  (memory.grow
    (i32.const 0)
   )
  )
@@ -206,7 +206,7 @@
  (import "env" "memory" (memory $0 256))
  (export "user" (func $user))
  (func $user (; 0 ;) (type $0) (result i32)
-  (grow_memory
+  (memory.grow
    (i32.const 0)
   )
  )
@@ -216,7 +216,7 @@
  (memory $0 23 256)
  (export "user" (func $user))
  (func $user (; 0 ;) (type $0) (result i32)
-  (current_memory)
+  (memory.size)
  )
 )
 (module

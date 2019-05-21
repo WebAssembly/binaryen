@@ -655,8 +655,8 @@ BinaryenOp BinaryenLtFloat64(void) { return LtFloat64; }
 BinaryenOp BinaryenLeFloat64(void) { return LeFloat64; }
 BinaryenOp BinaryenGtFloat64(void) { return GtFloat64; }
 BinaryenOp BinaryenGeFloat64(void) { return GeFloat64; }
-BinaryenOp BinaryenCurrentMemory(void) { return CurrentMemory; }
-BinaryenOp BinaryenGrowMemory(void) { return GrowMemory; }
+BinaryenOp BinaryenMemorySize(void) { return MemorySize; }
+BinaryenOp BinaryenMemoryGrow(void) { return MemoryGrow; }
 BinaryenOp BinaryenAtomicRMWAdd(void) { return AtomicRMWOp::Add; }
 BinaryenOp BinaryenAtomicRMWSub(void) { return AtomicRMWOp::Sub; }
 BinaryenOp BinaryenAtomicRMWAnd(void) { return AtomicRMWOp::And; }
@@ -3079,17 +3079,19 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
 
 // Features
 
-BinaryenFeatures BinaryenGetFeatures(BinaryenModuleRef module) {
+BinaryenFeatures BinaryenModuleGetFeatures(BinaryenModuleRef module) {
   if (tracing) {
-    std::cout << "  BinaryenGetFeatures(the_module);\n";
+    std::cout << "  BinaryenModuleGetFeatures(the_module);\n";
   }
   auto* wasm = static_cast<Module*>(module);
   return wasm->features.features;
 }
 
-void BinaryenSetFeatures(BinaryenModuleRef module, BinaryenFeatures features) {
+void BinaryenModuleSetFeatures(BinaryenModuleRef module,
+                               BinaryenFeatures features) {
   if (tracing) {
-    std::cout << "  BinaryenSetFeatures(the_module, " << features << ");\n";
+    std::cout << "  BinaryenModuleSetFeatures(the_module, " << features
+              << ");\n";
   }
   auto* wasm = static_cast<Module*>(module);
   wasm->features.features = features;
