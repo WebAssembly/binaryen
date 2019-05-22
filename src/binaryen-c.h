@@ -1012,6 +1012,13 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module);
 size_t
 BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize);
 
+// Serialize a module in s-expression text format.
+// @return how many bytes were written. This will be less than or equal to
+//         outputSize
+size_t BinaryenModuleWriteText(BinaryenModuleRef module,
+                               char* output,
+                               size_t outputSize);
+
 typedef struct BinaryenBufferSizes {
   size_t outputBytes;
   size_t sourceMapBytes;
@@ -1045,6 +1052,11 @@ typedef struct BinaryenModuleAllocateAndWriteResult {
 BinaryenModuleAllocateAndWriteResult
 BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
                                const char* sourceMapUrl);
+
+// Serialize a module in s-expression form. Implicity allocates the returned
+// char* with malloc(), and expects the user to free() them manually
+// once not needed anymore.
+char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module);
 
 // Deserialize a module from binary form.
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);

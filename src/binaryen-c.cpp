@@ -35,6 +35,8 @@
 #include "wasm-validator.h"
 #include "wasm.h"
 #include "wasm2js.h"
+#include <iostream>
+#include <sstream>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -3288,6 +3290,26 @@ BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize) {
     .outputBytes;
 }
 
+size_t BinaryenModuleWriteText(BinaryenModuleRef module,
+                               char* output,
+                               size_t outputSize) {
+
+  if (tracing) {
+    std::cout << "  // BinaryenModuleWriteTextr\n";
+  }
+
+  // use a stringstream as an std::ostream. Extract the std::string
+  // representation, and then store in the output.
+  std::stringstream ss;
+  WasmPrinter::printModule((Module*)module, ss);
+
+  const auto temp = ss.str();
+  const auto ctemp = temp.c_str();
+
+  strncpy(output, ctemp, outputSize);
+  return std::min(outputSize, temp.size());
+}
+
 BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module,
                                                      const char* url,
                                                      char* output,
@@ -3331,6 +3353,21 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
     std::copy_n(str.c_str(), str.length() + 1, sourceMap);
   }
   return {binary, buffer.size(), sourceMap};
+}
+
+char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module) {
+  if (tracing) {
+    std::cout << " // BinaryenModuleAllocateAndWriteText(the_module);";
+  }
+
+  std::stringstream ss;
+  WasmPrinter::printModule((Module*)module, ss);
+
+  const std::string out = ss.str();
+  const int len = out.length() + 1;
+  char* cout = (char*)malloc(len);
+  strncpy(cout, out.c_str(), len);
+  return cout;
 }
 
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
