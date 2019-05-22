@@ -787,7 +787,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         if (child == brTable) {
           // Nothing more to do here (we can in fact skip any code til
           // the parent block).
-          unneededExpressions.insert(block);
           continue;
         }
         // Ok, we are a block and our child in the first position is a
