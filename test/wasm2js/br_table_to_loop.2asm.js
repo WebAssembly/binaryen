@@ -23,26 +23,22 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  function $0() {
   block : {
-   loop : while (1) {
-    switch (1 | 0) {
-    case 1:
-     continue loop;
-    default:
-     break block;
-    };
+   loop : while (1) switch (1 | 0) {
+   case 1:
+    continue loop;
+   default:
+    break block;
    };
   }
  }
  
  function $1() {
   block : {
-   loop : while (1) {
-    switch (1 | 0) {
-    case 1:
-     break block;
-    default:
-     continue loop;
-    };
+   loop : while (1) switch (1 | 0) {
+   case 1:
+    break block;
+   default:
+    continue loop;
    };
   }
  }
