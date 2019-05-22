@@ -778,6 +778,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         if (!block->name.is()) {
           break;
         }
+        // If we have already seen this block, stop here.
+        if (unneededExpressions.count(block)) {
+          // XXX FIXME we should probably abort the entire optimization
+          break;
+        }
         auto& list = block->list;
         if (child == brTable) {
           // Nothing more to do here (we can in fact skip any code til
@@ -789,6 +794,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         // block, and the neither is branched to - unless maybe the child
         // branches to the parent, check that. Note how we treat the
         // final element which may be a break that is a fallthrough.
+        Expression* unneededBr = nullptr;
         for (Index j = 1; j < list.size() ; j++) {
           auto* item = list[j];
           auto newBranches = BranchUtils::getExitingBranches(item);
@@ -796,7 +802,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             if (j == list.size() - 1) {
               if (!br->condition && br->name == block->name) {
                 // This is a natural, unnecessary-to-emit fallthrough.
-                unneededExpressions.insert(br);
+                unneededBr = br;
                 break;
               }
             }
@@ -813,13 +819,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         SwitchCase& case_ = hoistedSwitchCases[brTable].back();
         for (Index j = 1; j < list.size() ; j++) {
           auto* item = list[j];
-          if (!unneededExpressions.count(item)) {
+          if (item != unneededBr) {
             case_.code.push_back(item);
           }
         }
+        list.resize(1);
         // Finally, mark the block as unneeded outside the switch.
-        unneededExpressions.insert(block);
-        assert(unneededExpressions.count(child));
+        unneededExpressions.insert(childBlock);
       }
     }
   };
@@ -937,13 +943,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       }
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
-      auto noResults = result == NO_RESULT ? size : size - 1;
-      for (size_t i = 0; i < noResults; i++) {
+      for (size_t i = 0; i < size; i++) {
         flattenAppend(
           ret, ValueBuilder::makeStatement(visit(curr->list[i], NO_RESULT)));
-      }
-      if (result != NO_RESULT) {
-        flattenAppend(ret, visitAndAssign(curr->list[size - 1], result));
       }
       if (curr->name.is()) {
         ret =
