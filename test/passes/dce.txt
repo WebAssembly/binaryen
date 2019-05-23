@@ -1,11 +1,11 @@
 (module
  (type $ii (func (param i32 i32)))
  (type $1 (func))
- (type $2 (func (result i32)))
- (type $3 (func (param i32) (result i32)))
- (type $4 (func (param i64 i64) (result i64)))
- (type $5 (func (param f32 i64)))
- (type $6 (func (param f32 i64) (result i32)))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $FUNCSIG$jjj (func (param i64 i64) (result i64)))
+ (type $FUNCSIG$vfj (func (param f32 i64)))
+ (type $FUNCSIG$ifj (func (param f32 i64) (result i32)))
  (memory $0 10)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
@@ -272,12 +272,12 @@
    (i32.const 2000)
   )
  )
- (func $typed-block-none-then-unreachable (; 4 ;) (type $2) (result i32)
+ (func $typed-block-none-then-unreachable (; 4 ;) (type $FUNCSIG$i) (result i32)
   (return
    (i32.const 0)
   )
  )
- (func $typed-block-remove-br-changes-type (; 5 ;) (type $3) (param $$$0 i32) (result i32)
+ (func $typed-block-remove-br-changes-type (; 5 ;) (type $FUNCSIG$ii) (param $$$0 i32) (result i32)
   (block $switch$7
    (block $switch-default$10
     (block $switch-case$9
@@ -299,43 +299,43 @@
  (func $global (; 6 ;) (type $1)
   (unreachable)
  )
- (func $ret (; 7 ;) (type $2) (result i32)
+ (func $ret (; 7 ;) (type $FUNCSIG$i) (result i32)
   (return
    (i32.const 0)
   )
  )
- (func $unreachable-br (; 8 ;) (type $2) (result i32)
+ (func $unreachable-br (; 8 ;) (type $FUNCSIG$i) (result i32)
   (block $out (result i32)
    (br $out
     (i32.const 0)
    )
   )
  )
- (func $unreachable-br-loop (; 9 ;) (type $2) (result i32)
+ (func $unreachable-br-loop (; 9 ;) (type $FUNCSIG$i) (result i32)
   (loop $out
    (br $out)
   )
  )
- (func $unreachable-block-ends-switch (; 10 ;) (type $2) (result i32)
+ (func $unreachable-block-ends-switch (; 10 ;) (type $FUNCSIG$i) (result i32)
   (block $label$3
    (nop)
    (unreachable)
   )
  )
- (func $unreachable-block-ends-br_if (; 11 ;) (type $2) (result i32)
+ (func $unreachable-block-ends-br_if (; 11 ;) (type $FUNCSIG$i) (result i32)
   (block $label$2
    (nop)
    (unreachable)
   )
  )
- (func $unreachable-brs-3 (; 12 ;) (type $2) (result i32)
+ (func $unreachable-brs-3 (; 12 ;) (type $FUNCSIG$i) (result i32)
   (block $label$0 (result i32)
    (br $label$0
     (i32.const 18)
    )
   )
  )
- (func $unreachable-brs-4 (; 13 ;) (type $3) (param $var$0 i32) (result i32)
+ (func $unreachable-brs-4 (; 13 ;) (type $FUNCSIG$ii) (param $var$0 i32) (result i32)
   (drop
    (i32.const 1)
   )
@@ -346,7 +346,7 @@
    (unreachable)
   )
  )
- (func $call-unreach (; 14 ;) (type $4) (param $var$0 i64) (param $var$1 i64) (result i64)
+ (func $call-unreach (; 14 ;) (type $FUNCSIG$jjj) (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $2 i64)
   (if (result i64)
    (i64.eqz
@@ -377,13 +377,13 @@
    )
   )
  )
- (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (; 15 ;) (type $3) (param $var$0 i32) (result i32)
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (; 15 ;) (type $FUNCSIG$ii) (param $var$0 i32) (result i32)
   (block $block
    (nop)
    (unreachable)
   )
  )
- (func $br-with-unreachable-value-should-not-give-a-block-a-value (; 16 ;) (type $3) (param $var$0 i32) (result i32)
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (; 16 ;) (type $FUNCSIG$ii) (param $var$0 i32) (result i32)
   (block $label$0 (result i32)
    (block $block
     (drop
@@ -396,7 +396,7 @@
    )
   )
  )
- (func $replace-br-value-of-i32-with-unreachable (; 17 ;) (type $2) (result i32)
+ (func $replace-br-value-of-i32-with-unreachable (; 17 ;) (type $FUNCSIG$i) (result i32)
   (block $label$1
    (nop)
    (unreachable)
@@ -405,13 +405,13 @@
  (func $shorten-block-requires-sync-refinalize (; 18 ;) (type $ii) (param $var$0 i32) (param $var$1 i32)
   (unreachable)
  )
- (func $block-with-type-but-is-unreachable (; 19 ;) (type $3) (param $var$0 i32) (result i32)
+ (func $block-with-type-but-is-unreachable (; 19 ;) (type $FUNCSIG$ii) (param $var$0 i32) (result i32)
   (block $block
    (nop)
    (unreachable)
   )
  )
- (func $if-with-type-but-is-unreachable (; 20 ;) (type $3) (param $var$0 i32) (result i32)
+ (func $if-with-type-but-is-unreachable (; 20 ;) (type $FUNCSIG$ii) (param $var$0 i32) (result i32)
   (if
    (local.get $var$0)
    (unreachable)
@@ -421,7 +421,7 @@
  (func $unreachable-loop (; 21 ;) (type $1)
   (unreachable)
  )
- (func $br-block-from-unary (; 22 ;) (type $2) (result i32)
+ (func $br-block-from-unary (; 22 ;) (type $FUNCSIG$i) (result i32)
   (block $label$6 (result i32)
    (br $label$6
     (i32.const 8)
@@ -443,7 +443,7 @@
    (unreachable)
   )
  )
- (func $replace-with-unreachable-affects-parent (; 25 ;) (type $5) (param $var$0 f32) (param $var$1 i64)
+ (func $replace-with-unreachable-affects-parent (; 25 ;) (type $FUNCSIG$vfj) (param $var$0 f32) (param $var$1 i64)
   (drop
    (i64.const 0)
   )
@@ -475,14 +475,14 @@
    )
   )
  )
- (func $helper (; 27 ;) (type $6) (param $var$0 f32) (param $var$1 i64) (result i32)
+ (func $helper (; 27 ;) (type $FUNCSIG$ifj) (param $var$0 f32) (param $var$1 i64) (result i32)
   (i32.const 0)
  )
 )
 (module
- (type $0 (func))
+ (type $FUNCSIG$v (func))
  (global $global (mut f64) (f64.const 0))
- (func $0 (; 0 ;) (type $0)
+ (func $0 (; 0 ;) (type $FUNCSIG$v)
   (if
    (i32.const 0)
    (unreachable)
@@ -491,8 +491,8 @@
  )
 )
 (module
- (type $0 (func))
- (func $0 (; 0 ;) (type $0)
+ (type $FUNCSIG$v (func))
+ (func $0 (; 0 ;) (type $FUNCSIG$v)
   (local $local f64)
   (if
    (i32.const 0)

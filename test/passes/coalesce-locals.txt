@@ -5,11 +5,10 @@
  (type $3 (func (param i32 f32)))
  (type $4 (func (param i32)))
  (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $7 (func (param i32) (result i32)))
- (type $8 (func (param f64 i32) (result i64)))
- (type $9 (func (param i32 i32)))
- (type $10 (func (result f64)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $FUNCSIG$jdi (func (param f64 i32) (result i64)))
+ (type $FUNCSIG$vii (func (param i32 i32)))
+ (type $FUNCSIG$d (func (result f64)))
  (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
  (import "env" "get" (func $get (result i32)))
  (import "env" "set" (func $set (param i32)))
@@ -1108,7 +1107,7 @@
    (br $top)
   )
  )
- (func $tee_br (; 48 ;) (type $7) (param $0 i32) (result i32)
+ (func $tee_br (; 48 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (block $b
    (return
     (br $b)
@@ -1126,7 +1125,7 @@
    )
   )
  )
- (func $tee_if_with_unreachable_else (; 50 ;) (type $8) (param $0 f64) (param $1 i32) (result i64)
+ (func $tee_if_with_unreachable_else (; 50 ;) (type $FUNCSIG$jdi) (param $0 f64) (param $1 i32) (result i64)
   (call $tee_if_with_unreachable_else
    (local.tee $0
     (if (result f64)
@@ -1141,7 +1140,7 @@
    )
   )
  )
- (func $tee_if_with_unreachable_true (; 51 ;) (type $8) (param $0 f64) (param $1 i32) (result i64)
+ (func $tee_if_with_unreachable_true (; 51 ;) (type $FUNCSIG$jdi) (param $0 f64) (param $1 i32) (result i64)
   (call $tee_if_with_unreachable_else
    (local.tee $0
     (if (result f64)
@@ -1220,7 +1219,7 @@
   )
   (nop)
  )
- (func $loop-copies (; 55 ;) (type $9) (param $0 i32) (param $1 i32)
+ (func $loop-copies (; 55 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (loop $loop
    (local.set $0
     (local.get $1)
@@ -1233,7 +1232,7 @@
    )
   )
  )
- (func $proper-type (; 56 ;) (type $10) (result f64)
+ (func $proper-type (; 56 ;) (type $FUNCSIG$d) (result f64)
   (local $0 f64)
   (local $1 i32)
   (drop

@@ -36,7 +36,7 @@
       (br_if $loop (i32.const 1))
     )
   )
- (func $loop3-4-b (; 4 ;) (type $0)
+ (func $loop3-4-b (; 4 ;) (type 0)
   (loop $loop
    (drop
     (i32.load

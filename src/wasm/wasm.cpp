@@ -406,14 +406,19 @@ void CallIndirect::finalize() {
 }
 
 bool FunctionType::structuralComparison(FunctionType& b) {
-  if (result != b.result) {
+  return structuralComparison(b.params, b.result);
+}
+
+bool FunctionType::structuralComparison(const std::vector<Type>& otherParams,
+                                        Type otherResult) {
+  if (result != otherResult) {
     return false;
   }
-  if (params.size() != b.params.size()) {
+  if (params.size() != otherParams.size()) {
     return false;
   }
   for (size_t i = 0; i < params.size(); i++) {
-    if (params[i] != b.params[i]) {
+    if (params[i] != otherParams[i]) {
       return false;
     }
   }

@@ -9,34 +9,34 @@
 [fuzz-exec] calling $e
 [fuzz-exec] note result: $e => i64.const -2146649112
 (module
- (type $0 (func (result i32)))
- (type $1 (func (result i64)))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$j (func (result i64)))
  (export "a" (func $a))
  (export "b" (func $b))
  (export "c" (func $c))
  (export "d" (func $d))
  (export "e" (func $e))
- (func $a (; 0 ;) (type $0) (result i32)
+ (func $a (; 0 ;) (type $FUNCSIG$i) (result i32)
   (i32.extend8_s
    (i32.const 187)
   )
  )
- (func $b (; 1 ;) (type $0) (result i32)
+ (func $b (; 1 ;) (type $FUNCSIG$i) (result i32)
   (i32.extend16_s
    (i32.const 33768)
   )
  )
- (func $c (; 2 ;) (type $1) (result i64)
+ (func $c (; 2 ;) (type $FUNCSIG$j) (result i64)
   (i64.extend8_s
    (i64.const 187)
   )
  )
- (func $d (; 3 ;) (type $1) (result i64)
+ (func $d (; 3 ;) (type $FUNCSIG$j) (result i64)
   (i64.extend16_s
    (i64.const 33768)
   )
  )
- (func $e (; 4 ;) (type $1) (result i64)
+ (func $e (; 4 ;) (type $FUNCSIG$j) (result i64)
   (i64.extend32_s
    (i64.const 2148318184)
   )

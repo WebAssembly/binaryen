@@ -112,7 +112,6 @@ class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
   std::vector<Name> functionNames;
-  std::vector<Name> functionTypeNames;
   std::vector<Name> globalNames;
   int functionCounter;
   int globalCounter = 0;
@@ -222,9 +221,20 @@ private:
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
-  std::vector<NameType> parseNamedParamOrLocal(Element& s, size_t& localIndex);
+  std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   Type parseResult(Element& s);
   FunctionType* parseTypeRef(Element& s);
+  size_t parseTypeUse(Element& s,
+                      size_t startPos,
+                      FunctionType*& functionType,
+                      std::vector<NameType>& namedParams,
+                      Type& result);
+  size_t parseTypeUse(Element& s,
+                      size_t startPos,
+                      FunctionType*& functionType,
+                      std::vector<Type>& params,
+                      Type& result);
+  size_t parseTypeUse(Element& s, size_t startPos, FunctionType*& functionType);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);

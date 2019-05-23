@@ -1,9 +1,9 @@
 (module
- (type $0 (func (result i32)))
+ (type $FUNCSIG$i (func (result i32)))
  (memory $0 1 1)
  (global $global$0 (mut i32) (i32.const 10))
  (export "foo" (func $0))
- (func $0 (; 0 ;) (type $0) (result i32)
+ (func $0 (; 0 ;) (type $FUNCSIG$i) (result i32)
   (global.set $global$0
    (i32.const 0)
   )

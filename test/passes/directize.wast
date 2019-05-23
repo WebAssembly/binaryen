@@ -185,7 +185,7 @@
  (func $0
   (block ;; the type of this block will change
    (nop)
-   (call_indirect (type $0)
+   (call_indirect (type 0)
     (i32.const 15)
    )
   )

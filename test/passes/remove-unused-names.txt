@@ -1,7 +1,7 @@
 (module
  (type $0 (func (param i32) (result i32)))
  (type $1 (func))
- (type $2 (func (result i32)))
+ (type $FUNCSIG$i (func (result i32)))
  (memory $0 256 256)
  (func $b0 (; 0 ;) (type $0) (param $i1 i32) (result i32)
   (i32.const 0)
@@ -64,7 +64,7 @@
    )
   )
  )
- (func $merge-typed-with-unreachable-child (; 3 ;) (type $2) (result i32)
+ (func $merge-typed-with-unreachable-child (; 3 ;) (type $FUNCSIG$i) (result i32)
   (local $0 f32)
   (block $label$1 (result i32)
    (br_if $label$1

@@ -2,7 +2,6 @@
  (type $0 (func (param i32) (result i32)))
  (type $1 (func (result i32)))
  (type $2 (func))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
  (type $FUNCSIG$ij (func (param i64) (result i32)))
  (type $FUNCSIG$fifd (func (param i32 f32 f64) (result f32)))
  (type $FUNCSIG$fidd (func (param i32 f64 f64) (result f32)))

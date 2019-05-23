@@ -32,16 +32,16 @@ func: ifs
  if             : 4       
 (module
  (type $0 (func (param i32)))
- (type $1 (func))
+ (type $FUNCSIG$v (func))
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
  (table $0 256 256 funcref)
  (elem (i32.const 0) $ifs $ifs $ifs)
  (global $glob i32 (i32.const 1337))
- (func $empty (; 0 ;) (type $1)
+ (func $empty (; 0 ;) (type $FUNCSIG$v)
   (nop)
  )
- (func $small (; 1 ;) (type $1)
+ (func $small (; 1 ;) (type $FUNCSIG$v)
   (nop)
   (drop
    (i32.const 100421)
