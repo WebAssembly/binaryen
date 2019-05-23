@@ -794,7 +794,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         // branches to the parent, check that. Note how we treat the
         // final element which may be a break that is a fallthrough.
         Expression* unneededBr = nullptr;
-        for (Index j = 1; j < list.size() ; j++) {
+        for (Index j = 1; j < list.size(); j++) {
           auto* item = list[j];
           auto newBranches = BranchUtils::getExitingBranches(item);
           if (auto* br = item->dynCast<Break>()) {
@@ -816,7 +816,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         auto* childBlock = child->cast<Block>();
         hoistedSwitchCases[brTable].emplace_back(childBlock->name);
         SwitchCase& case_ = hoistedSwitchCases[brTable].back();
-        for (Index j = 1; j < list.size() ; j++) {
+        for (Index j = 1; j < list.size(); j++) {
           auto* item = list[j];
           if (item != unneededBr) {
             case_.code.push_back(item);
@@ -1067,7 +1067,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           ValueBuilder::appendDefaultToSwitch(theSwitch);
         }
         for (auto* c : code) {
-          ValueBuilder::appendCodeToSwitch(theSwitch, blockify(visit(c, NO_RESULT)), false);
+          ValueBuilder::appendCodeToSwitch(
+            theSwitch, blockify(visit(c, NO_RESULT)), false);
         }
       }
       // Emit any remaining groups by just emitting branches to their code,
@@ -1093,7 +1094,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // TODO: if the group the default is in is not the largest, we can turn
       // the largest into
       //       the default by using a local and a check on the range
-      if (!emittedTargets.count(curr->default_)) { 
+      if (!emittedTargets.count(curr->default_)) {
         ValueBuilder::appendDefaultToSwitch(theSwitch);
         ValueBuilder::appendCodeToSwitch(
           theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
