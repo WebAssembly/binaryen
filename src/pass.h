@@ -56,6 +56,29 @@ private:
   std::map<std::string, PassInfo> passInfos;
 };
 
+struct InliningOptions {
+  // Function size at which we always inline.
+  // Typically a size so small that after optimizations, the inlined code will
+  // be smaller than the call instruction itself. 2 is a safe number because
+  // there is no risk of things like
+  //  (func $reverse (param $x i32) (param $y i32)
+  //   (call $something (local.get $y) (local.get $x))
+  //  )
+  // in which case the reversing of the params means we'll possibly need
+  // a block and a temp local. But that takes at least 3 nodes, and 2 < 3.
+  // More generally, with 2 items we may have a local.get, but no way to
+  // require it to be saved instead of directly consumed.
+  Index alwaysInlineMaxSize = 2;
+  // Function size which we inline when functions are lightweight (no loops
+  // and calls) and we are doing aggressive optimisation for speed (-O3).
+  // In particular it's nice that with this limit we can inline the clamp
+  // functions (i32s-div, f64-to-int, etc.), that can affect perf.
+  Index flexibleInlineMaxSize = 20;
+  // Function size which we inline when there is only one caller.
+  // FIXME: this should logically be higher than flexibleInlineMaxSize.
+  Index oneCallerInlineMaxSize = 15;
+};
+
 struct PassOptions {
   // Run passes in debug mode, doing extra validation and timing checks.
   bool debug = false;
@@ -67,6 +90,8 @@ struct PassOptions {
   int optimizeLevel = 0;
   // 0, 1, 2 correspond to -O0, -Os, -Oz
   int shrinkLevel = 0;
+  // Tweak thresholds for the Inlining pass.
+  InliningOptions inlining;
   // Optimize assuming things like div by 0, bad load/store, will not trap.
   bool ignoreImplicitTraps = false;
   // Optimize assuming that the low 1K of memory is not valid memory for the
