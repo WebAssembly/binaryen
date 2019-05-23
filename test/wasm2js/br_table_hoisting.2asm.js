@@ -1,4 +1,3 @@
-import { zed } from 'env';
 
 function asmFunc(global, env, buffer) {
  "almost asm";
@@ -22,8 +21,12 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var zed = env.zed;
- function $0(x) {
+ function zed($0) {
+  $0 = $0 | 0;
+  zed($0 | 0);
+ }
+ 
+ function $1(x) {
   x = x | 0;
   a : {
    b : {
@@ -52,7 +55,7 @@ function asmFunc(global, env, buffer) {
   zed(-10 | 0);
  }
  
- function $1(x) {
+ function $2(x) {
   x = x | 0;
   a : {
    b : {
@@ -89,7 +92,7 @@ function asmFunc(global, env, buffer) {
   zed(-10 | 0);
  }
  
- function $2(x) {
+ function $3(x) {
   x = x | 0;
   a : {
    b : {
@@ -128,7 +131,7 @@ function asmFunc(global, env, buffer) {
   zed(-10 | 0);
  }
  
- function $3(x) {
+ function $4(x) {
   x = x | 0;
   a : {
    b : {
@@ -175,15 +178,15 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  "foo1": $0, 
-  "foo2": $1, 
-  "foo3": $2, 
-  "foo4": $3
+  "foo1": $1, 
+  "foo2": $2, 
+  "foo3": $3, 
+  "foo4": $4
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },zed},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var foo1 = retasmFunc.foo1;
 export var foo2 = retasmFunc.foo2;
 export var foo3 = retasmFunc.foo3;

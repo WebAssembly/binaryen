@@ -1,5 +1,7 @@
 (module
- (import "env" "zed" (func $zed (param i32)))
+ (func $zed (param i32)
+  (call $zed (local.get 0))
+ )
  (func "foo1" (param $x i32)
   (block $a
    (block $b
