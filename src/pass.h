@@ -57,7 +57,7 @@ private:
 };
 
 struct InliningOptions {
-  // Function size at which we allways inline.
+  // Function size at which we always inline.
   // Typically a size so small that after optimizations, the inlined code will
   // be smaller than the call instruction itself. 2 is a safe number because
   // there is no risk of things like
