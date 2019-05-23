@@ -81,6 +81,7 @@ Name MUT("mut");
 Name SPECTEST("spectest");
 Name PRINT("print");
 Name EXIT("exit");
+Name SHARED("shared");
 
 // Expressions
 
