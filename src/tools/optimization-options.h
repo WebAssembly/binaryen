@@ -126,8 +126,9 @@ struct OptimizationOptions : public ToolOptions {
       .add("--always-inline-max-function-size",
            "-aimfs",
            "Max size of functions that are always inlined (default " +
-           std::to_string(InliningOptions().alwaysInlineMaxSize) + ", which "
-           "is safe for use with -Os builds)",
+             std::to_string(InliningOptions().alwaysInlineMaxSize) +
+             ", which "
+             "is safe for use with -Os builds)",
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.inlining.alwaysInlineMaxSize =
@@ -138,7 +139,7 @@ struct OptimizationOptions : public ToolOptions {
            "Max size of functions that are inlined when lightweight (no loops "
            "or function calls) when optimizing aggressively for speed (-O3). "
            "Default: " +
-           std::to_string(InliningOptions().flexibleInlineMaxSize),
+             std::to_string(InliningOptions().flexibleInlineMaxSize),
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.inlining.flexibleInlineMaxSize =
@@ -148,10 +149,10 @@ struct OptimizationOptions : public ToolOptions {
            "-ocimfs",
            "Max size of functions that are inlined when there is only one "
            "caller (default " +
-           std::to_string(InliningOptions().oneCallerInlineMaxSize) +
-           "). Reason this is not unbounded is that some "
-           "implementations may have a hard time optimizing really large "
-           "functions",
+             std::to_string(InliningOptions().oneCallerInlineMaxSize) +
+             "). Reason this is not unbounded is that some "
+             "implementations may have a hard time optimizing really large "
+             "functions",
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.inlining.oneCallerInlineMaxSize =
