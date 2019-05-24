@@ -12,14 +12,7 @@ class ParsingErrorTest(BinaryenTestCase):
      )
     )
     '''
-Of course this has the downside of changing the contents of the string, but I think that should be fine for this test. 
-
- (func $foo
-  (abc)
- )
-)
-    '''
     p = run_process(WASM_OPT + ['--print', '-o', os.devnull], input=module,
                     check=False, capture_output=True)
     self.assertNotEqual(p.returncode, 0)
-    self.assertIn("parse exception: abc (at 3:2)", p.stderr)
+    self.assertIn("parse exception: abc (at 4:6)", p.stderr)

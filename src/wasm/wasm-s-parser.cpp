@@ -59,6 +59,10 @@ static Address getCheckedAddress(const Element* s, const char* errorText) {
   return num;
 }
 
+static bool elementStartsWith(Element& s, IString str) {
+  return s.isList() && s.size() > 0 && s[0]->isStr() && s[0]->str() == str;
+}
+
 Element::List& Element::list() {
   if (!isList()) {
     throw ParseException("expected list", line, col);
@@ -348,7 +352,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
     auto& s = *module[j];
     preParseFunctionType(s);
     preParseImports(s);
-    if (s[0]->str() == FUNC && !isImport(s)) {
+    if (elementStartsWith(s, FUNC) && !isImport(s)) {
       implementedFunctions++;
     }
   }
@@ -363,7 +367,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
 bool SExpressionWasmBuilder::isImport(Element& curr) {
   for (Index i = 0; i < curr.size(); i++) {
     auto& x = *curr[i];
-    if (x.isList() && x.size() > 0 && x[0]->isStr() && x[0]->str() == IMPORT) {
+    if (elementStartsWith(x, IMPORT)) {
       return true;
     }
   }
@@ -489,7 +493,7 @@ std::vector<Type> SExpressionWasmBuilder::parseParamOrLocal(Element& s) {
 // If the name is unspecified, it will create one using localIndex.
 std::vector<NameType>
 SExpressionWasmBuilder::parseNamedParamOrLocal(Element& s, size_t& localIndex) {
-  assert(s.isList() && (s[0]->str() == PARAM || s[0]->str() == LOCAL));
+  assert(elementStartsWith(s, PARAM) || elementStartsWith(s, LOCAL));
   std::vector<NameType> namedParams;
   if (s.size() == 1) { // (param) or (local)
     return namedParams;
@@ -518,7 +522,7 @@ SExpressionWasmBuilder::parseNamedParamOrLocal(Element& s, size_t& localIndex) {
 
 // Parses (result type) element. (e.g. (result i32))
 Type SExpressionWasmBuilder::parseResult(Element& s) {
-  assert(s.isList() && s[0]->str() == RESULT);
+  assert(elementStartsWith(s, RESULT));
   if (s.size() != 2) {
     throw ParseException("invalid result arity", s.line, s.col);
   }
@@ -529,7 +533,7 @@ Type SExpressionWasmBuilder::parseResult(Element& s) {
 // should be in the form of (type name) or (type index).
 // (e.g. (type $a), (type 0))
 FunctionType* SExpressionWasmBuilder::parseTypeRef(Element& s) {
-  assert(s.isList() && s[0]->str() == TYPE);
+  assert(elementStartsWith(s, TYPE));
   if (s.size() != 2) {
     throw ParseException("invalid type reference", s.line, s.col);
   }
@@ -616,7 +620,7 @@ size_t SExpressionWasmBuilder::parseFunctionNames(Element& s,
   }
   if (i < s.size() && s[i]->isList()) {
     auto& inner = *s[i];
-    if (inner.size() > 0 && inner[0]->str() == EXPORT) {
+    if (elementStartsWith(inner, EXPORT)) {
       exportName = inner[1]->str();
       i++;
     }
@@ -1029,7 +1033,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
       break; // empty block
     }
     auto& first = *s[i];
-    if (first[0]->str() == BLOCK) {
+    if (elementStartsWith(first, BLOCK)) {
       // recurse
       curr = allocator.alloc<Block>();
       if (first.startLoc) {
@@ -1050,7 +1054,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
       while (i < s.size() && s[i]->isStr()) {
         i++;
       }
-      if (i < s.size() && (*s[i])[0]->str() == RESULT) {
+      if (i < s.size() && elementStartsWith(*s[i], RESULT)) {
         i++;
       }
       if (t < int(stack.size()) - 1) {
@@ -1548,7 +1552,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   auto ret = allocator.alloc<CallIndirect>();
   Index i = 1;
   Element& typeElement = *s[i];
-  if (typeElement[0]->str() == "type") {
+  if (elementStartsWith(typeElement, TYPE)) {
     // type name given
     IString type = typeElement[1]->str();
     auto* fullType = wasm.getFunctionTypeOrNull(type);
@@ -1562,11 +1566,11 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
     FunctionType type;
     while (1) {
       Element& curr = *s[i];
-      if (curr[0]->str() == PARAM) {
+      if (elementStartsWith(curr, PARAM)) {
         auto newParams = parseParamOrLocal(curr);
         type.params.insert(
           type.params.end(), newParams.begin(), newParams.end());
-      } else if (curr[0]->str() == RESULT) {
+      } else if (elementStartsWith(curr, RESULT)) {
         type.result = parseResult(curr);
       } else {
         break;
@@ -1616,7 +1620,7 @@ Expression* SExpressionWasmBuilder::makeBreak(Element& s) {
   if (i == s.size()) {
     return ret;
   }
-  if (s[0]->str() == BR_IF) {
+  if (elementStartsWith(s, BR_IF)) {
     if (i + 1 < s.size()) {
       ret->value = parseExpression(s[i]);
       i++;
@@ -1732,7 +1736,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   Name importModule, importBase;
   if (s[i]->isList()) {
     auto& inner = *s[i];
-    if (inner[0]->str() == EXPORT) {
+    if (elementStartsWith(inner, EXPORT)) {
       auto ex = make_unique<Export>();
       ex->name = inner[1]->str();
       ex->value = wasm.memory.name;
@@ -1742,11 +1746,11 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       }
       wasm.addExport(ex.release());
       i++;
-    } else if (inner[0]->str() == IMPORT) {
+    } else if (elementStartsWith(inner, IMPORT)) {
       wasm.memory.module = inner[1]->str();
       wasm.memory.base = inner[2]->str();
       i++;
-    } else if (inner[0]->str() == "shared") {
+    } else if (elementStartsWith(inner, SHARED)) {
       wasm.memory.shared = true;
       parseMemoryLimits(inner, 1);
       i++;
@@ -1770,7 +1774,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     Element& curr = *s[i];
     size_t j = 1;
     Address offsetValue;
-    if (curr[0]->str() == DATA) {
+    if (elementStartsWith(curr, DATA)) {
       offsetValue = 0;
     } else {
       offsetValue = getCheckedAddress(curr[j++], "excessive memory offset");
@@ -1834,13 +1838,13 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
   if (s[2]->isList()) {
     auto& inner = *s[2];
     ex->value = inner[1]->str();
-    if (inner[0]->str() == FUNC) {
+    if (elementStartsWith(inner, FUNC)) {
       ex->kind = ExternalKind::Function;
-    } else if (inner[0]->str() == MEMORY) {
+    } else if (elementStartsWith(inner, MEMORY)) {
       ex->kind = ExternalKind::Memory;
-    } else if (inner[0]->str() == TABLE) {
+    } else if (elementStartsWith(inner, TABLE)) {
       ex->kind = ExternalKind::Table;
-    } else if (inner[0]->str() == GLOBAL) {
+    } else if (elementStartsWith(inner, GLOBAL)) {
       ex->kind = ExternalKind::Global;
     } else {
       throw ParseException("invalid export");
@@ -1862,21 +1866,21 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   bool newStyle = s.size() == 4 && s[3]->isList();
   auto kind = ExternalKind::Invalid;
   if (newStyle) {
-    if ((*s[3])[0]->str() == FUNC) {
+    if (elementStartsWith(*s[3], FUNC)) {
       kind = ExternalKind::Function;
-    } else if ((*s[3])[0]->str() == MEMORY) {
+    } else if (elementStartsWith(*s[3], MEMORY)) {
       kind = ExternalKind::Memory;
       if (wasm.memory.exists) {
         throw ParseException("more than one memory");
       }
       wasm.memory.exists = true;
-    } else if ((*s[3])[0]->str() == TABLE) {
+    } else if (elementStartsWith(*s[3], TABLE)) {
       kind = ExternalKind::Table;
       if (wasm.table.exists) {
         throw ParseException("more than one table");
       }
       wasm.table.exists = true;
-    } else if ((*s[3])[0]->str() == GLOBAL) {
+    } else if (elementStartsWith(*s[3], GLOBAL)) {
       kind = ExternalKind::Global;
     } else {
       newStyle = false; // either (param..) or (result..)
@@ -1991,7 +1995,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     wasm.memory.base = base;
     if (inner[j]->isList()) {
       auto& limits = *inner[j];
-      if (!(limits[0]->isStr() && limits[0]->str() == "shared")) {
+      if (!elementStartsWith(limits, SHARED)) {
         throw ParseException("bad memory limit declaration");
       }
       wasm.memory.shared = true;
@@ -2018,7 +2022,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   Name importModule, importBase;
   while (i < s.size() && s[i]->isList()) {
     auto& inner = *s[i];
-    if (inner[0]->str() == EXPORT) {
+    if (elementStartsWith(inner, EXPORT)) {
       auto ex = make_unique<Export>();
       ex->name = inner[1]->str();
       ex->value = global->name;
@@ -2029,11 +2033,11 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
       wasm.addExport(ex.release());
       exported = true;
       i++;
-    } else if (inner[0]->str() == IMPORT) {
+    } else if (elementStartsWith(inner, IMPORT)) {
       importModule = inner[1]->str();
       importBase = inner[2]->str();
       i++;
-    } else if (inner[0]->str() == MUT) {
+    } else if (elementStartsWith(inner, MUT)) {
       mutable_ = true;
       type = stringToType(inner[1]->str());
       i++;
@@ -2104,7 +2108,7 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   Name importModule, importBase;
   if (s[i]->isList()) {
     auto& inner = *s[i];
-    if (inner[0]->str() == EXPORT) {
+    if (elementStartsWith(inner, EXPORT)) {
       auto ex = make_unique<Export>();
       ex->name = inner[1]->str();
       ex->value = wasm.table.name;
@@ -2114,7 +2118,7 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
       }
       wasm.addExport(ex.release());
       i++;
-    } else if (inner[0]->str() == IMPORT) {
+    } else if (elementStartsWith(inner, IMPORT)) {
       if (!preParseImport) {
         throw ParseException("!preParseImport in table");
       }
@@ -2199,11 +2203,11 @@ void SExpressionWasmBuilder::parseType(Element& s) {
   Element& func = *s[i];
   for (size_t k = 1; k < func.size(); k++) {
     Element& curr = *func[k];
-    if (curr[0]->str() == PARAM) {
+    if (elementStartsWith(curr, PARAM)) {
       auto newParams = parseParamOrLocal(curr);
       type->params.insert(
         type->params.end(), newParams.begin(), newParams.end());
-    } else if (curr[0]->str() == RESULT) {
+    } else if (elementStartsWith(curr, RESULT)) {
       type->result = parseResult(curr);
     }
   }
