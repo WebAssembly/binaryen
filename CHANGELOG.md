@@ -19,9 +19,11 @@ Current Trunk
   that were previously allowed. Typeuse entries should follow this format,
   meaning they should have (type) -> (param) -> (result) order if more than one
   of them exist.
+  ```
   typeuse ::= (type index|name)+ |
               (type index|name)+ (param ..)* (result ..)* |
               (param ..)* (result ..)*
+  ```
   Also, all (local) nodes in function definition should be after all typeuse
   elements.
 - Removed APIs related to deprecated instruction names in Binaryen.js:
