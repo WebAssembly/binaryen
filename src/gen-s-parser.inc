@@ -2250,7 +2250,7 @@ switch (op[0]) {
   default: goto parse_error;
 }
 parse_error:
-  throw ParseException(std::string(op));
+  throw ParseException(std::string(op), s.line, s.col);
 #endif // INSTRUCTION_PARSER
 
 // clang-format on
