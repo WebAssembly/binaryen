@@ -2216,7 +2216,7 @@ void SExpressionWasmBuilder::parseType(Element& s) {
   }
   // We allow duplicate types in the type section, i.e., we can have
   // (func (param i32) (result i32)) many times. For unnamed types, find a name
-  // that does tno clash with existing ones.
+  // that does not clash with existing ones.
   if (!type->name.is()) {
     type->name = "FUNCSIG$" + getSig(type.get());
   }
