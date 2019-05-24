@@ -13,6 +13,8 @@ var module = new Binaryen.Module();
 var initExpr = module.i32.const(1);
 var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr);
 
+console.log("GetGlobal is equal: " + (global === module.getGlobal("a-global")));
+
 var globalInfo = Binaryen.getGlobalInfo(global);
 console.log("getGlobalInfo=" + JSON.stringify(cleanInfo(globalInfo)));
 

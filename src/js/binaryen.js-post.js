@@ -1776,6 +1776,11 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddGlobal'](module, strToStack(name), type, mutable, init);
     });
   }
+  self['getGlobal'] = function(name) {
+    return preserveStack(function() {
+      return Module['_BinaryenGetGlobal'](module, strToStack(name));
+    });
+  };
   self['removeGlobal'] = function(name) {
     return preserveStack(function() {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
