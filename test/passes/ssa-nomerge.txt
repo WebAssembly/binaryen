@@ -1,8 +1,8 @@
 (module
- (type $0 (func (param i32)))
- (type $1 (func (param i32 i32)))
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$vii (func (param i32 i32)))
  (global $global$0 (mut i32) (i32.const 1))
- (func $basics (; 0 ;) (type $0) (param $x i32)
+ (func $basics (; 0 ;) (type $FUNCSIG$vi) (param $x i32)
   (local $y i32)
   (local $z f32)
   (local $w i64)
@@ -47,7 +47,7 @@
    (local.get $7)
   )
  )
- (func $if (; 1 ;) (type $0) (param $p i32)
+ (func $if (; 1 ;) (type $FUNCSIG$vi) (param $p i32)
   (local $x i32)
   (local $y i32)
   (local $3 i32)
@@ -126,7 +126,7 @@
    (local.get $x)
   )
  )
- (func $if2 (; 2 ;) (type $0) (param $x i32)
+ (func $if2 (; 2 ;) (type $FUNCSIG$vi) (param $x i32)
   (if
    (i32.const 1)
    (block $block
@@ -142,7 +142,7 @@
    (local.get $x)
   )
  )
- (func $nomerge (; 3 ;) (type $1) (param $p i32) (param $q i32)
+ (func $nomerge (; 3 ;) (type $FUNCSIG$vii) (param $p i32) (param $q i32)
   (local $x i32)
   (local $3 i32)
   (local $4 i32)

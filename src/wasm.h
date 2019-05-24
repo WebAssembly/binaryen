@@ -632,6 +632,7 @@ public:
   FunctionType() = default;
 
   bool structuralComparison(FunctionType& b);
+  bool structuralComparison(const std::vector<Type>& params, Type result);
 
   bool operator==(FunctionType& b);
   bool operator!=(FunctionType& b);

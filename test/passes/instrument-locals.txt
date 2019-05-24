@@ -1,5 +1,5 @@
 (module
- (type $0 (func))
+ (type $FUNCSIG$v (func))
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
  (type $FUNCSIG$jiij (func (param i32 i32 i64) (result i64)))
  (type $FUNCSIG$fiif (func (param i32 i32 f32) (result f32)))
@@ -12,7 +12,7 @@
  (import "env" "set_i64" (func $set_i64 (param i32 i32 i64) (result i64)))
  (import "env" "set_f32" (func $set_f32 (param i32 i32 f32) (result f32)))
  (import "env" "set_f64" (func $set_f64 (param i32 i32 f64) (result f64)))
- (func $A (; 8 ;) (type $0)
+ (func $A (; 8 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i64)
   (local $z f32)

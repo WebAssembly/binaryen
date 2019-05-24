@@ -1,8 +1,8 @@
 (module
- (type $0 (func))
- (type $1 (func (result i32)))
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$i (func (result i32)))
  (memory $0 1)
- (func $a (; 0 ;) (type $0)
+ (func $a (; 0 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_u
@@ -16,7 +16,7 @@
    )
   )
  )
- (func $b (; 1 ;) (type $0)
+ (func $b (; 1 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load16_u
@@ -30,7 +30,7 @@
    )
   )
  )
- (func $c (; 2 ;) (type $0)
+ (func $c (; 2 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_u
@@ -44,7 +44,7 @@
    )
   )
  )
- (func $d (; 3 ;) (type $0)
+ (func $d (; 3 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load16_u
@@ -58,7 +58,7 @@
    )
   )
  )
- (func $one-of-each (; 4 ;) (type $0)
+ (func $one-of-each (; 4 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -81,7 +81,7 @@
    )
   )
  )
- (func $more-of-one (; 5 ;) (type $0)
+ (func $more-of-one (; 5 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -110,7 +110,7 @@
    )
   )
  )
- (func $many-more-of-one (; 6 ;) (type $0)
+ (func $many-more-of-one (; 6 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_u
@@ -145,7 +145,7 @@
    )
   )
  )
- (func $a-sign (; 7 ;) (type $0)
+ (func $a-sign (; 7 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -162,7 +162,7 @@
    )
   )
  )
- (func $multivar (; 8 ;) (type $0)
+ (func $multivar (; 8 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -191,7 +191,7 @@
    )
   )
  )
- (func $corners (; 9 ;) (type $0)
+ (func $corners (; 9 ;) (type $FUNCSIG$v)
   (local $y i32)
   (drop
    (i32.load8_s
@@ -207,7 +207,7 @@
    (i32.const 1024)
   )
  )
- (func $wrong-size (; 10 ;) (type $0)
+ (func $wrong-size (; 10 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -221,7 +221,7 @@
    )
   )
  )
- (func $wrong-size_s (; 11 ;) (type $0)
+ (func $wrong-size_s (; 11 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_u
@@ -238,7 +238,7 @@
    )
   )
  )
- (func $non-sign-or-unsigned-use (; 12 ;) (type $0)
+ (func $non-sign-or-unsigned-use (; 12 ;) (type $FUNCSIG$v)
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -255,12 +255,12 @@
    (local.get $y)
   )
  )
- (func $toplevel-load (; 13 ;) (type $1) (result i32)
+ (func $toplevel-load (; 13 ;) (type $FUNCSIG$i) (result i32)
   (i32.load8_s
    (i32.const 1024)
   )
  )
- (func $tees (; 14 ;) (type $0)
+ (func $tees (; 14 ;) (type $FUNCSIG$v)
   (local $y i32)
   (drop
    (local.tee $y

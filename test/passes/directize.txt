@@ -103,13 +103,13 @@
 )
 (module
  (type $ii (func (param i32 i32)))
- (type $1 (func (param i32 i32 i32)))
+ (type $FUNCSIG$viii (func (param i32 i32 i32)))
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
  (func $foo (; 0 ;) (type $ii) (param $0 i32) (param $1 i32)
   (unreachable)
  )
- (func $bar (; 1 ;) (type $1) (param $x i32) (param $y i32) (param $z i32)
+ (func $bar (; 1 ;) (type $FUNCSIG$viii) (param $x i32) (param $y i32) (param $z i32)
   (call_indirect (type $ii)
    (local.get $x)
    (local.get $y)
@@ -157,10 +157,10 @@
 )
 (module
  (type $ii (func (param i32 i32)))
- (type $1 (func (param i32)))
+ (type $FUNCSIG$vi (func (param i32)))
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
- (func $foo (; 0 ;) (type $1) (param $0 i32)
+ (func $foo (; 0 ;) (type $FUNCSIG$vi) (param $0 i32)
   (unreachable)
  )
  (func $bar (; 1 ;) (type $ii) (param $x i32) (param $y i32)
@@ -176,15 +176,15 @@
  )
 )
 (module
- (type $0 (func (param i32)))
- (func $foo (; 0 ;) (type $0) (param $0 i32)
+ (type $FUNCSIG$vi (func (param i32)))
+ (func $foo (; 0 ;) (type $FUNCSIG$vi) (param $0 i32)
   (unreachable)
  )
 )
 (module
- (type $0 (func))
+ (type $FUNCSIG$v (func))
  (table $0 8 8 funcref)
- (func $0 (; 0 ;) (type $0)
+ (func $0 (; 0 ;) (type $FUNCSIG$v)
   (block $block
    (nop)
    (block

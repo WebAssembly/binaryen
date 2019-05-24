@@ -6,7 +6,6 @@
  (type $FUNCSIG$vj (func (param i32 i32)))
  (type $legaltype$wasm2js_scratch_store_i64 (func (param i32 i32)))
  (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$vii (func (param i32 i32)))
  (type $FUNCSIG$f (func (result f32)))
  (type $FUNCSIG$vf (func (param f32)))
  (type $FUNCSIG$d (func (result f64)))

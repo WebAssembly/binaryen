@@ -453,10 +453,10 @@ Name SExpressionWasmBuilder::getFunctionTypeName(Element& s) {
   } else {
     // index
     size_t offset = atoi(s.str().c_str());
-    if (offset >= functionTypeNames.size()) {
+    if (offset >= wasm.functionTypes.size()) {
       throw ParseException("unknown function type in getFunctionTypeName");
     }
-    return functionTypeNames[offset];
+    return wasm.functionTypes[offset]->name;
   }
 }
 
@@ -477,10 +477,10 @@ Name SExpressionWasmBuilder::getGlobalName(Element& s) {
 // parameter or local names when specified.
 std::vector<Type> SExpressionWasmBuilder::parseParamOrLocal(Element& s) {
   size_t fakeIndex = 0;
-  std::vector<NameType> namedParams = parseNamedParamOrLocal(s, fakeIndex);
+  std::vector<NameType> namedParams = parseParamOrLocal(s, fakeIndex);
   std::vector<Type> params;
-  for (auto& nameType : namedParams) {
-    params.push_back(nameType.type);
+  for (auto& p : namedParams) {
+    params.push_back(p.type);
   }
   return params;
 }
@@ -492,7 +492,7 @@ std::vector<Type> SExpressionWasmBuilder::parseParamOrLocal(Element& s) {
 // (local type+)      (e.g. (local i32 f64))
 // If the name is unspecified, it will create one using localIndex.
 std::vector<NameType>
-SExpressionWasmBuilder::parseNamedParamOrLocal(Element& s, size_t& localIndex) {
+SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
   assert(elementStartsWith(s, PARAM) || elementStartsWith(s, LOCAL));
   std::vector<NameType> namedParams;
   if (s.size() == 1) { // (param) or (local)
@@ -538,11 +538,109 @@ FunctionType* SExpressionWasmBuilder::parseTypeRef(Element& s) {
     throw ParseException("invalid type reference", s.line, s.col);
   }
   IString name = getFunctionTypeName(*s[1]);
-  FunctionType* ft = wasm.getFunctionTypeOrNull(name);
-  if (!ft) {
+  FunctionType* functionType = wasm.getFunctionTypeOrNull(name);
+  if (!functionType) {
     throw ParseException("bad function type for import", s[1]->line, s[1]->col);
   }
-  return ft;
+  return functionType;
+}
+
+// Prases typeuse, a reference to a type definition. It is in the form of either
+// (type index) or (type name), possibly augmented by inlined (param) and
+// (result) nodes. (type) node can be omitted as well, in which case we get an
+// existing type if there's one with the same structure or create one.
+// Outputs are returned by parameter references.
+// typeuse ::= (type index|name)+ |
+//             (type index|name)+ (param ..)* (result ..)* |
+//             (param ..)* (result ..)*
+// TODO Remove FunctionType* parameter and the related logic to create
+// FunctionType once we remove FunctionType class.
+size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
+                                            size_t startPos,
+                                            FunctionType*& functionType,
+                                            std::vector<NameType>& namedParams,
+                                            Type& result) {
+  size_t i = startPos;
+  bool typeExists = false, paramOrResultExists = false;
+  if (i < s.size() && elementStartsWith(*s[i], TYPE)) {
+    typeExists = true;
+    functionType = parseTypeRef(*s[i++]);
+  }
+  size_t paramPos = i;
+
+  size_t localIndex = 0;
+  while (i < s.size() && elementStartsWith(*s[i], PARAM)) {
+    paramOrResultExists = true;
+    auto newParams = parseParamOrLocal(*s[i++], localIndex);
+    namedParams.insert(namedParams.end(), newParams.begin(), newParams.end());
+  }
+  result = none;
+  if (i < s.size() && elementStartsWith(*s[i], RESULT)) {
+    paramOrResultExists = true;
+    result = parseResult(*s[i++]);
+  }
+
+  // verify if (type) and (params)/(result) match, if both are specified
+  if (typeExists && paramOrResultExists) {
+    size_t line = s[paramPos]->line, col = s[paramPos]->col;
+    const char* msg = "type and param/result don't match";
+    if (functionType->result != result) {
+      throw ParseException(msg, line, col);
+    }
+    if (functionType->params.size() != namedParams.size()) {
+      throw ParseException(msg, line, col);
+    }
+    for (size_t i = 0, n = namedParams.size(); i < n; i++) {
+      if (functionType->params[i] != namedParams[i].type) {
+        throw ParseException(msg, line, col);
+      }
+    }
+  }
+
+  // If (type) does not exist, check if there's a matching type, and if there
+  // isn't, create one.
+  if (!typeExists) {
+    bool need = true;
+    std::vector<Type> params;
+    for (auto& p : namedParams) {
+      params.push_back(p.type);
+    }
+    for (auto& existing : wasm.functionTypes) {
+      if (existing->structuralComparison(params, result)) {
+        functionType = existing.get();
+        need = false;
+        break;
+      }
+    }
+    if (need) {
+      functionType = ensureFunctionType(params, result, &wasm);
+    }
+  }
+
+  return i;
+}
+
+// Parses a typeuse. Ignores all parameter names.
+size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
+                                            size_t startPos,
+                                            FunctionType*& functionType,
+                                            std::vector<Type>& params,
+                                            Type& result) {
+  std::vector<NameType> namedParams;
+  size_t nextPos = parseTypeUse(s, startPos, functionType, namedParams, result);
+  for (auto& p : namedParams) {
+    params.push_back(p.type);
+  }
+  return nextPos;
+}
+
+// Parses a typeuse. Use this when only FunctionType* is needed.
+size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
+                                            size_t startPos,
+                                            FunctionType*& functionType) {
+  std::vector<Type> params;
+  Type result;
+  return parseTypeUse(s, startPos, functionType, params, result);
 }
 
 void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
@@ -565,41 +663,9 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   FunctionType* type = nullptr;
   functionTypes[name] = none;
   std::vector<Type> params;
-  for (; i < s.size(); i++) {
-    Element& curr = *s[i];
-    IString id = curr[0]->str();
-    if (id == RESULT) {
-      functionTypes[name] = parseResult(curr);
-    } else if (id == TYPE) {
-      functionTypes[name] = parseTypeRef(curr)->result;
-    } else if (id == PARAM && curr.size() > 1) {
-      auto newParams = parseParamOrLocal(curr);
-      params.insert(params.end(), newParams.begin(), newParams.end());
-    }
-  }
-  if (!type) {
-    // if no function type provided, generate one, but reuse a previous one with
-    // the right structure if there is one.
-    // see https://github.com/WebAssembly/spec/pull/301
-    bool need = true;
-    std::unique_ptr<FunctionType> functionType = make_unique<FunctionType>();
-    functionType->result = functionTypes[name];
-    functionType->params = std::move(params);
-    for (auto& existing : wasm.functionTypes) {
-      if (existing->structuralComparison(*functionType)) {
-        need = false;
-        break;
-      }
-    }
-    if (need) {
-      functionType->name = Name::fromInt(wasm.functionTypes.size());
-      functionTypeNames.push_back(functionType->name);
-      if (wasm.getFunctionTypeOrNull(functionType->name)) {
-        throw ParseException("duplicate function type", s.line, s.col);
-      }
-      wasm.addFunctionType(std::move(functionType));
-    }
-  }
+  parseTypeUse(s, i, type);
+  assert(type && "type should've been set by parseTypeUse");
+  functionTypes[name] = type->result;
 }
 
 size_t SExpressionWasmBuilder::parseFunctionNames(Element& s,
@@ -634,9 +700,10 @@ size_t SExpressionWasmBuilder::parseFunctionNames(Element& s,
 }
 
 void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
-  size_t i = 1;
+  brokeToAutoBlock = false;
+
   Name name, exportName;
-  i = parseFunctionNames(s, name, exportName);
+  size_t i = parseFunctionNames(s, name, exportName);
   if (!preParseImport) {
     if (!name.is()) {
       // unnamed, use an index
@@ -660,86 +727,26 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     }
     wasm.addExport(ex.release());
   }
-  Expression* body = nullptr;
-  size_t localIndex = 0; // params and vars
-  brokeToAutoBlock = false;
-  // we may have both params and a type. store the type info here
-  std::vector<NameType> typeParams;
-  std::vector<NameType> params;
-  std::vector<NameType> vars;
-  Type result = none;
-  Name type;
-  // we may need to add a block for the very top level
-  Block* autoBlock = nullptr;
+
+  // parse import
   Name importModule, importBase;
-  auto makeFunction = [&]() {
-    currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
-      name, std::move(params), result, std::move(vars)));
-  };
-  auto ensureAutoBlock = [&]() {
-    if (!autoBlock) {
-      autoBlock = allocator.alloc<Block>();
-      autoBlock->list.push_back(body);
-      body = autoBlock;
-    }
-  };
-  for (; i < s.size(); i++) {
+  if (i < s.size() && elementStartsWith(*s[i], IMPORT)) {
     Element& curr = *s[i];
-    IString id = curr[0]->str();
-    if (id == PARAM) {
-      auto newParams = parseNamedParamOrLocal(curr, localIndex);
-      params.insert(params.end(), newParams.begin(), newParams.end());
-    } else if (id == LOCAL) {
-      auto newVars = parseNamedParamOrLocal(curr, localIndex);
-      vars.insert(vars.end(), newVars.begin(), newVars.end());
-    } else if (id == RESULT) {
-      result = parseResult(curr);
-    } else if (id == TYPE) {
-      FunctionType* ft = parseTypeRef(curr);
-      type = ft->name;
-      result = ft->result;
-      for (size_t j = 0; j < ft->params.size(); j++) {
-        IString name = Name::fromInt(j);
-        Type currType = ft->params[j];
-        typeParams.emplace_back(name, currType);
-      }
-    } else if (id == IMPORT) {
-      importModule = curr[1]->str();
-      importBase = curr[2]->str();
-    } else {
-      // body
-      if (typeParams.size() > 0 && params.size() == 0) {
-        params = typeParams;
-      }
-      if (!currFunction) {
-        makeFunction();
-      }
-      Expression* ex = parseExpression(curr);
-      if (!body) {
-        body = ex;
-      } else {
-        ensureAutoBlock();
-        autoBlock->list.push_back(ex);
-      }
-    }
+    importModule = curr[1]->str();
+    importBase = curr[2]->str();
+    i++;
   }
-  // see https://github.com/WebAssembly/spec/pull/301
-  if (type.isNull()) {
-    // if no function type name provided, then we generated one
-    auto functionType = make_unique<FunctionType>(
-      sigToFunctionType(getSigFromStructs(result, params)));
-    for (auto& existing : wasm.functionTypes) {
-      if (existing->structuralComparison(*functionType)) {
-        type = existing->name;
-        break;
-      }
-    }
-    if (!type.is()) {
-      throw ParseException("no function type [internal error?]", s.line, s.col);
-    }
-  }
+
+  // parse typeuse: type/param/result
+  FunctionType* functionType = nullptr;
+  std::vector<NameType> params;
+  Type result = none;
+  i = parseTypeUse(s, i, functionType, params, result);
+  assert(functionType && "functionType should've been set by parseTypeUse");
+
+  // when (import) is inside a (func) element, this is not a function definition
+  // but an import.
   if (importModule.is()) {
-    // this is an import, actually
     if (!importBase.size()) {
       throw ParseException("module but no base for import");
     }
@@ -750,8 +757,8 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     im->name = name;
     im->module = importModule;
     im->base = importBase;
-    im->type = type;
-    FunctionTypeUtils::fillFunction(im.get(), wasm.getFunctionType(type));
+    im->type = functionType->name;
+    FunctionTypeUtils::fillFunction(im.get(), functionType);
     functionTypes[name] = im->result;
     if (wasm.getFunctionOrNull(im->name)) {
       throw ParseException("duplicate import", s.line, s.col);
@@ -763,9 +770,52 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     nameMapper.clear();
     return;
   }
+  // at this point this not an import but a real function definition.
   if (preParseImport) {
     throw ParseException("preParseImport in func");
   }
+
+  // in case only (type) is specified, populate params and result with temporary
+  // names
+  if (params.empty()) {
+    for (size_t j = 0; j < functionType->params.size(); j++) {
+      params.emplace_back(Name::fromInt(j), functionType->params[j]);
+    }
+  }
+  result = functionType->result;
+  size_t localIndex = params.size(); // local index for params and locals
+
+  // parse locals
+  std::vector<NameType> vars;
+  while (i < s.size() && elementStartsWith(*s[i], LOCAL)) {
+    auto newVars = parseParamOrLocal(*s[i++], localIndex);
+    vars.insert(vars.end(), newVars.begin(), newVars.end());
+  }
+
+  // make a new function
+  currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
+    name, std::move(params), result, std::move(vars)));
+  currFunction->type = functionType->name;
+
+  // parse body
+  Block* autoBlock = nullptr; // may need to add a block for the very top level
+  auto ensureAutoBlock = [&]() {
+    if (!autoBlock) {
+      autoBlock = allocator.alloc<Block>();
+      autoBlock->list.push_back(currFunction->body);
+      currFunction->body = autoBlock;
+    }
+  };
+  while (i < s.size()) {
+    Expression* ex = parseExpression(*s[i++]);
+    if (!currFunction->body) {
+      currFunction->body = ex;
+    } else {
+      ensureAutoBlock();
+      autoBlock->list.push_back(ex);
+    }
+  }
+
   if (brokeToAutoBlock) {
     ensureAutoBlock();
     autoBlock->name = FAKE_RETURN;
@@ -773,15 +823,12 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   if (autoBlock) {
     autoBlock->finalize(result);
   }
-  if (!currFunction) {
-    makeFunction();
-    body = allocator.alloc<Nop>();
+  if (!currFunction->body) {
+    currFunction->body = allocator.alloc<Nop>();
   }
   if (currFunction->result != result) {
     throw ParseException("bad func declaration", s.line, s.col);
   }
-  currFunction->body = body;
-  currFunction->type = type;
   if (s.startLoc) {
     currFunction->prologLocation.insert(getDebugLocation(*s.startLoc));
   }
@@ -1551,35 +1598,11 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   }
   auto ret = allocator.alloc<CallIndirect>();
   Index i = 1;
-  Element& typeElement = *s[i];
-  if (elementStartsWith(typeElement, TYPE)) {
-    // type name given
-    IString type = typeElement[1]->str();
-    auto* fullType = wasm.getFunctionTypeOrNull(type);
-    if (!fullType) {
-      throw ParseException("invalid call_indirect type", s.line, s.col);
-    }
-    ret->fullType = fullType->name;
-    i++;
-  } else {
-    // inline type
-    FunctionType type;
-    while (1) {
-      Element& curr = *s[i];
-      if (elementStartsWith(curr, PARAM)) {
-        auto newParams = parseParamOrLocal(curr);
-        type.params.insert(
-          type.params.end(), newParams.begin(), newParams.end());
-      } else if (elementStartsWith(curr, RESULT)) {
-        type.result = parseResult(curr);
-      } else {
-        break;
-      }
-      i++;
-    }
-    ret->fullType = ensureFunctionType(getSig(&type), &wasm)->name;
-  }
-  ret->type = wasm.getFunctionType(ret->fullType)->result;
+  FunctionType* functionType = nullptr;
+  i = parseTypeUse(s, i, functionType);
+  assert(functionType && "functionType should've been set by parseTypeUse");
+  ret->fullType = functionType->name;
+  ret->type = functionType->result;
   parseCallOperands(s, i, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
   ret->finalize();
@@ -1924,36 +1947,13 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   Element& inner = newStyle ? *s[3] : s;
   Index j = newStyle ? newStyleInner : i;
   if (kind == ExternalKind::Function) {
-    std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
-    if (inner.size() > j) {
-      Element& elems = *inner[j];
-      IString id = elems[0]->str();
-      if (id == PARAM) {
-        auto newParams = parseParamOrLocal(elems);
-        type->params.insert(
-          type->params.end(), newParams.begin(), newParams.end());
-      } else if (id == RESULT) {
-        type->result = parseResult(elems);
-      } else if (id == TYPE) {
-        type.reset(parseTypeRef(elems));
-      } else {
-        throw ParseException("bad import element");
-      }
-      if (inner.size() > j + 1) {
-        Element& result = *inner[j + 1];
-        if (result[0]->str() != RESULT) {
-          throw ParseException("expected result");
-        }
-        type->result = parseResult(result);
-      }
-    }
+    FunctionType* functionType = nullptr;
     auto func = make_unique<Function>();
+    parseTypeUse(inner, j, functionType, func->params, func->result);
     func->name = name;
     func->module = module;
     func->base = base;
-    auto* functionType = ensureFunctionType(getSig(type.get()), &wasm);
     func->type = functionType->name;
-    FunctionTypeUtils::fillFunction(func.get(), functionType);
     functionTypes[name] = func->result;
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
@@ -2211,12 +2211,17 @@ void SExpressionWasmBuilder::parseType(Element& s) {
       type->result = parseResult(curr);
     }
   }
-  if (!type->name.is()) {
-    type->name = Name::fromInt(wasm.functionTypes.size());
-  }
-  functionTypeNames.push_back(type->name);
-  if (wasm.getFunctionTypeOrNull(type->name)) {
+  while (type->name.is() && wasm.getFunctionTypeOrNull(type->name)) {
     throw ParseException("duplicate function type", s.line, s.col);
+  }
+  // We allow duplicate types in the type section, i.e., we can have
+  // (func (param i32) (result i32)) many times. For unnamed types, find a name
+  // that does not clash with existing ones.
+  if (!type->name.is()) {
+    type->name = "FUNCSIG$" + getSig(type.get());
+  }
+  while (wasm.getFunctionTypeOrNull(type->name)) {
+    type->name = Name(std::string(type->name.c_str()) + "_");
   }
   wasm.addFunctionType(std::move(type));
 }

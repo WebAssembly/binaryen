@@ -1,6 +1,6 @@
 (module
- (type $0 (func (param i32) (result i32)))
- (func $return-block (; 0 ;) (type $0) (param $x i32) (result i32)
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (func $return-block (; 0 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (local.set $x
    (local.get $x)
   )

@@ -1,10 +1,10 @@
 (module
  (type $0 (func (param i32)))
  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
- (type $2 (func))
+ (type $FUNCSIG$v (func))
  (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
  (memory $0 256 256)
- (func $pow2 (; 1 ;) (type $2)
+ (func $pow2 (; 1 ;) (type $FUNCSIG$v)
   (local $x f64)
   (local $y f64)
   (local $2 f64)
@@ -55,7 +55,7 @@
    )
   )
  )
- (func $pow.2 (; 2 ;) (type $2)
+ (func $pow.2 (; 2 ;) (type $FUNCSIG$v)
   (drop
    (f64.sqrt
     (f64.const 1)
