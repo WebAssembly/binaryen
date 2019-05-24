@@ -5,7 +5,15 @@ import os
 
 class ParsingErrorTest(BinaryenTestCase):
   def test_parsing_error_msg(self):
-    module = '''(module
+    module = '''
+    (module
+     (func $foo
+      (abc)
+     )
+    )
+    '''
+Of course this has the downside of changing the contents of the string, but I think that should be fine for this test. 
+
  (func $foo
   (abc)
  )
