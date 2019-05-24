@@ -853,11 +853,9 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
                                         BinaryenType* varTypes,
                                         BinaryenIndex numVarTypes,
                                         BinaryenExpressionRef body);
-
 // Gets a function reference by name.
 BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                         const char* name);
-
 // Removes a function by name.
 void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name);
 
@@ -913,6 +911,8 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                     BinaryenType type,
                                     int8_t mutable_,
                                     BinaryenExpressionRef init);
+// Gets a global reference by name.
+BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module, const char* name);
 void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name);
 
 // Function table. One per module

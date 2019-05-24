@@ -1,3 +1,4 @@
+GetGlobal is equal: true
 getGlobalInfo={"module":"","base":"","mutable":false}
 getExpressionInfo(init)={"id":14,"value":1}
 (i32.const 1)
