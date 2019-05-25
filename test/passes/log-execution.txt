@@ -1,6 +1,6 @@
 (module
  (type $FUNCSIG$v (func))
- (type $1 (func (result i32)))
+ (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$vi (func (param i32)))
  (import "env" "func" (func $import))
  (import "env" "log_execution" (func $log_execution (param i32)))
@@ -10,7 +10,7 @@
   )
   (nop)
  )
- (func $intt (; 3 ;) (type $1) (result i32)
+ (func $intt (; 3 ;) (type $FUNCSIG$i) (result i32)
   (call $log_execution
    (i32.const 1)
   )

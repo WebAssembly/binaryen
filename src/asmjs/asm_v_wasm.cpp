@@ -86,21 +86,11 @@ char getSig(Type type) {
 }
 
 std::string getSig(const FunctionType* type) {
-  std::string ret;
-  ret += getSig(type->result);
-  for (auto param : type->params) {
-    ret += getSig(param);
-  }
-  return ret;
+  return getSig(type->params, type->result);
 }
 
 std::string getSig(Function* func) {
-  std::string ret;
-  ret += getSig(func->result);
-  for (auto type : func->params) {
-    ret += getSig(type);
-  }
-  return ret;
+  return getSig(func->params, func->result);
 }
 
 Type sigToType(char sig) {
@@ -124,7 +114,7 @@ Type sigToType(char sig) {
   }
 }
 
-FunctionType sigToFunctionType(std::string sig) {
+FunctionType sigToFunctionType(const std::string& sig) {
   FunctionType ret;
   ret.result = sigToType(sig[0]);
   for (size_t i = 1; i < sig.size(); i++) {
@@ -133,8 +123,11 @@ FunctionType sigToFunctionType(std::string sig) {
   return ret;
 }
 
-FunctionType* ensureFunctionType(std::string sig, Module* wasm) {
-  cashew::IString name(("FUNCSIG$" + sig).c_str(), false);
+FunctionType*
+ensureFunctionType(const std::string& sig, Module* wasm, Name name) {
+  if (!name.is()) {
+    name = "FUNCSIG$" + sig;
+  }
   if (wasm->getFunctionTypeOrNull(name)) {
     return wasm->getFunctionType(name);
   }

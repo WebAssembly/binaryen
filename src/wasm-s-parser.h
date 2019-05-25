@@ -24,6 +24,7 @@
 
 #include "mixed_arena.h"
 #include "parsing.h" // for UniqueNameMapper. TODO: move dependency to cpp file?
+#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -111,7 +112,6 @@ class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
   std::vector<Name> functionNames;
-  std::vector<Name> functionTypeNames;
   std::vector<Name> globalNames;
   int functionCounter;
   int globalCounter = 0;
@@ -135,9 +135,6 @@ private:
 
   // function parsing state
   std::unique_ptr<Function> currFunction;
-  std::map<Name, Type> currLocalTypes;
-  size_t localIndex; // params and vars
-  size_t otherIndex;
   bool brokeToAutoBlock;
 
   UniqueNameMapper nameMapper;
@@ -184,11 +181,11 @@ private:
   Expression* makeDrop(Element& s);
   Expression* makeHost(Element& s, HostOp op);
   Index getLocalIndex(Element& s);
-  Expression* makeGetLocal(Element& s);
-  Expression* makeTeeLocal(Element& s);
-  Expression* makeSetLocal(Element& s);
-  Expression* makeGetGlobal(Element& s);
-  Expression* makeSetGlobal(Element& s);
+  Expression* makeLocalGet(Element& s);
+  Expression* makeLocalTee(Element& s);
+  Expression* makeLocalSet(Element& s);
+  Expression* makeGlobalGet(Element& s);
+  Expression* makeGlobalSet(Element& s);
   Expression* makeBlock(Element& s);
   Expression* makeThenOrElse(Element& s);
   Expression* makeConst(Element& s, Type type);
@@ -227,8 +224,24 @@ private:
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
 
+  // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
+  std::vector<Type> parseParamOrLocal(Element& s);
+  std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
+  Type parseResult(Element& s);
+  FunctionType* parseTypeRef(Element& s);
+  size_t parseTypeUse(Element& s,
+                      size_t startPos,
+                      FunctionType*& functionType,
+                      std::vector<NameType>& namedParams,
+                      Type& result);
+  size_t parseTypeUse(Element& s,
+                      size_t startPos,
+                      FunctionType*& functionType,
+                      std::vector<Type>& params,
+                      Type& result);
+  size_t parseTypeUse(Element& s, size_t startPos, FunctionType*& functionType);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);

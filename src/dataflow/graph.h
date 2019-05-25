@@ -46,7 +46,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   Node bad = Node(Node::Type::Bad);
 
   // Connects a specific set to the data in its value.
-  std::unordered_map<SetLocal*, Node*> setNodeMap;
+  std::unordered_map<LocalSet*, Node*> setNodeMap;
 
   // Maps a control-flow expression to the conditions for it. Currently,
   // this maps an if to the conditions for its arms
@@ -65,7 +65,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   std::unordered_map<Node*, Expression*> nodeParentMap;
 
   // All the sets, in order of appearance.
-  std::vector<SetLocal*> sets;
+  std::vector<LocalSet*> sets;
 
   // The function being processed.
   Function* func;
@@ -206,10 +206,10 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       return doVisitIf(iff);
     } else if (auto* loop = curr->dynCast<Loop>()) {
       return doVisitLoop(loop);
-    } else if (auto* get = curr->dynCast<GetLocal>()) {
-      return doVisitGetLocal(get);
-    } else if (auto* set = curr->dynCast<SetLocal>()) {
-      return doVisitSetLocal(set);
+    } else if (auto* get = curr->dynCast<LocalGet>()) {
+      return doVisitLocalGet(get);
+    } else if (auto* set = curr->dynCast<LocalSet>()) {
+      return doVisitLocalSet(set);
     } else if (auto* br = curr->dynCast<Break>()) {
       return doVisitBreak(br);
     } else if (auto* sw = curr->dynCast<Switch>()) {
@@ -385,7 +385,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     setInUnreachable();
     return &bad;
   }
-  Node* doVisitGetLocal(GetLocal* curr) {
+  Node* doVisitLocalGet(LocalGet* curr) {
     if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &bad;
     }
@@ -393,7 +393,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     auto* node = locals[curr->index];
     return node;
   }
-  Node* doVisitSetLocal(SetLocal* curr) {
+  Node* doVisitLocalSet(LocalSet* curr) {
     if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &bad;
     }
@@ -735,12 +735,12 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
 
   // Given a node representing something that is local.set'd, return
   // the set.
-  SetLocal* getSet(Node* node) {
+  LocalSet* getSet(Node* node) {
     auto iter = nodeParentMap.find(node);
     if (iter == nodeParentMap.end()) {
       return nullptr;
     }
-    return iter->second->dynCast<SetLocal>();
+    return iter->second->dynCast<LocalSet>();
   }
 
   // Given an expression, return the parent if such exists.
@@ -753,9 +753,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   }
 
   // Given an expression, return the set for it if such exists.
-  SetLocal* getSet(Expression* curr) {
+  LocalSet* getSet(Expression* curr) {
     auto* parent = getParent(curr);
-    return parent ? parent->dynCast<SetLocal>() : nullptr;
+    return parent ? parent->dynCast<LocalSet>() : nullptr;
   }
 
   // Creates an expression that uses a node. Generally, a node represents
@@ -766,13 +766,13 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       // The index is the wasm local that we assign to when implementing
       // the phi; get from there.
       auto index = node->index;
-      return builder.makeGetLocal(index, func->getLocalType(index));
+      return builder.makeLocalGet(index, func->getLocalType(index));
     } else if (node->isConst()) {
       return builder.makeConst(node->expr->cast<Const>()->value);
     } else if (node->isExpr()) {
       // Find the set we are a value of.
       auto index = getSet(node)->index;
-      return builder.makeGetLocal(index, func->getLocalType(index));
+      return builder.makeLocalGet(index, func->getLocalType(index));
     } else if (node->isZext()) {
       // i1 zexts are a no-op for wasm
       return makeUse(node->values[0]);

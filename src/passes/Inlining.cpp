@@ -43,26 +43,6 @@
 
 namespace wasm {
 
-// A limit on how big a function to inline when being careful about size
-static const int CAREFUL_SIZE_LIMIT = 15;
-
-// A limit on how big a function to inline when being more flexible. In
-// particular it's nice that with this limit we can inline the clamp
-// functions (i32s-div, f64-to-int, etc.), that can affect perf.
-static const int FLEXIBLE_SIZE_LIMIT = 20;
-
-// A size so small that after optimizations, the inlined code will be
-// smaller than the call instruction itself. 2 is a safe number because
-// there is no risk of things like
-//  (func $reverse (param $x i32) (param $y i32)
-//   (call $something (local.get $y) (local.get $x))
-//  )
-// in which case the reversing of the params means we'll possibly need
-// a block and a temp local. But that takes at least 3 nodes, and 2 < 3.
-// More generally, with 2 items we may have a local.get, but no way to
-// require it to be saved instead of directly consumed.
-static const int INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT = 2;
-
 // Useful into on a function, helping us decide if we can inline it
 struct FunctionInfo {
   std::atomic<Index> calls;
@@ -77,20 +57,25 @@ struct FunctionInfo {
     usedGlobally = false;
   }
 
+  // See pass.h for how defaults for these options were chosen.
   bool worthInlining(PassOptions& options) {
     // if it's big, it's just not worth doing (TODO: investigate more)
-    if (size > FLEXIBLE_SIZE_LIMIT) {
+    if (size > options.inlining.flexibleInlineMaxSize) {
       return false;
     }
     // if it's so small we have a guarantee that after we optimize the
     // size will not increase, inline it
-    if (size <= INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT) {
+    if (size <= options.inlining.alwaysInlineMaxSize) {
       return true;
     }
     // if it has one use, then inlining it would likely reduce code size
     // since we are just moving code around, + optimizing, so worth it
     // if small enough that we are pretty sure its ok
-    if (calls == 1 && !usedGlobally && size <= CAREFUL_SIZE_LIMIT) {
+    // FIXME: move this check to be first in this function, since we should
+    // return true if oneCallerInlineMaxSize is bigger than
+    // flexibleInlineMaxSize (which it typically should be).
+    if (calls == 1 && !usedGlobally &&
+        size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
     // more than one use, so we can't eliminate it after inlining,
@@ -199,10 +184,10 @@ doInlining(Module* module, Function* into, InliningAction& action) {
     void visitReturn(Return* curr) {
       replaceCurrent(builder->makeBreak(returnName, curr->value));
     }
-    void visitGetLocal(GetLocal* curr) {
+    void visitLocalGet(LocalGet* curr) {
       curr->index = localMapping[curr->index];
     }
-    void visitSetLocal(SetLocal* curr) {
+    void visitLocalSet(LocalSet* curr) {
       curr->index = localMapping[curr->index];
     }
   } updater;
@@ -214,13 +199,13 @@ doInlining(Module* module, Function* into, InliningAction& action) {
   // assign the operands into the params
   for (Index i = 0; i < from->params.size(); i++) {
     block->list.push_back(
-      builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
+      builder.makeLocalSet(updater.localMapping[i], call->operands[i]));
   }
   // zero out the vars (as we may be in a loop, and may depend on their
   // zero-init value
   for (Index i = 0; i < from->vars.size(); i++) {
     block->list.push_back(
-      builder.makeSetLocal(updater.localMapping[from->getVarIndexBase() + i],
+      builder.makeLocalSet(updater.localMapping[from->getVarIndexBase() + i],
                            LiteralUtils::makeZero(from->vars[i], *module)));
   }
   // generate and update the inlined contents

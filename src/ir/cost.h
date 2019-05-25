@@ -65,10 +65,10 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     }
     return ret;
   }
-  Index visitGetLocal(GetLocal* curr) { return 0; }
-  Index visitSetLocal(SetLocal* curr) { return 1; }
-  Index visitGetGlobal(GetGlobal* curr) { return 1; }
-  Index visitSetGlobal(SetGlobal* curr) { return 2; }
+  Index visitLocalGet(LocalGet* curr) { return 0; }
+  Index visitLocalSet(LocalSet* curr) { return 1; }
+  Index visitGlobalGet(GlobalGet* curr) { return 1; }
+  Index visitGlobalSet(GlobalSet* curr) { return 2; }
   Index visitLoad(Load* curr) {
     return 1 + visit(curr->ptr) + 10 * curr->isAtomic;
   }

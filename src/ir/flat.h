@@ -75,11 +75,11 @@ inline void verifyFlatness(Function* func) {
       if (isControlFlowStructure(curr)) {
         verify(!isConcreteType(curr->type),
                "control flow structures must not flow values");
-      } else if (curr->is<SetLocal>()) {
+      } else if (curr->is<LocalSet>()) {
         verify(!isConcreteType(curr->type), "tees are not allowed, only sets");
       } else {
         for (auto* child : ChildIterator(curr)) {
-          verify(child->is<Const>() || child->is<GetLocal>() ||
+          verify(child->is<Const>() || child->is<LocalGet>() ||
                    child->is<Unreachable>(),
                  "instructions must only have const, local.get, or unreachable "
                  "as children");

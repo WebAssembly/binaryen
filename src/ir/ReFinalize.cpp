@@ -129,10 +129,10 @@ void ReFinalize::visitSwitch(Switch* curr) {
 }
 void ReFinalize::visitCall(Call* curr) { curr->finalize(); }
 void ReFinalize::visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
-void ReFinalize::visitGetLocal(GetLocal* curr) { curr->finalize(); }
-void ReFinalize::visitSetLocal(SetLocal* curr) { curr->finalize(); }
-void ReFinalize::visitGetGlobal(GetGlobal* curr) { curr->finalize(); }
-void ReFinalize::visitSetGlobal(SetGlobal* curr) { curr->finalize(); }
+void ReFinalize::visitLocalGet(LocalGet* curr) { curr->finalize(); }
+void ReFinalize::visitLocalSet(LocalSet* curr) { curr->finalize(); }
+void ReFinalize::visitGlobalGet(GlobalGet* curr) { curr->finalize(); }
+void ReFinalize::visitGlobalSet(GlobalSet* curr) { curr->finalize(); }
 void ReFinalize::visitLoad(Load* curr) { curr->finalize(); }
 void ReFinalize::visitStore(Store* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }

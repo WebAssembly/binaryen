@@ -816,15 +816,9 @@ void WasmBinaryBuilder::read() {
       case BinaryConsts::Section::Element:
         readTableElements();
         break;
-      case BinaryConsts::Section::Global: {
+      case BinaryConsts::Section::Global:
         readGlobals();
-        // imports can read global imports, so we run getGlobalName and create
-        // the mapping but after we read globals, we need to add the internal
-        // globals too, so do that here
-        mappedGlobals.clear(); // wipe the mapping
-        getGlobalName(-1);     // force rebuild
         break;
-      }
       case BinaryConsts::Section::Data:
         readDataSegments();
         break;
@@ -1202,11 +1196,18 @@ void WasmBinaryBuilder::readSignatures() {
   }
 }
 
-Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
-  if (i >= wasm.functions.size()) {
+Name WasmBinaryBuilder::getFunctionName(Index index) {
+  if (index >= wasm.functions.size()) {
     throwError("invalid function index");
   }
-  return wasm.functions[i]->name;
+  return wasm.functions[index]->name;
+}
+
+Name WasmBinaryBuilder::getGlobalName(Index index) {
+  if (index >= wasm.globals.size()) {
+    throwError("invalid global index");
+  }
+  return wasm.globals[index]->name;
 }
 
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
@@ -1797,33 +1798,14 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   auto type = block->list[0]->type;
   if (isConcreteType(type)) {
     auto local = builder.addVar(currFunction, type);
-    block->list[0] = builder.makeSetLocal(local, block->list[0]);
-    block->list.push_back(builder.makeGetLocal(local, type));
+    block->list[0] = builder.makeLocalSet(local, block->list[0]);
+    block->list.push_back(builder.makeLocalGet(local, type));
   } else {
     assert(type == unreachable);
     // nothing to do here - unreachable anyhow
   }
   block->finalize();
   return block;
-}
-
-Name WasmBinaryBuilder::getGlobalName(Index index) {
-  if (!mappedGlobals.size()) {
-    // Create name => index mapping.
-    auto add = [&](Global* curr) {
-      auto index = mappedGlobals.size();
-      mappedGlobals[index] = curr->name;
-    };
-    ModuleUtils::iterImportedGlobals(wasm, add);
-    ModuleUtils::iterDefinedGlobals(wasm, add);
-  }
-  if (index == Index(-1)) {
-    return Name("null"); // just a force-rebuild
-  }
-  if (mappedGlobals.count(index) == 0) {
-    throwError("bad global index");
-  }
-  return mappedGlobals[index];
 }
 
 void WasmBinaryBuilder::validateBinary() {
@@ -1840,14 +1822,14 @@ void WasmBinaryBuilder::processFunctions() {
   // now that we have names for each function, apply things
 
   if (startIndex != static_cast<Index>(-1)) {
-    wasm.start = getFunctionIndexName(startIndex);
+    wasm.start = getFunctionName(startIndex);
   }
 
   for (auto* curr : exportOrder) {
     auto index = exportIndexes[curr];
     switch (curr->kind) {
       case ExternalKind::Function: {
-        curr->value = getFunctionIndexName(index);
+        curr->value = getFunctionName(index);
         break;
       }
       case ExternalKind::Table:
@@ -1869,7 +1851,7 @@ void WasmBinaryBuilder::processFunctions() {
     size_t index = iter.first;
     auto& calls = iter.second;
     for (auto* call : calls) {
-      call->target = getFunctionIndexName(index);
+      call->target = getFunctionName(index);
     }
   }
 
@@ -1877,7 +1859,7 @@ void WasmBinaryBuilder::processFunctions() {
     auto i = pair.first;
     auto& indexes = pair.second;
     for (auto j : indexes) {
-      wasm.table.segments[i].data.push_back(getFunctionIndexName(j));
+      wasm.table.segments[i].data.push_back(getFunctionName(j));
     }
   }
 
@@ -2127,7 +2109,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::BrIf:
       visitBreak((curr = allocator.alloc<Break>())->cast<Break>(), code);
       break; // code distinguishes br from br_if
-    case BinaryConsts::TableSwitch:
+    case BinaryConsts::BrTable:
       visitSwitch((curr = allocator.alloc<Switch>())->cast<Switch>());
       break;
     case BinaryConsts::CallFunction:
@@ -2137,19 +2119,19 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitCallIndirect(
         (curr = allocator.alloc<CallIndirect>())->cast<CallIndirect>());
       break;
-    case BinaryConsts::GetLocal:
-      visitGetLocal((curr = allocator.alloc<GetLocal>())->cast<GetLocal>());
+    case BinaryConsts::LocalGet:
+      visitLocalGet((curr = allocator.alloc<LocalGet>())->cast<LocalGet>());
       break;
-    case BinaryConsts::TeeLocal:
-    case BinaryConsts::SetLocal:
-      visitSetLocal((curr = allocator.alloc<SetLocal>())->cast<SetLocal>(),
+    case BinaryConsts::LocalTee:
+    case BinaryConsts::LocalSet:
+      visitLocalSet((curr = allocator.alloc<LocalSet>())->cast<LocalSet>(),
                     code);
       break;
-    case BinaryConsts::GetGlobal:
-      visitGetGlobal((curr = allocator.alloc<GetGlobal>())->cast<GetGlobal>());
+    case BinaryConsts::GlobalGet:
+      visitGlobalGet((curr = allocator.alloc<GlobalGet>())->cast<GlobalGet>());
       break;
-    case BinaryConsts::SetGlobal:
-      visitSetGlobal((curr = allocator.alloc<SetGlobal>())->cast<SetGlobal>());
+    case BinaryConsts::GlobalSet:
+      visitGlobalSet((curr = allocator.alloc<GlobalSet>())->cast<GlobalSet>());
       break;
     case BinaryConsts::Select:
       visitSelect((curr = allocator.alloc<Select>())->cast<Select>());
@@ -2320,8 +2302,8 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
     Builder builder(wasm);
     auto* item = curr->list[consumable]->cast<Drop>()->value;
     auto temp = builder.addVar(currFunction, item->type);
-    curr->list[consumable] = builder.makeSetLocal(temp, item);
-    curr->list.push_back(builder.makeGetLocal(temp, item->type));
+    curr->list[consumable] = builder.makeLocalSet(temp, item);
+    curr->list.push_back(builder.makeLocalGet(temp, item->type));
   }
 }
 
@@ -2562,9 +2544,9 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
   curr->finalize();
 }
 
-void WasmBinaryBuilder::visitGetLocal(GetLocal* curr) {
+void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
   if (debug) {
-    std::cerr << "zz node: GetLocal " << pos << std::endl;
+    std::cerr << "zz node: LocalGet " << pos << std::endl;
   }
   requireFunctionContext("local.get");
   curr->index = getU32LEB();
@@ -2575,9 +2557,9 @@ void WasmBinaryBuilder::visitGetLocal(GetLocal* curr) {
   curr->finalize();
 }
 
-void WasmBinaryBuilder::visitSetLocal(SetLocal* curr, uint8_t code) {
+void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
   if (debug) {
-    std::cerr << "zz node: Set|TeeLocal" << std::endl;
+    std::cerr << "zz node: Set|LocalTee" << std::endl;
   }
   requireFunctionContext("local.set outside of function");
   curr->index = getU32LEB();
@@ -2586,22 +2568,22 @@ void WasmBinaryBuilder::visitSetLocal(SetLocal* curr, uint8_t code) {
   }
   curr->value = popNonVoidExpression();
   curr->type = curr->value->type;
-  curr->setTee(code == BinaryConsts::TeeLocal);
+  curr->setTee(code == BinaryConsts::LocalTee);
   curr->finalize();
 }
 
-void WasmBinaryBuilder::visitGetGlobal(GetGlobal* curr) {
+void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
   if (debug) {
-    std::cerr << "zz node: GetGlobal " << pos << std::endl;
+    std::cerr << "zz node: GlobalGet " << pos << std::endl;
   }
   auto index = getU32LEB();
   curr->name = getGlobalName(index);
   curr->type = wasm.getGlobal(curr->name)->type;
 }
 
-void WasmBinaryBuilder::visitSetGlobal(SetGlobal* curr) {
+void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
   if (debug) {
-    std::cerr << "zz node: SetGlobal" << std::endl;
+    std::cerr << "zz node: GlobalSet" << std::endl;
   }
   auto index = getU32LEB();
   curr->name = getGlobalName(index);
@@ -3195,15 +3177,15 @@ bool WasmBinaryBuilder::maybeVisitUnary(Expression*& out, uint8_t code) {
       curr->op = ConvertSInt64ToFloat64;
       break;
 
-    case BinaryConsts::I64STruncI32:
+    case BinaryConsts::I64SExtendI32:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendSInt32;
       break;
-    case BinaryConsts::I64UTruncI32:
+    case BinaryConsts::I64UExtendI32:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendUInt32;
       break;
-    case BinaryConsts::I32ConvertI64:
+    case BinaryConsts::I32WrapI64:
       curr = allocator.alloc<Unary>();
       curr->op = WrapInt64;
       break;
@@ -3250,11 +3232,11 @@ bool WasmBinaryBuilder::maybeVisitUnary(Expression*& out, uint8_t code) {
       curr->op = TruncFloat64;
       break;
 
-    case BinaryConsts::F32ConvertF64:
+    case BinaryConsts::F32DemoteI64:
       curr = allocator.alloc<Unary>();
       curr->op = DemoteFloat64;
       break;
-    case BinaryConsts::F64ConvertF32:
+    case BinaryConsts::F64PromoteF32:
       curr = allocator.alloc<Unary>();
       curr->op = PromoteFloat32;
       break;
@@ -4209,14 +4191,14 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
 bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
   Host* curr;
   switch (code) {
-    case BinaryConsts::CurrentMemory: {
+    case BinaryConsts::MemorySize: {
       curr = allocator.alloc<Host>();
-      curr->op = CurrentMemory;
+      curr->op = MemorySize;
       break;
     }
-    case BinaryConsts::GrowMemory: {
+    case BinaryConsts::MemoryGrow: {
       curr = allocator.alloc<Host>();
-      curr->op = GrowMemory;
+      curr->op = MemoryGrow;
       curr->operands.resize(1);
       curr->operands[0] = popNonVoidExpression();
       break;
@@ -4229,7 +4211,7 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
   }
   auto reserved = getU32LEB();
   if (reserved != 0) {
-    throwError("Invalid reserved field on grow_memory/current_memory");
+    throwError("Invalid reserved field on memory.grow/memory.size");
   }
   curr->finalize();
   out = curr;

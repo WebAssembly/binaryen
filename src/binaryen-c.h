@@ -99,10 +99,10 @@ BinaryenExpressionId BinaryenBreakId(void);
 BinaryenExpressionId BinaryenSwitchId(void);
 BinaryenExpressionId BinaryenCallId(void);
 BinaryenExpressionId BinaryenCallIndirectId(void);
-BinaryenExpressionId BinaryenGetLocalId(void);
-BinaryenExpressionId BinaryenSetLocalId(void);
-BinaryenExpressionId BinaryenGetGlobalId(void);
-BinaryenExpressionId BinaryenSetGlobalId(void);
+BinaryenExpressionId BinaryenLocalGetId(void);
+BinaryenExpressionId BinaryenLocalSetId(void);
+BinaryenExpressionId BinaryenGlobalGetId(void);
+BinaryenExpressionId BinaryenGlobalSetId(void);
 BinaryenExpressionId BinaryenLoadId(void);
 BinaryenExpressionId BinaryenStoreId(void);
 BinaryenExpressionId BinaryenConstId(void);
@@ -136,6 +136,19 @@ BinaryenExternalKind BinaryenExternalFunction(void);
 BinaryenExternalKind BinaryenExternalTable(void);
 BinaryenExternalKind BinaryenExternalMemory(void);
 BinaryenExternalKind BinaryenExternalGlobal(void);
+
+// Features. Call to get the value of each; you can cache them. Use bitwise
+// operators to combine and test particular features.
+
+typedef uint32_t BinaryenFeatures;
+
+BinaryenFeatures BinaryenFeatureAtomics(void);
+BinaryenFeatures BinaryenFeatureBulkMemory(void);
+BinaryenFeatures BinaryenFeatureMutableGlobals(void);
+BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void);
+BinaryenFeatures BinaryenFeatureSignExt(void);
+BinaryenFeatures BinaryenFeatureSIMD128(void);
+BinaryenFeatures BinaryenFeatureExceptionHandling(void);
 
 // Modules
 //
@@ -332,8 +345,8 @@ BinaryenOp BinaryenLtFloat64(void);
 BinaryenOp BinaryenLeFloat64(void);
 BinaryenOp BinaryenGtFloat64(void);
 BinaryenOp BinaryenGeFloat64(void);
-BinaryenOp BinaryenCurrentMemory(void);
-BinaryenOp BinaryenGrowMemory(void);
+BinaryenOp BinaryenMemorySize(void);
+BinaryenOp BinaryenMemoryGrow(void);
 BinaryenOp BinaryenAtomicRMWAdd(void);
 BinaryenOp BinaryenAtomicRMWSub(void);
 BinaryenOp BinaryenAtomicRMWAnd(void);
@@ -529,33 +542,33 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
                                            BinaryenExpressionRef* operands,
                                            BinaryenIndex numOperands,
                                            const char* type);
-// GetLocal: Note the 'type' parameter. It might seem redundant, since the
+// LocalGet: Note the 'type' parameter. It might seem redundant, since the
 //           local at that index must have a type. However, this API lets you
 //           build code "top-down": create a node, then its parents, and so
 //           on, and finally create the function at the end. (Note that in fact
 //           you do not mention a function when creating ExpressionRefs, only
-//           a module.) And since GetLocal is a leaf node, we need to be told
+//           a module.) And since LocalGet is a leaf node, we need to be told
 //           its type. (Other nodes detect their type either from their
 //           type or their opcode, or failing that, their children. But
-//           GetLocal has no children, it is where a "stream" of type info
+//           LocalGet has no children, it is where a "stream" of type info
 //           begins.)
 //           Note also that the index of a local can refer to a param or
 //           a var, that is, either a parameter to the function or a variable
 //           declared when you call BinaryenAddFunction. See BinaryenAddFunction
 //           for more details.
-BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenType type);
-BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenLocalSet(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenExpressionRef value);
-BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenExpressionRef value);
-BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenType type);
-BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenGlobalSet(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenExpressionRef value);
 // Load: align can be 0, in which case it will be the natural alignment (equal
@@ -709,16 +722,16 @@ BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr,
                                                      BinaryenIndex index);
 
-BinaryenIndex BinaryenGetLocalGetIndex(BinaryenExpressionRef expr);
+BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr);
 
-int BinaryenSetLocalIsTee(BinaryenExpressionRef expr);
-BinaryenIndex BinaryenSetLocalGetIndex(BinaryenExpressionRef expr);
-BinaryenExpressionRef BinaryenSetLocalGetValue(BinaryenExpressionRef expr);
+int BinaryenLocalSetIsTee(BinaryenExpressionRef expr);
+BinaryenIndex BinaryenLocalSetGetIndex(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenLocalSetGetValue(BinaryenExpressionRef expr);
 
-const char* BinaryenGetGlobalGetName(BinaryenExpressionRef expr);
+const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr);
 
-const char* BinaryenSetGlobalGetName(BinaryenExpressionRef expr);
-BinaryenExpressionRef BinaryenSetGlobalGetValue(BinaryenExpressionRef expr);
+const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenGlobalSetGetValue(BinaryenExpressionRef expr);
 
 BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr);
 const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr);
@@ -840,11 +853,9 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
                                         BinaryenType* varTypes,
                                         BinaryenIndex numVarTypes,
                                         BinaryenExpressionRef body);
-
 // Gets a function reference by name.
 BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                         const char* name);
-
 // Removes a function by name.
 void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name);
 
@@ -900,6 +911,8 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                     BinaryenType type,
                                     int8_t mutable_,
                                     BinaryenExpressionRef init);
+// Gets a global reference by name.
+BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module, const char* name);
 void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name);
 
 // Function table. One per module
@@ -928,6 +941,13 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 // Start function. One per module
 
 void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
+
+// Features
+
+// These control what features are allowed when validation and in passes.
+BinaryenFeatures BinaryenModuleGetFeatures(BinaryenModuleRef module);
+void BinaryenModuleSetFeatures(BinaryenModuleRef module,
+                               BinaryenFeatures features);
 
 //
 // ========== Module Operations ==========
@@ -992,6 +1012,13 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module);
 size_t
 BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize);
 
+// Serialize a module in s-expression text format.
+// @return how many bytes were written. This will be less than or equal to
+//         outputSize
+size_t BinaryenModuleWriteText(BinaryenModuleRef module,
+                               char* output,
+                               size_t outputSize);
+
 typedef struct BinaryenBufferSizes {
   size_t outputBytes;
   size_t sourceMapBytes;
@@ -1025,6 +1052,11 @@ typedef struct BinaryenModuleAllocateAndWriteResult {
 BinaryenModuleAllocateAndWriteResult
 BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
                                const char* sourceMapUrl);
+
+// Serialize a module in s-expression form. Implicity allocates the returned
+// char* with malloc(), and expects the user to free() them manually
+// once not needed anymore.
+char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module);
 
 // Deserialize a module from binary form.
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
@@ -1104,6 +1136,21 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
                                       BinaryenIndex lineNumber,
                                       BinaryenIndex columnNumber);
 
+//
+// ========== Global Operations ==========
+//
+
+// Gets the name of the specified `Global`.
+const char* BinaryenGlobalGetName(BinaryenGlobalRef global);
+// Gets the name of the `GlobalType` associated with the specified `Global`. May
+// be `NULL` if the signature is implicit.
+BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global);
+// Returns true if the specified `Global` is mutable.
+int BinaryenGlobalIsMutable(BinaryenGlobalRef global);
+// Gets the initialization expression of the specified `Global`.
+BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global);
+
+//
 //
 // ========== Import Operations ==========
 //
@@ -1206,6 +1253,11 @@ BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module,
                                    BinaryenType* paramTypes,
                                    BinaryenIndex numParams);
 
+// Enable or disable coloring for the WASM printer
+void BinaryenSetColorsEnabled(int enabled);
+
+// Query whether color is enable for the WASM printer
+int BinaryenAreColorsEnabled();
 #ifdef __cplusplus
 } // extern "C"
 #endif

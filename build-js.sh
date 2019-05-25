@@ -69,7 +69,7 @@ BINARYEN_SRC="$(dirname $0)/src"
 BINARYEN_SCRIPTS="$(dirname $0)/scripts"
 
 # output binaries relative to current working directory
-BINARYEN_BIN="$PWD/bin"
+OUT="$PWD/out"
 
 echo "generate embedded intrinsics module"
 
@@ -77,6 +77,7 @@ python $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast 
 
 echo "building shared bitcode"
 
+mkdir -p ${OUT}
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/asmjs/asm_v_wasm.cpp \
@@ -92,6 +93,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/ir/ReFinalize.cpp \
   $BINARYEN_SRC/passes/pass.cpp \
   $BINARYEN_SRC/passes/AlignmentLowering.cpp \
+  $BINARYEN_SRC/passes/AvoidReinterprets.cpp \
   $BINARYEN_SRC/passes/CoalesceLocals.cpp \
   $BINARYEN_SRC/passes/DeadArgumentElimination.cpp \
   $BINARYEN_SRC/passes/CodeFolding.cpp \
@@ -167,7 +169,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/wasm/wasm-validator.cpp \
   $BINARYEN_SRC/wasm/wasm.cpp \
   -I$BINARYEN_SRC \
-  -o shared.bc
+  -o ${OUT}/shared.bc
 
 echo "building binaryen.js"
 
@@ -193,10 +195,10 @@ export_function "_BinaryenBreakId"
 export_function "_BinaryenSwitchId"
 export_function "_BinaryenCallId"
 export_function "_BinaryenCallIndirectId"
-export_function "_BinaryenGetLocalId"
-export_function "_BinaryenSetLocalId"
-export_function "_BinaryenGetGlobalId"
-export_function "_BinaryenSetGlobalId"
+export_function "_BinaryenLocalGetId"
+export_function "_BinaryenLocalSetId"
+export_function "_BinaryenGlobalGetId"
+export_function "_BinaryenGlobalSetId"
 export_function "_BinaryenLoadId"
 export_function "_BinaryenStoreId"
 export_function "_BinaryenConstId"
@@ -227,6 +229,15 @@ export_function "_BinaryenExternalFunction"
 export_function "_BinaryenExternalTable"
 export_function "_BinaryenExternalMemory"
 export_function "_BinaryenExternalGlobal"
+
+# Features
+export_function "_BinaryenFeatureAtomics"
+export_function "_BinaryenFeatureBulkMemory"
+export_function "_BinaryenFeatureMutableGlobals"
+export_function "_BinaryenFeatureNontrappingFPToInt"
+export_function "_BinaryenFeatureSignExt"
+export_function "_BinaryenFeatureSIMD128"
+export_function "_BinaryenFeatureExceptionHandling"
 
 # Literals
 export_function "_BinaryenLiteralInt32"
@@ -374,8 +385,8 @@ export_function "_BinaryenLtFloat64"
 export_function "_BinaryenLeFloat64"
 export_function "_BinaryenGtFloat64"
 export_function "_BinaryenGeFloat64"
-export_function "_BinaryenCurrentMemory"
-export_function "_BinaryenGrowMemory"
+export_function "_BinaryenMemorySize"
+export_function "_BinaryenMemoryGrow"
 export_function "_BinaryenAtomicRMWAdd"
 export_function "_BinaryenAtomicRMWSub"
 export_function "_BinaryenAtomicRMWAnd"
@@ -526,11 +537,11 @@ export_function "_BinaryenBreak"
 export_function "_BinaryenSwitch"
 export_function "_BinaryenCall"
 export_function "_BinaryenCallIndirect"
-export_function "_BinaryenGetLocal"
-export_function "_BinaryenSetLocal"
-export_function "_BinaryenTeeLocal"
-export_function "_BinaryenGetGlobal"
-export_function "_BinaryenSetGlobal"
+export_function "_BinaryenLocalGet"
+export_function "_BinaryenLocalSet"
+export_function "_BinaryenLocalTee"
+export_function "_BinaryenGlobalGet"
+export_function "_BinaryenGlobalSet"
 export_function "_BinaryenLoad"
 export_function "_BinaryenStore"
 export_function "_BinaryenConst"
@@ -599,20 +610,20 @@ export_function "_BinaryenCallIndirectGetTarget"
 export_function "_BinaryenCallIndirectGetNumOperands"
 export_function "_BinaryenCallIndirectGetOperand"
 
-# 'GetLocal' expression operations
-export_function "_BinaryenGetLocalGetIndex"
+# 'LocalGet' expression operations
+export_function "_BinaryenLocalGetGetIndex"
 
-# 'SetLocal' expression operations
-export_function "_BinaryenSetLocalIsTee"
-export_function "_BinaryenSetLocalGetIndex"
-export_function "_BinaryenSetLocalGetValue"
+# 'LocalSet' expression operations
+export_function "_BinaryenLocalSetIsTee"
+export_function "_BinaryenLocalSetGetIndex"
+export_function "_BinaryenLocalSetGetValue"
 
-# 'GetGlobal' expression operations
-export_function "_BinaryenGetGlobalGetName"
+# 'GlobalGet' expression operations
+export_function "_BinaryenGlobalGetGetName"
 
-# 'SetGlobal' expression operations
-export_function "_BinaryenSetGlobalGetName"
-export_function "_BinaryenSetGlobalGetValue"
+# 'GlobalSet' expression operations
+export_function "_BinaryenGlobalSetGetName"
+export_function "_BinaryenGlobalSetGetValue"
 
 # 'Host' expression operations
 export_function "_BinaryenHostGetOp"
@@ -743,6 +754,7 @@ export_function "_BinaryenAddFunction"
 export_function "_BinaryenGetFunction"
 export_function "_BinaryenRemoveFunction"
 export_function "_BinaryenAddGlobal"
+export_function "_BinaryenGetGlobal"
 export_function "_BinaryenRemoveGlobal"
 export_function "_BinaryenAddFunctionImport"
 export_function "_BinaryenAddTableImport"
@@ -756,6 +768,8 @@ export_function "_BinaryenRemoveExport"
 export_function "_BinaryenSetFunctionTable"
 export_function "_BinaryenSetMemory"
 export_function "_BinaryenSetStart"
+export_function "_BinaryenModuleGetFeatures"
+export_function "_BinaryenModuleSetFeatures"
 export_function "_BinaryenModuleParse"
 export_function "_BinaryenModulePrint"
 export_function "_BinaryenModulePrintAsmjs"
@@ -794,6 +808,12 @@ export_function "_BinaryenFunctionOptimize"
 export_function "_BinaryenFunctionRunPasses"
 export_function "_BinaryenFunctionSetDebugLocation"
 
+# 'Global' operations
+export_function "_BinaryenGlobalGetName"
+export_function "_BinaryenGlobalGetType"
+export_function "_BinaryenGlobalIsMutable"
+export_function "_BinaryenGlobalGetInitExpr"
+
 # 'Import' operations
 export_function "_BinaryenGlobalImportGetModule"
 export_function "_BinaryenGlobalImportGetBase"
@@ -819,10 +839,10 @@ export_function "_BinaryenSetAPITracing"
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/binaryen-c.cpp \
-  shared.bc \
+  $OUT/shared.bc \
   -I$BINARYEN_SRC/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
-  -o $BINARYEN_BIN/binaryen${OUT_FILE_SUFFIX}.js \
+  -o $OUT/binaryen${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
   --post-js $BINARYEN_SRC/js/binaryen.js-post.js

@@ -132,7 +132,7 @@ private:
     localGraph.computeInfluences();
     // We maintain a stack of relevant values. This contains:
     //  * a null for each actual value that the value stack would have
-    //  * an index of each SetLocal that *could* be on the value
+    //  * an index of each LocalSet that *could* be on the value
     //    stack at that location.
     const Index null = -1;
     std::vector<Index> values;
@@ -188,7 +188,7 @@ private:
       // This is something we should handle, look into it.
       if (isConcreteType(inst->type)) {
         bool optimized = false;
-        if (auto* get = inst->origin->dynCast<GetLocal>()) {
+        if (auto* get = inst->origin->dynCast<LocalGet>()) {
           // This is a potential optimization opportunity! See if we
           // can reach the set.
           if (values.size() > 0) {
@@ -199,7 +199,7 @@ private:
               if (index == null) {
                 break;
               }
-              auto* set = insts[index]->origin->cast<SetLocal>();
+              auto* set = insts[index]->origin->cast<LocalSet>();
               if (set->index == get->index) {
                 // This might be a proper set-get pair, where the set is
                 // used by this get and nothing else, check that.
@@ -238,7 +238,7 @@ private:
           // This is an actual regular value on the value stack.
           values.push_back(null);
         }
-      } else if (inst->origin->is<SetLocal>() && inst->type == none) {
+      } else if (inst->origin->is<LocalSet>() && inst->type == none) {
         // This set is potentially optimizable later, add to stack.
         values.push_back(i);
       }

@@ -1,6 +1,6 @@
 (module
- (type $0 (func (result i32)))
- (func $sink-from-inside (; 0 ;) (type $0) (result i32)
+ (type $FUNCSIG$i (func (result i32)))
+ (func $sink-from-inside (; 0 ;) (type $FUNCSIG$i) (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)

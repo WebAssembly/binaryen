@@ -160,6 +160,16 @@ void test_types() {
   printf("BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 }
 
+void test_features() {
+  printf("BinaryenFeatureAtomics: %d\n", BinaryenFeatureAtomics());
+  printf("BinaryenFeatureBulkMemory: %d\n", BinaryenFeatureBulkMemory());
+  printf("BinaryenFeatureMutableGlobals: %d\n", BinaryenFeatureMutableGlobals());
+  printf("BinaryenFeatureNontrappingFPToInt: %d\n", BinaryenFeatureNontrappingFPToInt());
+  printf("BinaryenFeatureSignExt: %d\n", BinaryenFeatureSignExt());
+  printf("BinaryenFeatureSIMD128: %d\n", BinaryenFeatureSIMD128());
+  printf("BinaryenFeatureExceptionHandling: %d\n", BinaryenFeatureExceptionHandling());
+}
+
 void test_core() {
 
   // Module creation
@@ -442,9 +452,9 @@ void test_core() {
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF")
     ),
-    BinaryenDrop(module, BinaryenGetLocal(module, 0, BinaryenTypeInt32())),
-    BinaryenSetLocal(module, 0, makeInt32(module, 101)),
-    BinaryenDrop(module, BinaryenTeeLocal(module, 0, makeInt32(module, 102))),
+    BinaryenDrop(module, BinaryenLocalGet(module, 0, BinaryenTypeInt32())),
+    BinaryenLocalSet(module, 0, makeInt32(module, 101)),
+    BinaryenDrop(module, BinaryenLocalTee(module, 0, makeInt32(module, 102))),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1)),
     BinaryenLoad(module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8)),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2)),
@@ -510,6 +520,16 @@ void test_core() {
 
   // A bunch of our code needs drop(), auto-add it
   BinaryenModuleAutoDrop(module);
+
+  BinaryenFeatures features =
+      BinaryenFeatureAtomics() |
+      BinaryenFeatureBulkMemory() |
+      BinaryenFeatureNontrappingFPToInt() |
+      BinaryenFeatureSignExt() |
+      BinaryenFeatureSIMD128();
+
+  BinaryenModuleSetFeatures(module, features);
+  assert(BinaryenModuleGetFeatures(module) == features);
 
   // Verify it validates
   assert(BinaryenModuleValidate(module));
@@ -745,8 +765,8 @@ void test_binaries() {
     BinaryenModuleRef module = BinaryenModuleCreate();
     BinaryenType params[2] = { BinaryenTypeInt32(), BinaryenTypeInt32() };
     BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenTypeInt32(), params, 2);
-    BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
-                          y = BinaryenGetLocal(module, 1, BinaryenTypeInt32());
+    BinaryenExpressionRef x = BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
+                          y = BinaryenLocalGet(module, 1, BinaryenTypeInt32());
     BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
     BinaryenFunctionRef adder = BinaryenAddFunction(module, "adder", iii, NULL, 0, add);
     BinaryenSetDebugInfo(1); // include names section
@@ -765,6 +785,19 @@ void test_binaries() {
   assert(BinaryenModuleValidate(module));
   printf("module loaded from binary form:\n");
   BinaryenModulePrint(module);
+
+  // write the s-expr representation of the module.
+  BinaryenModuleWriteText(module, buffer, 1024);
+  printf("module s-expr printed (in memory):\n%s\n", buffer);
+
+
+  // writ the s-expr representation to a pointer which is managed by the
+  // caller
+  char *text = BinaryenModuleAllocateAndWriteText(module);
+  printf("module s-expr printed (in memory, caller-owned):\n%s\n", text);
+  free(text);
+
+
   BinaryenModuleDispose(module);
 }
 
@@ -796,7 +829,7 @@ void test_nonvalid() {
     BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
     BinaryenType localTypes[] = { BinaryenTypeInt32() };
     BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, localTypes, 1,
-      BinaryenSetLocal(module, 0, makeInt64(module, 1234)) // wrong type!
+      BinaryenLocalSet(module, 0, makeInt64(module, 1234)) // wrong type!
     );
 
     BinaryenModulePrint(module);
@@ -813,8 +846,24 @@ void test_tracing() {
   BinaryenSetAPITracing(0);
 }
 
+void test_color_status() {
+    int i;
+
+    // save old state
+    const int old_state = BinaryenAreColorsEnabled();
+
+    // Check that we can set the state to both {0, 1}
+    for(i = 0; i <= 1; i++){
+        BinaryenSetColorsEnabled(i);
+        assert(BinaryenAreColorsEnabled() == i);
+    }
+
+    BinaryenSetColorsEnabled(old_state);
+}
+
 int main() {
   test_types();
+  test_features();
   test_core();
   test_unreachable();
   test_relooper();
@@ -822,6 +871,7 @@ int main() {
   test_interpret();
   test_nonvalid();
   test_tracing();
+  test_color_status();
 
   return 0;
 }

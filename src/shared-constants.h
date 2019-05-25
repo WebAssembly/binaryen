@@ -61,6 +61,7 @@ extern Name MUT;
 extern Name SPECTEST;
 extern Name PRINT;
 extern Name EXIT;
+extern Name SHARED;
 
 } // namespace wasm
 

@@ -89,7 +89,7 @@ Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
   if (!stackPointer) {
     Fatal() << "stack pointer global not found";
   }
-  return builder.makeGetGlobal(stackPointer->name, i32);
+  return builder.makeGlobalGet(stackPointer->name, i32);
 }
 
 Expression*
@@ -107,7 +107,7 @@ EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
   if (!stackPointer) {
     Fatal() << "stack pointer global not found";
   }
-  return builder.makeSetGlobal(stackPointer->name, value);
+  return builder.makeGlobalSet(stackPointer->name, value);
 }
 
 void EmscriptenGlueGenerator::generateStackSaveFunction() {
@@ -125,18 +125,18 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
   Function* function =
     builder.makeFunction(STACK_ALLOC, std::move(params), i32, {{"1", i32}});
   Expression* loadStack = generateLoadStackPointer();
-  GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
+  LocalGet* getSizeArg = builder.makeLocalGet(0, i32);
   Binary* sub = builder.makeBinary(SubInt32, loadStack, getSizeArg);
   const static uint32_t bitAlignment = 16;
   const static uint32_t bitMask = bitAlignment - 1;
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  SetLocal* teeStackLocal = builder.makeTeeLocal(1, maskedSub);
+  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub);
   Expression* storeStack = generateStoreStackPointer(teeStackLocal);
 
   Block* block = builder.makeBlock();
   block->list.push_back(storeStack);
-  GetLocal* getStackLocal2 = builder.makeGetLocal(1, i32);
+  LocalGet* getStackLocal2 = builder.makeLocalGet(1, i32);
   block->list.push_back(getStackLocal2);
   block->type = i32;
   function->body = block;
@@ -148,7 +148,7 @@ void EmscriptenGlueGenerator::generateStackRestoreFunction() {
   std::vector<NameType> params{{"0", i32}};
   Function* function =
     builder.makeFunction(STACK_RESTORE, std::move(params), none, {});
-  GetLocal* getArg = builder.makeGetLocal(0, i32);
+  LocalGet* getArg = builder.makeLocalGet(0, i32);
   Expression* store = generateStoreStackPointer(getArg);
 
   function->body = store;
@@ -193,16 +193,16 @@ ensureFunctionImport(Module* module, Name name, std::string sig) {
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
 Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
-  std::vector<Global*> got_entries_func;
-  std::vector<Global*> got_entries_mem;
+  std::vector<Global*> gotFuncEntries;
+  std::vector<Global*> gotMemEntries;
   for (auto& g : wasm.globals) {
     if (!g->imported()) {
       continue;
     }
     if (g->module == "GOT.func") {
-      got_entries_func.push_back(g.get());
+      gotFuncEntries.push_back(g.get());
     } else if (g->module == "GOT.mem") {
-      got_entries_mem.push_back(g.get());
+      gotMemEntries.push_back(g.get());
     } else {
       continue;
     }
@@ -211,24 +211,24 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     g->init = Builder(wasm).makeConst(Literal(0));
   }
 
-  if (!got_entries_func.size() && !got_entries_mem.size()) {
+  if (!gotFuncEntries.size() && !gotMemEntries.size()) {
     return nullptr;
   }
 
-  Function* assign_func =
+  Function* assignFunc =
     builder.makeFunction(ASSIGN_GOT_ENTIRES, std::vector<NameType>{}, none, {});
   Block* block = builder.makeBlock();
-  assign_func->body = block;
+  assignFunc->body = block;
 
-  for (Global* g : got_entries_mem) {
+  for (Global* g : gotMemEntries) {
     Name getter(std::string("g$") + g->base.c_str());
     ensureFunctionImport(&wasm, getter, "i");
     Expression* call = builder.makeCall(getter, {}, i32);
-    SetGlobal* set_global = builder.makeSetGlobal(g->name, call);
-    block->list.push_back(set_global);
+    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+    block->list.push_back(globalSet);
   }
 
-  for (Global* g : got_entries_func) {
+  for (Global* g : gotFuncEntries) {
     Function* f = nullptr;
     // The function has to exist either as export or an import.
     // Note that we don't search for the function by name since its internal
@@ -250,12 +250,12 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
         .c_str());
     ensureFunctionImport(&wasm, getter, "i");
     Expression* call = builder.makeCall(getter, {}, i32);
-    SetGlobal* set_global = builder.makeSetGlobal(g->name, call);
-    block->list.push_back(set_global);
+    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+    block->list.push_back(globalSet);
   }
 
-  wasm.addFunction(assign_func);
-  return assign_func;
+  wasm.addFunction(assignFunc);
+  return assignFunc;
 }
 
 // For emscripten SIDE_MODULE we generate a single exported function called
@@ -304,7 +304,7 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   Function* growFunction =
     builder.makeFunction(name, std::move(params), i32, {});
   growFunction->body =
-    builder.makeHost(GrowMemory, Name(), {builder.makeGetLocal(0, i32)});
+    builder.makeHost(MemoryGrow, Name(), {builder.makeLocalGet(0, i32)});
 
   addExportedFunction(wasm, growFunction);
 
@@ -334,8 +334,36 @@ inline void exportFunction(Module& wasm, Name name, bool must_export) {
   wasm.addExport(exp);
 }
 
+void EmscriptenGlueGenerator::generateDynCallThunk(std::string sig) {
+  auto* funcType = ensureFunctionType(sig, &wasm);
+  if (!sigs.insert(sig).second) {
+    return; // sig is already in the set
+  }
+  Name name = std::string("dynCall_") + sig;
+  if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
+    return; // module already contains this dyncall
+  }
+  std::vector<NameType> params;
+  params.emplace_back("fptr", i32); // function pointer param
+  int p = 0;
+  for (const auto& ty : funcType->params) {
+    params.emplace_back(std::to_string(p++), ty);
+  }
+  Function* f =
+    builder.makeFunction(name, std::move(params), funcType->result, {});
+  Expression* fptr = builder.makeLocalGet(0, i32);
+  std::vector<Expression*> args;
+  for (unsigned i = 0; i < funcType->params.size(); ++i) {
+    args.push_back(builder.makeLocalGet(i + 1, funcType->params[i]));
+  }
+  Expression* call = builder.makeCallIndirect(funcType, fptr, args);
+  f->body = call;
+
+  wasm.addFunction(f);
+  exportFunction(wasm, f->name, true);
+}
+
 void EmscriptenGlueGenerator::generateDynCallThunks() {
-  std::unordered_set<std::string> sigs;
   Builder builder(wasm);
   std::vector<Name> tableSegmentData;
   if (wasm.table.segments.size() > 0) {
@@ -343,39 +371,14 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
   }
   for (const auto& indirectFunc : tableSegmentData) {
     std::string sig = getSig(wasm.getFunction(indirectFunc));
-    auto* funcType = ensureFunctionType(sig, &wasm);
-    if (!sigs.insert(sig).second) {
-      continue; // sig is already in the set
-    }
-    Name name = std::string("dynCall_") + sig;
-    if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
-      continue; // module already contains this dyncall
-    }
-    std::vector<NameType> params;
-    params.emplace_back("fptr", i32); // function pointer param
-    int p = 0;
-    for (const auto& ty : funcType->params) {
-      params.emplace_back(std::to_string(p++), ty);
-    }
-    Function* f =
-      builder.makeFunction(name, std::move(params), funcType->result, {});
-    Expression* fptr = builder.makeGetLocal(0, i32);
-    std::vector<Expression*> args;
-    for (unsigned i = 0; i < funcType->params.size(); ++i) {
-      args.push_back(builder.makeGetLocal(i + 1, funcType->params[i]));
-    }
-    Expression* call = builder.makeCallIndirect(funcType, fptr, args);
-    f->body = call;
-
-    wasm.addFunction(f);
-    exportFunction(wasm, f->name, true);
+    generateDynCallThunk(sig);
   }
 }
 
 struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
   RemoveStackPointer(Global* stackPointer) : stackPointer(stackPointer) {}
 
-  void visitGetGlobal(GetGlobal* curr) {
+  void visitGlobalGet(GlobalGet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       needStackSave = true;
       if (!builder) {
@@ -385,7 +388,7 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
     }
   }
 
-  void visitSetGlobal(SetGlobal* curr) {
+  void visitGlobalSet(GlobalSet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       needStackRestore = true;
       if (!builder) {
@@ -502,14 +505,14 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   std::map<std::string, Address> ids;
   std::set<std::string> allSigs;
   // last sets in the current basic block, per index
-  std::map<Index, SetLocal*> sets;
+  std::map<Index, LocalSet*> sets;
 
   AsmConstWalker(Module& _wasm)
     : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
 
   void noteNonLinear(Expression* curr);
 
-  void visitSetLocal(SetLocal* curr);
+  void visitLocalSet(LocalSet* curr);
   void visitCall(Call* curr);
   void visitTable(Table* curr);
 
@@ -531,7 +534,7 @@ void AsmConstWalker::noteNonLinear(Expression* curr) {
   sets.clear();
 }
 
-void AsmConstWalker::visitSetLocal(SetLocal* curr) { sets[curr->index] = curr; }
+void AsmConstWalker::visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
 
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
@@ -542,7 +545,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     auto sig = fixupNameWithSig(curr->target, baseSig);
     auto* arg = curr->operands[0];
     while (!arg->dynCast<Const>()) {
-      if (auto* get = arg->dynCast<GetLocal>()) {
+      if (auto* get = arg->dynCast<LocalGet>()) {
         // The argument may be a local.get, in which case, the last set in this
         // basic block has the value.
         auto* set = sets[get->index];
@@ -694,7 +697,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       if (block && block->list.size() > 0) {
         value = block->list[0];
         // first item may be a set of a local that we get later
-        auto* set = value->dynCast<SetLocal>();
+        auto* set = value->dynCast<LocalSet>();
         if (set) {
           value = block->list[1];
         }
@@ -703,7 +706,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
           value = ret->value;
         }
         // if it's a get of that set, use that value
-        if (auto* get = value->dynCast<GetLocal>()) {
+        if (auto* get = value->dynCast<LocalGet>()) {
           if (set && get->index == set->index) {
             value = set->value;
           }
@@ -769,6 +772,7 @@ struct FixInvokeFunctionNamesWalker
   std::map<Name, Name> importRenames;
   std::vector<Name> toRemove;
   std::set<Name> newImports;
+  std::set<std::string> invokeSigs;
 
   FixInvokeFunctionNamesWalker(Module& _wasm) : wasm(_wasm) {}
 
@@ -791,7 +795,7 @@ struct FixInvokeFunctionNamesWalker
   // This function converts the names of invoke wrappers based on their lowered
   // argument types and a return type. In the example above, the resulting new
   // wrapper name becomes "invoke_vii".
-  static Name fixEmExceptionInvoke(const Name& name, const std::string& sig) {
+  Name fixEmExceptionInvoke(const Name& name, const std::string& sig) {
     std::string nameStr = name.c_str();
     if (nameStr.front() == '"' && nameStr.back() == '"') {
       nameStr = nameStr.substr(1, nameStr.size() - 2);
@@ -800,10 +804,11 @@ struct FixInvokeFunctionNamesWalker
       return name;
     }
     std::string sigWoOrigFunc = sig.front() + sig.substr(2, sig.size() - 2);
+    invokeSigs.insert(sigWoOrigFunc);
     return Name("invoke_" + sigWoOrigFunc);
   }
 
-  static Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
+  Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
     if (name == "emscripten_longjmp_jmpbuf") {
       return "emscripten_longjmp";
     }
@@ -843,6 +848,9 @@ struct FixInvokeFunctionNamesWalker
 void EmscriptenGlueGenerator::fixInvokeFunctionNames() {
   FixInvokeFunctionNamesWalker walker(wasm);
   walker.walkModule(&wasm);
+  for (auto sig : walker.invokeSigs) {
+    generateDynCallThunk(sig);
+  }
 }
 
 template<class C> void printSet(std::ostream& o, C& c) {

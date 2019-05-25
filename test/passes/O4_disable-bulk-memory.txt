@@ -66,14 +66,14 @@
     )
     (i32.shl
      (local.tee $2
-      (current_memory)
+      (memory.size)
      )
      (i32.const 16)
     )
    )
    (if
     (i32.lt_s
-     (grow_memory
+     (memory.grow
       (select
        (local.get $2)
        (local.tee $3
@@ -101,7 +101,7 @@
     )
     (if
      (i32.lt_s
-      (grow_memory
+      (memory.grow
        (local.get $3)
       )
       (i32.const 0)

@@ -34,11 +34,11 @@ instructions = [
     ("call_indirect",  "makeCallIndirect(s)"),
     ("drop",           "makeDrop(s)"),
     ("select",         "makeSelect(s)"),
-    ("local.get",      "makeGetLocal(s)"),
-    ("local.set",      "makeSetLocal(s)"),
-    ("local.tee",      "makeTeeLocal(s)"),
-    ("global.get",     "makeGetGlobal(s)"),
-    ("global.set",     "makeSetGlobal(s)"),
+    ("local.get",      "makeLocalGet(s)"),
+    ("local.set",      "makeLocalSet(s)"),
+    ("local.tee",      "makeLocalTee(s)"),
+    ("global.get",     "makeGlobalGet(s)"),
+    ("global.set",     "makeGlobalSet(s)"),
     ("memory.init",    "makeMemoryInit(s)"),
     ("data.drop",      "makeDataDrop(s)"),
     ("memory.copy",    "makeMemoryCopy(s)"),
@@ -66,8 +66,8 @@ instructions = [
     ("i64.store8",     "makeStore(s, i64, /*isAtomic=*/false)"),
     ("i64.store16",    "makeStore(s, i64, /*isAtomic=*/false)"),
     ("i64.store32",    "makeStore(s, i64, /*isAtomic=*/false)"),
-    ("current_memory", "makeHost(s, HostOp::CurrentMemory)"),
-    ("grow_memory",    "makeHost(s, HostOp::GrowMemory)"),
+    ("memory.size",    "makeHost(s, HostOp::MemorySize)"),
+    ("memory.grow",    "makeHost(s, HostOp::MemoryGrow)"),
     ("i32.const",      "makeConst(s, i32)"),
     ("i64.const",      "makeConst(s, i64)"),
     ("f32.const",      "makeConst(s, f32)"),
@@ -530,7 +530,7 @@ def instruction_parser():
   emit(trie)
   printer.print_line("parse_error:")
   with printer.indent():
-    printer.print_line("throw ParseException(std::string(op));")
+    printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
 
 
 def print_header():

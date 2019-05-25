@@ -30,6 +30,7 @@
 #include <ir/literal-utils.h>
 #include <ir/local-graph.h>
 #include <ir/manipulation.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -40,7 +41,7 @@ namespace wasm {
 
 static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
 
-typedef std::unordered_map<GetLocal*, Literal> GetValues;
+typedef std::unordered_map<LocalGet*, Literal> GetValues;
 
 // Precomputes an expression. Errors if we hit anything that can't be
 // precomputed.
@@ -79,7 +80,7 @@ public:
   Flow visitCallIndirect(CallIndirect* curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitGetLocal(GetLocal* curr) {
+  Flow visitLocalGet(LocalGet* curr) {
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {
       auto value = iter->second;
@@ -89,7 +90,7 @@ public:
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitSetLocal(SetLocal* curr) {
+  Flow visitLocalSet(LocalSet* curr) {
     // If we don't need to replace the whole expression, see if there
     // is a value flowing through a tee.
     if (!replaceExpression) {
@@ -100,7 +101,7 @@ public:
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitGetGlobal(GetGlobal* curr) {
+  Flow visitGlobalGet(GlobalGet* curr) {
     auto* global = module->getGlobal(curr->name);
     if (!global->imported() && !global->mutable_) {
       return visit(global->init);
@@ -119,7 +120,7 @@ public:
     return ExpressionRunner<PrecomputingExpressionRunner>::visitPop(curr);
   }
 
-  Flow visitSetGlobal(SetGlobal* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitGlobalSet(GlobalSet* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitLoad(Load* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitStore(Store* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
@@ -307,7 +308,7 @@ private:
       work.insert(curr);
     }
     // the constant value, or none if not a constant
-    std::unordered_map<SetLocal*, Literal> setValues;
+    std::unordered_map<LocalSet*, Literal> setValues;
     // propagate constant values
     while (!work.empty()) {
       auto iter = work.begin();
@@ -316,18 +317,19 @@ private:
       // see if this set or get is actually a constant value, and if so,
       // mark it as such and add everything it influences to the work list,
       // as they may be constant too.
-      if (auto* set = curr->dynCast<SetLocal>()) {
+      if (auto* set = curr->dynCast<LocalSet>()) {
         if (setValues[set].isConcrete()) {
           continue; // already known constant
         }
-        auto value = setValues[set] = precomputeValue(set->value);
+        auto value = setValues[set] =
+          precomputeValue(Properties::getFallthrough(set->value));
         if (value.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
             work.insert(get);
           }
         }
       } else {
-        auto* get = curr->cast<GetLocal>();
+        auto* get = curr->cast<LocalGet>();
         if (getValues[get].isConcrete()) {
           continue; // already known constant
         }

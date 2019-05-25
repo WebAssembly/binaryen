@@ -252,14 +252,14 @@ struct DeadCodeElimination
           DELEGATE(Call);
         case Expression::Id::CallIndirectId:
           DELEGATE(CallIndirect);
-        case Expression::Id::GetLocalId:
-          DELEGATE(GetLocal);
-        case Expression::Id::SetLocalId:
-          DELEGATE(SetLocal);
-        case Expression::Id::GetGlobalId:
-          DELEGATE(GetGlobal);
-        case Expression::Id::SetGlobalId:
-          DELEGATE(SetGlobal);
+        case Expression::Id::LocalGetId:
+          DELEGATE(LocalGet);
+        case Expression::Id::LocalSetId:
+          DELEGATE(LocalSet);
+        case Expression::Id::GlobalGetId:
+          DELEGATE(GlobalGet);
+        case Expression::Id::GlobalSetId:
+          DELEGATE(GlobalSet);
         case Expression::Id::LoadId:
           DELEGATE(Load);
         case Expression::Id::StoreId:
@@ -404,11 +404,11 @@ struct DeadCodeElimination
     }
   }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     blockifyReachableOperands({curr->value}, curr->type);
   }
 
-  void visitSetGlobal(SetGlobal* curr) {
+  void visitGlobalSet(GlobalSet* curr) {
     blockifyReachableOperands({curr->value}, curr->type);
   }
 

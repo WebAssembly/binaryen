@@ -30,13 +30,13 @@ struct Localizer {
 
   Localizer(Expression* input, Function* func, Module* wasm) {
     expr = input;
-    if (auto* get = expr->dynCast<GetLocal>()) {
+    if (auto* get = expr->dynCast<LocalGet>()) {
       index = get->index;
-    } else if (auto* set = expr->dynCast<SetLocal>()) {
+    } else if (auto* set = expr->dynCast<LocalSet>()) {
       index = set->index;
     } else {
       index = Builder::addVar(func, expr->type);
-      expr = Builder(*wasm).makeTeeLocal(index, expr);
+      expr = Builder(*wasm).makeLocalTee(index, expr);
     }
   }
 };

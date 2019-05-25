@@ -7,6 +7,13 @@ BinaryenTypeVec128: 5
 BinaryenTypeExceptRef: 6
 BinaryenTypeUnreachable: 7
 BinaryenTypeAuto: -1
+BinaryenFeatureAtomics: 1
+BinaryenFeatureBulkMemory: 16
+BinaryenFeatureMutableGlobals: 2
+BinaryenFeatureNontrappingFPToInt: 4
+BinaryenFeatureSignExt: 32
+BinaryenFeatureSIMD128: 8
+BinaryenFeatureExceptionHandling: 64
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1868,6 +1875,28 @@ module loaded from binary form:
   )
  )
 )
+module s-expr printed (in memory):
+(module
+ (type $0 (func (param i32 i32) (result i32)))
+ (func $adder (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+  (i32.add
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+)
+
+module s-expr printed (in memory, caller-owned):
+(module
+ (type $0 (func (param i32 i32) (result i32)))
+ (func $adder (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+  (i32.add
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+)
+
 (module
  (type $vi (func (param i32)))
  (type $v (func))
@@ -3188,12 +3217,12 @@ int main() {
     expressions[624] = BinaryenCallIndirect(the_module, expressions[623], operands, 4, "iiIfF");
   }
   expressions[625] = BinaryenUnary(the_module, 20, expressions[624]);
-  expressions[626] = BinaryenGetLocal(the_module, 0, 1);
+  expressions[626] = BinaryenLocalGet(the_module, 0, 1);
   expressions[627] = BinaryenDrop(the_module, expressions[626]);
   expressions[628] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
-  expressions[629] = BinaryenSetLocal(the_module, 0, expressions[628]);
+  expressions[629] = BinaryenLocalSet(the_module, 0, expressions[628]);
   expressions[630] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
-  expressions[631] = BinaryenTeeLocal(the_module, 0, expressions[630]);
+  expressions[631] = BinaryenLocalTee(the_module, 0, expressions[630]);
   expressions[632] = BinaryenDrop(the_module, expressions[631]);
   expressions[633] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[634] = BinaryenLoad(the_module, 4, 0, 0, 0, 1, expressions[633]);
@@ -3273,9 +3302,9 @@ int main() {
     functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[652]);
   }
   expressions[653] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
-  BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[653]);
+  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[653]);
   expressions[654] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
-  BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[654]);
+  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[654]);
   {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
@@ -3312,6 +3341,8 @@ int main() {
     functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
+  BinaryenModuleSetFeatures(the_module, 61);
+  BinaryenModuleGetFeatures(the_module);
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module

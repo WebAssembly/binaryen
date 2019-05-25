@@ -82,6 +82,7 @@ Name MUT("mut");
 Name SPECTEST("spectest");
 Name PRINT("print");
 Name EXIT("exit");
+Name SHARED("shared");
 
 // Expressions
 
@@ -103,13 +104,13 @@ const char* getExpressionName(Expression* curr) {
       return "call";
     case Expression::Id::CallIndirectId:
       return "call_indirect";
-    case Expression::Id::GetLocalId:
+    case Expression::Id::LocalGetId:
       return "local.get";
-    case Expression::Id::SetLocalId:
+    case Expression::Id::LocalSetId:
       return "local.set";
-    case Expression::Id::GetGlobalId:
+    case Expression::Id::GlobalGetId:
       return "global.get";
-    case Expression::Id::SetGlobalId:
+    case Expression::Id::GlobalSetId:
       return "global.set";
     case Expression::Id::LoadId:
       return "load";
@@ -410,14 +411,19 @@ void CallIndirect::finalize() {
 }
 
 bool FunctionType::structuralComparison(FunctionType& b) {
-  if (result != b.result) {
+  return structuralComparison(b.params, b.result);
+}
+
+bool FunctionType::structuralComparison(const std::vector<Type>& otherParams,
+                                        Type otherResult) {
+  if (result != otherResult) {
     return false;
   }
-  if (params.size() != b.params.size()) {
+  if (params.size() != otherParams.size()) {
     return false;
   }
   for (size_t i = 0; i < params.size(); i++) {
-    if (params[i] != b.params[i]) {
+    if (params[i] != otherParams[i]) {
       return false;
     }
   }
@@ -432,9 +438,9 @@ bool FunctionType::operator==(FunctionType& b) {
 }
 bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
 
-bool SetLocal::isTee() { return type != none; }
+bool LocalSet::isTee() { return type != none; }
 
-void SetLocal::setTee(bool is) {
+void LocalSet::setTee(bool is) {
   if (is) {
     type = value->type;
   } else {
@@ -443,7 +449,7 @@ void SetLocal::setTee(bool is) {
   finalize(); // type may need to be unreachable
 }
 
-void SetLocal::finalize() {
+void LocalSet::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
   } else if (isTee()) {
@@ -453,7 +459,7 @@ void SetLocal::finalize() {
   }
 }
 
-void SetGlobal::finalize() {
+void GlobalSet::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
   }
@@ -833,11 +839,11 @@ Index Pop::getDepth(Expression* parent) {
 
 void Host::finalize() {
   switch (op) {
-    case CurrentMemory: {
+    case MemorySize: {
       type = i32;
       break;
     }
-    case GrowMemory: {
+    case MemoryGrow: {
       // if the single operand is not reachable, so are we
       if (operands[0]->type == unreachable) {
         type = unreachable;

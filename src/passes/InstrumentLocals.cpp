@@ -64,7 +64,7 @@ Name set_f32("set_f32");
 Name set_f64("set_f64");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     Builder builder(*getModule());
     Name import;
     switch (curr->type) {
@@ -96,7 +96,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
                        curr->type));
   }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     Builder builder(*getModule());
     Name import;
     switch (curr->value->type) {

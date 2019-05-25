@@ -154,8 +154,8 @@ struct MetaDCEGraph {
       InitScanner(MetaDCEGraph* parent, Name parentDceName)
         : parent(parent), parentDceName(parentDceName) {}
 
-      void visitGetGlobal(GetGlobal* curr) { handleGlobal(curr->name); }
-      void visitSetGlobal(SetGlobal* curr) { handleGlobal(curr->name); }
+      void visitGlobalGet(GlobalGet* curr) { handleGlobal(curr->name); }
+      void visitGlobalSet(GlobalSet* curr) { handleGlobal(curr->name); }
 
     private:
       MetaDCEGraph* parent;
@@ -223,8 +223,8 @@ struct MetaDCEGraph {
                 ->importIdToDCENode[parent->getFunctionImportId(curr->target)]);
         }
       }
-      void visitGetGlobal(GetGlobal* curr) { handleGlobal(curr->name); }
-      void visitSetGlobal(SetGlobal* curr) { handleGlobal(curr->name); }
+      void visitGlobalGet(GlobalGet* curr) { handleGlobal(curr->name); }
+      void visitGlobalSet(GlobalSet* curr) { handleGlobal(curr->name); }
 
     private:
       MetaDCEGraph* parent;
@@ -353,7 +353,7 @@ public:
         std::cout << "  is function " << DCENodeToFunction[name] << '\n';
       }
       if (DCENodeToGlobal.find(name) != DCENodeToGlobal.end()) {
-        std::cout << "  is function " << DCENodeToGlobal[name] << '\n';
+        std::cout << "  is global " << DCENodeToGlobal[name] << '\n';
       }
       for (auto target : node.reaches) {
         std::cout << "  reaches: " << target.str << '\n';
@@ -427,7 +427,7 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
-           Colors::disable();
+           Colors::setEnabled(false);
          })
     .add("--emit-text",
          "-S",

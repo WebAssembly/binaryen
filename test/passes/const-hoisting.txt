@@ -1,6 +1,6 @@
 (module
- (type $0 (func))
- (func $10-of-each (; 0 ;) (type $0)
+ (type $FUNCSIG$v (func))
+ (func $10-of-each (; 0 ;) (type $FUNCSIG$v)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -420,7 +420,7 @@
    )
   )
  )
- (func $floats-10-times (; 1 ;) (type $0)
+ (func $floats-10-times (; 1 ;) (type $FUNCSIG$v)
   (local $0 f32)
   (local $1 f64)
   (block
@@ -494,7 +494,7 @@
    )
   )
  )
- (func $too-few (; 2 ;) (type $0)
+ (func $too-few (; 2 ;) (type $FUNCSIG$v)
   (drop
    (i32.const 8192)
   )
@@ -511,7 +511,7 @@
    (i32.const 8192)
   )
  )
- (func $just-enough (; 3 ;) (type $0)
+ (func $just-enough (; 3 ;) (type $FUNCSIG$v)
   (local $0 i32)
   (block
    (local.set $0
@@ -539,7 +539,7 @@
    )
   )
  )
- (func $too-few-b (; 4 ;) (type $0)
+ (func $too-few-b (; 4 ;) (type $FUNCSIG$v)
   (drop
    (i32.const 1048576)
   )
@@ -550,7 +550,7 @@
    (i32.const 1048576)
   )
  )
- (func $enough-b (; 5 ;) (type $0)
+ (func $enough-b (; 5 ;) (type $FUNCSIG$v)
   (local $0 i32)
   (block
    (local.set $0
@@ -572,7 +572,7 @@
    )
   )
  )
- (func $too-few-c (; 6 ;) (type $0)
+ (func $too-few-c (; 6 ;) (type $FUNCSIG$v)
   (drop
    (f32.const 0)
   )
@@ -583,7 +583,7 @@
    (f32.const 0)
   )
  )
- (func $enough-c (; 7 ;) (type $0)
+ (func $enough-c (; 7 ;) (type $FUNCSIG$v)
   (local $0 f32)
   (block
    (local.set $0
@@ -605,12 +605,12 @@
    )
   )
  )
- (func $too-few-d (; 8 ;) (type $0)
+ (func $too-few-d (; 8 ;) (type $FUNCSIG$v)
   (drop
    (f64.const 0)
   )
  )
- (func $enough-d (; 9 ;) (type $0)
+ (func $enough-d (; 9 ;) (type $FUNCSIG$v)
   (local $0 f64)
   (block
    (local.set $0

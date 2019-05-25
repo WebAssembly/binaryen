@@ -7,6 +7,13 @@ BinaryenTypeVec128: 5
 BinaryenTypeExceptRef: 6
 BinaryenTypeUnreachable: 7
 BinaryenTypeAuto: -1
+Binaryen.Features.Atomics: 1
+Binaryen.Features.BulkMemory: 16
+Binaryen.Features.MutableGlobals: 2
+Binaryen.Features.NontrappingFPToInt: 4
+Binaryen.Features.SignExt: 32
+Binaryen.Features.SIMD128: 8
+Binaryen.Features.ExceptionHandling: 64
 BinaryenInvalidId: 0
 BinaryenBlockId: 1
 BinaryenIfId: 2
@@ -15,10 +22,10 @@ BinaryenBreakId: 4
 BinaryenSwitchId: 5
 BinaryenCallId: 6
 BinaryenCallIndirectId: 7
-BinaryenGetLocalId: 8
-BinaryenSetLocalId: 9
-BinaryenGetGlobalId: 10
-BinaryenSetGlobalId: 11
+BinaryenLocalGetId: 8
+BinaryenLocalSetId: 9
+BinaryenGlobalGetId: 10
+BinaryenGlobalSetId: 11
 BinaryenLoadId: 12
 BinaryenStoreId: 13
 BinaryenConstId: 14
@@ -57,13 +64,16 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
  (type $3 (func))
+ (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
  (table $0 1 funcref)
  (elem (i32.const 0) "$kitchen()sinker")
+ (global $a-global i32 (i32.const 1))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
+ (export "a-global-exp" (global $a-global))
  (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
@@ -1886,6 +1896,7 @@ optimized:
 module loaded from binary form:
 (module
  (type $0 (func (param i32 i32) (result i32)))
+ (global $global$0 i32 (i32.const 3))
  (func $adder (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -3216,12 +3227,12 @@ int main() {
     expressions[623] = BinaryenCallIndirect(the_module, expressions[618], operands, 4, "iiIfF");
   }
   expressions[624] = BinaryenUnary(the_module, 20, expressions[623]);
-  expressions[625] = BinaryenGetLocal(the_module, 0, 1);
+  expressions[625] = BinaryenLocalGet(the_module, 0, 1);
   expressions[626] = BinaryenDrop(the_module, expressions[625]);
   expressions[627] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
-  expressions[628] = BinaryenSetLocal(the_module, 0, expressions[627]);
+  expressions[628] = BinaryenLocalSet(the_module, 0, expressions[627]);
   expressions[629] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
-  expressions[630] = BinaryenTeeLocal(the_module, 0, expressions[629]);
+  expressions[630] = BinaryenLocalTee(the_module, 0, expressions[629]);
   expressions[631] = BinaryenDrop(the_module, expressions[630]);
   expressions[632] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[633] = BinaryenLoad(the_module, 4, 1, 0, 0, 1, expressions[632]);
@@ -3327,12 +3338,16 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     BinaryenType varTypes[] = { 1 };
     functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[655]);
   }
+  expressions[656] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[656]);
   {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
   BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
+  BinaryenAddGlobalImport(the_module, "a-global-imp", "module", "base", 1);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
+  exports[1] = BinaryenAddGlobalExport(the_module, "a-global", "a-global-exp");
   BinaryenFunctionGetName(functions[0]);
   BinaryenFunctionImportGetModule(functions[0]);
   BinaryenFunctionImportGetBase(functions[0]);
@@ -3350,13 +3365,13 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     const char* funcNames[] = { "kitchen()sinker" };
     BinaryenSetFunctionTable(the_module, 1, 4294967295, funcNames, 1);
   }
-  expressions[656] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[657] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char segment1[] = { 73, 32, 97, 109, 32, 112, 97, 115, 115, 105, 118, 101 };
     const char* segments[] = { segment0, segment1 };
     int8_t segmentPassive[] = { 0, 1 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[656], expressions[0] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[657], expressions[0] };
     BinaryenIndex segmentSizes[] = { 12, 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 0);
   }
@@ -3364,10 +3379,10 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     BinaryenType paramTypes[] = { 0 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[657] = BinaryenNop(the_module);
+  expressions[658] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[657]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[658]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
@@ -3375,6 +3390,8 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
+  BinaryenModuleSetFeatures(the_module, 61);
+  BinaryenModuleGetFeatures(the_module);
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module
@@ -3382,13 +3399,16 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
  (type $3 (func))
+ (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
  (table $0 1 funcref)
  (elem (i32.const 0) "$kitchen()sinker")
+ (global $a-global i32 (i32.const 1))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
+ (export "a-global-exp" (global $a-global))
  (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
@@ -5691,6 +5711,7 @@ optimized:
 test_parsing text:
 (module
  (type $iii (func (param i32 i32) (result i32)))
+ (global $a-global i32 (i32.const 3))
  (func $adder (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -5702,6 +5723,7 @@ test_parsing text:
 module loaded from text form:
 (module
  (type $iii (func (param i32 i32) (result i32)))
+ (global $a-global i32 (i32.const 3))
  (func $ADD_ER (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)

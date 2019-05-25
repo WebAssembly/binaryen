@@ -6,6 +6,7 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
+ var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -13280,7 +13281,7 @@ function asmFunc(global, env, buffer) {
   "as_compare_left": $56, 
   "as_compare_right": $57, 
   "as_convert_operand": $58, 
-  "as_grow_memory_size": $59, 
+  "as_memory_grow_size": $59, 
   "nested_block_value": $60, 
   "nested_br_value": $61, 
   "nested_br_if_value": $62, 
@@ -13349,7 +13350,7 @@ export var as_test_operand = retasmFunc.as_test_operand;
 export var as_compare_left = retasmFunc.as_compare_left;
 export var as_compare_right = retasmFunc.as_compare_right;
 export var as_convert_operand = retasmFunc.as_convert_operand;
-export var as_grow_memory_size = retasmFunc.as_grow_memory_size;
+export var as_memory_grow_size = retasmFunc.as_memory_grow_size;
 export var nested_block_value = retasmFunc.nested_block_value;
 export var nested_br_value = retasmFunc.nested_br_value;
 export var nested_br_if_value = retasmFunc.nested_br_if_value;

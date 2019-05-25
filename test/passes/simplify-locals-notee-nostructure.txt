@@ -1,6 +1,6 @@
 (module
- (type $0 (func))
- (func $contrast (; 0 ;) (type $0)
+ (type $FUNCSIG$v (func))
+ (func $contrast (; 0 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local $z i32)

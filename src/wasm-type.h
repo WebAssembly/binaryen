@@ -45,6 +45,7 @@ bool isFloatType(Type type);
 bool isIntegerType(Type type);
 bool isVectorType(Type type);
 bool isReferenceType(Type type);
+Type reinterpretType(Type type);
 
 } // namespace wasm
 

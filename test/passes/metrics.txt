@@ -1,6 +1,7 @@
 total
  [exports]      : 0       
  [funcs]        : 1       
+ [globals]      : 1       
  [imports]      : 0       
  [memory-data]  : 9       
  [table-data]   : 3       
@@ -61,6 +62,7 @@ total
 total
  [exports]      : 0       
  [funcs]        : 0       
+ [globals]      : 0       
  [imports]      : 0       
  [total]        : 0       
  [vars]         : 0       

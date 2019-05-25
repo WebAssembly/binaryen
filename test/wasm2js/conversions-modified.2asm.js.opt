@@ -37,6 +37,7 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
+ var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -142,23 +143,17 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$7($0) {
-  var $1 = 0, $2 = 0, $3_1 = 0, $4_1 = 0;
-  $2 = $7($0);
-  $3_1 = i64toi32_i32$HIGH_BITS;
-  $4_1 = 32;
-  $1 = $4_1 & 31;
-  setTempRet0((32 >>> 0 <= $4_1 >>> 0 ? $3_1 >>> $1 : ((1 << $1) - 1 & $3_1) << 32 - $1 | $2 >>> $1) | 0);
-  return $2;
+  var $1 = 0;
+  $1 = $7($0);
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $1;
  }
  
  function legalstub$9($0) {
-  var $1 = 0, $2 = 0, $3_1 = 0, $4_1 = 0;
-  $2 = $9($0);
-  $3_1 = i64toi32_i32$HIGH_BITS;
-  $4_1 = 32;
-  $1 = $4_1 & 31;
-  setTempRet0((32 >>> 0 <= $4_1 >>> 0 ? $3_1 >>> $1 : ((1 << $1) - 1 & $3_1) << 32 - $1 | $2 >>> $1) | 0);
-  return $2;
+  var $1 = 0;
+  $1 = $9($0);
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $1;
  }
  
  function legalstub$12($0, $1) {
@@ -178,16 +173,16 @@ function asmFunc(global, env, buffer) {
  }
  
  function legalstub$22($0, $1) {
-  wasm2js_scratch_store_i32(0 | 0, $0 | 0);
-  wasm2js_scratch_store_i32(1 | 0, $1 | 0);
+  wasm2js_scratch_store_i32(0, $0 | 0);
+  wasm2js_scratch_store_i32(1, $1 | 0);
   return +wasm2js_scratch_load_f64();
  }
  
  function legalstub$24($0) {
   var $1 = 0, $2 = 0;
   wasm2js_scratch_store_f64(+$0);
-  $1 = wasm2js_scratch_load_i32(1 | 0) | 0;
-  $2 = wasm2js_scratch_load_i32(0 | 0) | 0;
+  $1 = wasm2js_scratch_load_i32(1) | 0;
+  $2 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $1;
   $1 = $2;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);

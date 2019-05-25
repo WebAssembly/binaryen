@@ -118,10 +118,10 @@ struct ReFinalize
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
-  void visitGetLocal(GetLocal* curr);
-  void visitSetLocal(SetLocal* curr);
-  void visitGetGlobal(GetGlobal* curr);
-  void visitSetGlobal(SetGlobal* curr);
+  void visitLocalGet(LocalGet* curr);
+  void visitLocalSet(LocalSet* curr);
+  void visitGlobalGet(GlobalGet* curr);
+  void visitGlobalSet(GlobalSet* curr);
   void visitLoad(Load* curr);
   void visitStore(Store* curr);
   void visitAtomicRMW(AtomicRMW* curr);
@@ -176,10 +176,10 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitSwitch(Switch* curr) { curr->finalize(); }
   void visitCall(Call* curr) { curr->finalize(); }
   void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
-  void visitGetLocal(GetLocal* curr) { curr->finalize(); }
-  void visitSetLocal(SetLocal* curr) { curr->finalize(); }
-  void visitGetGlobal(GetGlobal* curr) { curr->finalize(); }
-  void visitSetGlobal(SetGlobal* curr) { curr->finalize(); }
+  void visitLocalGet(LocalGet* curr) { curr->finalize(); }
+  void visitLocalSet(LocalSet* curr) { curr->finalize(); }
+  void visitGlobalGet(GlobalGet* curr) { curr->finalize(); }
+  void visitGlobalSet(GlobalSet* curr) { curr->finalize(); }
   void visitLoad(Load* curr) { curr->finalize(); }
   void visitStore(Store* curr) { curr->finalize(); }
   void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
@@ -306,19 +306,19 @@ struct I64Utilities {
 
   static Expression* recreateI64(Builder& builder, Index low, Index high) {
     return recreateI64(
-      builder, builder.makeGetLocal(low, i32), builder.makeGetLocal(high, i32));
+      builder, builder.makeLocalGet(low, i32), builder.makeLocalGet(high, i32));
   };
 
   static Expression* getI64High(Builder& builder, Index index) {
     return builder.makeUnary(
       WrapInt64,
       builder.makeBinary(ShrUInt64,
-                         builder.makeGetLocal(index, i64),
+                         builder.makeLocalGet(index, i64),
                          builder.makeConst(Literal(int64_t(32)))));
   }
 
   static Expression* getI64Low(Builder& builder, Index index) {
-    return builder.makeUnary(WrapInt64, builder.makeGetLocal(index, i64));
+    return builder.makeUnary(WrapInt64, builder.makeLocalGet(index, i64));
   }
 };
 

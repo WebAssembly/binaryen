@@ -1,13 +1,15 @@
-function instantiate(asmLibraryArg, wasmMemory, FUNCTION_TABLE) {
+function instantiate(asmLibraryArg, wasmMemory, wasmTable) {
 
 function asmFunc(global, env, buffer) {
  "almost asm";
  var memory = env.memory;
+ var FUNCTION_TABLE = wasmTable;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
+ var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -52,6 +54,84 @@ function asmFunc(global, env, buffer) {
   HEAPF64[16 >> 3] = 5.0 + 6.0;
   HEAP8[16 >> 0] = 7 + 8 | 0;
   HEAP16[16 >> 1] = 9 + 10 | 0;
+  if ((HEAP32[100 >> 2] | 0 | 0) == (1 | 0)) {
+   bar()
+  }
+  if ((HEAP32[104 >> 2] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAP32[108 >> 2] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((HEAP16[112 >> 1] | 0 | 0) == (1 | 0)) {
+   bar()
+  }
+  if ((HEAP16[116 >> 1] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAPU16[120 >> 1] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAP16[124 >> 1] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((HEAPU16[128 >> 1] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((HEAP8[132 >> 0] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAPU8[136 >> 0] | 0 | 0) < (2 | 0)) {
+   bar()
+  }
+  if ((HEAP8[140 >> 0] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((HEAPU8[144 >> 0] | 0) >>> 0 < 3 >>> 0) {
+   bar()
+  }
+  if ((bools(314159 | 0) | 0) >>> 7 | 0) {
+   bar()
+  }
+  if ((bools(314159 | 0) | 0) >> 8 | 0) {
+   bar()
+  }
+  if (~~Math_fround(getf32()) >>> 0) {
+   bar()
+  }
+  if (~~Math_fround(getf32())) {
+   bar()
+  }
+  if (~~+getf64() >>> 0) {
+   bar()
+  }
+  if (~~+getf64()) {
+   bar()
+  }
+  if (((geti32() | 0) + (geti32() | 0) | 0) + (geti32() | 0) | 0) {
+   bar()
+  }
+  if ((geti32() | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) {
+   bar()
+  }
+  if (((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) {
+   bar()
+  }
+  if ((((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) + (((geti32() | 0) + (geti32() | 0) | 0) + ((geti32() | 0) + (geti32() | 0) | 0) | 0) | 0) {
+   bar()
+  }
+ }
+ 
+ function geti32() {
+  return geti32() | 0 | 0;
+ }
+ 
+ function getf32() {
+  return Math_fround(Math_fround(getf32()));
+ }
+ 
+ function getf64() {
+  return +(+getf64());
  }
  
  function __growWasmMemory($0) {

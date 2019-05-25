@@ -15,6 +15,35 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Wast file parsing rules now don't allow a few invalid formats for typeuses
+  that were previously allowed. Typeuse entries should follow this format,
+  meaning they should have (type) -> (param) -> (result) order if more than one
+  of them exist.
+  ```
+  typeuse ::= (type index|name)+ |
+              (type index|name)+ (param ..)* (result ..)* |
+              (param ..)* (result ..)*
+  ```
+  Also, all (local) nodes in function definition should be after all typeuse
+  elements.
+- Removed APIs related to deprecated instruction names in Binaryen.js:
+  - `get_local` / `getLocal`
+  - `set_local` / `setLocal`
+  - `tee_local` / `teeLocal`
+  - `get_global` / `getGlobal`
+  - `set_global` / `setGlobal`
+  - `current_memory` / `currentMemory`
+  - `grow_memory` / `growMemory`
+  They are now available as their new instruction names:
+  `local.get`, `local.set`, `local.tee`, `global.get`, `global.set`,
+  `memory.size`, and `memory.grow`.
+- Add feature handling to the C/JS API with no feature enabled by default.
+
+v84
+---
+
+- Generate dynCall thunks for any signatures used in "invoke" calls.
+
 v81
 ---
 

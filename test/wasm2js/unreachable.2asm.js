@@ -7,6 +7,7 @@ function asmFunc(global, env, buffer) {
  var HEAP32 = new global.Int32Array(buffer);
  var HEAPU8 = new global.Uint8Array(buffer);
  var HEAPU16 = new global.Uint16Array(buffer);
+ var HEAPU32 = new global.Uint32Array(buffer);
  var HEAPF32 = new global.Float32Array(buffer);
  var HEAPF64 = new global.Float64Array(buffer);
  var Math_imul = global.Math.imul;
@@ -431,7 +432,7 @@ function asmFunc(global, env, buffer) {
   "as_compare_left": $51, 
   "as_compare_right": $52, 
   "as_convert_operand": $53, 
-  "as_grow_memory_size": $54
+  "as_memory_grow_size": $54
  };
 }
 
@@ -489,4 +490,4 @@ export var as_test_operand = retasmFunc.as_test_operand;
 export var as_compare_left = retasmFunc.as_compare_left;
 export var as_compare_right = retasmFunc.as_compare_right;
 export var as_convert_operand = retasmFunc.as_convert_operand;
-export var as_grow_memory_size = retasmFunc.as_grow_memory_size;
+export var as_memory_grow_size = retasmFunc.as_memory_grow_size;

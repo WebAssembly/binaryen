@@ -82,13 +82,13 @@ struct MergeLocals
     optimizeCopies();
   }
 
-  std::vector<SetLocal*> copies;
+  std::vector<LocalSet*> copies;
 
-  void visitSetLocal(SetLocal* curr) {
-    if (auto* get = curr->value->dynCast<GetLocal>()) {
+  void visitLocalSet(LocalSet* curr) {
+    if (auto* get = curr->value->dynCast<LocalGet>()) {
       if (get->index != curr->index) {
         Builder builder(*getModule());
-        auto* trivial = builder.makeTeeLocal(get->index, get);
+        auto* trivial = builder.makeLocalTee(get->index, get);
         curr->value = trivial;
         copies.push_back(curr);
       }
@@ -103,10 +103,10 @@ struct MergeLocals
     LocalGraph preGraph(getFunction());
     preGraph.computeInfluences();
     // optimize each copy
-    std::unordered_map<SetLocal*, SetLocal*> optimizedToCopy,
+    std::unordered_map<LocalSet*, LocalSet*> optimizedToCopy,
       optimizedToTrivial;
     for (auto* copy : copies) {
-      auto* trivial = copy->value->cast<SetLocal>();
+      auto* trivial = copy->value->cast<LocalSet>();
       bool canOptimizeToCopy = false;
       auto& trivialInfluences = preGraph.setInfluences[trivial];
       if (!trivialInfluences.empty()) {
@@ -215,7 +215,7 @@ struct MergeLocals
     }
     // remove the trivial sets
     for (auto* copy : copies) {
-      copy->value = copy->value->cast<SetLocal>()->value;
+      copy->value = copy->value->cast<LocalSet>()->value;
     }
   }
 };

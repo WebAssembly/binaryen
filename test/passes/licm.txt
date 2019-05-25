@@ -1,12 +1,12 @@
 (module
- (type $0 (func))
- (type $1 (func (result i32)))
- (type $2 (func (result i64)))
- (type $3 (func (param i32)))
- (type $4 (func (param i32) (result i32)))
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$j (func (result i64)))
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
  (memory $0 1)
  (global $glob (mut i32) (i32.const 1))
- (func $loop1 (; 0 ;) (type $0)
+ (func $loop1 (; 0 ;) (type $FUNCSIG$v)
   (drop
    (i32.const 10)
   )
@@ -17,7 +17,7 @@
    )
   )
  )
- (func $loop2 (; 1 ;) (type $0)
+ (func $loop2 (; 1 ;) (type $FUNCSIG$v)
   (drop
    (i32.const 10)
   )
@@ -32,7 +32,7 @@
    )
   )
  )
- (func $loop3 (; 2 ;) (type $0)
+ (func $loop3 (; 2 ;) (type $FUNCSIG$v)
   (drop
    (i32.const 10)
   )
@@ -48,7 +48,7 @@
    )
   )
  )
- (func $loop4 (; 3 ;) (type $0)
+ (func $loop4 (; 3 ;) (type $FUNCSIG$v)
   (drop
    (i32.load
     (i32.const 1)
@@ -61,7 +61,7 @@
    )
   )
  )
- (func $loop3-4 (; 4 ;) (type $0)
+ (func $loop3-4 (; 4 ;) (type $FUNCSIG$v)
   (loop $loop
    (drop
     (i32.load
@@ -79,7 +79,7 @@
    )
   )
  )
- (func $loop3-4-b (; 5 ;) (type $0)
+ (func $loop3-4-b (; 5 ;) (type $FUNCSIG$v)
   (drop
    (i32.load
     (i32.const 10)
@@ -98,7 +98,7 @@
    )
   )
  )
- (func $loop5 (; 6 ;) (type $0)
+ (func $loop5 (; 6 ;) (type $FUNCSIG$v)
   (loop $loop
    (i32.store
     (i32.const 1)
@@ -109,7 +109,7 @@
    )
   )
  )
- (func $loop6 (; 7 ;) (type $0)
+ (func $loop6 (; 7 ;) (type $FUNCSIG$v)
   (loop $loop
    (i32.store
     (i32.const 1)
@@ -121,7 +121,7 @@
    )
   )
  )
- (func $loop7 (; 8 ;) (type $0)
+ (func $loop7 (; 8 ;) (type $FUNCSIG$v)
   (loop $loop
    (i32.store
     (i32.const 1)
@@ -136,7 +136,7 @@
    )
   )
  )
- (func $loop8 (; 9 ;) (type $0)
+ (func $loop8 (; 9 ;) (type $FUNCSIG$v)
   (loop $loop
    (i32.store
     (i32.const 1)
@@ -147,7 +147,7 @@
    )
   )
  )
- (func $loop9 (; 10 ;) (type $0)
+ (func $loop9 (; 10 ;) (type $FUNCSIG$v)
   (loop $loop
    (drop
     (i32.load
@@ -163,7 +163,7 @@
    )
   )
  )
- (func $loop10 (; 11 ;) (type $0)
+ (func $loop10 (; 11 ;) (type $FUNCSIG$v)
   (drop
    (i32.load
     (i32.const 1)
@@ -182,7 +182,7 @@
    )
   )
  )
- (func $loop11 (; 12 ;) (type $0)
+ (func $loop11 (; 12 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (loop $loop
@@ -196,7 +196,7 @@
    )
   )
  )
- (func $loop12 (; 13 ;) (type $0)
+ (func $loop12 (; 13 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (drop
@@ -211,7 +211,7 @@
    )
   )
  )
- (func $loop13 (; 14 ;) (type $0)
+ (func $loop13 (; 14 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -227,7 +227,7 @@
    )
   )
  )
- (func $loop14 (; 15 ;) (type $0)
+ (func $loop14 (; 15 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -246,7 +246,7 @@
    )
   )
  )
- (func $loop14-1 (; 16 ;) (type $0)
+ (func $loop14-1 (; 16 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (loop $loop
@@ -264,7 +264,7 @@
    )
   )
  )
- (func $loop15 (; 17 ;) (type $0)
+ (func $loop15 (; 17 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -283,7 +283,7 @@
    )
   )
  )
- (func $loop15-1 (; 18 ;) (type $0)
+ (func $loop15-1 (; 18 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -303,7 +303,7 @@
    )
   )
  )
- (func $loop16 (; 19 ;) (type $0)
+ (func $loop16 (; 19 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -322,7 +322,7 @@
    )
   )
  )
- (func $loop16-1 (; 20 ;) (type $0)
+ (func $loop16-1 (; 20 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -342,7 +342,7 @@
    )
   )
  )
- (func $loop16-2 (; 21 ;) (type $0)
+ (func $loop16-2 (; 21 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -367,7 +367,7 @@
    )
   )
  )
- (func $loop16-3 (; 22 ;) (type $0)
+ (func $loop16-3 (; 22 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local.set $y
@@ -392,7 +392,7 @@
    )
   )
  )
- (func $nop (; 23 ;) (type $0)
+ (func $nop (; 23 ;) (type $FUNCSIG$v)
   (loop $loop
    (nop)
    (br_if $loop
@@ -400,7 +400,7 @@
    )
   )
  )
- (func $nested-blocks (; 24 ;) (type $0)
+ (func $nested-blocks (; 24 ;) (type $FUNCSIG$v)
   (loop $loop
    (block $block
     (nop)
@@ -420,7 +420,7 @@
    )
   )
  )
- (func $nested-unhoistable-blocks (; 25 ;) (type $0)
+ (func $nested-unhoistable-blocks (; 25 ;) (type $FUNCSIG$v)
   (loop $loop
    (block $block
     (call $nested-unhoistable-blocks)
@@ -440,7 +440,7 @@
    )
   )
  )
- (func $conditional (; 26 ;) (type $0)
+ (func $conditional (; 26 ;) (type $FUNCSIG$v)
   (if
    (i32.const 0)
    (drop
@@ -454,7 +454,7 @@
    )
   )
  )
- (func $conditional1 (; 27 ;) (type $1) (result i32)
+ (func $conditional1 (; 27 ;) (type $FUNCSIG$i) (result i32)
   (loop $loop
    (if
     (call $conditional1)
@@ -468,7 +468,7 @@
   )
   (unreachable)
  )
- (func $conditional2 (; 28 ;) (type $0)
+ (func $conditional2 (; 28 ;) (type $FUNCSIG$v)
   (block $out
    (loop $loop
     (br_if $out
@@ -483,7 +483,7 @@
    )
   )
  )
- (func $conditional3 (; 29 ;) (type $0)
+ (func $conditional3 (; 29 ;) (type $FUNCSIG$v)
   (block $out
    (block
     (drop
@@ -501,7 +501,7 @@
    )
   )
  )
- (func $after (; 30 ;) (type $0)
+ (func $after (; 30 ;) (type $FUNCSIG$v)
   (loop $loop
    (nop)
   )
@@ -509,7 +509,7 @@
    (i32.const 10)
   )
  )
- (func $loops (; 31 ;) (type $0)
+ (func $loops (; 31 ;) (type $FUNCSIG$v)
   (drop
    (i32.const 10)
   )
@@ -523,7 +523,7 @@
    )
   )
  )
- (func $loops2 (; 32 ;) (type $0)
+ (func $loops2 (; 32 ;) (type $FUNCSIG$v)
   (drop
    (i32.const 10)
   )
@@ -537,7 +537,7 @@
    )
   )
  )
- (func $fuzz1 (; 33 ;) (type $2) (result i64)
+ (func $fuzz1 (; 33 ;) (type $FUNCSIG$j) (result i64)
   (local $var$1 i64)
   (drop
    (block (result i32)
@@ -566,7 +566,7 @@
    (local.get $var$1)
   )
  )
- (func $self (; 34 ;) (type $1) (result i32)
+ (func $self (; 34 ;) (type $FUNCSIG$i) (result i32)
   (local $x i32)
   (loop $loop
    (local.set $x
@@ -581,7 +581,7 @@
   )
   (local.get $x)
  )
- (func $nested-set (; 35 ;) (type $0)
+ (func $nested-set (; 35 ;) (type $FUNCSIG$v)
   (local $var$0 i32)
   (local $var$1 i64)
   (loop $label$1
@@ -601,7 +601,7 @@
    )
   )
  )
- (func $load-store (; 36 ;) (type $3) (param $x i32)
+ (func $load-store (; 36 ;) (type $FUNCSIG$vi) (param $x i32)
   (loop $loop
    (drop
     (i32.load
@@ -617,7 +617,7 @@
    )
   )
  )
- (func $set-set (; 37 ;) (type $4) (param $x i32) (result i32)
+ (func $set-set (; 37 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (loop $loop
    (local.set $x
     (i32.const 1)
@@ -634,7 +634,7 @@
   )
   (local.get $x)
  )
- (func $copies-no (; 38 ;) (type $0)
+ (func $copies-no (; 38 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local $z i32)
@@ -658,7 +658,7 @@
    )
   )
  )
- (func $consts-no (; 39 ;) (type $0)
+ (func $consts-no (; 39 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $a i32)
   (local $b i32)
@@ -676,7 +676,7 @@
    )
   )
  )
- (func $global (; 40 ;) (type $0)
+ (func $global (; 40 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local.set $x
    (global.get $glob)

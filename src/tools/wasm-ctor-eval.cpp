@@ -133,7 +133,7 @@ public:
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       if (!global->init->is<Const>()) {
         // some constants are ok to use
-        if (auto* get = global->init->dynCast<GetGlobal>()) {
+        if (auto* get = global->init->dynCast<GlobalGet>()) {
           auto name = get->name;
           auto* import = wasm.getGlobal(name);
           if (import->module == Name(ENV) &&
@@ -228,7 +228,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       // offset 0.
       if (auto* c = segment.offset->dynCast<Const>()) {
         start = c->value.getInteger();
-      } else if (segment.offset->is<GetGlobal>()) {
+      } else if (segment.offset->is<GlobalGet>()) {
         start = 0;
       } else {
         WASM_UNREACHABLE(); // wasm spec only allows const and global.get there
@@ -408,7 +408,7 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
-           Colors::disable();
+           Colors::setEnabled(false);
          })
     .add("--emit-text",
          "-S",

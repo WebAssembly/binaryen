@@ -1068,9 +1068,9 @@ public:
 
   Flow visitCall(Call*) { WASM_UNREACHABLE(); }
   Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE(); }
-  Flow visitGetLocal(GetLocal*) { WASM_UNREACHABLE(); }
-  Flow visitSetLocal(SetLocal*) { WASM_UNREACHABLE(); }
-  Flow visitSetGlobal(SetGlobal*) { WASM_UNREACHABLE(); }
+  Flow visitLocalGet(LocalGet*) { WASM_UNREACHABLE(); }
+  Flow visitLocalSet(LocalSet*) { WASM_UNREACHABLE(); }
+  Flow visitGlobalSet(GlobalSet*) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE(); }
   Flow visitHost(Host* curr) { WASM_UNREACHABLE(); }
@@ -1095,7 +1095,7 @@ class ConstantExpressionRunner
 public:
   ConstantExpressionRunner(GlobalManager& globals) : globals(globals) {}
 
-  Flow visitGetGlobal(GetGlobal* curr) { return Flow(globals[curr->name]); }
+  Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
 };
 
 //
@@ -1462,6 +1462,7 @@ private:
 #endif
       return ret;
     }
+
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
       LiteralList arguments;
@@ -1477,15 +1478,17 @@ private:
       return instance.externalInterface->callTable(
         index, arguments, curr->type, *instance.self());
     }
-    Flow visitGetLocal(GetLocal* curr) {
-      NOTE_ENTER("GetLocal");
+
+    Flow visitLocalGet(LocalGet* curr) {
+      NOTE_ENTER("LocalGet");
       auto index = curr->index;
       NOTE_EVAL1(index);
       NOTE_EVAL1(scope.locals[index]);
       return scope.locals[index];
     }
-    Flow visitSetLocal(SetLocal* curr) {
-      NOTE_ENTER("SetLocal");
+
+    Flow visitLocalSet(LocalSet* curr) {
+      NOTE_ENTER("LocalSet");
       auto index = curr->index;
       Flow flow = this->visit(curr->value);
       if (flow.breaking()) {
@@ -1498,16 +1501,17 @@ private:
       return curr->isTee() ? flow : Flow();
     }
 
-    Flow visitGetGlobal(GetGlobal* curr) {
-      NOTE_ENTER("GetGlobal");
+    Flow visitGlobalGet(GlobalGet* curr) {
+      NOTE_ENTER("GlobalGet");
       auto name = curr->name;
       NOTE_EVAL1(name);
       assert(instance.globals.find(name) != instance.globals.end());
       NOTE_EVAL1(instance.globals[name]);
       return instance.globals[name];
     }
-    Flow visitSetGlobal(SetGlobal* curr) {
-      NOTE_ENTER("SetGlobal");
+
+    Flow visitGlobalSet(GlobalSet* curr) {
+      NOTE_ENTER("GlobalSet");
       auto name = curr->name;
       Flow flow = this->visit(curr->value);
       if (flow.breaking()) {
@@ -1532,6 +1536,7 @@ private:
       NOTE_EVAL1(ret);
       return ret;
     }
+
     Flow visitStore(Store* curr) {
       NOTE_ENTER("Store");
       Flow ptr = this->visit(curr->ptr);
@@ -1589,6 +1594,7 @@ private:
       instance.doAtomicStore(addr, curr->bytes, computed);
       return loaded;
     }
+
     Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       NOTE_ENTER("AtomicCmpxchg");
       Flow ptr = this->visit(curr->ptr);
@@ -1615,6 +1621,7 @@ private:
       }
       return loaded;
     }
+
     Flow visitAtomicWait(AtomicWait* curr) {
       NOTE_ENTER("AtomicWait");
       Flow ptr = this->visit(curr->ptr);
@@ -1643,6 +1650,7 @@ private:
       //       for now, just assume we are woken up
       return Literal(int32_t(0)); // woken up
     }
+
     Flow visitAtomicNotify(AtomicNotify* curr) {
       NOTE_ENTER("AtomicNotify");
       Flow ptr = this->visit(curr->ptr);
@@ -1658,12 +1666,13 @@ private:
       // TODO: add threads support!
       return Literal(int32_t(0)); // none woken up
     }
+
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");
       switch (curr->op) {
-        case CurrentMemory:
+        case MemorySize:
           return Literal(int32_t(instance.memorySize));
-        case GrowMemory: {
+        case MemoryGrow: {
           auto fail = Literal(int32_t(-1));
           Flow flow = this->visit(curr->operands[0]);
           if (flow.breaking()) {
@@ -1690,6 +1699,7 @@ private:
       }
       WASM_UNREACHABLE();
     }
+
     Flow visitMemoryInit(MemoryInit* curr) {
       NOTE_ENTER("MemoryInit");
       Flow dest = this->visit(curr->dest);
@@ -1734,6 +1744,7 @@ private:
       }
       return {};
     }
+
     Flow visitDataDrop(DataDrop* curr) {
       NOTE_ENTER("DataDrop");
       if (instance.droppedSegments.count(curr->segment)) {
@@ -1742,6 +1753,7 @@ private:
       instance.droppedSegments.insert(curr->segment);
       return {};
     }
+
     Flow visitMemoryCopy(MemoryCopy* curr) {
       NOTE_ENTER("MemoryCopy");
       Flow dest = this->visit(curr->dest);
@@ -1787,6 +1799,7 @@ private:
       }
       return {};
     }
+
     Flow visitMemoryFill(MemoryFill* curr) {
       NOTE_ENTER("MemoryFill");
       Flow dest = this->visit(curr->dest);

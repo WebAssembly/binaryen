@@ -53,7 +53,7 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
-           Colors::disable();
+           Colors::setEnabled(false);
          })
     .add(
       "--mapped-globals",
@@ -237,7 +237,7 @@ int main(int argc, const char* argv[]) {
     Expression* init;
     const auto& memBase = options.extra.find("mem base");
     if (memBase == options.extra.end()) {
-      init = Builder(wasm).makeGetGlobal(MEMORY_BASE, i32);
+      init = Builder(wasm).makeGlobalGet(MEMORY_BASE, i32);
     } else {
       init = Builder(wasm).makeConst(
         Literal(int32_t(atoi(memBase->second.c_str()))));

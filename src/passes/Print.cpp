@@ -111,10 +111,10 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   void visitCallIndirect(CallIndirect* curr) {
     printMedium(o, "call_indirect (type ") << curr->fullType << ')';
   }
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     printMedium(o, "local.get ") << printableLocal(curr->index, currFunction);
   }
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     if (curr->isTee()) {
       printMedium(o, "local.tee ");
     } else {
@@ -122,11 +122,11 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
     }
     o << printableLocal(curr->index, currFunction);
   }
-  void visitGetGlobal(GetGlobal* curr) {
+  void visitGlobalGet(GlobalGet* curr) {
     printMedium(o, "global.get ");
     printName(curr->name, o);
   }
-  void visitSetGlobal(SetGlobal* curr) {
+  void visitGlobalSet(GlobalSet* curr) {
     printMedium(o, "global.set ");
     printName(curr->name, o);
   }
@@ -1140,11 +1140,11 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   void visitReturn(Return* curr) { printMedium(o, "return"); }
   void visitHost(Host* curr) {
     switch (curr->op) {
-      case CurrentMemory:
-        printMedium(o, "current_memory");
+      case MemorySize:
+        printMedium(o, "memory.size");
         break;
-      case GrowMemory:
-        printMedium(o, "grow_memory");
+      case MemoryGrow:
+        printMedium(o, "memory.grow");
         break;
     }
   }
@@ -1404,24 +1404,24 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->target);
     decIndent();
   }
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
   }
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->value);
     decIndent();
   }
-  void visitGetGlobal(GetGlobal* curr) {
+  void visitGlobalGet(GlobalGet* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
   }
-  void visitSetGlobal(SetGlobal* curr) {
+  void visitGlobalSet(GlobalSet* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
@@ -1602,13 +1602,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     switch (curr->op) {
-      case GrowMemory: {
+      case MemoryGrow: {
         incIndent();
         printFullLine(curr->operands[0]);
         decIndent();
         break;
       }
-      case CurrentMemory: {
+      case MemorySize: {
         o << ')';
       }
     }

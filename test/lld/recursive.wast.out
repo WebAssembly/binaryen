@@ -2,7 +2,6 @@
  (type $0 (func (param i32 i32) (result i32)))
  (type $1 (func))
  (type $2 (func (result i32)))
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
  (memory $0 2)
  (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
@@ -115,7 +114,7 @@
   )
  )
  (func $__growWasmMemory (; 8 ;) (param $newSize i32) (result i32)
-  (grow_memory
+  (memory.grow
    (local.get $newSize)
   )
  )

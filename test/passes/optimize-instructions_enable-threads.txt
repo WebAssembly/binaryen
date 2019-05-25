@@ -1,18 +1,18 @@
 (module
  (type $0 (func (param i32 i64)))
- (type $1 (func))
- (type $2 (func (param i32 i32 f64 f64)))
- (type $3 (func (result i32)))
- (type $4 (func (param i32) (result i32)))
- (type $5 (func (param i32 i32)))
- (type $6 (func (param i32)))
- (type $7 (func (param i32 i32) (result i32)))
- (type $8 (func (param i64) (result i64)))
- (type $9 (func (result i64)))
- (type $10 (func (param i32 i64 f32 f64)))
- (type $11 (func (param i32 i64 f32)))
- (type $12 (func (param i32 i64 f64 i32)))
- (type $13 (func (result f64)))
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$viidd (func (param i32 i32 f64 f64)))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $FUNCSIG$vii (func (param i32 i32)))
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+ (type $FUNCSIG$jj (func (param i64) (result i64)))
+ (type $FUNCSIG$j (func (result i64)))
+ (type $FUNCSIG$vijfd (func (param i32 i64 f32 f64)))
+ (type $FUNCSIG$vijf (func (param i32 i64 f32)))
+ (type $FUNCSIG$vijdi (func (param i32 i64 f64 i32)))
+ (type $FUNCSIG$d (func (result f64)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (; 0 ;) (type $0) (param $i1 i32) (param $i2 i64)
@@ -224,7 +224,7 @@
    (i32.const 0)
   )
  )
- (func $load-store (; 1 ;) (type $1)
+ (func $load-store (; 1 ;) (type $FUNCSIG$v)
   (drop
    (i32.load8_u
     (i32.const 0)
@@ -312,7 +312,7 @@
    (i64.const 3)
   )
  )
- (func $and-neg1 (; 2 ;) (type $1)
+ (func $and-neg1 (; 2 ;) (type $FUNCSIG$v)
   (drop
    (i32.const 100)
   )
@@ -323,7 +323,7 @@
    )
   )
  )
- (func $and-pos1 (; 3 ;) (type $1)
+ (func $and-pos1 (; 3 ;) (type $FUNCSIG$v)
   (drop
    (i32.eqz
     (i32.const 1000)
@@ -347,7 +347,7 @@
    )
   )
  )
- (func $canonicalize (; 4 ;) (type $2) (param $x i32) (param $y i32) (param $fx f64) (param $fy f64)
+ (func $canonicalize (; 4 ;) (type $FUNCSIG$viidd) (param $x i32) (param $y i32) (param $fx f64) (param $fy f64)
   (drop
    (i32.and
     (unreachable)
@@ -573,7 +573,7 @@
    )
   )
  )
- (func $ne0 (; 5 ;) (type $3) (result i32)
+ (func $ne0 (; 5 ;) (type $FUNCSIG$i) (result i32)
   (if
    (call $ne0)
    (nop)
@@ -604,7 +604,7 @@
   )
   (i32.const 1)
  )
- (func $recurse-bool (; 6 ;) (type $1)
+ (func $recurse-bool (; 6 ;) (type $FUNCSIG$v)
   (if
    (if (result i32)
     (i32.const 1)
@@ -621,10 +621,10 @@
    (nop)
   )
  )
- (func $ne1 (; 7 ;) (type $3) (result i32)
+ (func $ne1 (; 7 ;) (type $FUNCSIG$i) (result i32)
   (unreachable)
  )
- (func $load-off-2 (; 8 ;) (type $4) (param $0 i32) (result i32)
+ (func $load-off-2 (; 8 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (i32.store
    (i32.const 6)
    (local.get $0)
@@ -707,7 +707,7 @@
    )
   )
  )
- (func $sign-ext (; 9 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $sign-ext (; 9 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.eqz
     (i32.and
@@ -818,7 +818,7 @@
    )
   )
  )
- (func $sign-ext-input (; 10 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $sign-ext-input (; 10 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.const 100)
   )
@@ -1149,7 +1149,7 @@
    )
   )
  )
- (func $linear-sums (; 11 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $linear-sums (; 11 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.add
     (i32.shl
@@ -1241,7 +1241,7 @@
    (local.get $0)
   )
  )
- (func $almost-sign-ext (; 12 ;) (type $6) (param $0 i32)
+ (func $almost-sign-ext (; 12 ;) (type $FUNCSIG$vi) (param $0 i32)
   (drop
    (i32.shr_s
     (i32.shl
@@ -1258,7 +1258,7 @@
    )
   )
  )
- (func $squaring (; 13 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $squaring (; 13 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.and
     (local.get $0)
@@ -1314,7 +1314,7 @@
    )
   )
  )
- (func $sign-ext-ne (; 14 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $sign-ext-ne (; 14 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.ne
     (i32.and
@@ -1364,7 +1364,7 @@
    )
   )
  )
- (func $sign-ext-eqz (; 15 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $sign-ext-eqz (; 15 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.eqz
     (i32.and
@@ -1374,7 +1374,7 @@
    )
   )
  )
- (func $sign-ext-boolean (; 16 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $sign-ext-boolean (; 16 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (if (result i32)
     (i32.and
@@ -1386,7 +1386,7 @@
    )
   )
  )
- (func $add-sub-zero (; 17 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $add-sub-zero (; 17 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (local.get $0)
   )
@@ -1394,7 +1394,7 @@
    (local.get $0)
   )
  )
- (func $store-signext (; 18 ;) (type $6) (param $0 i32)
+ (func $store-signext (; 18 ;) (type $FUNCSIG$vi) (param $0 i32)
   (i32.store8
    (i32.const 8)
    (local.get $0)
@@ -1452,7 +1452,7 @@
    )
   )
  )
- (func $sign-ext-tee (; 19 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $sign-ext-tee (; 19 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.shr_s
     (i32.shl
@@ -1470,7 +1470,7 @@
    )
   )
  )
- (func $sign-ext-load (; 20 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $sign-ext-load (; 20 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.load8_s
     (i32.const 256)
@@ -1541,7 +1541,7 @@
    )
   )
  )
- (func $mask-bits (; 21 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $mask-bits (; 21 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (local.tee $0
     (i32.const 127)
@@ -1595,7 +1595,7 @@
    )
   )
  )
- (func $local-info-zero-ext (; 22 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $local-info-zero-ext (; 22 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (local $x i32)
   (local $y i32)
   (local $z i32)
@@ -1646,7 +1646,7 @@
    )
   )
  )
- (func $local-info-sign-ext-bitsize (; 23 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $local-info-sign-ext-bitsize (; 23 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (local $x i32)
   (local $y i32)
   (local $z i32)
@@ -1706,7 +1706,7 @@
    )
   )
  )
- (func $local-info-sign-ext-already-exted (; 24 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $local-info-sign-ext-already-exted (; 24 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (local $x i32)
   (local $y i32)
   (local $z i32)
@@ -1817,7 +1817,7 @@
    )
   )
  )
- (func $signed-loads-fill-the-bits (; 25 ;) (type $4) (param $$e i32) (result i32)
+ (func $signed-loads-fill-the-bits (; 25 ;) (type $FUNCSIG$ii) (param $$e i32) (result i32)
   (local $$0 i32)
   (local $$conv i32)
   (local.set $$0
@@ -1838,7 +1838,7 @@
    )
   )
  )
- (func $local-info-sign-ext-already-exted-by-load (; 26 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $local-info-sign-ext-already-exted-by-load (; 26 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (local $x i32)
   (local $y i32)
   (local $z i32)
@@ -1880,7 +1880,7 @@
    )
   )
  )
- (func $compare-load-s-sign-extend (; 27 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $compare-load-s-sign-extend (; 27 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.eq
     (i32.load8_u
@@ -1960,7 +1960,7 @@
    )
   )
  )
- (func $unsign-diff-sizes (; 28 ;) (type $7) (param $x i32) (param $y i32) (result i32)
+ (func $unsign-diff-sizes (; 28 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (i32.ne
    (i32.shr_s
     (i32.shl
@@ -1984,7 +1984,7 @@
    )
   )
  )
- (func $unsign-same-sizes (; 29 ;) (type $7) (param $x i32) (param $y i32) (result i32)
+ (func $unsign-same-sizes (; 29 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (i32.ne
    (i32.and
     (call $unsign-same-sizes
@@ -2002,7 +2002,7 @@
    )
   )
  )
- (func $fuzz-almost-sign-ext (; 30 ;) (type $1)
+ (func $fuzz-almost-sign-ext (; 30 ;) (type $FUNCSIG$v)
   (drop
    (i32.shr_s
     (i32.shl
@@ -2026,7 +2026,7 @@
    )
   )
  )
- (func $fuzz-comp-impossible (; 31 ;) (type $6) (param $x i32)
+ (func $fuzz-comp-impossible (; 31 ;) (type $FUNCSIG$vi) (param $x i32)
   (drop
    (i32.eq
     (i32.and
@@ -2091,7 +2091,7 @@
    )
   )
  )
- (func $if-parallel (; 32 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $if-parallel (; 32 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.add
     (local.get $1)
@@ -2146,7 +2146,7 @@
    )
   )
  )
- (func $select-parallel (; 33 ;) (type $5) (param $0 i32) (param $1 i32)
+ (func $select-parallel (; 33 ;) (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
   (drop
    (i32.add
     (local.get $1)
@@ -2202,7 +2202,7 @@
    )
   )
  )
- (func $zero-shifts-is-not-sign-ext (; 34 ;) (type $1)
+ (func $zero-shifts-is-not-sign-ext (; 34 ;) (type $FUNCSIG$v)
   (drop
    (i32.eq
     (i32.load16_s align=1
@@ -2223,7 +2223,7 @@
    )
   )
  )
- (func $zero-ops (; 35 ;) (type $3) (result i32)
+ (func $zero-ops (; 35 ;) (type $FUNCSIG$i) (result i32)
   (return
    (i32.eq
     (i32.load16_s align=1
@@ -2233,7 +2233,7 @@
    )
   )
  )
- (func $sign-ext-1-and-ne (; 36 ;) (type $3) (result i32)
+ (func $sign-ext-1-and-ne (; 36 ;) (type $FUNCSIG$i) (result i32)
   (i32.ne
    (i32.and
     (call $sign-ext-1-and-ne)
@@ -2242,7 +2242,7 @@
    (i32.const -2147483648)
   )
  )
- (func $neg-shifts-and-255 (; 37 ;) (type $3) (result i32)
+ (func $neg-shifts-and-255 (; 37 ;) (type $FUNCSIG$i) (result i32)
   (i32.and
    (i32.shr_u
     (i32.const -99)
@@ -2251,7 +2251,7 @@
    (i32.const 255)
   )
  )
- (func $neg-shifts-and-255-b (; 38 ;) (type $3) (result i32)
+ (func $neg-shifts-and-255-b (; 38 ;) (type $FUNCSIG$i) (result i32)
   (i32.and
    (i32.shl
     (i32.const -2349025)
@@ -2260,7 +2260,7 @@
    (i32.const 255)
   )
  )
- (func $shifts-square-overflow (; 39 ;) (type $4) (param $x i32) (result i32)
+ (func $shifts-square-overflow (; 39 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (i32.shr_u
    (i32.shr_u
     (local.get $x)
@@ -2269,13 +2269,13 @@
    (i32.const 32767)
   )
  )
- (func $shifts-square-no-overflow-small (; 40 ;) (type $4) (param $x i32) (result i32)
+ (func $shifts-square-no-overflow-small (; 40 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (i32.shr_u
    (local.get $x)
    (i32.const 9)
   )
  )
- (func $shifts-square-overflow-64 (; 41 ;) (type $8) (param $x i64) (result i64)
+ (func $shifts-square-overflow-64 (; 41 ;) (type $FUNCSIG$jj) (param $x i64) (result i64)
   (i64.shr_u
    (i64.shr_u
     (local.get $x)
@@ -2284,13 +2284,13 @@
    (i64.const 64767)
   )
  )
- (func $shifts-square-no-overflow-small-64 (; 42 ;) (type $8) (param $x i64) (result i64)
+ (func $shifts-square-no-overflow-small-64 (; 42 ;) (type $FUNCSIG$jj) (param $x i64) (result i64)
   (i64.shr_u
    (local.get $x)
    (i64.const 9)
   )
  )
- (func $shifts-square-unreachable (; 43 ;) (type $4) (param $x i32) (result i32)
+ (func $shifts-square-unreachable (; 43 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (i32.shr_u
    (i32.shr_u
     (unreachable)
@@ -2299,7 +2299,7 @@
    (i32.const 4098)
   )
  )
- (func $mix-shifts (; 44 ;) (type $3) (result i32)
+ (func $mix-shifts (; 44 ;) (type $FUNCSIG$i) (result i32)
   (i32.shr_s
    (i32.shl
     (i32.const 23)
@@ -2308,13 +2308,13 @@
    (i32.const 168)
   )
  )
- (func $actually-no-shifts (; 45 ;) (type $3) (result i32)
+ (func $actually-no-shifts (; 45 ;) (type $FUNCSIG$i) (result i32)
   (i32.const 33)
  )
- (func $less-shifts-than-it-seems (; 46 ;) (type $4) (param $x i32) (result i32)
+ (func $less-shifts-than-it-seems (; 46 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (i32.const 4800)
  )
- (func $and-popcount32 (; 47 ;) (type $3) (result i32)
+ (func $and-popcount32 (; 47 ;) (type $FUNCSIG$i) (result i32)
   (i32.and
    (i32.popcnt
     (i32.const -1)
@@ -2322,12 +2322,12 @@
    (i32.const 31)
   )
  )
- (func $and-popcount32-big (; 48 ;) (type $3) (result i32)
+ (func $and-popcount32-big (; 48 ;) (type $FUNCSIG$i) (result i32)
   (i32.popcnt
    (i32.const -1)
   )
  )
- (func $and-popcount64 (; 49 ;) (type $9) (result i64)
+ (func $and-popcount64 (; 49 ;) (type $FUNCSIG$j) (result i64)
   (i64.and
    (i64.popcnt
     (i64.const -1)
@@ -2335,7 +2335,7 @@
    (i64.const 63)
   )
  )
- (func $and-popcount64-big (; 50 ;) (type $9) (result i64)
+ (func $and-popcount64-big (; 50 ;) (type $FUNCSIG$j) (result i64)
   (i64.and
    (i64.popcnt
     (i64.const -1)
@@ -2343,7 +2343,7 @@
    (i64.const 127)
   )
  )
- (func $and-popcount64-bigger (; 51 ;) (type $9) (result i64)
+ (func $and-popcount64-bigger (; 51 ;) (type $FUNCSIG$j) (result i64)
   (i64.and
    (i64.popcnt
     (i64.const -1)
@@ -2351,7 +2351,7 @@
    (i64.const 255)
   )
  )
- (func $optimizeAddedConstants-filters-through-nonzero (; 52 ;) (type $3) (result i32)
+ (func $optimizeAddedConstants-filters-through-nonzero (; 52 ;) (type $FUNCSIG$i) (result i32)
   (i32.add
    (i32.shl
     (i32.const -536870912)
@@ -2362,7 +2362,7 @@
    (i32.const -31744)
   )
  )
- (func $optimizeAddedConstants-filters-through-nonzero-b (; 53 ;) (type $3) (result i32)
+ (func $optimizeAddedConstants-filters-through-nonzero-b (; 53 ;) (type $FUNCSIG$i) (result i32)
   (i32.add
    (i32.shl
     (i32.const -536870912)
@@ -2373,7 +2373,7 @@
    (i32.const -31744)
   )
  )
- (func $return-proper-value-from-shift-left-by-zero (; 54 ;) (type $3) (result i32)
+ (func $return-proper-value-from-shift-left-by-zero (; 54 ;) (type $FUNCSIG$i) (result i32)
   (if (result i32)
    (i32.add
     (loop $label$0 (result i32)
@@ -2392,7 +2392,7 @@
    (i32.const 0)
   )
  )
- (func $de-morgan-2 (; 55 ;) (type $5) (param $x i32) (param $y i32)
+ (func $de-morgan-2 (; 55 ;) (type $FUNCSIG$vii) (param $x i32) (param $y i32)
   (drop
    (i32.eqz
     (i32.or
@@ -2458,7 +2458,7 @@
    )
   )
  )
- (func $subzero1 (; 56 ;) (type $4) (param $0 i32) (result i32)
+ (func $subzero1 (; 56 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (i32.sub
    (i32.const 32)
    (i32.clz
@@ -2466,7 +2466,7 @@
    )
   )
  )
- (func $subzero2 (; 57 ;) (type $4) (param $0 i32) (result i32)
+ (func $subzero2 (; 57 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (i32.sub
    (i32.const 32)
    (i32.clz
@@ -2474,7 +2474,7 @@
    )
   )
  )
- (func $subzero3 (; 58 ;) (type $7) (param $0 i32) (param $1 i32) (result i32)
+ (func $subzero3 (; 58 ;) (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.sub
    (local.get $1)
    (i32.clz
@@ -2482,7 +2482,7 @@
    )
   )
  )
- (func $subzero4 (; 59 ;) (type $7) (param $0 i32) (param $1 i32) (result i32)
+ (func $subzero4 (; 59 ;) (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.sub
    (local.get $0)
    (i32.clz
@@ -2490,7 +2490,7 @@
    )
   )
  )
- (func $mul-power-2 (; 60 ;) (type $4) (param $x i32) (result i32)
+ (func $mul-power-2 (; 60 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (drop
    (call $mul-power-2
     (i32.shl
@@ -2545,7 +2545,7 @@
   )
   (unreachable)
  )
- (func $urem-power-2 (; 61 ;) (type $4) (param $x i32) (result i32)
+ (func $urem-power-2 (; 61 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (drop
    (call $urem-power-2
     (i32.and
@@ -2593,10 +2593,10 @@
   )
   (unreachable)
  )
- (func $orZero (; 62 ;) (type $4) (param $0 i32) (result i32)
+ (func $orZero (; 62 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (local.get $0)
  )
- (func $andZero (; 63 ;) (type $4) (param $0 i32) (result i32)
+ (func $andZero (; 63 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (drop
    (i32.const 0)
   )
@@ -2610,7 +2610,7 @@
   )
   (unreachable)
  )
- (func $abstract-additions (; 64 ;) (type $10) (param $x32 i32) (param $x64 i64) (param $y32 f32) (param $y64 f64)
+ (func $abstract-additions (; 64 ;) (type $FUNCSIG$vijfd) (param $x32 i32) (param $x64 i64) (param $y32 f32) (param $y64 f64)
   (drop
    (local.get $x32)
   )
@@ -2816,7 +2816,7 @@
    )
   )
  )
- (func $negatives-are-sometimes-better (; 65 ;) (type $11) (param $x i32) (param $y i64) (param $z f32)
+ (func $negatives-are-sometimes-better (; 65 ;) (type $FUNCSIG$vijf) (param $x i32) (param $y i64) (param $z f32)
   (drop
    (i32.sub
     (local.get $x)
@@ -2914,7 +2914,7 @@
    )
   )
  )
- (func $shift-a-zero (; 66 ;) (type $11) (param $x i32) (param $y i64) (param $z f32)
+ (func $shift-a-zero (; 66 ;) (type $FUNCSIG$vijf) (param $x i32) (param $y i64) (param $z f32)
   (drop
    (i32.const 0)
   )
@@ -2934,7 +2934,7 @@
    )
   )
  )
- (func $identical-siblings (; 67 ;) (type $12) (param $x i32) (param $y i64) (param $z f64) (param $xx i32)
+ (func $identical-siblings (; 67 ;) (type $FUNCSIG$vijdi) (param $x i32) (param $y i64) (param $z f64) (param $xx i32)
   (drop
    (i32.const 0)
   )
@@ -3071,7 +3071,7 @@
    (local.get $x)
   )
  )
- (func $select-on-const (; 70 ;) (type $5) (param $x i32) (param $y i32)
+ (func $select-on-const (; 70 ;) (type $FUNCSIG$vii) (param $x i32) (param $y i32)
   (drop
    (local.get $x)
   )
@@ -3108,7 +3108,7 @@
    )
   )
  )
- (func $getFallthrough (; 71 ;) (type $1)
+ (func $getFallthrough (; 71 ;) (type $FUNCSIG$v)
   (local $x0 i32)
   (local $x1 i32)
   (local $x2 i32)
@@ -3187,7 +3187,7 @@
    )
   )
  )
- (func $tee-with-unreachable-value (; 72 ;) (type $13) (result f64)
+ (func $tee-with-unreachable-value (; 72 ;) (type $FUNCSIG$d) (result f64)
   (local $var$0 i32)
   (block $label$1 (result f64)
    (local.tee $var$0
@@ -3198,7 +3198,7 @@
    )
   )
  )
- (func $add-sub-zero-reorder-1 (; 73 ;) (type $4) (param $temp i32) (result i32)
+ (func $add-sub-zero-reorder-1 (; 73 ;) (type $FUNCSIG$ii) (param $temp i32) (result i32)
   (i32.add
    (i32.add
     (i32.sub
@@ -3212,7 +3212,7 @@
    (i32.const 2)
   )
  )
- (func $add-sub-zero-reorder-2 (; 74 ;) (type $4) (param $temp i32) (result i32)
+ (func $add-sub-zero-reorder-2 (; 74 ;) (type $FUNCSIG$ii) (param $temp i32) (result i32)
   (i32.add
    (i32.sub
     (local.tee $temp
@@ -3223,7 +3223,7 @@
    (i32.const 2)
   )
  )
- (func $pre-combine-or (; 75 ;) (type $5) (param $x i32) (param $y i32)
+ (func $pre-combine-or (; 75 ;) (type $FUNCSIG$vii) (param $x i32) (param $y i32)
   (drop
    (i32.ge_s
     (local.get $x)
@@ -3285,7 +3285,7 @@
    )
   )
  )
- (func $combine-or (; 76 ;) (type $5) (param $x i32) (param $y i32)
+ (func $combine-or (; 76 ;) (type $FUNCSIG$vii) (param $x i32) (param $y i32)
   (drop
    (i32.ge_s
     (local.get $x)
@@ -3295,9 +3295,9 @@
  )
 )
 (module
- (type $0 (func))
+ (type $FUNCSIG$v (func))
  (import "env" "memory" (memory $0 (shared 256 256)))
- (func $x (; 0 ;) (type $0)
+ (func $x (; 0 ;) (type $FUNCSIG$v)
   (drop
    (i32.shr_s
     (i32.shl

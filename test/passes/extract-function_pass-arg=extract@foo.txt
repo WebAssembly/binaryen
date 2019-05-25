@@ -1,0 +1,9 @@
+(module
+ (type $FUNCSIG$v (func))
+ (import "env" "bar" (func $bar))
+ (import "env" "other" (func $other))
+ (export "foo" (func $foo))
+ (func $foo (; 2 ;) (type $FUNCSIG$v)
+  (call $bar)
+ )
+)

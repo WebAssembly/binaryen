@@ -20,7 +20,8 @@
 #include <iosfwd>
 
 namespace Colors {
-void disable();
+void setEnabled(bool enabled);
+bool isEnabled();
 
 #if defined(__linux__) || defined(__APPLE__)
 void outputColorCode(std::ostream& stream, const char* colorCode);

@@ -609,8 +609,7 @@
     (local.set $x (i32.mul (local.get $x) (i32.const 1234)))
     (local.get $x)
   )
-  (func $two-pcs (param $x i64) (param $y i64) (result i64)
-    (param $t i64)
+  (func $two-pcs (param $x i64) (param $y i64) (param $t i64) (result i64)
     (if
       (i64.lt_s
         (local.get $x)

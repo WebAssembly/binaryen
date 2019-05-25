@@ -4,7 +4,7 @@
  (type $2 (func (result i32)))
  (type $3 (func (param i32) (result i32)))
  (type $4 (func (param i64 i64) (result i64)))
- (type $5 (func (result f32)))
+ (type $FUNCSIG$f (func (result f32)))
  (memory $0 10)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
@@ -628,7 +628,7 @@
    (local.get $7)
   )
  )
- (func $a17 (; 16 ;) (type $5) (result f32)
+ (func $a17 (; 16 ;) (type $FUNCSIG$f) (result f32)
   (local $var$0 f32)
   (local $1 f32)
   (local $2 f32)
@@ -691,7 +691,7 @@
    (local.get $1)
   )
  )
- (func $a19 (; 18 ;) (type $5) (result f32)
+ (func $a19 (; 18 ;) (type $FUNCSIG$f) (result f32)
   (block $label$0
    (block $label$1
     (unreachable)
@@ -1558,7 +1558,7 @@
     (i32.const 18)
    )
    (br $label$0)
-   (grow_memory
+   (memory.grow
     (unreachable)
    )
    (unreachable)

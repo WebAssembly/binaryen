@@ -131,10 +131,10 @@ public:
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
-  void visitGetLocal(GetLocal* curr);
-  void visitSetLocal(SetLocal* curr);
-  void visitGetGlobal(GetGlobal* curr);
-  void visitSetGlobal(SetGlobal* curr);
+  void visitLocalGet(LocalGet* curr);
+  void visitLocalSet(LocalSet* curr);
+  void visitGlobalGet(GlobalGet* curr);
+  void visitGlobalSet(GlobalSet* curr);
   void visitLoad(Load* curr);
   void visitStore(Store* curr);
   void visitAtomicRMW(AtomicRMW* curr);
@@ -613,7 +613,7 @@ void StackWriter<Mode, Parent>::visitSwitch(Switch* curr) {
   if (justAddToStack(curr)) {
     return;
   }
-  o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
+  o << int8_t(BinaryConsts::BrTable) << U32LEB(curr->targets.size());
   for (auto target : curr->targets) {
     o << U32LEB(getBreakIndex(target));
   }
@@ -652,18 +652,18 @@ void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
 }
 
 template<StackWriterMode Mode, typename Parent>
-void StackWriter<Mode, Parent>::visitGetLocal(GetLocal* curr) {
+void StackWriter<Mode, Parent>::visitLocalGet(LocalGet* curr) {
   if (justAddToStack(curr)) {
     return;
   }
-  o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->index]);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(mappedLocals[curr->index]);
 }
 
 template<StackWriterMode Mode, typename Parent>
-void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
+void StackWriter<Mode, Parent>::visitLocalSet(LocalSet* curr) {
   visitChild(curr->value);
   if (!justAddToStack(curr)) {
-    o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal)
+    o << int8_t(curr->isTee() ? BinaryConsts::LocalTee : BinaryConsts::LocalSet)
       << U32LEB(mappedLocals[curr->index]);
   }
   if (curr->type == unreachable) {
@@ -672,21 +672,21 @@ void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
 }
 
 template<StackWriterMode Mode, typename Parent>
-void StackWriter<Mode, Parent>::visitGetGlobal(GetGlobal* curr) {
+void StackWriter<Mode, Parent>::visitGlobalGet(GlobalGet* curr) {
   if (justAddToStack(curr)) {
     return;
   }
-  o << int8_t(BinaryConsts::GetGlobal)
+  o << int8_t(BinaryConsts::GlobalGet)
     << U32LEB(parent.getGlobalIndex(curr->name));
 }
 
 template<StackWriterMode Mode, typename Parent>
-void StackWriter<Mode, Parent>::visitSetGlobal(SetGlobal* curr) {
+void StackWriter<Mode, Parent>::visitGlobalSet(GlobalSet* curr) {
   visitChild(curr->value);
   if (justAddToStack(curr)) {
     return;
   }
-  o << int8_t(BinaryConsts::SetGlobal)
+  o << int8_t(BinaryConsts::GlobalSet)
     << U32LEB(parent.getGlobalIndex(curr->name));
 }
 
@@ -1418,13 +1418,13 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::F64Sqrt);
       break;
     case ExtendSInt32:
-      o << int8_t(BinaryConsts::I64STruncI32);
+      o << int8_t(BinaryConsts::I64SExtendI32);
       break;
     case ExtendUInt32:
-      o << int8_t(BinaryConsts::I64UTruncI32);
+      o << int8_t(BinaryConsts::I64UExtendI32);
       break;
     case WrapInt64:
-      o << int8_t(BinaryConsts::I32ConvertI64);
+      o << int8_t(BinaryConsts::I32WrapI64);
       break;
     case TruncUFloat32ToInt32:
       o << int8_t(BinaryConsts::I32UTruncF32);
@@ -1475,10 +1475,10 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::F64SConvertI64);
       break;
     case DemoteFloat64:
-      o << int8_t(BinaryConsts::F32ConvertF64);
+      o << int8_t(BinaryConsts::F32DemoteI64);
       break;
     case PromoteFloat32:
-      o << int8_t(BinaryConsts::F64ConvertF32);
+      o << int8_t(BinaryConsts::F64PromoteF32);
       break;
     case ReinterpretFloat32:
       o << int8_t(BinaryConsts::I32ReinterpretF32);
@@ -2176,10 +2176,10 @@ void StackWriter<Mode, Parent>::visitReturn(Return* curr) {
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitHost(Host* curr) {
   switch (curr->op) {
-    case CurrentMemory: {
+    case MemorySize: {
       break;
     }
-    case GrowMemory: {
+    case MemoryGrow: {
       visitChild(curr->operands[0]);
       break;
     }
@@ -2188,12 +2188,12 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
     return;
   }
   switch (curr->op) {
-    case CurrentMemory: {
-      o << int8_t(BinaryConsts::CurrentMemory);
+    case MemorySize: {
+      o << int8_t(BinaryConsts::MemorySize);
       break;
     }
-    case GrowMemory: {
-      o << int8_t(BinaryConsts::GrowMemory);
+    case MemoryGrow: {
+      o << int8_t(BinaryConsts::MemoryGrow);
       break;
     }
   }

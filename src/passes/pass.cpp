@@ -17,6 +17,10 @@
 #include <chrono>
 #include <sstream>
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
 #include "pass.h"
@@ -67,11 +71,14 @@ std::string PassRegistry::getPassDescription(std::string name) {
 // PassRunner
 
 void PassRegistry::registerPasses() {
-  registerPass(
-    "dae", "removes arguments to calls in an lto-like manner", createDAEPass);
   registerPass("alignment-lowering",
                "lower unaligned loads and stores to smaller aligned ones",
                createAlignmentLoweringPass);
+  registerPass("avoid-reinterprets",
+               "Tries to avoid reinterpret operations via more loads",
+               createAvoidReinterpretsPass);
+  registerPass(
+    "dae", "removes arguments to calls in an lto-like manner", createDAEPass);
   registerPass("dae-optimizing",
                "removes arguments to calls in an lto-like manner, and "
                "optimizes where we removed",
@@ -418,8 +425,13 @@ static void dumpWast(Name name, Module* wasm) {
   while (numstr.size() < 3) {
     numstr = '0' + numstr;
   }
-  auto fullName = std::string("byn-") + numstr + "-" + name.str + ".wasm";
-  Colors::disable();
+  auto fullName = std::string("byn-");
+#ifdef __linux__
+  // TODO: use _getpid() on windows, elsewhere?
+  fullName += std::to_string(getpid()) + '-';
+#endif
+  fullName += numstr + "-" + name.str + ".wasm";
+  Colors::setEnabled(false);
   ModuleWriter writer;
   writer.setBinary(false); // TODO: add an option for binary
   writer.write(*wasm, fullName);

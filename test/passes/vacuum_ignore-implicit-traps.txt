@@ -1,14 +1,14 @@
 (module
- (type $0 (func (result i32)))
- (type $1 (func))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$v (func))
  (memory $0 1)
- (func $load-would-normally-have-side-effects (; 0 ;) (type $0) (result i32)
+ (func $load-would-normally-have-side-effects (; 0 ;) (type $FUNCSIG$i) (result i32)
   (i64.ge_s
    (i64.const 2912825531628789796)
    (i64.const 0)
   )
  )
- (func $unary-binary-may-trap (; 1 ;) (type $1)
+ (func $unary-binary-may-trap (; 1 ;) (type $FUNCSIG$v)
   (nop)
  )
 )

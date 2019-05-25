@@ -73,6 +73,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzPasses = false;
   bool fuzzNaNs = true;
   bool fuzzMemory = true;
+  bool fuzzOOB = true;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
   std::string inputSourceMapFilename;
@@ -87,7 +88,7 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
-           Colors::disable();
+           Colors::setEnabled(false);
          })
     .add("--emit-text",
          "-S",
@@ -157,6 +158,11 @@ int main(int argc, const char* argv[]) {
          "don't emit memory ops when fuzzing",
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { fuzzMemory = false; })
+    .add("--no-fuzz-oob",
+         "",
+         "don't emit out-of-bounds loads/stores/indirect calls when fuzzing",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
     .add("--emit-js-wrapper",
          "-ejw",
          "Emit a JavaScript wrapper file that can run the wasm with some test "
@@ -242,6 +248,7 @@ int main(int argc, const char* argv[]) {
     }
     reader.setAllowNaNs(fuzzNaNs);
     reader.setAllowMemory(fuzzMemory);
+    reader.setAllowOOB(fuzzOOB);
     reader.build();
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {

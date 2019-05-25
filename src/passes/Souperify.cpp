@@ -79,9 +79,9 @@ struct UseFinder {
   }
 
   // There may be loops of sets with copies between them.
-  std::unordered_set<SetLocal*> seenSets;
+  std::unordered_set<LocalSet*> seenSets;
 
-  void addSetUses(SetLocal* set,
+  void addSetUses(LocalSet* set,
                   Graph& graph,
                   LocalGraph& localGraph,
                   std::vector<Expression*>& ret) {
@@ -261,7 +261,7 @@ struct Trace {
           break;
         }
         // Add the dependencies.
-        assert(!node->expr->is<GetLocal>());
+        assert(!node->expr->is<LocalGet>());
         for (Index i = 0; i < node->values.size(); i++) {
           add(node->getValue(i), depth);
         }
