@@ -1077,12 +1077,11 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     }
   }
 
-  Expression* getParent() {
-    if (expressionStack.size() == 1) {
+  Expression* getParent(size_t skip = 0) {
+    if (expressionStack.size() < 2 + skip) {
       return nullptr;
     }
-    assert(expressionStack.size() >= 2);
-    return expressionStack[expressionStack.size() - 2];
+    return expressionStack[expressionStack.size() - 2 - skip];
   }
 
   static void doPreVisit(SubType* self, Expression** currp) {

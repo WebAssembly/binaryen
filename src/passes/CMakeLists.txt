@@ -43,6 +43,7 @@ SET(passes_SOURCES
   PrintCallGraph.cpp
   PrintFeatures.cpp
   StackIR.cpp
+  Stackify.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp

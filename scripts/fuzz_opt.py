@@ -267,6 +267,7 @@ opt_choices = [
   ["--simplify-locals-notee"],
   ["--simplify-locals-notee-nostructure"],
   ["--ssa"],
+  ["--stackify"],
   ["--vacuum"],
 ]
 

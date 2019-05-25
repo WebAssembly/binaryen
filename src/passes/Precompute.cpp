@@ -107,6 +107,18 @@ public:
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
+  Flow visitPop(Pop* curr) {
+    Expression* parent = getParent();
+    if (!parent) {
+      return Flow(NOTPRECOMPUTABLE_FLOW);
+    }
+    Index depth = curr->getDepth(parent);
+    if (pushPopStack.size() <= depth) {
+      return Flow(NOTPRECOMPUTABLE_FLOW);
+    }
+    return ExpressionRunner<PrecomputingExpressionRunner>::visitPop(curr);
+  }
+
   Flow visitSetGlobal(SetGlobal* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitLoad(Load* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitStore(Store* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
@@ -122,8 +134,6 @@ public:
   Flow visitDataDrop(DataDrop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryFill(MemoryFill* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitPush(Push* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitPop(Pop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitHost(Host* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
 
   void trap(const char* why) override { throw NonstandaloneException(); }

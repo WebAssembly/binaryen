@@ -917,7 +917,7 @@ Expression* SExpressionWasmBuilder::makePop(Index depth) {
     throw ParseException("pop without push");
   }
   auto it = sideStack.end() - 1 - depth;
-  auto ret = allocator.alloc<Pop>(*it, depth);
+  auto ret = allocator.alloc<Pop>(*it);
   sideStack.erase(it);
   ret->finalize();
   return ret;

@@ -987,12 +987,10 @@ public:
 
 class Pop : public SpecificExpression<Expression::PopId> {
 public:
-  Pop(Type type, Index depth) : depth(depth) { this->type = type; }
-  Pop(MixedArena& allocator, Type type, Index depth) : depth(depth) {
-    this->type = type;
-  }
+  Pop(Type type) { this->type = type; }
+  Pop(MixedArena& allocator, Type type) { this->type = type; }
 
-  Index depth;
+  Index getDepth(Expression* parent);
 
   void finalize();
 };

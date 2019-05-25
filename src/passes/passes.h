@@ -91,6 +91,7 @@ Pass* createSimplifyLocalsNoNestingPass();
 Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();
 Pass* createSimplifyLocalsNoTeeNoStructurePass();
+Pass* createStackifyPass();
 Pass* createStripDebugPass();
 Pass* createStripProducersPass();
 Pass* createStripTargetFeaturesPass();

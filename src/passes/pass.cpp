@@ -278,6 +278,9 @@ void PassRegistry::registerPasses() {
     "ssa-nomerge",
     "ssa-ify variables so that they have a single assignment, ignoring merges",
     createSSAifyNoMergePass);
+  registerPass("stackify",
+               "Flatten the IR using Push and Pop instructions [experimental]",
+               createStackifyPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("strip-debug",

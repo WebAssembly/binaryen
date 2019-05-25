@@ -96,8 +96,8 @@ public:
     ret->finalize();
     return ret;
   }
-  Pop* makePop(Type type, Index depth) {
-    auto* ret = allocator.alloc<Pop>(type, depth);
+  Pop* makePop(Type type) {
+    auto* ret = allocator.alloc<Pop>(type);
     ret->finalize();
     return ret;
   }

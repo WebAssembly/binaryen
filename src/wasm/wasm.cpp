@@ -16,6 +16,7 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
+#include "ir/iteration.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -809,6 +810,26 @@ void Push::finalize() {
 
 // Pop must be constructed with the correct type and it must not change
 void Pop::finalize() {}
+
+Index Pop::getDepth(Expression* parent) {
+  // If is special, since it may have multiple children but each pops from the
+  // top of the stack
+  if (parent->is<If>()) {
+    return 0;
+  }
+  // Otherwise the first children get the deepest values
+  ChildIterator siblings(parent);
+  auto it = siblings.begin();
+  for (; *it != static_cast<Expression*>(this); ++it) {
+    assert(it != siblings.end() &&
+           "Pop was not a child of the provided parent");
+  }
+  Index depth = 0;
+  for (++it; it != siblings.end(); ++it) {
+    ++depth;
+  }
+  return depth;
+}
 
 void Host::finalize() {
   switch (op) {

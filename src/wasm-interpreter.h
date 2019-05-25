@@ -60,12 +60,6 @@ public:
 
   bool breaking() { return breakTo.is(); }
 
-  void clearIf(Name target) {
-    if (breakTo == target) {
-      breakTo.clear();
-    }
-  }
-
   friend std::ostream& operator<<(std::ostream& o, Flow& flow) {
     o << "(flow " << (flow.breakTo.is() ? flow.breakTo.str : "-") << " : "
       << flow.value << ')';
@@ -128,9 +122,16 @@ public:
 // Execute an expression
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
+  ExpressionStack expressionStack;
+
+protected:
+  std::vector<Literal> pushPopStack;
+
 public:
   Flow visit(Expression* curr) {
+    expressionStack.push_back(curr);
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+    expressionStack.pop_back();
     if (!ret.breaking() &&
         (isConcreteType(curr->type) || isConcreteType(ret.value.type))) {
 #if 1 // def WASM_INTERPRETER_DEBUG
@@ -145,8 +146,16 @@ public:
     return ret;
   }
 
+  Expression* getParent(size_t skip = 0) {
+    if (expressionStack.size() < 2 + skip) {
+      return nullptr;
+    }
+    return expressionStack[expressionStack.size() - 2 - skip];
+  }
+
   Flow visitBlock(Block* curr) {
     NOTE_ENTER("Block");
+    size_t depth = pushPopStack.size();
     // special-case Block, because Block nesting (in their first element) can be
     // incredibly deep
     std::vector<Block*> stack;
@@ -161,7 +170,12 @@ public:
       curr = stack.back();
       stack.pop_back();
       if (flow.breaking()) {
-        flow.clearIf(curr->name);
+        if (flow.breakTo == curr->name) {
+          flow.breakTo.clear();
+          // TODO: generalize for multivalue
+          assert(pushPopStack.size() >= depth);
+          pushPopStack.resize(depth);
+        }
         continue;
       }
       auto& list = curr->list;
@@ -172,7 +186,12 @@ public:
         }
         flow = visit(list[i]);
         if (flow.breaking()) {
-          flow.clearIf(curr->name);
+          if (flow.breakTo == curr->name) {
+            flow.breakTo.clear();
+            // TODO: generalize for multivalue
+            assert(pushPopStack.size() >= depth);
+            pushPopStack.resize(depth);
+          }
           break;
         }
       }
@@ -200,7 +219,11 @@ public:
   }
   Flow visitLoop(Loop* curr) {
     NOTE_ENTER("Loop");
+    size_t depth = pushPopStack.size();
     while (1) {
+      // TODO: generalize for multivalue
+      assert(pushPopStack.size() >= depth);
+      pushPopStack.resize(depth);
       Flow flow = visit(curr->body);
       if (flow.breaking()) {
         if (flow.breakTo == curr->name) {
@@ -1020,6 +1043,29 @@ public:
     }
   }
 
+  Flow visitPush(Push* curr) {
+    NOTE_ENTER("Push");
+    Flow flow = this->visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    NOTE_EVAL1(flow.value);
+    pushPopStack.push_back(flow.value);
+    return {};
+  }
+
+  Flow visitPop(Pop* curr) {
+    NOTE_ENTER("Pop");
+    Expression* parent = this->getParent();
+    assert(parent);
+    Index depth = curr->getDepth(parent);
+    assert(pushPopStack.size() > depth);
+    auto it = pushPopStack.end() - 1 - depth;
+    Flow flow(*it);
+    pushPopStack.erase(it);
+    return flow;
+  }
+
   Flow visitCall(Call*) { WASM_UNREACHABLE(); }
   Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE(); }
   Flow visitGetLocal(GetLocal*) { WASM_UNREACHABLE(); }
@@ -1027,8 +1073,6 @@ public:
   Flow visitSetGlobal(SetGlobal*) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE(); }
-  Flow visitPush(Push* curr) { WASM_UNREACHABLE(); }
-  Flow visitPop(Pop* curr) { WASM_UNREACHABLE(); }
   Flow visitHost(Host* curr) { WASM_UNREACHABLE(); }
   Flow visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE(); }
   Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE(); }
@@ -1378,7 +1422,6 @@ private:
     : public ExpressionRunner<RuntimeExpressionRunner> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
-    std::vector<Literal> sideStack;
 
   public:
     RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope)
@@ -1433,24 +1476,6 @@ private:
       Index index = target.value.geti32();
       return instance.externalInterface->callTable(
         index, arguments, curr->type, *instance.self());
-    }
-    Flow visitPush(Push* curr) {
-      NOTE_ENTER("Push");
-      Flow flow = this->visit(curr->value);
-      if (flow.breaking()) {
-        return flow;
-      }
-      NOTE_EVAL1(flow.value);
-      sideStack.push_back(flow.value);
-      return {};
-    }
-    Flow visitPop(Pop* curr) {
-      NOTE_ENTER("Pop");
-      assert(sideStack.size() > curr->depth);
-      auto it = sideStack.end() - 1 - curr->depth;
-      Flow flow(*it);
-      sideStack.erase(it);
-      return flow;
     }
     Flow visitGetLocal(GetLocal* curr) {
       NOTE_ENTER("GetLocal");

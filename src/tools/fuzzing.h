@@ -28,10 +28,11 @@ high chance for set at start of loop
 // TODO Complete except_ref type support. Its support is partialy implemented
 // and the type is currently not generated in fuzzed programs yet.
 
-#include "ir/memory-utils.h"
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
+#include <ir/memory-utils.h>
+#include <ir/stackification.h>
 #include <ir/utils.h>
 #include <support/file.h>
 #include <tools/optimization-options.h>
@@ -532,6 +533,8 @@ private:
     //       more possible sets
     // Recombination, mutation, etc. can break validation; fix things up after.
     fixLabels(func);
+    // Flatten some expressions with push/pop
+    stackify(func);
     // Add hang limit checks after all other operations on the function body.
     if (HANG_LIMIT > 0) {
       addHangLimitChecks(func);
@@ -744,6 +747,25 @@ private:
     Fixer fixer(wasm, *this);
     fixer.walk(func->body);
     ReFinalize().walkFunctionInModule(func, &wasm);
+  }
+
+  void stackify(Function* func) {
+    struct Stackifier
+      : public PostWalker<Stackifier, UnifiedExpressionVisitor<Stackifier>> {
+      Module& wasm;
+      TranslateToFuzzReader& parent;
+
+      Stackifier(Module& wasm, TranslateToFuzzReader& parent)
+        : wasm(wasm), parent(parent) {}
+
+      void visitExpression(Expression* curr) {
+        if (parent.oneIn(10)) {
+          replaceCurrent(ExpressionStackifier::stackify(wasm, curr));
+        }
+      }
+    };
+    Stackifier(wasm, *this).walk(func->body);
+    ;
   }
 
   // the fuzzer external interface sends in zeros (simpler to compare
