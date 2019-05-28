@@ -235,19 +235,15 @@ function asmFunc(global, env, buffer) {
    };
   }
   block50 : {
-   loop_in51 : while (1) {
-    switch (0 | 0) {
-    default:
-     break block50;
-    };
+   loop_in51 : while (1) switch (0 | 0) {
+   default:
+    break block50;
    };
   }
   block52 : {
-   loop_in53 : while (1) {
-    switch (1 | 0) {
-    default:
-     break block52;
-    };
+   loop_in53 : while (1) switch (1 | 0) {
+   default:
+    break block52;
    };
   }
   return 19 | 0;
