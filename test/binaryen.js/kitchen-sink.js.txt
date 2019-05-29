@@ -7,6 +7,7 @@ BinaryenTypeVec128: 5
 BinaryenTypeExceptRef: 6
 BinaryenTypeUnreachable: 7
 BinaryenTypeAuto: -1
+Binaryen.Features.MVP: 0
 Binaryen.Features.Atomics: 1
 Binaryen.Features.BulkMemory: 16
 Binaryen.Features.MutableGlobals: 2
@@ -14,6 +15,7 @@ Binaryen.Features.NontrappingFPToInt: 4
 Binaryen.Features.SignExt: 32
 Binaryen.Features.SIMD128: 8
 Binaryen.Features.ExceptionHandling: 64
+Binaryen.Features.All: 127
 BinaryenInvalidId: 0
 BinaryenBlockId: 1
 BinaryenIfId: 2
@@ -3390,7 +3392,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
-  BinaryenModuleSetFeatures(the_module, 61);
+  BinaryenModuleSetFeatures(the_module, 127);
   BinaryenModuleGetFeatures(the_module);
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
