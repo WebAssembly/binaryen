@@ -142,6 +142,7 @@ BinaryenExternalKind BinaryenExternalGlobal(void);
 
 typedef uint32_t BinaryenFeatures;
 
+BinaryenFeatures BinaryenFeatureMVP(void);
 BinaryenFeatures BinaryenFeatureAtomics(void);
 BinaryenFeatures BinaryenFeatureBulkMemory(void);
 BinaryenFeatures BinaryenFeatureMutableGlobals(void);
@@ -149,6 +150,7 @@ BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void);
 BinaryenFeatures BinaryenFeatureSignExt(void);
 BinaryenFeatures BinaryenFeatureSIMD128(void);
 BinaryenFeatures BinaryenFeatureExceptionHandling(void);
+BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
 //

@@ -87,6 +87,7 @@ Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
 
 // Features
 Module['Features'] = {
+  'MVP': Module['_BinaryenFeatureMVP'](),
   'Atomics': Module['_BinaryenFeatureAtomics'](),
   'BulkMemory': Module['_BinaryenFeatureBulkMemory'](),
   'MutableGlobals': Module['_BinaryenFeatureMutableGlobals'](),
@@ -94,6 +95,7 @@ Module['Features'] = {
   'SignExt': Module['_BinaryenFeatureSignExt'](),
   'SIMD128': Module['_BinaryenFeatureSIMD128'](),
   'ExceptionHandling': Module['_BinaryenFeatureExceptionHandling'](),
+  'All': Module['_BinaryenFeatureAll']()
 };
 
 // Operations
