@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/flat.h>
+#include <ir/stackification.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -261,6 +262,11 @@ struct Flatten
         preludes[getCurrent()].swap(ourPreludes);
       }
     }
+  }
+
+  void doWalkFunction(Function* curr) {
+    Stackification::verifyUnstackified(curr);
+    super::doWalkFunction(curr);
   }
 
   void visitFunction(Function* curr) {

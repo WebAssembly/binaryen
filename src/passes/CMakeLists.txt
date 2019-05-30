@@ -65,6 +65,7 @@ SET(passes_SOURCES
   Souperify.cpp
   SpillPointers.cpp
   SSAify.cpp
+  Unstackify.cpp
   Untee.cpp
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp

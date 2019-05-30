@@ -250,7 +250,7 @@ struct Precompute
     if (isConcreteType(flow.value.type)) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));
       worked = true;
-    } else {
+    } else if (!curr->is<Push>()) {
       ExpressionManipulator::nop(curr);
     }
   }

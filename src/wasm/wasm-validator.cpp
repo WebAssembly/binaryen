@@ -184,7 +184,7 @@ struct ValidationInfo {
 };
 
 struct FunctionValidator
-  : public WalkerPass<ExpressionStackWalker<FunctionValidator>> {
+  : public WalkerPass<PushPopStackWalker<FunctionValidator, Type>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FunctionValidator(&info); }
@@ -211,12 +211,6 @@ struct FunctionValidator
 
   std::unordered_map<Name, BreakInfo> breakInfos;
 
-  // Track explicitly pushed and popped types
-  std::vector<Type> pushPopStack;
-
-  // Track the stack size at the beginning of each block
-  std::vector<size_t> stackDepths;
-
   Type returnType = unreachable; // type used in returns
 
   // Binaryen IR requires that label names must be unique - IR generators must
@@ -228,7 +222,6 @@ struct FunctionValidator
 public:
   // visitors
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
-    self->stackDepths.push_back(self->pushPopStack.size());
     auto* curr = (*currp)->cast<Block>();
     if (curr->name.is()) {
       self->breakInfos[curr->name];
@@ -293,6 +286,7 @@ public:
   void visitHost(Host* curr);
   void visitPush(Push* curr);
   void visitPop(Pop* curr);
+  void visitPop(Pop* curr, Type ty);
   void visitFunction(Function* curr);
 
   // helpers
@@ -441,12 +435,16 @@ void FunctionValidator::visitBlock(Block* curr) {
     shouldBeTrue(
       curr->list.size() > 0, curr, "block with a value must not be empty");
   }
+  // Ignore unreachable pushed values
+  while (pushPopStack.size() > stackDepths.back() &&
+         pushPopStack.back() == unreachable) {
+    pushPopStack.pop_back();
+  }
   // TODO: check that multivalue blocks are children of pushes
   shouldBeEqual(pushPopStack.size(),
                 stackDepths.back(),
                 curr,
                 "All pushed values must be popped");
-  stackDepths.pop_back();
 }
 
 void FunctionValidator::visitLoop(Loop* curr) {
@@ -1530,9 +1528,7 @@ void FunctionValidator::visitHost(Host* curr) {
   }
 }
 
-void FunctionValidator::visitPush(Push* curr) {
-  pushPopStack.push_back(curr->value->type);
-}
+void FunctionValidator::visitPush(Push* curr) { doPush(curr->value->type); }
 
 void FunctionValidator::visitPop(Pop* curr) {
   Expression* parent = getParent();
@@ -1555,7 +1551,7 @@ void FunctionValidator::visitPop(Pop* curr) {
     }
   }
 
-  // Check that the popped value exists and has the right type
+  // Check that the popped value exists
   if (!stackDepths.size()) {
     return;
   }
@@ -1566,12 +1562,15 @@ void FunctionValidator::visitPop(Pop* curr) {
   if (pushPopStack.size() <= depth) {
     return;
   }
-  auto it = pushPopStack.end() - 1 - depth;
-  shouldBeTrue(curr->type == *it || curr->type == unreachable ||
-                 *it == unreachable,
+  // calls `visitPop` overload with value
+  super::visitPop(curr);
+}
+
+void FunctionValidator::visitPop(Pop* curr, Type ty) {
+  shouldBeTrue(curr->type == ty || curr->type == unreachable ||
+                 ty == unreachable,
                curr,
                "Popped type does not match pushed type");
-  pushPopStack.erase(it);
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

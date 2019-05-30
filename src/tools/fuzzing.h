@@ -766,7 +766,7 @@ private:
 
       void visitExpression(Expression* curr) {
         if (parent.oneIn(10)) {
-          replaceCurrent(ExpressionStackifier::stackify(wasm, curr));
+          replaceCurrent(Stackification::stackify(wasm, curr));
         }
       }
     };

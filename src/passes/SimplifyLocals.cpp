@@ -47,6 +47,7 @@
 //
 
 #include "ir/equivalent_sets.h"
+#include "ir/stackification.h"
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/find_all.h>
@@ -779,6 +780,8 @@ struct SimplifyLocals
   }
 
   void doWalkFunction(Function* func) {
+    // TODO: Check for stacky side effects to loosen this condition
+    Stackification::verifyUnstackified(func);
     // scan local.gets
     getCounter.analyze(func);
     // multiple passes may be required per function, consider this:

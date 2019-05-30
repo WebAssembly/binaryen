@@ -305,6 +305,10 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
                createTrapModeJS);
+  registerPass(
+    "unstackify",
+    "Replace Pushes and Pops with locals where possible [experimental]",
+    createUnstackifyPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
@@ -328,6 +332,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // if we are willing to work very very hard, flatten the IR and do opts
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
+    add("unstackify");
     add("flatten");
     add("local-cse");
   }
@@ -356,6 +361,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   }
   // don't create if/block return values yet, as coalesce can remove copies that
   // that could inhibit
+  add("unstackify");
   add("simplify-locals-nostructure");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
@@ -366,6 +372,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("merge-locals"); // very slow on e.g. sqlite
   }
   add("coalesce-locals");
+  add("unstackify");
   add("simplify-locals");
   add("vacuum");
   add("reorder-locals");

@@ -156,6 +156,11 @@ public:
   Flow visitBlock(Block* curr) {
     NOTE_ENTER("Block");
     size_t depth = pushPopStack.size();
+    auto exitBlock = [&]() {
+      expressionStack.pop_back();
+      // TODO: generalize for multivalue blocks
+      pushPopStack.resize(depth);
+    };
     // special-case Block, because Block nesting (in their first element) can be
     // incredibly deep
     std::vector<Block*> stack;
@@ -163,6 +168,7 @@ public:
     while (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
       curr = curr->list[0]->cast<Block>();
       stack.push_back(curr);
+      expressionStack.push_back(curr);
     }
     Flow flow;
     auto* top = stack.back();
@@ -176,6 +182,7 @@ public:
           assert(pushPopStack.size() >= depth);
           pushPopStack.resize(depth);
         }
+        exitBlock();
         continue;
       }
       auto& list = curr->list;
@@ -195,7 +202,10 @@ public:
           break;
         }
       }
+      exitBlock();
     }
+    // we popped curr, but we weren't expected to do so
+    expressionStack.push_back(curr);
     return flow;
   }
   Flow visitIf(If* curr) {

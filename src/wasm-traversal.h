@@ -1196,6 +1196,57 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   }
 };
 
+// Traversal with a stack of explicitly pushed values of type `T`. Implementors
+// are required to call `doPush` for every value that is pushed, and in return
+// `visitPop` is passed a reference to the pushed value on corresponding
+// pops. The stack of values at some point in the program may not depend on the
+// path of execution taken to that point.
+
+template<typename SubType, typename T, typename VisitorType = Visitor<SubType>>
+struct PushPopStackWalker : public ExpressionStackWalker<SubType, VisitorType> {
+  PushPopStackWalker() = default;
+
+  // TODO: properly handle unifying stack for both arms of an If
+  std::vector<T> pushPopStack;
+
+  // Track the stack size at the beginning of each block
+  std::vector<size_t> stackDepths = {0};
+
+  static void doPreVisit(SubType* self, Expression** currp) {
+    ExpressionStackWalker<SubType, VisitorType>::doPreVisit(self, currp);
+    Expression* curr = *currp;
+    if (curr->is<Block>()) {
+      self->stackDepths.push_back(self->pushPopStack.size());
+    }
+  }
+
+  static void doPostVisit(SubType* self, Expression** currp) {
+    Expression* curr = *currp;
+    if (curr->is<Block>()) {
+      // Remove unused (unreachable) items
+      Index depth = self->stackDepths.back();
+      self->stackDepths.pop_back();
+      self->pushPopStack.resize(depth);
+    }
+    ExpressionStackWalker<SubType, VisitorType>::doPostVisit(self, currp);
+  }
+
+  void doPush(T value) { pushPopStack.push_back(value); }
+
+  void visitPop(Pop* curr) {
+    Expression* parent =
+      ExpressionStackWalker<SubType, VisitorType>::getParent();
+    assert(parent);
+    Index depth = curr->getDepth(parent);
+    assert(stackDepths.size());
+    assert(pushPopStack.size() > stackDepths.back() + depth);
+    auto it = pushPopStack.end() - 1 - depth;
+    static_cast<SubType*>(this)->visitPop(curr, *it);
+    pushPopStack.erase(it);
+    ExpressionStackWalker<SubType, VisitorType>::visitPop(curr);
+  }
+};
+
 } // namespace wasm
 
 #endif // wasm_wasm_traversal_h

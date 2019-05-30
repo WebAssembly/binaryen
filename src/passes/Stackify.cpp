@@ -103,7 +103,7 @@ public:
   }
 };
 
-namespace ExpressionStackifier {
+namespace Stackification {
 
 Expression* stackify(Module& module, Expression*& curr) {
   Stackify stackifier;
@@ -112,7 +112,7 @@ Expression* stackify(Module& module, Expression*& curr) {
   return curr;
 }
 
-} // namespace ExpressionStackifier
+} // namespace Stackification
 
 Pass* createStackifyPass() { return new Stackify(); }
 

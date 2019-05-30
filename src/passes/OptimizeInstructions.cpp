@@ -749,29 +749,32 @@ struct OptimizeInstructions
           // sides are identical, fold
           // if we can replace the if with one arm, and no side effects in the
           // condition, do that
-          auto needCondition =
-            EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects();
-          auto typeIsIdentical = iff->ifTrue->type == iff->type;
-          if (typeIsIdentical && !needCondition) {
-            return iff->ifTrue;
-          } else {
-            Builder builder(*getModule());
-            if (typeIsIdentical) {
-              return builder.makeSequence(builder.makeDrop(iff->condition),
-                                          iff->ifTrue);
+          EffectAnalyzer effects(getPassOptions(), iff->condition);
+          // TODO: don't give up if the condition is stacky
+          if (effects.isStackNeutral()) {
+            auto needCondition = effects.hasSideEffects();
+            auto typeIsIdentical = iff->ifTrue->type == iff->type;
+            if (typeIsIdentical && !needCondition) {
+              return iff->ifTrue;
             } else {
-              // the types diff. as the condition is reachable, that means the
-              // if must be concrete while the arm is not
-              assert(isConcreteType(iff->type) &&
-                     iff->ifTrue->type == unreachable);
-              // emit a block with a forced type
-              auto* ret = builder.makeBlock();
-              if (needCondition) {
-                ret->list.push_back(builder.makeDrop(iff->condition));
+              Builder builder(*getModule());
+              if (typeIsIdentical) {
+                return builder.makeSequence(builder.makeDrop(iff->condition),
+                                            iff->ifTrue);
+              } else {
+                // the types diff. as the condition is reachable, that means the
+                // if must be concrete while the arm is not
+                assert(isConcreteType(iff->type) &&
+                       iff->ifTrue->type == unreachable);
+                // emit a block with a forced type
+                auto* ret = builder.makeBlock();
+                if (needCondition) {
+                  ret->list.push_back(builder.makeDrop(iff->condition));
+                }
+                ret->list.push_back(iff->ifTrue);
+                ret->finalize(iff->type);
+                return ret;
               }
-              ret->list.push_back(iff->ifTrue);
-              ret->finalize(iff->type);
-              return ret;
             }
           }
         }

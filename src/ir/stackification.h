@@ -21,12 +21,20 @@
 
 namespace wasm {
 
-namespace ExpressionStackifier {
+namespace Stackification {
 
-// Stackifies `curr` in place then returns it for convenience
+// Stackifies the given expression in place then returns it for convenience.
 Expression* stackify(Module&, Expression*&);
 
-} // namespace ExpressionStackifier
+// Unstackifies the given expression, replacing push/pop pairs with
+// local.get/local.set pairs.
+// TODO: For multivalue, ensure that all remaining pops are children of
+// local.set instructions and all remaining pushes directly provide multivalue
+// return values.
+Expression* unstackify(Module&, Expression*&);
+void verifyUnstackified(Function* func);
+
+} // namespace Stackification
 
 } // namespace wasm
 
