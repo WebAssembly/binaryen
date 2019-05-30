@@ -37,21 +37,21 @@ BinaryenSelectId: 17
 BinaryenDropId: 18
 BinaryenReturnId: 19
 BinaryenHostId: 20
-BinaryenNopId: 21
-BinaryenUnreachableId: 22
-BinaryenAtomicCmpxchgId: 24
-BinaryenAtomicRMWId: 23
-BinaryenAtomicWaitId: 25
-BinaryenAtomicNotifyId: 26
-BinaryenSIMDExtractId: 27
-BinaryenSIMDReplaceId: 28
-BinaryenSIMDShuffleId: 29
-BinaryenSIMDBitselectId: 30
-BinaryenSIMDShiftId: 31
-MemoryInitId: 32
-DataDropId: 33
-MemoryCopyId: 34
-MemoryFillId: 35
+BinaryenNopId: 23
+BinaryenUnreachableId: 24
+BinaryenAtomicCmpxchgId: 26
+BinaryenAtomicRMWId: 25
+BinaryenAtomicWaitId: 27
+BinaryenAtomicNotifyId: 28
+BinaryenSIMDExtractId: 29
+BinaryenSIMDReplaceId: 30
+BinaryenSIMDShuffleId: 31
+BinaryenSIMDBitselectId: 32
+BinaryenSIMDShiftId: 33
+MemoryInitId: 34
+DataDropId: 35
+MemoryCopyId: 36
+MemoryFillId: 37
 getExpressionInfo={"id":15,"type":3,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)

@@ -993,17 +993,17 @@ Expression* SExpressionWasmBuilder::makePush(Element& s) {
   auto ret = allocator.alloc<Push>();
   ret->value = parseExpression(s[1], 0);
   ret->finalize();
-  sideStack.push_back(ret->value->type);
+  pushPopStack.push_back(ret->value->type);
   return ret;
 }
 
 Expression* SExpressionWasmBuilder::makePop(Index depth) {
-  if (sideStack.size() <= depth) {
+  if (pushPopStack.size() <= depth) {
     throw ParseException("pop without push");
   }
-  auto it = sideStack.end() - 1 - depth;
+  auto it = pushPopStack.end() - 1 - depth;
   auto ret = allocator.alloc<Pop>(*it);
-  sideStack.erase(it);
+  pushPopStack.erase(it);
   ret->finalize();
   return ret;
 }

@@ -27,6 +27,7 @@
 // looked at.
 //
 
+#include <ir/effects.h>
 #include <ir/literal-utils.h>
 #include <ir/local-graph.h>
 #include <ir/manipulation.h>
@@ -250,7 +251,7 @@ struct Precompute
     if (isConcreteType(flow.value.type)) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));
       worked = true;
-    } else if (!curr->is<Push>()) {
+    } else if (EffectAnalyzer(getPassOptions(), curr).isStackNeutral()) {
       ExpressionManipulator::nop(curr);
     }
   }

@@ -756,6 +756,9 @@ private:
   }
 
   void stackify(Function* func) {
+    // TODO: re-enable this once Push/Pop are more stable
+    return;
+
     struct Stackifier
       : public PostWalker<Stackifier, UnifiedExpressionVisitor<Stackifier>> {
       Module& wasm;
@@ -771,7 +774,6 @@ private:
       }
     };
     Stackifier(wasm, *this).walk(func->body);
-    ;
   }
 
   // the fuzzer external interface sends in zeros (simpler to compare

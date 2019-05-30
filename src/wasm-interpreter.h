@@ -292,7 +292,6 @@ public:
     flow.value = value;
     return flow;
   }
-
   Flow visitConst(Const* curr) {
     NOTE_ENTER("Const");
     NOTE_EVAL1(curr->value);
@@ -992,7 +991,6 @@ public:
     trap("unreachable");
     WASM_UNREACHABLE();
   }
-
   Literal truncSFloat(Unary* curr, Literal value) {
     double val = value.getFloat();
     if (std::isnan(val)) {
@@ -1022,7 +1020,6 @@ public:
       return Literal(int64_t(val));
     }
   }
-
   Literal truncUFloat(Unary* curr, Literal value) {
     double val = value.getFloat();
     if (std::isnan(val)) {
@@ -1052,7 +1049,6 @@ public:
       return Literal(uint64_t(val));
     }
   }
-
   Flow visitPush(Push* curr) {
     NOTE_ENTER("Push");
     Flow flow = this->visit(curr->value);
@@ -1063,7 +1059,6 @@ public:
     pushPopStack.push_back(flow.value);
     return {};
   }
-
   Flow visitPop(Pop* curr) {
     NOTE_ENTER("Pop");
     Expression* parent = this->getParent();
@@ -1451,7 +1446,6 @@ private:
       }
       return Flow();
     }
-
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
       NOTE_NAME(curr->target);
@@ -1472,7 +1466,6 @@ private:
 #endif
       return ret;
     }
-
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
       LiteralList arguments;
@@ -1488,7 +1481,6 @@ private:
       return instance.externalInterface->callTable(
         index, arguments, curr->type, *instance.self());
     }
-
     Flow visitLocalGet(LocalGet* curr) {
       NOTE_ENTER("LocalGet");
       auto index = curr->index;
@@ -1496,7 +1488,6 @@ private:
       NOTE_EVAL1(scope.locals[index]);
       return scope.locals[index];
     }
-
     Flow visitLocalSet(LocalSet* curr) {
       NOTE_ENTER("LocalSet");
       auto index = curr->index;
@@ -1510,7 +1501,6 @@ private:
       scope.locals[index] = flow.value;
       return curr->isTee() ? flow : Flow();
     }
-
     Flow visitGlobalGet(GlobalGet* curr) {
       NOTE_ENTER("GlobalGet");
       auto name = curr->name;
@@ -1519,7 +1509,6 @@ private:
       NOTE_EVAL1(instance.globals[name]);
       return instance.globals[name];
     }
-
     Flow visitGlobalSet(GlobalSet* curr) {
       NOTE_ENTER("GlobalSet");
       auto name = curr->name;
@@ -1532,7 +1521,6 @@ private:
       instance.globals[name] = flow.value;
       return Flow();
     }
-
     Flow visitLoad(Load* curr) {
       NOTE_ENTER("Load");
       Flow flow = this->visit(curr->ptr);
@@ -1546,7 +1534,6 @@ private:
       NOTE_EVAL1(ret);
       return ret;
     }
-
     Flow visitStore(Store* curr) {
       NOTE_ENTER("Store");
       Flow ptr = this->visit(curr->ptr);
@@ -1563,7 +1550,6 @@ private:
       instance.externalInterface->store(curr, addr, value.value);
       return Flow();
     }
-
     Flow visitAtomicRMW(AtomicRMW* curr) {
       NOTE_ENTER("AtomicRMW");
       Flow ptr = this->visit(curr->ptr);
@@ -1604,7 +1590,6 @@ private:
       instance.doAtomicStore(addr, curr->bytes, computed);
       return loaded;
     }
-
     Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       NOTE_ENTER("AtomicCmpxchg");
       Flow ptr = this->visit(curr->ptr);
@@ -1631,7 +1616,6 @@ private:
       }
       return loaded;
     }
-
     Flow visitAtomicWait(AtomicWait* curr) {
       NOTE_ENTER("AtomicWait");
       Flow ptr = this->visit(curr->ptr);
@@ -1660,7 +1644,6 @@ private:
       //       for now, just assume we are woken up
       return Literal(int32_t(0)); // woken up
     }
-
     Flow visitAtomicNotify(AtomicNotify* curr) {
       NOTE_ENTER("AtomicNotify");
       Flow ptr = this->visit(curr->ptr);
@@ -1676,7 +1659,6 @@ private:
       // TODO: add threads support!
       return Literal(int32_t(0)); // none woken up
     }
-
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");
       switch (curr->op) {
@@ -1709,7 +1691,6 @@ private:
       }
       WASM_UNREACHABLE();
     }
-
     Flow visitMemoryInit(MemoryInit* curr) {
       NOTE_ENTER("MemoryInit");
       Flow dest = this->visit(curr->dest);
@@ -1754,7 +1735,6 @@ private:
       }
       return {};
     }
-
     Flow visitDataDrop(DataDrop* curr) {
       NOTE_ENTER("DataDrop");
       if (instance.droppedSegments.count(curr->segment)) {
@@ -1763,7 +1743,6 @@ private:
       instance.droppedSegments.insert(curr->segment);
       return {};
     }
-
     Flow visitMemoryCopy(MemoryCopy* curr) {
       NOTE_ENTER("MemoryCopy");
       Flow dest = this->visit(curr->dest);
@@ -1809,7 +1788,6 @@ private:
       }
       return {};
     }
-
     Flow visitMemoryFill(MemoryFill* curr) {
       NOTE_ENTER("MemoryFill");
       Flow dest = this->visit(curr->dest);
@@ -1839,7 +1817,6 @@ private:
       }
       return {};
     }
-
     void trap(const char* why) override {
       instance.externalInterface->trap(why);
     }

@@ -159,7 +159,7 @@ private:
   bool isType(cashew::IString str) { return stringToType(str, true) != none; }
 
   // Track explicitly pushed types
-  std::vector<Type> sideStack;
+  std::vector<Type> pushPopStack;
 
 public:
   Expression* parseExpression(Element* s, Index depth = 0) {

@@ -240,13 +240,13 @@ opt_choices = [
   ["--dae-optimizing"],
   ["--dce"],
   ["--directize"],
-  ["--unstackify", "--flatten", "--dfo"],
+  ["--flatten", "--dfo"],
   ["--duplicate-function-elimination"],
-  ["--unstackify", "--flatten"],
+  ["--flatten"],
   # ["--fpcast-emu"], # removes indirect call failures as it makes them go through regardless of type
   ["--inlining"],
   ["--inlining-optimizing"],
-  ["--unstackify", "--flatten", "--local-cse"],
+  ["--flatten", "--local-cse"],
   ["--generate-stack-ir"],
   ["--licm"],
   ["--memory-packing"],
@@ -265,16 +265,15 @@ opt_choices = [
   ["--remove-unused-names"],
   ["--reorder-functions"],
   ["--reorder-locals"],
-  ["--unstackify", "--flatten", "--rereloop"],
+  ["--flatten", "--rereloop"],
   ["--rse"],
-  ["--unstackify", "--simplify-locals"],
-  ["--unstackify", "--simplify-locals-nonesting"],
-  ["--unstackify", "--simplify-locals-nostructure"],
-  ["--unstackify", "--simplify-locals-notee"],
-  ["--unstackify", "--simplify-locals-notee-nostructure"],
+  ["--simplify-locals"],
+  ["--simplify-locals-nonesting"],
+  ["--simplify-locals-nostructure"],
+  ["--simplify-locals-notee"],
+  ["--simplify-locals-notee-nostructure"],
   ["--ssa"],
-  ["--stackify"],
-  ["--unstackify"],
+  ["--stackify", "--unstackify"],
   ["--vacuum"],
 ]
 
@@ -286,6 +285,10 @@ def get_multiple_opt_choices():
     ret += random.choice(opt_choices)
     if len(ret) > 20 or random.random() < 0.3:
       break
+  # possibly stackify at the end
+  # TODO: make this a normal pass once it is stable with opts
+  if random.random() < 0.2:
+    ret.append("--stackify")
   # modifiers (if not already implied by a -O? option)
   if '-O' not in str(ret):
     if random.random() < 0.5:
