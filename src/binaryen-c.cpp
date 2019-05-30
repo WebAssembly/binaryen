@@ -371,6 +371,9 @@ BinaryenExternalKind BinaryenExternalGlobal(void) {
 
 // Features
 
+BinaryenFeatures BinaryenFeatureMVP(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::MVP);
+}
 BinaryenFeatures BinaryenFeatureAtomics(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::Atomics);
 }
@@ -391,6 +394,9 @@ BinaryenFeatures BinaryenFeatureSIMD128(void) {
 }
 BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::ExceptionHandling);
+}
+BinaryenFeatures BinaryenFeatureAll(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::All);
 }
 
 // Modules

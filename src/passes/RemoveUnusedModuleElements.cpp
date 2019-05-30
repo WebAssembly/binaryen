@@ -120,17 +120,12 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 // Finds function type usage
 
 struct FunctionTypeAnalyzer : public PostWalker<FunctionTypeAnalyzer> {
-  std::vector<Function*> functionImports;
   std::vector<Function*> functions;
   std::vector<CallIndirect*> indirectCalls;
 
   void visitFunction(Function* curr) {
     if (curr->type.is()) {
-      if (curr->imported()) {
-        functionImports.push_back(curr);
-      } else {
-        functions.push_back(curr);
-      }
+      functions.push_back(curr);
     }
   }
 
@@ -271,9 +266,6 @@ struct RemoveUnusedModuleElements : public Pass {
       }
     };
     // canonicalize all uses of function types
-    for (auto* import : analyzer.functionImports) {
-      import->type = canonicalize(import->type);
-    }
     for (auto* func : analyzer.functions) {
       func->type = canonicalize(func->type);
     }

@@ -161,6 +161,7 @@ void test_types() {
 }
 
 void test_features() {
+  printf("BinaryenFeatureMVP: %d\n", BinaryenFeatureMVP());
   printf("BinaryenFeatureAtomics: %d\n", BinaryenFeatureAtomics());
   printf("BinaryenFeatureBulkMemory: %d\n", BinaryenFeatureBulkMemory());
   printf("BinaryenFeatureMutableGlobals: %d\n", BinaryenFeatureMutableGlobals());
@@ -168,6 +169,7 @@ void test_features() {
   printf("BinaryenFeatureSignExt: %d\n", BinaryenFeatureSignExt());
   printf("BinaryenFeatureSIMD128: %d\n", BinaryenFeatureSIMD128());
   printf("BinaryenFeatureExceptionHandling: %d\n", BinaryenFeatureExceptionHandling());
+  printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
 void test_core() {
@@ -521,13 +523,7 @@ void test_core() {
   // A bunch of our code needs drop(), auto-add it
   BinaryenModuleAutoDrop(module);
 
-  BinaryenFeatures features =
-      BinaryenFeatureAtomics() |
-      BinaryenFeatureBulkMemory() |
-      BinaryenFeatureNontrappingFPToInt() |
-      BinaryenFeatureSignExt() |
-      BinaryenFeatureSIMD128();
-
+  BinaryenFeatures features = BinaryenFeatureAll();
   BinaryenModuleSetFeatures(module, features);
   assert(BinaryenModuleGetFeatures(module) == features);
 

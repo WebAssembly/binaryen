@@ -63,6 +63,7 @@ function test_types() {
 }
 
 function test_features() {
+  console.log("Binaryen.Features.MVP: " + Binaryen.Features.MVP);
   console.log("Binaryen.Features.Atomics: " + Binaryen.Features.Atomics);
   console.log("Binaryen.Features.BulkMemory: " + Binaryen.Features.BulkMemory);
   console.log("Binaryen.Features.MutableGlobals: " + Binaryen.Features.MutableGlobals);
@@ -70,6 +71,7 @@ function test_features() {
   console.log("Binaryen.Features.SignExt: " + Binaryen.Features.SignExt);
   console.log("Binaryen.Features.SIMD128: " + Binaryen.Features.SIMD128);
   console.log("Binaryen.Features.ExceptionHandling: " + Binaryen.Features.ExceptionHandling);
+  console.log("Binaryen.Features.All: " + Binaryen.Features.All);
 }
 
 function test_ids() {
@@ -464,13 +466,7 @@ function test_core() {
   // A bunch of our code needs drop, auto-add it
   module.autoDrop();
 
-  var features =
-      Binaryen.Features.Atomics |
-      Binaryen.Features.BulkMemory |
-      Binaryen.Features.NontrappingFPToInt |
-      Binaryen.Features.SignExt |
-      Binaryen.Features.SIMD128;
-
+  var features = Binaryen.Features.All;
   module.setFeatures(features);
   assert(module.getFeatures() == features);
 
@@ -759,6 +755,9 @@ function test_parsing() {
 
   // create a module and write it to text
   module = new Binaryen.Module();
+
+  module.setFeatures(Binaryen.Features.All);
+
   var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
   var x = module.local.get(0, Binaryen.i32),
       y = module.local.get(1, Binaryen.i32);

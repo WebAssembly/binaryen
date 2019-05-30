@@ -231,6 +231,7 @@ export_function "_BinaryenExternalMemory"
 export_function "_BinaryenExternalGlobal"
 
 # Features
+export_function "_BinaryenFeatureMVP"
 export_function "_BinaryenFeatureAtomics"
 export_function "_BinaryenFeatureBulkMemory"
 export_function "_BinaryenFeatureMutableGlobals"
@@ -238,6 +239,7 @@ export_function "_BinaryenFeatureNontrappingFPToInt"
 export_function "_BinaryenFeatureSignExt"
 export_function "_BinaryenFeatureSIMD128"
 export_function "_BinaryenFeatureExceptionHandling"
+export_function "_BinaryenFeatureAll"
 
 # Literals
 export_function "_BinaryenLiteralInt32"

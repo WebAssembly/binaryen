@@ -579,6 +579,11 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
     paramOrResultExists = true;
     result = parseResult(*s[i++]);
   }
+  // If none of type/param/result exists, this is equivalent to a type that does
+  // not have parameters and returns nothing.
+  if (!typeExists && !paramOrResultExists) {
+    paramOrResultExists = true;
+  }
 
   // verify if (type) and (params)/(result) match, if both are specified
   if (typeExists && paramOrResultExists) {
@@ -597,8 +602,8 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
     }
   }
 
-  // If (type) does not exist, check if there's a matching type, and if there
-  // isn't, create one.
+  // If only (param)/(result) is specified, check if there's a matching type,
+  // and if there isn't, create one.
   if (!typeExists) {
     bool need = true;
     std::vector<Type> params;
@@ -614,6 +619,17 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
     }
     if (need) {
       functionType = ensureFunctionType(params, result, &wasm);
+    }
+  }
+
+  // If only (type) is specified, populate params and result.
+  if (!paramOrResultExists) {
+    assert(functionType);
+    result = functionType->result;
+    for (size_t index = 0, e = functionType->params.size(); index < e;
+         index++) {
+      Type type = functionType->params[index];
+      namedParams.emplace_back(Name::fromInt(index), type);
     }
   }
 
@@ -661,7 +677,6 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   functionNames.push_back(name);
   functionCounter++;
   FunctionType* type = nullptr;
-  functionTypes[name] = none;
   std::vector<Type> params;
   parseTypeUse(s, i, type);
   assert(type && "type should've been set by parseTypeUse");
@@ -775,13 +790,6 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     throw ParseException("preParseImport in func");
   }
 
-  // in case only (type) is specified, populate params and result with temporary
-  // names
-  if (params.empty()) {
-    for (size_t j = 0; j < functionType->params.size(); j++) {
-      params.emplace_back(Name::fromInt(j), functionType->params[j]);
-    }
-  }
   result = functionType->result;
   size_t localIndex = params.size(); // local index for params and locals
 
