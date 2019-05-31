@@ -504,55 +504,53 @@ def run_gcc_tests():
   print '\n[ checking native gcc testcases...]\n'
   if not NATIVECC or not NATIVEXX:
     fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
-  else:
-    for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'example'))):
-      output_file = os.path.join(options.binaryen_bin, 'example')
-      cmd = ['-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-pthread', '-o', output_file]
-      if t.endswith('.txt'):
-        # check if there is a trace in the file, if so, we should build it
-        out = subprocess.Popen([os.path.join('scripts', 'clean_c_api_trace.py'), os.path.join(options.binaryen_test, 'example', t)], stdout=subprocess.PIPE).communicate()[0]
-        if len(out) == 0:
-          print '  (no trace in ', t, ')'
-          continue
-        print '  (will check trace in ', t, ')'
-        src = 'trace.cpp'
-        with open(src, 'w') as o:
-          o.write(out)
-        expected = os.path.join(options.binaryen_test, 'example', t + '.txt')
-      else:
-        src = os.path.join(options.binaryen_test, 'example', t)
-        expected = os.path.join(options.binaryen_test, 'example', '.'.join(t.split('.')[:-1]) + '.txt')
-      if src.endswith(('.c', '.cpp')):
-        # build the C file separately
-        extra = [NATIVECC, src, '-c', '-o', 'example.o',
-                 '-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-pthread']
-        if src.endswith('.cpp'):
-          extra += ['-std=c++11']
-        print 'build: ', ' '.join(extra)
-        subprocess.check_call(extra)
-        # Link against the binaryen C library DSO, using an executable-relative rpath
-        cmd = ['example.o', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-lbinaryen'] + cmd + ['-Wl,-rpath,$ORIGIN/../lib']
-      else:
-        continue
-      print '  ', t, src, expected
-      if os.environ.get('COMPILER_FLAGS'):
-        for f in os.environ.get('COMPILER_FLAGS').split(' '):
-          cmd.append(f)
-      cmd = [NATIVEXX, '-std=c++11'] + cmd
-      try:
-        print 'link: ', ' '.join(cmd)
-        subprocess.check_call(cmd)
-        print 'run...', output_file
-        proc = subprocess.Popen([output_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        actual, err = proc.communicate()
-        assert proc.returncode == 0, [proc.returncode, actual, err]
-      finally:
-        os.remove(output_file)
-        if sys.platform == 'darwin':
-          # Also removes debug directory produced on Mac OS
-          shutil.rmtree(output_file + '.dSYM')
+    return
 
-      fail_if_not_identical_to_file(actual, expected)
+  for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'example'))):
+    output_file = 'example'
+    cmd = ['-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-pthread', '-o', output_file]
+    if t.endswith('.txt'):
+      # check if there is a trace in the file, if so, we should build it
+      out = subprocess.Popen([os.path.join('scripts', 'clean_c_api_trace.py'), os.path.join(options.binaryen_test, 'example', t)], stdout=subprocess.PIPE).communicate()[0]
+      if len(out) == 0:
+        print '  (no trace in ', t, ')'
+        continue
+      print '  (will check trace in ', t, ')'
+      src = 'trace.cpp'
+      with open(src, 'w') as o:
+        o.write(out)
+      expected = os.path.join(options.binaryen_test, 'example', t + '.txt')
+    else:
+      src = os.path.join(options.binaryen_test, 'example', t)
+      expected = os.path.join(options.binaryen_test, 'example', '.'.join(t.split('.')[:-1]) + '.txt')
+    if src.endswith(('.c', '.cpp')):
+      # build the C file separately
+      libpath = os.path.join(os.path.dirname(options.binaryen_bin),  'lib')
+      extra = [NATIVECC, src, '-c', '-o', 'example.o',
+               '-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
+      if src.endswith('.cpp'):
+        extra += ['-std=c++11']
+      print 'build: ', ' '.join(extra)
+      subprocess.check_call(extra)
+      # Link against the binaryen C library DSO, using an executable-relative rpath
+      cmd = ['example.o', '-L' + libpath, '-lbinaryen'] + cmd + ['-Wl,-rpath,' + libpath]
+    else:
+      continue
+    print '  ', t, src, expected
+    if os.environ.get('COMPILER_FLAGS'):
+      for f in os.environ.get('COMPILER_FLAGS').split(' '):
+        cmd.append(f)
+    cmd = [NATIVEXX, '-std=c++11'] + cmd
+    print 'link: ', ' '.join(cmd)
+    subprocess.check_call(cmd)
+    print 'run...', output_file
+    actual = subprocess.check_output([os.path.abspath(output_file)])
+    os.remove(output_file)
+    if sys.platform == 'darwin':
+      # Also removes debug directory produced on Mac OS
+      shutil.rmtree(output_file + '.dSYM')
+
+    fail_if_not_identical_to_file(actual, expected)
 
 
 def run_unittest():
