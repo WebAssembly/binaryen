@@ -60,13 +60,12 @@ jobs:
         - set -o errexit
         - flake8
         - ./clang-format-diff.sh
+        - ./clang-tidy-diff.sh
         # ensure generated parser is up to date
         - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
         - mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
         - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_INSTALL_PREFIX=install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        # clang-tidy-diff.sh may not exist when BUILD_SUBDIR is a subdirectory
-        - if [ -f clang-tidy-diff.sh ]; then ./clang-tidy-diff.sh; fi
         - make -j2 install
         - cd ${TRAVIS_BUILD_DIR}
         - ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
