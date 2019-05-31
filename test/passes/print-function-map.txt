@@ -1,6 +1,6 @@
-0:$Foo
-1:$bar
-2:$baz
+0:Foo
+1:bar
+2:baz
 (module
  (type $FUNCSIG$v (func))
  (import "env" "foo" (func $Foo))

@@ -35,7 +35,7 @@ struct PrintFunctionMap : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Index i = 0;
     for (auto& func : module->functions) {
-      std::cout << i++ << ':' << func->name << '\n';
+      std::cout << i++ << ':' << func->name.str << '\n';
     }
   }
 };
