@@ -198,6 +198,8 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
     // the value is unreachable, and necessary since the type of
     // the condition did not have an impact before (the break/switch
     // type was unreachable), and might not fit in.
+    // TODO: Figure out how to do this transformation when the condition is a
+    // pop
     if (isConcreteType(condition->type)) {
       condition = builder.makeDrop(condition);
     }

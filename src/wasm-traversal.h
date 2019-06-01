@@ -1212,23 +1212,25 @@ struct PushPopStackWalker : public ExpressionStackWalker<SubType, VisitorType> {
   // Track the stack size at the beginning of each block
   std::vector<size_t> stackDepths = {0};
 
-  static void doPreVisit(SubType* self, Expression** currp) {
-    ExpressionStackWalker<SubType, VisitorType>::doPreVisit(self, currp);
-    Expression* curr = *currp;
-    if (curr->is<Block>()) {
-      self->stackDepths.push_back(self->pushPopStack.size());
-    }
+  static void enterBlock(SubType* self, Expression** currp) {
+    self->stackDepths.push_back(self->pushPopStack.size());
   }
 
-  static void doPostVisit(SubType* self, Expression** currp) {
-    Expression* curr = *currp;
-    if (curr->is<Block>()) {
-      // Remove unused (unreachable) items
-      Index depth = self->stackDepths.back();
-      self->stackDepths.pop_back();
-      self->pushPopStack.resize(depth);
+  static void exitBlock(SubType* self, Expression** currp) {
+    // Remove unused (unreachable) items
+    Index depth = self->stackDepths.back();
+    self->stackDepths.pop_back();
+    self->pushPopStack.resize(depth);
+  }
+
+  static void scan(SubType* self, Expression** currp) {
+    if ((*currp)->is<Block>()) {
+      self->pushTask(SubType::exitBlock, currp);
+      ExpressionStackWalker<SubType, VisitorType>::scan(self, currp);
+      self->pushTask(SubType::enterBlock, currp);
+    } else {
+      ExpressionStackWalker<SubType, VisitorType>::scan(self, currp);
     }
-    ExpressionStackWalker<SubType, VisitorType>::doPostVisit(self, currp);
   }
 
   void doPush(T value) { pushPopStack.push_back(value); }

@@ -242,7 +242,7 @@ public:
 
   // override scan to add a pre and a post check task to all nodes
   static void scan(FunctionValidator* self, Expression** currp) {
-    ExpressionStackWalker<FunctionValidator>::scan(self, currp);
+    super::scan(self, currp);
 
     auto* curr = *currp;
     if (curr->is<Block>()) {

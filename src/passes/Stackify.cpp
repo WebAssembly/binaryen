@@ -15,6 +15,7 @@
  */
 
 #include "ir/stackification.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include <memory>
@@ -81,24 +82,25 @@ public:
     }
   }
 
-  static void doPostVisit(Stackify* self, Expression** currp) {
-    if (shouldMaterializePushes(*currp, self->getParent())) {
-      self->materializePushes(*currp);
-    }
-    super::doPostVisit(self, currp);
-  }
-
   void visitExpression(Expression* curr) {
     // Don't push pops
     if (curr->is<Pop>()) {
       return;
     }
 
-    if (!shouldMaterializePushes(curr, getParent())) {
+    if (shouldMaterializePushes(curr, getParent())) {
+      materializePushes(curr);
+    } else {
       // Replace self with a Pop, materialize self later
       assert(curr->type != none);
       pushed.push_back(curr);
       replaceCurrent(Builder(*getModule()).makePop(curr->type));
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (curr->body) {
+      ReFinalize().walkFunctionInModule(curr, getModule());
     }
   }
 };

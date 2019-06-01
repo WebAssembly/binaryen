@@ -15,6 +15,7 @@
  */
 
 #include "ir/stackification.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 
@@ -26,14 +27,29 @@ struct Unstackify
 public:
   void visitPush(Push* curr) {
     Builder builder(*getModule());
-    Index var = builder.addVar(getFunction(), curr->value->type);
-    doPush({var, curr->value->type});
-    replaceCurrent(builder.makeLocalSet(var, curr->value));
+    if (curr->value->type == unreachable) {
+      doPush({0, unreachable});
+      replaceCurrent(curr->value);
+    } else {
+      Index var = builder.addVar(getFunction(), curr->value->type);
+      doPush({var, curr->value->type});
+      replaceCurrent(builder.makeLocalSet(var, curr->value));
+    }
   }
   void visitPop(Pop* curr) { super::visitPop(curr); }
   void visitPop(Pop* curr, std::pair<Index, Type> var) {
     Builder builder(*getModule());
-    replaceCurrent(builder.makeLocalGet(var.first, var.second));
+    if (var.second == unreachable) {
+      replaceCurrent(builder.makeUnreachable());
+    } else {
+      replaceCurrent(builder.makeLocalGet(var.first, var.second));
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (curr->body) {
+      ReFinalize().walkFunctionInModule(curr, getModule());
+    }
   }
 };
 
