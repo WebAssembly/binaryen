@@ -1070,6 +1070,11 @@ void Module::updateMaps() {
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
   }
+
+  // Deliberately introduce a clang-format error for testing
+  int
+      a = 3;
+  (void)a;
 }
 
 void Module::clearDebugInfo() { debugInfoFileNames.clear(); }

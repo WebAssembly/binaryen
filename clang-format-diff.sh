@@ -1,4 +1,9 @@
 #!/bin/bash
+
+
+# For testing
+git br -v
+
 MERGE_BASE=$(git merge-base master HEAD)
 FORMAT_MSG=$(git clang-format $MERGE_BASE -q --diff -- src/)
 if [ -n "$FORMAT_MSG" -a "$FORMAT_MSG" != "no modified files to format" ]
