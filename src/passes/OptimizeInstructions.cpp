@@ -986,46 +986,56 @@ private:
   Expression* optimizeAddedConstants(Binary* binary) {
     uint32_t constant = 0;
     std::vector<Const*> constants;
-    std::function<void(Expression*, int)> seek = [&](Expression* curr,
-                                                     int mul) {
+
+    struct SeekState {
+      Expression* curr;
+      int mul;
+      SeekState(Expression* curr, int mul) : curr(curr), mul(mul) {}
+    };
+    std::vector<SeekState> seekStack;
+    seekStack.emplace_back(binary, 1);
+    while (!seekStack.empty()) {
+      auto state = seekStack.back();
+      seekStack.pop_back();
+      auto curr = state.curr;
+      auto mul = state.mul;
       if (auto* c = curr->dynCast<Const>()) {
         uint32_t value = c->value.geti32();
         if (value != 0) {
           constant += value * mul;
           constants.push_back(c);
         }
-        return;
+        continue;
       } else if (auto* binary = curr->dynCast<Binary>()) {
         if (binary->op == AddInt32) {
-          seek(binary->left, mul);
-          seek(binary->right, mul);
-          return;
+          seekStack.emplace_back(binary->right, mul);
+          seekStack.emplace_back(binary->left, mul);
+          continue;
         } else if (binary->op == SubInt32) {
           // if the left is a zero, ignore it, it's how we negate ints
           auto* left = binary->left->dynCast<Const>();
+          seekStack.emplace_back(binary->right, -mul);
           if (!left || left->value.geti32() != 0) {
-            seek(binary->left, mul);
+            seekStack.emplace_back(binary->left, mul);
           }
-          seek(binary->right, -mul);
-          return;
+          continue;
         } else if (binary->op == ShlInt32) {
           if (auto* c = binary->right->dynCast<Const>()) {
-            seek(binary->left, mul * Pow2(Bits::getEffectiveShifts(c)));
-            return;
+            seekStack.emplace_back(binary->left, mul * Pow2(Bits::getEffectiveShifts(c)));
+            continue;
           }
         } else if (binary->op == MulInt32) {
           if (auto* c = binary->left->dynCast<Const>()) {
-            seek(binary->right, mul * c->value.geti32());
-            return;
+            seekStack.emplace_back(binary->right, mul * c->value.geti32());
+            continue;
           } else if (auto* c = binary->right->dynCast<Const>()) {
-            seek(binary->left, mul * c->value.geti32());
-            return;
+            seekStack.emplace_back(binary->left, mul * c->value.geti32());
+            continue;
           }
         }
       }
     };
     // find all factors
-    seek(binary, 1);
     if (constants.size() <= 1) {
       // nothing much to do, except for the trivial case of adding/subbing a
       // zero
