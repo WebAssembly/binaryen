@@ -535,7 +535,8 @@ typedef std::pair<Branch*, Block*> BranchBlock;
 struct Optimizer : public RelooperRecursor {
   Block* Entry;
 
-  Optimizer(Relooper* Parent, Block* EntryInit) : RelooperRecursor(Parent), Entry(EntryInit) {
+  Optimizer(Relooper* Parent, Block* EntryInit)
+    : RelooperRecursor(Parent), Entry(EntryInit) {
     // TODO: there are likely some rare but possible O(N^2) cases with this
     // looping
     bool More = true;
