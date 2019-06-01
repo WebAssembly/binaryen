@@ -3,6 +3,7 @@
 
 # For testing
 git br -v
+git remote -vv
 
 MERGE_BASE=$(git merge-base master HEAD)
 FORMAT_MSG=$(git clang-format $MERGE_BASE -q --diff -- src/)
