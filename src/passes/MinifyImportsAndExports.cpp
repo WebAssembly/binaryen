@@ -159,6 +159,7 @@ private:
     };
     ModuleUtils::iterImportedGlobals(*module, processImport);
     ModuleUtils::iterImportedFunctions(*module, processImport);
+    ModuleUtils::iterImportedEvents(*module, processImport);
 
     if (minifyExports) {
       // Minify the exported names.

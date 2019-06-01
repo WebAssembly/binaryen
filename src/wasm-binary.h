@@ -363,6 +363,7 @@ enum Section {
   Code = 10,
   Data = 11,
   DataCount = 12,
+  Event = 13
 };
 
 enum SegmentFlag {
@@ -948,13 +949,18 @@ public:
   void writeExports();
   void writeDataCount();
   void writeDataSegments();
+  void writeEvents();
 
   // name of the Function => index. first imports, then internals
   std::unordered_map<Name, Index> mappedFunctions;
   // name of the Global => index. first imported globals, then internal globals
   std::unordered_map<Name, uint32_t> mappedGlobals;
+  // name of the Event => index. first imported events, then internal events
+  std::unordered_map<Name, uint32_t> mappedEvents;
+
   uint32_t getFunctionIndex(Name name);
   uint32_t getGlobalIndex(Name name);
+  uint32_t getEventIndex(Name name);
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1071,6 +1077,7 @@ public:
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
   Name getGlobalName(Index index);
+  Name getEventName(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,
@@ -1165,6 +1172,9 @@ public:
 
   void readFunctionTableDeclaration();
   void readTableElements();
+
+  void readEvents();
+
   void readNames(size_t);
   void readFeatures(size_t);
 

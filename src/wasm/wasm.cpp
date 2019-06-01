@@ -82,6 +82,8 @@ Name SPECTEST("spectest");
 Name PRINT("print");
 Name EXIT("exit");
 Name SHARED("shared");
+Name EVENT("event");
+Name ATTR("attr");
 
 // Expressions
 
@@ -908,7 +910,16 @@ Function* Module::getFunction(Name name) {
 Global* Module::getGlobal(Name name) {
   auto iter = globalsMap.find(name);
   if (iter == globalsMap.end()) {
+    assert(false);
     Fatal() << "Module::getGlobal: " << name << " does not exist";
+  }
+  return iter->second;
+}
+
+Event* Module::getEvent(Name name) {
+  auto iter = eventsMap.find(name);
+  if (iter == eventsMap.end()) {
+    Fatal() << "Module::getEvent: " << name << " does not exist";
   }
   return iter->second;
 }
@@ -940,6 +951,14 @@ Function* Module::getFunctionOrNull(Name name) {
 Global* Module::getGlobalOrNull(Name name) {
   auto iter = globalsMap.find(name);
   if (iter == globalsMap.end()) {
+    return nullptr;
+  }
+  return iter->second;
+}
+
+Event* Module::getEventOrNull(Name name) {
+  auto iter = eventsMap.find(name);
+  if (iter == eventsMap.end()) {
     return nullptr;
   }
   return iter->second;
@@ -1009,6 +1028,20 @@ Global* Module::addGlobal(Global* curr) {
   return curr;
 }
 
+Event* Module::addEvent(Event* curr) {
+  if (!curr->name.is()) {
+    Fatal() << "Module::addEvent: empty name";
+  }
+  if (getEventOrNull(curr->name)) {
+    Fatal() << "Module::addEvent: " << curr->name << " already exists";
+  }
+
+  events.emplace_back(curr);
+
+  eventsMap[curr->name] = curr;
+  return curr;
+}
+
 void Module::addStart(const Name& s) { start = s; }
 
 void Module::removeFunctionType(Name name) {
@@ -1051,6 +1084,16 @@ void Module::removeGlobal(Name name) {
   globalsMap.erase(name);
 }
 
+void Module::removeEvent(Name name) {
+  for (size_t i = 0; i < events.size(); i++) {
+    if (events[i]->name == name) {
+      events.erase(events.begin() + i);
+      break;
+    }
+  }
+  eventsMap.erase(name);
+}
+
 // TODO: remove* for other elements
 
 void Module::updateMaps() {
@@ -1069,6 +1112,10 @@ void Module::updateMaps() {
   globalsMap.clear();
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
+  }
+  eventsMap.clear();
+  for (auto& curr : events) {
+    eventsMap[curr->name] = curr.get();
   }
 }
 

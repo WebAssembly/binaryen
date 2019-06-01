@@ -34,6 +34,7 @@ namespace ModuleUtils {
 struct BinaryIndexes {
   std::unordered_map<Name, Index> functionIndexes;
   std::unordered_map<Name, Index> globalIndexes;
+  std::unordered_map<Name, Index> eventIndexes;
 
   BinaryIndexes(Module& wasm) {
     auto addGlobal = [&](Global* curr) {
@@ -66,6 +67,21 @@ struct BinaryIndexes {
       }
     }
     assert(functionIndexes.size() == wasm.functions.size());
+    auto addEvent = [&](Event* curr) {
+      auto index = eventIndexes.size();
+      eventIndexes[curr->name] = index;
+    };
+    for (auto& curr : wasm.events) {
+      if (curr->imported()) {
+        addEvent(curr.get());
+      }
+    }
+    for (auto& curr : wasm.events) {
+      if (!curr->imported()) {
+        addEvent(curr.get());
+      }
+    }
+    assert(eventIndexes.size() == wasm.events.size());
   }
 };
 
@@ -105,6 +121,16 @@ inline Global* copyGlobal(Global* global, Module& out) {
   return ret;
 }
 
+inline Event* copyEvent(Event* event, Module& out) {
+  auto* ret = new Event();
+  ret->name = event->name;
+  ret->attribute = event->attribute;
+  ret->type = event->type;
+  ret->params = event->params;
+  out.addEvent(ret);
+  return ret;
+}
+
 inline void copyModule(Module& in, Module& out) {
   // we use names throughout, not raw points, so simple copying is fine
   // for everything *but* expressions
@@ -119,6 +145,9 @@ inline void copyModule(Module& in, Module& out) {
   }
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
+  }
+  for (auto& curr : in.events) {
+    copyEvent(curr.get(), out);
   }
   out.table = in.table;
   for (auto& segment : out.table.segments) {
@@ -237,6 +266,22 @@ inline void iterImportedFunctions(Module& wasm, T visitor) {
 
 template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
   for (auto& import : wasm.functions) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T> inline void iterImportedEvents(Module& wasm, T visitor) {
+  for (auto& import : wasm.events) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
+  for (auto& import : wasm.events) {
     if (!import->imported()) {
       visitor(import.get());
     }

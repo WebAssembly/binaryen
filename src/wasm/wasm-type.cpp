@@ -68,6 +68,9 @@ FeatureSet getFeatures(Type type) {
   if (type == v128) {
     return FeatureSet::SIMD;
   }
+  if (type == except_ref) {
+    return FeatureSet::ExceptionHandling;
+  }
   return FeatureSet();
 }
 

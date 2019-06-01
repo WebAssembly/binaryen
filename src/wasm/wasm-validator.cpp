@@ -1745,6 +1745,10 @@ static void validateExports(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(name == Name("0") || name == module.memory.name,
                         name,
                         "module memory exports must be found");
+    } else if (exp->kind == ExternalKind::Event) {
+      info.shouldBeTrue(module.getEventOrNull(name),
+                        name,
+                        "module event exports must be found");
     } else {
       WASM_UNREACHABLE();
     }
@@ -1855,6 +1859,36 @@ static void validateTable(Module& module, ValidationInfo& info) {
   }
 }
 
+static void validateEvents(Module& module, ValidationInfo& info) {
+  if (!module.events.empty()) {
+    info.shouldBeTrue(module.features.hasExceptionHandling(),
+                      module.events[0]->name,
+                      "Module has events (event-handling is disabled)");
+  }
+  for (auto& curr : module.events) {
+    info.shouldBeTrue(
+      curr->type.is(), curr->name, "Event should have a valid type");
+    FunctionType* ft = module.getFunctionType(curr->type);
+    info.shouldBeEqual(
+      ft->result, none, curr->name, "Event type's result type should be none");
+    info.shouldBeTrue(!curr->params.empty(),
+                      curr->name,
+                      "There should be 1 or more values in an event type");
+    info.shouldBeEqual(curr->attribute,
+                       (unsigned)0,
+                       curr->attribute,
+                       "Currently only attribute 0 is supported");
+    for (auto type : curr->params) {
+      info.shouldBeTrue(isIntegerType(type) || isFloatType(type),
+                        curr->name,
+                        "Values in an event should have integer or float type");
+    }
+    info.shouldBeTrue(curr->params == ft->params,
+                      curr->name,
+                      "Event's function type and internal type should match");
+  }
+}
+
 static void validateModule(Module& module, ValidationInfo& info) {
   // start
   if (module.start.is()) {
@@ -1889,6 +1923,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateGlobals(module, info);
     validateMemory(module, info);
     validateTable(module, info);
+    validateEvents(module, info);
     validateModule(module, info);
   }
   // validate additional internal IR details when in pass-debug mode

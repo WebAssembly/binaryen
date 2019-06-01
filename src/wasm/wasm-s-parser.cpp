@@ -388,6 +388,8 @@ void SExpressionWasmBuilder::preParseImports(Element& curr) {
       parseTable(curr, true /* preParseImport */);
     } else if (id == MEMORY) {
       parseMemory(curr, true /* preParseImport */);
+    } else if (id == EVENT) {
+      parseEvent(curr, true /* preParseImport */);
     } else {
       throw ParseException(
         "fancy import we don't support yet", curr.line, curr.col);
@@ -430,6 +432,9 @@ void SExpressionWasmBuilder::parseModuleElement(Element& curr) {
   if (id == TYPE) {
     return; // already done
   }
+  if (id == EVENT) {
+    return parseEvent(curr);
+  }
   std::cerr << "bad module element " << id.str << '\n';
   throw ParseException("unknown module element", curr.line, curr.col);
 }
@@ -470,6 +475,19 @@ Name SExpressionWasmBuilder::getGlobalName(Element& s) {
       throw ParseException("unknown global in getGlobalName");
     }
     return globalNames[offset];
+  }
+}
+
+Name SExpressionWasmBuilder::getEventName(Element& s) {
+  if (s.dollared()) {
+    return s.str();
+  } else {
+    // index
+    size_t offset = atoi(s.str().c_str());
+    if (offset >= eventNames.size()) {
+      throw ParseException("unknown event in getEventName");
+    }
+    return eventNames[offset];
   }
 }
 
@@ -1877,6 +1895,8 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
       ex->kind = ExternalKind::Table;
     } else if (elementStartsWith(inner, GLOBAL)) {
       ex->kind = ExternalKind::Global;
+    } else if (inner[0]->str() == EVENT) {
+      ex->kind = ExternalKind::Event;
     } else {
       throw ParseException("invalid export");
     }
@@ -1913,6 +1933,8 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       wasm.table.exists = true;
     } else if (elementStartsWith(*s[3], GLOBAL)) {
       kind = ExternalKind::Global;
+    } else if ((*s[3])[0]->str() == EVENT) {
+      kind = ExternalKind::Event;
     } else {
       newStyle = false; // either (param..) or (result..)
     }
@@ -1936,6 +1958,9 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       name = Name("import$memory$" + std::to_string(0));
     } else if (kind == ExternalKind::Table) {
       name = Name("import$table$" + std::to_string(0));
+    } else if (kind == ExternalKind::Event) {
+      name = Name("import$event" + std::to_string(eventCounter++));
+      eventNames.push_back(name);
     } else {
       throw ParseException("invalid import");
     }
@@ -1957,7 +1982,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   if (kind == ExternalKind::Function) {
     FunctionType* functionType = nullptr;
     auto func = make_unique<Function>();
-    parseTypeUse(inner, j, functionType, func->params, func->result);
+    j = parseTypeUse(inner, j, functionType, func->params, func->result);
     func->name = name;
     func->module = module;
     func->base = base;
@@ -1968,9 +1993,9 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     Type type;
     bool mutable_ = false;
     if (inner[j]->isStr()) {
-      type = stringToType(inner[j]->str());
+      type = stringToType(inner[j++]->str());
     } else {
-      auto& inner2 = *inner[j];
+      auto& inner2 = *inner[j++];
       if (inner2[0]->str() != MUT) {
         throw ParseException("expected mut");
       }
@@ -1997,6 +2022,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     } else {
       wasm.table.max = Table::kUnlimitedSize;
     }
+    j++; // funcref
     // ends with the table element type
   } else if (kind == ExternalKind::Memory) {
     wasm.memory.module = module;
@@ -2007,10 +2033,32 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
         throw ParseException("bad memory limit declaration");
       }
       wasm.memory.shared = true;
-      parseMemoryLimits(limits, 1);
+      j = parseMemoryLimits(limits, 1);
     } else {
-      parseMemoryLimits(inner, j);
+      j = parseMemoryLimits(inner, j);
     }
+  } else if (kind == ExternalKind::Event) {
+    FunctionType* functionType = nullptr;
+    auto event = make_unique<Event>();
+    if (j >= inner.size()) {
+      throw ParseException("event does not have an attribute", s.line, s.col);
+    }
+    auto& attrElem = *inner[j++];
+    if (!elementStartsWith(attrElem, ATTR) || attrElem.size() != 2) {
+      throw ParseException("invalid attribute", attrElem.line, attrElem.col);
+    }
+    event->attribute = atoi(attrElem[1]->c_str());
+    Type fakeResult; // just to call parseTypeUse
+    j = parseTypeUse(inner, j, functionType, event->params, fakeResult);
+    event->name = name;
+    event->module = module;
+    event->base = base;
+    event->type = functionType->name;
+    wasm.addEvent(event.release());
+  }
+  // If there are more elements, they are invalid
+  if (j < inner.size()) {
+    throw ParseException("invalid element", inner[j]->line, inner[j]->col);
   }
 }
 
@@ -2232,6 +2280,97 @@ void SExpressionWasmBuilder::parseType(Element& s) {
     type->name = Name(std::string(type->name.c_str()) + "_");
   }
   wasm.addFunctionType(std::move(type));
+}
+
+void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
+  auto event = make_unique<Event>();
+  size_t i = 1;
+
+  // Parse name
+  if (s[i]->isStr() && s[i]->dollared()) {
+    auto& inner = *s[i++];
+    event->name = inner.str();
+    if (wasm.getEventOrNull(event->name)) {
+      throw ParseException("duplicate event", inner.line, inner.col);
+    }
+  } else {
+    event->name = Name::fromInt(eventCounter);
+    assert(!wasm.getEventOrNull(event->name));
+  }
+  eventCounter++;
+  eventNames.push_back(event->name);
+
+  // Parse import, if any
+  if (i < s.size() && elementStartsWith(*s[i], IMPORT)) {
+    assert(preParseImport && "import element in non-preParseImport mode");
+    auto& importElem = *s[i++];
+    if (importElem.size() != 3) {
+      throw ParseException("invalid import", importElem.line, importElem.col);
+    }
+    if (!importElem[1]->isStr() || importElem[1]->dollared()) {
+      throw ParseException(
+        "invalid import module name", importElem[1]->line, importElem[1]->col);
+    }
+    if (!importElem[2]->isStr() || importElem[2]->dollared()) {
+      throw ParseException(
+        "invalid import base name", importElem[2]->line, importElem[2]->col);
+    }
+    event->module = importElem[1]->str();
+    event->base = importElem[2]->str();
+  }
+
+  // Parse export, if any
+  if (i < s.size() && elementStartsWith(*s[i], EXPORT)) {
+    auto& exportElem = *s[i++];
+    if (event->module.is()) {
+      throw ParseException("import and export cannot be specified together",
+                           exportElem.line,
+                           exportElem.col);
+    }
+    if (exportElem.size() != 2) {
+      throw ParseException("invalid export", exportElem.line, exportElem.col);
+    }
+    if (!exportElem[1]->isStr() || exportElem[1]->dollared()) {
+      throw ParseException(
+        "invalid export name", exportElem[1]->line, exportElem[1]->col);
+    }
+    auto ex = make_unique<Export>();
+    ex->name = exportElem[1]->str();
+    if (wasm.getExportOrNull(ex->name)) {
+      throw ParseException(
+        "duplicate export", exportElem[1]->line, exportElem[1]->col);
+    }
+    ex->value = event->name;
+    ex->kind = ExternalKind::Event;
+  }
+
+  // Parse attribute
+  if (i >= s.size()) {
+    throw ParseException("event does not have an attribute", s.line, s.col);
+  }
+  auto& attrElem = *s[i++];
+  if (!elementStartsWith(attrElem, ATTR) || attrElem.size() != 2) {
+    throw ParseException("invalid attribute", attrElem.line, attrElem.col);
+  }
+  if (!attrElem[1]->isStr()) {
+    throw ParseException(
+      "invalid attribute", attrElem[1]->line, attrElem[1]->col);
+  }
+  event->attribute = atoi(attrElem[1]->c_str());
+
+  // Parse typeuse
+  FunctionType* functionType = nullptr;
+  Type fakeResult; // just co call parseTypeUse
+  i = parseTypeUse(s, i, functionType, event->params, fakeResult);
+  assert(functionType && "functionType should've been set by parseTypeUse");
+  event->type = functionType->name;
+
+  // If there are more elements, they are invalid
+  if (i < s.size()) {
+    throw ParseException("invalid element", s[i]->line, s[i]->col);
+  }
+
+  wasm.addEvent(event.release());
 }
 
 } // namespace wasm

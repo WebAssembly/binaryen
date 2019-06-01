@@ -113,8 +113,10 @@ class SExpressionWasmBuilder {
   MixedArena& allocator;
   std::vector<Name> functionNames;
   std::vector<Name> globalNames;
-  int functionCounter;
+  std::vector<Name> eventNames;
+  int functionCounter = 0;
   int globalCounter = 0;
+  int eventCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, Type> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
@@ -142,6 +144,7 @@ private:
   Name getFunctionName(Element& s);
   Name getFunctionTypeName(Element& s);
   Name getGlobalName(Element& s);
+  Name getEventName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
 
   // returns the next index in s
@@ -247,6 +250,7 @@ private:
   void parseElem(Element& s);
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
   void parseType(Element& s);
+  void parseEvent(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
 };

@@ -1,8 +1,13 @@
 [
   {
-    "name": "rooted-export",
+    "name": "rooted-export-func",
     "root": true,
     "export": "wasm_func_b"
+  },
+  {
+    "name": "rooted-export-event",
+    "root": true,
+    "export": "wasm_event_b"
   }
 ]
 

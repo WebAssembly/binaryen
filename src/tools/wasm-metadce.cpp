@@ -55,10 +55,12 @@ struct MetaDCEGraph {
   std::unordered_map<Name, Name> exportToDCENode;
   std::unordered_map<Name, Name> functionToDCENode; // function name => DCE name
   std::unordered_map<Name, Name> globalToDCENode;   // global name => DCE name
+  std::unordered_map<Name, Name> eventToDCENode;    // event name => DCE name
 
   std::unordered_map<Name, Name> DCENodeToExport; // reverse maps
   std::unordered_map<Name, Name> DCENodeToFunction;
   std::unordered_map<Name, Name> DCENodeToGlobal;
+  std::unordered_map<Name, Name> DCENodeToEvent;
 
   // imports are not mapped 1:1 to DCE nodes in the wasm, since env.X might
   // be imported twice, for example. So we don't map a DCE node to an Import,
@@ -77,6 +79,11 @@ struct MetaDCEGraph {
 
   ImportId getGlobalImportId(Name name) {
     auto* imp = wasm.getGlobal(name);
+    return getImportId(imp->module, imp->base);
+  }
+
+  ImportId getEventImportId(Name name) {
+    auto* imp = wasm.getEvent(name);
     return getImportId(imp->module, imp->base);
   }
 
@@ -106,8 +113,14 @@ struct MetaDCEGraph {
       globalToDCENode[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
-    // only process function and global imports - the table and memory are
-    // always there
+    ModuleUtils::iterDefinedEvents(wasm, [&](Event* event) {
+      auto dceName = getName("event", event->name.str);
+      DCENodeToEvent[dceName] = event->name;
+      eventToDCENode[event->name] = dceName;
+      nodes[dceName] = DCENode(dceName);
+    });
+    // only process function, global, and event imports - the table and memory
+    // are always there
     ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
@@ -116,6 +129,13 @@ struct MetaDCEGraph {
       }
     });
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
+      auto id = getImportId(import->module, import->base);
+      if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+        auto dceName = getName("importId", import->name.str);
+        importIdToDCENode[id] = dceName;
+      }
+    });
+    ModuleUtils::iterImportedEvents(wasm, [&](Event* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
         auto dceName = getName("importId", import->name.str);
@@ -144,6 +164,13 @@ struct MetaDCEGraph {
         } else {
           node.reaches.push_back(
             importIdToDCENode[getGlobalImportId(exp->value)]);
+        }
+      } else if (exp->kind == ExternalKind::Event) {
+        if (!wasm.getEvent(exp->value)->imported()) {
+          node.reaches.push_back(eventToDCENode[exp->value]);
+        } else {
+          node.reaches.push_back(
+            importIdToDCENode[getEventImportId(exp->value)]);
         }
       }
     }
@@ -354,6 +381,9 @@ public:
       }
       if (DCENodeToGlobal.find(name) != DCENodeToGlobal.end()) {
         std::cout << "  is global " << DCENodeToGlobal[name] << '\n';
+      }
+      if (DCENodeToEvent.find(name) != DCENodeToEvent.end()) {
+        std::cout << "  is event " << DCENodeToEvent[name] << '\n';
       }
       for (auto target : node.reaches) {
         std::cout << "  reaches: " << target.str << '\n';

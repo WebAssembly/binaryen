@@ -1660,6 +1660,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case ExternalKind::Global:
         o << "global";
         break;
+      case ExternalKind::Event:
+        o << "event";
+        break;
       case ExternalKind::Invalid:
         WASM_UNREACHABLE();
     }
@@ -1802,6 +1805,25 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << ')';
     } else {
       decIndent();
+    }
+    o << maybeNewLine;
+  }
+  void visitEvent(Event* curr) {
+    doIndent(o, indent);
+    if (curr->imported()) {
+      o << '(';
+      emitImportHeader(curr);
+    }
+    o << "(event ";
+    printName(curr->name, o);
+    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace << '(';
+    printMinor(o, "param");
+    for (auto& param : curr->params) {
+      o << ' ' << printType(param);
+    }
+    o << "))";
+    if (curr->imported()) {
+      o << ')';
     }
     o << maybeNewLine;
   }
@@ -1948,12 +1970,16 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterImportedFunctions(
       *curr, [&](Function* func) { visitFunction(func); });
+    ModuleUtils::iterImportedEvents(*curr,
+                                    [&](Event* event) { visitEvent(event); });
     ModuleUtils::iterDefinedMemories(
       *curr, [&](Memory* memory) { visitMemory(memory); });
     ModuleUtils::iterDefinedTables(*curr,
                                    [&](Table* table) { visitTable(table); });
     ModuleUtils::iterDefinedGlobals(
       *curr, [&](Global* global) { visitGlobal(global); });
+    ModuleUtils::iterDefinedEvents(*curr,
+                                   [&](Event* event) { visitEvent(event); });
     for (auto& child : curr->exports) {
       doIndent(o, indent);
       visitExport(child.get());

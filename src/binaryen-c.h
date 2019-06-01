@@ -136,6 +136,7 @@ BinaryenExternalKind BinaryenExternalFunction(void);
 BinaryenExternalKind BinaryenExternalTable(void);
 BinaryenExternalKind BinaryenExternalMemory(void);
 BinaryenExternalKind BinaryenExternalGlobal(void);
+BinaryenExternalKind BinaryenExternalEvent(void);
 
 // Features. Call to get the value of each; you can cache them. Use bitwise
 // operators to combine and test particular features.
@@ -882,6 +883,12 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              BinaryenType globalType);
+void BinaryenAddEventImport(BinaryenModuleRef module,
+                            const char* internalName,
+                            const char* externalModuleName,
+                            const char* externalBaseName,
+                            uint32_t attribute,
+                            BinaryenFunctionTypeRef eventType);
 
 // Exports
 
@@ -902,6 +909,9 @@ BinaryenExportRef BinaryenAddMemoryExport(BinaryenModuleRef module,
 BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
                                           const char* internalName,
                                           const char* externalName);
+BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
+                                         const char* internalName,
+                                         const char* externalName);
 void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 
 // Globals
@@ -916,6 +926,17 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
 // Gets a global reference by name.
 BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module, const char* name);
 void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name);
+
+// Events
+
+typedef void* BinaryenEventRef;
+
+BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
+                                  const char* name,
+                                  uint32_t attribute,
+                                  BinaryenFunctionTypeRef type);
+BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name);
+void BinaryenEventEvent(BinaryenModuleRef module, const char* name);
 
 // Function table. One per module
 
@@ -1153,6 +1174,21 @@ int BinaryenGlobalIsMutable(BinaryenGlobalRef global);
 BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global);
 
 //
+// ========== Event Operations ==========
+//
+
+// Gets the name of the specified `Event`.
+const char* BinaryenEventGetName(BinaryenEventRef event);
+// Gets the attribute of the specified `Event`.
+int BinaryenEventGetAttribute(BinaryenEventRef event);
+// Gets the name of the `FunctionType` associated with the specified `Event`.
+const char* BinaryenEventGetType(BinaryenEventRef event);
+// Gets the number of parameters of the specified `Event`.
+BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event);
+// Gets the type of the parameter at the specified index of the specified
+// `Event`.
+BinaryenType BinaryenEventGetParam(BinaryenEventRef event, BinaryenIndex index);
+
 //
 // ========== Import Operations ==========
 //
@@ -1160,9 +1196,11 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global);
 // Gets the external module name of the specified import.
 const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import);
 const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import);
+const char* BinaryenEventImportGetModule(BinaryenEventRef import);
 // Gets the external base name of the specified import.
 const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import);
 const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import);
+const char* BinaryenEventImportGetBase(BinaryenEventRef import);
 
 //
 // ========== Export Operations ==========

@@ -84,6 +84,7 @@ Module['ExternalFunction'] = Module['_BinaryenExternalFunction']();
 Module['ExternalTable'] = Module['_BinaryenExternalTable']();
 Module['ExternalMemory'] = Module['_BinaryenExternalMemory']();
 Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
+Module['ExternalEvent'] = Module['_BinaryenExternalEvent']();
 
 // Features
 Module['Features'] = {
@@ -1788,6 +1789,21 @@ function wrapModule(module, self) {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
     });
   }
+  self['addEvent'] = function(name, attribute, eventType) {
+    return preserveStack(function() {
+      return Module['_BinaryenAddEvent'](module, strToStack(name), attribute, eventType);
+    });
+  };
+  self['getEvent'] = function(name) {
+    return preserveStack(function() {
+      return Module['_BinaryenGetEvent'](module, strToStack(name));
+    });
+  };
+  self['removeEvent'] = function(name) {
+    return preserveStack(function() {
+      return Module['_BinaryenRemoveEvent'](module, strToStack(name));
+    });
+  };
   self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, functionType) {
     return preserveStack(function() {
       return Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), functionType);
@@ -1806,6 +1822,11 @@ function wrapModule(module, self) {
   self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType) {
     return preserveStack(function() {
       return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType);
+    });
+  };
+  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, eventType) {
+    return preserveStack(function() {
+      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, eventType);
     });
   };
   self['addExport'] = // deprecated
@@ -1827,6 +1848,11 @@ function wrapModule(module, self) {
   self['addGlobalExport'] = function(internalName, externalName) {
     return preserveStack(function() {
       return Module['_BinaryenAddGlobalExport'](module, strToStack(internalName), strToStack(externalName));
+    });
+  };
+  self['addEventExport'] = function(internalName, externalName) {
+    return preserveStack(function() {
+      return Module['_BinaryenAddEventExport'](module, strToStack(internalName), strToStack(externalName));
     });
   };
   self['removeExport'] = function(externalName) {
@@ -2351,6 +2377,17 @@ Module['getGlobalInfo'] = function(global) {
     'type': Module['_BinaryenGlobalGetType'](global),
     'mutable': Boolean(Module['_BinaryenGlobalIsMutable'](global)),
     'init': Module['_BinaryenGlobalGetInitExpr'](global)
+  };
+};
+
+// Obtains information about a 'Event'
+Module['getEventInfo'] = function(event_) {
+  return {
+    'name': UTF8ToString(Module['_BinaryenEventGetName'](event_)),
+    'module': UTF8ToString(Module['_BinaryenEventImportGetModule'](event_)),
+    'base': UTF8ToString(Module['_BinaryenEventImportGetBase'](event_)),
+    'attribute': Module['_BinaryenEventGetAttribute'](event_),
+    'type': UTF8ToString(Module['_BinaryenEventGetType'](event_))
   };
 };
 

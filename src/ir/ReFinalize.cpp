@@ -172,6 +172,7 @@ void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
+void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {
