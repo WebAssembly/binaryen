@@ -1021,7 +1021,8 @@ private:
           continue;
         } else if (binary->op == ShlInt32) {
           if (auto* c = binary->right->dynCast<Const>()) {
-            seekStack.emplace_back(binary->left, mul * Pow2(Bits::getEffectiveShifts(c)));
+            seekStack.emplace_back(binary->left,
+                                   mul * Pow2(Bits::getEffectiveShifts(c)));
             continue;
           }
         } else if (binary->op == MulInt32) {
