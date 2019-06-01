@@ -2,7 +2,7 @@
 
 
 # For testing
-git br -v
+git branch -vv
 git remote -vv
 
 MERGE_BASE=$(git merge-base master HEAD)
