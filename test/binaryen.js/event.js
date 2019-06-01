@@ -25,8 +25,8 @@ module.addEventImport("a-event-imp", "module", "base", 0, vif);
 module.validate();
 console.log(module.emitText());
 
-module.removeEvent("a-event");
 module.removeExport("a-event-exp");
+module.removeEvent("a-event");
 
 module.validate();
 console.log(module.emitText());
