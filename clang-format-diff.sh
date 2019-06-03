@@ -1,7 +1,8 @@
 #!/bin/bash
 
-
 # For testing
+nonexistent_command
+
 git branch -vv
 git remote -vv
 
