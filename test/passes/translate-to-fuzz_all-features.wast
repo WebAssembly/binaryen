@@ -1,4 +1,4 @@
-(module # fake module here, for test harness, but it's really not needed
+(module # fake module here, for test harness, but it is really not needed
 ..
 any
 3INPUT

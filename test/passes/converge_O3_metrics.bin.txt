@@ -1,4 +1,5 @@
 total
+ [events]       : 0       
  [exports]      : 2       
  [funcs]        : 8       
  [globals]      : 1       
@@ -242,6 +243,7 @@ total
  )
 )
 total
+ [events]       : 0       
  [exports]      : 2       
  [funcs]        : 8       
  [globals]      : 1       
@@ -486,6 +488,7 @@ total
  )
 )
 total
+ [events]       : 0       
  [exports]      : 2       
  [funcs]        : 8       
  [globals]      : 1       

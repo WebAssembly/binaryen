@@ -942,6 +942,7 @@ longname3488 => J9
 longname1490 => JA
 longname4946 => JAa
 longname1544 => JB
+eventname1 => JBa
 longname1598 => JC
 longname1652 => JD
 longname1706 => JE
@@ -5000,6 +5001,8 @@ longname1426 => zz
 longname4882 => zza
 (module
  (type $FUNCSIG$v (func))
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$vii (func (param i32 i32)))
  (import "env" "a" (global $import$global0 i32))
  (import "env" "__memory_base" (global $import$global1 i32))
  (import "env" "__table_base" (global $import$global2 i32))
@@ -10003,8 +10006,11 @@ longname4882 => zza
  (import "env" "HBa" (func $internal4998))
  (import "env" "IBa" (func $internal4999))
  (import "other" "anything" (func $internalInfinity))
+ (import "env" "JBa" (event $eventname1 (attr 0) (param i32)))
+ (event $event1 (attr 0) (param i32 i32))
  (export "foo1" (func $foo1))
  (export "foo2" (func $foo2))
+ (export "event1" (event $event1))
  (func $foo1 (; 5000 ;) (type $FUNCSIG$v)
   (nop)
  )

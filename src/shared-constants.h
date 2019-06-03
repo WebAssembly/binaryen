@@ -62,6 +62,8 @@ extern Name SPECTEST;
 extern Name PRINT;
 extern Name EXIT;
 extern Name SHARED;
+extern Name EVENT;
+extern Name ATTR;
 
 } // namespace wasm
 

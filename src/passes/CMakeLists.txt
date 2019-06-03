@@ -43,6 +43,7 @@ SET(passes_SOURCES
   Print.cpp
   PrintCallGraph.cpp
   PrintFeatures.cpp
+  PrintFunctionMap.cpp
   StackIR.cpp
   Strip.cpp
   StripTargetFeatures.cpp

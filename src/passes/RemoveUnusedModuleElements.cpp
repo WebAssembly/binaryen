@@ -15,9 +15,9 @@
  */
 
 //
-// Removes module elements that are are never used: functions and globals,
-// which may be imported or not, and function types (which we merge
-// and remove if unneeded)
+// Removes module elements that are are never used: functions, globals, and
+// events, which may be imported or not, and function types (which we merge and
+// remove if unneeded)
 //
 
 #include <memory>
@@ -30,7 +30,7 @@
 
 namespace wasm {
 
-enum class ModuleElementKind { Function, Global };
+enum class ModuleElementKind { Function, Global, Event };
 
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
@@ -68,7 +68,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
           if (!func->imported()) {
             walk(func->body);
           }
-        } else {
+        } else if (curr.first == ModuleElementKind::Global) {
           // if not imported, it has an init expression we need to walk
           auto* global = module->getGlobal(curr.second);
           if (!global->imported()) {
@@ -122,12 +122,15 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 struct FunctionTypeAnalyzer : public PostWalker<FunctionTypeAnalyzer> {
   std::vector<Function*> functions;
   std::vector<CallIndirect*> indirectCalls;
+  std::vector<Event*> events;
 
   void visitFunction(Function* curr) {
     if (curr->type.is()) {
       functions.push_back(curr);
     }
   }
+
+  void visitEvent(Event* curr) { events.push_back(curr); }
 
   void visitCallIndirect(CallIndirect* curr) { indirectCalls.push_back(curr); }
 };
@@ -139,11 +142,11 @@ struct RemoveUnusedModuleElements : public Pass {
     : rootAllFunctions(rootAllFunctions) {}
 
   void run(PassRunner* runner, Module* module) override {
-    optimizeGlobalsAndFunctions(module);
+    optimizeGlobalsAndFunctionsAndEvents(module);
     optimizeFunctionTypes(module);
   }
 
-  void optimizeGlobalsAndFunctions(Module* module) {
+  void optimizeGlobalsAndFunctionsAndEvents(Module* module) {
     std::vector<ModuleElement> roots;
     // Module start is a root.
     if (module->start.is()) {
@@ -169,6 +172,8 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Function, curr->value);
       } else if (curr->kind == ExternalKind::Global) {
         roots.emplace_back(ModuleElementKind::Global, curr->value);
+      } else if (curr->kind == ExternalKind::Event) {
+        roots.emplace_back(ModuleElementKind::Event, curr->value);
       } else if (curr->kind == ExternalKind::Memory) {
         exportsMemory = true;
       } else if (curr->kind == ExternalKind::Table) {
@@ -211,6 +216,17 @@ struct RemoveUnusedModuleElements : public Pass {
                              [&](const std::unique_ptr<Global>& curr) {
                                return analyzer.reachable.count(
                                         ModuleElement(ModuleElementKind::Global,
+                                                      curr->name)) == 0;
+                             }),
+              v.end());
+    }
+    {
+      auto& v = module->events;
+      v.erase(std::remove_if(v.begin(),
+                             v.end(),
+                             [&](const std::unique_ptr<Event>& curr) {
+                               return analyzer.reachable.count(
+                                        ModuleElement(ModuleElementKind::Event,
                                                       curr->name)) == 0;
                              }),
               v.end());
@@ -271,6 +287,9 @@ struct RemoveUnusedModuleElements : public Pass {
     }
     for (auto* call : analyzer.indirectCalls) {
       call->fullType = canonicalize(call->fullType);
+    }
+    for (auto* event : analyzer.events) {
+      event->type = canonicalize(event->type);
     }
     // remove no-longer used types
     module->functionTypes.erase(

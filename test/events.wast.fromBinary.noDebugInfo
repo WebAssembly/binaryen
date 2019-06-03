@@ -1,0 +1,13 @@
+(module
+ (type $0 (func (param i32)))
+ (type $1 (func (param i32 f32)))
+ (import "env" "im0" (event $eimport$0 (attr 0) (param i32)))
+ (import "env" "im1" (event $eimport$1 (attr 0) (param i32 f32)))
+ (event $event$0 (attr 0) (param i32))
+ (event $event$1 (attr 0) (param i32 f32))
+ (event $event$2 (attr 0) (param i32 f32))
+ (event $event$3 (attr 0) (param i32 f32))
+ (event $event$4 (attr 0) (param i32))
+ (export "ex1" (event $event$1))
+)
+

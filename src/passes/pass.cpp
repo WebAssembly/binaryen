@@ -211,6 +211,9 @@ void PassRegistry::registerPasses() {
     "print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass(
     "print-call-graph", "print call graph", createPrintCallGraphPass);
+  registerPass("print-function-map",
+               "print a map of function indexes to names",
+               createPrintFunctionMapPass);
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
                createPrintStackIRPass);

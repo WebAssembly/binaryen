@@ -1,4 +1,5 @@
 total
+ [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 0       

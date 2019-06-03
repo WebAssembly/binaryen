@@ -21,9 +21,10 @@ BinaryenFeatureAll: 127
 )
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $vi (func (param i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $3 (func))
+ (type $4 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
@@ -32,6 +33,7 @@ BinaryenFeatureAll: 127
  (elem (i32.const 0) "$kitchen()sinker")
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))
+ (event $a-event (attr 0) (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
  (start $starter)
@@ -1930,6 +1932,7 @@ int main() {
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
   std::map<size_t, BinaryenGlobalRef> globals;
+  std::map<size_t, BinaryenEventRef> events;
   std::map<size_t, BinaryenExportRef> exports;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
@@ -3308,10 +3311,15 @@ int main() {
   expressions[654] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
   globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[654]);
   {
-    BinaryenType paramTypes[] = { 1, 4 };
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
+    BinaryenType paramTypes[] = { 1 };
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
-  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
+  BinaryenAddEvent(the_module, "a-event", 0, functionTypes[1]);
+  {
+    BinaryenType paramTypes[] = { 1, 4 };
+    functionTypes[2] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
+  }
+  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[2]);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   BinaryenFunctionGetName(functions[0]);
   {
@@ -3330,17 +3338,17 @@ int main() {
   }
   {
     BinaryenType paramTypes[] = { 0 };
-    functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
+    functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
   expressions[656] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[656]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[656]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
     BinaryenType paramTypes[] = { 0 };
-    functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
+    functionTypes[4] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
   BinaryenModuleSetFeatures(the_module, 127);
@@ -3349,9 +3357,10 @@ int main() {
   BinaryenModulePrint(the_module);
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $vi (func (param i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $3 (func))
+ (type $4 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
@@ -3360,6 +3369,7 @@ int main() {
  (elem (i32.const 0) "$kitchen()sinker")
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))
+ (event $a-event (attr 0) (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
  (start $starter)
@@ -4723,6 +4733,7 @@ int main() {
   expressions.clear();
   functions.clear();
   globals.clear();
+  events.clear();
   exports.clear();
   relooperBlocks.clear();
   the_module = BinaryenModuleCreate();
@@ -5657,6 +5668,7 @@ optimized:
   expressions.clear();
   functions.clear();
   globals.clear();
+  events.clear();
   exports.clear();
   relooperBlocks.clear();
   return 0;

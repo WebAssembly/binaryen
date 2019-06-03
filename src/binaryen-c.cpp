@@ -125,6 +125,7 @@ std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
 std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
 std::map<BinaryenGlobalRef, size_t> globals;
+std::map<BinaryenEventRef, size_t> events;
 std::map<BinaryenExportRef, size_t> exports;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
 
@@ -368,6 +369,9 @@ BinaryenExternalKind BinaryenExternalMemory(void) {
 BinaryenExternalKind BinaryenExternalGlobal(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Global);
 }
+BinaryenExternalKind BinaryenExternalEvent(void) {
+  return static_cast<BinaryenExternalKind>(ExternalKind::Event);
+}
 
 // Features
 
@@ -417,12 +421,14 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     std::cout << "  expressions.clear();\n";
     std::cout << "  functions.clear();\n";
     std::cout << "  globals.clear();\n";
+    std::cout << "  events.clear();\n";
     std::cout << "  exports.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
     functionTypes.clear();
     expressions.clear();
     functions.clear();
     globals.clear();
+    events.clear();
     exports.clear();
     relooperBlocks.clear();
   }
@@ -2775,6 +2781,45 @@ void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
   wasm->removeGlobal(name);
 }
 
+// Events
+
+BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
+                                  const char* name,
+                                  uint32_t attribute,
+                                  BinaryenFunctionTypeRef type) {
+  if (tracing) {
+    std::cout << "  BinaryenAddEvent(the_module, \"" << name << "\", "
+              << attribute << ", functionTypes[" << functionTypes[type]
+              << "]);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  auto* ret = new Event();
+  ret->name = name;
+  ret->attribute = attribute;
+  ret->type = ((FunctionType*)type)->name;
+  ret->params = ((FunctionType*)type)->params;
+  wasm->addEvent(ret);
+  return ret;
+}
+
+BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenGetEvent(the_module, \"" << name << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->getEvent(name);
+}
+void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveEvent(the_module, \"" << name << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->removeEvent(name);
+}
+
 // Imports
 
 void BinaryenAddFunctionImport(BinaryenModuleRef module,
@@ -2849,6 +2894,29 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
   ret->base = externalBaseName;
   ret->type = Type(globalType);
   wasm->addGlobal(ret);
+}
+void BinaryenAddEventImport(BinaryenModuleRef module,
+                            const char* internalName,
+                            const char* externalModuleName,
+                            const char* externalBaseName,
+                            uint32_t attribute,
+                            BinaryenFunctionTypeRef eventType) {
+  auto* wasm = (Module*)module;
+  auto* ret = new Event();
+
+  if (tracing) {
+    std::cout << "  BinaryenAddEventImport(the_module, \"" << internalName
+              << "\", \"" << externalModuleName << "\", \"" << externalBaseName
+              << "\", " << attribute << ", functionTypes["
+              << functionTypes[eventType] << "]);\n";
+  }
+
+  ret->name = internalName;
+  ret->module = externalModuleName;
+  ret->base = externalBaseName;
+  ret->type = ((FunctionType*)eventType)->name;
+  ret->params = ((FunctionType*)eventType)->params;
+  wasm->addEvent(ret);
 }
 
 // Exports
@@ -2935,6 +3003,26 @@ BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
   ret->value = internalName;
   ret->name = externalName;
   ret->kind = ExternalKind::Global;
+  wasm->addExport(ret);
+  return ret;
+}
+BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
+                                         const char* internalName,
+                                         const char* externalName) {
+  auto* wasm = (Module*)module;
+  auto* ret = new Export();
+
+  if (tracing) {
+    auto id = exports.size();
+    exports[ret] = id;
+    std::cout << "  exports[" << id
+              << "] = BinaryenAddEventExport(the_module, \"" << internalName
+              << "\", \"" << externalName << "\");\n";
+  }
+
+  ret->value = internalName;
+  ret->name = externalName;
+  ret->kind = ExternalKind::Event;
   wasm->addExport(ret);
   return ret;
 }
@@ -3655,6 +3743,52 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 }
 
 //
+// =========== Event operations ===========
+//
+
+const char* BinaryenEventGetName(BinaryenEventRef event) {
+  if (tracing) {
+    std::cout << "  BinaryenEventGetName(events[" << events[event] << "]);\n";
+  }
+
+  return ((Event*)event)->name.c_str();
+}
+int BinaryenEventGetAttribute(BinaryenEventRef event) {
+  if (tracing) {
+    std::cout << "  BinaryenEventGetAttribute(events[" << events[event]
+              << "]);\n";
+  }
+
+  return ((Event*)event)->attribute;
+}
+const char* BinaryenEventGetType(BinaryenEventRef event) {
+  if (tracing) {
+    std::cout << "  BinaryenEventGetType(events[" << events[event] << "]);\n";
+  }
+
+  return ((Event*)event)->type.c_str();
+}
+BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event) {
+  if (tracing) {
+    std::cout << "  BinaryenEventGetNumParams(events[" << events[event]
+              << "]);\n";
+  }
+
+  return ((Event*)event)->params.size();
+}
+BinaryenType BinaryenEventGetParam(BinaryenEventRef event,
+                                   BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenEventGetParam(events[" << events[event] << "], "
+              << index << ");\n";
+  }
+
+  auto* fn = (Event*)event;
+  assert(index < fn->params.size());
+  return fn->params[index];
+}
+
+//
 // =========== Import operations ===========
 //
 
@@ -3684,6 +3818,19 @@ const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
     return "";
   }
 }
+const char* BinaryenEventImportGetModule(BinaryenEventRef import) {
+  if (tracing) {
+    std::cout << "  BinaryenEventImportGetModule(events[" << events[import]
+              << "]);\n";
+  }
+
+  auto* event = (Event*)import;
+  if (event->imported()) {
+    return event->module.c_str();
+  } else {
+    return "";
+  }
+}
 const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
   if (tracing) {
     std::cout << "  BinaryenFunctionImportGetBase(functions["
@@ -3706,6 +3853,19 @@ const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
   auto* global = (Global*)import;
   if (global->imported()) {
     return global->base.c_str();
+  } else {
+    return "";
+  }
+}
+const char* BinaryenEventImportGetBase(BinaryenEventRef import) {
+  if (tracing) {
+    std::cout << "  BinaryenEventImportGetBase(events[" << events[import]
+              << "]);\n";
+  }
+
+  auto* event = (Event*)import;
+  if (event->imported()) {
+    return event->base.c_str();
   } else {
     return "";
   }
@@ -3875,6 +4035,7 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
                  "  std::map<size_t, BinaryenFunctionRef> functions;\n"
                  "  std::map<size_t, BinaryenGlobalRef> globals;\n"
+                 "  std::map<size_t, BinaryenEventRef> events;\n"
                  "  std::map<size_t, BinaryenExportRef> exports;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
