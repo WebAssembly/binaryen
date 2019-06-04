@@ -45,7 +45,7 @@ using namespace cashew;
 
 extern Name WASM, RETURN_FLOW;
 
-enum { maxCallDepth = 250 };
+enum { maxInterpreterDepth = 250 };
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -128,8 +128,16 @@ public:
 // Execute an expression
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
+protected:
+  // Keep a record of call depth, to guard against excessive recursion.
+  size_t depth = 0;
+
 public:
   Flow visit(Expression* curr) {
+    depth++;
+    if (depth > maxInterpreterDepth) {
+      trap("interpreter recursion limit");
+    }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() &&
         (isConcreteType(curr->type) || isConcreteType(ret.value.type))) {
@@ -142,6 +150,7 @@ public:
 #endif
       assert(ret.value.type == curr->type);
     }
+    depth--;
     return ret;
   }
 
@@ -1790,7 +1799,7 @@ public:
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
   Literal callFunctionInternal(Name name, const LiteralList& arguments) {
-    if (callDepth > maxCallDepth) {
+    if (callDepth > maxInterpreterDepth) {
       externalInterface->trap("stack limit");
     }
     auto previousCallDepth = callDepth;
