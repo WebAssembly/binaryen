@@ -28,6 +28,7 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
+#include "ir/module-utils.h"
 #include "parsing.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
@@ -902,7 +903,7 @@ inline S32LEB binaryType(Type type) {
 class WasmBinaryWriter {
 public:
   WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false)
-    : wasm(input), o(o), debug(debug) {
+    : wasm(input), o(o), debug(debug), indexes(*input) {
     prepare();
   }
 
@@ -951,13 +952,6 @@ public:
   void writeDataSegments();
   void writeEvents();
 
-  // name of the Function => index. first imports, then internals
-  std::unordered_map<Name, Index> mappedFunctions;
-  // name of the Global => index. first imported globals, then internal globals
-  std::unordered_map<Name, uint32_t> mappedGlobals;
-  // name of the Event => index. first imported events, then internal events
-  std::unordered_map<Name, uint32_t> mappedEvents;
-
   uint32_t getFunctionIndex(Name name);
   uint32_t getGlobalIndex(Name name);
   uint32_t getEventIndex(Name name);
@@ -1003,6 +997,7 @@ private:
   Module* wasm;
   BufferWithRandomAccess& o;
   bool debug;
+  ModuleUtils::BinaryIndexes indexes;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;
