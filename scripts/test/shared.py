@@ -72,7 +72,6 @@ def parse_args(args):
       action='store_true', default=False,
       help=('If specified, all unfreed (but still referenced) pointers at the'
             ' end of execution are considered memory leaks. Default: disabled.'))
-
   parser.add_argument(
       'positional_args', metavar='tests', nargs=argparse.REMAINDER,
       help='Names specific tests to run.')
