@@ -45,7 +45,7 @@ using namespace cashew;
 
 extern Name WASM, RETURN_FLOW;
 
-enum { maxInterpreterDepth = 250 };
+enum { maxInterpreterDepth = 50 };
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
