@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <fstream>
 
-#include "ir/module-utils.h"
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
@@ -34,11 +33,6 @@ void WasmBinaryWriter::prepare() {
     // https://github.com/WebAssembly/spec/pull/301 might want this:
     // assert(!func->type.isNull());
   }
-  ModuleUtils::BinaryIndexes indexes(*wasm);
-  mappedFunctions = std::move(indexes.functionIndexes);
-  mappedGlobals = std::move(indexes.globalIndexes);
-  mappedEvents = std::move(indexes.eventIndexes);
-
   importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
@@ -458,18 +452,18 @@ void WasmBinaryWriter::writeDataSegments() {
 }
 
 uint32_t WasmBinaryWriter::getFunctionIndex(Name name) {
-  assert(mappedFunctions.count(name));
-  return mappedFunctions[name];
+  assert(indexes.functionIndexes.count(name));
+  return indexes.functionIndexes[name];
 }
 
 uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
-  assert(mappedGlobals.count(name));
-  return mappedGlobals[name];
+  assert(indexes.globalIndexes.count(name));
+  return indexes.globalIndexes[name];
 }
 
 uint32_t WasmBinaryWriter::getEventIndex(Name name) {
-  assert(mappedEvents.count(name));
-  return mappedEvents[name];
+  assert(indexes.eventIndexes.count(name));
+  return indexes.eventIndexes[name];
 }
 
 void WasmBinaryWriter::writeFunctionTableDeclaration() {
@@ -534,14 +528,10 @@ void WasmBinaryWriter::writeEvents() {
 }
 
 void WasmBinaryWriter::writeNames() {
-  bool hasContents = false;
-  if (wasm->functions.size() > 0) {
-    hasContents = true;
-    getFunctionIndex(wasm->functions[0]->name); // generate mappedFunctions
-  }
-  if (!hasContents) {
+  if (wasm->functions.empty()) {
     return;
   }
+
   if (debug) {
     std::cerr << "== writeNames" << std::endl;
   }
@@ -549,7 +539,7 @@ void WasmBinaryWriter::writeNames() {
   writeInlineString(BinaryConsts::UserSections::Name);
   auto substart =
     startSubsection(BinaryConsts::UserSections::Subsection::NameFunction);
-  o << U32LEB(mappedFunctions.size());
+  o << U32LEB(indexes.functionIndexes.size());
   Index emitted = 0;
   auto add = [&](Function* curr) {
     o << U32LEB(emitted);
@@ -558,7 +548,7 @@ void WasmBinaryWriter::writeNames() {
   };
   ModuleUtils::iterImportedFunctions(*wasm, add);
   ModuleUtils::iterDefinedFunctions(*wasm, add);
-  assert(emitted == mappedFunctions.size());
+  assert(emitted == indexes.functionIndexes.size());
   finishSubsection(substart);
   /* TODO: locals */
   finishSection(start);

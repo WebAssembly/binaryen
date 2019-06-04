@@ -19,7 +19,6 @@
 
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
-#include "wasm-binary.h"
 #include "wasm.h"
 
 namespace wasm {
