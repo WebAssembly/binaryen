@@ -20,9 +20,9 @@ import subprocess
 import sys
 import unittest
 
-from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
+from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
-    BIN_DIR, MOZJS, NATIVECC, NATIVEXX, NODEJS, BINARYEN_JS, WASM_AS,
+    BIN_DIR, NATIVECC, NATIVEXX, NODEJS, WASM_AS,
     WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_METADCE, WASM_DIS, WASM_REDUCE,
     binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
