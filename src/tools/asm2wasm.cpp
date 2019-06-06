@@ -140,13 +140,6 @@ int main(int argc, const char* argv[]) {
          [&legalizeJavaScriptFFI](Options* o, const std::string&) {
            legalizeJavaScriptFFI = false;
          })
-    .add("--debuginfo",
-         "-g",
-         "Emit names section in wasm binary (or full debuginfo in wast)",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) {
-           options.passOptions.debugInfo = true;
-         })
     .add("--source-map",
          "-sm",
          "Emit source map (if using binary output) to the specified file",

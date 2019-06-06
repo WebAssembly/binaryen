@@ -63,7 +63,6 @@ std::string runCommand(std::string command) {
 int main(int argc, const char* argv[]) {
   Name entry;
   bool emitBinary = true;
-  bool debugInfo = false;
   bool converge = false;
   bool fuzzExecBefore = false;
   bool fuzzExecAfter = false;
@@ -95,11 +94,6 @@ int main(int argc, const char* argv[]) {
          "Emit text instead of binary for the output file",
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { emitBinary = false; })
-    .add("--debuginfo",
-         "-g",
-         "Emit names section and debug info",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) { debugInfo = true; })
     .add("--converge",
          "-c",
          "Run passes to convergence, continuing while binary size decreases",
@@ -295,7 +289,7 @@ int main(int argc, const char* argv[]) {
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
-    writer.setDebugInfo(debugInfo);
+    writer.setDebugInfo(options.passOptions.debugInfo);
     writer.write(wasm, options.extra["output"]);
     firstOutput = runCommand(extraFuzzCommand);
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
@@ -377,7 +371,7 @@ int main(int argc, const char* argv[]) {
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
-    writer.setDebugInfo(debugInfo);
+    writer.setDebugInfo(options.passOptions.debugInfo);
     if (outputSourceMapFilename.size()) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
