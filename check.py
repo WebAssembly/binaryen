@@ -20,9 +20,9 @@ import subprocess
 import sys
 import unittest
 
-from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
+from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
-    BIN_DIR, MOZJS, NATIVECC, NATIVEXX, NODEJS, BINARYEN_JS, WASM_AS,
+    BIN_DIR, NATIVECC, NATIVEXX, NODEJS, WASM_AS,
     WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_METADCE, WASM_DIS, WASM_REDUCE,
     binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
@@ -36,6 +36,7 @@ from scripts.test import shared
 from scripts.test import asm2wasm
 from scripts.test import lld
 from scripts.test import wasm2js
+from scripts.test import binaryenjs
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
@@ -387,58 +388,6 @@ def run_spec_tests():
         check_expected(actual, os.path.join(options.binaryen_test, 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
 
-def run_binaryen_js_tests():
-  if not (MOZJS or NODEJS):
-    print 'no vm to run binaryen.js tests'
-    return
-
-  node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
-
-  if not os.path.exists(BINARYEN_JS):
-    print 'no binaryen.js build to test'
-    return
-
-  print '\n[ checking binaryen.js testcases... ]\n'
-
-  for s in sorted(os.listdir(os.path.join(options.binaryen_test, 'binaryen.js'))):
-    if not s.endswith('.js'):
-      continue
-    print s
-    f = open('a.js', 'w')
-    # avoid stdout/stderr ordering issues in some js shells - use just stdout
-    f.write('''
-      console.warn = function(x) { console.log(x) };
-    ''')
-    binaryen_js = open(BINARYEN_JS).read()
-    f.write(binaryen_js)
-    if NODEJS:
-      f.write(node_test_glue())
-    test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
-    test_src = open(test_path).read()
-    f.write(test_src)
-    f.close()
-
-    def test(engine):
-      cmd = [engine, 'a.js']
-      if 'fatal' not in s:
-        out = run_command(cmd, stderr=subprocess.STDOUT)
-      else:
-        # expect an error - the specific error code will depend on the vm
-        out = run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
-      expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
-      if expected not in out:
-        fail(out, expected)
-
-    # run in all possible shells
-    if MOZJS:
-      test(MOZJS)
-    if NODEJS:
-      if node_has_wasm or 'WebAssembly.' not in test_src:
-        test(NODEJS)
-      else:
-        print 'Skipping ' + test_path + ' because WebAssembly might not be supported'
-
-
 def run_validator_tests():
   print '\n[ running validation tests... ]\n'
   # Ensure the tests validate by default
@@ -579,7 +528,7 @@ def main():
     run_wasm_reduce_tests()
 
   run_spec_tests()
-  run_binaryen_js_tests()
+  binaryenjs.test_binaryen_js()
   lld.test_wasm_emscripten_finalize()
   wasm2js.test_wasm2js()
   run_validator_tests()
