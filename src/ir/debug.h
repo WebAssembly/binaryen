@@ -25,14 +25,13 @@ namespace debug {
 
 // Given an expression and a copy of it in another function, copy the debug
 // info into the second function.
-inline void copyDebugInfo(Expression* origin, Expression* copy,
-                          Function* originFunc, Function* copyFunc) {
-  struct Lister
-    : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
+inline void copyDebugInfo(Expression* origin,
+                          Expression* copy,
+                          Function* originFunc,
+                          Function* copyFunc) {
+  struct Lister : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
     std::vector<Expression*> list;
-    void visitExpression(Expression* curr) {
-      *list.push_back(curr);
-    }
+    void visitExpression(Expression* curr) { *list.push_back(curr); }
   };
 
   Lister originList;
@@ -52,6 +51,8 @@ inline void copyDebugInfo(Expression* origin, Expression* copy,
     }
   }
 };
+
+} // namespace debug
 
 } // namespace wasm
 
