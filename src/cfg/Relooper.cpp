@@ -533,7 +533,10 @@ struct Liveness : public RelooperRecursor {
 typedef std::pair<Branch*, Block*> BranchBlock;
 
 struct Optimizer : public RelooperRecursor {
-  Optimizer(Relooper* Parent) : RelooperRecursor(Parent) {
+  Block* Entry;
+
+  Optimizer(Relooper* Parent, Block* EntryInit)
+    : RelooperRecursor(Parent), Entry(EntryInit) {
     // TODO: there are likely some rare but possible O(N^2) cases with this
     // looping
     bool More = true;
@@ -726,6 +729,7 @@ struct Optimizer : public RelooperRecursor {
         NumPredecessors[NextBlock]++;
       }
     }
+    NumPredecessors[Entry]++;
     for (auto* CurrBlock : Parent->Blocks) {
       if (CurrBlock->BranchesOut.size() == 1) {
         auto iter = CurrBlock->BranchesOut.begin();
@@ -744,6 +748,9 @@ struct Optimizer : public RelooperRecursor {
             Builder.makeSequence(CurrBlock->Code, NextBlock->Code);
           // Use the next block's branching behavior
           CurrBlock->BranchesOut.swap(NextBlock->BranchesOut);
+          for (auto& iter : NextBlock->BranchesOut) {
+            delete iter.second;
+          }
           NextBlock->BranchesOut.clear();
           CurrBlock->SwitchCondition = NextBlock->SwitchCondition;
           // The next block now has no predecessors.
@@ -1032,7 +1039,7 @@ private:
 
 void Relooper::Calculate(Block* Entry) {
   // Optimize.
-  Optimizer(this);
+  Optimizer(this, Entry);
 
   // Find live blocks.
   Liveness Live(this);
