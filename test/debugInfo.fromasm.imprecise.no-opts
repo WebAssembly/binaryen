@@ -11,6 +11,7 @@
  (export "fib" (func $fib))
  (export "switch_reach" (func $switch_reach))
  (export "nofile" (func $nofile))
+ (export "inlineInto" (func $inlineInto))
  (func $add (; 0 ;) (param $x i32) (param $y i32) (result i32)
   ;;@ tests/hello_world.c:5:0
   (local.set $x
@@ -274,5 +275,15 @@
  (func $nofile (; 5 ;)
   ;;@ (unknown):1337:0
   (call $nofile)
+ )
+ (func $inlineMe (; 6 ;) (result i32)
+  (return
+   (i32.const 5)
+  )
+ )
+ (func $inlineInto (; 7 ;) (result i32)
+  (return
+   (call $inlineMe)
+  )
  )
 )

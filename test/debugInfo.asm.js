@@ -84,6 +84,12 @@ function () {
   function nofile() {
     nofile(); //@line 1337
   }
-  return { add: add, ret: ret, opts: opts, fib: fib, switch_reach: switch_reach, nofile: nofile };
+  function inlineMe() {
+    return 5;
+  }
+  function inlineInto() {
+    return inlineMe() | 0;
+  }
+  return { add: add, ret: ret, opts: opts, fib: fib, switch_reach: switch_reach, nofile: nofile, inlineInto: inlineInto };
 }
 
