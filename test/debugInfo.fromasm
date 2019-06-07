@@ -170,7 +170,20 @@
   ;;@ (unknown):1337:0
   (call $nofile)
  )
- (func $inlineInto (; 6 ;) (; has Stack IR ;) (result i32)
-  (i32.const 5)
+ (func $inlineInto (; 6 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  ;;@ inline_me.c:125:0
+  (i32.add
+   ;;@ inline_me.c:120:0
+   (local.tee $0
+    (i32.add
+     (local.get $0)
+     (local.get $1)
+    )
+   )
+   (i32.add
+    (local.get $0)
+    (local.get $1)
+   )
+  )
  )
 )

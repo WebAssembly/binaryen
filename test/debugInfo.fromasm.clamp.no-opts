@@ -288,14 +288,40 @@
   ;;@ (unknown):1337:0
   (call $nofile)
  )
- (func $inlineMe (; 7 ;) (result i32)
+ (func $inlineMe (; 7 ;) (param $x i32) (param $y i32) (result i32)
+  ;;@ inline_me.c:120:0
+  (local.set $x
+   (i32.add
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  ;;@ inline_me.c:121:0
+  (local.set $y
+   (i32.add
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  ;;@ inline_me.c:122:0
+  (local.set $x
+   (i32.add
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  ;;@ inline_me.c:123:0
   (return
-   (i32.const 5)
+   (local.get $x)
   )
  )
- (func $inlineInto (; 8 ;) (result i32)
+ (func $inlineInto (; 8 ;) (param $x i32) (param $y i32) (result i32)
+  ;;@ inline_me.c:125:0
   (return
-   (call $inlineMe)
+   (call $inlineMe
+    (local.get $x)
+    (local.get $y)
+   )
   )
  )
 )

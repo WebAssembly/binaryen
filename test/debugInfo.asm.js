@@ -84,11 +84,18 @@ function () {
   function nofile() {
     nofile(); //@line 1337
   }
-  function inlineMe() {
-    return 5;
+  function inlineMe(x, y) {
+    x = x | 0;
+    y = y | 0;
+    x = x + y | 0; //@line 120 "inline_me.c"
+    y = x + y | 0; //@line 121 "inline_me.c"
+    x = x + y | 0; //@line 122 "inline_me.c"
+    return x | 0; //@line 123 "inline_me.c"
   }
-  function inlineInto() {
-    return inlineMe() | 0;
+  function inlineInto(x, y) {
+    x = x | 0;
+    y = y | 0;
+    return inlineMe(x | 0, y | 0) | 0; //@line 125 "inline_me.c"
   }
   return { add: add, ret: ret, opts: opts, fib: fib, switch_reach: switch_reach, nofile: nofile, inlineInto: inlineInto };
 }
