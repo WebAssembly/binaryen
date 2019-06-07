@@ -123,6 +123,13 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options* o, const std::string& argument) {
              passOptions.shrinkLevel = atoi(argument.c_str());
            })
+      .add("--debuginfo",
+           "-g",
+           "Emit names section in wasm binary (or full debuginfo in wast)",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             passOptions.debugInfo = true;
+           })
       .add("--always-inline-max-function-size",
            "-aimfs",
            "Max size of functions that are always inlined (default " +
