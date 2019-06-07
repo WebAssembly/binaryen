@@ -212,7 +212,7 @@ doInlining(Module* module, Function* into, InliningAction& action) {
   }
   // Generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
-  if (!from.debugLocations.empty()) {
+  if (!from->debugLocations.empty()) {
     debug::copyDebugInfo(from->body, contents, from, into);
   }
   updater.walk(contents);
