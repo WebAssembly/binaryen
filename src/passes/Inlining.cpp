@@ -32,6 +32,7 @@
 
 #include <atomic>
 
+#include "ir/debug.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
@@ -175,7 +176,7 @@ doInlining(Module* module, Function* into, InliningAction& action) {
   auto* block = Builder(*module).makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.str);
   *action.callSite = block;
-  // set up a locals mapping
+  // Prepare to update the inlined code's locals and other things.
   struct Updater : public PostWalker<Updater> {
     std::map<Index, Index> localMapping;
     Name returnName;
@@ -193,33 +194,37 @@ doInlining(Module* module, Function* into, InliningAction& action) {
   } updater;
   updater.returnName = block->name;
   updater.builder = &builder;
+  // Set up a locals mapping
   for (Index i = 0; i < from->getNumLocals(); i++) {
     updater.localMapping[i] = builder.addVar(into, from->getLocalType(i));
   }
-  // assign the operands into the params
+  // Assign the operands into the params
   for (Index i = 0; i < from->params.size(); i++) {
     block->list.push_back(
       builder.makeLocalSet(updater.localMapping[i], call->operands[i]));
   }
-  // zero out the vars (as we may be in a loop, and may depend on their
+  // Zero out the vars (as we may be in a loop, and may depend on their
   // zero-init value
   for (Index i = 0; i < from->vars.size(); i++) {
     block->list.push_back(
       builder.makeLocalSet(updater.localMapping[from->getVarIndexBase() + i],
                            LiteralUtils::makeZero(from->vars[i], *module)));
   }
-  // generate and update the inlined contents
+  // Generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
+  if (!from->debugLocations.empty()) {
+    debug::copyDebugInfo(from->body, contents, from, into);
+  }
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = call->type;
-  // if the function returned a value, we just set the block containing the
+  // If the function returned a value, we just set the block containing the
   // inlined code to have that type. or, if the function was void and
   // contained void, that is fine too. a bad case is a void function in which
   // we have unreachable code, so we would be replacing a void call with an
   // unreachable; we need to handle
   if (contents->type == unreachable && block->type == none) {
-    // make the block reachable by adding a break to it
+    // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }
   return block;

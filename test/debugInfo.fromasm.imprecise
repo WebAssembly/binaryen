@@ -5,6 +5,7 @@
  (export "fib" (func $fib))
  (export "switch_reach" (func $switch_reach))
  (export "nofile" (func $nofile))
+ (export "inlineInto" (func $inlineInto))
  (func $add (; 0 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;;@ tests/other_file.cpp:314159:0
   (i32.add
@@ -160,5 +161,21 @@
  (func $nofile (; 5 ;) (; has Stack IR ;)
   ;;@ (unknown):1337:0
   (call $nofile)
+ )
+ (func $inlineInto (; 6 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  ;;@ inline_me.c:125:0
+  (i32.add
+   ;;@ inline_me.c:120:0
+   (local.tee $0
+    (i32.add
+     (local.get $0)
+     (local.get $1)
+    )
+   )
+   (i32.add
+    (local.get $0)
+    (local.get $1)
+   )
+  )
  )
 )
