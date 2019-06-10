@@ -77,6 +77,9 @@ void PassRegistry::registerPasses() {
   registerPass("avoid-reinterprets",
                "Tries to avoid reinterpret operations via more loads",
                createAvoidReinterpretsPass);
+  registerPass("bysyncify",
+               "async/await style transform, allowing pausing and resuming",
+               createBysyncifyPass);
   registerPass(
     "dae", "removes arguments to calls in an lto-like manner", createDAEPass);
   registerPass("dae-optimizing",
