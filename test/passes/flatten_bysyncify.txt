@@ -73,7 +73,13 @@
        )
       )
      )
-     (nop)
+     (if
+      (i32.eq
+       (global.get $__bysyncify_state)
+       (i32.const 0)
+      )
+      (nop)
+     )
     )
     (return)
    )
@@ -154,23 +160,65 @@
         )
        )
       )
-      (local.set $temp
-       (local.get $1)
+      (if
+       (i32.eq
+        (global.get $__bysyncify_state)
+        (i32.const 0)
+       )
+       (local.set $temp
+        (local.get $1)
+       )
       )
-      (nop)
-      (local.set $2
-       (local.get $temp)
+      (if
+       (i32.eq
+        (global.get $__bysyncify_state)
+        (i32.const 0)
+       )
+       (nop)
+      )
+      (if
+       (i32.eq
+        (global.get $__bysyncify_state)
+        (i32.const 0)
+       )
+       (local.set $2
+        (local.get $temp)
+       )
+      )
+      (if
+       (i32.eq
+        (global.get $__bysyncify_state)
+        (i32.const 0)
+       )
+       (return
+        (local.get $2)
+       )
+      )
+      (if
+       (i32.eq
+        (global.get $__bysyncify_state)
+        (i32.const 0)
+       )
+       (unreachable)
+      )
+     )
+     (if
+      (i32.eq
+       (global.get $__bysyncify_state)
+       (i32.const 0)
+      )
+      (local.set $4
+       (local.get $3)
+      )
+     )
+     (if
+      (i32.eq
+       (global.get $__bysyncify_state)
+       (i32.const 0)
       )
       (return
-       (local.get $2)
+       (local.get $4)
       )
-      (unreachable)
-     )
-     (local.set $4
-      (local.get $3)
-     )
-     (return
-      (local.get $4)
      )
     )
     (unreachable)
@@ -248,10 +296,22 @@
        )
       )
      )
-     (drop
-      (local.get $0)
+     (if
+      (i32.eq
+       (global.get $__bysyncify_state)
+       (i32.const 0)
+      )
+      (drop
+       (local.get $0)
+      )
      )
-     (nop)
+     (if
+      (i32.eq
+       (global.get $__bysyncify_state)
+       (i32.const 0)
+      )
+      (nop)
+     )
     )
     (return)
    )

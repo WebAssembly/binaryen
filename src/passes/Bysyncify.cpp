@@ -139,6 +139,7 @@
 #include "ir/effects.h"
 #include "ir/flat.h"
 #include "ir/literal-utils.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -234,6 +235,8 @@ struct BysyncifyFunction : public Pass {
       newBody->finalize(func->result);
     }
     func->body = newBody;
+    // Making things like returns conditional may alter types.
+    ReFinalize().walkFunctionInModule(func, module);
   }
 
 private:
@@ -293,10 +296,21 @@ private:
     //  return iff;
     } else if (doesCall(curr)) {
       return makeCallSupport(curr);
-    } else {
-//      WASM_UNREACHABLE();
     }
-    return curr;
+    // We must have handled any control flow before now, and in particular,
+    // there cannot be anything that can change the state in our children.
+    // As a result, all we need to do here is skip executing this code if we
+    // are rewinding.
+    assert(!mayChangeState(curr));
+    return makeMaybeSkip(curr);
+  }
+
+  // Possibly skip some code, if rewinding.
+  Expression* makeMaybeSkip(Expression* curr) {
+    return builder->makeIf(
+      makeStateCheck(State::Normal),
+      curr
+    );
   }
 
   Expression* makeCallSupport(Expression* curr) {
