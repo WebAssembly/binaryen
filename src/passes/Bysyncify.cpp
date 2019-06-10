@@ -151,7 +151,6 @@ struct Bysyncify : public Pass {
     {
       PassRunner runner(module);
       runner.setIsNested(true);
-      runner.add<Planner>(&state);
       runner.run();
     }
   }
@@ -161,12 +160,12 @@ private:
     Builder builder(*module);
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_STATE, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_DATA, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
-    auto* set = builder.makeFunction(BYSYNCIFY_STATE, { i32, i32 }, none, {}, builder.makeBlock({
-      builder.makeSetGlobal(BYSYNCIFY_STATE, builder.makeGetLocal(0, i32)),
-      builder.makeSetGlobal(BYSYNCIFY_DATA, builder.makeGetLocal(1, i32))
-    });
+    auto* set = builder.makeFunction(BYSYNCIFY_SET, { i32, i32 }, none, {}, builder.makeBlock({
+      builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeLocalGet(0, i32)),
+      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(1, i32))
+    }));
     module->addFunction(set);
-    module->addExport(BYSYNCIFY_SET, BYSYNCIFY_SET, ExternalKind::Function);
+    module->addExport(builder.makeExport(BYSYNCIFY_SET, BYSYNCIFY_SET, ExternalKind::Function));
   }
 };
 

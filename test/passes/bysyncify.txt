@@ -1,0 +1,13 @@
+(module
+ (global $__bysyncify_state (mut i32) (i32.const 0))
+ (global $__bysyncify_data (mut i32) (i32.const 0))
+ (export "__bysyncify_set" (func $__bysyncify_set))
+ (func $__bysyncify_set (; 0 ;) (param $0 i32) (param $1 i32)
+  (global.set $__bysyncify_state
+   (local.get $0)
+  )
+  (global.set $__bysyncify_data
+   (local.get $1)
+  )
+ )
+)
