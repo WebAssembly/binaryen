@@ -120,7 +120,10 @@
 // save locals. Note that the stack end location is provided, which is for
 // error detection.
 //
-// Usage: Run this pass on your code. You can then control things as follows:
+// Usage: Run this pass on your code. Note that it depends on flat IR, so
+// you should run --flatten before. (As that pass creates many new locals,
+// you probably want to do some flat-preserving optimization afterwards.)
+// You can then control things as follows:
 //
 //  * To unwind, set __bysyncify_state to 1, create a __bysyncify_data buffer,
 //    initialize it (set all the fields), and assign it to __bysyncify_data.
@@ -132,9 +135,9 @@
 // __bysyncify_data. TODO make this optional?
 //
 
-// TODO Optimize graph
 
-
+#include "ir/effects.h"
+#include "ir/flat.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -144,15 +147,86 @@ namespace wasm {
 static const Name BYSYNCIFY_STATE = "__bysyncify_state";
 static const Name BYSYNCIFY_DATA = "__bysyncify_data";
 static const Name BYSYNCIFY_SET = "__bysyncify_set";
+static const Name BYSYNCIFY_UNWIND = "bysyncify_unwind";
+
+namespace {
+
+// Check if an expression may alter the bysyncify state, either in itself or
+// in something called by it.
+static bool mayChangeState(Expression* curr) {
+  // TODO: currently this assumes that any calls may change the state, which
+  //       could be much improved by globally figuring out which calls may
+  //       actually reach relevant code.
+  EffectAnalyzer effects(PassOptions(), curr);
+  return effects.calls || effects.globalsWritten.count(BYSYNCIFY_STATE);
+}
+
+struct BysyncifyFunction : public WalkerPass<PostWalker<BysyncifyFunction>> {
+  bool isFunctionParallel() override { return true; }
+
+  BysyncifyFunction* create() override { return new BysyncifyFunction(); }
+
+  void visitCall(Call* curr) {
+  }
+
+  void doWalkFunction(Function* func) {
+    // If the function cannot change our state, we have nothing to do -
+    // we will never unwind or rewind the stack here.
+    if (!mayChangeState(func->body)) {
+      return;
+    }
+    Flat::verifyFlatness(func);
+    // Rewrite the function body.
+    walk(func->body);
+    // Emit the final body, including preamble and postamble etc.
+    Builder builder(*getModule());
+    // After the normal function body, emit a barrier before the postamble.
+    Expression* barrier;
+    if (func->result == none) {
+      // The function may have ended without a return; ensure one.
+      barrier = builder.makeReturn();
+    } else {
+      // The function must have returned or hit an unreachable, but emit one
+      // to make possible bugs easier to figure out (as this should never be
+      // reached). The optimizer can remove this anyhow.
+      barrier = builder.makeUnreachable();
+    }
+    func->body = builder.makeBlock({
+      makeLocalLoading(),
+      builder.makeBlock(
+        BYSYNCIFY_UNWIND,
+        builder.makeSequence(
+          func->body,
+          barrier
+        )
+      ),
+      makeLocalSaving()
+    });
+  }
+
+private:
+  Expression* makeLocalLoading() {
+    Builder builder(*getModule());
+    return builder.makeNop();
+  }
+
+  Expression* makeLocalSaving() {
+    Builder builder(*getModule());
+    return builder.makeNop();
+  }
+};
+
+} // anonymous namespace
 
 struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    addModuleSupport(module);
     {
       PassRunner runner(module);
+      runner.add<BysyncifyFunction>();
       runner.setIsNested(true);
       runner.run();
     }
+    addModuleSupport(module);
   }
 
 private:
