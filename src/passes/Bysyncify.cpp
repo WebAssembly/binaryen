@@ -138,6 +138,7 @@
 
 #include "ir/effects.h"
 #include "ir/flat.h"
+#include "ir/literal-utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -181,7 +182,6 @@ static bool mayChangeState(Expression* curr) {
 // Checks if something performs a call: either a direct or indirect call,
 // and perhaps it is dropped or assigned to a local.
 static bool doesCall(Expression* curr) {
-  assert(curr->type == none);
   if (auto* set = curr->dynCast<LocalSet>()) {
     curr = set->value;
   } else if (auto* drop = curr->dynCast<Drop>()) {
@@ -216,7 +216,7 @@ struct BysyncifyFunction : public Pass {
       // reached). The optimizer can remove this anyhow.
       barrier = builder->makeUnreachable();
     }
-    func->body = builder->makeBlock({
+    auto* newBody = builder->makeBlock({
       makeLocalLoading(),
       builder->makeBlock(
         BYSYNCIFY_UNWIND,
@@ -227,6 +227,13 @@ struct BysyncifyFunction : public Pass {
       ),
       makeLocalSaving()
     });
+    if (func->result != none) {
+      // If we unwind, we must still "return" a value, even if it will be
+      // ignored on the outside.
+      newBody->list.push_back(LiteralUtils::makeZero(func->result, *module));
+      newBody->finalize(func->result);
+    }
+    func->body = newBody;
   }
 
 private:
@@ -278,6 +285,9 @@ private:
 
     if (auto* block = curr->dynCast<Block>()) {
       // TODO: clump children and their checks.
+      for (auto*& item : block->list) {
+        item = process(item);
+      }
       return block;
     //} else if (auto* iff = curr->dynCast<If>()) {
     //  return iff;
@@ -291,6 +301,7 @@ private:
 
   Expression* makeCallSupport(Expression* curr) {
     assert(doesCall(curr));
+    assert(curr->type == none);
     auto index = callIndex++;
     // Execute the call, if either normal execution, or if rewinding and this is the right
     // call to go into.
