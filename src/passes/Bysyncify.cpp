@@ -102,12 +102,12 @@
 // rewinding and unwinding contains a pointer to a data structure with the
 // info needed to rewind and unwind:
 //
-//   {
-//     i32  - C stack start
-//     i32  - C stack end
-//     i32  - current bysyncify stack location
-//     i32  - bysyncify stack end
-//     i32* - bysyncify stack
+//   {                                            // offsets
+//     i32  - C stack start                       //  0
+//     i32  - C stack end                         //  4
+//     i32  - current bysyncify stack location    //  8
+//     i32  - bysyncify stack end                 // 12
+//     i32* - bysyncify stack data itself         // 16
 //   }
 //
 // The C stack is the normal C stack (which must be preserved in the case
@@ -144,12 +144,26 @@
 
 namespace wasm {
 
+namespace {
+
 static const Name BYSYNCIFY_STATE = "__bysyncify_state";
 static const Name BYSYNCIFY_DATA = "__bysyncify_data";
 static const Name BYSYNCIFY_SET = "__bysyncify_set";
 static const Name BYSYNCIFY_UNWIND = "bysyncify_unwind";
 
-namespace {
+enum class State {
+  Normal = 0,
+  Unwinding = 1,
+  Rewinding = 2
+};
+
+enum class DataOffset {
+  CStackStart = 0,
+  CStackEnd = 4,
+  BStackPos = 8,
+  BStackEnd = 12,
+  BStackData = 16
+};
 
 // Check if an expression may alter the bysyncify state, either in itself or
 // in something called by it.
@@ -158,18 +172,30 @@ static bool mayChangeState(Expression* curr) {
   //       could be much improved by globally figuring out which calls may
   //       actually reach relevant code.
   EffectAnalyzer effects(PassOptions(), curr);
-  return effects.calls || effects.globalsWritten.count(BYSYNCIFY_STATE);
+  // TODO: look at effects.globalsWritten.count(BYSYNCIFY_STATE);? Currently
+  //       this code assumes external code will change the state, so import
+  //       calls are really what matters.
+  return effects.calls;
 }
 
-struct BysyncifyFunction : public WalkerPass<PostWalker<BysyncifyFunction>> {
+// Checks if something performs a call: either a direct or indirect call,
+// and perhaps it is dropped or assigned to a local.
+static bool doesCall(Expression* curr) {
+  assert(curr->type == none);
+  if (auto* set = curr->dynCast<LocalSet>()) {
+    curr = set->value;
+  } else if (auto* drop = curr->dynCast<Drop>()) {
+    curr = drop->value;
+  }
+  return curr->is<Call>() || curr->is<CallIndirect>();
+}
+
+struct BysyncifyFunction : public Pass {
   bool isFunctionParallel() override { return true; }
 
   BysyncifyFunction* create() override { return new BysyncifyFunction(); }
 
-  void visitCall(Call* curr) {
-  }
-
-  void doWalkFunction(Function* func) {
+  void runOnFunction(PassRunner* runner, Module* module, Function* func) override {
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!mayChangeState(func->body)) {
@@ -177,25 +203,24 @@ struct BysyncifyFunction : public WalkerPass<PostWalker<BysyncifyFunction>> {
     }
     Flat::verifyFlatness(func);
     // Rewrite the function body.
-    walk(func->body);
-    // Emit the final body, including preamble and postamble etc.
-    Builder builder(*getModule());
+    builder = make_unique<Builder>(*module);
+    func->body = process(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
     if (func->result == none) {
       // The function may have ended without a return; ensure one.
-      barrier = builder.makeReturn();
+      barrier = builder->makeReturn();
     } else {
       // The function must have returned or hit an unreachable, but emit one
       // to make possible bugs easier to figure out (as this should never be
       // reached). The optimizer can remove this anyhow.
-      barrier = builder.makeUnreachable();
+      barrier = builder->makeUnreachable();
     }
-    func->body = builder.makeBlock({
+    func->body = builder->makeBlock({
       makeLocalLoading(),
-      builder.makeBlock(
+      builder->makeBlock(
         BYSYNCIFY_UNWIND,
-        builder.makeSequence(
+        builder->makeSequence(
           func->body,
           barrier
         )
@@ -205,14 +230,151 @@ struct BysyncifyFunction : public WalkerPass<PostWalker<BysyncifyFunction>> {
   }
 
 private:
+  std::unique_ptr<Builder> builder;
+
+  // Each call in the function has an index, noted during unwind and checked
+  // during rewind.
+  Index callIndex = 0;
+
   Expression* makeLocalLoading() {
-    Builder builder(*getModule());
-    return builder.makeNop();
+    return builder->makeNop();
   }
 
   Expression* makeLocalSaving() {
-    Builder builder(*getModule());
-    return builder.makeNop();
+    return builder->makeNop();
+  }
+
+  Expression* process(Expression* curr) {
+    // The IR is in flat form, which makes this much simpler. We basically
+    // need to add skips to avoid code when rewinding, and checks around calls
+    // with unwinding/rewinding support.
+    //
+    // Aside from that, we must "linearize" all control flow so that we can
+    // reach the right part when unwinding. For example, for an if we do this:
+    //
+    //    if (condition()) {
+    //      side1();
+    //    } else {
+    //      side2();
+    //    }
+    // =>
+    //    if (!rewinding) {
+    //      temp = condition();
+    //    }
+    //    if (rewinding || temp) {
+    //      side1();
+    //    }
+    //    if (rewinding || !temp) {
+    //      side2();
+    //    }
+    //
+    // This way we will linearly get through all the code in the function,
+    // if we are rewinding. In a similar way we skip over breaks, etc.; just
+    // "keep on truckin'".
+    //
+    // Note that temp locals added in this way are just normal locals, and in
+    // particular they are saved and loaded. That way if we resume from the
+    // first if arm we will avoid the second.
+
+    if (auto* block = curr->dynCast<Block>()) {
+      // TODO: clump children and their checks.
+      return block;
+    //} else if (auto* iff = curr->dynCast<If>()) {
+    //  return iff;
+    } else if (doesCall(curr)) {
+      return makeCallSupport(curr);
+    } else {
+//      WASM_UNREACHABLE();
+    }
+    return curr;
+  }
+
+  Expression* makeCallSupport(Expression* curr) {
+    assert(doesCall(curr));
+    auto index = callIndex++;
+    // Execute the call if either normal execution, or if rewinding and this is the right
+    // call to go into.
+    return builder->makeSequence(
+      builder->makeIf(
+        builder->makeIf(
+          makeStateCheck(State::Normal),
+          builder->makeConst(Literal(int32_t(1))),
+          builder->makeIf(
+            makeCallIndexPeek(index),
+            builder->makeSequence(
+              makeCallIndexPop(),
+              builder->makeConst(Literal(int32_t(1)))
+            ),
+            builder->makeConst(Literal(int32_t(0)))
+          )
+        ),
+        curr
+      ),
+      makePossibleUnwind(index)
+    );
+  }
+
+  Expression* makePossibleUnwind(Index index) {
+    return builder->makeIf(
+      makeStateCheck(State::Unwinding),
+      builder->makeSequence(
+        makeCallIndexPush(index),
+        builder->makeBreak(BYSYNCIFY_UNWIND)
+      )
+    );
+  }
+
+  Expression* makeStateCheck(State value) {
+    return builder->makeBinary(
+      EqInt32,
+      builder->makeGlobalGet(BYSYNCIFY_STATE, i32),
+      builder->makeConst(Literal(int32_t(value)))
+    );
+  }
+
+  Expression* makeCallIndexPeek(Index index) {
+    return builder->makeBinary(
+      EqInt32,
+      builder->makeLoad(4, false, 0, 4, makeGetStackPos(), i32),
+      builder->makeConst(Literal(int32_t(index)))
+    );
+  }
+
+  Expression* makeCallIndexPop() {
+    return builder->makeStore(4, int32_t(DataOffset::BStackPos), 4,
+      builder->makeGlobalGet(BYSYNCIFY_DATA, i32),
+      builder->makeBinary(
+        SubInt32,
+        makeGetStackPos(),
+        builder->makeConst(Literal(int32_t(4)))
+      ),
+      i32
+    );
+  }
+
+  Expression* makeCallIndexPush(Index index) {
+    // TODO: add a check against the stack end here
+    return builder->makeSequence(
+      builder->makeStore(4, 4, 4,
+        makeGetStackPos(),
+        builder->makeConst(Literal(int32_t(index))),
+        i32
+      ),
+      builder->makeStore(4, int32_t(DataOffset::BStackPos), 4,
+        builder->makeGlobalGet(BYSYNCIFY_DATA, i32),
+        builder->makeBinary(
+          AddInt32,
+          makeGetStackPos(),
+          builder->makeConst(Literal(int32_t(4)))
+        ),
+        i32
+      )
+    );
+  }
+
+  Expression* makeGetStackPos() {
+    return builder->makeLoad(4, false, int32_t(DataOffset::BStackPos), 4,
+      builder->makeGlobalGet(BYSYNCIFY_DATA, i32), i32);
   }
 };
 
