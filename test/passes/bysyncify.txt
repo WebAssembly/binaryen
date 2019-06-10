@@ -1,8 +1,27 @@
 (module
+ (type $FUNCSIG$v (func))
+ (import "env" "import" (func $import))
  (global $__bysyncify_state (mut i32) (i32.const 0))
  (global $__bysyncify_data (mut i32) (i32.const 0))
  (export "__bysyncify_set" (func $__bysyncify_set))
- (func $__bysyncify_set (; 0 ;) (param $0 i32) (param $1 i32)
+ (func $calls-import (; 1 ;) (type $FUNCSIG$v)
+  (nop)
+  (block $bysyncify_unwind
+   (block
+    (call $import)
+    (return)
+   )
+  )
+  (nop)
+ )
+ (func $calls-nothing (; 2 ;) (type $FUNCSIG$v)
+  (drop
+   (i32.eqz
+    (i32.const 17)
+   )
+  )
+ )
+ (func $__bysyncify_set (; 3 ;) (param $0 i32) (param $1 i32)
   (global.set $__bysyncify_state
    (local.get $0)
   )
