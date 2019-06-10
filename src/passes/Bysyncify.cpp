@@ -292,25 +292,26 @@ private:
   Expression* makeCallSupport(Expression* curr) {
     assert(doesCall(curr));
     auto index = callIndex++;
-    // Execute the call if either normal execution, or if rewinding and this is the right
+    // Execute the call, if either normal execution, or if rewinding and this is the right
     // call to go into.
-    return builder->makeSequence(
+    // If we execute
+    return builder->makeIf(
       builder->makeIf(
+        makeStateCheck(State::Normal),
+        builder->makeConst(Literal(int32_t(1))),
         builder->makeIf(
-          makeStateCheck(State::Normal),
-          builder->makeConst(Literal(int32_t(1))),
-          builder->makeIf(
-            makeCallIndexPeek(index),
-            builder->makeSequence(
-              makeCallIndexPop(),
-              builder->makeConst(Literal(int32_t(1)))
-            ),
-            builder->makeConst(Literal(int32_t(0)))
-          )
-        ),
-        curr
+          makeCallIndexPeek(index),
+          builder->makeSequence(
+            makeCallIndexPop(),
+            builder->makeConst(Literal(int32_t(1)))
+          ),
+          builder->makeConst(Literal(int32_t(0)))
+        )
       ),
-      makePossibleUnwind(index)
+      builder->makeSequence(
+        curr,
+        makePossibleUnwind(index)
+      )
     );
   }
 
