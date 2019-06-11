@@ -95,6 +95,15 @@
     (i32.const 2)
    )
    (block
+    (i32.store offset=8
+     (global.get $__bysyncify_data)
+     (i32.add
+      (i32.load offset=8
+       (global.get $__bysyncify_data)
+      )
+      (i32.const -20)
+     )
+    )
     (local.set $0
      (i32.load
       (i32.load offset=8
@@ -128,15 +137,6 @@
       (i32.load offset=8
        (global.get $__bysyncify_data)
       )
-     )
-    )
-    (i32.store offset=8
-     (global.get $__bysyncify_data)
-     (i32.add
-      (i32.load offset=8
-       (global.get $__bysyncify_data)
-      )
-      (i32.const -20)
      )
     )
    )

@@ -443,7 +443,14 @@ private:
 
   Expression* makeLocalLoading() {
     auto* func = getFunction();
+    Index total = 0;
+    for (Index i = 0; i < numPreservableLocals; i++) {
+      auto type = func->getLocalType(i);
+      auto size = getTypeSize(type);
+      total += size;
+    }
     auto* block = builder->makeBlock();
+    block->list.push_back(builder->makeIncStackPos(-total));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
@@ -460,7 +467,6 @@ private:
       );
       offset += size;
     }
-    block->list.push_back(builder->makeIncStackPos(-offset));
     block->finalize();
     return block;
   }
