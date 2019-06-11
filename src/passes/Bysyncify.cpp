@@ -471,6 +471,9 @@ private:
   Index numPreservableLocals;
 
   Expression* makeLocalLoading() {
+    if (numPreservableLocals == 0) {
+      return builder->makeNop();
+    }
     auto* func = getFunction();
     Index total = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
@@ -480,6 +483,10 @@ private:
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
+    auto tempIndex = builder->addVar(func, i32);
+    block->list.push_back(
+      builder->makeLocalSet(tempIndex, builder->makeGetStackPos())
+    );
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
@@ -491,7 +498,7 @@ private:
         builder->makeLocalSet(
           i,
           builder->makeLoad(size, true, offset, STACK_ALIGN,
-            builder->makeGetStackPos(), type)
+            builder->makeLocalGet(tempIndex, i32), type)
         )
       );
       offset += size;
@@ -501,8 +508,15 @@ private:
   }
 
   Expression* makeLocalSaving() {
+    if (numPreservableLocals == 0) {
+      return builder->makeNop();
+    }
     auto* func = getFunction();
     auto* block = builder->makeBlock();
+    auto tempIndex = builder->addVar(func, i32);
+    block->list.push_back(
+      builder->makeLocalSet(tempIndex, builder->makeGetStackPos())
+    );
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
@@ -512,7 +526,7 @@ private:
       // TODO: optimize use of stack pos (add a local, ignore it here)
       block->list.push_back(
         builder->makeStore(size, offset, STACK_ALIGN,
-          builder->makeGetStackPos(),
+          builder->makeLocalGet(tempIndex, i32),
           builder->makeLocalGet(i, type),
           type
         )
