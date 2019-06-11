@@ -16,5 +16,19 @@
   (func $calls-nothing
     (drop (i32.eqz (i32.const 17)))
   )
+  (func $many-locals (param $x i32) (result i32)
+    (local $y i32)
+    (loop $l
+      (local.set $x
+        (i32.add (local.get $y) (i32.const 1))
+      )
+      (local.set $y
+        (i32.div_s (local.get $x) (i32.const 3))
+      )
+      (br_if $l (local.get $y))
+    )
+    (call $import)
+    (return (local.get $y))
+  )
 )
 
