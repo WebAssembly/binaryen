@@ -195,6 +195,26 @@ public:
     return makeLoad(4, false, int32_t(DataOffset::BStackPos), 4,
       makeGlobalGet(BYSYNCIFY_DATA, i32), i32);
   }
+
+  Expression* makeIncStackPos(int32_t by) {
+    return makeStore(4, int32_t(DataOffset::BStackPos), 4,
+      makeGlobalGet(BYSYNCIFY_DATA, i32),
+      makeBinary(
+        AddInt32,
+        makeGetStackPos(),
+        makeConst(Literal(by))
+      ),
+      i32
+    );
+  }
+
+  Expression* makeStateCheck(State value) {
+    return makeBinary(
+      EqInt32,
+      makeGlobalGet(BYSYNCIFY_STATE, i32),
+      makeConst(Literal(int32_t(value)))
+    );
+  }
 };
 
 // Instrument control flow, around calls and adding skips for rewinding.
@@ -282,7 +302,7 @@ private:
   // Possibly skip some code, if rewinding.
   Expression* makeMaybeSkip(Expression* curr) {
     return builder->makeIf(
-      makeStateCheck(State::Normal),
+      builder->makeStateCheck(State::Normal),
       curr
     );
   }
@@ -296,7 +316,7 @@ private:
     // If we execute
     return builder->makeIf(
       builder->makeIf(
-        makeStateCheck(State::Normal),
+        builder->makeStateCheck(State::Normal),
         builder->makeConst(Literal(int32_t(1))),
         builder->makeIf(
           makeCallIndexPeek(index),
@@ -320,18 +340,10 @@ private:
     // target here, as the optimizer would remove it later; we can only add
     // it when we add its contents, later.)
     return builder->makeIf(
-      makeStateCheck(State::Unwinding),
+      builder->makeStateCheck(State::Unwinding),
       builder->makeCall(BYSYNCIFY_UNWIND, {
         builder->makeConst(Literal(int32_t(index)))
       }, none)
-    );
-  }
-
-  Expression* makeStateCheck(State value) {
-    return builder->makeBinary(
-      EqInt32,
-      builder->makeGlobalGet(BYSYNCIFY_STATE, i32),
-      builder->makeConst(Literal(int32_t(value)))
     );
   }
 
@@ -344,15 +356,7 @@ private:
   }
 
   Expression* makeCallIndexPop() {
-    return builder->makeStore(4, int32_t(DataOffset::BStackPos), 4,
-      builder->makeGlobalGet(BYSYNCIFY_DATA, i32),
-      builder->makeBinary(
-        SubInt32,
-        builder->makeGetStackPos(),
-        builder->makeConst(Literal(int32_t(4)))
-      ),
-      i32
-    );
+    return builder->makeIncStackPos(-4);
   }
 };
 
@@ -391,9 +395,16 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
       // reached). The optimizer can remove this anyhow.
       barrier = builder->makeUnreachable();
     }
+    // The new function body has a prelude to load locals if rewinding,
+    // then the actual main body, which does all its unwindings by breaking
+    // to the unwind block, which then handles pushing the call index, as
+    // well as saving the locals.
     auto tempIndex = builder->addVar(func, i32);
     auto* newBody = builder->makeBlock({
-      makeLocalLoading(),
+      builder->makeIf(
+        builder->makeStateCheck(State::Rewinding),
+        makeLocalLoading()
+      ),
       builder->makeLocalSet(
         tempIndex,
         builder->makeBlock(
@@ -422,7 +433,27 @@ private:
   std::unique_ptr<BysyncifyBuilder> builder;
 
   Expression* makeLocalLoading() {
-    return builder->makeNop();
+    auto* func = getFunction();
+    auto numLocals = func->getNumLocals();
+    auto* block = builder->makeBlock();
+    Index offset = 0;
+    for (Index i = 0; i < numLocals; i++) {
+      auto type = func->getLocalType(i);
+      auto size = getTypeSize(type);
+      // TODO: higher alignment than 4?
+      // TODO: optimize use of stack pos (add a local, ignore it here)
+      block->list.push_back(
+        builder->makeLocalSet(
+          i,
+          builder->makeLoad(size, true, offset, 4,
+            builder->makeGetStackPos(), type)
+        )
+      );
+      offset += size;
+    }
+    block->list.push_back(builder->makeIncStackPos(-offset));
+    block->finalize();
+    return block;
   }
 
   Expression* makeLocalSaving() {
@@ -437,15 +468,7 @@ private:
         builder->makeLocalGet(tempIndex, i32),
         i32
       ),
-      builder->makeStore(4, int32_t(DataOffset::BStackPos), 4,
-        builder->makeGlobalGet(BYSYNCIFY_DATA, i32),
-        builder->makeBinary(
-          AddInt32,
-          builder->makeGetStackPos(),
-          builder->makeConst(Literal(int32_t(4)))
-        ),
-        i32
-      )
+      builder->makeIncStackPos(4)
     );
   }
 };
