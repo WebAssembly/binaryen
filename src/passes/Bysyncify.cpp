@@ -175,7 +175,8 @@ static bool mayChangeState(Expression* curr) {
   EffectAnalyzer effects(PassOptions(), curr);
   // TODO: look at effects.globalsWritten.count(BYSYNCIFY_STATE);? Currently
   //       this code assumes external code will change the state, so import
-  //       calls are really what matters.
+  //       calls are really what matters, but we look at all calls, non-
+  //       recursively
   return effects.calls;
 }
 
@@ -229,7 +230,8 @@ struct BysyncifyFlow : public Pass {
 
   BysyncifyFlow* create() override { return new BysyncifyFlow(); }
 
-  void runOnFunction(PassRunner* runner, Module* module, Function* func) override {
+  void runOnFunction(PassRunner* runner, Module* module_, Function* func) override {
+    module = module_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!mayChangeState(func->body)) {
@@ -250,14 +252,16 @@ struct BysyncifyFlow : public Pass {
 private:
   std::unique_ptr<BysyncifyBuilder> builder;
 
+  Module* module;
+
   // Each call in the function has an index, noted during unwind and checked
   // during rewind.
   Index callIndex = 0;
 
   Expression* process(Expression* curr) {
-    // The entering assumption here is that somewhere in us or our children is
-    // a potential state change, and therefore we must do something about that.
-    assert(mayChangeState(curr));
+    if (!mayChangeState(curr)) {
+      return makeMaybeSkip(curr);
+    }
     // The IR is in flat form, which makes this much simpler. We basically
     // need to add skips to avoid code when rewinding, and checks around calls
     // with unwinding/rewinding support.
@@ -321,8 +325,41 @@ private:
         }
       }
       return block;
-    //} else if (auto* iff = curr->dynCast<If>()) {
-    //  return iff;
+    } else if (auto* iff = curr->dynCast<If>()) {
+      // The state change cannot be in the condition due to flat form, so it
+      // must be in one of the children.
+      assert(!mayChangeState(iff->condition));
+      // We must linearize this, which means we pass through both arms if we
+      // are rewinding. This is pretty simple as in flat form the if condition
+      // is either a const or a get, so easily copyable.
+      // Start with the first arm, for which we reuse the original if.
+      auto* otherArm = iff->ifFalse;
+      iff->ifFalse = nullptr;
+      auto* originalCondition = iff->condition;
+      iff->condition = builder->makeBinary(
+        OrInt32,
+        originalCondition,
+        builder->makeStateCheck(State::Rewinding)
+      );
+      iff->ifTrue = process(iff->ifTrue);
+      iff->finalize();
+      if (!otherArm) {
+        return iff;
+      }
+      // Add support for the second arm as well.
+      auto* otherIf = builder->makeIf(
+        builder->makeBinary(
+          OrInt32,
+          builder->makeUnary(
+            EqZInt32,
+            ExpressionManipulator::copy(originalCondition, *module)
+          ),
+          builder->makeStateCheck(State::Rewinding)
+        ),
+        process(otherArm)
+      );
+      otherIf->finalize();
+      return builder->makeSequence(iff, otherIf);
     } else if (doesCall(curr)) {
       return makeCallSupport(curr);
     }
@@ -564,7 +601,7 @@ struct Bysyncify : public Pass {
       // which may make unreachable code look reachable.
       runner.add("dce");
       runner.add<BysyncifyFlow>();
-      runner.setIsNested(true);
+      //runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
     }
@@ -576,7 +613,7 @@ struct Bysyncify : public Pass {
       runner.addDefaultFunctionOptimizationPasses();
       runner.add<BysyncifyLocals>();
       runner.addDefaultFunctionOptimizationPasses();
-      runner.setIsNested(true);
+      //runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
     }
