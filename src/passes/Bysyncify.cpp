@@ -120,10 +120,7 @@
 // save locals. Note that the stack end location is provided, which is for
 // error detection.
 //
-// Usage: Run this pass on your code. Note that it depends on flat IR, so
-// you should run --flatten before. (As that pass creates many new locals,
-// you probably want to do some flat-preserving optimization afterwards.)
-// You can then control things as follows:
+// Usage: Run this pass on your code. You can then control things as follows:
 //
 //  * To unwind, set __bysyncify_state to 1, create a __bysyncify_data buffer,
 //    initialize it (set all the fields), and assign it to __bysyncify_data.
@@ -137,7 +134,6 @@
 
 
 #include "ir/effects.h"
-#include "ir/flat.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -151,7 +147,7 @@ namespace {
 static const Name BYSYNCIFY_STATE = "__bysyncify_state";
 static const Name BYSYNCIFY_DATA = "__bysyncify_data";
 static const Name BYSYNCIFY_SET = "__bysyncify_set";
-static const Name BYSYNCIFY_UNWIND = "bysyncify_unwind";
+static const Name BYSYNCIFY_UNWIND = "__bysyncify_unwind";
 
 enum class State {
   Normal = 0,
@@ -191,10 +187,18 @@ static bool doesCall(Expression* curr) {
   return curr->is<Call>() || curr->is<CallIndirect>();
 }
 
-struct BysyncifyFunction : public Pass {
+class BysyncifyBuilder : public Builder {
+  Expression* makeGetStackPos() {
+    return makeLoad(4, false, int32_t(DataOffset::BStackPos), 4,
+      makeGlobalGet(BYSYNCIFY_DATA, i32), i32);
+  }
+};
+
+// Instrument control flow, around calls and adding skips for rewinding.
+struct BysyncifyFlow : public Pass {
   bool isFunctionParallel() override { return true; }
 
-  BysyncifyFunction* create() override { return new BysyncifyFunction(); }
+  BysyncifyFlow* create() override { return new BysyncifyFlow(); }
 
   void runOnFunction(PassRunner* runner, Module* module, Function* func) override {
     // If the function cannot change our state, we have nothing to do -
@@ -202,57 +206,24 @@ struct BysyncifyFunction : public Pass {
     if (!mayChangeState(func->body)) {
       return;
     }
-    Flat::verifyFlatness(func);
     // Rewrite the function body.
-    builder = make_unique<Builder>(*module);
+    builder = make_unique<BysyncifyBuilder>(*module);
     func->body = process(func->body);
-    // After the normal function body, emit a barrier before the postamble.
-    Expression* barrier;
-    if (func->result == none) {
-      // The function may have ended without a return; ensure one.
-      barrier = builder->makeReturn();
-    } else {
-      // The function must have returned or hit an unreachable, but emit one
-      // to make possible bugs easier to figure out (as this should never be
-      // reached). The optimizer can remove this anyhow.
-      barrier = builder->makeUnreachable();
-    }
-    auto* newBody = builder->makeBlock({
-      makeLocalLoading(),
-      builder->makeBlock(
-        BYSYNCIFY_UNWIND,
-        builder->makeSequence(
-          func->body,
-          barrier
-        )
-      ),
-      makeLocalSaving()
-    });
     if (func->result != none) {
-      // If we unwind, we must still "return" a value, even if it will be
-      // ignored on the outside.
-      newBody->list.push_back(LiteralUtils::makeZero(func->result, *module));
-      newBody->finalize(func->result);
+      // Rewriting control flow may alter things; make sure the function ends in
+      // something valid (which the optimizer can remove later).
+      func->body = builder->makeSequence(func->body, builder->makeUnreachable());
     }
-    func->body = newBody;
     // Making things like returns conditional may alter types.
     ReFinalize().walkFunctionInModule(func, module);
   }
 
 private:
-  std::unique_ptr<Builder> builder;
+  std::unique_ptr<BysyncifyBuilder> builder;
 
   // Each call in the function has an index, noted during unwind and checked
   // during rewind.
   Index callIndex = 0;
-
-  Expression* makeLocalLoading() {
-    return builder->makeNop();
-  }
-
-  Expression* makeLocalSaving() {
-    return builder->makeNop();
-  }
 
   Expression* process(Expression* curr) {
     // The IR is in flat form, which makes this much simpler. We basically
@@ -341,12 +312,15 @@ private:
   }
 
   Expression* makePossibleUnwind(Index index) {
+    // In this pass we emit an "unwind" as a call to a fake intrinsic. We
+    // will implement it in the later pass. (We can't create the unwind block
+    // target here, as the optimizer would remove it later; we can only add
+    // it when we add its contents, later.)
     return builder->makeIf(
       makeStateCheck(State::Unwinding),
-      builder->makeSequence(
-        makeCallIndexPush(index),
-        builder->makeBreak(BYSYNCIFY_UNWIND)
-      )
+      builder->makeCall(BYSYNCIFY_UNWIND, {
+        builder->makeConst(Literal(int32_t(index)))
+      }, none)
     );
   }
 
@@ -361,7 +335,7 @@ private:
   Expression* makeCallIndexPeek(Index index) {
     return builder->makeBinary(
       EqInt32,
-      builder->makeLoad(4, false, 0, 4, makeGetStackPos(), i32),
+      builder->makeLoad(4, false, 0, 4, builder->makeGetStackPos(), i32),
       builder->makeConst(Literal(int32_t(index)))
     );
   }
@@ -371,36 +345,105 @@ private:
       builder->makeGlobalGet(BYSYNCIFY_DATA, i32),
       builder->makeBinary(
         SubInt32,
-        makeGetStackPos(),
+        builder->makeGetStackPos(),
         builder->makeConst(Literal(int32_t(4)))
       ),
       i32
     );
   }
+};
 
-  Expression* makeCallIndexPush(Index index) {
+// Instrument local saving/restoring.
+struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
+  bool isFunctionParallel() override { return true; }
+
+  BysyncifyLocals* create() override { return new BysyncifyLocals(); }
+
+  void visitCall(Call* curr) {
+    // Replace calls to the fake intrinsic with a proper unwind.
+    if (curr->name == BYSYNCIFY_UNWIND) {
+      replaceCurrent(
+        builder->makeBreak(BYSYNCIFY_UNWIND, curr->operands[0])
+      );
+    }
+  }
+
+  void doWalkFunction(Function* func) {
+    // If the function cannot change our state, we have nothing to do -
+    // we will never unwind or rewind the stack here.
+    if (!mayChangeState(func->body)) {
+      return;
+    }
+    // Rewrite the function body.
+    builder = make_unique<BysyncifyBuilder>(*module);
+    walk(func->body);
+    // After the normal function body, emit a barrier before the postamble.
+    Expression* barrier;
+    if (func->result == none) {
+      // The function may have ended without a return; ensure one.
+      barrier = builder->makeReturn();
+    } else {
+      // The function must have returned or hit an unreachable, but emit one
+      // to make possible bugs easier to figure out (as this should never be
+      // reached). The optimizer can remove this anyhow.
+      barrier = builder->makeUnreachable();
+    }
+    auto tempIndex = builder->addVar(func, i32);
+    auto* newBody = builder->makeBlock({
+      makeLocalLoading(),
+      builder->makeSetLocal(
+        tempIndex,
+        builder->makeBlock(
+          BYSYNCIFY_UNWIND,
+          builder->makeSequence(
+            func->body,
+            barrier
+          )
+        )
+      ),
+      makeCallIndexPush(tempIndex),
+      makeLocalSaving()
+    });
+    if (func->result != none) {
+      // If we unwind, we must still "return" a value, even if it will be
+      // ignored on the outside.
+      newBody->list.push_back(LiteralUtils::makeZero(func->result, *module));
+      newBody->finalize(func->result);
+    }
+    func->body = newBody;
+    // Making things like returns conditional may alter types.
+    ReFinalize().walkFunctionInModule(func, module);
+  }
+
+private:
+  std::unique_ptr<BysyncifyBuilder> builder;
+
+  Expression* makeLocalLoading() {
+    return builder->makeNop();
+  }
+
+  Expression* makeLocalSaving() {
+    return builder->makeNop();
+  }
+
+  Expression* makeCallIndexPush(Index tempIndex) {
     // TODO: add a check against the stack end here
     return builder->makeSequence(
       builder->makeStore(4, 4, 4,
-        makeGetStackPos(),
-        builder->makeConst(Literal(int32_t(index))),
+        builder->makeGetStackPos(),
+        builder->makeGetLocal(tempIndex, i32),
         i32
       ),
       builder->makeStore(4, int32_t(DataOffset::BStackPos), 4,
         builder->makeGlobalGet(BYSYNCIFY_DATA, i32),
         builder->makeBinary(
           AddInt32,
-          makeGetStackPos(),
+          builder->makeGetStackPos(),
           builder->makeConst(Literal(int32_t(4)))
         ),
         i32
       )
     );
-  }
-
-  Expression* makeGetStackPos() {
-    return builder->makeLoad(4, false, int32_t(DataOffset::BStackPos), 4,
-      builder->makeGlobalGet(BYSYNCIFY_DATA, i32), i32);
   }
 };
 
@@ -408,12 +451,26 @@ private:
 
 struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    // First, instrument the flow of code, adding code instrumentation and
+    // skips for when rewinding. We do this on flat IR.
     {
       PassRunner runner(module);
-      runner.add<BysyncifyFunction>();
+      runner.add("flatten");
+      runner.add<BysyncifyFlow>();
       runner.setIsNested(true);
       runner.run();
     }
+    // Next, add local saving/restoring logic. We optimize before doing this,
+    // to undo the extra code generated by flattening.
+    {
+      PassRunner runner(module);
+      runner.addDefaultFunctionOptimizationPasses(true);
+      runner.add<BysyncifyLocals>();
+      runner.setIsNested(true);
+      runner.run();
+    }
+    // Finally, add global module support, including functions (that should
+    // not have been seen by the previous passes).
     addModuleSupport(module);
   }
 
