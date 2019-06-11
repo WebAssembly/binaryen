@@ -163,6 +163,8 @@ enum class DataOffset {
   BStackData = 16
 };
 
+const auto STACK_ALIGN = 4;
+
 // Check if an expression may alter the bysyncify state, either in itself or
 // in something called by it.
 static bool mayChangeState(Expression* curr) {
@@ -197,6 +199,9 @@ public:
   }
 
   Expression* makeIncStackPos(int32_t by) {
+    if (by == 0) {
+      return makeNop();
+    }
     return makeStore(4, int32_t(DataOffset::BStackPos), 4,
       makeGlobalGet(BYSYNCIFY_DATA, i32),
       makeBinary(
@@ -395,6 +400,8 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
       // reached). The optimizer can remove this anyhow.
       barrier = builder->makeUnreachable();
     }
+    // Note the locals we want to preserve, before we add any more helpers.
+    numPreservableLocals = func->getNumLocals();
     // The new function body has a prelude to load locals if rewinding,
     // then the actual main body, which does all its unwindings by breaking
     // to the unwind block, which then handles pushing the call index, as
@@ -432,20 +439,22 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
 private:
   std::unique_ptr<BysyncifyBuilder> builder;
 
+  Index numPreservableLocals;
+
   Expression* makeLocalLoading() {
     auto* func = getFunction();
-    auto numLocals = func->getNumLocals();
     auto* block = builder->makeBlock();
     Index offset = 0;
-    for (Index i = 0; i < numLocals; i++) {
+    for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
       auto size = getTypeSize(type);
-      // TODO: higher alignment than 4?
+      assert(size % STACK_ALIGN == 0);
+      // TODO: higher alignment?
       // TODO: optimize use of stack pos (add a local, ignore it here)
       block->list.push_back(
         builder->makeLocalSet(
           i,
-          builder->makeLoad(size, true, offset, 4,
+          builder->makeLoad(size, true, offset, STACK_ALIGN,
             builder->makeGetStackPos(), type)
         )
       );
@@ -457,7 +466,27 @@ private:
   }
 
   Expression* makeLocalSaving() {
-    return builder->makeNop();
+    auto* func = getFunction();
+    auto* block = builder->makeBlock();
+    Index offset = 0;
+    for (Index i = 0; i < numPreservableLocals; i++) {
+      auto type = func->getLocalType(i);
+      auto size = getTypeSize(type);
+      assert(size % STACK_ALIGN == 0);
+      // TODO: higher alignment?
+      // TODO: optimize use of stack pos (add a local, ignore it here)
+      block->list.push_back(
+        builder->makeStore(size, offset, STACK_ALIGN,
+          builder->makeGetStackPos(),
+          builder->makeLocalGet(i, type),
+          type
+        )
+      );
+      offset += size;
+    }
+    block->list.push_back(builder->makeIncStackPos(offset));
+    block->finalize();
+    return block;
   }
 
   Expression* makeCallIndexPush(Index tempIndex) {

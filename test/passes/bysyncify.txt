@@ -14,24 +14,7 @@
     (global.get $__bysyncify_state)
     (i32.const 2)
    )
-   (block
-    (local.set $0
-     (i32.load
-      (i32.load offset=8
-       (global.get $__bysyncify_data)
-      )
-     )
-    )
-    (i32.store offset=8
-     (global.get $__bysyncify_data)
-     (i32.add
-      (i32.load offset=8
-       (global.get $__bysyncify_data)
-      )
-      (i32.const -4)
-     )
-    )
-   )
+   (nop)
   )
   (local.set $0
    (block $__bysyncify_unwind (result i32)
@@ -95,7 +78,9 @@
     )
    )
   )
-  (nop)
+  (block
+   (nop)
+  )
  )
  (func $calls-import2 (; 3 ;) (type $FUNCSIG$i) (result i32)
   (local $0 i32)
@@ -145,20 +130,13 @@
       )
      )
     )
-    (local.set $5
-     (i32.load offset=20
-      (i32.load offset=8
-       (global.get $__bysyncify_data)
-      )
-     )
-    )
     (i32.store offset=8
      (global.get $__bysyncify_data)
      (i32.add
       (i32.load offset=8
        (global.get $__bysyncify_data)
       )
-      (i32.const -24)
+      (i32.const -20)
      )
     )
    )
@@ -273,7 +251,47 @@
     )
    )
   )
-  (nop)
+  (block
+   (i32.store
+    (i32.load offset=8
+     (global.get $__bysyncify_data)
+    )
+    (local.get $0)
+   )
+   (i32.store offset=4
+    (i32.load offset=8
+     (global.get $__bysyncify_data)
+    )
+    (local.get $1)
+   )
+   (i32.store offset=8
+    (i32.load offset=8
+     (global.get $__bysyncify_data)
+    )
+    (local.get $2)
+   )
+   (i32.store offset=12
+    (i32.load offset=8
+     (global.get $__bysyncify_data)
+    )
+    (local.get $3)
+   )
+   (i32.store offset=16
+    (i32.load offset=8
+     (global.get $__bysyncify_data)
+    )
+    (local.get $4)
+   )
+   (i32.store offset=8
+    (global.get $__bysyncify_data)
+    (i32.add
+     (i32.load offset=8
+      (global.get $__bysyncify_data)
+     )
+     (i32.const 20)
+    )
+   )
+  )
   (i32.const 0)
  )
  (func $calls-import2-drop (; 4 ;) (type $FUNCSIG$v)
@@ -283,24 +301,7 @@
     (global.get $__bysyncify_state)
     (i32.const 2)
    )
-   (block
-    (local.set $0
-     (i32.load
-      (i32.load offset=8
-       (global.get $__bysyncify_data)
-      )
-     )
-    )
-    (i32.store offset=8
-     (global.get $__bysyncify_data)
-     (i32.add
-      (i32.load offset=8
-       (global.get $__bysyncify_data)
-      )
-      (i32.const -4)
-     )
-    )
-   )
+   (nop)
   )
   (local.set $0
    (block $__bysyncify_unwind (result i32)
@@ -366,7 +367,9 @@
     )
    )
   )
-  (nop)
+  (block
+   (nop)
+  )
  )
  (func $calls-nothing (; 5 ;) (type $FUNCSIG$v)
   (nop)
