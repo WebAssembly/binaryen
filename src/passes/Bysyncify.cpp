@@ -461,6 +461,7 @@ struct Bysyncify : public Pass {
       runner.add("flatten");
       runner.add<BysyncifyFlow>();
       runner.setIsNested(true);
+      runner.setValidateGlobally(false);
       runner.run();
     }
     // Next, add local saving/restoring logic. We optimize before doing this,
@@ -470,10 +471,12 @@ struct Bysyncify : public Pass {
       runner.addDefaultFunctionOptimizationPasses();
       runner.add<BysyncifyLocals>();
       runner.setIsNested(true);
+      runner.setValidateGlobally(false);
       runner.run();
     }
     // Finally, add global module support, including functions (that should
-    // not have been seen by the previous passes).
+    // not have been seen by the previous passes) and globals. Note that we
+    // can't validate globally until we get here.
     addModuleSupport(module);
   }
 
