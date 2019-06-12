@@ -21,7 +21,7 @@ var instance = new WebAssembly.Instance(module, {
       console.log('sleep...');
       sleeps++;
       // Unwinding.
-      exports.__bysyncify_set(1, DATA_ADDR);
+      exports.bysyncify_start_unwind(DATA_ADDR);
       // Fill in the data structure. The first value has the stack location,
       // which begins 8 after it.
       view[DATA_ADDR >> 2] = DATA_ADDR + 8;
@@ -44,13 +44,13 @@ assert(!result, 'bad first sleep result');
 console.log(view);
 
 // Rewind, run until the second sleep.
-exports.__bysyncify_set(2, DATA_ADDR);
+exports.bysyncify_start_rewind(DATA_ADDR);
 result = exports.run();
 console.log('meaningless result during second sleep: ' + result);
 assert(!result, 'bad first sleep result');
 
 // Finally, rewind and run til the end.
-exports.__bysyncify_set(2, DATA_ADDR);
+exports.bysyncify_start_rewind(DATA_ADDR);
 result = exports.run();
 console.log('final result: ' + result);
 assert(result == 42, 'bad final result');

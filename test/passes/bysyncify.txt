@@ -9,7 +9,8 @@
  (memory $0 1 2)
  (global $__bysyncify_state (mut i32) (i32.const 0))
  (global $__bysyncify_data (mut i32) (i32.const 0))
- (export "__bysyncify_set" (func $__bysyncify_set))
+ (export "bysyncify_start_unwind" (func $bysyncify_start_unwind))
+ (export "bysyncify_start_rewind" (func $bysyncify_start_rewind))
  (func $calls-import (; 3 ;) (type $FUNCSIG$v)
   (local $0 i32)
   (local.set $0
@@ -19,16 +20,16 @@
       (global.get $__bysyncify_state)
       (if (result i32)
        (i32.load
-        (i32.load offset=8
+        (i32.load offset=4
          (global.get $__bysyncify_data)
         )
        )
        (i32.const 0)
        (block (result i32)
-        (i32.store offset=8
+        (i32.store offset=4
          (global.get $__bysyncify_data)
          (i32.add
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
           (i32.const -4)
@@ -56,15 +57,15 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -80,10 +81,10 @@
     (i32.const 2)
    )
    (block
-    (i32.store offset=8
+    (i32.store offset=4
      (global.get $__bysyncify_data)
      (i32.add
-      (i32.load offset=8
+      (i32.load offset=4
        (global.get $__bysyncify_data)
       )
       (i32.const -4)
@@ -91,7 +92,7 @@
     )
     (local.set $0
      (i32.load
-      (i32.load offset=8
+      (i32.load offset=4
        (global.get $__bysyncify_data)
       )
      )
@@ -105,16 +106,16 @@
       (global.get $__bysyncify_state)
       (if (result i32)
        (i32.load
-        (i32.load offset=8
+        (i32.load offset=4
          (global.get $__bysyncify_data)
         )
        )
        (i32.const 0)
        (block (result i32)
-        (i32.store offset=8
+        (i32.store offset=4
          (global.get $__bysyncify_data)
          (i32.add
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
           (i32.const -4)
@@ -152,30 +153,30 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $1)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
    )
   )
   (i32.store
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -192,16 +193,16 @@
       (global.get $__bysyncify_state)
       (if (result i32)
        (i32.load
-        (i32.load offset=8
+        (i32.load offset=4
          (global.get $__bysyncify_data)
         )
        )
        (i32.const 0)
        (block (result i32)
-        (i32.store offset=8
+        (i32.store offset=4
          (global.get $__bysyncify_data)
          (i32.add
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
           (i32.const -4)
@@ -231,15 +232,15 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -258,10 +259,10 @@
     (i32.const 2)
    )
    (block
-    (i32.store offset=8
+    (i32.store offset=4
      (global.get $__bysyncify_data)
      (i32.add
-      (i32.load offset=8
+      (i32.load offset=4
        (global.get $__bysyncify_data)
       )
       (i32.const -8)
@@ -270,7 +271,7 @@
     (local.set $0
      (i32.load
       (local.tee $1
-       (i32.load offset=8
+       (i32.load offset=4
         (global.get $__bysyncify_data)
        )
       )
@@ -308,16 +309,16 @@
       (global.get $__bysyncify_state)
       (if (result i32)
        (i32.load
-        (i32.load offset=8
+        (i32.load offset=4
          (global.get $__bysyncify_data)
         )
        )
        (i32.const 0)
        (block (result i32)
-        (i32.store offset=8
+        (i32.store offset=4
          (global.get $__bysyncify_data)
          (i32.add
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
           (i32.const -4)
@@ -353,15 +354,15 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $2)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -369,7 +370,7 @@
   )
   (i32.store
    (local.tee $2
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
    )
@@ -379,10 +380,10 @@
    (local.get $2)
    (local.get $1)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 8)
@@ -402,10 +403,10 @@
         (i32.const 2)
        )
        (block
-        (i32.store offset=8
+        (i32.store offset=4
          (global.get $__bysyncify_data)
          (i32.add
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
           (i32.const -4)
@@ -413,7 +414,7 @@
         )
         (local.set $0
          (i32.load
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
          )
@@ -433,16 +434,16 @@
        (global.get $__bysyncify_state)
        (if (result i32)
         (i32.load
-         (i32.load offset=8
+         (i32.load offset=4
           (global.get $__bysyncify_data)
          )
         )
         (i32.const 0)
         (block (result i32)
-         (i32.store offset=8
+         (i32.store offset=4
           (global.get $__bysyncify_data)
           (i32.add
-           (i32.load offset=8
+           (i32.load offset=4
             (global.get $__bysyncify_data)
            )
            (i32.const -4)
@@ -471,30 +472,30 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $1)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
    )
   )
   (i32.store
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -513,10 +514,10 @@
         (i32.const 2)
        )
        (block
-        (i32.store offset=8
+        (i32.store offset=4
          (global.get $__bysyncify_data)
          (i32.add
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
           (i32.const -4)
@@ -524,7 +525,7 @@
         )
         (local.set $0
          (i32.load
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
          )
@@ -544,16 +545,16 @@
        (global.get $__bysyncify_state)
        (if (result i32)
         (i32.load
-         (i32.load offset=8
+         (i32.load offset=4
           (global.get $__bysyncify_data)
          )
         )
         (i32.const 0)
         (block (result i32)
-         (i32.store offset=8
+         (i32.store offset=4
           (global.get $__bysyncify_data)
           (i32.add
-           (i32.load offset=8
+           (i32.load offset=4
             (global.get $__bysyncify_data)
            )
            (i32.const -4)
@@ -596,17 +597,17 @@
        (if (result i32)
         (i32.eq
          (i32.load
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
          )
          (i32.const 1)
         )
         (block (result i32)
-         (i32.store offset=8
+         (i32.store offset=4
           (global.get $__bysyncify_data)
           (i32.add
-           (i32.load offset=8
+           (i32.load offset=4
             (global.get $__bysyncify_data)
            )
            (i32.const -4)
@@ -638,30 +639,30 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $1)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
    )
   )
   (i32.store
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -680,10 +681,10 @@
         (i32.const 2)
        )
        (block
-        (i32.store offset=8
+        (i32.store offset=4
          (global.get $__bysyncify_data)
          (i32.add
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
           (i32.const -4)
@@ -691,7 +692,7 @@
         )
         (local.set $0
          (i32.load
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
          )
@@ -730,16 +731,16 @@
        (global.get $__bysyncify_state)
        (if (result i32)
         (i32.load
-         (i32.load offset=8
+         (i32.load offset=4
           (global.get $__bysyncify_data)
          )
         )
         (i32.const 0)
         (block (result i32)
-         (i32.store offset=8
+         (i32.store offset=4
           (global.get $__bysyncify_data)
           (i32.add
-           (i32.load offset=8
+           (i32.load offset=4
             (global.get $__bysyncify_data)
            )
            (i32.const -4)
@@ -778,30 +779,30 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $1)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
    )
   )
   (i32.store
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -821,10 +822,10 @@
         (i32.const 2)
        )
        (block
-        (i32.store offset=8
+        (i32.store offset=4
          (global.get $__bysyncify_data)
          (i32.add
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
           (i32.const -4)
@@ -832,7 +833,7 @@
         )
         (local.set $0
          (i32.load
-          (i32.load offset=8
+          (i32.load offset=4
            (global.get $__bysyncify_data)
           )
          )
@@ -852,16 +853,16 @@
        (global.get $__bysyncify_state)
        (if (result i32)
         (i32.load
-         (i32.load offset=8
+         (i32.load offset=4
           (global.get $__bysyncify_data)
          )
         )
         (i32.const 0)
         (block (result i32)
-         (i32.store offset=8
+         (i32.store offset=4
           (global.get $__bysyncify_data)
           (i32.add
-           (i32.load offset=8
+           (i32.load offset=4
             (global.get $__bysyncify_data)
            )
            (i32.const -4)
@@ -919,30 +920,30 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $1)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
    )
   )
   (i32.store
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -958,10 +959,10 @@
     (i32.const 2)
    )
    (block
-    (i32.store offset=8
+    (i32.store offset=4
      (global.get $__bysyncify_data)
      (i32.add
-      (i32.load offset=8
+      (i32.load offset=4
        (global.get $__bysyncify_data)
       )
       (i32.const -4)
@@ -969,7 +970,7 @@
     )
     (local.set $0
      (i32.load
-      (i32.load offset=8
+      (i32.load offset=4
        (global.get $__bysyncify_data)
       )
      )
@@ -984,16 +985,16 @@
        (global.get $__bysyncify_state)
        (if (result i32)
         (i32.load
-         (i32.load offset=8
+         (i32.load offset=4
           (global.get $__bysyncify_data)
          )
         )
         (i32.const 0)
         (block (result i32)
-         (i32.store offset=8
+         (i32.store offset=4
           (global.get $__bysyncify_data)
           (i32.add
-           (i32.load offset=8
+           (i32.load offset=4
             (global.get $__bysyncify_data)
            )
            (i32.const -4)
@@ -1037,30 +1038,30 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $1)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
    )
   )
   (i32.store
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
@@ -1076,10 +1077,10 @@
     (i32.const 2)
    )
    (block
-    (i32.store offset=8
+    (i32.store offset=4
      (global.get $__bysyncify_data)
      (i32.add
-      (i32.load offset=8
+      (i32.load offset=4
        (global.get $__bysyncify_data)
       )
       (i32.const -4)
@@ -1087,7 +1088,7 @@
     )
     (local.set $0
      (i32.load
-      (i32.load offset=8
+      (i32.load offset=4
        (global.get $__bysyncify_data)
       )
      )
@@ -1102,16 +1103,16 @@
        (global.get $__bysyncify_state)
        (if (result i32)
         (i32.load
-         (i32.load offset=8
+         (i32.load offset=4
           (global.get $__bysyncify_data)
          )
         )
         (i32.const 0)
         (block (result i32)
-         (i32.store offset=8
+         (i32.store offset=4
           (global.get $__bysyncify_data)
           (i32.add
-           (i32.load offset=8
+           (i32.load offset=4
             (global.get $__bysyncify_data)
            )
            (i32.const -4)
@@ -1150,42 +1151,50 @@
    )
   )
   (i32.store offset=4
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $1)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
    )
   )
   (i32.store
-   (i32.load offset=8
+   (i32.load offset=4
     (global.get $__bysyncify_data)
    )
    (local.get $0)
   )
-  (i32.store offset=8
+  (i32.store offset=4
    (global.get $__bysyncify_data)
    (i32.add
-    (i32.load offset=8
+    (i32.load offset=4
      (global.get $__bysyncify_data)
     )
     (i32.const 4)
    )
   )
  )
- (func $__bysyncify_set (; 14 ;) (param $0 i32) (param $1 i32)
+ (func $bysyncify_start_unwind (; 14 ;) (param $0 i32)
   (global.set $__bysyncify_state
-   (local.get $0)
+   (i32.const 1)
   )
   (global.set $__bysyncify_data
-   (local.get $1)
+   (local.get $0)
+  )
+ )
+ (func $bysyncify_start_rewind (; 15 ;) (param $0 i32)
+  (global.set $__bysyncify_state
+   (i32.const 2)
+  )
+  (global.set $__bysyncify_data
+   (local.get $0)
   )
  )
 )

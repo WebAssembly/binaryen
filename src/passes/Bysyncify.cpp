@@ -106,7 +106,6 @@
 //   {                                            // offsets
 //     i32  - current bysyncify stack location    //  0
 //     i32  - bysyncify stack end                 //  4
-//     i32* - bysyncify stack data itself         //  8
 //   }
 //
 // The bysyncify stack is a representation of the call frame, as a list of
@@ -119,19 +118,17 @@
 //
 // When you start an unwinding operation, you must set the initial fields
 // of the data structure, that is, set the current stack location to the
-// proper place, which is at offset 8, and the end to the proper end based
-// on how much memory you reserved.
+// proper place, and the end to the proper end based on how much memory
+// you reserved. Note that bysyncify will grow the stack up.
 //
-// Usage: Run this pass on your code. You can then control things as follows:
+// The pass will also create and export two functions that let you control
+// unwinding and rewinding:
 //
-//  * To unwind, set __bysyncify_state to 1, create a __bysyncify_data buffer,
-//    initialize it (set all the fields), and assign it to __bysyncify_data.
-//  * To rewind, set __bysyncify_state to 2, and make sure that __bysyncify_data
-//    points to the proper buffer.
-//
-// This pass will create a "bysyncify_set" export which you can call
-// from outside, which receives two parameters, for __bysyncify_state and
-// __bysyncify_data. TODO make this optional?
+//  * bysyncify_start_unwind(data : i32): call this to start unwinding the
+//    stack from the current location. "data" must point to a valid data
+//    structure as described above (with both fields containing valid data).
+//  * bysyncify_start_rewind(data : i32): call this to start rewinding the
+//    stack vack up to the location stored in the provided data.
 //
 
 
@@ -148,7 +145,10 @@ namespace {
 
 static const Name BYSYNCIFY_STATE = "__bysyncify_state";
 static const Name BYSYNCIFY_DATA = "__bysyncify_data";
-static const Name BYSYNCIFY_SET = "__bysyncify_set";
+
+static const Name BYSYNCIFY_START_UNWIND = "bysyncify_start_unwind";
+static const Name BYSYNCIFY_START_REWIND = "bysyncify_start_rewind";
+
 static const Name BYSYNCIFY_UNWIND = "__bysyncify_unwind";
 
 enum class State {
@@ -632,12 +632,20 @@ private:
     Builder builder(*module);
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_STATE, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_DATA, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
-    auto* set = builder.makeFunction(BYSYNCIFY_SET, { i32, i32 }, none, {}, builder.makeBlock({
-      builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeLocalGet(0, i32)),
-      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(1, i32))
+
+    auto* unwind = builder.makeFunction(BYSYNCIFY_START_UNWIND, std::vector<Type>{ i32 }, none, std::vector<Type>{}, builder.makeBlock({
+      builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(State::Unwinding)))),
+      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32))
     }));
-    module->addFunction(set);
-    module->addExport(builder.makeExport(BYSYNCIFY_SET, BYSYNCIFY_SET, ExternalKind::Function));
+    module->addFunction(unwind);
+    module->addExport(builder.makeExport(BYSYNCIFY_START_UNWIND, BYSYNCIFY_START_UNWIND, ExternalKind::Function));
+
+    auto* rewind = builder.makeFunction(BYSYNCIFY_START_REWIND, std::vector<Type>{ i32 }, none, std::vector<Type>{}, builder.makeBlock({
+      builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(State::Rewinding)))),
+      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32))
+    }));
+    module->addFunction(rewind);
+    module->addExport(builder.makeExport(BYSYNCIFY_START_REWIND, BYSYNCIFY_START_REWIND, ExternalKind::Function));
   }
 };
 
