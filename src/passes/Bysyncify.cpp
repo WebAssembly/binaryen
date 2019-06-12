@@ -600,6 +600,8 @@ struct Bysyncify : public Pass {
       // dce is useful here, since BysyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable.
       runner.add("dce");
+      runner.add("simplify-locals-nonesting");
+      runner.add("vacuum");
       runner.add<BysyncifyFlow>();
       //runner.setIsNested(true);
       runner.setValidateGlobally(false);
