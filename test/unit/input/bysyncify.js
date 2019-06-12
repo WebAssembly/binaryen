@@ -31,13 +31,17 @@ var instance = new WebAssembly.Instance(module, {
         view[DATA_ADDR >> 2] = DATA_ADDR + 8;
         // The end of the stack will not be reached here anyhow.
         view[DATA_ADDR + 4 >> 2] = 1024;
-        logMemory();
         sleeping = true;
       } else {
         // We are called as part of a resume/rewind. Stop sleeping.
         console.log('resume...');
+        exports.bysyncify_stop_rewind();
+        // The stack should have been all used up, and so returned to the original state.
+        assert(view[DATA_ADDR >> 2] == DATA_ADDR + 8);
+        assert(view[DATA_ADDR + 4 >> 2] == 1024);
         sleeping = false;
       }
+      logMemory();
     }
   }
 });
@@ -73,6 +77,4 @@ console.log('final result: ' + result);
 assert(result == 42, 'bad final result');
 
 assert(sleeps == 2, 'total of 2 sleeps');
-
-throw 'a';
 
