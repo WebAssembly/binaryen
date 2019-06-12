@@ -936,7 +936,7 @@ BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                   uint32_t attribute,
                                   BinaryenFunctionTypeRef type);
 BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name);
-void BinaryenEventEvent(BinaryenModuleRef module, const char* name);
+void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name);
 
 // Function table. One per module
 
