@@ -158,9 +158,8 @@ enum class State {
 };
 
 enum class DataOffset {
-  BStackPos = 4,
-  BStackEnd = 8,
-  BStackData = 12
+  BStackPos = 0,
+  BStackEnd = 4
 };
 
 const auto STACK_ALIGN = 4;
