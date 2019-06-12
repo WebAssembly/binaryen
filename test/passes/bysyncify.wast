@@ -56,5 +56,23 @@
     )
     (return (i32.const 3))
   )
+  (func $calls-loop (param $x i32)
+    (loop $l
+      (call $import3 (i32.const 1))
+      (local.set $x
+        (i32.add (local.get $x) (i32.const 1))
+      )
+      (br_if $l
+        (local.get $x)
+      )
+    )
+  )
+  (func $calls-loop2
+    (loop $l
+      (br_if $l
+        (call $import2)
+      )
+    )
+  )
 )
 

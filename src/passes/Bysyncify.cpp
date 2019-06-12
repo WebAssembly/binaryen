@@ -360,6 +360,9 @@ private:
       );
       otherIf->finalize();
       return builder->makeSequence(iff, otherIf);
+    } else if (auto* loop = curr->dynCast<Loop>()) {
+      loop->body = process(loop->body);
+      return loop;
     } else if (doesCall(curr)) {
       return makeCallSupport(curr);
     }
