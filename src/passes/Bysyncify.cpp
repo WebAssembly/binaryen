@@ -104,15 +104,11 @@
 // info needed to rewind and unwind:
 //
 //   {                                            // offsets
-//     i32  - C stack start                       //  0
-//     i32  - C stack end                         //  4
-//     i32  - current bysyncify stack location    //  8
-//     i32  - bysyncify stack end                 // 12
-//     i32* - bysyncify stack data itself         // 16
+//     i32  - current bysyncify stack location    //  0
+//     i32  - bysyncify stack end                 //  4
+//     i32* - bysyncify stack data itself         //  8
 //   }
 //
-// The C stack is the normal C stack (which must be preserved in the case
-// of coroutines, but if the same execution frame will be resumed later).
 // The bysyncify stack is a representation of the call frame, as a list of
 // indexes of calls. In the example above, we saw index "0" for calling "bar"
 // from "foo". When unwinding, the indexes are added to the stack; when
@@ -120,6 +116,11 @@
 // undated while doing both operations. The bysyncify stack is also used to
 // save locals. Note that the stack end location is provided, which is for
 // error detection.
+//
+// When you start an unwinding operation, you must set the initial fields
+// of the data structure, that is, set the current stack location to the
+// proper place, which is at offset 8, and the end to the proper end based
+// on how much memory you reserved.
 //
 // Usage: Run this pass on your code. You can then control things as follows:
 //
@@ -157,11 +158,9 @@ enum class State {
 };
 
 enum class DataOffset {
-  CStackStart = 0,
-  CStackEnd = 4,
-  BStackPos = 8,
-  BStackEnd = 12,
-  BStackData = 16
+  BStackPos = 4,
+  BStackEnd = 8,
+  BStackData = 12
 };
 
 const auto STACK_ALIGN = 4;
