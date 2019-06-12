@@ -129,6 +129,17 @@
 //    structure as described above (with both fields containing valid data).
 //  * bysyncify_start_rewind(data : i32): call this to start rewinding the
 //    stack vack up to the location stored in the provided data.
+//  * bysyncify_stop_rewind(): call this to note that rewinding has
+//    concluded, and normal execution can resume.
+//
+// To use this API, call bysyncify_start_unwind when you want to. The call
+// stack will then be unwound, and so execution will resume in the JS or
+// other host environment on the outside that called into wasm. Then when
+// you want to rewind, call bysyncify_start_rewind, and then call the same
+// initial function you called before, so that unwinding can begin. The
+// unwinding will reach the same function from which you started the unwind,
+// at which point you should call bysyncify_stop_rewind, and then execution
+// can resumt normally.
 //
 
 
@@ -148,6 +159,7 @@ static const Name BYSYNCIFY_DATA = "__bysyncify_data";
 
 static const Name BYSYNCIFY_START_UNWIND = "bysyncify_start_unwind";
 static const Name BYSYNCIFY_START_REWIND = "bysyncify_start_rewind";
+static const Name BYSYNCIFY_STOP_REWIND = "bysyncify_stop_rewind";
 
 static const Name BYSYNCIFY_UNWIND = "__bysyncify_unwind";
 
@@ -632,19 +644,19 @@ private:
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_STATE, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_DATA, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
 
-    auto* unwind = builder.makeFunction(BYSYNCIFY_START_UNWIND, std::vector<Type>{ i32 }, none, std::vector<Type>{}, builder.makeBlock({
-      builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(State::Unwinding)))),
-      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32))
-    }));
-    module->addFunction(unwind);
-    module->addExport(builder.makeExport(BYSYNCIFY_START_UNWIND, BYSYNCIFY_START_UNWIND, ExternalKind::Function));
+    auto makeFunction = [&](Name name, std::vector<Type> params, State state, Expression* extra) {
+      Expression* body = builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state))));
+      if (extra) {
+        body = builder.makeSequence(body, extra);
+      }
+      auto* func = builder.makeFunction(name, std::move(params), none, std::vector<Type>{}, body);
+      module->addFunction(func);
+      module->addExport(builder.makeExport(name, name, ExternalKind::Function));
+    };
 
-    auto* rewind = builder.makeFunction(BYSYNCIFY_START_REWIND, std::vector<Type>{ i32 }, none, std::vector<Type>{}, builder.makeBlock({
-      builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(State::Rewinding)))),
-      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32))
-    }));
-    module->addFunction(rewind);
-    module->addExport(builder.makeExport(BYSYNCIFY_START_REWIND, BYSYNCIFY_START_REWIND, ExternalKind::Function));
+    makeFunction(BYSYNCIFY_START_UNWIND, { i32 }, State::Unwinding, builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
+    makeFunction(BYSYNCIFY_START_REWIND, { i32 }, State::Rewinding, builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
+    makeFunction(BYSYNCIFY_STOP_REWIND,       {}, State::Normal,    nullptr);
   }
 };
 
