@@ -501,6 +501,7 @@ def run_gcc_tests():
 
     fail_if_not_identical_to_file(actual, expected)
 
+
 def run_unittest():
   print '\n[ checking unit tests...]\n'
 
@@ -510,6 +511,7 @@ def run_unittest():
   shared.num_failures += len(result.errors) + len(result.failures)
   if options.abort_on_first_failure and shared.num_failures:
     raise Exception("unittest failed")
+
 
 # Run all the tests
 def main():
