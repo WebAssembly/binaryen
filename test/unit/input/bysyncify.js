@@ -23,31 +23,38 @@ var instance = new WebAssembly.Instance(module, {
       // Unwinding.
       exports.bysyncify_start_unwind(DATA_ADDR);
       // Fill in the data structure. The first value has the stack location,
-      // which begins 8 after it.
+      // which for simplicity we can start right after the data structure itself.
       view[DATA_ADDR >> 2] = DATA_ADDR + 8;
       // The end of the stack will not be reached here anyhow.
       view[DATA_ADDR + 4 >> 2] = 1024;
+      logMemory();
     }
   }
 });
 
 var exports = instance.exports;
-var view = new Int32Array(exports.memory);
+var view = new Int32Array(exports.memory.buffer);
 
-console.log(view);
+function logMemory() {
+  console.log('memory: ', view[DATA_ADDR >> 2], view[DATA_ADDR + 4 >> 2], view[DATA_ADDR + 8 >> 2], view[DATA_ADDR + 12 >> 2]);
+}
+
+logMemory();
 
 // Run until the sleep.
 var result = exports.run();
 console.log('meaningless result during sleep: ' + result);
 assert(!result, 'bad first sleep result');
 
-console.log(view);
+logMemory();
 
 // Rewind, run until the second sleep.
 exports.bysyncify_start_rewind(DATA_ADDR);
 result = exports.run();
 console.log('meaningless result during second sleep: ' + result);
 assert(!result, 'bad first sleep result');
+
+logMemory();
 
 // Finally, rewind and run til the end.
 exports.bysyncify_start_rewind(DATA_ADDR);
