@@ -141,6 +141,11 @@
 // at which point you should call bysyncify_stop_rewind, and then execution
 // can resumt normally.
 //
+// TODO: convert calls to imports "bysyncify.start_unwind" into calls to
+//       the new functions? that way code can refer to them as imports
+//       before this pass, and the pass converts them into direct calls.
+//
+// TODO: custom list of imports that may sleep.
 
 
 #include "ir/effects.h"
@@ -163,6 +168,8 @@ static const Name BYSYNCIFY_STOP_REWIND = "bysyncify_stop_rewind";
 
 static const Name BYSYNCIFY_UNWIND = "__bysyncify_unwind";
 
+// TODO: having just normal/unwind_or_rewind would decrease code
+//       size, but make debugging harder
 enum class State {
   Normal = 0,
   Unwinding = 1,
@@ -648,11 +655,28 @@ private:
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_STATE, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_DATA, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
 
-    auto makeFunction = [&](Name name, std::vector<Type> params, State state, Expression* extra) {
-      Expression* body = builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state))));
-      if (extra) {
-        body = builder.makeSequence(body, extra);
+    auto makeFunction = [&](Name name, bool setData, State state, Expression* extra) {
+      std::vector<Type> params;
+      if (setData) {
+        params.push_back(i32);
       }
+      auto* body = builder.makeBlock();
+      if (setData) {
+        // Verify the data is valid.
+        auto* stackPos = builder.makeLoad(4, false, int32_t(DataOffset::BStackPos), 4, builder.makeLocalGet(0, i32), i32);
+        auto* stackEnd = builder.makeLoad(4, false, int32_t(DataOffset::BStackEnd), 4, builder.makeLocalGet(0, i32), i32);
+        body->list.push_back(
+          builder.makeIf(
+            builder.makeBinary(GtUInt32, stackPos, stackEnd),
+            builder.makeUnreachable()
+          )
+        );
+      }
+      body->list.push_back(builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
+      if (extra) {
+        body->list.push_back(extra);
+      }
+      body->finalize();
       auto* func = builder.makeFunction(name, std::move(params), none, std::vector<Type>{}, body);
       module->addFunction(func);
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));

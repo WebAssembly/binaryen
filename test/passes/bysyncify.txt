@@ -1180,6 +1180,17 @@
   )
  )
  (func $bysyncify_start_unwind (; 14 ;) (param $0 i32)
+  (if
+   (i32.gt_u
+    (i32.load
+     (local.get $0)
+    )
+    (i32.load offset=4
+     (local.get $0)
+    )
+   )
+   (unreachable)
+  )
   (global.set $__bysyncify_state
    (i32.const 1)
   )
@@ -1188,6 +1199,17 @@
   )
  )
  (func $bysyncify_start_rewind (; 15 ;) (param $0 i32)
+  (if
+   (i32.gt_u
+    (i32.load
+     (local.get $0)
+    )
+    (i32.load offset=4
+     (local.get $0)
+    )
+   )
+   (unreachable)
+  )
   (global.set $__bysyncify_state
    (i32.const 2)
   )
