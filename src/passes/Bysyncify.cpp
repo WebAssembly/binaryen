@@ -595,7 +595,7 @@ private:
   Expression* makeCallIndexPush(Index tempIndex) {
     // TODO: add a check against the stack end here
     return builder->makeSequence(
-      builder->makeStore(4, 4, 4,
+      builder->makeStore(4, 0, 4,
         builder->makeGetStackPos(),
         builder->makeLocalGet(tempIndex, i32),
         i32
