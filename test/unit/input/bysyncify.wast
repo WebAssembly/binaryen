@@ -14,10 +14,22 @@
   )
   (func "local" (result i32)
     (local $x i32)
-    (local.set $x (i32.const 10))
+    (local.set $x (i32.load (i32.const 0))) ;; a zero that the optimizer won't see
+    (local.set $x
+      (i32.add (local.get $x) (i32.const 10)) ;; add 10
+    )
+    (call $sleep)
+    (local.get $x)
+  )
+  (func "local2" (result i32)
+    (local $x i32)
+    (local.set $x (i32.load (i32.const 0))) ;; a zero that the optimizer won't see
+    (local.set $x
+      (i32.add (local.get $x) (i32.const 10)) ;; add 10
+    )
     (call $sleep)
     (local.set $x
-      (i32.add (local.get $x) (i32.const 10))
+      (i32.add (local.get $x) (i32.const 12)) ;; add 12 more
     )
     (local.get $x)
   )

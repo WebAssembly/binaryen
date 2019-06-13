@@ -90,5 +90,8 @@ runTest('minimal', 1, 21);
 runTest('repeat', 2, 42);
 
 // A value in a local is preserved across a sleep.
-runTest('local', 1, 20);
+runTest('local', 1, 12);
+
+// A local with more operations done on it.
+runTest('local', 1, 22);
 
