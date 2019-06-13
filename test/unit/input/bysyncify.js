@@ -41,7 +41,6 @@ var instance = new WebAssembly.Instance(module, {
         assert(view[DATA_ADDR + 4 >> 2] == 1024);
         sleeping = false;
       }
-      logMemory();
     }
   }
 });
@@ -50,31 +49,46 @@ var exports = instance.exports;
 var view = new Int32Array(exports.memory.buffer);
 
 function logMemory() {
+  // Log the relevant memory locations for debugging purposes.
   console.log('memory: ', view[DATA_ADDR >> 2], view[DATA_ADDR + 4 >> 2], view[DATA_ADDR + 8 >> 2], view[DATA_ADDR + 12 >> 2]);
 }
 
-logMemory();
+function runTest(name, expectedSleeps, expectedResult) {
+  console.log('==== testing ' + name + ' ====');
 
-// Run until the sleep.
-var result = exports.run();
-console.log('meaningless result during sleep: ' + result);
-assert(!result, 'bad first sleep result');
+  sleeps = 0;
 
-logMemory();
+  // Run until the sleep.
+  var result = exports[name]();
+  assert(!result, 'results during sleep are meaningless, just 0');
 
-// Rewind, run until the second sleep.
-exports.bysyncify_start_rewind(DATA_ADDR);
-result = exports.run();
-console.log('meaningless result during second sleep: ' + result);
-assert(!result, 'bad first sleep result');
+  for (var i = 0; i < expectedSleeps - 1; i++) {
+    // Rewind, run until the nextsleep.
+    exports.bysyncify_start_rewind(DATA_ADDR);
+    result = exports[name]();
+    assert(!result, 'results during sleep are meaningless, just 0');
+    assert(!result, 'bad first sleep result');
+  }
 
-logMemory();
+  // Finally, rewind and run til the end.
+  exports.bysyncify_start_rewind(DATA_ADDR);
+  result = exports[name]();
+  console.log('final result: ' + result);
+  assert(result == expectedResult, 'bad final result');
 
-// Finally, rewind and run til the end.
-exports.bysyncify_start_rewind(DATA_ADDR);
-result = exports.run();
-console.log('final result: ' + result);
-assert(result == 42, 'bad final result');
+  assert(sleeps == expectedSleeps, 'expectedSleeps');
+}
 
-assert(sleeps == 2, 'total of 2 sleeps');
+//================
+// Tests
+//================
+
+// A minimal single sleep.
+runTest('minimal', 1, 21);
+
+// Two sleeps.
+runTest('repeat', 2, 42);
+
+// A value in a local is preserved across a sleep.
+runTest('local', 1, 20);
 
