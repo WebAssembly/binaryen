@@ -126,5 +126,13 @@ runTest('factorial-recursive', 2,   6, [3]);
 runTest('factorial-recursive', 3,  24, [4]);
 runTest('factorial-recursive', 4, 120, [5]);
 
+// A looping factorial, that sleeps on each iteration
+// above 1.
+runTest('factorial-loop', 0,   1, [1]);
+runTest('factorial-loop', 1,   2, [2]);
+runTest('factorial-loop', 2,   6, [3]);
+runTest('factorial-loop', 3,  24, [4]);
+runTest('factorial-loop', 4, 120, [5]);
+
 console.log('\ntests completed successfully');
 

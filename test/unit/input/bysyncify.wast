@@ -89,7 +89,33 @@
     )
   )
   (func "factorial-loop" (param $x i32) (result i32)
-    (unreachable)
+    (local $i i32)
+    (local $ret i32)
+    (local.set $ret (i32.const 1))
+    (local.set $i (i32.const 2))
+    (loop $l
+      (if
+        (i32.gt_u
+          (local.get $i)
+          (local.get $x)
+        )
+        (return (local.get $ret))
+      )
+      (local.set $ret
+        (i32.mul
+          (local.get $ret)
+          (local.get $i)
+        )
+      )
+      (call $sleep)
+      (local.set $i
+        (i32.add
+          (local.get $i)
+          (i32.const 1)
+        )
+      )
+      (br $l)
+    )
   )
 )
 
