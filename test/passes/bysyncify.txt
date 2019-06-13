@@ -17,31 +17,34 @@
   (local.set $0
    (block $__bysyncify_unwind (result i32)
     (if
-     (i32.eq
-      (global.get $__bysyncify_state)
-      (i32.const 2)
-     )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
-       )
-       (i32.const -4)
-      )
-     )
-    )
-    (if
-     (if (result i32)
-      (global.get $__bysyncify_state)
+     (select
       (i32.eqz
-       (i32.load
-        (i32.load
-         (global.get $__bysyncify_data)
+       (if (result i32)
+        (i32.eq
+         (global.get $__bysyncify_state)
+         (i32.const 2)
         )
+        (block (result i32)
+         (i32.store
+          (global.get $__bysyncify_data)
+          (i32.add
+           (i32.load
+            (global.get $__bysyncify_data)
+           )
+           (i32.const -4)
+          )
+         )
+         (i32.load
+          (i32.load
+           (global.get $__bysyncify_data)
+          )
+         )
+        )
+        (local.get $0)
        )
       )
       (i32.const 1)
+      (global.get $__bysyncify_state)
      )
      (block
       (call $import)
@@ -105,31 +108,34 @@
   (local.set $1
    (block $__bysyncify_unwind (result i32)
     (if
-     (i32.eq
-      (global.get $__bysyncify_state)
-      (i32.const 2)
-     )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
-       )
-       (i32.const -4)
-      )
-     )
-    )
-    (if
-     (if (result i32)
-      (global.get $__bysyncify_state)
+     (select
       (i32.eqz
-       (i32.load
-        (i32.load
-         (global.get $__bysyncify_data)
+       (if (result i32)
+        (i32.eq
+         (global.get $__bysyncify_state)
+         (i32.const 2)
         )
+        (block (result i32)
+         (i32.store
+          (global.get $__bysyncify_data)
+          (i32.add
+           (i32.load
+            (global.get $__bysyncify_data)
+           )
+           (i32.const -4)
+          )
+         )
+         (i32.load
+          (i32.load
+           (global.get $__bysyncify_data)
+          )
+         )
+        )
+        (local.get $1)
        )
       )
       (i32.const 1)
+      (global.get $__bysyncify_state)
      )
      (block
       (local.set $0
@@ -194,31 +200,34 @@
   (local.set $0
    (block $__bysyncify_unwind (result i32)
     (if
-     (i32.eq
-      (global.get $__bysyncify_state)
-      (i32.const 2)
-     )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
-       )
-       (i32.const -4)
-      )
-     )
-    )
-    (if
-     (if (result i32)
-      (global.get $__bysyncify_state)
+     (select
       (i32.eqz
-       (i32.load
-        (i32.load
-         (global.get $__bysyncify_data)
+       (if (result i32)
+        (i32.eq
+         (global.get $__bysyncify_state)
+         (i32.const 2)
         )
+        (block (result i32)
+         (i32.store
+          (global.get $__bysyncify_data)
+          (i32.add
+           (i32.load
+            (global.get $__bysyncify_data)
+           )
+           (i32.const -4)
+          )
+         )
+         (i32.load
+          (i32.load
+           (global.get $__bysyncify_data)
+          )
+         )
+        )
+        (local.get $0)
        )
       )
       (i32.const 1)
+      (global.get $__bysyncify_state)
      )
      (block
       (drop
@@ -298,13 +307,22 @@
       (global.get $__bysyncify_state)
       (i32.const 2)
      )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
+     (block
+      (i32.store
+       (global.get $__bysyncify_data)
+       (i32.add
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+        (i32.const -4)
        )
-       (i32.const -4)
+      )
+      (local.set $2
+       (i32.load
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+       )
       )
      )
     )
@@ -327,16 +345,12 @@
      )
     )
     (if
-     (if (result i32)
-      (global.get $__bysyncify_state)
+     (select
       (i32.eqz
-       (i32.load
-        (i32.load
-         (global.get $__bysyncify_data)
-        )
-       )
+       (local.get $2)
       )
       (i32.const 1)
+      (global.get $__bysyncify_state)
      )
      (block
       (call $import)
@@ -433,13 +447,22 @@
       (global.get $__bysyncify_state)
       (i32.const 2)
      )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
+     (block
+      (i32.store
+       (global.get $__bysyncify_data)
+       (i32.add
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+        (i32.const -4)
        )
-       (i32.const -4)
+      )
+      (local.set $1
+       (i32.load
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+       )
       )
      )
     )
@@ -452,16 +475,12 @@
       )
      )
      (if
-      (if (result i32)
-       (global.get $__bysyncify_state)
+      (select
        (i32.eqz
-        (i32.load
-         (i32.load
-          (global.get $__bysyncify_data)
-         )
-        )
+        (local.get $1)
        )
        (i32.const 1)
+       (global.get $__bysyncify_state)
       )
       (block
        (call $import)
@@ -544,13 +563,22 @@
       (global.get $__bysyncify_state)
       (i32.const 2)
      )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
+     (block
+      (i32.store
+       (global.get $__bysyncify_data)
+       (i32.add
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+        (i32.const -4)
        )
-       (i32.const -4)
+      )
+      (local.set $1
+       (i32.load
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+       )
       )
      )
     )
@@ -563,16 +591,12 @@
       )
      )
      (if
-      (if (result i32)
-       (global.get $__bysyncify_state)
+      (select
        (i32.eqz
-        (i32.load
-         (i32.load
-          (global.get $__bysyncify_data)
-         )
-        )
+        (local.get $1)
        )
        (i32.const 1)
+       (global.get $__bysyncify_state)
       )
       (block
        (call $import3
@@ -601,17 +625,13 @@
       )
      )
      (if
-      (if (result i32)
-       (global.get $__bysyncify_state)
+      (select
        (i32.eq
-        (i32.load
-         (i32.load
-          (global.get $__bysyncify_data)
-         )
-        )
+        (local.get $1)
         (i32.const 1)
        )
        (i32.const 1)
+       (global.get $__bysyncify_state)
       )
       (block
        (call $import3
@@ -696,13 +716,22 @@
       (global.get $__bysyncify_state)
       (i32.const 2)
      )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
+     (block
+      (i32.store
+       (global.get $__bysyncify_data)
+       (i32.add
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+        (i32.const -4)
        )
-       (i32.const -4)
+      )
+      (local.set $1
+       (i32.load
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+       )
       )
      )
     )
@@ -734,16 +763,12 @@
       )
      )
      (if
-      (if (result i32)
-       (global.get $__bysyncify_state)
+      (select
        (i32.eqz
-        (i32.load
-         (i32.load
-          (global.get $__bysyncify_data)
-         )
-        )
+        (local.get $1)
        )
        (i32.const 1)
+       (global.get $__bysyncify_state)
       )
       (block
        (call $import3
@@ -837,13 +862,22 @@
       (global.get $__bysyncify_state)
       (i32.const 2)
      )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
+     (block
+      (i32.store
+       (global.get $__bysyncify_data)
+       (i32.add
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+        (i32.const -4)
        )
-       (i32.const -4)
+      )
+      (local.set $1
+       (i32.load
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+       )
       )
      )
     )
@@ -856,16 +890,12 @@
       )
      )
      (if
-      (if (result i32)
-       (global.get $__bysyncify_state)
+      (select
        (i32.eqz
-        (i32.load
-         (i32.load
-          (global.get $__bysyncify_data)
-         )
-        )
+        (local.get $1)
        )
        (i32.const 1)
+       (global.get $__bysyncify_state)
       )
       (block
        (call $import3
@@ -978,28 +1008,33 @@
       (global.get $__bysyncify_state)
       (i32.const 2)
      )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
+     (block
+      (i32.store
+       (global.get $__bysyncify_data)
+       (i32.add
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+        (i32.const -4)
        )
-       (i32.const -4)
+      )
+      (local.set $1
+       (i32.load
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+       )
       )
      )
     )
     (loop $l
      (if
-      (if (result i32)
-       (global.get $__bysyncify_state)
+      (select
        (i32.eqz
-        (i32.load
-         (i32.load
-          (global.get $__bysyncify_data)
-         )
-        )
+        (local.get $1)
        )
        (i32.const 1)
+       (global.get $__bysyncify_state)
       )
       (block
        (call $import3
@@ -1098,28 +1133,33 @@
       (global.get $__bysyncify_state)
       (i32.const 2)
      )
-     (i32.store
-      (global.get $__bysyncify_data)
-      (i32.add
-       (i32.load
-        (global.get $__bysyncify_data)
+     (block
+      (i32.store
+       (global.get $__bysyncify_data)
+       (i32.add
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+        (i32.const -4)
        )
-       (i32.const -4)
+      )
+      (local.set $1
+       (i32.load
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+       )
       )
      )
     )
     (loop $l
      (if
-      (if (result i32)
-       (global.get $__bysyncify_state)
+      (select
        (i32.eqz
-        (i32.load
-         (i32.load
-          (global.get $__bysyncify_data)
-         )
-        )
+        (local.get $1)
        )
        (i32.const 1)
+       (global.get $__bysyncify_state)
       )
       (block
        (local.set $0

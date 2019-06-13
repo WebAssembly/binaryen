@@ -168,6 +168,9 @@ static const Name BYSYNCIFY_STOP_REWIND = "bysyncify_stop_rewind";
 
 static const Name BYSYNCIFY_UNWIND = "__bysyncify_unwind";
 
+static const Name BYSYNCIFY_GET_CALL_INDEX = "__bysyncify_get_call_index";
+static const Name BYSYNCIFY_CHECK_CALL_INDEX = "__bysyncify_check_call_index";
+
 // TODO: having just normal/unwind_or_rewind would decrease code
 //       size, but make debugging harder
 enum class State {
@@ -443,15 +446,17 @@ std::cout << "BAD " << *curr << '\n';
   }
 
   Expression* makeCallIndexPeek(Index index) {
-    return builder->makeBinary(
-      EqInt32,
-      builder->makeLoad(4, false, 0, 4, builder->makeGetStackPos(), i32),
+    // Emit an intrinsic for this, as we store the index into a local, and
+    // don't want it to be seen by bysyncify itself.
+    return builder->makeCall(BYSYNCIFY_CHECK_CALL_INDEX, {
       builder->makeConst(Literal(int32_t(index)))
-    );
+    }, i32);
   }
 
   Expression* makeCallIndexPop() {
-    return builder->makeIncStackPos(-4);
+    // Emit an intrinsic for this, as we store the index into a local, and
+    // don't want it to be seen by bysyncify itself.
+    return builder->makeCall(BYSYNCIFY_GET_CALL_INDEX, {}, none);
   }
 };
 
@@ -462,10 +467,28 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
   BysyncifyLocals* create() override { return new BysyncifyLocals(); }
 
   void visitCall(Call* curr) {
-    // Replace calls to the fake intrinsic with a proper unwind.
+    // Replace calls to the fake intrinsics.
     if (curr->target == BYSYNCIFY_UNWIND) {
       replaceCurrent(
         builder->makeBreak(BYSYNCIFY_UNWIND, curr->operands[0])
+      );
+    } else if (curr->target == BYSYNCIFY_GET_CALL_INDEX) {
+      replaceCurrent(
+        builder->makeSequence(
+          builder->makeIncStackPos(-4),
+          builder->makeLocalSet(
+            rewindIndex,
+            builder->makeLoad(4, false, 0, 4, builder->makeGetStackPos(), i32)
+          )
+        )
+      );
+    } else if (curr->target == BYSYNCIFY_CHECK_CALL_INDEX) {
+      replaceCurrent(
+        builder->makeBinary(
+          EqInt32,
+          builder->makeLocalGet(rewindIndex, i32),
+          builder->makeConst(Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))
+        )
       );
     }
   }
@@ -476,6 +499,16 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
     if (!mayChangeState(func->body)) {
       return;
     }
+    // Note the locals we want to preserve, before we add any more helpers.
+    numPreservableLocals = func->getNumLocals();
+    // The new function body has a prelude to load locals if rewinding,
+    // then the actual main body, which does all its unwindings by breaking
+    // to the unwind block, which then handles pushing the call index, as
+    // well as saving the locals.
+    // An index is needed for getting the unwinding and rewinding call indexes
+    // around TODO: can this be the same index?
+    auto unwindIndex = builder->addVar(func, i32);
+    rewindIndex = builder->addVar(func, i32);
     // Rewrite the function body.
     builder = make_unique<BysyncifyBuilder>(*getModule());
     walk(func->body);
@@ -490,20 +523,13 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
       // reached). The optimizer can remove this anyhow.
       barrier = builder->makeUnreachable();
     }
-    // Note the locals we want to preserve, before we add any more helpers.
-    numPreservableLocals = func->getNumLocals();
-    // The new function body has a prelude to load locals if rewinding,
-    // then the actual main body, which does all its unwindings by breaking
-    // to the unwind block, which then handles pushing the call index, as
-    // well as saving the locals.
-    auto tempIndex = builder->addVar(func, i32);
     auto* newBody = builder->makeBlock({
       builder->makeIf(
         builder->makeStateCheck(State::Rewinding),
         makeLocalLoading()
       ),
       builder->makeLocalSet(
-        tempIndex,
+        unwindIndex,
         builder->makeBlock(
           BYSYNCIFY_UNWIND,
           builder->makeSequence(
@@ -512,7 +538,7 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
           )
         )
       ),
-      makeCallIndexPush(tempIndex),
+      makeCallIndexPush(unwindIndex),
       makeLocalSaving()
     });
     if (func->result != none) {
@@ -529,6 +555,7 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
 private:
   std::unique_ptr<BysyncifyBuilder> builder;
 
+  Index rewindIndex;
   Index numPreservableLocals;
 
   Expression* makeLocalLoading() {
