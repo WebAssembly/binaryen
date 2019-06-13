@@ -249,12 +249,22 @@ struct BysyncifyFlow : public Pass {
     }
     // Rewrite the function body.
     builder = make_unique<BysyncifyBuilder>(*module);
-    func->body = process(func->body);
+    // Each function we enter will pop one from the stack, which is the index
+    // of the next call to make.
+    auto* block = builder->makeBlock({
+      builder->makeIf(
+        builder->makeStateCheck(State::Rewinding), // TODO: such checks can be !normal
+        makeCallIndexPop()
+      ),
+      process(func->body)
+    });
     if (func->result != none) {
       // Rewriting control flow may alter things; make sure the function ends in
       // something valid (which the optimizer can remove later).
-      func->body = builder->makeSequence(func->body, builder->makeUnreachable());
+      block->list.push_back(builder->makeUnreachable());
     }
+    block->finalize();
+    func->body = block;
     // Making things like returns conditional may alter types.
     ReFinalize().walkFunctionInModule(func, module);
   }
@@ -395,21 +405,15 @@ std::cout << "BAD " << *curr << '\n';
     assert(doesCall(curr));
     assert(curr->type == none);
     auto index = callIndex++;
-    // Execute the call, if either normal execution, or if rewinding and this is the right
-    // call to go into.
-    // If we execute
+    // Execute the call, if either normal execution, or if rewinding and this
+    // is the right call to go into.
+    // TODO: we can read the next call index once in each function (but should
+    //       avoid saving/restoring that local later)
     return builder->makeIf(
       builder->makeIf(
         builder->makeStateCheck(State::Normal),
         builder->makeConst(Literal(int32_t(1))),
-        builder->makeIf(
-          makeCallIndexPeek(index),
-          builder->makeSequence(
-            makeCallIndexPop(),
-            builder->makeConst(Literal(int32_t(1)))
-          ),
-          builder->makeConst(Literal(int32_t(0)))
-        )
+        makeCallIndexPeek(index)
       ),
       builder->makeSequence(
         curr,

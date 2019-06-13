@@ -1,6 +1,6 @@
 
 function assert(x, y) {
-  if (!x) throw (y || 'assertion failed');
+  if (!x) throw (y || 'assertion failed') + '\n' + new Error().stack;
 }
 
 var fs = require('fs');
@@ -20,6 +20,8 @@ var sleeping = false;
 var instance = new WebAssembly.Instance(module, {
   env: {
     sleep: function() {
+      logMemory();
+assert(view[0] == 0);
       if (!sleeping) {
         // We are called in order to start a sleep/unwind.
         console.log('sleep...');
@@ -41,6 +43,7 @@ var instance = new WebAssembly.Instance(module, {
         assert(view[DATA_ADDR + 4 >> 2] == 1024);
         sleeping = false;
       }
+      logMemory();
     }
   }
 });
@@ -50,31 +53,36 @@ var view = new Int32Array(exports.memory.buffer);
 
 function logMemory() {
   // Log the relevant memory locations for debugging purposes.
-  console.log('memory: ', view[DATA_ADDR >> 2], view[DATA_ADDR + 4 >> 2], view[DATA_ADDR + 8 >> 2], view[DATA_ADDR + 12 >> 2]);
+  console.log('memory: ', view[0 >> 2], view[4 >> 2], view[8 >> 2], view[12 >> 2], view[16 >> 2], view[20 >> 2], view[24 >> 2]);
 }
 
 function runTest(name, expectedSleeps, expectedResult) {
-  console.log('==== testing ' + name + ' ====');
+  console.log('\n==== testing ' + name + ' ====');
 
   sleeps = 0;
+
+  logMemory();
 
   // Run until the sleep.
   var result = exports[name]();
   assert(!result, 'results during sleep are meaningless, just 0');
+  logMemory();
 
   for (var i = 0; i < expectedSleeps - 1; i++) {
-    // Rewind, run until the nextsleep.
+    console.log('rewind, run until the next sleep');
     exports.bysyncify_start_rewind(DATA_ADDR);
     result = exports[name]();
     assert(!result, 'results during sleep are meaningless, just 0');
     assert(!result, 'bad first sleep result');
+    logMemory();
   }
 
-  // Finally, rewind and run til the end.
+  console.log('rewind and run til the end.');
   exports.bysyncify_start_rewind(DATA_ADDR);
   result = exports[name]();
   console.log('final result: ' + result);
   assert(result == expectedResult, 'bad final result');
+  logMemory();
 
   assert(sleeps == expectedSleeps, 'expectedSleeps');
 }
