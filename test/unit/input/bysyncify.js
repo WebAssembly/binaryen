@@ -67,21 +67,25 @@ function runTest(name, expectedSleeps, expectedResult, params) {
 
   // Run until the sleep.
   var result = exports[name].apply(null, params);
-  assert(!result, 'results during sleep are meaningless, just 0');
   logMemory();
 
-  for (var i = 0; i < expectedSleeps - 1; i++) {
-    console.log('rewind, run until the next sleep');
-    exports.bysyncify_start_rewind(DATA_ADDR);
-    result = exports[name](); // no need for params on later times
+  if (expectedSleeps > 0) {
     assert(!result, 'results during sleep are meaningless, just 0');
-    assert(!result, 'bad first sleep result');
-    logMemory();
+
+    for (var i = 0; i < expectedSleeps - 1; i++) {
+      console.log('rewind, run until the next sleep');
+      exports.bysyncify_start_rewind(DATA_ADDR);
+      result = exports[name](); // no need for params on later times
+      assert(!result, 'results during sleep are meaningless, just 0');
+      assert(!result, 'bad first sleep result');
+      logMemory();
+    }
+
+    console.log('rewind and run til the end.');
+    exports.bysyncify_start_rewind(DATA_ADDR);
+    result = exports[name]();
   }
 
-  console.log('rewind and run til the end.');
-  exports.bysyncify_start_rewind(DATA_ADDR);
-  result = exports[name]();
   console.log('final result: ' + result);
   assert(result == expectedResult, 'bad final result');
   logMemory();
@@ -108,6 +112,11 @@ runTest('local2', 1, 22);
 // A local with more operations done on it.
 runTest('params', 1, 18);
 runTest('params', 1, 21, [1, 2]);
+
+// Calls to multiple other functions, only one of whom
+// sleeps, and keep locals and globals valid throughout.
+runTest('deeper', 0, 27, [0]);
+runTest('deeper', 1,  3, [1]);
 
 console.log('\ntests completed successfully');
 

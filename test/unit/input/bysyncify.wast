@@ -2,6 +2,7 @@
   (memory 1 2)
   (import "env" "sleep" (func $sleep))
   (export "memory" (memory 0))
+  (global $temp (mut i32) (i32.const 0))
   (func "minimal" (result i32)
     (call $sleep)
     (i32.const 21)
@@ -42,6 +43,28 @@
     )
     (call $sleep)
     (i32.add (local.get $x) (local.get $y))
+  )
+  (func $pre
+    (global.set $temp (i32.const 1))
+  )
+  (func $inner (param $x i32)
+    (if (i32.eqz (local.get $x)) (call $post))
+    (if (local.get $x) (call $sleep))
+    (if (i32.eqz (local.get $x)) (call $post))
+  )
+  (func $post
+    (global.set $temp
+      (i32.mul
+        (global.get $temp)
+        (i32.const 3)
+      )
+    )
+  )
+  (func "deeper" (param $x i32) (result i32)
+    (call $pre)
+    (call $inner (local.get $x))
+    (call $post)
+    (global.get $temp)
   )
 )
 
