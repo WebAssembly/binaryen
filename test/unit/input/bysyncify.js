@@ -56,7 +56,9 @@ function logMemory() {
   console.log('memory: ', view[0 >> 2], view[4 >> 2], view[8 >> 2], view[12 >> 2], view[16 >> 2], view[20 >> 2], view[24 >> 2]);
 }
 
-function runTest(name, expectedSleeps, expectedResult) {
+function runTest(name, expectedSleeps, expectedResult, params) {
+  params = params || [];
+
   console.log('\n==== testing ' + name + ' ====');
 
   sleeps = 0;
@@ -64,14 +66,14 @@ function runTest(name, expectedSleeps, expectedResult) {
   logMemory();
 
   // Run until the sleep.
-  var result = exports[name]();
+  var result = exports[name].apply(null, params);
   assert(!result, 'results during sleep are meaningless, just 0');
   logMemory();
 
   for (var i = 0; i < expectedSleeps - 1; i++) {
     console.log('rewind, run until the next sleep');
     exports.bysyncify_start_rewind(DATA_ADDR);
-    result = exports[name]();
+    result = exports[name](); // no need for params on later times
     assert(!result, 'results during sleep are meaningless, just 0');
     assert(!result, 'bad first sleep result');
     logMemory();
@@ -102,4 +104,10 @@ runTest('local', 1, 10);
 
 // A local with more operations done on it.
 runTest('local2', 1, 22);
+
+// A local with more operations done on it.
+runTest('params', 1, 18);
+runTest('params', 1, 21, [1, 2]);
+
+console.log('\ntests completed successfully');
 

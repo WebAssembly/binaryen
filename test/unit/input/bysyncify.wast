@@ -33,5 +33,15 @@
     )
     (local.get $x)
   )
+  (func "params" (param $x i32) (param $y i32) (result i32)
+    (local.set $x
+      (i32.add (local.get $x) (i32.const 17)) ;; add 10
+    )
+    (local.set $y
+      (i32.add (local.get $y) (i32.const 1)) ;; add 12 more
+    )
+    (call $sleep)
+    (i32.add (local.get $x) (local.get $y))
+  )
 )
 
