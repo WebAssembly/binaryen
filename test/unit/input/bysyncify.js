@@ -118,5 +118,13 @@ runTest('params', 1, 21, [1, 2]);
 runTest('deeper', 0, 27, [0]);
 runTest('deeper', 1,  3, [1]);
 
+// A recursive factorial, that sleeps on each iteration
+// above 1.
+runTest('factorial-recursive', 0,   1, [1]);
+runTest('factorial-recursive', 1,   2, [2]);
+runTest('factorial-recursive', 2,   6, [3]);
+runTest('factorial-recursive', 3,  24, [4]);
+runTest('factorial-recursive', 4, 120, [5]);
+
 console.log('\ntests completed successfully');
 

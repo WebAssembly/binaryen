@@ -2,6 +2,7 @@
   (memory 1 2)
   (import "env" "sleep" (func $sleep))
   (export "memory" (memory 0))
+  (export "factorial-recursive" (func $factorial-recursive))
   (global $temp (mut i32) (i32.const 0))
   (func "minimal" (result i32)
     (call $sleep)
@@ -65,6 +66,30 @@
     (call $inner (local.get $x))
     (call $post)
     (global.get $temp)
+  )
+  (func $factorial-recursive (param $x i32) (result i32)
+    (if
+      (i32.eq
+        (local.get $x)
+        (i32.const 1)
+      )
+      (return (i32.const 1))
+    )
+    (call $sleep)
+    (return
+      (i32.mul
+        (local.get $x)
+        (call $factorial-recursive
+          (i32.sub
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+  (func "factorial-loop" (param $x i32) (result i32)
+    (unreachable)
   )
 )
 
