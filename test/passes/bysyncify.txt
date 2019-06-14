@@ -1219,7 +1219,112 @@
    )
   )
  )
- (func $bysyncify_start_unwind (; 14 ;) (param $0 i32)
+ (func $calls-mix (; 14 ;) (type $FUNCSIG$v)
+  (local $0 i32)
+  (local.set $0
+   (block $__bysyncify_unwind (result i32)
+    (if
+     (i32.eq
+      (global.get $__bysyncify_state)
+      (i32.const 2)
+     )
+     (block
+      (i32.store
+       (global.get $__bysyncify_data)
+       (i32.add
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+        (i32.const -4)
+       )
+      )
+      (local.set $0
+       (i32.load
+        (i32.load
+         (global.get $__bysyncify_data)
+        )
+       )
+      )
+     )
+    )
+    (if
+     (i32.eqz
+      (global.get $__bysyncify_state)
+     )
+     (call $boring)
+    )
+    (if
+     (select
+      (i32.eqz
+       (local.get $0)
+      )
+      (i32.const 1)
+      (global.get $__bysyncify_state)
+     )
+     (block
+      (call $import)
+      (drop
+       (br_if $__bysyncify_unwind
+        (i32.const 0)
+        (i32.eq
+         (global.get $__bysyncify_state)
+         (i32.const 1)
+        )
+       )
+      )
+     )
+    )
+    (if
+     (i32.eqz
+      (global.get $__bysyncify_state)
+     )
+     (call $boring)
+    )
+    (if
+     (select
+      (i32.eq
+       (local.get $0)
+       (i32.const 1)
+      )
+      (i32.const 1)
+      (global.get $__bysyncify_state)
+     )
+     (block
+      (call $import)
+      (drop
+       (br_if $__bysyncify_unwind
+        (i32.const 1)
+        (i32.eq
+         (global.get $__bysyncify_state)
+         (i32.const 1)
+        )
+       )
+      )
+     )
+    )
+    (return)
+   )
+  )
+  (i32.store
+   (i32.load
+    (global.get $__bysyncify_data)
+   )
+   (local.get $0)
+  )
+  (i32.store
+   (global.get $__bysyncify_data)
+   (i32.add
+    (i32.load
+     (global.get $__bysyncify_data)
+    )
+    (i32.const 4)
+   )
+  )
+ )
+ (func $boring (; 15 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $bysyncify_start_unwind (; 16 ;) (param $0 i32)
   (if
    (i32.gt_u
     (i32.load
@@ -1238,7 +1343,7 @@
    (local.get $0)
   )
  )
- (func $bysyncify_start_rewind (; 15 ;) (param $0 i32)
+ (func $bysyncify_start_rewind (; 17 ;) (param $0 i32)
   (if
    (i32.gt_u
     (i32.load
@@ -1257,7 +1362,7 @@
    (local.get $0)
   )
  )
- (func $bysyncify_stop_rewind (; 16 ;)
+ (func $bysyncify_stop_rewind (; 18 ;)
   (global.set $__bysyncify_state
    (i32.const 0)
   )

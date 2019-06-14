@@ -74,5 +74,12 @@
       )
     )
   )
+  (func $calls-mix
+    (call $boring)
+    (call $import)
+    (call $boring)
+    (call $import)
+  )
+  (func $boring)
 )
 
