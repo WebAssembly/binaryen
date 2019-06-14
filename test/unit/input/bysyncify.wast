@@ -1,6 +1,7 @@
 (module
   (memory 1 2)
   (import "env" "sleep" (func $sleep))
+  (import "env" "tunnel" (func $tunnel (param $x i32) (result i32)))
   (export "memory" (memory 0))
   (export "factorial-recursive" (func $factorial-recursive))
   (global $temp (mut i32) (i32.const 0))
@@ -116,6 +117,23 @@
       )
       (br $l)
     )
+  )
+  (func "end_tunnel" (param $x i32) (result i32)
+    (local.set $x
+      (i32.add (local.get $x) (i32.const 22))
+    )
+    (call $sleep)
+    (i32.add (local.get $x) (i32.const 5))
+  )
+  (func "do_tunnel" (param $x i32) (result i32)
+    (local.set $x
+      (i32.add (local.get $x) (i32.const 11))
+    )
+    (local.set $x
+      (call $tunnel (local.get $x)) ;; calls js which calls back into wasm for end_tunnel
+    )
+    (call $sleep)
+    (i32.add (local.get $x) (i32.const 33))
   )
 )
 

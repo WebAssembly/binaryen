@@ -412,6 +412,8 @@ std::cout << "BAD " << *curr << '\n';
   }
 
   Expression* makeCallSupport(Expression* curr) {
+    // TODO: stop doing this after code can no longer reach a call that may
+    //       change the state
     assert(doesCall(curr));
     assert(curr->type == none);
     auto index = callIndex++;

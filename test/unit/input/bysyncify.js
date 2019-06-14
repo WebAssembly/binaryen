@@ -44,6 +44,10 @@ assert(view[0] == 0);
         sleeping = false;
       }
       logMemory();
+    },
+    tunnel: function(x) {
+      console.log('tunneling, sleep == ' + sleeping);
+      return exports.end_tunnel(x);
     }
   }
 });
@@ -134,5 +138,11 @@ runTest('factorial-loop', 2,   6, [3]);
 runTest('factorial-loop', 3,  24, [4]);
 runTest('factorial-loop', 4, 120, [5]);
 
+// Test calling into JS in the middle (which can work if
+// the JS just forwards the call and has no side effects or
+// state of its own that needs to be saved).
+runTest('do_tunnel', 2, 72, [1]);
+
+// All done.
 console.log('\ntests completed successfully');
 
