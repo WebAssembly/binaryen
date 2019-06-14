@@ -162,7 +162,39 @@
     (call $sleep)
     (i32.add (local.get $y) (i32.const 300)) ;; total is 10+30+90+300=430 + y's original value
   )
-  (func "if_else" (param $x i32)
+  (func "if_else" (param $x i32) (param $y i32) (result i32)
+    (if (i32.eq (local.get $x) (i32.const 1))
+      (local.set $y
+        (i32.add (local.get $y) (i32.const 10))
+      )
+      (local.set $y
+        (i32.add (local.get $y) (i32.const 20))
+      )
+    )
+    (if (i32.eq (local.get $x) (i32.const 1))
+      (local.set $y
+        (i32.add (local.get $y) (i32.const 40))
+      )
+      (call $sleep)
+    )
+    (if (i32.eq (local.get $x) (i32.const 1))
+      (call $sleep)
+      (local.set $y
+        (i32.add (local.get $y) (i32.const 90))
+      )
+    )
+    (if (i32.eq (local.get $x) (i32.const 1))
+      (call $sleep)
+      (call $sleep)
+    )
+    (local.set $y
+      (i32.add (local.get $y) (i32.const 160))
+    )
+    (call $sleep)
+    (local.set $y
+      (i32.add (local.get $y) (i32.const 250))
+    )
+    (local.get $y)
   )
 )
 
