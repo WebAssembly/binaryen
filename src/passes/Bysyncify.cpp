@@ -1,4 +1,3 @@
-#include <wasm-printing.h>
 /*
  * Copyright 2019 WebAssembly Community Group participants
  *
