@@ -1,10 +1,13 @@
 (module
   (memory 1 2)
+  (type $ii (func (param i32) (result i32)))
   (import "env" "sleep" (func $sleep))
   (import "env" "tunnel" (func $tunnel (param $x i32) (result i32)))
   (export "memory" (memory 0))
   (export "factorial-recursive" (func $factorial-recursive))
   (global $temp (mut i32) (i32.const 0))
+  (table 10 funcref)
+  (elem (i32.const 5) $tablefunc)
   (func "minimal" (result i32)
     (call $sleep)
     (i32.const 21)
@@ -134,6 +137,30 @@
     )
     (call $sleep)
     (i32.add (local.get $x) (i32.const 33))
+  )
+  (func $tablefunc (param $y i32) (result i32)
+    (local.set $y
+      (i32.add (local.get $y) (i32.const 10))
+    )
+    (call $sleep)
+    (i32.add (local.get $y) (i32.const 30))
+  )
+  (func "call_indirect" (param $x i32) (param $y i32) (result i32)
+    (local.set $x
+      (i32.add (local.get $x) (i32.const 1))
+    )
+    (call $sleep)
+    (local.set $x
+      (i32.add (local.get $x) (i32.const 3))
+    )
+    (local.set $y
+      (call_indirect (type $ii) (local.get $y) (local.get $x)) ;; call function pointer x + 4, which will be 5
+    )
+    (local.set $y
+      (i32.add (local.get $y) (i32.const 90))
+    )
+    (call $sleep)
+    (i32.add (local.get $y) (i32.const 300)) ;; total is 10+30+90+300=430 + y's original value
   )
 )
 

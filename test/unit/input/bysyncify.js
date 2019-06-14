@@ -143,6 +143,9 @@ runTest('factorial-loop', 4, 120, [5]);
 // state of its own that needs to be saved).
 runTest('do_tunnel', 2, 72, [1]);
 
+// Test indirect function calls.
+runTest('call_indirect', 3, 432, [1, 2]);
+
 // All done.
 console.log('\ntests completed successfully');
 
