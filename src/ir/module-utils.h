@@ -291,13 +291,12 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
 // Performs a parallel map on function in the module, emitting a map object
 // of function => result.
 // TODO: use in inlining and elsewhere
-template<typename T>
-struct ParallelFunctionMap {
+template<typename T> struct ParallelFunctionMap {
 
   typedef std::map<Function*, T> Map;
   Map map;
 
-  typedef std::function<void (Function*, T&)> Func;
+  typedef std::function<void(Function*, T&)> Func;
 
   struct Info {
     Map* map;
@@ -319,16 +318,13 @@ struct ParallelFunctionMap {
     }
 
     // Run on the implemented functions.
-    struct Mapper
-      : public WalkerPass<PostWalker<Mapper>> {
+    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
 
       bool isFunctionParallel() override { return true; }
 
       Mapper(Info* info) : info(info) {}
 
-      Mapper* create() override {
-        return new Mapper(info);
-      }
+      Mapper* create() override { return new Mapper(info); }
 
       void doWalkFunction(Function* curr) {
         assert((*info->map).count(curr));
@@ -339,7 +335,7 @@ struct ParallelFunctionMap {
       Info* info;
     };
 
-    Info info = { &map, work };
+    Info info = {&map, work};
 
     PassRunner runner(&wasm);
     runner.setIsNested(true);

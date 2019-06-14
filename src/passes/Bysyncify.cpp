@@ -159,7 +159,6 @@
 // bysyncify.* imports) are assumed not to.
 //
 
-
 #include "ir/effects.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
@@ -188,16 +187,9 @@ static const Name BYSYNCIFY_CHECK_CALL_INDEX = "__bysyncify_check_call_index";
 
 // TODO: having just normal/unwind_or_rewind would decrease code
 //       size, but make debugging harder
-enum class State {
-  Normal = 0,
-  Unwinding = 1,
-  Rewinding = 2
-};
+enum class State { Normal = 0, Unwinding = 1, Rewinding = 2 };
 
-enum class DataOffset {
-  BStackPos = 0,
-  BStackEnd = 4
-};
+enum class DataOffset { BStackPos = 0, BStackEnd = 4 };
 
 const auto STACK_ALIGN = 4;
 
@@ -217,54 +209,60 @@ class ModuleAnalyzer {
   Map map;
 
 public:
-  ModuleAnalyzer(Module& module, std::function<bool (Name, Name)> canImportChangeState) : module(module) {
+  ModuleAnalyzer(Module& module,
+                 std::function<bool(Name, Name)> canImportChangeState)
+    : module(module) {
     // Scan to see which functions can directly change the state.
     // Also handle the bysyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
     // name).
-    ModuleUtils::ParallelFunctionMap<Info> scanner(module, [&](Function* func, Info& info) {
-      if (func->imported()) {
-        // The bysyncify imports to start an unwind or rewind can definitely
-        // change the state.
-        if (func->module == BYSYNCIFY && (func->base == START_UNWIND || func->base == START_REWIND)) {
-          info.canChangeState = true;
-        } else {
-          info.canChangeState = canImportChangeState(func->module, func->base);
-        }
-        return;
-      }
-      struct Walker : PostWalker<Walker> {
-        void visitCall(Call* curr) {
-          auto* target = module->getFunction(curr->target);
-          if (target->imported() && target->module == BYSYNCIFY) {
-            // Redirect the imports to the functions we'll add later.
-            if (target->base == START_UNWIND) {
-              curr->target = BYSYNCIFY_START_UNWIND;
-            } else if (target->base == START_REWIND) {
-              curr->target = BYSYNCIFY_START_REWIND;
-            } else if (target->base == STOP_REWIND) {
-              curr->target = BYSYNCIFY_STOP_REWIND;
-              // TODO: in theory, this does not change the state
-            } else {
-              Fatal() << "call to unidenfied bysyncify import: " << target->base;
-            }
-            info->canChangeState = true;
-            return;
+    ModuleUtils::ParallelFunctionMap<Info> scanner(
+      module, [&](Function* func, Info& info) {
+        if (func->imported()) {
+          // The bysyncify imports to start an unwind or rewind can definitely
+          // change the state.
+          if (func->module == BYSYNCIFY &&
+              (func->base == START_UNWIND || func->base == START_REWIND)) {
+            info.canChangeState = true;
+          } else {
+            info.canChangeState =
+              canImportChangeState(func->module, func->base);
           }
-          info->callsTo.insert(target);
+          return;
         }
-        void visitCallIndirect(CallIndirect* curr) {
-          // TODO optimize
-          info->canChangeState = true;
-        }
-        Info* info;
-        Module* module;
-      };
-      Walker walker;
-      walker.info = &info;
-      walker.module = &module;
-      walker.walk(func->body);
-    });
+        struct Walker : PostWalker<Walker> {
+          void visitCall(Call* curr) {
+            auto* target = module->getFunction(curr->target);
+            if (target->imported() && target->module == BYSYNCIFY) {
+              // Redirect the imports to the functions we'll add later.
+              if (target->base == START_UNWIND) {
+                curr->target = BYSYNCIFY_START_UNWIND;
+              } else if (target->base == START_REWIND) {
+                curr->target = BYSYNCIFY_START_REWIND;
+              } else if (target->base == STOP_REWIND) {
+                curr->target = BYSYNCIFY_STOP_REWIND;
+                // TODO: in theory, this does not change the state
+              } else {
+                Fatal() << "call to unidenfied bysyncify import: "
+                        << target->base;
+              }
+              info->canChangeState = true;
+              return;
+            }
+            info->callsTo.insert(target);
+          }
+          void visitCallIndirect(CallIndirect* curr) {
+            // TODO optimize
+            info->canChangeState = true;
+          }
+          Info* info;
+          Module* module;
+        };
+        Walker walker;
+        walker.info = &info;
+        walker.module = &module;
+        walker.walk(func->body);
+      });
     map.swap(scanner.map);
 
     // Remove the bysyncify imports, if any.
@@ -304,9 +302,7 @@ public:
     }
   }
 
-  bool canChangeState(Function* func) {
-    return map[func].canChangeState;
-  }
+  bool canChangeState(Function* func) { return map[func].canChangeState; }
 
   bool canChangeState(Expression* curr) {
     // Look inside to see if we call any of the things we know can change the
@@ -316,7 +312,8 @@ public:
       void visitCall(Call* curr) {
         // We only implement these at the very end, but we know that they
         // definitely change the state.
-        if (curr->target == BYSYNCIFY_START_UNWIND || curr->target == BYSYNCIFY_START_REWIND) {
+        if (curr->target == BYSYNCIFY_START_UNWIND ||
+            curr->target == BYSYNCIFY_START_REWIND) {
           canChangeState = true;
           return;
         }
@@ -359,31 +356,31 @@ public:
   BysyncifyBuilder(Module& wasm) : Builder(wasm) {}
 
   Expression* makeGetStackPos() {
-    return makeLoad(4, false, int32_t(DataOffset::BStackPos), 4,
-      makeGlobalGet(BYSYNCIFY_DATA, i32), i32);
+    return makeLoad(4,
+                    false,
+                    int32_t(DataOffset::BStackPos),
+                    4,
+                    makeGlobalGet(BYSYNCIFY_DATA, i32),
+                    i32);
   }
 
   Expression* makeIncStackPos(int32_t by) {
     if (by == 0) {
       return makeNop();
     }
-    return makeStore(4, int32_t(DataOffset::BStackPos), 4,
+    return makeStore(
+      4,
+      int32_t(DataOffset::BStackPos),
+      4,
       makeGlobalGet(BYSYNCIFY_DATA, i32),
-      makeBinary(
-        AddInt32,
-        makeGetStackPos(),
-        makeConst(Literal(by))
-      ),
-      i32
-    );
+      makeBinary(AddInt32, makeGetStackPos(), makeConst(Literal(by))),
+      i32);
   }
 
   Expression* makeStateCheck(State value) {
-    return makeBinary(
-      EqInt32,
-      makeGlobalGet(BYSYNCIFY_STATE, i32),
-      makeConst(Literal(int32_t(value)))
-    );
+    return makeBinary(EqInt32,
+                      makeGlobalGet(BYSYNCIFY_STATE, i32),
+                      makeConst(Literal(int32_t(value))));
   }
 };
 
@@ -397,7 +394,8 @@ struct BysyncifyFlow : public Pass {
 
   BysyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
-  void runOnFunction(PassRunner* runner, Module* module_, Function* func) override {
+  void
+  runOnFunction(PassRunner* runner, Module* module_, Function* func) override {
     module = module_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
@@ -408,13 +406,11 @@ struct BysyncifyFlow : public Pass {
     builder = make_unique<BysyncifyBuilder>(*module);
     // Each function we enter will pop one from the stack, which is the index
     // of the next call to make.
-    auto* block = builder->makeBlock({
-      builder->makeIf(
-        builder->makeStateCheck(State::Rewinding), // TODO: such checks can be !normal
-        makeCallIndexPop()
-      ),
-      process(func->body)
-    });
+    auto* block = builder->makeBlock(
+      {builder->makeIf(builder->makeStateCheck(
+                         State::Rewinding), // TODO: such checks can be !normal
+                       makeCallIndexPop()),
+       process(func->body)});
     if (func->result != none) {
       // Rewriting control flow may alter things; make sure the function ends in
       // something valid (which the optimizer can remove later).
@@ -514,10 +510,7 @@ private:
       iff->ifFalse = nullptr;
       auto* originalCondition = iff->condition;
       iff->condition = builder->makeBinary(
-        OrInt32,
-        originalCondition,
-        builder->makeStateCheck(State::Rewinding)
-      );
+        OrInt32, originalCondition, builder->makeStateCheck(State::Rewinding));
       iff->ifTrue = process(iff->ifTrue);
       iff->finalize();
       if (!otherArm) {
@@ -528,13 +521,9 @@ private:
         builder->makeBinary(
           OrInt32,
           builder->makeUnary(
-            EqZInt32,
-            ExpressionManipulator::copy(originalCondition, *module)
-          ),
-          builder->makeStateCheck(State::Rewinding)
-        ),
-        process(otherArm)
-      );
+            EqZInt32, ExpressionManipulator::copy(originalCondition, *module)),
+          builder->makeStateCheck(State::Rewinding)),
+        process(otherArm));
       otherIf->finalize();
       return builder->makeSequence(iff, otherIf);
     } else if (auto* loop = curr->dynCast<Loop>()) {
@@ -546,16 +535,13 @@ private:
     // We must handle all control flow above, and all things that can change
     // the state, so there should be nothing that can reach here - add it
     // earlier as necessary.
-std::cout << "BAD " << *curr << '\n';
+    std::cout << "BAD " << *curr << '\n';
     WASM_UNREACHABLE();
   }
 
   // Possibly skip some code, if rewinding.
   Expression* makeMaybeSkip(Expression* curr) {
-    return builder->makeIf(
-      builder->makeStateCheck(State::Normal),
-      curr
-    );
+    return builder->makeIf(builder->makeStateCheck(State::Normal), curr);
   }
 
   Expression* makeCallSupport(Expression* curr) {
@@ -569,16 +555,10 @@ std::cout << "BAD " << *curr << '\n';
     // TODO: we can read the next call index once in each function (but should
     //       avoid saving/restoring that local later)
     return builder->makeIf(
-      builder->makeIf(
-        builder->makeStateCheck(State::Normal),
-        builder->makeConst(Literal(int32_t(1))),
-        makeCallIndexPeek(index)
-      ),
-      builder->makeSequence(
-        curr,
-        makePossibleUnwind(index)
-      )
-    );
+      builder->makeIf(builder->makeStateCheck(State::Normal),
+                      builder->makeConst(Literal(int32_t(1))),
+                      makeCallIndexPeek(index)),
+      builder->makeSequence(curr, makePossibleUnwind(index)));
   }
 
   Expression* makePossibleUnwind(Index index) {
@@ -588,18 +568,16 @@ std::cout << "BAD " << *curr << '\n';
     // it when we add its contents, later.)
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
-      builder->makeCall(BYSYNCIFY_UNWIND, {
-        builder->makeConst(Literal(int32_t(index)))
-      }, none)
-    );
+      builder->makeCall(
+        BYSYNCIFY_UNWIND, {builder->makeConst(Literal(int32_t(index)))}, none));
   }
 
   Expression* makeCallIndexPeek(Index index) {
     // Emit an intrinsic for this, as we store the index into a local, and
     // don't want it to be seen by bysyncify itself.
-    return builder->makeCall(BYSYNCIFY_CHECK_CALL_INDEX, {
-      builder->makeConst(Literal(int32_t(index)))
-    }, i32);
+    return builder->makeCall(BYSYNCIFY_CHECK_CALL_INDEX,
+                             {builder->makeConst(Literal(int32_t(index)))},
+                             i32);
   }
 
   Expression* makeCallIndexPop() {
@@ -622,27 +600,19 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
   void visitCall(Call* curr) {
     // Replace calls to the fake intrinsics.
     if (curr->target == BYSYNCIFY_UNWIND) {
-      replaceCurrent(
-        builder->makeBreak(BYSYNCIFY_UNWIND, curr->operands[0])
-      );
+      replaceCurrent(builder->makeBreak(BYSYNCIFY_UNWIND, curr->operands[0]));
     } else if (curr->target == BYSYNCIFY_GET_CALL_INDEX) {
-      replaceCurrent(
-        builder->makeSequence(
-          builder->makeIncStackPos(-4),
-          builder->makeLocalSet(
-            rewindIndex,
-            builder->makeLoad(4, false, 0, 4, builder->makeGetStackPos(), i32)
-          )
-        )
-      );
+      replaceCurrent(builder->makeSequence(
+        builder->makeIncStackPos(-4),
+        builder->makeLocalSet(
+          rewindIndex,
+          builder->makeLoad(4, false, 0, 4, builder->makeGetStackPos(), i32))));
     } else if (curr->target == BYSYNCIFY_CHECK_CALL_INDEX) {
-      replaceCurrent(
-        builder->makeBinary(
-          EqInt32,
-          builder->makeLocalGet(rewindIndex, i32),
-          builder->makeConst(Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))
-        )
-      );
+      replaceCurrent(builder->makeBinary(
+        EqInt32,
+        builder->makeLocalGet(rewindIndex, i32),
+        builder->makeConst(
+          Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))));
     }
   }
 
@@ -676,28 +646,20 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
       // reached). The optimizer can remove this anyhow.
       barrier = builder->makeUnreachable();
     }
-    auto* newBody = builder->makeBlock({
-      builder->makeIf(
-        builder->makeStateCheck(State::Rewinding),
-        makeLocalLoading()
-      ),
-      builder->makeLocalSet(
-        unwindIndex,
-        builder->makeBlock(
-          BYSYNCIFY_UNWIND,
-          builder->makeSequence(
-            func->body,
-            barrier
-          )
-        )
-      ),
-      makeCallIndexPush(unwindIndex),
-      makeLocalSaving()
-    });
+    auto* newBody = builder->makeBlock(
+      {builder->makeIf(builder->makeStateCheck(State::Rewinding),
+                       makeLocalLoading()),
+       builder->makeLocalSet(
+         unwindIndex,
+         builder->makeBlock(BYSYNCIFY_UNWIND,
+                            builder->makeSequence(func->body, barrier))),
+       makeCallIndexPush(unwindIndex),
+       makeLocalSaving()});
     if (func->result != none) {
       // If we unwind, we must still "return" a value, even if it will be
       // ignored on the outside.
-      newBody->list.push_back(LiteralUtils::makeZero(func->result, *getModule()));
+      newBody->list.push_back(
+        LiteralUtils::makeZero(func->result, *getModule()));
       newBody->finalize(func->result);
     }
     func->body = newBody;
@@ -726,8 +688,7 @@ private:
     block->list.push_back(builder->makeIncStackPos(-total));
     auto tempIndex = builder->addVar(func, i32);
     block->list.push_back(
-      builder->makeLocalSet(tempIndex, builder->makeGetStackPos())
-    );
+      builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
@@ -735,13 +696,14 @@ private:
       assert(size % STACK_ALIGN == 0);
       // TODO: higher alignment?
       // TODO: optimize use of stack pos (add a local, ignore it here)
-      block->list.push_back(
-        builder->makeLocalSet(
-          i,
-          builder->makeLoad(size, true, offset, STACK_ALIGN,
-            builder->makeLocalGet(tempIndex, i32), type)
-        )
-      );
+      block->list.push_back(builder->makeLocalSet(
+        i,
+        builder->makeLoad(size,
+                          true,
+                          offset,
+                          STACK_ALIGN,
+                          builder->makeLocalGet(tempIndex, i32),
+                          type)));
       offset += size;
     }
     block->finalize();
@@ -756,8 +718,7 @@ private:
     auto* block = builder->makeBlock();
     auto tempIndex = builder->addVar(func, i32);
     block->list.push_back(
-      builder->makeLocalSet(tempIndex, builder->makeGetStackPos())
-    );
+      builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
@@ -766,12 +727,12 @@ private:
       // TODO: higher alignment?
       // TODO: optimize use of stack pos (add a local, ignore it here)
       block->list.push_back(
-        builder->makeStore(size, offset, STACK_ALIGN,
-          builder->makeLocalGet(tempIndex, i32),
-          builder->makeLocalGet(i, type),
-          type
-        )
-      );
+        builder->makeStore(size,
+                           offset,
+                           STACK_ALIGN,
+                           builder->makeLocalGet(tempIndex, i32),
+                           builder->makeLocalGet(i, type),
+                           type));
       offset += size;
     }
     block->list.push_back(builder->makeIncStackPos(offset));
@@ -782,13 +743,13 @@ private:
   Expression* makeCallIndexPush(Index tempIndex) {
     // TODO: add a check against the stack end here
     return builder->makeSequence(
-      builder->makeStore(4, 0, 4,
-        builder->makeGetStackPos(),
-        builder->makeLocalGet(tempIndex, i32),
-        i32
-      ),
-      builder->makeIncStackPos(4)
-    );
+      builder->makeStore(4,
+                         0,
+                         4,
+                         builder->makeGetStackPos(),
+                         builder->makeLocalGet(tempIndex, i32),
+                         i32),
+      builder->makeIncStackPos(4));
   }
 };
 
@@ -800,10 +761,9 @@ struct Bysyncify : public Pass {
     // Find which imports can change the state.
     const char* ALL_IMPORTS_CAN_CHANGE_STATE = "__bysyncify_all_imports";
     auto stateChangingImports = runner->options.getArgumentOrDefault(
-      "bysyncify",
-      ALL_IMPORTS_CAN_CHANGE_STATE
-    );
-    bool allImportsCanChangeState = stateChangingImports == ALL_IMPORTS_CAN_CHANGE_STATE;
+      "bysyncify", ALL_IMPORTS_CAN_CHANGE_STATE);
+    bool allImportsCanChangeState =
+      stateChangingImports == ALL_IMPORTS_CAN_CHANGE_STATE;
     std::string separator = ",";
     stateChangingImports = separator + stateChangingImports + separator;
     // Scan the module.
@@ -832,7 +792,7 @@ struct Bysyncify : public Pass {
       runner.add("merge-blocks");
       runner.add("vacuum");
       runner.add<BysyncifyFlow>(&analyzer);
-      //runner.setIsNested(true);
+      // runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
     }
@@ -850,7 +810,7 @@ struct Bysyncify : public Pass {
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
-      //runner.setIsNested(true);
+      // runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
     }
@@ -862,13 +822,22 @@ struct Bysyncify : public Pass {
 private:
   void addGlobals(Module* module) {
     Builder builder(*module);
-    module->addGlobal(builder.makeGlobal(BYSYNCIFY_STATE, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
-    module->addGlobal(builder.makeGlobal(BYSYNCIFY_DATA, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
+    module->addGlobal(builder.makeGlobal(BYSYNCIFY_STATE,
+                                         i32,
+                                         builder.makeConst(Literal(int32_t(0))),
+                                         Builder::Mutable));
+    module->addGlobal(builder.makeGlobal(BYSYNCIFY_DATA,
+                                         i32,
+                                         builder.makeConst(Literal(int32_t(0))),
+                                         Builder::Mutable));
   }
 
   void addFunctions(Module* module) {
     Builder builder(*module);
-    auto makeFunction = [&](Name name, bool setData, State state, Expression* extra) {
+    auto makeFunction = [&](Name name,
+                            bool setData,
+                            State state,
+                            Expression* extra) {
       std::vector<Type> params;
       if (setData) {
         params.push_back(i32);
@@ -876,28 +845,45 @@ private:
       auto* body = builder.makeBlock();
       if (setData) {
         // Verify the data is valid.
-        auto* stackPos = builder.makeLoad(4, false, int32_t(DataOffset::BStackPos), 4, builder.makeLocalGet(0, i32), i32);
-        auto* stackEnd = builder.makeLoad(4, false, int32_t(DataOffset::BStackEnd), 4, builder.makeLocalGet(0, i32), i32);
+        auto* stackPos = builder.makeLoad(4,
+                                          false,
+                                          int32_t(DataOffset::BStackPos),
+                                          4,
+                                          builder.makeLocalGet(0, i32),
+                                          i32);
+        auto* stackEnd = builder.makeLoad(4,
+                                          false,
+                                          int32_t(DataOffset::BStackEnd),
+                                          4,
+                                          builder.makeLocalGet(0, i32),
+                                          i32);
         body->list.push_back(
-          builder.makeIf(
-            builder.makeBinary(GtUInt32, stackPos, stackEnd),
-            builder.makeUnreachable()
-          )
-        );
+          builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
+                         builder.makeUnreachable()));
       }
-      body->list.push_back(builder.makeGlobalSet(BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
+      body->list.push_back(builder.makeGlobalSet(
+        BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
       if (extra) {
         body->list.push_back(extra);
       }
       body->finalize();
-      auto* func = builder.makeFunction(name, std::move(params), none, std::vector<Type>{}, body);
+      auto* func = builder.makeFunction(
+        name, std::move(params), none, std::vector<Type>{}, body);
       module->addFunction(func);
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };
 
-    makeFunction(BYSYNCIFY_START_UNWIND, { i32 }, State::Unwinding, builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
-    makeFunction(BYSYNCIFY_START_REWIND, { i32 }, State::Rewinding, builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
-    makeFunction(BYSYNCIFY_STOP_REWIND,       {}, State::Normal,    nullptr);
+    makeFunction(
+      BYSYNCIFY_START_UNWIND,
+      {i32},
+      State::Unwinding,
+      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
+    makeFunction(
+      BYSYNCIFY_START_REWIND,
+      {i32},
+      State::Rewinding,
+      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
+    makeFunction(BYSYNCIFY_STOP_REWIND, {}, State::Normal, nullptr);
   }
 };
 
