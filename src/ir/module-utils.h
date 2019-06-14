@@ -301,11 +301,24 @@ struct ParallelFunctionMap {
 
   struct Info {
     Map* map;
-    Func func;
+    Func work;
   };
 
-  ParallelFunctionMap(Module& wasm, Func func) {
+  ParallelFunctionMap(Module& wasm, Func work) {
+    // Fill in map, as we operate on it in parallel (each function to its own
+    // entry).
+    for (auto& func : wasm.functions) {
+      map[func.get()];
+    }
 
+    // Run on the imports first. TODO: parallelize this too
+    for (auto& func : wasm.functions) {
+      if (func->imported()) {
+        work(func.get(), map[func.get()]);
+      }
+    }
+
+    // Run on the implemented functions.
     struct Mapper
       : public WalkerPass<PostWalker<Mapper>> {
 
@@ -317,22 +330,16 @@ struct ParallelFunctionMap {
         return new Mapper(info);
       }
 
-      void doVisitFunction(Function* curr) {
+      void doWalkFunction(Function* curr) {
         assert((*info->map).count(curr));
-        info->func(curr, (*info->map)[curr]);
+        info->work(curr, (*info->map)[curr]);
       }
 
     private:
       Info* info;
     };
 
-    // Fill in map, as we operate on it in parallel (each function to its own
-    // entry).
-    for (auto& func : wasm.functions) {
-      map[func.get()];
-    }
-
-    Info info = { &map, func };
+    Info info = { &map, work };
 
     PassRunner runner(&wasm);
     runner.setIsNested(true);

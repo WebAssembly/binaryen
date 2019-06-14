@@ -217,9 +217,6 @@ public:
         void visitCall(Call* curr) {
           auto* target = module->getFunction(curr->target);
           info->callsTo.insert(target);
-          if (target->imported()) {
-            info->canChangeState = true;
-          }
         }
         void visitCallIndirect(CallIndirect* curr) {
           // TODO optimize
@@ -274,8 +271,9 @@ public:
     // TODO: caching, this is O(N^2)
     struct Walker : PostWalker<Walker> {
       void visitCall(Call* curr) {
-        auto* target = module->getFunction(curr->target);
-        if ((*map)[target].canChangeState) {
+        // The target may not exist if it is one of our temporary intrinsics.
+        auto* target = module->getFunctionOrNull(curr->target);
+        if (target && (*map)[target].canChangeState) {
           canChangeState = true;
         }
       }
@@ -771,6 +769,7 @@ struct Bysyncify : public Pass {
     // well to simplify the code as much as possible.
     {
       PassRunner runner(module);
+// TODO: only if optimizeLevel > 0
       runner.addDefaultFunctionOptimizationPasses();
       runner.add<BysyncifyLocals>(&analyzer);
       runner.addDefaultFunctionOptimizationPasses();
