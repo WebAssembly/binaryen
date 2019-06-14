@@ -159,8 +159,6 @@
 // bysyncify.* imports) are assumed not to.
 //
 
-// TODO: custom list of imports that may sleep.
-
 
 #include "ir/effects.h"
 #include "ir/literal-utils.h"
