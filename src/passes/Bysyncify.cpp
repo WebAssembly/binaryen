@@ -747,7 +747,7 @@ private:
 
 struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    //bool optimize = runner->options.optimizeLevel > 0;
+    bool optimize = runner->options.optimizeLevel > 0;
     // Scan the module.
     ModuleAnalyzer analyzer(*module);
     // Add necessary globals before we emit code to use them.
@@ -779,11 +779,11 @@ struct Bysyncify : public Pass {
     // the code as much as possible.
     {
       PassRunner runner(module);
-      if (1) {
+      if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
       runner.add<BysyncifyLocals>(&analyzer);
-      if (1) {
+      if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
       //runner.setIsNested(true);
