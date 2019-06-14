@@ -311,6 +311,12 @@ public:
     // TODO: caching, this is O(N^2)
     struct Walker : PostWalker<Walker> {
       void visitCall(Call* curr) {
+        // We only implement these at the very end, but we know that they
+        // definitely change the state.
+        if (curr->target == BYSYNCIFY_START_UNWIND || curr->target == BYSYNCIFY_START_REWIND) {
+          canChangeState = true;
+          return;
+        }
         // The target may not exist if it is one of our temporary intrinsics.
         auto* target = module->getFunctionOrNull(curr->target);
         if (target && (*map)[target].canChangeState) {
