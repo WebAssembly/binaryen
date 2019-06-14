@@ -150,8 +150,10 @@
 
 #include "ir/effects.h"
 #include "ir/literal-utils.h"
+#include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -186,22 +188,116 @@ enum class DataOffset {
 
 const auto STACK_ALIGN = 4;
 
-// Check if an expression may alter the bysyncify state, either in itself or
-// in something called by it.
-static bool mayChangeState(Expression* curr) {
-  // TODO: currently this assumes that any calls may change the state, which
-  //       could be much improved by globally figuring out which calls may
-  //       actually reach relevant code.
-  EffectAnalyzer effects(PassOptions(), curr);
-  // TODO: look at effects.globalsWritten.count(BYSYNCIFY_STATE);? Currently
-  //       this code assumes external code will change the state, so import
-  //       calls are really what matters, but we look at all calls, non-
-  //       recursively
-  return effects.calls;
-}
+// Analyze the entire module to see which calls may change the state, that
+// is, start an unwind or rewind), either in itself or in something called
+// by it.
+class ModuleAnalyzer {
+  Module& module;
+
+  struct Info {
+    bool canChangeState = false;
+    std::set<Function*> callsTo;
+    std::set<Function*> calledBy;
+  };
+
+  typedef std::map<Function*, Info> Map;
+  Map map;
+
+public:
+  ModuleAnalyzer(Module& module) : module(module) {
+    // Scan to see which functions can directly change the state.
+    ModuleUtils::ParallelFunctionMap<Info> scanner(module, [&module](Function* func, Info& info) {
+      // TODO: currently this assumes that any calls may change the
+      //       state, which could be much improved.
+      if (func->imported()) {
+        info.canChangeState = true;
+        return;
+      }
+      struct Walker : PostWalker<Walker> {
+        void visitCall(Call* curr) {
+          auto* target = module->getFunction(curr->target);
+          info->callsTo.insert(target);
+          if (target->imported()) {
+            info->canChangeState = true;
+          }
+        }
+        void visitCallIndirect(CallIndirect* curr) {
+          // TODO optimize
+          info->canChangeState = true;
+        }
+        Info* info;
+        Module* module;
+      };
+      Walker walker;
+      walker.info = &info;
+      walker.module = &module;
+      walker.walk(func->body);
+    });
+    map.swap(scanner.map);
+
+    // Find what is called by what.
+    for (auto& pair : map) {
+      auto* func = pair.first;
+      auto& info = pair.second;
+      for (auto* target : info.callsTo) {
+        map[target].calledBy.insert(func);
+      }
+    }
+
+    // Close over, finding all functions that can reach something that can
+    // change the state.
+    // The work queue contains an item we just learned can change the state.
+    UniqueDeferredQueue<Function*> work;
+    for (auto& func : module.functions) {
+      if (map[func.get()].canChangeState) {
+        work.push(func.get());
+      }
+    }
+    while (!work.empty()) {
+      auto* func = work.pop();
+      for (auto* caller : map[func].calledBy) {
+        if (!map[caller].canChangeState) {
+          map[caller].canChangeState = true;
+          work.push(caller);
+        }
+      }
+    }
+  }
+
+  bool canChangeState(Function* func) {
+    return map[func].canChangeState;
+  }
+
+  bool canChangeState(Expression* curr) {
+    // Look inside to see if we call any of the things we know can change the
+    // state.
+    // TODO: caching, this is O(N^2)
+    struct Walker : PostWalker<Walker> {
+      void visitCall(Call* curr) {
+        auto* target = module->getFunction(curr->target);
+        if ((*map)[target].canChangeState) {
+          canChangeState = true;
+        }
+      }
+      void visitCallIndirect(CallIndirect* curr) {
+        // TODO optimize
+        canChangeState = true;
+      }
+      Module* module;
+      Map* map;
+      bool canChangeState = false;
+    };
+    Walker walker;
+    walker.module = &module;
+    walker.map = &map;
+    walker.walk(curr);
+    return walker.canChangeState;
+  }
+};
 
 // Checks if something performs a call: either a direct or indirect call,
-// and perhaps it is dropped or assigned to a local.
+// and perhaps it is dropped or assigned to a local. This captures all the
+// cases of a call in flat IR.
 static bool doesCall(Expression* curr) {
   if (auto* set = curr->dynCast<LocalSet>()) {
     curr = set->value;
@@ -248,13 +344,17 @@ public:
 struct BysyncifyFlow : public Pass {
   bool isFunctionParallel() override { return true; }
 
-  BysyncifyFlow* create() override { return new BysyncifyFlow(); }
+  ModuleAnalyzer* analyzer;
+
+  BysyncifyFlow* create() override { return new BysyncifyFlow(analyzer); }
+
+  BysyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void runOnFunction(PassRunner* runner, Module* module_, Function* func) override {
     module = module_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
-    if (!mayChangeState(func->body)) {
+    if (!analyzer->canChangeState(func)) {
       return;
     }
     // Rewrite the function body.
@@ -289,7 +389,7 @@ private:
   Index callIndex = 0;
 
   Expression* process(Expression* curr) {
-    if (!mayChangeState(curr)) {
+    if (!analyzer->canChangeState(curr)) {
       return makeMaybeSkip(curr);
     }
     // The IR is in flat form, which makes this much simpler. We basically
@@ -328,12 +428,12 @@ private:
       Index i = 0;
       auto& list = block->list;
       while (i < list.size()) {
-        if (mayChangeState(list[i])) {
+        if (analyzer->canChangeState(list[i])) {
           list[i] = process(list[i]);
           i++;
         } else {
           Index end = i + 1;
-          while (end < list.size() && !mayChangeState(list[end])) {
+          while (end < list.size() && !analyzer->canChangeState(list[end])) {
             end++;
           }
           // We have a range of [i, end) in which the state cannot change,
@@ -358,7 +458,7 @@ private:
     } else if (auto* iff = curr->dynCast<If>()) {
       // The state change cannot be in the condition due to flat form, so it
       // must be in one of the children.
-      assert(!mayChangeState(iff->condition));
+      assert(!analyzer->canChangeState(iff->condition));
       // We must linearize this, which means we pass through both arms if we
       // are rewinding. This is pretty simple as in flat form the if condition
       // is either a const or a get, so easily copyable.
@@ -466,7 +566,11 @@ std::cout << "BAD " << *curr << '\n';
 struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
   bool isFunctionParallel() override { return true; }
 
-  BysyncifyLocals* create() override { return new BysyncifyLocals(); }
+  ModuleAnalyzer* analyzer;
+
+  BysyncifyLocals* create() override { return new BysyncifyLocals(analyzer); }
+
+  BysyncifyLocals(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void visitCall(Call* curr) {
     // Replace calls to the fake intrinsics.
@@ -498,7 +602,7 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
   void doWalkFunction(Function* func) {
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
-    if (!mayChangeState(func->body)) {
+    if (!analyzer->canChangeState(func->body)) {
       return;
     }
     // Note the locals we want to preserve, before we add any more helpers.
@@ -645,7 +749,9 @@ private:
 
 struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    // First, instrument the flow of code, adding code instrumentation and
+    // Scan the module.
+    ModuleAnalyzer analyzer(*module);
+    // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR.
     {
       PassRunner runner(module);
@@ -655,7 +761,7 @@ struct Bysyncify : public Pass {
       runner.add("dce");
       runner.add("simplify-locals-nonesting");
       runner.add("vacuum");
-      runner.add<BysyncifyFlow>();
+      runner.add<BysyncifyFlow>(&analyzer);
       //runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
@@ -666,7 +772,7 @@ struct Bysyncify : public Pass {
     {
       PassRunner runner(module);
       runner.addDefaultFunctionOptimizationPasses();
-      runner.add<BysyncifyLocals>();
+      runner.add<BysyncifyLocals>(&analyzer);
       runner.addDefaultFunctionOptimizationPasses();
       //runner.setIsNested(true);
       runner.setValidateGlobally(false);

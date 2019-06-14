@@ -19,6 +19,7 @@
 
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
+#include "pass.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -286,6 +287,59 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
     }
   }
 }
+
+// Performs a parallel map on function in the module, emitting a map object
+// of function => result.
+// TODO: use in inlining and elsewhere
+template<typename T>
+struct ParallelFunctionMap {
+
+  typedef std::map<Function*, T> Map;
+  Map map;
+
+  typedef std::function<void (Function*, T&)> Func;
+
+  struct Info {
+    Map* map;
+    Func func;
+  };
+
+  ParallelFunctionMap(Module& wasm, Func func) {
+
+    struct Mapper
+      : public WalkerPass<PostWalker<Mapper>> {
+
+      bool isFunctionParallel() override { return true; }
+
+      Mapper(Info* info) : info(info) {}
+
+      Mapper* create() override {
+        return new Mapper(info);
+      }
+
+      void doVisitFunction(Function* curr) {
+        assert((*info->map).count(curr));
+        info->func(curr, (*info->map)[curr]);
+      }
+
+    private:
+      Info* info;
+    };
+
+    // Fill in map, as we operate on it in parallel (each function to its own
+    // entry).
+    for (auto& func : wasm.functions) {
+      map[func.get()];
+    }
+
+    Info info = { &map, func };
+
+    PassRunner runner(&wasm);
+    runner.setIsNested(true);
+    runner.add<Mapper>(&info);
+    runner.run();
+  }
+};
 
 } // namespace ModuleUtils
 
