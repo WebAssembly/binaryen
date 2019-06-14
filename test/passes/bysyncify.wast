@@ -1,3 +1,52 @@
+;; Pre-existing imports that the pass turns into the implementations.
+(module
+  (memory 1 2)
+  (import "bysyncify" "start_unwind" (func $bysyncify_start_unwind (param i32)))
+  (import "bysyncify" "start_rewind" (func $bysyncify_start_rewind (param i32)))
+  (import "bysyncify" "stop_rewind" (func $bysyncify_stop_rewind))
+  (global $sleeping (mut i32) (i32.const 0))
+  ;; do a sleep operation: start a sleep if running, or resume after a sleep
+  ;; if we just rewound.
+  (func $do_sleep
+    (if
+      (i32.eqz (global.get $sleeping))
+      (block
+        (global.set $sleeping (i32.const 1))
+        ;; we should set up the data at address 4 around here
+        (call $bysyncify_start_unwind (i32.const 4))
+      )
+      (block
+        (global.set $sleeping (i32.const 0))
+        (call $bysyncify_stop_rewind)
+      )
+    )
+  )
+  ;; a function that does some work and has a sleep (async pause/resume) in the middle
+  (func $work
+    (call $stuff) ;; do some work
+    (call $do_sleep) ;; take a break
+    (call $stuff) ;; do some more work
+  )
+  (func  $stuff)
+  ;; the first event called from the main event loop: just call into $work
+  (func $first_event
+    (call $work)
+    ;; work will sleep, so we exit through here while it is paused
+  )
+  ;; the second event called from the main event loop: to resume $work,
+  ;; initiate a rewind, and then do the call to start things back up
+  (func $second_event
+    (call $bysyncify_start_rewind (i32.const 4))
+    (call $work)
+  )
+  ;; a function that can't do a sleep
+  (func $never_sleep
+    (call $stuff)
+    (call $stuff)
+    (call $stuff)
+  )
+)
+;; Calls to imports that will call into bysyncify themselves.
 (module
   (memory 1 2)
   (import "env" "import" (func $import))

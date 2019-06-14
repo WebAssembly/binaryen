@@ -132,6 +132,13 @@
 //  * bysyncify_stop_rewind(): call this to note that rewinding has
 //    concluded, and normal execution can resume.
 //
+// Note: the data ptr must be 4-byte aligned.
+
+// You can create imports to bysyncify.start_unwind, bysyncify.start_rewind,
+// bysyncify.stop_rewind. If those exist when this pass runs then it will
+// turn those into direct calls to the functions that it creates (this lets
+// you call them from inside wasm).
+//
 // To use this API, call bysyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
 // other host environment on the outside that called into wasm. Then when
@@ -163,13 +170,14 @@ namespace {
 
 static const Name BYSYNCIFY_STATE = "__bysyncify_state";
 static const Name BYSYNCIFY_DATA = "__bysyncify_data";
-
 static const Name BYSYNCIFY_START_UNWIND = "bysyncify_start_unwind";
 static const Name BYSYNCIFY_START_REWIND = "bysyncify_start_rewind";
 static const Name BYSYNCIFY_STOP_REWIND = "bysyncify_stop_rewind";
-
 static const Name BYSYNCIFY_UNWIND = "__bysyncify_unwind";
-
+static const Name BYSYNCIFY = "bysyncify";
+static const Name START_UNWIND = "start_unwind";
+static const Name START_REWIND = "start_rewind";
+static const Name STOP_REWIND = "stop_rewind";
 static const Name BYSYNCIFY_GET_CALL_INDEX = "__bysyncify_get_call_index";
 static const Name BYSYNCIFY_CHECK_CALL_INDEX = "__bysyncify_check_call_index";
 
@@ -206,16 +214,40 @@ class ModuleAnalyzer {
 public:
   ModuleAnalyzer(Module& module) : module(module) {
     // Scan to see which functions can directly change the state.
+    // Also handle the bysyncify imports, removing them (as we will implement
+    // them later), and replace calls to them with calls to the later proper
+    // name).
     ModuleUtils::ParallelFunctionMap<Info> scanner(module, [&module](Function* func, Info& info) {
-      // TODO: currently this assumes that any calls may change the
-      //       state, which could be much improved.
       if (func->imported()) {
+        // The bysyncify imports to start an unwind or rewind can definitely
+        // change the state.
+        if (func->module == BYSYNCIFY && (func->base == START_UNWIND || func->base == START_REWIND)) {
+          info.canChangeState = true;
+          return;
+        }
+        // TODO: currently this assumes that *any* imports may change the
+        //       state, which could be much improved.
         info.canChangeState = true;
         return;
       }
       struct Walker : PostWalker<Walker> {
         void visitCall(Call* curr) {
           auto* target = module->getFunction(curr->target);
+          if (target->imported() && target->module == BYSYNCIFY) {
+            // Redirect the imports to the functions we'll add later.
+            if (target->base == START_UNWIND) {
+              curr->target = BYSYNCIFY_START_UNWIND;
+            } else if (target->base == START_REWIND) {
+              curr->target = BYSYNCIFY_START_REWIND;
+            } else if (target->base == STOP_REWIND) {
+              curr->target = BYSYNCIFY_STOP_REWIND;
+              // TODO: in theory, this does not change the state
+            } else {
+              Fatal() << "call to unidenfied bysyncify import: " << target->base;
+            }
+            info->canChangeState = true;
+            return;
+          }
           info->callsTo.insert(target);
         }
         void visitCallIndirect(CallIndirect* curr) {
@@ -231,6 +263,14 @@ public:
       walker.walk(func->body);
     });
     map.swap(scanner.map);
+
+    // Remove the bysyncify imports, if any.
+    for (auto& pair : map) {
+      auto* func = pair.first;
+      if (func->imported() && func->module == BYSYNCIFY) {
+        module.removeFunction(func->name);
+      }
+    }
 
     // Find what is called by what.
     for (auto& pair : map) {
