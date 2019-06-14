@@ -21,17 +21,20 @@
 // be turned into code that unwinds the stack at the "blocking" operation,
 // then is able to rewind it back up when the actual async operation
 // comples, the so the code appears to have been running synchronously
-// all the while.
+// all the while. Use cases for this include coroutines, python generators,
+// etc.
 //
 // The approach here is a third-generation design after Emscripten's original
 // Asyncify and then Emterpreter-Async approaches:
 //
-//  * Asyncify rewrote control flow in LLVM IR. A problem is that this causes
-//    many more phis to appear, and since we must save locals to the stack,
-//    that means the code size increase can be extreme.
+//  * Asyncify rewrote control flow in LLVM IR. A problem is that this needs
+//    to save all SSA registers as part of the local state, which can be
+//    very costly. A further increase can happen because of phis that are
+//    added because of control flow transformations. As a result we saw
+//    pathological cases where the code size increase was unacceptable.
 //  * Emterpreter-Async avoids any risk of code size increase by running it
 //    in a little bytecode VM, which also makes pausing/resuming trivial.
-//    Speed is the main downside here, however, the approach did prove that by
+//    Speed is the main downside here; however, the approach did prove that by
 //    *selectively* emterpretifying only certain code, many projects can run
 //    at full speed - often just the "main loop" must be emterpreted, while
 //    high-speed code that it calls, and in which cannot be an async operation,
@@ -40,17 +43,18 @@
 // Bysyncify's design learns from both of those:
 //
 //  * The code rewrite is done in Binaryen, that is, at the wasm level. At
-//    this level we will only need to save wasm locals, and not LLVM SSA
-//    registers which are far more numerous.
-//  * We aim for very low but non-zero overhead. Low overhead is very important
+//    this level we will only need to save wasm locals, which is a much smaller
+//    number than LLVM's SSA registers.
+//  * We aim for low but non-zero overhead. Low overhead is very important
 //    for obvious reasons, while Emterpreter-Async proved it is tolerable to
 //    have *some* overhead, if the transform can be applied selectively.
 //
 // The specific transform implemented here is simpler than Asyncify but should
 // still have low overhead when properly optimized. Asyncify worked at the CFG
-// level and added branches from the entry directly to all possible resume
-// points. Bysyncify on the other hand does *not* try to get there directly.
-// The transformed code looks conceptually like this:
+// level and added branches there; Bysyncify on the other hand works on the
+// structured control flow of wasm and simply "skips over" code when rewinding
+// the stack, and jumps out when unwinding. The transformed code looks
+// conceptually like this:
 //
 //   void foo(int x) {
 //     // new prelude
@@ -63,7 +67,8 @@
 //       x = x + 1;
 //       x = x / 2;
 //     }
-//     if (!rewinding or nextCall() == 0) {
+//     // If rewinding, do this call only if it is the right one.
+//     if (!rewinding or nextCall == 0) {
 //       bar(x);
 //       if (unwinding) {
 //         noteUnWound(0);
@@ -77,8 +82,7 @@
 //         x = x + 1;
 //       }
 //     }
-//     return x;
-//   }
+//     [..]
 //
 // The general idea is that while rewinding we just "keep going forward",
 // skipping code we should not run. That is, instead of jumping directly
@@ -87,7 +91,7 @@
 // not be very high. However, we do need to reach the right location via
 // such skipping, which means that in a very large function the rewind
 // takes some extra time. On the other hand, though, code that cannot
-// unwind or rewind (like that look near the end) can run at full speed.
+// unwind or rewind (like that loop near the end) can run at full speed.
 // Overall, this should allow good performance with small overhead that is
 // mostly noticed at rewind time.
 //
@@ -98,9 +102,9 @@
 //   1: unwinding the stack
 //   2: rewinding the stack
 //
-// There is also "__bysyncify_data" which is normally 0, and that when
-// rewinding and unwinding contains a pointer to a data structure with the
-// info needed to rewind and unwind:
+// There is also "__bysyncify_data" which when rewinding and unwinding
+// contains a pointer to a data structure with the info needed to rewind
+// and unwind:
 //
 //   {                                            // offsets
 //     i32  - current bysyncify stack location    //  0
@@ -115,47 +119,59 @@
 // save locals. Note that the stack end location is provided, which is for
 // error detection.
 //
+// Note: all pointers are assumed to be 4-byte aligned.
+//
 // When you start an unwinding operation, you must set the initial fields
 // of the data structure, that is, set the current stack location to the
 // proper place, and the end to the proper end based on how much memory
 // you reserved. Note that bysyncify will grow the stack up.
 //
-// The pass will also create and export two functions that let you control
-// unwinding and rewinding:
+// The pass will also create three functions that let you control unwinding
+// and rewinding:
 //
 //  * bysyncify_start_unwind(data : i32): call this to start unwinding the
-//    stack from the current location. "data" must point to a valid data
-//    structure as described above (with both fields containing valid data).
+//    stack from the current location. "data" must point to a data
+//    structure as described above (with fields containing valid data).
+//
 //  * bysyncify_start_rewind(data : i32): call this to start rewinding the
-//    stack vack up to the location stored in the provided data.
+//    stack vack up to the location stored in the provided data. This prepares
+//    for the rewind; to start it, you must call the first function in the
+//    call stack to be unwound.
+//
 //  * bysyncify_stop_rewind(): call this to note that rewinding has
 //    concluded, and normal execution can resume.
 //
-// Note: the data ptr must be 4-byte aligned.
-
-// You can create imports to bysyncify.start_unwind, bysyncify.start_rewind,
-// bysyncify.stop_rewind. If those exist when this pass runs then it will
-// turn those into direct calls to the functions that it creates (this lets
-// you call them from inside wasm).
+// These three functions are exported so that you can call them from the
+// outside. If you want to manage things from inside the wasm, then you
+// couldn't have called them before they were created by this pass. To work
+// around that, you can create imports to bysyncify.start_unwind,
+// bysyncify.start_rewind, and bysyncify.stop_rewind; if those exist when
+// this pass runs then it will turn those into direct calls to the functions
+// that it creates.
 //
 // To use this API, call bysyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
 // other host environment on the outside that called into wasm. Then when
 // you want to rewind, call bysyncify_start_rewind, and then call the same
 // initial function you called before, so that unwinding can begin. The
-// unwinding will reach the same function from which you started the unwind,
-// at which point you should call bysyncify_stop_rewind, and then execution
-// can resumt normally.
+// unwinding will reach the same function from which you started, since
+// we are recreating the call stack. At that point you should call
+// bysyncify_stop_rewind and then execution can resume normally.
 //
-// By default this pass assumes that any import may start an unwind/rewind.
+// By default this pass assumes that any import may call any of the
+// exported bysyncify methods, that is, any import may start an unwind/rewind.
 // To customize this, you can provide an argument to wasm-opt (or another
 // tool that can run this pass),
 //
 //   --pass-arg=bysyncify@module1.base1,module2.base2,module3.base3
 //
 // Each module.base in that comma-separated list will be considered to
-// be an import that can unwind/rewind, and all others (aside from the
-// bysyncify.* imports) are assumed not to.
+// be an import that can unwind/rewind, and all others are assumed not to
+// (aside from the bysyncify.* imports, which are always assumed to). To
+// say that no import (aside from bysyncify.*) can do so (that is, the
+// opposite of the default behavior), you can simply provide an import
+// that doesn't exist (say,
+// --pass-arg=bysyncify@no.imports
 //
 
 #include "ir/effects.h"
@@ -214,7 +230,7 @@ public:
     // Scan to see which functions can directly change the state.
     // Also handle the bysyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
-    // name).
+    // name.
     ModuleUtils::ParallelFunctionMap<Info> scanner(
       module, [&](Function* func, Info& info) {
         if (func->imported()) {
@@ -693,7 +709,6 @@ private:
       auto size = getTypeSize(type);
       assert(size % STACK_ALIGN == 0);
       // TODO: higher alignment?
-      // TODO: optimize use of stack pos (add a local, ignore it here)
       block->list.push_back(builder->makeLocalSet(
         i,
         builder->makeLoad(size,
@@ -723,7 +738,6 @@ private:
       auto size = getTypeSize(type);
       assert(size % STACK_ALIGN == 0);
       // TODO: higher alignment?
-      // TODO: optimize use of stack pos (add a local, ignore it here)
       block->list.push_back(
         builder->makeStore(size,
                            offset,
@@ -764,6 +778,7 @@ struct Bysyncify : public Pass {
       stateChangingImports == ALL_IMPORTS_CAN_CHANGE_STATE;
     std::string separator = ",";
     stateChangingImports = separator + stateChangingImports + separator;
+
     // Scan the module.
     ModuleAnalyzer analyzer(*module, [&](Name module, Name base) {
       if (allImportsCanChangeState) {
@@ -772,8 +787,10 @@ struct Bysyncify : public Pass {
       std::string full = separator + module.str + '.' + base.str + separator;
       return stateChangingImports.find(full) != std::string::npos;
     });
+
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
+
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is
     // practical to add code around each call, without affecting
@@ -790,7 +807,7 @@ struct Bysyncify : public Pass {
       runner.add("merge-blocks");
       runner.add("vacuum");
       runner.add<BysyncifyFlow>(&analyzer);
-      // runner.setIsNested(true);
+      runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
     }
@@ -808,7 +825,7 @@ struct Bysyncify : public Pass {
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
-      // runner.setIsNested(true);
+      runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
     }

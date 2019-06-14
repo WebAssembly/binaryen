@@ -162,5 +162,7 @@
     (call $sleep)
     (i32.add (local.get $y) (i32.const 300)) ;; total is 10+30+90+300=430 + y's original value
   )
+  (func "if_else" (param $x i32)
+  )
 )
 
