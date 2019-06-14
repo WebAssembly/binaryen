@@ -749,6 +749,8 @@ struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // Scan the module.
     ModuleAnalyzer analyzer(*module);
+    // Add necessary globals before we emit code to use them.
+    addGlobals(module);
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR.
     {
@@ -777,18 +779,20 @@ struct Bysyncify : public Pass {
       runner.setValidateGlobally(false);
       runner.run();
     }
-    // Finally, add global module support, including functions (that should
-    // not have been seen by the previous passes) and globals. Note that we
-    // can't validate globally until we get here.
-    addModuleSupport(module);
+    // Finally, add function support (that should not have been seen by
+    // the previous passes).
+    addFunctions(module);
   }
 
 private:
-  void addModuleSupport(Module* module) {
+  void addGlobals(Module* module) {
     Builder builder(*module);
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_STATE, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
     module->addGlobal(builder.makeGlobal(BYSYNCIFY_DATA, i32, builder.makeConst(Literal(int32_t(0))), Builder::Mutable));
+  }
 
+  void addFunctions(Module* module) {
+    Builder builder(*module);
     auto makeFunction = [&](Name name, bool setData, State state, Expression* extra) {
       std::vector<Type> params;
       if (setData) {

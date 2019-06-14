@@ -102,9 +102,8 @@ public:
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitGlobalGet(GlobalGet* curr) {
-    // The global may not exist, if we are just running function passes.
-    auto* global = module->getGlobalOrNull(curr->name);
-    if (global && !global->imported() && !global->mutable_) {
+    auto* global = module->getGlobal(curr->name);
+    if (!global->imported() && !global->mutable_) {
       return visit(global->init);
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
