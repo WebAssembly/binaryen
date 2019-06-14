@@ -328,7 +328,9 @@ public:
         // We only implement these at the very end, but we know that they
         // definitely change the state.
         if (curr->target == BYSYNCIFY_START_UNWIND ||
-            curr->target == BYSYNCIFY_START_REWIND) {
+            curr->target == BYSYNCIFY_START_REWIND ||
+            curr->target == BYSYNCIFY_GET_CALL_INDEX ||
+            curr->target == BYSYNCIFY_CHECK_CALL_INDEX) {
           canChangeState = true;
           return;
         }
