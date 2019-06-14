@@ -147,8 +147,8 @@ runTest('do_tunnel', 2, 72, [1]);
 runTest('call_indirect', 3, 432, [1, 2]);
 
 // Test indirect function calls.
-runTest('if_else', 4, -1, [1, 1000]);
-//runTest('if_else', 4, -1, [2, 2000]);
+runTest('if_else', 3, 1460, [1, 1000]);
+runTest('if_else', 3, 2520, [2, 2000]);
 
 // All done.
 console.log('\ntests completed successfully');
