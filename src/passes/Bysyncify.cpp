@@ -534,7 +534,6 @@ private:
     // We must handle all control flow above, and all things that can change
     // the state, so there should be nothing that can reach here - add it
     // earlier as necessary.
-    std::cout << "BAD " << *curr << '\n';
     WASM_UNREACHABLE();
   }
 
