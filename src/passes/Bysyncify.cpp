@@ -890,15 +890,15 @@ private:
 
     makeFunction(
       BYSYNCIFY_START_UNWIND,
-      {i32},
+      true,
       State::Unwinding,
       builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
     makeFunction(
       BYSYNCIFY_START_REWIND,
-      {i32},
+      true,
       State::Rewinding,
       builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
-    makeFunction(BYSYNCIFY_STOP_REWIND, {}, State::Normal, nullptr);
+    makeFunction(BYSYNCIFY_STOP_REWIND, false, State::Normal, nullptr);
   }
 };
 

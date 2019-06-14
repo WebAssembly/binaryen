@@ -94,6 +94,7 @@ mkdir -p ${OUT}
   $BINARYEN_SRC/passes/pass.cpp \
   $BINARYEN_SRC/passes/AlignmentLowering.cpp \
   $BINARYEN_SRC/passes/AvoidReinterprets.cpp \
+  $BINARYEN_SRC/passes/Bysyncify.cpp \
   $BINARYEN_SRC/passes/CoalesceLocals.cpp \
   $BINARYEN_SRC/passes/DeadArgumentElimination.cpp \
   $BINARYEN_SRC/passes/CodeFolding.cpp \
