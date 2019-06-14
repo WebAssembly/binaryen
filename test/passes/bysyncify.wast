@@ -81,5 +81,17 @@
     (call $import)
   )
   (func $boring)
+  (func $calls-mix-deep
+    (call $boring-deep)
+    (call $import-deep)
+    (call $boring)
+    (call $import)
+  )
+  (func $boring-deep
+    (call $boring)
+  )
+  (func $import-deep
+    (call $import)
+  )
 )
 
