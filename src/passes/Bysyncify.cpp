@@ -148,10 +148,17 @@
 // at which point you should call bysyncify_stop_rewind, and then execution
 // can resumt normally.
 //
-// TODO: convert calls to imports "bysyncify.start_unwind" into calls to
-//       the new functions? that way code can refer to them as imports
-//       before this pass, and the pass converts them into direct calls.
+// By default this pass assumes that any import may start an unwind/rewind.
+// To customize this, you can provide an argument to wasm-opt (or another
+// tool that can run this pass),
 //
+//   --pass-arg=bysyncify@module1.base1,module2.base2,module3.base3
+//
+// Each module.base in that comma-separated list will be considered to
+// be an import that can unwind/rewind, and all others (aside from the
+// bysyncify.* imports) are assumed not to.
+//
+
 // TODO: custom list of imports that may sleep.
 
 
@@ -212,22 +219,20 @@ class ModuleAnalyzer {
   Map map;
 
 public:
-  ModuleAnalyzer(Module& module) : module(module) {
+  ModuleAnalyzer(Module& module, std::function<bool (Name, Name)> canImportChangeState) : module(module) {
     // Scan to see which functions can directly change the state.
     // Also handle the bysyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
     // name).
-    ModuleUtils::ParallelFunctionMap<Info> scanner(module, [&module](Function* func, Info& info) {
+    ModuleUtils::ParallelFunctionMap<Info> scanner(module, [&](Function* func, Info& info) {
       if (func->imported()) {
         // The bysyncify imports to start an unwind or rewind can definitely
         // change the state.
         if (func->module == BYSYNCIFY && (func->base == START_UNWIND || func->base == START_REWIND)) {
           info.canChangeState = true;
-          return;
+        } else {
+          info.canChangeState = canImportChangeState(func->module, func->base);
         }
-        // TODO: currently this assumes that *any* imports may change the
-        //       state, which could be much improved.
-        info.canChangeState = true;
         return;
       }
       struct Walker : PostWalker<Walker> {
@@ -794,8 +799,23 @@ private:
 struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
+    // Find which imports can change the state.
+    const char* ALL_IMPORTS_CAN_CHANGE_STATE = "__bysyncify_all_imports";
+    auto stateChangingImports = runner->options.getArgumentOrDefault(
+      "bysyncify",
+      ALL_IMPORTS_CAN_CHANGE_STATE
+    );
+    bool allImportsCanChangeState = stateChangingImports == ALL_IMPORTS_CAN_CHANGE_STATE;
+    std::string separator = ",";
+    stateChangingImports = separator + stateChangingImports + separator;
     // Scan the module.
-    ModuleAnalyzer analyzer(*module);
+    ModuleAnalyzer analyzer(*module, [&](Name module, Name base) {
+      if (allImportsCanChangeState) {
+        return true;
+      }
+      std::string full = separator + module.str + '.' + base.str + separator;
+      return stateChangingImports.find(full) != std::string::npos;
+    });
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
     // Instrument the flow of code, adding code instrumentation and

@@ -127,6 +127,13 @@ struct PassOptions {
     }
     return arguments[key];
   }
+
+  std::string getArgumentOrDefault(std::string key, std::string default_) {
+    if (arguments.count(key) == 0) {
+      return default_;
+    }
+    return arguments[key];
+  }
 };
 
 //
