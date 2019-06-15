@@ -6,6 +6,8 @@ function assert(x, y) {
 var fs = require('fs');
 
 function sleepTests() {
+  console.log('\nsleep tests\n\n');
+
   // Get and compile the wasm.
 
   var binary = fs.readFileSync('a.wasm');
@@ -153,6 +155,8 @@ function sleepTests() {
 }
 
 function coroutineTests() {
+  console.log('\ncoroutine tests\n\n');
+
   // Get and compile the wasm.
 
   var binary = fs.readFileSync('b.wasm');
@@ -162,8 +166,9 @@ function coroutineTests() {
   // Create a coroutine, for a specific export to
   // call, and whose unwind/rewind data is in
   // a specific range.
-  function Couroutine(name, dataStart, dataEnd) {
-    this.start() = function() {
+  function Coroutine(name, dataStart, dataEnd) {
+    this.name = name;
+    this.start = function() {
       exports[name]();
     };
     this.startUnwind = function() {
@@ -171,6 +176,8 @@ function coroutineTests() {
       view[dataStart >> 2] = dataStart + 8;
       view[dataStart + 4 >> 2] = dataEnd;
       exports.bysyncify_start_unwind(dataStart);
+      // (With C etc. coroutines we would also have
+      // a C stack to pause and resume here.)
     };
     this.stopUnwind = function() {
       exports.bysyncify_stop_unwind();
@@ -195,8 +202,10 @@ function coroutineTests() {
     run: function(iters) {
       Runtime.coroutines.forEach(function(coroutine) {
         console.log('starting ' + coroutine.name);
+        Runtime.active = coroutine;
         coroutine.start();
         coroutine.stopUnwind();
+        Runtime.active = null;
       });
       for (var i = 0; i < iters; i++) {
         Runtime.coroutines.forEach(function(coroutine) {
@@ -204,14 +213,17 @@ function coroutineTests() {
           Runtime.active = coroutine;
           Runtime.rewinding = true;
           coroutine.startRewind();
+          Runtime.active = null;
         });
       }
     },
     values: [],
     yield: function(value) {
+      console.log('yield reached', Runtime.rewinding, value); 
       var coroutine = Runtime.active;
       if (Runtime.rewinding) {
         coroutine.stopRewind();
+        Runtime.rewinding = false;
       } else {
         Runtime.values.push(value);
         coroutine.startUnwind();
@@ -232,10 +244,11 @@ function coroutineTests() {
   Runtime.run(4);
   console.log(Runtime.values);
   assert(JSON.stringify(Runtime.values) === JSON.stringify([
-     0, 1,    42,
-    10, 2,  1337,
-    20, 4,     0,
-    30, 8, -1000
+     0,  1,    42,
+    10,  2,  1337,
+    20,  4,     0,
+    30,  8, -1000,
+    40, 16,    42
   ]), 'check yielded values')
 }
 
