@@ -7,6 +7,7 @@ SET(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
   AvoidReinterprets.cpp
+  Bysyncify.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp

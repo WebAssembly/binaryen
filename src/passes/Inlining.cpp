@@ -160,8 +160,6 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
     }
   }
 
-  void doWalkFunction(Function* func) { walk(func->body); }
-
 private:
   InliningState* state;
 };

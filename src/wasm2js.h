@@ -311,7 +311,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       runner.add("avoid-reinterprets");
     }
     // Finally, get the code into the flat form we need for wasm2js itself, and
-    // optimize that a little in a way that keeps flat property.
+    // optimize that a little in a way that keeps that property.
     runner.add("flatten");
     // Regardless of optimization level, run some simple optimizations to undo
     // some of the effects of flattening.

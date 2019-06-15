@@ -27,7 +27,7 @@ namespace wasm {
 
 struct EffectAnalyzer
   : public PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>> {
-  EffectAnalyzer(PassOptions& passOptions, Expression* ast = nullptr) {
+  EffectAnalyzer(const PassOptions& passOptions, Expression* ast = nullptr) {
     ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
     debugInfo = passOptions.debugInfo;
     if (ast) {
@@ -372,7 +372,7 @@ struct EffectAnalyzer
   // Helpers
 
   static bool
-  canReorder(PassOptions& passOptions, Expression* a, Expression* b) {
+  canReorder(const PassOptions& passOptions, Expression* a, Expression* b) {
     EffectAnalyzer aEffects(passOptions, a);
     EffectAnalyzer bEffects(passOptions, b);
     return !aEffects.invalidates(bEffects);
