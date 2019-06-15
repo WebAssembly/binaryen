@@ -172,15 +172,16 @@
 // To customize this, you can provide an argument to wasm-opt (or another
 // tool that can run this pass),
 //
-//   --pass-arg=bysyncify@module1.base1,module2.base2,module3.base3
+//   --pass-arg=bysyncify-imports@module1.base1,module2.base2,module3.base3
 //
 // Each module.base in that comma-separated list will be considered to
 // be an import that can unwind/rewind, and all others are assumed not to
 // (aside from the bysyncify.* imports, which are always assumed to). To
 // say that no import (aside from bysyncify.*) can do so (that is, the
 // opposite of the default behavior), you can simply provide an import
-// that doesn't exist (say,
-// --pass-arg=bysyncify@no.imports
+// that doesn't exist, for example:
+
+// --pass-arg=bysyncify-imports@no.imports
 //
 
 #include "ir/effects.h"
@@ -790,7 +791,7 @@ struct Bysyncify : public Pass {
     // Find which imports can change the state.
     const char* ALL_IMPORTS_CAN_CHANGE_STATE = "__bysyncify_all_imports";
     auto stateChangingImports = runner->options.getArgumentOrDefault(
-      "bysyncify", ALL_IMPORTS_CAN_CHANGE_STATE);
+      "bysyncify-imports", ALL_IMPORTS_CAN_CHANGE_STATE);
     bool allImportsCanChangeState =
       stateChangingImports == ALL_IMPORTS_CAN_CHANGE_STATE;
     std::string separator = ",";
