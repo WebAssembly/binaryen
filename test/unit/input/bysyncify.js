@@ -21,7 +21,6 @@ var instance = new WebAssembly.Instance(module, {
   env: {
     sleep: function() {
       logMemory();
-assert(view[0] == 0);
       if (!sleeping) {
         // We are called in order to start a sleep/unwind.
         console.log('sleep...');
@@ -75,14 +74,15 @@ function runTest(name, expectedSleeps, expectedResult, params) {
 
   if (expectedSleeps > 0) {
     assert(!result, 'results during sleep are meaningless, just 0');
+    exports.bysyncify_stop_unwind(DATA_ADDR);
 
     for (var i = 0; i < expectedSleeps - 1; i++) {
       console.log('rewind, run until the next sleep');
       exports.bysyncify_start_rewind(DATA_ADDR);
       result = exports[name](); // no need for params on later times
       assert(!result, 'results during sleep are meaningless, just 0');
-      assert(!result, 'bad first sleep result');
       logMemory();
+      exports.bysyncify_stop_unwind(DATA_ADDR);
     }
 
     console.log('rewind and run til the end.');
