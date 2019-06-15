@@ -59,7 +59,7 @@ function logMemory() {
   console.log('memory: ', view[0 >> 2], view[4 >> 2], view[8 >> 2], view[12 >> 2], view[16 >> 2], view[20 >> 2], view[24 >> 2]);
 }
 
-function runTest(name, expectedSleeps, expectedResult, params) {
+function doSleepingTest(name, expectedSleeps, expectedResult, params) {
   params = params || [];
 
   console.log('\n==== testing ' + name + ' ====');
@@ -102,53 +102,53 @@ function runTest(name, expectedSleeps, expectedResult, params) {
 //================
 
 // A minimal single sleep.
-runTest('minimal', 1, 21);
+doSleepingTest('minimal', 1, 21);
 
 // Two sleeps.
-runTest('repeat', 2, 42);
+doSleepingTest('repeat', 2, 42);
 
 // A value in a local is preserved across a sleep.
-runTest('local', 1, 10);
+doSleepingTest('local', 1, 10);
 
 // A local with more operations done on it.
-runTest('local2', 1, 22);
+doSleepingTest('local2', 1, 22);
 
 // A local with more operations done on it.
-runTest('params', 1, 18);
-runTest('params', 1, 21, [1, 2]);
+doSleepingTest('params', 1, 18);
+doSleepingTest('params', 1, 21, [1, 2]);
 
 // Calls to multiple other functions, only one of whom
 // sleeps, and keep locals and globals valid throughout.
-runTest('deeper', 0, 27, [0]);
-runTest('deeper', 1,  3, [1]);
+doSleepingTest('deeper', 0, 27, [0]);
+doSleepingTest('deeper', 1,  3, [1]);
 
 // A recursive factorial, that sleeps on each iteration
 // above 1.
-runTest('factorial-recursive', 0,   1, [1]);
-runTest('factorial-recursive', 1,   2, [2]);
-runTest('factorial-recursive', 2,   6, [3]);
-runTest('factorial-recursive', 3,  24, [4]);
-runTest('factorial-recursive', 4, 120, [5]);
+doSleepingTest('factorial-recursive', 0,   1, [1]);
+doSleepingTest('factorial-recursive', 1,   2, [2]);
+doSleepingTest('factorial-recursive', 2,   6, [3]);
+doSleepingTest('factorial-recursive', 3,  24, [4]);
+doSleepingTest('factorial-recursive', 4, 120, [5]);
 
 // A looping factorial, that sleeps on each iteration
 // above 1.
-runTest('factorial-loop', 0,   1, [1]);
-runTest('factorial-loop', 1,   2, [2]);
-runTest('factorial-loop', 2,   6, [3]);
-runTest('factorial-loop', 3,  24, [4]);
-runTest('factorial-loop', 4, 120, [5]);
+doSleepingTest('factorial-loop', 0,   1, [1]);
+doSleepingTest('factorial-loop', 1,   2, [2]);
+doSleepingTest('factorial-loop', 2,   6, [3]);
+doSleepingTest('factorial-loop', 3,  24, [4]);
+doSleepingTest('factorial-loop', 4, 120, [5]);
 
 // Test calling into JS in the middle (which can work if
 // the JS just forwards the call and has no side effects or
 // state of its own that needs to be saved).
-runTest('do_tunnel', 2, 72, [1]);
+doSleepingTest('do_tunnel', 2, 72, [1]);
 
 // Test indirect function calls.
-runTest('call_indirect', 3, 432, [1, 2]);
+doSleepingTest('call_indirect', 3, 432, [1, 2]);
 
 // Test indirect function calls.
-runTest('if_else', 3, 1460, [1, 1000]);
-runTest('if_else', 3, 2520, [2, 2000]);
+doSleepingTest('if_else', 3, 1460, [1, 1000]);
+doSleepingTest('if_else', 3, 2520, [2, 2000]);
 
 // All done.
 console.log('\ntests completed successfully');
