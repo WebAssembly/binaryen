@@ -10,6 +10,7 @@
  (global $__bysyncify_state (mut i32) (i32.const 0))
  (global $__bysyncify_data (mut i32) (i32.const 0))
  (export "bysyncify_start_unwind" (func $bysyncify_start_unwind))
+ (export "bysyncify_stop_unwind" (func $bysyncify_stop_unwind))
  (export "bysyncify_start_rewind" (func $bysyncify_start_rewind))
  (export "bysyncify_stop_rewind" (func $bysyncify_stop_rewind))
  (func $calls-import (; 3 ;) (type $FUNCSIG$v)
@@ -1514,7 +1515,12 @@
    (local.get $0)
   )
  )
- (func $bysyncify_start_rewind (; 20 ;) (param $0 i32)
+ (func $bysyncify_stop_unwind (; 20 ;)
+  (global.set $__bysyncify_state
+   (i32.const 0)
+  )
+ )
+ (func $bysyncify_start_rewind (; 21 ;) (param $0 i32)
   (if
    (i32.gt_u
     (i32.load
@@ -1533,7 +1539,7 @@
    (local.get $0)
   )
  )
- (func $bysyncify_stop_rewind (; 21 ;)
+ (func $bysyncify_stop_rewind (; 22 ;)
   (global.set $__bysyncify_state
    (i32.const 0)
   )

@@ -126,12 +126,20 @@
 // proper place, and the end to the proper end based on how much memory
 // you reserved. Note that bysyncify will grow the stack up.
 //
-// The pass will also create three functions that let you control unwinding
+// The pass will also create four functions that let you control unwinding
 // and rewinding:
 //
 //  * bysyncify_start_unwind(data : i32): call this to start unwinding the
 //    stack from the current location. "data" must point to a data
 //    structure as described above (with fields containing valid data).
+//
+//  * bysyncify_stop_unwind(): call this to note that unwinding has
+//    concluded. If no other code will run before you start to rewind,
+//    this is not strictly necessary, however, if you swap between
+//    coroutines, or even just want to run some normal code during a
+//    "sleep", then you must call this at the proper time. Otherwise,
+//    the code will think it is still unwinding when it should not be,
+//    which means it will keep unwinding in a meaningless way.
 //
 //  * bysyncify_start_rewind(data : i32): call this to start rewinding the
 //    stack vack up to the location stored in the provided data. This prepares
@@ -141,17 +149,18 @@
 //  * bysyncify_stop_rewind(): call this to note that rewinding has
 //    concluded, and normal execution can resume.
 //
-// These three functions are exported so that you can call them from the
+// These four functions are exported so that you can call them from the
 // outside. If you want to manage things from inside the wasm, then you
 // couldn't have called them before they were created by this pass. To work
 // around that, you can create imports to bysyncify.start_unwind,
-// bysyncify.start_rewind, and bysyncify.stop_rewind; if those exist when
-// this pass runs then it will turn those into direct calls to the functions
-// that it creates.
+// bysyncify.stop_unwind, bysyncify.start_rewind, and bysyncify.stop_rewind;
+// if those exist when this pass runs then it will turn those into direct
+// calls to the functions that it creates.
 //
 // To use this API, call bysyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
-// other host environment on the outside that called into wasm. Then when
+// other host environment on the outside that called into wasm. When you
+// return there after unwinding, call bysyncify_stop_unwind. Then when
 // you want to rewind, call bysyncify_start_rewind, and then call the same
 // initial function you called before, so that unwinding can begin. The
 // unwinding will reach the same function from which you started, since
@@ -163,15 +172,16 @@
 // To customize this, you can provide an argument to wasm-opt (or another
 // tool that can run this pass),
 //
-//   --pass-arg=bysyncify@module1.base1,module2.base2,module3.base3
+//   --pass-arg=bysyncify-imports@module1.base1,module2.base2,module3.base3
 //
 // Each module.base in that comma-separated list will be considered to
 // be an import that can unwind/rewind, and all others are assumed not to
 // (aside from the bysyncify.* imports, which are always assumed to). To
 // say that no import (aside from bysyncify.*) can do so (that is, the
 // opposite of the default behavior), you can simply provide an import
-// that doesn't exist (say,
-// --pass-arg=bysyncify@no.imports
+// that doesn't exist, for example:
+
+// --pass-arg=bysyncify-imports@no.imports
 //
 
 #include "ir/effects.h"
@@ -190,11 +200,13 @@ namespace {
 static const Name BYSYNCIFY_STATE = "__bysyncify_state";
 static const Name BYSYNCIFY_DATA = "__bysyncify_data";
 static const Name BYSYNCIFY_START_UNWIND = "bysyncify_start_unwind";
+static const Name BYSYNCIFY_STOP_UNWIND = "bysyncify_stop_unwind";
 static const Name BYSYNCIFY_START_REWIND = "bysyncify_start_rewind";
 static const Name BYSYNCIFY_STOP_REWIND = "bysyncify_stop_rewind";
 static const Name BYSYNCIFY_UNWIND = "__bysyncify_unwind";
 static const Name BYSYNCIFY = "bysyncify";
 static const Name START_UNWIND = "start_unwind";
+static const Name STOP_UNWIND = "stop_unwind";
 static const Name START_REWIND = "start_rewind";
 static const Name STOP_REWIND = "stop_rewind";
 static const Name BYSYNCIFY_GET_CALL_INDEX = "__bysyncify_get_call_index";
@@ -234,10 +246,10 @@ public:
     ModuleUtils::ParallelFunctionMap<Info> scanner(
       module, [&](Function* func, Info& info) {
         if (func->imported()) {
-          // The bysyncify imports to start an unwind or rewind can definitely
-          // change the state.
+          // The bysyncify imports can definitely change the state.
           if (func->module == BYSYNCIFY &&
-              (func->base == START_UNWIND || func->base == START_REWIND)) {
+              (func->base == START_UNWIND || func->base == STOP_UNWIND ||
+               func->base == START_REWIND || func->base == STOP_REWIND)) {
             info.canChangeState = true;
           } else {
             info.canChangeState =
@@ -252,6 +264,8 @@ public:
               // Redirect the imports to the functions we'll add later.
               if (target->base == START_UNWIND) {
                 curr->target = BYSYNCIFY_START_UNWIND;
+              } else if (target->base == STOP_UNWIND) {
+                curr->target = BYSYNCIFY_STOP_UNWIND;
               } else if (target->base == START_REWIND) {
                 curr->target = BYSYNCIFY_START_REWIND;
               } else if (target->base == STOP_REWIND) {
@@ -328,7 +342,9 @@ public:
         // We only implement these at the very end, but we know that they
         // definitely change the state.
         if (curr->target == BYSYNCIFY_START_UNWIND ||
+            curr->target == BYSYNCIFY_STOP_UNWIND ||
             curr->target == BYSYNCIFY_START_REWIND ||
+            curr->target == BYSYNCIFY_STOP_REWIND ||
             curr->target == BYSYNCIFY_GET_CALL_INDEX ||
             curr->target == BYSYNCIFY_CHECK_CALL_INDEX) {
           canChangeState = true;
@@ -775,7 +791,7 @@ struct Bysyncify : public Pass {
     // Find which imports can change the state.
     const char* ALL_IMPORTS_CAN_CHANGE_STATE = "__bysyncify_all_imports";
     auto stateChangingImports = runner->options.getArgumentOrDefault(
-      "bysyncify", ALL_IMPORTS_CAN_CHANGE_STATE);
+      "bysyncify-imports", ALL_IMPORTS_CAN_CHANGE_STATE);
     bool allImportsCanChangeState =
       stateChangingImports == ALL_IMPORTS_CAN_CHANGE_STATE;
     std::string separator = ",";
@@ -895,6 +911,7 @@ private:
       true,
       State::Unwinding,
       builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
+    makeFunction(BYSYNCIFY_STOP_UNWIND, false, State::Normal, nullptr);
     makeFunction(
       BYSYNCIFY_START_REWIND,
       true,

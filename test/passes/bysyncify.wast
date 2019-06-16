@@ -2,6 +2,7 @@
 (module
   (memory 1 2)
   (import "bysyncify" "start_unwind" (func $bysyncify_start_unwind (param i32)))
+  (import "bysyncify" "stop_unwind" (func $bysyncify_stop_unwind))
   (import "bysyncify" "start_rewind" (func $bysyncify_start_rewind (param i32)))
   (import "bysyncify" "stop_rewind" (func $bysyncify_stop_rewind))
   (global $sleeping (mut i32) (i32.const 0))
@@ -34,8 +35,10 @@
     ;; work will sleep, so we exit through here while it is paused
   )
   ;; the second event called from the main event loop: to resume $work,
-  ;; initiate a rewind, and then do the call to start things back up
+  ;; stop the unwind, then prepare a rewind, and initiate it by doing 
+  ;; the call to rewind the call stack back up to where it was
   (func $second_event
+    (call $bysyncify_stop_unwind)
     (call $bysyncify_start_rewind (i32.const 4))
     (call $work)
   )
