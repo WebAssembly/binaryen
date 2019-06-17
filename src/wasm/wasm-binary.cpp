@@ -2132,9 +2132,9 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
     uint8_t prefix = getInt8();
     if (prefix != BinaryConsts::FeatureUsed) {
       if (prefix == BinaryConsts::FeatureRequired) {
-        throwError("Required features not supported");
+        std::cerr << "warning: required features in feature section are ignored";
       } else if (prefix == BinaryConsts::FeatureDisallowed) {
-        throwError("Disallowed features not supported");
+        std::cerr << "warning: disallowed features in feature section are ignored";
       } else {
         throwError("Unrecognized feature policy prefix");
       }
