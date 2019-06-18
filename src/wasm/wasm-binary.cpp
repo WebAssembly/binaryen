@@ -2132,9 +2132,11 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
     uint8_t prefix = getInt8();
     if (prefix != BinaryConsts::FeatureUsed) {
       if (prefix == BinaryConsts::FeatureRequired) {
-        throwError("Required features not supported");
+        std::cerr
+          << "warning: required features in feature section are ignored";
       } else if (prefix == BinaryConsts::FeatureDisallowed) {
-        throwError("Disallowed features not supported");
+        std::cerr
+          << "warning: disallowed features in feature section are ignored";
       } else {
         throwError("Unrecognized feature policy prefix");
       }
@@ -2145,18 +2147,20 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
       throwError("ill-formed string extends beyond section");
     }
 
-    if (name == BinaryConsts::UserSections::AtomicsFeature) {
-      wasm.features.setAtomics();
-    } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
-      wasm.features.setBulkMemory();
-    } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
-      wasm.features.setExceptionHandling();
-    } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
-      wasm.features.setTruncSat();
-    } else if (name == BinaryConsts::UserSections::SignExtFeature) {
-      wasm.features.setSignExt();
-    } else if (name == BinaryConsts::UserSections::SIMD128Feature) {
-      wasm.features.setSIMD();
+    if (prefix != BinaryConsts::FeatureDisallowed) {
+      if (name == BinaryConsts::UserSections::AtomicsFeature) {
+        wasm.features.setAtomics();
+      } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
+        wasm.features.setBulkMemory();
+      } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
+        wasm.features.setExceptionHandling();
+      } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
+        wasm.features.setTruncSat();
+      } else if (name == BinaryConsts::UserSections::SignExtFeature) {
+        wasm.features.setSignExt();
+      } else if (name == BinaryConsts::UserSections::SIMD128Feature) {
+        wasm.features.setSIMD();
+      }
     }
   }
   if (pos != sectionPos + payloadLen) {
