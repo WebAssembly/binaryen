@@ -167,21 +167,23 @@
 // we are recreating the call stack. At that point you should call
 // bysyncify_stop_rewind and then execution can resume normally.
 //
-// By default this pass assumes that any import may call any of the
-// exported bysyncify methods, that is, any import may start an unwind/rewind.
-// To customize this, you can provide an argument to wasm-opt (or another
-// tool that can run this pass),
+// By default this pass is very carefuly: it assumes that any import and
+// any indirect call may start an unwind/rewind operation. If you know more
+// specific information you can inform bysyncify about that, which can reduce
+// a great deal of overhead, as it can instrument less code. The relevant
+// options to wasm-opt etc. are:
 //
 //   --pass-arg=bysyncify-imports@module1.base1,module2.base2,module3.base3
 //
-// Each module.base in that comma-separated list will be considered to
-// be an import that can unwind/rewind, and all others are assumed not to
-// (aside from the bysyncify.* imports, which are always assumed to). To
-// say that no import (aside from bysyncify.*) can do so (that is, the
-// opposite of the default behavior), you can simply provide an import
-// that doesn't exist, for example:
-
-// --pass-arg=bysyncify-imports@no.imports
+//      Each module.base in that comma-separated list will be considered to
+//      be an import that can unwind/rewind, and all others are assumed not to
+//      (aside from the bysyncify.* imports, which are always assumed to).
+//  
+//   --pass-arg=bysyncify-ignore-imports
+//
+//      Ignore all imports (except for bynsyncify.*), that is, assume none of
+//      them can start an unwind/rewind. (This is effectively the same as
+//      providing bysyncify-imports with a list of non-existent imports.)
 //
 
 #include "ir/effects.h"
@@ -789,14 +791,16 @@ struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
     // Find which imports can change the state.
-    const char* ALL_IMPORTS_CAN_CHANGE_STATE = "__bysyncify_all_imports";
     auto stateChangingImports = runner->options.getArgumentOrDefault(
-      "bysyncify-imports", ALL_IMPORTS_CAN_CHANGE_STATE);
-    bool allImportsCanChangeState =
-      stateChangingImports == ALL_IMPORTS_CAN_CHANGE_STATE;
+      "bysyncify-imports", "");
     std::string separator = ",";
-    stateChangingImports = separator + stateChangingImports + separator;
-
+    auto ignoreImports = runner->options.getArgumentOrDefault(
+      "bysyncify-ignore-imports", "");
+    bool allImportsCanChangeState =
+      stateChangingImports == "" && ignoreImports == "";
+    if (!allImportsCanChangeState) {
+      stateChangingImports = separator + stateChangingImports + separator;
+    }
     // Scan the module.
     ModuleAnalyzer analyzer(*module, [&](Name module, Name base) {
       if (allImportsCanChangeState) {
