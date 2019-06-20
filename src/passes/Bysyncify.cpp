@@ -185,6 +185,13 @@
 //      them can start an unwind/rewind. (This is effectively the same as
 //      providing bysyncify-imports with a list of non-existent imports.)
 //
+//   --pass-arg=bysyncify-ignore-indirect
+//
+//      Ignore all indirect calls. This implies that you know an call stack
+//      will never need to be unwound with an indirect call somewhere in it.
+//      If that is true for your codebase, then this can be extremely useful
+//      as otherwise it looks like any indirect call can go to a lot of places.
+//
 
 #include "ir/effects.h"
 #include "ir/literal-utils.h"
@@ -227,6 +234,7 @@ const auto STACK_ALIGN = 4;
 // by it.
 class ModuleAnalyzer {
   Module& module;
+  bool canIndirectChangeState;
 
   struct Info {
     bool canChangeState = false;
@@ -239,8 +247,9 @@ class ModuleAnalyzer {
 
 public:
   ModuleAnalyzer(Module& module,
-                 std::function<bool(Name, Name)> canImportChangeState)
-    : module(module) {
+                 std::function<bool(Name, Name)> canImportChangeState,
+                 bool canIndirectChangeState)
+    : module(module), canIndirectChangeState(canIndirectChangeState) {
     // Scan to see which functions can directly change the state.
     // Also handle the bysyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
@@ -283,15 +292,19 @@ public:
             info->callsTo.insert(target);
           }
           void visitCallIndirect(CallIndirect* curr) {
-            // TODO optimize
-            info->canChangeState = true;
+            if (canIndirectChangeState) {
+              info->canChangeState = true;
+            }
+            // TODO optimize the other case, at least by type
           }
           Info* info;
           Module* module;
+          bool canIndirectChangeState;
         };
         Walker walker;
         walker.info = &info;
         walker.module = &module;
+        walker.canIndirectChangeState = canIndirectChangeState;
         walker.walk(func->body);
       });
     map.swap(scanner.map);
@@ -359,16 +372,20 @@ public:
         }
       }
       void visitCallIndirect(CallIndirect* curr) {
-        // TODO optimize
-        canChangeState = true;
+        if (canIndirectChangeState) {
+          canChangeState = true;
+        }
+        // TODO optimize the other case, at least by type
       }
       Module* module;
       Map* map;
+      bool canIndirectChangeState;
       bool canChangeState = false;
     };
     Walker walker;
     walker.module = &module;
     walker.map = &map;
+    walker.canIndirectChangeState = canIndirectChangeState;
     walker.walk(curr);
     return walker.canChangeState;
   }
@@ -790,7 +807,7 @@ private:
 struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
-    // Find which imports can change the state.
+    // Find which things can change the state.
     auto stateChangingImports = runner->options.getArgumentOrDefault(
       "bysyncify-imports", "");
     std::string separator = ",";
@@ -801,6 +818,9 @@ struct Bysyncify : public Pass {
     if (!allImportsCanChangeState) {
       stateChangingImports = separator + stateChangingImports + separator;
     }
+    auto ignoreIndirect = runner->options.getArgumentOrDefault(
+      "bysyncify-ignore-indirect", "");
+
     // Scan the module.
     ModuleAnalyzer analyzer(*module, [&](Name module, Name base) {
       if (allImportsCanChangeState) {
@@ -808,7 +828,7 @@ struct Bysyncify : public Pass {
       }
       std::string full = separator + module.str + '.' + base.str + separator;
       return stateChangingImports.find(full) != std::string::npos;
-    });
+    }, ignoreIndirect == "");
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
