@@ -178,7 +178,7 @@
 //      Each module.base in that comma-separated list will be considered to
 //      be an import that can unwind/rewind, and all others are assumed not to
 //      (aside from the bysyncify.* imports, which are always assumed to).
-//  
+//
 //   --pass-arg=bysyncify-ignore-imports
 //
 //      Ignore all imports (except for bynsyncify.*), that is, assume none of
@@ -808,27 +808,30 @@ struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
     // Find which things can change the state.
-    auto stateChangingImports = runner->options.getArgumentOrDefault(
-      "bysyncify-imports", "");
+    auto stateChangingImports =
+      runner->options.getArgumentOrDefault("bysyncify-imports", "");
     std::string separator = ",";
-    auto ignoreImports = runner->options.getArgumentOrDefault(
-      "bysyncify-ignore-imports", "");
+    auto ignoreImports =
+      runner->options.getArgumentOrDefault("bysyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     if (!allImportsCanChangeState) {
       stateChangingImports = separator + stateChangingImports + separator;
     }
-    auto ignoreIndirect = runner->options.getArgumentOrDefault(
-      "bysyncify-ignore-indirect", "");
+    auto ignoreIndirect =
+      runner->options.getArgumentOrDefault("bysyncify-ignore-indirect", "");
 
     // Scan the module.
-    ModuleAnalyzer analyzer(*module, [&](Name module, Name base) {
-      if (allImportsCanChangeState) {
-        return true;
-      }
-      std::string full = separator + module.str + '.' + base.str + separator;
-      return stateChangingImports.find(full) != std::string::npos;
-    }, ignoreIndirect == "");
+    ModuleAnalyzer analyzer(
+      *module,
+      [&](Name module, Name base) {
+        if (allImportsCanChangeState) {
+          return true;
+        }
+        std::string full = separator + module.str + '.' + base.str + separator;
+        return stateChangingImports.find(full) != std::string::npos;
+      },
+      ignoreIndirect == "");
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
