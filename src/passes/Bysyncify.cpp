@@ -161,7 +161,7 @@
 // If it did, the unwind would not stop until you left the wasm module
 // entirely, etc. Therefore we do not instrument a function if it has
 // a call to the four bysyncify_* methods. Note that you may need to disable
-//inlining if that would cause code that does need to be instrumented
+// inlining if that would cause code that does need to be instrumented
 // show up in that runtime code.
 //
 // To use this API, call bysyncify_start_unwind when you want to. The call
