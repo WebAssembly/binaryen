@@ -187,12 +187,15 @@ struct OptimizationOptions : public ToolOptions {
            "in the form KEY@VALUE",
            Options::Arguments::N,
            [this](Options*, const std::string& argument) {
+             std::string key, value;
              auto colon = argument.find('@');
              if (colon == std::string::npos) {
-               Fatal() << "--pass-arg value must be in the form of KEY@VALUE";
+               key = argument;
+               value = "1";
+             } else {
+               key = argument.substr(0, colon);
+               value = argument.substr(colon + 1);
              }
-             auto key = argument.substr(0, colon);
-             auto value = argument.substr(colon + 1);
              passOptions.arguments[key] = value;
            });
     // add passes in registry
