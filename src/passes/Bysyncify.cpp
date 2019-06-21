@@ -155,14 +155,14 @@
 // around that, you can create imports to bysyncify.start_unwind,
 // bysyncify.stop_unwind, bysyncify.start_rewind, and bysyncify.stop_rewind;
 // if those exist when this pass runs then it will turn those into direct
-// calls to the functions that it creates. (Note that when doing everything
-// in wasm like this, Bysyncify must not instrument your bottom-most "runtime"
-// code, that is, the code that is reached when an unwind completes and that
-// starts a rewind. If it did, the unwind would not stop until you left the
-// wasm module entirely. Therefore we do not instrument a function if it has
-// a call to bysyncify_stop_unwind or bysyncify_start_rewind. You may need to
-// disable inlining if that would cause code that does need to be instrumented
-// show up in that runtime code.)
+// calls to the functions that it creates. Note that when doing everything
+// in wasm like this, Bysyncify must not instrument your "runtime" support
+// code, that is, the code that initiates unwinds and rewinds and stops them.
+// If it did, the unwind would not stop until you left the wasm module
+// entirely, etc. Therefore we do not instrument a function if it has
+// a call to the four bysyncify_* methods. Note that you may need to disable
+//inlining if that would cause code that does need to be instrumented
+// show up in that runtime code.
 //
 // To use this API, call bysyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
@@ -251,6 +251,12 @@ class ModuleAnalyzer {
     // This is only relevant when handling things entirely inside wasm,
     // as opposed to imports.
     bool isBottomMostRuntime = false;
+    // If this function is part of the runtime that starts an unwinding
+    // and stops a rewinding. If so, we do not instrument it, see above.
+    // The difference between the top-most and bottom-most runtime is that
+    // the top-most part is still marked as changing the state; so things
+    // that call it are instrumented. This is not done for the bottom.
+    bool isTopMostRuntime = false;
     std::set<Function*> callsTo;
     std::set<Function*> calledBy;
   };
@@ -288,6 +294,7 @@ public:
               if (target->base == START_UNWIND) {
                 curr->target = BYSYNCIFY_START_UNWIND;
                 info->canChangeState = true;
+                info->isTopMostRuntime = true;
               } else if (target->base == STOP_UNWIND) {
                 curr->target = BYSYNCIFY_STOP_UNWIND;
                 info->isBottomMostRuntime = true;
@@ -297,6 +304,7 @@ public:
               } else if (target->base == STOP_REWIND) {
                 curr->target = BYSYNCIFY_STOP_REWIND;
                 info->canChangeState = true;
+                info->isTopMostRuntime = true;
               } else {
                 Fatal() << "call to unidenfied bysyncify import: "
                         << target->base;
@@ -368,7 +376,10 @@ public:
     }
   }
 
-  bool canChangeState(Function* func) { return map[func].canChangeState; }
+  bool needsInstrumentation(Function* func) {
+    auto& info = map[func];
+    return info.canChangeState && !info.isTopMostRuntime;
+  }
 
   bool canChangeState(Expression* curr) {
     // Look inside to see if we call any of the things we know can change the
@@ -480,7 +491,7 @@ struct BysyncifyFlow : public Pass {
     module = module_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
-    if (!analyzer->canChangeState(func)) {
+    if (!analyzer->needsInstrumentation(func)) {
       return;
     }
     // Rewrite the function body.
@@ -699,7 +710,7 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
   void doWalkFunction(Function* func) {
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
-    if (!analyzer->canChangeState(func->body)) {
+    if (!analyzer->needsInstrumentation(func)) {
       return;
     }
     // Note the locals we want to preserve, before we add any more helpers.
