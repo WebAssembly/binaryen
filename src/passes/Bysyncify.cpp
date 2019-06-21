@@ -155,7 +155,14 @@
 // around that, you can create imports to bysyncify.start_unwind,
 // bysyncify.stop_unwind, bysyncify.start_rewind, and bysyncify.stop_rewind;
 // if those exist when this pass runs then it will turn those into direct
-// calls to the functions that it creates.
+// calls to the functions that it creates. Note that when doing everything
+// in wasm like this, Bysyncify must not instrument your "runtime" support
+// code, that is, the code that initiates unwinds and rewinds and stops them.
+// If it did, the unwind would not stop until you left the wasm module
+// entirely, etc. Therefore we do not instrument a function if it has
+// a call to the four bysyncify_* methods. Note that you may need to disable
+// inlining if that would cause code that does need to be instrumented
+// show up in that runtime code.
 //
 // To use this API, call bysyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
@@ -237,7 +244,19 @@ class ModuleAnalyzer {
   bool canIndirectChangeState;
 
   struct Info {
+    // If this function can start an unwind/rewind.
     bool canChangeState = false;
+    // If this function is part of the runtime that receives an unwinding
+    // and starts a rewinding. If so, we do not instrument it, see above.
+    // This is only relevant when handling things entirely inside wasm,
+    // as opposed to imports.
+    bool isBottomMostRuntime = false;
+    // If this function is part of the runtime that starts an unwinding
+    // and stops a rewinding. If so, we do not instrument it, see above.
+    // The difference between the top-most and bottom-most runtime is that
+    // the top-most part is still marked as changing the state; so things
+    // that call it are instrumented. This is not done for the bottom.
+    bool isTopMostRuntime = false;
     std::set<Function*> callsTo;
     std::set<Function*> calledBy;
   };
@@ -257,10 +276,9 @@ public:
     ModuleUtils::ParallelFunctionMap<Info> scanner(
       module, [&](Function* func, Info& info) {
         if (func->imported()) {
-          // The bysyncify imports can definitely change the state.
+          // The relevant bysyncify imports can definitely change the state.
           if (func->module == BYSYNCIFY &&
-              (func->base == START_UNWIND || func->base == STOP_UNWIND ||
-               func->base == START_REWIND || func->base == STOP_REWIND)) {
+              (func->base == START_UNWIND || func->base == STOP_REWIND)) {
             info.canChangeState = true;
           } else {
             info.canChangeState =
@@ -275,18 +293,22 @@ public:
               // Redirect the imports to the functions we'll add later.
               if (target->base == START_UNWIND) {
                 curr->target = BYSYNCIFY_START_UNWIND;
+                info->canChangeState = true;
+                info->isTopMostRuntime = true;
               } else if (target->base == STOP_UNWIND) {
                 curr->target = BYSYNCIFY_STOP_UNWIND;
+                info->isBottomMostRuntime = true;
               } else if (target->base == START_REWIND) {
                 curr->target = BYSYNCIFY_START_REWIND;
+                info->isBottomMostRuntime = true;
               } else if (target->base == STOP_REWIND) {
                 curr->target = BYSYNCIFY_STOP_REWIND;
-                // TODO: in theory, this does not change the state
+                info->canChangeState = true;
+                info->isTopMostRuntime = true;
               } else {
                 Fatal() << "call to unidenfied bysyncify import: "
                         << target->base;
               }
-              info->canChangeState = true;
               return;
             }
             info->callsTo.insert(target);
@@ -306,7 +328,15 @@ public:
         walker.module = &module;
         walker.canIndirectChangeState = canIndirectChangeState;
         walker.walk(func->body);
+
+        if (info.isBottomMostRuntime) {
+          info.canChangeState = false;
+          // TODO: issue warnings on suspicious things, like a function in
+          //       the bottom-most runtime also doing top-most runtime stuff
+          //       like starting and unwinding.
+        }
       });
+
     map.swap(scanner.map);
 
     // Remove the bysyncify imports, if any.
@@ -338,7 +368,7 @@ public:
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
-        if (!map[caller].canChangeState) {
+        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime) {
           map[caller].canChangeState = true;
           work.push(caller);
         }
@@ -346,7 +376,10 @@ public:
     }
   }
 
-  bool canChangeState(Function* func) { return map[func].canChangeState; }
+  bool needsInstrumentation(Function* func) {
+    auto& info = map[func];
+    return info.canChangeState && !info.isTopMostRuntime;
+  }
 
   bool canChangeState(Expression* curr) {
     // Look inside to see if we call any of the things we know can change the
@@ -357,12 +390,15 @@ public:
         // We only implement these at the very end, but we know that they
         // definitely change the state.
         if (curr->target == BYSYNCIFY_START_UNWIND ||
-            curr->target == BYSYNCIFY_STOP_UNWIND ||
-            curr->target == BYSYNCIFY_START_REWIND ||
             curr->target == BYSYNCIFY_STOP_REWIND ||
             curr->target == BYSYNCIFY_GET_CALL_INDEX ||
             curr->target == BYSYNCIFY_CHECK_CALL_INDEX) {
           canChangeState = true;
+          return;
+        }
+        if (curr->target == BYSYNCIFY_STOP_UNWIND ||
+            curr->target == BYSYNCIFY_START_REWIND) {
+          isBottomMostRuntime = true;
           return;
         }
         // The target may not exist if it is one of our temporary intrinsics.
@@ -381,12 +417,16 @@ public:
       Map* map;
       bool canIndirectChangeState;
       bool canChangeState = false;
+      bool isBottomMostRuntime = false;
     };
     Walker walker;
     walker.module = &module;
     walker.map = &map;
     walker.canIndirectChangeState = canIndirectChangeState;
     walker.walk(curr);
+    if (walker.isBottomMostRuntime) {
+      walker.canChangeState = false;
+    }
     return walker.canChangeState;
   }
 };
@@ -451,7 +491,7 @@ struct BysyncifyFlow : public Pass {
     module = module_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
-    if (!analyzer->canChangeState(func)) {
+    if (!analyzer->needsInstrumentation(func)) {
       return;
     }
     // Rewrite the function body.
@@ -670,7 +710,7 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
   void doWalkFunction(Function* func) {
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
-    if (!analyzer->canChangeState(func->body)) {
+    if (!analyzer->needsInstrumentation(func)) {
       return;
     }
     // Note the locals we want to preserve, before we add any more helpers.

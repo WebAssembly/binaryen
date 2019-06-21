@@ -12,229 +12,29 @@
  (func $do_sleep (; 0 ;) (type $FUNCSIG$v)
   (local $0 i32)
   (local $1 i32)
-  (local $2 i32)
-  (local $3 i32)
-  (local $4 i32)
-  (local $5 i32)
+  (local.set $0
+   (global.get $sleeping)
+  )
+  (local.set $1
+   (i32.eqz
+    (local.get $0)
+   )
+  )
   (if
-   (i32.eq
-    (global.get $__bysyncify_state)
-    (i32.const 2)
-   )
+   (local.get $1)
    (block
-    (i32.store
-     (global.get $__bysyncify_data)
-     (i32.add
-      (i32.load
-       (global.get $__bysyncify_data)
-      )
-      (i32.const -8)
-     )
+    (global.set $sleeping
+     (i32.const 1)
     )
-    (local.set $4
-     (i32.load
-      (global.get $__bysyncify_data)
-     )
-    )
-    (local.set $0
-     (i32.load
-      (local.get $4)
-     )
-    )
-    (local.set $1
-     (i32.load offset=4
-      (local.get $4)
-     )
-    )
-   )
-  )
-  (local.set $2
-   (block $__bysyncify_unwind (result i32)
-    (block
-     (block
-      (if
-       (i32.eq
-        (global.get $__bysyncify_state)
-        (i32.const 2)
-       )
-       (block
-        (i32.store
-         (global.get $__bysyncify_data)
-         (i32.add
-          (i32.load
-           (global.get $__bysyncify_data)
-          )
-          (i32.const -4)
-         )
-        )
-        (local.set $3
-         (i32.load
-          (i32.load
-           (global.get $__bysyncify_data)
-          )
-         )
-        )
-       )
-      )
-      (block
-       (if
-        (i32.eq
-         (global.get $__bysyncify_state)
-         (i32.const 0)
-        )
-        (block
-         (local.set $0
-          (global.get $sleeping)
-         )
-         (local.set $1
-          (i32.eqz
-           (local.get $0)
-          )
-         )
-        )
-       )
-       (nop)
-       (block
-        (if
-         (i32.or
-          (local.get $1)
-          (i32.eq
-           (global.get $__bysyncify_state)
-           (i32.const 2)
-          )
-         )
-         (block
-          (if
-           (i32.eq
-            (global.get $__bysyncify_state)
-            (i32.const 0)
-           )
-           (global.set $sleeping
-            (i32.const 1)
-           )
-          )
-          (if
-           (if (result i32)
-            (i32.eq
-             (global.get $__bysyncify_state)
-             (i32.const 0)
-            )
-            (i32.const 1)
-            (i32.eq
-             (local.get $3)
-             (i32.const 0)
-            )
-           )
-           (block
-            (call $bysyncify_start_unwind
-             (i32.const 4)
-            )
-            (if
-             (i32.eq
-              (global.get $__bysyncify_state)
-              (i32.const 1)
-             )
-             (br $__bysyncify_unwind
-              (i32.const 0)
-             )
-            )
-           )
-          )
-         )
-        )
-        (if
-         (i32.or
-          (i32.eqz
-           (local.get $1)
-          )
-          (i32.eq
-           (global.get $__bysyncify_state)
-           (i32.const 2)
-          )
-         )
-         (block
-          (if
-           (i32.eq
-            (global.get $__bysyncify_state)
-            (i32.const 0)
-           )
-           (global.set $sleeping
-            (i32.const 0)
-           )
-          )
-          (if
-           (if (result i32)
-            (i32.eq
-             (global.get $__bysyncify_state)
-             (i32.const 0)
-            )
-            (i32.const 1)
-            (i32.eq
-             (local.get $3)
-             (i32.const 1)
-            )
-           )
-           (block
-            (call $bysyncify_stop_rewind)
-            (if
-             (i32.eq
-              (global.get $__bysyncify_state)
-              (i32.const 1)
-             )
-             (br $__bysyncify_unwind
-              (i32.const 1)
-             )
-            )
-           )
-          )
-         )
-        )
-       )
-      )
-     )
-     (return)
-    )
-   )
-  )
-  (block
-   (i32.store
-    (i32.load
-     (global.get $__bysyncify_data)
-    )
-    (local.get $2)
-   )
-   (i32.store
-    (global.get $__bysyncify_data)
-    (i32.add
-     (i32.load
-      (global.get $__bysyncify_data)
-     )
+    (call $bysyncify_start_unwind
      (i32.const 4)
     )
    )
-  )
-  (block
-   (local.set $5
-    (i32.load
-     (global.get $__bysyncify_data)
+   (block
+    (global.set $sleeping
+     (i32.const 0)
     )
-   )
-   (i32.store
-    (local.get $5)
-    (local.get $0)
-   )
-   (i32.store offset=4
-    (local.get $5)
-    (local.get $1)
-   )
-   (i32.store
-    (global.get $__bysyncify_data)
-    (i32.add
-     (i32.load
-      (global.get $__bysyncify_data)
-     )
-     (i32.const 8)
-    )
+    (call $bysyncify_stop_rewind)
    )
   )
  )
@@ -432,120 +232,10 @@
   (nop)
  )
  (func $second_event (; 4 ;) (type $FUNCSIG$v)
-  (local $0 i32)
-  (local $1 i32)
-  (if
-   (i32.eq
-    (global.get $__bysyncify_state)
-    (i32.const 2)
-   )
-   (nop)
+  (call $bysyncify_start_rewind
+   (i32.const 4)
   )
-  (local.set $0
-   (block $__bysyncify_unwind (result i32)
-    (block
-     (block
-      (if
-       (i32.eq
-        (global.get $__bysyncify_state)
-        (i32.const 2)
-       )
-       (block
-        (i32.store
-         (global.get $__bysyncify_data)
-         (i32.add
-          (i32.load
-           (global.get $__bysyncify_data)
-          )
-          (i32.const -4)
-         )
-        )
-        (local.set $1
-         (i32.load
-          (i32.load
-           (global.get $__bysyncify_data)
-          )
-         )
-        )
-       )
-      )
-      (block
-       (if
-        (if (result i32)
-         (i32.eq
-          (global.get $__bysyncify_state)
-          (i32.const 0)
-         )
-         (i32.const 1)
-         (i32.eq
-          (local.get $1)
-          (i32.const 0)
-         )
-        )
-        (block
-         (call $bysyncify_start_rewind
-          (i32.const 4)
-         )
-         (if
-          (i32.eq
-           (global.get $__bysyncify_state)
-           (i32.const 1)
-          )
-          (br $__bysyncify_unwind
-           (i32.const 0)
-          )
-         )
-        )
-       )
-       (if
-        (if (result i32)
-         (i32.eq
-          (global.get $__bysyncify_state)
-          (i32.const 0)
-         )
-         (i32.const 1)
-         (i32.eq
-          (local.get $1)
-          (i32.const 1)
-         )
-        )
-        (block
-         (call $work)
-         (if
-          (i32.eq
-           (global.get $__bysyncify_state)
-           (i32.const 1)
-          )
-          (br $__bysyncify_unwind
-           (i32.const 1)
-          )
-         )
-        )
-       )
-      )
-     )
-     (return)
-    )
-   )
-  )
-  (block
-   (i32.store
-    (i32.load
-     (global.get $__bysyncify_data)
-    )
-    (local.get $0)
-   )
-   (i32.store
-    (global.get $__bysyncify_data)
-    (i32.add
-     (i32.load
-      (global.get $__bysyncify_data)
-     )
-     (i32.const 4)
-    )
-   )
-  )
-  (nop)
+  (call $work)
  )
  (func $never_sleep (; 5 ;) (type $FUNCSIG$v)
   (call $stuff)
