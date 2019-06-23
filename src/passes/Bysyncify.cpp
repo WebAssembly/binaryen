@@ -983,6 +983,10 @@ struct Bysyncify : public Pass {
       // unreachable code here.
       runner.add("dce");
       if (optimize) {
+        // Optimizing before BsyncifyFlow is crucial, especially coalescing,
+        // because the flow changes add many branches, break up if-elses, etc.,
+        // all of which extend the live ranges of locals. In other words, it is
+        // not possible to coalesce well afterwards.
         runner.add("simplify-locals-nonesting");
         runner.add("reorder-locals");
         runner.add("coalesce-locals");
