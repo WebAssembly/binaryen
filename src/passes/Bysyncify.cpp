@@ -487,8 +487,9 @@ struct BysyncifyFlow : public Pass {
   BysyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void
-  runOnFunction(PassRunner* runner, Module* module_, Function* func) override {
+  runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
+    func = func_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
@@ -518,6 +519,7 @@ private:
   std::unique_ptr<BysyncifyBuilder> builder;
 
   Module* module;
+  Function* func;
 
   // Each call in the function has an index, noted during unwind and checked
   // during rewind.
@@ -527,12 +529,15 @@ private:
     if (!analyzer->canChangeState(curr)) {
       return makeMaybeSkip(curr);
     }
-    // The IR is in flat form, which makes this much simpler. We basically
-    // need to add skips to avoid code when rewinding, and checks around calls
-    // with unwinding/rewinding support.
+    // The IR is in flat form, which makes this much simpler: there are no
+    // unnecessarily nested side effects or control flow, so we can add
+    // skips for rewinding in an easy manner, putting a single if around
+    // whole chunks of code. Also calls are separated out so that it is easy
+    // to add the necessary checks for them for unwinding/rewinding support.
     //
     // Aside from that, we must "linearize" all control flow so that we can
-    // reach the right part when unwinding. For example, for an if we do this:
+    // reach the right part when rewinding, which is done by always skipping
+    // forward. For example, for an if we do this:
     //
     //    if (condition()) {
     //      side1();
@@ -640,19 +645,34 @@ private:
     //       change the state
     assert(doesCall(curr));
     assert(curr->type == none);
+    // The case of a set is tricky: we must *not* execute the set when
+    // unwinding, since at that point we have a fake value for the return,
+    // and if we applied it to the local, it would end up saved and then
+    // potentially used later. Instead, split out the set, saving the
+    // return value to a temporary, and afterwards apply the temp loca
+    // if not unwinding.
+    auto* set = curr->dynCast<LocalSet>();
+    if (set) {
+      auto type = func->getLocalType(set->index);
+      auto temp = builder->addVar(func, type);
+      curr = builder->makeLocalSet(temp, set->value);
+      set->value = builder->makeLocalGet(temp, type);
+    }
+    // Instrument the call itself (or, if a drop, the drop+call).
     auto index = callIndex++;
     // Execute the call, if either normal execution, or if rewinding and this
     // is the right call to go into.
     // TODO: we can read the next call index once in each function (but should
     //       avoid saving/restoring that local later)
-    return builder->makeIf(
+    curr = builder->makeIf(
       builder->makeIf(builder->makeStateCheck(State::Normal),
                       builder->makeConst(Literal(int32_t(1))),
                       makeCallIndexPeek(index)),
-      builder->makeSequence(curr, makePossibleUnwind(index)));
+      builder->makeSequence(curr, makePossibleUnwind(index, set)));
+    return curr;
   }
 
-  Expression* makePossibleUnwind(Index index) {
+  Expression* makePossibleUnwind(Index index, Expression* ifNotUnwinding) {
     // In this pass we emit an "unwind" as a call to a fake intrinsic. We
     // will implement it in the later pass. (We can't create the unwind block
     // target here, as the optimizer would remove it later; we can only add
@@ -660,7 +680,8 @@ private:
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
       builder->makeCall(
-        BYSYNCIFY_UNWIND, {builder->makeConst(Literal(int32_t(index)))}, none));
+        BYSYNCIFY_UNWIND, {builder->makeConst(Literal(int32_t(index)))}, none),
+      ifNotUnwinding);
   }
 
   Expression* makeCallIndexPeek(Index index) {
@@ -884,13 +905,18 @@ struct Bysyncify : public Pass {
       PassRunner runner(module);
       runner.add("flatten");
       // Dce is useful here, since BysyncifyFlow makes control flow conditional,
-      // which may make unreachable code look reachable. We also do some other
-      // minimal optimization here in an unconditional way here, to counteract
-      // the flattening.
+      // which may make unreachable code look reachable. It also lets us ignore
+      // unreachable code here.
       runner.add("dce");
-      runner.add("simplify-locals-nonesting");
-      runner.add("merge-blocks");
-      runner.add("vacuum");
+      if (optimize) {
+        runner.add("simplify-locals-nonesting");
+        runner.add("reorder-locals");
+        runner.add("coalesce-locals");
+        runner.add("simplify-locals-nonesting");
+        runner.add("reorder-locals");
+        runner.add("merge-blocks");
+        runner.add("vacuum");
+      }
       runner.add<BysyncifyFlow>(&analyzer);
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
