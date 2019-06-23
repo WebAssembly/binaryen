@@ -236,9 +236,55 @@ enum class DataOffset { BStackPos = 0, BStackEnd = 4 };
 
 const auto STACK_ALIGN = 4;
 
+// A helper class for managing fake global names. Creates the globals and
+// provides mappings for using them.
+class GlobalHelper {
+  Module& module;
+
+public:
+  GlobalHelper(Module& module) : module(module) {
+    map[i32] = "bysyncify_fake_call_global_i32";
+    map[i64] = "bysyncify_fake_call_global_i64";
+    map[f32] = "bysyncify_fake_call_global_f32";
+    map[f64] = "bysyncify_fake_call_global_f64";
+    Builder builder(module);
+    for (auto& pair : map) {
+      auto type = pair.first;
+      auto name = pair.second;
+      rev[name] = type;
+      module.addGlobal(builder.makeGlobal(name, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
+    }
+  }
+
+  ~GlobalHelper() {
+    for (auto& pair : map) {
+      auto name = pair.second;
+      module.removeGlobal(name);
+    }
+  }
+
+  Name getName(Type type) {
+    return map.at(type);
+  }
+
+  Type getTypeOrNone(Name name) {
+    auto iter = rev.find(name);
+    if (iter != rev.end()) {
+      return iter->second;
+    }
+    return none;
+  }
+
+private:
+  std::map<Type, Name> map;
+  std::map<Name, Type> rev;
+};
+
 // Analyze the entire module to see which calls may change the state, that
 // is, start an unwind or rewind), either in itself or in something called
 // by it.
+// Handles global module management, needed from the various parts of this
+// transformation.
 class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
@@ -268,7 +314,7 @@ public:
   ModuleAnalyzer(Module& module,
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState)
-    : module(module), canIndirectChangeState(canIndirectChangeState) {
+    : module(module), canIndirectChangeState(canIndirectChangeState), globals(module) {
     // Scan to see which functions can directly change the state.
     // Also handle the bysyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
@@ -429,6 +475,8 @@ public:
     }
     return walker.canChangeState;
   }
+
+  GlobalHelper globals;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -487,9 +535,8 @@ struct BysyncifyFlow : public Pass {
   BysyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void
-  runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
+  runOnFunction(PassRunner* runner, Module* module_, Function* func) override {
     module = module_;
-    func = func_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
@@ -519,7 +566,6 @@ private:
   std::unique_ptr<BysyncifyBuilder> builder;
 
   Module* module;
-  Function* func;
 
   // Each call in the function has an index, noted during unwind and checked
   // during rewind.
@@ -648,15 +694,20 @@ private:
     // The case of a set is tricky: we must *not* execute the set when
     // unwinding, since at that point we have a fake value for the return,
     // and if we applied it to the local, it would end up saved and then
-    // potentially used later. Instead, split out the set, saving the
-    // return value to a temporary, and afterwards apply the temp loca
-    // if not unwinding.
+    // potentially used later - and with coalescing, that may interfere
+    // with other things. Note also that at this point in the process we
+    // have not yet written the load saving/loading code, so the optimizer
+    // doesn't see that locals will have another use at the beginning and
+    // end of the function. We don't do that yet because we don't want it
+    // to force the final number of locals to be too high, but we also
+    // must be careful to never touch a local unnecessarily to avoid bugs.
+    // To implement this, write to a fake global; we'll fix it up after
+    // BysyncifyLocals locals adds local saving/restoring.
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
-      auto type = func->getLocalType(set->index);
-      auto temp = builder->addVar(func, type);
-      curr = builder->makeLocalSet(temp, set->value);
-      set->value = builder->makeLocalGet(temp, type);
+      auto name = analyzer->globals.getName(set->value->type);
+      curr = builder->makeGlobalSet(name, set->value);
+      set->value = builder->makeGlobalGet(name, set->value->type);
     }
     // Instrument the call itself (or, if a drop, the drop+call).
     auto index = callIndex++;
@@ -728,6 +779,28 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
     }
   }
 
+  void visitGlobalSet(GlobalSet* curr) {
+    auto type = analyzer->globals.getTypeOrNone(curr->name);
+    if (type != none) {
+      replaceCurrent(builder->makeLocalSet(getFakeCallLocal(type), curr->value));
+    }
+  }
+
+  void visitGlobalGet(GlobalGet* curr) {
+    auto type = analyzer->globals.getTypeOrNone(curr->name);
+    if (type != none) {
+      replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
+    }
+  }
+
+  Index getFakeCallLocal(Type type) {
+    auto iter = fakeCallLocals.find(type);
+    if (iter != fakeCallLocals.end()) {
+      return iter->second;
+    }
+    return fakeCallLocals[type] = builder->addVar(getFunction(), type);
+  }
+
   void doWalkFunction(Function* func) {
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
@@ -784,6 +857,7 @@ private:
 
   Index rewindIndex;
   Index numPreservableLocals;
+  std::map<Type, Index> fakeCallLocals;
 
   Expression* makeLocalLoading() {
     if (numPreservableLocals == 0) {
