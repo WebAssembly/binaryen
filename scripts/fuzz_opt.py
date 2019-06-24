@@ -131,7 +131,7 @@ def run_vm(cmd):
   ]
   try:
     return run(cmd)
-  except:
+  except Exception as e:
     output = run_unchecked(cmd)
     for issue in known_issues:
       if issue in output:
