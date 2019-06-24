@@ -48,8 +48,19 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
     std::vector<Name> names;
     ModuleUtils::iterImportedFunctions(
       *curr, [&](Function* func) { names.push_back(func->name); });
+    // Do not remove names referenced in a table
+    std::set<Name> indirectNames;
+    if (curr->table.exists) {
+      for (auto& segment : curr->table.segments) {
+        for (auto& name : segment.data) {
+          indirectNames.insert(name);
+        }
+      }
+    }
     for (auto& name : names) {
-      curr->removeFunction(name);
+      if (indirectNames.find(name) == indirectNames.end()) {
+        curr->removeFunction(name);
+      }
     }
   }
 };
