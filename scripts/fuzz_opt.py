@@ -249,7 +249,7 @@ class Bysyncify(TestCaseHandler):
     # --remove-unused-module-elements removes the bysyncify intrinsics, which are not valid to call
     cmd = [in_bin('wasm-opt'), wasm, '--bysyncify', '--remove-unused-module-elements', '-o', 'by.wasm']
     if random.random() < 0.5:
-      cmd += ['--optimize-level=3'] # TODO: more
+      cmd += ['--optimize-level=3']  # TODO: more
     run(cmd)
     after = run([in_bin('wasm-opt'), 'by.wasm', '--fuzz-exec'])
     after = '\n'.join([line for line in after.splitlines() if '[fuzz-exec] calling $bysyncify' not in line])
@@ -262,7 +262,7 @@ testcase_handlers = [
   FuzzExec(),
   CheckDeterminism(),
   Wasm2JS(),
-  #Bysyncify(),
+  # TODO Bysyncify(),
 ]
 
 
