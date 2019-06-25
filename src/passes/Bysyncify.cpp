@@ -535,8 +535,9 @@ struct BysyncifyFlow : public Pass {
   BysyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void
-  runOnFunction(PassRunner* runner, Module* module_, Function* func) override {
+  runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
+    func = func_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
@@ -566,6 +567,7 @@ private:
   std::unique_ptr<BysyncifyBuilder> builder;
 
   Module* module;
+  Function* func;
 
   // Each call in the function has an index, noted during unwind and checked
   // during rewind.
@@ -646,25 +648,28 @@ private:
       // must be in one of the children.
       assert(!analyzer->canChangeState(iff->condition));
       // We must linearize this, which means we pass through both arms if we
-      // are rewinding. This is pretty simple as in flat form the if condition
-      // is either a const or a get, so easily copyable.
-      // Start with the first arm, for which we reuse the original if.
-      auto* otherArm = iff->ifFalse;
-      iff->ifFalse = nullptr;
-      auto* originalCondition = iff->condition;
-      iff->condition = builder->makeBinary(
-        OrInt32, originalCondition, builder->makeStateCheck(State::Rewinding));
-      iff->ifTrue = process(iff->ifTrue);
-      iff->finalize();
-      if (!otherArm) {
+      // are rewinding.
+      if (!iff->ifFalse) {
+        iff->condition = builder->makeBinary(
+          OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
+        iff->ifTrue = process(iff->ifTrue);
+        iff->finalize();
         return iff;
       }
+      auto conditionTemp = builder->addVar(func, i32);
+      iff->condition = builder->makeLocalTee(conditionTemp, iff->condition);
+      iff->condition = builder->makeBinary(
+        OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
+      iff->ifTrue = process(iff->ifTrue);
+      auto* otherArm = iff->ifFalse;
+      iff->ifFalse = nullptr;
+      iff->finalize();
       // Add support for the second arm as well.
       auto* otherIf = builder->makeIf(
         builder->makeBinary(
           OrInt32,
           builder->makeUnary(
-            EqZInt32, ExpressionManipulator::copy(originalCondition, *module)),
+            EqZInt32, builder->makeLocalGet(conditionTemp, i32)),
           builder->makeStateCheck(State::Rewinding)),
         process(otherArm));
       otherIf->finalize();

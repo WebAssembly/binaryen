@@ -263,7 +263,6 @@ struct Reducer
       "--remove-unused-names --merge-blocks --vacuum",
       "--optimize-instructions",
       "--precompute",
-      "--remove-imports",
       "--remove-memory",
       "--remove-unused-names --remove-unused-brs",
       "--remove-unused-module-elements",

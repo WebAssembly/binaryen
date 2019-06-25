@@ -588,11 +588,11 @@
     )
     (if
      (i32.or
-      (local.get $0)
       (i32.eq
        (global.get $__bysyncify_state)
        (i32.const 2)
       )
+      (local.get $0)
      )
      (if
       (select
@@ -741,11 +741,11 @@
     )
     (if
      (i32.or
-      (local.get $0)
       (i32.eq
        (global.get $__bysyncify_state)
        (i32.const 2)
       )
+      (local.get $0)
      )
      (if
       (i32.eqz
@@ -887,11 +887,11 @@
     )
     (if
      (i32.or
-      (local.get $0)
       (i32.eq
        (global.get $__bysyncify_state)
        (i32.const 2)
       )
+      (local.get $0)
      )
      (if
       (select
