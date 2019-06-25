@@ -236,9 +236,54 @@ enum class DataOffset { BStackPos = 0, BStackEnd = 4 };
 
 const auto STACK_ALIGN = 4;
 
+// A helper class for managing fake global names. Creates the globals and
+// provides mappings for using them.
+class GlobalHelper {
+  Module& module;
+
+public:
+  GlobalHelper(Module& module) : module(module) {
+    map[i32] = "bysyncify_fake_call_global_i32";
+    map[i64] = "bysyncify_fake_call_global_i64";
+    map[f32] = "bysyncify_fake_call_global_f32";
+    map[f64] = "bysyncify_fake_call_global_f64";
+    Builder builder(module);
+    for (auto& pair : map) {
+      auto type = pair.first;
+      auto name = pair.second;
+      rev[name] = type;
+      module.addGlobal(builder.makeGlobal(
+        name, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
+    }
+  }
+
+  ~GlobalHelper() {
+    for (auto& pair : map) {
+      auto name = pair.second;
+      module.removeGlobal(name);
+    }
+  }
+
+  Name getName(Type type) { return map.at(type); }
+
+  Type getTypeOrNone(Name name) {
+    auto iter = rev.find(name);
+    if (iter != rev.end()) {
+      return iter->second;
+    }
+    return none;
+  }
+
+private:
+  std::map<Type, Name> map;
+  std::map<Name, Type> rev;
+};
+
 // Analyze the entire module to see which calls may change the state, that
 // is, start an unwind or rewind), either in itself or in something called
 // by it.
+// Handles global module management, needed from the various parts of this
+// transformation.
 class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
@@ -268,7 +313,8 @@ public:
   ModuleAnalyzer(Module& module,
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState)
-    : module(module), canIndirectChangeState(canIndirectChangeState) {
+    : module(module), canIndirectChangeState(canIndirectChangeState),
+      globals(module) {
     // Scan to see which functions can directly change the state.
     // Also handle the bysyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
@@ -429,6 +475,8 @@ public:
     }
     return walker.canChangeState;
   }
+
+  GlobalHelper globals;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -487,8 +535,9 @@ struct BysyncifyFlow : public Pass {
   BysyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void
-  runOnFunction(PassRunner* runner, Module* module_, Function* func) override {
+  runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
+    func = func_;
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
@@ -518,6 +567,7 @@ private:
   std::unique_ptr<BysyncifyBuilder> builder;
 
   Module* module;
+  Function* func;
 
   // Each call in the function has an index, noted during unwind and checked
   // during rewind.
@@ -527,12 +577,15 @@ private:
     if (!analyzer->canChangeState(curr)) {
       return makeMaybeSkip(curr);
     }
-    // The IR is in flat form, which makes this much simpler. We basically
-    // need to add skips to avoid code when rewinding, and checks around calls
-    // with unwinding/rewinding support.
+    // The IR is in flat form, which makes this much simpler: there are no
+    // unnecessarily nested side effects or control flow, so we can add
+    // skips for rewinding in an easy manner, putting a single if around
+    // whole chunks of code. Also calls are separated out so that it is easy
+    // to add the necessary checks for them for unwinding/rewinding support.
     //
     // Aside from that, we must "linearize" all control flow so that we can
-    // reach the right part when unwinding. For example, for an if we do this:
+    // reach the right part when rewinding, which is done by always skipping
+    // forward. For example, for an if we do this:
     //
     //    if (condition()) {
     //      side1();
@@ -595,25 +648,28 @@ private:
       // must be in one of the children.
       assert(!analyzer->canChangeState(iff->condition));
       // We must linearize this, which means we pass through both arms if we
-      // are rewinding. This is pretty simple as in flat form the if condition
-      // is either a const or a get, so easily copyable.
-      // Start with the first arm, for which we reuse the original if.
-      auto* otherArm = iff->ifFalse;
-      iff->ifFalse = nullptr;
-      auto* originalCondition = iff->condition;
-      iff->condition = builder->makeBinary(
-        OrInt32, originalCondition, builder->makeStateCheck(State::Rewinding));
-      iff->ifTrue = process(iff->ifTrue);
-      iff->finalize();
-      if (!otherArm) {
+      // are rewinding.
+      if (!iff->ifFalse) {
+        iff->condition = builder->makeBinary(
+          OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
+        iff->ifTrue = process(iff->ifTrue);
+        iff->finalize();
         return iff;
       }
+      auto conditionTemp = builder->addVar(func, i32);
+      iff->condition = builder->makeLocalTee(conditionTemp, iff->condition);
+      iff->condition = builder->makeBinary(
+        OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
+      iff->ifTrue = process(iff->ifTrue);
+      auto* otherArm = iff->ifFalse;
+      iff->ifFalse = nullptr;
+      iff->finalize();
       // Add support for the second arm as well.
       auto* otherIf = builder->makeIf(
         builder->makeBinary(
           OrInt32,
-          builder->makeUnary(
-            EqZInt32, ExpressionManipulator::copy(originalCondition, *module)),
+          builder->makeUnary(EqZInt32,
+                             builder->makeLocalGet(conditionTemp, i32)),
           builder->makeStateCheck(State::Rewinding)),
         process(otherArm));
       otherIf->finalize();
@@ -640,19 +696,39 @@ private:
     //       change the state
     assert(doesCall(curr));
     assert(curr->type == none);
+    // The case of a set is tricky: we must *not* execute the set when
+    // unwinding, since at that point we have a fake value for the return,
+    // and if we applied it to the local, it would end up saved and then
+    // potentially used later - and with coalescing, that may interfere
+    // with other things. Note also that at this point in the process we
+    // have not yet written the load saving/loading code, so the optimizer
+    // doesn't see that locals will have another use at the beginning and
+    // end of the function. We don't do that yet because we don't want it
+    // to force the final number of locals to be too high, but we also
+    // must be careful to never touch a local unnecessarily to avoid bugs.
+    // To implement this, write to a fake global; we'll fix it up after
+    // BysyncifyLocals locals adds local saving/restoring.
+    auto* set = curr->dynCast<LocalSet>();
+    if (set) {
+      auto name = analyzer->globals.getName(set->value->type);
+      curr = builder->makeGlobalSet(name, set->value);
+      set->value = builder->makeGlobalGet(name, set->value->type);
+    }
+    // Instrument the call itself (or, if a drop, the drop+call).
     auto index = callIndex++;
     // Execute the call, if either normal execution, or if rewinding and this
     // is the right call to go into.
     // TODO: we can read the next call index once in each function (but should
     //       avoid saving/restoring that local later)
-    return builder->makeIf(
+    curr = builder->makeIf(
       builder->makeIf(builder->makeStateCheck(State::Normal),
                       builder->makeConst(Literal(int32_t(1))),
                       makeCallIndexPeek(index)),
-      builder->makeSequence(curr, makePossibleUnwind(index)));
+      builder->makeSequence(curr, makePossibleUnwind(index, set)));
+    return curr;
   }
 
-  Expression* makePossibleUnwind(Index index) {
+  Expression* makePossibleUnwind(Index index, Expression* ifNotUnwinding) {
     // In this pass we emit an "unwind" as a call to a fake intrinsic. We
     // will implement it in the later pass. (We can't create the unwind block
     // target here, as the optimizer would remove it later; we can only add
@@ -660,7 +736,8 @@ private:
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
       builder->makeCall(
-        BYSYNCIFY_UNWIND, {builder->makeConst(Literal(int32_t(index)))}, none));
+        BYSYNCIFY_UNWIND, {builder->makeConst(Literal(int32_t(index)))}, none),
+      ifNotUnwinding);
   }
 
   Expression* makeCallIndexPeek(Index index) {
@@ -705,6 +782,29 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
         builder->makeConst(
           Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))));
     }
+  }
+
+  void visitGlobalSet(GlobalSet* curr) {
+    auto type = analyzer->globals.getTypeOrNone(curr->name);
+    if (type != none) {
+      replaceCurrent(
+        builder->makeLocalSet(getFakeCallLocal(type), curr->value));
+    }
+  }
+
+  void visitGlobalGet(GlobalGet* curr) {
+    auto type = analyzer->globals.getTypeOrNone(curr->name);
+    if (type != none) {
+      replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
+    }
+  }
+
+  Index getFakeCallLocal(Type type) {
+    auto iter = fakeCallLocals.find(type);
+    if (iter != fakeCallLocals.end()) {
+      return iter->second;
+    }
+    return fakeCallLocals[type] = builder->addVar(getFunction(), type);
   }
 
   void doWalkFunction(Function* func) {
@@ -763,6 +863,7 @@ private:
 
   Index rewindIndex;
   Index numPreservableLocals;
+  std::map<Type, Index> fakeCallLocals;
 
   Expression* makeLocalLoading() {
     if (numPreservableLocals == 0) {
@@ -884,13 +985,22 @@ struct Bysyncify : public Pass {
       PassRunner runner(module);
       runner.add("flatten");
       // Dce is useful here, since BysyncifyFlow makes control flow conditional,
-      // which may make unreachable code look reachable. We also do some other
-      // minimal optimization here in an unconditional way here, to counteract
-      // the flattening.
+      // which may make unreachable code look reachable. It also lets us ignore
+      // unreachable code here.
       runner.add("dce");
-      runner.add("simplify-locals-nonesting");
-      runner.add("merge-blocks");
-      runner.add("vacuum");
+      if (optimize) {
+        // Optimizing before BsyncifyFlow is crucial, especially coalescing,
+        // because the flow changes add many branches, break up if-elses, etc.,
+        // all of which extend the live ranges of locals. In other words, it is
+        // not possible to coalesce well afterwards.
+        runner.add("simplify-locals-nonesting");
+        runner.add("reorder-locals");
+        runner.add("coalesce-locals");
+        runner.add("simplify-locals-nonesting");
+        runner.add("reorder-locals");
+        runner.add("merge-blocks");
+        runner.add("vacuum");
+      }
       runner.add<BysyncifyFlow>(&analyzer);
       runner.setIsNested(true);
       runner.setValidateGlobally(false);

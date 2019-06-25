@@ -139,7 +139,7 @@
       (global.get $__bysyncify_state)
      )
      (block
-      (local.set $0
+      (local.set $1
        (call $import2)
       )
       (drop
@@ -150,6 +150,9 @@
          (i32.const 1)
         )
        )
+      )
+      (local.set $0
+       (local.get $1)
       )
      )
     )
@@ -585,11 +588,11 @@
     )
     (if
      (i32.or
-      (local.get $0)
       (i32.eq
        (global.get $__bysyncify_state)
        (i32.const 2)
       )
+      (local.get $0)
      )
      (if
       (select
@@ -738,11 +741,11 @@
     )
     (if
      (i32.or
-      (local.get $0)
       (i32.eq
        (global.get $__bysyncify_state)
        (i32.const 2)
       )
+      (local.get $0)
      )
      (if
       (i32.eqz
@@ -884,11 +887,11 @@
     )
     (if
      (i32.or
-      (local.get $0)
       (i32.eq
        (global.get $__bysyncify_state)
        (i32.const 2)
       )
+      (local.get $0)
      )
      (if
       (select
@@ -1103,6 +1106,7 @@
  (func $calls-loop2 (; 13 ;) (type $FUNCSIG$v)
   (local $0 i32)
   (local $1 i32)
+  (local $2 i32)
   (if
    (i32.eq
     (global.get $__bysyncify_state)
@@ -1144,7 +1148,7 @@
         (i32.const -4)
        )
       )
-      (local.set $1
+      (local.set $2
        (i32.load
         (i32.load
          (global.get $__bysyncify_data)
@@ -1157,13 +1161,13 @@
      (if
       (select
        (i32.eqz
-        (local.get $1)
+        (local.get $2)
        )
        (i32.const 1)
        (global.get $__bysyncify_state)
       )
       (block
-       (local.set $0
+       (local.set $1
         (call $import2)
        )
        (drop
@@ -1174,6 +1178,9 @@
           (i32.const 1)
          )
         )
+       )
+       (local.set $0
+        (local.get $1)
        )
       )
      )
