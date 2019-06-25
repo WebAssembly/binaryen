@@ -83,10 +83,10 @@ def randomize_pass_debug():
 IGNORE = '[binaryen-fuzzer-ignore]'
 
 
-def compare(x, y, comment='comparing'):
+def compare(x, y, context):
   if x != y and x != IGNORE and y != IGNORE:
-    message = ''.join([a.rstrip() + '\n' for a in difflib.unified_diff(x.split('\n'), y.split('\n'), fromfile='expected', tofile='actual')])
-    raise Exception(str(comment) + ": Expected to have '%s' == '%s', diff:\n\n%s" % (
+    message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
+    raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
       x, y,
       message
     ))
@@ -109,15 +109,15 @@ def fix_output(out):
 
   # exceptions may differ when optimizing, but an exception should occur. so ignore their types
   # also js engines print them out slightly differently
-  return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
+  return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.splitlines()))
 
 
 def fix_spec_output(out):
   out = fix_output(out)
   # spec shows a pointer when it traps, remove that
-  out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.split('\n')))
+  out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.splitlines()))
   # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
-  out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
+  out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.splitlines()))
   return out
 
 
@@ -131,7 +131,7 @@ def run_vm(cmd):
   ]
   try:
     return run(cmd)
-  except Exception:
+  except subprocess.CalledProcessError:
     output = run_unchecked(cmd)
     for issue in known_issues:
       if issue in output:
@@ -151,8 +151,8 @@ class TestCaseHandler:
   # on each of the pair. That is useful if you just want the two wasms, and don't
   # care about their relationship
   def handle_pair(self, before_wasm, after_wasm, opts):
-    self.handle(before_wasm, opts)
-    self.handle(after_wasm, opts)
+    self.handle(before_wasm)
+    self.handle(after_wasm)
 
 
 # Run VMs and compare results
@@ -167,10 +167,10 @@ class CompareVMs(TestCaseHandler):
   def run_vms(self, js, wasm):
     results = []
     results.append(run_bynterp(wasm))
-    results.append(fix_output(run_vm([os.path.expanduser('d8'), js] + V8_OPTS + ['--', wasm])))
+    results.append(fix_output(run_vm(['d8', js] + V8_OPTS + ['--', wasm])))
 
     # append to add results from VMs
-    # results += [fix_output(run_vm([os.path.expanduser('d8'), js] + V8_OPTS + ['--', wasm]))]
+    # results += [fix_output(run_vm(['d8', js] + V8_OPTS + ['--', wasm]))]
     # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
     # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
     # run(['../spec/interpreter/wasm', wasm])
@@ -183,13 +183,13 @@ class CompareVMs(TestCaseHandler):
     if not NANS:
       first = results[0]
       for i in range(len(results)):
-        compare(first, results[i], 'comparing between vms at ' + str(i))
+        compare(first, results[i], 'CompareVMs at ' + str(i))
 
     return results
 
   def compare_vs(self, before, after):
     for i in range(len(before)):
-      compare(before[i], after[i], 'comparing between builds at ' + str(i))
+      compare(before[i], after[i], 'CompareVMs at ' + str(i))
       # with nans, we can only compare the binaryen interpreter to itself
       if NANS:
         break
@@ -214,7 +214,7 @@ class CheckDeterminism(TestCaseHandler):
 
 class Wasm2JS(TestCaseHandler):
   def handle_pair(self, before_wasm, after_wasm, opts):
-    compare(self.run(before_wasm), self.run(after_wasm))
+    compare(self.run(before_wasm), self.run(after_wasm), 'Wasm2JS')
 
   def run(self, wasm):
     # TODO: wasm2js does not handle nans precisely, and does not
@@ -240,12 +240,29 @@ class Wasm2JS(TestCaseHandler):
     return out
 
 
+class Bysyncify(TestCaseHandler):
+  def handle(self, wasm):
+    # run normally and run in an async manner, and compare
+    before = run([in_bin('wasm-opt'), wasm, '--fuzz-exec'])
+    # TODO: also something that actually does async sleeps in the code, say
+    # on the logging commands?
+    # --remove-unused-module-elements removes the bysyncify intrinsics, which are not valid to call
+    cmd = [in_bin('wasm-opt'), wasm, '--bysyncify', '--remove-unused-module-elements', '-o', 'by.wasm']
+    if random.random() < 0.5:
+      cmd += ['--optimize-level=3'] # TODO: more
+    run(cmd)
+    after = run([in_bin('wasm-opt'), 'by.wasm', '--fuzz-exec'])
+    after = '\n'.join([line for line in after.splitlines() if '[fuzz-exec] calling $bysyncify' not in line])
+    compare(before, after, 'Bysyncify')
+
+
 # The global list of all test case handlers
 testcase_handlers = [
   CompareVMs(),
   FuzzExec(),
   CheckDeterminism(),
   Wasm2JS(),
+  #Bysyncify(),
 ]
 
 
