@@ -252,7 +252,8 @@ public:
       auto type = pair.first;
       auto name = pair.second;
       rev[name] = type;
-      module.addGlobal(builder.makeGlobal(name, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
+      module.addGlobal(builder.makeGlobal(
+        name, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
     }
   }
 
@@ -263,9 +264,7 @@ public:
     }
   }
 
-  Name getName(Type type) {
-    return map.at(type);
-  }
+  Name getName(Type type) { return map.at(type); }
 
   Type getTypeOrNone(Name name) {
     auto iter = rev.find(name);
@@ -314,7 +313,8 @@ public:
   ModuleAnalyzer(Module& module,
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState)
-    : module(module), canIndirectChangeState(canIndirectChangeState), globals(module) {
+    : module(module), canIndirectChangeState(canIndirectChangeState),
+      globals(module) {
     // Scan to see which functions can directly change the state.
     // Also handle the bysyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
@@ -668,8 +668,8 @@ private:
       auto* otherIf = builder->makeIf(
         builder->makeBinary(
           OrInt32,
-          builder->makeUnary(
-            EqZInt32, builder->makeLocalGet(conditionTemp, i32)),
+          builder->makeUnary(EqZInt32,
+                             builder->makeLocalGet(conditionTemp, i32)),
           builder->makeStateCheck(State::Rewinding)),
         process(otherArm));
       otherIf->finalize();
@@ -787,7 +787,8 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
   void visitGlobalSet(GlobalSet* curr) {
     auto type = analyzer->globals.getTypeOrNone(curr->name);
     if (type != none) {
-      replaceCurrent(builder->makeLocalSet(getFakeCallLocal(type), curr->value));
+      replaceCurrent(
+        builder->makeLocalSet(getFakeCallLocal(type), curr->value));
     }
   }
 
