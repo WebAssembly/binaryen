@@ -6,7 +6,10 @@
   (import $waka "somewhere" "waka")
   (import $waka-ret "somewhere" "waka-ret" (result i32))
   (import $waka-ret-d "somewhere" "waka-ret-d" (result f64))
+  (import $waka-sneaky "somewhere" "waka-sneaky")
   (import "env" "memBase" (global i32))
+  (import "env" "table" (table $table 1 1 funcref))
+  (elem (i32.const 0) $waka-sneaky)
   (func $nada (type $FUNCSIG$v)
     (call $waka)
     (drop
@@ -15,5 +18,6 @@
     (drop
       (call $waka-ret-d)
     )
+    (call_indirect (i32.const 0))
   )
 )
