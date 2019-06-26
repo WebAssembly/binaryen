@@ -75,7 +75,7 @@ echo "generate embedded intrinsics module"
 
 python $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast $BINARYEN_SRC/passes/WasmIntrinsics.cpp
 
-echo "building shared bitcode"
+echo "compiling source files"
 
 mkdir -p ${OUT}
 "$EMSCRIPTEN/em++" \
@@ -171,7 +171,7 @@ mkdir -p ${OUT}
   $BINARYEN_SRC/wasm/wasm-validator.cpp \
   $BINARYEN_SRC/wasm/wasm.cpp \
   -I$BINARYEN_SRC \
-  -o ${OUT}/shared.bc
+  -o ${OUT}/shared.o
 
 echo "building binaryen.js"
 
@@ -858,7 +858,7 @@ export_function "_BinaryenSetAPITracing"
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/binaryen-c.cpp \
-  $OUT/shared.bc \
+  $OUT/shared.o \
   -I$BINARYEN_SRC/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
   -o $OUT/binaryen${OUT_FILE_SUFFIX}.js \
