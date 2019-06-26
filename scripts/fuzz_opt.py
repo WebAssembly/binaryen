@@ -48,8 +48,6 @@ INPUT_SIZE_LIMIT = 150 * 1024
 
 LOG_LIMIT = 125
 
-WASM2JS = False
-
 
 # utilities
 
@@ -85,10 +83,10 @@ def randomize_pass_debug():
 IGNORE = '[binaryen-fuzzer-ignore]'
 
 
-def compare(x, y, comment):
+def compare(x, y, context):
   if x != y and x != IGNORE and y != IGNORE:
-    message = ''.join([a.rstrip() + '\n' for a in difflib.unified_diff(x.split('\n'), y.split('\n'), fromfile='expected', tofile='actual')])
-    raise Exception(str(comment) + ": Expected to have '%s' == '%s', diff:\n\n%s" % (
+    message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
+    raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
       x, y,
       message
     ))
@@ -111,15 +109,15 @@ def fix_output(out):
 
   # exceptions may differ when optimizing, but an exception should occur. so ignore their types
   # also js engines print them out slightly differently
-  return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.split('\n')))
+  return '\n'.join(map(lambda x: '   *exception*' if 'exception' in x else x, out.splitlines()))
 
 
 def fix_spec_output(out):
   out = fix_output(out)
   # spec shows a pointer when it traps, remove that
-  out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.split('\n')))
+  out = '\n'.join(map(lambda x: x if 'runtime trap' not in x else x[x.find('runtime trap'):], out.splitlines()))
   # https://github.com/WebAssembly/spec/issues/543 , float consts are messed up
-  out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.split('\n')))
+  out = '\n'.join(map(lambda x: x if 'f32' not in x and 'f64' not in x else '', out.splitlines()))
   return out
 
 
@@ -133,7 +131,7 @@ def run_vm(cmd):
   ]
   try:
     return run(cmd)
-  except:
+  except subprocess.CalledProcessError:
     output = run_unchecked(cmd)
     for issue in known_issues:
       if issue in output:
@@ -145,52 +143,130 @@ def run_bynterp(wasm):
   return fix_output(run_vm([in_bin('wasm-opt'), wasm, '--fuzz-exec-before'] + FEATURE_OPTS))
 
 
-def run_wasm2js(wasm):
-  wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
-  cmd = [in_bin('wasm2js'), wasm, '--emscripten']
-  if random.random() < 0.5:
-    cmd += ['-O']
-  main = run(cmd + FEATURE_OPTS)
-  with open(os.path.join(options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
-    glue = f.read()
-  with open('js.js', 'w') as f:
-    f.write(glue)
-    f.write(main)
-    f.write(wrapper)
-  out = fix_output(run_vm([NODEJS, 'js.js', 'a.wasm']))
-  if 'exception' in out:
-    # exception, so ignoring - wasm2js does not have normal wasm trapping, so opts can eliminate a trap
-    out = IGNORE
-  return out
+# Each test case handler receives two wasm files, one before and one after some changes
+# that should have kept it equivalent. It also receives the optimizations that the
+# fuzzer chose to run.
+class TestCaseHandler:
+  # If the core handle_pair() method is not overridden, it calls handle_single()
+  # on each of the pair. That is useful if you just want the two wasms, and don't
+  # care about their relationship
+  def handle_pair(self, before_wasm, after_wasm, opts):
+    self.handle(before_wasm)
+    self.handle(after_wasm)
 
 
-def run_vms(prefix):
-  wasm = prefix + 'wasm'
-  results = []
-  results.append(run_bynterp(wasm))
-  results.append(fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', wasm])))
-  if WASM2JS:
-    results.append(run_wasm2js(wasm))
+# Run VMs and compare results
+class CompareVMs(TestCaseHandler):
+  def handle_pair(self, before_wasm, after_wasm, opts):
+    run([in_bin('wasm-opt'), before_wasm, '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat'])
+    run([in_bin('wasm-opt'), after_wasm, '--emit-js-wrapper=b.js', '--emit-spec-wrapper=b.wat'])
+    before = self.run_vms('a.js', before_wasm)
+    after = self.run_vms('b.js', after_wasm)
+    self.compare_vs(before, after)
 
-  # append to add results from VMs
-  # results += [fix_output(run_vm([os.path.expanduser('d8'), prefix + 'js'] + V8_OPTS + ['--', prefix + 'wasm']))]
-  # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), prefix + 'js', '--', prefix + 'wasm']))]
-  # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
-  # run(['../spec/interpreter/wasm', prefix + 'wasm'])
-  # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', prefix + 'wasm', '-e', open(prefix + 'wat').read()]))]
+  def run_vms(self, js, wasm):
+    results = []
+    results.append(run_bynterp(wasm))
+    results.append(fix_output(run_vm(['d8', js] + V8_OPTS + ['--', wasm])))
 
-  if len(results) == 0:
-    results = [0]
+    # append to add results from VMs
+    # results += [fix_output(run_vm(['d8', js] + V8_OPTS + ['--', wasm]))]
+    # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
+    # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
+    # run(['../spec/interpreter/wasm', wasm])
+    # results += [fix_spec_output(run_unchecked(['../spec/interpreter/wasm', wasm, '-e', open(prefix + 'wat').read()]))]
 
-  # NaNs are a source of nondeterminism between VMs; don't compare them
-  if not NANS:
-    first = results[0]
-    for i in range(len(results)):
-      compare(first, results[i], 'comparing between vms at ' + str(i))
+    if len(results) == 0:
+      results = [0]
 
-  return results
+    # NaNs are a source of nondeterminism between VMs; don't compare them
+    if not NANS:
+      first = results[0]
+      for i in range(len(results)):
+        compare(first, results[i], 'CompareVMs at ' + str(i))
+
+    return results
+
+  def compare_vs(self, before, after):
+    for i in range(len(before)):
+      compare(before[i], after[i], 'CompareVMs at ' + str(i))
+      # with nans, we can only compare the binaryen interpreter to itself
+      if NANS:
+        break
 
 
+# Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
+# two separate binaries) so it's easy to reproduce.
+class FuzzExec(TestCaseHandler):
+  def handle_pair(self, before_wasm, after_wasm, opts):
+    # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
+    run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec', '--fuzz-binary'] + opts)
+
+
+# Check for determinism - the same command must have the same output
+class CheckDeterminism(TestCaseHandler):
+  def handle_pair(self, before_wasm, after_wasm, opts):
+    # check for determinism
+    run([in_bin('wasm-opt'), before_wasm, '-o', 'b1.wasm'] + opts)
+    run([in_bin('wasm-opt'), before_wasm, '-o', 'b2.wasm'] + opts)
+    assert open('b1.wasm').read() == open('b2.wasm').read(), 'output must be deterministic'
+
+
+class Wasm2JS(TestCaseHandler):
+  def handle_pair(self, before_wasm, after_wasm, opts):
+    compare(self.run(before_wasm), self.run(after_wasm), 'Wasm2JS')
+
+  def run(self, wasm):
+    # TODO: wasm2js does not handle nans precisely, and does not
+    # handle oob loads etc. with traps, should we use
+    #   FUZZ_OPTS += ['--no-fuzz-nans']
+    #   FUZZ_OPTS += ['--no-fuzz-oob']
+    # ?
+    wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
+    cmd = [in_bin('wasm2js'), wasm, '--emscripten']
+    if random.random() < 0.5:
+      cmd += ['-O']
+    main = run(cmd + FEATURE_OPTS)
+    with open(os.path.join(options.binaryen_root, 'scripts', 'wasm2js.js')) as f:
+      glue = f.read()
+    with open('js.js', 'w') as f:
+      f.write(glue)
+      f.write(main)
+      f.write(wrapper)
+    out = fix_output(run_vm([NODEJS, 'js.js', 'a.wasm']))
+    if 'exception' in out:
+      # exception, so ignoring - wasm2js does not have normal wasm trapping, so opts can eliminate a trap
+      out = IGNORE
+    return out
+
+
+class Bysyncify(TestCaseHandler):
+  def handle(self, wasm):
+    # run normally and run in an async manner, and compare
+    before = run([in_bin('wasm-opt'), wasm, '--fuzz-exec'])
+    # TODO: also something that actually does async sleeps in the code, say
+    # on the logging commands?
+    # --remove-unused-module-elements removes the bysyncify intrinsics, which are not valid to call
+    cmd = [in_bin('wasm-opt'), wasm, '--bysyncify', '--remove-unused-module-elements', '-o', 'by.wasm']
+    if random.random() < 0.5:
+      cmd += ['--optimize-level=3']  # TODO: more
+    run(cmd)
+    after = run([in_bin('wasm-opt'), 'by.wasm', '--fuzz-exec'])
+    after = '\n'.join([line for line in after.splitlines() if '[fuzz-exec] calling $bysyncify' not in line])
+    compare(before, after, 'Bysyncify')
+
+
+# The global list of all test case handlers
+testcase_handlers = [
+  CompareVMs(),
+  FuzzExec(),
+  CheckDeterminism(),
+  Wasm2JS(),
+  # TODO Bysyncify(),
+]
+
+
+# Do one test, given an input file for -ttf and some optimizations to run
 def test_one(infile, opts):
   randomize_pass_debug()
 
@@ -198,30 +274,21 @@ def test_one(infile, opts):
 
   # fuzz vms
   # gather VM outputs on input file
-  run([in_bin('wasm-opt'), infile, '-ttf', '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+  run([in_bin('wasm-opt'), infile, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
-  before = run_vms('a.')
   print('----------------')
+
   # gather VM outputs on processed file
   run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
   wasm_size = os.stat('b.wasm').st_size
   bytes += wasm_size
   print('post js size:', os.stat('a.js').st_size, ' wasm size:', wasm_size)
   shutil.copyfile('a.js', 'b.js')
-  after = run_vms('b.')
-  for i in range(len(before)):
-    compare(before[i], after[i], 'comparing between builds at ' + str(i))
-    # with nans, we can only compare the binaryen interpreter to itself
-    if NANS:
-      break
-  # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
-  run([in_bin('wasm-opt'), 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts + FUZZ_OPTS + FEATURE_OPTS)
-  # check for determinism
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'c.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
-  assert open('b.wasm').read() == open('c.wasm').read(), 'output must be deterministic'
+
+  for testcase_handler in testcase_handlers:
+    testcase_handler.handle_pair(before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
 
   return bytes
 
@@ -297,12 +364,6 @@ def get_multiple_opt_choices():
 
 if not NANS:
   FUZZ_OPTS += ['--no-fuzz-nans']
-
-if WASM2JS:
-  # wasm2js does not handle nans precisely, and does not
-  # handle oob loads etc. with traps
-  FUZZ_OPTS += ['--no-fuzz-nans']
-  FUZZ_OPTS += ['--no-fuzz-oob']
 
 if __name__ == '__main__':
   print('checking infinite random inputs')
