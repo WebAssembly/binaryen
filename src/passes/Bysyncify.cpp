@@ -202,6 +202,7 @@
 
 #include "ir/effects.h"
 #include "ir/literal-utils.h"
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -948,6 +949,10 @@ private:
 struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
+
+    // Ensure there is a memory, as we need it.
+    MemoryUtils::ensureExists(module->memory);
+
     // Find which things can change the state.
     auto stateChangingImports =
       runner->options.getArgumentOrDefault("bysyncify-imports", "");
