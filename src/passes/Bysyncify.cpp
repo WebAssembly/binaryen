@@ -683,6 +683,7 @@ private:
     // We must handle all control flow above, and all things that can change
     // the state, so there should be nothing that can reach here - add it
     // earlier as necessary.
+    // std::cout << *curr << '\n';
     WASM_UNREACHABLE();
   }
 
@@ -999,7 +1000,6 @@ struct Bysyncify : public Pass {
         runner.add("simplify-locals-nonesting");
         runner.add("reorder-locals");
         runner.add("merge-blocks");
-        runner.add("vacuum");
       }
       runner.add<BysyncifyFlow>(&analyzer);
       runner.setIsNested(true);
