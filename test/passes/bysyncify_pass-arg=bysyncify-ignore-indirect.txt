@@ -345,10 +345,17 @@
         )
         (block
          (if
+          (i32.eq
+           (global.get $__bysyncify_state)
+           (i32.const 0)
+          )
+          (local.set $2
+           (local.get $1)
+          )
+         )
+         (if
           (i32.or
-           (local.tee $2
-            (local.get $1)
-           )
+           (local.get $2)
            (i32.eq
             (global.get $__bysyncify_state)
             (i32.const 2)
