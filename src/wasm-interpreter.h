@@ -1722,16 +1722,16 @@ private:
       Address sourceVal(uint32_t(source.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
-      ssize_t start = 0;
-      ssize_t end = sizeVal;
+      int64_t start = 0;
+      int64_t end = sizeVal;
       int step = 1;
       // Reverse direction if source is below dest
       if (sourceVal < destVal) {
-        start = ssize_t(sizeVal) - 1;
+        start = int64_t(sizeVal) - 1;
         end = -1;
         step = -1;
       }
-      for (ssize_t i = start; i != end; i += step) {
+      for (int64_t i = start; i != end; i += step) {
         if (i + destVal >= std::numeric_limits<uint32_t>::max()) {
           trap("Out of bounds memory access");
         }
