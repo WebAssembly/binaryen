@@ -254,7 +254,7 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Bysyncify(TestCaseHandler):
-  def handle_pair(self, before_wasm, after_wasm, opts, random_input):
+  def handle_pair(self, before_wasm, after_wasm, opts):
     # we must legalize in order to run in JS
     run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm])
     run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm])
@@ -326,7 +326,7 @@ def test_one(random_input, opts):
   shutil.copyfile('a.js', 'b.js')
 
   for testcase_handler in testcase_handlers:
-    testcase_handler.handle_pair(before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_input=random_input)
+    testcase_handler.handle_pair(before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
 
   return bytes
 
