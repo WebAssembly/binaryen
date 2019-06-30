@@ -52,6 +52,10 @@ LOG_LIMIT = 125
 # utilities
 
 
+def in_binaryen(*args):
+  return os.path.join(options.binaryen_root, *args)
+
+
 def in_bin(tool):
   return os.path.join(options.binaryen_root, 'bin', tool)
 
@@ -139,8 +143,17 @@ def run_vm(cmd):
     raise
 
 
-def run_bynterp(wasm):
-  return fix_output(run_vm([in_bin('wasm-opt'), wasm, '--fuzz-exec-before'] + FEATURE_OPTS))
+def run_bynterp(wasm, args):
+  # increase the interpreter stack depth, to test more things
+  os.environ['BINARYEN_MAX_INTERPRETER_DEPTH'] = '1000'
+  try:
+    return run_vm([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + args)
+  finally:
+    del os.environ['BINARYEN_MAX_INTERPRETER_DEPTH']
+
+
+def run_d8(wasm):
+  return run_vm(['d8', in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
 
 
 # Each test case handler receives two wasm files, one before and one after some changes
@@ -166,7 +179,7 @@ class CompareVMs(TestCaseHandler):
 
   def run_vms(self, js, wasm):
     results = []
-    results.append(run_bynterp(wasm))
+    results.append(fix_output(run_bynterp(wasm, ['--fuzz-exec-before'])))
     results.append(fix_output(run_vm(['d8', js] + V8_OPTS + ['--', wasm])))
 
     # append to add results from VMs
@@ -200,7 +213,7 @@ class CompareVMs(TestCaseHandler):
 class FuzzExec(TestCaseHandler):
   def handle_pair(self, before_wasm, after_wasm, opts):
     # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
-    run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec', '--fuzz-binary'] + opts)
+    run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'])
 
 
 # Check for determinism - the same command must have the same output
@@ -241,19 +254,44 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Bysyncify(TestCaseHandler):
-  def handle(self, wasm):
-    # run normally and run in an async manner, and compare
-    before = run([in_bin('wasm-opt'), wasm, '--fuzz-exec'])
+  def handle_pair(self, before_wasm, after_wasm, opts, random_input):
+    # we must legalize in order to run in JS
+    run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm])
+    run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm])
+    before = fix_output(run_d8(before_wasm))
+    after = fix_output(run_d8(after_wasm))
+
     # TODO: also something that actually does async sleeps in the code, say
     # on the logging commands?
     # --remove-unused-module-elements removes the bysyncify intrinsics, which are not valid to call
-    cmd = [in_bin('wasm-opt'), wasm, '--bysyncify', '--remove-unused-module-elements', '-o', 'by.wasm']
-    if random.random() < 0.5:
-      cmd += ['--optimize-level=3']  # TODO: more
-    run(cmd)
-    after = run([in_bin('wasm-opt'), 'by.wasm', '--fuzz-exec'])
-    after = '\n'.join([line for line in after.splitlines() if '[fuzz-exec] calling $bysyncify' not in line])
-    compare(before, after, 'Bysyncify')
+
+    def do_bysyncify(wasm):
+      cmd = [in_bin('wasm-opt'), wasm, '--bysyncify', '-o', 't.wasm']
+      if random.random() < 0.5:
+        cmd += ['--optimize-level=%d' % random.randint(1, 3)]
+      if random.random() < 0.5:
+        cmd += ['--shrink-level=%d' % random.randint(1, 2)]
+      run(cmd)
+      out = run_d8('t.wasm')
+      # emit some status logging from bysyncify
+      print(out.splitlines()[-1])
+      # ignore the output from the new bysyncify API calls - the ones with asserts will trap, too
+      for ignore in ['[fuzz-exec] calling $bysyncify_start_unwind\nexception!\n',
+                     '[fuzz-exec] calling $bysyncify_start_unwind\n',
+                     '[fuzz-exec] calling $bysyncify_start_rewind\nexception!\n',
+                     '[fuzz-exec] calling $bysyncify_start_rewind\n',
+                     '[fuzz-exec] calling $bysyncify_stop_rewind\n',
+                     '[fuzz-exec] calling $bysyncify_stop_unwind\n']:
+        out = out.replace(ignore, '')
+      out = '\n'.join([l for l in out.splitlines() if 'bysyncify: ' not in l])
+      return fix_output(out)
+
+    before_bysyncify = do_bysyncify(before_wasm)
+    after_bysyncify = do_bysyncify(after_wasm)
+
+    compare(before, after, 'Bysyncify (before/after)')
+    compare(before, before_bysyncify, 'Bysyncify (before/before_bysyncify)')
+    compare(before, after_bysyncify, 'Bysyncify (before/after_bysyncify)')
 
 
 # The global list of all test case handlers
@@ -262,19 +300,19 @@ testcase_handlers = [
   FuzzExec(),
   CheckDeterminism(),
   Wasm2JS(),
-  # TODO Bysyncify(),
+  Bysyncify(),
 ]
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
-def test_one(infile, opts):
+def test_one(random_input, opts):
   randomize_pass_debug()
 
   bytes = 0
 
   # fuzz vms
   # gather VM outputs on input file
-  run([in_bin('wasm-opt'), infile, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+  run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
   wasm_size = os.stat('a.wasm').st_size
   bytes += wasm_size
   print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
@@ -288,7 +326,7 @@ def test_one(infile, opts):
   shutil.copyfile('a.js', 'b.js')
 
   for testcase_handler in testcase_handlers:
-    testcase_handler.handle_pair(before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+    testcase_handler.handle_pair(before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_input=random_input)
 
   return bytes
 

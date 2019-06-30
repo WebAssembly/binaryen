@@ -375,6 +375,9 @@ private:
     hasher->type = ensureFunctionType(getSig(hasher), &wasm)->name;
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
+    // Export memory so JS fuzzing can use it
+    wasm.addExport(
+      builder.makeExport("memory", "0", ExternalKind::Memory));
   }
 
   void setupTable() {
