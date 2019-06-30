@@ -45,9 +45,7 @@ static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
 // that we can do anything useful to precompute a hugely nested expression
 // (we should succed at smaller parts of it first). Second, a low limit is
 // helpful to avoid platform differences in native stack sizes.
-enum {
-  MAX_DEPTH = 50
-};
+enum { MAX_DEPTH = 50 };
 
 typedef std::unordered_map<LocalGet*, Literal> GetValues;
 
@@ -71,9 +69,8 @@ public:
   PrecomputingExpressionRunner(Module* module,
                                GetValues& getValues,
                                bool replaceExpression)
-    : ExpressionRunner<PrecomputingExpressionRunner>(MAX_DEPTH),
-      module(module), getValues(getValues),
-      replaceExpression(replaceExpression) {}
+    : ExpressionRunner<PrecomputingExpressionRunner>(MAX_DEPTH), module(module),
+      getValues(getValues), replaceExpression(replaceExpression) {}
 
   struct NonstandaloneException {
   }; // TODO: use a flow with a special name, as this is likely very slow

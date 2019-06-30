@@ -1057,7 +1057,9 @@ class ConstantExpressionRunner
   GlobalManager& globals;
 
 public:
-  ConstantExpressionRunner(GlobalManager& globals, Index maxDepth) : ExpressionRunner<ConstantExpressionRunner<GlobalManager>>(maxDepth), globals(globals) {}
+  ConstantExpressionRunner(GlobalManager& globals, Index maxDepth)
+    : ExpressionRunner<ConstantExpressionRunner<GlobalManager>>(maxDepth),
+      globals(globals) {}
 
   Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
 };
@@ -1233,9 +1235,10 @@ public:
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
-                                .visit(global->init)
-                                .value;
+      globals[global->name] =
+        ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
+          .visit(global->init)
+          .value;
     });
 
     // initialize the rest of the external interface
@@ -1388,8 +1391,11 @@ private:
     FunctionScope& scope;
 
   public:
-    RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope, Index maxDepth)
-      : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance), scope(scope) {}
+    RuntimeExpressionRunner(ModuleInstanceBase& instance,
+                            FunctionScope& scope,
+                            Index maxDepth)
+      : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
+        scope(scope) {}
 
     Flow generateArguments(const ExpressionList& operands,
                            LiteralList& arguments) {
@@ -1819,7 +1825,8 @@ public:
     }
 #endif
 
-    Flow flow = RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
+    Flow flow =
+      RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     Literal ret = flow.value;
@@ -1843,9 +1850,7 @@ public:
 protected:
   Address memorySize; // in pages
 
-  enum {
-    maxDepth = 250
-  };
+  enum { maxDepth = 250 };
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
     if (lhs > rhs) {
