@@ -45,8 +45,6 @@ using namespace cashew;
 
 extern Name WASM, RETURN_FLOW;
 
-enum { maxInterpreterDepth = 50 };
-
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
 class Flow {
@@ -129,13 +127,16 @@ public:
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
 protected:
-  // Keep a record of call depth, to guard against excessive recursion.
-  size_t depth = 0;
+  Index maxDepth;
+
+  Index depth = 0;
 
 public:
+  ExpressionRunner(Index maxDepth) : maxDepth(maxDepth) {}
+
   Flow visit(Expression* curr) {
     depth++;
-    if (depth > maxInterpreterDepth) {
+    if (depth > maxDepth) {
       trap("interpreter recursion limit");
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -1056,7 +1057,7 @@ class ConstantExpressionRunner
   GlobalManager& globals;
 
 public:
-  ConstantExpressionRunner(GlobalManager& globals) : globals(globals) {}
+  ConstantExpressionRunner(GlobalManager& globals, Index maxDepth) : ExpressionRunner<ConstantExpressionRunner<GlobalManager>>(maxDepth), globals(globals) {}
 
   Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
 };
@@ -1232,7 +1233,7 @@ public:
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals)
+      globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
                                 .visit(global->init)
                                 .value;
     });
@@ -1297,7 +1298,7 @@ private:
   void initializeTableContents() {
     for (auto& segment : wasm.table.segments) {
       Address offset =
-        (uint32_t)ConstantExpressionRunner<GlobalManager>(globals)
+        (uint32_t)ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(segment.offset)
           .value.geti32();
       if (offset + segment.data.size() > wasm.table.initial) {
@@ -1340,7 +1341,7 @@ private:
       // the memory.init and data.drop instructions.
       Function dummyFunc;
       FunctionScope dummyScope(&dummyFunc, {});
-      RuntimeExpressionRunner runner(*this, dummyScope);
+      RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
       runner.visit(&init);
       runner.visit(&drop);
     }
@@ -1387,8 +1388,8 @@ private:
     FunctionScope& scope;
 
   public:
-    RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope)
-      : instance(instance), scope(scope) {}
+    RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope, Index maxDepth)
+      : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance), scope(scope) {}
 
     Flow generateArguments(const ExpressionList& operands,
                            LiteralList& arguments) {
@@ -1799,7 +1800,7 @@ public:
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
   Literal callFunctionInternal(Name name, const LiteralList& arguments) {
-    if (callDepth > maxInterpreterDepth) {
+    if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
     }
     auto previousCallDepth = callDepth;
@@ -1818,7 +1819,7 @@ public:
     }
 #endif
 
-    Flow flow = RuntimeExpressionRunner(*this, scope).visit(function->body);
+    Flow flow = RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     Literal ret = flow.value;
@@ -1841,6 +1842,10 @@ public:
 
 protected:
   Address memorySize; // in pages
+
+  enum {
+    maxDepth = 1024
+  };
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
     if (lhs > rhs) {
