@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_support_string_h
-#define wasm_support_string_h
+#ifndef wasm_support_name_h
+#define wasm_support_name_h
 
 #include <cstring>
 
@@ -65,4 +65,4 @@ template<> struct hash<wasm::Name> : hash<cashew::IString> {};
 
 } // namespace std
 
-#endif // wasm_support_string_h
+#endif // wasm_support_name_h
