@@ -578,8 +578,11 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       Ref descs = ValueBuilder::makeObject();
       Ref growDesc = ValueBuilder::makeObject();
       ValueBuilder::appendToObjectWithQuotes(descs, IString("grow"), growDesc);
-      ValueBuilder::appendToObjectWithQuotes(
-        growDesc, IString("value"), ValueBuilder::makeName(WASM_MEMORY_GROW));
+      if (wasm->memory.max > wasm->memory.initial) {
+        ValueBuilder::appendToObjectWithQuotes(
+          growDesc, IString("value"),
+          ValueBuilder::makeName(WASM_MEMORY_GROW));
+      }
       Ref bufferDesc = ValueBuilder::makeObject();
       Ref bufferGetter = ValueBuilder::makeFunction(IString(""));
       bufferGetter[3]->push_back(
