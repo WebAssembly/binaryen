@@ -46,11 +46,18 @@ public:
 
 // Does a simple wildcard match between a pattern and a value. Currently
 // supports a '*' at the end of the pattern.
-inline bool wildcardMatch(const std::string& pattern, const std::string& value) {
+inline bool wildcardMatch(const std::string& pattern,
+                          const std::string& value) {
   for (size_t i = 0; i < pattern.size(); i++) {
-    if (i >= value.size()) return false;
-    if (pattern[i] == '*') return true;
-    if (pattern[i] != value[i]) return false;
+    if (i >= value.size()) {
+      return false;
+    }
+    if (pattern[i] == '*') {
+      return true;
+    }
+    if (pattern[i] != value[i]) {
+      return false;
+    }
   }
   return value.size() == pattern.size();
 }
