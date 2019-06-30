@@ -1844,7 +1844,7 @@ protected:
   Address memorySize; // in pages
 
   enum {
-    maxDepth = 1024
+    maxDepth = 250
   };
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
