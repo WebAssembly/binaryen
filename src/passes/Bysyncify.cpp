@@ -185,6 +185,7 @@
 //      Each module.base in that comma-separated list will be considered to
 //      be an import that can unwind/rewind, and all others are assumed not to
 //      (aside from the bysyncify.* imports, which are always assumed to).
+//      Each entry can end in a '*' in which case it is matched as a prefix.
 //
 //   --pass-arg=bysyncify-ignore-imports
 //
@@ -205,6 +206,7 @@
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/string.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -951,14 +953,11 @@ struct Bysyncify : public Pass {
     // Find which things can change the state.
     auto stateChangingImports =
       runner->options.getArgumentOrDefault("bysyncify-imports", "");
-    std::string separator = ",";
     auto ignoreImports =
       runner->options.getArgumentOrDefault("bysyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
-    if (!allImportsCanChangeState) {
-      stateChangingImports = separator + stateChangingImports + separator;
-    }
+    String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect =
       runner->options.getArgumentOrDefault("bysyncify-ignore-indirect", "");
 
@@ -969,8 +968,13 @@ struct Bysyncify : public Pass {
         if (allImportsCanChangeState) {
           return true;
         }
-        std::string full = separator + module.str + '.' + base.str + separator;
-        return stateChangingImports.find(full) != std::string::npos;
+        std::string full = std::string(module.str) + '.' + base.str;
+        for (auto& listedImport : listedImports) {
+          if (String::wildcardMatch(listedImport, full)) {
+            return true;
+          }
+        }
+        return false;
       },
       ignoreIndirect == "");
 
