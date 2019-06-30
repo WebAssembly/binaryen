@@ -658,7 +658,8 @@ private:
       }
       auto conditionTemp = builder->addVar(func, i32);
       // TODO: can avoid pre if the condition is a get or a const
-      auto* pre = makeMaybeSkip(builder->makeLocalSet(conditionTemp, iff->condition));
+      auto* pre =
+        makeMaybeSkip(builder->makeLocalSet(conditionTemp, iff->condition));
       iff->condition = builder->makeLocalGet(conditionTemp, i32);
       iff->condition = builder->makeBinary(
         OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
@@ -675,7 +676,7 @@ private:
           builder->makeStateCheck(State::Rewinding)),
         process(otherArm));
       otherIf->finalize();
-      return builder->makeBlock({ pre, iff, otherIf });
+      return builder->makeBlock({pre, iff, otherIf});
     } else if (auto* loop = curr->dynCast<Loop>()) {
       loop->body = process(loop->body);
       return loop;
