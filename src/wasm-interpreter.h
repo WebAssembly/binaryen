@@ -1690,11 +1690,6 @@ private:
       Address offsetVal(uint32_t(offset.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
-      instance.checkLoadAddress(destVal, 0);
-      if (offsetVal > segment.data.size()) {
-        trap("segment offset out of bounds");
-      }
-
       for (size_t i = 0; i < sizeVal; ++i) {
         if (offsetVal + i >= segment.data.size()) {
           trap("out of bounds segment access in memory.init");
@@ -1734,20 +1729,16 @@ private:
       Address sourceVal(uint32_t(source.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
-      instance.checkLoadAddress(destVal, 0);
-      instance.checkLoadAddress(sourceVal, 0);
-
-      size_t start = 0;
-      size_t end = sizeVal;
+      int64_t start = 0;
+      int64_t end = sizeVal;
       int step = 1;
-      // Reverse direction if source is below dest and they overlap
-      if (sourceVal < destVal &&
-          (sourceVal + sizeVal > destVal || sourceVal + sizeVal < sourceVal)) {
-        start = sizeVal - 1;
+      // Reverse direction if source is below dest
+      if (sourceVal < destVal) {
+        start = int64_t(sizeVal) - 1;
         end = -1;
         step = -1;
       }
-      for (size_t i = start; i != end; i += step) {
+      for (int64_t i = start; i != end; i += step) {
         if (i + destVal >= std::numeric_limits<uint32_t>::max()) {
           trap("Out of bounds memory access");
         }
@@ -1777,8 +1768,6 @@ private:
       NOTE_EVAL1(size);
       Address destVal(uint32_t(dest.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
-
-      instance.checkLoadAddress(destVal, 0);
 
       uint8_t val(value.value.geti32());
       for (size_t i = 0; i < sizeVal; ++i) {

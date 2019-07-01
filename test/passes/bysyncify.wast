@@ -146,4 +146,7 @@
     (call $import)
   )
 )
+;; empty module, in particular with no memory
+(module
+)
 

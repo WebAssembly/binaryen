@@ -33,19 +33,11 @@
 ;; Fill all of memory
 (invoke "fill" (i32.const 0) (i32.const 0) (i32.const 0x10000))
 
-;; Out-of-bounds writes trap, but all previous writes succeed.
-(assert_trap (invoke "fill" (i32.const 0xff00) (i32.const 1) (i32.const 0x101))
-    "out of bounds memory access")
-(assert_return (invoke "load8_u" (i32.const 0xff00)) (i32.const 1))
-(assert_return (invoke "load8_u" (i32.const 0xffff)) (i32.const 1))
-
 ;; Succeed when writing 0 bytes at the end of the region.
 (invoke "fill" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 
-;; Fail on out-of-bounds when writing 0 bytes outside of memory.
-(assert_trap (invoke "fill" (i32.const 0x10001) (i32.const 0) (i32.const 0))
-    "out of bounds memory access")
-
+;; OK to write 0 bytes outside of memory.
+(invoke "fill" (i32.const 0x10001) (i32.const 0) (i32.const 0))
 
 ;; memory.copy
 (module
@@ -105,21 +97,13 @@
 (invoke "copy" (i32.const 0xff00) (i32.const 0) (i32.const 0x100))
 (invoke "copy" (i32.const 0xfe00) (i32.const 0xff00) (i32.const 0x100))
 
-;; Out-of-bounds writes trap, but all previous writes succeed.
-(assert_trap (invoke "copy" (i32.const 0xfffe) (i32.const 0) (i32.const 3))
-    "out of bounds memory access")
-(assert_return (invoke "load8_u" (i32.const 0xfffe)) (i32.const 0xaa))
-(assert_return (invoke "load8_u" (i32.const 0xffff)) (i32.const 0xbb))
-
 ;; Succeed when copying 0 bytes at the end of the region.
 (invoke "copy" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 (invoke "copy" (i32.const 0) (i32.const 0x10000) (i32.const 0))
 
-;; Fail on out-of-bounds when copying 0 bytes outside of memory.
-(assert_trap (invoke "copy" (i32.const 0x10001) (i32.const 0) (i32.const 0))
-    "out of bounds memory access")
-(assert_trap (invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0))
-    "out of bounds memory access")
+;; OK copying 0 bytes outside of memory.
+(invoke "copy" (i32.const 0x10001) (i32.const 0) (i32.const 0))
+(invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0))
 
 ;; memory.init
 (module
@@ -154,11 +138,9 @@
 (invoke "init" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 (invoke "init" (i32.const 0) (i32.const 4) (i32.const 0))
 
-;; Fail on out-of-bounds when writing 0 bytes outside of memory or segment.
-(assert_trap (invoke "init" (i32.const 0x10001) (i32.const 0) (i32.const 0))
-    "out of bounds memory access")
-(assert_trap (invoke "init" (i32.const 0) (i32.const 5) (i32.const 0))
-    "out of bounds memory access")
+;; OK writing 0 bytes outside of memory or segment.
+(invoke "init" (i32.const 0x10001) (i32.const 0) (i32.const 0))
+(invoke "init" (i32.const 0) (i32.const 5) (i32.const 0))
 
 ;; data.drop
 (module

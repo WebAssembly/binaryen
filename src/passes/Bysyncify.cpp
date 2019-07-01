@@ -185,6 +185,7 @@
 //      Each module.base in that comma-separated list will be considered to
 //      be an import that can unwind/rewind, and all others are assumed not to
 //      (aside from the bysyncify.* imports, which are always assumed to).
+//      Each entry can end in a '*' in which case it is matched as a prefix.
 //
 //   --pass-arg=bysyncify-ignore-imports
 //
@@ -202,9 +203,11 @@
 
 #include "ir/effects.h"
 #include "ir/literal-utils.h"
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/string.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -657,7 +660,10 @@ private:
         return iff;
       }
       auto conditionTemp = builder->addVar(func, i32);
-      iff->condition = builder->makeLocalTee(conditionTemp, iff->condition);
+      // TODO: can avoid pre if the condition is a get or a const
+      auto* pre =
+        makeMaybeSkip(builder->makeLocalSet(conditionTemp, iff->condition));
+      iff->condition = builder->makeLocalGet(conditionTemp, i32);
       iff->condition = builder->makeBinary(
         OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
       iff->ifTrue = process(iff->ifTrue);
@@ -673,7 +679,7 @@ private:
           builder->makeStateCheck(State::Rewinding)),
         process(otherArm));
       otherIf->finalize();
-      return builder->makeSequence(iff, otherIf);
+      return builder->makeBlock({pre, iff, otherIf});
     } else if (auto* loop = curr->dynCast<Loop>()) {
       loop->body = process(loop->body);
       return loop;
@@ -683,6 +689,7 @@ private:
     // We must handle all control flow above, and all things that can change
     // the state, so there should be nothing that can reach here - add it
     // earlier as necessary.
+    // std::cout << *curr << '\n';
     WASM_UNREACHABLE();
   }
 
@@ -948,17 +955,18 @@ private:
 struct Bysyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
+
+    // Ensure there is a memory, as we need it.
+    MemoryUtils::ensureExists(module->memory);
+
     // Find which things can change the state.
     auto stateChangingImports =
       runner->options.getArgumentOrDefault("bysyncify-imports", "");
-    std::string separator = ",";
     auto ignoreImports =
       runner->options.getArgumentOrDefault("bysyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
-    if (!allImportsCanChangeState) {
-      stateChangingImports = separator + stateChangingImports + separator;
-    }
+    String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect =
       runner->options.getArgumentOrDefault("bysyncify-ignore-indirect", "");
 
@@ -969,8 +977,13 @@ struct Bysyncify : public Pass {
         if (allImportsCanChangeState) {
           return true;
         }
-        std::string full = separator + module.str + '.' + base.str + separator;
-        return stateChangingImports.find(full) != std::string::npos;
+        std::string full = std::string(module.str) + '.' + base.str;
+        for (auto& listedImport : listedImports) {
+          if (String::wildcardMatch(listedImport, full)) {
+            return true;
+          }
+        }
+        return false;
       },
       ignoreIndirect == "");
 
@@ -999,7 +1012,6 @@ struct Bysyncify : public Pass {
         runner.add("simplify-locals-nonesting");
         runner.add("reorder-locals");
         runner.add("merge-blocks");
-        runner.add("vacuum");
       }
       runner.add<BysyncifyFlow>(&analyzer);
       runner.setIsNested(true);

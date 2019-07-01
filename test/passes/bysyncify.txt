@@ -1366,10 +1366,17 @@
         )
         (block
          (if
+          (i32.eq
+           (global.get $__bysyncify_state)
+           (i32.const 0)
+          )
+          (local.set $2
+           (local.get $1)
+          )
+         )
+         (if
           (i32.or
-           (local.tee $2
-            (local.get $1)
-           )
+           (local.get $2)
            (i32.eq
             (global.get $__bysyncify_state)
             (i32.const 2)
@@ -1617,10 +1624,17 @@
         )
         (block
          (if
+          (i32.eq
+           (global.get $__bysyncify_state)
+           (i32.const 0)
+          )
+          (local.set $4
+           (local.get $1)
+          )
+         )
+         (if
           (i32.or
-           (local.tee $4
-            (local.get $1)
-           )
+           (local.get $4)
            (i32.eq
             (global.get $__bysyncify_state)
             (i32.const 2)
@@ -1857,10 +1871,17 @@
         )
         (block
          (if
+          (i32.eq
+           (global.get $__bysyncify_state)
+           (i32.const 0)
+          )
+          (local.set $4
+           (local.get $1)
+          )
+         )
+         (if
           (i32.or
-           (local.tee $4
-            (local.get $1)
-           )
+           (local.get $4)
            (i32.eq
             (global.get $__bysyncify_state)
             (i32.const 2)
@@ -2830,6 +2851,63 @@
   )
  )
  (func $bysyncify_stop_rewind (; 22 ;)
+  (global.set $__bysyncify_state
+   (i32.const 0)
+  )
+ )
+)
+(module
+ (memory $0 1 1)
+ (global $__bysyncify_state (mut i32) (i32.const 0))
+ (global $__bysyncify_data (mut i32) (i32.const 0))
+ (export "bysyncify_start_unwind" (func $bysyncify_start_unwind))
+ (export "bysyncify_stop_unwind" (func $bysyncify_stop_unwind))
+ (export "bysyncify_start_rewind" (func $bysyncify_start_rewind))
+ (export "bysyncify_stop_rewind" (func $bysyncify_stop_rewind))
+ (func $bysyncify_start_unwind (; 0 ;) (param $0 i32)
+  (if
+   (i32.gt_u
+    (i32.load
+     (local.get $0)
+    )
+    (i32.load offset=4
+     (local.get $0)
+    )
+   )
+   (unreachable)
+  )
+  (global.set $__bysyncify_state
+   (i32.const 1)
+  )
+  (global.set $__bysyncify_data
+   (local.get $0)
+  )
+ )
+ (func $bysyncify_stop_unwind (; 1 ;)
+  (global.set $__bysyncify_state
+   (i32.const 0)
+  )
+ )
+ (func $bysyncify_start_rewind (; 2 ;) (param $0 i32)
+  (if
+   (i32.gt_u
+    (i32.load
+     (local.get $0)
+    )
+    (i32.load offset=4
+     (local.get $0)
+    )
+   )
+   (unreachable)
+  )
+  (global.set $__bysyncify_state
+   (i32.const 2)
+  )
+  (global.set $__bysyncify_data
+   (local.get $0)
+  )
+ )
+ (func $bysyncify_stop_rewind (; 3 ;)
   (global.set $__bysyncify_state
    (i32.const 0)
   )
