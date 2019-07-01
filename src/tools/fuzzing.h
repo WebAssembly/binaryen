@@ -376,8 +376,7 @@ private:
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
-    wasm.addExport(
-      builder.makeExport("memory", "0", ExternalKind::Memory));
+    wasm.addExport(builder.makeExport("memory", "0", ExternalKind::Memory));
   }
 
   void setupTable() {
