@@ -1056,9 +1056,7 @@ private:
 
   void addFunctions(Module* module) {
     Builder builder(*module);
-    auto makeFunction = [&](Name name,
-                            bool setData,
-                            State state) {
+    auto makeFunction = [&](Name name, bool setData, State state) {
       std::vector<Type> params;
       if (setData) {
         params.push_back(i32);
@@ -1067,21 +1065,24 @@ private:
       body->list.push_back(builder.makeGlobalSet(
         BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
       if (setData) {
-        body->list.push_back(builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
+        body->list.push_back(
+          builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
       }
       // Verify the data is valid.
-      auto* stackPos = builder.makeLoad(4,
-                                        false,
-                                        int32_t(DataOffset::BStackPos),
-                                        4,
-                                        builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
-                                        i32);
-      auto* stackEnd = builder.makeLoad(4,
-                                        false,
-                                        int32_t(DataOffset::BStackEnd),
-                                        4,
-                                        builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
-                                        i32);
+      auto* stackPos =
+        builder.makeLoad(4,
+                         false,
+                         int32_t(DataOffset::BStackPos),
+                         4,
+                         builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
+                         i32);
+      auto* stackEnd =
+        builder.makeLoad(4,
+                         false,
+                         int32_t(DataOffset::BStackEnd),
+                         4,
+                         builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
+                         i32);
       body->list.push_back(
         builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
                        builder.makeUnreachable()));
@@ -1092,15 +1093,9 @@ private:
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };
 
-    makeFunction(
-      BYSYNCIFY_START_UNWIND,
-      true,
-      State::Unwinding);
+    makeFunction(BYSYNCIFY_START_UNWIND, true, State::Unwinding);
     makeFunction(BYSYNCIFY_STOP_UNWIND, false, State::Normal);
-    makeFunction(
-      BYSYNCIFY_START_REWIND,
-      true,
-      State::Rewinding);
+    makeFunction(BYSYNCIFY_START_REWIND, true, State::Rewinding);
     makeFunction(BYSYNCIFY_STOP_REWIND, false, State::Normal);
   }
 };
