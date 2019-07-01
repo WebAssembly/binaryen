@@ -1058,36 +1058,33 @@ private:
     Builder builder(*module);
     auto makeFunction = [&](Name name,
                             bool setData,
-                            State state,
-                            Expression* extra) {
+                            State state) {
       std::vector<Type> params;
       if (setData) {
         params.push_back(i32);
       }
       auto* body = builder.makeBlock();
-      if (setData) {
-        // Verify the data is valid.
-        auto* stackPos = builder.makeLoad(4,
-                                          false,
-                                          int32_t(DataOffset::BStackPos),
-                                          4,
-                                          builder.makeLocalGet(0, i32),
-                                          i32);
-        auto* stackEnd = builder.makeLoad(4,
-                                          false,
-                                          int32_t(DataOffset::BStackEnd),
-                                          4,
-                                          builder.makeLocalGet(0, i32),
-                                          i32);
-        body->list.push_back(
-          builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
-                         builder.makeUnreachable()));
-      }
       body->list.push_back(builder.makeGlobalSet(
         BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
-      if (extra) {
-        body->list.push_back(extra);
+      if (setData) {
+        body->list.push_back(builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
       }
+      // Verify the data is valid.
+      auto* stackPos = builder.makeLoad(4,
+                                        false,
+                                        int32_t(DataOffset::BStackPos),
+                                        4,
+                                        builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
+                                        i32);
+      auto* stackEnd = builder.makeLoad(4,
+                                        false,
+                                        int32_t(DataOffset::BStackEnd),
+                                        4,
+                                        builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
+                                        i32);
+      body->list.push_back(
+        builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
+                       builder.makeUnreachable()));
       body->finalize();
       auto* func = builder.makeFunction(
         name, std::move(params), none, std::vector<Type>{}, body);
@@ -1098,15 +1095,13 @@ private:
     makeFunction(
       BYSYNCIFY_START_UNWIND,
       true,
-      State::Unwinding,
-      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
-    makeFunction(BYSYNCIFY_STOP_UNWIND, false, State::Normal, nullptr);
+      State::Unwinding);
+    makeFunction(BYSYNCIFY_STOP_UNWIND, false, State::Normal);
     makeFunction(
       BYSYNCIFY_START_REWIND,
       true,
-      State::Rewinding,
-      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
-    makeFunction(BYSYNCIFY_STOP_REWIND, false, State::Normal, nullptr);
+      State::Rewinding);
+    makeFunction(BYSYNCIFY_STOP_REWIND, false, State::Normal);
   }
 };
 
