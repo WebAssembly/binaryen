@@ -1850,7 +1850,7 @@ public:
 protected:
   Address memorySize; // in pages
 
-  enum { maxDepth = 250 };
+  static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
     if (lhs > rhs) {
