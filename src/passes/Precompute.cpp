@@ -45,7 +45,7 @@ static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
 // that we can do anything useful to precompute a hugely nested expression
 // (we should succed at smaller parts of it first). Second, a low limit is
 // helpful to avoid platform differences in native stack sizes.
-static const Index maxDepth = 50;
+static const Index MAX_DEPTH = 50;
 
 typedef std::unordered_map<LocalGet*, Literal> GetValues;
 
