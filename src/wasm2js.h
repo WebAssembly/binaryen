@@ -1804,55 +1804,55 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     // TODO's
 
     Ref visitAtomicRMW(AtomicRMW* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitAtomicWait(AtomicWait* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitAtomicNotify(AtomicNotify* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitSIMDExtract(SIMDExtract* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitSIMDReplace(SIMDReplace* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitSIMDShuffle(SIMDShuffle* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitSIMDBitselect(SIMDBitselect* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitSIMDShift(SIMDShift* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitMemoryInit(MemoryInit* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitDataDrop(DataDrop* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitMemoryCopy(MemoryCopy* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
     Ref visitMemoryFill(MemoryFill* curr) {
-      unimplemented(getExpressionName(curr));
+      unimplemented(curr);
       WASM_UNREACHABLE();
     }
 
@@ -1867,8 +1867,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       return ret;
     }
 
-    void unimplemented(const char* name) {
-      Fatal() << "wasm2js cannot convert " << name;
+    void unimplemented(Expression* curr) {
+      Fatal() << "wasm2js cannot convert " << getExpressionName(curr);
     }
   };
 
