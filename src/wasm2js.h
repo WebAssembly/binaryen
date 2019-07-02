@@ -829,7 +829,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
   };
 
-  struct ExpressionProcessor : public OverriddenVisitor<ExpressionProcessor, Ref> {
+  struct ExpressionProcessor
+    : public OverriddenVisitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
     IString result; // TODO: remove
     Function* func;
