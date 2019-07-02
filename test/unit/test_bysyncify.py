@@ -10,6 +10,7 @@ class BysyncifyTest(BinaryenTestCase):
       print(args)
       run_process(WASM_OPT + args + [self.input_path('bysyncify-sleep.wast'), '--bysyncify', '-o', 'a.wasm'])
       run_process(WASM_OPT + args + [self.input_path('bysyncify-coroutine.wast'), '--bysyncify', '-o', 'b.wasm'])
+      run_process(WASM_OPT + args + [self.input_path('bysyncify-stackOverflow.wast'), '--bysyncify', '-o', 'c.wasm'])
       print('  file size: %d' % os.path.getsize('a.wasm'))
       run_process([NODEJS, self.input_path('bysyncify.js')])
 

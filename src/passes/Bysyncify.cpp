@@ -174,6 +174,17 @@
 // we are recreating the call stack. At that point you should call
 // bysyncify_stop_rewind and then execution can resume normally.
 //
+// Note that the bysyncify_* API calls will verify that the data structure
+// is valid, checking if the current location is past the end. If so, they
+// will throw a wasm unreachable. No check is done during unwinding or
+// rewinding, to keep things fast - in principle, from when unwinding begins
+// and until it ends there should be no memory accesses aside from the
+// bysyncify code itself (and likewise when rewinding), so there should be
+// no chance of memory corruption causing odd errors. However, the low
+// overhead of this approach does cause an error only to be shown when
+// unwinding/rewinding finishes, and not at the specific spot where the
+// stack end was exceeded.
+//
 // By default this pass is very carefuly: it assumes that any import and
 // any indirect call may start an unwind/rewind operation. If you know more
 // specific information you can inform bysyncify about that, which can reduce
@@ -1056,38 +1067,36 @@ private:
 
   void addFunctions(Module* module) {
     Builder builder(*module);
-    auto makeFunction = [&](Name name,
-                            bool setData,
-                            State state,
-                            Expression* extra) {
+    auto makeFunction = [&](Name name, bool setData, State state) {
       std::vector<Type> params;
       if (setData) {
         params.push_back(i32);
       }
       auto* body = builder.makeBlock();
-      if (setData) {
-        // Verify the data is valid.
-        auto* stackPos = builder.makeLoad(4,
-                                          false,
-                                          int32_t(DataOffset::BStackPos),
-                                          4,
-                                          builder.makeLocalGet(0, i32),
-                                          i32);
-        auto* stackEnd = builder.makeLoad(4,
-                                          false,
-                                          int32_t(DataOffset::BStackEnd),
-                                          4,
-                                          builder.makeLocalGet(0, i32),
-                                          i32);
-        body->list.push_back(
-          builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
-                         builder.makeUnreachable()));
-      }
       body->list.push_back(builder.makeGlobalSet(
         BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
-      if (extra) {
-        body->list.push_back(extra);
+      if (setData) {
+        body->list.push_back(
+          builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
       }
+      // Verify the data is valid.
+      auto* stackPos =
+        builder.makeLoad(4,
+                         false,
+                         int32_t(DataOffset::BStackPos),
+                         4,
+                         builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
+                         i32);
+      auto* stackEnd =
+        builder.makeLoad(4,
+                         false,
+                         int32_t(DataOffset::BStackEnd),
+                         4,
+                         builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
+                         i32);
+      body->list.push_back(
+        builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
+                       builder.makeUnreachable()));
       body->finalize();
       auto* func = builder.makeFunction(
         name, std::move(params), none, std::vector<Type>{}, body);
@@ -1095,18 +1104,10 @@ private:
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };
 
-    makeFunction(
-      BYSYNCIFY_START_UNWIND,
-      true,
-      State::Unwinding,
-      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
-    makeFunction(BYSYNCIFY_STOP_UNWIND, false, State::Normal, nullptr);
-    makeFunction(
-      BYSYNCIFY_START_REWIND,
-      true,
-      State::Rewinding,
-      builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
-    makeFunction(BYSYNCIFY_STOP_REWIND, false, State::Normal, nullptr);
+    makeFunction(BYSYNCIFY_START_UNWIND, true, State::Unwinding);
+    makeFunction(BYSYNCIFY_STOP_UNWIND, false, State::Normal);
+    makeFunction(BYSYNCIFY_START_REWIND, true, State::Rewinding);
+    makeFunction(BYSYNCIFY_STOP_REWIND, false, State::Normal);
   }
 };
 

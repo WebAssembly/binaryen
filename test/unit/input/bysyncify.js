@@ -252,10 +252,53 @@ function coroutineTests() {
   ]), 'check yielded values')
 }
 
+function stackOverflowAssertTests() {
+  console.log('\nstack overflow assertion tests\n\n');
+
+  // Get and compile the wasm.
+
+  var binary = fs.readFileSync('c.wasm');
+
+  var module = new WebAssembly.Module(binary);
+
+  var DATA_ADDR = 4;
+
+  var instance = new WebAssembly.Instance(module, {
+    env: {
+      sleep: function() {
+        console.log('sleep...');
+        exports.bysyncify_start_unwind(DATA_ADDR);
+        view[DATA_ADDR >> 2] = DATA_ADDR + 8;
+        // The end of the stack will be reached as the stack is tiny.
+        view[DATA_ADDR + 4 >> 2] = view[DATA_ADDR >> 2] + 1;
+      }
+    }
+  });
+
+  var exports = instance.exports;
+  var view = new Int32Array(exports.memory.buffer);
+  exports.many_locals();
+  assert(view[DATA_ADDR >> 2] > view[DATA_ADDR + 4 >> 2], 'should have wrote past the end of the stack');
+  // All API calls should now fail, since we wrote past the end of the
+  // stack
+  var fails = 0;
+  ['bysyncify_stop_unwind', 'bysyncify_start_rewind', 'bysyncify_stop_rewind', 'bysyncify_start_unwind'].forEach(function(name) {
+    try {
+      exports[name](DATA_ADDR);
+      console.log('no fail on', name);
+    } catch (e) {
+      console.log('expected fail on', name);
+      fails++;
+    }
+  });
+  assert(fails == 4, 'all 4 should have failed');
+}
+
 // Main
 
 sleepTests();
 coroutineTests();
+stackOverflowAssertTests();
 
 console.log('\ntests completed successfully');
 
