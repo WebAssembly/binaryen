@@ -137,6 +137,13 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
     self.check_features(filename, ['nontrapping-float-to-int'])
     self.assertIn('i32.trunc_sat_f32_u', self.disassemble(filename))
 
+  def test_mutable_globals(self):
+    filename = 'mutable_globals_target_feature.wasm'
+    self.roundtrip(filename)
+    self.check_features(filename, ['mutable-globals'])
+    self.assertIn('(import "env" "global-mut" (global $gimport$0 (mut i32)))',
+                  self.disassemble(filename))
+
   def test_sign_ext(self):
     filename = 'signext_target_feature.wasm'
     self.roundtrip(filename)

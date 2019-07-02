@@ -109,6 +109,9 @@ void PassRegistry::registerPasses() {
   registerPass("duplicate-function-elimination",
                "removes duplicate functions",
                createDuplicateFunctionEliminationPass);
+  registerPass("emit-target-features",
+               "emit the target features section in the output",
+               createEmitTargetFeaturesPass);
   registerPass("extract-function",
                "leaves just one function (useful for debugging)",
                createExtractFunctionPass);

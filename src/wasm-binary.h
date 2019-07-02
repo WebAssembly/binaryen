@@ -400,6 +400,7 @@ extern const char* TargetFeatures;
 extern const char* AtomicsFeature;
 extern const char* BulkMemoryFeature;
 extern const char* ExceptionHandlingFeature;
+extern const char* MutableGlobalsFeature;
 extern const char* TruncSatFeature;
 extern const char* SignExtFeature;
 extern const char* SIMD128Feature;
