@@ -157,6 +157,7 @@ NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
 NODEJS = os.getenv('NODE', which('nodejs') or which('node'))
 MOZJS = which('mozjs') or which('spidermonkey')
+V8 = which('v8') or which('d8')
 EMCC = which('emcc')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
@@ -190,7 +191,13 @@ if options.valgrind:
   ASM2WASM = wrap_with_valgrind(ASM2WASM)
   WASM_SHELL = wrap_with_valgrind(WASM_SHELL)
 
-os.environ['BINARYEN'] = os.getcwd()
+
+def in_binaryen(*args):
+  __rootpath__ = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+  return os.path.join(__rootpath__, *args)
+
+
+os.environ['BINARYEN'] = in_binaryen()
 
 
 def get_platform():
@@ -203,6 +210,19 @@ def get_platform():
 def has_shell_timeout():
   return get_platform() != 'windows' and os.system('timeout 1s pwd') == 0
 
+
+# Default options to pass to v8. These enable all features.
+V8_OPTS = [
+  '--experimental-wasm-eh',
+  '--experimental-wasm-mv',
+  '--experimental-wasm-sat-f2i-conversions',
+  '--experimental-wasm-se',
+  '--experimental-wasm-threads',
+  '--experimental-wasm-simd',
+  '--experimental-wasm-anyref',
+  '--experimental-wasm-bulk-memory',
+  '--experimental-wasm-return-call'
+]
 
 has_vanilla_llvm = False
 
@@ -388,6 +408,17 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     os.unlink('a.wasm')
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
   assert os.path.exists('a.wasm')
+
+  # make sure it is a valid wasm, using a real wasm VM
+  if V8:
+    if os.path.basename(wast) not in [
+      'atomics.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=9425
+      'events.wast',  # https://github.com/WebAssembly/binaryen/issues/2204
+      'simd.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=8460
+    ]:
+      cmd = [V8] + V8_OPTS + [in_binaryen('scripts', 'validation_shell.js'), '--', 'a.wasm']
+      print '      ', ' '.join(cmd)
+      subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
   cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast']
   print '      ', ' '.join(cmd)
