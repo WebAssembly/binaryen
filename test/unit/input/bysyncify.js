@@ -28,14 +28,14 @@ function sleepTests() {
           // We are called in order to start a sleep/unwind.
           console.log('sleep...');
           sleeps++;
+          sleeping = true;
           // Unwinding.
-          exports.bysyncify_start_unwind(DATA_ADDR);
           // Fill in the data structure. The first value has the stack location,
           // which for simplicity we can start right after the data structure itself.
           view[DATA_ADDR >> 2] = DATA_ADDR + 8;
           // The end of the stack will not be reached here anyhow.
           view[DATA_ADDR + 4 >> 2] = 1024;
-          sleeping = true;
+          exports.bysyncify_start_unwind(DATA_ADDR);
         } else {
           // We are called as part of a resume/rewind. Stop sleeping.
           console.log('resume...');
@@ -77,7 +77,7 @@ function sleepTests() {
 
     if (expectedSleeps > 0) {
       assert(!result, 'results during sleep are meaningless, just 0');
-      exports.bysyncify_stop_unwind(DATA_ADDR);
+      exports.bysyncify_stop_unwind();
 
       for (var i = 0; i < expectedSleeps - 1; i++) {
         console.log('rewind, run until the next sleep');
@@ -85,7 +85,7 @@ function sleepTests() {
         result = exports[name](); // no need for params on later times
         assert(!result, 'results during sleep are meaningless, just 0');
         logMemory();
-        exports.bysyncify_stop_unwind(DATA_ADDR);
+        exports.bysyncify_stop_unwind();
       }
 
       console.log('rewind and run til the end.');
