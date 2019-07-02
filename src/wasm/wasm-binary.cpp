@@ -666,19 +666,21 @@ void WasmBinaryWriter::writeFeaturesSection() {
   auto toString = [](FeatureSet::Feature f) {
     switch (f) {
       case FeatureSet::Atomics:
-        return "atomics";
+        return BinaryConsts::UserSections::AtomicsFeature;
       case FeatureSet::MutableGlobals:
         return "mutable-globals";
       case FeatureSet::TruncSat:
-        return "nontrapping-fptoint";
+        return BinaryConsts::UserSections::TruncSatFeature;
       case FeatureSet::SIMD:
-        return "simd128";
+        return BinaryConsts::UserSections::SIMD128Feature;
       case FeatureSet::BulkMemory:
-        return "bulk-memory";
+        return BinaryConsts::UserSections::BulkMemoryFeature;
       case FeatureSet::SignExt:
-        return "sign-ext";
+        return BinaryConsts::UserSections::SignExtFeature;
       case FeatureSet::ExceptionHandling:
-        return "exception-handling";
+        return BinaryConsts::UserSections::ExceptionHandlingFeature;
+      case FeatureSet::TailCall:
+        return BinaryConsts::UserSections::TailCallFeature;
       default:
         WASM_UNREACHABLE();
     }
@@ -2160,6 +2162,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setSignExt();
       } else if (name == BinaryConsts::UserSections::SIMD128Feature) {
         wasm.features.setSIMD();
+      } else if (name == BinaryConsts::UserSections::TailCallFeature) {
+        wasm.features.setTailCall();
       }
     }
   }
@@ -2208,6 +2212,20 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitCallIndirect(
         (curr = allocator.alloc<CallIndirect>())->cast<CallIndirect>());
       break;
+    case BinaryConsts::RetCallFunction: {
+      auto call = allocator.alloc<Call>();
+      call->isReturn = true;
+      curr = call;
+      visitCall(call);
+      break;
+    }
+    case BinaryConsts::RetCallIndirect: {
+      auto call = allocator.alloc<CallIndirect>();
+      call->isReturn = true;
+      curr = call;
+      visitCallIndirect(call);
+      break;
+    }
     case BinaryConsts::LocalGet:
       visitLocalGet((curr = allocator.alloc<LocalGet>())->cast<LocalGet>());
       break;

@@ -206,8 +206,8 @@ private:
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);
-  Expression* makeCall(Element& s);
-  Expression* makeCallIndirect(Element& s);
+  Expression* makeCall(Element& s, bool isReturn);
+  Expression* makeCallIndirect(Element& s, bool isReturn);
   template<class T>
   void parseCallOperands(Element& s, Index i, Index j, T* call) {
     while (i < j) {

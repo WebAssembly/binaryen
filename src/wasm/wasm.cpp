@@ -39,6 +39,7 @@ const char* ExceptionHandlingFeature = "exception-handling";
 const char* TruncSatFeature = "nontrapping-fptoint";
 const char* SignExtFeature = "sign-ext";
 const char* SIMD128Feature = "simd128";
+const char* TailCallFeature = "tail-call";
 } // namespace UserSections
 } // namespace BinaryConsts
 

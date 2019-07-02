@@ -27,6 +27,9 @@ class FeatureValidationTest(BinaryenTestCase):
   def check_exception_handling(self, module, error):
     self.check_feature(module, error, '--enable-exception-handling')
 
+  def check_tail_call(self, module, error):
+    self.check_feature(module, error, '--enable-tail-call')
+
   def test_v128_signature(self):
     module = '''
     (module
@@ -117,6 +120,17 @@ class FeatureValidationTest(BinaryenTestCase):
     '''
     self.check_bulk_mem(module, 'nonzero segment flags (bulk memory is disabled)')
 
+  def test_tail_call(self):
+    module = '''
+    (module
+     (func $bar)
+     (func $foo
+      (return_call $bar)
+     )
+    )
+    '''
+    self.check_tail_call(module, 'return_call requires tail calls to be enabled')
+
 
 class TargetFeaturesSectionTest(BinaryenTestCase):
   def test_atomics(self):
@@ -148,6 +162,12 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
     self.roundtrip(filename)
     self.check_features(filename, ['simd'])
     self.assertIn('i32x4.splat', self.disassemble(filename))
+
+  def test_tailcall(self):
+    filename = 'tail_call_target_feature.wasm'
+    self.roundtrip(filename)
+    self.check_features(filename, ['tail-call'])
+    self.assertIn('return_call', self.disassemble(filename))
 
   def test_incompatible_features(self):
     path = self.input_path('signext_target_feature.wasm')

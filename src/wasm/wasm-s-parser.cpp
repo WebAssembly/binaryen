@@ -1608,17 +1608,19 @@ Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeCall(Element& s) {
+Expression* SExpressionWasmBuilder::makeCall(Element& s, bool isReturn) {
   auto target = getFunctionName(*s[1]);
   auto ret = allocator.alloc<Call>();
   ret->target = target;
   ret->type = functionTypes[ret->target];
   parseCallOperands(s, 2, s.size(), ret);
+  ret->isReturn = isReturn;
   ret->finalize();
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
+Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
+                                                     bool isReturn) {
   if (!wasm.table.exists) {
     throw ParseException("no table");
   }
@@ -1631,6 +1633,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   ret->type = functionType->result;
   parseCallOperands(s, i, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
+  ret->isReturn = isReturn;
   ret->finalize();
   return ret;
 }
