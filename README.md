@@ -67,6 +67,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      WebAssembly's official text format is primarily a linear instruction list
      (with s-expression extensions). Binaryen can't read the linear style, but
      it can read a wasm text file if it contains only s-expressions.
+   * Binaryen uses Stack IR to optimize "stacky" code (that can't be
+     represented in structured form).
+   * In rare cases stacky code must be represented in Binaryen IR as well, like
+     popping a value in an exception catch. To support that Binaryen IR has
+     `push` and `pop` instructions.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
@@ -104,11 +109,8 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      used in the containing node. Such a block is sometimes called an "implicit
      block".
  * Multivalue
-   * Binaryen does not represent multivalue instructions and values directly.
-     Instead, they are lowered to non-multivalue things on binary reading. In
-     Stack IR we can optimize to generate multivalue uses. In other words, the
-     main Binaryen IR does not have multivalue, but Stack IR does.
-   * Binaryen's main focus is on optimization of wasm, and therefore the question
+   * Binaryen will not represent multivalue instructions and values directly.
+     Binaryen's main focus is on optimization of wasm, and therefore the question
      of whether we should have multivalue in the main IR is whether it justifes
      the extra complexity there. Experiments show that the shrinking of code
      size thanks to multivalue is useful but small, just 1-3% or so. Given that,
@@ -116,10 +118,9 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      in Stack IR, which is more suitable for such things.
    * Binaryen does still need to implement the "ABI" level of multivalue, that
      is, we need multivalue calls because those may cross module boundaries,
-     and so they are observable externally. To support that, Binaryen adds two
-     instructions, `push` and `pop`, which push a multivalue or pop one. To do
-     a multivalue call, you receive the extra values by popping afterwards; to
-     do a multivalue return, you send the extra values by pushing before.
+     and so they are observable externally. To support that, Binaryen may use
+     `push` and `pop` as mentioned earlier; another option is to add LLVM-like
+     `extractvalue/composevalue` instructions.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
