@@ -36,6 +36,7 @@ const char* TargetFeatures = "target_features";
 const char* AtomicsFeature = "atomics";
 const char* BulkMemoryFeature = "bulk-memory";
 const char* ExceptionHandlingFeature = "exception-handling";
+const char* MutableGlobalsFeature = "mutable-globals";
 const char* TruncSatFeature = "nontrapping-fptoint";
 const char* SignExtFeature = "sign-ext";
 const char* SIMD128Feature = "simd128";
@@ -162,6 +163,10 @@ const char* getExpressionName(Expression* curr) {
       return "memory_copy";
     case Expression::Id::MemoryFillId:
       return "memory_fill";
+    case Expression::Id::PushId:
+      return "push";
+    case Expression::Id::PopId:
+      return "pop";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE();
   }
@@ -819,6 +824,14 @@ void Host::finalize() {
       }
       break;
     }
+  }
+}
+
+void Push::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = none;
   }
 }
 

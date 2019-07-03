@@ -84,7 +84,7 @@ public:
     auto* export_ = new Export();
     export_->name = name;
     export_->value = value;
-    export_->kind = ExternalKind::Function;
+    export_->kind = kind;
     return export_;
   }
 
@@ -496,6 +496,18 @@ public:
     return ret;
   }
   Unreachable* makeUnreachable() { return allocator.alloc<Unreachable>(); }
+  Push* makePush(Expression* value) {
+    auto* ret = allocator.alloc<Push>();
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  Pop* makePop(Type type) {
+    auto* ret = allocator.alloc<Pop>();
+    ret->type = type;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

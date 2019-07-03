@@ -28,14 +28,14 @@ function sleepTests() {
           // We are called in order to start a sleep/unwind.
           console.log('sleep...');
           sleeps++;
+          sleeping = true;
           // Unwinding.
-          exports.bysyncify_start_unwind(DATA_ADDR);
           // Fill in the data structure. The first value has the stack location,
           // which for simplicity we can start right after the data structure itself.
           view[DATA_ADDR >> 2] = DATA_ADDR + 8;
           // The end of the stack will not be reached here anyhow.
           view[DATA_ADDR + 4 >> 2] = 1024;
-          sleeping = true;
+          exports.bysyncify_start_unwind(DATA_ADDR);
         } else {
           // We are called as part of a resume/rewind. Stop sleeping.
           console.log('resume...');
@@ -77,7 +77,7 @@ function sleepTests() {
 
     if (expectedSleeps > 0) {
       assert(!result, 'results during sleep are meaningless, just 0');
-      exports.bysyncify_stop_unwind(DATA_ADDR);
+      exports.bysyncify_stop_unwind();
 
       for (var i = 0; i < expectedSleeps - 1; i++) {
         console.log('rewind, run until the next sleep');
@@ -85,7 +85,7 @@ function sleepTests() {
         result = exports[name](); // no need for params on later times
         assert(!result, 'results during sleep are meaningless, just 0');
         logMemory();
-        exports.bysyncify_stop_unwind(DATA_ADDR);
+        exports.bysyncify_stop_unwind();
       }
 
       console.log('rewind and run til the end.');
@@ -252,10 +252,53 @@ function coroutineTests() {
   ]), 'check yielded values')
 }
 
+function stackOverflowAssertTests() {
+  console.log('\nstack overflow assertion tests\n\n');
+
+  // Get and compile the wasm.
+
+  var binary = fs.readFileSync('c.wasm');
+
+  var module = new WebAssembly.Module(binary);
+
+  var DATA_ADDR = 4;
+
+  var instance = new WebAssembly.Instance(module, {
+    env: {
+      sleep: function() {
+        console.log('sleep...');
+        exports.bysyncify_start_unwind(DATA_ADDR);
+        view[DATA_ADDR >> 2] = DATA_ADDR + 8;
+        // The end of the stack will be reached as the stack is tiny.
+        view[DATA_ADDR + 4 >> 2] = view[DATA_ADDR >> 2] + 1;
+      }
+    }
+  });
+
+  var exports = instance.exports;
+  var view = new Int32Array(exports.memory.buffer);
+  exports.many_locals();
+  assert(view[DATA_ADDR >> 2] > view[DATA_ADDR + 4 >> 2], 'should have wrote past the end of the stack');
+  // All API calls should now fail, since we wrote past the end of the
+  // stack
+  var fails = 0;
+  ['bysyncify_stop_unwind', 'bysyncify_start_rewind', 'bysyncify_stop_rewind', 'bysyncify_start_unwind'].forEach(function(name) {
+    try {
+      exports[name](DATA_ADDR);
+      console.log('no fail on', name);
+    } catch (e) {
+      console.log('expected fail on', name);
+      fails++;
+    }
+  });
+  assert(fails == 4, 'all 4 should have failed');
+}
+
 // Main
 
 sleepTests();
 coroutineTests();
+stackOverflowAssertTests();
 
 console.log('\ntests completed successfully');
 

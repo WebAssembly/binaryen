@@ -52,13 +52,13 @@ void WasmBinaryWriter::write() {
   writeFunctionTableDeclaration();
   writeMemory();
   writeGlobals();
+  writeEvents();
   writeExports();
   writeStart();
   writeTableElements();
   writeDataCount();
   writeFunctions();
   writeDataSegments();
-  writeEvents();
   if (debugInfo) {
     writeNames();
   }
@@ -668,7 +668,7 @@ void WasmBinaryWriter::writeFeaturesSection() {
       case FeatureSet::Atomics:
         return BinaryConsts::UserSections::AtomicsFeature;
       case FeatureSet::MutableGlobals:
-        return "mutable-globals";
+        return BinaryConsts::UserSections::MutableGlobalsFeature;
       case FeatureSet::TruncSat:
         return BinaryConsts::UserSections::TruncSatFeature;
       case FeatureSet::SIMD:
@@ -2156,6 +2156,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setBulkMemory();
       } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
         wasm.features.setExceptionHandling();
+      } else if (name == BinaryConsts::UserSections::MutableGlobalsFeature) {
+        wasm.features.setMutableGlobals();
       } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
         wasm.features.setTruncSat();
       } else if (name == BinaryConsts::UserSections::SignExtFeature) {

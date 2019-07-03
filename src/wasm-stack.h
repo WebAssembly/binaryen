@@ -94,7 +94,7 @@ public:
 enum class StackWriterMode { Binaryen2Binary, Binaryen2Stack, Stack2Binary };
 
 template<StackWriterMode Mode, typename Parent>
-class StackWriter : public Visitor<StackWriter<Mode, Parent>> {
+class StackWriter : public OverriddenVisitor<StackWriter<Mode, Parent>> {
 public:
   StackWriter(Parent& parent,
               BufferWithRandomAccess& o,
@@ -159,6 +159,8 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
+  void visitPush(Push* curr);
+  void visitPop(Pop* curr);
 
   // We need to emit extra unreachable opcodes in some cases
   void emitExtraUnreachable();
@@ -358,7 +360,7 @@ void StackWriter<Mode, Parent>::visit(Expression* curr) {
   if (Mode == StackWriterMode::Binaryen2Binary && sourceMap) {
     parent.writeDebugLocation(curr, func);
   }
-  Visitor<StackWriter>::visit(curr);
+  OverriddenVisitor<StackWriter>::visit(curr);
 }
 
 // emits a node, but if it is a block with no name, emit a list of its contents
@@ -2223,6 +2225,19 @@ void StackWriter<Mode, Parent>::visitDrop(Drop* curr) {
     return;
   }
   o << int8_t(BinaryConsts::Drop);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitPush(Push* curr) {
+  // Turns into nothing in the binary format: leave the child on the
+  // stack for others to use.
+  visitChild(curr->value);
+}
+
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitPop(Pop* curr) {
+  // Turns into nothing in the binary format: just get a value that is
+  // already on the stack.
 }
 
 template<StackWriterMode Mode, typename Parent>
