@@ -208,7 +208,7 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
     p2 = run_process(WASM_OPT + ['--print-features', '-o', os.devnull],
                      input=p.stdout, check=False, capture_output=True)
     self.assertEqual(p2.returncode, 0)
-    self.assertEqual(p2.stdout.split(), [
+    self.assertEqual([
         '--enable-threads',
         '--enable-bulk-memory',
         '--enable-exception-handling',
@@ -216,4 +216,5 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
         '--enable-nontrapping-float-to-int',
         '--enable-sign-ext',
         '--enable-simd',
-    ])
+        '--enable-tail-call'
+    ], p2.stdout.split())
