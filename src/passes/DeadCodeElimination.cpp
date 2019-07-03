@@ -308,6 +308,10 @@ struct DeadCodeElimination
           DELEGATE(MemoryCopy);
         case Expression::Id::MemoryFillId:
           DELEGATE(MemoryFill);
+        case Expression::Id::PushId:
+          DELEGATE(Push);
+        case Expression::Id::PopId:
+          DELEGATE(Pop);
         case Expression::Id::InvalidId:
           WASM_UNREACHABLE();
         case Expression::Id::NumExpressionIds:
