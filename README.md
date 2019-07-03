@@ -103,6 +103,23 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      emitted when generating wasm. Instead its list of operands will be directly
      used in the containing node. Such a block is sometimes called an "implicit
      block".
+ * Multivalue
+   * Binaryen does not represent multivalue instructions and values directly.
+     Instead, they are lowered to non-multivalue things on binary reading. In
+     Stack IR we can optimize to generate multivalue uses. In other words, the
+     main Binaryen IR does not have multivalue, but Stack IR does.
+   * Binaryen's main focus is on optimization of wasm, and therefore the question
+     of whether we should have multivalue in the main IR is whether it justifes
+     the extra complexity there. Experiments show that the shrinking of code
+     size thanks to multivalue is useful but small, just 1-3% or so. Given that,
+     we prefer to keep the main IR simple, and focus on multivalue optimizations
+     in Stack IR, which is more suitable for such things.
+   * Binaryen does still need to implement the "ABI" level of multivalue, that
+     is, we need multivalue calls because those may cross module boundaries,
+     and so they are observable externally. To support that, Binaryen adds two
+     instructions, `push` and `pop`, which push a multivalue or pop one. To do
+     a multivalue call, you receive the extra values by popping afterwards; to
+     do a multivalue return, you send the extra values by pushing before.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
