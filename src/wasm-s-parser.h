@@ -203,6 +203,8 @@ private:
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);
   Expression* makeMemoryFill(Element& s);
+  Expression* makePush(Element& s);
+  Expression* makePop(Type type);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);

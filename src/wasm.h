@@ -477,6 +477,8 @@ public:
     DataDropId,
     MemoryCopyId,
     MemoryFillId,
+    PushId,
+    PopId,
     NumExpressionIds
   };
   Id _id;
@@ -972,6 +974,31 @@ class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
   Unreachable() { type = unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
+};
+
+// A multivalue push. This represents a push of a value, which will be
+// used in the next return. That is, a multivalue return is done by
+// pushing some values, then doing a return (with a value as well).
+// For more on this design, see the readme.
+class Push : public SpecificExpression<Expression::PushId> {
+public:
+  Push() = default;
+  Push(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+// A multivalue pop. This represents a pop of a value, which arrived
+// from a multivalue call or other situation where there are things on
+// the stack. That is, a multivalue-returning call is done by doing
+// the call, receiving the first value normally, and receiving the others
+// via calls to pop.
+class Pop : public SpecificExpression<Expression::PopId> {
+public:
+  Pop() = default;
+  Pop(MixedArena& allocator) {}
 };
 
 // Globals

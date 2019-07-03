@@ -146,6 +146,8 @@ struct ReFinalize
   void visitHost(Host* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
+  void visitPush(Push* curr);
+  void visitPop(Pop* curr);
 
   void visitFunction(Function* curr);
 
@@ -203,6 +205,8 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitHost(Host* curr) { curr->finalize(); }
   void visitNop(Nop* curr) { curr->finalize(); }
   void visitUnreachable(Unreachable* curr) { curr->finalize(); }
+  void visitPush(Push* curr) { curr->finalize(); }
+  void visitPop(Pop* curr) { curr->finalize(); }
 
   void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
   void visitExport(Export* curr) { WASM_UNREACHABLE(); }

@@ -52,13 +52,13 @@ void WasmBinaryWriter::write() {
   writeFunctionTableDeclaration();
   writeMemory();
   writeGlobals();
+  writeEvents();
   writeExports();
   writeStart();
   writeTableElements();
   writeDataCount();
   writeFunctions();
   writeDataSegments();
-  writeEvents();
   if (debugInfo) {
     writeNames();
   }

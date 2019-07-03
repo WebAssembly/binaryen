@@ -1046,6 +1046,8 @@ public:
   Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE(); }
   Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE(); }
   Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
+  Flow visitPush(Push*) { WASM_UNREACHABLE(); }
+  Flow visitPop(Pop*) { WASM_UNREACHABLE(); }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE(); }
 };
@@ -1226,6 +1228,9 @@ public:
 
   // Values of globals
   GlobalManager globals;
+
+  // Multivalue ABI support (see push/pop).
+  std::vector<Literal> multiValues;
 
   ModuleInstanceBase(Module& wasm, ExternalInterface* externalInterface)
     : wasm(wasm), externalInterface(externalInterface) {
@@ -1775,6 +1780,22 @@ private:
           instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1), val);
       }
       return {};
+    }
+    Flow visitPush(Push* curr) {
+      NOTE_ENTER("Push");
+      Flow value = this->visit(curr->value);
+      if (value.breaking()) {
+        return value;
+      }
+      instance.multiValues.push_back(value.value);
+      return Flow();
+    }
+    Flow visitPop(Pop* curr) {
+      NOTE_ENTER("Pop");
+      assert(!instance.multiValues.empty());
+      auto ret = instance.multiValues.back();
+      instance.multiValues.pop_back();
+      return ret;
     }
 
     void trap(const char* why) override {
