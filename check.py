@@ -380,7 +380,7 @@ def run_spec_tests():
             o.write(module + '\n' + '\n'.join(asserts))
           run_spec_test('split.wast')  # before binary stuff - just check it's still ok split out
           run_opt_test('split.wast')  # also that our optimizer doesn't break on it
-          result_wast = binary_format_check('split.wast', verify_final_result=False)
+          result_wast = binary_format_check('split.wast', verify_final_result=False, original_wast=wast)
           # add the asserts, and verify that the test still passes
           open(result_wast, 'a').write('\n' + '\n'.join(asserts))
           actual += run_spec_test(result_wast)

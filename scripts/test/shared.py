@@ -398,7 +398,7 @@ if not has_vanilla_emcc:
 # check utilities
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
-                        binary_suffix='.fromBinary'):
+                        binary_suffix='.fromBinary', original_wast=None):
   # checks we can convert the wast to binary and back
 
   print '     (binary format check)'
@@ -411,7 +411,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
 
   # make sure it is a valid wasm, using a real wasm VM
   if V8:
-    if os.path.basename(wast) not in [
+    if os.path.basename(original_wast or wast) not in [
       'atomics.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=9425
       'simd.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=8460
     ]:
