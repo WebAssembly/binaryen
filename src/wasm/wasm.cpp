@@ -161,6 +161,10 @@ const char* getExpressionName(Expression* curr) {
       return "memory_copy";
     case Expression::Id::MemoryFillId:
       return "memory_fill";
+    case Expression::Id::PushId:
+      return "push";
+    case Expression::Id::PopId:
+      return "pop";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE();
   }
@@ -818,6 +822,14 @@ void Host::finalize() {
       }
       break;
     }
+  }
+}
+
+void Push::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = none;
   }
 }
 

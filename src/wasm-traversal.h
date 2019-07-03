@@ -72,6 +72,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitHost(Host* curr) { return ReturnType(); }
   ReturnType visitNop(Nop* curr) { return ReturnType(); }
   ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
+  ReturnType visitPush(Push* curr) { return ReturnType(); }
+  ReturnType visitPop(Pop* curr) { return ReturnType(); }
   // Module-level visitors
   ReturnType visitFunctionType(FunctionType* curr) { return ReturnType(); }
   ReturnType visitExport(Export* curr) { return ReturnType(); }
@@ -160,6 +162,10 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Nop);
       case Expression::Id::UnreachableId:
         DELEGATE(Unreachable);
+      case Expression::Id::PushId:
+        DELEGATE(Push);
+      case Expression::Id::PopId:
+        DELEGATE(Pop);
       case Expression::Id::InvalidId:
       default:
         WASM_UNREACHABLE();
@@ -218,6 +224,8 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Host);
   UNIMPLEMENTED(Nop);
   UNIMPLEMENTED(Unreachable);
+  UNIMPLEMENTED(Push);
+  UNIMPLEMENTED(Pop);
   UNIMPLEMENTED(FunctionType);
   UNIMPLEMENTED(Export);
   UNIMPLEMENTED(Global);
@@ -307,6 +315,10 @@ struct OverriddenVisitor {
         DELEGATE(Nop);
       case Expression::Id::UnreachableId:
         DELEGATE(Unreachable);
+      case Expression::Id::PushId:
+        DELEGATE(Push);
+      case Expression::Id::PopId:
+        DELEGATE(Pop);
       case Expression::Id::InvalidId:
       default:
         WASM_UNREACHABLE();
@@ -428,6 +440,12 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitUnreachable(Unreachable* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitPush(Push* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitPop(Pop* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
 };
@@ -711,6 +729,12 @@ struct Walker : public VisitorType {
   static void doVisitUnreachable(SubType* self, Expression** currp) {
     self->visitUnreachable((*currp)->cast<Unreachable>());
   }
+  static void doVisitPush(SubType* self, Expression** currp) {
+    self->visitPush((*currp)->cast<Push>());
+  }
+  static void doVisitPop(SubType* self, Expression** currp) {
+    self->visitPop((*currp)->cast<Pop>());
+  }
 
   void setModule(Module* module) { currModule = module; }
 
@@ -943,6 +967,14 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::UnreachableId: {
         self->pushTask(SubType::doVisitUnreachable, currp);
+        break;
+      }
+      case Expression::Id::PushId: {
+        self->pushTask(SubType::doVisitPush, currp);
+        break;
+      }
+      case Expression::Id::PopId: {
+        self->pushTask(SubType::doVisitPop, currp);
         break;
       }
       case Expression::Id::NumExpressionIds:

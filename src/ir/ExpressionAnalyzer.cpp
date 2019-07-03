@@ -209,6 +209,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) {}
+    void visitPush(Push* curr) {}
+    void visitPop(Pop* curr) {}
   } singleton(curr, visitor);
 }
 
