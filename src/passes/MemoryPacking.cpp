@@ -28,8 +28,9 @@ struct MemoryPacking : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
-    if (!module->memory.exists)
+    if (!module->memory.exists) {
       return;
+    }
 
     // Conservatively refuse to change segments if any are passive to avoid
     // invalidating segment indices or segment contents referenced from
