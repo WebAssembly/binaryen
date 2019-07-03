@@ -157,6 +157,8 @@ void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
 void ReFinalize::visitHost(Host* curr) { curr->finalize(); }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
+void ReFinalize::visitPush(Push* curr) { curr->finalize(); }
+void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
