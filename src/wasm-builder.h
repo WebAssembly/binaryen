@@ -84,7 +84,7 @@ public:
     auto* export_ = new Export();
     export_->name = name;
     export_->value = value;
-    export_->kind = ExternalKind::Function;
+    export_->kind = kind;
     return export_;
   }
 

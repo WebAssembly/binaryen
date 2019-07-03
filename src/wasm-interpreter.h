@@ -45,8 +45,6 @@ using namespace cashew;
 
 extern Name WASM, RETURN_FLOW;
 
-enum { maxInterpreterDepth = 50 };
-
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
 class Flow {
@@ -129,13 +127,16 @@ public:
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
 protected:
-  // Keep a record of call depth, to guard against excessive recursion.
-  size_t depth = 0;
+  Index maxDepth;
+
+  Index depth = 0;
 
 public:
+  ExpressionRunner(Index maxDepth) : maxDepth(maxDepth) {}
+
   Flow visit(Expression* curr) {
     depth++;
-    if (depth > maxInterpreterDepth) {
+    if (depth > maxDepth) {
       trap("interpreter recursion limit");
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -1056,7 +1057,9 @@ class ConstantExpressionRunner
   GlobalManager& globals;
 
 public:
-  ConstantExpressionRunner(GlobalManager& globals) : globals(globals) {}
+  ConstantExpressionRunner(GlobalManager& globals, Index maxDepth)
+    : ExpressionRunner<ConstantExpressionRunner<GlobalManager>>(maxDepth),
+      globals(globals) {}
 
   Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
 };
@@ -1232,9 +1235,10 @@ public:
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals)
-                                .visit(global->init)
-                                .value;
+      globals[global->name] =
+        ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
+          .visit(global->init)
+          .value;
     });
 
     // initialize the rest of the external interface
@@ -1297,7 +1301,7 @@ private:
   void initializeTableContents() {
     for (auto& segment : wasm.table.segments) {
       Address offset =
-        (uint32_t)ConstantExpressionRunner<GlobalManager>(globals)
+        (uint32_t)ConstantExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(segment.offset)
           .value.geti32();
       if (offset + segment.data.size() > wasm.table.initial) {
@@ -1340,7 +1344,7 @@ private:
       // the memory.init and data.drop instructions.
       Function dummyFunc;
       FunctionScope dummyScope(&dummyFunc, {});
-      RuntimeExpressionRunner runner(*this, dummyScope);
+      RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
       runner.visit(&init);
       runner.visit(&drop);
     }
@@ -1387,8 +1391,11 @@ private:
     FunctionScope& scope;
 
   public:
-    RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope)
-      : instance(instance), scope(scope) {}
+    RuntimeExpressionRunner(ModuleInstanceBase& instance,
+                            FunctionScope& scope,
+                            Index maxDepth)
+      : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
+        scope(scope) {}
 
     Flow generateArguments(const ExpressionList& operands,
                            LiteralList& arguments) {
@@ -1683,11 +1690,6 @@ private:
       Address offsetVal(uint32_t(offset.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
-      instance.checkLoadAddress(destVal, 0);
-      if (offsetVal > segment.data.size()) {
-        trap("segment offset out of bounds");
-      }
-
       for (size_t i = 0; i < sizeVal; ++i) {
         if (offsetVal + i >= segment.data.size()) {
           trap("out of bounds segment access in memory.init");
@@ -1727,20 +1729,16 @@ private:
       Address sourceVal(uint32_t(source.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
-      instance.checkLoadAddress(destVal, 0);
-      instance.checkLoadAddress(sourceVal, 0);
-
-      size_t start = 0;
-      size_t end = sizeVal;
+      int64_t start = 0;
+      int64_t end = sizeVal;
       int step = 1;
-      // Reverse direction if source is below dest and they overlap
-      if (sourceVal < destVal &&
-          (sourceVal + sizeVal > destVal || sourceVal + sizeVal < sourceVal)) {
-        start = sizeVal - 1;
+      // Reverse direction if source is below dest
+      if (sourceVal < destVal) {
+        start = int64_t(sizeVal) - 1;
         end = -1;
         step = -1;
       }
-      for (size_t i = start; i != end; i += step) {
+      for (int64_t i = start; i != end; i += step) {
         if (i + destVal >= std::numeric_limits<uint32_t>::max()) {
           trap("Out of bounds memory access");
         }
@@ -1771,8 +1769,6 @@ private:
       Address destVal(uint32_t(dest.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
-      instance.checkLoadAddress(destVal, 0);
-
       uint8_t val(value.value.geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
@@ -1799,7 +1795,7 @@ public:
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
   Literal callFunctionInternal(Name name, const LiteralList& arguments) {
-    if (callDepth > maxInterpreterDepth) {
+    if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
     }
     auto previousCallDepth = callDepth;
@@ -1818,7 +1814,8 @@ public:
     }
 #endif
 
-    Flow flow = RuntimeExpressionRunner(*this, scope).visit(function->body);
+    Flow flow =
+      RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     Literal ret = flow.value;
@@ -1841,6 +1838,8 @@ public:
 
 protected:
   Address memorySize; // in pages
+
+  static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
     if (lhs > rhs) {

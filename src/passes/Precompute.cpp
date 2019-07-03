@@ -41,6 +41,12 @@ namespace wasm {
 
 static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
 
+// Limit evaluation depth for 2 reasons: first, it is highly unlikely
+// that we can do anything useful to precompute a hugely nested expression
+// (we should succed at smaller parts of it first). Second, a low limit is
+// helpful to avoid platform differences in native stack sizes.
+static const Index MAX_DEPTH = 50;
+
 typedef std::unordered_map<LocalGet*, Literal> GetValues;
 
 // Precomputes an expression. Errors if we hit anything that can't be
@@ -63,8 +69,8 @@ public:
   PrecomputingExpressionRunner(Module* module,
                                GetValues& getValues,
                                bool replaceExpression)
-    : module(module), getValues(getValues),
-      replaceExpression(replaceExpression) {}
+    : ExpressionRunner<PrecomputingExpressionRunner>(MAX_DEPTH), module(module),
+      getValues(getValues), replaceExpression(replaceExpression) {}
 
   struct NonstandaloneException {
   }; // TODO: use a flow with a special name, as this is likely very slow

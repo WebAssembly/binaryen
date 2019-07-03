@@ -19,6 +19,7 @@
  (global $hangLimit (mut i32) (i32.const 10))
  (event $event$0 (attr 0) (param i32 f32 i32 f64 i32))
  (export "hashMemory" (func $hashMemory))
+ (export "memory" (memory $0))
  (export "hangLimitInitializer" (func $hangLimitInitializer))
  (func $hashMemory (; 4 ;) (type $FUNCSIG$i) (result i32)
   (local $0 i32)
