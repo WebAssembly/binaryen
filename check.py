@@ -382,9 +382,7 @@ def run_spec_tests():
           try:
             run_spec_test(basename)  # before binary stuff - just check it's still ok split out
             run_opt_test(basename)  # also that our optimizer doesn't break on it
-            result_wast = binary_format_check(basename,
-                                              verify_final_result=False,
-                                              main_wast=wast)
+            result_wast = binary_format_check(basename, verify_final_result=False)
           finally:
             os.unlink(basename)
           # add the asserts, and verify that the test still passes
