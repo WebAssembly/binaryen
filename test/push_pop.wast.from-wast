@@ -1,0 +1,30 @@
+(module
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$j (func (result i64)))
+ (type $FUNCSIG$f (func (result f32)))
+ (type $FUNCSIG$d (func (result f64)))
+ (func $a (; 0 ;) (type $FUNCSIG$i) (result i32)
+  (push
+   (i32.const 1)
+  )
+  (i32.pop)
+ )
+ (func $b (; 1 ;) (type $FUNCSIG$j) (result i64)
+  (push
+   (i64.const 1)
+  )
+  (i64.pop)
+ )
+ (func $c (; 2 ;) (type $FUNCSIG$f) (result f32)
+  (push
+   (f32.const 1)
+  )
+  (f32.pop)
+ )
+ (func $d (; 3 ;) (type $FUNCSIG$d) (result f64)
+  (push
+   (f64.const 1)
+  )
+  (f64.pop)
+ )
+)
