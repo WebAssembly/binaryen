@@ -180,3 +180,20 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
   def test_explicit_detect_features(self):
     self.check_features('signext_target_feature.wasm', ['sign-ext', 'simd'],
                         opts=['-mvp', '--detect-features', '--enable-simd'])
+
+  def test_emit_all_features(self):
+    p = run_process(WASM_OPT + ['--emit-target-features', '-all', '-o', '-'],
+                    input="(module)", check=False, capture_output=True)
+    self.assertEqual(p.returncode, 0)
+    p2 = run_process(WASM_OPT + ['--print-features', '-o', os.devnull],
+                     input=p.stdout, check=False, capture_output=True)
+    self.assertEqual(p2.returncode, 0)
+    self.assertEqual(p2.stdout.split(), [
+        '--enable-threads',
+        '--enable-bulk-memory',
+        '--enable-exception-handling',
+        '--enable-mutable-globals',
+        '--enable-nontrapping-float-to-int',
+        '--enable-sign-ext',
+        '--enable-simd',
+    ])
