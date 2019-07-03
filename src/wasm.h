@@ -621,6 +621,7 @@ public:
 
   ExpressionList operands;
   Name target;
+  bool isReturn = false;
 
   void finalize();
 };
@@ -647,6 +648,7 @@ public:
   ExpressionList operands;
   Name fullType;
   Expression* target;
+  bool isReturn = false;
 
   void finalize();
 };

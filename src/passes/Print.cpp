@@ -106,11 +106,20 @@ struct PrintExpressionContents
     o << ' ' << curr->default_;
   }
   void visitCall(Call* curr) {
-    printMedium(o, "call ");
+    if (curr->isReturn) {
+      printMedium(o, "return_call ");
+    } else {
+      printMedium(o, "call ");
+    }
     printName(curr->target, o);
   }
   void visitCallIndirect(CallIndirect* curr) {
-    printMedium(o, "call_indirect (type ") << curr->fullType << ')';
+    if (curr->isReturn) {
+      printMedium(o, "return_call_indirect (type ");
+    } else {
+      printMedium(o, "call_indirect (type ");
+    }
+    o << curr->fullType << ')';
   }
   void visitLocalGet(LocalGet* curr) {
     printMedium(o, "local.get ") << printableLocal(curr->index, currFunction);

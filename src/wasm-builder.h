@@ -187,41 +187,45 @@ public:
     ret->condition = condition;
     return ret;
   }
-  Call* makeCall(Name target, const std::vector<Expression*>& args, Type type) {
+  Call* makeCall(Name target,
+                 const std::vector<Expression*>& args,
+                 Type type,
+                 bool isReturn = false) {
     auto* call = allocator.alloc<Call>();
     // not all functions may exist yet, so type must be provided
     call->type = type;
     call->target = target;
     call->operands.set(args);
+    call->isReturn = isReturn;
     return call;
   }
-  template<typename T> Call* makeCall(Name target, const T& args, Type type) {
+  template<typename T>
+  Call* makeCall(Name target, const T& args, Type type, bool isReturn = false) {
     auto* call = allocator.alloc<Call>();
     // not all functions may exist yet, so type must be provided
     call->type = type;
     call->target = target;
     call->operands.set(args);
+    call->isReturn = isReturn;
     return call;
   }
   CallIndirect* makeCallIndirect(FunctionType* type,
                                  Expression* target,
-                                 const std::vector<Expression*>& args) {
-    auto* call = allocator.alloc<CallIndirect>();
-    call->fullType = type->name;
-    call->type = type->result;
-    call->target = target;
-    call->operands.set(args);
-    return call;
+                                 const std::vector<Expression*>& args,
+                                 bool isReturn = false) {
+    return makeCallIndirect(type->name, target, args, type->result, isReturn);
   }
   CallIndirect* makeCallIndirect(Name fullType,
                                  Expression* target,
                                  const std::vector<Expression*>& args,
-                                 Type type) {
+                                 Type type,
+                                 bool isReturn = false) {
     auto* call = allocator.alloc<CallIndirect>();
     call->fullType = fullType;
     call->type = type;
     call->target = target;
     call->operands.set(args);
+    call->isReturn = isReturn;
     return call;
   }
   // FunctionType

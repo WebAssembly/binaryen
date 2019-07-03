@@ -405,6 +405,7 @@ extern const char* TruncSatFeature;
 extern const char* SignExtFeature;
 extern const char* SIMD128Feature;
 extern const char* ExceptionHandlingFeature;
+extern const char* TailCallFeature;
 
 enum Subsection {
   NameFunction = 1,
@@ -429,6 +430,8 @@ enum ASTNodes {
 
   CallFunction = 0x10,
   CallIndirect = 0x11,
+  RetCallFunction = 0x12,
+  RetCallIndirect = 0x13,
 
   Drop = 0x1a,
   Select = 0x1b,
