@@ -27,7 +27,8 @@ from scripts.test.shared import (
     binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, options, tests, requested, warnings,
-    has_shell_timeout, fail_if_not_identical_to_file, with_pass_debug
+    has_shell_timeout, fail_if_not_identical_to_file, with_pass_debug,
+    validate_binary
 )
 
 # For shared.num_failures. Cannot import directly because modifications made in
@@ -188,6 +189,8 @@ def run_wasm_dis_tests():
         run_command(cmd)
 
       with_pass_debug(check)
+
+      validate_binary(t)
 
 
 def run_crash_tests():
