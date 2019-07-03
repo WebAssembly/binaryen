@@ -666,19 +666,19 @@ void WasmBinaryWriter::writeFeaturesSection() {
   auto toString = [](FeatureSet::Feature f) {
     switch (f) {
       case FeatureSet::Atomics:
-        return "atomics";
+        return BinaryConsts::UserSections::AtomicsFeature;
       case FeatureSet::MutableGlobals:
-        return "mutable-globals";
+        return BinaryConsts::UserSections::MutableGlobalsFeature;
       case FeatureSet::TruncSat:
-        return "nontrapping-fptoint";
+        return BinaryConsts::UserSections::TruncSatFeature;
       case FeatureSet::SIMD:
-        return "simd128";
+        return BinaryConsts::UserSections::SIMD128Feature;
       case FeatureSet::BulkMemory:
-        return "bulk-memory";
+        return BinaryConsts::UserSections::BulkMemoryFeature;
       case FeatureSet::SignExt:
-        return "sign-ext";
+        return BinaryConsts::UserSections::SignExtFeature;
       case FeatureSet::ExceptionHandling:
-        return "exception-handling";
+        return BinaryConsts::UserSections::ExceptionHandlingFeature;
       default:
         WASM_UNREACHABLE();
     }
@@ -2154,6 +2154,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setBulkMemory();
       } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
         wasm.features.setExceptionHandling();
+      } else if (name == BinaryConsts::UserSections::MutableGlobalsFeature) {
+        wasm.features.setMutableGlobals();
       } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
         wasm.features.setTruncSat();
       } else if (name == BinaryConsts::UserSections::SignExtFeature) {
