@@ -57,7 +57,7 @@ static Name printableLocal(Index index, Function* func) {
 
 // Prints the internal contents of an expression: everything but
 // the children.
-struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
+struct PrintExpressionContents : public OverriddenVisitor<PrintExpressionContents> {
   Function* currFunction = nullptr;
   std::ostream& o;
 
@@ -1150,11 +1150,19 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
+  void visitPush(Push* curr) {
+    prepareColor(o) << "push";
+  }
+  void visitPop(Pop* curr) {
+    prepareColor(o) << printType(curr->type);
+    o << ".pop";
+    restoreNormalColor(o);
+  }
 };
 
 // Prints an expression in s-expr format, including both the
 // internal contents and the nested children.
-struct PrintSExpression : public Visitor<PrintSExpression> {
+struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
 
@@ -1205,7 +1213,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   void visit(Expression* curr) {
     printDebugLocation(curr);
-    Visitor<PrintSExpression>::visit(curr);
+    OverriddenVisitor<PrintSExpression>::visit(curr);
   }
 
   void setMinify(bool minify_) {
@@ -1617,6 +1625,18 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << ')';
   }
   void visitUnreachable(Unreachable* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitPush(Push* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitPop(Pop* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
