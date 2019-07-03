@@ -2209,7 +2209,7 @@ switch (op[0]) {
             if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
             goto parse_error;
           case '_':
-            if (strcmp(op, "return_call_indirect") == 0) { return makeCall(s, /*isReturn=*/true); }
+            if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
             goto parse_error;
           default: goto parse_error;
         }

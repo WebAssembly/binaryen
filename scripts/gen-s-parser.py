@@ -31,7 +31,7 @@ instructions = [
     ("call",           "makeCall(s, /*isReturn=*/false)"),
     ("call_indirect",  "makeCallIndirect(s, /*isReturn=*/false)"),
     ("return_call",    "makeCall(s, /*isReturn=*/true)"),
-    ("return_call_indirect", "makeCall(s, /*isReturn=*/true)"),
+    ("return_call_indirect", "makeCallIndirect(s, /*isReturn=*/true)"),
     ("drop",           "makeDrop(s)"),
     ("select",         "makeSelect(s)"),
     ("local.get",      "makeLocalGet(s)"),
