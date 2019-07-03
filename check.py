@@ -376,15 +376,11 @@ def run_spec_tests():
             continue
           print '    testing split module', split_num
           split_num += 1
-          basename = os.path.basename(wast)
-          with open(basename, 'w') as o:
+          with open('split.wast', 'w') as o:
             o.write(module + '\n' + '\n'.join(asserts))
-          try:
-            run_spec_test(basename)  # before binary stuff - just check it's still ok split out
-            run_opt_test(basename)  # also that our optimizer doesn't break on it
-            result_wast = binary_format_check(basename, verify_final_result=False)
-          finally:
-            os.unlink(basename)
+          run_spec_test('split.wast')  # before binary stuff - just check it's still ok split out
+          run_opt_test('split.wast')  # also that our optimizer doesn't break on it
+          result_wast = binary_format_check('split.wast', verify_final_result=False)
           # add the asserts, and verify that the test still passes
           open(result_wast, 'a').write('\n' + '\n'.join(asserts))
           actual += run_spec_test(result_wast)

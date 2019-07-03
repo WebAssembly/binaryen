@@ -413,7 +413,6 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   if V8:
     if os.path.basename(wast) not in [
       'atomics.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=9425
-      'events.wast',  # https://github.com/WebAssembly/binaryen/issues/2204
       'simd.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=8460
     ]:
       cmd = [V8] + V8_OPTS + [in_binaryen('scripts', 'validation_shell.js'), '--', 'a.wasm']
