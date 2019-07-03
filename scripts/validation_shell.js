@@ -4,7 +4,6 @@
 if (typeof console === 'undefined') {
   console = { log: print };
 }
-var tempRet0;
 var binary;
 if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {
   var args = process.argv.slice(2);
@@ -24,17 +23,6 @@ if (typeof process === 'object' && typeof require === 'function' /* node.js dete
   }
 }
 
-// Test the wasm for validity. The imports aren't there (we can't use a proxy
-// because we don't know the types), but if we get to the imports, that means
-// the wasm is valid.
-try {
-  var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {});
-} catch (e) {
-  if (e.toString().indexOf('Import #') > 0) {
-    console.log('import error, the wasm itself is valid');
-  } else {
-    throw e;
-  }
-}
-console.log('wasm is valid');
+// Test the wasm for validity by compiling it.
+new WebAssembly.Module(binary);
 

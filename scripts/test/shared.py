@@ -410,14 +410,16 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   assert os.path.exists('a.wasm')
 
   # make sure it is a valid wasm, using a real wasm VM
-  if V8:
-    if os.path.basename(original_wast or wast) not in [
-      'atomics.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=9425
-      'simd.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=8460
-    ]:
+  if os.path.basename(original_wast or wast) not in [
+    'atomics.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=9425
+    'simd.wast',  # https://bugs.chromium.org/p/v8/issues/detail?id=8460
+  ]:
+    if V8:
       cmd = [V8] + V8_OPTS + [in_binaryen('scripts', 'validation_shell.js'), '--', 'a.wasm']
       print '      ', ' '.join(cmd)
       subprocess.check_call(cmd, stdout=subprocess.PIPE)
+    else:
+      print '(skipping v8 binary check)'
 
   cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast']
   print '      ', ' '.join(cmd)
