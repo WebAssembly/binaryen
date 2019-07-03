@@ -57,7 +57,8 @@ static Name printableLocal(Index index, Function* func) {
 
 // Prints the internal contents of an expression: everything but
 // the children.
-struct PrintExpressionContents : public OverriddenVisitor<PrintExpressionContents> {
+struct PrintExpressionContents
+  : public OverriddenVisitor<PrintExpressionContents> {
   Function* currFunction = nullptr;
   std::ostream& o;
 
@@ -1150,9 +1151,7 @@ struct PrintExpressionContents : public OverriddenVisitor<PrintExpressionContent
   }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
-  void visitPush(Push* curr) {
-    prepareColor(o) << "push";
-  }
+  void visitPush(Push* curr) { prepareColor(o) << "push"; }
   void visitPop(Pop* curr) {
     prepareColor(o) << printType(curr->type);
     o << ".pop";

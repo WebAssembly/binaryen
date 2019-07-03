@@ -368,12 +368,8 @@ struct EffectAnalyzer
   }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branches = true; }
-  void visitPush(Push* curr) {
-    calls = true;
-  }
-  void visitPop(Pop* curr) {
-    calls = true;
-  }
+  void visitPush(Push* curr) { calls = true; }
+  void visitPop(Pop* curr) { calls = true; }
 
   // Helpers
 
