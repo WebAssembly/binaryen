@@ -626,8 +626,9 @@ void StackWriter<Mode, Parent>::visitCall(Call* curr) {
     visitChild(operand);
   }
   if (!justAddToStack(curr)) {
-    o << int8_t(BinaryConsts::CallFunction)
-      << U32LEB(parent.getFunctionIndex(curr->target));
+    int8_t op = curr->isReturn ? BinaryConsts::RetCallFunction
+                               : BinaryConsts::CallFunction;
+    o << op << U32LEB(parent.getFunctionIndex(curr->target));
   }
   // TODO FIXME: this and similar can be removed
   if (curr->type == unreachable) {
@@ -642,8 +643,9 @@ void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
   }
   visitChild(curr->target);
   if (!justAddToStack(curr)) {
-    o << int8_t(BinaryConsts::CallIndirect)
-      << U32LEB(parent.getFunctionTypeIndex(curr->fullType))
+    int8_t op = curr->isReturn ? BinaryConsts::RetCallIndirect
+                               : BinaryConsts::CallIndirect;
+    o << op << U32LEB(parent.getFunctionTypeIndex(curr->fullType))
       << U32LEB(0); // Reserved flags field
   }
   if (curr->type == unreachable) {

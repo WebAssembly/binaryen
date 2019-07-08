@@ -15,7 +15,7 @@ BinaryenFeatureNontrappingFPToInt: 4
 BinaryenFeatureSignExt: 32
 BinaryenFeatureSIMD128: 8
 BinaryenFeatureExceptionHandling: 64
-BinaryenFeatureAll: 127
+BinaryenFeatureAll: 255
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -3351,7 +3351,7 @@ int main() {
     functionTypes[4] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
-  BinaryenModuleSetFeatures(the_module, 127);
+  BinaryenModuleSetFeatures(the_module, 255);
   BinaryenModuleGetFeatures(the_module);
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);

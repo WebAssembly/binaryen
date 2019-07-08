@@ -21,7 +21,7 @@ import re
 import shutil
 import time
 
-from test.shared import options, NODEJS
+from test.shared import options, NODEJS, V8_OPTS
 
 
 # parameters
@@ -31,18 +31,6 @@ NANS = True
 FEATURE_OPTS = []  # '--all-features' etc
 
 FUZZ_OPTS = []
-
-V8_OPTS = [
-  '--experimental-wasm-eh',
-  '--experimental-wasm-mv',
-  '--experimental-wasm-sat-f2i-conversions',
-  '--experimental-wasm-se',
-  '--experimental-wasm-threads',
-  '--experimental-wasm-simd',
-  '--experimental-wasm-anyref',
-  '--experimental-wasm-bulk-memory',
-  '--experimental-wasm-return-call'
-]
 
 INPUT_SIZE_LIMIT = 150 * 1024
 

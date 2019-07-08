@@ -55,7 +55,7 @@ jobs:
         # get jsvu in order to get more js engines
         - npm install jsvu -g
         - export PATH="${HOME}/.jsvu:${PATH}"
-        - jsvu --os=linux64 --engines=spidermonkey
+        - jsvu --os=linux64 --engines=spidermonkey,v8
       script:
         - set -o errexit
         - flake8

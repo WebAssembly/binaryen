@@ -569,6 +569,9 @@ void FunctionValidator::visitSwitch(Switch* curr) {
 }
 
 void FunctionValidator::visitCall(Call* curr) {
+  shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
+               curr,
+               "return_call requires tail calls to be enabled");
   if (!info.validateGlobally) {
     return;
   }
@@ -593,6 +596,9 @@ void FunctionValidator::visitCall(Call* curr) {
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
+  shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
+               curr,
+               "return_call_indirect requires tail calls to be enabled");
   if (!info.validateGlobally) {
     return;
   }

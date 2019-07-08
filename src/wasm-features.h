@@ -32,8 +32,8 @@ struct FeatureSet {
     BulkMemory = 1 << 4,
     SignExt = 1 << 5,
     ExceptionHandling = 1 << 6,
-    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory | SignExt |
-          ExceptionHandling
+    TailCall = 1 << 7,
+    All = (1 << 8) - 1
   };
 
   static std::string toString(Feature f) {
@@ -52,6 +52,8 @@ struct FeatureSet {
         return "sign-ext";
       case ExceptionHandling:
         return "exception-handling";
+      case TailCall:
+        return "tail-call";
       default:
         WASM_UNREACHABLE();
     }
@@ -69,6 +71,7 @@ struct FeatureSet {
   bool hasBulkMemory() const { return features & BulkMemory; }
   bool hasSignExt() const { return features & SignExt; }
   bool hasExceptionHandling() const { return features & ExceptionHandling; }
+  bool hasTailCall() const { return features & TailCall; }
   bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
@@ -82,6 +85,7 @@ struct FeatureSet {
   void setBulkMemory(bool v = true) { set(BulkMemory, v); }
   void setSignExt(bool v = true) { set(SignExt, v); }
   void setExceptionHandling(bool v = true) { set(ExceptionHandling, v); }
+  void setTailCall(bool v = true) { set(TailCall, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   void enable(const FeatureSet& other) { features |= other.features; }
@@ -110,6 +114,9 @@ struct FeatureSet {
     }
     if (hasSIMD()) {
       f(SIMD);
+    }
+    if (hasTailCall()) {
+      f(TailCall);
     }
   }
 

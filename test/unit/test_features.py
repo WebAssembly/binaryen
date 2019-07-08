@@ -27,6 +27,9 @@ class FeatureValidationTest(BinaryenTestCase):
   def check_exception_handling(self, module, error):
     self.check_feature(module, error, '--enable-exception-handling')
 
+  def check_tail_call(self, module, error):
+    self.check_feature(module, error, '--enable-tail-call')
+
   def test_v128_signature(self):
     module = '''
     (module
@@ -117,6 +120,17 @@ class FeatureValidationTest(BinaryenTestCase):
     '''
     self.check_bulk_mem(module, 'nonzero segment flags (bulk memory is disabled)')
 
+  def test_tail_call(self):
+    module = '''
+    (module
+     (func $bar)
+     (func $foo
+      (return_call $bar)
+     )
+    )
+    '''
+    self.check_tail_call(module, 'return_call requires tail calls to be enabled')
+
 
 class TargetFeaturesSectionTest(BinaryenTestCase):
   def test_atomics(self):
@@ -137,6 +151,13 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
     self.check_features(filename, ['nontrapping-float-to-int'])
     self.assertIn('i32.trunc_sat_f32_u', self.disassemble(filename))
 
+  def test_mutable_globals(self):
+    filename = 'mutable_globals_target_feature.wasm'
+    self.roundtrip(filename)
+    self.check_features(filename, ['mutable-globals'])
+    self.assertIn('(import "env" "global-mut" (global $gimport$0 (mut i32)))',
+                  self.disassemble(filename))
+
   def test_sign_ext(self):
     filename = 'signext_target_feature.wasm'
     self.roundtrip(filename)
@@ -148,6 +169,12 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
     self.roundtrip(filename)
     self.check_features(filename, ['simd'])
     self.assertIn('i32x4.splat', self.disassemble(filename))
+
+  def test_tailcall(self):
+    filename = 'tail_call_target_feature.wasm'
+    self.roundtrip(filename)
+    self.check_features(filename, ['tail-call'])
+    self.assertIn('return_call', self.disassemble(filename))
 
   def test_incompatible_features(self):
     path = self.input_path('signext_target_feature.wasm')
@@ -173,3 +200,21 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
   def test_explicit_detect_features(self):
     self.check_features('signext_target_feature.wasm', ['sign-ext', 'simd'],
                         opts=['-mvp', '--detect-features', '--enable-simd'])
+
+  def test_emit_all_features(self):
+    p = run_process(WASM_OPT + ['--emit-target-features', '-all', '-o', '-'],
+                    input="(module)", check=False, capture_output=True)
+    self.assertEqual(p.returncode, 0)
+    p2 = run_process(WASM_OPT + ['--print-features', '-o', os.devnull],
+                     input=p.stdout, check=False, capture_output=True)
+    self.assertEqual(p2.returncode, 0)
+    self.assertEqual([
+        '--enable-threads',
+        '--enable-bulk-memory',
+        '--enable-exception-handling',
+        '--enable-mutable-globals',
+        '--enable-nontrapping-float-to-int',
+        '--enable-sign-ext',
+        '--enable-simd',
+        '--enable-tail-call'
+    ], p2.stdout.split())

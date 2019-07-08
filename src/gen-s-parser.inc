@@ -40,10 +40,10 @@ switch (op[0]) {
   case 'c': {
     switch (op[4]) {
       case '\0':
-        if (strcmp(op, "call") == 0) { return makeCall(s); }
+        if (strcmp(op, "call") == 0) { return makeCall(s, /*isReturn=*/false); }
         goto parse_error;
       case '_':
-        if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s); }
+        if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
         goto parse_error;
       default: goto parse_error;
     }
@@ -2228,9 +2228,25 @@ switch (op[0]) {
   case 'p':
     if (strcmp(op, "push") == 0) { return makePush(s); }
     goto parse_error;
-  case 'r':
-    if (strcmp(op, "return") == 0) { return makeReturn(s); }
-    goto parse_error;
+  case 'r': {
+    switch (op[6]) {
+      case '\0':
+        if (strcmp(op, "return") == 0) { return makeReturn(s); }
+        goto parse_error;
+      case '_': {
+        switch (op[11]) {
+          case '\0':
+            if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+            goto parse_error;
+          case '_':
+            if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      default: goto parse_error;
+    }
+  }
   case 's':
     if (strcmp(op, "select") == 0) { return makeSelect(s); }
     goto parse_error;
