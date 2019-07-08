@@ -1858,6 +1858,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
+    Ref visitPush(Push* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitPop(Pop* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
 
   private:
     Ref makePointer(Expression* ptr, Address offset) {
