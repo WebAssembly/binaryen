@@ -831,7 +831,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
   };
 
-  struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
+  struct ExpressionProcessor
+    : public OverriddenVisitor<ExpressionProcessor, Ref> {
     Wasm2JSBuilder* parent;
     IString result; // TODO: remove
     Function* func;
@@ -890,7 +891,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Ref visit(Expression* curr, IString nextResult) {
       IString old = result;
       result = nextResult;
-      Ref ret = Visitor::visit(curr);
+      Ref ret = OverriddenVisitor::visit(curr);
       // keep it consistent for the rest of this frame, which may call visit on
       // multiple children
       result = old;
@@ -1803,6 +1804,61 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
 
+    // TODO's
+
+    Ref visitAtomicRMW(AtomicRMW* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitAtomicWait(AtomicWait* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitAtomicNotify(AtomicNotify* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitSIMDExtract(SIMDExtract* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitSIMDReplace(SIMDReplace* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitSIMDShuffle(SIMDShuffle* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitSIMDBitselect(SIMDBitselect* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitSIMDShift(SIMDShift* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitMemoryInit(MemoryInit* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitDataDrop(DataDrop* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitMemoryCopy(MemoryCopy* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitMemoryFill(MemoryFill* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+
   private:
     Ref makePointer(Expression* ptr, Address offset) {
       auto ret = visit(ptr, EXPRESSION_RESULT);
@@ -1812,6 +1868,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           ASM_INT);
       }
       return ret;
+    }
+
+    void unimplemented(Expression* curr) {
+      Fatal() << "wasm2js cannot convert " << getExpressionName(curr);
     }
   };
 
