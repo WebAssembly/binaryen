@@ -66,8 +66,6 @@ extern cashew::IString SQRT;
 extern cashew::IString POW;
 extern cashew::IString I32_TEMP;
 extern cashew::IString DEBUGGER;
-extern cashew::IString USE_ASM;
-extern cashew::IString ALMOST_ASM;
 extern cashew::IString BUFFER;
 extern cashew::IString ENV;
 extern cashew::IString STACKTOP;

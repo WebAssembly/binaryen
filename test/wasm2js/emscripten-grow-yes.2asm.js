@@ -1,7 +1,6 @@
 function instantiate(asmLibraryArg, wasmMemory, wasmTable) {
 
 function asmFunc(global, env, buffer) {
- "almost asm";
  var memory = env.memory;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);

@@ -2,7 +2,6 @@ import { memoryBase } from 'env';
 import { tableBase } from 'env';
 
 function asmFunc(global, env, buffer) {
- "almost asm";
  var memory = env.memory;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
