@@ -178,7 +178,9 @@ var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), imports)
 // Handle the exports.
 var exports = instance.exports;
 exports = Bysyncify.instrumentExports(exports);
-var view = new Int32Array(exports.memory.buffer);
+if (exports.memory) {
+  var view = new Int32Array(exports.memory.buffer);
+}
 
 // Run the wasm.
 var sortedExports = [];
