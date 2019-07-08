@@ -28,7 +28,11 @@ from test.shared import options, NODEJS, V8_OPTS
 
 NANS = True
 
-FEATURE_OPTS = []  # '--all-features' etc
+# exceptions: https://github.com/WebAssembly/binaryen/issues/2195
+# simd: known issues with d8
+# atomics, bulk memory: doesn't work in wasm2js
+# truncsat: https://github.com/WebAssembly/binaryen/issues/2198
+FEATURE_OPTS = ['--all-features', '--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int']
 
 FUZZ_OPTS = []
 
@@ -159,8 +163,8 @@ class TestCaseHandler:
 # Run VMs and compare results
 class CompareVMs(TestCaseHandler):
   def handle_pair(self, before_wasm, after_wasm, opts):
-    run([in_bin('wasm-opt'), before_wasm, '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat'])
-    run([in_bin('wasm-opt'), after_wasm, '--emit-js-wrapper=b.js', '--emit-spec-wrapper=b.wat'])
+    run([in_bin('wasm-opt'), before_wasm, '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat'] + FEATURE_OPTS)
+    run([in_bin('wasm-opt'), after_wasm, '--emit-js-wrapper=b.js', '--emit-spec-wrapper=b.wat'] + FEATURE_OPTS)
     before = self.run_vms('a.js', before_wasm)
     after = self.run_vms('b.js', after_wasm)
     self.compare_vs(before, after)
@@ -244,8 +248,8 @@ class Wasm2JS(TestCaseHandler):
 class Bysyncify(TestCaseHandler):
   def handle_pair(self, before_wasm, after_wasm, opts):
     # we must legalize in order to run in JS
-    run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm])
-    run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm])
+    run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
+    run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
     before = fix_output(run_d8(before_wasm))
     after = fix_output(run_d8(after_wasm))
 
@@ -259,6 +263,7 @@ class Bysyncify(TestCaseHandler):
         cmd += ['--optimize-level=%d' % random.randint(1, 3)]
       if random.random() < 0.5:
         cmd += ['--shrink-level=%d' % random.randint(1, 2)]
+      cmd += FEATURE_OPTS
       run(cmd)
       out = run_d8('t.wasm')
       # emit some status logging from bysyncify
