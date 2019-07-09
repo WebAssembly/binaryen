@@ -291,6 +291,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!br->condition) {
             br->condition = curr->condition;
           } else {
+// this is wrong on e,g. ./tests/runner.py  wasm1.test_regex
             // In this case we can replace
             //   if (condition1) br_if (condition2)
             // =>
