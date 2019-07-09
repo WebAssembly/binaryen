@@ -3150,13 +3150,8 @@
               )
              )
              (block
-              (if
-               (local.tee $12
-                (i32.load
-                 (i32.const 1648)
-                )
-               )
-               (br_if $do-once33
+              (br_if $do-once33
+               (select
                 (i32.or
                  (i32.le_u
                   (local.get $8)
@@ -3164,9 +3159,15 @@
                  )
                  (i32.gt_u
                   (local.get $8)
-                  (local.get $12)
+                  (local.tee $8
+                   (i32.load
+                    (i32.const 1648)
+                   )
+                  )
                  )
                 )
+                (i32.const 0)
+                (local.get $8)
                )
               )
               (local.set $1
