@@ -292,7 +292,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           } else {
             Builder builder(*getModule());
             br->condition =
-              builder.makeSelect(curr->condition, br->condition, LiteralUtils::makeZero(i32, *getModule()));
+              builder.makeSelect(curr->condition,
+                                 br->condition,
+                                 LiteralUtils::makeZero(i32, *getModule()));
           }
           br->finalize();
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
