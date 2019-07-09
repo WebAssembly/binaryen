@@ -1219,9 +1219,9 @@ private:
       // don't do this if it would wrap the pointer
       uint64_t value64 = last->value.geti32();
       uint64_t offset64 = offset;
-      if (value64 <= std::numeric_limits<int32_t>::max() &&
-          offset64 <= std::numeric_limits<int32_t>::max() &&
-          value64 + offset64 <= std::numeric_limits<int32_t>::max()) {
+      if (value64 <= uint64_t(std::numeric_limits<int32_t>::max()) &&
+          offset64 <= uint64_t(std::numeric_limits<int32_t>::max()) &&
+          value64 + offset64 <= uint64_t(std::numeric_limits<int32_t>::max())) {
         last->value = Literal(int32_t(value64 + offset64));
         offset = 0;
       }
