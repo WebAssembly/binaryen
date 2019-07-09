@@ -285,10 +285,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     if (!curr->ifFalse) {
       // if without an else. try to reduce   if (condition) br  =>  br_if
       // (condition)
-      Break* br = curr->ifTrue->dynCast<Break>();
-      if (br && !br->condition) { // TODO: if there is a condition, join them
+      if (Break* br = curr->ifTrue->dynCast<Break>()) {
         if (canTurnIfIntoBrIf(curr->condition, br->value, getPassOptions())) {
-          br->condition = curr->condition;
+          if (!br->condition) {
+            br->condition = curr->condition;
+          } else {
+            br->condition = builder.makeBinary(OrInt32, iff->condition, br->condition);
+          }
           br->finalize();
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
