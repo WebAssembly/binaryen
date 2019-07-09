@@ -290,7 +290,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!br->condition) {
             br->condition = curr->condition;
           } else {
-            br->condition = builder.makeBinary(OrInt32, iff->condition, br->condition);
+            br->condition =
+              builder.makeBinary(OrInt32, iff->condition, br->condition);
           }
           br->finalize();
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
