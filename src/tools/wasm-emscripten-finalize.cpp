@@ -205,6 +205,7 @@ int main(int argc, const char* argv[]) {
     generator.generatePostInstantiateFunction();
   } else {
     generator.generateRuntimeFunctions();
+    generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
     if (Function* F = generator.generateAssignGOTEntriesFunction()) {
