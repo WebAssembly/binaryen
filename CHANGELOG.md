@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- wasm-emscripten-finalize: For -pie binaries that import a mutable stack
+  pointer we internalize this an import it as immutable.
+
 v86
 ---
 
