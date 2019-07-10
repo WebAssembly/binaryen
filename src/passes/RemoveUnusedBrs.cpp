@@ -50,6 +50,26 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   return !EffectAnalyzer(options, ifCondition).invalidates(value);
 }
 
+// Check if it is not worth it to run code unconditionally. This
+// assumes we are trying to run one or two expressions that might
+// before have not executed or only one of them executed, and that
+// executing them unconditionally is good for code size.
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Expression* expr,
+                                          Expression* other = nullptr) {
+  // If we care mostly about code size, just do it for that reason.
+  if (passOptions.shrinkLevel) {
+    return true;
+  }
+  // Consider the cost of executing all the code unconditionally.
+  const auto MAX_COST = 7;
+  auto total = CostAnalyzer(expr).cost;
+  if (other) {
+    total += CostAnalyzer(other).cost;
+  }
+  return total < MAX_COST;
+}
+
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
@@ -291,7 +311,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!br->condition) {
             br->condition = curr->condition;
           } else {
-// this is wrong on e,g. ./tests/runner.py  wasm1.test_regex
             // In this case we can replace
             //   if (condition1) br_if (condition2)
             // =>
@@ -300,15 +319,22 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // zero (also 3 bytes). The size is unchanged, but the select may
             // be further optimizable, and if select does not branch we also
             // avoid one branch.
+            // If running the br's condition unconditionally is too expensive,
+            // give up.
+            if (tooCostlyToRunUnconditionally(getPassOptions(), br->condition)) {
+              return;
+            }
             // Of course we can't do this if the br's condition has side
             // effects, as we would then execute those unconditionally.
             if (EffectAnalyzer(getPassOptions(), br->condition).hasSideEffects()) {
               return;
             }
             Builder builder(*getModule());
+            // Note that we use the br's condition as the select condition.
+            // That keeps the order of the two conditions as it was originally.
             br->condition =
-              builder.makeSelect(curr->condition,
-                                 br->condition,
+              builder.makeSelect(br->condition,
+                                 curr->condition,
                                  LiteralUtils::makeZero(i32, *getModule()));
           }
           br->finalize();
@@ -893,14 +919,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // This is always helpful for code size, but can be a tradeoff with
         // performance as we run both code paths. So when shrinking we always
         // try to do this, but otherwise must consider more carefully.
-        if (!passOptions.shrinkLevel) {
-          // Consider the cost of executing all the code unconditionally
-          const auto MAX_COST = 7;
-          auto total =
-            CostAnalyzer(iff->ifTrue).cost + CostAnalyzer(iff->ifFalse).cost;
-          if (total >= MAX_COST) {
-            return nullptr;
-          }
+        if (tooCostlyToRunUnconditionally(passOptions,
+                                          iff->ifTrue,
+                                          iff->ifFalse)) {
+          return nullptr;
         }
         // Check if side effects allow this.
         EffectAnalyzer condition(passOptions, iff->condition);
