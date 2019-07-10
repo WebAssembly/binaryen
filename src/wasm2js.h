@@ -42,6 +42,7 @@
 #include "mixed_arena.h"
 #include "passes/passes.h"
 #include "support/base64.h"
+#include "support/file.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
@@ -123,6 +124,7 @@ public:
     bool pedantic = false;
     bool allowAsserts = false;
     bool emscripten = false;
+    std::string symbolsFile;
   };
 
   Wasm2JSBuilder(Flags f, PassOptions options_) : flags(f), options(options_) {
@@ -328,6 +330,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.add("remove-unused-module-elements");
     runner.setDebug(flags.debug);
     runner.run();
+  }
+
+  if (flags.symbolsFile.size() > 0) {
+    Output out(flags.symbolsFile, wasm::Flags::Text, wasm::Flags::Release);
+    Index i = 0;
+    for (auto& func : wasm->functions) {
+      out.getStream() << i++ << ':' << func->name.str << '\n';
+    }
   }
 
 #ifndef NDEBUG
