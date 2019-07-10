@@ -32,7 +32,8 @@ NANS = True
 # simd: known issues with d8
 # atomics, bulk memory: doesn't work in wasm2js
 # truncsat: https://github.com/WebAssembly/binaryen/issues/2198
-FEATURE_OPTS = ['--all-features', '--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int']
+# tail-call: WIP
+FEATURE_OPTS = ['--all-features', '--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call']
 
 FUZZ_OPTS = []
 

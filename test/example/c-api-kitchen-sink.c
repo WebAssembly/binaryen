@@ -459,12 +459,20 @@ void test_core() {
     BinaryenDrop(module, BinaryenLocalTee(module, 0, makeInt32(module, 102))),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1)),
     BinaryenLoad(module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8)),
-    BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2)),
-    BinaryenLoad(module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9)),
+    BinaryenLoad(
+      module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2)),
+    BinaryenLoad(
+      module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9)),
     BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32()),
     BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64()),
     BinaryenSelect(module, temp10, temp11, temp12),
     BinaryenReturn(module, makeInt32(module, 1337)),
+    // Tail call
+    BinaryenReturnCall(
+      module, "kitchen()sinker", callOperands4, 4, BinaryenTypeInt32()),
+    BinaryenReturnCallIndirect(
+      module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF"),
+
     // TODO: Host
     BinaryenNop(module),
     BinaryenUnreachable(module),

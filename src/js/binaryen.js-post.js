@@ -450,6 +450,16 @@ function wrapModule(module, self) {
       return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
     });
   };
+  self['returnCall'] = function(name, operands, type) {
+    return preserveStack(function() {
+      return Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
+    });
+  };
+  self['returnCallIndirect'] = function(target, operands, type) {
+    return preserveStack(function() {
+      return Module['_BinaryenReturnCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
+    });
+  };
 
   self['local'] = {
     'get': function(index, type) {
