@@ -205,7 +205,7 @@ class CompareVMs(TestCaseHandler):
 class FuzzExec(TestCaseHandler):
   def handle_pair(self, before_wasm, after_wasm, opts):
     # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
-    run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'])
+    run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'] + opts)
 
 
 # Check for determinism - the same command must have the same output
