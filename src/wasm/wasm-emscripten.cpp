@@ -311,15 +311,6 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   return growFunction;
 }
 
-void EmscriptenGlueGenerator::generateStackInitialization(Address addr) {
-  auto* stackPointer = getStackPointerGlobal();
-  assert(!stackPointer->imported());
-  if (!stackPointer->init || !stackPointer->init->is<Const>()) {
-    Fatal() << "stack pointer global is not assignable";
-  }
-  stackPointer->init->cast<Const>()->value = Literal(int32_t(addr));
-}
-
 inline void exportFunction(Module& wasm, Name name, bool must_export) {
   if (!wasm.getFunctionOrNull(name)) {
     assert(!must_export);

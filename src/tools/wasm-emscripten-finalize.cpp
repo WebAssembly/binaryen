@@ -49,7 +49,6 @@ int main(int argc, const char* argv[]) {
   bool isSideModule = false;
   bool legalizeJavaScriptFFI = true;
   uint64_t globalBase = INVALID_BASE;
-  uint64_t initialStackPointer = INVALID_BASE;
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
   options
@@ -78,13 +77,13 @@ int main(int argc, const char* argv[]) {
          [&globalBase](Options*, const std::string& argument) {
            globalBase = std::stoull(argument);
          })
+    // TODO(sbc): Remove this one this argument is no longer passed by
+    // emscripten. See https://github.com/emscripten-core/emscripten/issues/8905
     .add("--initial-stack-pointer",
          "",
-         "The initial location of the stack pointer",
+         "ignored - will be removed in a future release",
          Options::Arguments::One,
-         [&initialStackPointer](Options*, const std::string& argument) {
-           initialStackPointer = std::stoull(argument);
-         })
+         [](Options*, const std::string& argument) {})
     .add("--side-module",
          "",
          "Input is an emscripten side module",
@@ -169,9 +168,6 @@ int main(int argc, const char* argv[]) {
     if (globalBase == INVALID_BASE) {
       Fatal() << "globalBase must be set";
     }
-    if (initialStackPointer == INVALID_BASE) {
-      Fatal() << "initialStackPointer must be set";
-    }
     Export* dataEndExport = wasm.getExport("__data_end");
     if (dataEndExport == nullptr) {
       Fatal() << "__data_end export not found";
@@ -210,7 +206,6 @@ int main(int argc, const char* argv[]) {
   } else {
     generator.generateRuntimeFunctions();
     generator.generateMemoryGrowthFunction();
-    generator.generateStackInitialization(initialStackPointer);
     // For side modules these gets called via __post_instantiate
     if (Function* F = generator.generateAssignGOTEntriesFunction()) {
       auto* ex = new Export();
