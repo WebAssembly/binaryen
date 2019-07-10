@@ -171,9 +171,9 @@ struct PassRunner {
     doAdd(pass);
   }
 
-  template<class P> void add() { doAdd(new P()); }
-
-  template<class P, class Arg> void add(Arg arg) { doAdd(new P(arg)); }
+  template<class P, class... Args> void add(Args&&... args) {
+    doAdd(new P(std::forward<Args>(args)...));
+  }
 
   // Adds the default set of optimization passes; this is
   // what -O does.

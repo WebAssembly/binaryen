@@ -15,6 +15,18 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- wasm-emscripten-finalize: For -pie binaries that import a mutable stack
+  pointer we internalize this an import it as immutable.
+
+v86
+---
+
+- The --initial-stack-pointer argument to wasm-emscripten-finalize no longer
+  has any effect.  It will be removed completely in future release.
+
+v85
+---
+
 - Wast file parsing rules now don't allow a few invalid formats for typeuses
   that were previously allowed. Typeuse entries should follow this format,
   meaning they should have (type) -> (param) -> (result) order if more than one

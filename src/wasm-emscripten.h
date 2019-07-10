@@ -34,7 +34,6 @@ public:
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
-  void generateStackInitialization(Address addr);
   void generatePostInstantiateFunction();
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
@@ -44,6 +43,10 @@ public:
   // Convert stack pointer access from global.get/global.set to calling save
   // and restore functions.
   void replaceStackPointerGlobal();
+
+  // Remove the import of a mutable __stack_pointer and instead initialize the
+  // stack pointer from an immutable import.
+  void internalizeStackPointerGlobal();
 
   std::string
   generateEmscriptenMetadata(Address staticBump,

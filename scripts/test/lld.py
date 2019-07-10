@@ -25,7 +25,7 @@ def args_for_finalize(filename):
    if 'shared' in filename:
      return ['--side-module']
    else:
-     return ['--global-base=568', '--initial-stack-pointer=16384']
+     return ['--global-base=568']
 
 
 def test_wasm_emscripten_finalize():
