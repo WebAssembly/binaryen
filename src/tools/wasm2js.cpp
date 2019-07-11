@@ -843,7 +843,9 @@ int main(int argc, const char* argv[]) {
       "",
       "Emit a symbols file that maps function indexes to their original names",
       Options::Arguments::One,
-      [&](Options* o, const std::string& argument) { flags.symbolsFile = argument; })
+      [&](Options* o, const std::string& argument) {
+        flags.symbolsFile = argument;
+      })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
