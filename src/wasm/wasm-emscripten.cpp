@@ -444,6 +444,8 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   wasm.removeGlobal(stackPointer->name);
 }
 
+const Address UNKNOWN_OFFSET(uint32_t(-1));
+
 std::vector<Address> getSegmentOffsets(Module& wasm) {
   std::unordered_map<Index, Address> passiveOffsets;
   if (wasm.features.hasBulkMemory()) {
@@ -476,7 +478,7 @@ std::vector<Address> getSegmentOffsets(Module& wasm) {
         segmentOffsets.push_back(it->second);
       } else {
         // This was a non-constant offset (perhaps TLS)
-        segmentOffsets.push_back(0);
+        segmentOffsets.push_back(UNKNOWN_OFFSET);
       }
     } else if (auto* addrConst = segment.offset->dynCast<Const>()) {
       auto address = addrConst->value.geti32();
@@ -484,7 +486,7 @@ std::vector<Address> getSegmentOffsets(Module& wasm) {
     } else {
       // TODO(sbc): Wasm shared libraries have data segments with non-const
       // offset.
-      segmentOffsets.push_back(0);
+      segmentOffsets.push_back(UNKNOWN_OFFSET);
     }
   }
   return segmentOffsets;
@@ -525,7 +527,7 @@ const char* stringAtAddr(Module& wasm,
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
     Memory::Segment& segment = wasm.memory.segments[i];
     Address offset = segmentOffsets[i];
-    if (offset != 0 && address >= offset &&
+    if (offset != UNKNOWN_OFFSET && address >= offset &&
         address < offset + segment.data.size()) {
       return &segment.data[address - offset];
     }
