@@ -319,21 +319,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // If running the br's condition unconditionally is too expensive,
             // give up.
             auto* zero = LiteralUtils::makeZero(i32, *getModule());
-            if (tooCostlyToRunUnconditionally(getPassOptions(), br->condition, zero)) {
+            if (tooCostlyToRunUnconditionally(
+                  getPassOptions(), br->condition, zero)) {
               return;
             }
             // Of course we can't do this if the br's condition has side
             // effects, as we would then execute those unconditionally.
-            if (EffectAnalyzer(getPassOptions(), br->condition).hasSideEffects()) {
+            if (EffectAnalyzer(getPassOptions(), br->condition)
+                  .hasSideEffects()) {
               return;
             }
             Builder builder(*getModule());
             // Note that we use the br's condition as the select condition.
             // That keeps the order of the two conditions as it was originally.
             br->condition =
-              builder.makeSelect(br->condition,
-                                 curr->condition,
-                                 zero);
+              builder.makeSelect(br->condition, curr->condition, zero);
           }
           br->finalize();
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
@@ -917,9 +917,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // This is always helpful for code size, but can be a tradeoff with
         // performance as we run both code paths. So when shrinking we always
         // try to do this, but otherwise must consider more carefully.
-        if (tooCostlyToRunUnconditionally(passOptions,
-                                          iff->ifTrue,
-                                          iff->ifFalse)) {
+        if (tooCostlyToRunUnconditionally(
+              passOptions, iff->ifTrue, iff->ifFalse)) {
           return nullptr;
         }
         // Check if side effects allow this.
