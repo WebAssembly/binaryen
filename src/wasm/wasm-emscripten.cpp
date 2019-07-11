@@ -65,7 +65,7 @@ Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
   // linker could export it by name?
   for (auto& g : wasm.globals) {
     if (g->imported()) {
-      if (g->base == "__stack_pointer") {
+      if (g->base == STACK_POINTER) {
         return g.get();
       }
     } else if (!isExported(wasm, g->name)) {
