@@ -525,7 +525,8 @@ const char* stringAtAddr(Module& wasm,
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
     Memory::Segment& segment = wasm.memory.segments[i];
     Address offset = segmentOffsets[i];
-    if (address >= offset && address < offset + segment.data.size()) {
+    if (offset != 0 && address >= offset &&
+        address < offset + segment.data.size()) {
       return &segment.data[address - offset];
     }
   }
