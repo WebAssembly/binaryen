@@ -25,6 +25,7 @@ extern Name GROW_WASM_MEMORY;
 extern Name WASM_CALL_CTORS;
 extern Name MEMORY_BASE;
 extern Name TABLE_BASE;
+extern Name STACK_POINTER;
 extern Name GET_TEMP_RET0;
 extern Name SET_TEMP_RET0;
 extern Name NEW_SIZE;
