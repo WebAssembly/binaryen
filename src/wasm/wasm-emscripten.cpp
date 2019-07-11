@@ -445,11 +445,11 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
 }
 
 std::vector<Address> getSegmentOffsets(Module& wasm) {
-  std::unordered_map<unsigned, Address> passiveOffsets;
+  std::unordered_map<Index, Address> passiveOffsets;
   if (wasm.features.hasBulkMemory()) {
     // Fetch passive segment offsets out of memory.init instructions
     struct OffsetSearcher : PostWalker<OffsetSearcher> {
-      std::unordered_map<unsigned, Address>& offsets;
+      std::unordered_map<Index, Address>& offsets;
       OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
         : offsets(offsets) {}
       void visitMemoryInit(MemoryInit* curr) {
