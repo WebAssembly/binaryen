@@ -2431,4 +2431,55 @@
    )
   )
  )
+ (func $if_br_if (; 115 ;) (type $1)
+  (local $0 i32)
+  (block $label$1
+   (br_if $label$1
+    (select
+     (local.tee $0
+      (i32.const 1024)
+     )
+     (i32.const 0)
+     (i32.eqz
+      (i32.const -4)
+     )
+    )
+   )
+   (br_if $label$1
+    (select
+     (i32.const 1025)
+     (i32.const 0)
+     (i32.eqz
+      (i32.const -5)
+     )
+    )
+   )
+   (br_if $label$1
+    (select
+     (local.tee $0
+      (i32.const 1025)
+     )
+     (i32.const 0)
+     (i32.eqz
+      (i32.const -6)
+     )
+    )
+   )
+   (if
+    (i32.const 1026)
+    (br_if $label$1
+     (local.tee $0
+      (i32.const -7)
+     )
+    )
+   )
+   (i32.store
+    (i32.const 1024)
+    (i32.add
+     (local.get $0)
+     (i32.const 1)
+    )
+   )
+  )
+ )
 )

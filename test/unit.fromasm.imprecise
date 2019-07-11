@@ -693,19 +693,17 @@
   )
  )
  (func $loophi (; 44 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
-  (local $2 i32)
   (loop $while-in
    (block $while-out
     (call $loophi
      (local.get $0)
      (i32.const 0)
     )
-    (if
-     (local.tee $2
+    (br_if $while-out
+     (select
       (local.get $0)
-     )
-     (br_if $while-out
-      (local.get $2)
+      (i32.const 0)
+      (local.get $0)
      )
     )
     (br_if $while-in
@@ -735,9 +733,10 @@
      (local.set $2
       (local.get $0)
      )
-     (if
-      (call $return_int)
-      (br_if $label$break$L7
+     (br_if $label$break$L7
+      (select
+       (call $return_int)
+       (i32.const 0)
        (local.get $2)
       )
      )
@@ -767,9 +766,10 @@
      (local.set $1
       (local.get $0)
      )
-     (if
-      (call $return_int)
-      (br_if $label$break$L7
+     (br_if $label$break$L7
+      (select
+       (call $return_int)
+       (i32.const 0)
        (local.get $1)
       )
      )

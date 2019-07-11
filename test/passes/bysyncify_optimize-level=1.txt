@@ -1244,11 +1244,12 @@
        )
       )
      )
-     (if
-      (i32.eqz
-       (global.get $__bysyncify_state)
-      )
-      (br_if $l
+     (br_if $l
+      (select
+       (i32.eqz
+        (global.get $__bysyncify_state)
+       )
+       (i32.const 0)
        (local.get $0)
       )
      )

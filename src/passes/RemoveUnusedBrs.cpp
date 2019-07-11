@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/literal-utils.h>
 #include <ir/utils.h>
 #include <parsing.h>
 #include <pass.h>
@@ -47,6 +48,23 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
     return false;
   }
   return !EffectAnalyzer(options, ifCondition).invalidates(value);
+}
+
+// Check if it is not worth it to run code unconditionally. This
+// assumes we are trying to run two expressions where previously
+// only one of the two might have executed. We assume here that
+// executing both is good for code size.
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Expression* one,
+                                          Expression* two) {
+  // If we care mostly about code size, just do it for that reason.
+  if (passOptions.shrinkLevel) {
+    return false;
+  }
+  // Consider the cost of executing all the code unconditionally.
+  const auto TOO_MUCH = 7;
+  auto total = CostAnalyzer(one).cost + CostAnalyzer(two).cost;
+  return total >= TOO_MUCH;
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
@@ -283,12 +301,40 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   void visitIf(If* curr) {
     if (!curr->ifFalse) {
-      // if without an else. try to reduce   if (condition) br  =>  br_if
-      // (condition)
-      Break* br = curr->ifTrue->dynCast<Break>();
-      if (br && !br->condition) { // TODO: if there is a condition, join them
+      // if without an else. try to reduce
+      //    if (condition) br  =>  br_if (condition)
+      if (Break* br = curr->ifTrue->dynCast<Break>()) {
         if (canTurnIfIntoBrIf(curr->condition, br->value, getPassOptions())) {
-          br->condition = curr->condition;
+          if (!br->condition) {
+            br->condition = curr->condition;
+          } else {
+            // In this case we can replace
+            //   if (condition1) br_if (condition2)
+            // =>
+            //   br_if select (condition1) (condition2) (i32.const 0)
+            // In other words, we replace an if (3 bytes) with a select and a
+            // zero (also 3 bytes). The size is unchanged, but the select may
+            // be further optimizable, and if select does not branch we also
+            // avoid one branch.
+            // If running the br's condition unconditionally is too expensive,
+            // give up.
+            auto* zero = LiteralUtils::makeZero(i32, *getModule());
+            if (tooCostlyToRunUnconditionally(
+                  getPassOptions(), br->condition, zero)) {
+              return;
+            }
+            // Of course we can't do this if the br's condition has side
+            // effects, as we would then execute those unconditionally.
+            if (EffectAnalyzer(getPassOptions(), br->condition)
+                  .hasSideEffects()) {
+              return;
+            }
+            Builder builder(*getModule());
+            // Note that we use the br's condition as the select condition.
+            // That keeps the order of the two conditions as it was originally.
+            br->condition =
+              builder.makeSelect(br->condition, curr->condition, zero);
+          }
           br->finalize();
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
@@ -871,14 +917,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // This is always helpful for code size, but can be a tradeoff with
         // performance as we run both code paths. So when shrinking we always
         // try to do this, but otherwise must consider more carefully.
-        if (!passOptions.shrinkLevel) {
-          // Consider the cost of executing all the code unconditionally
-          const auto MAX_COST = 7;
-          auto total =
-            CostAnalyzer(iff->ifTrue).cost + CostAnalyzer(iff->ifFalse).cost;
-          if (total >= MAX_COST) {
-            return nullptr;
-          }
+        if (tooCostlyToRunUnconditionally(
+              passOptions, iff->ifTrue, iff->ifFalse)) {
+          return nullptr;
         }
         // Check if side effects allow this.
         EffectAnalyzer condition(passOptions, iff->condition);

@@ -10223,13 +10223,18 @@
              )
             )
             (block
-             (if
-              (local.tee $3
-               (i32.load
-                (i32.const 616)
+             (br_if $label$break$L279
+              (select
+               (i32.eqz
+                (i32.eqz
+                 (local.tee $3
+                  (i32.load
+                   (i32.const 616)
+                  )
+                 )
+                )
                )
-              )
-              (br_if $label$break$L279
+               (i32.const 0)
                (i32.or
                 (i32.le_u
                  (local.get $12)
