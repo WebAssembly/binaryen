@@ -838,6 +838,14 @@ int main(int argc, const char* argv[]) {
       "form)",
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { flags.emscripten = true; })
+    .add(
+      "--symbols-file",
+      "",
+      "Emit a symbols file that maps function indexes to their original names",
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) {
+        flags.symbolsFile = argument;
+      })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
