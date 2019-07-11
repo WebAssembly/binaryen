@@ -36,7 +36,7 @@ def test_wasm_emscripten_finalize():
     is_passive = '.passive.' in wast_path
     mem_file = wast_path + '.mem'
     extension_arg_map = {
-      '.out': [] ,
+        '.out': [],
     }
     if not is_passive:
       extension_arg_map.update({
@@ -60,7 +60,6 @@ def test_wasm_emscripten_finalize():
           mem = mf.read()
           fail_if_not_identical_to_file(mem, wast_path + '.mem.mem')
         os.remove(mem_file)
-
 
 
 def update_lld_tests():
