@@ -486,7 +486,7 @@ std::vector<Address> getSegmentOffsets(Module& wasm) {
     } else {
       // TODO(sbc): Wasm shared libraries have data segments with non-const
       // offset.
-      segmentOffsets.push_back(UNKNOWN_OFFSET);
+      segmentOffsets.push_back(0);
     }
   }
   return segmentOffsets;
