@@ -10225,13 +10225,9 @@
             (block
              (br_if $label$break$L279
               (select
-               (i32.eqz
-                (i32.eqz
-                 (local.tee $3
-                  (i32.load
-                   (i32.const 616)
-                  )
-                 )
+               (local.tee $3
+                (i32.load
+                 (i32.const 616)
                 )
                )
                (i32.const 0)

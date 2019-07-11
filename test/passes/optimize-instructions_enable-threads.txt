@@ -3293,6 +3293,16 @@
    )
   )
  )
+ (func $select-into-arms (; 77 ;) (type $FUNCSIG$vii) (param $x i32) (param $y i32)
+  (if
+   (select
+    (local.get $x)
+    (local.get $y)
+    (local.get $y)
+   )
+   (unreachable)
+  )
+ )
 )
 (module
  (type $FUNCSIG$v (func))

@@ -975,6 +975,9 @@ private:
         iff->ifTrue = optimizeBoolean(iff->ifTrue);
         iff->ifFalse = optimizeBoolean(iff->ifFalse);
       }
+    } else if (auto* select = boolean->dynCast<Select>()) {
+      select->ifTrue = optimizeBoolean(select->ifTrue);
+      select->ifFalse = optimizeBoolean(select->ifFalse);
     }
     // TODO: recurse into br values?
     return boolean;
