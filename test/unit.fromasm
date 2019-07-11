@@ -747,9 +747,9 @@
      )
      (br_if $label$break$L7
       (select
-       (local.get $2)
-       (i32.const 0)
        (call $return_int)
+       (i32.const 0)
+       (local.get $2)
       )
      )
      (br_if $while-in
@@ -780,9 +780,9 @@
      )
      (br_if $label$break$L7
       (select
-       (local.get $1)
-       (i32.const 0)
        (call $return_int)
+       (i32.const 0)
+       (local.get $1)
       )
      )
      (br_if $while-in

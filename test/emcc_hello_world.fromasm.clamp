@@ -7446,7 +7446,6 @@
   (local $16 i32)
   (local $17 i32)
   (local $18 i32)
-  (local $19 i32)
   (local.set $0
    (if (result i32)
     (i32.lt_u
@@ -10356,9 +10355,9 @@
              (local.get $6)
             )
            )
-           (local.set $4
+           (local.set $12
             (i32.add
-             (local.tee $3
+             (local.tee $4
               (i32.load
                (i32.const 608)
               )
@@ -10380,19 +10379,25 @@
             (block
              (br_if $label$break$L279
               (select
-               (i32.or
-                (i32.le_u
-                 (local.get $4)
-                 (local.get $3)
-                )
-                (i32.gt_u
-                 (local.get $4)
-                 (local.get $19)
+               (i32.eqz
+                (i32.eqz
+                 (local.tee $3
+                  (i32.load
+                   (i32.const 616)
+                  )
+                 )
                 )
                )
                (i32.const 0)
-               (i32.load
-                (i32.const 616)
+               (i32.or
+                (i32.le_u
+                 (local.get $12)
+                 (local.get $4)
+                )
+                (i32.gt_u
+                 (local.get $12)
+                 (local.get $3)
+                )
                )
               )
              )

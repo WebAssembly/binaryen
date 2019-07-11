@@ -51,23 +51,20 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
 }
 
 // Check if it is not worth it to run code unconditionally. This
-// assumes we are trying to run one or two expressions that might
-// before have not executed or only one of them executed, and that
-// executing them unconditionally is good for code size.
+// assumes we are trying to run two expressions where previously
+// only one of the two might have executed. We assume here that
+// executing both is good for code size.
 static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
-                                          Expression* expr,
-                                          Expression* other = nullptr) {
+                                          Expression* one,
+                                          Expression* two) {
   // If we care mostly about code size, just do it for that reason.
   if (passOptions.shrinkLevel) {
-    return true;
+    return false;
   }
   // Consider the cost of executing all the code unconditionally.
-  const auto MAX_COST = 7;
-  auto total = CostAnalyzer(expr).cost;
-  if (other) {
-    total += CostAnalyzer(other).cost;
-  }
-  return total < MAX_COST;
+  const auto TOO_MUCH = 7;
+  auto total = CostAnalyzer(one).cost + CostAnalyzer(two).cost;
+  return total >= TOO_MUCH;
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
@@ -321,7 +318,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // avoid one branch.
             // If running the br's condition unconditionally is too expensive,
             // give up.
-            if (tooCostlyToRunUnconditionally(getPassOptions(), br->condition)) {
+            auto* zero = LiteralUtils::makeZero(i32, *getModule());
+            if (tooCostlyToRunUnconditionally(getPassOptions(), br->condition, zero)) {
               return;
             }
             // Of course we can't do this if the br's condition has side
@@ -335,7 +333,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             br->condition =
               builder.makeSelect(br->condition,
                                  curr->condition,
-                                 LiteralUtils::makeZero(i32, *getModule()));
+                                 zero);
           }
           br->finalize();
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
