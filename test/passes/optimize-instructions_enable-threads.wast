@@ -3738,6 +3738,16 @@
     ))
     ;; TODO: more stuff here
   )
+  (func $select-into-arms (param $x i32) (param $y i32)
+    (if
+      (select
+        (i32.eqz (i32.eqz (local.get $x)))
+        (i32.eqz (i32.eqz (local.get $y)))
+        (local.get $y)
+      )
+      (unreachable)
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

@@ -939,6 +939,7 @@ private:
 
   // Optimize given that the expression is flowing into a boolean context
   Expression* optimizeBoolean(Expression* boolean) {
+    // TODO use a general getFallthroughs
     if (auto* unary = boolean->dynCast<Unary>()) {
       if (unary && unary->op == EqZInt32) {
         auto* unary2 = unary->value->dynCast<Unary>();
@@ -975,6 +976,9 @@ private:
         iff->ifTrue = optimizeBoolean(iff->ifTrue);
         iff->ifFalse = optimizeBoolean(iff->ifFalse);
       }
+    } else if (auto* select = boolean->dynCast<Select>()) {
+      select->ifTrue = optimizeBoolean(select->ifTrue);
+      select->ifFalse = optimizeBoolean(select->ifFalse);
     }
     // TODO: recurse into br values?
     return boolean;
