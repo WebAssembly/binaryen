@@ -12,7 +12,6 @@ import { setTempRet0 } from 'env';
   }
       
 function asmFunc(global, env, buffer) {
- "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -839,7 +838,6 @@ import { getTempRet0 } from 'env';
   }
       
 function asmFunc(global, env, buffer) {
- "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -1660,7 +1658,6 @@ export var no_dce_i64_rem_u = retasmFunc.no_dce_i64_rem_u;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
- "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -1901,7 +1898,6 @@ export var no_dce_i64_trunc_u_f64 = retasmFunc.no_dce_i64_trunc_u_f64;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
- "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);

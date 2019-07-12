@@ -63,8 +63,6 @@ cashew::IString SQRT("sqrt");
 cashew::IString POW("pow");
 cashew::IString I32_TEMP("asm2wasm_i32_temp");
 cashew::IString DEBUGGER("debugger");
-cashew::IString USE_ASM("use asm");
-cashew::IString ALMOST_ASM("almost asm");
 cashew::IString BUFFER("buffer");
 cashew::IString ENV("env");
 cashew::IString STACKTOP("STACKTOP");
