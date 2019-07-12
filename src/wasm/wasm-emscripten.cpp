@@ -444,10 +444,43 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   wasm.removeGlobal(stackPointer->name);
 }
 
+const Address UNKNOWN_OFFSET(uint32_t(-1));
+
 std::vector<Address> getSegmentOffsets(Module& wasm) {
+  std::unordered_map<Index, Address> passiveOffsets;
+  if (wasm.features.hasBulkMemory()) {
+    // Fetch passive segment offsets out of memory.init instructions
+    struct OffsetSearcher : PostWalker<OffsetSearcher> {
+      std::unordered_map<Index, Address>& offsets;
+      OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
+        : offsets(offsets) {}
+      void visitMemoryInit(MemoryInit* curr) {
+        auto* dest = curr->dest->dynCast<Const>();
+        if (!dest) {
+          return;
+        }
+        auto it = offsets.find(curr->segment);
+        if (it != offsets.end()) {
+          Fatal() << "Cannot get offset of passive segment initialized "
+                     "multiple times";
+        }
+        offsets[curr->segment] = dest->value.geti32();
+      }
+    } searcher(passiveOffsets);
+    searcher.walkModule(&wasm);
+  }
   std::vector<Address> segmentOffsets;
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    if (auto* addrConst = wasm.memory.segments[i].offset->dynCast<Const>()) {
+    auto& segment = wasm.memory.segments[i];
+    if (segment.isPassive) {
+      auto it = passiveOffsets.find(i);
+      if (it != passiveOffsets.end()) {
+        segmentOffsets.push_back(it->second);
+      } else {
+        // This was a non-constant offset (perhaps TLS)
+        segmentOffsets.push_back(UNKNOWN_OFFSET);
+      }
+    } else if (auto* addrConst = segment.offset->dynCast<Const>()) {
       auto address = addrConst->value.geti32();
       segmentOffsets.push_back(address);
     } else {
@@ -494,7 +527,8 @@ const char* stringAtAddr(Module& wasm,
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
     Memory::Segment& segment = wasm.memory.segments[i];
     Address offset = segmentOffsets[i];
-    if (address >= offset && address < offset + segment.data.size()) {
+    if (offset != UNKNOWN_OFFSET && address >= offset &&
+        address < offset + segment.data.size()) {
       return &segment.data[address - offset];
     }
   }

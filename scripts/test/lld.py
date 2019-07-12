@@ -33,11 +33,15 @@ def test_wasm_emscripten_finalize():
 
   for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
     print '..', wast_path
+    is_passive = '.passive.' in wast_path
     mem_file = wast_path + '.mem'
     extension_arg_map = {
-      '.out': [],
-      '.mem.out': ['--separate-data-segments', mem_file],
+        '.out': [],
     }
+    if not is_passive:
+      extension_arg_map.update({
+          '.mem.out': ['--separate-data-segments', mem_file],
+      })
     for ext, ext_args in extension_arg_map.items():
       expected_file = wast_path + ext
       if ext != '.out' and not os.path.exists(expected_file):
@@ -63,11 +67,15 @@ def update_lld_tests():
 
   for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
     print '..', wast_path
+    is_passive = '.passive.' in wast_path
     mem_file = wast_path + '.mem'
     extension_arg_map = {
       '.out': [],
-      '.mem.out': ['--separate-data-segments', mem_file + '.mem'],
     }
+    if not is_passive:
+      extension_arg_map.update({
+          '.mem.out': ['--separate-data-segments', mem_file + '.mem'],
+      })
     for ext, ext_args in extension_arg_map.items():
       out_path = wast_path + ext
       if ext != '.out' and not os.path.exists(out_path):
