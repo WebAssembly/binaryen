@@ -30,7 +30,7 @@
 )
 
 (assert_invalid
-  (module (event $e (attr 0) (param except_ref)))
+  (module (event $e (attr 0) (param exnref)))
   "Values in an event should have integer or float type"
 )
 

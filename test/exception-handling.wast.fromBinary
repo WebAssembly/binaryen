@@ -1,7 +1,7 @@
 (module
- (type $0 (func (param except_ref) (result except_ref)))
+ (type $0 (func (param exnref) (result exnref)))
  (memory $0 1 1)
- (func $except_ref_test (; 0 ;) (type $0) (param $0 except_ref) (result except_ref)
+ (func $exnref_test (; 0 ;) (type $0) (param $0 exnref) (result exnref)
   (local.get $0)
  )
 )

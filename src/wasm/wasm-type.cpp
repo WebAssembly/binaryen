@@ -36,8 +36,8 @@ const char* printType(Type type) {
       return "f64";
     case Type::v128:
       return "v128";
-    case Type::except_ref:
-      return "except_ref";
+    case Type::exnref:
+      return "exnref";
     case Type::unreachable:
       return "unreachable";
   }
@@ -56,7 +56,7 @@ unsigned getTypeSize(Type type) {
       return 8;
     case Type::v128:
       return 16;
-    case Type::except_ref: // except_ref type is opaque
+    case Type::exnref: // exnref type is opaque
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE();
@@ -68,7 +68,7 @@ FeatureSet getFeatures(Type type) {
   if (type == v128) {
     return FeatureSet::SIMD;
   }
-  if (type == except_ref) {
+  if (type == exnref) {
     return FeatureSet::ExceptionHandling;
   }
   return FeatureSet();
@@ -118,7 +118,7 @@ bool isVectorType(Type type) { return type == v128; }
 
 bool isReferenceType(Type type) {
   // TODO Add other reference types later
-  return type == except_ref;
+  return type == exnref;
 }
 
 Type reinterpretType(Type type) {
@@ -132,7 +132,7 @@ Type reinterpretType(Type type) {
     case Type::f64:
       return i64;
     case Type::v128:
-    case Type::except_ref:
+    case Type::exnref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE();

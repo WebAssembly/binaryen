@@ -1085,8 +1085,8 @@ Type WasmBinaryBuilder::getType() {
       return f64;
     case BinaryConsts::EncodedType::v128:
       return v128;
-    case BinaryConsts::EncodedType::except_ref:
-      return except_ref;
+    case BinaryConsts::EncodedType::exnref:
+      return exnref;
     default: { throwError("invalid wasm type: " + std::to_string(type)); }
   }
   WASM_UNREACHABLE();
