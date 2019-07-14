@@ -184,7 +184,7 @@ export_function "_BinaryenTypeInt64"
 export_function "_BinaryenTypeFloat32"
 export_function "_BinaryenTypeFloat64"
 export_function "_BinaryenTypeVec128"
-export_function "_BinaryenTypeExceptRef"
+export_function "_BinaryenTypeExnref"
 export_function "_BinaryenTypeUnreachable"
 export_function "_BinaryenTypeAuto"
 

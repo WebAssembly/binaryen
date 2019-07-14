@@ -1,6 +1,6 @@
 (module
  (memory 1 1)
- (func $except_ref_test (param $0 except_ref) (result except_ref)
+ (func $exnref_test (param $0 exnref) (result exnref)
   (local.get $0)
  )
 )

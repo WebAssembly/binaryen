@@ -80,7 +80,7 @@ public:
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0))}});
-      case Type::except_ref: // there's no except_ref literals
+      case Type::exnref: // there's no exnref literals
       case none:
       case unreachable:
         WASM_UNREACHABLE();
@@ -430,7 +430,7 @@ template<> struct less<wasm::Literal> {
         return a.reinterpreti64() < b.reinterpreti64();
       case wasm::Type::v128:
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
-      case wasm::Type::except_ref: // except_ref is an opaque value
+      case wasm::Type::exnref: // exnref is an opaque value
       case wasm::Type::none:
       case wasm::Type::unreachable:
         return false;
