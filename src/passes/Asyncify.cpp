@@ -982,21 +982,21 @@ struct Asyncify : public Pass {
       runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
 
     // Scan the module.
-    ModuleAnalyzer analyzer(
-      *module,
-      [&](Name module, Name base) {
-        if (allImportsCanChangeState) {
-          return true;
-        }
-        std::string full = std::string(module.str) + '.' + base.str;
-        for (auto& listedImport : listedImports) {
-          if (String::wildcardMatch(listedImport, full)) {
-            return true;
-          }
-        }
-        return false;
-      },
-      ignoreIndirect == "");
+    ModuleAnalyzer analyzer(*module,
+                            [&](Name module, Name base) {
+                              if (allImportsCanChangeState) {
+                                return true;
+                              }
+                              std::string full =
+                                std::string(module.str) + '.' + base.str;
+                              for (auto& listedImport : listedImports) {
+                                if (String::wildcardMatch(listedImport, full)) {
+                                  return true;
+                                }
+                              }
+                              return false;
+                            },
+                            ignoreIndirect == "");
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
