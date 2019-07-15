@@ -37,7 +37,7 @@ Module['i64'] = Module['_BinaryenTypeInt64']();
 Module['f32'] = Module['_BinaryenTypeFloat32']();
 Module['f64'] = Module['_BinaryenTypeFloat64']();
 Module['v128'] = Module['_BinaryenTypeVec128']();
-Module['except_ref'] = Module['_BinaryenTypeExceptRef']();
+Module['exnref'] = Module['_BinaryenTypeExnref']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 

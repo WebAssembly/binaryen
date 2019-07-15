@@ -1,10 +1,10 @@
 (module
   (memory 1 1)
   (import "spectest" "print" (func $print (param i32)))
-  (import "bysyncify" "start_unwind" (func $bysyncify_start_unwind (param i32)))
-  (import "bysyncify" "stop_unwind" (func $bysyncify_stop_unwind))
-  (import "bysyncify" "start_rewind" (func $bysyncify_start_rewind (param i32)))
-  (import "bysyncify" "stop_rewind" (func $bysyncify_stop_rewind))
+  (import "asyncify" "start_unwind" (func $asyncify_start_unwind (param i32)))
+  (import "asyncify" "stop_unwind" (func $asyncify_stop_unwind))
+  (import "asyncify" "start_rewind" (func $asyncify_start_rewind (param i32)))
+  (import "asyncify" "stop_rewind" (func $asyncify_stop_rewind))
   (global $sleeping (mut i32) (i32.const 0))
   (start $runtime)
   (func $main
@@ -28,11 +28,11 @@
         (global.set $sleeping (i32.const 1))
         (i32.store (i32.const 16) (i32.const 24))
         (i32.store (i32.const 20) (i32.const 1024))
-        (call $bysyncify_start_unwind (i32.const 16))
+        (call $asyncify_start_unwind (i32.const 16))
       )
       (block
         (call $print (i32.const 3000))
-        (call $bysyncify_stop_rewind)
+        (call $asyncify_stop_rewind)
         (global.set $sleeping (i32.const 0))
       )
     )
@@ -46,11 +46,11 @@
     ;; call main the first time, let the stack unwind
     (call $main)
     (call $print (i32.const 200))
-    (call $bysyncify_stop_unwind)
+    (call $asyncify_stop_unwind)
     (call $print (i32.const 300))
     ;; ...can do some async stuff around here...
     ;; set the rewind in motion
-    (call $bysyncify_start_rewind (i32.const 16))
+    (call $asyncify_start_rewind (i32.const 16))
     (call $print (i32.const 400))
     (call $main)
     (call $print (i32.const 500))

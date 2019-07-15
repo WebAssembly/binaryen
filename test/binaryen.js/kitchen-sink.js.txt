@@ -4,7 +4,7 @@ BinaryenTypeInt64: 2
 BinaryenTypeFloat32: 3
 BinaryenTypeFloat64: 4
 BinaryenTypeVec128: 5
-BinaryenTypeExceptRef: 6
+BinaryenTypeExnref: 6
 BinaryenTypeUnreachable: 7
 BinaryenTypeAuto: -1
 Binaryen.Features.MVP: 0

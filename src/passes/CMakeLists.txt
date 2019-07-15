@@ -6,8 +6,8 @@ add_custom_command(
 SET(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
+  Asyncify.cpp
   AvoidReinterprets.cpp
-  Bysyncify.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp

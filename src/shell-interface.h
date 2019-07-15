@@ -114,8 +114,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             break;
           case v128:
             assert(false && "v128 not implemented yet");
-          case except_ref:
-            assert(false && "except_ref not implemented yet");
+          case exnref:
+            assert(false && "exnref not implemented yet");
           case none:
           case unreachable:
             WASM_UNREACHABLE();

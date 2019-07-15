@@ -93,8 +93,8 @@ mkdir -p ${OUT}
   $BINARYEN_SRC/ir/ReFinalize.cpp \
   $BINARYEN_SRC/passes/pass.cpp \
   $BINARYEN_SRC/passes/AlignmentLowering.cpp \
+  $BINARYEN_SRC/passes/Asyncify.cpp \
   $BINARYEN_SRC/passes/AvoidReinterprets.cpp \
-  $BINARYEN_SRC/passes/Bysyncify.cpp \
   $BINARYEN_SRC/passes/CoalesceLocals.cpp \
   $BINARYEN_SRC/passes/DeadArgumentElimination.cpp \
   $BINARYEN_SRC/passes/CodeFolding.cpp \
@@ -184,7 +184,7 @@ export_function "_BinaryenTypeInt64"
 export_function "_BinaryenTypeFloat32"
 export_function "_BinaryenTypeFloat64"
 export_function "_BinaryenTypeVec128"
-export_function "_BinaryenTypeExceptRef"
+export_function "_BinaryenTypeExnref"
 export_function "_BinaryenTypeUnreachable"
 export_function "_BinaryenTypeAuto"
 

@@ -28,12 +28,16 @@ from test.shared import options, NODEJS, V8_OPTS
 
 NANS = True
 
+# feature options that are always passed to the tools.
 # exceptions: https://github.com/WebAssembly/binaryen/issues/2195
 # simd: known issues with d8
 # atomics, bulk memory: doesn't work in wasm2js
 # truncsat: https://github.com/WebAssembly/binaryen/issues/2198
 # tail-call: WIP
-FEATURE_OPTS = ['--all-features', '--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call']
+CONSTANT_FEATURE_OPTS = ['--all-features']
+
+# possible feature options that are sometimes passed to the tools.
+POSSIBLE_FEATURE_OPTS = ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call']
 
 FUZZ_OPTS = []
 
@@ -74,6 +78,21 @@ def randomize_pass_debug():
   else:
     os.environ['BINARYEN_PASS_DEBUG'] = '0'
     del os.environ['BINARYEN_PASS_DEBUG']
+
+
+def randomize_feature_opts():
+  global FEATURE_OPTS
+  FEATURE_OPTS = CONSTANT_FEATURE_OPTS[:]
+  # half the time apply all the possible opts. this lets all test runners work at max
+  # capacity at least half the time, as otherwise if they need almost all the opts, the
+  # chance of getting them is exponentially small.
+  if random.random() < 0.5:
+    FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
+  else:
+    for possible in POSSIBLE_FEATURE_OPTS:
+      if random.random() < 0.5:
+        FEATURE_OPTS.append(possible)
+  print('feature opts:', ' '.join(FEATURE_OPTS))
 
 
 # Test outputs we want to ignore are marked this way.
@@ -146,7 +165,7 @@ def run_bynterp(wasm, args):
 
 
 def run_d8(wasm):
-  return run_vm(['d8', in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
+  return run_vm(['d8'] + V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
 
 
 # Each test case handler receives two wasm files, one before and one after some changes
@@ -159,6 +178,9 @@ class TestCaseHandler:
   def handle_pair(self, before_wasm, after_wasm, opts):
     self.handle(before_wasm)
     self.handle(after_wasm)
+
+  def can_run_on_feature_opts(self, feature_opts):
+    return True
 
 
 # Run VMs and compare results
@@ -199,6 +221,9 @@ class CompareVMs(TestCaseHandler):
       # with nans, we can only compare the binaryen interpreter to itself
       if NANS:
         break
+
+  def can_run_on_feature_opts(self, feature_opts):
+    return all([x in feature_opts for x in ['--disable-simd']])
 
 
 # Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
@@ -245,8 +270,11 @@ class Wasm2JS(TestCaseHandler):
       out = IGNORE
     return out
 
+  def can_run_on_feature_opts(self, feature_opts):
+    return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int']])
 
-class Bysyncify(TestCaseHandler):
+
+class Asyncify(TestCaseHandler):
   def handle_pair(self, before_wasm, after_wasm, opts):
     # we must legalize in order to run in JS
     run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
@@ -256,10 +284,10 @@ class Bysyncify(TestCaseHandler):
 
     # TODO: also something that actually does async sleeps in the code, say
     # on the logging commands?
-    # --remove-unused-module-elements removes the bysyncify intrinsics, which are not valid to call
+    # --remove-unused-module-elements removes the asyncify intrinsics, which are not valid to call
 
-    def do_bysyncify(wasm):
-      cmd = [in_bin('wasm-opt'), wasm, '--bysyncify', '-o', 't.wasm']
+    def do_asyncify(wasm):
+      cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 't.wasm']
       if random.random() < 0.5:
         cmd += ['--optimize-level=%d' % random.randint(1, 3)]
       if random.random() < 0.5:
@@ -267,25 +295,28 @@ class Bysyncify(TestCaseHandler):
       cmd += FEATURE_OPTS
       run(cmd)
       out = run_d8('t.wasm')
-      # emit some status logging from bysyncify
+      # emit some status logging from asyncify
       print(out.splitlines()[-1])
-      # ignore the output from the new bysyncify API calls - the ones with asserts will trap, too
-      for ignore in ['[fuzz-exec] calling $bysyncify_start_unwind\nexception!\n',
-                     '[fuzz-exec] calling $bysyncify_start_unwind\n',
-                     '[fuzz-exec] calling $bysyncify_start_rewind\nexception!\n',
-                     '[fuzz-exec] calling $bysyncify_start_rewind\n',
-                     '[fuzz-exec] calling $bysyncify_stop_rewind\n',
-                     '[fuzz-exec] calling $bysyncify_stop_unwind\n']:
+      # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
+      for ignore in ['[fuzz-exec] calling $asyncify_start_unwind\nexception!\n',
+                     '[fuzz-exec] calling $asyncify_start_unwind\n',
+                     '[fuzz-exec] calling $asyncify_start_rewind\nexception!\n',
+                     '[fuzz-exec] calling $asyncify_start_rewind\n',
+                     '[fuzz-exec] calling $asyncify_stop_rewind\n',
+                     '[fuzz-exec] calling $asyncify_stop_unwind\n']:
         out = out.replace(ignore, '')
-      out = '\n'.join([l for l in out.splitlines() if 'bysyncify: ' not in l])
+      out = '\n'.join([l for l in out.splitlines() if 'asyncify: ' not in l])
       return fix_output(out)
 
-    before_bysyncify = do_bysyncify(before_wasm)
-    after_bysyncify = do_bysyncify(after_wasm)
+    before_asyncify = do_asyncify(before_wasm)
+    after_asyncify = do_asyncify(after_wasm)
 
-    compare(before, after, 'Bysyncify (before/after)')
-    compare(before, before_bysyncify, 'Bysyncify (before/before_bysyncify)')
-    compare(before, after_bysyncify, 'Bysyncify (before/after_bysyncify)')
+    compare(before, after, 'Asyncify (before/after)')
+    compare(before, before_asyncify, 'Asyncify (before/before_asyncify)')
+    compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
+
+  def can_run_on_feature_opts(self, feature_opts):
+    return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd']])
 
 
 # The global list of all test case handlers
@@ -294,13 +325,14 @@ testcase_handlers = [
   FuzzExec(),
   CheckDeterminism(),
   Wasm2JS(),
-  Bysyncify(),
+  Asyncify(),
 ]
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
 def test_one(random_input, opts):
   randomize_pass_debug()
+  randomize_feature_opts()
 
   bytes = 0
 
@@ -320,7 +352,9 @@ def test_one(random_input, opts):
   shutil.copyfile('a.js', 'b.js')
 
   for testcase_handler in testcase_handlers:
-    testcase_handler.handle_pair(before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+    print('running testcase handler:', testcase_handler.__class__.__name__)
+    if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
+      testcase_handler.handle_pair(before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
 
   return bytes
 

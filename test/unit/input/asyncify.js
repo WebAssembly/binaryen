@@ -35,11 +35,11 @@ function sleepTests() {
           view[DATA_ADDR >> 2] = DATA_ADDR + 8;
           // The end of the stack will not be reached here anyhow.
           view[DATA_ADDR + 4 >> 2] = 1024;
-          exports.bysyncify_start_unwind(DATA_ADDR);
+          exports.asyncify_start_unwind(DATA_ADDR);
         } else {
           // We are called as part of a resume/rewind. Stop sleeping.
           console.log('resume...');
-          exports.bysyncify_stop_rewind();
+          exports.asyncify_stop_rewind();
           // The stack should have been all used up, and so returned to the original state.
           assert(view[DATA_ADDR >> 2] == DATA_ADDR + 8);
           assert(view[DATA_ADDR + 4 >> 2] == 1024);
@@ -77,19 +77,19 @@ function sleepTests() {
 
     if (expectedSleeps > 0) {
       assert(!result, 'results during sleep are meaningless, just 0');
-      exports.bysyncify_stop_unwind();
+      exports.asyncify_stop_unwind();
 
       for (var i = 0; i < expectedSleeps - 1; i++) {
         console.log('rewind, run until the next sleep');
-        exports.bysyncify_start_rewind(DATA_ADDR);
+        exports.asyncify_start_rewind(DATA_ADDR);
         result = exports[name](); // no need for params on later times
         assert(!result, 'results during sleep are meaningless, just 0');
         logMemory();
-        exports.bysyncify_stop_unwind();
+        exports.asyncify_stop_unwind();
       }
 
       console.log('rewind and run til the end.');
-      exports.bysyncify_start_rewind(DATA_ADDR);
+      exports.asyncify_start_rewind(DATA_ADDR);
       result = exports[name]();
     }
 
@@ -175,19 +175,19 @@ function coroutineTests() {
       // Initialize the data.
       view[dataStart >> 2] = dataStart + 8;
       view[dataStart + 4 >> 2] = dataEnd;
-      exports.bysyncify_start_unwind(dataStart);
+      exports.asyncify_start_unwind(dataStart);
       // (With C etc. coroutines we would also have
       // a C stack to pause and resume here.)
     };
     this.stopUnwind = function() {
-      exports.bysyncify_stop_unwind();
+      exports.asyncify_stop_unwind();
     };
     this.startRewind = function() {
-      exports.bysyncify_start_rewind(dataStart);
+      exports.asyncify_start_rewind(dataStart);
       exports[name]();
     };
     this.stopRewind = function() {
-      exports.bysyncify_stop_rewind();
+      exports.asyncify_stop_rewind();
     };
   }
 
@@ -267,7 +267,7 @@ function stackOverflowAssertTests() {
     env: {
       sleep: function() {
         console.log('sleep...');
-        exports.bysyncify_start_unwind(DATA_ADDR);
+        exports.asyncify_start_unwind(DATA_ADDR);
         view[DATA_ADDR >> 2] = DATA_ADDR + 8;
         // The end of the stack will be reached as the stack is tiny.
         view[DATA_ADDR + 4 >> 2] = view[DATA_ADDR >> 2] + 1;
@@ -282,7 +282,7 @@ function stackOverflowAssertTests() {
   // All API calls should now fail, since we wrote past the end of the
   // stack
   var fails = 0;
-  ['bysyncify_stop_unwind', 'bysyncify_start_rewind', 'bysyncify_stop_rewind', 'bysyncify_start_unwind'].forEach(function(name) {
+  ['asyncify_stop_unwind', 'asyncify_start_rewind', 'asyncify_stop_rewind', 'asyncify_start_unwind'].forEach(function(name) {
     try {
       exports[name](DATA_ADDR);
       console.log('no fail on', name);

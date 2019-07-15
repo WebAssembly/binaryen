@@ -15,7 +15,7 @@
  */
 
 //
-// Bysyncify: async/await style code transformation, that allows pausing
+// Asyncify: async/await style code transformation, that allows pausing
 // and resuming. This lets a language support synchronous operations in
 // an async manner, for example, you can do a blocking wait, and that will
 // be turned into code that unwinds the stack at the "blocking" operation,
@@ -40,7 +40,7 @@
 //    high-speed code that it calls, and in which cannot be an async operation,
 //    remain at full speed.
 //
-// Bysyncify's design learns from both of those:
+// Asyncify's design learns from both of those:
 //
 //  * The code rewrite is done in Binaryen, that is, at the wasm level. At
 //    this level we will only need to save wasm locals, which is a much smaller
@@ -51,7 +51,7 @@
 //
 // The specific transform implemented here is simpler than Asyncify but should
 // still have low overhead when properly optimized. Asyncify worked at the CFG
-// level and added branches there; Bysyncify on the other hand works on the
+// level and added branches there; Asyncify on the other hand works on the
 // structured control flow of wasm and simply "skips over" code when rewinding
 // the stack, and jumps out when unwinding. The transformed code looks
 // conceptually like this:
@@ -95,27 +95,27 @@
 // Overall, this should allow good performance with small overhead that is
 // mostly noticed at rewind time.
 //
-// After this pass is run a new i32 global "__bysyncify_state" is added, which
+// After this pass is run a new i32 global "__asyncify_state" is added, which
 // has the following values:
 //
 //   0: normal execution
 //   1: unwinding the stack
 //   2: rewinding the stack
 //
-// There is also "__bysyncify_data" which when rewinding and unwinding
+// There is also "__asyncify_data" which when rewinding and unwinding
 // contains a pointer to a data structure with the info needed to rewind
 // and unwind:
 //
 //   {                                            // offsets
-//     i32  - current bysyncify stack location    //  0
-//     i32  - bysyncify stack end                 //  4
+//     i32  - current asyncify stack location    //  0
+//     i32  - asyncify stack end                 //  4
 //   }
 //
-// The bysyncify stack is a representation of the call frame, as a list of
+// The asyncify stack is a representation of the call frame, as a list of
 // indexes of calls. In the example above, we saw index "0" for calling "bar"
 // from "foo". When unwinding, the indexes are added to the stack; when
-// rewinding, they are popped off; the current bysyncify stack location is
-// undated while doing both operations. The bysyncify stack is also used to
+// rewinding, they are popped off; the current asyncify stack location is
+// undated while doing both operations. The asyncify stack is also used to
 // save locals. Note that the stack end location is provided, which is for
 // error detection.
 //
@@ -124,16 +124,16 @@
 // When you start an unwinding operation, you must set the initial fields
 // of the data structure, that is, set the current stack location to the
 // proper place, and the end to the proper end based on how much memory
-// you reserved. Note that bysyncify will grow the stack up.
+// you reserved. Note that asyncify will grow the stack up.
 //
 // The pass will also create four functions that let you control unwinding
 // and rewinding:
 //
-//  * bysyncify_start_unwind(data : i32): call this to start unwinding the
+//  * asyncify_start_unwind(data : i32): call this to start unwinding the
 //    stack from the current location. "data" must point to a data
 //    structure as described above (with fields containing valid data).
 //
-//  * bysyncify_stop_unwind(): call this to note that unwinding has
+//  * asyncify_stop_unwind(): call this to note that unwinding has
 //    concluded. If no other code will run before you start to rewind,
 //    this is not strictly necessary, however, if you swap between
 //    coroutines, or even just want to run some normal code during a
@@ -141,45 +141,45 @@
 //    the code will think it is still unwinding when it should not be,
 //    which means it will keep unwinding in a meaningless way.
 //
-//  * bysyncify_start_rewind(data : i32): call this to start rewinding the
+//  * asyncify_start_rewind(data : i32): call this to start rewinding the
 //    stack vack up to the location stored in the provided data. This prepares
 //    for the rewind; to start it, you must call the first function in the
 //    call stack to be unwound.
 //
-//  * bysyncify_stop_rewind(): call this to note that rewinding has
+//  * asyncify_stop_rewind(): call this to note that rewinding has
 //    concluded, and normal execution can resume.
 //
 // These four functions are exported so that you can call them from the
 // outside. If you want to manage things from inside the wasm, then you
 // couldn't have called them before they were created by this pass. To work
-// around that, you can create imports to bysyncify.start_unwind,
-// bysyncify.stop_unwind, bysyncify.start_rewind, and bysyncify.stop_rewind;
+// around that, you can create imports to asyncify.start_unwind,
+// asyncify.stop_unwind, asyncify.start_rewind, and asyncify.stop_rewind;
 // if those exist when this pass runs then it will turn those into direct
 // calls to the functions that it creates. Note that when doing everything
-// in wasm like this, Bysyncify must not instrument your "runtime" support
+// in wasm like this, Asyncify must not instrument your "runtime" support
 // code, that is, the code that initiates unwinds and rewinds and stops them.
 // If it did, the unwind would not stop until you left the wasm module
 // entirely, etc. Therefore we do not instrument a function if it has
-// a call to the four bysyncify_* methods. Note that you may need to disable
+// a call to the four asyncify_* methods. Note that you may need to disable
 // inlining if that would cause code that does need to be instrumented
 // show up in that runtime code.
 //
-// To use this API, call bysyncify_start_unwind when you want to. The call
+// To use this API, call asyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
 // other host environment on the outside that called into wasm. When you
-// return there after unwinding, call bysyncify_stop_unwind. Then when
-// you want to rewind, call bysyncify_start_rewind, and then call the same
+// return there after unwinding, call asyncify_stop_unwind. Then when
+// you want to rewind, call asyncify_start_rewind, and then call the same
 // initial function you called before, so that unwinding can begin. The
 // unwinding will reach the same function from which you started, since
 // we are recreating the call stack. At that point you should call
-// bysyncify_stop_rewind and then execution can resume normally.
+// asyncify_stop_rewind and then execution can resume normally.
 //
-// Note that the bysyncify_* API calls will verify that the data structure
+// Note that the asyncify_* API calls will verify that the data structure
 // is valid, checking if the current location is past the end. If so, they
 // will throw a wasm unreachable. No check is done during unwinding or
 // rewinding, to keep things fast - in principle, from when unwinding begins
 // and until it ends there should be no memory accesses aside from the
-// bysyncify code itself (and likewise when rewinding), so there should be
+// asyncify code itself (and likewise when rewinding), so there should be
 // no chance of memory corruption causing odd errors. However, the low
 // overhead of this approach does cause an error only to be shown when
 // unwinding/rewinding finishes, and not at the specific spot where the
@@ -187,24 +187,24 @@
 //
 // By default this pass is very carefuly: it assumes that any import and
 // any indirect call may start an unwind/rewind operation. If you know more
-// specific information you can inform bysyncify about that, which can reduce
+// specific information you can inform asyncify about that, which can reduce
 // a great deal of overhead, as it can instrument less code. The relevant
 // options to wasm-opt etc. are:
 //
-//   --pass-arg=bysyncify-imports@module1.base1,module2.base2,module3.base3
+//   --pass-arg=asyncify-imports@module1.base1,module2.base2,module3.base3
 //
 //      Each module.base in that comma-separated list will be considered to
 //      be an import that can unwind/rewind, and all others are assumed not to
-//      (aside from the bysyncify.* imports, which are always assumed to).
+//      (aside from the asyncify.* imports, which are always assumed to).
 //      Each entry can end in a '*' in which case it is matched as a prefix.
 //
-//   --pass-arg=bysyncify-ignore-imports
+//   --pass-arg=asyncify-ignore-imports
 //
 //      Ignore all imports (except for bynsyncify.*), that is, assume none of
 //      them can start an unwind/rewind. (This is effectively the same as
-//      providing bysyncify-imports with a list of non-existent imports.)
+//      providing asyncify-imports with a list of non-existent imports.)
 //
-//   --pass-arg=bysyncify-ignore-indirect
+//   --pass-arg=asyncify-ignore-indirect
 //
 //      Ignore all indirect calls. This implies that you know an call stack
 //      will never need to be unwound with an indirect call somewhere in it.
@@ -227,20 +227,20 @@ namespace wasm {
 
 namespace {
 
-static const Name BYSYNCIFY_STATE = "__bysyncify_state";
-static const Name BYSYNCIFY_DATA = "__bysyncify_data";
-static const Name BYSYNCIFY_START_UNWIND = "bysyncify_start_unwind";
-static const Name BYSYNCIFY_STOP_UNWIND = "bysyncify_stop_unwind";
-static const Name BYSYNCIFY_START_REWIND = "bysyncify_start_rewind";
-static const Name BYSYNCIFY_STOP_REWIND = "bysyncify_stop_rewind";
-static const Name BYSYNCIFY_UNWIND = "__bysyncify_unwind";
-static const Name BYSYNCIFY = "bysyncify";
+static const Name ASYNCIFY_STATE = "__asyncify_state";
+static const Name ASYNCIFY_DATA = "__asyncify_data";
+static const Name ASYNCIFY_START_UNWIND = "asyncify_start_unwind";
+static const Name ASYNCIFY_STOP_UNWIND = "asyncify_stop_unwind";
+static const Name ASYNCIFY_START_REWIND = "asyncify_start_rewind";
+static const Name ASYNCIFY_STOP_REWIND = "asyncify_stop_rewind";
+static const Name ASYNCIFY_UNWIND = "__asyncify_unwind";
+static const Name ASYNCIFY = "asyncify";
 static const Name START_UNWIND = "start_unwind";
 static const Name STOP_UNWIND = "stop_unwind";
 static const Name START_REWIND = "start_rewind";
 static const Name STOP_REWIND = "stop_rewind";
-static const Name BYSYNCIFY_GET_CALL_INDEX = "__bysyncify_get_call_index";
-static const Name BYSYNCIFY_CHECK_CALL_INDEX = "__bysyncify_check_call_index";
+static const Name ASYNCIFY_GET_CALL_INDEX = "__asyncify_get_call_index";
+static const Name ASYNCIFY_CHECK_CALL_INDEX = "__asyncify_check_call_index";
 
 // TODO: having just normal/unwind_or_rewind would decrease code
 //       size, but make debugging harder
@@ -257,10 +257,10 @@ class GlobalHelper {
 
 public:
   GlobalHelper(Module& module) : module(module) {
-    map[i32] = "bysyncify_fake_call_global_i32";
-    map[i64] = "bysyncify_fake_call_global_i64";
-    map[f32] = "bysyncify_fake_call_global_f32";
-    map[f64] = "bysyncify_fake_call_global_f64";
+    map[i32] = "asyncify_fake_call_global_i32";
+    map[i64] = "asyncify_fake_call_global_i64";
+    map[f32] = "asyncify_fake_call_global_f32";
+    map[f64] = "asyncify_fake_call_global_f64";
     Builder builder(module);
     for (auto& pair : map) {
       auto type = pair.first;
@@ -330,14 +330,14 @@ public:
     : module(module), canIndirectChangeState(canIndirectChangeState),
       globals(module) {
     // Scan to see which functions can directly change the state.
-    // Also handle the bysyncify imports, removing them (as we will implement
+    // Also handle the asyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
     // name.
     ModuleUtils::ParallelFunctionMap<Info> scanner(
       module, [&](Function* func, Info& info) {
         if (func->imported()) {
-          // The relevant bysyncify imports can definitely change the state.
-          if (func->module == BYSYNCIFY &&
+          // The relevant asyncify imports can definitely change the state.
+          if (func->module == ASYNCIFY &&
               (func->base == START_UNWIND || func->base == STOP_REWIND)) {
             info.canChangeState = true;
           } else {
@@ -349,24 +349,24 @@ public:
         struct Walker : PostWalker<Walker> {
           void visitCall(Call* curr) {
             auto* target = module->getFunction(curr->target);
-            if (target->imported() && target->module == BYSYNCIFY) {
+            if (target->imported() && target->module == ASYNCIFY) {
               // Redirect the imports to the functions we'll add later.
               if (target->base == START_UNWIND) {
-                curr->target = BYSYNCIFY_START_UNWIND;
+                curr->target = ASYNCIFY_START_UNWIND;
                 info->canChangeState = true;
                 info->isTopMostRuntime = true;
               } else if (target->base == STOP_UNWIND) {
-                curr->target = BYSYNCIFY_STOP_UNWIND;
+                curr->target = ASYNCIFY_STOP_UNWIND;
                 info->isBottomMostRuntime = true;
               } else if (target->base == START_REWIND) {
-                curr->target = BYSYNCIFY_START_REWIND;
+                curr->target = ASYNCIFY_START_REWIND;
                 info->isBottomMostRuntime = true;
               } else if (target->base == STOP_REWIND) {
-                curr->target = BYSYNCIFY_STOP_REWIND;
+                curr->target = ASYNCIFY_STOP_REWIND;
                 info->canChangeState = true;
                 info->isTopMostRuntime = true;
               } else {
-                Fatal() << "call to unidenfied bysyncify import: "
+                Fatal() << "call to unidenfied asyncify import: "
                         << target->base;
               }
               return;
@@ -399,10 +399,10 @@ public:
 
     map.swap(scanner.map);
 
-    // Remove the bysyncify imports, if any.
+    // Remove the asyncify imports, if any.
     for (auto& pair : map) {
       auto* func = pair.first;
-      if (func->imported() && func->module == BYSYNCIFY) {
+      if (func->imported() && func->module == ASYNCIFY) {
         module.removeFunction(func->name);
       }
     }
@@ -449,15 +449,15 @@ public:
       void visitCall(Call* curr) {
         // We only implement these at the very end, but we know that they
         // definitely change the state.
-        if (curr->target == BYSYNCIFY_START_UNWIND ||
-            curr->target == BYSYNCIFY_STOP_REWIND ||
-            curr->target == BYSYNCIFY_GET_CALL_INDEX ||
-            curr->target == BYSYNCIFY_CHECK_CALL_INDEX) {
+        if (curr->target == ASYNCIFY_START_UNWIND ||
+            curr->target == ASYNCIFY_STOP_REWIND ||
+            curr->target == ASYNCIFY_GET_CALL_INDEX ||
+            curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
           canChangeState = true;
           return;
         }
-        if (curr->target == BYSYNCIFY_STOP_UNWIND ||
-            curr->target == BYSYNCIFY_START_REWIND) {
+        if (curr->target == ASYNCIFY_STOP_UNWIND ||
+            curr->target == ASYNCIFY_START_REWIND) {
           isBottomMostRuntime = true;
           return;
         }
@@ -505,16 +505,16 @@ static bool doesCall(Expression* curr) {
   return curr->is<Call>() || curr->is<CallIndirect>();
 }
 
-class BysyncifyBuilder : public Builder {
+class AsyncifyBuilder : public Builder {
 public:
-  BysyncifyBuilder(Module& wasm) : Builder(wasm) {}
+  AsyncifyBuilder(Module& wasm) : Builder(wasm) {}
 
   Expression* makeGetStackPos() {
     return makeLoad(4,
                     false,
                     int32_t(DataOffset::BStackPos),
                     4,
-                    makeGlobalGet(BYSYNCIFY_DATA, i32),
+                    makeGlobalGet(ASYNCIFY_DATA, i32),
                     i32);
   }
 
@@ -526,27 +526,27 @@ public:
       4,
       int32_t(DataOffset::BStackPos),
       4,
-      makeGlobalGet(BYSYNCIFY_DATA, i32),
+      makeGlobalGet(ASYNCIFY_DATA, i32),
       makeBinary(AddInt32, makeGetStackPos(), makeConst(Literal(by))),
       i32);
   }
 
   Expression* makeStateCheck(State value) {
     return makeBinary(EqInt32,
-                      makeGlobalGet(BYSYNCIFY_STATE, i32),
+                      makeGlobalGet(ASYNCIFY_STATE, i32),
                       makeConst(Literal(int32_t(value))));
   }
 };
 
 // Instrument control flow, around calls and adding skips for rewinding.
-struct BysyncifyFlow : public Pass {
+struct AsyncifyFlow : public Pass {
   bool isFunctionParallel() override { return true; }
 
   ModuleAnalyzer* analyzer;
 
-  BysyncifyFlow* create() override { return new BysyncifyFlow(analyzer); }
+  AsyncifyFlow* create() override { return new AsyncifyFlow(analyzer); }
 
-  BysyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
+  AsyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void
   runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
@@ -558,7 +558,7 @@ struct BysyncifyFlow : public Pass {
       return;
     }
     // Rewrite the function body.
-    builder = make_unique<BysyncifyBuilder>(*module);
+    builder = make_unique<AsyncifyBuilder>(*module);
     // Each function we enter will pop one from the stack, which is the index
     // of the next call to make.
     auto* block = builder->makeBlock(
@@ -578,7 +578,7 @@ struct BysyncifyFlow : public Pass {
   }
 
 private:
-  std::unique_ptr<BysyncifyBuilder> builder;
+  std::unique_ptr<AsyncifyBuilder> builder;
 
   Module* module;
   Function* func;
@@ -725,7 +725,7 @@ private:
     // to force the final number of locals to be too high, but we also
     // must be careful to never touch a local unnecessarily to avoid bugs.
     // To implement this, write to a fake global; we'll fix it up after
-    // BysyncifyLocals locals adds local saving/restoring.
+    // AsyncifyLocals locals adds local saving/restoring.
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
       auto name = analyzer->globals.getName(set->value->type);
@@ -754,46 +754,46 @@ private:
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
       builder->makeCall(
-        BYSYNCIFY_UNWIND, {builder->makeConst(Literal(int32_t(index)))}, none),
+        ASYNCIFY_UNWIND, {builder->makeConst(Literal(int32_t(index)))}, none),
       ifNotUnwinding);
   }
 
   Expression* makeCallIndexPeek(Index index) {
     // Emit an intrinsic for this, as we store the index into a local, and
-    // don't want it to be seen by bysyncify itself.
-    return builder->makeCall(BYSYNCIFY_CHECK_CALL_INDEX,
+    // don't want it to be seen by asyncify itself.
+    return builder->makeCall(ASYNCIFY_CHECK_CALL_INDEX,
                              {builder->makeConst(Literal(int32_t(index)))},
                              i32);
   }
 
   Expression* makeCallIndexPop() {
     // Emit an intrinsic for this, as we store the index into a local, and
-    // don't want it to be seen by bysyncify itself.
-    return builder->makeCall(BYSYNCIFY_GET_CALL_INDEX, {}, none);
+    // don't want it to be seen by asyncify itself.
+    return builder->makeCall(ASYNCIFY_GET_CALL_INDEX, {}, none);
   }
 };
 
 // Instrument local saving/restoring.
-struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
+struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   bool isFunctionParallel() override { return true; }
 
   ModuleAnalyzer* analyzer;
 
-  BysyncifyLocals* create() override { return new BysyncifyLocals(analyzer); }
+  AsyncifyLocals* create() override { return new AsyncifyLocals(analyzer); }
 
-  BysyncifyLocals(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
+  AsyncifyLocals(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
   void visitCall(Call* curr) {
     // Replace calls to the fake intrinsics.
-    if (curr->target == BYSYNCIFY_UNWIND) {
-      replaceCurrent(builder->makeBreak(BYSYNCIFY_UNWIND, curr->operands[0]));
-    } else if (curr->target == BYSYNCIFY_GET_CALL_INDEX) {
+    if (curr->target == ASYNCIFY_UNWIND) {
+      replaceCurrent(builder->makeBreak(ASYNCIFY_UNWIND, curr->operands[0]));
+    } else if (curr->target == ASYNCIFY_GET_CALL_INDEX) {
       replaceCurrent(builder->makeSequence(
         builder->makeIncStackPos(-4),
         builder->makeLocalSet(
           rewindIndex,
           builder->makeLoad(4, false, 0, 4, builder->makeGetStackPos(), i32))));
-    } else if (curr->target == BYSYNCIFY_CHECK_CALL_INDEX) {
+    } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
       replaceCurrent(builder->makeBinary(
         EqInt32,
         builder->makeLocalGet(rewindIndex, i32),
@@ -842,7 +842,7 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
     auto unwindIndex = builder->addVar(func, i32);
     rewindIndex = builder->addVar(func, i32);
     // Rewrite the function body.
-    builder = make_unique<BysyncifyBuilder>(*getModule());
+    builder = make_unique<AsyncifyBuilder>(*getModule());
     walk(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
@@ -860,7 +860,7 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
                        makeLocalLoading()),
        builder->makeLocalSet(
          unwindIndex,
-         builder->makeBlock(BYSYNCIFY_UNWIND,
+         builder->makeBlock(ASYNCIFY_UNWIND,
                             builder->makeSequence(func->body, barrier))),
        makeCallIndexPush(unwindIndex),
        makeLocalSaving()});
@@ -877,7 +877,7 @@ struct BysyncifyLocals : public WalkerPass<PostWalker<BysyncifyLocals>> {
   }
 
 private:
-  std::unique_ptr<BysyncifyBuilder> builder;
+  std::unique_ptr<AsyncifyBuilder> builder;
 
   Index rewindIndex;
   Index numPreservableLocals;
@@ -963,7 +963,7 @@ private:
 
 } // anonymous namespace
 
-struct Bysyncify : public Pass {
+struct Asyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
 
@@ -972,31 +972,31 @@ struct Bysyncify : public Pass {
 
     // Find which things can change the state.
     auto stateChangingImports =
-      runner->options.getArgumentOrDefault("bysyncify-imports", "");
+      runner->options.getArgumentOrDefault("asyncify-imports", "");
     auto ignoreImports =
-      runner->options.getArgumentOrDefault("bysyncify-ignore-imports", "");
+      runner->options.getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect =
-      runner->options.getArgumentOrDefault("bysyncify-ignore-indirect", "");
+      runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
 
     // Scan the module.
-    ModuleAnalyzer analyzer(
-      *module,
-      [&](Name module, Name base) {
-        if (allImportsCanChangeState) {
-          return true;
-        }
-        std::string full = std::string(module.str) + '.' + base.str;
-        for (auto& listedImport : listedImports) {
-          if (String::wildcardMatch(listedImport, full)) {
-            return true;
-          }
-        }
-        return false;
-      },
-      ignoreIndirect == "");
+    ModuleAnalyzer analyzer(*module,
+                            [&](Name module, Name base) {
+                              if (allImportsCanChangeState) {
+                                return true;
+                              }
+                              std::string full =
+                                std::string(module.str) + '.' + base.str;
+                              for (auto& listedImport : listedImports) {
+                                if (String::wildcardMatch(listedImport, full)) {
+                                  return true;
+                                }
+                              }
+                              return false;
+                            },
+                            ignoreIndirect == "");
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
@@ -1008,7 +1008,7 @@ struct Bysyncify : public Pass {
     {
       PassRunner runner(module);
       runner.add("flatten");
-      // Dce is useful here, since BysyncifyFlow makes control flow conditional,
+      // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
       // unreachable code here.
       runner.add("dce");
@@ -1024,7 +1024,7 @@ struct Bysyncify : public Pass {
         runner.add("reorder-locals");
         runner.add("merge-blocks");
       }
-      runner.add<BysyncifyFlow>(&analyzer);
+      runner.add<AsyncifyFlow>(&analyzer);
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
@@ -1039,7 +1039,7 @@ struct Bysyncify : public Pass {
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
-      runner.add<BysyncifyLocals>(&analyzer);
+      runner.add<AsyncifyLocals>(&analyzer);
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
@@ -1055,11 +1055,11 @@ struct Bysyncify : public Pass {
 private:
   void addGlobals(Module* module) {
     Builder builder(*module);
-    module->addGlobal(builder.makeGlobal(BYSYNCIFY_STATE,
+    module->addGlobal(builder.makeGlobal(ASYNCIFY_STATE,
                                          i32,
                                          builder.makeConst(Literal(int32_t(0))),
                                          Builder::Mutable));
-    module->addGlobal(builder.makeGlobal(BYSYNCIFY_DATA,
+    module->addGlobal(builder.makeGlobal(ASYNCIFY_DATA,
                                          i32,
                                          builder.makeConst(Literal(int32_t(0))),
                                          Builder::Mutable));
@@ -1074,10 +1074,10 @@ private:
       }
       auto* body = builder.makeBlock();
       body->list.push_back(builder.makeGlobalSet(
-        BYSYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
+        ASYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
       if (setData) {
         body->list.push_back(
-          builder.makeGlobalSet(BYSYNCIFY_DATA, builder.makeLocalGet(0, i32)));
+          builder.makeGlobalSet(ASYNCIFY_DATA, builder.makeLocalGet(0, i32)));
       }
       // Verify the data is valid.
       auto* stackPos =
@@ -1085,14 +1085,14 @@ private:
                          false,
                          int32_t(DataOffset::BStackPos),
                          4,
-                         builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
+                         builder.makeGlobalGet(ASYNCIFY_DATA, i32),
                          i32);
       auto* stackEnd =
         builder.makeLoad(4,
                          false,
                          int32_t(DataOffset::BStackEnd),
                          4,
-                         builder.makeGlobalGet(BYSYNCIFY_DATA, i32),
+                         builder.makeGlobalGet(ASYNCIFY_DATA, i32),
                          i32);
       body->list.push_back(
         builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
@@ -1104,13 +1104,13 @@ private:
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };
 
-    makeFunction(BYSYNCIFY_START_UNWIND, true, State::Unwinding);
-    makeFunction(BYSYNCIFY_STOP_UNWIND, false, State::Normal);
-    makeFunction(BYSYNCIFY_START_REWIND, true, State::Rewinding);
-    makeFunction(BYSYNCIFY_STOP_REWIND, false, State::Normal);
+    makeFunction(ASYNCIFY_START_UNWIND, true, State::Unwinding);
+    makeFunction(ASYNCIFY_STOP_UNWIND, false, State::Normal);
+    makeFunction(ASYNCIFY_START_REWIND, true, State::Rewinding);
+    makeFunction(ASYNCIFY_STOP_REWIND, false, State::Normal);
   }
 };
 
-Pass* createBysyncifyPass() { return new Bysyncify(); }
+Pass* createAsyncifyPass() { return new Asyncify(); }
 
 } // namespace wasm

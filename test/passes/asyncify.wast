@@ -1,9 +1,10 @@
 ;; Pre-existing imports that the pass turns into the implementations.
 (module
   (memory 1 2)
-  (import "bysyncify" "start_unwind" (func $bysyncify_start_unwind (param i32)))
-  (import "bysyncify" "start_rewind" (func $bysyncify_start_rewind (param i32)))
-  (import "bysyncify" "stop_rewind" (func $bysyncify_stop_rewind))
+  (import "asyncify" "start_unwind" (func $asyncify_start_unwind (param i32)))
+  (import "asyncify" "stop_unwind" (func $asyncify_stop_unwind))
+  (import "asyncify" "start_rewind" (func $asyncify_start_rewind (param i32)))
+  (import "asyncify" "stop_rewind" (func $asyncify_stop_rewind))
   (global $sleeping (mut i32) (i32.const 0))
   ;; do a sleep operation: start a sleep if running, or resume after a sleep
   ;; if we just rewound.
@@ -13,11 +14,11 @@
       (block
         (global.set $sleeping (i32.const 1))
         ;; we should set up the data at address 4 around here
-        (call $bysyncify_start_unwind (i32.const 4))
+        (call $asyncify_start_unwind (i32.const 4))
       )
       (block
         (global.set $sleeping (i32.const 0))
-        (call $bysyncify_stop_rewind)
+        (call $asyncify_stop_rewind)
       )
     )
   )
@@ -34,9 +35,11 @@
     ;; work will sleep, so we exit through here while it is paused
   )
   ;; the second event called from the main event loop: to resume $work,
-  ;; initiate a rewind, and then do the call to start things back up
+  ;; stop the unwind, then prepare a rewind, and initiate it by doing 
+  ;; the call to rewind the call stack back up to where it was
   (func $second_event
-    (call $bysyncify_start_rewind (i32.const 4))
+    (call $asyncify_stop_unwind)
+    (call $asyncify_start_rewind (i32.const 4))
     (call $work)
   )
   ;; a function that can't do a sleep
@@ -46,7 +49,7 @@
     (call $stuff)
   )
 )
-;; Calls to imports that will call into bysyncify themselves.
+;; Calls to imports that will call into asyncify themselves.
 (module
   (memory 1 2)
   (import "env" "import" (func $import))
@@ -142,5 +145,8 @@
   (func $import-deep
     (call $import)
   )
+)
+;; empty module, in particular with no memory
+(module
 )
 
