@@ -1000,7 +1000,7 @@ static BinaryenExpressionRef makeBinaryenCall(BinaryenModuleRef module,
     }
     std::cout << " };\n  ";
     traceExpression(ret,
-                    "BinaryenCall",
+                    (isReturn ? "BinaryenReturnCall" : "BinaryenCall"),
                     StringLit(target),
                     "operands",
                     numOperands,
@@ -1057,12 +1057,13 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
       std::cout << "0";
     }
     std::cout << " };\n  ";
-    traceExpression(ret,
-                    "BinaryenCallIndirect",
-                    target,
-                    "operands",
-                    numOperands,
-                    StringLit(type));
+    traceExpression(
+      ret,
+      (isReturn ? "BinaryenReturnCallIndirect" : "BinaryenCallIndirect"),
+      target,
+      "operands",
+      numOperands,
+      StringLit(type));
     std::cout << "  }\n";
   }
 

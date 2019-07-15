@@ -1213,8 +1213,7 @@ private:
       for (auto argType : target->params) {
         args.push_back(make(argType));
       }
-      bool isReturn = wasm.features.hasTailCall() && oneIn(8);
-      return builder.makeCall(target->name, args, type, isReturn);
+      return builder.makeCall(target->name, args, type);
     }
     // we failed to find something
     return make(type);
@@ -1256,9 +1255,7 @@ private:
       args.push_back(make(type));
     }
     func->type = ensureFunctionType(getSig(func), &wasm)->name;
-    bool isReturn = wasm.features.hasTailCall() && oneIn(8);
-    return builder.makeCallIndirect(
-      func->type, target, args, func->result, isReturn);
+    return builder.makeCallIndirect(func->type, target, args, func->result);
   }
 
   Expression* makeLocalGet(Type type) {

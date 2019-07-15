@@ -1380,6 +1380,23 @@ BinaryenFeatureAll: 255
       (return
        (i32.const 1337)
       )
+      (drop
+       (return_call "$kitchen()sinker"
+        (i32.const 13)
+        (i64.const 37)
+        (f32.const 1.2999999523162842)
+        (f64.const 3.7)
+       )
+      )
+      (drop
+       (return_call_indirect (type $iiIfF)
+        (i32.const 13)
+        (i64.const 37)
+        (f32.const 1.2999999523162842)
+        (f64.const 3.7)
+        (i32.const 2449)
+       )
+      )
       (nop)
       (unreachable)
      )
@@ -3242,8 +3259,17 @@ int main() {
   expressions[643] = BinaryenSelect(the_module, expressions[27], expressions[28], expressions[29]);
   expressions[644] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
   expressions[645] = BinaryenReturn(the_module, expressions[644]);
-  expressions[646] = BinaryenNop(the_module);
-  expressions[647] = BinaryenUnreachable(the_module);
+  {
+    BinaryenExpressionRef operands[] = { expressions[10], expressions[11], expressions[12], expressions[13] };
+    expressions[646] = BinaryenReturnCall(the_module, "kitchen()sinker", operands, 4, 1);
+  }
+  expressions[647] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
+  {
+    BinaryenExpressionRef operands[] = { expressions[14], expressions[15], expressions[16], expressions[17] };
+    expressions[648] = BinaryenReturnCallIndirect(the_module, expressions[647], operands, 4, "iiIfF");
+  }
+  expressions[649] = BinaryenNop(the_module);
+  expressions[650] = BinaryenUnreachable(the_module);
   BinaryenExpressionPrint(expressions[41]);
 (f32.neg
  (f32.const -33.61199951171875)
@@ -3289,27 +3315,28 @@ int main() {
        expressions[608], expressions[609], expressions[611], expressions[613], expressions[614], expressions[615], 
        expressions[617], expressions[619], expressions[622], expressions[625], expressions[627], expressions[629], 
        expressions[632], expressions[634], expressions[636], expressions[638], expressions[640], expressions[641], 
-       expressions[642], expressions[643], expressions[645], expressions[646], expressions[647] };
-    expressions[648] = BinaryenBlock(the_module, "the-value", children, 244, BinaryenTypeAuto());
+       expressions[642], expressions[643], expressions[645], expressions[646], expressions[648], expressions[649], 
+       expressions[650] };
+    expressions[651] = BinaryenBlock(the_module, "the-value", children, 246, BinaryenTypeAuto());
   }
-  expressions[649] = BinaryenDrop(the_module, expressions[648]);
+  expressions[652] = BinaryenDrop(the_module, expressions[651]);
   {
-    BinaryenExpressionRef children[] = { expressions[649] };
-    expressions[650] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
+    BinaryenExpressionRef children[] = { expressions[652] };
+    expressions[653] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
   }
-  expressions[651] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[654] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
-    BinaryenExpressionRef children[] = { expressions[650], expressions[651] };
-    expressions[652] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
+    BinaryenExpressionRef children[] = { expressions[653], expressions[654] };
+    expressions[655] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
   }
   {
     BinaryenType varTypes[] = { 1 };
-    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[652]);
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[655]);
   }
-  expressions[653] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
-  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[653]);
-  expressions[654] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
-  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[654]);
+  expressions[656] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
+  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[656]);
+  expressions[657] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
+  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[657]);
   {
     BinaryenType paramTypes[] = { 1 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
@@ -3326,13 +3353,13 @@ int main() {
     const char* funcNames[] = { "kitchen()sinker" };
     BinaryenSetFunctionTable(the_module, 1, 1, funcNames, 1);
   }
-  expressions[655] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[658] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char segment1[] = { 73, 32, 97, 109, 32, 112, 97, 115, 115, 105, 118, 101 };
     const char* segments[] = { segment0, segment1 };
     int8_t segmentPassive[] = { 0, 1 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[655], expressions[0] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[658], expressions[0] };
     BinaryenIndex segmentSizes[] = { 12, 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 0);
   }
@@ -3340,10 +3367,10 @@ int main() {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[656] = BinaryenNop(the_module);
+  expressions[659] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[656]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[659]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
@@ -4715,6 +4742,23 @@ int main() {
       )
       (return
        (i32.const 1337)
+      )
+      (drop
+       (return_call "$kitchen()sinker"
+        (i32.const 13)
+        (i64.const 37)
+        (f32.const 1.2999999523162842)
+        (f64.const 3.7)
+       )
+      )
+      (drop
+       (return_call_indirect (type $iiIfF)
+        (i32.const 13)
+        (i64.const 37)
+        (f32.const 1.2999999523162842)
+        (f64.const 3.7)
+        (i32.const 2449)
+       )
       )
       (nop)
       (unreachable)

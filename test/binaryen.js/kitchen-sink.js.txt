@@ -3279,7 +3279,7 @@ int main() {
   expressions[648] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
     BinaryenExpressionRef operands[] = { expressions[645], expressions[646], expressions[647], expressions[648] };
-    expressions[649] = BinaryenCall(the_module, "kitchen()sinker", operands, 4, 1);
+    expressions[649] = BinaryenReturnCall(the_module, "kitchen()sinker", operands, 4, 1);
   }
   expressions[650] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
   expressions[651] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
@@ -3288,7 +3288,7 @@ int main() {
   expressions[654] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
     BinaryenExpressionRef operands[] = { expressions[651], expressions[652], expressions[653], expressions[654] };
-    expressions[655] = BinaryenCallIndirect(the_module, expressions[650], operands, 4, "iiIfF");
+    expressions[655] = BinaryenReturnCallIndirect(the_module, expressions[650], operands, 4, "iiIfF");
   }
   expressions[656] = BinaryenNop(the_module);
   expressions[657] = BinaryenUnreachable(the_module);
