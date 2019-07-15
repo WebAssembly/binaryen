@@ -245,7 +245,7 @@ class Wasm2JS(TestCaseHandler):
     return out
 
 
-class Bysyncify(TestCaseHandler):
+class Asyncify(TestCaseHandler):
   def handle_pair(self, before_wasm, after_wasm, opts):
     # we must legalize in order to run in JS
     run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
@@ -255,10 +255,10 @@ class Bysyncify(TestCaseHandler):
 
     # TODO: also something that actually does async sleeps in the code, say
     # on the logging commands?
-    # --remove-unused-module-elements removes the bysyncify intrinsics, which are not valid to call
+    # --remove-unused-module-elements removes the asyncify intrinsics, which are not valid to call
 
-    def do_bysyncify(wasm):
-      cmd = [in_bin('wasm-opt'), wasm, '--bysyncify', '-o', 't.wasm']
+    def do_asyncify(wasm):
+      cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 't.wasm']
       if random.random() < 0.5:
         cmd += ['--optimize-level=%d' % random.randint(1, 3)]
       if random.random() < 0.5:
@@ -266,25 +266,25 @@ class Bysyncify(TestCaseHandler):
       cmd += FEATURE_OPTS
       run(cmd)
       out = run_d8('t.wasm')
-      # emit some status logging from bysyncify
+      # emit some status logging from asyncify
       print(out.splitlines()[-1])
-      # ignore the output from the new bysyncify API calls - the ones with asserts will trap, too
-      for ignore in ['[fuzz-exec] calling $bysyncify_start_unwind\nexception!\n',
-                     '[fuzz-exec] calling $bysyncify_start_unwind\n',
-                     '[fuzz-exec] calling $bysyncify_start_rewind\nexception!\n',
-                     '[fuzz-exec] calling $bysyncify_start_rewind\n',
-                     '[fuzz-exec] calling $bysyncify_stop_rewind\n',
-                     '[fuzz-exec] calling $bysyncify_stop_unwind\n']:
+      # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
+      for ignore in ['[fuzz-exec] calling $asyncify_start_unwind\nexception!\n',
+                     '[fuzz-exec] calling $asyncify_start_unwind\n',
+                     '[fuzz-exec] calling $asyncify_start_rewind\nexception!\n',
+                     '[fuzz-exec] calling $asyncify_start_rewind\n',
+                     '[fuzz-exec] calling $asyncify_stop_rewind\n',
+                     '[fuzz-exec] calling $asyncify_stop_unwind\n']:
         out = out.replace(ignore, '')
-      out = '\n'.join([l for l in out.splitlines() if 'bysyncify: ' not in l])
+      out = '\n'.join([l for l in out.splitlines() if 'asyncify: ' not in l])
       return fix_output(out)
 
-    before_bysyncify = do_bysyncify(before_wasm)
-    after_bysyncify = do_bysyncify(after_wasm)
+    before_asyncify = do_asyncify(before_wasm)
+    after_asyncify = do_asyncify(after_wasm)
 
-    compare(before, after, 'Bysyncify (before/after)')
-    compare(before, before_bysyncify, 'Bysyncify (before/before_bysyncify)')
-    compare(before, after_bysyncify, 'Bysyncify (before/after_bysyncify)')
+    compare(before, after, 'Asyncify (before/after)')
+    compare(before, before_asyncify, 'Asyncify (before/before_asyncify)')
+    compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
 
 # The global list of all test case handlers
@@ -293,7 +293,7 @@ testcase_handlers = [
   FuzzExec(),
   CheckDeterminism(),
   Wasm2JS(),
-  Bysyncify(),
+  Asyncify(),
 ]
 
 
