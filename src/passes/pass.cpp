@@ -74,12 +74,15 @@ void PassRegistry::registerPasses() {
   registerPass("alignment-lowering",
                "lower unaligned loads and stores to smaller aligned ones",
                createAlignmentLoweringPass);
+  registerPass("asyncify",
+               "async/await style transform, allowing pausing and resuming",
+               createAsyncifyPass);
+  registerPass("bysyncify",
+               "(temporary alias for asyncify)",
+               createAsyncifyPass);
   registerPass("avoid-reinterprets",
                "Tries to avoid reinterpret operations via more loads",
                createAvoidReinterpretsPass);
-  registerPass("bysyncify",
-               "async/await style transform, allowing pausing and resuming",
-               createBysyncifyPass);
   registerPass(
     "dae", "removes arguments to calls in an lto-like manner", createDAEPass);
   registerPass("dae-optimizing",

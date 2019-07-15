@@ -38,8 +38,8 @@ var detrand = (function() {
   };
 })();
 
-// Bysyncify integration.
-var Bysyncify = {
+// Asyncify integration.
+var Asyncify = {
   sleeping: false,
   sleepingFunction: null,
   sleeps: 0,
@@ -55,43 +55,43 @@ var Bysyncify = {
         if (typeof imports[module][i] === 'function') {
           (function(module, i) {
             ret[module][i] = function() {
-              if (!Bysyncify.sleeping) {
-                // Sleep if bysyncify support is present, and at a certain
+              if (!Asyncify.sleeping) {
+                // Sleep if asyncify support is present, and at a certain
                 // probability.
-                if (exports.bysyncify_start_unwind && 
+                if (exports.asyncify_start_unwind && 
                     detrand() < 0.5) {
                   // We are called in order to start a sleep/unwind.
-                  console.log('bysyncify: sleep in ' + i + '...');
-                  Bysyncify.sleepingFunction = i;
-                  Bysyncify.sleeps++;
+                  console.log('asyncify: sleep in ' + i + '...');
+                  Asyncify.sleepingFunction = i;
+                  Asyncify.sleeps++;
                   var depth = new Error().stack.split('\n').length - 6;
-                  Bysyncify.maxDepth = Math.max(Bysyncify.maxDepth, depth);
+                  Asyncify.maxDepth = Math.max(Asyncify.maxDepth, depth);
                   // Save the memory we use for data, so after we restore it later, the
                   // sleep/resume appears to have had no change to memory.
-                  Bysyncify.savedMemory = new Int32Array(view.subarray(Bysyncify.DATA_ADDR >> 2, Bysyncify.DATA_MAX >> 2));
+                  Asyncify.savedMemory = new Int32Array(view.subarray(Asyncify.DATA_ADDR >> 2, Asyncify.DATA_MAX >> 2));
                   // Unwinding.
                   // Fill in the data structure. The first value has the stack location,
                   // which for simplicity we can start right after the data structure itself.
-                  view[Bysyncify.DATA_ADDR >> 2] = Bysyncify.DATA_ADDR + 8;
+                  view[Asyncify.DATA_ADDR >> 2] = Asyncify.DATA_ADDR + 8;
                   // The end of the stack will not be reached here anyhow.
-                  view[Bysyncify.DATA_ADDR + 4 >> 2] = Bysyncify.DATA_MAX;
-                  exports.bysyncify_start_unwind(Bysyncify.DATA_ADDR);
-                  Bysyncify.sleeping = true;
+                  view[Asyncify.DATA_ADDR + 4 >> 2] = Asyncify.DATA_MAX;
+                  exports.asyncify_start_unwind(Asyncify.DATA_ADDR);
+                  Asyncify.sleeping = true;
                 } else {
                   // Don't sleep, normal execution.
                   return imports[module][i].apply(null, arguments);
                 }
               } else {
                 // We are called as part of a resume/rewind. Stop sleeping.
-                console.log('bysyncify: resume in ' + i + '...');
-                assert(Bysyncify.sleepingFunction === i);
-                exports.bysyncify_stop_rewind();
+                console.log('asyncify: resume in ' + i + '...');
+                assert(Asyncify.sleepingFunction === i);
+                exports.asyncify_stop_rewind();
                 // The stack should have been all used up, and so returned to the original state.
-                assert(view[Bysyncify.DATA_ADDR >> 2] == Bysyncify.DATA_ADDR + 8);
-                assert(view[Bysyncify.DATA_ADDR + 4 >> 2] == Bysyncify.DATA_MAX);
-                Bysyncify.sleeping = false;
+                assert(view[Asyncify.DATA_ADDR >> 2] == Asyncify.DATA_ADDR + 8);
+                assert(view[Asyncify.DATA_ADDR + 4 >> 2] == Asyncify.DATA_MAX);
+                Asyncify.sleeping = false;
                 // Restore the memory to the state from before we slept.
-                view.set(Bysyncify.savedMemory, Bysyncify.DATA_ADDR >> 2);
+                view.set(Asyncify.savedMemory, Asyncify.DATA_ADDR >> 2);
                 return imports[module][i].apply(null, arguments);
               }
             };
@@ -101,7 +101,7 @@ var Bysyncify = {
         }
       }
     }
-    // Add ignored.print, which is ignored by bysyncify, and allows debugging of bysyncified code.
+    // Add ignored.print, which is ignored by asyncify, and allows debugging of asyncified code.
     ret['ignored'] = { 'print': function(x, y) { console.log(x, y) } };
     return ret;
   },
@@ -109,19 +109,19 @@ var Bysyncify = {
     var ret = {};
     for (var e in exports) {
       if (typeof exports[e] === 'function' &&
-          !e.startsWith('bysyncify_')) {
+          !e.startsWith('asyncify_')) {
         (function(e) {
           ret[e] = function() {
             while (1) {
               var ret = exports[e].apply(null, arguments);
               // If we are sleeping, then the stack was unwound; rewind it.
-              if (Bysyncify.sleeping) {
-                console.log('bysyncify: stop unwind; rewind');
+              if (Asyncify.sleeping) {
+                console.log('asyncify: stop unwind; rewind');
                 assert(!ret, 'results during sleep are meaningless, just 0');
-                //console.log('bysyncify: after unwind', view[Bysyncify.DATA_ADDR >> 2], view[Bysyncify.DATA_ADDR + 4 >> 2]);
+                //console.log('asyncify: after unwind', view[Asyncify.DATA_ADDR >> 2], view[Asyncify.DATA_ADDR + 4 >> 2]);
                 try {
-                  exports.bysyncify_stop_unwind();
-                  exports.bysyncify_start_rewind(Bysyncify.DATA_ADDR);
+                  exports.asyncify_stop_unwind();
+                  exports.asyncify_start_rewind(Asyncify.DATA_ADDR);
                 } catch (e) {
                   console.log('error in unwind/rewind switch', e);
                 }
@@ -138,11 +138,11 @@ var Bysyncify = {
     return ret;
   },
   check: function() {
-    assert(!Bysyncify.sleeping);
+    assert(!Asyncify.sleeping);
   },
   finish: function() {
-    if (Bysyncify.sleeps > 0) {
-      print('bysyncify:', 'sleeps:', Bysyncify.sleeps, 'max depth:', Bysyncify.maxDepth);
+    if (Asyncify.sleeps > 0) {
+      print('asyncify:', 'sleeps:', Asyncify.sleeps, 'max depth:', Asyncify.maxDepth);
     }
   },
 };
@@ -170,14 +170,14 @@ var imports = {
   },
 };
 
-imports = Bysyncify.instrumentImports(imports);
+imports = Asyncify.instrumentImports(imports);
 
 // Create the wasm.
 var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), imports);
 
 // Handle the exports.
 var exports = instance.exports;
-exports = Bysyncify.instrumentExports(exports);
+exports = Asyncify.instrumentExports(exports);
 if (exports.memory) {
   var view = new Int32Array(exports.memory.buffer);
 }
@@ -190,10 +190,10 @@ for (var e in exports) {
 sortedExports.sort();
 sortedExports = sortedExports.filter(function(e) {
   // Filter special intrinsic functions.
-  return !e.startsWith('bysyncify_');
+  return !e.startsWith('asyncify_');
 });
 sortedExports.forEach(function(e) {
-  Bysyncify.check();
+  Asyncify.check();
   if (typeof exports[e] !== 'function') return;
   try {
     console.log('[fuzz-exec] calling $' + e);
@@ -207,5 +207,5 @@ sortedExports.forEach(function(e) {
 });
 
 // Finish up
-Bysyncify.finish();
+Asyncify.finish();
 

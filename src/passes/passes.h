@@ -23,8 +23,8 @@ class Pass;
 
 // All passes:
 Pass* createAlignmentLoweringPass();
+Pass* createAsyncifyPass();
 Pass* createAvoidReinterpretsPass();
-Pass* createBysyncifyPass();
 Pass* createCoalesceLocalsPass();
 Pass* createCoalesceLocalsWithLearningPass();
 Pass* createCodeFoldingPass();
