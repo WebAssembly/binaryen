@@ -77,8 +77,6 @@ void PassRegistry::registerPasses() {
   registerPass("asyncify",
                "async/await style transform, allowing pausing and resuming",
                createAsyncifyPass);
-  registerPass(
-    "bysyncify", "(temporary alias for asyncify)", createAsyncifyPass);
   registerPass("avoid-reinterprets",
                "Tries to avoid reinterpret operations via more loads",
                createAvoidReinterpretsPass);
