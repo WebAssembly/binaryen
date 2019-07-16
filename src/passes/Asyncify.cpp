@@ -27,8 +27,8 @@
 // The approach here is a third-generation design after Emscripten's original
 // Asyncify and then Emterpreter-Async approaches:
 //
-//  * Asyncify rewrote control flow in LLVM IR. A problem is that this needs
-//    to save all SSA registers as part of the local state, which can be
+//  * Old Asyncify rewrote control flow in LLVM IR. A problem is that this
+//    needs to save all SSA registers as part of the local state, which can be
 //    very costly. A further increase can happen because of phis that are
 //    added because of control flow transformations. As a result we saw
 //    pathological cases where the code size increase was unacceptable.
@@ -40,7 +40,7 @@
 //    high-speed code that it calls, and in which cannot be an async operation,
 //    remain at full speed.
 //
-// Asyncify's design learns from both of those:
+// New Asyncify's design learns from both of those:
 //
 //  * The code rewrite is done in Binaryen, that is, at the wasm level. At
 //    this level we will only need to save wasm locals, which is a much smaller
@@ -49,9 +49,10 @@
 //    for obvious reasons, while Emterpreter-Async proved it is tolerable to
 //    have *some* overhead, if the transform can be applied selectively.
 //
-// The specific transform implemented here is simpler than Asyncify but should
-// still have low overhead when properly optimized. Asyncify worked at the CFG
-// level and added branches there; Asyncify on the other hand works on the
+// The specific transform implemented here is nicknamed "Bysyncify" (as it is
+// in BinarYen, and "B" comes after "A"). It is simpler than old Asyncify but
+// has low overhead when properly optimized. Old Asyncify worked at the CFG
+// level and added branches there; new Asyncify on the other hand works on the
 // structured control flow of wasm and simply "skips over" code when rewinding
 // the stack, and jumps out when unwinding. The transformed code looks
 // conceptually like this:
