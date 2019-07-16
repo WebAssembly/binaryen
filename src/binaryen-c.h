@@ -545,6 +545,18 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
                                            BinaryenExpressionRef* operands,
                                            BinaryenIndex numOperands,
                                            const char* type);
+BinaryenExpressionRef BinaryenReturnCall(BinaryenModuleRef module,
+                                         const char* target,
+                                         BinaryenExpressionRef* operands,
+                                         BinaryenIndex numOperands,
+                                         BinaryenType returnType);
+BinaryenExpressionRef
+BinaryenReturnCallIndirect(BinaryenModuleRef module,
+                           BinaryenExpressionRef target,
+                           BinaryenExpressionRef* operands,
+                           BinaryenIndex numOperands,
+                           const char* type);
+
 // LocalGet: Note the 'type' parameter. It might seem redundant, since the
 //           local at that index must have a type. However, this API lets you
 //           build code "top-down": create a node, then its parents, and so

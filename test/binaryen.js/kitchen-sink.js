@@ -396,6 +396,9 @@ function test_core() {
     module.i64.store(2, 4, temp15, temp16),
     module.select(temp10, temp11, temp12),
     module.return(makeInt32(1337)),
+    // Tail Call
+    module.returnCall("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], Binaryen.i32),
+    module.returnCallIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF"),
     // TODO: Host
     module.nop(),
     module.unreachable(),

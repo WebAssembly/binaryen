@@ -977,11 +977,12 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module,
-                                   const char* target,
-                                   BinaryenExpressionRef* operands,
-                                   BinaryenIndex numOperands,
-                                   BinaryenType returnType) {
+static BinaryenExpressionRef makeBinaryenCall(BinaryenModuleRef module,
+                                              const char* target,
+                                              BinaryenExpressionRef* operands,
+                                              BinaryenIndex numOperands,
+                                              BinaryenType returnType,
+                                              bool isReturn) {
   auto* ret = ((Module*)module)->allocator.alloc<Call>();
 
   if (tracing) {
@@ -999,7 +1000,7 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module,
     }
     std::cout << " };\n  ";
     traceExpression(ret,
-                    "BinaryenCall",
+                    (isReturn ? "BinaryenReturnCall" : "BinaryenCall"),
                     StringLit(target),
                     "operands",
                     numOperands,
@@ -1012,14 +1013,33 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module,
     ret->operands.push_back((Expression*)operands[i]);
   }
   ret->type = Type(returnType);
+  ret->isReturn = isReturn;
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
-                                           BinaryenExpressionRef target,
-                                           BinaryenExpressionRef* operands,
-                                           BinaryenIndex numOperands,
-                                           const char* type) {
+BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module,
+                                   const char* target,
+                                   BinaryenExpressionRef* operands,
+                                   BinaryenIndex numOperands,
+                                   BinaryenType returnType) {
+  return makeBinaryenCall(
+    module, target, operands, numOperands, returnType, false);
+}
+BinaryenExpressionRef BinaryenReturnCall(BinaryenModuleRef module,
+                                         const char* target,
+                                         BinaryenExpressionRef* operands,
+                                         BinaryenIndex numOperands,
+                                         BinaryenType returnType) {
+  return makeBinaryenCall(
+    module, target, operands, numOperands, returnType, true);
+}
+static BinaryenExpressionRef
+makeBinaryenCallIndirect(BinaryenModuleRef module,
+                         BinaryenExpressionRef target,
+                         BinaryenExpressionRef* operands,
+                         BinaryenIndex numOperands,
+                         const char* type,
+                         bool isReturn) {
   auto* wasm = (Module*)module;
   auto* ret = wasm->allocator.alloc<CallIndirect>();
 
@@ -1037,12 +1057,13 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
       std::cout << "0";
     }
     std::cout << " };\n  ";
-    traceExpression(ret,
-                    "BinaryenCallIndirect",
-                    target,
-                    "operands",
-                    numOperands,
-                    StringLit(type));
+    traceExpression(
+      ret,
+      (isReturn ? "BinaryenReturnCallIndirect" : "BinaryenCallIndirect"),
+      target,
+      "operands",
+      numOperands,
+      StringLit(type));
     std::cout << "  }\n";
   }
 
@@ -1052,8 +1073,26 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
   }
   ret->fullType = type;
   ret->type = wasm->getFunctionType(ret->fullType)->result;
+  ret->isReturn = isReturn;
   ret->finalize();
   return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
+                                           BinaryenExpressionRef target,
+                                           BinaryenExpressionRef* operands,
+                                           BinaryenIndex numOperands,
+                                           const char* type) {
+  return makeBinaryenCallIndirect(
+    module, target, operands, numOperands, type, false);
+}
+BinaryenExpressionRef
+BinaryenReturnCallIndirect(BinaryenModuleRef module,
+                           BinaryenExpressionRef target,
+                           BinaryenExpressionRef* operands,
+                           BinaryenIndex numOperands,
+                           const char* type) {
+  return makeBinaryenCallIndirect(
+    module, target, operands, numOperands, type, true);
 }
 BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                        BinaryenIndex index,
