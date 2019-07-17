@@ -79,7 +79,8 @@ private:
   NameNameMap* copiedParentMap;
 };
 
-struct ConstantGlobalApplier : public WalkerPass<PostWalker<ConstantGlobalApplier>> {
+struct ConstantGlobalApplier
+  : public WalkerPass<PostWalker<ConstantGlobalApplier>> {
   bool isFunctionParallel() override { return true; }
 
   ConstantGlobalApplier(NameSet* constantGlobals)
@@ -165,7 +166,8 @@ struct SimplifyGlobals : public Pass {
     // any uses).
     NameSet constantGlobals;
     for (auto& global : module->globals) {
-      if (!global->mutable_ && !global->imported() && global->init->is<Const>()) {
+      if (!global->mutable_ && !global->imported() &&
+          global->init->is<Const>()) {
         constantGlobals.insert(global->name);
       }
     }
