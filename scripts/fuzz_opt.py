@@ -360,7 +360,7 @@ def test_one(random_input, opts):
   bytes = wasm_size
   print('pre wasm size:', wasm_size)
 
-  # first, run all handlers that use get_commands. those don't need the second wasm in the
+  # first, run all handlers that use get_commands(). those don't need the second wasm in the
   # pair, and by fuzzing them first we can find bugs in creating the second wasm
   for testcase_handler in testcase_handlers:
     if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
