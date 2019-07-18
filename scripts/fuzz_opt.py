@@ -342,11 +342,11 @@ class Asyncify(TestCaseHandler):
 # The global list of all test case handlers
 testcase_handlers = [
   FuzzExec(),
-  #CompareVMs(),
-  #CheckDeterminism(),
-  #Wasm2JS(),
-  #Asyncify(),
-  #FuzzExecImmediately(),
+  CompareVMs(),
+  CheckDeterminism(),
+  Wasm2JS(),
+  Asyncify(),
+  FuzzExecImmediately(),
 ]
 
 
@@ -392,6 +392,10 @@ def test_one(random_input, opts):
           while 1:
             reduced = False
             for i in range(len(opts)):
+              # some opts can't be removed, like --flatten --dfo requires flatten
+              if opts[i] == '--flatten':
+                if i != len(opts) - 1 and opts[i + 1] in ('--dfo', '--local-cse', '--rereloop'):
+                  continue
               shorter = opts[:i] + opts[i + 1:]
               try:
                 write_commands_and_test(shorter)
@@ -490,7 +494,6 @@ opt_choices = [
   ["--simplify-locals-notee-nostructure"],
   ["--ssa"],
   ["--vacuum"],
-  ['--failme'],
 ]
 
 
