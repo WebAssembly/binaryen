@@ -741,35 +741,14 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       return;
     }
     auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
-    auto addrConst = curr->body->dynCast<Const>();
-    if (addrConst == nullptr) {
-      auto block = curr->body->dynCast<Block>();
-      Expression* value = nullptr;
-      if (block && block->list.size() > 0) {
-        value = block->list[0];
-        // first item may be a set of a local that we get later
-        auto* set = value->dynCast<LocalSet>();
-        if (set) {
-          value = block->list[1];
-        }
-        // look into a return value
-        if (auto* ret = value->dynCast<Return>()) {
-          value = ret->value;
-        }
-        // if it's a get of that set, use that value
-        if (auto* get = value->dynCast<LocalGet>()) {
-          if (set && get->index == set->index) {
-            value = set->value;
-          }
-        }
-      }
-      if (value) {
-        addrConst = value->dynCast<Const>();
-      }
-    }
-    if (addrConst == nullptr) {
+    // An EM_JS has a single const in the body. Typically it is just returned,
+    // but in unoptimized code it might be stored to a local and loaded from
+    // there, and in relocatable code it might get added to __memory_base etc.
+    FindAll<Const> consts(curr->body);
+    if (consts.list.size() != 1) {
       Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
     }
+    auto* addrConst = consts.list[0];
     auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
     codeByName[funcName] = code;
   }
