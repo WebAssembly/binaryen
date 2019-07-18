@@ -361,7 +361,11 @@ def test_one(random_input, opts):
   print('pre wasm size:', wasm_size)
 
   # first, run all handlers that use get_commands(). those don't need the second wasm in the
-  # pair, and by fuzzing them first we can find bugs in creating the second wasm
+  # pair, since they all they do is return their commands, and expect us to run them, and
+  # those commands do the actual testing, by operating on the original input wasm file. by
+  # fuzzing the get_commands() ones first we can find bugs in creating the second wasm (that
+  # has the opts run on it) before we try to create it later down for the passes that
+  # expect to get it as one of their inputs.
   for testcase_handler in testcase_handlers:
     if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
       if hasattr(testcase_handler, 'get_commands'):
@@ -372,6 +376,8 @@ def test_one(random_input, opts):
         # value there if we reduce).
         random_seed = random.random()
 
+        # gets commands from the handler, for a given set of optimizations. this is all the commands
+        # needed to run the testing that that handler wants to do.
         def get_commands(opts):
           return testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
 
