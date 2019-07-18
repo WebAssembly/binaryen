@@ -155,9 +155,13 @@ def run_vm(cmd):
     raise
 
 
+MAX_INTERPRETER_ENV_VAR = 'BINARYEN_MAX_INTERPRETER_DEPTH'
+MAX_INTERPRETER_DEPTH = 1000
+
+
 def run_bynterp(wasm, args):
   # increase the interpreter stack depth, to test more things
-  os.environ['BINARYEN_MAX_INTERPRETER_DEPTH'] = '1000'
+  os.environ[MAX_INTERPRETER_ENV_VAR] = str(MAX_INTERPRETER_DEPTH)
   try:
     return run_vm([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + args)
   finally:
@@ -229,9 +233,16 @@ class CompareVMs(TestCaseHandler):
 # Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
 # two separate binaries) so it's easy to reproduce.
 class FuzzExec(TestCaseHandler):
-  def handle_pair(self, input, before_wasm, after_wasm, opts):
-    # fuzz binaryen interpreter itself. separate invocation so result is easily reduceable
-    run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'] + opts)
+  def get_commands(self, wasm, opts, random_seed):
+    return [
+      '%(MAX_INTERPRETER_ENV_VAR)s=%(MAX_INTERPRETER_DEPTH)d %(wasm_opt)s --fuzz-exec --fuzz-binary %(opts)s %(wasm)s' % {
+        'MAX_INTERPRETER_ENV_VAR': MAX_INTERPRETER_ENV_VAR,
+        'MAX_INTERPRETER_DEPTH': MAX_INTERPRETER_DEPTH,
+        'wasm_opt': in_bin('wasm-opt'),
+        'opts': ' '.join(opts),
+        'wasm': wasm
+      }
+    ]
 
 
 # As FuzzExec, but without a separate invocation. This can find internal bugs with generating
@@ -329,12 +340,12 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-  CompareVMs(),
+  #CompareVMs(),
   FuzzExec(),
-  FuzzExecImmediately(),
-  CheckDeterminism(),
-  Wasm2JS(),
-  Asyncify(),
+  #FuzzExecImmediately(),
+  #CheckDeterminism(),
+  #Wasm2JS(),
+  #Asyncify(),
 ]
 
 
@@ -368,12 +379,17 @@ def test_one(random_input, opts):
         # and use them to do useful things like automatic reduction. in this case we give it the input
         # wasm plus opts and a random seed (if it needs any internal randomness; we want to have the same
         # value there if we reduce).
+        random_seed = random.random()
         commands = testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
         write_commands(commands, 't.sh')
         try:
           run(['bash', 't.sh'])
         except subprocess.CalledProcessError:
+          print('')
+          print('====================')
           print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm"...')
+          print('====================')
+          print('')
           # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
           shutil.copyfile('a.wasm', 'input.wasm')
           # reduce the input to something smaller with the same behavior on the script
@@ -391,11 +407,11 @@ def test_one(random_input, opts):
 
 def write_commands(commands, filename):
   with open(filename, 'w') as f:
-    f.write('set -e')
-    for i, command in enumerate(commands):
-      f.write('echo "step %d"' % i)
-      f.write(' '.join(command))
-    f.write('echo "ok"')
+    f.write('set -e\n')
+    for command in commands:
+      f.write('echo "%s"\n' % command)
+      f.write(command + '\n')
+    f.write('echo "ok"\n')
 
 
 # main
