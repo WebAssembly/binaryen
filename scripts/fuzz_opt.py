@@ -363,10 +363,39 @@ def test_one(random_input, opts):
   for testcase_handler in testcase_handlers:
     print('running testcase handler:', testcase_handler.__class__.__name__)
     if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
-      testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+      if hasattr(testcase_handler, 'get_commands'):
+        # if the testcase handler supports giving us a list of commands, then we can get those commands
+        # and use them to do useful things like automatic reduction. in this case we give it the input
+        # wasm plus opts and a random seed (if it needs any internal randomness; we want to have the same
+        # value there if we reduce).
+        commands = testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
+        write_commands(commands, 't.sh')
+        try:
+          run(['bash', 't.sh'])
+        except subprocess.CalledProcessError:
+          print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm"...')
+          # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
+          shutil.copyfile('a.wasm', 'input.wasm')
+          # reduce the input to something smaller with the same behavior on the script
+          run([in_bin('wasm-reduce'), 'input.wasm', '--command="bash t.sh"', '-t', 'a.wasm', '-w', 'reduced.wasm'])
+          print('Finished reduction.')
+          sys.exit(1)
+      else:
+        # let the testcase handler handle this testcase however it wants. in this case we give it
+        # the input and both wasms.
+        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
     print('')
 
   return bytes
+
+
+def write_commands(commands, filename):
+  with open(filename, 'w') as f:
+    f.write('set -e')
+    for i, command in enumerate(commands):
+      f.write('echo "step %d"' % i)
+      f.write(' '.join(command))
+    f.write('echo "ok"')
 
 
 # main
