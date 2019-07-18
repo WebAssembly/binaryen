@@ -340,12 +340,12 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-  #CompareVMs(),
   FuzzExec(),
-  #FuzzExecImmediately(),
-  #CheckDeterminism(),
-  #Wasm2JS(),
-  #Asyncify(),
+  CompareVMs(),
+  CheckDeterminism(),
+  Wasm2JS(),
+  Asyncify(),
+  FuzzExecImmediately(),
 ]
 
 
@@ -354,27 +354,17 @@ def test_one(random_input, opts):
   randomize_pass_debug()
   randomize_feature_opts()
 
-  bytes = 0
-
-  # fuzz vms
-  # gather VM outputs on input file
   run([in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
   wasm_size = os.stat('a.wasm').st_size
-  bytes += wasm_size
-  print('pre js size :', os.stat('a.js').st_size, ' wasm size:', wasm_size)
-  print('----------------')
+  bytes = wasm_size
+  print('pre wasm size:', wasm_size)
 
-  # gather VM outputs on processed file
-  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
-  wasm_size = os.stat('b.wasm').st_size
-  bytes += wasm_size
-  print('post js size:', os.stat('a.js').st_size, ' wasm size:', wasm_size)
-  shutil.copyfile('a.js', 'b.js')
-
+  # first, run all handlers that use get_commands. those don't need the second wasm in the
+  # pair, and by fuzzing them first we can find bugs in creating the second wasm
   for testcase_handler in testcase_handlers:
-    print('running testcase handler:', testcase_handler.__class__.__name__)
     if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
       if hasattr(testcase_handler, 'get_commands'):
+        print('running testcase handler:', testcase_handler.__class__.__name__)
         # if the testcase handler supports giving us a list of commands, then we can get those commands
         # and use them to do useful things like automatic reduction. in this case we give it the input
         # wasm plus opts and a random seed (if it needs any internal randomness; we want to have the same
@@ -383,7 +373,7 @@ def test_one(random_input, opts):
         commands = testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
         write_commands(commands, 't.sh')
         try:
-          run(['bash', 't.sh'])
+          subprocess.call(['bash', 't.sh'])
         except subprocess.CalledProcessError:
           print('')
           print('====================')
@@ -393,14 +383,25 @@ def test_one(random_input, opts):
           # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
           shutil.copyfile('a.wasm', 'input.wasm')
           # reduce the input to something smaller with the same behavior on the script
-          run([in_bin('wasm-reduce'), 'input.wasm', '--command="bash t.sh"', '-t', 'a.wasm', '-w', 'reduced.wasm'])
+          subprocess.call([in_bin('wasm-reduce'), 'input.wasm', '--command="bash t.sh"', '-t', 'a.wasm', '-w', 'reduced.wasm'])
           print('Finished reduction.')
           sys.exit(1)
-      else:
+        print('')
+
+  # created a second wasm for handlers that want to look at pairs.
+  run([in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS)
+  wasm_size = os.stat('b.wasm').st_size
+  bytes += wasm_size
+  print('post wasm size:', wasm_size)
+
+  for testcase_handler in testcase_handlers:
+    if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
+      if not hasattr(testcase_handler, 'get_commands'):
+        print('running testcase handler:', testcase_handler.__class__.__name__)
         # let the testcase handler handle this testcase however it wants. in this case we give it
         # the input and both wasms.
         testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
-    print('')
+        print('')
 
   return bytes
 
@@ -410,7 +411,7 @@ def write_commands(commands, filename):
     f.write('set -e\n')
     for command in commands:
       f.write('echo "%s"\n' % command)
-      f.write(command + '\n')
+      f.write(command + ' &> /dev/null\n')
     f.write('echo "ok"\n')
 
 
