@@ -371,20 +371,43 @@ def test_one(random_input, opts):
         # wasm plus opts and a random seed (if it needs any internal randomness; we want to have the same
         # value there if we reduce).
         random_seed = random.random()
-        commands = testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
-        write_commands(commands, 't.sh')
-        try:
+
+        def get_commands(opts):
+          return testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
+
+        def write_commands_and_test(opts):
+          commands = get_commands(opts)
+          write_commands(commands, 't.sh')
           subprocess.check_call(['bash', 't.sh'])
+
+        try:
+          write_commands_and_test(opts)
         except subprocess.CalledProcessError:
           print('')
           print('====================')
-          print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm"...')
+          print('Found a problem! See "t.sh" for the commands, and "input.wasm" for the input. Auto-reducing to "reduced.wasm" and "tt.sh"...')
           print('====================')
           print('')
+          # first, reduce the fuzz opts: keep removing until we can't
+          while 1:
+            reduced = False
+            for i in range(len(opts)):
+              shorter = opts[:i] + opts[i + 1:]
+              try:
+                write_commands_and_test(shorter)
+              except subprocess.CalledProcessError:
+                # great, the shorter one is good as well
+                opts = shorter
+                print('reduced opts to ' + ' '.join(opts))
+                reduced = True
+                break
+            if not reduced:
+              break
+          # second, reduce the wasm
           # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
           shutil.copyfile('a.wasm', 'input.wasm')
           # add a command to verify the input. this lets the reducer see that it is indeed working on the input correctly
-          commands = [in_bin('wasm-opt') + ' -all a.wasm'] + commands
+          commands = [in_bin('wasm-opt') + ' -all a.wasm'] + get_commands(opts)
           write_commands(commands, 'tt.sh')
           # reduce the input to something smaller with the same behavior on the script
           subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
