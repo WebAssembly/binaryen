@@ -19,6 +19,7 @@ import subprocess
 import random
 import re
 import shutil
+import sys
 import time
 
 from test.shared import options, NODEJS, V8_OPTS
@@ -341,11 +342,11 @@ class Asyncify(TestCaseHandler):
 # The global list of all test case handlers
 testcase_handlers = [
   FuzzExec(),
-  CompareVMs(),
-  CheckDeterminism(),
-  Wasm2JS(),
-  Asyncify(),
-  FuzzExecImmediately(),
+  #CompareVMs(),
+  #CheckDeterminism(),
+  #Wasm2JS(),
+  #Asyncify(),
+  #FuzzExecImmediately(),
 ]
 
 
@@ -373,7 +374,7 @@ def test_one(random_input, opts):
         commands = testcase_handler.get_commands(wasm='a.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS, random_seed=random_seed)
         write_commands(commands, 't.sh')
         try:
-          subprocess.call(['bash', 't.sh'])
+          subprocess.check_call(['bash', 't.sh'])
         except subprocess.CalledProcessError:
           print('')
           print('====================')
@@ -382,9 +383,12 @@ def test_one(random_input, opts):
           print('')
           # copy a.wasm to a safe place as the reducer will use the commands on new inputs, and the commands work on a.wasm
           shutil.copyfile('a.wasm', 'input.wasm')
+          # add a command to verify the input. this lets the reducer see that it is indeed working on the input correctly
+          commands = [in_bin('wasm-opt') + ' -all a.wasm'] + commands
+          write_commands(commands, 'tt.sh')
           # reduce the input to something smaller with the same behavior on the script
-          subprocess.call([in_bin('wasm-reduce'), 'input.wasm', '--command="bash t.sh"', '-t', 'a.wasm', '-w', 'reduced.wasm'])
-          print('Finished reduction.')
+          subprocess.check_call([in_bin('wasm-reduce'), 'input.wasm', '--command=bash tt.sh', '-t', 'a.wasm', '-w', 'reduced.wasm'])
+          print('Finished reduction. See "tt.sh" and "reduced.wasm".')
           sys.exit(1)
         print('')
 
@@ -463,6 +467,7 @@ opt_choices = [
   ["--simplify-locals-notee-nostructure"],
   ["--ssa"],
   ["--vacuum"],
+  ['--failme'],
 ]
 
 
