@@ -175,7 +175,7 @@ class TestCaseHandler:
   # If the core handle_pair() method is not overridden, it calls handle_single()
   # on each of the pair. That is useful if you just want the two wasms, and don't
   # care about their relationship
-  def handle_pair(self, before_wasm, after_wasm, opts):
+  def handle_pair(self, input, before_wasm, after_wasm, opts):
     self.handle(before_wasm)
     self.handle(after_wasm)
 
@@ -185,7 +185,7 @@ class TestCaseHandler:
 
 # Run VMs and compare results
 class CompareVMs(TestCaseHandler):
-  def handle_pair(self, before_wasm, after_wasm, opts):
+  def handle_pair(self, input, before_wasm, after_wasm, opts):
     run([in_bin('wasm-opt'), before_wasm, '--emit-js-wrapper=a.js', '--emit-spec-wrapper=a.wat'] + FEATURE_OPTS)
     run([in_bin('wasm-opt'), after_wasm, '--emit-js-wrapper=b.js', '--emit-spec-wrapper=b.wat'] + FEATURE_OPTS)
     before = self.run_vms('a.js', before_wasm)
@@ -229,14 +229,22 @@ class CompareVMs(TestCaseHandler):
 # Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
 # two separate binaries) so it's easy to reproduce.
 class FuzzExec(TestCaseHandler):
-  def handle_pair(self, before_wasm, after_wasm, opts):
-    # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
+  def handle_pair(self, input, before_wasm, after_wasm, opts):
+    # fuzz binaryen interpreter itself. separate invocation so result is easily reduceable
+    run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'] + opts)
+
+
+# As FuzzExec, but without a separate invocation. This can find internal bugs with generating
+# the IR (which might be worked around by writing it and then reading it).
+class FuzzExecImmediately(TestCaseHandler):
+  def handle_pair(self, input, before_wasm, after_wasm, opts):
+    # fuzz binaryen interpreter itself. separate invocation so result is easily reduceable
     run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'] + opts)
 
 
 # Check for determinism - the same command must have the same output
 class CheckDeterminism(TestCaseHandler):
-  def handle_pair(self, before_wasm, after_wasm, opts):
+  def handle_pair(self, input, before_wasm, after_wasm, opts):
     # check for determinism
     run([in_bin('wasm-opt'), before_wasm, '-o', 'b1.wasm'] + opts)
     run([in_bin('wasm-opt'), before_wasm, '-o', 'b2.wasm'] + opts)
@@ -244,7 +252,7 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
-  def handle_pair(self, before_wasm, after_wasm, opts):
+  def handle_pair(self, input, before_wasm, after_wasm, opts):
     compare(self.run(before_wasm), self.run(after_wasm), 'Wasm2JS')
 
   def run(self, wasm):
@@ -275,7 +283,7 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Asyncify(TestCaseHandler):
-  def handle_pair(self, before_wasm, after_wasm, opts):
+  def handle_pair(self, input, before_wasm, after_wasm, opts):
     # we must legalize in order to run in JS
     run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm] + FEATURE_OPTS)
     run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', after_wasm] + FEATURE_OPTS)
@@ -323,6 +331,7 @@ class Asyncify(TestCaseHandler):
 testcase_handlers = [
   CompareVMs(),
   FuzzExec(),
+  FuzzExecImmediately(),
   CheckDeterminism(),
   Wasm2JS(),
   Asyncify(),
@@ -354,7 +363,8 @@ def test_one(random_input, opts):
   for testcase_handler in testcase_handlers:
     print('running testcase handler:', testcase_handler.__class__.__name__)
     if testcase_handler.can_run_on_feature_opts(FEATURE_OPTS):
-      testcase_handler.handle_pair(before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+      testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FUZZ_OPTS + FEATURE_OPTS)
+    print('')
 
   return bytes
 
