@@ -173,9 +173,13 @@ def run_d8(wasm):
   return run_vm(['d8'] + V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
 
 
-# Each test case handler receives two wasm files, one before and one after some changes
-# that should have kept it equivalent. It also receives the optimizations that the
-# fuzzer chose to run.
+# There are two types of test case handlers:
+#  * get_commands() users: these return a list of commands to run (for example, "run this wasm-opt
+#    command, then that one"). The calling code gets and runs those commands on the test wasm
+#    file, and has enough information and control to be able to perform auto-reduction of any
+#    bugs found.
+#  * Totally generic: These receive the input pattern, a wasm generated from it, and a wasm
+#    optimized from that, and can then do anything it wants with those.
 class TestCaseHandler:
   # If the core handle_pair() method is not overridden, it calls handle_single()
   # on each of the pair. That is useful if you just want the two wasms, and don't
@@ -254,7 +258,10 @@ class FuzzExecImmediately(TestCaseHandler):
     run_bynterp(before_wasm, ['--fuzz-exec', '--fuzz-binary'] + opts)
 
 
-# Check for determinism - the same command must have the same output
+# Check for determinism - the same command must have the same output.
+# Note that this doesn't use get_commands() intentionally, since we are testing
+# for something that autoreduction won't help with anyhow (nondeterminism is very
+# hard to reduce).
 class CheckDeterminism(TestCaseHandler):
   def handle_pair(self, input, before_wasm, after_wasm, opts):
     # check for determinism
