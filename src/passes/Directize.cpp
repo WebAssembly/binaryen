@@ -65,7 +65,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       }
       // Everything looks good!
       replaceCurrent(
-        Builder(*getModule()).makeCall(name, curr->operands, curr->type));
+        Builder(*getModule())
+          .makeCall(name, curr->operands, curr->type, curr->isReturn));
     }
   }
 

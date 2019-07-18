@@ -57,6 +57,12 @@ struct DAEFunctionInfo {
   // Map of all calls that are dropped, to their drops' locations (so that
   // if we can optimize out the drop, we can replace the drop there).
   std::unordered_map<Call*, Expression**> droppedCalls;
+  // Whether the function contains any tail calls, which inhibit the removal of
+  // dropped return values because of the constraint that tail-callees must have
+  // the same return type as tail-callers. TODO: allow the removal of dropped
+  // returns from tail-callers if their tail-callees can have their returns
+  // removed as well.
+  bool hasTailCalls = false;
   // Whether the function can be called from places that
   // affect what we can do. For now, any call we don't
   // see inhibits our optimizations, but TODO: an export
@@ -116,6 +122,15 @@ struct DAEScanner
   void visitCall(Call* curr) {
     if (!getModule()->getFunction(curr->target)->imported()) {
       info->calls[curr->target].push_back(curr);
+    }
+    if (curr->isReturn) {
+      info->hasTailCalls = true;
+    }
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    if (curr->isReturn) {
+      info->hasTailCalls = true;
     }
   }
 
@@ -346,6 +361,9 @@ struct DAE : public Pass {
         }
         auto name = func->name;
         if (infoMap[name].hasUnseenCalls) {
+          continue;
+        }
+        if (infoMap[name].hasTailCalls) {
           continue;
         }
         auto iter = allCalls.find(name);

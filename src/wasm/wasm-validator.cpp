@@ -549,6 +549,10 @@ void FunctionValidator::noteBreak(Name name,
 }
 void FunctionValidator::visitBreak(Break* curr) {
   noteBreak(curr->name, curr->value, curr);
+  if (curr->value) {
+    shouldBeTrue(
+      curr->value->type != none, curr, "break value must be a concrete type");
+  }
   if (curr->condition) {
     shouldBeTrue(curr->condition->type == unreachable ||
                    curr->condition->type == i32,
@@ -593,6 +597,36 @@ void FunctionValidator::visitCall(Call* curr) {
       getStream() << "(on argument " << i << ")\n";
     }
   }
+  if (curr->isReturn) {
+    shouldBeEqual(curr->type,
+                  unreachable,
+                  curr,
+                  "return_call should have unreachable type");
+    shouldBeEqual(
+      getFunction()->result,
+      target->result,
+      curr,
+      "return_call callee return type must match caller return type");
+  } else {
+    if (curr->type == unreachable) {
+      bool hasUnreachableOperand = false;
+      for (auto* op : curr->operands) {
+        if (op->type == unreachable) {
+          hasUnreachableOperand = true;
+          break;
+        }
+      }
+      shouldBeTrue(
+        hasUnreachableOperand,
+        curr,
+        "calls may only be unreachable if they have unreachable operands");
+    } else {
+      shouldBeEqual(curr->type,
+                    target->result,
+                    curr,
+                    "call type must match callee return type");
+    }
+  }
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -620,6 +654,38 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
                                            "call param types must match") &&
         !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
+    }
+  }
+  if (curr->isReturn) {
+    shouldBeEqual(curr->type,
+                  unreachable,
+                  curr,
+                  "return_call_indirect should have unreachable type");
+    shouldBeEqual(
+      getFunction()->result,
+      type->result,
+      curr,
+      "return_call_indirect callee return type must match caller return type");
+  } else {
+    if (curr->type == unreachable) {
+      if (curr->target->type != unreachable) {
+        bool hasUnreachableOperand = false;
+        for (auto* op : curr->operands) {
+          if (op->type == unreachable) {
+            hasUnreachableOperand = true;
+            break;
+          }
+        }
+        shouldBeTrue(hasUnreachableOperand,
+                     curr,
+                     "call_indirects may only be unreachable if they have "
+                     "unreachable operands");
+      }
+    } else {
+      shouldBeEqual(curr->type,
+                    type->result,
+                    curr,
+                    "call_indirect type must match callee return type");
     }
   }
 }

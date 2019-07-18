@@ -1439,6 +1439,7 @@ private:
       if (curr->isReturn) {
         Const c;
         c.value = ret.value;
+        c.finalize();
         Return return_;
         return_.value = &c;
         return this->visit(&return_);
@@ -1457,12 +1458,14 @@ private:
         return target;
       }
       Index index = target.value.geti32();
+      Type type = curr->isReturn ? scope.function->result : curr->type;
       Flow ret = instance.externalInterface->callTable(
-        index, arguments, curr->type, *instance.self());
+        index, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
         Const c;
         c.value = ret.value;
+        c.finalize();
         Return return_;
         return_.value = &c;
         return this->visit(&return_);

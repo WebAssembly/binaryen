@@ -176,12 +176,34 @@ doInlining(Module* module, Function* into, InliningAction& action) {
   *action.callSite = block;
   // Prepare to update the inlined code's locals and other things.
   struct Updater : public PostWalker<Updater> {
+    Module* module;
     std::map<Index, Index> localMapping;
     Name returnName;
     Builder* builder;
 
     void visitReturn(Return* curr) {
       replaceCurrent(builder->makeBreak(returnName, curr->value));
+    }
+    void replaceReturnCall(Expression* curr) {
+      if (isConcreteType(curr->type)) {
+        replaceCurrent(builder->makeBreak(returnName, curr));
+      } else {
+        replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
+      }
+    }
+    void visitCall(Call* curr) {
+      if (curr->isReturn) {
+        curr->isReturn = false;
+        curr->type = module->getFunction(curr->target)->result;
+        replaceReturnCall(curr);
+      }
+    }
+    void visitCallIndirect(CallIndirect* curr) {
+      if (curr->isReturn) {
+        curr->isReturn = false;
+        curr->type = module->getFunctionType(curr->fullType)->result;
+        replaceReturnCall(curr);
+      }
     }
     void visitLocalGet(LocalGet* curr) {
       curr->index = localMapping[curr->index];
@@ -190,6 +212,7 @@ doInlining(Module* module, Function* into, InliningAction& action) {
       curr->index = localMapping[curr->index];
     }
   } updater;
+  updater.module = module;
   updater.returnName = block->name;
   updater.builder = &builder;
   // Set up a locals mapping
