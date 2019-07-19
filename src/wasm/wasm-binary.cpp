@@ -295,7 +295,8 @@ void WasmBinaryWriter::writeFunctionSignatures() {
 }
 
 void WasmBinaryWriter::writeExpression(Expression* curr) {
-  ExpressionStackWriter<WasmBinaryWriter>(curr, *this, o, debug);
+  BinaryenIRToBinaryWriter writer(*this, o);
+  writer.visit(curr);
 }
 
 void WasmBinaryWriter::writeFunctions() {
@@ -322,12 +323,14 @@ void WasmBinaryWriter::writeFunctions() {
       if (debug) {
         std::cerr << "write Stack IR" << std::endl;
       }
-      StackIRFunctionStackWriter<WasmBinaryWriter>(func, *this, o, debug);
+      StackIRToBinaryWriter writer(*this, o, func);
+      writer.write();
     } else {
       if (debug) {
         std::cerr << "write Binaryen IR" << std::endl;
       }
-      FunctionStackWriter<WasmBinaryWriter>(func, *this, o, sourceMap, debug);
+      BinaryenIRToBinaryWriter writer(*this, o, func, sourceMap);
+      writer.write();
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
