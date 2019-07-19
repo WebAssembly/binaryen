@@ -315,6 +315,11 @@ protected:
 
 public:
   void run(PassRunner* runner, Module* module) override {
+    // A function-parallel pass should be run using a PassRunner, which will
+    // parallelize it and call runOnFunction from multiple threads. (This code
+    // path will call walkModule() which uses the single-thread walking from
+    // wasm-traversal.)
+    assert(!isFunctionParallel());
     setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkModule(module);
