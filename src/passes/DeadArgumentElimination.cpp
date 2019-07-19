@@ -57,12 +57,14 @@ struct DAEFunctionInfo {
   // Map of all calls that are dropped, to their drops' locations (so that
   // if we can optimize out the drop, we can replace the drop there).
   std::unordered_map<Call*, Expression**> droppedCalls;
-  // Whether the function contains any tail calls, which inhibit the removal of
-  // dropped return values because of the constraint that tail-callees must have
-  // the same return type as tail-callers. TODO: allow the removal of dropped
-  // returns from tail-callers if their tail-callees can have their returns
-  // removed as well.
+  // Whether this function contains any tail calls (including indirect tail
+  // calls) and the set of functions this function tail calls. Tail callers and
+  // tail callees cannot have their dropped returns removed because of the
+  // constraint that tail-callees must have the same return type as
+  // tail-callers. TODO: allow the removal of dropped returns from tail-callers
+  // if their tail-callees can have their returns removed as well.
   bool hasTailCalls = false;
+  std::unordered_set<Name> tailCallees;
   // Whether the function can be called from places that
   // affect what we can do. For now, any call we don't
   // see inhibits our optimizations, but TODO: an export
@@ -125,6 +127,7 @@ struct DAEScanner
     }
     if (curr->isReturn) {
       info->hasTailCalls = true;
+      info->tailCallees.insert(curr->target);
     }
   }
 
@@ -254,6 +257,7 @@ struct DAE : public Pass {
     DAEScanner(&infoMap).run(runner, module);
     // Combine all the info.
     std::unordered_map<Name, std::vector<Call*>> allCalls;
+    std::unordered_set<Name> tailCallees;
     for (auto& pair : infoMap) {
       auto& info = pair.second;
       for (auto& pair : info.calls) {
@@ -261,6 +265,9 @@ struct DAE : public Pass {
         auto& calls = pair.second;
         auto& allCallsToName = allCalls[name];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
+      }
+      for (auto& callee : info.tailCallees) {
+        tailCallees.insert(callee);
       }
       for (auto& pair : info.droppedCalls) {
         allDroppedCalls[pair.first] = pair.second;
@@ -364,6 +371,9 @@ struct DAE : public Pass {
           continue;
         }
         if (infoMap[name].hasTailCalls) {
+          continue;
+        }
+        if (tailCallees.find(name) != tailCallees.end()) {
           continue;
         }
         auto iter = allCalls.find(name);
