@@ -24,17 +24,17 @@ test/validator/*.wasm
 *.map
 
 # files related to building in-tree
-/CMakeFiles/
+CMakeFiles
+*.cmake
 /CMakeCache.txt
 /Makefile
-/cmake_install.cmake
 /*.ninja
 /.ninja_deps
 /.ninja_log
 /bin/
 /lib/
 
-# files related to bulding in-tree on windows 
+# files related to bulding in-tree on windows
 /.vs/
 /*.vcxproj*
 /*.dir/
