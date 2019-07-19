@@ -3390,10 +3390,8 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  PassRunner passRunner(wasm);
-  passRunner.options = globalPassOptions;
-  passRunner.add<AutoDrop>();
-  passRunner.run();
+  PassRunner runner(wasm, globalPassOptions);
+  AutoDrop().run(&runner, wasm);
 }
 
 static BinaryenBufferSizes writeModule(BinaryenModuleRef module,

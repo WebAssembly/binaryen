@@ -1068,10 +1068,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           passRunner.setValidateGlobally(false);
         }
         // run autodrop first, before optimizations
-        passRunner.add<AutoDrop>();
+        passRunner.add(make_unique<AutoDrop>());
         if (preprocessor.debugInfo) {
           // fix up debug info to better survive optimization
-          passRunner.add<AdjustDebugInfo>();
+          passRunner.add(make_unique<AdjustDebugInfo>());
         }
         // optimize relooper label variable usage at the wasm level, where it is
         // easy
@@ -1680,7 +1680,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   }
   // finalizeCalls also does autoDrop, which is crucial for the non-optimizing
   // case, so that the output of the first pass is valid
-  passRunner.add<FinalizeCalls>(this);
+  passRunner.add(make_unique<FinalizeCalls>(this));
   passRunner.add(ABI::getLegalizationPass(legalizeJavaScriptFFI
                                             ? ABI::LegalizationLevel::Full
                                             : ABI::LegalizationLevel::Minimal));
@@ -1697,11 +1697,11 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     if (preprocessor.debugInfo) {
       // we would have run this before if optimizing, do it now otherwise. must
       // precede ApplyDebugInfo
-      passRunner.add<AdjustDebugInfo>();
+      passRunner.add(make_unique<AdjustDebugInfo>());
     }
   }
   if (preprocessor.debugInfo) {
-    passRunner.add<ApplyDebugInfo>();
+    passRunner.add(make_unique<ApplyDebugInfo>());
     // FIXME maybe just remove the nops that were debuginfo nodes, if not
     // optimizing?
     passRunner.add("vacuum");

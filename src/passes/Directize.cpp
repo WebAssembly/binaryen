@@ -109,12 +109,7 @@ struct Directize : public Pass {
       return;
     }
     // The table exists and is constant, so this is possible.
-    {
-      PassRunner runner(module);
-      runner.setIsNested(true);
-      runner.add<FunctionDirectizer>(&flatTable);
-      runner.run();
-    }
+    FunctionDirectizer(&flatTable).run(runner, module);
   }
 };
 

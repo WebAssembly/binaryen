@@ -57,8 +57,7 @@ static void optimizeWasm(Module& wasm, PassOptions options) {
   };
 
   PassRunner runner(&wasm, options);
-  runner.add<OptimizeForJS>();
-  runner.run();
+  OptimizeForJS().run(&runner, &wasm);
 }
 
 template<typename T> static void printJS(Ref ast, T& output) {

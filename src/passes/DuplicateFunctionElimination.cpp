@@ -70,10 +70,7 @@ struct DuplicateFunctionElimination : public Pass {
       limit--;
       // Hash all the functions
       auto hashes = FunctionHasher::createMap(module);
-      PassRunner hasherRunner(module);
-      hasherRunner.setIsNested(true);
-      hasherRunner.add<FunctionHasher>(&hashes);
-      hasherRunner.run();
+      FunctionHasher(&hashes).run(runner, module);
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
       ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
@@ -121,10 +118,7 @@ struct DuplicateFunctionElimination : public Pass {
                 v.end());
         module->updateMaps();
         // replace direct calls
-        PassRunner replacerRunner(module);
-        replacerRunner.setIsNested(true);
-        replacerRunner.add<FunctionReplacer>(&replacements);
-        replacerRunner.run();
+        FunctionReplacer(&replacements).run(runner, module);
         // replace in table
         for (auto& segment : module->table.segments) {
           for (auto& name : segment.data) {
