@@ -1025,7 +1025,7 @@ struct Asyncify : public Pass {
         runner.add("reorder-locals");
         runner.add("merge-blocks");
       }
-      runner.add<AsyncifyFlow>(&analyzer);
+      runner.add(make_unique<AsyncifyFlow>(&analyzer));
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
@@ -1040,7 +1040,7 @@ struct Asyncify : public Pass {
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
-      runner.add<AsyncifyLocals>(&analyzer);
+      runner.add(make_unique<AsyncifyLocals>(&analyzer));
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }

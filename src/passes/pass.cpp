@@ -46,11 +46,12 @@ void PassRegistry::registerPass(const char* name,
   passInfos[name] = PassInfo(description, create);
 }
 
-Pass* PassRegistry::createPass(std::string name) {
+std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
   if (passInfos.find(name) == passInfos.end()) {
     return nullptr;
   }
-  auto ret = passInfos[name].create();
+  std::unique_ptr<Pass> ret;
+  ret.reset(passInfos[name].create());
   ret->name = name;
   return ret;
 }
@@ -455,13 +456,13 @@ void PassRunner::run() {
       validationFlags = validationFlags | WasmValidator::Globally;
     }
     std::cerr << "[PassRunner] running passes..." << std::endl;
-    for (auto pass : passes) {
+    for (auto& pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
     if (passDebug >= 3) {
       dumpWast("before", wasm);
     }
-    for (auto* pass : passes) {
+    for (auto& pass : passes) {
       // ignoring the time, save a printout of the module before, in case this
       // pass breaks it, so we can print the before and after
       std::stringstream moduleBefore;
@@ -477,9 +478,9 @@ void PassRunner::run() {
       if (pass->isFunctionParallel()) {
         // function-parallel passes should get a new instance per function
         ModuleUtils::iterDefinedFunctions(
-          *wasm, [&](Function* func) { runPassOnFunction(pass, func); });
+          *wasm, [&](Function* func) { runPassOnFunction(pass.get(), func); });
       } else {
-        runPass(pass);
+        runPass(pass.get());
       }
       auto after = std::chrono::steady_clock::now();
       std::chrono::duration<double> diff = after - before;
@@ -554,12 +555,12 @@ void PassRunner::run() {
       }
       stack.clear();
     };
-    for (auto* pass : passes) {
+    for (auto& pass : passes) {
       if (pass->isFunctionParallel()) {
-        stack.push_back(pass);
+        stack.push_back(pass.get());
       } else {
         flush();
-        runPass(pass);
+        runPass(pass.get());
       }
     }
     flush();
@@ -571,19 +572,13 @@ void PassRunner::runOnFunction(Function* func) {
     std::cerr << "[PassRunner] running passes on function " << func->name
               << std::endl;
   }
-  for (auto* pass : passes) {
-    runPassOnFunction(pass, func);
+  for (auto& pass : passes) {
+    runPassOnFunction(pass.get(), func);
   }
 }
 
-PassRunner::~PassRunner() {
-  for (auto pass : passes) {
-    delete pass;
-  }
-}
-
-void PassRunner::doAdd(Pass* pass) {
-  passes.push_back(pass);
+void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
+  passes.emplace_back(std::move(pass));
   pass->prepareToRun(this, wasm);
 }
 

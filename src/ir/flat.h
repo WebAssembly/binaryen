@@ -114,9 +114,7 @@ inline void verifyFlatness(Module* module) {
   };
 
   PassRunner runner(module);
-  runner.setIsNested(true);
-  runner.add<VerifyFlatness>();
-  runner.run();
+  VerifyFlatness().run(&runner, module);
 }
 
 } // namespace Flat

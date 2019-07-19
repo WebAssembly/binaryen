@@ -39,7 +39,7 @@ struct PassRegistry {
   typedef std::function<Pass*()> Creator;
 
   void registerPass(const char* name, const char* description, Creator create);
-  Pass* createPass(std::string name);
+  std::unique_ptr<Pass> createPass(std::string name);
   std::vector<std::string> getRegisteredNames();
   std::string getPassDescription(std::string name);
 
@@ -142,7 +142,7 @@ struct PassOptions {
 struct PassRunner {
   Module* wasm;
   MixedArena* allocator;
-  std::vector<Pass*> passes;
+  std::vector<std::unique_ptr<Pass>> passes;
   PassOptions options;
 
   PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
@@ -163,16 +163,18 @@ struct PassRunner {
     options.validateGlobally = validate;
   }
 
+  // Add a pass using its name.
   void add(std::string passName) {
     auto pass = PassRegistry::get()->createPass(passName);
     if (!pass) {
       Fatal() << "Could not find pass: " << passName << "\n";
     }
-    doAdd(pass);
+    doAdd(std::move(pass));
   }
 
-  template<class P, class... Args> void add(Args&&... args) {
-    doAdd(new P(std::forward<Args>(args)...));
+  // Add a pass given an instance.
+  template<class P> void add(std::unique_ptr<P> pass) {
+    doAdd(std::move(pass));
   }
 
   // Adds the default set of optimization passes; this is
@@ -205,8 +207,6 @@ struct PassRunner {
   // Get the last pass that was already executed of a certain type.
   template<class P> P* getLast();
 
-  ~PassRunner();
-
   // When running a pass runner within another pass runner, this
   // flag should be set. This influences how pass debugging works,
   // and may influence other things in the future too.
@@ -227,7 +227,7 @@ protected:
   bool isNested = false;
 
 private:
-  void doAdd(Pass* pass);
+  void doAdd(std::unique_ptr<Pass> pass);
 
   void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
@@ -319,7 +319,9 @@ public:
     if (isFunctionParallel()) {
       PassRunner runner(module);
       runner.setIsNested(true);
-      runner.add<WalkerPass<WalkerType>>();
+      std::unique_ptr<Pass> copy;
+      copy.reset(create());
+      runner.add(std::move(copy));
       runner.run();
       return;
     }
