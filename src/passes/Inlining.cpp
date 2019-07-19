@@ -298,9 +298,7 @@ struct Inlining : public Pass {
       state.actionsForFunction[func->name];
     }
     // find and plan inlinings
-    {
-      Planner(&state).run(runner, module);
-    }
+    Planner(&state).run(runner, module);
     // perform inlinings TODO: parallelize
     std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined
     // which functions were inlined into
