@@ -22,7 +22,18 @@
  (type $FUNCSIG$v (func))
  (memory $0 1 1)
  (func $foo (; 0 ;) (type $FUNCSIG$v)
-  (unreachable)
+  (block
+   (drop
+    (i32.const 0)
+   )
+   (drop
+    (i32.const 0)
+   )
+   (drop
+    (i32.const 0)
+   )
+   (unreachable)
+  )
   (unreachable)
  )
  (func $bar (; 1 ;) (type $FUNCSIG$v)

@@ -36,7 +36,7 @@ struct MemoryPacking : public Pass {
 
     if (module->features.hasBulkMemory()) {
       // Remove any references to active segments that might be invalidated.
-      optimizeTrappingBulkMemoryOps(module);
+      optimizeTrappingBulkMemoryOps(runner, module);
       // Conservatively refuse to change segments if any are passive to avoid
       // invalidating segment indices or segment contents referenced from
       // memory.init and data.drop instructions.
@@ -125,17 +125,25 @@ struct MemoryPacking : public Pass {
     module->memory.segments.swap(packed);
   }
 
-  void optimizeTrappingBulkMemoryOps(Module* module) {
-    struct Trapper : PostWalker<Trapper> {
-      bool changed = false;
-      void process(Expression* curr, Index index) {
-        if (!getModule()->memory.segments[index].isPassive) {
+  void optimizeTrappingBulkMemoryOps(PassRunner* runner, Module* module) {
+    struct Trapper : WalkerPass<PostWalker<Trapper>> {
+      bool changed;
+      void visitMemoryInit(MemoryInit* curr) {
+        if (!getModule()->memory.segments[curr->segment].isPassive) {
+          Builder builder(*getModule());
+          replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
+                                          builder.makeDrop(curr->offset),
+                                          builder.makeDrop(curr->size),
+                                          builder.makeUnreachable()));
+          changed = true;
+        }
+      }
+      void visitDataDrop(DataDrop* curr) {
+        if (!getModule()->memory.segments[curr->segment].isPassive) {
           ExpressionManipulator::unreachable(curr);
           changed = true;
         }
       }
-      void visitMemoryInit(MemoryInit* curr) { process(curr, curr->segment); }
-      void visitDataDrop(DataDrop* curr) { process(curr, curr->segment); }
       void walkFunction(Function* func) {
         changed = false;
         PostWalker<Trapper>::walkFunction(func);
@@ -143,8 +151,10 @@ struct MemoryPacking : public Pass {
           ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
+      bool isFunctionParallel() override { return true; }
+      Pass* create() override { return new Trapper; }
     } trapper;
-    trapper.walkModule(module);
+    trapper.run(runner, module);
   }
 };
 
