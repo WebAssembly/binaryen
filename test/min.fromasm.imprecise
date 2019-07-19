@@ -1,6 +1,5 @@
 (module
  (import "env" "memory" (memory $memory 256 256))
- (global $M i32 (i32.const 0))
  (export "floats" (func $floats))
  (export "getTempRet0" (func $ub))
  (export "neg" (func $neg))
@@ -33,6 +32,6 @@
   (drop
    (call $ub)
   )
-  (global.get $M)
+  (i32.const 0)
  )
 )

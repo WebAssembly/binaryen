@@ -20,7 +20,6 @@
  (import "env" "emscripten_log" (func $emscripten_log))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
  (global $Int (mut i32) (i32.const 0))
- (global $Double f64 (f64.const 0))
  (global $nonZero (mut i32) (i32.const 1337))
  (global $exportedNumber i32 (i32.const 42))
  (export "big_negative" (func $big_negative))
@@ -88,7 +87,7 @@
   )
   (if
    (f64.gt
-    (global.get $Double)
+    (f64.const 0)
     (f64.const 0)
    )
    (return
