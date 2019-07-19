@@ -578,8 +578,8 @@ void PassRunner::runOnFunction(Function* func) {
 }
 
 void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
-  passes.emplace_back(std::move(pass));
   pass->prepareToRun(this, wasm);
+  passes.emplace_back(std::move(pass));
 }
 
 // Checks that the state is valid before and after a
