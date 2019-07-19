@@ -20,12 +20,20 @@
 (module
  (memory $0 1 1)
  (data (i32.const 0) "")
- (func $func
+ (func $foo
   (memory.init 0
    (i32.const 0)
    (i32.const 0)
    (i32.const 0)
   )
   (data.drop 0)
+ )
+ (func $bar
+  (drop
+   (loop (result i32)
+    (data.drop 0)
+    (i32.const 42)
+   )
+  )
  )
 )

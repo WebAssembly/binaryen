@@ -15,6 +15,7 @@
  */
 
 #include "ir/manipulation.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
@@ -126,13 +127,22 @@ struct MemoryPacking : public Pass {
 
   void optimizeTrappingBulkMemoryOps(Module* module) {
     struct Trapper : PostWalker<Trapper> {
+      bool changed = false;
       void process(Expression* curr, Index index) {
         if (!getModule()->memory.segments[index].isPassive) {
           ExpressionManipulator::unreachable(curr);
+          changed = true;
         }
       }
       void visitMemoryInit(MemoryInit* curr) { process(curr, curr->segment); }
       void visitDataDrop(DataDrop* curr) { process(curr, curr->segment); }
+      void walkFunction(Function* func) {
+        changed = false;
+        PostWalker<Trapper>::walkFunction(func);
+        if (changed) {
+          ReFinalize().walkFunctionInModule(func, getModule());
+        }
+      }
     } trapper;
     trapper.walkModule(module);
   }
