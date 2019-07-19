@@ -51,6 +51,7 @@ public:
   Output(const std::string& filename,
          Flags::BinaryOption binary,
          Flags::DebugOption debug);
+  explicit Output(std::ostream& stream);
   ~Output() = default;
   template<typename T> std::ostream& operator<<(const T& v) { return out << v; }
 

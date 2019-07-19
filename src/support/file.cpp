@@ -111,6 +111,8 @@ wasm::Output::Output(const std::string& filename,
       return buffer;
     }()) {}
 
+wasm::Output::Output(std::ostream& stream) : outfile(), out(stream.rdbuf()) {}
+
 void wasm::copy_file(std::string input, std::string output) {
   std::ifstream src(input, std::ios::binary);
   std::ofstream dst(output, std::ios::binary);

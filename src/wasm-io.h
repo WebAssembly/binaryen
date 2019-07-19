@@ -75,14 +75,17 @@ public:
   // write text
   void writeText(Module& wasm, Output& output);
   void writeText(Module& wasm, std::string filename);
+  void writeText(Module& wasm, std::ostream& stream);
   // write binary
   void writeBinary(Module& wasm, Output& output);
   void writeBinary(Module& wasm, std::string filename);
+  void writeBinary(Module& wasm, std::ostream& stream);
   // write text or binary, defaulting to binary unless setBinary(false),
   // and unless there is no output file (in which case we write text
   // to stdout).
   void write(Module& wasm, Output& output);
   void write(Module& wasm, std::string filename);
+  void write(Module& wasm, std::ostream& stream);
 };
 
 } // namespace wasm

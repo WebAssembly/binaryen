@@ -132,6 +132,11 @@ void ModuleWriter::writeText(Module& wasm, std::string filename) {
   writeText(wasm, output);
 }
 
+void ModuleWriter::writeText(Module& wasm, std::ostream& stream) {
+  Output output(stream);
+  writeText(wasm, output);
+}
+
 void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   BufferWithRandomAccess buffer(debug);
   WasmBinaryWriter writer(&wasm, buffer, debug);
@@ -161,6 +166,11 @@ void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
   writeBinary(wasm, output);
 }
 
+void ModuleWriter::writeBinary(Module& wasm, std::ostream& stream) {
+  Output output(stream);
+  writeBinary(wasm, output);
+}
+
 void ModuleWriter::write(Module& wasm, Output& output) {
   if (binary) {
     writeBinary(wasm, output);
@@ -174,6 +184,14 @@ void ModuleWriter::write(Module& wasm, std::string filename) {
     writeBinary(wasm, filename);
   } else {
     writeText(wasm, filename);
+  }
+}
+
+void ModuleWriter::write(Module& wasm, std::ostream& stream) {
+  if (binary) {
+    writeBinary(wasm, stream);
+  } else {
+    writeText(wasm, stream);
   }
 }
 
