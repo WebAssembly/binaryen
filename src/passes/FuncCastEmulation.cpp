@@ -185,7 +185,7 @@ struct FuncCastEmulation : public Pass {
       }
     }
     // update call_indirects
-    ParallelFuncCastEmulation>(ABIType).run(runner, module);
+    ParallelFuncCastEmulation(ABIType).run(runner, module);
   }
 
 private:

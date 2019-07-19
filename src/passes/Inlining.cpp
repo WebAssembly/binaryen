@@ -266,9 +266,7 @@ struct Inlining : public Pass {
       infos[func->name];
     }
     PassRunner runner(module);
-    runner.setIsNested(true);
-    runner.add<FunctionInfoScanner>(&infos);
-    runner.run();
+    FunctionInfoScanner(&infos).run(&runner, module);
     // fill in global uses
     // anything exported or used in a table should not be inlined
     for (auto& ex : module->exports) {
@@ -301,10 +299,7 @@ struct Inlining : public Pass {
     }
     // find and plan inlinings
     {
-      PassRunner runner(module);
-      runner.setIsNested(true);
-      runner.add<Planner>(&state);
-      runner.run();
+      Planner(&state).run(runner, module);
     }
     // perform inlinings TODO: parallelize
     std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined

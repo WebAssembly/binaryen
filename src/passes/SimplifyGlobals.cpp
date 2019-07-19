@@ -119,11 +119,7 @@ struct SimplifyGlobals : public Pass {
         map[ex->value].exported = true;
       }
     }
-    {
-      PassRunner subRunner(module, runner->options);
-      subRunner.add<GlobalUseScanner>(&map);
-      subRunner.run();
-    }
+    GlobalUseScanner(&map).run(runner, module);
     // We now know which are immutable in practice.
     for (auto& global : module->globals) {
       auto& info = map[global->name];
@@ -157,9 +153,7 @@ struct SimplifyGlobals : public Pass {
         }
       }
       // Apply to the gets.
-      PassRunner subRunner(module, runner->options);
-      subRunner.add<GlobalUseModifier>(&copiedParentMap);
-      subRunner.run();
+      GlobalUseModifier(&copiedParentMap).run(runner, module);
     }
     // If any immutable globals have constant values, we can just apply them
     // (the global itself will be removed by another pass, as it/ won't have
@@ -172,9 +166,7 @@ struct SimplifyGlobals : public Pass {
       }
     }
     if (!constantGlobals.empty()) {
-      PassRunner subRunner(module, runner->options);
-      subRunner.add<ConstantGlobalApplier>(&constantGlobals);
-      subRunner.run();
+      ConstantGlobalApplier(&constantGlobals).run(runner, module);
     }
     // TODO a mutable global's initial value can be applied to another global
     // after it, as the mutable one can't mutate during instance startup
