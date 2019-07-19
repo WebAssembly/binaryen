@@ -970,8 +970,6 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
-  shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "Bulk memory operation (bulk memory is disabled)");
@@ -983,27 +981,33 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
     curr->offset->type, i32, curr, "memory.init offset must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, i32, curr, "memory.init size must be an i32");
+  if (!shouldBeTrue(getModule()->memory.exists,
+                    curr,
+                    "Memory operations require a memory")) {
+    return;
+  }
   shouldBeTrue(curr->segment < getModule()->memory.segments.size(),
                curr,
                "memory.init segment index out of bounds");
 }
 
 void FunctionValidator::visitDataDrop(DataDrop* curr) {
-  shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, none, curr, "data.drop must have type none");
+  if (!shouldBeTrue(getModule()->memory.exists,
+                    curr,
+                    "Memory operations require a memory")) {
+    return;
+  }
   shouldBeTrue(curr->segment < getModule()->memory.segments.size(),
                curr,
                "data.drop segment index out of bounds");
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
-  shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "Bulk memory operation (bulk memory is disabled)");
@@ -1015,11 +1019,11 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
     curr->source->type, i32, curr, "memory.copy source must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, i32, curr, "memory.copy size must be an i32");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
-  shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "Bulk memory operation (bulk memory is disabled)");
@@ -1031,6 +1035,8 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
     curr->value->type, i32, curr, "memory.fill value must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, i32, curr, "memory.fill size must be an i32");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::validateMemBytes(uint8_t bytes,

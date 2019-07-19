@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/manipulation.h"
 #include "pass.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
@@ -32,11 +33,13 @@ struct MemoryPacking : public Pass {
       return;
     }
 
-    // Conservatively refuse to change segments if any are passive to avoid
-    // invalidating segment indices or segment contents referenced from
-    // memory.init instructions.
-    // TODO: optimize in the presence of memory.init instructions
     if (module->features.hasBulkMemory()) {
+      // Remove any references to active segments that might be invalidated.
+      optimizeTrappingBulkMemoryOps(module);
+      // Conservatively refuse to change segments if any are passive to avoid
+      // invalidating segment indices or segment contents referenced from
+      // memory.init and data.drop instructions.
+      // TODO: optimize in the presence of memory.init and  data.drop
       for (auto segment : module->memory.segments) {
         if (segment.isPassive) {
           return;
@@ -119,6 +122,19 @@ struct MemoryPacking : public Pass {
       numRemaining--;
     }
     module->memory.segments.swap(packed);
+  }
+
+  void optimizeTrappingBulkMemoryOps(Module* module) {
+    struct Trapper : PostWalker<Trapper> {
+      void process(Expression* curr, Index index) {
+        if (!getModule()->memory.segments[index].isPassive) {
+          ExpressionManipulator::unreachable(curr);
+        }
+      }
+      void visitMemoryInit(MemoryInit* curr) { process(curr, curr->segment); }
+      void visitDataDrop(DataDrop* curr) { process(curr, curr->segment); }
+    } trapper;
+    trapper.walkModule(module);
   }
 };
 
