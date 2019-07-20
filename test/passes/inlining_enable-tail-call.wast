@@ -260,7 +260,7 @@
   )
  )
 )
-(module (; a fuzz test case forcing ReFinalization ;)
+(module
  (type $6 (func))
  (memory $0 1 1)
  (global $global$0 (mut i32) (i32.const 10))

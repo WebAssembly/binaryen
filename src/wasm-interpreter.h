@@ -1839,44 +1839,42 @@ public:
     if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
     }
+    auto previousCallDepth = callDepth;
+    callDepth++;
+    auto previousFunctionStackSize = functionStack.size();
+    functionStack.push_back(name);
+
     Function* function = wasm.getFunction(name);
     assert(function);
     FunctionScope scope(function, arguments);
 
-    while (true) {
-      auto previousCallDepth = callDepth;
-      callDepth++;
-      auto previousFunctionStackSize = functionStack.size();
-      functionStack.push_back(name);
-
 #ifdef WASM_INTERPRETER_DEBUG
-      std::cout << "entering " << function->name << "\n  with arguments:\n";
-      for (unsigned i = 0; i < arguments.size(); ++i) {
-        std::cout << "    $" << i << ": " << arguments[i] << '\n';
-      }
-#endif
-      Flow flow =
-        RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
-      // may decrease more than one, if we jumped up the stack
-      callDepth = previousCallDepth;
-      // if we jumped up the stack, we also need to pop higher frames
-      while (functionStack.size() > previousFunctionStackSize) {
-        functionStack.pop_back();
-      }
-      // cannot still be breaking, it means we missed our stop
-      assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
-      // TODO: continue if a continuation flow
-      Literal ret = flow.value;
-      if (function->result != ret.type) {
-        std::cerr << "calling " << function->name << " resulted in " << ret
-                  << " but the function type is " << function->result << '\n';
-        WASM_UNREACHABLE();
-      }
-#ifdef WASM_INTERPRETER_DEBUG
-      std::cout << "exiting " << function->name << " with " << ret << '\n';
-#endif
-      return ret;
+    std::cout << "entering " << function->name << "\n  with arguments:\n";
+    for (unsigned i = 0; i < arguments.size(); ++i) {
+      std::cout << "    $" << i << ": " << arguments[i] << '\n';
     }
+#endif
+
+    Flow flow =
+      RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
+    // cannot still be breaking, it means we missed our stop
+    assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
+    Literal ret = flow.value;
+    if (function->result != ret.type) {
+      std::cerr << "calling " << function->name << " resulted in " << ret
+                << " but the function type is " << function->result << '\n';
+      WASM_UNREACHABLE();
+    }
+    // may decrease more than one, if we jumped up the stack
+    callDepth = previousCallDepth;
+    // if we jumped up the stack, we also need to pop higher frames
+    while (functionStack.size() > previousFunctionStackSize) {
+      functionStack.pop_back();
+    }
+#ifdef WASM_INTERPRETER_DEBUG
+    std::cout << "exiting " << function->name << " with " << ret << '\n';
+#endif
+    return ret;
   }
 
 protected:
