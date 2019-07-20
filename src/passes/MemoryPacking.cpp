@@ -144,9 +144,9 @@ struct MemoryPacking : public Pass {
           changed = true;
         }
       }
-      void walkFunction(Function* func) {
+      void doWalkFunction(Function* func) {
         changed = false;
-        PostWalker<Trapper>::walkFunction(func);
+        super::doWalkFunction(func);
         if (changed) {
           ReFinalize().walkFunctionInModule(func, getModule());
         }
