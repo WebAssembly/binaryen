@@ -146,7 +146,20 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
     // plan to inline if we know this is valid to inline, and if the call is
     // actually performed - if it is dead code, it's pointless to inline.
     // we also cannot inline ourselves.
-    if (state->worthInlining.count(curr->target) && curr->type != unreachable &&
+    bool isUnreachable;
+    if (curr->isReturn) {
+      // Tail calls are only actually unreachable if an argument is
+      isUnreachable = false;
+      for (auto* op : curr->operands) {
+        if (op->type == unreachable) {
+          isUnreachable = true;
+          break;
+        }
+      }
+    } else {
+      isUnreachable = curr->type == unreachable;
+    }
+    if (state->worthInlining.count(curr->target) && !isUnreachable &&
         curr->target != getFunction()->name) {
       // nest the call in a block. that way the location of the pointer to the
       // call will not change even if we inline multiple times into the same
@@ -170,17 +183,26 @@ static Expression*
 doInlining(Module* module, Function* into, InliningAction& action) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
+  // Works for return_call, too
+  Type retType = module->getFunction(call->target)->result;
   Builder builder(*module);
-  auto* block = Builder(*module).makeBlock();
+  auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.str);
-  *action.callSite = block;
+  if (call->isReturn) {
+    if (isConcreteType(retType)) {
+      *action.callSite = builder.makeReturn(block);
+    } else {
+      *action.callSite = builder.makeSequence(block, builder.makeReturn());
+    }
+  } else {
+    *action.callSite = block;
+  }
   // Prepare to update the inlined code's locals and other things.
   struct Updater : public PostWalker<Updater> {
     Module* module;
     std::map<Index, Index> localMapping;
     Name returnName;
     Builder* builder;
-
     void visitReturn(Return* curr) {
       replaceCurrent(builder->makeBreak(returnName, curr->value));
     }
@@ -238,12 +260,12 @@ doInlining(Module* module, Function* into, InliningAction& action) {
   }
   updater.walk(contents);
   block->list.push_back(contents);
-  block->type = call->type;
+  block->type = retType;
   // If the function returned a value, we just set the block containing the
   // inlined code to have that type. or, if the function was void and
   // contained void, that is fine too. a bad case is a void function in which
   // we have unreachable code, so we would be replacing a void call with an
-  // unreachable; we need to handle
+  // unreachable.
   if (contents->type == unreachable && block->type == none) {
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));

@@ -37,7 +37,7 @@ NANS = True
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
 # possible feature options that are sometimes passed to the tools.
-POSSIBLE_FEATURE_OPTS = ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int']
+POSSIBLE_FEATURE_OPTS = ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call']
 
 FUZZ_OPTS = []
 
