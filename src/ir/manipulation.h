@@ -38,11 +38,6 @@ template<typename InputType> inline Nop* nop(InputType* target) {
   return convert<InputType, Nop>(target);
 }
 
-template<typename InputType>
-inline Unreachable* unreachable(InputType* target) {
-  return convert<InputType, Unreachable>(target);
-}
-
 // Convert a node that allocates
 template<typename InputType, typename OutputType>
 inline OutputType* convert(InputType* input, MixedArena& allocator) {
