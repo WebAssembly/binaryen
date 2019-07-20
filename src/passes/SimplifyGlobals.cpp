@@ -21,10 +21,12 @@
 //    globals immutable.
 //  * If an immutable global is a copy of another, use the earlier one,
 //    to allow removal of the copies later.
+//  * Apply the constant values of immutable globals.
 //
 
 #include <atomic>
 
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm.h"
 
@@ -54,6 +56,7 @@ private:
 };
 
 using NameNameMap = std::map<Name, Name>;
+using NameSet = std::set<Name>;
 
 struct GlobalUseModifier : public WalkerPass<PostWalker<GlobalUseModifier>> {
   bool isFunctionParallel() override { return true; }
@@ -76,6 +79,29 @@ private:
   NameNameMap* copiedParentMap;
 };
 
+struct ConstantGlobalApplier
+  : public WalkerPass<PostWalker<ConstantGlobalApplier>> {
+  bool isFunctionParallel() override { return true; }
+
+  ConstantGlobalApplier(NameSet* constantGlobals)
+    : constantGlobals(constantGlobals) {}
+
+  ConstantGlobalApplier* create() override {
+    return new ConstantGlobalApplier(constantGlobals);
+  }
+
+  void visitGlobalGet(GlobalGet* curr) {
+    if (constantGlobals->count(curr->name)) {
+      auto* global = getModule()->getGlobal(curr->name);
+      assert(global->init->is<Const>());
+      replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
+    }
+  }
+
+private:
+  NameSet* constantGlobals;
+};
+
 } // anonymous namespace
 
 struct SimplifyGlobals : public Pass {
@@ -93,11 +119,7 @@ struct SimplifyGlobals : public Pass {
         map[ex->value].exported = true;
       }
     }
-    {
-      PassRunner subRunner(module, runner->options);
-      subRunner.add<GlobalUseScanner>(&map);
-      subRunner.run();
-    }
+    GlobalUseScanner(&map).run(runner, module);
     // We now know which are immutable in practice.
     for (auto& global : module->globals) {
       auto& info = map[global->name];
@@ -131,10 +153,23 @@ struct SimplifyGlobals : public Pass {
         }
       }
       // Apply to the gets.
-      PassRunner subRunner(module, runner->options);
-      subRunner.add<GlobalUseModifier>(&copiedParentMap);
-      subRunner.run();
+      GlobalUseModifier(&copiedParentMap).run(runner, module);
     }
+    // If any immutable globals have constant values, we can just apply them
+    // (the global itself will be removed by another pass, as it/ won't have
+    // any uses).
+    NameSet constantGlobals;
+    for (auto& global : module->globals) {
+      if (!global->mutable_ && !global->imported() &&
+          global->init->is<Const>()) {
+        constantGlobals.insert(global->name);
+      }
+    }
+    if (!constantGlobals.empty()) {
+      ConstantGlobalApplier(&constantGlobals).run(runner, module);
+    }
+    // TODO a mutable global's initial value can be applied to another global
+    // after it, as the mutable one can't mutate during instance startup
   }
 };
 

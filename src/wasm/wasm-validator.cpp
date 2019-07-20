@@ -1925,9 +1925,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
   info.quiet = (flags & Quiet) != 0;
   // parallel wasm logic validation
   PassRunner runner(&module);
-  runner.add<FunctionValidator>(&info);
-  runner.setIsNested(true);
-  runner.run();
+  FunctionValidator(&info).run(&runner, &module);
   // validate globally
   if (info.validateGlobally) {
     validateImports(module, info);

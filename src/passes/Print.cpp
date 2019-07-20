@@ -2103,10 +2103,8 @@ Pass* createPrintStackIRPass() { return new PrintStackIR(); }
 // Print individual expressions
 
 std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
-  PassRunner passRunner(module);
-  passRunner.setIsNested(true);
-  passRunner.add<Printer>(&o);
-  passRunner.run();
+  PassRunner runner(module);
+  Printer(&o).run(&runner, module);
   return o;
 }
 

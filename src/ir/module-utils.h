@@ -319,7 +319,6 @@ template<typename T> struct ParallelFunctionMap {
 
     // Run on the implemented functions.
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
-
       bool isFunctionParallel() override { return true; }
 
       Mapper(Info* info) : info(info) {}
@@ -338,9 +337,7 @@ template<typename T> struct ParallelFunctionMap {
     Info info = {&map, work};
 
     PassRunner runner(&wasm);
-    runner.setIsNested(true);
-    runner.add<Mapper>(&info);
-    runner.run();
+    Mapper(&info).run(&runner, &wasm);
   }
 };
 

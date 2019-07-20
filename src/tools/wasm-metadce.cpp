@@ -274,9 +274,7 @@ struct MetaDCEGraph {
     };
 
     PassRunner runner(&wasm);
-    runner.setIsNested(true);
-    runner.add<Scanner>(this);
-    runner.run();
+    Scanner(this).run(&runner, &wasm);
   }
 
 private:

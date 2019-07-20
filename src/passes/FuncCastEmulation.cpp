@@ -185,10 +185,7 @@ struct FuncCastEmulation : public Pass {
       }
     }
     // update call_indirects
-    PassRunner subRunner(module, runner->options);
-    subRunner.setIsNested(true);
-    subRunner.add<ParallelFuncCastEmulation>(ABIType);
-    subRunner.run();
+    ParallelFuncCastEmulation(ABIType).run(runner, module);
   }
 
 private:

@@ -455,7 +455,8 @@ def write_commands(commands, filename):
     f.write('set -e\n')
     for command in commands:
       f.write('echo "%s"\n' % command)
-      f.write(command + ' &> /dev/null\n')
+      pre = 'BINARYEN_PASS_DEBUG=%s ' % (os.environ.get('BINARYEN_PASS_DEBUG') or '0')
+      f.write(pre + command + ' &> /dev/null\n')
     f.write('echo "ok"\n')
 
 

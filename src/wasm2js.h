@@ -283,7 +283,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // First, do the lowering to a JS-friendly subset.
   {
     PassRunner runner(wasm, options);
-    runner.add<AutoDrop>();
+    runner.add(make_unique<AutoDrop>());
     runner.add("legalize-js-interface");
     // First up remove as many non-JS operations we can, including things like
     // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.

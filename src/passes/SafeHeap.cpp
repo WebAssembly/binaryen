@@ -106,10 +106,7 @@ struct SafeHeap : public Pass {
     // add imports
     addImports(module);
     // instrument loads and stores
-    PassRunner instrumenter(module);
-    instrumenter.setIsNested(true);
-    instrumenter.add<AccessInstrumenter>();
-    instrumenter.run();
+    AccessInstrumenter().run(runner, module);
     // add helper checking funcs and imports
     addGlobals(module, module->features);
   }
