@@ -61,7 +61,8 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   Global* stackPointer = nullptr;
   Export* stackSaveFunctionExport = wasm.getExportOrNull("stackSave");
   if (stackSaveFunctionExport) {
-    Function* stackSaveFunction = wasm.getFunctionOrNull(stackSaveFunctionExport->value);
+    Function* stackSaveFunction =
+      wasm.getFunctionOrNull(stackSaveFunctionExport->value);
     if (stackSaveFunction) {
       Expression* functionBody = stackSaveFunction->body;
       if (functionBody) {
