@@ -127,7 +127,11 @@ struct MemoryPacking : public Pass {
 
   void optimizeTrappingBulkMemoryOps(PassRunner* runner, Module* module) {
     struct Trapper : WalkerPass<PostWalker<Trapper>> {
+      bool isFunctionParallel() override { return true; }
       bool changed;
+
+      Pass* create() override { return new Trapper; }
+
       void visitMemoryInit(MemoryInit* curr) {
         if (!getModule()->memory.segments[curr->segment].isPassive) {
           Builder builder(*getModule());
@@ -151,8 +155,6 @@ struct MemoryPacking : public Pass {
           ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
-      bool isFunctionParallel() override { return true; }
-      Pass* create() override { return new Trapper; }
     } trapper;
     trapper.run(runner, module);
   }
