@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "ir/manipulation.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
@@ -32,11 +34,13 @@ struct MemoryPacking : public Pass {
       return;
     }
 
-    // Conservatively refuse to change segments if any are passive to avoid
-    // invalidating segment indices or segment contents referenced from
-    // memory.init instructions.
-    // TODO: optimize in the presence of memory.init instructions
     if (module->features.hasBulkMemory()) {
+      // Remove any references to active segments that might be invalidated.
+      optimizeTrappingBulkMemoryOps(runner, module);
+      // Conservatively refuse to change segments if any are passive to avoid
+      // invalidating segment indices or segment contents referenced from
+      // memory.init and data.drop instructions.
+      // TODO: optimize in the presence of memory.init and  data.drop
       for (auto segment : module->memory.segments) {
         if (segment.isPassive) {
           return;
@@ -119,6 +123,40 @@ struct MemoryPacking : public Pass {
       numRemaining--;
     }
     module->memory.segments.swap(packed);
+  }
+
+  void optimizeTrappingBulkMemoryOps(PassRunner* runner, Module* module) {
+    struct Trapper : WalkerPass<PostWalker<Trapper>> {
+      bool isFunctionParallel() override { return true; }
+      bool changed;
+
+      Pass* create() override { return new Trapper; }
+
+      void visitMemoryInit(MemoryInit* curr) {
+        if (!getModule()->memory.segments[curr->segment].isPassive) {
+          Builder builder(*getModule());
+          replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
+                                          builder.makeDrop(curr->offset),
+                                          builder.makeDrop(curr->size),
+                                          builder.makeUnreachable()));
+          changed = true;
+        }
+      }
+      void visitDataDrop(DataDrop* curr) {
+        if (!getModule()->memory.segments[curr->segment].isPassive) {
+          ExpressionManipulator::unreachable(curr);
+          changed = true;
+        }
+      }
+      void doWalkFunction(Function* func) {
+        changed = false;
+        super::doWalkFunction(func);
+        if (changed) {
+          ReFinalize().walkFunctionInModule(func, getModule());
+        }
+      }
+    } trapper;
+    trapper.run(runner, module);
   }
 };
 
