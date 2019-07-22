@@ -142,7 +142,7 @@ private:
   std::map<Index, size_t> mappedLocals;
 };
 
-// Takes a binaryen IR and converts it to something else (binary or stack IR)
+// Takes binaryen IR and converts it to something else (binary or stack IR)
 template<typename SubType>
 class BinaryenIRWriter : public OverriddenVisitor<BinaryenIRWriter<SubType>> {
 public:
