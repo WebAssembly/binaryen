@@ -49,6 +49,7 @@ jobs:
       before_install:
         - export ASAN_OPTIONS="symbolize=1"
       install:
+        - clang --version
         - nvm install 10
         - nvm use 10
         - pip install --user flake8==3.4.1
