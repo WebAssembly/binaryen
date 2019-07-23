@@ -87,7 +87,7 @@ jobs:
     - <<: *test-ubuntu
       env: |
         COMPILER_FLAGS="-fsanitize=thread"
-        LINKER_FLAGS="-ltsan"
+        LINKER_FLAGS="-fsanitize=thread"
 
     # Build with gcc 7 and run tests on the host system (Ubuntu).
     - <<: *test-ubuntu
