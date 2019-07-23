@@ -20,8 +20,8 @@ namespace wasm {
 
 void BinaryInstWriter::visitBlock(Block* curr) {
   breakStack.push_back(curr->name);
-  o << int8_t(BinaryConsts::Block)
-    << binaryType(curr->type != unreachable ? curr->type : none);
+  o << int8_t(BinaryConsts::Block);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
 }
 
 void BinaryInstWriter::visitIf(If* curr) {
@@ -29,8 +29,8 @@ void BinaryInstWriter::visitIf(If* curr) {
   // TODO: optimize this in Stack IR (if child is a block, we may break to this
   // instead)
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
-  o << int8_t(BinaryConsts::If)
-    << binaryType(curr->type != unreachable ? curr->type : none);
+  o << int8_t(BinaryConsts::If);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
 }
 
 void BinaryInstWriter::emitIfElse() {
