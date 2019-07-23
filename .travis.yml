@@ -1,5 +1,5 @@
 sudo: false
-dist: trusty
+dist: bionic
 language: cpp
 
 stages:
@@ -88,12 +88,12 @@ jobs:
       env: |
         COMPILER_FLAGS="-fsanitize=thread"
 
-    # Build with gcc 5 and run tests on the host system (Ubuntu).
+    # Build with gcc 7 and run tests on the host system (Ubuntu).
     - <<: *test-ubuntu
       compiler: gcc
       env: |
-        CC="gcc-5"
-        CXX="g++-5"
+        CC="gcc-7"
+        CXX="g++-7"
 
     # Build the .js outputs using emcc
     - &test-emcc
