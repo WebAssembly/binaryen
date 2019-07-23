@@ -1,5 +1,5 @@
 sudo: false
-dist: bionic
+dist: trusty
 language: cpp
 
 stages:
