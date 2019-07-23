@@ -338,8 +338,8 @@ struct DAE : public Pass {
           // Great, it's not used. Check if none of the calls has a param with
           // side effects, as that would prevent us removing them (flattening
           // should have been done earlier).
-          bool canRemove = std::none_of(
-            calls.begin(), calls.end(), [&runner](Expression* call) {
+          bool canRemove =
+            std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
               return EffectAnalyzer(runner->options, operand).hasSideEffects();
             });
@@ -381,7 +381,7 @@ struct DAE : public Pass {
         }
         auto& calls = iter->second;
         bool allDropped =
-          std::all_of(calls.begin(), calls.end(), [](Expression* call) {
+          std::all_of(calls.begin(), calls.end(), [&](Call* call) {
             return allDroppedCalls.count(call);
           });
         if (!allDropped) {
