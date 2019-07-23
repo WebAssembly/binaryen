@@ -131,6 +131,20 @@ class FeatureValidationTest(BinaryenTestCase):
     '''
     self.check_tail_call(module, 'return_call requires tail calls to be enabled')
 
+  def test_tail_call_indirect(self):
+    module = '''
+    (module
+     (type $T (func))
+     (table $0 1 1 funcref)
+     (func $foo
+      (return_call_indirect (type $T)
+       (i32.const 0)
+      )
+     )
+    )
+    '''
+    self.check_tail_call(module, 'return_call_indirect requires tail calls to be enabled')
+
 
 class TargetFeaturesSectionTest(BinaryenTestCase):
   def test_atomics(self):

@@ -149,13 +149,10 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
     bool isUnreachable;
     if (curr->isReturn) {
       // Tail calls are only actually unreachable if an argument is
-      isUnreachable = false;
-      for (auto* op : curr->operands) {
-        if (op->type == unreachable) {
-          isUnreachable = true;
-          break;
-        }
-      }
+      isUnreachable =
+        std::any_of(curr->operands.begin(),
+                    curr->operands.end(),
+                    [](Expression* op) { return op->type == unreachable; });
     } else {
       isUnreachable = curr->type == unreachable;
     }
@@ -175,6 +172,46 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
 
 private:
   InliningState* state;
+};
+
+struct Updater : public PostWalker<Updater> {
+  Module* module;
+  std::map<Index, Index> localMapping;
+  Name returnName;
+  Builder* builder;
+  void visitReturn(Return* curr) {
+    replaceCurrent(builder->makeBreak(returnName, curr->value));
+  }
+  // Return calls in inlined functions should only break out of the scope of
+  // the inlined code, not the entire function they are being inlined into. To
+  // achieve this, make the call a non-return call and add a break. This does
+  // not cause unbounded stack growth because inlining and return calling both
+  // avoid creating a new stack frame.
+  template<typename T> void handleReturnCall(T* curr, Type targetType) {
+    curr->isReturn = false;
+    curr->type = targetType;
+    if (isConcreteType(targetType)) {
+      replaceCurrent(builder->makeBreak(returnName, curr));
+    } else {
+      replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
+    }
+  }
+  void visitCall(Call* curr) {
+    if (curr->isReturn) {
+      handleReturnCall(curr, module->getFunction(curr->target)->result);
+    }
+  }
+  void visitCallIndirect(CallIndirect* curr) {
+    if (curr->isReturn) {
+      handleReturnCall(curr, module->getFunctionType(curr->fullType)->result);
+    }
+  }
+  void visitLocalGet(LocalGet* curr) {
+    curr->index = localMapping[curr->index];
+  }
+  void visitLocalSet(LocalSet* curr) {
+    curr->index = localMapping[curr->index];
+  }
 };
 
 // Core inlining logic. Modifies the outside function (adding locals as
@@ -198,42 +235,7 @@ doInlining(Module* module, Function* into, InliningAction& action) {
     *action.callSite = block;
   }
   // Prepare to update the inlined code's locals and other things.
-  struct Updater : public PostWalker<Updater> {
-    Module* module;
-    std::map<Index, Index> localMapping;
-    Name returnName;
-    Builder* builder;
-    void visitReturn(Return* curr) {
-      replaceCurrent(builder->makeBreak(returnName, curr->value));
-    }
-    void replaceReturnCall(Expression* curr) {
-      if (isConcreteType(curr->type)) {
-        replaceCurrent(builder->makeBreak(returnName, curr));
-      } else {
-        replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
-      }
-    }
-    void visitCall(Call* curr) {
-      if (curr->isReturn) {
-        curr->isReturn = false;
-        curr->type = module->getFunction(curr->target)->result;
-        replaceReturnCall(curr);
-      }
-    }
-    void visitCallIndirect(CallIndirect* curr) {
-      if (curr->isReturn) {
-        curr->isReturn = false;
-        curr->type = module->getFunctionType(curr->fullType)->result;
-        replaceReturnCall(curr);
-      }
-    }
-    void visitLocalGet(LocalGet* curr) {
-      curr->index = localMapping[curr->index];
-    }
-    void visitLocalSet(LocalSet* curr) {
-      curr->index = localMapping[curr->index];
-    }
-  } updater;
+  Updater updater;
   updater.module = module;
   updater.returnName = block->name;
   updater.builder = &builder;

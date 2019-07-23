@@ -551,7 +551,7 @@ void FunctionValidator::visitBreak(Break* curr) {
   noteBreak(curr->name, curr->value, curr);
   if (curr->value) {
     shouldBeTrue(
-      curr->value->type != none, curr, "break value must be a concrete type");
+      curr->value->type != none, curr, "break value must not have none type");
   }
   if (curr->condition) {
     shouldBeTrue(curr->condition->type == unreachable ||
@@ -609,7 +609,10 @@ void FunctionValidator::visitCall(Call* curr) {
       "return_call callee return type must match caller return type");
   } else {
     if (curr->type == unreachable) {
-      bool hasUnreachableOperand = false;
+      bool hasUnreachableOperand =
+        std::any_of(curr->operands.begin(),
+                    curr->operands.end(),
+                    [](Expression* op) { return op->type == unreachable; });
       for (auto* op : curr->operands) {
         if (op->type == unreachable) {
           hasUnreachableOperand = true;
@@ -669,13 +672,10 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   } else {
     if (curr->type == unreachable) {
       if (curr->target->type != unreachable) {
-        bool hasUnreachableOperand = false;
-        for (auto* op : curr->operands) {
-          if (op->type == unreachable) {
-            hasUnreachableOperand = true;
-            break;
-          }
-        }
+        bool hasUnreachableOperand =
+          std::any_of(curr->operands.begin(),
+                      curr->operands.end(),
+                      [](Expression* op) { return op->type == unreachable; });
         shouldBeTrue(hasUnreachableOperand,
                      curr,
                      "call_indirects may only be unreachable if they have "

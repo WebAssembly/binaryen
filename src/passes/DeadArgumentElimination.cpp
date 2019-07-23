@@ -58,11 +58,13 @@ struct DAEFunctionInfo {
   // if we can optimize out the drop, we can replace the drop there).
   std::unordered_map<Call*, Expression**> droppedCalls;
   // Whether this function contains any tail calls (including indirect tail
-  // calls) and the set of functions this function tail calls. Tail callers and
-  // tail callees cannot have their dropped returns removed because of the
+  // calls) and the set of functions this function tail calls. Tail-callers and
+  // tail-callees cannot have their dropped returns removed because of the
   // constraint that tail-callees must have the same return type as
-  // tail-callers. TODO: allow the removal of dropped returns from tail-callers
-  // if their tail-callees can have their returns removed as well.
+  // tail-callers. Indirectly tail called functions are already not optimized
+  // because being in a table inhibits DAE. TODO: Allow the removal of dropped
+  // returns from tail-callers if their tail-callees can have their returns
+  // removed as well.
   bool hasTailCalls = false;
   std::unordered_set<Name> tailCallees;
   // Whether the function can be called from places that
@@ -336,14 +338,11 @@ struct DAE : public Pass {
           // Great, it's not used. Check if none of the calls has a param with
           // side effects, as that would prevent us removing them (flattening
           // should have been done earlier).
-          bool canRemove = true;
-          for (auto* call : calls) {
-            auto* operand = call->operands[i];
-            if (EffectAnalyzer(runner->options, operand).hasSideEffects()) {
-              canRemove = false;
-              break;
-            }
-          }
+          bool canRemove = std::none_of(
+            calls.begin(), calls.end(), [&runner](Expression* call) {
+              auto* operand = call->operands[i];
+              return EffectAnalyzer(runner->options, operand).hasSideEffects();
+            });
           if (canRemove) {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
@@ -381,13 +380,10 @@ struct DAE : public Pass {
           continue;
         }
         auto& calls = iter->second;
-        bool allDropped = true;
-        for (auto* call : calls) {
-          if (!allDroppedCalls.count(call)) {
-            allDropped = false;
-            break;
-          }
-        }
+        bool allDropped =
+          std::all_of(calls.begin(), calls.end(), [](Expression* call) {
+            return allDroppedCalls.count(call);
+          });
         if (!allDropped) {
           continue;
         }
