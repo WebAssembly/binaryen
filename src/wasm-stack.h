@@ -267,8 +267,7 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
 
   // Handle very deeply nested blocks in the first position efficiently,
   // avoiding heavy recursion. We only start to do this if we see it will help
-  // us (to avoid allocation of the vector). Note that Stack2Binary mode we
-  // don't need to visit children anyhow, so we don't need this optimization.
+  // us (to avoid allocation of the vector).
   if (!curr->list.empty() && curr->list[0]->is<Block>()) {
     std::vector<Block*> parents;
     Block* child;
