@@ -482,6 +482,9 @@ def run_gcc_tests():
                '-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
       if src.endswith('.cpp'):
         extra += ['-std=c++11']
+      if os.environ.get('COMPILER_FLAGS'):
+        for f in os.environ.get('COMPILER_FLAGS').split(' '):
+          extra.append(f)
       print 'build: ', ' '.join(extra)
       subprocess.check_call(extra)
       # Link against the binaryen C library DSO, using an executable-relative rpath
