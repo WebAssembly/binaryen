@@ -613,12 +613,6 @@ void FunctionValidator::visitCall(Call* curr) {
         std::any_of(curr->operands.begin(),
                     curr->operands.end(),
                     [](Expression* op) { return op->type == unreachable; });
-      for (auto* op : curr->operands) {
-        if (op->type == unreachable) {
-          hasUnreachableOperand = true;
-          break;
-        }
-      }
       shouldBeTrue(
         hasUnreachableOperand,
         curr,
