@@ -468,7 +468,8 @@ public:
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
-        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime && !blacklist.count(caller->name)) {
+        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime &&
+            !blacklist.count(caller->name)) {
           map[caller].canChangeState = true;
           work.push(caller);
         }
@@ -1031,16 +1032,24 @@ struct Asyncify : public Pass {
     String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect =
       runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
-    String::Split blacklist(runner->options.getArgumentOrDefault("asyncify-blacklist", ""), ",");
-    String::Split whitelist(runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",");
+    String::Split blacklist(
+      runner->options.getArgumentOrDefault("asyncify-blacklist", ""), ",");
+    String::Split whitelist(
+      runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",");
 
-    auto checkList = [module](const String::Split& list, const std::string& which) {
+    auto checkList = [module](const String::Split& list,
+                              const std::string& which) {
       for (auto& name : list) {
         auto* func = module->getFunctionOrNull(name);
         if (!func) {
-          Fatal() << "Asyncify " << which << "list contained a non-existing function name: " << name << '\n';
+          Fatal() << "Asyncify " << which
+                  << "list contained a non-existing function name: " << name
+                  << '\n';
         } else if (func->imported()) {
-          Fatal() << "Asyncify " << which << "list contained an imported function name (use the import list for imports): " << name << '\n';
+          Fatal() << "Asyncify " << which
+                  << "list contained an imported function name (use the import "
+                     "list for imports): "
+                  << name << '\n';
         }
       }
     };
@@ -1048,27 +1057,28 @@ struct Asyncify : public Pass {
     checkList(whitelist, "white");
 
     if (!blacklist.empty() && !whitelist.empty()) {
-      Fatal() << "It makes no sense to use both a blacklist and a whitelist with asyncify.";
+      Fatal() << "It makes no sense to use both a blacklist and a whitelist "
+                 "with asyncify.";
     }
 
     // Scan the module.
-    ModuleAnalyzer analyzer(*module,
-                            [&](Name module, Name base) {
-                              if (allImportsCanChangeState) {
-                                return true;
-                              }
-                              std::string full =
-                                std::string(module.str) + '.' + base.str;
-                              for (auto& listedImport : listedImports) {
-                                if (String::wildcardMatch(listedImport, full)) {
-                                  return true;
-                                }
-                              }
-                              return false;
-                            },
-                            ignoreIndirect == "",
-                            blacklist,
-                            whitelist);
+    ModuleAnalyzer analyzer(
+      *module,
+      [&](Name module, Name base) {
+        if (allImportsCanChangeState) {
+          return true;
+        }
+        std::string full = std::string(module.str) + '.' + base.str;
+        for (auto& listedImport : listedImports) {
+          if (String::wildcardMatch(listedImport, full)) {
+            return true;
+          }
+        }
+        return false;
+      },
+      ignoreIndirect == "",
+      blacklist,
+      whitelist);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
