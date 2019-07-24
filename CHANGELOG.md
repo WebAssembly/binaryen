@@ -17,6 +17,8 @@ Current Trunk
 
 - wasm-emscripten-finalize: For -pie binaries that import a mutable stack
   pointer we internalize this an import it as immutable.
+- The `tail-call` feature including the `return_call` and `return_call_indirect`
+  instructions is ready to use.
 
 v86
 ---
