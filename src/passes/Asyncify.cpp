@@ -212,6 +212,24 @@
 //      If that is true for your codebase, then this can be extremely useful
 //      as otherwise it looks like any indirect call can go to a lot of places.
 //
+//   --pass-arg=asyncify-blacklist@name1,name2,name3
+//
+//      If the blacklist is provided, then the functions in it will not be
+//      instrumented even if it looks like they need to. This can be useful
+//      if you know things the whole-program analysis doesn't, like if you
+//      know certain indirect calls are safe and won't unwind. But if you
+//      get the list wrong things will break (and in a production build user
+//      input might reach code paths you missed during testing, so it's hard
+//      to know you got this right), so this is not recommended unless you
+//      really know what are doing, and need to optimize every bit of speed
+//      and size.
+//
+//   --pass-arg=asyncify-whitelist@name1,name2,name3
+//
+//      If the whitelist is provided, then only the functions in the list
+//      will be instrumented. Like the blacklist, getting this wrong will
+//      break your application.
+//
 
 #include "ir/effects.h"
 #include "ir/literal-utils.h"
@@ -327,9 +345,15 @@ class ModuleAnalyzer {
 public:
   ModuleAnalyzer(Module& module,
                  std::function<bool(Name, Name)> canImportChangeState,
-                 bool canIndirectChangeState)
+                 bool canIndirectChangeState,
+                 const String::Split& blacklistInput,
+                 const String::Split& whitelistInput)
     : module(module), canIndirectChangeState(canIndirectChangeState),
       globals(module) {
+
+    blacklist.insert(blacklistInput.begin(), blacklistInput.end());
+    whitelist.insert(whitelistInput.begin(), whitelistInput.end());
+
     // Scan to see which functions can directly change the state.
     // Also handle the asyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
@@ -388,11 +412,13 @@ public:
           }
           Info* info;
           Module* module;
+          ModuleAnalyzer* analyzer;
           bool canIndirectChangeState;
         };
         Walker walker;
         walker.info = &info;
         walker.module = &module;
+        walker.analyzer = this;
         walker.canIndirectChangeState = canIndirectChangeState;
         walker.walk(func->body);
 
@@ -405,6 +431,13 @@ public:
       });
 
     map.swap(scanner.map);
+
+    if (!blacklist.empty()) {
+      // Functions in the blacklist are assumed to not change the state.
+      for (auto& name : blacklist) {
+        map[module.getFunction(name)].canChangeState = false;
+      }
+    }
 
     // Remove the asyncify imports, if any.
     for (auto& pair : map) {
@@ -439,6 +472,13 @@ public:
           map[caller].canChangeState = true;
           work.push(caller);
         }
+      }
+    }
+
+    if (!whitelist.empty()) {
+      // Only the functions in the whitelist can change the state.
+      for (auto& func : module.functions) {
+        map[func.get()].canChangeState = whitelist.count(func->name) > 0;
       }
     }
   }
@@ -481,6 +521,7 @@ public:
         // TODO optimize the other case, at least by type
       }
       Module* module;
+      ModuleAnalyzer* analyzer;
       Map* map;
       bool canIndirectChangeState;
       bool canChangeState = false;
@@ -488,6 +529,7 @@ public:
     };
     Walker walker;
     walker.module = &module;
+    walker.analyzer = this;
     walker.map = &map;
     walker.canIndirectChangeState = canIndirectChangeState;
     walker.walk(curr);
@@ -498,6 +540,8 @@ public:
   }
 
   GlobalHelper globals;
+  std::set<Name> blacklist;
+  std::set<Name> whitelist;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -987,6 +1031,19 @@ struct Asyncify : public Pass {
     String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect =
       runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
+    String::Split blacklist(runner->options.getArgumentOrDefault("asyncify-blacklist", ""), ",");
+    String::Split whitelist(runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",");
+
+    auto checkList = [module](const String::Split& list, const std::string& which) {
+      for (auto& name : list) {
+        if (!module->getFunctionOrNull(name)) {
+          std::cerr << "asyncify " << which << "list contained a non-existing function name: " << name << '\n';
+        }
+      }
+    };
+    checkList(listedImports, "imports ");
+    checkList(blacklist, "black");
+    checkList(whitelist, "white");
 
     // Scan the module.
     ModuleAnalyzer analyzer(*module,
@@ -1003,7 +1060,9 @@ struct Asyncify : public Pass {
                               }
                               return false;
                             },
-                            ignoreIndirect == "");
+                            ignoreIndirect == "",
+                            blacklist,
+                            whitelist);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
