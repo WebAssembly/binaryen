@@ -354,6 +354,8 @@ BinaryenExpressionId BinaryenMemoryCopyId(void) {
 BinaryenExpressionId BinaryenMemoryFillId(void) {
   return Expression::Id::MemoryFillId;
 }
+BinaryenExpressionId BinaryenPushId(void) { return Expression::Id::PushId; }
+BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
 
 // External kinds
 
@@ -1573,6 +1575,21 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
+BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
+                                   BinaryenExpressionRef value) {
+  auto* ret = Builder(*((Module*)module)).makePush((Expression*)value);
+  if (tracing) {
+    traceExpression(ret, "BinaryenPush", value);
+  }
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
+  auto* ret = Builder(*((Module*)module)).makePop(Type(type));
+  if (tracing) {
+    traceExpression(ret, "BinaryenPop", type);
+  }
+  return static_cast<Expression*>(ret);
+}
 
 // Expression utility
 
@@ -2703,6 +2720,16 @@ BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<MemoryFill>());
   return static_cast<MemoryFill*>(expression)->size;
+}
+BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenPushGetValue(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Push>());
+  return static_cast<Push*>(expression)->value;
 }
 
 // Functions

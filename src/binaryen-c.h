@@ -127,6 +127,8 @@ BinaryenExpressionId BinaryenMemoryInitId(void);
 BinaryenExpressionId BinaryenDataDropId(void);
 BinaryenExpressionId BinaryenMemoryCopyId(void);
 BinaryenExpressionId BinaryenMemoryFillId(void);
+BinaryenExpressionId BinaryenPushId(void);
+BinaryenExpressionId BinaryenPopId(void);
 
 // External kinds (call to get the value of each; you can cache them)
 
@@ -699,6 +701,9 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
                                          BinaryenExpressionRef dest,
                                          BinaryenExpressionRef value,
                                          BinaryenExpressionRef size);
+BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
+                                   BinaryenExpressionRef value);
+BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type);
 
 BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
 BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
@@ -849,6 +854,8 @@ BinaryenExpressionRef BinaryenMemoryCopyGetSize(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenMemoryFillGetDest(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenMemoryFillGetValue(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr);
+
+BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr);
 
 // Functions
 
