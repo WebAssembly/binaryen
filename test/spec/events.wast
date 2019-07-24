@@ -20,11 +20,6 @@
 )
 
 (assert_invalid
-  (module (event $e (attr 0)))
-  "There should be 1 or more values in an event type"
-)
-
-(assert_invalid
   (module (event $e (attr 1) (param i32)))
    "Currently only attribute 0 is supported"
 )

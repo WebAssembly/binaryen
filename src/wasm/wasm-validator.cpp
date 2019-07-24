@@ -1943,9 +1943,6 @@ static void validateEvents(Module& module, ValidationInfo& info) {
     FunctionType* ft = module.getFunctionType(curr->type);
     info.shouldBeEqual(
       ft->result, none, curr->name, "Event type's result type should be none");
-    info.shouldBeTrue(!curr->params.empty(),
-                      curr->name,
-                      "There should be 1 or more values in an event type");
     info.shouldBeEqual(curr->attribute,
                        (unsigned)0,
                        curr->attribute,
