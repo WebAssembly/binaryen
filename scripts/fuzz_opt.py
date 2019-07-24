@@ -294,7 +294,7 @@ class Wasm2JS(TestCaseHandler):
     return out
 
   def can_run_on_feature_opts(self, feature_opts):
-    return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call']])
+    return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext']])
 
 
 class Asyncify(TestCaseHandler):
