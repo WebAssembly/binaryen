@@ -1764,7 +1764,7 @@ private:
             auto op = pick(
               FeatureOptions<UnaryOp>()
                 .add(FeatureSet::MVP, EqZInt32, ClzInt32, CtzInt32, PopcntInt32)
-                .add(FeatureSet::Atomics, ExtendS8Int32, ExtendS16Int32));
+                .add(FeatureSet::SignExt, ExtendS8Int32, ExtendS16Int32));
             return buildUnary({op, make(i32)});
           }
           case i64:
