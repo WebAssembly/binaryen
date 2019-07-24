@@ -130,4 +130,34 @@
     (local.get $x)
   )
 )
-
+(module ;; tail calls inhibit dropped result removal
+  (func $foo (param $x i32) (result i32)
+    (drop
+      (return_call $bar
+        (i32.const 0)
+      )
+    )
+    (i32.const 42)
+  )
+  (func $bar (param $x i32) (result i32)
+    (i32.const 7)
+  )
+)
+(module ;; indirect tail calls inhibit dropped result removal
+  (type $T (func (result i32)))
+  (table 1 1 funcref)
+  (func $foo (param $x i32) (result i32)
+    (drop
+      (return_call_indirect (type $T)
+        (i32.const 0)
+      )
+    )
+  )
+  (func $bar
+    (drop
+      (call $foo
+        (i32.const 42)
+      )
+    )
+  )
+)

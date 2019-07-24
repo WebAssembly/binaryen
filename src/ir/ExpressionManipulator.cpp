@@ -71,7 +71,8 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
                                 copy(curr->value));
     }
     Expression* visitCall(Call* curr) {
-      auto* ret = builder.makeCall(curr->target, {}, curr->type);
+      auto* ret =
+        builder.makeCall(curr->target, {}, curr->type, curr->isReturn);
       for (Index i = 0; i < curr->operands.size(); i++) {
         ret->operands.push_back(copy(curr->operands[i]));
       }
@@ -79,7 +80,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     }
     Expression* visitCallIndirect(CallIndirect* curr) {
       auto* ret = builder.makeCallIndirect(
-        curr->fullType, copy(curr->target), {}, curr->type);
+        curr->fullType, copy(curr->target), {}, curr->type, curr->isReturn);
       for (Index i = 0; i < curr->operands.size(); i++) {
         ret->operands.push_back(copy(curr->operands[i]));
       }

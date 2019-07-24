@@ -223,6 +223,9 @@ struct EffectAnalyzer
 
   void visitCall(Call* curr) {
     calls = true;
+    if (curr->isReturn) {
+      branches = true;
+    }
     if (debugInfo) {
       // debugInfo call imports must be preserved very strongly, do not
       // move code around them
@@ -230,7 +233,12 @@ struct EffectAnalyzer
       branches = true;
     }
   }
-  void visitCallIndirect(CallIndirect* curr) { calls = true; }
+  void visitCallIndirect(CallIndirect* curr) {
+    calls = true;
+    if (curr->isReturn) {
+      branches = true;
+    }
+  }
   void visitLocalGet(LocalGet* curr) { localsRead.insert(curr->index); }
   void visitLocalSet(LocalSet* curr) { localsWritten.insert(curr->index); }
   void visitGlobalGet(GlobalGet* curr) { globalsRead.insert(curr->name); }

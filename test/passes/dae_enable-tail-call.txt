@@ -243,3 +243,41 @@
   )
  )
 )
+(module
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (func $foo (; 0 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+  (drop
+   (return_call $bar)
+  )
+  (i32.const 42)
+ )
+ (func $bar (; 1 ;) (result i32)
+  (local $0 i32)
+  (local.set $0
+   (i32.const 0)
+  )
+  (i32.const 7)
+ )
+)
+(module
+ (type $T (func (result i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $FUNCSIG$v (func))
+ (table $0 1 1 funcref)
+ (func $foo (; 0 ;) (result i32)
+  (local $0 i32)
+  (local.set $0
+   (i32.const 42)
+  )
+  (drop
+   (return_call_indirect (type $T)
+    (i32.const 0)
+   )
+  )
+ )
+ (func $bar (; 1 ;) (type $FUNCSIG$v)
+  (drop
+   (call $foo)
+  )
+ )
+)
