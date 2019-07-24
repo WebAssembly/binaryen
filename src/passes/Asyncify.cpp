@@ -468,7 +468,7 @@ public:
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
-        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime) {
+        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime && !blacklist.count(caller->name)) {
           map[caller].canChangeState = true;
           work.push(caller);
         }
@@ -1036,14 +1036,20 @@ struct Asyncify : public Pass {
 
     auto checkList = [module](const String::Split& list, const std::string& which) {
       for (auto& name : list) {
-        if (!module->getFunctionOrNull(name)) {
-          std::cerr << "asyncify " << which << "list contained a non-existing function name: " << name << '\n';
+        auto* func = module->getFunctionOrNull(name);
+        if (!func) {
+          Fatal() << "Asyncify " << which << "list contained a non-existing function name: " << name << '\n';
+        } else if (func->imported()) {
+          Fatal() << "Asyncify " << which << "list contained an imported function name (use the import list for imports): " << name << '\n';
         }
       }
     };
-    checkList(listedImports, "imports ");
     checkList(blacklist, "black");
     checkList(whitelist, "white");
+
+    if (!blacklist.empty() && !whitelist.empty()) {
+      Fatal() << "It makes no sense to use both a blacklist and a whitelist with asyncify.";
+    }
 
     // Scan the module.
     ModuleAnalyzer analyzer(*module,

@@ -27,3 +27,24 @@ class AsyncifyTest(BinaryenTestCase):
     output = run_process(WASM_SHELL + ['a.wast'], capture_output=True).stdout
     with open(self.input_path('asyncify-pure.txt')) as f:
       self.assertEqual(f.read(), output)
+
+  def test_asyncify_blacklist_bad(self):
+    try:
+      run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '--pass-arg=asyncify-blacklist@nontexistent'])
+    except:
+      return
+    raise Exception('unexpected pass')
+
+  def test_asyncify_whitelist_bad(self):
+    try:
+      run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '--pass-arg=asyncify-whitelist@nontexistent'])
+    except:
+      return
+    raise Exception('unexpected pass')
+
+  def test_asyncify_blacklist_and_whitelist(self):
+    try:
+      run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '--pass-arg=asyncify-whitelist@main', '--pass-arg=asyncify-blacklist@main'])
+    except:
+      return
+    raise Exception('unexpected pass')
