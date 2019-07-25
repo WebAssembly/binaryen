@@ -2054,7 +2054,7 @@ static char formatNibble(int nibble) {
   return nibble < 10 ? '0' + nibble : 'a' - 10 + nibble;
 }
 
-static void escapeName(Name& name) {
+void escapeName(Name& name) {
   bool allIdChars = true;
   for (const char* p = name.str; allIdChars && *p; p++) {
     allIdChars = isIdChar(*p);
@@ -2098,7 +2098,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
       auto rawName = getInlineString();
-      escapeName(rawName);
+      //escapeName(rawName);
       auto name = rawName;
       // De-duplicate names by appending .1, .2, etc.
       for (int i = 1; !usedNames.insert(name).second; ++i) {
