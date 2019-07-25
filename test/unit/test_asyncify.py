@@ -45,8 +45,6 @@ class AsyncifyTest(BinaryenTestCase):
         assert 'warning' not in err
 
   def test_asyncify_blacklist_and_whitelist(self):
-    try:
-      run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '--pass-arg=asyncify-whitelist@main', '--pass-arg=asyncify-blacklist@main'])
-    except Exception as e:
-      return
-    raise Exception('unexpected pass')
+    proc = run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '--pass-arg=asyncify-whitelist@main', '--pass-arg=asyncify-blacklist@main'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    assert proc.returncode != 0, 'must error on using both lists at once'
+    assert 'It makes no sense to use both a blacklist and a whitelist with asyncify' in proc.stdout
