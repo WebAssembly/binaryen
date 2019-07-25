@@ -914,7 +914,7 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
                                    const char* name,
                                    BinaryenExpressionRef body) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeLoop(name ? Name(name) : Name(), (Expression*)body);
 
   if (tracing) {
@@ -927,7 +927,7 @@ BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module,
                                     const char* name,
                                     BinaryenExpressionRef condition,
                                     BinaryenExpressionRef value) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeBreak(name, (Expression*)value, (Expression*)condition);
 
   if (tracing) {
@@ -1214,7 +1214,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module,
                                     BinaryenLiteral value) {
-  auto* ret = Builder(*((Module*)module)).makeConst(fromBinaryenLiteral(value));
+  auto* ret = Builder(*(Module*)module).makeConst(fromBinaryenLiteral(value));
   if (tracing) {
     traceExpression(ret, "BinaryenConst", value);
   }
@@ -1224,7 +1224,7 @@ BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module,
                                     BinaryenOp op,
                                     BinaryenExpressionRef value) {
   auto* ret =
-    Builder(*((Module*)module)).makeUnary(UnaryOp(op), (Expression*)value);
+    Builder(*(Module*)module).makeUnary(UnaryOp(op), (Expression*)value);
 
   if (tracing) {
     traceExpression(ret, "BinaryenUnary", op, value);
@@ -1237,7 +1237,7 @@ BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
                                      BinaryenExpressionRef left,
                                      BinaryenExpressionRef right) {
   auto* ret =
-    Builder(*((Module*)module))
+    Builder(*(Module*)module)
       .makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right);
 
   if (tracing) {
@@ -1276,7 +1276,7 @@ BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
                                      BinaryenExpressionRef value) {
-  auto* ret = Builder(*((Module*)module)).makeReturn((Expression*)value);
+  auto* ret = Builder(*(Module*)module).makeReturn((Expression*)value);
 
   if (tracing) {
     traceExpression(ret, "BinaryenReturn", value);
@@ -1343,7 +1343,7 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                          uint32_t offset,
                                          BinaryenType type,
                                          BinaryenExpressionRef ptr) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeAtomicLoad(bytes, offset, (Expression*)ptr, Type(type));
 
   if (tracing) {
@@ -1359,7 +1359,7 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           BinaryenExpressionRef value,
                                           BinaryenType type) {
   auto* ret =
-    Builder(*((Module*)module))
+    Builder(*(Module*)module)
       .makeAtomicStore(
         bytes, offset, (Expression*)ptr, (Expression*)value, Type(type));
 
@@ -1377,7 +1377,7 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenExpressionRef ptr,
                                         BinaryenExpressionRef value,
                                         BinaryenType type) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeAtomicRMW(AtomicRMWOp(op),
                                bytes,
                                offset,
@@ -1399,7 +1399,7 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenExpressionRef expected,
                                             BinaryenExpressionRef replacement,
                                             BinaryenType type) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeAtomicCmpxchg(bytes,
                                    offset,
                                    (Expression*)ptr,
@@ -1425,7 +1425,7 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
                                          BinaryenExpressionRef expected,
                                          BinaryenExpressionRef timeout,
                                          BinaryenType expectedType) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeAtomicWait((Expression*)ptr,
                                 (Expression*)expected,
                                 (Expression*)timeout,
@@ -1443,7 +1443,7 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                                            BinaryenExpressionRef ptr,
                                            BinaryenExpressionRef notifyCount) {
   auto* ret =
-    Builder(*((Module*)module))
+    Builder(*(Module*)module)
       .makeAtomicNotify((Expression*)ptr, (Expression*)notifyCount, 0);
 
   if (tracing) {
@@ -1456,7 +1456,7 @@ BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
                                           BinaryenOp op,
                                           BinaryenExpressionRef vec,
                                           uint8_t index) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeSIMDExtract(SIMDExtractOp(op), (Expression*)vec, index);
   if (tracing) {
     traceExpression(ret, "BinaryenSIMDExtract", op, vec, int(index));
@@ -1469,7 +1469,7 @@ BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module,
                                           uint8_t index,
                                           BinaryenExpressionRef value) {
   auto* ret =
-    Builder(*((Module*)module))
+    Builder(*(Module*)module)
       .makeSIMDReplace(
         SIMDReplaceOp(op), (Expression*)vec, index, (Expression*)value);
   if (tracing) {
@@ -1483,7 +1483,7 @@ BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module,
                                           const uint8_t mask_[16]) {
   std::array<uint8_t, 16> mask;
   memcpy(mask.data(), mask_, 16);
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeSIMDShuffle((Expression*)left, (Expression*)right, mask);
   if (tracing) {
     std::cout << "  {\n";
@@ -1504,7 +1504,7 @@ BinaryenExpressionRef BinaryenSIMDBitselect(BinaryenModuleRef module,
                                             BinaryenExpressionRef left,
                                             BinaryenExpressionRef right,
                                             BinaryenExpressionRef cond) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeSIMDBitselect(
                   (Expression*)left, (Expression*)right, (Expression*)cond);
   if (tracing) {
@@ -1517,7 +1517,7 @@ BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module,
                                         BinaryenExpressionRef vec,
                                         BinaryenExpressionRef shift) {
   auto* ret =
-    Builder(*((Module*)module))
+    Builder(*(Module*)module)
       .makeSIMDShift(SIMDShiftOp(op), (Expression*)vec, (Expression*)shift);
   if (tracing) {
     traceExpression(ret, "BinaryenSIMDShift", op, vec, shift);
@@ -1530,7 +1530,7 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          BinaryenExpressionRef offset,
                                          BinaryenExpressionRef size) {
   auto* ret =
-    Builder(*((Module*)module))
+    Builder(*(Module*)module)
       .makeMemoryInit(
         segment, (Expression*)dest, (Expression*)offset, (Expression*)size);
   if (tracing) {
@@ -1541,7 +1541,7 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
 
 BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
                                        uint32_t segment) {
-  auto* ret = Builder(*((Module*)module)).makeDataDrop(segment);
+  auto* ret = Builder(*(Module*)module).makeDataDrop(segment);
   if (tracing) {
     traceExpression(ret, "BinaryenDataDrop", segment);
   }
@@ -1552,7 +1552,7 @@ BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
                                          BinaryenExpressionRef dest,
                                          BinaryenExpressionRef source,
                                          BinaryenExpressionRef size) {
-  auto* ret = Builder(*((Module*)module))
+  auto* ret = Builder(*(Module*)module)
                 .makeMemoryCopy(
                   (Expression*)dest, (Expression*)source, (Expression*)size);
   if (tracing) {
@@ -1566,7 +1566,7 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
                                          BinaryenExpressionRef value,
                                          BinaryenExpressionRef size) {
   auto* ret =
-    Builder(*((Module*)module))
+    Builder(*(Module*)module)
       .makeMemoryFill((Expression*)dest, (Expression*)value, (Expression*)size);
   if (tracing) {
     traceExpression(ret, "BinaryenMemoryFill", dest, value, size);
