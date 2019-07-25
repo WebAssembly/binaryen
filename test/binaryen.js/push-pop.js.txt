@@ -1,0 +1,31 @@
+(module
+ (type $v (func))
+ (func $func (; 0 ;) (type $v)
+  (push
+   (i32.pop)
+  )
+  (push
+   (i64.pop)
+  )
+  (push
+   (f32.pop)
+  )
+  (push
+   (f64.pop)
+  )
+  (push
+   (v128.pop)
+  )
+  (push
+   (exnref.pop)
+  )
+ )
+)
+
+getExpressionInfo(i32.pop) = {"id":37,"type":1}
+getExpressionInfo(i64.pop) = {"id":37,"type":2}
+getExpressionInfo(f32.pop) = {"id":37,"type":3}
+getExpressionInfo(f64.pop) = {"id":37,"type":4}
+getExpressionInfo(v128.pop) = {"id":37,"type":5}
+getExpressionInfo(exnref.pop) = {"id":37,"type":6}
+getExpressionInfo(push) = {"id":36}

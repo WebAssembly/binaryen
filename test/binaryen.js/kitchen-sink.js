@@ -111,6 +111,8 @@ function test_ids() {
   console.log("DataDropId: " + Binaryen.DataDropId);
   console.log("MemoryCopyId: " + Binaryen.MemoryCopyId);
   console.log("MemoryFillId: " + Binaryen.MemoryFillId);
+  console.log("PushId: " + Binaryen.PushId);
+  console.log("PopId: " + Binaryen.PopId);
 }
 
 function test_core() {
@@ -399,6 +401,13 @@ function test_core() {
     // Tail Call
     module.returnCall("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], Binaryen.i32),
     module.returnCallIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF"),
+    // Push and pop
+    module.push(module.i32.pop()),
+    module.push(module.i64.pop()),
+    module.push(module.f32.pop()),
+    module.push(module.f64.pop()),
+    module.push(module.v128.pop()),
+    module.push(module.exnref.pop()),
     // TODO: Host
     module.nop(),
     module.unreachable(),
