@@ -434,8 +434,10 @@ public:
 
     if (!blacklist.empty()) {
       // Functions in the blacklist are assumed to not change the state.
-      for (auto& name : blacklist) {
-        map[module.getFunction(name)].canChangeState = false;
+      for (auto& func : module.functions) {
+        if (blacklist.count(func->name)) {
+          map[func.get()].canChangeState = false;
+        }
       }
     }
 
@@ -479,7 +481,9 @@ public:
     if (!whitelist.empty()) {
       // Only the functions in the whitelist can change the state.
       for (auto& func : module.functions) {
-        map[func.get()].canChangeState = whitelist.count(func->name) > 0;
+        if (!func->imported()) {
+          map[func.get()].canChangeState = whitelist.count(func->name) > 0;
+        }
       }
     }
   }
@@ -1042,9 +1046,9 @@ struct Asyncify : public Pass {
       for (auto& name : list) {
         auto* func = module->getFunctionOrNull(name);
         if (!func) {
-          Fatal() << "Asyncify " << which
-                  << "list contained a non-existing function name: " << name
-                  << '\n';
+          std::cerr << "warning: Asyncify " << which
+                    << "list contained a non-existing function name: " << name
+                    << '\n';
         } else if (func->imported()) {
           Fatal() << "Asyncify " << which
                   << "list contained an imported function name (use the import "
