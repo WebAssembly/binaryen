@@ -1577,14 +1577,14 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
                                    BinaryenExpressionRef value) {
-  auto* ret = Builder(*((Module*)module)).makePush((Expression*)value);
+  auto* ret = Builder(*(Module*)module).makePush((Expression*)value);
   if (tracing) {
     traceExpression(ret, "BinaryenPush", value);
   }
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
-  auto* ret = Builder(*((Module*)module)).makePop(Type(type));
+  auto* ret = Builder(*(Module*)module).makePop(Type(type));
   if (tracing) {
     traceExpression(ret, "BinaryenPop", type);
   }
