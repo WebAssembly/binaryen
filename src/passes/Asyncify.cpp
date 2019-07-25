@@ -1043,14 +1043,14 @@ struct Asyncify : public Pass {
 
     // The lists contain human-readable strings. Turn them into the internal
     // escaped names for later comparisons
-    auto processList = [module](String::Split& list,
-                                const std::string& which) {
+    auto processList = [module](String::Split& list, const std::string& which) {
       for (auto& name : list) {
         auto escaped = WasmBinaryBuilder::escape(name);
         auto* func = module->getFunctionOrNull(escaped);
         if (!func) {
           std::cerr << "warning: Asyncify " << which
-                    << "list contained a non-existing function name: " << name << " (" << escaped << ")\n";
+                    << "list contained a non-existing function name: " << name
+                    << " (" << escaped << ")\n";
         } else if (func->imported()) {
           Fatal() << "Asyncify " << which
                   << "list contained an imported function name (use the import "
