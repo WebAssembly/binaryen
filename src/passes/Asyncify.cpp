@@ -1068,24 +1068,25 @@ struct Asyncify : public Pass {
                  "with asyncify.";
     }
 
-    // Scan the module.
-    ModuleAnalyzer analyzer(
-      *module,
-      [&](Name module, Name base) {
-        if (allImportsCanChangeState) {
+    auto canImportChangeState = [&](Name module, Name base) {
+      if (allImportsCanChangeState) {
+        return true;
+      }
+      std::string full = std::string(module.str) + '.' + base.str;
+      for (auto& listedImport : listedImports) {
+        if (String::wildcardMatch(listedImport, full)) {
           return true;
         }
-        std::string full = std::string(module.str) + '.' + base.str;
-        for (auto& listedImport : listedImports) {
-          if (String::wildcardMatch(listedImport, full)) {
-            return true;
-          }
-        }
-        return false;
-      },
-      ignoreIndirect == "",
-      blacklist,
-      whitelist);
+      }
+      return false;
+    };
+
+    // Scan the module.
+    ModuleAnalyzer analyzer(*module,
+                            canImportChangeState,
+                            ignoreIndirect == "",
+                            blacklist,
+                            whitelist);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
