@@ -1041,24 +1041,27 @@ struct Asyncify : public Pass {
     String::Split whitelist(
       runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",");
 
-    auto checkList = [module](const String::Split& list,
-                              const std::string& which) {
+    // The lists contain human-readable strings. Turn them into the internal
+    // escaped names for later comparisons
+    auto processList = [module](String::Split& list,
+                                const std::string& which) {
       for (auto& name : list) {
-        auto* func = module->getFunctionOrNull(name);
+        auto escaped = WasmBinaryBuilder::escape(name);
+        auto* func = module->getFunctionOrNull(escaped);
         if (!func) {
           std::cerr << "warning: Asyncify " << which
-                    << "list contained a non-existing function name: " << name
-                    << '\n';
+                    << "list contained a non-existing function name: " << name << " (" << escaped << ")\n";
         } else if (func->imported()) {
           Fatal() << "Asyncify " << which
                   << "list contained an imported function name (use the import "
                      "list for imports): "
                   << name << '\n';
         }
+        name = escaped.str;
       }
     };
-    checkList(blacklist, "black");
-    checkList(whitelist, "white");
+    processList(blacklist, "black");
+    processList(whitelist, "white");
 
     if (!blacklist.empty() && !whitelist.empty()) {
       Fatal() << "It makes no sense to use both a blacklist and a whitelist "
