@@ -1815,7 +1815,7 @@ private:
             auto op =
               pick(FeatureOptions<UnaryOp>()
                      .add(FeatureSet::MVP, ClzInt64, CtzInt64, PopcntInt64)
-                     .add(FeatureSet::Atomics,
+                     .add(FeatureSet::SignExt,
                           ExtendS8Int64,
                           ExtendS16Int64,
                           ExtendS32Int64));

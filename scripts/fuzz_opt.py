@@ -36,9 +36,6 @@ NANS = True
 # truncsat: https://github.com/WebAssembly/binaryen/issues/2198
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
-# possible feature options that are sometimes passed to the tools.
-POSSIBLE_FEATURE_OPTS = ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call']
-
 FUZZ_OPTS = []
 
 INPUT_SIZE_LIMIT = 150 * 1024
@@ -297,7 +294,7 @@ class Wasm2JS(TestCaseHandler):
     return out
 
   def can_run_on_feature_opts(self, feature_opts):
-    return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call']])
+    return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext']])
 
 
 class Asyncify(TestCaseHandler):
@@ -530,6 +527,12 @@ def get_multiple_opt_choices():
 
 if not NANS:
   FUZZ_OPTS += ['--no-fuzz-nans']
+
+# possible feature options that are sometimes passed to the tools. this
+# contains the list of all possible feature flags we can disable (after
+# we enable all before that in the constant options)
+POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', '-all', in_binaryen('test', 'hello_world.wast'), '-all']).replace('--enable', '--disable').strip().split('\n')
+print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 
 if __name__ == '__main__':
   print('checking infinite random inputs')
