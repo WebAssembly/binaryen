@@ -1,4 +1,5 @@
-import os, subprocess
+import os
+import subprocess
 
 from scripts.test.shared import WASM_OPT, WASM_DIS, WASM_SHELL, NODEJS, run_process
 from utils import BinaryenTestCase
@@ -46,6 +47,6 @@ class AsyncifyTest(BinaryenTestCase):
   def test_asyncify_blacklist_and_whitelist(self):
     try:
       run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '--pass-arg=asyncify-whitelist@main', '--pass-arg=asyncify-blacklist@main'])
-    except:
+    except Exception as e:
       return
     raise Exception('unexpected pass')
