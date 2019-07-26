@@ -141,7 +141,7 @@ struct PrintExpressionContents
     printName(curr->name, o);
   }
   void visitLoad(Load* curr) {
-    prepareColor(o) << printType(curr->type);
+    prepareColor(o) << printType(curr->type, true);
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -167,7 +167,7 @@ struct PrintExpressionContents
     }
   }
   void visitStore(Store* curr) {
-    prepareColor(o) << printType(curr->valueType);
+    prepareColor(o) << printType(curr->valueType, true);
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -192,10 +192,8 @@ struct PrintExpressionContents
     }
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
-    prepareColor(o) << printType(type) << ".atomic.rmw";
-    if (type == unreachable) {
-      o << '?';
-    } else if (bytes != getTypeSize(type)) {
+    prepareColor(o) << printType(type, true) << ".atomic.rmw";
+    if (type != unreachable && bytes != getTypeSize(type)) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
@@ -253,7 +251,7 @@ struct PrintExpressionContents
   }
   void visitAtomicWait(AtomicWait* curr) {
     prepareColor(o);
-    o << printType(curr->expectedType) << ".atomic.wait";
+    o << printType(curr->expectedType, true) << ".atomic.wait";
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
