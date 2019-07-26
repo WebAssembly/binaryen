@@ -142,6 +142,7 @@ static void run_asserts(Name moduleName,
         id == ASSERT_UNLINKABLE) {
       // a module invalidity test
       Module wasm;
+      wasm.features = FeatureSet::All;
       bool invalid = false;
       std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
