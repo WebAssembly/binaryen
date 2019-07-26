@@ -47,7 +47,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   // Attempt to locate the stack pointer by recognizing code idioms
   // used by Emscripten.  First, look for a global initialized to an
   // imported variable named "STACKTOP" in environment "env".
-  Global* stackPointer =
+  auto* stackPointer =
     GlobalUtils::getGlobalInitializedToImport(wasm, ENV, "STACKTOP");
   // Starting with Emscripten 1.38.24, the stack pointer variable is
   // initialized with a literal constant, eliminating the import that
@@ -64,16 +64,15 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   //  ...
   //)
   if (!stackPointer) {
-    Export* stackSaveFunctionExport = wasm.getExportOrNull("stackSave");
+    auto* stackSaveFunctionExport = wasm.getExportOrNull("stackSave");
     if (stackSaveFunctionExport &&
         stackSaveFunctionExport->kind == ExternalKind::Function) {
-      Function* stackSaveFunction =
+      auto* stackSaveFunction =
         wasm.getFunction(stackSaveFunctionExport->value);
       assert(!stackSaveFunction->imported());
-      Expression* functionBody = stackSaveFunction->body;
-      GlobalGet* globalGet = functionBody->dynCast<GlobalGet>();
+      auto* globalGet = stackSaveFunction->body->dynCast<GlobalGet>();
       if (globalGet) {
-        stackPointer = wasm.getGlobalOrNull(globalGet->name);
+        stackPointer = wasm.getGlobal(globalGet->name);
       }
     }
   }
