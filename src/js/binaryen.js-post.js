@@ -78,6 +78,8 @@ Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
 Module['DataDropId'] = Module['_BinaryenDataDropId']();
 Module['MemoryCopyId'] = Module['_BinaryenMemoryCopyId']();
 Module['MemoryFillId'] = Module['_BinaryenMemoryFillId']();
+Module['PushId'] = Module['_BinaryenPushId']();
+Module['PopId'] = Module['_BinaryenPopId']();
 
 // External kinds
 Module['ExternalFunction'] = Module['_BinaryenExternalFunction']();
@@ -761,6 +763,9 @@ function wrapModule(module, self) {
     'wait': function(ptr, expected, timeout) {
       return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
     },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['i32']);
+    }
   };
 
   self['i64'] = {
@@ -1062,6 +1067,9 @@ function wrapModule(module, self) {
     'wait': function(ptr, expected, timeout) {
       return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
     },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['i64']);
+    }
   };
 
   self['f32'] = {
@@ -1167,6 +1175,9 @@ function wrapModule(module, self) {
     'ge': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeFloat32'], left, right);
     },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['f32']);
+    }
   };
 
   self['f64'] = {
@@ -1272,6 +1283,9 @@ function wrapModule(module, self) {
     'ge': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeFloat64'], left, right);
     },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['f64']);
+    }
   };
 
   self['v128'] = {
@@ -1302,6 +1316,9 @@ function wrapModule(module, self) {
     },
     'bitselect': function(left, right, cond) {
       return Module['_BinaryenSIMDBitselect'](module, left, right, cond);
+    },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['v128']);
     }
   };
 
@@ -1724,6 +1741,12 @@ function wrapModule(module, self) {
     },
   };
 
+  self['exnref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['exnref']);
+    }
+  };
+
   self['select'] = function(condition, ifTrue, ifFalse) {
     return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse);
   };
@@ -1747,6 +1770,9 @@ function wrapModule(module, self) {
   };
   self['notify'] = function(ptr, notifyCount) {
     return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
+  };
+  self['push'] = function(value) {
+    return Module['_BinaryenPush'](module, value);
   };
 
   // 'Module' operations
@@ -2225,6 +2251,7 @@ Module['getExpressionInfo'] = function(expr) {
       };
     case Module['NopId']:
     case Module['UnreachableId']:
+    case Module['PopId']:
       return {
         'id': id,
         'type': type
@@ -2348,6 +2375,11 @@ Module['getExpressionInfo'] = function(expr) {
         'dest': Module['_BinaryenMemoryFillGetDest'](expr),
         'value': Module['_BinaryenMemoryFillGetValue'](expr),
         'size': Module['_BinaryenMemoryFillGetSize'](expr)
+      };
+    case Module['PushId']:
+      return {
+        'id': id,
+        'value': Module['_BinaryenPushGetValue'](expr)
       };
 
     default:

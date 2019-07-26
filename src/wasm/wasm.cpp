@@ -405,10 +405,18 @@ template<typename T> void handleUnreachableOperands(T* curr) {
   }
 }
 
-void Call::finalize() { handleUnreachableOperands(this); }
+void Call::finalize() {
+  handleUnreachableOperands(this);
+  if (isReturn) {
+    type = unreachable;
+  }
+}
 
 void CallIndirect::finalize() {
   handleUnreachableOperands(this);
+  if (isReturn) {
+    type = unreachable;
+  }
   if (target->type == unreachable) {
     type = unreachable;
   }

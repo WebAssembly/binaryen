@@ -48,6 +48,8 @@ instructions = [
     ("i64.pop",        "makePop(i64)"),
     ("f32.pop",        "makePop(f32)"),
     ("f64.pop",        "makePop(f64)"),
+    ("v128.pop",       "makePop(v128)"),
+    ("exnref.pop",     "makePop(exnref)"),
     ("i32.load",       "makeLoad(s, i32, /*isAtomic=*/false)"),
     ("i64.load",       "makeLoad(s, i64, /*isAtomic=*/false)"),
     ("f32.load",       "makeLoad(s, f32, /*isAtomic=*/false)"),

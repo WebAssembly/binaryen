@@ -195,3 +195,17 @@
   )
  )
 )
+(module
+ (type $ii (func (param i32 i32)))
+ (table $0 5 5 funcref)
+ (elem (i32.const 1) $foo)
+ (func $foo (; 0 ;) (type $ii) (param $0 i32) (param $1 i32)
+  (unreachable)
+ )
+ (func $bar (; 1 ;) (type $ii) (param $x i32) (param $y i32)
+  (return_call $foo
+   (local.get $x)
+   (local.get $y)
+  )
+ )
+)

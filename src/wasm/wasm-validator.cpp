@@ -549,6 +549,10 @@ void FunctionValidator::noteBreak(Name name,
 }
 void FunctionValidator::visitBreak(Break* curr) {
   noteBreak(curr->name, curr->value, curr);
+  if (curr->value) {
+    shouldBeTrue(
+      curr->value->type != none, curr, "break value must not have none type");
+  }
   if (curr->condition) {
     shouldBeTrue(curr->condition->type == unreachable ||
                    curr->condition->type == i32,
@@ -593,6 +597,33 @@ void FunctionValidator::visitCall(Call* curr) {
       getStream() << "(on argument " << i << ")\n";
     }
   }
+  if (curr->isReturn) {
+    shouldBeEqual(curr->type,
+                  unreachable,
+                  curr,
+                  "return_call should have unreachable type");
+    shouldBeEqual(
+      getFunction()->result,
+      target->result,
+      curr,
+      "return_call callee return type must match caller return type");
+  } else {
+    if (curr->type == unreachable) {
+      bool hasUnreachableOperand =
+        std::any_of(curr->operands.begin(),
+                    curr->operands.end(),
+                    [](Expression* op) { return op->type == unreachable; });
+      shouldBeTrue(
+        hasUnreachableOperand,
+        curr,
+        "calls may only be unreachable if they have unreachable operands");
+    } else {
+      shouldBeEqual(curr->type,
+                    target->result,
+                    curr,
+                    "call type must match callee return type");
+    }
+  }
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -620,6 +651,35 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
                                            "call param types must match") &&
         !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
+    }
+  }
+  if (curr->isReturn) {
+    shouldBeEqual(curr->type,
+                  unreachable,
+                  curr,
+                  "return_call_indirect should have unreachable type");
+    shouldBeEqual(
+      getFunction()->result,
+      type->result,
+      curr,
+      "return_call_indirect callee return type must match caller return type");
+  } else {
+    if (curr->type == unreachable) {
+      if (curr->target->type != unreachable) {
+        bool hasUnreachableOperand =
+          std::any_of(curr->operands.begin(),
+                      curr->operands.end(),
+                      [](Expression* op) { return op->type == unreachable; });
+        shouldBeTrue(hasUnreachableOperand,
+                     curr,
+                     "call_indirects may only be unreachable if they have "
+                     "unreachable operands");
+      }
+    } else {
+      shouldBeEqual(curr->type,
+                    type->result,
+                    curr,
+                    "call_indirect type must match callee return type");
     }
   }
 }
@@ -970,8 +1030,6 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
-  shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "Bulk memory operation (bulk memory is disabled)");
@@ -983,27 +1041,33 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
     curr->offset->type, i32, curr, "memory.init offset must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, i32, curr, "memory.init size must be an i32");
+  if (!shouldBeTrue(getModule()->memory.exists,
+                    curr,
+                    "Memory operations require a memory")) {
+    return;
+  }
   shouldBeTrue(curr->segment < getModule()->memory.segments.size(),
                curr,
                "memory.init segment index out of bounds");
 }
 
 void FunctionValidator::visitDataDrop(DataDrop* curr) {
-  shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, none, curr, "data.drop must have type none");
+  if (!shouldBeTrue(getModule()->memory.exists,
+                    curr,
+                    "Memory operations require a memory")) {
+    return;
+  }
   shouldBeTrue(curr->segment < getModule()->memory.segments.size(),
                curr,
                "data.drop segment index out of bounds");
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
-  shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "Bulk memory operation (bulk memory is disabled)");
@@ -1015,11 +1079,11 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
     curr->source->type, i32, curr, "memory.copy source must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, i32, curr, "memory.copy size must be an i32");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
-  shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "Bulk memory operation (bulk memory is disabled)");
@@ -1031,6 +1095,8 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
     curr->value->type, i32, curr, "memory.fill value must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, i32, curr, "memory.fill size must be an i32");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::validateMemBytes(uint8_t bytes,
@@ -1877,9 +1943,6 @@ static void validateEvents(Module& module, ValidationInfo& info) {
     FunctionType* ft = module.getFunctionType(curr->type);
     info.shouldBeEqual(
       ft->result, none, curr->name, "Event type's result type should be none");
-    info.shouldBeTrue(!curr->params.empty(),
-                      curr->name,
-                      "There should be 1 or more values in an event type");
     info.shouldBeEqual(curr->attribute,
                        (unsigned)0,
                        curr->attribute,
@@ -1919,9 +1982,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
   info.quiet = (flags & Quiet) != 0;
   // parallel wasm logic validation
   PassRunner runner(&module);
-  runner.add<FunctionValidator>(&info);
-  runner.setIsNested(true);
-  runner.run();
+  FunctionValidator(&info).run(&runner, &module);
   // validate globally
   if (info.validateGlobally) {
     validateImports(module, info);

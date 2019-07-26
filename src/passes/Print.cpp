@@ -1837,11 +1837,16 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << maybeNewLine;
   }
   void visitEvent(Event* curr) {
-    doIndent(o, indent);
     if (curr->imported()) {
-      o << '(';
-      emitImportHeader(curr);
+      visitImportedEvent(curr);
+    } else {
+      visitDefinedEvent(curr);
     }
+  }
+  void visitImportedEvent(Event* curr) {
+    doIndent(o, indent);
+    o << '(';
+    emitImportHeader(curr);
     o << "(event ";
     printName(curr->name, o);
     o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace << '(';
@@ -1849,11 +1854,20 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     for (auto& param : curr->params) {
       o << ' ' << printType(param);
     }
-    o << "))";
-    if (curr->imported()) {
-      o << ')';
-    }
+    o << ")))";
     o << maybeNewLine;
+  }
+  void visitDefinedEvent(Event* curr) {
+    doIndent(o, indent);
+    o << '(';
+    printMedium(o, "event ");
+    printName(curr->name, o);
+    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace << '(';
+    printMinor(o, "param");
+    for (auto& param : curr->params) {
+      o << ' ' << printType(param);
+    }
+    o << "))" << maybeNewLine;
   }
   void printTableHeader(Table* curr) {
     o << '(';
@@ -2103,10 +2117,8 @@ Pass* createPrintStackIRPass() { return new PrintStackIR(); }
 // Print individual expressions
 
 std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
-  PassRunner passRunner(module);
-  passRunner.setIsNested(true);
-  passRunner.add<Printer>(&o);
-  passRunner.run();
+  PassRunner runner(module);
+  Printer(&o).run(&runner, module);
   return o;
 }
 

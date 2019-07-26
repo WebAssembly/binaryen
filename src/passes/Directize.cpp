@@ -65,7 +65,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       }
       // Everything looks good!
       replaceCurrent(
-        Builder(*getModule()).makeCall(name, curr->operands, curr->type));
+        Builder(*getModule())
+          .makeCall(name, curr->operands, curr->type, curr->isReturn));
     }
   }
 
@@ -109,12 +110,7 @@ struct Directize : public Pass {
       return;
     }
     // The table exists and is constant, so this is possible.
-    {
-      PassRunner runner(module);
-      runner.setIsNested(true);
-      runner.add<FunctionDirectizer>(&flatTable);
-      runner.run();
-    }
+    FunctionDirectizer(&flatTable).run(runner, module);
   }
 };
 

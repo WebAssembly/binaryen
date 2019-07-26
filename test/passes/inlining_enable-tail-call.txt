@@ -261,3 +261,167 @@
   )
  )
 )
+(module
+ (type $FUNCSIG$i (func (result i32)))
+ (func $0 (; 0 ;) (type $FUNCSIG$i) (result i32)
+  (return
+   (block $__inlined_func$1 (result i32)
+    (i32.const 42)
+   )
+  )
+ )
+)
+(module
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$vi (func (param i32)))
+ (func $0 (; 0 ;) (type $FUNCSIG$v)
+  (local $0 i32)
+  (block
+   (block $__inlined_func$1
+    (local.set $0
+     (i32.const 42)
+    )
+    (drop
+     (local.get $0)
+    )
+   )
+   (return)
+  )
+ )
+)
+(module
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (func $0 (; 0 ;) (type $FUNCSIG$i) (result i32)
+  (local $0 i32)
+  (return
+   (block $__inlined_func$1 (result i32)
+    (local.set $0
+     (i32.const 42)
+    )
+    (local.get $0)
+   )
+  )
+ )
+)
+(module
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$i (func (result i32)))
+ (func $0 (; 0 ;) (type $FUNCSIG$v)
+  (drop
+   (block (result i32)
+    (block $__inlined_func$1 (result i32)
+     (block
+      (br $__inlined_func$1
+       (block (result i32)
+        (block $__inlined_func$2 (result i32)
+         (i32.const 42)
+        )
+       )
+      )
+     )
+    )
+   )
+  )
+ )
+)
+(module
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$vi (func (param i32)))
+ (func $0 (; 0 ;) (type $FUNCSIG$v)
+  (local $0 i32)
+  (block $__inlined_func$1
+   (block
+    (block
+     (block
+      (block $__inlined_func$2
+       (local.set $0
+        (i32.const 42)
+       )
+       (drop
+        (local.get $0)
+       )
+      )
+     )
+     (br $__inlined_func$1)
+    )
+   )
+   (br $__inlined_func$1)
+  )
+ )
+)
+(module
+ (type $T (func (param i32) (result i32)))
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$i (func (result i32)))
+ (table $0 10 funcref)
+ (func $0 (; 0 ;) (type $FUNCSIG$v)
+  (drop
+   (block (result i32)
+    (block $__inlined_func$1 (result i32)
+     (br $__inlined_func$1
+      (call_indirect (type $T)
+       (i32.const 42)
+       (i32.const 0)
+      )
+     )
+    )
+   )
+  )
+ )
+)
+(module
+ (type $T (func (param i32)))
+ (type $FUNCSIG$v (func))
+ (table $0 10 funcref)
+ (func $0 (; 0 ;) (type $FUNCSIG$v)
+  (block $__inlined_func$1
+   (block
+    (call_indirect (type $T)
+     (i32.const 42)
+     (i32.const 0)
+    )
+    (br $__inlined_func$1)
+   )
+   (br $__inlined_func$1)
+  )
+ )
+)
+(module
+ (type $6 (func))
+ (memory $0 1 1)
+ (global $global$0 (mut i32) (i32.const 10))
+ (export "func_102_invoker" (func $19))
+ (func $19 (; 0 ;) (type $6)
+  (block
+   (block
+    (block $__inlined_func$13
+     (block
+      (if
+       (global.get $global$0)
+       (unreachable)
+      )
+      (block
+       (block
+        (block $__inlined_func$2
+         (block
+          (if
+           (global.get $global$0)
+           (br $__inlined_func$2)
+          )
+          (global.set $global$0
+           (i32.const 1)
+          )
+         )
+        )
+        (br $__inlined_func$13)
+       )
+      )
+     )
+     (br $__inlined_func$13)
+    )
+   )
+  )
+  (unreachable)
+ )
+)

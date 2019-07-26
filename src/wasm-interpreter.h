@@ -1435,6 +1435,15 @@ private:
 #ifdef WASM_INTERPRETER_DEBUG
       std::cout << "(returned to " << scope.function->name << ")\n";
 #endif
+      // TODO: make this a proper tail call (return first)
+      if (curr->isReturn) {
+        Const c;
+        c.value = ret.value;
+        c.finalize();
+        Return return_;
+        return_.value = &c;
+        return this->visit(&return_);
+      }
       return ret;
     }
     Flow visitCallIndirect(CallIndirect* curr) {
@@ -1449,8 +1458,19 @@ private:
         return target;
       }
       Index index = target.value.geti32();
-      return instance.externalInterface->callTable(
-        index, arguments, curr->type, *instance.self());
+      Type type = curr->isReturn ? scope.function->result : curr->type;
+      Flow ret = instance.externalInterface->callTable(
+        index, arguments, type, *instance.self());
+      // TODO: make this a proper tail call (return first)
+      if (curr->isReturn) {
+        Const c;
+        c.value = ret.value;
+        c.finalize();
+        Return return_;
+        return_.value = &c;
+        return this->visit(&return_);
+      }
+      return ret;
     }
 
     Flow visitLocalGet(LocalGet* curr) {

@@ -132,9 +132,13 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       }
       visitor.visitScopeName(curr->default_);
     }
-    void visitCall(Call* curr) { visitor.visitNonScopeName(curr->target); }
+    void visitCall(Call* curr) {
+      visitor.visitNonScopeName(curr->target);
+      visitor.visitInt(curr->isReturn);
+    }
     void visitCallIndirect(CallIndirect* curr) {
       visitor.visitNonScopeName(curr->fullType);
+      visitor.visitInt(curr->isReturn);
     }
     void visitLocalGet(LocalGet* curr) { visitor.visitIndex(curr->index); }
     void visitLocalSet(LocalSet* curr) { visitor.visitIndex(curr->index); }

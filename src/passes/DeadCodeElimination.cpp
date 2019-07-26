@@ -365,7 +365,12 @@ struct DeadCodeElimination
     return curr;
   }
 
-  void visitCall(Call* curr) { handleCall(curr); }
+  void visitCall(Call* curr) {
+    handleCall(curr);
+    if (curr->isReturn) {
+      reachable = false;
+    }
+  }
 
   void visitCallIndirect(CallIndirect* curr) {
     if (handleCall(curr) != curr) {
@@ -379,6 +384,9 @@ struct DeadCodeElimination
       block->list.push_back(curr->target);
       block->finalize(curr->type);
       replaceCurrent(block);
+    }
+    if (curr->isReturn) {
+      reachable = false;
     }
   }
 

@@ -167,6 +167,7 @@ mkdir -p ${OUT}
   $BINARYEN_SRC/wasm/wasm-interpreter.cpp \
   $BINARYEN_SRC/wasm/wasm-io.cpp \
   $BINARYEN_SRC/wasm/wasm-s-parser.cpp \
+  $BINARYEN_SRC/wasm/wasm-stack.cpp \
   $BINARYEN_SRC/wasm/wasm-type.cpp \
   $BINARYEN_SRC/wasm/wasm-validator.cpp \
   $BINARYEN_SRC/wasm/wasm.cpp \
@@ -225,6 +226,8 @@ export_function "_BinaryenMemoryInitId"
 export_function "_BinaryenDataDropId"
 export_function "_BinaryenMemoryCopyId"
 export_function "_BinaryenMemoryFillId"
+export_function "_BinaryenPushId"
+export_function "_BinaryenPopId"
 
 # External kinds
 export_function "_BinaryenExternalFunction"
@@ -575,6 +578,8 @@ export_function "_BinaryenMemoryInit"
 export_function "_BinaryenDataDrop"
 export_function "_BinaryenMemoryCopy"
 export_function "_BinaryenMemoryFill"
+export_function "_BinaryenPush"
+export_function "_BinaryenPop"
 
 # 'Expression' operations
 export_function "_BinaryenExpressionGetId"
@@ -750,6 +755,9 @@ export_function "_BinaryenMemoryCopyGetSize"
 export_function "_BinaryenMemoryFillGetDest"
 export_function "_BinaryenMemoryFillGetValue"
 export_function "_BinaryenMemoryFillGetSize"
+
+# 'Push' expression operations
+export_function "_BinaryenPushGetValue"
 
 # 'Module' operations
 export_function "_BinaryenModuleCreate"

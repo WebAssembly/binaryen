@@ -1174,6 +1174,7 @@ public:
 
   void readEvents();
 
+  static Name escape(Name name);
   void readNames(size_t);
   void readFeatures(size_t);
 

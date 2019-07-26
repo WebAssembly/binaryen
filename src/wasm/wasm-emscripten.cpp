@@ -1042,7 +1042,23 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   wasm.features.iterFeatures([&](FeatureSet::Feature f) {
     meta << nextElement() << "\"--enable-" << FeatureSet::toString(f) << '"';
   });
-  meta << "\n  ]\n";
+  meta << "\n  ],\n";
+
+  auto mainReadsParams = false;
+  if (auto* exp = wasm.getExportOrNull("main")) {
+    if (exp->kind == ExternalKind::Function) {
+      auto* main = wasm.getFunction(exp->value);
+      mainReadsParams = true;
+      // If main does not read its parameters, it will just be a stub that
+      // calls __original_main (which has no parameters).
+      if (auto* call = main->body->dynCast<Call>()) {
+        if (call->operands.empty()) {
+          mainReadsParams = false;
+        }
+      }
+    }
+  }
+  meta << "  \"mainReadsParams\": " << int(mainReadsParams) << '\n';
 
   meta << "}\n";
 

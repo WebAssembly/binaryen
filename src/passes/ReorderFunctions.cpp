@@ -62,12 +62,7 @@ struct ReorderFunctions : public Pass {
       counts[func->name];
     }
     // find counts on function calls
-    {
-      PassRunner runner(module);
-      runner.setIsNested(true);
-      runner.add<CallCountScanner>(&counts);
-      runner.run();
-    }
+    CallCountScanner(&counts).run(runner, module);
     // find counts on global usages
     if (module->start.is()) {
       counts[module->start]++;

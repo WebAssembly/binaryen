@@ -23,11 +23,15 @@
 //    to allow removal of the copies later.
 //  * Apply the constant values of immutable globals.
 //
+// Some globals may not have uses after these changes, which we leave
+// to other passes to optimize.
+//
 
 #include <atomic>
 
 #include "ir/utils.h"
 #include "pass.h"
+#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -105,9 +109,26 @@ private:
 } // anonymous namespace
 
 struct SimplifyGlobals : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  PassRunner* runner;
+  Module* module;
+
+  GlobalInfoMap map;
+
+  void run(PassRunner* runner_, Module* module_) override {
+    runner = runner_;
+    module = module_;
+
+    analyze();
+
+    preferEarlierImports();
+
+    propagateConstantsToGlobals();
+
+    propagateConstantsToCode();
+  }
+
+  void analyze() {
     // First, find out all the relevant info.
-    GlobalInfoMap map;
     for (auto& global : module->globals) {
       auto& info = map[global->name];
       if (global->imported()) {
@@ -119,11 +140,7 @@ struct SimplifyGlobals : public Pass {
         map[ex->value].exported = true;
       }
     }
-    {
-      PassRunner subRunner(module, runner->options);
-      subRunner.add<GlobalUseScanner>(&map);
-      subRunner.run();
-    }
+    GlobalUseScanner(&map).run(runner, module);
     // We now know which are immutable in practice.
     for (auto& global : module->globals) {
       auto& info = map[global->name];
@@ -132,6 +149,9 @@ struct SimplifyGlobals : public Pass {
         global->mutable_ = false;
       }
     }
+  }
+
+  void preferEarlierImports() {
     // Optimize uses of immutable globals, prefer the earlier import when
     // there is a copy.
     NameNameMap copiedParentMap;
@@ -157,13 +177,36 @@ struct SimplifyGlobals : public Pass {
         }
       }
       // Apply to the gets.
-      PassRunner subRunner(module, runner->options);
-      subRunner.add<GlobalUseModifier>(&copiedParentMap);
-      subRunner.run();
+      GlobalUseModifier(&copiedParentMap).run(runner, module);
     }
-    // If any immutable globals have constant values, we can just apply them
-    // (the global itself will be removed by another pass, as it/ won't have
-    // any uses).
+  }
+
+  // Constant propagation part 1: even an mutable global with a constant
+  // value can have that value propagated to another global that reads it,
+  // since we do know the value during startup, it can't be modified until
+  // code runs.
+  void propagateConstantsToGlobals() {
+    // Go over the list of globals in order, which is the order of
+    // initialization as well, tracking their constant values.
+    std::map<Name, Literal> constantGlobals;
+    for (auto& global : module->globals) {
+      if (!global->imported()) {
+        if (auto* c = global->init->dynCast<Const>()) {
+          constantGlobals[global->name] = c->value;
+        } else if (auto* get = global->init->dynCast<GlobalGet>()) {
+          auto iter = constantGlobals.find(get->name);
+          if (iter != constantGlobals.end()) {
+            Builder builder(*module);
+            global->init = builder.makeConst(iter->second);
+          }
+        }
+      }
+    }
+  }
+
+  // Constant propagation part 2: apply the values of immutable globals
+  // with constant values to to global.gets in the code.
+  void propagateConstantsToCode() {
     NameSet constantGlobals;
     for (auto& global : module->globals) {
       if (!global->mutable_ && !global->imported() &&
@@ -172,12 +215,8 @@ struct SimplifyGlobals : public Pass {
       }
     }
     if (!constantGlobals.empty()) {
-      PassRunner subRunner(module, runner->options);
-      subRunner.add<ConstantGlobalApplier>(&constantGlobals);
-      subRunner.run();
+      ConstantGlobalApplier(&constantGlobals).run(runner, module);
     }
-    // TODO a mutable global's initial value can be applied to another global
-    // after it, as the mutable one can't mutate during instance startup
   }
 };
 

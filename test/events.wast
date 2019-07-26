@@ -3,6 +3,7 @@
 (module
   (event (attr 0) (param i32))
   (event $e (attr 0) (param i32 f32))
+  (event $empty (attr 0))
 
   (event $e-params0 (attr 0) (param i32 f32))
   (event $e-params1 (attr 0) (param i32) (param f32))

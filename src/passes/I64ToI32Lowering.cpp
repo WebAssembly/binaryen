@@ -262,9 +262,14 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     return call;
   }
   void visitCall(Call* curr) {
+    if (curr->isReturn &&
+        getModule()->getFunction(curr->target)->result == i64) {
+      Fatal()
+        << "i64 to i32 lowering of return_call values not yet implemented";
+    }
     auto* fixedCall = visitGenericCall<Call>(
       curr, [&](std::vector<Expression*>& args, Type ty) {
-        return builder->makeCall(curr->target, args, ty);
+        return builder->makeCall(curr->target, args, ty, curr->isReturn);
       });
     // If this was to an import, we need to call the legal version. This assumes
     // that legalize-js-interface has been run before.
@@ -275,10 +280,15 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitCallIndirect(CallIndirect* curr) {
+    if (curr->isReturn &&
+        getModule()->getFunctionType(curr->fullType)->result == i64) {
+      Fatal()
+        << "i64 to i32 lowering of return_call values not yet implemented";
+    }
     visitGenericCall<CallIndirect>(
       curr, [&](std::vector<Expression*>& args, Type ty) {
         return builder->makeCallIndirect(
-          curr->fullType, curr->target, args, ty);
+          curr->fullType, curr->target, args, ty, curr->isReturn);
       });
   }
 

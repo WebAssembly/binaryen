@@ -174,4 +174,115 @@
   (call $0)
  )
 )
-
+(module
+ (func $0 (result i32)
+  (return_call $1)
+ )
+ (func $1 (result i32)
+  (i32.const 42)
+ )
+)
+(module
+ (func $0
+  (return_call $1
+   (i32.const 42)
+  )
+ )
+ (func $1 (param i32)
+  (drop
+   (local.get 0)
+  )
+ )
+)
+(module
+ (func $0 (result i32)
+  (return_call $1
+   (i32.const 42)
+  )
+ )
+ (func $1 (param i32) (result i32)
+  (local.get 0)
+ )
+)
+(module
+ (func $0
+  (drop
+   (call $1)
+  )
+ )
+ (func $1 (result i32)
+  (return_call $2)
+ )
+ (func $2 (result i32)
+  (i32.const 42)
+ )
+)
+(module
+ (func $0
+  (call $1)
+ )
+ (func $1
+  (return_call $2
+   (i32.const 42)
+  )
+ )
+ (func $2 (param i32)
+  (drop
+   (local.get 0)
+  )
+ )
+)
+(module
+ (type $T (func (param i32) (result i32)))
+ (table 10 funcref)
+ (func $0
+  (drop
+   (call $1)
+  )
+ )
+ (func $1 (result i32)
+  (return_call_indirect (type $T)
+   (i32.const 42)
+   (i32.const 0)
+  )
+ )
+)
+(module
+ (type $T (func (param i32)))
+ (table 10 funcref)
+ (func $0
+  (call $1)
+ )
+ (func $1
+  (return_call_indirect (type $T)
+   (i32.const 42)
+   (i32.const 0)
+  )
+ )
+)
+(module
+ (type $6 (func))
+ (memory $0 1 1)
+ (global $global$0 (mut i32) (i32.const 10))
+ (export "func_102_invoker" (func $19))
+ (func $2 (; 2 ;) (type $6)
+  (if
+   (global.get $global$0)
+   (return)
+  )
+  (global.set $global$0
+   (i32.const 1)
+  )
+ )
+ (func $13 (; 13 ;) (type $6)
+  (if
+   (global.get $global$0)
+   (unreachable)
+  )
+  (return_call $2)
+ )
+ (func $19 (; 19 ;) (type $6)
+  (call $13)
+  (unreachable)
+ )
+)

@@ -295,7 +295,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
 }
 
 void WasmBinaryWriter::writeExpression(Expression* curr) {
-  ExpressionStackWriter<WasmBinaryWriter>(curr, *this, o, debug);
+  BinaryenIRToBinaryWriter(*this, o).visit(curr);
 }
 
 void WasmBinaryWriter::writeFunctions() {
@@ -322,12 +322,12 @@ void WasmBinaryWriter::writeFunctions() {
       if (debug) {
         std::cerr << "write Stack IR" << std::endl;
       }
-      StackIRFunctionStackWriter<WasmBinaryWriter>(func, *this, o, debug);
+      StackIRToBinaryWriter(*this, o, func).write();
     } else {
       if (debug) {
         std::cerr << "write Binaryen IR" << std::endl;
       }
-      FunctionStackWriter<WasmBinaryWriter>(func, *this, o, sourceMap, debug);
+      BinaryenIRToBinaryWriter(*this, o, func, sourceMap).write();
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
@@ -2054,13 +2054,13 @@ static char formatNibble(int nibble) {
   return nibble < 10 ? '0' + nibble : 'a' - 10 + nibble;
 }
 
-static void escapeName(Name& name) {
+Name WasmBinaryBuilder::escape(Name name) {
   bool allIdChars = true;
   for (const char* p = name.str; allIdChars && *p; p++) {
     allIdChars = isIdChar(*p);
   }
   if (allIdChars) {
-    return;
+    return name;
   }
   // encode name, if at least one non-idchar (per WebAssembly spec) was found
   std::string escaped;
@@ -2075,7 +2075,7 @@ static void escapeName(Name& name) {
     escaped.push_back(formatNibble(ch >> 4));
     escaped.push_back(formatNibble(ch & 15));
   }
-  name = escaped;
+  return escaped;
 }
 
 void WasmBinaryBuilder::readNames(size_t payloadLen) {
@@ -2098,7 +2098,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
       auto rawName = getInlineString();
-      escapeName(rawName);
+      rawName = escape(rawName);
       auto name = rawName;
       // De-duplicate names by appending .1, .2, etc.
       for (int i = 1; !usedNames.insert(name).second; ++i) {

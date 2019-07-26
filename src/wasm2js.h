@@ -283,7 +283,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // First, do the lowering to a JS-friendly subset.
   {
     PassRunner runner(wasm, options);
-    runner.add<AutoDrop>();
+    runner.add(make_unique<AutoDrop>());
     runner.add("legalize-js-interface");
     // First up remove as many non-JS operations we can, including things like
     // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
@@ -1115,6 +1115,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitCall(Call* curr) {
+      if (curr->isReturn) {
+        Fatal() << "tail calls not yet supported in wasm2js";
+      }
       Ref theCall =
         ValueBuilder::makeCall(fromName(curr->target, NameScope::Top));
       // For wasm => wasm calls, we don't need coercions. TODO: even imports
@@ -1136,6 +1139,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
+      if (curr->isReturn) {
+        Fatal() << "tail calls not yet supported in wasm2js";
+      }
       // If the target has effects that interact with the operands, we must
       // reorder it to the start.
       bool mustReorder = false;

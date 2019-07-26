@@ -59,9 +59,17 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'e':
-    if (strcmp(op, "else") == 0) { return makeThenOrElse(s); }
-    goto parse_error;
+  case 'e': {
+    switch (op[1]) {
+      case 'l':
+        if (strcmp(op, "else") == 0) { return makeThenOrElse(s); }
+        goto parse_error;
+      case 'x':
+        if (strcmp(op, "exnref.pop") == 0) { return makePop(exnref); }
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
   case 'f': {
     switch (op[1]) {
       case '3': {
@@ -2277,6 +2285,9 @@ switch (op[0]) {
             goto parse_error;
           case 'o':
             if (strcmp(op, "v128.or") == 0) { return makeBinary(s, BinaryOp::OrVec128); }
+            goto parse_error;
+          case 'p':
+            if (strcmp(op, "v128.pop") == 0) { return makePop(v128); }
             goto parse_error;
           case 's':
             if (strcmp(op, "v128.store") == 0) { return makeStore(s, v128, /*isAtomic=*/false); }

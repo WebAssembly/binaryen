@@ -1200,12 +1200,15 @@ private:
   Expression* makeCall(Type type) {
     // seems ok, go on
     int tries = TRIES;
+    bool isReturn;
     while (tries-- > 0) {
       Function* target = func;
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
         target = vectorPick(wasm.functions).get();
       }
-      if (target->result != type) {
+      isReturn = type == unreachable && wasm.features.hasTailCall() &&
+                 func->result == target->result;
+      if (target->result != type && !isReturn) {
         continue;
       }
       // we found one!
@@ -1213,7 +1216,7 @@ private:
       for (auto argType : target->params) {
         args.push_back(make(argType));
       }
-      return builder.makeCall(target->name, args, type);
+      return builder.makeCall(target->name, args, type, isReturn);
     }
     // we failed to find something
     return make(type);
@@ -1227,11 +1230,14 @@ private:
     // look for a call target with the right type
     Index start = upTo(data.size());
     Index i = start;
-    Function* func;
+    Function* targetFn;
+    bool isReturn;
     while (1) {
       // TODO: handle unreachable
-      func = wasm.getFunction(data[i]);
-      if (func->result == type) {
+      targetFn = wasm.getFunction(data[i]);
+      isReturn = type == unreachable && wasm.features.hasTailCall() &&
+                 func->result == targetFn->result;
+      if (targetFn->result == type || isReturn) {
         break;
       }
       i++;
@@ -1251,11 +1257,12 @@ private:
       target = make(i32);
     }
     std::vector<Expression*> args;
-    for (auto type : func->params) {
+    for (auto type : targetFn->params) {
       args.push_back(make(type));
     }
-    func->type = ensureFunctionType(getSig(func), &wasm)->name;
-    return builder.makeCallIndirect(func->type, target, args, func->result);
+    targetFn->type = ensureFunctionType(getSig(targetFn), &wasm)->name;
+    return builder.makeCallIndirect(
+      targetFn->type, target, args, targetFn->result, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
@@ -1757,7 +1764,7 @@ private:
             auto op = pick(
               FeatureOptions<UnaryOp>()
                 .add(FeatureSet::MVP, EqZInt32, ClzInt32, CtzInt32, PopcntInt32)
-                .add(FeatureSet::Atomics, ExtendS8Int32, ExtendS16Int32));
+                .add(FeatureSet::SignExt, ExtendS8Int32, ExtendS16Int32));
             return buildUnary({op, make(i32)});
           }
           case i64:
@@ -1808,7 +1815,7 @@ private:
             auto op =
               pick(FeatureOptions<UnaryOp>()
                      .add(FeatureSet::MVP, ClzInt64, CtzInt64, PopcntInt64)
-                     .add(FeatureSet::Atomics,
+                     .add(FeatureSet::SignExt,
                           ExtendS8Int64,
                           ExtendS16Int64,
                           ExtendS32Int64));
