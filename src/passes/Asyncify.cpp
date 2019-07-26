@@ -432,12 +432,10 @@ public:
 
     map.swap(scanner.map);
 
-    if (!blacklist.empty()) {
-      // Functions in the blacklist are assumed to not change the state.
-      for (auto& func : module.functions) {
-        if (blacklist.count(func->name)) {
-          map[func.get()].canChangeState = false;
-        }
+    // Functions in the blacklist are assumed to not change the state.
+    for (auto& name : blacklist) {
+      if (auto* func = module.getFunctionOrNull(name)) {
+        map[func].canChangeState = false;
       }
     }
 
