@@ -437,7 +437,7 @@
    )
   )
   (drop
-   (unreachable.load offset=100
+   (i32.load offset=100
     (unreachable)
    )
   )
