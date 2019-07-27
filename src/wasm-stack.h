@@ -385,8 +385,8 @@ void BinaryenIRWriter<SubType>::visitCall(Call* curr) {
 
   // For non-control-flow value-returning instructions, if the type of an
   // expression is unreachable, we emit an unreachable and don't emit the
-  // instruction itself, If we don't emit an unreachable, instructions that
-  // follow can have validation failure in wasm binary format. For example:
+  // instruction itself. If we don't emit an unreachable, instructions that
+  // follow can have a validation failure in wasm binary format. For example:
   // [unreachable] (f32.add
   // [unreachable]   (i32.eqz
   // [unreachable]     (unreachable)
