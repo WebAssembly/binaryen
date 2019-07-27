@@ -22,7 +22,7 @@
 
 namespace wasm {
 
-const char* printType(Type type, bool noUnreachable) {
+const char* printType(Type type) {
   switch (type) {
     case Type::none:
       return "none";
@@ -39,13 +39,7 @@ const char* printType(Type type, bool noUnreachable) {
     case Type::exnref:
       return "exnref";
     case Type::unreachable:
-      if (noUnreachable) {
-        // Printing "unreachable" as a instruction prefix type is not valid in
-        // wasm text format. Print something else to make it pass.
-        return "i32";
-      } else {
-        return "unreachable";
-      }
+      return "unreachable";
   }
   WASM_UNREACHABLE();
 }

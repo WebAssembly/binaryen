@@ -35,7 +35,7 @@ enum Type {
   unreachable
 };
 
-const char* printType(Type type, bool noUnreachable = false);
+const char* printType(Type type);
 unsigned getTypeSize(Type type);
 FeatureSet getFeatures(Type type);
 Type getType(unsigned size, bool float_);

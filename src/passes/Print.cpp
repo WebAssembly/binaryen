@@ -55,6 +55,12 @@ static Name printableLocal(Index index, Function* func) {
   return name;
 }
 
+// Printing "unreachable" as a instruction prefix type is not valid in wasm text
+// format. Print something else to make it pass.
+static Type forceConcrete(Type type) {
+  return isConcreteType(type) ? type : i32;
+}
+
 // Prints the internal contents of an expression: everything but
 // the children.
 struct PrintExpressionContents
@@ -141,7 +147,7 @@ struct PrintExpressionContents
     printName(curr->name, o);
   }
   void visitLoad(Load* curr) {
-    prepareColor(o) << printType(curr->type, true);
+    prepareColor(o) << printType(forceConcrete(curr->type));
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -167,7 +173,7 @@ struct PrintExpressionContents
     }
   }
   void visitStore(Store* curr) {
-    prepareColor(o) << printType(curr->valueType, true);
+    prepareColor(o) << printType(forceConcrete(curr->valueType));
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -192,7 +198,7 @@ struct PrintExpressionContents
     }
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
-    prepareColor(o) << printType(type, true) << ".atomic.rmw";
+    prepareColor(o) << printType(forceConcrete(type)) << ".atomic.rmw";
     if (type != unreachable && bytes != getTypeSize(type)) {
       if (bytes == 1) {
         o << '8';
@@ -251,7 +257,7 @@ struct PrintExpressionContents
   }
   void visitAtomicWait(AtomicWait* curr) {
     prepareColor(o);
-    o << printType(curr->expectedType, true) << ".atomic.wait";
+    o << printType(forceConcrete(curr->expectedType)) << ".atomic.wait";
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
