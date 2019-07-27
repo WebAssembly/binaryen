@@ -432,6 +432,10 @@ void BinaryenIRWriter<SubType>::visitLocalGet(LocalGet* curr) {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitLocalSet(LocalSet* curr) {
   visit(curr->value);
+  if (curr->isTee() && curr->type == unreachable) {
+    emitUnreachable();
+    return;
+  }
   emit(curr);
 }
 

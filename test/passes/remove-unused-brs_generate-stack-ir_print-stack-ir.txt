@@ -9,7 +9,7 @@
       unreachable
      end
      unreachable
-     local.tee $var$0
+     unreachable
      unreachable
     end
     unreachable
