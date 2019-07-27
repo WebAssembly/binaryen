@@ -679,7 +679,7 @@
    (drop
     (unreachable)
    )
-   (unreachable.load
+   (i32.load
     (unreachable)
    )
    (unreachable)
@@ -1183,7 +1183,7 @@
     (i32.const 22)
     (block
      (unreachable)
-     (unreachable.load
+     (i32.load
       (unreachable)
      )
      (drop
