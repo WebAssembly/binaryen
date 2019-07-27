@@ -2186,7 +2186,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
       return;
     }
-    out << "," << import->base.str;
+    out << "," << asmangle(import->base.str);
   });
   out << "},mem" << moduleName.str << ");\n";
 
