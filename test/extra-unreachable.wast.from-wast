@@ -70,23 +70,23 @@
    )
   )
   (global.set $g
-   (unreachable.load
+   (i32.load
     (unreachable)
    )
   )
   (global.set $g
-   (unreachable.atomic.load
+   (i32.atomic.load
     (unreachable)
    )
   )
   (global.set $g
-   (unreachable.atomic.rmw?.add
+   (i32.atomic.rmw.add
     (unreachable)
     (i32.const 0)
    )
   )
   (global.set $g
-   (unreachable.atomic.rmw?.cmpxchg
+   (i32.atomic.rmw.cmpxchg
     (unreachable)
     (i32.const 0)
     (i32.const 0)
