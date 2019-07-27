@@ -2087,7 +2087,7 @@ void Wasm2JSGlue::emitPreES6() {
     }
     baseModuleMap[base] = module;
 
-    out << "import { " << base.str << " } from '" << module.str << "';\n";
+    out << "import { " << asmangle(base.str) << " } from '" << module.str << "';\n";
   };
 
   ImportInfo imports(wasm);
