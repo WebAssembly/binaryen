@@ -382,11 +382,33 @@ void BinaryenIRWriter<SubType>::visitCall(Call* curr) {
   for (auto* operand : curr->operands) {
     visit(operand);
   }
-  emit(curr);
-  // TODO FIXME: this and similar can be removed
-  if (curr->type == unreachable) {
+
+  // For non-control-flow value-returning instructions, if the type of an
+  // expression is unreachable, we emit an unreachable and don't emit the
+  // instruction itself. If we don't emit an unreachable, instructions that
+  // follow can have a validation failure in wasm binary format. For example:
+  // [unreachable] (f32.add
+  // [unreachable]   (i32.eqz
+  // [unreachable]     (unreachable)
+  //                 )
+  //                 ...
+  //               )
+  // This is a valid prgram in binaryen IR, because the unreachable type
+  // propagates out of an expression, making both i32.eqz and f32.add
+  // unreachable. But in binary format, this becomes:
+  // unreachable
+  // i32.eqz
+  // f32.add       ;; validation failure; it takes an i32!
+  // And here f32.add causes validation failure in wasm validation. So in this
+  // case we add an unreachable to prevent following instructions to consume
+  // the current value (here i32.eqz).
+  //
+  // The same applies for other expressions.
+  if (curr->type == unreachable && !curr->isReturn) {
     emitUnreachable();
+    return;
   }
+  emit(curr);
 }
 
 template<typename SubType>
@@ -395,10 +417,11 @@ void BinaryenIRWriter<SubType>::visitCallIndirect(CallIndirect* curr) {
     visit(operand);
   }
   visit(curr->target);
-  emit(curr);
-  if (curr->type == unreachable) {
+  if (curr->type == unreachable && !curr->isReturn) {
     emitUnreachable();
+    return;
   }
+  emit(curr);
 }
 
 template<typename SubType>
@@ -409,10 +432,11 @@ void BinaryenIRWriter<SubType>::visitLocalGet(LocalGet* curr) {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitLocalSet(LocalSet* curr) {
   visit(curr->value);
-  emit(curr);
-  if (curr->type == unreachable) {
+  if (curr->isTee() && curr->type == unreachable) {
     emitUnreachable();
+    return;
   }
+  emit(curr);
 }
 
 template<typename SubType>
@@ -430,7 +454,6 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitLoad(Load* curr) {
   visit(curr->ptr);
   if (curr->type == unreachable) {
-    // don't even emit it; we don't know the right type
     emitUnreachable();
     return;
   }
@@ -441,27 +464,14 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitStore(Store* curr) {
   visit(curr->ptr);
   visit(curr->value);
-  if (curr->type == unreachable) {
-    // don't even emit it; we don't know the right type
-    emitUnreachable();
-    return;
-  }
   emit(curr);
 }
 
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitAtomicRMW(AtomicRMW* curr) {
   visit(curr->ptr);
-  // stop if the rest isn't reachable anyhow
-  if (curr->ptr->type == unreachable) {
-    return;
-  }
   visit(curr->value);
-  if (curr->value->type == unreachable) {
-    return;
-  }
   if (curr->type == unreachable) {
-    // don't even emit it; we don't know the right type
     emitUnreachable();
     return;
   }
@@ -471,20 +481,9 @@ void BinaryenIRWriter<SubType>::visitAtomicRMW(AtomicRMW* curr) {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   visit(curr->ptr);
-  // stop if the rest isn't reachable anyhow
-  if (curr->ptr->type == unreachable) {
-    return;
-  }
   visit(curr->expected);
-  if (curr->expected->type == unreachable) {
-    return;
-  }
   visit(curr->replacement);
-  if (curr->replacement->type == unreachable) {
-    return;
-  }
   if (curr->type == unreachable) {
-    // don't even emit it; we don't know the right type
     emitUnreachable();
     return;
   }
@@ -494,16 +493,10 @@ void BinaryenIRWriter<SubType>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitAtomicWait(AtomicWait* curr) {
   visit(curr->ptr);
-  // stop if the rest isn't reachable anyhow
-  if (curr->ptr->type == unreachable) {
-    return;
-  }
   visit(curr->expected);
-  if (curr->expected->type == unreachable) {
-    return;
-  }
   visit(curr->timeout);
-  if (curr->timeout->type == unreachable) {
+  if (curr->type == unreachable) {
+    emitUnreachable();
     return;
   }
   emit(curr);
@@ -512,12 +505,9 @@ void BinaryenIRWriter<SubType>::visitAtomicWait(AtomicWait* curr) {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitAtomicNotify(AtomicNotify* curr) {
   visit(curr->ptr);
-  // stop if the rest isn't reachable anyhow
-  if (curr->ptr->type == unreachable) {
-    return;
-  }
   visit(curr->notifyCount);
-  if (curr->notifyCount->type == unreachable) {
+  if (curr->type == unreachable) {
+    emitUnreachable();
     return;
   }
   emit(curr);
@@ -526,6 +516,10 @@ void BinaryenIRWriter<SubType>::visitAtomicNotify(AtomicNotify* curr) {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitSIMDExtract(SIMDExtract* curr) {
   visit(curr->vec);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+    return;
+  }
   emit(curr);
 }
 
@@ -533,6 +527,10 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitSIMDReplace(SIMDReplace* curr) {
   visit(curr->vec);
   visit(curr->value);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+    return;
+  }
   emit(curr);
 }
 
@@ -540,6 +538,10 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitSIMDShuffle(SIMDShuffle* curr) {
   visit(curr->left);
   visit(curr->right);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+    return;
+  }
   emit(curr);
 }
 
@@ -548,6 +550,10 @@ void BinaryenIRWriter<SubType>::visitSIMDBitselect(SIMDBitselect* curr) {
   visit(curr->left);
   visit(curr->right);
   visit(curr->cond);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+    return;
+  }
   emit(curr);
 }
 
@@ -555,6 +561,10 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitSIMDShift(SIMDShift* curr) {
   visit(curr->vec);
   visit(curr->shift);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+    return;
+  }
   emit(curr);
 }
 
