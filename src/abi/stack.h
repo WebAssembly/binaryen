@@ -38,10 +38,44 @@ inline Index stackAlign(Index size) {
 // Allocate some space on the stack, and assign it to a local.
 // The local will have the same constant value in all the function, so you can
 // just local.get it anywhere there.
+//
+// FIXME: This function assumes that the stack grows upward, per the convention
+// used by fastcomp.  The stack grows downward when using the WASM backend.
+
 inline void
 getStackSpace(Index local, Function* func, Index size, Module& wasm) {
+  // Attempt to locate the stack pointer by recognizing code idioms
+  // used by Emscripten.  First, look for a global initialized to an
+  // imported variable named "STACKTOP" in environment "env".
   auto* stackPointer =
     GlobalUtils::getGlobalInitializedToImport(wasm, ENV, "STACKTOP");
+  // Starting with Emscripten 1.38.24, the stack pointer variable is
+  // initialized with a literal constant, eliminating the import that
+  // we used to locate the stack pointer by name.  We must match a more
+  // complicated idiom, expecting to see the module structured as follows:
+  //
+  //(module
+  //  ...
+  //  (export "stackSave" (func $stackSave))
+  //  ...
+  //  (func $stackSave (; 410 ;) (; has Stack IR ;) (result i32)
+  //    (global.get $STACKTOP)
+  //  )
+  //  ...
+  //)
+  if (!stackPointer) {
+    auto* stackSaveFunctionExport = wasm.getExportOrNull("stackSave");
+    if (stackSaveFunctionExport &&
+        stackSaveFunctionExport->kind == ExternalKind::Function) {
+      auto* stackSaveFunction =
+        wasm.getFunction(stackSaveFunctionExport->value);
+      assert(!stackSaveFunction->imported());
+      auto* globalGet = stackSaveFunction->body->dynCast<GlobalGet>();
+      if (globalGet) {
+        stackPointer = wasm.getGlobal(globalGet->name);
+      }
+    }
+  }
   if (!stackPointer) {
     Fatal() << "getStackSpace: failed to find the stack pointer";
   }
