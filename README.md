@@ -280,13 +280,33 @@ as a translation of
  )
 ```
 
-You can also tell wasm2js to optimize, using the normal optimization flags
-wasm-opt and other tools receive (such as `-Os`). For optimal code size,
-you should both optimize and run a JavaScript minifier afterwards.
+wasm2js's output is in ES6 module format - basically, it converts a wasm
+module into an ES6 module (to run on older browsers and Node.js versions
+you can use Babel etc. to convert it to ES5). Let's look at a full example
+of calling that hello world wast; first, create the main JS file:
 
-Things to keep in mind with wasm2js's output:
+```javascript
+// main.mjs
+import { add } from "./hello_world.mjs";
+console.log('the sum of 1 and 2 is:', add(1, 2));
+```
 
- * It is not possible to match WebAssemblty semantics 100% precisely with fast
+The run this (note that you need a new enough Node.js with ES6 module
+support):
+
+```shell
+$ bin/wasm2js test/hello_world.wast -o hello_world.mjs
+$ node --experimental-modules main.mjs
+the sum of 1 and 2 is: 3
+```
+
+Things keep to in mind with wasm2js's output:
+
+ * You should run wasm2js with optimizations for release builds, using `-O`
+   or another optimization level. That will optimize along the entire pipeline
+   (wasm and JS). It won't do everything a JS minifer would, though, like
+   minify whitespace, so you should still run a normal JS minifer afterwards.
+ * It is not possible to match WebAssembly semantics 100% precisely with fast
    JavaScript code. For example, every load and store may trap, and to make
    JavaScript do the same we'd need to add checks everywhere, which would be
    large and slow. Instead, wasm2js assumes loads and stores do not trap, that

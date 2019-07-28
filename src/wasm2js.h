@@ -2087,7 +2087,8 @@ void Wasm2JSGlue::emitPreES6() {
     }
     baseModuleMap[base] = module;
 
-    out << "import { " << base.str << " } from '" << module.str << "';\n";
+    out << "import { " << asmangle(base.str) << " } from '" << module.str
+        << "';\n";
   };
 
   ImportInfo imports(wasm);
@@ -2185,7 +2186,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isScratchMemoryHelper(import->base)) {
       return;
     }
-    out << "," << import->base.str;
+    out << "," << asmangle(import->base.str);
   });
   out << "},mem" << moduleName.str << ");\n";
 

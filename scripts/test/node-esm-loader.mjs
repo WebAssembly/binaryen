@@ -16,9 +16,8 @@ export function resolve(specifier, parentModuleURL = baseURL, defaultResolve) {
       format: 'builtin'
     };
   }
-  // Resolve the 'spectest' and 'env' modules to our custom implementations of
-  // various builtins.
-  if (specifier == 'spectest' || specifier == 'env') {
+  // Resolve special modules used in our test suite.
+  if (specifier == 'spectest' || specifier == 'env' || specifier == 'mod.ule') {
     const resolved = new URL('./scripts/test/' + specifier + '.js', parentModuleURL);
     return {
       url: resolved.href,
