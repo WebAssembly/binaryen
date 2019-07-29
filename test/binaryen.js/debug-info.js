@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 var wast = `
 (module
  (type $v (func))
@@ -15,6 +19,7 @@ var binary = module.emitBinary();
 module.dispose();
 module = Binaryen.readBinary(binary);
 console.log(module.emitText());
+assert(module.validate());
 module.dispose();
 
 // With debug info
@@ -26,6 +31,7 @@ binary = module.emitBinary();
 module.dispose();
 module = Binaryen.readBinary(binary);
 console.log(module.emitText());
+assert(module.validate());
 module.dispose();
 
 // Without debug info
@@ -37,4 +43,5 @@ binary = module.emitBinary();
 module.dispose();
 module = Binaryen.readBinary(binary);
 console.log(module.emitText());
+assert(module.validate());
 module.dispose();

@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 var module = Binaryen.parseText(`
 (module
   (memory $0 (shared 1 1))
@@ -60,5 +64,5 @@ module.addFunction("main", signature, [], module.block("", [
 ]));
 
 module.setFeatures(Binaryen.Features.Atomics);
-module.validate();
+assert(module.validate());
 console.log(module.emitText());

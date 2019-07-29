@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 var module = new Binaryen.Module();
 
 var signature = module.addFunctionType("i", Binaryen.i32, []);
@@ -18,6 +22,7 @@ module.setDebugLocation(func, expr, fileIndex, 1, 2);
 module.setDebugLocation(func, body, fileIndex, 0, 3);
 
 var output = module.emitBinary("module.wasm.map");
+assert(module.validate());
 
 function dumpBinary(buffer) {
   var hex = [], o, b, h;

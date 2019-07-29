@@ -1,3 +1,6 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
 
 // "hello world" type example: create a function that adds two i32s and
 // returns the result
@@ -38,6 +41,7 @@ console.log('optimized:\n\n' + module.emitText());
 var binary = module.emitBinary();
 console.log('binary size: ' + binary.length);
 console.log();
+assert(module.validate());
 
 // We don't need the Binaryen module anymore, so we can tell it to
 // clean itself up

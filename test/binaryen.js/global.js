@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
@@ -25,11 +29,11 @@ console.log(Binaryen.emitText(globalInfo.init));
 module.addGlobalExport("a-global", "a-global-exp");
 module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32);
 
-module.validate();
+assert(module.validate());
 console.log(module.emitText());
 
 module.removeGlobal("a-global");
 module.removeExport("a-global-exp");
 
-module.validate();
+assert(module.validate());
 console.log(module.emitText());
