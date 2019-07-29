@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
@@ -22,11 +26,11 @@ console.log("getEventInfo=" + JSON.stringify(cleanInfo(eventInfo)));
 module.addEventExport("a-event", "a-event-exp");
 module.addEventImport("a-event-imp", "module", "base", 0, vif);
 
-module.validate();
+assert(module.validate());
 console.log(module.emitText());
 
 module.removeExport("a-event-exp");
 module.removeEvent("a-event");
 
-module.validate();
+assert(module.validate());
 console.log(module.emitText());

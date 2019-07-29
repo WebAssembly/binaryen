@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 var wast = `
 (module
  (type $i (func (param i32) (result i32)))
@@ -19,6 +23,7 @@ var wast = `
 console.log("=== input wast ===" + wast);
 
 var module = Binaryen.parseText(wast);
+assert(module.validate());
 
 console.log("=== default ===");
 console.log(module.emitStackIR());

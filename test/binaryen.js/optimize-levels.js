@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 var wast = `
 (module
  (type $i (func (param i32) (result i32)))
@@ -25,13 +29,13 @@ function printOptions() {
 var module = Binaryen.parseText(wast);
 
 console.log("=== unoptimized ===");
-module.validate();
+assert(module.validate());
 console.log(module.emitText());
 
 module.optimize();
 console.log("=== optimized using defaults ===");
 printOptions();
-module.validate();
+assert(module.validate());
 console.log(module.emitText());
 module.dispose();
 
@@ -43,7 +47,7 @@ Binaryen.setShrinkLevel(0);
 module.optimize();
 console.log("=== optimized with -O0 ===");
 printOptions();
-module.validate();
+assert(module.validate());
 console.log(module.emitText());
 module.dispose();
 
@@ -55,6 +59,6 @@ Binaryen.setShrinkLevel(1);
 module.optimize();
 console.log("=== optimized with -Os ===");
 printOptions();
-module.validate();
+assert(module.validate());
 console.log(module.emitText());
 module.dispose();

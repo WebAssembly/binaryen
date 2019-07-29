@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
@@ -28,7 +32,7 @@ var func = module.addFunction("func", v, [],
  )
 )
 
-module.validate();
+assert(module.validate());
 console.log(module.emitText());
 
 console.log("getExpressionInfo(i32.pop) = " + stringify(module.i32.pop()));
