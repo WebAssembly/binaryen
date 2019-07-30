@@ -380,7 +380,8 @@ def fail_if_not_contained(actual, expected):
 
 
 def fail_if_not_identical_to_file(actual, expected_file):
-  with open(expected_file, 'rb' if expected_file.endswith(".wasm") else 'r') as f:
+  binary = expected_file.endswith(".wasm") or type(actual) == bytes
+  with open(expected_file, 'rb' if binary else 'r') as f:
     fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 

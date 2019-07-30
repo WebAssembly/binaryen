@@ -131,12 +131,12 @@ def test_asm2wasm():
           with open(jsmap, 'rb') as actual:
             fail_if_not_identical_to_file(actual.read(), wasm + '.map')
           with open('a.wasm', 'rb') as binary:
-            url_section_name = bytearray([16]) + bytearray('sourceMappingURL')
+            url_section_name = bytes([16]) + bytes('sourceMappingURL', 'utf-8')
             url = 'http://example.org/' + jsmap
             assert len(url) < 256, 'name too long'
-            url_section_contents = bytearray([len(url)]) + bytearray(url)
+            url_section_contents = bytes([len(url)]) + bytes(url, 'utf-8')
             print(url_section_name)
-            binary_contents = bytearray(binary.read())
+            binary_contents = binary.read()
             if url_section_name not in binary_contents:
               fail_with_error('source map url section not found in binary')
             url_section_index = binary_contents.index(url_section_name)
@@ -151,9 +151,9 @@ def test_asm2wasm_binary():
   delete_from_orbit('a.wasm')
   delete_from_orbit('b.wast')
   run_command(ASM2WASM + [asmjs, '-o', 'a.wasm'])
-  assert open('a.wasm', 'rb').read()[0] == '\0', 'we emit binary by default'
+  assert open('a.wasm', 'rb').read()[0] == 0, 'we emit binary by default'
   run_command(ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
-  assert open('b.wast', 'rb').read()[0] != '\0', 'we emit text with -S'
+  assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
 
 
 if __name__ == '__main__':

@@ -215,8 +215,8 @@ def run_dylink_tests():
       t = os.path.join(options.binaryen_test, t)
       cmd = WASM_OPT + [t, '-o', 'a.wasm']
       run_command(cmd)
-      with open('a.wasm') as output:
-        index = output.read().find('dylink')
+      with open('a.wasm', 'rb') as output:
+        index = output.read().find(b'dylink')
         print('  ', index)
         assert index == 11, 'dylink section must be first, right after the magic number etc.'
 
