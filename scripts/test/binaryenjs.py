@@ -17,27 +17,27 @@
 import os
 import subprocess
 
-from support import run_command, node_has_webassembly, node_test_glue
-from shared import BINARYEN_JS, MOZJS, NODEJS, options, fail
+from .support import run_command, node_has_webassembly, node_test_glue
+from .shared import BINARYEN_JS, MOZJS, NODEJS, options, fail
 
 
 def test_binaryen_js():
   if not (MOZJS or NODEJS):
-    print 'no vm to run binaryen.js tests'
+    print('no vm to run binaryen.js tests')
     return
 
   node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
 
   if not os.path.exists(BINARYEN_JS):
-    print 'no binaryen.js build to test'
+    print('no binaryen.js build to test')
     return
 
-  print '\n[ checking binaryen.js testcases... ]\n'
+  print('\n[ checking binaryen.js testcases... ]\n')
 
   for s in sorted(os.listdir(os.path.join(options.binaryen_test, 'binaryen.js'))):
     if not s.endswith('.js'):
       continue
-    print s
+    print(s)
     f = open('a.js', 'w')
     # avoid stdout/stderr ordering issues in some js shells - use just stdout
     f.write('''
@@ -70,7 +70,7 @@ def test_binaryen_js():
       if node_has_wasm or 'WebAssembly.' not in test_src:
         test(NODEJS)
       else:
-        print 'Skipping ' + test_path + ' because WebAssembly might not be supported'
+        print('Skipping ' + test_path + ' because WebAssembly might not be supported')
 
 
 if __name__ == "__main__":

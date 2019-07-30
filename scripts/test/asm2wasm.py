@@ -17,15 +17,15 @@
 import os
 import subprocess
 
-from support import run_command
-from shared import (
+from .support import run_command
+from .shared import (
     ASM2WASM, WASM_OPT, binary_format_check, delete_from_orbit,
     fail_with_error, options, tests, fail_if_not_identical_to_file
 )
 
 
 def test_asm2wasm():
-  print '[ checking asm2wasm testcases... ]\n'
+  print('[ checking asm2wasm testcases... ]\n')
 
   for asm in tests:
     if not asm.endswith('.asm.js'):
@@ -63,7 +63,7 @@ def test_asm2wasm():
         if 'i64' in asm or 'wasm-only' in asm or 'noffi' in asm:
           cmd += ['--wasm-only']
         wasm = os.path.join(options.binaryen_test, wasm)
-        print '..', asm, wasm
+        print('..', asm, wasm)
 
         def do_asm2wasm_test():
           actual = run_command(cmd)
@@ -80,10 +80,10 @@ def test_asm2wasm():
         old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
         try:
           os.environ['BINARYEN_PASS_DEBUG'] = '1'
-          print "With BINARYEN_PASS_DEBUG=1:"
+          print("With BINARYEN_PASS_DEBUG=1:")
           do_asm2wasm_test()
           del os.environ['BINARYEN_PASS_DEBUG']
-          print "With BINARYEN_PASS_DEBUG disabled:"
+          print("With BINARYEN_PASS_DEBUG disabled:")
           do_asm2wasm_test()
         finally:
           if old_pass_debug is not None:
@@ -107,13 +107,13 @@ def test_asm2wasm():
               start, end = reported.split('-')
               start_line, start_col = map(int, start.split('.'))
               lines = open('ztemp.wast').read().split('\n')
-              print
-              print '=' * 80
-              print lines[start_line - 1]
-              print (' ' * (start_col - 1)) + '^'
-              print (' ' * (start_col - 2)) + '/_\\'
-              print '=' * 80
-              print err
+              print()
+              print('=' * 80)
+              print(lines[start_line - 1])
+              print((' ' * (start_col - 1)) + '^')
+              print((' ' * (start_col - 2)) + '/_\\')
+              print('=' * 80)
+              print(err)
             except Exception:
               # failed to pretty-print
               fail_with_error('wasm interpreter error: ' + err)
@@ -135,7 +135,7 @@ def test_asm2wasm():
             url = 'http://example.org/' + jsmap
             assert len(url) < 256, 'name too long'
             url_section_contents = bytearray([len(url)]) + bytearray(url)
-            print url_section_name
+            print(url_section_name)
             binary_contents = bytearray(binary.read())
             if url_section_name not in binary_contents:
               fail_with_error('source map url section not found in binary')
@@ -145,7 +145,7 @@ def test_asm2wasm():
 
 
 def test_asm2wasm_binary():
-  print '\n[ checking asm2wasm binary reading/writing... ]\n'
+  print('\n[ checking asm2wasm binary reading/writing... ]\n')
 
   asmjs = os.path.join(options.binaryen_test, 'hello_world.asm.js')
   delete_from_orbit('a.wasm')
