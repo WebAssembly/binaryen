@@ -54,7 +54,7 @@ def test_asm2wasm():
           cmd += ['--no-legalize-javascript-ffi']
         if precise and opts:
           # test mem init importing
-          open('a.mem', 'wb').write(asm)
+          open('a.mem', 'w').write(asm)
           cmd += ['--mem-init=a.mem']
           if asm[0] == 'e':
             cmd += ['--mem-base=1024']
