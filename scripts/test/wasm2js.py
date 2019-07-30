@@ -16,8 +16,8 @@
 
 import os
 
-from support import run_command, split_wast
-from shared import (
+from .support import run_command, split_wast
+from .shared import (
     WASM2JS, MOZJS, NODEJS, fail_if_not_identical, options, tests,
     fail_if_not_identical_to_file, with_pass_debug
 )
@@ -52,7 +52,7 @@ def test_wasm2js_output():
       if not os.path.exists(expected_file):
         continue
 
-      print '..', wasm
+      print('..', wasm)
 
       t = os.path.join(options.binaryen_test, wasm)
 
@@ -71,7 +71,7 @@ def test_wasm2js_output():
         all_out.append(out)
 
         if not NODEJS and not MOZJS:
-          print 'No JS interpreters. Skipping spec tests.'
+          print('No JS interpreters. Skipping spec tests.')
           continue
 
         open('a.2asm.mjs', 'w').write(out)
@@ -102,7 +102,7 @@ def test_wasm2js_output():
 
 def test_asserts_output():
   for wasm in assert_tests:
-    print '..', wasm
+    print('..', wasm)
 
     asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
     traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
@@ -120,13 +120,13 @@ def test_asserts_output():
 
 
 def test_wasm2js():
-  print '\n[ checking wasm2js testcases... ]\n'
+  print('\n[ checking wasm2js testcases... ]\n')
   test_wasm2js_output()
   test_asserts_output()
 
 
 def update_wasm2js_tests():
-  print '\n[ checking wasm2js ]\n'
+  print('\n[ checking wasm2js ]\n')
 
   for opt in (0, 1):
     for wasm in tests + spec_tests + extra_wasm2js_tests:
@@ -148,7 +148,7 @@ def update_wasm2js_tests():
       if wasm not in extra_wasm2js_tests and not os.path.exists(expected_file):
         continue
 
-      print '..', wasm
+      print('..', wasm)
 
       t = os.path.join(options.binaryen_test, wasm)
 
@@ -170,7 +170,7 @@ def update_wasm2js_tests():
         o.write(''.join(all_out))
 
   for wasm in assert_tests:
-    print '..', wasm
+    print('..', wasm)
 
     asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
     traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')

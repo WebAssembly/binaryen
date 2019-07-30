@@ -35,10 +35,6 @@ module;;comment
 
 (;comment""";)
 
-(;HeiÃŸe WÃ¼rstchen;)
-
-(;í ½í¸ší¸Ží ½í²©;)
-
 (;comment
 comment;)
 

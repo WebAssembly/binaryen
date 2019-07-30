@@ -88,15 +88,13 @@ def untar(tarfile, outdir):
 
 
 def split_wast(wastFile):
+  # if it's a binary, leave it as is
+  if wastFile.endswith('.wasm'):
+    return [[open(wastFile, 'rb').read(), '']]
+
   # .wast files can contain multiple modules, and assertions for each one.
   # this splits out a wast into [(module, assertions), ..]
   # we ignore module invalidity tests here.
-  wast = open(wastFile, 'rb').read()
-
-  # if it's a binary, leave it as is
-  if wast[0] == '\0':
-    return [[wast, '']]
-
   wast = open(wastFile, 'r').read()
   ret = []
 
@@ -152,7 +150,7 @@ def run_command(cmd, expected_status=0, stderr=None,
     assert stderr == subprocess.PIPE or stderr is None,\
         "Can't redirect stderr if using expected_err"
     stderr = subprocess.PIPE
-  print 'executing: ', ' '.join(cmd)
+  print('executing: ', ' '.join(cmd))
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True)
   out, err = proc.communicate()
   code = proc.returncode

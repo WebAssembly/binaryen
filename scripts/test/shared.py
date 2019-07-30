@@ -89,7 +89,7 @@ warnings = []
 def warn(text):
   global warnings
   warnings.append(text)
-  print 'warning:', text
+  print('warning:', text)
 
 
 # setup
@@ -201,7 +201,8 @@ os.environ['BINARYEN'] = in_binaryen()
 
 
 def get_platform():
-  return {'linux2': 'linux',
+  return {'linux': 'linux',
+          'linux2': 'linux',
           'darwin': 'mac',
           'win32': 'windows',
           'cygwin': 'windows'}[sys.platform]
@@ -354,8 +355,8 @@ def fail_with_error(msg):
   try:
     num_failures += 1
     raise Exception(msg)
-  except Exception, e:
-    print >> sys.stderr, str(e)
+  except Exception as e:
+    print(str(e))
     if options.abort_on_first_failure:
       raise
 
@@ -401,19 +402,19 @@ if not has_vanilla_emcc:
 def validate_binary(wasm):
   if V8:
     cmd = [V8] + V8_OPTS + [in_binaryen('scripts', 'validation_shell.js'), '--', wasm]
-    print '      ', ' '.join(cmd)
+    print('      ', ' '.join(cmd))
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
   else:
-    print '(skipping v8 binary validation)'
+    print('(skipping v8 binary validation)')
 
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
                         binary_suffix='.fromBinary', original_wast=None):
   # checks we can convert the wast to binary and back
 
-  print '     (binary format check)'
+  print('     (binary format check)')
   cmd = WASM_AS + [wast, '-o', 'a.wasm', '-all'] + wasm_as_args
-  print '      ', ' '.join(cmd)
+  print('      ', ' '.join(cmd))
   if os.path.exists('a.wasm'):
     os.unlink('a.wasm')
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
@@ -427,7 +428,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     validate_binary('a.wasm')
 
   cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast']
-  print '      ', ' '.join(cmd)
+  print('      ', ' '.join(cmd))
   if os.path.exists('ab.wast'):
     os.unlink('ab.wast')
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
@@ -435,7 +436,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
 
   # make sure it is a valid wast
   cmd = WASM_OPT + ['ab.wast', '-all']
-  print '      ', ' '.join(cmd)
+  print('      ', ' '.join(cmd))
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
   if verify_final_result:
@@ -448,9 +449,9 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
 def minify_check(wast, verify_final_result=True):
   # checks we can parse minified output
 
-  print '     (minify check)'
+  print('     (minify check)')
   cmd = WASM_OPT + [wast, '--print-minified', '-all']
-  print '      ', ' '.join(cmd)
+  print('      ', ' '.join(cmd))
   subprocess.check_call(cmd, stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wast')
   subprocess.check_call(
