@@ -469,7 +469,7 @@ def run_gcc_tests():
         continue
       print('  (will check trace in ', t, ')')
       src = 'trace.cpp'
-      with open(src, 'w') as o:
+      with open(src, 'wb') as o:
         o.write(out)
       expected = os.path.join(options.binaryen_test, 'example', t + '.txt')
     else:

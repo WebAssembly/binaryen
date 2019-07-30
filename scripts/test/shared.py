@@ -309,45 +309,18 @@ class Py2CalledProcessError(subprocess.CalledProcessError):
     self.stderr = stderr
 
 
-# https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess
-class Py2CompletedProcess:
-  def __init__(self, args, returncode, stdout, stderr):
-    self.args = args
-    self.returncode = returncode
-    self.stdout = stdout
-    self.stderr = stderr
-
-  def __repr__(self):
-    _repr = ['args=%s, returncode=%s' % (self.args, self.returncode)]
-    if self.stdout is not None:
-      _repr += 'stdout=' + repr(self.stdout)
-    if self.stderr is not None:
-      _repr += 'stderr=' + repr(self.stderr)
-    return 'CompletedProcess(%s)' % ', '.join(_repr)
-
-  def check_returncode(self):
-    if self.returncode != 0:
-      raise Py2CalledProcessError(returncode=self.returncode, cmd=self.args,
-                                  output=self.stdout, stderr=self.stderr)
-
-
 def run_process(cmd, check=True, input=None, capture_output=False, *args, **kw):
-  if hasattr(subprocess, "run"):
-    ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
-    return ret
-
-  # Python 2 compatibility: Introduce Python 3 subprocess.run-like behavior
-  if input is not None:
-    kw['stdin'] = subprocess.PIPE
+  if input and type(input) == str:
+    input = bytes(input, 'utf-8')
   if capture_output:
     kw['stdout'] = subprocess.PIPE
     kw['stderr'] = subprocess.PIPE
-  proc = subprocess.Popen(cmd, *args, **kw)
-  stdout, stderr = proc.communicate(input)
-  result = Py2CompletedProcess(cmd, proc.returncode, stdout, stderr)
-  if check:
-    result.check_returncode()
-  return result
+  ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
+  if ret.stdout is not None:
+    ret.stdout = ret.stdout.decode('utf-8')
+  if ret.stderr is not None:
+    ret.stderr = ret.stderr.decode('utf-8')
+  return ret
 
 
 def fail_with_error(msg):
