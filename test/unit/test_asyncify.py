@@ -7,7 +7,6 @@ from .utils import BinaryenTestCase
 
 class AsyncifyTest(BinaryenTestCase):
   def test_asyncify_js(self):
-    return
     def test(args):
       print(args)
       run_process(WASM_OPT + args + [self.input_path('asyncify-sleep.wast'), '--asyncify', '-o', 'a.wasm'])
