@@ -584,7 +584,7 @@ private:
   void queueImport(Name importName, std::string baseSig);
   void addImports();
 
-  template<typename T> Const *resolveConstIndex(Expression* arg, T report);
+  template<typename T> int32_t resolveConstIndex(Expression* arg, T report);
   Const *resolveConstAddr(Expression* arg, const Name &target);
   void prepareAsmIndices(Table *table);
   Literal tableIndexForName(Name name);
@@ -626,7 +626,7 @@ Const *AsmConstWalker::resolveConstAddr(Expression* arg, const Name &target) {
 }
 
 template<typename T>
-Const *AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
+int32_t AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
   while (!arg->dynCast<Const>()) {
     if (auto* get = arg->dynCast<LocalGet>()) {
       // The argument may be a local.get, in which case, the last set in this
@@ -636,11 +636,15 @@ Const *AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
         assert(set->index == get->index);
         arg = set->value;
       }
+    } else if (auto* get = arg->dynCast<GlobalGet>()) {
+      // In the dynamic linking case, indices start at __table_base.
+      // We want the value relative to __table_base.
+      return 0;
     } else {
       report(arg);
     }
   }
-  return arg->cast<Const>();
+  return arg->cast<Const>()->value.geti32();
 }
 
 void AsmConstWalker::visitCall(Call* curr) {
@@ -661,8 +665,9 @@ void AsmConstWalker::visitCall(Call* curr) {
     auto idx = resolveConstIndex(curr->operands[0], [&](Expression *arg) {
       Fatal() << "Unexpected table index type (" << getExpressionName(arg)
               << ") in call to: " << import->base;
-    })->value.geti32();
+    });
 
+    // If the address of the invoke call is an emscripten_asm_const_* function:
     if (asmTable.count(idx)) {
       auto* value = resolveConstAddr(curr->operands[1], *asmTable[idx]);
       auto code = codeForConstAddr(wasm, segmentOffsets, value);
@@ -685,7 +690,7 @@ void AsmConstWalker::prepareAsmIndices(Table *table) {
     int idx = resolveConstIndex(segment.offset, [&](Expression *arg) {
       Fatal() << "Unexpected table index type (" << getExpressionName(arg)
               << ") table";
-    })->value.geti32();
+    });
     for (auto& name : segment.data) {
       auto* func = wasm.getFunction(name);
       if (func->imported() && func->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
