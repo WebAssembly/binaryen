@@ -1,4 +1,6 @@
 set -e
+echo "install"
+sudo apt-get install python3
 echo "travis-test build"
 ./build-js.sh -g
 echo "travis-test test"

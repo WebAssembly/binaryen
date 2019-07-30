@@ -40,6 +40,7 @@ jobs:
       stage: test
       compiler: clang
       python:
+        - 2.7
         - 3.6
       addons:
         apt:
@@ -124,7 +125,7 @@ jobs:
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update
-        - alpine apk add build-base cmake git python3
+        - alpine apk add build-base cmake git python2 python3
       script:
         - alpine cmake .
         - alpine make -j2
