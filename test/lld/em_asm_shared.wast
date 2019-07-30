@@ -12,7 +12,9 @@
  (import "env" "__stack_pointer" (global $gimport$2 (mut i32)))
  (import "env" "__memory_base" (global $gimport$3 i32))
  (import "env" "__table_base" (global $gimport$4 i32))
+ (import "GOT.func" "emscripten_asm_const_int" (global $gimport$5 (mut i32)))
  (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i32 i32 i32) (result i32)))
+ (import "env" "__invoke_i32_i8*_i8*_..." (func $__invoke_i32_i8*_i8*_... (param i32 i32 i32 i32) (result i32)))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__original_main" (func $__original_main))
  (export "_ZN20__em_asm_sig_builder12__em_asm_sigIJEEEKNS_5innerIJDpT_EEES3_" (func $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29))
@@ -43,6 +45,22 @@
   )
   (drop
    (call $emscripten_asm_const_int
+    (i32.add
+     (local.tee $1
+      (global.get $gimport$3)
+     )
+     (i32.const 0)
+    )
+    (i32.add
+     (local.get $0)
+     (i32.const 24)
+    )
+    (i32.const 0)
+   )
+  )
+  (drop
+   (call $__invoke_i32_i8*_i8*_...
+    (global.get $gimport$5)
     (i32.add
      (local.tee $1
       (global.get $gimport$3)
