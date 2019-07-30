@@ -1043,7 +1043,7 @@ struct FixInvokeFunctionNamesWalker
     }
     std::string sigWoOrigFunc = sig.front() + sig.substr(2, sig.size() - 2);
     invokeSigs.insert(sigWoOrigFunc);
-    return Name("invoke_" + sigWoOrigFunc);
+    return Name(INVOKE_PREFIX + sigWoOrigFunc);
   }
 
   Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
@@ -1183,7 +1183,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (emJsWalker.codeByName.count(import->base.str) == 0 &&
         !import->base.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
-        !import->base.startsWith("invoke_")) {
+        !import->base.startsWith(INVOKE_PREFIX)) {
       if (declares.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
       }
@@ -1237,7 +1237,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "  \"invokeFuncs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    if (import->base.startsWith("invoke_")) {
+    if (import->base.startsWith(INVOKE_PREFIX)) {
       if (invokeFuncs.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
       }
