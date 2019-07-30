@@ -1,8 +1,6 @@
 set -e
-echo "install"
-apt-get install python3
 echo "travis-test build"
 ./build-js.sh -g
 echo "travis-test test"
-python3 ./scripts/test/binaryenjs.py
+python -m scripts.test.binaryenjs
 echo "travis-test yay!"
