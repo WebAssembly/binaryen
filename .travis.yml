@@ -128,7 +128,7 @@ jobs:
       script:
         - alpine cmake .
         - alpine make -j2
-        - alpine ./check.py
+        - alpine python3 ./check.py
 
     # Build statically linked release binaries with gcc 6.3 on Alpine Linux
     # (inside chroot). If building a tagged commit, then deploy release tarball
