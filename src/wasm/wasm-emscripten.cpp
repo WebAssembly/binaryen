@@ -32,7 +32,7 @@ namespace wasm {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
-static const char *INVOKE_PREFIX = "invoke_";
+static const char* INVOKE_PREFIX = "invoke_";
 
 static Name STACK_SAVE("stackSave");
 static Name STACK_RESTORE("stackRestore");
@@ -700,8 +700,8 @@ private:
   void addImports();
 
   template<typename T> int32_t resolveConstIndex(Expression* arg, T report);
-  Const *resolveConstAddr(Expression* arg, const Name &target);
-  void prepareAsmIndices(Table *table);
+  Const* resolveConstAddr(Expression* arg, const Name& target);
+  void prepareAsmIndices(Table* table);
   Literal tableIndexForName(Name name);
 
   std::vector<std::unique_ptr<Function>> queuedImports;
@@ -715,7 +715,7 @@ void AsmConstWalker::noteNonLinear(Expression* curr) {
 
 void AsmConstWalker::visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
 
-Const *AsmConstWalker::resolveConstAddr(Expression* arg, const Name &target) {
+Const* AsmConstWalker::resolveConstAddr(Expression* arg, const Name& target) {
   while (!arg->dynCast<Const>()) {
     if (auto* get = arg->dynCast<LocalGet>()) {
       // The argument may be a local.get, in which case, the last set in this
@@ -777,7 +777,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     Builder builder(wasm);
     curr->operands[0] = builder.makeConst(idLiteralForCode(code));
   } else if (import->imported() && import->base.startsWith(INVOKE_PREFIX)) {
-    auto idx = resolveConstIndex(curr->operands[0], [&](Expression *arg) {
+    auto idx = resolveConstIndex(curr->operands[0], [&](Expression* arg) {
       Fatal() << "Unexpected table index type (" << getExpressionName(arg)
               << ") in call to: " << import->base;
     });
@@ -800,9 +800,9 @@ void AsmConstWalker::visitCall(Call* curr) {
   }
 }
 
-void AsmConstWalker::prepareAsmIndices(Table *table) {
+void AsmConstWalker::prepareAsmIndices(Table* table) {
   for (auto& segment : table->segments) {
-    int idx = resolveConstIndex(segment.offset, [&](Expression *arg) {
+    int idx = resolveConstIndex(segment.offset, [&](Expression* arg) {
       Fatal() << "Unexpected table index type (" << getExpressionName(arg)
               << ") table";
     });
@@ -902,9 +902,9 @@ void AsmConstWalker::addImports() {
   }
 
   if (!queuedTableEntries.empty()) {
-    std::vector<Name> &tableSegmentData = wasm.table.segments[0].data;
+    std::vector<Name>& tableSegmentData = wasm.table.segments[0].data;
     assert(wasm.table.segments.size() == 1);
-    for (auto &entry : queuedTableEntries) {
+    for (auto& entry : queuedTableEntries) {
       tableSegmentData.push_back(entry);
     }
     wasm.table.initial.addr += queuedTableEntries.size();
