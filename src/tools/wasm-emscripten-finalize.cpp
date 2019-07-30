@@ -193,6 +193,12 @@ int main(int argc, const char* argv[]) {
 
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
+  generator.fixEmAsm();
+
+  if (options.debug) {
+    std::cerr << "Module after:\n";
+    WasmPrinter::printModule(&wasm, std::cerr);
+  }
 
   std::vector<Name> initializerFunctions;
 

@@ -676,10 +676,14 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   std::map<Index, LocalSet*> sets;
   // table indices that are calls to emscripten_asm_const_*
   std::map<Index, Name> asmTable;
+  // GOT imports that are calls to emscripten_asm_const_*
+  std::set<Name> gotTable;
   // cache used by tableIndexForName
   std::map<Name, Literal> tableIndices;
   // first available index after the table segment for each segment
   std::vector<int32_t> tableOffsets;
+  // cache used by globalImportForName
+  std::map<Name, Name> globalImports;
 
   AsmConstWalker(Module& _wasm)
     : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
@@ -703,8 +707,11 @@ private:
   Index resolveConstIndex(Expression* arg,
                           std::function<void(Expression*)> reportError);
   Const* resolveConstAddr(Expression* arg, const Name& target);
+  Name* resolveGlobalGet(Expression* arg, const Name& target);
   void prepareAsmIndices(Table* table);
+  void prepareGotNames();
   Literal tableIndexForName(Name name);
+  Name globalImportForName(Name name);
 
   std::vector<std::unique_ptr<Function>> queuedImports;
   std::vector<Name> queuedTableEntries;
@@ -726,6 +733,8 @@ Const* AsmConstWalker::resolveConstAddr(Expression* arg, const Name& target) {
       if (set) {
         assert(set->index == get->index);
         arg = set->value;
+      } else {
+        return nullptr;
       }
     } else if (auto* value = arg->dynCast<Binary>()) {
       // In the dynamic linking case the address of the string constant
@@ -740,6 +749,26 @@ Const* AsmConstWalker::resolveConstAddr(Expression* arg, const Name& target) {
     }
   }
   return arg->cast<Const>();
+}
+
+// Given an expression that's either (global.get $name) or (local.get $var)
+// where the most recent set on $var is (local.set $var (global.get $name)),
+// return the name.
+Name* AsmConstWalker::resolveGlobalGet(Expression* arg, const Name& target) {
+  while (!arg->dynCast<GlobalGet>()) {
+    if (auto* get = arg->dynCast<LocalGet>()) {
+      // The argument may be a local.get, in which case, the last set in this
+      // basic block has the value.
+      auto* set = sets[get->index];
+      if (set) {
+        assert(set->index == get->index);
+        arg = set->value;
+        continue;
+      }
+    }
+    return nullptr;
+  }
+  return &arg->cast<GlobalGet>()->name;
 }
 
 Index AsmConstWalker::resolveConstIndex(
@@ -779,6 +808,9 @@ void AsmConstWalker::visitCall(Call* curr) {
   // Find calls to emscripten_asm_const* functions whose first argument is
   // is always a string constant.
   if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+    if (curr->operands.size() < 1) {
+      return;
+    }
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
     auto* value = resolveConstAddr(curr->operands[0], import->base);
@@ -792,22 +824,40 @@ void AsmConstWalker::visitCall(Call* curr) {
     // A call to emscripten_asm_const_* maybe done indirectly via one of the
     // invoke_* functions, in case of setjmp/longjmp, for example.
     // We attempt to modify the invoke_* call instead.
+    if (curr->operands.size() < 2) {
+      return;
+    }
     auto idx = resolveConstIndex(curr->operands[0], [&](Expression* arg) {});
 
-    // If the address of the invoke call is an emscripten_asm_const_* function:
-    if (asmTable.count(idx)) {
-      auto* value = resolveConstAddr(curr->operands[1], asmTable[idx]);
-      auto code = codeForConstAddr(wasm, segmentOffsets, value);
+    std::string code;
+    Name name;
+    Builder builder(wasm);
+
+    auto fillCodeAndName = [&](const Name& target) {
+      auto* value = resolveConstAddr(curr->operands[1], target);
+      code = codeForConstAddr(wasm, segmentOffsets, value);
 
       // Extract the base signature from the invoke_* function name.
       std::string baseSig(import->base.c_str() + sizeof(INVOKE_PREFIX) - 1);
-      Name name;
       auto sig = fixupNameWithSig(name, baseSig);
       sigsForCode[code].insert(sig);
+    };
 
-      Builder builder(wasm);
+    // If the address of the invoke call is an emscripten_asm_const_* function,
+    // which happens without dynamic linking:
+    if (asmTable.count(idx)) {
+      fillCodeAndName(asmTable[idx]);
       curr->operands[0] = builder.makeConst(tableIndexForName(name));
       curr->operands[1] = builder.makeConst(idLiteralForCode(code));
+    } else {
+      // Otherwise, in dynamic linking, the first operand is a global.get of
+      // an imported global from GOT.func that holds the table index:
+      Name* global = resolveGlobalGet(curr->operands[0], import->base);
+      if (global && gotTable.count(*global)) {
+        fillCodeAndName(*global);
+        *global = globalImportForName(name);
+        curr->operands[1] = builder.makeConst(idLiteralForCode(code));
+      }
     }
   }
 }
@@ -829,6 +879,15 @@ void AsmConstWalker::prepareAsmIndices(Table* table) {
   }
 }
 
+void AsmConstWalker::prepareGotNames() {
+  for (const auto& global : wasm.globals) {
+    if (global->module == "GOT.func" &&
+        global->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+      gotTable.insert(global->name);
+    }
+  }
+}
+
 void AsmConstWalker::visitTable(Table* curr) {
   for (auto& segment : curr->segments) {
     for (auto& name : segment.data) {
@@ -844,6 +903,8 @@ void AsmConstWalker::visitTable(Table* curr) {
 void AsmConstWalker::process() {
   // Find table indices that point to emscripten_asm_const_* functions.
   prepareAsmIndices(&wasm.table);
+  // Find GOT.func imports that are emscripten_asm_const_* functions.
+  prepareGotNames();
   // Find and queue necessary imports
   walkModule(&wasm);
   // Add them after the walk, to avoid iterator invalidation on
@@ -895,7 +956,9 @@ void AsmConstWalker::queueImport(Name importName, std::string baseSig) {
   auto import = new Function;
   import->name = import->base = importName;
   import->module = ENV;
-  import->type = ensureFunctionType(baseSig, &wasm)->name;
+  auto type = ensureFunctionType(baseSig, &wasm);
+  import->type = type->name;
+  FunctionTypeUtils::fillFunction(import, type);
   queuedImports.push_back(std::unique_ptr<Function>(import));
 }
 
@@ -906,6 +969,15 @@ Literal AsmConstWalker::tableIndexForName(Name name) {
   }
   queuedTableEntries.push_back(name);
   return tableIndices[name] = Literal(tableOffsets[0]++);
+}
+
+Name AsmConstWalker::globalImportForName(Name name) {
+  if (globalImports.count(name)) {
+    return globalImports[name];
+  }
+  std::string result = "gimport$";
+  result += name.c_str();
+  return globalImports[name] = Name(result.c_str());
 }
 
 void AsmConstWalker::addImports() {
@@ -920,6 +992,20 @@ void AsmConstWalker::addImports() {
       tableSegmentData.push_back(entry);
     }
     wasm.table.initial.addr += queuedTableEntries.size();
+  }
+
+  for (const auto& entry : globalImports) {
+    auto* import = new Global;
+    import->name = entry.second;
+    import->module = "GOT.func";
+    import->base = entry.first;
+    import->type = i32;
+    import->mutable_ = true;
+    wasm.addGlobal(import);
+  }
+
+  for (const auto& name : gotTable) {
+    wasm.removeGlobal(name);
   }
 }
 
@@ -942,6 +1028,12 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
     wasm.removeFunction(importName);
   }
   return walker;
+}
+
+void EmscriptenGlueGenerator::fixEmAsm() {
+  auto walker = fixEmAsmConstsAndReturnWalker(wasm);
+  asmSigsForCode = std::move(walker.sigsForCode);
+  asmCodeIds = std::move(walker.ids);
 }
 
 struct EmJsWalker : public PostWalker<EmJsWalker> {
@@ -1133,17 +1225,15 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   std::stringstream meta;
   meta << "{\n";
 
-  AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
-
   // print
   commaFirst = true;
-  if (!emAsmWalker.sigsForCode.empty()) {
+  if (!asmSigsForCode.empty()) {
     meta << "  \"asmConsts\": {";
-    for (auto& pair : emAsmWalker.sigsForCode) {
+    for (auto& pair : asmSigsForCode) {
       auto& code = pair.first;
       auto& sigs = pair.second;
       meta << nextElement();
-      meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
+      meta << '"' << asmCodeIds[code] << "\": [\"" << code << "\", ";
       printSet(meta, sigs);
       meta << ", ";
 

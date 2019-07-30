@@ -40,6 +40,10 @@ public:
   // signature in the indirect function table.
   void generateDynCallThunks();
 
+  // Fix up emscripten_asm_const_* calls to contain the correct signature in the
+  // function name.
+  void fixEmAsm();
+
   // Convert stack pointer access from global.get/global.set to calling save
   // and restore functions.
   void replaceStackPointerGlobal();
@@ -70,6 +74,10 @@ private:
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<std::string> sigs;
+
+  // Created by fixEmAsm and used by generateEmscriptenMetadata.
+  std::map<std::string, std::set<std::string>> asmSigsForCode;
+  std::map<std::string, Address> asmCodeIds;
 
   Global* getStackPointerGlobal();
   Expression* generateLoadStackPointer();
