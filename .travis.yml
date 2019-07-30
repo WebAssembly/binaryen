@@ -40,7 +40,6 @@ jobs:
       stage: test
       compiler: clang
       python:
-        - 2.7
         - 3.6
       addons:
         apt:
@@ -69,7 +68,7 @@ jobs:
         - if [ -f clang-tidy-diff.sh ]; then ./clang-tidy-diff.sh; fi
         - make -j2 install
         - cd ${TRAVIS_BUILD_DIR}
-        - ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
+        - python3 ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
 
     - <<: *test-ubuntu
       env: |
@@ -125,7 +124,7 @@ jobs:
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update
-        - alpine apk add build-base cmake git python2
+        - alpine apk add build-base cmake git python3
       script:
         - alpine cmake .
         - alpine make -j2
