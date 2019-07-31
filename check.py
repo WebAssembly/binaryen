@@ -368,8 +368,10 @@ def run_spec_tests():
       }
 
       # check binary format. here we can verify execution of the final result, no need for an output verification
-      split_num = 0
-      if os.path.basename(wast) not in []:  # avoid some tests with things still being sorted out in the spec
+      # some wast files cannot be split:
+      #   * comments.wast: contains characters that are not valid utf-8, so our string splitting code fails there
+      if os.path.basename(wast) not in ['comments.wast']:
+        split_num = 0
         actual = ''
         for module, asserts in split_wast(wast):
           skip = splits_to_skip.get(os.path.basename(wast)) or []
@@ -389,6 +391,9 @@ def run_spec_tests():
           actual += run_spec_test(result_wast)
         # compare all the outputs to the expected output
         check_expected(actual, os.path.join(options.binaryen_test, 'spec', 'expected-output', os.path.basename(wast) + '.log'))
+      else:
+        # handle unsplittable wast files
+        run_spec_test(wast)
 
 
 def run_validator_tests():
