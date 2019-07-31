@@ -56,7 +56,9 @@ inline String::Split handleBracketingOperators(String::Split split) {
   std::string last;
   int nesting = 0;
   auto handlePart = [&](std::string part) {
-    if (part.empty()) return;
+    if (part.empty()) {
+      return;
+    }
     for (const char c : part) {
       if (c == '(' || c == '<' || c == '[' || c == '{') {
         nesting++;
