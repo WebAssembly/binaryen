@@ -674,7 +674,7 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
   // table indices that are calls to emscripten_asm_const_*
-  std::map<int32_t, Name*> asmTable;
+  std::map<Index, Name> asmTable;
   // cache used by tableIndexForName
   std::map<Name, Literal> tableIndices;
   // first available index after the table segment for each segment
@@ -699,7 +699,7 @@ private:
   void queueImport(Name importName, std::string baseSig);
   void addImports();
 
-  template<typename T> int32_t resolveConstIndex(Expression* arg, T report);
+  template<typename T> Index resolveConstIndex(Expression* arg, T report);
   Const* resolveConstAddr(Expression* arg, const Name& target);
   void prepareAsmIndices(Table* table);
   Literal tableIndexForName(Name name);
@@ -741,7 +741,7 @@ Const* AsmConstWalker::resolveConstAddr(Expression* arg, const Name& target) {
 }
 
 template<typename T>
-int32_t AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
+Index AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
   while (!arg->dynCast<Const>()) {
     if (auto* get = arg->dynCast<LocalGet>()) {
       // The argument may be a local.get, in which case, the last set in this
@@ -751,7 +751,7 @@ int32_t AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
         assert(set->index == get->index);
         arg = set->value;
       }
-    } else if (auto* get = arg->dynCast<GlobalGet>()) {
+    } else if (arg->is<GlobalGet>()) {
       // In the dynamic linking case, indices start at __table_base.
       // We want the value relative to __table_base.
       return 0;
@@ -759,14 +759,18 @@ int32_t AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
       report(arg);
     }
   }
-  return arg->cast<Const>()->value.geti32();
+  return Index(arg->cast<Const>()->value.geti32());
 }
 
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
+  if (!import->imported()) {
+    return;
+  }
+
   // Find calls to emscripten_asm_const* functions whose first argument is
   // is always a string constant.
-  if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
     auto* value = resolveConstAddr(curr->operands[0], import->base);
@@ -776,7 +780,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     // Replace the first argument to the call with a Const index
     Builder builder(wasm);
     curr->operands[0] = builder.makeConst(idLiteralForCode(code));
-  } else if (import->imported() && import->base.startsWith(INVOKE_PREFIX)) {
+  } else if (import->base.startsWith(INVOKE_PREFIX)) {
     auto idx = resolveConstIndex(curr->operands[0], [&](Expression* arg) {
       Fatal() << "Unexpected table index type (" << getExpressionName(arg)
               << ") in call to: " << import->base;
@@ -784,7 +788,7 @@ void AsmConstWalker::visitCall(Call* curr) {
 
     // If the address of the invoke call is an emscripten_asm_const_* function:
     if (asmTable.count(idx)) {
-      auto* value = resolveConstAddr(curr->operands[1], *asmTable[idx]);
+      auto* value = resolveConstAddr(curr->operands[1], asmTable[idx]);
       auto code = codeForConstAddr(wasm, segmentOffsets, value);
 
       // Extract the base signature from the invoke_* function name.
@@ -802,14 +806,14 @@ void AsmConstWalker::visitCall(Call* curr) {
 
 void AsmConstWalker::prepareAsmIndices(Table* table) {
   for (auto& segment : table->segments) {
-    int idx = resolveConstIndex(segment.offset, [&](Expression* arg) {
+    auto idx = resolveConstIndex(segment.offset, [&](Expression* arg) {
       Fatal() << "Unexpected table index type (" << getExpressionName(arg)
               << ") table";
     });
     for (auto& name : segment.data) {
       auto* func = wasm.getFunction(name);
       if (func->imported() && func->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
-        asmTable[idx] = &name;
+        asmTable[idx] = name;
       }
       ++idx;
     }
