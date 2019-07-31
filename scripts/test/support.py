@@ -89,10 +89,12 @@ def untar(tarfile, outdir):
 
 def split_wast(wastFile):
   # if it's a binary, leave it as is, we can't split it
-  try:
-    wast = open(wastFile, 'r').read()
-  except Exception as e:
-    wast = None
+  wast = None
+  if not wastFile.endswith('.wasm'):
+    try:
+      wast = open(wastFile, 'r').read()
+    except Exception as e:
+      pass
 
   if not wast:
     return ((open(wastFile, 'rb').read(), []),)
