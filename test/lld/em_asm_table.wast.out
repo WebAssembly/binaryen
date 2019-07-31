@@ -1,26 +1,49 @@
 (module
  (type $0 (func (param i32 i32)))
  (type $1 (func (param i32 i32 i32) (result i32)))
- (type $FUNCSIG$vii (func (param i32 i32)))
+ (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
+ (type $FUNCSIG$v (func))
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
+ (type $FUNCSIG$vii (func (param i32 i32)))
  (import "env" "memory" (memory $0 8192))
+ (data (i32.const 1024) "{ console.log(\"hello world\"); }\00")
  (import "env" "emscripten_log" (func $fimport$0 (param i32 i32)))
+ (import "env" "invoke_iiii" (func $invoke_iiii (param i32 i32 i32 i32) (result i32)))
  (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
- (table $0 159609 funcref)
- (elem (i32.const 1) $fimport$0 $emscripten_asm_const_iii)
+ (table $0 159610 funcref)
+ (elem (i32.const 1) $fimport$0 $emscripten_asm_const_iii $emscripten_asm_const_iii)
  (global $global$0 (mut i32) (i32.const 1024))
  (global $global$1 i32 (i32.const 1048))
  (export "__data_end" (global $global$1))
+ (export "main" (func $main))
+ (export "dynCall_iiii" (func $dynCall_iiii))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (export "dynCall_vii" (func $dynCall_vii))
- (export "dynCall_iiii" (func $dynCall_iiii))
- (func $stackSave (; 2 ;) (result i32)
+ (func $main (; 3 ;) (type $FUNCSIG$v)
+  (drop
+   (call $invoke_iiii
+    (i32.const 3)
+    (i32.const 0)
+    (i32.const 13)
+    (i32.const 27)
+   )
+  )
+ )
+ (func $dynCall_iiii (; 4 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (call_indirect (type $FUNCSIG$iiii)
+   (local.get $0)
+   (local.get $1)
+   (local.get $2)
+   (local.get $fptr)
+  )
+ )
+ (func $stackSave (; 5 ;) (result i32)
   (global.get $global$0)
  )
- (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (; 6 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (global.set $global$0
    (local.tee $1
@@ -35,28 +58,20 @@
   )
   (local.get $1)
  )
- (func $stackRestore (; 4 ;) (param $0 i32)
+ (func $stackRestore (; 7 ;) (param $0 i32)
   (global.set $global$0
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 5 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (; 8 ;) (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )
  )
- (func $dynCall_vii (; 6 ;) (param $fptr i32) (param $0 i32) (param $1 i32)
+ (func $dynCall_vii (; 9 ;) (param $fptr i32) (param $0 i32) (param $1 i32)
   (call_indirect (type $FUNCSIG$vii)
    (local.get $0)
    (local.get $1)
-   (local.get $fptr)
-  )
- )
- (func $dynCall_iiii (; 7 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (call_indirect (type $FUNCSIG$iiii)
-   (local.get $0)
-   (local.get $1)
-   (local.get $2)
    (local.get $fptr)
   )
  )
@@ -64,37 +79,43 @@
 (;
 --BEGIN METADATA --
 {
+  "asmConsts": {
+    "0": ["{ console.log(\"hello world\"); }", ["iii"], [""]]
+  },
   "staticBump": 480,
-  "tableSize": 159609,
+  "tableSize": 159610,
   "declares": [
     "emscripten_log"
   ],
   "externs": [
   ],
   "implementedFunctions": [
+    "_main",
+    "_dynCall_iiii",
     "_stackSave",
     "_stackAlloc",
     "_stackRestore",
     "___growWasmMemory",
-    "_dynCall_vii",
-    "_dynCall_iiii"
+    "_dynCall_vii"
   ],
   "exports": [
+    "main",
+    "dynCall_iiii",
     "stackSave",
     "stackAlloc",
     "stackRestore",
     "__growWasmMemory",
-    "dynCall_vii",
-    "dynCall_iiii"
+    "dynCall_vii"
   ],
   "namedGlobals": {
     "__data_end" : "1048"
   },
   "invokeFuncs": [
+    "invoke_iiii"
   ],
   "features": [
   ],
-  "mainReadsParams": 0
+  "mainReadsParams": 1
 }
 -- END METADATA --
 ;)
