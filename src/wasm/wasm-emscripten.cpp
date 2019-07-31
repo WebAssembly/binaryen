@@ -16,6 +16,7 @@
 
 #include "wasm-emscripten.h"
 
+#include <functional>
 #include <sstream>
 
 #include "asm_v_wasm.h"
@@ -584,7 +585,8 @@ private:
   void queueImport(Name importName, std::string baseSig);
   void addImports();
 
-  template<typename T> Index resolveConstIndex(Expression* arg, T report);
+  Index resolveConstIndex(Expression* arg,
+                          std::function<void(Expression*)> reportError);
   Const* resolveConstAddr(Expression* arg, const Name& target);
   void prepareAsmIndices(Table* table);
   Literal tableIndexForName(Name name);
@@ -625,8 +627,8 @@ Const* AsmConstWalker::resolveConstAddr(Expression* arg, const Name& target) {
   return arg->cast<Const>();
 }
 
-template<typename T>
-Index AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
+Index AsmConstWalker::resolveConstIndex(
+  Expression* arg, std::function<void(Expression*)> reportError) {
   while (!arg->dynCast<Const>()) {
     if (auto* get = arg->dynCast<LocalGet>()) {
       // The argument may be a local.get, in which case, the last set in this
@@ -641,7 +643,7 @@ Index AsmConstWalker::resolveConstIndex(Expression* arg, T report) {
       // We want the value relative to __table_base.
       return 0;
     } else {
-      report(arg);
+      reportError(arg);
     }
   }
   return Index(arg->cast<Const>()->value.geti32());
@@ -780,7 +782,6 @@ Literal AsmConstWalker::tableIndexForName(Name name) {
   if (tableIndices.count(name)) {
     return tableIndices[name];
   }
-  assert(wasm.table.segments.size() == 1);
   queuedTableEntries.push_back(name);
   return tableIndices[name] = Literal(tableOffsets[0]++);
 }
@@ -791,8 +792,8 @@ void AsmConstWalker::addImports() {
   }
 
   if (!queuedTableEntries.empty()) {
-    std::vector<Name>& tableSegmentData = wasm.table.segments[0].data;
     assert(wasm.table.segments.size() == 1);
+    std::vector<Name>& tableSegmentData = wasm.table.segments[0].data;
     for (auto& entry : queuedTableEntries) {
       tableSegmentData.push_back(entry);
     }
