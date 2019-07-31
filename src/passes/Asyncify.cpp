@@ -1039,6 +1039,9 @@ struct Asyncify : public Pass {
     String::Split whitelist(
       runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",");
 
+    blacklist = handleBracketingOperators(blacklist);
+    whitelist = handleBracketingOperators(whitelist);
+
     // The lists contain human-readable strings. Turn them into the internal
     // escaped names for later comparisons
     auto processList = [module](String::Split& list, const std::string& which) {
