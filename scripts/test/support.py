@@ -93,7 +93,7 @@ def split_wast(wastFile):
   if not wastFile.endswith('.wasm'):
     try:
       wast = open(wastFile, 'r').read()
-    except Exception as e:
+    except Exception:
       pass
 
   if not wast:
