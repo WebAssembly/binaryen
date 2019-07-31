@@ -125,7 +125,7 @@ jobs:
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update
-        - alpine apk add build-base cmake git python2 python3
+        - alpine apk add build-base cmake git python2 python3 clang
       script:
         - alpine cmake .
         - alpine make -j2
@@ -145,6 +145,8 @@ jobs:
                        -DCMAKE_VERBOSE_MAKEFILE=ON
                        -DCMAKE_CXX_FLAGS="-static -no-pie"
                        -DCMAKE_C_FLAGS="-static -no-pie" .
+                       -DCMAKE_C_COMPILER=clang
+                       -DCMAKE_CXX_COMPILER=clang++
         - alpine make -j2
         - alpine find bin/ -type f -perm -u=x -exec strip {} +
         - alpine ls -lh bin/
