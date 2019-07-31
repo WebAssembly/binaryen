@@ -27,8 +27,7 @@ class AsyncifyTest(BinaryenTestCase):
     run_process(WASM_DIS + ['a.wasm', '-o', 'a.wast'])
     output = run_process(WASM_SHELL + ['a.wast'], capture_output=True).stdout
     with open(self.input_path('asyncify-pure.txt'), 'r') as f:
-      temp = f.read()
-      self.assertEqual(temp, output)
+      self.assertEqual(f.read(), output)
 
   def test_asyncify_list_bad(self):
     for arg, warning in [
