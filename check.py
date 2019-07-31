@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Copyright 2015 WebAssembly Community Group participants
 #
@@ -20,7 +20,7 @@ import subprocess
 import sys
 import unittest
 
-from scripts.test.support import run_command, split_wast
+from scripts.test.support import run_command, split_wast, write_wast
 from scripts.test.shared import (
     BIN_DIR, NATIVECC, NATIVEXX, NODEJS, WASM_AS,
     WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_METADCE, WASM_DIS, WASM_REDUCE,
@@ -96,8 +96,7 @@ def run_wasm_opt_tests():
       actual = ''
       for module, asserts in split_wast(t):
         assert len(asserts) == 0
-        with open('split.wast', "wb" if binary else 'w') as o:
-          o.write(module)
+        write_wast('split.wast', module)
         cmd = WASM_OPT + opts + ['split.wast', '--print']
         curr = run_command(cmd)
         actual += curr
@@ -381,8 +380,7 @@ def run_spec_tests():
             continue
           print('    testing split module', split_num)
           split_num += 1
-          with open('split.wast', 'w') as o:
-            o.write(module + '\n' + '\n'.join(asserts))
+          write_wast('split.wast', module, asserts)
           run_spec_test('split.wast')  # before binary stuff - just check it's still ok split out
           run_opt_test('split.wast')  # also that our optimizer doesn't break on it
           result_wast = binary_format_check('split.wast', verify_final_result=False, original_wast=wast)
@@ -537,7 +535,6 @@ def main():
   run_wasm_metadce_tests()
   if has_shell_timeout():
     run_wasm_reduce_tests()
-
   run_spec_tests()
   binaryenjs.test_binaryen_js()
   lld.test_wasm_emscripten_finalize()
@@ -548,7 +545,6 @@ def main():
   print('\n[ checking example testcases... ]\n')
   if options.run_gcc_tests:
     run_gcc_tests()
-
   run_unittest()
 
   # Check/display the results

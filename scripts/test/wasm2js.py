@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2016 WebAssembly Community Group participants
 #
@@ -16,7 +16,7 @@
 
 import os
 
-from .support import run_command, split_wast
+from .support import run_command, split_wast, write_wast
 from .shared import (
     WASM2JS, MOZJS, NODEJS, fail_if_not_identical, options, tests,
     fail_if_not_identical_to_file, with_pass_debug
@@ -59,8 +59,7 @@ def test_wasm2js_output():
       all_out = []
 
       for module, asserts in split_wast(t):
-        with open('split.wast', 'w') as o:
-          o.write(module + '\n'.join(asserts))
+        write_wast('split.wast', module, asserts)
 
         cmd = WASM2JS + ['split.wast']
         if opt:
@@ -155,8 +154,7 @@ def update_wasm2js_tests():
       all_out = []
 
       for module, asserts in split_wast(t):
-        with open('split.wast', 'w') as o:
-          o.write(module + '\n'.join(asserts))
+        write_wast('split.wast', module, asserts)
 
         cmd = WASM2JS + ['split.wast']
         if opt:

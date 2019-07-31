@@ -88,14 +88,18 @@ def untar(tarfile, outdir):
 
 
 def split_wast(wastFile):
-  # if it's a binary, leave it as is
-  if wastFile.endswith('.wasm'):
-    return [[open(wastFile, 'rb').read(), '']]
+  # if it's a binary, leave it as is, we can't split it
+  try:
+    wast = open(wastFile, 'r').read()
+  except Exception as e:
+    wast = None
+
+  if not wast:
+    return ((open(wastFile, 'rb').read(), []),)
 
   # .wast files can contain multiple modules, and assertions for each one.
   # this splits out a wast into [(module, assertions), ..]
   # we ignore module invalidity tests here.
-  wast = open(wastFile, 'r').read()
   ret = []
 
   def to_end(j):
@@ -142,6 +146,18 @@ def split_wast(wastFile):
     elif chunk.startswith(('(assert', '(invoke')):
       ret[-1][1].append(chunk)
   return ret
+
+
+# write a split wast from split_wast. the wast may be binary if the original
+# file was binary
+def write_wast(filename, wast, asserts=[]):
+  if type(wast) == bytes:
+    assert not asserts
+    with open(filename, 'wb') as o:
+      o.write(wast)
+  else:
+    with open(filename, 'w') as o:
+      o.write(wast + '\n'.join(asserts))
 
 
 def run_command(cmd, expected_status=0, stderr=None,

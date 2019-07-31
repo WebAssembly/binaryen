@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2015 WebAssembly Community Group participants
 #
@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import sys
 
-from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
+from scripts.test.support import run_command, split_wast, write_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS,
     WASM_CTOR_EVAL, WASM_REDUCE, WASM_METADCE, BINARYEN_INSTALL_DIR,
@@ -112,8 +112,7 @@ def update_wasm_opt_tests():
       actual = ''
       for module, asserts in split_wast(t):
         assert len(asserts) == 0
-        with open('split.wast', 'wb' if t.endswith('.wasm') else 'w') as o:
-          o.write(module)
+        write_wast('split.wast', module)
         cmd = WASM_OPT + opts + ['split.wast', '--print']
         actual += run_command(cmd)
       with open(os.path.join('test', 'passes', base + ('.bin' if binary else '') + '.txt'), 'w') as o:
