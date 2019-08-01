@@ -22,10 +22,12 @@ from .shared import (
 
 
 def args_for_finalize(filename):
-   if 'shared' in filename:
-     return ['--side-module']
-   else:
-     return ['--global-base=568']
+  if 'safe_stack' in filename:
+    return ['--check-stack-overflow', '--global-base=568']
+  elif 'shared' in filename:
+    return ['--side-module']
+  else:
+    return ['--global-base=568']
 
 
 def test_wasm_emscripten_finalize():
