@@ -55,5 +55,8 @@
     (call $main)
     (call $print (i32.const 500))
   )
+  ;; interesting escaped name
+  (func $DOS_ReadFile\28unsigned\20short\2c\20unsigned\20char*\2c\20unsigned\20short*\2c\20bool\29 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
+  )
 )
 

@@ -31,6 +31,8 @@ namespace String {
 // Creates a vector of the split parts of a string, by a delimiter.
 class Split : public std::vector<std::string> {
 public:
+  Split() = default;
+
   Split(const std::string& input, const std::string& delim) {
     size_t lastEnd = 0;
     while (lastEnd < input.size()) {
@@ -43,6 +45,46 @@ public:
     }
   }
 };
+
+// Handles bracketing in a list initially split by ",", but the list may
+// contain nested ","s. For example,
+//   void foo(int, double)
+// must be kept together because of the "(". Likewise, "{", "<", "[" are
+// handled.
+inline String::Split handleBracketingOperators(String::Split split) {
+  String::Split ret;
+  std::string last;
+  int nesting = 0;
+  auto handlePart = [&](std::string part) {
+    if (part.empty()) {
+      return;
+    }
+    for (const char c : part) {
+      if (c == '(' || c == '<' || c == '[' || c == '{') {
+        nesting++;
+      } else if (c == ')' || c == '>' || c == ']' || c == '}') {
+        nesting--;
+      }
+    }
+    if (last.empty()) {
+      last = part;
+    } else {
+      last += ',' + part;
+    }
+    if (nesting == 0) {
+      ret.push_back(last);
+      last.clear();
+    }
+  };
+  for (auto& part : split) {
+    handlePart(part);
+  }
+  handlePart("");
+  if (nesting != 0) {
+    Fatal() << "Asyncify: failed to parse lists";
+  }
+  return ret;
+}
 
 // Does a simple wildcard match between a pattern and a value. Currently
 // supports a '*' at the end of the pattern.
