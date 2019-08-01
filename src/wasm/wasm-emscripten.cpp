@@ -37,8 +37,11 @@ static Name STACK_SAVE("stackSave");
 static Name STACK_RESTORE("stackRestore");
 static Name STACK_ALLOC("stackAlloc");
 static Name STACK_INIT("stack$init");
+static Name STACK_LIMIT("__stack_limit");
+static Name SET_STACK_LIMIT("__set_stack_limit");
 static Name POST_INSTANTIATE("__post_instantiate");
 static Name ASSIGN_GOT_ENTIRES("__assign_got_enties");
+static Name STACK_OVERFLOW_IMPORT("__handle_stack_overflow");
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
@@ -442,6 +445,82 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   // Finally remove the stack pointer global itself. This avoids importing
   // a mutable global.
   wasm.removeGlobal(stackPointer->name);
+}
+
+struct StackLimitEnforcer : public PostWalker<StackLimitEnforcer> {
+  StackLimitEnforcer(Global* stackPointer,
+                     Global* stackLimit,
+                     Builder& builder,
+                     Name handler)
+    : stackPointer(stackPointer), stackLimit(stackLimit), builder(builder),
+      handler(handler) {}
+
+  void visitGlobalSet(GlobalSet* curr) {
+    if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
+      auto newSP = Builder::addVar(getFunction(), stackPointer->type);
+      auto teeNewSP = builder.makeLocalTee(newSP, curr->value);
+      auto check = builder.makeIf(
+        builder.makeBinary(
+          BinaryOp::LtUInt32,
+          teeNewSP,
+          builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
+        builder.makeCall(handler, {}, none));
+      auto newSet = builder.makeGlobalSet(
+        stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
+      replaceCurrent(builder.blockify(check, newSet));
+    }
+  }
+
+private:
+  Global* stackPointer;
+  Global* stackLimit;
+  Builder& builder;
+  Name handler;
+};
+
+void EmscriptenGlueGenerator::enforceStackLimit() {
+  Global* stackPointer = getStackPointerGlobal();
+
+  auto* stackLimit = builder.makeGlobal(STACK_LIMIT,
+                                        stackPointer->type,
+                                        builder.makeConst(Literal(0)),
+                                        Builder::Mutable);
+  wasm.addGlobal(stackLimit);
+
+  auto handler = importStackOverflowHandler();
+
+  StackLimitEnforcer walker(stackPointer, stackLimit, builder, handler);
+  walker.walkModule(&wasm);
+
+  generateSetStackLimitFunction();
+}
+
+void EmscriptenGlueGenerator::generateSetStackLimitFunction() {
+  std::vector<NameType> params{{"0", i32}};
+  Function* function =
+    builder.makeFunction(SET_STACK_LIMIT, std::move(params), none, {});
+  LocalGet* getArg = builder.makeLocalGet(0, i32);
+  Expression* store = builder.makeGlobalSet(STACK_LIMIT, getArg);
+  function->body = store;
+  addExportedFunction(wasm, function);
+}
+
+Name EmscriptenGlueGenerator::importStackOverflowHandler() {
+  ImportInfo info(wasm);
+
+  if (auto* existing = info.getImportedFunction(ENV, STACK_OVERFLOW_IMPORT)) {
+    return existing->name;
+  } else {
+    auto* import = new Function;
+    import->name = STACK_OVERFLOW_IMPORT;
+    import->module = ENV;
+    import->base = STACK_OVERFLOW_IMPORT;
+    auto* functionType = ensureFunctionType("v", &wasm);
+    import->type = functionType->name;
+    FunctionTypeUtils::fillFunction(import, functionType);
+    wasm.addFunction(import);
+    return STACK_OVERFLOW_IMPORT;
+  }
 }
 
 const Address UNKNOWN_OFFSET(uint32_t(-1));

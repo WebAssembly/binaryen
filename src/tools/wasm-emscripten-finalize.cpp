@@ -48,6 +48,7 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool isSideModule = false;
   bool legalizeJavaScriptFFI = true;
+  bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
@@ -126,6 +127,13 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&dataSegmentFile](Options* o, const std::string& argument) {
            dataSegmentFile = argument;
+         })
+    .add("--check-stack-overflow",
+         "",
+         "Check for stack overflows every time the stack is extended",
+         Options::Arguments::Zero,
+         [&checkStackOverflow](Options* o, const std::string&) {
+           checkStackOverflow = true;
          })
     .add_positional("INFILE",
                     Options::Arguments::One,
@@ -219,6 +227,10 @@ int main(int argc, const char* argv[]) {
     if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
       initializerFunctions.push_back(e->value);
     }
+  }
+
+  if (checkStackOverflow) {
+    generator.enforceStackLimit();
   }
 
   generator.generateDynCallThunks();
