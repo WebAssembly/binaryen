@@ -230,6 +230,10 @@
 //      will be instrumented. Like the blacklist, getting this wrong will
 //      break your application.
 //
+// TODO When wasm has GC, extending the live ranges of locals can keep things
+//      alive unnecessarily. We may want to set locals to null at the end
+//      of their original range.
+//
 
 #include "ir/effects.h"
 #include "ir/literal-utils.h"

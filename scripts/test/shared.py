@@ -89,7 +89,7 @@ warnings = []
 def warn(text):
   global warnings
   warnings.append(text)
-  print 'warning:', text
+  print('warning:', text)
 
 
 # setup
@@ -201,7 +201,8 @@ os.environ['BINARYEN'] = in_binaryen()
 
 
 def get_platform():
-  return {'linux2': 'linux',
+  return {'linux': 'linux',
+          'linux2': 'linux',
           'darwin': 'mac',
           'win32': 'windows',
           'cygwin': 'windows'}[sys.platform]
@@ -308,45 +309,18 @@ class Py2CalledProcessError(subprocess.CalledProcessError):
     self.stderr = stderr
 
 
-# https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess
-class Py2CompletedProcess:
-  def __init__(self, args, returncode, stdout, stderr):
-    self.args = args
-    self.returncode = returncode
-    self.stdout = stdout
-    self.stderr = stderr
-
-  def __repr__(self):
-    _repr = ['args=%s, returncode=%s' % (self.args, self.returncode)]
-    if self.stdout is not None:
-      _repr += 'stdout=' + repr(self.stdout)
-    if self.stderr is not None:
-      _repr += 'stderr=' + repr(self.stderr)
-    return 'CompletedProcess(%s)' % ', '.join(_repr)
-
-  def check_returncode(self):
-    if self.returncode != 0:
-      raise Py2CalledProcessError(returncode=self.returncode, cmd=self.args,
-                                  output=self.stdout, stderr=self.stderr)
-
-
 def run_process(cmd, check=True, input=None, capture_output=False, *args, **kw):
-  if hasattr(subprocess, "run"):
-    ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
-    return ret
-
-  # Python 2 compatibility: Introduce Python 3 subprocess.run-like behavior
-  if input is not None:
-    kw['stdin'] = subprocess.PIPE
+  if input and type(input) == str:
+    input = bytes(input, 'utf-8')
   if capture_output:
     kw['stdout'] = subprocess.PIPE
     kw['stderr'] = subprocess.PIPE
-  proc = subprocess.Popen(cmd, *args, **kw)
-  stdout, stderr = proc.communicate(input)
-  result = Py2CompletedProcess(cmd, proc.returncode, stdout, stderr)
-  if check:
-    result.check_returncode()
-  return result
+  ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
+  if ret.stdout is not None:
+    ret.stdout = ret.stdout.decode('utf-8')
+  if ret.stderr is not None:
+    ret.stderr = ret.stderr.decode('utf-8')
+  return ret
 
 
 def fail_with_error(msg):
@@ -354,8 +328,8 @@ def fail_with_error(msg):
   try:
     num_failures += 1
     raise Exception(msg)
-  except Exception, e:
-    print >> sys.stderr, str(e)
+  except Exception as e:
+    print(str(e))
     if options.abort_on_first_failure:
       raise
 
@@ -379,7 +353,8 @@ def fail_if_not_contained(actual, expected):
 
 
 def fail_if_not_identical_to_file(actual, expected_file):
-  with open(expected_file, 'rb' if expected_file.endswith(".wasm") else 'r') as f:
+  binary = expected_file.endswith(".wasm") or type(actual) == bytes
+  with open(expected_file, 'rb' if binary else 'r') as f:
     fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 
@@ -401,19 +376,19 @@ if not has_vanilla_emcc:
 def validate_binary(wasm):
   if V8:
     cmd = [V8] + V8_OPTS + [in_binaryen('scripts', 'validation_shell.js'), '--', wasm]
-    print '      ', ' '.join(cmd)
+    print('      ', ' '.join(cmd))
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
   else:
-    print '(skipping v8 binary validation)'
+    print('(skipping v8 binary validation)')
 
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
                         binary_suffix='.fromBinary', original_wast=None):
   # checks we can convert the wast to binary and back
 
-  print '     (binary format check)'
+  print('     (binary format check)')
   cmd = WASM_AS + [wast, '-o', 'a.wasm', '-all'] + wasm_as_args
-  print '      ', ' '.join(cmd)
+  print('      ', ' '.join(cmd))
   if os.path.exists('a.wasm'):
     os.unlink('a.wasm')
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
@@ -427,7 +402,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     validate_binary('a.wasm')
 
   cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast']
-  print '      ', ' '.join(cmd)
+  print('      ', ' '.join(cmd))
   if os.path.exists('ab.wast'):
     os.unlink('ab.wast')
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
@@ -435,7 +410,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
 
   # make sure it is a valid wast
   cmd = WASM_OPT + ['ab.wast', '-all']
-  print '      ', ' '.join(cmd)
+  print('      ', ' '.join(cmd))
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
   if verify_final_result:
@@ -448,9 +423,9 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
 def minify_check(wast, verify_final_result=True):
   # checks we can parse minified output
 
-  print '     (minify check)'
+  print('     (minify check)')
   cmd = WASM_OPT + [wast, '--print-minified', '-all']
-  print '      ', ' '.join(cmd)
+  print('      ', ' '.join(cmd))
   subprocess.check_call(cmd, stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wast')
   subprocess.check_call(

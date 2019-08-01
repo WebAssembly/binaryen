@@ -2,7 +2,7 @@ import os
 import subprocess
 
 from scripts.test.shared import WASM_OPT, WASM_DIS, WASM_SHELL, NODEJS, run_process
-from utils import BinaryenTestCase
+from .utils import BinaryenTestCase
 
 
 class AsyncifyTest(BinaryenTestCase):
@@ -26,7 +26,7 @@ class AsyncifyTest(BinaryenTestCase):
     run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '-o', 'a.wasm'])
     run_process(WASM_DIS + ['a.wasm', '-o', 'a.wast'])
     output = run_process(WASM_SHELL + ['a.wast'], capture_output=True).stdout
-    with open(self.input_path('asyncify-pure.txt')) as f:
+    with open(self.input_path('asyncify-pure.txt'), 'r') as f:
       self.assertEqual(f.read(), output)
 
   def test_asyncify_list_bad(self):

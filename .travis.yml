@@ -69,7 +69,7 @@ jobs:
         - if [ -f clang-tidy-diff.sh ]; then ./clang-tidy-diff.sh; fi
         - make -j2 install
         - cd ${TRAVIS_BUILD_DIR}
-        - ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
+        - python3 ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
 
     - <<: *test-ubuntu
       env: |
@@ -125,11 +125,11 @@ jobs:
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update
-        - alpine apk add build-base cmake git python2
+        - alpine apk add build-base cmake git python2 python3
       script:
         - alpine cmake .
         - alpine make -j2
-        - alpine ./check.py
+        - alpine python3 ./check.py
 
     # Build statically linked release binaries with gcc 6.3 on Alpine Linux
     # (inside chroot). If building a tagged commit, then deploy release tarball
