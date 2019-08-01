@@ -73,7 +73,7 @@ private:
 
   Global* getStackPointerGlobal();
   Expression* generateLoadStackPointer();
-  Expression* generateStoreStackPointer(Expression* value);
+  Expression* generateStoreStackPointer(Function* func, Expression* value);
   void generateDynCallThunk(std::string sig);
   void generateStackSaveFunction();
   void generateStackAllocFunction();

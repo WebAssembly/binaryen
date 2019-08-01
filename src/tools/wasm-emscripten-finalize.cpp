@@ -208,6 +208,10 @@ int main(int argc, const char* argv[]) {
   }
   wasm.updateMaps();
 
+  if (checkStackOverflow && !isSideModule) {
+    generator.enforceStackLimit();
+  }
+
   if (isSideModule) {
     generator.replaceStackPointerGlobal();
     generator.generatePostInstantiateFunction();
@@ -227,10 +231,6 @@ int main(int argc, const char* argv[]) {
     if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
       initializerFunctions.push_back(e->value);
     }
-  }
-
-  if (checkStackOverflow) {
-    generator.enforceStackLimit();
   }
 
   generator.generateDynCallThunks();

@@ -95,8 +95,28 @@ Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
   return builder.makeGlobalGet(stackPointer->name, i32);
 }
 
+inline Expression* stackBoundsCheck(Builder& builder,
+                                    Function* func,
+                                    Expression* value,
+                                    Global* stackPointer,
+                                    Global* stackLimit,
+                                    Name handler) {
+  auto newSP = Builder::addVar(func, stackPointer->type);
+  auto teeNewSP = builder.makeLocalTee(newSP, value);
+  auto check =
+    builder.makeIf(builder.makeBinary(
+                     BinaryOp::LtUInt32,
+                     teeNewSP,
+                     builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
+                   builder.makeCall(handler, {}, none));
+  auto newSet = builder.makeGlobalSet(
+    stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
+  return builder.blockify(check, newSet);
+}
+
 Expression*
-EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
+EmscriptenGlueGenerator::generateStoreStackPointer(Function* func,
+                                                   Expression* value) {
   if (!useStackPointerGlobal) {
     return builder.makeStore(
       /* bytes  =*/4,
@@ -109,6 +129,14 @@ EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
   Global* stackPointer = getStackPointerGlobal();
   if (!stackPointer) {
     Fatal() << "stack pointer global not found";
+  }
+  if (auto* stackLimit = wasm.getGlobalOrNull(STACK_LIMIT)) {
+    return stackBoundsCheck(builder,
+                            func,
+                            value,
+                            stackPointer,
+                            stackLimit,
+                            importStackOverflowHandler());
   }
   return builder.makeGlobalSet(stackPointer->name, value);
 }
@@ -135,7 +163,7 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
   LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub);
-  Expression* storeStack = generateStoreStackPointer(teeStackLocal);
+  Expression* storeStack = generateStoreStackPointer(function, teeStackLocal);
 
   Block* block = builder.makeBlock();
   block->list.push_back(storeStack);
@@ -152,7 +180,7 @@ void EmscriptenGlueGenerator::generateStackRestoreFunction() {
   Function* function =
     builder.makeFunction(STACK_RESTORE, std::move(params), none, {});
   LocalGet* getArg = builder.makeLocalGet(0, i32);
-  Expression* store = generateStoreStackPointer(getArg);
+  Expression* store = generateStoreStackPointer(function, getArg);
 
   function->body = store;
 
@@ -480,17 +508,12 @@ struct StackLimitEnforcer : public PostWalker<StackLimitEnforcer> {
   void visitGlobalSet(GlobalSet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer &&
         canBeSubtract(curr->value)) {
-      auto newSP = Builder::addVar(getFunction(), stackPointer->type);
-      auto teeNewSP = builder.makeLocalTee(newSP, curr->value);
-      auto check = builder.makeIf(
-        builder.makeBinary(
-          BinaryOp::LtUInt32,
-          teeNewSP,
-          builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
-        builder.makeCall(handler, {}, none));
-      auto newSet = builder.makeGlobalSet(
-        stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
-      replaceCurrent(builder.blockify(check, newSet));
+      replaceCurrent(stackBoundsCheck(builder,
+                                      getFunction(),
+                                      curr->value,
+                                      stackPointer,
+                                      stackLimit,
+                                      handler));
     }
   }
 
@@ -506,6 +529,9 @@ private:
 
 void EmscriptenGlueGenerator::enforceStackLimit() {
   Global* stackPointer = getStackPointerGlobal();
+  if (!stackPointer) {
+    return;
+  }
 
   auto* stackLimit = builder.makeGlobal(STACK_LIMIT,
                                         stackPointer->type,
