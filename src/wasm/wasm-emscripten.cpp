@@ -455,8 +455,31 @@ struct StackLimitEnforcer : public PostWalker<StackLimitEnforcer> {
     : stackPointer(stackPointer), stackLimit(stackLimit), builder(builder),
       handler(handler) {}
 
+  void noteNonLinear(Expression* curr) {
+    // End of this basic block; clear sets.
+    sets.clear();
+  }
+
+  void visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
+
+  bool canBeSubtract(Expression* arg) {
+    while (auto* get = arg->dynCast<LocalGet>()) {
+      auto* set = sets[get->index];
+      if (set) {
+        assert(set->index == get->index);
+        arg = set->value;
+      }
+    }
+    if (auto* binary = arg->dynCast<Binary>()) {
+      return binary->op == SubInt32;
+    } else {
+      return true;
+    }
+  }
+
   void visitGlobalSet(GlobalSet* curr) {
-    if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
+    if (getModule()->getGlobalOrNull(curr->name) == stackPointer &&
+        canBeSubtract(curr->value)) {
       auto newSP = Builder::addVar(getFunction(), stackPointer->type);
       auto teeNewSP = builder.makeLocalTee(newSP, curr->value);
       auto check = builder.makeIf(
@@ -476,6 +499,9 @@ private:
   Global* stackLimit;
   Builder& builder;
   Name handler;
+
+  // last sets in the current basic block, per index
+  std::map<Index, LocalSet*> sets;
 };
 
 void EmscriptenGlueGenerator::enforceStackLimit() {
