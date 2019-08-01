@@ -9,12 +9,11 @@ class BinaryenTestCase(unittest.TestCase):
 
   def roundtrip(self, filename, opts=[]):
     path = self.input_path(filename)
-    p = run_process(WASM_OPT + ['-g', '-o', '-', path] + opts, check=False,
-                    capture_output=True)
+    p = run_process(WASM_OPT + ['-g', '-o', 'a.wasm', path] + opts)
     self.assertEqual(p.returncode, 0)
-    self.assertEqual(p.stderr, '')
     with open(path, 'rb') as f:
-      self.assertEqual(str(p.stdout), str(f.read()))
+      with open('a.wasm', 'rb') as g:
+        self.assertEqual(g.read(), f.read())
 
   def disassemble(self, filename):
     path = self.input_path(filename)

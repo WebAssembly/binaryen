@@ -1,6 +1,6 @@
 import os
 from scripts.test.shared import WASM_OPT, run_process
-from utils import BinaryenTestCase
+from .utils import BinaryenTestCase
 
 
 class FeatureValidationTest(BinaryenTestCase):

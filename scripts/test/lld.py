@@ -14,8 +14,8 @@
 # limitations under the License.
 
 import os
-from support import run_command
-from shared import (
+from .support import run_command
+from .shared import (
     fail_with_error, files_with_pattern, options,
     WASM_EMSCRIPTEN_FINALIZE, fail_if_not_identical_to_file
 )
@@ -29,10 +29,10 @@ def args_for_finalize(filename):
 
 
 def test_wasm_emscripten_finalize():
-  print '\n[ checking wasm-emscripten-finalize testcases... ]\n'
+  print('\n[ checking wasm-emscripten-finalize testcases... ]\n')
 
   for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
-    print '..', wast_path
+    print('..', wast_path)
     is_passive = '.passive.' in wast_path
     mem_file = wast_path + '.mem'
     extension_arg_map = {
@@ -52,7 +52,7 @@ def test_wasm_emscripten_finalize():
       actual = run_command(cmd)
 
       if not os.path.exists(expected_file):
-        print actual
+        print(actual)
         fail_with_error('output ' + expected_file + ' does not exist')
       fail_if_not_identical_to_file(actual, expected_file)
       if ext == '.mem.out':
@@ -63,10 +63,10 @@ def test_wasm_emscripten_finalize():
 
 
 def update_lld_tests():
-  print '\n[ updatring wasm-emscripten-finalize testcases... ]\n'
+  print('\n[ updatring wasm-emscripten-finalize testcases... ]\n')
 
   for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
-    print '..', wast_path
+    print('..', wast_path)
     is_passive = '.passive.' in wast_path
     mem_file = wast_path + '.mem'
     extension_arg_map = {

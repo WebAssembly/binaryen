@@ -88,16 +88,20 @@ def untar(tarfile, outdir):
 
 
 def split_wast(wastFile):
+  # if it's a binary, leave it as is, we can't split it
+  wast = None
+  if not wastFile.endswith('.wasm'):
+    try:
+      wast = open(wastFile, 'r').read()
+    except Exception:
+      pass
+
+  if not wast:
+    return ((open(wastFile, 'rb').read(), []),)
+
   # .wast files can contain multiple modules, and assertions for each one.
   # this splits out a wast into [(module, assertions), ..]
   # we ignore module invalidity tests here.
-  wast = open(wastFile, 'rb').read()
-
-  # if it's a binary, leave it as is
-  if wast[0] == '\0':
-    return [[wast, '']]
-
-  wast = open(wastFile, 'r').read()
   ret = []
 
   def to_end(j):
@@ -146,13 +150,25 @@ def split_wast(wastFile):
   return ret
 
 
+# write a split wast from split_wast. the wast may be binary if the original
+# file was binary
+def write_wast(filename, wast, asserts=[]):
+  if type(wast) == bytes:
+    assert not asserts
+    with open(filename, 'wb') as o:
+      o.write(wast)
+  else:
+    with open(filename, 'w') as o:
+      o.write(wast + '\n'.join(asserts))
+
+
 def run_command(cmd, expected_status=0, stderr=None,
                 expected_err=None, err_contains=False, err_ignore=None):
   if expected_err is not None:
     assert stderr == subprocess.PIPE or stderr is None,\
         "Can't redirect stderr if using expected_err"
     stderr = subprocess.PIPE
-  print 'executing: ', ' '.join(cmd)
+  print('executing: ', ' '.join(cmd))
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True)
   out, err = proc.communicate()
   code = proc.returncode

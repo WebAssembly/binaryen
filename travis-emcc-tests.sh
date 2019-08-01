@@ -2,5 +2,5 @@ set -e
 echo "travis-test build"
 ./build-js.sh -g
 echo "travis-test test"
-./scripts/test/binaryenjs.py
+python -m scripts.test.binaryenjs
 echo "travis-test yay!"

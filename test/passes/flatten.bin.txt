@@ -15,7 +15,7 @@
  (export "type-local-f64" (func $3))
  (export "type-param-i32" (func $4))
  (export "type-param-i64" (func $5))
- (export "tÿÿe-param-f32" (func $6))
+ (export "type-param-f32" (func $6))
  (export "type-param-f64" (func $7))
  (export "type-mixed" (func $8))
  (export "read" (func $9))
