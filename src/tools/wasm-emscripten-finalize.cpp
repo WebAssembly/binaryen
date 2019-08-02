@@ -48,6 +48,7 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool isSideModule = false;
   bool legalizeJavaScriptFFI = true;
+  bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
@@ -127,6 +128,13 @@ int main(int argc, const char* argv[]) {
          [&dataSegmentFile](Options* o, const std::string& argument) {
            dataSegmentFile = argument;
          })
+    .add("--check-stack-overflow",
+         "",
+         "Check for stack overflows every time the stack is extended",
+         Options::Arguments::Zero,
+         [&checkStackOverflow](Options* o, const std::string&) {
+           checkStackOverflow = true;
+         })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [&infile](Options* o, const std::string& argument) {
@@ -199,6 +207,10 @@ int main(int argc, const char* argv[]) {
     }
   }
   wasm.updateMaps();
+
+  if (checkStackOverflow && !isSideModule) {
+    generator.enforceStackLimit();
+  }
 
   if (isSideModule) {
     generator.replaceStackPointerGlobal();
