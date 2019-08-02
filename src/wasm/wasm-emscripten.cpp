@@ -479,7 +479,7 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   wasm.removeGlobal(stackPointer->name);
 }
 
-struct StackLimitEnforcer : public PostWalker<StackLimitEnforcer> {
+struct StackLimitEnforcer : public WalkerPass<PostWalker<StackLimitEnforcer>> {
   StackLimitEnforcer(Global* stackPointer,
                      Global* stackLimit,
                      Builder& builder,
@@ -487,37 +487,10 @@ struct StackLimitEnforcer : public PostWalker<StackLimitEnforcer> {
     : stackPointer(stackPointer), stackLimit(stackLimit), builder(builder),
       handler(handler) {}
 
-  void noteNonLinear(Expression* curr) {
-    // End of this basic block; clear sets.
-    sets.clear();
-  }
-
-  void visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
-
-  // Checks if an expression is addition.
-  // If we are adding to the stack pointer, for example, in the function
-  // epilogue, overflow is impossible.
-  bool isAddition(Expression* arg) {
-    while (auto* get = arg->dynCast<LocalGet>()) {
-      auto* set = sets[get->index];
-      if (set) {
-        assert(set->index == get->index);
-        arg = set->value;
-      }
-    }
-
-    if (arg->is<GlobalGet>() || arg->is<Const>()) {
-      return true;
-    } else if (auto* binary = arg->dynCast<Binary>()) {
-      return binary->op == AddInt32;
-    } else {
-      return false;
-    }
-  }
+  bool isFunctionParallel() override { return true; }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (getModule()->getGlobalOrNull(curr->name) == stackPointer &&
-        !isAddition(curr->value)) {
+    if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       replaceCurrent(stackBoundsCheck(builder,
                                       getFunction(),
                                       curr->value,
@@ -532,9 +505,6 @@ private:
   Global* stackLimit;
   Builder& builder;
   Name handler;
-
-  // last sets in the current basic block, per index
-  std::map<Index, LocalSet*> sets;
 };
 
 void EmscriptenGlueGenerator::enforceStackLimit() {
@@ -558,8 +528,7 @@ void EmscriptenGlueGenerator::enforceStackLimit() {
 }
 
 void EmscriptenGlueGenerator::generateSetStackLimitFunction() {
-  Function* function =
-    builder.makeFunction(SET_STACK_LIMIT, {i32}, none, {});
+  Function* function = builder.makeFunction(SET_STACK_LIMIT, {i32}, none, {});
   LocalGet* getArg = builder.makeLocalGet(0, i32);
   Expression* store = builder.makeGlobalSet(STACK_LIMIT, getArg);
   function->body = store;
