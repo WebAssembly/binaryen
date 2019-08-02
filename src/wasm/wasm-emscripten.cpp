@@ -101,14 +101,18 @@ inline Expression* stackBoundsCheck(Builder& builder,
                                     Global* stackPointer,
                                     Global* stackLimit,
                                     Name handler) {
+  // Add a local to store the value of the expression. We need the value twice:
+  // once to check if it has overflowed, and again to assign to store it.
   auto newSP = Builder::addVar(func, stackPointer->type);
-  auto teeNewSP = builder.makeLocalTee(newSP, value);
+  // (if (i32.lt_u (local.tee $newSP (...value...)) (global.get $__stack_limit))
+  //  (call $handler))
   auto check =
     builder.makeIf(builder.makeBinary(
                      BinaryOp::LtUInt32,
-                     teeNewSP,
+                     builder.makeLocalTee(newSP, value),
                      builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
                    builder.makeCall(handler, {}, none));
+  // (global.set $__stack_pointer (local.get $newSP))
   auto newSet = builder.makeGlobalSet(
     stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
   return builder.blockify(check, newSet);
@@ -490,7 +494,10 @@ struct StackLimitEnforcer : public PostWalker<StackLimitEnforcer> {
 
   void visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
 
-  bool canBeSubtract(Expression* arg) {
+  // Checks if an expression is addition.
+  // If we are adding to the stack pointer, for example, in the function
+  // epilogue, overflow is impossible.
+  bool isAddition(Expression* arg) {
     while (auto* get = arg->dynCast<LocalGet>()) {
       auto* set = sets[get->index];
       if (set) {
@@ -498,16 +505,19 @@ struct StackLimitEnforcer : public PostWalker<StackLimitEnforcer> {
         arg = set->value;
       }
     }
-    if (auto* binary = arg->dynCast<Binary>()) {
-      return binary->op == SubInt32;
-    } else {
+
+    if (arg->is<GlobalGet>() || arg->is<Const>()) {
       return true;
+    } else if (auto* binary = arg->dynCast<Binary>()) {
+      return binary->op == AddInt32;
+    } else {
+      return false;
     }
   }
 
   void visitGlobalSet(GlobalSet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer &&
-        canBeSubtract(curr->value)) {
+        !isAddition(curr->value)) {
       replaceCurrent(stackBoundsCheck(builder,
                                       getFunction(),
                                       curr->value,
