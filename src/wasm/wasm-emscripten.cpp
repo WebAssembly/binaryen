@@ -489,6 +489,10 @@ struct StackLimitEnforcer : public WalkerPass<PostWalker<StackLimitEnforcer>> {
 
   bool isFunctionParallel() override { return true; }
 
+  Pass* create() override {
+    return new StackLimitEnforcer(stackPointer, stackLimit, builder, handler);
+  }
+
   void visitGlobalSet(GlobalSet* curr) {
     if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       replaceCurrent(stackBoundsCheck(builder,
@@ -522,7 +526,8 @@ void EmscriptenGlueGenerator::enforceStackLimit() {
   auto handler = importStackOverflowHandler();
 
   StackLimitEnforcer walker(stackPointer, stackLimit, builder, handler);
-  walker.walkModule(&wasm);
+  PassRunner runner(&wasm);
+  walker.run(&runner, &wasm);
 
   generateSetStackLimitFunction();
 }
