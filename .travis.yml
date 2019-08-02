@@ -143,8 +143,8 @@ jobs:
       script:
         - alpine cmake -DCMAKE_BUILD_TYPE=Release
                        -DCMAKE_VERBOSE_MAKEFILE=ON
-                       -DCMAKE_CXX_FLAGS="-static -no-pie"
-                       -DCMAKE_C_FLAGS="-static -no-pie" .
+                       -DCMAKE_CXX_FLAGS="-static"
+                       -DCMAKE_C_FLAGS="-static" .
                        -DCMAKE_C_COMPILER=clang
                        -DCMAKE_CXX_COMPILER=clang++
         - alpine make -j2
