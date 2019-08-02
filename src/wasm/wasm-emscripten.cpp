@@ -558,9 +558,8 @@ void EmscriptenGlueGenerator::enforceStackLimit() {
 }
 
 void EmscriptenGlueGenerator::generateSetStackLimitFunction() {
-  std::vector<NameType> params{{"0", i32}};
   Function* function =
-    builder.makeFunction(SET_STACK_LIMIT, std::move(params), none, {});
+    builder.makeFunction(SET_STACK_LIMIT, {i32}, none, {});
   LocalGet* getArg = builder.makeLocalGet(0, i32);
   Expression* store = builder.makeGlobalSet(STACK_LIMIT, getArg);
   function->body = store;
