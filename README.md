@@ -372,7 +372,7 @@ about how to use it.
 ./check.py
 ```
 
-(or `python check.py`) will run `wasm-shell`, `wasm-opt`, `asm2wasm`, etc. on the testcases in `test/`, and verify their outputs.
+(or `python3 check.py`) will run `wasm-shell`, `wasm-opt`, `asm2wasm`, etc. on the testcases in `test/`, and verify their outputs.
 
 The `check.py` script supports some options:
 
