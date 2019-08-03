@@ -514,7 +514,7 @@ def run_gcc_tests():
 def run_unittest():
   print('\n[ checking unit tests...]\n')
 
-  # equivalent to `python3 -m unittest discover -s ./test -v`
+  # equivalent to `python -m unittest discover -s ./test -v`
   suite = unittest.defaultTestLoader.discover(os.path.dirname(options.binaryen_test))
   result = unittest.TextTestRunner(verbosity=2, failfast=options.abort_on_first_failure).run(suite)
   shared.num_failures += len(result.errors) + len(result.failures)
