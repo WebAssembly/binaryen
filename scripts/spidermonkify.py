@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # 2016 WebAssembly Community Group participants
 #
@@ -38,7 +38,7 @@ new Uint8Array(wasmTextToBinary(os.file.readFile("a.out.wast"))))'
 investigate with
 >>> map(chr, map(ord, open('moz.wasm').read()))
 or
-python3 -c "print str(map(chr,map(ord,
+python -c "print str(map(chr,map(ord,
  open('a.out.wasm').read()))).replace(',', '\n')"
 '''
 subprocess.check_call(
