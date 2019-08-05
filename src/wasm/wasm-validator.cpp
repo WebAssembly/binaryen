@@ -466,7 +466,8 @@ void FunctionValidator::visitBlock(Block* curr) {
             "(binaryen's autodrop option might help you)") &&
           !info.quiet) {
         getStream() << "(on index " << i << ":\n"
-                    << curr->list[i] << "\n), type: " << curr->list[i] << "\n";
+                    << curr->list[i] << "\n), type: " << curr->list[i]->type
+                    << "\n";
       }
     }
   }
