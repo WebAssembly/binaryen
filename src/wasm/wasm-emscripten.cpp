@@ -752,6 +752,9 @@ Index AsmConstWalker::resolveConstIndex(
       if (set) {
         assert(set->index == get->index);
         arg = set->value;
+      } else {
+        reportError(arg);
+        return 0;
       }
     } else if (arg->is<GlobalGet>()) {
       // In the dynamic linking case, indices start at __table_base.
@@ -759,6 +762,7 @@ Index AsmConstWalker::resolveConstIndex(
       return 0;
     } else {
       reportError(arg);
+      return 0;
     }
   }
   return Index(arg->cast<Const>()->value.geti32());
@@ -783,10 +787,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     Builder builder(wasm);
     curr->operands[0] = builder.makeConst(idLiteralForCode(code));
   } else if (import->base.startsWith(INVOKE_PREFIX)) {
-    auto idx = resolveConstIndex(curr->operands[0], [&](Expression* arg) {
-      Fatal() << "Unexpected table index type (" << getExpressionName(arg)
-              << ") in call to: " << import->base;
-    });
+    auto idx = resolveConstIndex(curr->operands[0], [&](Expression* arg) {});
 
     // If the address of the invoke call is an emscripten_asm_const_* function:
     if (asmTable.count(idx)) {
