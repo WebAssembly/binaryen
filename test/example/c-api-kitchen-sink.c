@@ -447,27 +447,19 @@ void test_core() {
     BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3)),
     BinaryenBreak(module, "the-nothing", NULL, NULL),
     BinaryenSwitch(module, switchValueNames, 1, "the-value", temp8, temp9),
-    BinaryenSwitch(
-      module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
-    BinaryenUnary(
-      module,
-      BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenCall(
-        module, "kitchen()sinker", callOperands4, 4, BinaryenTypeInt32())),
-    BinaryenUnary(module,
-                  BinaryenEqZInt32(), // check the output type of the call node
-                  BinaryenUnary(module,
-                                BinaryenTruncSFloat32ToInt32(),
-                                BinaryenCall(module,
-                                             "an-imported",
-                                             callOperands2,
-                                             2,
-                                             BinaryenTypeFloat32()))),
-    BinaryenUnary(
-      module,
-      BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenCallIndirect(
-        module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF")),
+    BinaryenSwitch(module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
+    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
+      BinaryenCall(module, "kitchen()sinker", callOperands4, 4, BinaryenTypeInt32())
+    ),
+    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
+      BinaryenUnary(module,
+        BinaryenTruncSFloat32ToInt32(),
+        BinaryenCall(module, "an-imported", callOperands2, 2, BinaryenTypeFloat32())
+      )
+    ),
+    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
+      BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF")
+    ),
     BinaryenDrop(module, BinaryenLocalGet(module, 0, BinaryenTypeInt32())),
     BinaryenLocalSet(module, 0, makeInt32(module, 101)),
     BinaryenDrop(module, BinaryenLocalTee(module, 0, makeInt32(module, 102))),

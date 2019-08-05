@@ -38,7 +38,6 @@ inline bool isBranchReachable(Switch* sw) {
 }
 
 inline bool isBranchReachable(BrOnExn* br) {
-  assert(br->exnref && "br_on_exn always has an exnref argument");
   return br->exnref->type != unreachable;
 }
 
@@ -54,9 +53,7 @@ inline bool isBranchReachable(Expression* expr) {
 }
 
 inline std::set<Name> getUniqueTargets(Break* br) {
-  std::set<Name> ret;
-  ret.insert(br->name);
-  return ret;
+  return {br->name};
 }
 
 inline std::set<Name> getUniqueTargets(Switch* sw) {
@@ -69,9 +66,7 @@ inline std::set<Name> getUniqueTargets(Switch* sw) {
 }
 
 inline std::set<Name> getUniqueTargets(BrOnExn* br) {
-  std::set<Name> ret;
-  ret.insert(br->name);
-  return ret;
+  return {br->name};
 }
 
 // If we branch to 'from', change that to 'to' instead.

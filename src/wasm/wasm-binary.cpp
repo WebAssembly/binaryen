@@ -4394,11 +4394,10 @@ void WasmBinaryBuilder::visitTry(Try* curr) {
     {label, curr->type != none && curr->type != unreachable});
   auto start = expressionStack.size();
   // catch instruction pushes an exnref value onto the stack, but because we
-  // model catch as not an instruction but a barrier within a try scope for
+  // model catch not as an instruction but a barrier within a try scope for
   // readability, we assume that after catch there is an exnref value on top of
   // the stack, and create a pop instruction that pops the exnref value from the
-  // stack. This is only for binaryen internal representation and will not be
-  // printed.
+  // stack. This is only for binaryen's internal representation.
   Builder builder(wasm);
   auto* pop = builder.makePop(exnref);
   expressionStack.push_back(pop);

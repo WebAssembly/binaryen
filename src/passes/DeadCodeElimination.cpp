@@ -145,7 +145,10 @@ struct DeadCodeElimination
   }
 
   void visitBrOnExn(BrOnExn* curr) {
-    // Safely mark this as reachable for now. TODO Add proper analysis
+    if (isDead(curr->exnref)) {
+      replaceCurrent(curr->exnref);
+      return;
+    }
     addBreak(curr->name);
   }
 

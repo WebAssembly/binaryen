@@ -270,7 +270,6 @@ public:
                  unsigned align,
                  Expression* ptr,
                  Type type) {
-    assert(!isReferenceType(type));
     auto* ret = allocator.alloc<Load>();
     ret->isAtomic = false;
     ret->bytes = bytes;
@@ -316,7 +315,6 @@ public:
                    Expression* ptr,
                    Expression* value,
                    Type type) {
-    assert(!isReferenceType(type));
     auto* ret = allocator.alloc<Store>();
     ret->isAtomic = false;
     ret->bytes = bytes;
@@ -455,7 +453,6 @@ public:
     return ret;
   }
   Const* makeConst(Literal value) {
-    assert(isConcreteType(value.type) && !isReferenceType(value.type));
     auto* ret = allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;

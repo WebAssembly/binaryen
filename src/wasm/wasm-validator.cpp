@@ -342,25 +342,6 @@ void FunctionValidator::noteLabelName(Name name) {
     "names in Binaryen IR must be unique - IR generators must ensure that");
 }
 
-void FunctionValidator::visitLoop(Loop* curr) {
-  if (curr->name.is()) {
-    noteLabelName(curr->name);
-    auto iter = breakInfos.find(curr->name);
-    assert(iter != breakInfos.end()); // we set it ourselves
-    auto& info = iter->second;
-    if (info.hasBeenSet()) {
-      shouldBeEqual(
-        info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
-    }
-    breakInfos.erase(iter);
-  }
-  if (curr->type == none) {
-    shouldBeFalse(isConcreteType(curr->body->type),
-                  curr,
-                  "bad body for a loop that has no value");
-  }
-}
-
 // Validate correctness related to br_on_exn. br_on_exn is special: its argument
 // is an exnref value, and when it is taken, it pushes extracted values from
 // exnref, and if not, it re-pushes the exnref value onto the stack. To model
@@ -522,6 +503,25 @@ void FunctionValidator::visitBlock(Block* curr) {
                curr,
                "br_on_exn's exnref value must be drop()ed "
                "(binaryen's autodrop option might help you)");
+}
+
+void FunctionValidator::visitLoop(Loop* curr) {
+  if (curr->name.is()) {
+    noteLabelName(curr->name);
+    auto iter = breakInfos.find(curr->name);
+    assert(iter != breakInfos.end()); // we set it ourselves
+    auto& info = iter->second;
+    if (info.hasBeenSet()) {
+      shouldBeEqual(
+        info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
+    }
+    breakInfos.erase(iter);
+  }
+  if (curr->type == none) {
+    shouldBeFalse(isConcreteType(curr->body->type),
+                  curr,
+                  "bad body for a loop that has no value");
+  }
 }
 
 void FunctionValidator::visitIf(If* curr) {

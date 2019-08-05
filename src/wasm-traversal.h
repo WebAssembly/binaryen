@@ -1269,9 +1269,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       }
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);
-        if (curr->cast<Try>()->name.is()) {
-          self->pushTask(SubType::doNoteNonLinear, currp);
-        }
+        self->pushTask(SubType::doNoteNonLinear, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
         self->pushTask(SubType::doNoteNonLinear, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->body);

@@ -1011,7 +1011,6 @@ class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) {}
 
-  Name name;
   Expression* body;
   Expression* catchBody;
 
@@ -1033,7 +1032,7 @@ class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
   Rethrow(MixedArena& allocator) {}
 
-  Expression* exnref = nullptr;
+  Expression* exnref;
 
   void finalize();
 };
@@ -1045,7 +1044,7 @@ public:
 
   Name name;
   Name event;
-  Expression* exnref = nullptr;
+  Expression* exnref;
   // This is duplicate info of param types stored in Event, but this is required
   // when BrOnExn expression is refinalized independently without modules.
   std::vector<Type> eventParams;
