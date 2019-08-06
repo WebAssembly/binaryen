@@ -344,12 +344,6 @@ def fail(actual, expected, fromfile='expected'):
 
 def fail_if_not_identical(actual, expected, fromfile='expected'):
   if expected != actual:
-    # Only for Travis CI debugging that cannot be reproduced locally, and will
-    # NOT be included in the final commit
-    print(expected)
-    print(type(expected))
-    print(actual)
-    print(type(actual))
     fail(actual, expected, fromfile=fromfile)
 
 

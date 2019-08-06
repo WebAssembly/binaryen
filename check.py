@@ -502,7 +502,7 @@ def run_gcc_tests():
     print('link: ', ' '.join(cmd))
     subprocess.check_call(cmd)
     print('run...', output_file)
-    actual = subprocess.check_output([os.path.abspath(output_file)])
+    actual = subprocess.check_output([os.path.abspath(output_file)]).decode('utf-8')
     os.remove(output_file)
     if sys.platform == 'darwin':
       # Also removes debug directory produced on Mac OS
