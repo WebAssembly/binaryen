@@ -884,7 +884,7 @@ void BrOnExn::finalize() {
 
 // Currently we don't support multi value return from a block, we pick the
 // type of the first param from the event.
-// TODO Renove this function and generalize event type after multi-value support
+// TODO Remove this function and generalize event type after multi-value support
 Type BrOnExn::getSingleEventType() {
   return eventParams.empty() ? none : eventParams.front();
 }

@@ -257,5 +257,5 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
         '--enable-nontrapping-float-to-int',
         '--enable-sign-ext',
         '--enable-simd',
-        '--enable-tail-call',
+        '--enable-tail-call'
     ], p2.stdout.split())

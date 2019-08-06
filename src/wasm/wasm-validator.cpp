@@ -355,7 +355,8 @@ struct BrOnExnValidator : public ExpressionStackWalker<BrOnExnValidator> {
 
   bool validate() {
     bool brOnExnExists = false;
-    // To save time, scan first before going into full walking
+    // To save time, scan top-level elements first before going into full
+    // walking
     for (Index i = 0, e = block->list.size(); i < e; i++) {
       Expression* child = block->list[i];
       if (child->is<BrOnExn>()) {

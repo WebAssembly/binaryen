@@ -1548,6 +1548,8 @@ void StackIRGenerator::emit(Expression* curr) {
     stackInst = makeStackInst(StackInst::IfBegin, curr);
   } else if (curr->is<Loop>()) {
     stackInst = makeStackInst(StackInst::LoopBegin, curr);
+  } else if (curr->is<Try>()) {
+    stackInst = makeStackInst(StackInst::TryBegin, curr);
   } else {
     stackInst = makeStackInst(curr);
   }
@@ -1562,6 +1564,8 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
     stackInst = makeStackInst(StackInst::IfEnd, curr);
   } else if (curr->is<Loop>()) {
     stackInst = makeStackInst(StackInst::LoopEnd, curr);
+  } else if (curr->is<Try>()) {
+    stackInst = makeStackInst(StackInst::TryEnd, curr);
   } else {
     WASM_UNREACHABLE();
   }

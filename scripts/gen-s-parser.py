@@ -429,7 +429,7 @@ instructions = [
     ("throw",                "makeThrow(s)"),
     ("catch",                "makeCatch(s)"),
     ("rethrow",              "makeRethrow(s)"),
-    ("br_on_exn",            "makeBrOnExn(s)"),
+    ("br_on_exn",            "makeBrOnExn(s)")
 ]
 
 

@@ -134,7 +134,6 @@ public:
   Flow visitThrow(Throw* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitRethrow(Rethrow* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitBrOnExn(BrOnExn* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-
   Flow visitPush(Push* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitPop(Pop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
 

@@ -2255,7 +2255,8 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       }
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryBegin: {
         doIndent();
         PrintExpressionContents(func, o).visit(inst->origin);
         indent++;
@@ -2263,7 +2264,8 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       }
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryEnd: {
         indent--;
         doIndent();
         o << "end";
@@ -2275,6 +2277,13 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         o << "else";
         indent++;
         doIndent();
+        break;
+      }
+      case StackInst::Catch: {
+        indent--;
+        doIndent();
+        o << "catch";
+        indent++;
         break;
       }
       default:
