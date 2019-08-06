@@ -2217,7 +2217,6 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         doIndent();
         o << "else";
         indent++;
-        doIndent();
         break;
       }
       default:
