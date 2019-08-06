@@ -362,7 +362,7 @@
   if
    i32.const 2
    return
-  else   
+  else
    i32.const 1
    return
   end
@@ -373,7 +373,7 @@
   if
    i32.const 2
    return
-  else   
+  else
    i32.const 1
    return
   end
@@ -416,7 +416,7 @@
   i32.const 1
   if
    nop
-  else   
+  else
    unreachable
   end
  )
@@ -478,7 +478,7 @@
    i32.const 1
    call $local-to-stack
    local.set $temp
-  else   
+  else
    i32.const 2
    call $local-to-stack
    local.set $temp
@@ -609,7 +609,7 @@
    i32.const 0
    call $local-to-stack-multi-4
    drop
-  else   
+  else
    i32.const 1
    call $local-to-stack-multi-4
    drop
