@@ -524,6 +524,9 @@ def run_unittest():
 
 # Run all the tests
 def main():
+  # This is to test the current Travis CI failure which is not reproducible
+  # locally. Will NOT be included in the final commit.
+  """
   run_help_tests()
   run_wasm_opt_tests()
   asm2wasm.test_asm2wasm()
@@ -542,10 +545,11 @@ def main():
   run_validator_tests()
   if has_vanilla_emcc and has_vanilla_llvm and 0:
     run_vanilla_tests()
+  """
   print('\n[ checking example testcases... ]\n')
   if options.run_gcc_tests:
     run_gcc_tests()
-  run_unittest()
+  #run_unittest()
 
   # Check/display the results
   if shared.num_failures == 0:
