@@ -539,10 +539,11 @@ TEST_SUITES = OrderedDict([
   ('lld', lld.test_wasm_emscripten_finalize),
   ('wasm2js', wasm2js.test_wasm2js),
   ('validator', run_validator_tests),
-  #('vanilla', lambda: run_vanilla_tests() if has_vanilla_emcc and has_vanilla_llvm else None),
+  ('vanilla', lambda: run_vanilla_tests() if has_vanilla_emcc and has_vanilla_llvm and 0 else None),
   ('gcc', run_gcc_tests),
   ('unit', run_unittest),
 ])
+
 
 # Run all the tests
 def main():
