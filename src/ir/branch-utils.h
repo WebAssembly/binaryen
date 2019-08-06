@@ -52,9 +52,7 @@ inline bool isBranchReachable(Expression* expr) {
   WASM_UNREACHABLE();
 }
 
-inline std::set<Name> getUniqueTargets(Break* br) {
-  return {br->name};
-}
+inline std::set<Name> getUniqueTargets(Break* br) { return {br->name}; }
 
 inline std::set<Name> getUniqueTargets(Switch* sw) {
   std::set<Name> ret;
@@ -65,9 +63,7 @@ inline std::set<Name> getUniqueTargets(Switch* sw) {
   return ret;
 }
 
-inline std::set<Name> getUniqueTargets(BrOnExn* br) {
-  return {br->name};
-}
+inline std::set<Name> getUniqueTargets(BrOnExn* br) { return {br->name}; }
 
 // If we branch to 'from', change that to 'to' instead.
 inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
