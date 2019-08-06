@@ -41,13 +41,6 @@ def parse_args(args):
       action='store_false',
       help=('If set, the whole test suite will run to completion independent of'
             ' earlier errors.'))
-  parser.add_argument(
-      '--run-gcc-tests', dest='run_gcc_tests', action='store_true', default=True,
-      help=('Chooses whether to run the tests that require building with native'
-            ' GCC. Default: true.'))
-  parser.add_argument(
-      '--no-run-gcc-tests', dest='run_gcc_tests', action='store_false',
-      help='If set, disables the native GCC tests.')
 
   parser.add_argument(
       '--interpreter', dest='interpreter', default='',
@@ -73,8 +66,11 @@ def parse_args(args):
       help=('If specified, all unfreed (but still referenced) pointers at the'
             ' end of execution are considered memory leaks. Default: disabled.'))
   parser.add_argument(
+      '--spec-test', action='append', nargs='*', default=[], dest='spec_tests',
+      help='Names specific spec tests to run.')
+  parser.add_argument(
       'positional_args', metavar='tests', nargs=argparse.REMAINDER,
-      help='Names specific tests to run.')
+      help='Names specific test suites to run.')
 
   return parser.parse_args(args)
 
