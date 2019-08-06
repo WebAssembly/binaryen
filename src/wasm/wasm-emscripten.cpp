@@ -855,7 +855,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
     if (!curr->name.startsWith(EM_JS_PREFIX.str)) {
       return;
     }
-    Function* func = wasm.getFunction(curr->value);
+    auto* func = wasm.getFunction(curr->value);
     auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
     // An EM_JS has a single const in the body. Typically it is just returned,
     // but in unoptimized code it might be stored to a local and loaded from
