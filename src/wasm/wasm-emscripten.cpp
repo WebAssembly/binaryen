@@ -744,7 +744,7 @@ Const* AsmConstWalker::resolveConstAddr(Expression* arg, const Name& target) {
 
 Index AsmConstWalker::resolveConstIndex(
   Expression* arg, std::function<void(Expression*)> reportError) {
-  while (!arg->dynCast<Const>()) {
+  while (!arg->is<Const>()) {
     if (auto* get = arg->dynCast<LocalGet>()) {
       // The argument may be a local.get, in which case, the last set in this
       // basic block has the value.
@@ -759,6 +759,8 @@ Index AsmConstWalker::resolveConstIndex(
     } else if (arg->is<GlobalGet>()) {
       // In the dynamic linking case, indices start at __table_base.
       // We want the value relative to __table_base.
+      // If we are doing a global.get, assume it's __table_base, then the
+      // offset relative to __table_base must be 0.
       return 0;
     } else {
       reportError(arg);
@@ -787,6 +789,9 @@ void AsmConstWalker::visitCall(Call* curr) {
     Builder builder(wasm);
     curr->operands[0] = builder.makeConst(idLiteralForCode(code));
   } else if (import->base.startsWith(INVOKE_PREFIX)) {
+    // A call to emscripten_asm_const_* maybe done indirectly via one of the
+    // invoke_* functions, in case of setjmp/longjmp, for example.
+    // We attempt to modify the invoke_* call instead.
     auto idx = resolveConstIndex(curr->operands[0], [&](Expression* arg) {});
 
     // If the address of the invoke call is an emscripten_asm_const_* function:
@@ -895,8 +900,9 @@ void AsmConstWalker::queueImport(Name importName, std::string baseSig) {
 }
 
 Literal AsmConstWalker::tableIndexForName(Name name) {
-  if (tableIndices.count(name)) {
-    return tableIndices[name];
+  auto result = tableIndices.find(name);
+  if (result != tableIndices.end()) {
+    return result->second;
   }
   queuedTableEntries.push_back(name);
   return tableIndices[name] = Literal(tableOffsets[0]++);
