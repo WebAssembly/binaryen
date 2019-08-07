@@ -212,6 +212,44 @@ void test_core() {
     BinaryenAddFunctionType(module, "vi", BinaryenTypeNone(), eparams, 1);
   BinaryenAddEvent(module, "a-event", 0, vi);
 
+  // Exception handling
+
+  // (try
+  //   (throw $e (i32.const 0))
+  //   (catch
+  //     ;; We don't support multi-value yet. Use locals instead.
+  //     (local.set 0 (exnref.pop))
+  //     (drop
+  //       (block $l (result i32)
+  //         (br_on_exn $l $e (local.get 0))
+  //         (rethrow (exnref.pop))
+  //       )
+  //     )
+  //   )
+  // )
+  BinaryenExpressionRef tryBody = BinaryenThrow(
+    module, "a-event", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1);
+  BinaryenExpressionRef catchBody = BinaryenBlock(
+    module,
+    NULL,
+    (BinaryenExpressionRef[]){
+      BinaryenLocalSet(module, 5, BinaryenPop(module, BinaryenTypeExnref())),
+      BinaryenDrop(
+        module,
+        BinaryenBlock(
+          module,
+          "try-block",
+          (BinaryenExpressionRef[]){
+            BinaryenBrOnExn(module,
+                            "try-block",
+                            "a-event",
+                            BinaryenLocalGet(module, 5, BinaryenTypeExnref())),
+            BinaryenRethrow(module, BinaryenPop(module, BinaryenTypeExnref()))},
+          2,
+          BinaryenTypeInt32()))},
+    2,
+    BinaryenTypeNone());
+
   BinaryenExpressionRef valueList[] = {
     // Unary
     makeUnary(module, BinaryenClzInt32(), 1),
@@ -478,49 +516,8 @@ void test_core() {
       module, "kitchen()sinker", callOperands4, 4, BinaryenTypeInt32()),
     BinaryenReturnCallIndirect(
       module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF"),
-
     // Exception handling
-
-    // (try
-    //   (throw $e (i32.const 0))
-    //   (catch
-    //     ;; We don't support multi-value yet. Use locals instead.
-    //     (local.set 0 (exnref.pop))
-    //     (drop
-    //       (block $l (result i32)
-    //         (br_on_exn $l $e (local.get 0))
-    //         (rethrow (exnref.pop))
-    //       )
-    //     )
-    //   )
-    // )
-    BinaryenTry(
-      module,
-      BinaryenThrow(
-        module, "a-event", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1),
-      BinaryenBlock(
-        module,
-        NULL,
-        (BinaryenExpressionRef[]){
-          BinaryenLocalSet(
-            module, 5, BinaryenPop(module, BinaryenTypeExnref())),
-          BinaryenDrop(
-            module,
-            BinaryenBlock(
-              module,
-              "try-block",
-              (BinaryenExpressionRef[]){
-                BinaryenBrOnExn(
-                  module,
-                  "try-block",
-                  "a-event",
-                  BinaryenLocalGet(module, 5, BinaryenTypeExnref())),
-                BinaryenRethrow(module,
-                                BinaryenPop(module, BinaryenTypeExnref()))},
-              2,
-              BinaryenTypeInt32()))},
-        2,
-        BinaryenTypeNone())),
+    BinaryenTry(module, tryBody, catchBody),
 
     // TODO: Host
     BinaryenNop(module),
