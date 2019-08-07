@@ -848,18 +848,19 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
   EmJsWalker(Module& _wasm)
     : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
 
-  void visitFunction(Function* curr) {
-    if (curr->imported()) {
+  void visitExport(Export* curr) {
+    if (curr->kind != ExternalKind::Function) {
       return;
     }
     if (!curr->name.startsWith(EM_JS_PREFIX.str)) {
       return;
     }
+    auto* func = wasm.getFunction(curr->value);
     auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
     // An EM_JS has a single const in the body. Typically it is just returned,
     // but in unoptimized code it might be stored to a local and loaded from
     // there, and in relocatable code it might get added to __memory_base etc.
-    FindAll<Const> consts(curr->body);
+    FindAll<Const> consts(func->body);
     if (consts.list.size() != 1) {
       Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
     }
