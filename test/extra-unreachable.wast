@@ -56,9 +56,7 @@
     )
     (drop
       (block (result i32)
-        (drop
-          (br_on_exn 0 $e (unreachable))
-        )
+        (br_on_exn 0 $e (unreachable))
       )
     )
 

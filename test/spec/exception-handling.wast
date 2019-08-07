@@ -15,8 +15,9 @@
         (local.set $exn (exnref.pop))
         (drop
           (block $l0 (result i32)
-            (br_on_exn $l0 $e0 (local.get $exn))
-            (rethrow (exnref.pop))
+            (rethrow
+              (br_on_exn $l0 $e0 (local.get $exn))
+            )
           )
         )
       )
@@ -89,7 +90,7 @@
       )
     )
   )
-  "br_on_exn's argument must be exnref type"
+  "br_on_exn's argument must be unreachable or exnref type"
 )
 
 (assert_invalid
@@ -97,22 +98,26 @@
     (event $e0 (attr 0) (param i32))
     (func $f0 (result i32) (local $0 exnref)
       (block $l0 (result i32)
-        (br_on_exn $l0 $e0 (local.get $0))
+        (i32.eqz
+          (br_on_exn $l0 $e0 (local.get $0))
+        )
       )
     )
   )
-  "br_on_exn's exnref value must be drop()ed (binaryen's autodrop option might help you)"
+  "i32.eqz input must be i32"
 )
 
 (assert_invalid
   (module
     (event $e0 (attr 0) (param i32))
-    (func $f0 (result i32) (local $0 exnref)
-      (block $l0 (result i32)
-        (br_on_exn $l0 $e0 (local.get $0))
-        (br_on_exn $l0 $e0 (exnref.pop))
+    (func $f0 (result f32) (local $0 exnref)
+      (block $l0 (result f32)
+        (drop
+          (br_on_exn $l0 $e0 (local.get $0))
+        )
+        (f32.const 0)
       )
     )
   )
-  "br_on_exn's exnref value must be drop()ed (binaryen's autodrop option might help you)"
+  "block+breaks must have right type if breaks return a value"
 )

@@ -878,7 +878,7 @@ void BrOnExn::finalize() {
   if (exnref->type == unreachable) {
     type = unreachable;
   } else {
-    type = getSingleEventType();
+    type = Type::exnref;
   }
 }
 

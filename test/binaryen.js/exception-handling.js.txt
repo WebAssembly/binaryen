@@ -14,11 +14,10 @@
     )
     (drop
      (block $l (result i32)
-      (br_on_exn $l $e
-       (local.get $0)
-      )
       (rethrow
-       (exnref.pop)
+       (br_on_exn $l $e
+        (local.get $0)
+       )
       )
      )
     )
@@ -28,6 +27,6 @@
 )
 
 getExpressionInfo(throw) = {"id":39,"type":7,"event":"e"}
-getExpressionInfo(br_on_exn) = {"id":41,"type":1,"name":"l","event":"e"}
+getExpressionInfo(br_on_exn) = {"id":41,"type":6,"name":"l","event":"e"}
 getExpressionInfo(rethrow) = {"id":40,"type":7}
 getExpressionInfo(try) = {"id":38,"type":0}

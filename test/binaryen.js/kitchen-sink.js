@@ -417,9 +417,10 @@ function test_core() {
         module.local.set(5, module.exnref.pop()),
         module.drop(
           module.block("try-block", [
-            module.br_on_exn("try-block", "a-event",
-              module.local.get(5, Binaryen.exnref)),
-            module.rethrow(module.exnref.pop())
+            module.rethrow(
+              module.br_on_exn("try-block", "a-event",
+                module.local.get(5, Binaryen.exnref)),
+            )
           ], Binaryen.i32)
         )
       ]

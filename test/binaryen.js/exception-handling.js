@@ -30,21 +30,22 @@ var event_ = module.addEvent("e", 0, vi);
 //     (local.set 0 (exnref.pop))
 //     (drop
 //       (block $l (result i32)
-//         (br_on_exn $l $e (local.get 0))
-//         (rethrow (exnref.pop))
+//         (rethrow
+//           (br_on_exn $l $e (local.get 0))
+//         )
 //       )
 //     )
 //   )
 // )
 var throw_ = module.throw("e", [module.i32.const(0)]);
-var rethrow = module.rethrow(module.exnref.pop());
 var br_on_exn = module.br_on_exn("l", "e", module.local.get(0, Binaryen.exnref));
+var rethrow = module.rethrow(br_on_exn);
 var try_ = module.try(
   throw_,
   module.block(null, [
     module.local.set(0, module.exnref.pop()),
     module.drop(
-      module.block("l", [br_on_exn, rethrow], Binaryen.i32)
+      module.block("l", [rethrow], Binaryen.i32)
     )
   ]
   )

@@ -14,8 +14,9 @@
         (local.set $exn (exnref.pop))
         (drop
           (block $l0 (result i32)
-            (br_on_exn $l0 $e0 (local.get $exn))
-            (rethrow (exnref.pop))
+            (rethrow
+              (br_on_exn $l0 $e0 (local.get $exn))
+            )
           )
         )
       )

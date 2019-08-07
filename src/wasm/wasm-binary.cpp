@@ -1725,17 +1725,6 @@ void WasmBinaryBuilder::readGlobals() {
   }
 }
 
-// If not taken, it re-pushes the exnref value onto the expression stack. To
-// simulate this behavior, we create a pseudo-insruction pop and push it onto
-// the stack.
-void WasmBinaryBuilder::handleBrOnExnNotTaken(Expression* curr) {
-  Builder builder(wasm);
-  if (curr->is<BrOnExn>()) {
-    auto* pop = builder.makePop(exnref);
-    expressionStack.push_back(pop);
-  }
-}
-
 void WasmBinaryBuilder::processExpressions() {
   if (debug) {
     std::cerr << "== processExpressions" << std::endl;
@@ -1752,7 +1741,6 @@ void WasmBinaryBuilder::processExpressions() {
       return;
     }
     expressionStack.push_back(curr);
-    handleBrOnExnNotTaken(curr);
     if (curr->type == unreachable) {
       // once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
@@ -1817,7 +1805,6 @@ void WasmBinaryBuilder::skipUnreachableCode() {
       return;
     }
     expressionStack.push_back(curr);
-    handleBrOnExnNotTaken(curr);
   }
 }
 

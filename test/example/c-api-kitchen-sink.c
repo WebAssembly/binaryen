@@ -215,14 +215,15 @@ void test_core() {
   // Exception handling
 
   // (try
-  //   (throw $e (i32.const 0))
+  //   (throw $a-event (i32.const 0))
   //   (catch
   //     ;; We don't support multi-value yet. Use locals instead.
   //     (local.set 0 (exnref.pop))
   //     (drop
-  //       (block $l (result i32)
-  //         (br_on_exn $l $e (local.get 0))
-  //         (rethrow (exnref.pop))
+  //       (block $try-block (result i32)
+  //         (rethrow
+  //           (br_on_exn $try-block $a-event (local.get 5))
+  //         )
   //       )
   //     )
   //   )
@@ -236,17 +237,17 @@ void test_core() {
       BinaryenLocalSet(module, 5, BinaryenPop(module, BinaryenTypeExnref())),
       BinaryenDrop(
         module,
-        BinaryenBlock(
-          module,
-          "try-block",
-          (BinaryenExpressionRef[]){
-            BinaryenBrOnExn(module,
-                            "try-block",
-                            "a-event",
-                            BinaryenLocalGet(module, 5, BinaryenTypeExnref())),
-            BinaryenRethrow(module, BinaryenPop(module, BinaryenTypeExnref()))},
-          2,
-          BinaryenTypeInt32()))},
+        BinaryenBlock(module,
+                      "try-block",
+                      (BinaryenExpressionRef[]){BinaryenRethrow(
+                        module,
+                        BinaryenBrOnExn(
+                          module,
+                          "try-block",
+                          "a-event",
+                          BinaryenLocalGet(module, 5, BinaryenTypeExnref())))},
+                      1,
+                      BinaryenTypeInt32()))},
     2,
     BinaryenTypeNone());
 

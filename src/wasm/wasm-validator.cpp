@@ -342,64 +342,6 @@ void FunctionValidator::noteLabelName(Name name) {
     "names in Binaryen IR must be unique - IR generators must ensure that");
 }
 
-// Validate correctness related to br_on_exn. br_on_exn is special: its argument
-// is an exnref value, and when it is taken, it pushes extracted values from
-// exnref, and if not, it re-pushes the exnref value onto the stack. To model
-// this value in binaryen AST, we calculate br_on_exn's type based on its
-// extracted event type, and the next instruction that takes re-pushed exnref
-// will get it from exnref.pop instruction instead. So within a block, if there
-// is a top-level br_on_exn (which is not dropped) and there is no exnref.pop
-// after that, that's a validation failure.
-struct BrOnExnValidator : public ExpressionStackWalker<BrOnExnValidator> {
-  BrOnExnValidator(Block* block) : block(block) {}
-
-  bool validate() {
-    bool brOnExnExists = false;
-    // To save time, scan top-level elements first before going into full
-    // walking
-    for (Index i = 0, e = block->list.size(); i < e; i++) {
-      Expression* child = block->list[i];
-      if (child->is<BrOnExn>()) {
-        brOnExnExists = true;
-        break;
-      }
-    }
-    if (!brOnExnExists) {
-      return true;
-    }
-    Expression* exp = block;
-    walk(exp);
-    return missingDrops == 0;
-  }
-
-  void visitBrOnExn(BrOnExn* curr) {
-    // Only check for top-level br_on_exns
-    if (getParent() == block) {
-      missingDrops++;
-    }
-  }
-
-  void visitPop(Pop* curr) {
-    // If this is nested within another block or loop, don't count it, because
-    // currently without multi-value we don't support block/loop taking a value
-    // from stack.
-    // TODO Fix it after multi-value support
-    for (int i = expressionStack.size() - 2; i >= 0; i--) {
-      Expression* exp = expressionStack[i];
-      if ((exp->is<Block>() || exp->is<Loop>()) && exp != block) {
-        return;
-      }
-    }
-    // We don't check for the case when there are more pops than necessary here
-    if (curr->type == exnref && missingDrops > 0) {
-      missingDrops--;
-    }
-  }
-
-  Block* block = nullptr;
-  unsigned missingDrops = 0;
-};
-
 void FunctionValidator::visitBlock(Block* curr) {
   // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
@@ -456,10 +398,6 @@ void FunctionValidator::visitBlock(Block* curr) {
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
-      // We validate br_on_exn later
-      if (curr->list[i]->is<BrOnExn>()) {
-        continue;
-      }
       if (!shouldBeTrue(
             !isConcreteType(curr->list[i]->type),
             curr,
@@ -499,12 +437,6 @@ void FunctionValidator::visitBlock(Block* curr) {
     shouldBeTrue(
       curr->list.size() > 0, curr, "block with a value must not be empty");
   }
-
-  BrOnExnValidator brOnExnVal(curr);
-  shouldBeTrue(brOnExnVal.validate(),
-               curr,
-               "br_on_exn's exnref value must be drop()ed "
-               "(binaryen's autodrop option might help you)");
 }
 
 void FunctionValidator::visitLoop(Loop* curr) {
@@ -1732,7 +1664,18 @@ void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
   shouldBeTrue(curr->exnref->type == unreachable ||
                  curr->exnref->type == exnref,
                curr,
-               "br_on_exn's argument must be exnref type");
+               "br_on_exn's argument must be unreachable or exnref type");
+  if (curr->exnref->type == unreachable) {
+    shouldBeTrue(curr->type == unreachable,
+                 curr,
+                 "If exnref argument's type is unreachable, br_on_exn should "
+                 "be unreachable too");
+  } else {
+    shouldBeTrue(curr->type == exnref,
+                 curr,
+                 "br_on_exn's type should be exnref unless its exnref argument "
+                 "is unreachable");
+  }
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

@@ -1386,13 +1386,10 @@
         )
         (drop
          (block $try-block (result i32)
-          (drop
+          (rethrow
            (br_on_exn $try-block $a-event
             (local.get $5)
            )
-          )
-          (rethrow
-           (exnref.pop)
           )
          )
         )
