@@ -58,8 +58,7 @@ jobs:
         - jsvu --os=linux64 --engines=spidermonkey,v8
       script:
         - set -o errexit
-        # Commented out for Travis CI debugging: will not be submitted
-        #- flake8
+        - flake8
         - ./clang-format-diff.sh
         # ensure generated parser is up to date
         - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
