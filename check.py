@@ -524,7 +524,7 @@ def run_unittest():
 
 
 TEST_SUITES = OrderedDict([
-  ('help', run_help_tests),
+  ('help-messages', run_help_tests),
   ('wasm-opt', run_wasm_opt_tests),
   ('asm2wasm', asm2wasm.test_asm2wasm),
   ('asm2wasm-binary', asm2wasm.test_asm2wasm_binary),
@@ -547,6 +547,11 @@ TEST_SUITES = OrderedDict([
 
 # Run all the tests
 def main():
+  if options.list_suites:
+    for suite in TEST_SUITES.keys():
+      print(suite)
+    return 0
+
   for test in requested or TEST_SUITES.keys():
     TEST_SUITES[test]()
 

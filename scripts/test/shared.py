@@ -69,8 +69,12 @@ def parse_args(args):
       '--spec-test', action='append', nargs='*', default=[], dest='spec_tests',
       help='Names specific spec tests to run.')
   parser.add_argument(
-      'positional_args', metavar='tests', nargs=argparse.REMAINDER,
-      help='Names specific test suites to run.')
+      'positional_args', metavar='TEST_SUITE', nargs='*',
+      help=('Names specific test suites to run. Use --list-suites to see a '
+            'list of all test suites'))
+  parser.add_argument(
+      '--list-suites', action='store_true',
+      help='List the test suites that can be run.')
 
   return parser.parse_args(args)
 
@@ -85,7 +89,7 @@ warnings = []
 def warn(text):
   global warnings
   warnings.append(text)
-  print('warning:', text)
+  print('warning:', text, file=sys.stderr)
 
 
 # setup
