@@ -255,6 +255,10 @@ def run_wasm_metadce_tests():
 
 
 def run_wasm_reduce_tests():
+  if not has_shell_timeout():
+    print('\n[ skipping wasm-reduce testcases]\n')
+    return
+
   print('\n[ checking wasm-reduce testcases]\n')
 
   # fixed testcases
@@ -413,6 +417,10 @@ def run_validator_tests():
 
 
 def run_vanilla_tests():
+  if not (has_vanilla_emcc and has_vanilla_llvm and 0):
+    print('\n[ skipping emcc WASM_BACKEND testcases...]\n')
+    return
+
   print('\n[ checking emcc WASM_BACKEND testcases...]\n')
 
   try:
@@ -533,13 +541,13 @@ TEST_SUITES = OrderedDict([
   ('dylink', run_dylink_tests),
   ('ctor-eval', run_ctor_eval_tests),
   ('wasm-metadce', run_wasm_metadce_tests),
-  ('wasm-reduce', lambda: run_wasm_reduce_tests() if has_shell_timeout() else None),
+  ('wasm-reduce', run_wasm_reduce_tests),
   ('spec', run_spec_tests),
   ('binaryenjs', binaryenjs.test_binaryen_js),
   ('lld', lld.test_wasm_emscripten_finalize),
   ('wasm2js', wasm2js.test_wasm2js),
   ('validator', run_validator_tests),
-  ('vanilla', lambda: run_vanilla_tests() if has_vanilla_emcc and has_vanilla_llvm and 0 else None),
+  ('vanilla', run_vanilla_tests),
   ('gcc', run_gcc_tests),
   ('unit', run_unittest),
 ])
