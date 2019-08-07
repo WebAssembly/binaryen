@@ -18,12 +18,13 @@ import os
 import shutil
 import subprocess
 import sys
+from collections import OrderedDict
 
 from scripts.test.support import run_command, split_wast, write_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS,
     WASM_CTOR_EVAL, WASM_REDUCE, WASM_METADCE, BINARYEN_INSTALL_DIR,
-    BINARYEN_JS, has_shell_timeout, options)
+    BINARYEN_JS, has_shell_timeout, options, requested)
 
 from scripts.test import lld
 from scripts.test import wasm2js
@@ -328,18 +329,29 @@ def update_reduce_tests():
       run_command(WASM_DIS + ['c.wasm', '-o', expected])
 
 
+TEST_SUITES = OrderedDict([
+  ('wasm-opt', update_wasm_opt_tests),
+  ('asm2wasm', update_asm_js_tests),
+  ('wasm-dis', update_wasm_dis_tests),
+  ('example', update_example_tests),
+  ('ctor-eval', update_ctor_eval_tests),
+  ('wasm-metadce', update_metadce_tests),
+  ('wasm-reduce', update_reduce_tests),
+  ('binaryenjs', update_binaryen_js_tests),
+  ('lld', lld.update_lld_tests),
+  ('wasm2js', wasm2js.update_wasm2js_tests),
+  ('binfmt', update_bin_fmt_tests),
+])
+
+
 def main():
-  update_asm_js_tests()
-  lld.update_lld_tests()
-  update_wasm_opt_tests()
-  update_bin_fmt_tests()
-  update_example_tests()
-  update_wasm_dis_tests()
-  update_ctor_eval_tests()
-  wasm2js.update_wasm2js_tests()
-  update_metadce_tests()
-  update_reduce_tests()
-  update_binaryen_js_tests()
+  if options.list_suites:
+    for suite in TEST_SUITES.keys():
+      print(suite)
+    return 0
+
+  for test in requested or TEST_SUITES.keys():
+    TEST_SUITES[test]()
 
   print('\n[ success! ]')
 
