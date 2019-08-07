@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function
+
 import argparse
 import difflib
 import glob
@@ -41,13 +43,6 @@ def parse_args(args):
       action='store_false',
       help=('If set, the whole test suite will run to completion independent of'
             ' earlier errors.'))
-  parser.add_argument(
-      '--run-gcc-tests', dest='run_gcc_tests', action='store_true', default=True,
-      help=('Chooses whether to run the tests that require building with native'
-            ' GCC. Default: true.'))
-  parser.add_argument(
-      '--no-run-gcc-tests', dest='run_gcc_tests', action='store_false',
-      help='If set, disables the native GCC tests.')
 
   parser.add_argument(
       '--interpreter', dest='interpreter', default='',
@@ -73,8 +68,15 @@ def parse_args(args):
       help=('If specified, all unfreed (but still referenced) pointers at the'
             ' end of execution are considered memory leaks. Default: disabled.'))
   parser.add_argument(
-      'positional_args', metavar='tests', nargs=argparse.REMAINDER,
-      help='Names specific tests to run.')
+      '--spec-test', action='append', nargs='*', default=[], dest='spec_tests',
+      help='Names specific spec tests to run.')
+  parser.add_argument(
+      'positional_args', metavar='TEST_SUITE', nargs='*',
+      help=('Names specific test suites to run. Use --list-suites to see a '
+            'list of all test suites'))
+  parser.add_argument(
+      '--list-suites', action='store_true',
+      help='List the test suites that can be run.')
 
   return parser.parse_args(args)
 
@@ -89,7 +91,7 @@ warnings = []
 def warn(text):
   global warnings
   warnings.append(text)
-  print('warning:', text)
+  print('warning:', text, file=sys.stderr)
 
 
 # setup
