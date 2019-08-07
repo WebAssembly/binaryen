@@ -343,6 +343,7 @@ TEST_SUITES = OrderedDict([
   ('binfmt', update_bin_fmt_tests),
 ])
 
+
 def main():
   if options.list_suites:
     for suite in TEST_SUITES.keys():
