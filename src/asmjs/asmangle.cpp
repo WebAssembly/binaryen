@@ -20,6 +20,12 @@
 namespace wasm {
 
 std::string asmangle(std::string name) {
+  // Wasm allows empty names as exports etc., but JS doesn't allow such
+  // identifiers.
+  if (name.empty()) {
+    name = "$";
+  }
+
   bool mightBeKeyword = true;
   size_t i = 1;
 
