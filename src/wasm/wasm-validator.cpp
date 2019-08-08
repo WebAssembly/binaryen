@@ -1775,8 +1775,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
 
 static void validateExports(Module& module, ValidationInfo& info) {
   for (auto& curr : module.exports) {
-    info.shouldBeTrue(
-      curr->name != "", curr->name, "export name must not be empty");
+    info.shouldBeTrue(curr->name != "", curr->name, "export name must not be empty");
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
         Function* f = module.getFunction(curr->value);
