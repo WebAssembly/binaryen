@@ -24,7 +24,7 @@ namespace ExpressionManipulator {
 
 Expression*
 flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
-  struct Copier : public Visitor<Copier, Expression*> {
+  struct Copier : public OverriddenVisitor<Copier, Expression*> {
     Module& wasm;
     CustomCopier custom;
 
@@ -41,7 +41,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       if (ret) {
         return ret;
       }
-      return Visitor<Copier, Expression*>::visit(curr);
+      return OverriddenVisitor<Copier, Expression*>::visit(curr);
     }
 
     Expression* visitBlock(Block* curr) {
@@ -223,6 +223,8 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     Expression* visitUnreachable(Unreachable* curr) {
       return builder.makeUnreachable();
     }
+    Expression* visitPush(Push* curr) { return builder.makePush(curr->value); }
+    Expression* visitPop(Pop* curr) { return builder.makePop(curr->type); }
   };
 
   Copier copier(wasm, custom);
