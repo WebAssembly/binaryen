@@ -107,6 +107,9 @@ void PassRegistry::registerPasses() {
     "directize", "turns indirect calls into direct ones", createDirectizePass);
   registerPass(
     "dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
+  registerPass("duplicate-import-elimination",
+               "removes duplicate imports",
+               createDuplicateImportEliminationPass);
   registerPass("duplicate-function-elimination",
                "removes duplicate functions",
                createDuplicateFunctionEliminationPass);
@@ -412,6 +415,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
   // optimizations show more functions as duplicate
   add("duplicate-function-elimination");
+  add("duplicate-import-elimination");
   add("simplify-globals");
   add("remove-unused-module-elements");
   add("memory-packing");

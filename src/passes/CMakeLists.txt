@@ -16,6 +16,7 @@ SET(passes_SOURCES
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
   Directize.cpp
+  DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
   Flatten.cpp
