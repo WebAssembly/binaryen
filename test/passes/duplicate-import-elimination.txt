@@ -1,0 +1,12 @@
+(module
+ (type $FUNCSIG$v (func))
+ (import "env" "waka" (func $foo))
+ (table $0 2 2 funcref)
+ (elem (i32.const 0) $foo $foo)
+ (export "baz" (func $0))
+ (start $foo)
+ (func $0 (; 1 ;) (type $FUNCSIG$v)
+  (call $foo)
+  (call $foo)
+ )
+)
