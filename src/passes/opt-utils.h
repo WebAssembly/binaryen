@@ -57,7 +57,7 @@ inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs,
 struct CallTargetReplacer : public WalkerPass<PostWalker<CallTargetReplacer>> {
   bool isFunctionParallel() override { return true; }
 
-  using MaybeReplace = std::function<void (Name&)>;
+  using MaybeReplace = std::function<void(Name&)>;
 
   CallTargetReplacer(MaybeReplace maybeReplace) : maybeReplace(maybeReplace) {}
 
@@ -65,9 +65,7 @@ struct CallTargetReplacer : public WalkerPass<PostWalker<CallTargetReplacer>> {
     return new CallTargetReplacer(maybeReplace);
   }
 
-  void visitCall(Call* curr) {
-    maybeReplace(curr->target);
-  }
+  void visitCall(Call* curr) { maybeReplace(curr->target); }
 
 private:
   MaybeReplace maybeReplace;
