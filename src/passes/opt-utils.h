@@ -74,7 +74,9 @@ private:
   std::map<Name, Name>* replacements;
 };
 
-inline void replaceFunctions(PassRunner* runner, Module& module, std::map<Name, Name>& replacements) {
+inline void replaceFunctions(PassRunner* runner,
+                             Module& module,
+                             std::map<Name, Name>& replacements) {
   // replace direct calls
   CallTargetReplacer(&replacements).run(runner, &module);
   // replace in table
