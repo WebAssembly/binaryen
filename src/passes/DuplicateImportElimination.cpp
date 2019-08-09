@@ -33,6 +33,7 @@ struct DuplicateImportElimination : public Pass {
     ImportInfo imports(*module);
     std::map<Name, Name> replacements;
     std::map<std::pair<Name, Name>, Name> seen;
+    std::vector<Name> toRemove;
     for (auto* func : imports.importedFunctions) {
       auto pair = std::make_pair(func->module, func->base);
       auto iter = seen.find(pair);
@@ -42,8 +43,8 @@ struct DuplicateImportElimination : public Pass {
         // It is ok to import the same thing with multiple types; we can only
         // merge if the types match, of course.
         if (getSig(previousFunc) == getSig(func)) {
-          module->removeFunction(func->name);
           replacements[func->name] = previousName;
+          toRemove.push_back(func->name);
           continue;
         }
       }
@@ -52,6 +53,9 @@ struct DuplicateImportElimination : public Pass {
     if (!replacements.empty()) {
       module->updateMaps();
       OptUtils::replaceFunctions(runner, *module, replacements);
+      for (auto name : toRemove) {
+        module->removeFunction(name);
+      }
     }
   }
 };
