@@ -17,6 +17,7 @@
 #ifndef wasm_passes_opt_utils_h
 #define wasm_passes_opt_utils_h
 
+#include <functional>
 #include <unordered_set>
 
 #include <pass.h>
@@ -56,35 +57,33 @@ inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs,
 struct CallTargetReplacer : public WalkerPass<PostWalker<CallTargetReplacer>> {
   bool isFunctionParallel() override { return true; }
 
-  CallTargetReplacer(const std::map<Name, Name>& replacements)
-    : replacements(replacements) {}
+  using MaybeReplace = std::function<void (Name&)>;
+
+  CallTargetReplacer(MaybeReplace maybeReplace) : maybeReplace(maybeReplace) {}
 
   CallTargetReplacer* create() override {
-    return new CallTargetReplacer(replacements);
+    return new CallTargetReplacer(maybeReplace);
   }
 
   void visitCall(Call* curr) {
-    auto iter = replacements.find(curr->target);
-    if (iter != replacements.end()) {
-      curr->target = iter->second;
-    }
+    maybeReplace(curr->target);
   }
 
 private:
-  const std::map<Name, Name>& replacements;
+  MaybeReplace maybeReplace;
 };
 
 inline void replaceFunctions(PassRunner* runner,
                              Module& module,
-                             std::map<Name, Name>& replacements) {
-  // replace direct calls
-  CallTargetReplacer(replacements).run(runner, &module);
+                             const std::map<Name, Name>& replacements) {
   auto maybeReplace = [&](Name& name) {
     auto iter = replacements.find(name);
     if (iter != replacements.end()) {
       name = iter->second;
     }
   };
+  // replace direct calls
+  CallTargetReplacer(maybeReplace).run(runner, &module);
   // replace in table
   for (auto& segment : module.table.segments) {
     for (auto& name : segment.data) {
