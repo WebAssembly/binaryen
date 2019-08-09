@@ -195,11 +195,6 @@ int main(int argc, const char* argv[]) {
   generator.fixInvokeFunctionNames();
   generator.fixEmAsm();
 
-  if (options.debug) {
-    std::cerr << "Module after:\n";
-    WasmPrinter::printModule(&wasm, std::cerr);
-  }
-
   std::vector<Name> initializerFunctions;
 
   if (wasm.table.imported()) {
