@@ -20,6 +20,7 @@
 // TODO: non-function imports too
 //
 
+#include "asm_v_wasm.h"
 #include "ir/import-utils.h"
 #include "opt-utils.h"
 #include "pass.h"
@@ -36,11 +37,17 @@ struct DuplicateImportElimination : public Pass {
       auto pair = std::make_pair(func->module, func->base);
       auto iter = seen.find(pair);
       if (iter != seen.end()) {
-        module->removeFunction(func->name);
-        replacements[func->name] = iter->second;
-      } else {
-        seen[pair] = func->name;
+        auto previousName = iter->second;
+        auto previousFunc = module->getFunction(previousName);
+        // It is ok to import the same thing with multiple types; we can only
+        // merge if the types match, of course.
+        if (getSig(previousFunc) == getSig(func)) {
+          module->removeFunction(func->name);
+          replacements[func->name] = previousName;
+          continue;
+        }
       }
+      seen[pair] = func->name;
     }
     if (!replacements.empty()) {
       module->updateMaps();
