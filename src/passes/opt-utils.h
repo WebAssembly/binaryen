@@ -56,7 +56,7 @@ inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs,
 struct CallTargetReplacer : public WalkerPass<PostWalker<CallTargetReplacer>> {
   bool isFunctionParallel() override { return true; }
 
-  CallTargetReplacer(std::map<Name, Name>* replacements)
+  CallTargetReplacer(const std::map<Name, Name>& replacements)
     : replacements(replacements) {}
 
   CallTargetReplacer* create() override {
@@ -64,43 +64,40 @@ struct CallTargetReplacer : public WalkerPass<PostWalker<CallTargetReplacer>> {
   }
 
   void visitCall(Call* curr) {
-    auto iter = replacements->find(curr->target);
-    if (iter != replacements->end()) {
+    auto iter = replacements.find(curr->target);
+    if (iter != replacements.end()) {
       curr->target = iter->second;
     }
   }
 
 private:
-  std::map<Name, Name>* replacements;
+  const std::map<Name, Name>& replacements;
 };
 
 inline void replaceFunctions(PassRunner* runner,
                              Module& module,
                              std::map<Name, Name>& replacements) {
   // replace direct calls
-  CallTargetReplacer(&replacements).run(runner, &module);
+  CallTargetReplacer(replacements).run(runner, &module);
+  auto maybeReplace = [&](Name& name) {
+    auto iter = replacements.find(name);
+    if (iter != replacements.end()) {
+      name = iter->second;
+    }
+  };
   // replace in table
   for (auto& segment : module.table.segments) {
     for (auto& name : segment.data) {
-      auto iter = replacements.find(name);
-      if (iter != replacements.end()) {
-        name = iter->second;
-      }
+      maybeReplace(name);
     }
   }
   // replace in start
   if (module.start.is()) {
-    auto iter = replacements.find(module.start);
-    if (iter != replacements.end()) {
-      module.start = iter->second;
-    }
+    maybeReplace(module.start);
   }
   // replace in exports
   for (auto& exp : module.exports) {
-    auto iter = replacements.find(exp->value);
-    if (iter != replacements.end()) {
-      exp->value = iter->second;
-    }
+    maybeReplace(exp->value);
   }
 }
 
