@@ -681,6 +681,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ExceptionHandlingFeature;
       case FeatureSet::TailCall:
         return BinaryConsts::UserSections::TailCallFeature;
+      case FeatureSet::ReferenceTypes:
+        return BinaryConsts::UserSections::ReferenceTypesFeature;
       default:
         WASM_UNREACHABLE();
     }
@@ -1085,6 +1087,8 @@ Type WasmBinaryBuilder::getType() {
       return f64;
     case BinaryConsts::EncodedType::v128:
       return v128;
+    case BinaryConsts::EncodedType::anyref:
+      return anyref;
     case BinaryConsts::EncodedType::exnref:
       return exnref;
     default: { throwError("invalid wasm type: " + std::to_string(type)); }
@@ -2167,6 +2171,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setSIMD();
       } else if (name == BinaryConsts::UserSections::TailCallFeature) {
         wasm.features.setTailCall();
+      } else if (name == BinaryConsts::UserSections::ReferenceTypesFeature) {
+        wasm.features.setReferenceTypes();
       }
     }
   }

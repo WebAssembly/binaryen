@@ -29,6 +29,9 @@ class FeatureValidationTest(BinaryenTestCase):
     def check_tail_call(self, module, error):
         self.check_feature(module, error, '--enable-tail-call')
 
+    def check_reference_types(self, module, error):
+        self.check_feature(module, error, '--enable-reference-types')
+
     def test_v128_signature(self):
         module = '''
         (module
@@ -144,6 +147,24 @@ class FeatureValidationTest(BinaryenTestCase):
         '''
         self.check_tail_call(module, 'return_call_indirect requires tail calls to be enabled')
 
+    def test_reference_types_anyref(self):
+        module = '''
+        (module
+         (import "env" "test1" (func $test1 (param anyref) (result anyref)))
+         (import "env" "test2" (global $test2 anyref))
+         (export "test1" (func $test1 (param anyref) (result anyref)))
+         (export "test2" (global $test2))
+         (func $anyref_test (param $0 anyref) (result anyref)
+          (return
+           (call $test1
+            (local.get $0)
+           )
+          )
+         )
+        )
+        '''
+        self.check_reference_types(module, 'all used types should be allowed')
+
     def test_exnref_local(self):
         module = '''
         (module
@@ -210,6 +231,12 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
         self.check_features(filename, ['tail-call'])
         self.assertIn('return_call', self.disassemble(filename))
 
+    def test_reference_types(self):
+        filename = 'reference_types_target_feature.wasm'
+        self.roundtrip(filename)
+        self.check_features(filename, ['reference-types'])
+        self.assertIn('anyref', self.disassemble(filename))
+
     def test_exception_handling(self):
         filename = 'exception_handling_target_feature.wasm'
         self.roundtrip(filename)
@@ -243,7 +270,7 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
 
     def test_emit_all_features(self):
         p = run_process(WASM_OPT + ['--emit-target-features', '-all', '-o', '-'],
-                        input="(module)", check=False, capture_output=True)
+                        input="(module)", check=False, capture_output=True, decode_output=False)
         self.assertEqual(p.returncode, 0)
         p2 = run_process(WASM_OPT + ['--print-features', '-o', os.devnull],
                          input=p.stdout, check=False, capture_output=True)
@@ -256,5 +283,6 @@ class TargetFeaturesSectionTest(BinaryenTestCase):
             '--enable-nontrapping-float-to-int',
             '--enable-sign-ext',
             '--enable-simd',
-            '--enable-tail-call'
+            '--enable-tail-call',
+            '--enable-reference-types'
         ], p2.stdout.split())

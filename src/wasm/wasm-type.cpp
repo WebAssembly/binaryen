@@ -36,6 +36,8 @@ const char* printType(Type type) {
       return "f64";
     case Type::v128:
       return "v128";
+    case Type::anyref:
+      return "anyref";
     case Type::exnref:
       return "exnref";
     case Type::unreachable:
@@ -56,6 +58,7 @@ unsigned getTypeSize(Type type) {
       return 8;
     case Type::v128:
       return 16;
+    case Type::anyref: // anyref type is opaque
     case Type::exnref: // exnref type is opaque
     case Type::none:
     case Type::unreachable:
@@ -65,13 +68,16 @@ unsigned getTypeSize(Type type) {
 }
 
 FeatureSet getFeatures(Type type) {
-  if (type == v128) {
-    return FeatureSet::SIMD;
+  switch (type) {
+    case v128:
+      return FeatureSet::SIMD;
+    case anyref:
+      return FeatureSet::ReferenceTypes;
+    case exnref:
+      return FeatureSet::ExceptionHandling;
+    default:
+      return FeatureSet();
   }
-  if (type == exnref) {
-    return FeatureSet::ExceptionHandling;
-  }
-  return FeatureSet();
 }
 
 Type getType(unsigned size, bool float_) {
@@ -117,8 +123,13 @@ bool isFloatType(Type type) {
 bool isVectorType(Type type) { return type == v128; }
 
 bool isReferenceType(Type type) {
-  // TODO Add other reference types later
-  return type == exnref;
+  switch (type) {
+    case anyref:
+    case exnref:
+      return true;
+    default:
+      return false;
+  }
 }
 
 Type reinterpretType(Type type) {
@@ -132,6 +143,7 @@ Type reinterpretType(Type type) {
     case Type::f64:
       return i64;
     case Type::v128:
+    case Type::anyref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:

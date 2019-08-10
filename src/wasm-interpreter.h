@@ -1142,6 +1142,7 @@ public:
           return Literal(load64u(addr)).castToF64();
         case v128:
           return Literal(load128(addr).data());
+        case anyref: // anyref cannot be loaded from memory
         case exnref: // exnref cannot be loaded from memory
         case none:
         case unreachable:
@@ -1196,6 +1197,7 @@ public:
         case v128:
           store128(addr, value.getv128());
           break;
+        case anyref: // anyref cannot be stored from memory
         case exnref: // exnref cannot be stored in memory
         case none:
         case unreachable:

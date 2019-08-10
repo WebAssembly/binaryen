@@ -313,14 +313,14 @@ class Py2CalledProcessError(subprocess.CalledProcessError):
         self.stderr = stderr
 
 
-def run_process(cmd, check=True, input=None, capture_output=False, *args, **kw):
+def run_process(cmd, check=True, input=None, capture_output=False, decode_output=True, *args, **kw):
     if input and type(input) == str:
         input = bytes(input, 'utf-8')
     if capture_output:
         kw['stdout'] = subprocess.PIPE
         kw['stderr'] = subprocess.PIPE
     ret = subprocess.run(cmd, check=check, input=input, *args, **kw)
-    if ret.stdout is not None:
+    if decode_output and ret.stdout is not None:
         ret.stdout = ret.stdout.decode('utf-8')
     if ret.stderr is not None:
         ret.stderr = ret.stderr.decode('utf-8')

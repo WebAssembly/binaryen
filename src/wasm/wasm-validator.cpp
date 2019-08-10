@@ -1134,6 +1134,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       shouldBeEqual(
         bytes, uint8_t(16), curr, "expected v128 operation to touch 16 bytes");
       break;
+    case anyref: // anyref cannot be stored in memory
     case exnref: // exnref cannot be stored in memory
     case none:
       WASM_UNREACHABLE();
@@ -1788,6 +1789,7 @@ void FunctionValidator::validateAlignment(
     case v128:
     case unreachable:
       break;
+    case anyref: // anyref cannot be stored in memory
     case exnref: // exnref cannot be stored in memory
     case none:
       WASM_UNREACHABLE();

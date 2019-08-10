@@ -155,6 +155,7 @@ void test_types() {
   printf("BinaryenTypeFloat32: %d\n", BinaryenTypeFloat32());
   printf("BinaryenTypeFloat64: %d\n", BinaryenTypeFloat64());
   printf("BinaryenTypeVec128: %d\n", BinaryenTypeVec128());
+  printf("BinaryenTypeAnyref: %d\n", BinaryenTypeAnyref());
   printf("BinaryenTypeExnref: %d\n", BinaryenTypeExnref());
   printf("BinaryenTypeUnreachable: %d\n", BinaryenTypeUnreachable());
   printf("BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
