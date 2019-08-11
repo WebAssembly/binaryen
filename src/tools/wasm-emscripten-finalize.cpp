@@ -229,7 +229,7 @@ int main(int argc, const char* argv[]) {
       initializerFunctions.push_back(F->name);
     }
     if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-      initializerFunctions.push_back(e->value);
+      initializerFunctions.push_back(e->name);
     }
   }
 

@@ -383,7 +383,7 @@ The `check.py` script supports some options:
  * If an interpreter is provided, we run the output through it, checking for
    parse errors.
  * If tests are provided, we run exactly those. If none are provided, we run
-   them all.
+   them all. To see what tests are available, run `./check.py --list-suites`.
  * Some tests require `emcc` or `nodejs` in the path. They will not run if the
    tool cannot be found, and you'll see a warning.
  * We have tests from upstream in `tests/spec`, in git submodules. Running

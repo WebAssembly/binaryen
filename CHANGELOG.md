@@ -15,10 +15,21 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- wasm-emscripten-finalize: Don't realy on name section being present in the
+  input. Use the exported names for things instead.
+
+v88
+---
+
 - wasm-emscripten-finalize: For -pie binaries that import a mutable stack
   pointer we internalize this an import it as immutable.
 - The `tail-call` feature including the `return_call` and `return_call_indirect`
   instructions is ready to use.
+
+v87
+---
+
+- Rename Bysyncify => Asyncify
 
 v86
 ---

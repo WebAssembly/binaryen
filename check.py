@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import unittest
+from collections import OrderedDict
 
 from scripts.test.support import run_command, split_wast, write_wast
 from scripts.test.shared import (
@@ -254,6 +255,10 @@ def run_wasm_metadce_tests():
 
 
 def run_wasm_reduce_tests():
+  if not has_shell_timeout():
+    print('\n[ skipping wasm-reduce testcases]\n')
+    return
+
   print('\n[ checking wasm-reduce testcases]\n')
 
   # fixed testcases
@@ -285,13 +290,13 @@ def run_wasm_reduce_tests():
 def run_spec_tests():
   print('\n[ checking wasm-shell spec testcases... ]\n')
 
-  if len(requested) == 0:
+  if not options.spec_tests:
     # FIXME we support old and new memory formats, for now, until 0xc, and so can't pass this old-style test.
     BLACKLIST = ['binary.wast']
     # FIXME to update the spec to 0xd, we need to implement (register "name") for import.wast
     spec_tests = [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'spec'))) if t not in BLACKLIST]
   else:
-    spec_tests = requested[:]
+    spec_tests = options.spec_tests[:]
 
   for t in spec_tests:
     if t.startswith('spec') and t.endswith('.wast'):
@@ -412,6 +417,10 @@ def run_validator_tests():
 
 
 def run_vanilla_tests():
+  if not (has_vanilla_emcc and has_vanilla_llvm and 0):
+    print('\n[ skipping emcc WASM_BACKEND testcases...]\n')
+    return
+
   print('\n[ checking emcc WASM_BACKEND testcases...]\n')
 
   try:
@@ -522,30 +531,37 @@ def run_unittest():
     raise Exception("unittest failed")
 
 
+TEST_SUITES = OrderedDict([
+  ('help-messages', run_help_tests),
+  ('wasm-opt', run_wasm_opt_tests),
+  ('asm2wasm', asm2wasm.test_asm2wasm),
+  ('asm2wasm-binary', asm2wasm.test_asm2wasm_binary),
+  ('wasm-dis', run_wasm_dis_tests),
+  ('crash', run_crash_tests),
+  ('dylink', run_dylink_tests),
+  ('ctor-eval', run_ctor_eval_tests),
+  ('wasm-metadce', run_wasm_metadce_tests),
+  ('wasm-reduce', run_wasm_reduce_tests),
+  ('spec', run_spec_tests),
+  ('binaryenjs', binaryenjs.test_binaryen_js),
+  ('lld', lld.test_wasm_emscripten_finalize),
+  ('wasm2js', wasm2js.test_wasm2js),
+  ('validator', run_validator_tests),
+  ('vanilla', run_vanilla_tests),
+  ('gcc', run_gcc_tests),
+  ('unit', run_unittest),
+])
+
+
 # Run all the tests
 def main():
-  run_help_tests()
-  run_wasm_opt_tests()
-  asm2wasm.test_asm2wasm()
-  asm2wasm.test_asm2wasm_binary()
-  run_wasm_dis_tests()
-  run_crash_tests()
-  run_dylink_tests()
-  run_ctor_eval_tests()
-  run_wasm_metadce_tests()
-  if has_shell_timeout():
-    run_wasm_reduce_tests()
-  run_spec_tests()
-  binaryenjs.test_binaryen_js()
-  lld.test_wasm_emscripten_finalize()
-  wasm2js.test_wasm2js()
-  run_validator_tests()
-  if has_vanilla_emcc and has_vanilla_llvm and 0:
-    run_vanilla_tests()
-  print('\n[ checking example testcases... ]\n')
-  if options.run_gcc_tests:
-    run_gcc_tests()
-  run_unittest()
+  if options.list_suites:
+    for suite in TEST_SUITES.keys():
+      print(suite)
+    return 0
+
+  for test in requested or TEST_SUITES.keys():
+    TEST_SUITES[test]()
 
   # Check/display the results
   if shared.num_failures == 0:
