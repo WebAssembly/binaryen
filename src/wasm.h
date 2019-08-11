@@ -1046,11 +1046,11 @@ public:
   Name event;
   Expression* exnref;
   // This is duplicate info of param types stored in Event, but this is required
-  // when BrOnExn expression is refinalized independently without modules.
+  // for us to know the type of the value sent to the target block.
   std::vector<Type> eventParams;
 
   void finalize();
-  Type getSingleEventType();
+  Type getSingleSentType();
 };
 
 // Globals

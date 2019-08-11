@@ -1660,7 +1660,7 @@ void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
   shouldBeTrue(event->params == curr->eventParams,
                curr,
                "br_on_exn's event params and event's params are different");
-  noteBreak(curr->name, curr->getSingleEventType(), curr);
+  noteBreak(curr->name, curr->getSingleSentType(), curr);
   shouldBeTrue(curr->exnref->type == unreachable ||
                  curr->exnref->type == exnref,
                curr,

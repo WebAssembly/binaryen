@@ -214,7 +214,7 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitBrOnExn(BrOnExn* curr) {
     if (curr->name == targetName) {
-      types.push_back(curr->getSingleEventType());
+      types.push_back(curr->getSingleSentType());
     }
   }
 
@@ -882,10 +882,13 @@ void BrOnExn::finalize() {
   }
 }
 
-// Currently we don't support multi value return from a block, we pick the
-// type of the first param from the event.
+// br_on_exn's type is exnref, which it pushes onto the stack when it is not
+// taken, but the type of the value it pushes onto the stack when it is taken
+// should be the event type. So this is the type we 'send' to the block end when
+// it is taken. Currently we don't support multi value return from a block, we
+// pick the type of the first param from the event.
 // TODO Remove this function and generalize event type after multi-value support
-Type BrOnExn::getSingleEventType() {
+Type BrOnExn::getSingleSentType() {
   return eventParams.empty() ? none : eventParams.front();
 }
 

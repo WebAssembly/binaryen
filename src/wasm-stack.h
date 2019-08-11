@@ -318,7 +318,6 @@ template<typename SubType> void BinaryenIRWriter<SubType>::visitIf(If* curr) {
     return;
   }
   emit(curr);
-  // TODO: emit block contents directly, if possible
   visitPossibleBlockContents(curr->ifTrue);
 
   if (curr->ifFalse) {
@@ -672,7 +671,6 @@ void BinaryenIRWriter<SubType>::visitHost(Host* curr) {
 
 template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   emit(curr);
-  // TODO: emit block contents directly, if possible
   visitPossibleBlockContents(curr->body);
   emitCatch(curr);
   visitPossibleBlockContents(curr->catchBody);
