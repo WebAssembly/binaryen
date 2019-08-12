@@ -45,13 +45,13 @@ jobs:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['cmake', 'g++-5']
+          packages: ['cmake', 'g++-5', 'python3-pip']
       before_install:
         - export ASAN_OPTIONS="symbolize=1"
       install:
         - nvm install 10
         - nvm use 10
-        - python3 -m pip install --user flake8==3.7.8
+        - pip3 install --user flake8==3.7.8
         # get jsvu in order to get more js engines
         - npm install jsvu -g
         - export PATH="${HOME}/.jsvu:${PATH}"
