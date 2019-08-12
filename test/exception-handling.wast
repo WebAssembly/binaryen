@@ -30,7 +30,7 @@
       )
     )
 
-    ;; Try-catch empty bodies test
+    ;; Empty try body
     (try
       (catch
         (drop (exnref.pop))

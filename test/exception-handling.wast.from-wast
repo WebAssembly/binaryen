@@ -35,5 +35,13 @@
     )
    )
   )
+  (try
+   (nop)
+   (catch
+    (drop
+     (exnref.pop)
+    )
+   )
+  )
  )
 )
