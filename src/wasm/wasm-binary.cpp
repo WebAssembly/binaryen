@@ -2493,7 +2493,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
   auto start = expressionStack.size();
 
   Builder builder(wasm);
-  for (unsigned i = 0; i < numPops ; i++) {
+  for (unsigned i = 0; i < numPops; i++) {
     auto* pop = builder.makePop(exnref);
     expressionStack.push_back(pop);
   }
