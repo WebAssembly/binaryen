@@ -31,12 +31,10 @@
     )
 
     ;; Try-catch empty bodies test
-    ;; This fails to validate now presumably due to a v8 bug:
-    ;; https://bugs.chromium.org/p/v8/issues/detail?id=9584
-    ;; TODO Enable this test later
-    ;; (try
-    ;;   (catch
-    ;;   )
-    ;; )
+    (try
+      (catch
+        (drop (exnref.pop))
+      )
+    )
   )
 )
