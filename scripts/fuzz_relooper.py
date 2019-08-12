@@ -18,13 +18,15 @@
 This fuzzes the relooper using the C API.
 '''
 
+from __future__ import print_function
+
 import difflib
 import os
 import random
 import subprocess
 import time
 
-seed_init = long(time.time())
+seed_init = int(time.time())
 seed_init *= seed_init
 seed_init %= (2**32)
 
@@ -78,7 +80,7 @@ while True:
     branches[i] = b
     branch_codes[i] = [random_code() for item in range(len(b) + 1)]  # one for each branch, plus the default
   optimize = random.random() < 0.5
-  print counter, ':', num, density, optimize, code_likelihood, code_max, max_printed, ', seed =', seed
+  print(counter, ':', num, density, optimize, code_likelihood, code_max, max_printed, ', seed =', seed)
   counter += 1
 
   for temp in ['fuzz.wasm', 'fuzz.wast', 'fast.txt', 'fuzz.slow.js',
@@ -360,28 +362,28 @@ int main() {
   open('fuzz.slow.js', 'w').write(slow)
   open('fuzz.c', 'w').write(fast)
 
-  print '.'
+  print('.')
   cmd = [os.environ.get('CC') or 'gcc', 'fuzz.c', '-Isrc',
          '-lbinaryen', '-lasmjs',
          '-lsupport', '-Llib/.', '-pthread', '-o', 'fuzz']
   subprocess.check_call(cmd)
-  print '^'
+  print('^')
   subprocess.check_call(['./fuzz'], stdout=open('fuzz.wast', 'w'))
-  print '*'
+  print('*')
   fast_out = subprocess.Popen(['bin/wasm-shell', 'fuzz.wast'],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE).communicate()[0]
-  print '-'
+  print('-')
   node = os.getenv('NODE', 'nodejs')
   slow_out = subprocess.Popen([node, 'fuzz.slow.js'],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE).communicate()[0]
-  print '_'
+  print('_')
 
   if slow_out != fast_out:
-    print ''.join([a.rstrip() + '\n' for a in difflib.unified_diff(
+    print(''.join([a.rstrip() + '\n' for a in difflib.unified_diff(
           slow_out.split('\n'),
           fast_out.split('\n'),
           fromfile='slow',
-          tofile='fast')])
+          tofile='fast')]))
     assert False

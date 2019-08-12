@@ -25,6 +25,8 @@ Usage: Provide a base filename for a runnable program, e.g. a.out.js.
        Other parameters after the first are used when calling the program.
 '''
 
+from __future__ import print_function
+
 import os
 import random
 import shutil
@@ -50,19 +52,19 @@ PASSES = [
 
 base = sys.argv[1]
 wast = base[:-3] + '.wast'
-print '>>> base program:', base, ', wast:', wast
+print('>>> base program:', base, ', wast:', wast)
 
 args = sys.argv[2:]
 
 
 def run():
   if os.path.exists(wast):
-    print '>>> running using a wast of size', os.stat(wast).st_size
+    print('>>> running using a wast of size', os.stat(wast).st_size)
   cmd = ['mozjs', base] + args
   try:
     return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-  except Exception, e:
-    print ">>> !!! ", e, " !!!"
+  except Exception as e:
+    print(">>> !!! ", e, " !!!")
 
 
 original_wast = None
@@ -71,7 +73,7 @@ try:
   # get normal output
 
   normal = run()
-  print '>>> normal output:\n', normal
+  print('>>> normal output:\n', normal)
   assert normal, 'must be output'
 
   # ensure we actually use the wast
@@ -96,22 +98,20 @@ try:
     more = True
     while more:
       more = False
-      print '>>> trying to reduce:', ' '.join(passes),
-      print '  [' + str(len(passes)) + ']'
+      print('>>> trying to reduce:', ' '.join(passes), '  [' + str(len(passes)) + ']')
       for i in range(len(passes)):
         smaller = passes[:i] + passes[i + 1:]
-        print '>>>>>> try to reduce to:', ' '.join(smaller),
-        print '  [' + str(len(smaller)) + ']'
+        print('>>>>>> try to reduce to:', ' '.join(smaller), '  [' + str(len(smaller)) + ']')
         try:
           apply_passes(smaller)
           assert run() == normal
         except Exception:
           # this failed too, so it's a good reduction
           passes = smaller
-          print '>>> reduction successful'
+          print('>>> reduction successful')
           more = True
           break
-    print '>>> reduced to:', ' '.join(passes)
+    print('>>> reduced to:', ' '.join(passes))
 
   tested = set()
 
@@ -128,17 +128,17 @@ try:
 
   while 1:
     passes = pick_passes()
-    print '>>> [' + str(counter) + '] testing:', ' '.join(passes)
+    print('>>> [' + str(counter) + '] testing:', ' '.join(passes))
     counter += 1
     try:
       apply_passes(passes)
-    except Exception, e:
-      print e
+    except Exception as e:
+      print(e)
       simplify(passes)
       break
     seen = run()
     if seen != normal:
-      print '>>> bad output:\n', seen
+      print('>>> bad output:\n', seen)
       simplify(passes)
       break
 
