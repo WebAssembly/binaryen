@@ -51,7 +51,7 @@ jobs:
       install:
         - nvm install 10
         - nvm use 10
-        - pip3 install --user flake8==3.7.8
+        - python3 -m pip install --user flake8==3.7.8
         # get jsvu in order to get more js engines
         - npm install jsvu -g
         - export PATH="${HOME}/.jsvu:${PATH}"
