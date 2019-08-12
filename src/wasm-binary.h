@@ -1204,7 +1204,7 @@ public:
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(Type type);
+  Expression* getBlockOrSingleton(Type type, unsigned numPops = 0);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);

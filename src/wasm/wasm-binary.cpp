@@ -2482,10 +2482,22 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
   }
 }
 
-Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
+// Gets a block of expressions. If it's just one, return that singleton.
+// numPops is the number of pop instructions we add before starting to parse the
+// block. Can be used when we need to assume certain number of values are on top
+// of the stack in the beginning.
+Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
+                                                   unsigned numPops) {
   Name label = getNextLabel();
   breakStack.push_back({label, type != none && type != unreachable});
   auto start = expressionStack.size();
+
+  Builder builder(wasm);
+  for (unsigned i = 0; i < numPops ; i++) {
+    auto* pop = builder.makePop(exnref);
+    expressionStack.push_back(pop);
+  }
+
   processExpressions();
   size_t end = expressionStack.size();
   if (end < start) {
@@ -4374,37 +4386,7 @@ void WasmBinaryBuilder::visitTry(Try* curr) {
   if (lastSeparator != BinaryConsts::Catch) {
     throwError("No catch instruction within a try scope");
   }
-
-  // Parse instructions within (catch ...)
-  Name label = getNextLabel();
-  breakStack.push_back(
-    {label, curr->type != none && curr->type != unreachable});
-  auto start = expressionStack.size();
-  // catch instruction pushes an exnref value onto the stack, but because we
-  // model catch not as an instruction but a barrier within a try scope for
-  // readability, we assume that after catch there is an exnref value on top of
-  // the stack, and create a pop instruction that pops the exnref value from the
-  // stack. This is only for binaryen's internal representation.
-  Builder builder(wasm);
-  auto* pop = builder.makePop(exnref);
-  expressionStack.push_back(pop);
-  processExpressions();
-  size_t end = expressionStack.size();
-  breakStack.pop_back();
-  auto* block = allocator.alloc<Block>();
-  pushBlockElements(block, start, end);
-  block->name = label;
-  block->finalize(curr->type);
-  curr->catchBody = block;
-  // maybe we don't need a block here?
-  if (breakTargetNames.find(block->name) == breakTargetNames.end()) {
-    block->name = Name();
-    if (block->list.size() == 1) {
-      curr->catchBody = block->list[0];
-    }
-  }
-  breakTargetNames.erase(block->name);
-
+  curr->catchBody = getBlockOrSingleton(curr->type, 1);
   curr->finalize(curr->type);
   if (lastSeparator != BinaryConsts::End) {
     throwError("try should end with end");
