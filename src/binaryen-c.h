@@ -127,6 +127,10 @@ BinaryenExpressionId BinaryenMemoryInitId(void);
 BinaryenExpressionId BinaryenDataDropId(void);
 BinaryenExpressionId BinaryenMemoryCopyId(void);
 BinaryenExpressionId BinaryenMemoryFillId(void);
+BinaryenExpressionId BinaryenTryId(void);
+BinaryenExpressionId BinaryenThrowId(void);
+BinaryenExpressionId BinaryenRethrowId(void);
+BinaryenExpressionId BinaryenBrOnExnId(void);
 BinaryenExpressionId BinaryenPushId(void);
 BinaryenExpressionId BinaryenPopId(void);
 
@@ -701,6 +705,19 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
                                          BinaryenExpressionRef dest,
                                          BinaryenExpressionRef value,
                                          BinaryenExpressionRef size);
+BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
+                                  BinaryenExpressionRef body,
+                                  BinaryenExpressionRef catchBody);
+BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
+                                    const char* event,
+                                    BinaryenExpressionRef* operands,
+                                    BinaryenIndex numOperands);
+BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
+                                      BinaryenExpressionRef exnref);
+BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
+                                      const char* name,
+                                      const char* eventName,
+                                      BinaryenExpressionRef exnref);
 BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
                                    BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type);
@@ -854,6 +871,20 @@ BinaryenExpressionRef BinaryenMemoryCopyGetSize(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenMemoryFillGetDest(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenMemoryFillGetValue(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr);
+
+BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenTryGetCatchBody(BinaryenExpressionRef expr);
+
+const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenThrowGetOperand(BinaryenExpressionRef expr,
+                                              BinaryenIndex index);
+BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr);
+
+BinaryenExpressionRef BinaryenRethrowGetExnref(BinaryenExpressionRef expr);
+
+const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr);
+const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr);
 
 BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr);
 

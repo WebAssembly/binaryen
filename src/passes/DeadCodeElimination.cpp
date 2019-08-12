@@ -144,6 +144,14 @@ struct DeadCodeElimination
     reachable = false;
   }
 
+  void visitBrOnExn(BrOnExn* curr) {
+    if (isDead(curr->exnref)) {
+      replaceCurrent(curr->exnref);
+      return;
+    }
+    addBreak(curr->name);
+  }
+
   void visitReturn(Return* curr) {
     if (isDead(curr->value)) {
       replaceCurrent(curr->value);
@@ -312,6 +320,14 @@ struct DeadCodeElimination
           DELEGATE(Push);
         case Expression::Id::PopId:
           DELEGATE(Pop);
+        case Expression::Id::TryId:
+          DELEGATE(Try);
+        case Expression::Id::ThrowId:
+          DELEGATE(Throw);
+        case Expression::Id::RethrowId:
+          DELEGATE(Rethrow);
+        case Expression::Id::BrOnExnId:
+          DELEGATE(BrOnExn);
         case Expression::Id::InvalidId:
           WASM_UNREACHABLE();
         case Expression::Id::NumExpressionIds:

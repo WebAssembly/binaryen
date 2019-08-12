@@ -1162,6 +1162,23 @@ struct PrintExpressionContents
         break;
     }
   }
+  void visitTry(Try* curr) {
+    printMedium(o, "try");
+    if (isConcreteType(curr->type)) {
+      o << " (result " << printType(curr->type) << ')';
+    }
+  }
+  void visitThrow(Throw* curr) {
+    printMedium(o, "throw ");
+    printName(curr->event, o);
+  }
+  void visitRethrow(Rethrow* curr) { printMedium(o, "rethrow"); }
+  void visitBrOnExn(BrOnExn* curr) {
+    printMedium(o, "br_on_exn ");
+    printName(curr->name, o);
+    o << " ";
+    printName(curr->event, o);
+  }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPush(Push* curr) { prepareColor(o) << "push"; }
@@ -1260,6 +1277,20 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << maybeNewLine;
   }
 
+  // loop, if, and try can contain implicit blocks. But they are not needed to
+  // be printed in some cases.
+  void maybePrintImplicitBlock(Expression* curr, bool allowMultipleInsts) {
+    auto block = curr->dynCast<Block>();
+    if (!full && block && block->name.isNull() &&
+        (allowMultipleInsts || block->list.size() == 1)) {
+      for (auto expression : block->list) {
+        printFullLine(expression);
+      }
+    } else {
+      printFullLine(curr);
+    }
+  }
+
   void visitBlock(Block* curr) {
     // special-case Block, because Block nesting (in their first element) can be
     // incredibly deep
@@ -1319,22 +1350,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->condition);
-    // ifTrue and False have implict blocks, avoid printing them if possible
-    if (!full && curr->ifTrue->is<Block>() &&
-        curr->ifTrue->dynCast<Block>()->name.isNull() &&
-        curr->ifTrue->dynCast<Block>()->list.size() == 1) {
-      printFullLine(curr->ifTrue->dynCast<Block>()->list.back());
-    } else {
-      printFullLine(curr->ifTrue);
-    }
+    maybePrintImplicitBlock(curr->ifTrue, false);
     if (curr->ifFalse) {
-      if (!full && curr->ifFalse->is<Block>() &&
-          curr->ifFalse->dynCast<Block>()->name.isNull() &&
-          curr->ifFalse->dynCast<Block>()->list.size() == 1) {
-        printFullLine(curr->ifFalse->dynCast<Block>()->list.back());
-      } else {
-        printFullLine(curr->ifFalse);
-      }
+      maybePrintImplicitBlock(curr->ifFalse, false);
     }
     decIndent();
     if (full) {
@@ -1345,16 +1363,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
-    auto block = curr->body->dynCast<Block>();
-    if (!full && block && block->name.isNull()) {
-      // wasm spec has loops containing children directly, while our ast
-      // has a single child for simplicity. print out the optimal form.
-      for (auto expression : block->list) {
-        printFullLine(expression);
-      }
-    } else {
-      printFullLine(curr->body);
-    }
+    maybePrintImplicitBlock(curr->body, true);
     decIndent();
     if (full) {
       o << " ;; end loop";
@@ -1630,6 +1639,54 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << ')';
       }
     }
+  }
+  // try-catch-end is written in the folded wast format as
+  // (try
+  //   ...
+  //  (catch
+  //    ...
+  //  )
+  // )
+  // The parenthesis wrapping 'catch' is just a syntax and does not affect
+  // nested depths of instructions within.
+  void visitTry(Try* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    maybePrintImplicitBlock(curr->body, true);
+    doIndent(o, indent);
+    o << "(catch";
+    incIndent();
+    maybePrintImplicitBlock(curr->catchBody, true);
+    decIndent();
+    o << "\n";
+    decIndent();
+    if (full) {
+      o << " ;; end try";
+    }
+  }
+  void visitThrow(Throw* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    for (auto operand : curr->operands) {
+      printFullLine(operand);
+    }
+    decIndent();
+  }
+  void visitRethrow(Rethrow* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->exnref);
+    decIndent();
+  }
+  void visitBrOnExn(BrOnExn* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->exnref);
+    decIndent();
   }
   void visitNop(Nop* curr) {
     o << '(';
@@ -2198,7 +2255,8 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       }
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryBegin: {
         doIndent();
         PrintExpressionContents(func, o).visit(inst->origin);
         indent++;
@@ -2206,7 +2264,8 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       }
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryEnd: {
         indent--;
         doIndent();
         o << "end";
@@ -2216,6 +2275,13 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         indent--;
         doIndent();
         o << "else";
+        indent++;
+        break;
+      }
+      case StackInst::Catch: {
+        indent--;
+        doIndent();
+        o << "catch";
         indent++;
         break;
       }

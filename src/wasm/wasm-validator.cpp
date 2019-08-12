@@ -254,6 +254,7 @@ public:
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
+  void noteBreak(Name name, Type valueType, Expression* curr);
   void visitBreak(Break* curr);
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
@@ -284,6 +285,10 @@ public:
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -519,11 +524,15 @@ void FunctionValidator::visitIf(If* curr) {
 void FunctionValidator::noteBreak(Name name,
                                   Expression* value,
                                   Expression* curr) {
-  Type valueType = none;
-  Index arity = 0;
   if (value) {
-    valueType = value->type;
-    shouldBeUnequal(valueType, none, curr, "breaks must have a valid value");
+    shouldBeUnequal(value->type, none, curr, "breaks must have a valid value");
+  }
+  noteBreak(name, value ? value->type : none, curr);
+}
+
+void FunctionValidator::noteBreak(Name name, Type valueType, Expression* curr) {
+  Index arity = 0;
+  if (valueType != none) {
     arity = 1;
   }
   auto iter = breakInfos.find(name);
@@ -1578,6 +1587,94 @@ void FunctionValidator::visitHost(Host* curr) {
     }
     case MemorySize:
       break;
+  }
+}
+
+void FunctionValidator::visitTry(Try* curr) {
+  if (curr->type != unreachable) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->body->type,
+      curr->type,
+      curr->body,
+      "try's type does not match try body's type");
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->catchBody->type,
+      curr->type,
+      curr->catchBody,
+      "try's type does not match catch's body type");
+  }
+  if (isConcreteType(curr->body->type)) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->catchBody->type,
+      curr->body->type,
+      curr->catchBody,
+      "try's body type must match catch's body type");
+  }
+  if (isConcreteType(curr->catchBody->type)) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->body->type,
+      curr->catchBody->type,
+      curr->body,
+      "try's body type must match catch's body type");
+  }
+}
+
+void FunctionValidator::visitThrow(Throw* curr) {
+  if (!info.validateGlobally) {
+    return;
+  }
+  shouldBeEqual(
+    curr->type, unreachable, curr, "throw's type must be unreachable");
+  auto* event = getModule()->getEventOrNull(curr->event);
+  if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
+    return;
+  }
+  if (!shouldBeTrue(curr->operands.size() == event->params.size(),
+                    curr,
+                    "event's param numbers must match")) {
+    return;
+  }
+  for (size_t i = 0; i < curr->operands.size(); i++) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
+                                           event->params[i],
+                                           curr->operands[i],
+                                           "event param types must match") &&
+        !info.quiet) {
+      getStream() << "(on argument " << i << ")\n";
+    }
+  }
+}
+
+void FunctionValidator::visitRethrow(Rethrow* curr) {
+  shouldBeEqual(
+    curr->type, unreachable, curr, "rethrow's type must be unreachable");
+  shouldBeEqual(curr->exnref->type,
+                exnref,
+                curr->exnref,
+                "rethrow's argument must be exnref type");
+}
+
+void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
+  Event* event = getModule()->getEventOrNull(curr->event);
+  shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
+  shouldBeTrue(event->params == curr->eventParams,
+               curr,
+               "br_on_exn's event params and event's params are different");
+  noteBreak(curr->name, curr->getSingleSentType(), curr);
+  shouldBeTrue(curr->exnref->type == unreachable ||
+                 curr->exnref->type == exnref,
+               curr,
+               "br_on_exn's argument must be unreachable or exnref type");
+  if (curr->exnref->type == unreachable) {
+    shouldBeTrue(curr->type == unreachable,
+                 curr,
+                 "If exnref argument's type is unreachable, br_on_exn should "
+                 "be unreachable too");
+  } else {
+    shouldBeTrue(curr->type == exnref,
+                 curr,
+                 "br_on_exn's type should be exnref unless its exnref argument "
+                 "is unreachable");
   }
 }
 

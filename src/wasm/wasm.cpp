@@ -168,6 +168,14 @@ const char* getExpressionName(Expression* curr) {
       return "push";
     case Expression::Id::PopId:
       return "pop";
+    case Expression::TryId:
+      return "try";
+    case Expression::ThrowId:
+      return "throw";
+    case Expression::RethrowId:
+      return "rethrow";
+    case Expression::BrOnExnId:
+      return "br_on_exn";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE();
   }
@@ -201,6 +209,12 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
     }
     if (curr->default_ == targetName) {
       types.push_back(curr->value ? curr->value->type : none);
+    }
+  }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    if (curr->name == targetName) {
+      types.push_back(curr->getSingleSentType());
     }
   }
 
@@ -834,6 +848,48 @@ void Host::finalize() {
       break;
     }
   }
+}
+
+void Try::finalize() {
+  if (body->type == catchBody->type) {
+    type = body->type;
+  } else if (isConcreteType(body->type) && catchBody->type == unreachable) {
+    type = body->type;
+  } else if (isConcreteType(catchBody->type) && body->type == unreachable) {
+    type = catchBody->type;
+  } else {
+    type = none;
+  }
+}
+
+void Try::finalize(Type type_) {
+  type = type_;
+  if (type == none && body->type == unreachable &&
+      catchBody->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void Throw::finalize() { type = unreachable; }
+
+void Rethrow::finalize() { type = unreachable; }
+
+void BrOnExn::finalize() {
+  if (exnref->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = Type::exnref;
+  }
+}
+
+// br_on_exn's type is exnref, which it pushes onto the stack when it is not
+// taken, but the type of the value it pushes onto the stack when it is taken
+// should be the event type. So this is the type we 'send' to the block end when
+// it is taken. Currently we don't support multi value return from a block, we
+// pick the type of the first param from the event.
+// TODO Remove this function and generalize event type after multi-value support
+Type BrOnExn::getSingleSentType() {
+  return eventParams.empty() ? none : eventParams.front();
 }
 
 void Push::finalize() {

@@ -219,6 +219,24 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
         builder.makeHost(curr->op, curr->nameOperand, std::move(operands));
       return ret;
     }
+    Expression* visitTry(Try* curr) {
+      return builder.makeTry(
+        copy(curr->body), copy(curr->catchBody), curr->type);
+    }
+    Expression* visitThrow(Throw* curr) {
+      std::vector<Expression*> operands;
+      for (Index i = 0; i < curr->operands.size(); i++) {
+        operands.push_back(copy(curr->operands[i]));
+      }
+      return builder.makeThrow(curr->event, std::move(operands));
+    }
+    Expression* visitRethrow(Rethrow* curr) {
+      return builder.makeRethrow(copy(curr->exnref));
+    }
+    Expression* visitBrOnExn(BrOnExn* curr) {
+      return builder.makeBrOnExn(
+        curr->name, curr->event, copy(curr->exnref), curr->eventParams);
+    }
     Expression* visitNop(Nop* curr) { return builder.makeNop(); }
     Expression* visitUnreachable(Unreachable* curr) {
       return builder.makeUnreachable();

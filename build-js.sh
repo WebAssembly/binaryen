@@ -227,6 +227,10 @@ export_function "_BinaryenMemoryInitId"
 export_function "_BinaryenDataDropId"
 export_function "_BinaryenMemoryCopyId"
 export_function "_BinaryenMemoryFillId"
+export_function "_BinaryenTryId"
+export_function "_BinaryenThrowId"
+export_function "_BinaryenRethrowId"
+export_function "_BinaryenBrOnExnId"
 export_function "_BinaryenPushId"
 export_function "_BinaryenPopId"
 
@@ -579,6 +583,10 @@ export_function "_BinaryenMemoryInit"
 export_function "_BinaryenDataDrop"
 export_function "_BinaryenMemoryCopy"
 export_function "_BinaryenMemoryFill"
+export_function "_BinaryenTry"
+export_function "_BinaryenThrow"
+export_function "_BinaryenRethrow"
+export_function "_BinaryenBrOnExn"
 export_function "_BinaryenPush"
 export_function "_BinaryenPop"
 
@@ -756,6 +764,23 @@ export_function "_BinaryenMemoryCopyGetSize"
 export_function "_BinaryenMemoryFillGetDest"
 export_function "_BinaryenMemoryFillGetValue"
 export_function "_BinaryenMemoryFillGetSize"
+
+# 'Try' expression operations
+export_function "_BinaryenTryGetBody"
+export_function "_BinaryenTryGetCatchBody"
+
+# 'Throw' expression operations
+export_function "_BinaryenThrowGetEvent"
+export_function "_BinaryenThrowGetNumOperands"
+export_function "_BinaryenThrowGetOperand"
+
+# 'Rethrow' expression operations
+export_function "_BinaryenRethrowGetExnref"
+
+# 'BrOnExn' expression operations
+export_function "_BinaryenBrOnExnGetEvent"
+export_function "_BinaryenBrOnExnGetName"
+export_function "_BinaryenBrOnExnGetExnref"
 
 # 'Push' expression operations
 export_function "_BinaryenPushGetValue"

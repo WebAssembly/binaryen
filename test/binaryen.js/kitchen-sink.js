@@ -111,6 +111,10 @@ function test_ids() {
   console.log("DataDropId: " + Binaryen.DataDropId);
   console.log("MemoryCopyId: " + Binaryen.MemoryCopyId);
   console.log("MemoryFillId: " + Binaryen.MemoryFillId);
+  console.log("TryId: " + Binaryen.TryId);
+  console.log("ThrowId: " + Binaryen.ThrowId);
+  console.log("RethrowId: " + Binaryen.RethrowId);
+  console.log("BrOnExnId: " + Binaryen.BrOnExnId);
   console.log("PushId: " + Binaryen.PushId);
   console.log("PopId: " + Binaryen.PopId);
 }
@@ -120,6 +124,10 @@ function test_core() {
   // Module creation
 
   module = new Binaryen.Module();
+
+  // Create an event
+  var vi = module.addFunctionType("vi", Binaryen.none, [Binaryen.i32]);
+  var event_ = module.addEvent("a-event", 0, vi);
 
   // Literals and consts
 
@@ -401,6 +409,24 @@ function test_core() {
     // Tail Call
     module.returnCall("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], Binaryen.i32),
     module.returnCallIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF"),
+
+    // Exception handling
+    module.try(
+      module.throw("a-event", [module.i32.const(0)]),
+      module.block(null, [
+        module.local.set(5, module.exnref.pop()),
+        module.drop(
+          module.block("try-block", [
+            module.rethrow(
+              module.br_on_exn("try-block", "a-event",
+                module.local.get(5, Binaryen.exnref)),
+            )
+          ], Binaryen.i32)
+        )
+      ]
+      )
+    ),
+
     // Push and pop
     module.push(module.i32.pop()),
     module.push(module.i64.pop()),
@@ -429,15 +455,11 @@ function test_core() {
   var body = module.block("the-body", [ nothing, makeInt32(42) ]);
 
   // Create the function
-  var sinker = module.addFunction("kitchen()sinker", iiIfF, [ Binaryen.i32 ], body);
+  var sinker = module.addFunction("kitchen()sinker", iiIfF, [ Binaryen.i32, Binaryen.exnref ], body);
 
   // Create a global
   var initExpr = module.i32.const(1);
   var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
-
-  // Create an event
-  var vi = module.addFunctionType("vi", Binaryen.none, [Binaryen.i32]);
-  var event_ = module.addEvent("a-event", 0, vi);
 
   // Imports
 
@@ -487,6 +509,7 @@ function test_core() {
   var features = Binaryen.Features.All;
   module.setFeatures(features);
   assert(module.getFeatures() == features);
+  console.log(module.emitText());
 
   // Verify it validates
   assert(module.validate());

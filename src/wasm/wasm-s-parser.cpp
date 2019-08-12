@@ -1726,6 +1726,102 @@ Expression* SExpressionWasmBuilder::makeReturn(Element& s) {
   return ret;
 }
 
+// try-catch-end is written in the folded wast format as
+// (try
+//   ...
+//  (catch
+//    ...
+//  )
+// )
+// The parenthesis wrapping 'catch' is just a syntax and does not affect nested
+// depths of instructions within.
+Expression* SExpressionWasmBuilder::makeTry(Element& s) {
+  auto ret = allocator.alloc<Try>();
+  Index i = 1;
+  Name sName;
+  if (s[i]->dollared()) {
+    // the try is labeled
+    sName = s[i++]->str();
+  } else {
+    sName = "try";
+  }
+  auto label = nameMapper.pushLabelName(sName);
+  Type type = parseOptionalResultType(s, i); // signature
+  if (elementStartsWith(*s[i], "catch")) {   // empty try body
+    ret->body = makeNop();
+  } else {
+    ret->body = parseExpression(*s[i++]);
+  }
+  if (!elementStartsWith(*s[i], "catch")) {
+    throw ParseException("catch clause does not exist");
+  }
+  ret->catchBody = makeCatch(*s[i++]);
+  ret->finalize(type);
+  nameMapper.popLabelName(label);
+  // create a break target if we must
+  if (BranchUtils::BranchSeeker::hasNamed(ret, label)) {
+    auto* block = allocator.alloc<Block>();
+    block->name = label;
+    block->list.push_back(ret);
+    block->finalize(ret->type);
+    return block;
+  }
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeCatch(Element& s) {
+  if (!elementStartsWith(s, "catch")) {
+    throw ParseException("invalid catch clause", s.line, s.col);
+  }
+  auto ret = allocator.alloc<Block>();
+  for (size_t i = 1; i < s.size(); i++) {
+    ret->list.push_back(parseExpression(s[i]));
+  }
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeThrow(Element& s) {
+  auto ret = allocator.alloc<Throw>();
+  Index i = 1;
+
+  ret->event = getEventName(*s[i++]);
+  if (!wasm.getEventOrNull(ret->event)) {
+    throw ParseException("bad event name", s[1]->line, s[1]->col);
+  }
+  for (; i < s.size(); i++) {
+    ret->operands.push_back(parseExpression(s[i]));
+  }
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRethrow(Element& s) {
+  auto ret = allocator.alloc<Rethrow>();
+  ret->exnref = parseExpression(*s[1]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
+  auto ret = allocator.alloc<BrOnExn>();
+  size_t i = 1;
+  ret->name = getLabel(*s[i++]);
+  ret->event = getEventName(*s[i++]);
+  if (!wasm.getEventOrNull(ret->event)) {
+    throw ParseException("bad event name", s[1]->line, s[1]->col);
+  }
+  ret->exnref = parseExpression(s[i]);
+
+  Event* event = wasm.getEventOrNull(ret->event);
+  assert(event && "br_on_exn's event must exist");
+  // Copy params info into BrOnExn, because it is necessary when BrOnExn is
+  // refinalized without the module.
+  ret->eventParams = event->params;
+  ret->finalize();
+  return ret;
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.

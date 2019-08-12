@@ -1754,7 +1754,8 @@ void WasmBinaryBuilder::processExpressions() {
         throwError("unexpected end of input");
       }
       auto peek = input[pos];
-      if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
+      if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
+          peek == BinaryConsts::Catch) {
         if (debug) {
           std::cerr << "== processExpressions finished with unreachable"
                     << std::endl;
@@ -2260,7 +2261,20 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::End:
     case BinaryConsts::Else:
+    case BinaryConsts::Catch:
       curr = nullptr;
+      break;
+    case BinaryConsts::Try:
+      visitTry((curr = allocator.alloc<Try>())->cast<Try>());
+      break;
+    case BinaryConsts::Throw:
+      visitThrow((curr = allocator.alloc<Throw>())->cast<Throw>());
+      break;
+    case BinaryConsts::Rethrow:
+      visitRethrow((curr = allocator.alloc<Rethrow>())->cast<Rethrow>());
+      break;
+    case BinaryConsts::BrOnExn:
+      visitBrOnExn((curr = allocator.alloc<BrOnExn>())->cast<BrOnExn>());
       break;
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
@@ -2420,6 +2434,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
   if (debug) {
     std::cerr << "zz node: Block" << std::endl;
   }
+
   // special-case Block and de-recurse nested blocks in their first position, as
   // that is a common pattern that can be very highly nested.
   std::vector<Block*> stack;
@@ -2467,10 +2482,22 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
   }
 }
 
-Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
+// Gets a block of expressions. If it's just one, return that singleton.
+// numPops is the number of pop instructions we add before starting to parse the
+// block. Can be used when we need to assume certain number of values are on top
+// of the stack in the beginning.
+Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
+                                                   unsigned numPops) {
   Name label = getNextLabel();
   breakStack.push_back({label, type != none && type != unreachable});
   auto start = expressionStack.size();
+
+  Builder builder(wasm);
+  for (unsigned i = 0; i < numPops; i++) {
+    auto* pop = builder.makePop(exnref);
+    expressionStack.push_back(pop);
+  }
+
   processExpressions();
   size_t end = expressionStack.size();
   if (end < start) {
@@ -4344,6 +4371,73 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
     std::cerr << "zz node: Drop" << std::endl;
   }
   curr->value = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitTry(Try* curr) {
+  if (debug) {
+    std::cerr << "zz node: Try" << std::endl;
+  }
+  // For simplicity of implementation, like if scopes, we create a hidden block
+  // within each try-body and catch-body, and let branches target those inner
+  // blocks instead.
+  curr->type = getType();
+  curr->body = getBlockOrSingleton(curr->type);
+  if (lastSeparator != BinaryConsts::Catch) {
+    throwError("No catch instruction within a try scope");
+  }
+  curr->catchBody = getBlockOrSingleton(curr->type, 1);
+  curr->finalize(curr->type);
+  if (lastSeparator != BinaryConsts::End) {
+    throwError("try should end with end");
+  }
+}
+
+void WasmBinaryBuilder::visitThrow(Throw* curr) {
+  if (debug) {
+    std::cerr << "zz node: Throw" << std::endl;
+  }
+  auto index = getU32LEB();
+  if (index >= wasm.events.size()) {
+    throwError("bad event index");
+  }
+  auto* event = wasm.events[index].get();
+  curr->event = event->name;
+  size_t num = event->params.size();
+  curr->operands.resize(num);
+  for (size_t i = 0; i < num; i++) {
+    curr->operands[num - i - 1] = popNonVoidExpression();
+  }
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
+  if (debug) {
+    std::cerr << "zz node: Rethrow" << std::endl;
+  }
+  curr->exnref = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
+  if (debug) {
+    std::cerr << "zz node: BrOnExn" << std::endl;
+  }
+  BreakTarget target = getBreakTarget(getU32LEB());
+  curr->name = target.name;
+  auto index = getU32LEB();
+  if (index >= wasm.events.size()) {
+    throwError("bad event index");
+  }
+  curr->event = wasm.events[index]->name;
+  curr->exnref = popNonVoidExpression();
+
+  Event* event = wasm.getEventOrNull(curr->event);
+  assert(event && "br_on_exn's event must exist");
+
+  // Copy params info into BrOnExn, because it is necessary when BrOnExn is
+  // refinalized without the module.
+  curr->eventParams = event->params;
   curr->finalize();
 }
 

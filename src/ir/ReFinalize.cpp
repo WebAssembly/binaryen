@@ -62,6 +62,8 @@ void ReFinalize::visitBlock(Block* curr) {
         auto type = iter->second;
         if (type == none) {
           // we need to fix this up. set the values to unreachables
+          // note that we don't need to handle br_on_exn here, because its value
+          // type is never none
           for (auto* br : FindAll<Break>(curr).list) {
             handleBranchForVisitBlock(br, curr->name, getModule());
           }
@@ -155,6 +157,13 @@ void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
 void ReFinalize::visitHost(Host* curr) { curr->finalize(); }
+void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
+void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
+void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
+void ReFinalize::visitBrOnExn(BrOnExn* curr) {
+  curr->finalize();
+  updateBreakValueType(curr->name, curr->getSingleSentType());
+}
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPush(Push* curr) { curr->finalize(); }

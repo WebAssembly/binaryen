@@ -65,6 +65,8 @@ struct TypeUpdater
         blockInfos[target];
       }
       blockInfos[sw->default_];
+    } else if (auto* br = curr->dynCast<BrOnExn>()) {
+      blockInfos[br->name];
     }
     // add a break to the info, for break and switch
     discoverBreaks(curr, +1);
@@ -151,6 +153,8 @@ struct TypeUpdater
       noteBreakChange(br->name, change, br->value);
     } else if (auto* sw = curr->dynCast<Switch>()) {
       applySwitchChanges(sw, change);
+    } else if (auto* br = curr->dynCast<BrOnExn>()) {
+      noteBreakChange(br->name, change, br->getSingleSentType());
     }
   }
 
@@ -168,6 +172,10 @@ struct TypeUpdater
 
   // note the addition of a node
   void noteBreakChange(Name name, int change, Expression* value) {
+    noteBreakChange(name, change, value ? value->type : none);
+  }
+
+  void noteBreakChange(Name name, int change, Type type) {
     auto iter = blockInfos.find(name);
     if (iter == blockInfos.end()) {
       return; // we can ignore breaks to loops
@@ -186,7 +194,7 @@ struct TypeUpdater
         if (block->type != unreachable) {
           return; // was already reachable, had a fallthrough
         }
-        changeTypeTo(block, value ? value->type : none);
+        changeTypeTo(block, type);
       }
     }
   }

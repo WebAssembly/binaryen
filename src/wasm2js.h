@@ -1872,6 +1872,22 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
+    Ref visitTry(Try* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitThrow(Throw* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitRethrow(Rethrow* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitBrOnExn(BrOnExn* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
     Ref visitPush(Push* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE();

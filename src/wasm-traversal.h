@@ -70,6 +70,10 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitDrop(Drop* curr) { return ReturnType(); }
   ReturnType visitReturn(Return* curr) { return ReturnType(); }
   ReturnType visitHost(Host* curr) { return ReturnType(); }
+  ReturnType visitTry(Try* curr) { return ReturnType(); }
+  ReturnType visitThrow(Throw* curr) { return ReturnType(); }
+  ReturnType visitRethrow(Rethrow* curr) { return ReturnType(); }
+  ReturnType visitBrOnExn(BrOnExn* curr) { return ReturnType(); }
   ReturnType visitNop(Nop* curr) { return ReturnType(); }
   ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
   ReturnType visitPush(Push* curr) { return ReturnType(); }
@@ -158,6 +162,14 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Return);
       case Expression::Id::HostId:
         DELEGATE(Host);
+      case Expression::Id::TryId:
+        DELEGATE(Try);
+      case Expression::Id::ThrowId:
+        DELEGATE(Throw);
+      case Expression::Id::RethrowId:
+        DELEGATE(Rethrow);
+      case Expression::Id::BrOnExnId:
+        DELEGATE(BrOnExn);
       case Expression::Id::NopId:
         DELEGATE(Nop);
       case Expression::Id::UnreachableId:
@@ -222,6 +234,10 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Drop);
   UNIMPLEMENTED(Return);
   UNIMPLEMENTED(Host);
+  UNIMPLEMENTED(Try);
+  UNIMPLEMENTED(Throw);
+  UNIMPLEMENTED(Rethrow);
+  UNIMPLEMENTED(BrOnExn);
   UNIMPLEMENTED(Nop);
   UNIMPLEMENTED(Unreachable);
   UNIMPLEMENTED(Push);
@@ -311,6 +327,14 @@ struct OverriddenVisitor {
         DELEGATE(Return);
       case Expression::Id::HostId:
         DELEGATE(Host);
+      case Expression::Id::TryId:
+        DELEGATE(Try);
+      case Expression::Id::ThrowId:
+        DELEGATE(Throw);
+      case Expression::Id::RethrowId:
+        DELEGATE(Rethrow);
+      case Expression::Id::BrOnExnId:
+        DELEGATE(BrOnExn);
       case Expression::Id::NopId:
         DELEGATE(Nop);
       case Expression::Id::UnreachableId:
@@ -434,6 +458,18 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitHost(Host* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitTry(Try* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitThrow(Throw* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRethrow(Rethrow* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitBrOnExn(BrOnExn* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitNop(Nop* curr) {
@@ -723,6 +759,18 @@ struct Walker : public VisitorType {
   static void doVisitHost(SubType* self, Expression** currp) {
     self->visitHost((*currp)->cast<Host>());
   }
+  static void doVisitTry(SubType* self, Expression** currp) {
+    self->visitTry((*currp)->cast<Try>());
+  }
+  static void doVisitThrow(SubType* self, Expression** currp) {
+    self->visitThrow((*currp)->cast<Throw>());
+  }
+  static void doVisitRethrow(SubType* self, Expression** currp) {
+    self->visitRethrow((*currp)->cast<Rethrow>());
+  }
+  static void doVisitBrOnExn(SubType* self, Expression** currp) {
+    self->visitBrOnExn((*currp)->cast<BrOnExn>());
+  }
   static void doVisitNop(SubType* self, Expression** currp) {
     self->visitNop((*currp)->cast<Nop>());
   }
@@ -755,7 +803,6 @@ template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct PostWalker : public Walker<SubType, VisitorType> {
 
   static void scan(SubType* self, Expression** currp) {
-
     Expression* curr = *currp;
     switch (curr->_id) {
       case Expression::Id::InvalidId:
@@ -959,6 +1006,30 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         for (int i = int(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
         }
+        break;
+      }
+      case Expression::Id::TryId: {
+        self->pushTask(SubType::doVisitTry, currp);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+        break;
+      }
+      case Expression::Id::ThrowId: {
+        self->pushTask(SubType::doVisitThrow, currp);
+        auto& list = curr->cast<Throw>()->operands;
+        for (int i = int(list.size()) - 1; i >= 0; i--) {
+          self->pushTask(SubType::scan, &list[i]);
+        }
+        break;
+      }
+      case Expression::Id::RethrowId: {
+        self->pushTask(SubType::doVisitRethrow, currp);
+        self->pushTask(SubType::scan, &curr->cast<Rethrow>()->exnref);
+        break;
+      }
+      case Expression::Id::BrOnExnId: {
+        self->pushTask(SubType::doVisitBrOnExn, currp);
+        self->pushTask(SubType::scan, &curr->cast<BrOnExn>()->exnref);
         break;
       }
       case Expression::Id::NopId: {
@@ -1194,6 +1265,35 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitReturn, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
         self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
+        break;
+      }
+      case Expression::Id::TryId: {
+        self->pushTask(SubType::doVisitTry, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+        break;
+      }
+      case Expression::Id::ThrowId: {
+        self->pushTask(SubType::doVisitThrow, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        auto& list = curr->cast<Throw>()->operands;
+        for (int i = int(list.size()) - 1; i >= 0; i--) {
+          self->pushTask(SubType::scan, &list[i]);
+        }
+        break;
+      }
+      case Expression::Id::RethrowId: {
+        self->pushTask(SubType::doVisitRethrow, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<Rethrow>()->exnref);
+        break;
+      }
+      case Expression::Id::BrOnExnId: {
+        self->pushTask(SubType::doVisitBrOnExn, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<BrOnExn>()->exnref);
         break;
       }
       case Expression::Id::UnreachableId: {

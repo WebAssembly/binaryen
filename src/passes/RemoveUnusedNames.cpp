@@ -42,6 +42,8 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
     branchesSeen[curr->default_].insert(curr);
   }
 
+  void visitBrOnExn(BrOnExn* curr) { branchesSeen[curr->name].insert(curr); }
+
   void handleBreakTarget(Name& name) {
     if (name.is()) {
       if (branchesSeen.find(name) == branchesSeen.end()) {
@@ -72,6 +74,10 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
             }
             if (sw->default_ == curr->name) {
               sw->default_ = child->name;
+            }
+          } else if (BrOnExn* br = branch->dynCast<BrOnExn>()) {
+            if (br->name == curr->name) {
+              br->name = child->name;
             }
           } else {
             WASM_UNREACHABLE();
