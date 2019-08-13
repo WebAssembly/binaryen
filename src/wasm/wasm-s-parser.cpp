@@ -1421,6 +1421,10 @@ Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeAtomicFence(Element& s) {
+  return allocator.alloc<AtomicFence>();
+}
+
 static uint8_t parseLaneIndex(const Element* s, size_t lanes) {
   const char* str = s->c_str();
   char* end;

@@ -60,7 +60,30 @@ module.addFunction("main", signature, [], module.block("", [
     module.i64.atomic.load32_u(0,
       module.i32.const(0)
     )
-  )
+  ),
+  // wait and notify
+  module.drop(
+    module.i32.atomic.wait(
+      module.i32.const(0),
+      module.i32.const(0),
+      module.i64.const(0)
+    )
+  ),
+  module.drop(
+    module.i64.atomic.wait(
+      module.i32.const(0),
+      module.i64.const(0),
+      module.i64.const(0)
+    )
+  ),
+  module.drop(
+    module.atomic.notify(
+      module.i32.const(0),
+      module.i32.const(0)
+    )
+  ),
+  // fence
+  module.atomic.fence()
 ]));
 
 module.setFeatures(Binaryen.Features.Atomics);

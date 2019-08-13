@@ -1816,6 +1816,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
+    Ref visitAtomicFence(AtomicFence* curr) {
+      // Sequentially consistent fences can be lowered to no operation
+      return ValueBuilder::makeToplevel();
+    }
     Ref visitSIMDExtract(SIMDExtract* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE();

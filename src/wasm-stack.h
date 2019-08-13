@@ -103,6 +103,7 @@ public:
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicNotify(AtomicNotify* curr);
+  void visitAtomicFence(AtomicFence* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
@@ -178,6 +179,7 @@ public:
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicNotify(AtomicNotify* curr);
+  void visitAtomicFence(AtomicFence* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
@@ -522,6 +524,11 @@ void BinaryenIRWriter<SubType>::visitAtomicNotify(AtomicNotify* curr) {
     emitUnreachable();
     return;
   }
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitAtomicFence(AtomicFence* curr) {
   emit(curr);
 }
 

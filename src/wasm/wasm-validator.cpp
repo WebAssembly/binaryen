@@ -270,6 +270,7 @@ public:
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicNotify(AtomicNotify* curr);
+  void visitAtomicFence(AtomicFence* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
@@ -915,6 +916,21 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
     i32,
     curr,
     "AtomicNotify notifyCount type must be i32");
+}
+
+void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(getModule()->features.hasAtomics(),
+               curr,
+               "Atomic operation (atomics are disabled)");
+  shouldBeFalse(!getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
+  shouldBeTrue(curr->order == 0,
+               curr,
+               "Currently only sequentially consistent atomics are supported, "
+               "so AtomicFence's order should be 0");
 }
 
 void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {

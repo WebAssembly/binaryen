@@ -331,6 +331,9 @@ BinaryenExpressionId BinaryenAtomicWaitId(void) {
 BinaryenExpressionId BinaryenAtomicNotifyId(void) {
   return Expression::Id::AtomicNotifyId;
 }
+BinaryenExpressionId BinaryenAtomicFenceId(void) {
+  return Expression::Id::AtomicFenceId;
+}
 BinaryenExpressionId BinaryenSIMDExtractId(void) {
   return Expression::Id::SIMDExtractId;
 }
@@ -1466,6 +1469,15 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
+BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module) {
+  auto* ret = Builder(*(Module*)module).makeAtomicFence();
+
+  if (tracing) {
+    traceExpression(ret, "BinaryenAtomicFence");
+  }
+
+  return static_cast<Expression*>(ret);
+}
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
                                           BinaryenOp op,
                                           BinaryenExpressionRef vec,
@@ -2519,6 +2531,17 @@ BinaryenAtomicNotifyGetNotifyCount(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<AtomicNotify>());
   return static_cast<AtomicNotify*>(expression)->notifyCount;
+}
+// AtomicFence
+uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicFenceGetOrder(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicFence>());
+  return static_cast<AtomicFence*>(expression)->order;
 }
 // SIMDExtract
 BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr) {

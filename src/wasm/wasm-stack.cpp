@@ -422,6 +422,11 @@ void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   emitMemoryAccess(4, 4, 0);
 }
 
+void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
+  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicFence)
+    << int8_t(curr->order);
+}
+
 void BinaryInstWriter::visitSIMDExtract(SIMDExtract* curr) {
   o << int8_t(BinaryConsts::SIMDPrefix);
   switch (curr->op) {

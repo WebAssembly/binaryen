@@ -520,6 +520,20 @@ void test_core() {
       module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF"),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
+    // Atomics
+    BinaryenAtomicStore(module, 4, 0, makeInt32(module, 0),
+      BinaryenAtomicLoad(module, 4, 0,
+                         BinaryenTypeInt32(), makeInt32(module, 0)),
+      BinaryenTypeInt32()
+    ),
+    BinaryenDrop(module,
+      BinaryenAtomicWait(module, makeInt32(module, 0), makeInt32(module, 0),
+                         makeInt64(module, 0), BinaryenTypeInt32())
+    ),
+    BinaryenDrop(module,
+      BinaryenAtomicNotify(module, makeInt32(module, 0), makeInt32(module, 0))
+    ),
+    BinaryenAtomicFence(module),
 
     // TODO: Host
     BinaryenNop(module),
@@ -565,7 +579,7 @@ void test_core() {
   int8_t segmentPassive[] = { 0, 1 };
   BinaryenExpressionRef segmentOffsets[] = { BinaryenConst(module, BinaryenLiteralInt32(10)), NULL };
   BinaryenIndex segmentSizes[] = { 12, 12 };
-  BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 0);
+  BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
 
   // Start function. One per module
 

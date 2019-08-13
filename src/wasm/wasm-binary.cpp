@@ -2302,6 +2302,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitAtomicNotify(curr, code)) {
         break;
       }
+      if ((maybeVisitAtomicFence(curr, code))) {
+        break;
+      }
       throwError("invalid code after atomic prefix: " + std::to_string(code));
       break;
     }
@@ -3167,6 +3170,20 @@ bool WasmBinaryBuilder::maybeVisitAtomicNotify(Expression*& out, uint8_t code) {
   if (readAlign != getTypeSize(curr->type)) {
     throwError("Align of AtomicNotify must match size");
   }
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitAtomicFence(Expression*& out, uint8_t code) {
+  if (code != BinaryConsts::AtomicFence) {
+    return false;
+  }
+  auto* curr = allocator.alloc<AtomicFence>();
+  if (debug) {
+    std::cerr << "zz node: AtomicFence" << std::endl;
+  }
+  curr->order = getU32LEB();
   curr->finalize();
   out = curr;
   return true;

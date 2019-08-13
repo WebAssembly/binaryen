@@ -119,6 +119,7 @@ BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
 BinaryenExpressionId BinaryenAtomicRMWId(void);
 BinaryenExpressionId BinaryenAtomicWaitId(void);
 BinaryenExpressionId BinaryenAtomicNotifyId(void);
+BinaryenExpressionId BinaryenAtomicFenceId(void);
 BinaryenExpressionId BinaryenSIMDExtractId(void);
 BinaryenExpressionId BinaryenSIMDReplaceId(void);
 BinaryenExpressionId BinaryenSIMDShuffleId(void);
@@ -670,6 +671,7 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                                            BinaryenExpressionRef ptr,
                                            BinaryenExpressionRef notifyCount);
+BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
                                           BinaryenOp op,
                                           BinaryenExpressionRef vec,
@@ -836,6 +838,8 @@ BinaryenType BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenAtomicNotifyGetPtr(BinaryenExpressionRef expr);
 BinaryenExpressionRef
 BinaryenAtomicNotifyGetNotifyCount(BinaryenExpressionRef expr);
+
+uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr);
 
 BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr);

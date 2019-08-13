@@ -147,6 +147,8 @@ const char* getExpressionName(Expression* curr) {
       return "atomic_wait";
     case Expression::Id::AtomicNotifyId:
       return "atomic_notify";
+    case Expression::Id::AtomicFenceId:
+      return "atomic_fence";
     case Expression::Id::SIMDExtractId:
       return "simd_extract";
     case Expression::Id::SIMDReplaceId:

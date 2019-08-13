@@ -298,6 +298,8 @@ struct DeadCodeElimination
           DELEGATE(AtomicWait);
         case Expression::Id::AtomicNotifyId:
           DELEGATE(AtomicNotify);
+        case Expression::Id::AtomicFenceId:
+          DELEGATE(AtomicFence);
         case Expression::Id::SIMDExtractId:
           DELEGATE(SIMDExtract);
         case Expression::Id::SIMDReplaceId:

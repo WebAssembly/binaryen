@@ -468,6 +468,7 @@ public:
     AtomicCmpxchgId,
     AtomicWaitId,
     AtomicNotifyId,
+    AtomicFenceId,
     SIMDExtractId,
     SIMDReplaceId,
     SIMDShuffleId,
@@ -783,6 +784,17 @@ public:
   Expression* notifyCount;
 
   void finalize();
+};
+
+class AtomicFence : public SpecificExpression<Expression::AtomicFenceId> {
+public:
+  AtomicFence() = default;
+  AtomicFence(MixedArena& allocator) : AtomicFence() {}
+
+  // Current wasm threads only supports sequentialy consistent atomics, but
+  // other orderings may be added in the future. This field is reserved for
+  // that, and currently set to 0.
+  uint8_t order = 0;
 };
 
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
@@ -1243,7 +1255,7 @@ class Event : public Importable {
 public:
   Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
-  uint32_t attribute;
+  uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
   // Type string in the format of function type. Return type is considered as a
   // void type. So if you have an event whose type is (i32, i32), the type
   // string will be "vii".

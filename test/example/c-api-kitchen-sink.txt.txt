@@ -8,7 +8,7 @@
  (type $v (func))
  (type $4 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
- (memory $0 1 256)
+ (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
  (table $0 1 1 funcref)
@@ -1395,6 +1395,26 @@
         )
        )
       )
+      (i32.atomic.store
+       (i32.const 0)
+       (i32.atomic.load
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i32.atomic.wait
+        (i32.const 0)
+        (i32.const 0)
+        (i64.const 0)
+       )
+      )
+      (drop
+       (atomic.notify
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (atomic.fence)
       (nop)
       (unreachable)
      )

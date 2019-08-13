@@ -158,5 +158,8 @@
    )
   )
  )
+ (func $4 (; 4 ;) (type $0)
+  (atomic.fence)
+ )
 )
 

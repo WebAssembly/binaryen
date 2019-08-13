@@ -157,6 +157,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeAtomicNotify(
         copy(curr->ptr), copy(curr->notifyCount), curr->offset);
     }
+    Expression* visitAtomicFence(AtomicFence* curr) {
+      return builder.makeAtomicFence();
+    }
     Expression* visitSIMDExtract(SIMDExtract* curr) {
       return builder.makeSIMDExtract(curr->op, copy(curr->vec), curr->index);
     }

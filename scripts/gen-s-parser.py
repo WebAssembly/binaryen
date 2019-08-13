@@ -211,6 +211,7 @@ instructions = [
     ("atomic.notify",           "makeAtomicNotify(s)"),
     ("i32.atomic.wait",         "makeAtomicWait(s, i32)"),
     ("i64.atomic.wait",         "makeAtomicWait(s, i64)"),
+    ("atomic.fence",            "makeAtomicFence(s)"),
     ("i32.atomic.load8_u",      "makeLoad(s, i32, /*isAtomic=*/true)"),
     ("i32.atomic.load16_u",     "makeLoad(s, i32, /*isAtomic=*/true)"),
     ("i32.atomic.load",         "makeLoad(s, i32, /*isAtomic=*/true)"),
