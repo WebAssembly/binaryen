@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function
+
 import os
 import sys
 from support import run_command
@@ -28,11 +30,11 @@ def files_with_extensions(path, extensions):
 
 
 def generate_wast_files(llvm_bin, emscripten_root):
-  print '\n[ building wast files from C sources... ]\n'
+  print('\n[ building wast files from C sources... ]\n')
 
   lld_path = os.path.join(shared.options.binaryen_test, 'lld')
   for src_file, ext in files_with_extensions(lld_path, ['.c', '.cpp']):
-    print '..', src_file
+    print('..', src_file)
     obj_file = src_file.replace(ext, '.o')
 
     src_path = os.path.join(lld_path, src_file)
@@ -84,6 +86,6 @@ def generate_wast_files(llvm_bin, emscripten_root):
 
 if __name__ == '__main__':
   if len(shared.options.positional_args) != 2:
-    print 'Usage: generate_lld_tests.py [llvm/bin/dir] [path/to/emscripten]'
+    print('Usage: generate_lld_tests.py [llvm/bin/dir] [path/to/emscripten]')
     sys.exit(1)
   generate_wast_files(*shared.options.positional_args)

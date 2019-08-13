@@ -22,6 +22,8 @@ or validation
 Usage: Provide the filename of the wast.
 '''
 
+from __future__ import print_function
+
 import os
 import random
 import shutil
@@ -46,7 +48,7 @@ PASSES = [
 # main
 
 wast = sys.argv[1]
-print '>>> wast:', wast
+print('>>> wast:', wast)
 
 args = sys.argv[2:]
 
@@ -54,9 +56,9 @@ args = sys.argv[2:]
 def run():
   try:
     cmd = ['bin/wasm-opt', wast]
-    print 'run', cmd
+    print('run', cmd)
     subprocess.check_call(cmd, stderr=open('/dev/null'))
-  except Exception, e:
+  except Exception as e:
     return ">>> !!! ", e, " !!!"
   return 'ok'
 
@@ -67,7 +69,7 @@ try:
   # get normal output
 
   normal = run()
-  print '>>> normal output:\n', normal
+  print('>>> normal output:\n', normal)
   assert normal, 'must be output'
 
   # ensure we actually use the wast
@@ -87,22 +89,20 @@ try:
     more = True
     while more:
       more = False
-      print '>>> trying to reduce:', ' '.join(passes),
-      print '  [' + str(len(passes)) + ']'
+      print('>>> trying to reduce:', ' '.join(passes), '  [' + str(len(passes)) + ']')
       for i in range(len(passes)):
         smaller = passes[:i] + passes[i + 1:]
-        print '>>>>>> try to reduce to:', ' '.join(smaller),
-        print '  [' + str(len(smaller)) + ']'
+        print('>>>>>> try to reduce to:', ' '.join(smaller), '  [' + str(len(smaller)) + ']')
         try:
           apply_passes(smaller)
           assert run() == normal
         except Exception:
           # this failed too, so it's a good reduction
           passes = smaller
-          print '>>> reduction successful'
+          print('>>> reduction successful')
           more = True
           break
-    print '>>> reduced to:', ' '.join(passes)
+    print('>>> reduced to:', ' '.join(passes))
 
   tested = set()
 
@@ -120,17 +120,17 @@ try:
 
   while 1:
     passes = pick_passes()
-    print '>>> [' + str(counter) + '] testing:', ' '.join(passes)
+    print('>>> [' + str(counter) + '] testing:', ' '.join(passes))
     counter += 1
     try:
       apply_passes(passes)
-    except Exception, e:
-      print e
+    except Exception as e:
+      print(e)
       simplify(passes)
       break
     seen = run()
     if seen != normal:
-      print '>>> bad output:\n', seen
+      print('>>> bad output:\n', seen)
       simplify(passes)
       break
 
