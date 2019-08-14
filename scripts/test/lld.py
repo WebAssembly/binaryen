@@ -22,72 +22,72 @@ from .shared import (
 
 
 def args_for_finalize(filename):
-  if 'safe_stack' in filename:
-    return ['--check-stack-overflow', '--global-base=568']
-  elif 'shared' in filename:
-    return ['--side-module']
-  else:
-    return ['--global-base=568']
+    if 'safe_stack' in filename:
+        return ['--check-stack-overflow', '--global-base=568']
+    elif 'shared' in filename:
+        return ['--side-module']
+    else:
+        return ['--global-base=568']
 
 
 def test_wasm_emscripten_finalize():
-  print('\n[ checking wasm-emscripten-finalize testcases... ]\n')
+    print('\n[ checking wasm-emscripten-finalize testcases... ]\n')
 
-  for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
-    print('..', wast_path)
-    is_passive = '.passive.' in wast_path
-    mem_file = wast_path + '.mem'
-    extension_arg_map = {
-        '.out': [],
-    }
-    if not is_passive:
-      extension_arg_map.update({
-          '.mem.out': ['--separate-data-segments', mem_file],
-      })
-    for ext, ext_args in extension_arg_map.items():
-      expected_file = wast_path + ext
-      if ext != '.out' and not os.path.exists(expected_file):
-        continue
+    for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
+        print('..', wast_path)
+        is_passive = '.passive.' in wast_path
+        mem_file = wast_path + '.mem'
+        extension_arg_map = {
+            '.out': [],
+        }
+        if not is_passive:
+            extension_arg_map.update({
+                '.mem.out': ['--separate-data-segments', mem_file],
+            })
+        for ext, ext_args in extension_arg_map.items():
+            expected_file = wast_path + ext
+            if ext != '.out' and not os.path.exists(expected_file):
+                continue
 
-      cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
-      cmd += args_for_finalize(os.path.basename(wast_path))
-      actual = run_command(cmd)
+            cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
+            cmd += args_for_finalize(os.path.basename(wast_path))
+            actual = run_command(cmd)
 
-      if not os.path.exists(expected_file):
-        print(actual)
-        fail_with_error('output ' + expected_file + ' does not exist')
-      fail_if_not_identical_to_file(actual, expected_file)
-      if ext == '.mem.out':
-        with open(mem_file) as mf:
-          mem = mf.read()
-          fail_if_not_identical_to_file(mem, wast_path + '.mem.mem')
-        os.remove(mem_file)
+            if not os.path.exists(expected_file):
+                print(actual)
+                fail_with_error('output ' + expected_file + ' does not exist')
+            fail_if_not_identical_to_file(actual, expected_file)
+            if ext == '.mem.out':
+                with open(mem_file) as mf:
+                    mem = mf.read()
+                    fail_if_not_identical_to_file(mem, wast_path + '.mem.mem')
+                os.remove(mem_file)
 
 
 def update_lld_tests():
-  print('\n[ updatring wasm-emscripten-finalize testcases... ]\n')
+    print('\n[ updatring wasm-emscripten-finalize testcases... ]\n')
 
-  for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
-    print('..', wast_path)
-    is_passive = '.passive.' in wast_path
-    mem_file = wast_path + '.mem'
-    extension_arg_map = {
-      '.out': [],
-    }
-    if not is_passive:
-      extension_arg_map.update({
-          '.mem.out': ['--separate-data-segments', mem_file + '.mem'],
-      })
-    for ext, ext_args in extension_arg_map.items():
-      out_path = wast_path + ext
-      if ext != '.out' and not os.path.exists(out_path):
-        continue
-      cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
-      cmd += args_for_finalize(os.path.basename(wast_path))
-      actual = run_command(cmd)
-      with open(out_path, 'w') as o:
-        o.write(actual)
+    for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
+        print('..', wast_path)
+        is_passive = '.passive.' in wast_path
+        mem_file = wast_path + '.mem'
+        extension_arg_map = {
+            '.out': [],
+        }
+        if not is_passive:
+            extension_arg_map.update({
+                '.mem.out': ['--separate-data-segments', mem_file + '.mem'],
+            })
+        for ext, ext_args in extension_arg_map.items():
+            out_path = wast_path + ext
+            if ext != '.out' and not os.path.exists(out_path):
+                continue
+            cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
+            cmd += args_for_finalize(os.path.basename(wast_path))
+            actual = run_command(cmd)
+            with open(out_path, 'w') as o:
+                o.write(actual)
 
 
 if __name__ == '__main__':
-  test_wasm_emscripten_finalize()
+    test_wasm_emscripten_finalize()

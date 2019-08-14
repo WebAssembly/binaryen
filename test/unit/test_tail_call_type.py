@@ -4,8 +4,8 @@ import os
 
 
 class TailCallTypeTest(BinaryenTestCase):
-  def test_return_call(self):
-    module = '''
+    def test_return_call(self):
+        module = '''
     (module
      (func $foo (result f32)
       (return_call $bar)
@@ -14,16 +14,16 @@ class TailCallTypeTest(BinaryenTestCase):
       (i32.const 1)
      )
     )
-    '''
-    p = run_process(WASM_OPT + ['--enable-tail-call', '-o', os.devnull],
-                    input=module, check=False, capture_output=True)
-    self.assertNotEqual(p.returncode, 0)
-    self.assertIn(
-        'return_call callee return type must match caller return type',
-        p.stderr)
+'''
+        p = run_process(WASM_OPT + ['--enable-tail-call', '-o', os.devnull],
+                        input=module, check=False, capture_output=True)
+        self.assertNotEqual(p.returncode, 0)
+        self.assertIn(
+            'return_call callee return type must match caller return type',
+            p.stderr)
 
-  def test_return_call_indirect(self):
-    module = '''
+    def test_return_call_indirect(self):
+        module = '''
     (module
      (type $T (func (result i32)))
      (table $0 1 1 funcref)
@@ -33,10 +33,10 @@ class TailCallTypeTest(BinaryenTestCase):
       )
      )
     )
-    '''
-    p = run_process(WASM_OPT + ['--enable-tail-call', '-o', os.devnull],
-                    input=module, check=False, capture_output=True)
-    self.assertNotEqual(p.returncode, 0)
-    self.assertIn(
-        'return_call_indirect callee return type must match caller return type',
-        p.stderr)
+'''
+        p = run_process(WASM_OPT + ['--enable-tail-call', '-o', os.devnull],
+                        input=module, check=False, capture_output=True)
+        self.assertNotEqual(p.returncode, 0)
+        self.assertIn(
+            'return_call_indirect callee return type must match caller return type',
+            p.stderr)

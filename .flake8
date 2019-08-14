@@ -1,6 +1,5 @@
 [flake8]
 ignore =
-  E111, # indentation not a multiple of 4 (we use 2))
   E114, # comment indentation not a multiple of 4
   E501, # line too long
   E121, # continuation line under-indented for hanging indent
