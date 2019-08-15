@@ -665,6 +665,32 @@ std::string codeForConstAddr(Module& wasm,
   return escape(str);
 }
 
+// The main purpose of this walker is to rename emscripten_asm_const_*
+// function calls to have the proper signature in the name, as well as changing
+// the string argument containing the JavaScript code to an index.
+//
+// Normally, this just finds direct calls to emscripten_asm_const_* and replace
+// the target function name and change one argument. If the new target function
+// is not imported, we also have to add an import.
+//
+// With setjmp/longjmp, all the calls are indirect through invoke_* functions.
+// With static linking, we parse the wasm table identify all indices that are
+// emscripten_asm_const_*, and finding invoke_* calls with i32.const indices
+// that are emscripten_asm_const_* functions. Then, we must change the code
+// argument, add an import for the new target function if one hasn't be added
+// already, and add it to the table, then replace the i32.const with our newly
+// assigned index.
+//
+// With setjmp/longjmp and dynamic linking, we have to parse all GOT.func
+// imports, identifying those that are emscripten_asm_const_* functions, and
+// record the imported globals that store the table indices.
+// Then, we identify all calls through invoke_* with global.get indices on
+// globals that are imported emscripten_asm_const_* functions. Then, we must
+// change the code argument, add a GOT.func import for the new target function,
+// if one has not been added, and replace the global.get to use our new global.
+//
+// All added imports are queued and only added to the wasm module after
+// processing completes.
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
   std::vector<Address> segmentOffsets; // segment index => address offset
@@ -676,14 +702,14 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   std::map<Index, LocalSet*> sets;
   // table indices that are calls to emscripten_asm_const_*
   std::map<Index, Name> asmTable;
-  // GOT imports that are calls to emscripten_asm_const_*
+  // GOT.func imports that are calls to emscripten_asm_const_*
   std::set<Name> gotTable;
   // cache used by tableIndexForName
   std::map<Name, Literal> tableIndices;
   // first available index after the table segment for each segment
   std::vector<int32_t> tableOffsets;
   // cache used by globalImportForName
-  std::map<Name, Name> globalImports;
+  std::map<Name, Name> globalFuncImports;
 
   AsmConstWalker(Module& _wasm)
     : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
@@ -971,12 +997,14 @@ Literal AsmConstWalker::tableIndexForName(Name name) {
 }
 
 Name AsmConstWalker::globalImportForName(Name name) {
-  if (globalImports.count(name)) {
-    return globalImports[name];
+  if (globalFuncImports.count(name)) {
+    return globalFuncImports[name];
   }
   std::string result = "gimport$";
   result += name.c_str();
-  return globalImports[name] = Name(result.c_str());
+  auto ret = Name(result.c_str());
+  globalFuncImports[name] = ret;
+  return ret;
 }
 
 void AsmConstWalker::addImports() {
@@ -993,7 +1021,14 @@ void AsmConstWalker::addImports() {
     wasm.table.initial.addr += queuedTableEntries.size();
   }
 
-  for (const auto& entry : globalImports) {
+  // Remove LLVM-generated emscripten_asm_const_* imports, which does not have
+  // the correct signatures in the name...
+  for (const auto& name : gotTable) {
+    wasm.removeGlobal(name);
+  }
+
+  // And add our new function imports with the correct signatures in the name.
+  for (const auto& entry : globalFuncImports) {
     auto* import = new Global;
     import->name = entry.second;
     import->module = "GOT.func";
@@ -1001,10 +1036,6 @@ void AsmConstWalker::addImports() {
     import->type = i32;
     import->mutable_ = true;
     wasm.addGlobal(import);
-  }
-
-  for (const auto& name : gotTable) {
-    wasm.removeGlobal(name);
   }
 }
 
