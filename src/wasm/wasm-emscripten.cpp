@@ -756,17 +756,16 @@ Const* AsmConstWalker::resolveConstAddr(Expression* arg, const Name& target) {
 // return the name.
 Name* AsmConstWalker::resolveGlobalGet(Expression* arg, const Name& target) {
   while (!arg->dynCast<GlobalGet>()) {
-    if (auto* get = arg->dynCast<LocalGet>()) {
-      // The argument may be a local.get, in which case, the last set in this
-      // basic block has the value.
-      auto* set = sets[get->index];
-      if (set) {
-        assert(set->index == get->index);
-        arg = set->value;
-        continue;
-      }
+    auto* get = arg->dynCast<LocalGet>();
+    if (!get) {
+      return nullptr;
     }
-    return nullptr;
+    auto* set = sets[get->index];
+    if (!set) {
+      return nullptr;
+    }
+    assert(set->index == get->index);
+    arg = set->value;
   }
   return &arg->cast<GlobalGet>()->name;
 }
@@ -1009,9 +1008,7 @@ void AsmConstWalker::addImports() {
   }
 }
 
-AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
-  // Collect imports to remove
-  // This would find our generated functions if we ran it later
+void EmscriptenGlueGenerator::fixEmAsm() {
   std::vector<Name> toRemove;
   for (auto& import : wasm.functions) {
     if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
@@ -1027,11 +1024,7 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
   for (auto importName : toRemove) {
     wasm.removeFunction(importName);
   }
-  return walker;
-}
 
-void EmscriptenGlueGenerator::fixEmAsm() {
-  auto walker = fixEmAsmConstsAndReturnWalker(wasm);
   asmSigsForCode = std::move(walker.sigsForCode);
   asmCodeIds = std::move(walker.ids);
 }

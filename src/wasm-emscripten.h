@@ -75,7 +75,10 @@ private:
   // so far.
   std::unordered_set<std::string> sigs;
 
-  // Created by fixEmAsm and used by generateEmscriptenMetadata.
+  // Stores metadata from processing EM_ASM calls. This is decoupled from the
+  // metadata generation step so that emitted code will benefit from further
+  // processing. Otherwise, a portion of the steps afterwards would have to be
+  // replicated.
   std::map<std::string, std::set<std::string>> asmSigsForCode;
   std::map<std::string, Address> asmCodeIds;
 
