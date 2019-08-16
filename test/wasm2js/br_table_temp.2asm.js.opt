@@ -12571,6 +12571,7 @@ function asmFunc(global, env, buffer) {
     $2 = 18;
    case 1:
     $1 = $2 + 1 | 0;
+    break;
    default:
     break block;
    };
@@ -12589,6 +12590,7 @@ function asmFunc(global, env, buffer) {
     $2 = 16;
    case 1:
     $1 = $2 + 1 | 0;
+    break;
    case 0:
     break block;
    };
@@ -12607,6 +12609,7 @@ function asmFunc(global, env, buffer) {
     $2 = 16;
    case 1:
     $1 = $2 + 1 | 0;
+    break;
    default:
     break block;
    };

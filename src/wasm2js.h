@@ -1013,43 +1013,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Expression* defaultBody = nullptr; // default must be last in asm.js
 
     Ref visitSwitch(Switch* curr) {
-#if 0
-      // Simple switch emitting. This is valid but may lead to block nesting of a size
-      // that JS engines can't handle.
-      Ref ret = ValueBuilder::makeBlock();
-      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      Ref theSwitch =
-        ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
-      ret[1]->push_back(theSwitch);
-      // First, group the switch targets.
-      std::map<Name, std::vector<Index>> targetIndexes;
-      for (size_t i = 0; i < curr->targets.size(); i++) {
-        targetIndexes[curr->targets[i]].push_back(i);
-      }
-      // Emit group by group.
-      for (auto& pair : targetIndexes) {
-        auto target = pair.first;
-        auto& indexes = pair.second;
-        if (target != curr->default_) {
-          for (auto i : indexes) {
-            ValueBuilder::appendCaseToSwitch(theSwitch,
-                                             ValueBuilder::makeNum(i));
-          }
-          ValueBuilder::appendCodeToSwitch(
-            theSwitch, blockify(makeBreakOrContinue(target)), false);
-        } else {
-          // For the group going to the same place as the default, we can just
-          // emit the default itself, which we do at the end.
-        }
-      }
-      // TODO: if the group the default is in is not the largest, we can turn
-      // the largest into
-      //       the default by using a local and a check on the range
-      ValueBuilder::appendDefaultToSwitch(theSwitch);
-      ValueBuilder::appendCodeToSwitch(
-        theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
-      return ret;
-#else
       // Even without optimizations, we work hard here to emit minimal and
       // especially minimally-nested code, since otherwise we may get block
       // nesting of a size that JS engines can't handle.
@@ -1064,6 +1027,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // Emit first any hoisted groups.
       auto& hoistedCases = switchProcessor.hoistedSwitchCases[curr];
       std::set<Name> emittedTargets;
+      bool hoistedEndsWithUnreachable = false;
       for (auto& case_ : hoistedCases) {
         auto target = case_.target;
         auto& code = case_.code;
@@ -1080,8 +1044,24 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         for (auto* c : code) {
           ValueBuilder::appendCodeToSwitch(
             theSwitch, blockify(visit(c, NO_RESULT)), false);
+          hoistedEndsWithUnreachable = c->type == unreachable;
         }
       }
+      // After the hoisted cases, if any remain we must make sure not to
+      // fall through into them. If no code was hoisted, this is unnecessary,
+      // and if the hoisted code ended with an unreachable it also is not
+      // necessary.
+      bool stoppedFurtherFallthrough = false;
+      auto stopFurtherFallthrough = [&]() {
+        if (!stoppedFurtherFallthrough && !hoistedCases.empty() && !hoistedEndsWithUnreachable) {
+          stoppedFurtherFallthrough = true;
+          ValueBuilder::appendCodeToSwitch(
+            theSwitch,
+            blockify(ValueBuilder::makeBreak(IString())),
+            false);
+        }
+      };
+
       // Emit any remaining groups by just emitting branches to their code,
       // which will appear outside the switch.
       for (auto& pair : targetIndexes) {
@@ -1090,6 +1070,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         if (emittedTargets.count(target)) {
           continue;
         }
+        stopFurtherFallthrough();
         if (target != curr->default_) {
           for (auto i : indexes) {
             ValueBuilder::appendCaseToSwitch(theSwitch,
@@ -1106,12 +1087,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // the largest into
       //       the default by using a local and a check on the range
       if (!emittedTargets.count(curr->default_)) {
+        stopFurtherFallthrough();
         ValueBuilder::appendDefaultToSwitch(theSwitch);
         ValueBuilder::appendCodeToSwitch(
           theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
       }
       return theSwitch;
-#endif
     }
 
     Ref visitCall(Call* curr) {

@@ -100,6 +100,7 @@ function asmFunc(global, env, buffer) {
        }
        zed(-1);
        zed(-2);
+       break;
       case 0:
        break a;
       case 1:
@@ -140,6 +141,7 @@ function asmFunc(global, env, buffer) {
        }
        zed(-1);
        zed(-2);
+       break;
       case 0:
        break a;
       case 1:
