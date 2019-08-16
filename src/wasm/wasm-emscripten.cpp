@@ -16,7 +16,6 @@
 
 #include "wasm-emscripten.h"
 
-#include <functional>
 #include <sstream>
 
 #include "asm_v_wasm.h"
@@ -33,7 +32,6 @@ namespace wasm {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
-static const char* INVOKE_PREFIX = "invoke_";
 
 static Name STACK_SAVE("stackSave");
 static Name STACK_RESTORE("stackRestore");
@@ -674,12 +672,6 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   std::set<std::string> allSigs;
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
-  // table indices that are calls to emscripten_asm_const_*
-  std::map<Index, Name> asmTable;
-  // cache used by tableIndexForName
-  std::map<Name, Literal> tableIndices;
-  // first available index after the table segment for each segment
-  std::vector<int32_t> tableOffsets;
 
   AsmConstWalker(Module& _wasm)
     : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
@@ -700,14 +692,7 @@ private:
   void queueImport(Name importName, std::string baseSig);
   void addImports();
 
-  Index resolveConstIndex(Expression* arg,
-                          std::function<void(Expression*)> reportError);
-  Const* resolveConstAddr(Expression* arg, const Name& target);
-  void prepareAsmIndices(Table* table);
-  Literal tableIndexForName(Name name);
-
   std::vector<std::unique_ptr<Function>> queuedImports;
-  std::vector<Name> queuedTableEntries;
 };
 
 void AsmConstWalker::noteNonLinear(Expression* curr) {
@@ -717,115 +702,45 @@ void AsmConstWalker::noteNonLinear(Expression* curr) {
 
 void AsmConstWalker::visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
 
-Const* AsmConstWalker::resolveConstAddr(Expression* arg, const Name& target) {
-  while (!arg->dynCast<Const>()) {
-    if (auto* get = arg->dynCast<LocalGet>()) {
-      // The argument may be a local.get, in which case, the last set in this
-      // basic block has the value.
-      auto* set = sets[get->index];
-      if (set) {
-        assert(set->index == get->index);
-        arg = set->value;
-      }
-    } else if (auto* value = arg->dynCast<Binary>()) {
-      // In the dynamic linking case the address of the string constant
-      // is the result of adding its offset to __memory_base.
-      // In this case are only looking for the offset with the data segment so
-      // the RHS of the addition is just what we want.
-      assert(value->op == AddInt32);
-      arg = value->right;
-    } else {
-      Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
-              << ") in call to to: " << target;
-    }
-  }
-  return arg->cast<Const>();
-}
-
-Index AsmConstWalker::resolveConstIndex(
-  Expression* arg, std::function<void(Expression*)> reportError) {
-  while (!arg->is<Const>()) {
-    if (auto* get = arg->dynCast<LocalGet>()) {
-      // The argument may be a local.get, in which case, the last set in this
-      // basic block has the value.
-      auto* set = sets[get->index];
-      if (set) {
-        assert(set->index == get->index);
-        arg = set->value;
-      } else {
-        reportError(arg);
-        return 0;
-      }
-    } else if (arg->is<GlobalGet>()) {
-      // In the dynamic linking case, indices start at __table_base.
-      // We want the value relative to __table_base.
-      // If we are doing a global.get, assume it's __table_base, then the
-      // offset relative to __table_base must be 0.
-      return 0;
-    } else {
-      reportError(arg);
-      return 0;
-    }
-  }
-  return Index(arg->cast<Const>()->value.geti32());
-}
-
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
-  if (!import->imported()) {
-    return;
-  }
-
   // Find calls to emscripten_asm_const* functions whose first argument is
   // is always a string constant.
-  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+  if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto baseSig = getSig(curr);
     auto sig = fixupNameWithSig(curr->target, baseSig);
-    auto* value = resolveConstAddr(curr->operands[0], import->base);
+    auto* arg = curr->operands[0];
+    while (!arg->dynCast<Const>()) {
+      if (auto* get = arg->dynCast<LocalGet>()) {
+        // The argument may be a local.get, in which case, the last set in this
+        // basic block has the value.
+        auto* set = sets[get->index];
+        if (set) {
+          assert(set->index == get->index);
+          arg = set->value;
+        }
+      } else if (auto* value = arg->dynCast<Binary>()) {
+        // In the dynamic linking case the address of the string constant
+        // is the result of adding its offset to __memory_base.
+        // In this case are only looking for the offset with the data segment so
+        // the RHS of the addition is just what we want.
+        assert(value->op == AddInt32);
+        arg = value->right;
+      } else {
+        if (!value) {
+          Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
+                  << ") in call to to: " << import->base;
+        }
+      }
+    }
+
+    auto* value = arg->cast<Const>();
     auto code = codeForConstAddr(wasm, segmentOffsets, value);
     sigsForCode[code].insert(sig);
 
     // Replace the first argument to the call with a Const index
     Builder builder(wasm);
     curr->operands[0] = builder.makeConst(idLiteralForCode(code));
-  } else if (import->base.startsWith(INVOKE_PREFIX)) {
-    // A call to emscripten_asm_const_* maybe done indirectly via one of the
-    // invoke_* functions, in case of setjmp/longjmp, for example.
-    // We attempt to modify the invoke_* call instead.
-    auto idx = resolveConstIndex(curr->operands[0], [&](Expression* arg) {});
-
-    // If the address of the invoke call is an emscripten_asm_const_* function:
-    if (asmTable.count(idx)) {
-      auto* value = resolveConstAddr(curr->operands[1], asmTable[idx]);
-      auto code = codeForConstAddr(wasm, segmentOffsets, value);
-
-      // Extract the base signature from the invoke_* function name.
-      std::string baseSig(import->base.c_str() + sizeof(INVOKE_PREFIX) - 1);
-      Name name;
-      auto sig = fixupNameWithSig(name, baseSig);
-      sigsForCode[code].insert(sig);
-
-      Builder builder(wasm);
-      curr->operands[0] = builder.makeConst(tableIndexForName(name));
-      curr->operands[1] = builder.makeConst(idLiteralForCode(code));
-    }
-  }
-}
-
-void AsmConstWalker::prepareAsmIndices(Table* table) {
-  for (auto& segment : table->segments) {
-    auto idx = resolveConstIndex(segment.offset, [&](Expression* arg) {
-      Fatal() << "Unexpected table index type (" << getExpressionName(arg)
-              << ") table";
-    });
-    for (auto& name : segment.data) {
-      auto* func = wasm.getFunction(name);
-      if (func->imported() && func->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
-        asmTable[idx] = name;
-      }
-      ++idx;
-    }
-    tableOffsets.push_back(idx);
   }
 }
 
@@ -842,8 +757,6 @@ void AsmConstWalker::visitTable(Table* curr) {
 }
 
 void AsmConstWalker::process() {
-  // Find table indices that point to emscripten_asm_const_* functions.
-  prepareAsmIndices(&wasm.table);
   // Find and queue necessary imports
   walkModule(&wasm);
   // Add them after the walk, to avoid iterator invalidation on
@@ -899,27 +812,9 @@ void AsmConstWalker::queueImport(Name importName, std::string baseSig) {
   queuedImports.push_back(std::unique_ptr<Function>(import));
 }
 
-Literal AsmConstWalker::tableIndexForName(Name name) {
-  auto result = tableIndices.find(name);
-  if (result != tableIndices.end()) {
-    return result->second;
-  }
-  queuedTableEntries.push_back(name);
-  return tableIndices[name] = Literal(tableOffsets[0]++);
-}
-
 void AsmConstWalker::addImports() {
   for (auto& import : queuedImports) {
     wasm.addFunction(import.release());
-  }
-
-  if (!queuedTableEntries.empty()) {
-    assert(wasm.table.segments.size() == 1);
-    std::vector<Name>& tableSegmentData = wasm.table.segments[0].data;
-    for (auto& entry : queuedTableEntries) {
-      tableSegmentData.push_back(entry);
-    }
-    wasm.table.initial.addr += queuedTableEntries.size();
   }
 }
 
@@ -1056,7 +951,7 @@ struct FixInvokeFunctionNamesWalker
     }
     std::string sigWoOrigFunc = sig.front() + sig.substr(2, sig.size() - 2);
     invokeSigs.insert(sigWoOrigFunc);
-    return Name(INVOKE_PREFIX + sigWoOrigFunc);
+    return Name("invoke_" + sigWoOrigFunc);
   }
 
   Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
@@ -1196,7 +1091,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (emJsWalker.codeByName.count(import->base.str) == 0 &&
         !import->base.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
-        !import->base.startsWith(INVOKE_PREFIX)) {
+        !import->base.startsWith("invoke_")) {
       if (declares.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
       }
@@ -1250,7 +1145,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "  \"invokeFuncs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
-    if (import->base.startsWith(INVOKE_PREFIX)) {
+    if (import->base.startsWith("invoke_")) {
       if (invokeFuncs.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
       }
