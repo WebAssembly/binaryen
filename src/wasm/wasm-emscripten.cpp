@@ -718,6 +718,11 @@ void AsmConstWalker::visitCall(Call* curr) {
         if (set) {
           assert(set->index == get->index);
           arg = set->value;
+        } else {
+          Fatal() << "local.get of unknown in arg0 of call to " << import->base
+                  << " in function " << getFunction()->name
+                  << ".\nThis might be caused by aggressive compiler "
+                     "transformations. Consider using EM_JS instead.";
         }
       } else if (auto* value = arg->dynCast<Binary>()) {
         // In the dynamic linking case the address of the string constant
@@ -729,7 +734,7 @@ void AsmConstWalker::visitCall(Call* curr) {
       } else {
         if (!value) {
           Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
-                  << ") in call to to: " << import->base;
+                  << ") in call to: " << import->base;
         }
       }
     }
