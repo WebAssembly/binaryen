@@ -469,7 +469,7 @@ class Node:
     return "".join(prefix)
 
   def do_insert(self, full_inst, inst, expr):
-    if inst is "":
+    if not inst:
       assert self.expr is None, "Repeated instruction " + full_inst
       self.expr = expr
       self.inst = full_inst
@@ -478,7 +478,7 @@ class Node:
     prefix, key = "", None
     for k in self.children:
       prefix = Node._common_prefix(inst, k)
-      if prefix is not "":
+      if prefix:
         key = k
         break
     if key is None:
@@ -486,7 +486,7 @@ class Node:
       self.children[inst] = Node(expr, inst=full_inst)
       return
     key_remainder = key[len(prefix):]
-    if key_remainder is not "":
+    if key_remainder:
       # split key and move everything after the prefix to a new node
       child = self.children.pop(key)
       self.children[prefix] = Node(children={key_remainder: child})

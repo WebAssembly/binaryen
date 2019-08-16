@@ -34,4 +34,4 @@ if start >= 0:
     assert end > 0
     trace = trace[:start] + trace[end + 2:]
 
-  print trace
+  print(trace)

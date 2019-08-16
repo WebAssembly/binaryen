@@ -8,6 +8,6 @@ import sys
 
 for line in open(sys.argv[1]).readlines():
   if '(local.tee ' in line or '(local.set ' in line or '(local.get ' in line:
-    print line[:line.find('$')]
+    print(line[:line.find('$')])
   else:
-    print line,
+    print(line.rstrip())
