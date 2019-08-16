@@ -719,11 +719,11 @@ void AsmConstWalker::visitCall(Call* curr) {
           assert(set->index == get->index);
           arg = set->value;
         } else {
-          Fatal()
-            << "local.get of unknown in arg0 of call to " << import->base
-            << " in function " << getFunction()->name
-            << " (used by EM_ASM* macros).\nThis might be caused by aggressive "
-               "compiler transformations. Consider using EM_JS instead.";
+          Fatal() << "local.get of unknown in arg0 of call to " << import->base
+                  << " (used by EM_ASM* macros) in function "
+                  << getFunction()->name
+                  << ".\nThis might be caused by aggressive compiler "
+                     "transformations. Consider using EM_JS instead.";
         }
       } else if (auto* value = arg->dynCast<Binary>()) {
         // In the dynamic linking case the address of the string constant
