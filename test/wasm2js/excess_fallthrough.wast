@@ -1,6 +1,6 @@
 (module
- (import "env" "bar" (func $bar))
  (export "foo" (func $foo))
+ (func $bar)
  (func $foo (param $0 i32)
   (loop $label$4
    (block $label$5
