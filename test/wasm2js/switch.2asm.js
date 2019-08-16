@@ -46,6 +46,7 @@ function asmFunc(global, env, buffer) {
      j = 101;
     default:
      j = 102;
+     break;
     case 7:
      break $7;
     };
