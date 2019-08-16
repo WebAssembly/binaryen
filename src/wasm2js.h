@@ -1053,12 +1053,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // necessary.
       bool stoppedFurtherFallthrough = false;
       auto stopFurtherFallthrough = [&]() {
-        if (!stoppedFurtherFallthrough && !hoistedCases.empty() && !hoistedEndsWithUnreachable) {
+        if (!stoppedFurtherFallthrough && !hoistedCases.empty() &&
+            !hoistedEndsWithUnreachable) {
           stoppedFurtherFallthrough = true;
           ValueBuilder::appendCodeToSwitch(
-            theSwitch,
-            blockify(ValueBuilder::makeBreak(IString())),
-            false);
+            theSwitch, blockify(ValueBuilder::makeBreak(IString())), false);
         }
       };
 
