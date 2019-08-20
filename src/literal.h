@@ -80,6 +80,7 @@ public:
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0))}});
+      case Type::anyref: // there's no anyref literals
       case Type::exnref: // there's no exnref literals
       case none:
       case unreachable:
@@ -430,6 +431,7 @@ template<> struct less<wasm::Literal> {
         return a.reinterpreti64() < b.reinterpreti64();
       case wasm::Type::v128:
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
+      case wasm::Type::anyref: // anyref is an opaque value
       case wasm::Type::exnref: // exnref is an opaque value
       case wasm::Type::none:
       case wasm::Type::unreachable:

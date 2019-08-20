@@ -81,8 +81,10 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case v128:
         assert(false && "v128 not implemented yet");
+      case anyref:
+        assert(false && "anyref not implemented yet");
       case exnref:
-        assert(false && "not implemented yet");
+        assert(false && "exnref not implemented yet");
       case none:
         WASM_UNREACHABLE();
       case unreachable:
@@ -113,6 +115,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case v128:
         assert(false && "v128 not implemented yet");
+      case anyref:
+        assert(false && "anyref not implemented yet");
       case exnref:
         assert(false && "exnref not implemented yet");
       case unreachable:

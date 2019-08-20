@@ -70,6 +70,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       break;
     }
 
+    case Type::anyref: // there's no anyref literals
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
@@ -90,6 +91,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.i64).castToF64();
     case Type::v128:
       return Literal(x.v128);
+    case Type::anyref: // there's no anyref literals
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
@@ -210,6 +212,7 @@ void printArg(std::ostream& setup, std::ostream& out, BinaryenLiteral arg) {
       out << "BinaryenLiteralVec128(" << array << ")";
       break;
     }
+    case Type::anyref: // there's no anyref literals
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
@@ -265,6 +268,7 @@ BinaryenType BinaryenTypeInt64(void) { return i64; }
 BinaryenType BinaryenTypeFloat32(void) { return f32; }
 BinaryenType BinaryenTypeFloat64(void) { return f64; }
 BinaryenType BinaryenTypeVec128(void) { return v128; }
+BinaryenType BinaryenTypeAnyref(void) { return anyref; }
 BinaryenType BinaryenTypeExnref(void) { return exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }

@@ -723,6 +723,9 @@ public:
         value = Literal(bytes.data());
         break;
       }
+      case anyref:
+        // TODO Implement and return nullref
+        assert(false && "anyref not implemented yet");
       case exnref:
         // TODO Implement and return nullref
         assert(false && "exnref not implemented yet");

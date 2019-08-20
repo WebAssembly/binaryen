@@ -147,6 +147,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
+      case anyref: // anyref cannot be loaded from memory
       case exnref: // exnref cannot be loaded from memory
       case none:
         WASM_UNREACHABLE();
@@ -246,6 +247,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
+      case anyref: // anyref cannot be stored from memory
       case exnref: // exnref cannot be stored in memory
       case none:
       case unreachable:
@@ -580,6 +582,7 @@ void BinaryInstWriter::visitConst(Const* curr) {
       }
       break;
     }
+    case anyref: // there's no anyref.const
     case exnref: // there's no exnref.const
     case none:
     case unreachable:
@@ -1493,6 +1496,11 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       continue;
     }
     index += numLocalsByType[v128];
+    if (type == anyref) {
+      mappedLocals[i] = index + currLocalsByType[anyref] - 1;
+      continue;
+    }
+    index += numLocalsByType[anyref];
     if (type == exnref) {
       mappedLocals[i] = index + currLocalsByType[exnref] - 1;
       continue;
@@ -1503,6 +1511,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   o << U32LEB((numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
               (numLocalsByType[f32] ? 1 : 0) + (numLocalsByType[f64] ? 1 : 0) +
               (numLocalsByType[v128] ? 1 : 0) +
+              (numLocalsByType[anyref] ? 1 : 0) +
               (numLocalsByType[exnref] ? 1 : 0));
   if (numLocalsByType[i32]) {
     o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
@@ -1518,6 +1527,9 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   }
   if (numLocalsByType[v128]) {
     o << U32LEB(numLocalsByType[v128]) << binaryType(v128);
+  }
+  if (numLocalsByType[anyref]) {
+    o << U32LEB(numLocalsByType[anyref]) << binaryType(anyref);
   }
   if (numLocalsByType[exnref]) {
     o << U32LEB(numLocalsByType[exnref]) << binaryType(exnref);

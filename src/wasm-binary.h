@@ -381,7 +381,9 @@ enum EncodedType {
   v128 = -0x5, // 0x7b
   // elem_type
   AnyFunc = -0x10, // 0x70
-  // reference type
+  // opaque reference type
+  anyref = -0x11, // 0x6f
+  // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
   Func = -0x20, // 0x60
@@ -406,6 +408,7 @@ extern const char* SignExtFeature;
 extern const char* SIMD128Feature;
 extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
+extern const char* ReferenceTypesFeature;
 
 enum Subsection {
   NameFunction = 1,
@@ -902,6 +905,9 @@ inline S32LEB binaryType(Type type) {
       break;
     case v128:
       ret = BinaryConsts::EncodedType::v128;
+      break;
+    case anyref:
+      ret = BinaryConsts::EncodedType::anyref;
       break;
     case exnref:
       ret = BinaryConsts::EncodedType::exnref;

@@ -74,6 +74,7 @@ BinaryenType BinaryenTypeInt64(void);
 BinaryenType BinaryenTypeFloat32(void);
 BinaryenType BinaryenTypeFloat64(void);
 BinaryenType BinaryenTypeVec128(void);
+BinaryenType BinaryenTypeAnyref(void);
 BinaryenType BinaryenTypeExnref(void);
 BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let

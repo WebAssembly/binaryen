@@ -4,8 +4,9 @@ BinaryenTypeInt64: 2
 BinaryenTypeFloat32: 3
 BinaryenTypeFloat64: 4
 BinaryenTypeVec128: 5
-BinaryenTypeExnref: 6
-BinaryenTypeUnreachable: 7
+BinaryenTypeAnyref: 6
+BinaryenTypeExnref: 7
+BinaryenTypeUnreachable: 8
 BinaryenTypeAuto: -1
 Binaryen.Features.MVP: 0
 Binaryen.Features.Atomics: 1
@@ -15,7 +16,7 @@ Binaryen.Features.NontrappingFPToInt: 4
 Binaryen.Features.SignExt: 32
 Binaryen.Features.SIMD128: 8
 Binaryen.Features.ExceptionHandling: 64
-Binaryen.Features.All: 255
+Binaryen.Features.All: 511
 BinaryenInvalidId: 0
 BinaryenBlockId: 1
 BinaryenIfId: 2
@@ -4759,9 +4760,9 @@ int main() {
     BinaryenExpressionRef operands[] = { expressions[656] };
     expressions[657] = BinaryenThrow(the_module, "a-event", operands, 1);
   }
-  expressions[658] = BinaryenPop(the_module, 6);
+  expressions[658] = BinaryenPop(the_module, 7);
   expressions[659] = BinaryenLocalSet(the_module, 5, expressions[658]);
-  expressions[660] = BinaryenLocalGet(the_module, 5, 6);
+  expressions[660] = BinaryenLocalGet(the_module, 5, 7);
   expressions[661] = BinaryenBrOnExn(the_module, "try-block", "a-event", expressions[660]);
   expressions[662] = BinaryenRethrow(the_module, expressions[661]);
   {
@@ -4784,7 +4785,7 @@ int main() {
   expressions[674] = BinaryenPush(the_module, expressions[673]);
   expressions[675] = BinaryenPop(the_module, 5);
   expressions[676] = BinaryenPush(the_module, expressions[675]);
-  expressions[677] = BinaryenPop(the_module, 6);
+  expressions[677] = BinaryenPop(the_module, 7);
   expressions[678] = BinaryenPush(the_module, expressions[677]);
   expressions[679] = BinaryenNop(the_module);
   expressions[680] = BinaryenUnreachable(the_module);
@@ -4876,7 +4877,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     expressions[689] = BinaryenBlock(the_module, "the-body", children, 2, 0);
   }
   {
-    BinaryenType varTypes[] = { 1, 6 };
+    BinaryenType varTypes[] = { 1, 7 };
     functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[1], varTypes, 2, expressions[689]);
   }
   expressions[690] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
@@ -4934,7 +4935,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     functionTypes[4] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
-  BinaryenModuleSetFeatures(the_module, 255);
+  BinaryenModuleSetFeatures(the_module, 511);
   BinaryenModuleGetFeatures(the_module);
   BinaryenModulePrint(the_module);
 (module

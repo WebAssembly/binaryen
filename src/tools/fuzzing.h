@@ -851,6 +851,7 @@ private:
       case f32:
       case f64:
       case v128:
+      case anyref:
       case exnref:
         ret = _makeConcrete(type);
         break;
@@ -1370,6 +1371,7 @@ private:
         return builder.makeLoad(
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
+      case anyref: // anyref cannot be loaded from memory
       case exnref: // exnref cannot be loaded from memory
       case none:
       case unreachable:
@@ -1471,6 +1473,7 @@ private:
         return builder.makeStore(
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
+      case anyref: // anyref cannot be stored in memory
       case exnref: // exnref cannot be stored in memory
       case none:
       case unreachable:
@@ -1481,7 +1484,7 @@ private:
 
   Expression* makeStore(Type type) {
     // exnref type cannot be stored in memory
-    if (!allowMemory || type == exnref) {
+    if (!allowMemory || isReferenceType(type)) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicStore(type);
@@ -1566,6 +1569,7 @@ private:
           case f64:
             return Literal(getDouble());
           case v128:
+          case anyref: // anyref cannot have literals
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
@@ -1608,6 +1612,7 @@ private:
           case f64:
             return Literal(double(small));
           case v128:
+          case anyref: // anyref cannot have literals
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
@@ -1673,6 +1678,7 @@ private:
                                          std::numeric_limits<uint64_t>::max()));
             break;
           case v128:
+          case anyref: // anyref cannot have literals
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
@@ -1704,6 +1710,7 @@ private:
             value = Literal(double(int64_t(1) << upTo(64)));
             break;
           case v128:
+          case anyref: // anyref cannot have literals
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
@@ -1728,12 +1735,21 @@ private:
   }
 
   Expression* makeConst(Type type) {
-    if (type == exnref) {
-      // There's no exnref.const.
-      // TODO We should return a nullref once we implement instructions for
-      // reference types proposal.
-      assert(false && "exnref const is not implemented yet");
+    switch (type) {
+      case anyref:
+        // There's no anyref.const.
+        // TODO We should return a nullref once we implement instructions for
+        // reference types proposal.
+        assert(false && "anyref const is not implemented yet");
+      case exnref:
+        // There's no exnref.const.
+        // TODO We should return a nullref once we implement instructions for
+        // reference types proposal.
+        assert(false && "exnref const is not implemented yet");
+      default:
+        break;
     }
+
     auto* ret = wasm.allocator.alloc<Const>();
     ret->value = makeLiteral(type);
     ret->type = type;
@@ -1802,6 +1818,7 @@ private:
                                     AllTrueVecI64x2),
                                make(v128)});
           }
+          case anyref: // there's no unary ops for anyref
           case exnref: // there's no unary ops for exnref
           case none:
           case unreachable:
@@ -1933,6 +1950,7 @@ private:
         }
         WASM_UNREACHABLE();
       }
+      case anyref: // there's no unary ops for anyref
       case exnref: // there's no unary ops for exnref
       case none:
       case unreachable:
@@ -1955,7 +1973,7 @@ private:
       return makeTrivial(type);
     }
     // There's no binary ops for exnref
-    if (type == exnref) {
+    if (isReferenceType(type)) {
       makeTrivial(type);
     }
 
@@ -2146,6 +2164,7 @@ private:
                             make(v128),
                             make(v128)});
       }
+      case anyref: // there's no binary ops for anyref
       case exnref: // there's no binary ops for exnref
       case none:
       case unreachable:
@@ -2340,6 +2359,7 @@ private:
         op = ExtractLaneVecF64x2;
         break;
       case v128:
+      case anyref:
       case exnref:
       case none:
       case unreachable:

@@ -893,6 +893,9 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
       return v128;
     }
   }
+  if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
+    return anyref;
+  }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return exnref;
   }

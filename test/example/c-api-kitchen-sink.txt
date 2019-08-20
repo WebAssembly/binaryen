@@ -4,8 +4,9 @@ BinaryenTypeInt64: 2
 BinaryenTypeFloat32: 3
 BinaryenTypeFloat64: 4
 BinaryenTypeVec128: 5
-BinaryenTypeExnref: 6
-BinaryenTypeUnreachable: 7
+BinaryenTypeAnyref: 6
+BinaryenTypeExnref: 7
+BinaryenTypeUnreachable: 8
 BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
@@ -15,7 +16,7 @@ BinaryenFeatureNontrappingFPToInt: 4
 BinaryenFeatureSignExt: 32
 BinaryenFeatureSIMD128: 8
 BinaryenFeatureExceptionHandling: 64
-BinaryenFeatureAll: 255
+BinaryenFeatureAll: 511
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -2022,9 +2023,9 @@ int main() {
     BinaryenExpressionRef operands[] = { expressions[34] };
     expressions[35] = BinaryenThrow(the_module, "a-event", operands, 1);
   }
-  expressions[36] = BinaryenPop(the_module, 6);
+  expressions[36] = BinaryenPop(the_module, 7);
   expressions[37] = BinaryenLocalSet(the_module, 5, expressions[36]);
-  expressions[38] = BinaryenLocalGet(the_module, 5, 6);
+  expressions[38] = BinaryenLocalGet(the_module, 5, 7);
   expressions[39] = BinaryenBrOnExn(the_module, "try-block", "a-event", expressions[38]);
   expressions[40] = BinaryenRethrow(the_module, expressions[39]);
   {
@@ -3371,7 +3372,7 @@ int main() {
     expressions[666] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
   }
   {
-    BinaryenType varTypes[] = { 1, 6 };
+    BinaryenType varTypes[] = { 1, 7 };
     functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 2, expressions[666]);
   }
   expressions[667] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
@@ -3414,7 +3415,7 @@ int main() {
     functionTypes[4] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
-  BinaryenModuleSetFeatures(the_module, 255);
+  BinaryenModuleSetFeatures(the_module, 511);
   BinaryenModuleGetFeatures(the_module);
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
