@@ -16,9 +16,11 @@ EXECUTE_PROCESS(COMMAND
              GIT_HASH
          OUTPUT_STRIP_TRAILING_WHITESPACE)
 IF(${GIT_HASH_RESULT})
-  MESSAGE(FATAL_ERROR "Error running git describe to determine version")
+  MESSAGE(WARNING "Error running git describe to determine version")
+  SET(BINARYEN_VERSION_INFO "(unable to determine version)")
+ELSE()
+  SET(BINARYEN_VERSION_INFO "${GIT_HASH}")
 ENDIF()
-SET(BINARYEN_VERSION_INFO "${GIT_HASH}")
 CONFIGURE_FILE(config.h.in config.h)
 
 OPTION(BUILD_STATIC_LIB "Build as a static library" OFF)
@@ -66,7 +68,7 @@ ENDFUNCTION()
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-# Add output direcoty to include path so config.h can be found
+# Add output directory to include path so config.h can be found
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 # Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
