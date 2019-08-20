@@ -49,17 +49,33 @@ def run_help_tests():
     print('[ checking --help is useful... ]\n')
 
     not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm']
-    executables = sorted(filter(lambda x: not any(x.endswith(s) for s in
-                                not_executable_suffix) and os.path.isfile(x),
-                                os.listdir(options.binaryen_bin)))
+    bin_files = [os.path.join(options.binaryen_bin, f) for f in os.listdir(options.binaryen_bin)]
+    executables = [f for f in bin_files if os.path.isfile(f) and not any(f.endswith(s) for s in not_executable_suffix)]
+    executables = sorted(executables)
+    assert len(executables)
+
     for e in executables:
         print('.. %s --help' % e)
-        out, err = subprocess.Popen([os.path.join(options.binaryen_bin, e), '--help'],
+        out, err = subprocess.Popen([e, '--help'],
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE).communicate()
-        assert len(out) == 0, 'Expected no stdout, got:\n%s' % out
-        assert e.replace('.exe', '') in err, 'Expected help to contain program name, got:\n%s' % err
-        assert len(err.split('\n')) > 8, 'Expected some help, got:\n%s' % err
+        out = out.decode('utf-8')
+        err = err.decode('utf-8')
+        assert len(err) == 0, 'Expected no stderr, got:\n%s' % err
+        assert os.path.basename(e).replace('.exe', '') in out, 'Expected help to contain program name, got:\n%s' % out
+        assert len(out.split('\n')) > 8, 'Expected some help, got:\n%s' % out
+
+    print('[ checking --version ... ]\n')
+    for e in executables:
+        print('.. %s --version' % e)
+        out, err = subprocess.Popen([e, '--version'],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE).communicate()
+        out = out.decode('utf-8')
+        err = err.decode('utf-8')
+        assert len(err) == 0, 'Expected no stderr, got:\n%s' % err
+        assert os.path.basename(e).replace('.exe', '') in out, 'Expected version to contain program name, got:\n%s' % out
+        assert len(out.strip().splitlines()) == 1, 'Expected only version info, got:\n%s' % out
 
 
 def run_wasm_opt_tests():
