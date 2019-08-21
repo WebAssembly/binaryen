@@ -7,6 +7,22 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE "Release")
 ENDIF()
 
+FIND_PACKAGE(Git QUIET REQUIRED)
+EXECUTE_PROCESS(COMMAND
+             "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags
+         RESULT_VARIABLE
+             GIT_HASH_RESULT
+         OUTPUT_VARIABLE
+             GIT_HASH
+         OUTPUT_STRIP_TRAILING_WHITESPACE)
+IF(${GIT_HASH_RESULT})
+  MESSAGE(WARNING "Error running git describe to determine version")
+  SET(BINARYEN_VERSION_INFO "(unable to determine version)")
+ELSE()
+  SET(BINARYEN_VERSION_INFO "${GIT_HASH}")
+ENDIF()
+CONFIGURE_FILE(config.h.in config.h)
+
 OPTION(BUILD_STATIC_LIB "Build as a static library" OFF)
 
 # Support functionality.
@@ -51,6 +67,9 @@ ENDFUNCTION()
 # Compiler setup.
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+# Add output directory to include path so config.h can be found
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 # Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
 FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
