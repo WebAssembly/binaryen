@@ -4269,7 +4269,7 @@ void BinaryenSetAPITracing(int on) {
     std::cout << "// beginning a Binaryen API trace\n"
                  "#include <math.h>\n"
                  "#include <map>\n"
-                 "#include \"src/binaryen-c.h\"\n"
+                 "#include \"binaryen-c.h\"\n"
                  "int main() {\n"
                  "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n"
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"

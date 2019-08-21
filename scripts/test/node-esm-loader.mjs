@@ -7,7 +7,9 @@ import Module from 'module';
 const builtins = Module.builtinModules;
 
 const baseURL = new URL('file://');
-baseURL.pathname = `${process.cwd()}/`;
+const binaryen_root = path.dirname(path.dirname(process.cwd()));
+baseURL.pathname = `${binaryen_root}/`;
+
 
 export function resolve(specifier, parentModuleURL = baseURL, defaultResolve) {
   if (builtins.includes(specifier)) {
@@ -18,7 +20,7 @@ export function resolve(specifier, parentModuleURL = baseURL, defaultResolve) {
   }
   // Resolve special modules used in our test suite.
   if (specifier == 'spectest' || specifier == 'env' || specifier == 'mod.ule') {
-    const resolved = new URL('./scripts/test/' + specifier + '.js', parentModuleURL);
+    const resolved = new URL('./scripts/test/' + specifier + '.js', baseURL);
     return {
       url: resolved.href,
       format: 'esm'

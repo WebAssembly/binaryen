@@ -86,7 +86,8 @@ def test_wasm2js_output():
                 # to enable ESM syntax and we're also passing a custom loader to handle the
                 # `spectest` and `env` modules in our tests.
                 if NODEJS:
-                    node = [NODEJS, '--experimental-modules', '--loader', './scripts/test/node-esm-loader.mjs']
+                    loader = os.path.join(options.binaryen_root, 'scripts', 'test', 'node-esm-loader.mjs')
+                    node = [NODEJS, '--experimental-modules', '--loader', loader]
                     cmd = node[:]
                     cmd.append('a.2asm.mjs')
                     out = run_command(cmd)
