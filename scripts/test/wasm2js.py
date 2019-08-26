@@ -173,8 +173,8 @@ def update_wasm2js_tests():
 
         asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
         traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
-        asserts_expected_file = os.path.join('test', asserts)
-        traps_expected_file = os.path.join('test', traps)
+        asserts_expected_file = os.path.join(options.binaryen_test, asserts)
+        traps_expected_file = os.path.join(options.binaryen_test, traps)
 
         cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts']
         out = run_command(cmd)
