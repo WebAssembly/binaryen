@@ -353,11 +353,13 @@ static void optimizeJS(Ref ast) {
     } else if (isUnary(node, L_NOT)) {
       node[2] = optimizeBoolean(node[2]);
     }
-    // Add/subtract can merge coercions up.
+    // Add/subtract can merge coercions up, except when a child is a division,
+    // which needs to be eagerly truncated to remove fractional results.
     else if (isBinary(node, PLUS) || isBinary(node, MINUS)) {
       auto left = node[2];
       auto right = node[3];
-      if (isOrZero(left) && isOrZero(right)) {
+      if (isOrZero(left) && isOrZero(right) && !isBinary(left[2], DIV) &&
+          !isBinary(right[2], DIV)) {
         auto op = node[1]->getIString();
         // Add a coercion on top.
         node[1]->setString(OR);
