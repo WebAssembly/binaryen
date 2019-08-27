@@ -517,7 +517,7 @@ public:
                    SExpressionWasmBuilder& sexpBuilder,
                    Output& out,
                    Wasm2JSBuilder::Flags flags,
-                   PassOptions options)
+                   const OptimizationOptions& options)
     : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags),
       options(options) {}
 
@@ -528,7 +528,7 @@ private:
   SExpressionWasmBuilder& sexpBuilder;
   Output& out;
   Wasm2JSBuilder::Flags flags;
-  PassOptions options;
+  OptimizationOptions options;
   Module tempAllocationModule;
 
   Ref emitAssertReturnFunc(Builder& wasmBuilder,
@@ -547,7 +547,7 @@ private:
   void fixCalls(Ref asmjs, Name asmModule);
 
   Ref processFunction(Function* func) {
-    Wasm2JSBuilder sub(flags, options);
+    Wasm2JSBuilder sub(flags, options.passOptions);
     return sub.processStandaloneFunction(&tempAllocationModule, func);
   }
 
@@ -771,8 +771,9 @@ void AssertionEmitter::emit() {
       Name funcName(funcNameS.str().c_str());
       asmModule = Name(moduleNameS.str().c_str());
       Module wasm;
+      options.applyFeatures(wasm);
       SExpressionWasmBuilder builder(wasm, e);
-      emitWasm(wasm, out, flags, options, funcName);
+      emitWasm(wasm, out, flags, options.passOptions, funcName);
       continue;
     }
     if (!isAssertHandled(e)) {
@@ -859,6 +860,7 @@ int main(int argc, const char* argv[]) {
 
   Element* root = nullptr;
   Module wasm;
+  options.applyFeatures(wasm);
   Ref js;
   std::unique_ptr<SExpressionParser> sexprParser;
   std::unique_ptr<SExpressionWasmBuilder> sexprBuilder;
@@ -882,7 +884,6 @@ int main(int argc, const char* argv[]) {
       ModuleReader reader;
       reader.setDebug(options.debug);
       reader.read(input, wasm, "");
-      options.applyFeatures(wasm);
     } else {
       auto input(read_file<std::vector<char>>(options.extra["infile"],
                                               Flags::Text,
@@ -921,7 +922,7 @@ int main(int argc, const char* argv[]) {
                 Flags::Text,
                 options.debug ? Flags::Debug : Flags::Release);
   if (!binaryInput && options.extra["asserts"] == "1") {
-    AssertionEmitter(*root, *sexprBuilder, output, flags, options.passOptions)
+    AssertionEmitter(*root, *sexprBuilder, output, flags, options)
       .emit();
   } else {
     emitWasm(wasm, output, flags, options.passOptions, "asmFunc");
