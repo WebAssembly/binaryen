@@ -180,6 +180,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitAtomicNotify(AtomicNotify* curr) {
       visitor.visitAddress(curr->offset);
     }
+    void visitAtomicFence(AtomicFence* curr) { visitor.visitInt(curr->order); }
     void visitSIMDExtract(SIMDExtract* curr) {
       visitor.visitInt(curr->op);
       visitor.visitInt(curr->index);

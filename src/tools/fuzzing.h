@@ -953,7 +953,8 @@ private:
                           &Self::makeDrop,
                           &Self::makeNop,
                           &Self::makeGlobalSet)
-                     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory);
+                     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
+                     .add(FeatureSet::Atomics, &Self::makeAtomic);
     return (this->*pick(options))(none);
   }
 
@@ -2240,6 +2241,9 @@ private:
       return makeTrivial(type);
     }
     wasm.memory.shared = true;
+    if (type == none) {
+      return builder.makeAtomicFence();
+    }
     if (type == i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {
         auto* ptr = makePointer();

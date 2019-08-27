@@ -158,5 +158,8 @@
    )
   )
  )
+ (func $atomic-fence (; 4 ;) (type $0)
+  (atomic.fence)
+ )
 )
 

@@ -428,6 +428,28 @@ function test_core() {
       )
     ),
 
+    // Atomics
+    module.i32.atomic.store(0,
+      module.i32.const(0),
+      module.i32.atomic.load(0,
+        module.i32.const(0)
+      )
+    ),
+    module.drop(
+      module.i32.atomic.wait(
+        module.i32.const(0),
+        module.i32.const(0),
+        module.i64.const(0)
+      )
+    ),
+    module.drop(
+      module.atomic.notify(
+        module.i32.const(0),
+        module.i32.const(0)
+      )
+    ),
+    module.atomic.fence(),
+
     // Push and pop
     module.push(module.i32.pop()),
     module.push(module.i64.pop()),
@@ -492,7 +514,7 @@ function test_core() {
       offset: null,
       data: "I am passive".split('').map(function(x) { return x.charCodeAt(0) })
     }
-  ]);
+  ], true);
 
   // Start function. One per module
 

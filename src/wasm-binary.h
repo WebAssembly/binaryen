@@ -627,6 +627,7 @@ enum ASTNodes {
   AtomicNotify = 0x00,
   I32AtomicWait = 0x01,
   I64AtomicWait = 0x02,
+  AtomicFence = 0x03,
 
   I32AtomicLoad = 0x10,
   I64AtomicLoad = 0x11,
@@ -1232,6 +1233,7 @@ public:
   bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
   bool maybeVisitAtomicWait(Expression*& out, uint8_t code);
   bool maybeVisitAtomicNotify(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicFence(Expression*& out, uint8_t code);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);

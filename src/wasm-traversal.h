@@ -54,6 +54,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return ReturnType(); }
   ReturnType visitAtomicWait(AtomicWait* curr) { return ReturnType(); }
   ReturnType visitAtomicNotify(AtomicNotify* curr) { return ReturnType(); }
+  ReturnType visitAtomicFence(AtomicFence* curr) { return ReturnType(); }
   ReturnType visitSIMDExtract(SIMDExtract* curr) { return ReturnType(); }
   ReturnType visitSIMDReplace(SIMDReplace* curr) { return ReturnType(); }
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return ReturnType(); }
@@ -130,6 +131,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(AtomicWait);
       case Expression::Id::AtomicNotifyId:
         DELEGATE(AtomicNotify);
+      case Expression::Id::AtomicFenceId:
+        DELEGATE(AtomicFence);
       case Expression::Id::SIMDExtractId:
         DELEGATE(SIMDExtract);
       case Expression::Id::SIMDReplaceId:
@@ -218,6 +221,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(AtomicCmpxchg);
   UNIMPLEMENTED(AtomicWait);
   UNIMPLEMENTED(AtomicNotify);
+  UNIMPLEMENTED(AtomicFence);
   UNIMPLEMENTED(SIMDExtract);
   UNIMPLEMENTED(SIMDReplace);
   UNIMPLEMENTED(SIMDShuffle);
@@ -295,6 +299,8 @@ struct OverriddenVisitor {
         DELEGATE(AtomicWait);
       case Expression::Id::AtomicNotifyId:
         DELEGATE(AtomicNotify);
+      case Expression::Id::AtomicFenceId:
+        DELEGATE(AtomicFence);
       case Expression::Id::SIMDExtractId:
         DELEGATE(SIMDExtract);
       case Expression::Id::SIMDReplaceId:
@@ -410,6 +416,9 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitAtomicNotify(AtomicNotify* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitAtomicFence(AtomicFence* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitSIMDExtract(SIMDExtract* curr) {
@@ -711,6 +720,9 @@ struct Walker : public VisitorType {
   static void doVisitAtomicNotify(SubType* self, Expression** currp) {
     self->visitAtomicNotify((*currp)->cast<AtomicNotify>());
   }
+  static void doVisitAtomicFence(SubType* self, Expression** currp) {
+    self->visitAtomicFence((*currp)->cast<AtomicFence>());
+  }
   static void doVisitSIMDExtract(SubType* self, Expression** currp) {
     self->visitSIMDExtract((*currp)->cast<SIMDExtract>());
   }
@@ -911,6 +923,10 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitAtomicNotify, currp);
         self->pushTask(SubType::scan, &curr->cast<AtomicNotify>()->notifyCount);
         self->pushTask(SubType::scan, &curr->cast<AtomicNotify>()->ptr);
+        break;
+      }
+      case Expression::Id::AtomicFenceId: {
+        self->pushTask(SubType::doVisitAtomicFence, currp);
         break;
       }
       case Expression::Id::SIMDExtractId: {

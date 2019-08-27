@@ -309,6 +309,7 @@ public:
     notify->finalize();
     return notify;
   }
+  AtomicFence* makeAtomicFence() { return allocator.alloc<AtomicFence>(); }
   Store* makeStore(unsigned bytes,
                    uint32_t offset,
                    unsigned align,

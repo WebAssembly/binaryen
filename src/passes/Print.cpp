@@ -268,6 +268,7 @@ struct PrintExpressionContents
       o << " offset=" << curr->offset;
     }
   }
+  void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);
     switch (curr->op) {
@@ -1504,6 +1505,11 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->ptr);
     printFullLine(curr->notifyCount);
     decIndent();
+  }
+  void visitAtomicFence(AtomicFence* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
   }
   void visitSIMDExtract(SIMDExtract* curr) {
     o << '(';

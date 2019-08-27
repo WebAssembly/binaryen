@@ -1029,6 +1029,12 @@ public:
       return Literal(uint64_t(val));
     }
   }
+  Flow visitAtomicFence(AtomicFence*) {
+    // Wasm currently supports only sequentially consistent atomics, in which
+    // case atomic_fence can be lowered to nothing.
+    NOTE_ENTER("AtomicFence");
+    return Flow();
+  }
 
   Flow visitCall(Call*) { WASM_UNREACHABLE(); }
   Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE(); }

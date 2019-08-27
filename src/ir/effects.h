@@ -294,7 +294,14 @@ struct EffectAnalyzer
     if (!ignoreImplicitTraps) {
       implicitTrap = true;
     }
-  };
+  }
+  void visitAtomicFence(AtomicFence* curr) {
+    // AtomicFence should not be reordered with any memory operations, so we set
+    // these to true.
+    readsMemory = true;
+    writesMemory = true;
+    isAtomic = true;
+  }
   void visitSIMDExtract(SIMDExtract* curr) {}
   void visitSIMDReplace(SIMDReplace* curr) {}
   void visitSIMDShuffle(SIMDShuffle* curr) {}

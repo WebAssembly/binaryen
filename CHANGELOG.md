@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Binaryen.js instruction API changes:
+  - `notify` -> `atomic.notify`
+  - `i32.wait` / `i64.wait` -> `i32.atomic.wait` / `i64.atomic.wait`
+- Binaryen.js: `flags` argument in `setMemory` function is removed.
+- `atomic.fence` instruction support is added.
 - wasm-emscripten-finalize: Don't realy on name section being present in the
   input. Use the exported names for things instead.
 

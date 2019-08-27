@@ -70,6 +70,7 @@ Module['AtomicCmpxchgId'] = Module['_BinaryenAtomicCmpxchgId']();
 Module['AtomicRMWId'] = Module['_BinaryenAtomicRMWId']();
 Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
 Module['AtomicNotifyId'] = Module['_BinaryenAtomicNotifyId']();
+Module['AtomicFenceId'] = Module['_BinaryenAtomicFenceId']();
 Module['SIMDExtractId'] = Module['_BinaryenSIMDExtractId']();
 Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
 Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
@@ -676,7 +677,7 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUInt32'], left, right);
     },
-    'atomic':{
+    'atomic': {
       'load': function(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i32'], ptr);
       },
@@ -764,9 +765,9 @@ function wrapModule(module, self) {
           return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'])
         },
       },
-    },
-    'wait': function(ptr, expected, timeout) {
-      return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
+      'wait': function(ptr, expected, timeout) {
+        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
+      }
     },
     'pop': function() {
       return Module['_BinaryenPop'](module, Module['i32']);
@@ -951,7 +952,7 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUInt64'], left, right);
     },
-    'atomic':{
+    'atomic': {
       'load': function(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 8, offset, Module['i64'], ptr);
       },
@@ -1068,9 +1069,9 @@ function wrapModule(module, self) {
           return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'])
         },
       },
-    },
-    'wait': function(ptr, expected, timeout) {
-      return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
+      'wait': function(ptr, expected, timeout) {
+        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
+      }
     },
     'pop': function() {
       return Module['_BinaryenPop'](module, Module['i64']);
@@ -1773,9 +1774,16 @@ function wrapModule(module, self) {
   self['unreachable'] = function() {
     return Module['_BinaryenUnreachable'](module);
   };
-  self['notify'] = function(ptr, notifyCount) {
-    return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
+
+  self['atomic'] = {
+    'notify': function(ptr, notifyCount) {
+      return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
+    },
+    'fence': function() {
+      return Module['_BinaryenAtomicFence'](module);
+    }
   };
+
   self['try'] = function(body, catchBody) {
     return Module['_BinaryenTry'](module, body, catchBody);
   };
@@ -1925,7 +1933,7 @@ function wrapModule(module, self) {
       );
     });
   };
-  self['setMemory'] = function(initial, maximum, exportName, segments, flags, shared) {
+  self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
     return preserveStack(function() {
@@ -2320,6 +2328,12 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'ptr': Module['_BinaryenAtomicNotifyGetPtr'](expr),
         'notifyCount': Module['_BinaryenAtomicNotifyGetNotifyCount'](expr)
+      };
+    case Module['AtomicFenceId']:
+      return {
+        'id': id,
+        'type': type,
+        'order': Module['_BinaryenAtomicFenceGetOrder'](expr)
       };
     case Module['SIMDExtractId']:
       return {
