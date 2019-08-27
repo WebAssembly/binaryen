@@ -528,9 +528,7 @@ void test_core() {
     BinaryenDrop(module,
       BinaryenAtomicWait(module, temp6, temp6, temp16, BinaryenTypeInt32())
     ),
-    BinaryenDrop(module,
-      BinaryenAtomicNotify(module, makeInt32(module, 0), makeInt32(module, 0))
-    ),
+    BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6)),
     BinaryenAtomicFence(module),
 
     // TODO: Host
