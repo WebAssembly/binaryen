@@ -2302,7 +2302,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitAtomicNotify(curr, code)) {
         break;
       }
-      if ((maybeVisitAtomicFence(curr, code))) {
+      if (maybeVisitAtomicFence(curr, code)) {
         break;
       }
       throwError("invalid code after atomic prefix: " + std::to_string(code));

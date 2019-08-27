@@ -1424,7 +1424,7 @@ BinaryenFeatureAll: 511
        (i32.atomic.wait
         (i32.const 0)
         (i32.const 0)
-        (i64.const 0)
+        (i64.const 111)
        )
       )
       (drop
@@ -3330,22 +3330,17 @@ int main() {
     expressions[658] = BinaryenReturnCallIndirect(the_module, expressions[657], operands, 4, "iiIfF");
   }
   expressions[659] = BinaryenTry(the_module, expressions[35], expressions[43]);
-  expressions[660] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[661] = BinaryenAtomicLoad(the_module, 4, 0, 1, expressions[660]);
-  expressions[662] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[663] = BinaryenAtomicStore(the_module, 4, 0, expressions[662], expressions[661], 1);
-  expressions[664] = BinaryenConst(the_module, BinaryenLiteralInt64(0));
+  expressions[660] = BinaryenAtomicLoad(the_module, 4, 0, 1, expressions[23]);
+  expressions[661] = BinaryenAtomicStore(the_module, 4, 0, expressions[23], expressions[660], 1);
+  expressions[662] = BinaryenAtomicWait(the_module, expressions[23], expressions[23], expressions[33], 1);
+  expressions[663] = BinaryenDrop(the_module, expressions[662]);
+  expressions[664] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[665] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[666] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[667] = BinaryenAtomicWait(the_module, expressions[666], expressions[665], expressions[664], 1);
-  expressions[668] = BinaryenDrop(the_module, expressions[667]);
-  expressions[669] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[670] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[671] = BinaryenAtomicNotify(the_module, expressions[670], expressions[669]);
-  expressions[672] = BinaryenDrop(the_module, expressions[671]);
-  expressions[673] = BinaryenAtomicFence(the_module);
-  expressions[674] = BinaryenNop(the_module);
-  expressions[675] = BinaryenUnreachable(the_module);
+  expressions[666] = BinaryenAtomicNotify(the_module, expressions[665], expressions[664]);
+  expressions[667] = BinaryenDrop(the_module, expressions[666]);
+  expressions[668] = BinaryenAtomicFence(the_module);
+  expressions[669] = BinaryenNop(the_module);
+  expressions[670] = BinaryenUnreachable(the_module);
   BinaryenExpressionPrint(expressions[51]);
 (f32.neg
  (f32.const -33.61199951171875)
@@ -3392,27 +3387,27 @@ int main() {
        expressions[627], expressions[629], expressions[632], expressions[635], expressions[637], expressions[639], 
        expressions[642], expressions[644], expressions[646], expressions[648], expressions[650], expressions[651], 
        expressions[652], expressions[653], expressions[655], expressions[656], expressions[658], expressions[659], 
-       expressions[663], expressions[668], expressions[672], expressions[673], expressions[674], expressions[675] };
-    expressions[676] = BinaryenBlock(the_module, "the-value", children, 251, BinaryenTypeAuto());
+       expressions[661], expressions[663], expressions[667], expressions[668], expressions[669], expressions[670] };
+    expressions[671] = BinaryenBlock(the_module, "the-value", children, 251, BinaryenTypeAuto());
   }
-  expressions[677] = BinaryenDrop(the_module, expressions[676]);
+  expressions[672] = BinaryenDrop(the_module, expressions[671]);
   {
-    BinaryenExpressionRef children[] = { expressions[677] };
-    expressions[678] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
+    BinaryenExpressionRef children[] = { expressions[672] };
+    expressions[673] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
   }
-  expressions[679] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[674] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
-    BinaryenExpressionRef children[] = { expressions[678], expressions[679] };
-    expressions[680] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
+    BinaryenExpressionRef children[] = { expressions[673], expressions[674] };
+    expressions[675] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
   }
   {
     BinaryenType varTypes[] = { 1, 7 };
-    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 2, expressions[680]);
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 2, expressions[675]);
   }
-  expressions[681] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
-  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[681]);
-  expressions[682] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
-  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[682]);
+  expressions[676] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
+  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[676]);
+  expressions[677] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
+  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[677]);
   {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
@@ -3424,13 +3419,13 @@ int main() {
     const char* funcNames[] = { "kitchen()sinker" };
     BinaryenSetFunctionTable(the_module, 1, 1, funcNames, 1);
   }
-  expressions[683] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[678] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char segment1[] = { 73, 32, 97, 109, 32, 112, 97, 115, 115, 105, 118, 101 };
     const char* segments[] = { segment0, segment1 };
     int8_t segmentPassive[] = { 0, 1 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[683], expressions[0] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[678], expressions[0] };
     BinaryenIndex segmentSizes[] = { 12, 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
   }
@@ -3438,10 +3433,10 @@ int main() {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[684] = BinaryenNop(the_module);
+  expressions[679] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[684]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[679]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
@@ -4857,7 +4852,7 @@ int main() {
        (i32.atomic.wait
         (i32.const 0)
         (i32.const 0)
-        (i64.const 0)
+        (i64.const 111)
        )
       )
       (drop

@@ -521,14 +521,12 @@ void test_core() {
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics
-    BinaryenAtomicStore(module, 4, 0, makeInt32(module, 0),
-      BinaryenAtomicLoad(module, 4, 0,
-                         BinaryenTypeInt32(), makeInt32(module, 0)),
+    BinaryenAtomicStore(module, 4, 0, temp6,
+      BinaryenAtomicLoad(module, 4, 0, BinaryenTypeInt32(), temp6),
       BinaryenTypeInt32()
     ),
     BinaryenDrop(module,
-      BinaryenAtomicWait(module, makeInt32(module, 0), makeInt32(module, 0),
-                         makeInt64(module, 0), BinaryenTypeInt32())
+      BinaryenAtomicWait(module, temp6, temp6, temp16, BinaryenTypeInt32())
     ),
     BinaryenDrop(module,
       BinaryenAtomicNotify(module, makeInt32(module, 0), makeInt32(module, 0))

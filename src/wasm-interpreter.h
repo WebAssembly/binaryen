@@ -1031,7 +1031,7 @@ public:
   }
   Flow visitAtomicFence(AtomicFence*) {
     // Wasm currently supports only sequentially consistent atomics, in which
-    // case atomic_fence can lowered to nothing.
+    // case atomic_fence can be lowered to nothing.
     NOTE_ENTER("AtomicFence");
     return Flow();
   }
