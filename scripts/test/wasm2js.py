@@ -40,7 +40,6 @@ def test_wasm2js_output():
         for wasm in tests + spec_tests + extra_wasm2js_tests:
             if not wasm.endswith('.wast'):
                 continue
-            print('full path = ' + wasm)
             basename = os.path.basename(wasm)
             if basename in wasm2js_blacklist:
                 continue
