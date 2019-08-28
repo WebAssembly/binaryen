@@ -16,6 +16,8 @@ Binaryen.Features.NontrappingFPToInt: 4
 Binaryen.Features.SignExt: 32
 Binaryen.Features.SIMD128: 8
 Binaryen.Features.ExceptionHandling: 64
+Binaryen.Features.TailCall: 128
+Binaryen.Features.ReferenceTypes: 256
 Binaryen.Features.All: 511
 BinaryenInvalidId: 0
 BinaryenBlockId: 1

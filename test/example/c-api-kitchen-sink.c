@@ -170,6 +170,8 @@ void test_features() {
   printf("BinaryenFeatureSignExt: %d\n", BinaryenFeatureSignExt());
   printf("BinaryenFeatureSIMD128: %d\n", BinaryenFeatureSIMD128());
   printf("BinaryenFeatureExceptionHandling: %d\n", BinaryenFeatureExceptionHandling());
+  printf("BinaryenFeatureTailCall: %d\n", BinaryenFeatureTailCall());
+  printf("BinaryenFeatureReferenceTypes: %d\n", BinaryenFeatureReferenceTypes());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 

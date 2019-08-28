@@ -159,6 +159,8 @@ BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void);
 BinaryenFeatures BinaryenFeatureSignExt(void);
 BinaryenFeatures BinaryenFeatureSIMD128(void);
 BinaryenFeatures BinaryenFeatureExceptionHandling(void);
+BinaryenFeatures BinaryenFeatureTailCall(void);
+BinaryenFeatures BinaryenFeatureReferenceTypes(void);
 BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules

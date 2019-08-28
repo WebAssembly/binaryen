@@ -252,6 +252,8 @@ export_function "_BinaryenFeatureNontrappingFPToInt"
 export_function "_BinaryenFeatureSignExt"
 export_function "_BinaryenFeatureSIMD128"
 export_function "_BinaryenFeatureExceptionHandling"
+export_function "_BinaryenFeatureTailCall"
+export_function "_BinaryenFeatureReferenceTypes"
 export_function "_BinaryenFeatureAll"
 
 # Literals

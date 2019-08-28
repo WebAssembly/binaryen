@@ -104,6 +104,8 @@ Module['Features'] = {
   'SignExt': Module['_BinaryenFeatureSignExt'](),
   'SIMD128': Module['_BinaryenFeatureSIMD128'](),
   'ExceptionHandling': Module['_BinaryenFeatureExceptionHandling'](),
+  'TailCall': Module['_BinaryenFeatureTailCall'](),
+  'ReferenceTypes': Module['_BinaryenFeatureReferenceTypes'](),
   'All': Module['_BinaryenFeatureAll']()
 };
 
