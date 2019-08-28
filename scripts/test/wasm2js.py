@@ -36,14 +36,6 @@ wasm2js_blacklist = ['empty_imported_table.wast']
 
 
 def test_wasm2js_output():
-    print('cwd = ' + os.getcwd())
-    print('tests = ')
-    print(tests)
-    print('spec_tests = ')
-    print(spec_tests)
-    print('extra_wasm2js_tests = ')
-    print(extra_wasm2js_tests)
-    print()
     for opt in (0, 1):
         for wasm in tests + spec_tests + extra_wasm2js_tests:
             if not wasm.endswith('.wast'):
