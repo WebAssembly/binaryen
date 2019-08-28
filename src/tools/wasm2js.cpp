@@ -922,8 +922,7 @@ int main(int argc, const char* argv[]) {
                 Flags::Text,
                 options.debug ? Flags::Debug : Flags::Release);
   if (!binaryInput && options.extra["asserts"] == "1") {
-    AssertionEmitter(*root, *sexprBuilder, output, flags, options)
-      .emit();
+    AssertionEmitter(*root, *sexprBuilder, output, flags, options).emit();
   } else {
     emitWasm(wasm, output, flags, options.passOptions, "asmFunc");
   }
