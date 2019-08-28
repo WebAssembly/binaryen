@@ -35,10 +35,10 @@ from scripts.test.shared import (
 # For shared.num_failures. Cannot import directly because modifications made in
 # shared.py would not affect the version imported here.
 from scripts.test import shared
-#from scripts.test import asm2wasm
-#from scripts.test import lld
+from scripts.test import asm2wasm
+from scripts.test import lld
 from scripts.test import wasm2js
-#from scripts.test import binaryenjs
+from scripts.test import binaryenjs
 
 if options.interpreter:
     print('[ using wasm interpreter at "%s" ]' % options.interpreter)
@@ -552,7 +552,24 @@ def run_unittest():
 
 
 TEST_SUITES = OrderedDict([
-    ('wasm2js', wasm2js.test_wasm2js)
+#    ('help-messages', run_help_tests),
+#    ('wasm-opt', run_wasm_opt_tests),
+#    ('asm2wasm', asm2wasm.test_asm2wasm),
+#    ('asm2wasm-binary', asm2wasm.test_asm2wasm_binary),
+#    ('wasm-dis', run_wasm_dis_tests),
+#    ('crash', run_crash_tests),
+#    ('dylink', run_dylink_tests),
+#    ('ctor-eval', run_ctor_eval_tests),
+#    ('wasm-metadce', run_wasm_metadce_tests),
+#    ('wasm-reduce', run_wasm_reduce_tests),
+#    ('spec', run_spec_tests),
+#    ('binaryenjs', binaryenjs.test_binaryen_js),
+#    ('lld', lld.test_wasm_emscripten_finalize),
+    ('wasm2js', wasm2js.test_wasm2js),
+#    ('validator', run_validator_tests),
+#    ('vanilla', run_vanilla_tests),
+#    ('gcc', run_gcc_tests),
+#    ('unit', run_unittest),
 ])
 
 
