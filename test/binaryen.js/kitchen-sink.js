@@ -72,6 +72,8 @@ function test_features() {
   console.log("Binaryen.Features.SignExt: " + Binaryen.Features.SignExt);
   console.log("Binaryen.Features.SIMD128: " + Binaryen.Features.SIMD128);
   console.log("Binaryen.Features.ExceptionHandling: " + Binaryen.Features.ExceptionHandling);
+  console.log("Binaryen.Features.TailCall: " + Binaryen.Features.TailCall);
+  console.log("Binaryen.Features.ReferenceTypes: " + Binaryen.Features.ReferenceTypes);
   console.log("Binaryen.Features.All: " + Binaryen.Features.All);
 }
 

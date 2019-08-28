@@ -416,6 +416,12 @@ BinaryenFeatures BinaryenFeatureSIMD128(void) {
 BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::ExceptionHandling);
 }
+BinaryenFeatures BinaryenFeatureTailCall(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::TailCall);
+}
+BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Feature::ReferenceTypes);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::All);
 }

@@ -16,6 +16,8 @@ BinaryenFeatureNontrappingFPToInt: 4
 BinaryenFeatureSignExt: 32
 BinaryenFeatureSIMD128: 8
 BinaryenFeatureExceptionHandling: 64
+BinaryenFeatureTailCall: 128
+BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureAll: 511
 (f32.neg
  (f32.const -33.61199951171875)
