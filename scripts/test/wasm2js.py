@@ -61,7 +61,7 @@ def test_wasm2js_output():
             for module, asserts in split_wast(t):
                 write_wast('split.wast', module, asserts)
 
-                cmd = WASM2JS + ['split.wast']
+                cmd = WASM2JS + ['split.wast', '-all']
                 if opt:
                     cmd += ['-O']
                 if 'emscripten' in wasm:
@@ -110,7 +110,7 @@ def test_asserts_output():
         traps_expected_file = os.path.join(options.binaryen_test, traps)
 
         wasm = os.path.join(wasm2js_dir, wasm)
-        cmd = WASM2JS + [wasm, '--allow-asserts']
+        cmd = WASM2JS + [wasm, '--allow-asserts', '-all']
         out = run_command(cmd)
         fail_if_not_identical_to_file(out, asserts_expected_file)
 
@@ -157,7 +157,7 @@ def update_wasm2js_tests():
             for module, asserts in split_wast(t):
                 write_wast('split.wast', module, asserts)
 
-                cmd = WASM2JS + ['split.wast']
+                cmd = WASM2JS + ['split.wast', '-all']
                 if opt:
                     cmd += ['-O']
                 if 'emscripten' in wasm:
@@ -176,7 +176,7 @@ def update_wasm2js_tests():
         asserts_expected_file = os.path.join(options.binaryen_test, asserts)
         traps_expected_file = os.path.join(options.binaryen_test, traps)
 
-        cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts']
+        cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts', '-all']
         out = run_command(cmd)
         with open(asserts_expected_file, 'w') as o:
             o.write(out)
