@@ -517,7 +517,7 @@ public:
                    SExpressionWasmBuilder& sexpBuilder,
                    Output& out,
                    Wasm2JSBuilder::Flags flags,
-                   const OptimizationOptions& options)
+                   const ToolOptions& options)
     : root(root), sexpBuilder(sexpBuilder), out(out), flags(flags),
       options(options) {}
 
@@ -528,7 +528,7 @@ private:
   SExpressionWasmBuilder& sexpBuilder;
   Output& out;
   Wasm2JSBuilder::Flags flags;
-  OptimizationOptions options;
+  ToolOptions options;
   Module tempAllocationModule;
 
   Ref emitAssertReturnFunc(Builder& wasmBuilder,

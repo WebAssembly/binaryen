@@ -68,7 +68,6 @@ def test_wasm2js_output():
                     cmd += ['--emscripten']
                 out = run_command(cmd)
                 all_out.append(out)
-                #import pdb; pdb.set_trace()
 
                 if not NODEJS and not MOZJS:
                     print('No JS interpreters. Skipping spec tests.')
@@ -98,7 +97,6 @@ def test_wasm2js_output():
                     out = run_command(cmd, expected_err='', err_ignore='The ESM module loader is experimental')
                     fail_if_not_identical(out, '')
 
-            #import pdb; pdb.set_trace()
             fail_if_not_identical_to_file(''.join(all_out), expected_file)
 
 
