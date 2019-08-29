@@ -1,5 +1,8 @@
 ---
 
+skip_branch_with_pr: true
+image: Visual Studio 2017
+
 init:
   - set PATH=C:\Python27\Scripts;%PATH%             # while python's bin is already in PATH, but pip.exe in Scripts\ dir isn't
   - set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
@@ -10,15 +13,15 @@ environment:
   - GENERATOR: MSYS Makefiles
     CONFIG: Release
     PARALLEL_FLAG: -j
-  - GENERATOR: Visual Studio 14 2015
+  - GENERATOR: Visual Studio 15 2017
     CONFIG: Release
     PARALLEL_FLAG: "/m:"
     DEPLOY: 1
     ARCH: x86
-  - GENERATOR: Visual Studio 14 2015 Win64
+  - GENERATOR: Visual Studio 15 2017 Win64
     CONFIG: Debug
     PARALLEL_FLAG: "/m:"
-  - GENERATOR: Visual Studio 14 2015 Win64
+  - GENERATOR: Visual Studio 15 2017 Win64
     CONFIG: Release
     PARALLEL_FLAG: "/m:"
     DEPLOY: 1
