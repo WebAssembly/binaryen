@@ -1,5 +1,8 @@
 ---
 
+skip_branch_with_pr: true
+image: Visual Studio 2017
+
 init:
   - set PATH=C:\Python27\Scripts;%PATH%             # while python's bin is already in PATH, but pip.exe in Scripts\ dir isn't
   - set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
