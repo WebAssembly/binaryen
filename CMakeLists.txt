@@ -148,6 +148,9 @@ ELSE()
   ADD_COMPILE_FLAG("-Wextra")
   ADD_COMPILE_FLAG("-Wno-unused-parameter")
   ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
+  # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove this flag we
+  # resolve the issue.
+  ADD_COMPILE_FLAG("-Wno-implicit-int-float-conversion")
   ADD_COMPILE_FLAG("-Wswitch") # we explicitly expect this in the code
   IF(WIN32)
     ADD_COMPILE_FLAG("-D_GNU_SOURCE")
