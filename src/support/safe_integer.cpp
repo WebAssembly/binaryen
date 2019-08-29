@@ -52,7 +52,7 @@ int32_t wasm::toSInteger32(double x) {
 bool wasm::isUInteger64(double x) {
   static_assert(std::numeric_limits<double>::is_iec559,
                 "this function only works with IEEE 754 floating point");
-  return !std::signbit(x) && isInteger(x) && x < 0x1p6;
+  return !std::signbit(x) && isInteger(x) && x < 0x1p64;
 }
 
 bool wasm::isSInteger64(double x) {
