@@ -1,5 +1,6 @@
 import os
 import subprocess
+import tempfile
 
 from scripts.test.shared import WASM_OPT, WASM_DIS, WASM_SHELL, NODEJS, run_process
 from .utils import BinaryenTestCase
@@ -50,3 +51,16 @@ class AsyncifyTest(BinaryenTestCase):
         proc = run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', '--pass-arg=asyncify-whitelist@main', '--pass-arg=asyncify-blacklist@main'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
         self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
         self.assertIn('It makes no sense to use both a blacklist and a whitelist with asyncify', proc.stdout)
+
+    def test_asyncify_imports(self):
+        def test(args):
+            return run_process(WASM_OPT + [self.input_path('asyncify-sleep.wast'), '--asyncify', '--print'] + args, stdout=subprocess.PIPE).stdout
+
+        normal = test(['--pass-arg=asyncify-imports@env.sleep'])
+        temp = tempfile.NamedTemporaryFile().name
+        with open(temp, 'w') as f:
+            f.write('env.sleep')
+        response = test(['--pass-arg=asyncify-imports@@%s' % temp])
+        self.assertEqual(normal, response)
+        without = test(['--pass-arg=asyncify-imports@without.anything'])
+        self.assertNotEqual(normal, without)
