@@ -2231,14 +2231,14 @@ void Wasm2JSGlue::emitMemory(
     function(mem) {
       var _mem = new Uint8Array(mem);
       return function(offset, s) {
-        var bytes;
+        var bytes, i;
         if (typeof Buffer === 'undefined') {
           bytes = atob(s);
-          for (var i = 0; i < bytes.length; i++)
+          for (i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes.charCodeAt(i);
         } else {
           bytes = Buffer.from(s, 'base64');
-          for (var i = 0; i < bytes.length; i++)
+          for (i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes[i];
         }
       }
