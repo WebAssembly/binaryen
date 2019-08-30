@@ -1035,8 +1035,8 @@ struct Asyncify : public Pass {
     MemoryUtils::ensureExists(module->memory);
 
     // Find which things can change the state.
-    auto stateChangingImports =
-      read_possible_response_file(runner->options.getArgumentOrDefault("asyncify-imports", ""));
+    auto stateChangingImports = read_possible_response_file(
+      runner->options.getArgumentOrDefault("asyncify-imports", ""));
     auto ignoreImports =
       runner->options.getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =

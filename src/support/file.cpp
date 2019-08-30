@@ -81,7 +81,8 @@ std::string wasm::read_possible_response_file(const std::string& input) {
   if (input.size() == 0 || input[0] != '@') {
     return input;
   }
-  return wasm::read_file<std::string>(input.substr(1), Flags::Text, Flags::Release);
+  return wasm::read_file<std::string>(
+    input.substr(1), Flags::Text, Flags::Release);
 }
 
 // Explicit instantiations for the explicit specializations.
