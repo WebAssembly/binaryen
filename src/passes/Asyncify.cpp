@@ -202,7 +202,9 @@
 //      The list of imports can be a response file (which is convenient if it
 //      is long, or you don't want to bother escaping it on the commandline
 //      etc.), e.g. --pass-arg=asyncify-imports@@file.txt will load the
-//      contents of file.txt.
+//      contents of file.txt (note the double "@@" - the first is the
+//      separator for --pass-arg, and the second is the usual convention for
+//      indicating a response file).
 //
 //   --pass-arg=asyncify-ignore-imports
 //
