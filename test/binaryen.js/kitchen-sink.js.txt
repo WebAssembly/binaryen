@@ -77,6 +77,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (type $v (func))
  (type $4 (func))
  (import "module" "base" (global $a-global-imp i32))
+ (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
  (memory $0 (shared 1 256))
@@ -1516,6 +1517,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (type $v (func))
  (type $4 (func))
  (import "module" "base" (global $a-global-imp i32))
+ (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
  (memory $0 (shared 1 256))
@@ -4943,7 +4945,8 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     functionTypes[2] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
   BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[2]);
-  BinaryenAddGlobalImport(the_module, "a-global-imp", "module", "base", 1);
+  BinaryenAddGlobalImport(the_module, "a-global-imp", "module", "base", 1, 0);
+  BinaryenAddGlobalImport(the_module, "a-mut-global-imp", "module", "base", 1, 1);
   BinaryenAddEventImport(the_module, "a-event-imp", "module", "base", 0, functionTypes[0]);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   exports[1] = BinaryenAddGlobalExport(the_module, "a-global", "a-global-exp");
@@ -5001,6 +5004,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (type $v (func))
  (type $4 (func))
  (import "module" "base" (global $a-global-imp i32))
+ (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
  (memory $0 (shared 1 256))
@@ -6442,6 +6446,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (type $v (func))
  (type $4 (func))
  (import "module" "base" (global $a-global-imp i32))
+ (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
  (memory $0 (shared 1 256))
