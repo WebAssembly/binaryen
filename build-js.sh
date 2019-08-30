@@ -52,7 +52,7 @@ if [ "$1" == "-g" ]; then
   EMCC_ARGS="$EMCC_ARGS -O2" # need emcc js opts to be decently fast
   EMCC_ARGS="$EMCC_ARGS --llvm-opts 0 --llvm-lto 0"
   EMCC_ARGS="$EMCC_ARGS -profiling"
-  EMCC_ARGS="$EMCC_ARGS -s ASSERTIONS=1"
+  EMCC_ARGS="$EMCC_ARGS -s ASSERTIONS=0" # 0 as a temporary workaround for https://github.com/emscripten-core/emscripten/pull/9360
 else
   EMCC_ARGS="$EMCC_ARGS -Oz"
   EMCC_ARGS="$EMCC_ARGS --llvm-lto 1"
