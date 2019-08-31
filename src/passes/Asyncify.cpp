@@ -231,11 +231,15 @@
 //      really know what are doing, and need to optimize every bit of speed
 //      and size.
 //
+//      As with --asyncify-imports, you can use a response file here.
+//
 //   --pass-arg=asyncify-whitelist@name1,name2,name3
 //
 //      If the whitelist is provided, then only the functions in the list
 //      will be instrumented. Like the blacklist, getting this wrong will
 //      break your application.
+//
+//      As with --asyncify-imports, you can use a response file here.
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
@@ -1047,9 +1051,9 @@ struct Asyncify : public Pass {
     auto ignoreIndirect =
       runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
     String::Split blacklist(
-      runner->options.getArgumentOrDefault("asyncify-blacklist", ""), ",");
+      String::trim(read_possible_response_file(runner->options.getArgumentOrDefault("asyncify-blacklist", ""), ",")));
     String::Split whitelist(
-      runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",");
+      String::trim(read_possible_response_file(runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",")));
 
     blacklist = handleBracketingOperators(blacklist);
     whitelist = handleBracketingOperators(whitelist);
