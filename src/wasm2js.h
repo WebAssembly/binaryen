@@ -1832,7 +1832,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
-    Ref visitSIMDBitselect(SIMDBitselect* curr) {
+    Ref visitSIMDTernary(SIMDTernary* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE();
     }

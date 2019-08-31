@@ -330,9 +330,25 @@ struct PrintExpressionContents
       o << " " << std::to_string(mask_index);
     }
   }
-  void visitSIMDBitselect(SIMDBitselect* curr) {
+  void visitSIMDTernary(SIMDTernary* curr) {
     prepareColor(o);
-    o << "v128.bitselect";
+    switch (curr->op) {
+      case Bitselect:
+        o << "v128.bitselect";
+        break;
+      case QFMAF32x4:
+        o << "f32x4.qfma";
+        break;
+      case QFMSF32x4:
+        o << "f32x4.qfms";
+        break;
+      case QFMAF64x2:
+        o << "f64x2.qfma";
+        break;
+      case QFMSF64x2:
+        o << "f64x2.qfms";
+        break;
+    }
   }
   void visitSIMDShift(SIMDShift* curr) {
     prepareColor(o);
@@ -1534,13 +1550,13 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->right);
     decIndent();
   }
-  void visitSIMDBitselect(SIMDBitselect* curr) {
+  void visitSIMDTernary(SIMDTernary* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
-    printFullLine(curr->left);
-    printFullLine(curr->right);
-    printFullLine(curr->cond);
+    printFullLine(curr->a);
+    printFullLine(curr->b);
+    printFullLine(curr->c);
     decIndent();
   }
   void visitSIMDShift(SIMDShift* curr) {

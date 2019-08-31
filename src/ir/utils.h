@@ -132,7 +132,7 @@ struct ReFinalize
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
@@ -196,7 +196,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
   void visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
   void visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
-  void visitSIMDBitselect(SIMDBitselect* curr) { curr->finalize(); }
+  void visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
   void visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
   void visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
   void visitDataDrop(DataDrop* curr) { curr->finalize(); }

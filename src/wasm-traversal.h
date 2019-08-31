@@ -58,7 +58,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitSIMDExtract(SIMDExtract* curr) { return ReturnType(); }
   ReturnType visitSIMDReplace(SIMDReplace* curr) { return ReturnType(); }
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return ReturnType(); }
-  ReturnType visitSIMDBitselect(SIMDBitselect* curr) { return ReturnType(); }
+  ReturnType visitSIMDTernary(SIMDTernary* curr) { return ReturnType(); }
   ReturnType visitSIMDShift(SIMDShift* curr) { return ReturnType(); }
   ReturnType visitMemoryInit(MemoryInit* curr) { return ReturnType(); }
   ReturnType visitDataDrop(DataDrop* curr) { return ReturnType(); }
@@ -139,8 +139,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(SIMDReplace);
       case Expression::Id::SIMDShuffleId:
         DELEGATE(SIMDShuffle);
-      case Expression::Id::SIMDBitselectId:
-        DELEGATE(SIMDBitselect);
+      case Expression::Id::SIMDTernaryId:
+        DELEGATE(SIMDTernary);
       case Expression::Id::SIMDShiftId:
         DELEGATE(SIMDShift);
       case Expression::Id::MemoryInitId:
@@ -225,7 +225,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(SIMDExtract);
   UNIMPLEMENTED(SIMDReplace);
   UNIMPLEMENTED(SIMDShuffle);
-  UNIMPLEMENTED(SIMDBitselect);
+  UNIMPLEMENTED(SIMDTernary);
   UNIMPLEMENTED(SIMDShift);
   UNIMPLEMENTED(MemoryInit);
   UNIMPLEMENTED(DataDrop);
@@ -307,8 +307,8 @@ struct OverriddenVisitor {
         DELEGATE(SIMDReplace);
       case Expression::Id::SIMDShuffleId:
         DELEGATE(SIMDShuffle);
-      case Expression::Id::SIMDBitselectId:
-        DELEGATE(SIMDBitselect);
+      case Expression::Id::SIMDTernaryId:
+        DELEGATE(SIMDTernary);
       case Expression::Id::SIMDShiftId:
         DELEGATE(SIMDShift);
       case Expression::Id::MemoryInitId:
@@ -430,7 +430,7 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
-  ReturnType visitSIMDBitselect(SIMDBitselect* curr) {
+  ReturnType visitSIMDTernary(SIMDTernary* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitSIMDShift(SIMDShift* curr) {
@@ -732,8 +732,8 @@ struct Walker : public VisitorType {
   static void doVisitSIMDShuffle(SubType* self, Expression** currp) {
     self->visitSIMDShuffle((*currp)->cast<SIMDShuffle>());
   }
-  static void doVisitSIMDBitselect(SubType* self, Expression** currp) {
-    self->visitSIMDBitselect((*currp)->cast<SIMDBitselect>());
+  static void doVisitSIMDTernary(SubType* self, Expression** currp) {
+    self->visitSIMDTernary((*currp)->cast<SIMDTernary>());
   }
   static void doVisitSIMDShift(SubType* self, Expression** currp) {
     self->visitSIMDShift((*currp)->cast<SIMDShift>());
@@ -946,11 +946,11 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<SIMDShuffle>()->left);
         break;
       }
-      case Expression::Id::SIMDBitselectId: {
-        self->pushTask(SubType::doVisitSIMDBitselect, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->cond);
-        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->right);
-        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->left);
+      case Expression::Id::SIMDTernaryId: {
+        self->pushTask(SubType::doVisitSIMDTernary, currp);
+        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->c);
+        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->b);
+        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->a);
         break;
       }
       case Expression::Id::SIMDShiftId: {

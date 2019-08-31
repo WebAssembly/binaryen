@@ -198,7 +198,7 @@ private:
   Expression* makeSIMDExtract(Element& s, SIMDExtractOp op, size_t lanes);
   Expression* makeSIMDReplace(Element& s, SIMDReplaceOp op, size_t lanes);
   Expression* makeSIMDShuffle(Element& s);
-  Expression* makeSIMDBitselect(Element& s);
+  Expression* makeSIMDTernary(Element& s, SIMDTernaryOp op);
   Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
   Expression* makeMemoryInit(Element& s);
   Expression* makeDataDrop(Element& s);

@@ -157,8 +157,8 @@ const char* getExpressionName(Expression* curr) {
       return "simd_replace";
     case Expression::Id::SIMDShuffleId:
       return "simd_shuffle";
-    case Expression::Id::SIMDBitselectId:
-      return "simd_bitselect";
+    case Expression::Id::SIMDTernaryId:
+      return "simd_ternary";
     case Expression::Id::SIMDShiftId:
       return "simd_shift";
     case Expression::Id::MemoryInitId:
@@ -582,11 +582,11 @@ void SIMDShuffle::finalize() {
   }
 }
 
-void SIMDBitselect::finalize() {
-  assert(left && right && cond);
+void SIMDTernary::finalize() {
+  assert(a && b && c);
   type = v128;
-  if (left->type == unreachable || right->type == unreachable ||
-      cond->type == unreachable) {
+  if (a->type == unreachable || b->type == unreachable ||
+      c->type == unreachable) {
     type = unreachable;
   }
 }

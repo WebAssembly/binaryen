@@ -2355,7 +2355,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDShuffle(curr, opcode)) {
         break;
       }
-      if (maybeVisitSIMDBitselect(curr, opcode)) {
+      if (maybeVisitSIMDTernary(curr, opcode)) {
         break;
       }
       if (maybeVisitSIMDShift(curr, opcode)) {
@@ -4251,15 +4251,35 @@ bool WasmBinaryBuilder::maybeVisitSIMDShuffle(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitSIMDBitselect(Expression*& out,
-                                                uint32_t code) {
-  if (code != BinaryConsts::V128Bitselect) {
-    return false;
+bool WasmBinaryBuilder::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
+  SIMDTernary* curr;
+  switch (code) {
+    case BinaryConsts::V128Bitselect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = Bitselect;
+      break;
+    case BinaryConsts::F32x4QFMA:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = QFMAF32x4;
+      break;
+    case BinaryConsts::F32x4QFMS:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = QFMSF32x4;
+      break;
+    case BinaryConsts::F64x2QFMA:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = QFMAF64x2;
+      break;
+    case BinaryConsts::F64x2QFMS:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = QFMSF64x2;
+      break;
+    default:
+      return false;
   }
-  auto* curr = allocator.alloc<SIMDBitselect>();
-  curr->cond = popNonVoidExpression();
-  curr->right = popNonVoidExpression();
-  curr->left = popNonVoidExpression();
+  curr->c = popNonVoidExpression();
+  curr->b = popNonVoidExpression();
+  curr->a = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;

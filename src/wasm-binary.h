@@ -829,6 +829,8 @@ enum ASTNodes {
   F32x4Abs = 0x95,
   F32x4Neg = 0x96,
   F32x4Sqrt = 0x97,
+  F32x4QFMA = 0x98,
+  F32x4QFMS = 0x99,
   F32x4Add = 0x9a,
   F32x4Sub = 0x9b,
   F32x4Mul = 0x9c,
@@ -838,6 +840,8 @@ enum ASTNodes {
   F64x2Abs = 0xa0,
   F64x2Neg = 0xa1,
   F64x2Sqrt = 0xa2,
+  F64x2QFMA = 0xa3,
+  F64x2QFMS = 0xa4,
   F64x2Add = 0xa5,
   F64x2Sub = 0xa6,
   F64x2Mul = 0xa7,
@@ -1246,7 +1250,7 @@ public:
   bool maybeVisitSIMDExtract(Expression*& out, uint32_t code);
   bool maybeVisitSIMDReplace(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShuffle(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDBitselect(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDTernary(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
