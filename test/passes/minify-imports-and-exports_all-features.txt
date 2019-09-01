@@ -942,7 +942,7 @@ longname3488 => J9
 longname1490 => JA
 longname4946 => JAa
 longname1544 => JB
-eventname1 => JBa
+longname3-only => JBa
 longname1598 => JC
 longname1652 => JD
 longname1706 => JE
@@ -1035,7 +1035,7 @@ longname3489 => K9
 longname1491 => KA
 longname4947 => KAa
 longname1545 => KB
-exp1 => KBa
+eventname1 => KBa
 longname1599 => KC
 longname1653 => KD
 longname1707 => KE
@@ -1128,7 +1128,7 @@ longname3490 => L9
 longname1492 => LA
 longname4948 => LAa
 longname1546 => LB
-exp2 => LBa
+exp1 => LBa
 longname1600 => LC
 longname1654 => LD
 longname1708 => LE
@@ -1221,7 +1221,7 @@ longname3491 => M9
 longname1493 => MA
 longname4949 => MAa
 longname1547 => MB
-event1 => MBa
+exp2 => MBa
 longname1601 => MC
 longname1655 => MD
 longname1709 => ME
@@ -1314,6 +1314,7 @@ longname3492 => N9
 longname1494 => NA
 longname4950 => NAa
 longname1548 => NB
+event1 => NBa
 longname1602 => NC
 longname1656 => ND
 longname1710 => NE
@@ -10009,15 +10010,17 @@ longname4882 => zza
  (import "env" "HBa" (func $internal4998))
  (import "env" "IBa" (func $internal4999))
  (import "other" "anything" (func $internalInfinity))
- (import "env" "JBa" (event $eventname1 (attr 0) (param i32)))
+ (import "wasi_unstable" "d" (func $internal3_wasi))
+ (import "wasi_unstable" "JBa" (func $internal3_wasi_only))
+ (import "env" "KBa" (event $eventname1 (attr 0) (param i32)))
  (event $event1 (attr 0) (param i32 i32))
- (export "KBa" (func $foo1))
- (export "LBa" (func $foo2))
- (export "MBa" (event $event1))
- (func $foo1 (; 5000 ;) (type $FUNCSIG$v)
+ (export "LBa" (func $foo1))
+ (export "MBa" (func $foo2))
+ (export "NBa" (event $event1))
+ (func $foo1 (; 5002 ;) (type $FUNCSIG$v)
   (nop)
  )
- (func $foo2 (; 5001 ;) (type $FUNCSIG$v)
+ (func $foo2 (; 5003 ;) (type $FUNCSIG$v)
   (nop)
  )
 )
