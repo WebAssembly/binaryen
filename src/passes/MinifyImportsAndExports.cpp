@@ -160,7 +160,8 @@ private:
       }
     };
     auto processImport = [&](Importable* curr) {
-      if (curr->module == ENV || curr->module == WASI || curr->module == WASI_UNSTABLE) {
+      if (curr->module == ENV || curr->module == WASI ||
+          curr->module == WASI_UNSTABLE) {
         process(curr->base);
       }
     };
