@@ -20,17 +20,21 @@
 //
 
 #include <asmjs/shared-constants.h>
+#include <ir/import-utils.h>
 #include <ir/localize.h>
 #include <pass.h>
+#include <shared-constants.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
 namespace wasm {
 
-struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
+namespace {
+
+struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new PostEmscripten; }
+  Pass* create() override { return new OptimizeCalls; }
 
   void visitCall(Call* curr) {
     // special asm.js imports can be optimized
@@ -57,6 +61,27 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
         }
       }
     }
+  }
+};
+
+} // namespace
+
+struct PostEmscripten : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    // Apply the sbrk ptr, if it was provided.
+    auto sbrkPtrStr =
+      runner->options.getArgumentOrDefault("emscripten-sbrk-ptr", "");
+    if (sbrkPtrStr != "") {
+      auto sbrkPtr = std::stoi(sbrkPtrStr);
+      ImportInfo imports(*module);
+      auto* func = imports.getImportedFunction(ENV, "emscripten_get_sbrk_ptr");
+      Builder builder(*module);
+      func->body = builder.makeConst(Literal(int32_t(sbrkPtr)));
+      func->module = func->base = Name();
+    }
+
+    // Optimize calls
+    OptimizeCalls().run(runner, module);
   }
 };
 
