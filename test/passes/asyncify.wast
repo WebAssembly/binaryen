@@ -8,7 +8,7 @@
   (global $sleeping (mut i32) (i32.const 0))
   ;; do a sleep operation: start a sleep if running, or resume after a sleep
   ;; if we just rewound.
-  (func $do_sleep
+  (func $do_sleep (export "do_sleep")
     (if
       (i32.eqz (global.get $sleeping))
       (block
@@ -23,27 +23,27 @@
     )
   )
   ;; a function that does some work and has a sleep (async pause/resume) in the middle
-  (func $work
+  (func $work (export "work")
     (call $stuff) ;; do some work
     (call $do_sleep) ;; take a break
     (call $stuff) ;; do some more work
   )
-  (func  $stuff)
+  (func $stuff (export "stuff"))
   ;; the first event called from the main event loop: just call into $work
-  (func $first_event
+  (func $first_event (export "first_event")
     (call $work)
     ;; work will sleep, so we exit through here while it is paused
   )
   ;; the second event called from the main event loop: to resume $work,
-  ;; stop the unwind, then prepare a rewind, and initiate it by doing 
+  ;; stop the unwind, then prepare a rewind, and initiate it by doing
   ;; the call to rewind the call stack back up to where it was
-  (func $second_event
+  (func $second_event (export "second_event")
     (call $asyncify_stop_unwind)
     (call $asyncify_start_rewind (i32.const 4))
     (call $work)
   )
   ;; a function that can't do a sleep
-  (func $never_sleep
+  (func $never_sleep (export "never_sleep")
     (call $stuff)
     (call $stuff)
     (call $stuff)
@@ -55,21 +55,21 @@
   (import "env" "import" (func $import))
   (import "env" "import2" (func $import2 (result i32)))
   (import "env" "import3" (func $import3 (param i32)))
-  (func $calls-import
+  (func $calls-import (export "calls-import")
     (call $import)
   )
-  (func $calls-import2 (result i32)
+  (func $calls-import2 (export "calls-import2") (result i32)
     (local $temp i32)
     (local.set $temp (call $import2))
     (return (local.get $temp))
   )
-  (func $calls-import2-drop
+  (func $calls-import2-drop (export "calls-import2-drop")
     (drop (call $import2))
   )
-  (func $calls-nothing
+  (func $calls-nothing (export "calls-nothing")
     (drop (i32.eqz (i32.const 17)))
   )
-  (func $many-locals (param $x i32) (result i32)
+  (func $many-locals (export "many-locals") (param $x i32) (result i32)
     (local $y i32)
     (loop $l
       (local.set $x
@@ -83,32 +83,32 @@
     (call $import)
     (return (local.get $y))
   )
-  (func $calls-import2-if (param $x i32)
+  (func $calls-import2-if (export "calls-import2-if") (param $x i32)
     (if (local.get $x)
       (call $import)
     )
   )
-  (func $calls-import2-if-else (param $x i32)
+  (func $calls-import2-if-else (export "alls-import2-if-else") (param $x i32)
     (if (local.get $x)
       (call $import3 (i32.const 1))
       (call $import3 (i32.const 2))
     )
   )
-  (func $calls-import2-if-else-oneside (param $x i32) (result i32)
+  (func $calls-import2-if-else-oneside (export "calls-import2-if-else-oneside") (param $x i32) (result i32)
     (if (local.get $x)
       (return (i32.const 1))
       (call $import3 (i32.const 2))
     )
     (return (i32.const 3))
   )
-  (func $calls-import2-if-else-oneside2 (param $x i32) (result i32)
+  (func $calls-import2-if-else-oneside2 (export "calls-import2-if-else-oneside2") (param $x i32) (result i32)
     (if (local.get $x)
       (call $import3 (i32.const 1))
       (return (i32.const 2))
     )
     (return (i32.const 3))
   )
-  (func $calls-loop (param $x i32)
+  (func $calls-loop (export "calls-loop") (param $x i32)
     (loop $l
       (call $import3 (i32.const 1))
       (local.set $x
@@ -119,30 +119,30 @@
       )
     )
   )
-  (func $calls-loop2
+  (func $calls-loop2 (export "calls-loop2")
     (loop $l
       (br_if $l
         (call $import2)
       )
     )
   )
-  (func $calls-mix
+  (func $calls-mix (export "calls-mix")
     (call $boring)
     (call $import)
     (call $boring)
     (call $import)
   )
-  (func $boring)
-  (func $calls-mix-deep
+  (func $boring (export "boring"))
+  (func $calls-mix-deep (export "calls-mix-deep")
     (call $boring-deep)
     (call $import-deep)
     (call $boring)
     (call $import)
   )
-  (func $boring-deep
+  (func $boring-deep (export "boring-deep")
     (call $boring)
   )
-  (func $import-deep
+  (func $import-deep (export "import-deep")
     (call $import)
   )
 )

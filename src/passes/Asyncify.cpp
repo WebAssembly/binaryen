@@ -503,6 +503,8 @@ public:
     return info.canChangeState && !info.isTopMostRuntime;
   }
 
+  bool canChangeState(Function* func) { return map[func].canChangeState; }
+
   bool canChangeState(Expression* curr) {
     // Look inside to see if we call any of the things we know can change the
     // state.
@@ -1167,7 +1169,7 @@ struct Asyncify : public Pass {
         continue;
       }
       auto* func = module->getFunction(exp->value);
-      if (!analyzer.needsInstrumentation(func)) {
+      if (!analyzer.canChangeState(func)) {
         continue;
       }
       userSections.resize(userSections.size() + 1);
