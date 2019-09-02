@@ -1150,6 +1150,32 @@ struct Asyncify : public Pass {
       runner.setValidateGlobally(false);
       runner.run();
     }
+    // Mark exported asyncified functions.
+    //
+    // This creates a custom section for each function that:
+    // 1) Is exported and, thus, directly accessible by user.
+    // 2) Might directly or indirectly start an async operation (and unwind).
+    //
+    // Each such section will have a name "asyncify" and name of the export as
+    // its data.
+    //
+    // This gives the JavaScript side an opportunity to wrap functions into an
+    // `async` variant only if it's necessary, and leave others intact.
+    auto& userSections = module->userSections;
+    for (auto& exp : module->exports) {
+      if (exp->kind != ExternalKind::Function) {
+        continue;
+      }
+      auto* func = module->getFunction(exp->value);
+      if (!analyzer.needsInstrumentation(func)) {
+        continue;
+      }
+      userSections.resize(userSections.size() + 1);
+      auto& section = userSections.back();
+      section.name = BinaryConsts::UserSections::Asyncify;
+      auto& name = exp->name;
+      section.data.assign(name.c_str(), name.c_str() + name.size());
+    }
     // Finally, add function support (that should not have been seen by
     // the previous passes).
     addFunctions(module);
