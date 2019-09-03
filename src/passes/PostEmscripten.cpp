@@ -75,9 +75,11 @@ struct PostEmscripten : public Pass {
       auto sbrkPtr = std::stoi(sbrkPtrStr);
       ImportInfo imports(*module);
       auto* func = imports.getImportedFunction(ENV, "emscripten_get_sbrk_ptr");
-      Builder builder(*module);
-      func->body = builder.makeConst(Literal(int32_t(sbrkPtr)));
-      func->module = func->base = Name();
+      if (func) {
+        Builder builder(*module);
+        func->body = builder.makeConst(Literal(int32_t(sbrkPtr)));
+        func->module = func->base = Name();
+      }
     }
 
     // Optimize calls
