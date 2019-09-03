@@ -2445,6 +2445,7 @@ private:
   }
 
   Expression* makeSIMDTernary() {
+    // TODO: Enable qfma/qfms once it is implemented in V8 and the interpreter
     // SIMDTernaryOp op = pick(Bitselect,
     //                         QFMAF32x4,
     //                         QFMSF32x4,
