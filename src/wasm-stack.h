@@ -107,7 +107,7 @@ public:
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
@@ -183,7 +183,7 @@ public:
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
@@ -565,10 +565,10 @@ void BinaryenIRWriter<SubType>::visitSIMDShuffle(SIMDShuffle* curr) {
 }
 
 template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSIMDBitselect(SIMDBitselect* curr) {
-  visit(curr->left);
-  visit(curr->right);
-  visit(curr->cond);
+void BinaryenIRWriter<SubType>::visitSIMDTernary(SIMDTernary* curr) {
+  visit(curr->a);
+  visit(curr->b);
+  visit(curr->c);
   if (curr->type == unreachable) {
     emitUnreachable();
     return;

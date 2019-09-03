@@ -1473,11 +1473,13 @@ Expression* SExpressionWasmBuilder::makeSIMDShuffle(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeSIMDBitselect(Element& s) {
-  auto ret = allocator.alloc<SIMDBitselect>();
-  ret->left = parseExpression(s[1]);
-  ret->right = parseExpression(s[2]);
-  ret->cond = parseExpression(s[3]);
+Expression* SExpressionWasmBuilder::makeSIMDTernary(Element& s,
+                                                    SIMDTernaryOp op) {
+  auto ret = allocator.alloc<SIMDTernary>();
+  ret->op = op;
+  ret->a = parseExpression(s[1]);
+  ret->b = parseExpression(s[2]);
+  ret->c = parseExpression(s[3]);
   ret->finalize();
   return ret;
 }

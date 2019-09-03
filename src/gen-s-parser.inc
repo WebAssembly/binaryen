@@ -338,6 +338,17 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'q': {
+                switch (op[9]) {
+                  case 'a':
+                    if (strcmp(op, "f32x4.qfma") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::QFMAF32x4); }
+                    goto parse_error;
+                  case 's':
+                    if (strcmp(op, "f32x4.qfms") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::QFMSF32x4); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'r':
                 if (strcmp(op, "f32x4.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecF32x4, 4); }
                 goto parse_error;
@@ -604,6 +615,17 @@ switch (op[0]) {
                     goto parse_error;
                   case 'g':
                     if (strcmp(op, "f64x2.neg") == 0) { return makeUnary(s, UnaryOp::NegVecF64x2); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'q': {
+                switch (op[9]) {
+                  case 'a':
+                    if (strcmp(op, "f64x2.qfma") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::QFMAF64x2); }
+                    goto parse_error;
+                  case 's':
+                    if (strcmp(op, "f64x2.qfms") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::QFMSF64x2); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -2315,7 +2337,7 @@ switch (op[0]) {
             if (strcmp(op, "v128.and") == 0) { return makeBinary(s, BinaryOp::AndVec128); }
             goto parse_error;
           case 'b':
-            if (strcmp(op, "v128.bitselect") == 0) { return makeSIMDBitselect(s); }
+            if (strcmp(op, "v128.bitselect") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::Bitselect); }
             goto parse_error;
           case 'c':
             if (strcmp(op, "v128.const") == 0) { return makeConst(s, v128); }

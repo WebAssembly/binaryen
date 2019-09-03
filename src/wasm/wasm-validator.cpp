@@ -274,7 +274,7 @@ public:
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
@@ -1030,17 +1030,17 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
   }
 }
 
-void FunctionValidator::visitSIMDBitselect(SIMDBitselect* curr) {
+void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->type, v128, curr, "v128.bitselect must have type v128");
+    curr->type, v128, curr, "SIMD ternary must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->left->type, v128, curr, "expected operand of type v128");
+    curr->a->type, v128, curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->right->type, v128, curr, "expected operand of type v128");
+    curr->b->type, v128, curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->cond->type, v128, curr, "expected operand of type v128");
+    curr->c->type, v128, curr, "expected operand of type v128");
 }
 
 void FunctionValidator::visitSIMDShift(SIMDShift* curr) {

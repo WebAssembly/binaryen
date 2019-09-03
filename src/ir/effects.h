@@ -305,7 +305,7 @@ struct EffectAnalyzer
   void visitSIMDExtract(SIMDExtract* curr) {}
   void visitSIMDReplace(SIMDReplace* curr) {}
   void visitSIMDShuffle(SIMDShuffle* curr) {}
-  void visitSIMDBitselect(SIMDBitselect* curr) {}
+  void visitSIMDTernary(SIMDTernary* curr) {}
   void visitSIMDShift(SIMDShift* curr) {}
   void visitMemoryInit(MemoryInit* curr) {
     writesMemory = true;

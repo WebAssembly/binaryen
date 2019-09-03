@@ -343,8 +343,8 @@ BinaryenExpressionId BinaryenSIMDReplaceId(void) {
 BinaryenExpressionId BinaryenSIMDShuffleId(void) {
   return Expression::Id::SIMDShuffleId;
 }
-BinaryenExpressionId BinaryenSIMDBitselectId(void) {
-  return Expression::Id::SIMDBitselectId;
+BinaryenExpressionId BinaryenSIMDTernaryId(void) {
+  return Expression::Id::SIMDTernaryId;
 }
 BinaryenExpressionId BinaryenSIMDShiftId(void) {
   return Expression::Id::SIMDShiftId;
@@ -790,6 +790,7 @@ BinaryenOp BinaryenNotVec128(void) { return NotVec128; }
 BinaryenOp BinaryenAndVec128(void) { return AndVec128; }
 BinaryenOp BinaryenOrVec128(void) { return OrVec128; }
 BinaryenOp BinaryenXorVec128(void) { return XorVec128; }
+BinaryenOp BinaryenBitselectVec128(void) { return Bitselect; }
 BinaryenOp BinaryenNegVecI8x16(void) { return NegVecI8x16; }
 BinaryenOp BinaryenAnyTrueVecI8x16(void) { return AnyTrueVecI8x16; }
 BinaryenOp BinaryenAllTrueVecI8x16(void) { return AllTrueVecI8x16; }
@@ -836,6 +837,8 @@ BinaryenOp BinaryenSubVecI64x2(void) { return SubVecI64x2; }
 BinaryenOp BinaryenAbsVecF32x4(void) { return AbsVecF32x4; }
 BinaryenOp BinaryenNegVecF32x4(void) { return NegVecF32x4; }
 BinaryenOp BinaryenSqrtVecF32x4(void) { return SqrtVecF32x4; }
+BinaryenOp BinaryenQFMAVecF32x4(void) { return QFMAF32x4; }
+BinaryenOp BinaryenQFMSVecF32x4(void) { return QFMSF32x4; }
 BinaryenOp BinaryenAddVecF32x4(void) { return AddVecF32x4; }
 BinaryenOp BinaryenSubVecF32x4(void) { return SubVecF32x4; }
 BinaryenOp BinaryenMulVecF32x4(void) { return MulVecF32x4; }
@@ -845,6 +848,8 @@ BinaryenOp BinaryenMaxVecF32x4(void) { return MaxVecF32x4; }
 BinaryenOp BinaryenAbsVecF64x2(void) { return AbsVecF64x2; }
 BinaryenOp BinaryenNegVecF64x2(void) { return NegVecF64x2; }
 BinaryenOp BinaryenSqrtVecF64x2(void) { return SqrtVecF64x2; }
+BinaryenOp BinaryenQFMAVecF64x2(void) { return QFMAF64x2; }
+BinaryenOp BinaryenQFMSVecF64x2(void) { return QFMSF64x2; }
 BinaryenOp BinaryenAddVecF64x2(void) { return AddVecF64x2; }
 BinaryenOp BinaryenSubVecF64x2(void) { return SubVecF64x2; }
 BinaryenOp BinaryenMulVecF64x2(void) { return MulVecF64x2; }
@@ -1532,15 +1537,17 @@ BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDBitselect(BinaryenModuleRef module,
-                                            BinaryenExpressionRef left,
-                                            BinaryenExpressionRef right,
-                                            BinaryenExpressionRef cond) {
-  auto* ret = Builder(*(Module*)module)
-                .makeSIMDBitselect(
-                  (Expression*)left, (Expression*)right, (Expression*)cond);
+BinaryenExpressionRef BinaryenSIMDTernary(BinaryenModuleRef module,
+                                          BinaryenOp op,
+                                          BinaryenExpressionRef a,
+                                          BinaryenExpressionRef b,
+                                          BinaryenExpressionRef c) {
+  auto* ret =
+    Builder(*(Module*)module)
+      .makeSIMDTernary(
+        SIMDTernaryOp(op), (Expression*)a, (Expression*)b, (Expression*)c);
   if (tracing) {
-    traceExpression(ret, "BinaryenSIMDBitselect", left, right, cond);
+    traceExpression(ret, "BinaryenSIMDTernary", op, a, b, c);
   }
   return static_cast<Expression*>(ret);
 }
@@ -2652,37 +2659,46 @@ void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t* mask) {
   assert(expression->is<SIMDShuffle>());
   memcpy(mask, static_cast<SIMDShuffle*>(expression)->mask.data(), 16);
 }
-// SIMDBitselect
-BinaryenExpressionRef BinaryenSIMDBitselectGetLeft(BinaryenExpressionRef expr) {
+// SIMDTernary
+BinaryenOp BinaryenSIMDTernaryGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSIMDBitselectGetLeft(expressions["
-              << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenSIMDTernaryOp(expressions[" << expressions[expr]
+              << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<SIMDBitselect>());
-  return static_cast<SIMDBitselect*>(expression)->left;
+  assert(expression->is<SIMDTernary>());
+  return static_cast<SIMDTernary*>(expression)->op;
 }
-BinaryenExpressionRef
-BinaryenSIMDBitselectGetRight(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenSIMDTernaryGetA(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSIMDBitselectGetRight(expressions["
-              << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenSIMDTernaryGetA(expressions[" << expressions[expr]
+              << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<SIMDBitselect>());
-  return static_cast<SIMDBitselect*>(expression)->right;
+  assert(expression->is<SIMDTernary>());
+  return static_cast<SIMDTernary*>(expression)->a;
 }
-BinaryenExpressionRef BinaryenSIMDBitselectGetCond(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenSIMDTernaryGetB(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSIMDBitselectGetCond(expressions["
-              << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenSIMDTernaryGetB(expressions[" << expressions[expr]
+              << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<SIMDBitselect>());
-  return static_cast<SIMDBitselect*>(expression)->cond;
+  assert(expression->is<SIMDTernary>());
+  return static_cast<SIMDTernary*>(expression)->b;
+}
+BinaryenExpressionRef BinaryenSIMDTernaryGetC(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDTernaryGetC(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDTernary>());
+  return static_cast<SIMDTernary*>(expression)->c;
 }
 // SIMDShift
 BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr) {

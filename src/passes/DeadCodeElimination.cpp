@@ -306,8 +306,8 @@ struct DeadCodeElimination
           DELEGATE(SIMDReplace);
         case Expression::Id::SIMDShuffleId:
           DELEGATE(SIMDShuffle);
-        case Expression::Id::SIMDBitselectId:
-          DELEGATE(SIMDBitselect);
+        case Expression::Id::SIMDTernaryId:
+          DELEGATE(SIMDTernary);
         case Expression::Id::SIMDShiftId:
           DELEGATE(SIMDShift);
         case Expression::Id::MemoryInitId:
