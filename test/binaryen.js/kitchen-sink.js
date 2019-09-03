@@ -490,7 +490,8 @@ function test_core() {
 
   var fiF = module.addFunctionType("fiF", Binaryen.f32, [ Binaryen.i32, Binaryen.f64 ]);
   module.addFunctionImport("an-imported", "module", "base", fiF);
-  module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32);
+  module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32, false);
+  module.addGlobalImport("a-mut-global-imp", "module", "base", Binaryen.i32, true);
   module.addEventImport("a-event-imp", "module", "base", 0, vi);
 
   // Exports

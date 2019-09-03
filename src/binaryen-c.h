@@ -939,7 +939,8 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* internalName,
                              const char* externalModuleName,
                              const char* externalBaseName,
-                             BinaryenType globalType);
+                             BinaryenType globalType,
+                             int mutable_);
 void BinaryenAddEventImport(BinaryenModuleRef module,
                             const char* internalName,
                             const char* externalModuleName,

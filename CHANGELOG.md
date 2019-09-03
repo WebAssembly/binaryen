@@ -22,6 +22,7 @@ Current Trunk
 - `atomic.fence` instruction support is added.
 - wasm-emscripten-finalize: Don't realy on name section being present in the
   input. Use the exported names for things instead.
+- Added `mutable` parameter to BinaryenAddGlobalImport.
 
 v88
 ---

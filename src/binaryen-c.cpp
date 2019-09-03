@@ -3150,20 +3150,22 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* internalName,
                              const char* externalModuleName,
                              const char* externalBaseName,
-                             BinaryenType globalType) {
+                             BinaryenType globalType,
+                             int mutable_) {
   auto* wasm = (Module*)module;
   auto* ret = new Global();
 
   if (tracing) {
     std::cout << "  BinaryenAddGlobalImport(the_module, \"" << internalName
               << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << globalType << ");\n";
+              << "\", " << globalType << ", " << mutable_ << ");\n";
   }
 
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   ret->type = Type(globalType);
+  ret->mutable_ = mutable_ != 0;
   wasm->addGlobal(ret);
 }
 void BinaryenAddEventImport(BinaryenModuleRef module,
