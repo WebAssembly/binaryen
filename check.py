@@ -48,7 +48,7 @@ if options.interpreter:
 def run_help_tests():
     print('[ checking --help is useful... ]\n')
 
-    not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm']
+    not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest']
     bin_files = [os.path.join(options.binaryen_bin, f) for f in os.listdir(options.binaryen_bin)]
     executables = [f for f in bin_files if os.path.isfile(f) and not any(f.endswith(s) for s in not_executable_suffix)]
     executables = sorted(executables)
