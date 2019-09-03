@@ -23,7 +23,7 @@ Current Trunk
 - wasm-emscripten-finalize: Don't rely on name section being present in the
   input. Use the exported names for things instead.
 - Added `mutable` parameter to BinaryenAddGlobalImport.
-- Replace BinarySIMDBitselect* with BinarnSIMDTernary* in the C API and add
+- Replace BinaryenSIMDBitselect* with BinaryenSIMDTernary* in the C API and add
   qfma/qfms instructions.
 
 v88
