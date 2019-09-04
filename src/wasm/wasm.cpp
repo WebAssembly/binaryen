@@ -88,8 +88,6 @@ Name EXIT("exit");
 Name SHARED("shared");
 Name EVENT("event");
 Name ATTR("attr");
-Name WASI("wasi");
-Name WASI_UNSTABLE("wasi_unstable");
 
 // Expressions
 

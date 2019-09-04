@@ -65,8 +65,6 @@ extern Name EXIT;
 extern Name SHARED;
 extern Name EVENT;
 extern Name ATTR;
-extern Name WASI;
-extern Name WASI_UNSTABLE;
 
 } // namespace wasm
 
