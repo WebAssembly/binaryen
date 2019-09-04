@@ -2090,6 +2090,10 @@ function asmFunc(global, env, buffer) {
  }
  
  var FUNCTION_TABLE = [i32_t0, i32_t1, i64_t0, i64_t1, f32_t0, f32_t1, f64_t0, f64_t1];
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
  function __wasm_memory_grow(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
   var oldPages = __wasm_memory_size() | 0;
@@ -2110,10 +2114,6 @@ function asmFunc(global, env, buffer) {
    buffer = newBuffer;
   }
   return oldPages;
- }
- 
- function __wasm_memory_size() {
-  return buffer.byteLength / 65536 | 0;
  }
  
  return {

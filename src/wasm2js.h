@@ -255,6 +255,7 @@ private:
   void addTable(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
+  void addMemoryFuncs(Ref ast, Module* wasm);
   void addMemoryGrowthFuncs(Ref ast, Module* wasm);
 
   Wasm2JSBuilder() = delete;
@@ -608,8 +609,8 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         exports, fromName(export_->name, NameScope::Top), memory);
     }
   }
-  if (wasm->memory.exists && wasm->memory.max > wasm->memory.initial) {
-    addMemoryGrowthFuncs(ast, wasm);
+  if (wasm->memory.exists) {
+    addMemoryFuncs(ast, wasm);
   }
   ast->push_back(
     ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
@@ -1900,6 +1901,22 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
   return ExpressionProcessor(this, m, func, standaloneFunction).process();
 }
 
+void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
+  Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
+  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
+    makeAsmCoercion(ValueBuilder::makeBinary(
+                      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
+                                            IString("byteLength")),
+                      DIV,
+                      ValueBuilder::makeInt(Memory::kPageSize)),
+                    AsmType::ASM_INT)));
+  ast->push_back(memorySizeFunc);
+
+  if (wasm->memory.max > wasm->memory.initial) {
+    addMemoryGrowthFuncs(ast, wasm);
+  }
+}
+
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
   Ref memoryGrowFunc = ValueBuilder::makeFunction(WASM_MEMORY_GROW);
   ValueBuilder::appendArgumentToFunction(memoryGrowFunc, IString("pagesToAdd"));
@@ -2016,16 +2033,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
   memoryGrowFunc[3]->push_back(
     ValueBuilder::makeReturn(ValueBuilder::makeName(IString("oldPages"))));
 
-  Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
-  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
-    makeAsmCoercion(ValueBuilder::makeBinary(
-                      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
-                                            IString("byteLength")),
-                      DIV,
-                      ValueBuilder::makeInt(Memory::kPageSize)),
-                    AsmType::ASM_INT)));
   ast->push_back(memoryGrowFunc);
-  ast->push_back(memorySizeFunc);
 }
 
 // Wasm2JSGlue emits the core of the module - the functions etc. that would
