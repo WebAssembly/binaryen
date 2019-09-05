@@ -121,7 +121,8 @@ struct SafeHeap : public Pass {
     // optimized to have the number in the binary.
     if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
       dynamicTopPtr = existing->name;
-    } else if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
+    } else if (auto* existing =
+                 info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
       getSbrkPtr = existing->name;
     } else {
       auto* import = new Function;
