@@ -18,11 +18,11 @@ import os
 
 from .support import run_command, split_wast, write_wast
 from .shared import (
-    WASM2JS, MOZJS, NODEJS, fail_if_not_identical, options, tests,
+    WASM2JS, MOZJS, NODEJS, fail_if_not_identical, options,
     fail_if_not_identical_to_file, with_pass_debug
 )
 
-# tests with i64s, invokes, etc.
+tests = sorted(os.listdir(os.path.join(options.binaryen_test)))
 spec_dir = os.path.join(options.binaryen_test, 'spec')
 spec_tests = [os.path.join(spec_dir, t)
               for t in sorted(os.listdir(spec_dir))

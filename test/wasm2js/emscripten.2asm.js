@@ -187,6 +187,10 @@ function asmFunc(global, env, buffer) {
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
  FUNCTION_TABLE[3] = tabled;
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
  return {
   "main": main, 
   "other": other, 

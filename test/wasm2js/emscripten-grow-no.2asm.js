@@ -25,6 +25,10 @@ function asmFunc(global, env, buffer) {
  // EMSCRIPTEN_START_FUNCS;
  // EMSCRIPTEN_END_FUNCS;
  var FUNCTION_TABLE = [];
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
  return {
   "memory": Object.create(Object.prototype, {
    "grow": {
