@@ -863,24 +863,30 @@ public:
     Literal right = flow.value;
     return left.shuffleV8x16(right, curr->mask);
   }
-  Flow visitSIMDBitselect(SIMDBitselect* curr) {
+  Flow visitSIMDTernary(SIMDTernary* curr) {
     NOTE_ENTER("SIMDBitselect");
-    Flow flow = this->visit(curr->left);
+    Flow flow = this->visit(curr->a);
     if (flow.breaking()) {
       return flow;
     }
-    Literal left = flow.value;
-    flow = this->visit(curr->right);
+    Literal a = flow.value;
+    flow = this->visit(curr->b);
     if (flow.breaking()) {
       return flow;
     }
-    Literal right = flow.value;
-    flow = this->visit(curr->cond);
+    Literal b = flow.value;
+    flow = this->visit(curr->c);
     if (flow.breaking()) {
       return flow;
     }
-    Literal cond = flow.value;
-    return cond.bitselectV128(left, right);
+    Literal c = flow.value;
+    switch (curr->op) {
+      case Bitselect:
+        return c.bitselectV128(a, b);
+      default:
+        // TODO: implement qfma/qfms
+        WASM_UNREACHABLE();
+    }
   }
   Flow visitSIMDShift(SIMDShift* curr) {
     NOTE_ENTER("SIMDShift");

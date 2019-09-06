@@ -74,7 +74,7 @@ Module['AtomicFenceId'] = Module['_BinaryenAtomicFenceId']();
 Module['SIMDExtractId'] = Module['_BinaryenSIMDExtractId']();
 Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
 Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
-Module['SIMDBitselectId'] = Module['_BinaryenSIMDBitselectId']();
+Module['SIMDTernaryId'] = Module['_BinaryenSIMDTernaryId']();
 Module['SIMDShiftId'] = Module['_BinaryenSIMDShiftId']();
 Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
 Module['DataDropId'] = Module['_BinaryenDataDropId']();
@@ -366,6 +366,8 @@ Module['SubVecI64x2'] = Module['_BinaryenSubVecI64x2']();
 Module['AbsVecF32x4'] = Module['_BinaryenAbsVecF32x4']();
 Module['NegVecF32x4'] = Module['_BinaryenNegVecF32x4']();
 Module['SqrtVecF32x4'] = Module['_BinaryenSqrtVecF32x4']();
+Module['QFMAVecF32x4'] = Module['_BinaryenQFMAVecF32x4']();
+Module['QFMSVecF32x4'] = Module['_BinaryenQFMSVecF32x4']();
 Module['AddVecF32x4'] = Module['_BinaryenAddVecF32x4']();
 Module['SubVecF32x4'] = Module['_BinaryenSubVecF32x4']();
 Module['MulVecF32x4'] = Module['_BinaryenMulVecF32x4']();
@@ -375,6 +377,8 @@ Module['MaxVecF32x4'] = Module['_BinaryenMaxVecF32x4']();
 Module['AbsVecF64x2'] = Module['_BinaryenAbsVecF64x2']();
 Module['NegVecF64x2'] = Module['_BinaryenNegVecF64x2']();
 Module['SqrtVecF64x2'] = Module['_BinaryenSqrtVecF64x2']();
+Module['QFMAVecF64x2'] = Module['_BinaryenQFMAVecF64x2']();
+Module['QFMSVecF64x2'] = Module['_BinaryenQFMSVecF64x2']();
 Module['AddVecF64x2'] = Module['_BinaryenAddVecF64x2']();
 Module['SubVecF64x2'] = Module['_BinaryenSubVecF64x2']();
 Module['MulVecF64x2'] = Module['_BinaryenMulVecF64x2']();
@@ -1323,7 +1327,7 @@ function wrapModule(module, self) {
       return Module['_BinaryenUnary'](module, Module['XorVec128'], value);
     },
     'bitselect': function(left, right, cond) {
-      return Module['_BinaryenSIMDBitselect'](module, left, right, cond);
+      return Module['_BinaryenSIMDTernary'](module, Module['Bitselect'], left, right, cond);
     },
     'pop': function() {
       return Module['_BinaryenPop'](module, Module['v128']);
@@ -1660,6 +1664,12 @@ function wrapModule(module, self) {
     'sqrt': function(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtVecF32x4'], value);
     },
+    'qfma': function(a, b, c) {
+      return Module['_BinaryenSIMDTernary'](module, Module['QFMAVecF32x4'], a, b, c);
+    },
+    'qfms': function(a, b, c) {
+      return Module['_BinaryenSIMDTernary'](module, Module['QFMSVecF32x4'], a, b, c);
+    },
     'add': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecF32x4'], left, right);
     },
@@ -1722,6 +1732,12 @@ function wrapModule(module, self) {
     },
     'sqrt': function(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtVecF64x2'], value);
+    },
+    'qfma': function(a, b, c) {
+      return Module['_BinaryenSIMDTernary'](module, Module['QFMAVecF64x2'], a, b, c);
+    },
+    'qfms': function(a, b, c) {
+      return Module['_BinaryenSIMDTernary'](module, Module['QFMSVecF64x2'], a, b, c);
     },
     'add': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecF64x2'], left, right);
@@ -1886,9 +1902,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared);
     });
   };
-  self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType) {
+  self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType, mutable) {
     return preserveStack(function() {
-      return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType);
+      return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable);
     });
   };
   self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, eventType) {
@@ -2370,13 +2386,14 @@ Module['getExpressionInfo'] = function(expr) {
           'mask': mask
         };
       });
-    case Module['SIMDBitselectId']:
+    case Module['SIMDTernaryId']:
       return {
         'id': id,
         'type': type,
-        'left': Module['_BinaryenSIMDBitselectGetLeft'](expr),
-        'right': Module['_BinaryenSIMDBitselectGetRight'](expr),
-        'cond': Module['_BinaryenSIMDBitselectGetCond'](expr)
+        'op': Module['_BinaryenSIMDTernaryGetOp'](expr),
+        'a': Module['_BinaryenSIMDTernaryGetA'](expr),
+        'b': Module['_BinaryenSIMDTernaryGetB'](expr),
+        'c': Module['_BinaryenSIMDTernaryGetC'](expr)
       };
     case Module['SIMDShiftId']:
       return {

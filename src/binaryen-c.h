@@ -123,7 +123,7 @@ BinaryenExpressionId BinaryenAtomicFenceId(void);
 BinaryenExpressionId BinaryenSIMDExtractId(void);
 BinaryenExpressionId BinaryenSIMDReplaceId(void);
 BinaryenExpressionId BinaryenSIMDShuffleId(void);
-BinaryenExpressionId BinaryenSIMDBitselectId(void);
+BinaryenExpressionId BinaryenSIMDTernaryId(void);
 BinaryenExpressionId BinaryenSIMDShiftId(void);
 BinaryenExpressionId BinaryenMemoryInitId(void);
 BinaryenExpressionId BinaryenDataDropId(void);
@@ -486,6 +486,8 @@ BinaryenOp BinaryenSubVecI64x2(void);
 BinaryenOp BinaryenAbsVecF32x4(void);
 BinaryenOp BinaryenNegVecF32x4(void);
 BinaryenOp BinaryenSqrtVecF32x4(void);
+BinaryenOp BinaryenQFMAVecF32x4(void);
+BinaryenOp BinaryenQFMSVecF32x4(void);
 BinaryenOp BinaryenAddVecF32x4(void);
 BinaryenOp BinaryenSubVecF32x4(void);
 BinaryenOp BinaryenMulVecF32x4(void);
@@ -495,6 +497,8 @@ BinaryenOp BinaryenMaxVecF32x4(void);
 BinaryenOp BinaryenAbsVecF64x2(void);
 BinaryenOp BinaryenNegVecF64x2(void);
 BinaryenOp BinaryenSqrtVecF64x2(void);
+BinaryenOp BinaryenQFMAVecF64x2(void);
+BinaryenOp BinaryenQFMSVecF64x2(void);
 BinaryenOp BinaryenAddVecF64x2(void);
 BinaryenOp BinaryenSubVecF64x2(void);
 BinaryenOp BinaryenMulVecF64x2(void);
@@ -687,10 +691,11 @@ BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module,
                                           BinaryenExpressionRef left,
                                           BinaryenExpressionRef right,
                                           const uint8_t mask[16]);
-BinaryenExpressionRef BinaryenSIMDBitselect(BinaryenModuleRef module,
-                                            BinaryenExpressionRef left,
-                                            BinaryenExpressionRef right,
-                                            BinaryenExpressionRef cond);
+BinaryenExpressionRef BinaryenSIMDTernary(BinaryenModuleRef module,
+                                          BinaryenOp op,
+                                          BinaryenExpressionRef a,
+                                          BinaryenExpressionRef b,
+                                          BinaryenExpressionRef c);
 BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module,
                                         BinaryenOp op,
                                         BinaryenExpressionRef vec,
@@ -856,9 +861,10 @@ BinaryenExpressionRef BinaryenSIMDShuffleGetLeft(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr);
 void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t* mask);
 
-BinaryenExpressionRef BinaryenSIMDBitselectGetLeft(BinaryenExpressionRef expr);
-BinaryenExpressionRef BinaryenSIMDBitselectGetRight(BinaryenExpressionRef expr);
-BinaryenExpressionRef BinaryenSIMDBitselectGetCond(BinaryenExpressionRef expr);
+BinaryenOp BinaryenSIMDTernaryGetOp(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDTernaryGetA(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDTernaryGetB(BinaryenExpressionRef expr);
+BinaryenExpressionRef BinaryenSIMDTernaryGetC(BinaryenExpressionRef expr);
 
 BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr);
 BinaryenExpressionRef BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr);
@@ -939,7 +945,8 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* internalName,
                              const char* externalModuleName,
                              const char* externalBaseName,
-                             BinaryenType globalType);
+                             BinaryenType globalType,
+                             int mutable_);
 void BinaryenAddEventImport(BinaryenModuleRef module,
                             const char* internalName,
                             const char* externalModuleName,

@@ -171,9 +171,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeSIMDShuffle(
         copy(curr->left), copy(curr->right), curr->mask);
     }
-    Expression* visitSIMDBitselect(SIMDBitselect* curr) {
-      return builder.makeSIMDBitselect(
-        copy(curr->left), copy(curr->right), copy(curr->cond));
+    Expression* visitSIMDTernary(SIMDTernary* curr) {
+      return builder.makeSIMDTernary(
+        curr->op, copy(curr->a), copy(curr->b), copy(curr->c));
     }
     Expression* visitSIMDShift(SIMDShift* curr) {
       return builder.makeSIMDShift(

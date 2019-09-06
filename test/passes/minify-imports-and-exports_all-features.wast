@@ -5003,6 +5003,8 @@
   (import "env" "__table_base" (global i32))
   (import "other" "anything" (func $internalInfinity))
   (import "env" "eventname1" (event $eventname1 (attr 0) (param i32)))
+  (import "wasi_unstable" "longname3" (func $internal3_wasi)) ;; overlapping base
+  (import "wasi_unstable" "longname3-only" (func $internal3_wasi_only))
   (export "exp1" (func $foo1))
   (export "exp2" (func $foo2))
   (func $foo1)

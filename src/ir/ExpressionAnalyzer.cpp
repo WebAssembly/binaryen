@@ -194,7 +194,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
         visitor.visitInt(x);
       }
     }
-    void visitSIMDBitselect(SIMDBitselect* curr) {}
+    void visitSIMDTernary(SIMDTernary* curr) { visitor.visitInt(curr->op); }
     void visitSIMDShift(SIMDShift* curr) { visitor.visitInt(curr->op); }
     void visitMemoryInit(MemoryInit* curr) {
       visitor.visitIndex(curr->segment);

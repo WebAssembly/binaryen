@@ -491,8 +491,25 @@ void BinaryInstWriter::visitSIMDShuffle(SIMDShuffle* curr) {
   }
 }
 
-void BinaryInstWriter::visitSIMDBitselect(SIMDBitselect* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Bitselect);
+void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case Bitselect:
+      o << U32LEB(BinaryConsts::V128Bitselect);
+      break;
+    case QFMAF32x4:
+      o << U32LEB(BinaryConsts::F32x4QFMA);
+      break;
+    case QFMSF32x4:
+      o << U32LEB(BinaryConsts::F32x4QFMS);
+      break;
+    case QFMAF64x2:
+      o << U32LEB(BinaryConsts::F64x2QFMA);
+      break;
+    case QFMSF64x2:
+      o << U32LEB(BinaryConsts::F64x2QFMS);
+      break;
+  }
 }
 
 void BinaryInstWriter::visitSIMDShift(SIMDShift* curr) {

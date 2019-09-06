@@ -400,12 +400,15 @@ public:
     ret->finalize();
     return ret;
   }
-  SIMDBitselect*
-  makeSIMDBitselect(Expression* left, Expression* right, Expression* cond) {
-    auto* ret = allocator.alloc<SIMDBitselect>();
-    ret->left = left;
-    ret->right = right;
-    ret->cond = cond;
+  SIMDTernary* makeSIMDTernary(SIMDTernaryOp op,
+                               Expression* a,
+                               Expression* b,
+                               Expression* c) {
+    auto* ret = allocator.alloc<SIMDTernary>();
+    ret->op = op;
+    ret->a = a;
+    ret->b = b;
+    ret->c = c;
     ret->finalize();
     return ret;
   }

@@ -41,6 +41,8 @@
 
 namespace wasm {
 
+static Name WASI_UNSTABLE("wasi_unstable");
+
 struct MinifyImportsAndExports : public Pass {
   bool minifyExports;
 
@@ -143,17 +145,24 @@ private:
     MinifiedNames names;
     size_t soFar = 0;
     std::map<Name, Name> oldToNew;
+    std::map<Name, Name> newToOld;
     auto process = [&](Name& name) {
       // do not minifiy special imports, they must always exist
       if (name == MEMORY_BASE || name == TABLE_BASE || name == STACK_POINTER) {
         return;
       }
-      auto newName = names.getName(soFar++);
-      oldToNew[newName] = name;
-      name = newName;
+      auto iter = oldToNew.find(name);
+      if (iter == oldToNew.end()) {
+        auto newName = names.getName(soFar++);
+        oldToNew[name] = newName;
+        newToOld[newName] = name;
+        name = newName;
+      } else {
+        name = iter->second;
+      }
     };
     auto processImport = [&](Importable* curr) {
-      if (curr->module == ENV) {
+      if (curr->module == ENV || curr->module == WASI_UNSTABLE) {
         process(curr->base);
       }
     };
@@ -169,7 +178,7 @@ private:
     }
     module->updateMaps();
     // Emit the mapping.
-    for (auto& pair : oldToNew) {
+    for (auto& pair : newToOld) {
       std::cout << pair.second.str << " => " << pair.first.str << '\n';
     }
   }

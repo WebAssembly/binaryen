@@ -417,6 +417,8 @@ enum SIMDShiftOp {
   ShrUVecI64x2
 };
 
+enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
+
 //
 // Expressions
 //
@@ -472,7 +474,7 @@ public:
     SIMDExtractId,
     SIMDReplaceId,
     SIMDShuffleId,
-    SIMDBitselectId,
+    SIMDTernaryId,
     SIMDShiftId,
     MemoryInitId,
     DataDropId,
@@ -834,14 +836,15 @@ public:
   void finalize();
 };
 
-class SIMDBitselect : public SpecificExpression<Expression::SIMDBitselectId> {
+class SIMDTernary : public SpecificExpression<Expression::SIMDTernaryId> {
 public:
-  SIMDBitselect() = default;
-  SIMDBitselect(MixedArena& allocator) : SIMDBitselect() {}
+  SIMDTernary() = default;
+  SIMDTernary(MixedArena& allocator) : SIMDTernary() {}
 
-  Expression* left;
-  Expression* right;
-  Expression* cond;
+  SIMDTernaryOp op;
+  Expression* a;
+  Expression* b;
+  Expression* c;
 
   void finalize();
 };

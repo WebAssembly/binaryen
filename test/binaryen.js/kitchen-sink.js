@@ -108,7 +108,7 @@ function test_ids() {
   console.log("BinaryenSIMDExtractId: " + Binaryen.SIMDExtractId);
   console.log("BinaryenSIMDReplaceId: " + Binaryen.SIMDReplaceId);
   console.log("BinaryenSIMDShuffleId: " + Binaryen.SIMDShuffleId);
-  console.log("BinaryenSIMDBitselectId: " + Binaryen.SIMDBitselectId);
+  console.log("BinaryenSIMDTernaryId: " + Binaryen.SIMDTernaryId);
   console.log("BinaryenSIMDShiftId: " + Binaryen.SIMDShiftId);
   console.log("MemoryInitId: " + Binaryen.MemoryInitId);
   console.log("DataDropId: " + Binaryen.DataDropId);
@@ -370,6 +370,10 @@ function test_core() {
     // Other SIMD
     module.v8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.qfma(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.qfms(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.qfma(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.qfms(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // Bulk memory
     module.memory.init(0, makeInt32(1024), makeInt32(0), makeInt32(12)),
     module.data.drop(0),
@@ -490,7 +494,8 @@ function test_core() {
 
   var fiF = module.addFunctionType("fiF", Binaryen.f32, [ Binaryen.i32, Binaryen.f64 ]);
   module.addFunctionImport("an-imported", "module", "base", fiF);
-  module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32);
+  module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32, false);
+  module.addGlobalImport("a-mut-global-imp", "module", "base", Binaryen.i32, true);
   module.addEventImport("a-event-imp", "module", "base", 0, vi);
 
   // Exports

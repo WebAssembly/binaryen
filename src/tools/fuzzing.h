@@ -2336,7 +2336,7 @@ private:
       case 3:
         return makeSIMDShuffle();
       case 4:
-        return makeSIMDBitselect();
+        return makeSIMDTernary();
       case 5:
         return makeSIMDShift();
     }
@@ -2444,11 +2444,18 @@ private:
     return builder.makeSIMDShuffle(left, right, mask);
   }
 
-  Expression* makeSIMDBitselect() {
-    Expression* left = make(v128);
-    Expression* right = make(v128);
-    Expression* cond = make(v128);
-    return builder.makeSIMDBitselect(left, right, cond);
+  Expression* makeSIMDTernary() {
+    // TODO: Enable qfma/qfms once it is implemented in V8 and the interpreter
+    // SIMDTernaryOp op = pick(Bitselect,
+    //                         QFMAF32x4,
+    //                         QFMSF32x4,
+    //                         QFMAF64x2,
+    //                         QFMSF64x2);
+    SIMDTernaryOp op = Bitselect;
+    Expression* a = make(v128);
+    Expression* b = make(v128);
+    Expression* c = make(v128);
+    return builder.makeSIMDTernary(op, a, b, c);
   }
 
   Expression* makeSIMDShift() {
