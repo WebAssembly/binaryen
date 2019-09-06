@@ -128,8 +128,7 @@ struct SafeHeap : public Pass {
     } else if (auto* existing =
                  info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
       getSbrkPtr = existing->name;
-    } else if (auto* existing =
-                 module->getExportOrNull(GET_SBRK_PTR_EXPORT)) {
+    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR_EXPORT)) {
       getSbrkPtr = existing->value;
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
