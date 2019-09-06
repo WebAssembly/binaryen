@@ -26,6 +26,8 @@ def args_for_finalize(filename):
         return ['--check-stack-overflow', '--global-base=568']
     elif 'shared' in filename:
         return ['--side-module']
+    elif 'wasi' in filename:
+        return ['--wasi', '--global-base=568']
     else:
         return ['--global-base=568']
 

@@ -22,6 +22,7 @@
 #include "asmjs/shared-constants.h"
 #include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
+#include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
@@ -1208,6 +1209,20 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     lastEnd = offset + seg.data.size();
   }
   wasm.memory.segments.clear();
+}
+
+void EmscriptenGlueGenerator::exportWasiStart() {
+  // If main exists, export a function to call it per the wasi standard.
+  Name main = "main";
+  if (!wasm.getFunctionOrNull(main)) {
+    return;
+  }
+  Name _start = "_start";
+  Builder builder(wasm);
+  auto* body = builder.makeDrop(builder.makeCall(main, { LiteralUtils::makeZero(i32, wasm), LiteralUtils::makeZero(i32, wasm) }, i32));
+  auto* func = builder.makeFunction(_start, std::vector<wasm::Type>{}, none, {}, body);
+  wasm.addFunction(func);
+  wasm.addExport(builder.makeExport(_start, _start, ExternalKind::Function));
 }
 
 } // namespace wasm
