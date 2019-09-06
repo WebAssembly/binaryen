@@ -34,6 +34,7 @@ namespace wasm {
 
 static const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR");
 static const Name GET_SBRK_PTR_IMPORT("emscripten_get_sbrk_ptr");
+static const Name GET_SBRK_PTR_EXPORT("_emscripten_get_sbrk_ptr");
 static const Name SBRK("sbrk");
 static const Name SEGFAULT_IMPORT("segfault");
 static const Name ALIGNFAULT_IMPORT("alignfault");
@@ -119,12 +120,17 @@ struct SafeHeap : public Pass {
     ImportInfo info(*module);
     // Older emscripten imports env.DYNAMICTOP_PTR.
     // Newer emscripten imports emscripten_get_sbrk_ptr(), which is later
-    // optimized to have the number in the binary.
+    // optimized to have the number in the binary (or in the case of fastcomp,
+    // emscripten_get_sbrk_ptr is an asm.js library function so it is inside
+    // the wasm, and discoverable via an export).
     if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
       dynamicTopPtr = existing->name;
     } else if (auto* existing =
                  info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
       getSbrkPtr = existing->name;
+    } else if (auto* existing =
+                 module->getExportOrNull(GET_SBRK_PTR_EXPORT)) {
+      getSbrkPtr = existing->value;
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
