@@ -1051,9 +1051,9 @@ struct Asyncify : public Pass {
     auto ignoreIndirect =
       runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
     String::Split blacklist(
-      String::trim(read_possible_response_file(runner->options.getArgumentOrDefault("asyncify-blacklist", ""), ",")));
+      String::trim(read_possible_response_file(runner->options.getArgumentOrDefault("asyncify-blacklist", ""))), ",");
     String::Split whitelist(
-      String::trim(read_possible_response_file(runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",")));
+      String::trim(read_possible_response_file(runner->options.getArgumentOrDefault("asyncify-whitelist", ""))), ",");
 
     blacklist = handleBracketingOperators(blacklist);
     whitelist = handleBracketingOperators(whitelist);
