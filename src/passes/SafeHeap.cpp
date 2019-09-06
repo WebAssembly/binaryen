@@ -125,8 +125,7 @@ struct SafeHeap : public Pass {
     } else if (auto* existing =
                  info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
       getSbrkPtr = existing->name;
-    } else if (auto* existing =
-                 info.getImportedFunction(ENV, SBRK)) {
+    } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
       auto* import = new Function;
@@ -330,7 +329,8 @@ struct SafeHeap : public Pass {
     auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
-      brkLocation = builder.makeCall(sbrk, {builder.makeConst(Literal(int32_t(0)))}, i32);
+      brkLocation =
+        builder.makeCall(sbrk, {builder.makeConst(Literal(int32_t(0)))}, i32);
     } else {
       Expression* sbrkPtr;
       if (dynamicTopPtr.is()) {
