@@ -33,6 +33,7 @@
 namespace wasm {
 
 const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR");
+const Name GET_SBRK_PTR_IMPORT("emscripten_get_sbrk_ptr");
 const Name SEGFAULT_IMPORT("segfault");
 const Name ALIGNFAULT_IMPORT("alignfault");
 
@@ -111,19 +112,27 @@ struct SafeHeap : public Pass {
     addGlobals(module, module->features);
   }
 
-  Name dynamicTopPtr, segfault, alignfault;
+  Name dynamicTopPtr, getSbrkPtr, segfault, alignfault;
 
   void addImports(Module* module) {
     ImportInfo info(*module);
+    // Older emscripten imports env.DYNAMICTOP_PTR.
+    // Newer emscripten imports emscripten_get_sbrk_ptr(), which is later
+    // optimized to have the number in the binary.
     if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
       dynamicTopPtr = existing->name;
+    } else if (auto* existing =
+                 info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
+      getSbrkPtr = existing->name;
     } else {
-      auto* import = new Global;
-      import->name = dynamicTopPtr = DYNAMICTOP_PTR_IMPORT;
+      auto* import = new Function;
+      import->name = getSbrkPtr = GET_SBRK_PTR_IMPORT;
       import->module = ENV;
-      import->base = DYNAMICTOP_PTR_IMPORT;
-      import->type = i32;
-      module->addGlobal(import);
+      import->base = GET_SBRK_PTR_IMPORT;
+      auto* functionType = ensureFunctionType("i", module);
+      import->type = functionType->name;
+      FunctionTypeUtils::fillFunction(import, functionType);
+      module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
       segfault = existing->name;
@@ -315,6 +324,12 @@ struct SafeHeap : public Pass {
   makeBoundsCheck(Type type, Builder& builder, Index local, Index bytes) {
     auto upperOp = options.lowMemoryUnused ? LtUInt32 : EqInt32;
     auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
+    Expression* sbrkPtr;
+    if (dynamicTopPtr.is()) {
+      sbrkPtr = builder.makeGlobalGet(dynamicTopPtr, i32);
+    } else {
+      sbrkPtr = builder.makeCall(getSbrkPtr, {}, i32);
+    }
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
@@ -326,8 +341,7 @@ struct SafeHeap : public Pass {
           builder.makeBinary(AddInt32,
                              builder.makeLocalGet(local, i32),
                              builder.makeConst(Literal(int32_t(bytes)))),
-          builder.makeLoad(
-            4, false, 0, 4, builder.makeGlobalGet(dynamicTopPtr, i32), i32))),
+          builder.makeLoad(4, false, 0, 4, sbrkPtr, i32))),
       builder.makeCall(segfault, {}, none));
   }
 };
