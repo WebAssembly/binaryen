@@ -2122,6 +2122,25 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size "
         << section.data.size();
+      bool isPrintable = true;
+      for (auto c : section.data) {
+        if (!isprint(c)) {
+          isPrintable = false;
+          break;
+        }
+      }
+      if (isPrintable) {
+        o << ", contents: ";
+        // std::quoted is not available in all the supported compilers yet.
+        o << '"';
+        for (auto c : section.data) {
+          if (c == '\\' || c == '"') {
+            o << '\\';
+          }
+          o << c;
+        }
+        o << '"';
+      }
       o << maybeNewLine;
     }
     decIndent();

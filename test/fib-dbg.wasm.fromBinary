@@ -214,6 +214,6 @@
   (local $0 i32)
   (nop)
  )
- ;; custom section "sourceMappingURL", size 35
+ ;; custom section "sourceMappingURL", size 35, contents: "\"http://localhost:8000/fib.wasm.map"
 )
 
