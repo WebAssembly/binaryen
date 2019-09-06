@@ -1219,8 +1219,12 @@ void EmscriptenGlueGenerator::exportWasiStart() {
   }
   Name _start = "_start";
   Builder builder(wasm);
-  auto* body = builder.makeDrop(builder.makeCall(main, { LiteralUtils::makeZero(i32, wasm), LiteralUtils::makeZero(i32, wasm) }, i32));
-  auto* func = builder.makeFunction(_start, std::vector<wasm::Type>{}, none, {}, body);
+  auto* body = builder.makeDrop(builder.makeCall(
+    main,
+    {LiteralUtils::makeZero(i32, wasm), LiteralUtils::makeZero(i32, wasm)},
+    i32));
+  auto* func =
+    builder.makeFunction(_start, std::vector<wasm::Type>{}, none, {}, body);
   wasm.addFunction(func);
   wasm.addExport(builder.makeExport(_start, _start, ExternalKind::Function));
 }

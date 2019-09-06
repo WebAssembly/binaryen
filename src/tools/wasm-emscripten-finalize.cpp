@@ -136,14 +136,12 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&checkStackOverflow](Options* o, const std::string&) {
            checkStackOverflow = true;
-          })
+         })
     .add("--wasi",
          "",
          "Emit a wasi-compatible wasm file, with exported_start etc.",
          Options::Arguments::Zero,
-         [&wasi](Options* o, const std::string&) {
-           wasi = true;
-         })
+         [&wasi](Options* o, const std::string&) { wasi = true; })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [&infile](Options* o, const std::string& argument) {
