@@ -393,6 +393,7 @@ Module['ConvertSVecI32x4ToVecF32x4'] = Module['_BinaryenConvertSVecI32x4ToVecF32
 Module['ConvertUVecI32x4ToVecF32x4'] = Module['_BinaryenConvertUVecI32x4ToVecF32x4']();
 Module['ConvertSVecI64x2ToVecF64x2'] = Module['_BinaryenConvertSVecI64x2ToVecF64x2']();
 Module['ConvertUVecI64x2ToVecF64x2'] = Module['_BinaryenConvertUVecI64x2ToVecF64x2']();
+Module['Bitselect'] = Module['_BinaryenBitselect']();
 
 // The size of a single literal in memory as used in Const creation,
 // which is a little different: we don't want users to need to make

@@ -513,6 +513,7 @@ BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void);
 BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void);
 BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void);
 BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void);
+BinaryenOp BinaryenBitselect(void);
 
 typedef void* BinaryenExpressionRef;
 
