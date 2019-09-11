@@ -243,7 +243,7 @@
 //
 //  --pass-arg=asyncify-asserts
 //
-//      This enables extra assertions in the output, like checking if we in
+//      This enables extra asserts in the output, like checking if we in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
 //      tweaking of the whitelist/blacklist).
 //
@@ -370,9 +370,9 @@ public:
                  bool canIndirectChangeState,
                  const String::Split& blacklistInput,
                  const String::Split& whitelistInput,
-                 bool assertions)
+                 bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      globals(module), assertions(assertions) {
+      globals(module), asserts(asserts) {
 
     blacklist.insert(blacklistInput.begin(), blacklistInput.end());
     whitelist.insert(whitelistInput.begin(), whitelistInput.end());
@@ -568,7 +568,7 @@ public:
   GlobalHelper globals;
   std::set<Name> blacklist;
   std::set<Name> whitelist;
-  bool assertions;
+  bool asserts;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -614,6 +614,11 @@ public:
                       makeGlobalGet(ASYNCIFY_STATE, i32),
                       makeConst(Literal(int32_t(value))));
   }
+
+  Expression* makeNegatedStateCheck(State value) {
+    return makeUnary(EqZInt32,
+                     makeStateCheck(value));
+  }
 };
 
 // Instrument control flow, around calls and adding skips for rewinding.
@@ -634,8 +639,8 @@ struct AsyncifyFlow : public Pass {
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
-      if (analyzer.assertions) {
-        addAssertionsInNonInstrumented(func);
+      if (analyzer->asserts) {
+        addAssertsInNonInstrumented(func);
       }
       return;
     }
@@ -857,8 +862,49 @@ private:
   // need it, or depending on the whitelist/blacklist - add assertions that
   // verify that property at runtime. Specifically, we should not enter
   // the function if rewinding, and not be unwinding after any call.
-  void addAssertionsInNonInstrumented(Function* func) {
-    func->body = builder.makeSequence(
+  void addAssertsInNonInstrumented(Function* func) {
+    // Add a check at the function entry.
+    func->body = builder->makeSequence(
+      builder->makeIf(
+        builder->makeNegatedStateCheck(State::Normal),
+        builder->makeUnreachable()
+      ),
+      func->body
+    );
+    // Add a check around every call.
+    struct Walker : PostWalker<Walker> {
+      void visitCall(Call* curr) {
+        handleCall(curr);
+      }
+      void visitCallIndirect(CallIndirect* curr) {
+        handleCall(curr);
+      }
+      void handleCall(Expression* call) {
+        auto* check = 
+              builder->makeIf(
+                builder->makeNegatedStateCheck(State::Normal),
+                builder->makeUnreachable()
+              );
+        Expression* rep;
+        if (isConcreteType(call->type)) {
+          auto temp = builder->addVar(func, call->type);
+          rep = builder->makeBlock({
+            builder->makeLocalSet(temp, call),
+            check,
+            builder->makeLocalGet(temp, call->type),
+          });
+        } else {
+          rep = builder->makeSequence(call, check);
+        }
+        replaceCurrent(rep);
+      }
+      Function* func;
+      AsyncifyBuilder* builder;
+    };
+    Walker walker;
+    walker.func = func;
+    walker.builder = builder.get();
+    walker.walk(func->body);
   }
 };
 
@@ -1078,8 +1124,8 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(
         runner->options.getArgumentOrDefault("asyncify-whitelist", ""))),
       ",");
-    auto assertions =
-      runner->options.getArgumentOrDefault("asyncify-assertions", "") != "";
+    auto asserts =
+      runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
 
     blacklist = handleBracketingOperators(blacklist);
     whitelist = handleBracketingOperators(whitelist);
@@ -1130,7 +1176,7 @@ struct Asyncify : public Pass {
                             ignoreIndirect,
                             blacklist,
                             whitelist,
-                            assertions);
+                            asserts);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
