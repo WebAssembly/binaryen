@@ -856,6 +856,18 @@ enum ASTNodes {
   F32x4ConvertUI32x4 = 0xb0,
   F64x2ConvertSI64x2 = 0xb1,
   F64x2ConvertUI64x2 = 0xb2,
+  I8x16NarrowSI16x8 = 0xc6,
+  I8x16NarrowUI16x8 = 0xc7,
+  I16x8NarrowSI32x4 = 0xc8,
+  I16x8NarrowUI32x4 = 0xc9,
+  I16x8WidenLowSI8x16 = 0xca,
+  I16x8WidenHighSI8x16 = 0xcb,
+  I16x8WidenLowUI8x16 = 0xcc,
+  I16x8WidenHighUI8x16 = 0xcd,
+  I32x4WidenLowSI16x8 = 0xce,
+  I32x4WidenHighSI16x8 = 0xcf,
+  I32x4WidenLowUI16x8 = 0xd0,
+  I32x4WidenHighUI16x8 = 0xd1,
 
   // bulk memory opcodes
 

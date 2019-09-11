@@ -513,6 +513,18 @@ BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void);
 BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void);
 BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void);
 BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void);
+BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void);
+BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void);
+BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void);
+BinaryenOp BinaryenNarrowUVecI32x4ToVecI16x8(void);
+BinaryenOp BinaryenWidenLowSVecI8x16ToVecI16x8(void);
+BinaryenOp BinaryenWidenHighSVecI8x16ToVecI16x8(void);
+BinaryenOp BinaryenWidenLowUVecI8x16ToVecI16x8(void);
+BinaryenOp BinaryenWidenHighUVecI8x16ToVecI16x8(void);
+BinaryenOp BinaryenWidenLowSVecI16x8ToVecI32x4(void);
+BinaryenOp BinaryenWidenHighSVecI16x8ToVecI32x4(void);
+BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void);
+BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void);
 
 typedef void* BinaryenExpressionRef;
 

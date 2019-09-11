@@ -3943,6 +3943,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MaxVecF64x2;
       break;
+    case BinaryConsts::I8x16NarrowSI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = NarrowSVecI16x8ToVecI8x16;
+      break;
+    case BinaryConsts::I8x16NarrowUI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = NarrowUVecI16x8ToVecI8x16;
+      break;
+    case BinaryConsts::I16x8NarrowSI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = NarrowSVecI32x4ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8NarrowUI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = NarrowUVecI32x4ToVecI16x8;
+      break;
     default:
       return false;
   }
@@ -4089,6 +4105,38 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2ConvertUI64x2:
       curr = allocator.alloc<Unary>();
       curr->op = ConvertUVecI64x2ToVecF64x2;
+      break;
+    case BinaryConsts::I16x8WidenLowSI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowSVecI8x16ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8WidenHighSI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighSVecI8x16ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8WidenLowUI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowUVecI8x16ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8WidenHighUI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighUVecI8x16ToVecI16x8;
+      break;
+    case BinaryConsts::I32x4WidenLowSI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowSVecI16x8ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4WidenHighSI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighSVecI16x8ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4WidenLowUI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowUVecI16x8ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4WidenHighUI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighUVecI16x8ToVecI32x4;
       break;
     default:
       return false;

@@ -1330,7 +1330,11 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MulVecF64x2:
     case DivVecF64x2:
     case MinVecF64x2:
-    case MaxVecF64x2: {
+    case MaxVecF64x2:
+    case NarrowSVecI16x8ToVecI8x16:
+    case NarrowUVecI16x8ToVecI8x16:
+    case NarrowSVecI32x4ToVecI16x8:
+    case NarrowUVecI32x4ToVecI16x8: {
       shouldBeEqualOrFirstIsUnreachable(
         curr->left->type, v128, curr, "v128 op");
       shouldBeEqualOrFirstIsUnreachable(
@@ -1528,6 +1532,14 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case ConvertUVecI32x4ToVecF32x4:
     case ConvertSVecI64x2ToVecF64x2:
     case ConvertUVecI64x2ToVecF64x2:
+    case WidenLowSVecI8x16ToVecI16x8:
+    case WidenHighSVecI8x16ToVecI16x8:
+    case WidenLowUVecI8x16ToVecI16x8:
+    case WidenHighUVecI8x16ToVecI16x8:
+    case WidenLowSVecI16x8ToVecI32x4:
+    case WidenHighSVecI16x8ToVecI32x4:
+    case WidenLowUVecI16x8ToVecI32x4:
+    case WidenHighUVecI16x8ToVecI32x4:
       shouldBeEqual(curr->type, v128, curr, "expected v128 type");
       shouldBeEqual(curr->value->type, v128, curr, "expected v128 operand");
       break;

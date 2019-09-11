@@ -880,6 +880,42 @@ BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void) {
 BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void) {
   return ConvertUVecI64x2ToVecF64x2;
 }
+BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
+  return NarrowSVecI16x8ToVecI8x16;
+}
+BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void) {
+  return NarrowUVecI16x8ToVecI8x16;
+}
+BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void) {
+  return NarrowSVecI32x4ToVecI16x8;
+}
+BinaryenOp BinaryenNarrowUVecI32x4ToVecI16x8(void) {
+  return NarrowUVecI32x4ToVecI16x8;
+}
+BinaryenOp BinaryenWidenLowSVecI8x16ToVecI16x8(void) {
+  return WidenLowSVecI8x16ToVecI16x8;
+}
+BinaryenOp BinaryenWidenHighSVecI8x16ToVecI16x8(void) {
+  return WidenHighSVecI8x16ToVecI16x8;
+}
+BinaryenOp BinaryenWidenLowUVecI8x16ToVecI16x8(void) {
+  return WidenLowUVecI8x16ToVecI16x8;
+}
+BinaryenOp BinaryenWidenHighUVecI8x16ToVecI16x8(void) {
+  return WidenHighUVecI8x16ToVecI16x8;
+}
+BinaryenOp BinaryenWidenLowSVecI16x8ToVecI32x4(void) {
+  return WidenLowSVecI16x8ToVecI32x4;
+}
+BinaryenOp BinaryenWidenHighSVecI16x8ToVecI32x4(void) {
+  return WidenHighSVecI16x8ToVecI32x4;
+}
+BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void) {
+  return WidenLowUVecI16x8ToVecI32x4;
+}
+BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void) {
+  return WidenHighUVecI16x8ToVecI32x4;
+}
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,
