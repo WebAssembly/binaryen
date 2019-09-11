@@ -860,15 +860,17 @@ private:
 
   // Given a function that is not instrumented - because we proved it doesn't
   // need it, or depending on the whitelist/blacklist - add assertions that
-  // verify that property at runtime. Specifically, we should not enter
-  // the function if rewinding, and not be unwinding after any call.
+  // verify that property at runtime.
+  // Note that it is ok to run code while sleeping (if you are careful not
+  // to break assumptions in the program!) - so what is actually
+  // checked here is if the state *changes* in an uninstrumented function.
+  // That is, if in an uninstrumented function, a sleep should not begin
+  // from any call.
   void addAssertsInNonInstrumented(Function* func) {
+    auto oldState = builder->addVar(func, i32);
     // Add a check at the function entry.
     func->body = builder->makeSequence(
-      builder->makeIf(
-        builder->makeNegatedStateCheck(State::Normal),
-        builder->makeUnreachable()
-      ),
+      builder->makeLocalSet(oldState, builder->makeGlobalGet(ASYNCIFY_STATE, i32)),
       func->body
     );
     // Add a check around every call.
@@ -882,7 +884,9 @@ private:
       void handleCall(Expression* call) {
         auto* check = 
               builder->makeIf(
-                builder->makeNegatedStateCheck(State::Normal),
+                builder->makeBinary(NeInt32,
+                      builder->makeGlobalGet(ASYNCIFY_STATE, i32),
+                      builder->makeLocalGet(oldState, i32)),
                 builder->makeUnreachable()
               );
         Expression* rep;
@@ -900,10 +904,12 @@ private:
       }
       Function* func;
       AsyncifyBuilder* builder;
+      Index oldState;
     };
     Walker walker;
     walker.func = func;
     walker.builder = builder.get();
+    walker.oldState = oldState;
     walker.walk(func->body);
   }
 };
