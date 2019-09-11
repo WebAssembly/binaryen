@@ -616,8 +616,7 @@ public:
   }
 
   Expression* makeNegatedStateCheck(State value) {
-    return makeUnary(EqZInt32,
-                     makeStateCheck(value));
+    return makeUnary(EqZInt32, makeStateCheck(value));
   }
 };
 
@@ -870,25 +869,19 @@ private:
     auto oldState = builder->addVar(func, i32);
     // Add a check at the function entry.
     func->body = builder->makeSequence(
-      builder->makeLocalSet(oldState, builder->makeGlobalGet(ASYNCIFY_STATE, i32)),
-      func->body
-    );
+      builder->makeLocalSet(oldState,
+                            builder->makeGlobalGet(ASYNCIFY_STATE, i32)),
+      func->body);
     // Add a check around every call.
     struct Walker : PostWalker<Walker> {
-      void visitCall(Call* curr) {
-        handleCall(curr);
-      }
-      void visitCallIndirect(CallIndirect* curr) {
-        handleCall(curr);
-      }
+      void visitCall(Call* curr) { handleCall(curr); }
+      void visitCallIndirect(CallIndirect* curr) { handleCall(curr); }
       void handleCall(Expression* call) {
-        auto* check = 
-              builder->makeIf(
-                builder->makeBinary(NeInt32,
-                      builder->makeGlobalGet(ASYNCIFY_STATE, i32),
-                      builder->makeLocalGet(oldState, i32)),
-                builder->makeUnreachable()
-              );
+        auto* check = builder->makeIf(
+          builder->makeBinary(NeInt32,
+                              builder->makeGlobalGet(ASYNCIFY_STATE, i32),
+                              builder->makeLocalGet(oldState, i32)),
+          builder->makeUnreachable());
         Expression* rep;
         if (isConcreteType(call->type)) {
           auto temp = builder->addVar(func, call->type);
@@ -1119,9 +1112,8 @@ struct Asyncify : public Pass {
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
-    auto ignoreIndirect =
-      runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "") ==
-      "";
+    auto ignoreIndirect = runner->options.getArgumentOrDefault(
+                            "asyncify-ignore-indirect", "") == "";
     String::Split blacklist(
       String::trim(read_possible_response_file(
         runner->options.getArgumentOrDefault("asyncify-blacklist", ""))),
