@@ -880,7 +880,6 @@ BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void) {
 BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void) {
   return ConvertUVecI64x2ToVecF64x2;
 }
-BinaryenOp BinaryenBitselect(void) { return Bitselect; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,

@@ -440,6 +440,7 @@ BinaryenOp BinaryenNotVec128(void);
 BinaryenOp BinaryenAndVec128(void);
 BinaryenOp BinaryenOrVec128(void);
 BinaryenOp BinaryenXorVec128(void);
+BinaryenOp BinaryenBitselectVec128(void);
 BinaryenOp BinaryenNegVecI8x16(void);
 BinaryenOp BinaryenAnyTrueVecI8x16(void);
 BinaryenOp BinaryenAllTrueVecI8x16(void);
@@ -513,7 +514,6 @@ BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void);
 BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void);
 BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void);
 BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void);
-BinaryenOp BinaryenBitselect(void);
 
 typedef void* BinaryenExpressionRef;
 

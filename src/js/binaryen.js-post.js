@@ -320,6 +320,7 @@ Module['NotVec128'] = Module['_BinaryenNotVec128']();
 Module['AndVec128'] = Module['_BinaryenAndVec128']();
 Module['OrVec128'] = Module['_BinaryenOrVec128']();
 Module['XorVec128'] = Module['_BinaryenXorVec128']();
+Module['BitselectVec128'] = Module['_BinaryenBitselectVec128']();
 Module['NegVecI8x16'] = Module['_BinaryenNegVecI8x16']();
 Module['AnyTrueVecI8x16'] = Module['_BinaryenAnyTrueVecI8x16']();
 Module['AllTrueVecI8x16'] = Module['_BinaryenAllTrueVecI8x16']();
@@ -393,7 +394,6 @@ Module['ConvertSVecI32x4ToVecF32x4'] = Module['_BinaryenConvertSVecI32x4ToVecF32
 Module['ConvertUVecI32x4ToVecF32x4'] = Module['_BinaryenConvertUVecI32x4ToVecF32x4']();
 Module['ConvertSVecI64x2ToVecF64x2'] = Module['_BinaryenConvertSVecI64x2ToVecF64x2']();
 Module['ConvertUVecI64x2ToVecF64x2'] = Module['_BinaryenConvertUVecI64x2ToVecF64x2']();
-Module['Bitselect'] = Module['_BinaryenBitselect']();
 
 // The size of a single literal in memory as used in Const creation,
 // which is a little different: we don't want users to need to make
@@ -1328,7 +1328,7 @@ function wrapModule(module, self) {
       return Module['_BinaryenUnary'](module, Module['XorVec128'], value);
     },
     'bitselect': function(left, right, cond) {
-      return Module['_BinaryenSIMDTernary'](module, Module['Bitselect'], left, right, cond);
+      return Module['_BinaryenSIMDTernary'](module, Module['BitselectVec128'], left, right, cond);
     },
     'pop': function() {
       return Module['_BinaryenPop'](module, Module['v128']);
