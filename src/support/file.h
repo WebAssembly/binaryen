@@ -39,11 +39,17 @@ template<typename T>
 T read_file(const std::string& filename,
             Flags::BinaryOption binary,
             Flags::DebugOption debug);
+
 // Declare the valid explicit specializations.
 extern template std::string
 read_file<>(const std::string&, Flags::BinaryOption, Flags::DebugOption);
 extern template std::vector<char>
 read_file<>(const std::string&, Flags::BinaryOption, Flags::DebugOption);
+
+// Given a string which may be a response file (i.e., a filename starting
+// with "@"), if it is a response file read it and return that, or if it
+// is not a response file, return it as is.
+std::string read_possible_response_file(const std::string&);
 
 class Output {
 public:

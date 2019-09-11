@@ -417,6 +417,8 @@ enum SIMDShiftOp {
   ShrUVecI64x2
 };
 
+enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
+
 //
 // Expressions
 //
@@ -468,10 +470,11 @@ public:
     AtomicCmpxchgId,
     AtomicWaitId,
     AtomicNotifyId,
+    AtomicFenceId,
     SIMDExtractId,
     SIMDReplaceId,
     SIMDShuffleId,
-    SIMDBitselectId,
+    SIMDTernaryId,
     SIMDShiftId,
     MemoryInitId,
     DataDropId,
@@ -479,6 +482,10 @@ public:
     MemoryFillId,
     PushId,
     PopId,
+    TryId,
+    ThrowId,
+    RethrowId,
+    BrOnExnId,
     NumExpressionIds
   };
   Id _id;
@@ -781,6 +788,17 @@ public:
   void finalize();
 };
 
+class AtomicFence : public SpecificExpression<Expression::AtomicFenceId> {
+public:
+  AtomicFence() = default;
+  AtomicFence(MixedArena& allocator) : AtomicFence() {}
+
+  // Current wasm threads only supports sequentialy consistent atomics, but
+  // other orderings may be added in the future. This field is reserved for
+  // that, and currently set to 0.
+  uint8_t order = 0;
+};
+
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
 public:
   SIMDExtract() = default;
@@ -818,14 +836,15 @@ public:
   void finalize();
 };
 
-class SIMDBitselect : public SpecificExpression<Expression::SIMDBitselectId> {
+class SIMDTernary : public SpecificExpression<Expression::SIMDTernaryId> {
 public:
-  SIMDBitselect() = default;
-  SIMDBitselect(MixedArena& allocator) : SIMDBitselect() {}
+  SIMDTernary() = default;
+  SIMDTernary(MixedArena& allocator) : SIMDTernary() {}
 
-  Expression* left;
-  Expression* right;
-  Expression* cond;
+  SIMDTernaryOp op;
+  Expression* a;
+  Expression* b;
+  Expression* c;
 
   void finalize();
 };
@@ -1001,6 +1020,52 @@ class Pop : public SpecificExpression<Expression::PopId> {
 public:
   Pop() = default;
   Pop(MixedArena& allocator) {}
+};
+
+class Try : public SpecificExpression<Expression::TryId> {
+public:
+  Try(MixedArena& allocator) {}
+
+  Expression* body;
+  Expression* catchBody;
+
+  void finalize();
+  void finalize(Type type_);
+};
+
+class Throw : public SpecificExpression<Expression::ThrowId> {
+public:
+  Throw(MixedArena& allocator) : operands(allocator) {}
+
+  Name event;
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class Rethrow : public SpecificExpression<Expression::RethrowId> {
+public:
+  Rethrow(MixedArena& allocator) {}
+
+  Expression* exnref;
+
+  void finalize();
+};
+
+class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
+public:
+  BrOnExn() { type = unreachable; }
+  BrOnExn(MixedArena& allocator) : BrOnExn() {}
+
+  Name name;
+  Name event;
+  Expression* exnref;
+  // This is duplicate info of param types stored in Event, but this is required
+  // for us to know the type of the value sent to the target block.
+  std::vector<Type> eventParams;
+
+  void finalize();
+  Type getSingleSentType();
 };
 
 // Globals
@@ -1193,7 +1258,7 @@ class Event : public Importable {
 public:
   Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
-  uint32_t attribute;
+  uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
   // Type string in the format of function type. Return type is considered as a
   // void type. So if you have an event whose type is (i32, i32), the type
   // string will be "vii".

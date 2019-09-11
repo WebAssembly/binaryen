@@ -4,8 +4,9 @@ BinaryenTypeInt64: 2
 BinaryenTypeFloat32: 3
 BinaryenTypeFloat64: 4
 BinaryenTypeVec128: 5
-BinaryenTypeExnref: 6
-BinaryenTypeUnreachable: 7
+BinaryenTypeAnyref: 6
+BinaryenTypeExnref: 7
+BinaryenTypeUnreachable: 8
 BinaryenTypeAuto: -1
 Binaryen.Features.MVP: 0
 Binaryen.Features.Atomics: 1
@@ -15,7 +16,9 @@ Binaryen.Features.NontrappingFPToInt: 4
 Binaryen.Features.SignExt: 32
 Binaryen.Features.SIMD128: 8
 Binaryen.Features.ExceptionHandling: 64
-Binaryen.Features.All: 255
+Binaryen.Features.TailCall: 128
+Binaryen.Features.ReferenceTypes: 256
+Binaryen.Features.All: 511
 BinaryenInvalidId: 0
 BinaryenBlockId: 1
 BinaryenIfId: 2
@@ -43,17 +46,21 @@ BinaryenAtomicCmpxchgId: 24
 BinaryenAtomicRMWId: 23
 BinaryenAtomicWaitId: 25
 BinaryenAtomicNotifyId: 26
-BinaryenSIMDExtractId: 27
-BinaryenSIMDReplaceId: 28
-BinaryenSIMDShuffleId: 29
-BinaryenSIMDBitselectId: 30
-BinaryenSIMDShiftId: 31
-MemoryInitId: 32
-DataDropId: 33
-MemoryCopyId: 34
-MemoryFillId: 35
-PushId: 36
-PopId: 37
+BinaryenSIMDExtractId: 28
+BinaryenSIMDReplaceId: 29
+BinaryenSIMDShuffleId: 30
+BinaryenSIMDTernaryId: 31
+BinaryenSIMDShiftId: 32
+MemoryInitId: 33
+DataDropId: 34
+MemoryCopyId: 35
+MemoryFillId: 36
+TryId: 39
+ThrowId: 40
+RethrowId: 41
+BrOnExnId: 42
+PushId: 37
+PopId: 38
 getExpressionInfo={"id":15,"type":3,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -64,15 +71,16 @@ getExpressionInfo(i64.const)={"id":14,"type":2,"value":{"low":6,"high":7}}
 getExpressionInfo(f32.const)={"id":14,"type":3,"value":8.5}
 getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
 (module
- (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $vi (func (param i32)))
+ (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
  (type $4 (func))
  (import "module" "base" (global $a-global-imp i32))
+ (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
- (memory $0 1 256)
+ (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
  (table $0 1 funcref)
@@ -86,6 +94,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (start $starter)
  (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
+  (local $5 exnref)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
@@ -1275,6 +1284,34 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
+      (drop
+       (f32x4.qfma
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.qfms
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.qfma
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.qfms
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
       (memory.init 0
        (i32.const 1024)
        (i32.const 0)
@@ -1431,6 +1468,1513 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        (f64.const 3.7)
        (i32.const 2449)
       )
+      (try
+       (throw $a-event
+        (i32.const 0)
+       )
+       (catch
+        (local.set $5
+         (exnref.pop)
+        )
+        (drop
+         (block $try-block (result i32)
+          (rethrow
+           (br_on_exn $try-block $a-event
+            (local.get $5)
+           )
+          )
+         )
+        )
+       )
+      )
+      (i32.atomic.store
+       (i32.const 0)
+       (i32.atomic.load
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i32.atomic.wait
+        (i32.const 0)
+        (i32.const 0)
+        (i64.const 0)
+       )
+      )
+      (drop
+       (atomic.notify
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (atomic.fence)
+      (push
+       (i32.pop)
+      )
+      (push
+       (i64.pop)
+      )
+      (push
+       (f32.pop)
+      )
+      (push
+       (f64.pop)
+      )
+      (push
+       (v128.pop)
+      )
+      (push
+       (exnref.pop)
+      )
+      (nop)
+      (unreachable)
+     )
+    )
+   )
+   (i32.const 42)
+  )
+ )
+ (func $starter (; 2 ;) (type $v)
+  (nop)
+ )
+)
+
+(module
+ (type $vi (func (param i32)))
+ (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $fiF (func (param i32 f64) (result f32)))
+ (type $v (func))
+ (type $4 (func))
+ (import "module" "base" (global $a-global-imp i32))
+ (import "module" "base" (global $a-mut-global-imp (mut i32)))
+ (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
+ (memory $0 (shared 1 256))
+ (data (i32.const 10) "hello, world")
+ (data passive "I am passive")
+ (table $0 1 funcref)
+ (elem (i32.const 0) "$kitchen()sinker")
+ (global $a-global i32 (i32.const 1))
+ (event $a-event (attr 0) (param i32))
+ (export "kitchen_sinker" (func "$kitchen()sinker"))
+ (export "a-global-exp" (global $a-global))
+ (export "a-event-exp" (event $a-event))
+ (export "mem" (memory $0))
+ (start $starter)
+ (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+  (local $4 i32)
+  (local $5 exnref)
+  (block $the-body (result i32)
+   (block $the-nothing
+    (drop
+     (block $the-value (result i32)
+      (drop
+       (i32.clz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.ctz
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.popcnt
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.neg
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.abs
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.ceil
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.floor
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.trunc
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.nearest
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.sqrt
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_i32_s
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_i32_u
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i32.wrap_i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.trunc_f32_s
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_f32_s
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_f32_u
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_f32_u
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_f64_s
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_f64_s
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.trunc_f64_u
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_f64_u
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.trunc_sat_f32_s
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_sat_f32_s
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_sat_f32_u
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_sat_f32_u
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_sat_f64_s
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_sat_f64_s
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.trunc_sat_f64_u
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_sat_f64_u
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.reinterpret_f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.reinterpret_f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.convert_i32_s
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_i32_s
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_i32_u
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_i32_u
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_i64_s
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_i64_s
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f32.convert_i64_u
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_i64_u
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.promote_f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.demote_f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.reinterpret_i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.reinterpret_i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i8x16.splat
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i16x8.splat
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i32x4.splat
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i64x2.splat
+        (i64.const 1958505087099)
+       )
+      )
+      (drop
+       (f32x4.splat
+        (f32.const 42)
+       )
+      )
+      (drop
+       (f64x2.splat
+        (f64.const 42)
+       )
+      )
+      (drop
+       (v128.not
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.abs
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.sqrt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.abs
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.sqrt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.trunc_sat_f64x2_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.trunc_sat_f64x2_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.convert_i32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.convert_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.convert_i64x2_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.convert_i64x2_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32.add
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f64.sub
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (i32.div_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.div_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.rem_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.rem_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.and
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.or
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.xor
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.shl
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.shr_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.shr_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.rotl
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.rotr
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (f32.div
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.copysign
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f32.min
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.max
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (i32.eq
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f32.ne
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (i32.lt_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.lt_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.le_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.le_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.gt_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.gt_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.ge_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.ge_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (f32.lt
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.le
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f64.gt
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f32.ge
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (i8x16.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.lt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.lt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.gt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.gt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.le_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.le_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.ge_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.ge_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.lt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.lt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.gt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.gt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.le_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.le_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.ge_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.ge_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.lt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.lt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.gt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.gt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.le_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.le_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.ge_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.ge_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.lt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.gt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.le
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.ge
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.ge
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.lt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.gt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.le
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.ge
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (drop
+       (i8x16.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.add_saturate_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.add_saturate_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.sub_saturate_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.sub_saturate_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.add_saturate_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.add_saturate_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.sub_saturate_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.sub_saturate_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.div
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.min
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.max
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.div
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.min
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.max
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.extract_lane_s 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.extract_lane_u 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extract_lane_s 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extract_lane_u 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.extract_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.extract_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.extract_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.extract_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i8x16.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i32x4.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i64x2.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i64.const 184683593770)
+       )
+      )
+      (drop
+       (f32x4.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (f32.const 42)
+       )
+      )
+      (drop
+       (f64x2.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (f64.const 42)
+       )
+      )
+      (drop
+       (i8x16.shl
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i8x16.shr_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i8x16.shr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i16x8.shl
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i16x8.shr_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i16x8.shr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i32x4.shl
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i32x4.shr_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i32x4.shr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64x2.shl
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64x2.shr_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64x2.shr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (v8x16.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.bitselect
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.qfma
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.qfms
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.qfma
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.qfms
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (memory.init 0
+       (i32.const 1024)
+       (i32.const 0)
+       (i32.const 12)
+      )
+      (data.drop 0)
+      (memory.copy
+       (i32.const 2048)
+       (i32.const 1024)
+       (i32.const 12)
+      )
+      (memory.fill
+       (i32.const 0)
+       (i32.const 42)
+       (i32.const 1024)
+      )
+      (block
+      )
+      (if
+       (i32.const 1)
+       (drop
+        (i32.const 2)
+       )
+       (drop
+        (i32.const 3)
+       )
+      )
+      (if
+       (i32.const 4)
+       (drop
+        (i32.const 5)
+       )
+      )
+      (drop
+       (loop $in (result i32)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (loop (result i32)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (br_if $the-value
+        (i32.const 1)
+        (i32.const 0)
+       )
+      )
+      (br_if $the-nothing
+       (i32.const 2)
+      )
+      (br $the-value
+       (i32.const 3)
+      )
+      (br $the-nothing)
+      (br_table $the-value $the-value
+       (i32.const 1)
+       (i32.const 0)
+      )
+      (br_table $the-nothing $the-nothing
+       (i32.const 2)
+      )
+      (drop
+       (i32.eqz
+        (call "$kitchen()sinker"
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.trunc_f32_s
+         (call $an-imported
+          (i32.const 13)
+          (f64.const 3.7)
+         )
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (call_indirect (type $iiIfF)
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+         (i32.const 2449)
+        )
+       )
+      )
+      (drop
+       (local.get $0)
+      )
+      (local.set $0
+       (i32.const 101)
+      )
+      (drop
+       (local.tee $0
+        (i32.const 102)
+       )
+      )
+      (drop
+       (i32.load
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64.load16_s offset=2 align=1
+        (i32.const 8)
+       )
+      )
+      (drop
+       (f32.load
+        (i32.const 2)
+       )
+      )
+      (drop
+       (f64.load offset=2
+        (i32.const 9)
+       )
+      )
+      (i32.store
+       (i32.const 10)
+       (i32.const 11)
+      )
+      (i64.store offset=2 align=4
+       (i32.const 110)
+       (i64.const 111)
+      )
+      (drop
+       (select
+        (i32.const 3)
+        (i32.const 5)
+        (i32.const 1)
+       )
+      )
+      (return
+       (i32.const 1337)
+      )
+      (return_call "$kitchen()sinker"
+       (i32.const 13)
+       (i64.const 37)
+       (f32.const 1.2999999523162842)
+       (f64.const 3.7)
+      )
+      (return_call_indirect (type $iiIfF)
+       (i32.const 13)
+       (i64.const 37)
+       (f32.const 1.2999999523162842)
+       (f64.const 3.7)
+       (i32.const 2449)
+      )
+      (try
+       (throw $a-event
+        (i32.const 0)
+       )
+       (catch
+        (local.set $5
+         (exnref.pop)
+        )
+        (drop
+         (block $try-block (result i32)
+          (rethrow
+           (br_on_exn $try-block $a-event
+            (local.get $5)
+           )
+          )
+         )
+        )
+       )
+      )
+      (i32.atomic.store
+       (i32.const 0)
+       (i32.atomic.load
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i32.atomic.wait
+        (i32.const 0)
+        (i32.const 0)
+        (i64.const 0)
+       )
+      )
+      (drop
+       (atomic.notify
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (atomic.fence)
       (push
        (i32.pop)
       )
@@ -1977,7 +3521,7 @@ validation: 0
 // beginning a Binaryen API trace
 #include <math.h>
 #include <map>
-#include "src/binaryen-c.h"
+#include "binaryen-c.h"
 int main() {
   std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
@@ -1990,6 +3534,11 @@ int main() {
   RelooperRef the_relooper = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
+  {
+    BinaryenType paramTypes[] = { 1 };
+    functionTypes[0] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
+  }
+  BinaryenAddEvent(the_module, "a-event", 0, functionTypes[0]);
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt64(2));
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralFloat32(3.14));
@@ -1998,7 +3547,7 @@ int main() {
   expressions[6] = BinaryenConst(the_module, BinaryenLiteralFloat64(NAN));
   {
     BinaryenType paramTypes[] = { 1, 2, 3, 4 };
-    functionTypes[0] = BinaryenAddFunctionType(the_module, "iiIfF", 1, paramTypes, 4);
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "iiIfF", 1, paramTypes, 4);
   }
   expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[8] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
@@ -3203,123 +4752,209 @@ int main() {
     uint8_t t209[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[576] = BinaryenConst(the_module, BinaryenLiteralVec128(t209));
   }
-  expressions[577] = BinaryenSIMDBitselect(the_module, expressions[574], expressions[575], expressions[576]);
-  expressions[578] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
-  expressions[579] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[580] = BinaryenConst(the_module, BinaryenLiteralInt32(12));
-  expressions[581] = BinaryenMemoryInit(the_module, 0, expressions[578], expressions[579], expressions[580]);
-  expressions[582] = BinaryenDataDrop(the_module, 0);
-  expressions[583] = BinaryenConst(the_module, BinaryenLiteralInt32(2048));
-  expressions[584] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
-  expressions[585] = BinaryenConst(the_module, BinaryenLiteralInt32(12));
-  expressions[586] = BinaryenMemoryCopy(the_module, expressions[583], expressions[584], expressions[585]);
-  expressions[587] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[588] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
-  expressions[589] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
-  expressions[590] = BinaryenMemoryFill(the_module, expressions[587], expressions[588], expressions[589]);
+  expressions[577] = BinaryenSIMDTernary(the_module, 0, expressions[574], expressions[575], expressions[576]);
+  {
+    uint8_t t210[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[578] = BinaryenConst(the_module, BinaryenLiteralVec128(t210));
+  }
+  {
+    uint8_t t211[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[579] = BinaryenConst(the_module, BinaryenLiteralVec128(t211));
+  }
+  {
+    uint8_t t212[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[580] = BinaryenConst(the_module, BinaryenLiteralVec128(t212));
+  }
+  expressions[581] = BinaryenSIMDTernary(the_module, 1, expressions[578], expressions[579], expressions[580]);
+  {
+    uint8_t t213[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[582] = BinaryenConst(the_module, BinaryenLiteralVec128(t213));
+  }
+  {
+    uint8_t t214[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[583] = BinaryenConst(the_module, BinaryenLiteralVec128(t214));
+  }
+  {
+    uint8_t t215[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[584] = BinaryenConst(the_module, BinaryenLiteralVec128(t215));
+  }
+  expressions[585] = BinaryenSIMDTernary(the_module, 2, expressions[582], expressions[583], expressions[584]);
+  {
+    uint8_t t216[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[586] = BinaryenConst(the_module, BinaryenLiteralVec128(t216));
+  }
+  {
+    uint8_t t217[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[587] = BinaryenConst(the_module, BinaryenLiteralVec128(t217));
+  }
+  {
+    uint8_t t218[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[588] = BinaryenConst(the_module, BinaryenLiteralVec128(t218));
+  }
+  expressions[589] = BinaryenSIMDTernary(the_module, 3, expressions[586], expressions[587], expressions[588]);
+  {
+    uint8_t t219[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[590] = BinaryenConst(the_module, BinaryenLiteralVec128(t219));
+  }
+  {
+    uint8_t t220[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[591] = BinaryenConst(the_module, BinaryenLiteralVec128(t220));
+  }
+  {
+    uint8_t t221[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[592] = BinaryenConst(the_module, BinaryenLiteralVec128(t221));
+  }
+  expressions[593] = BinaryenSIMDTernary(the_module, 4, expressions[590], expressions[591], expressions[592]);
+  expressions[594] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
+  expressions[595] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[596] = BinaryenConst(the_module, BinaryenLiteralInt32(12));
+  expressions[597] = BinaryenMemoryInit(the_module, 0, expressions[594], expressions[595], expressions[596]);
+  expressions[598] = BinaryenDataDrop(the_module, 0);
+  expressions[599] = BinaryenConst(the_module, BinaryenLiteralInt32(2048));
+  expressions[600] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
+  expressions[601] = BinaryenConst(the_module, BinaryenLiteralInt32(12));
+  expressions[602] = BinaryenMemoryCopy(the_module, expressions[599], expressions[600], expressions[601]);
+  expressions[603] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[604] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[605] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
+  expressions[606] = BinaryenMemoryFill(the_module, expressions[603], expressions[604], expressions[605]);
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[591] = BinaryenBlock(the_module, NULL, children, 0, 0);
+    expressions[607] = BinaryenBlock(the_module, NULL, children, 0, 0);
   }
-  expressions[592] = BinaryenIf(the_module, expressions[7], expressions[8], expressions[9]);
-  expressions[593] = BinaryenIf(the_module, expressions[10], expressions[11], expressions[0]);
-  expressions[594] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[595] = BinaryenLoop(the_module, "in", expressions[594]);
-  expressions[596] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[597] = BinaryenLoop(the_module, NULL, expressions[596]);
-  expressions[598] = BinaryenBreak(the_module, "the-value", expressions[12], expressions[13]);
-  expressions[599] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-  expressions[600] = BinaryenBreak(the_module, "the-nothing", expressions[599], expressions[0]);
-  expressions[601] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-  expressions[602] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[601]);
-  expressions[603] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
+  expressions[608] = BinaryenIf(the_module, expressions[7], expressions[8], expressions[9]);
+  expressions[609] = BinaryenIf(the_module, expressions[10], expressions[11], expressions[0]);
+  expressions[610] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[611] = BinaryenLoop(the_module, "in", expressions[610]);
+  expressions[612] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[613] = BinaryenLoop(the_module, NULL, expressions[612]);
+  expressions[614] = BinaryenBreak(the_module, "the-value", expressions[12], expressions[13]);
+  expressions[615] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[616] = BinaryenBreak(the_module, "the-nothing", expressions[615], expressions[0]);
+  expressions[617] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[618] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[617]);
+  expressions[619] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
   {
     const char* names[] = { "the-value" };
-    expressions[604] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[14], expressions[15]);
+    expressions[620] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[14], expressions[15]);
   }
-  expressions[605] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[621] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   {
     const char* names[] = { "the-nothing" };
-    expressions[606] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[605], expressions[0]);
+    expressions[622] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[621], expressions[0]);
   }
-  expressions[607] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
-  expressions[608] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
-  expressions[609] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
-  expressions[610] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
+  expressions[623] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
+  expressions[624] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
+  expressions[625] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
+  expressions[626] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
-    BinaryenExpressionRef operands[] = { expressions[607], expressions[608], expressions[609], expressions[610] };
-    expressions[611] = BinaryenCall(the_module, "kitchen()sinker", operands, 4, 1);
+    BinaryenExpressionRef operands[] = { expressions[623], expressions[624], expressions[625], expressions[626] };
+    expressions[627] = BinaryenCall(the_module, "kitchen()sinker", operands, 4, 1);
   }
-  expressions[612] = BinaryenUnary(the_module, 20, expressions[611]);
-  expressions[613] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
-  expressions[614] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
+  expressions[628] = BinaryenUnary(the_module, 20, expressions[627]);
+  expressions[629] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
+  expressions[630] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
-    BinaryenExpressionRef operands[] = { expressions[613], expressions[614] };
-    expressions[615] = BinaryenCall(the_module, "an-imported", operands, 2, 3);
+    BinaryenExpressionRef operands[] = { expressions[629], expressions[630] };
+    expressions[631] = BinaryenCall(the_module, "an-imported", operands, 2, 3);
   }
-  expressions[616] = BinaryenUnary(the_module, 25, expressions[615]);
-  expressions[617] = BinaryenUnary(the_module, 20, expressions[616]);
-  expressions[618] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
-  expressions[619] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
-  expressions[620] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
-  expressions[621] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
-  expressions[622] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
+  expressions[632] = BinaryenUnary(the_module, 25, expressions[631]);
+  expressions[633] = BinaryenUnary(the_module, 20, expressions[632]);
+  expressions[634] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
+  expressions[635] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
+  expressions[636] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
+  expressions[637] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
+  expressions[638] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
-    BinaryenExpressionRef operands[] = { expressions[619], expressions[620], expressions[621], expressions[622] };
-    expressions[623] = BinaryenCallIndirect(the_module, expressions[618], operands, 4, "iiIfF");
+    BinaryenExpressionRef operands[] = { expressions[635], expressions[636], expressions[637], expressions[638] };
+    expressions[639] = BinaryenCallIndirect(the_module, expressions[634], operands, 4, "iiIfF");
   }
-  expressions[624] = BinaryenUnary(the_module, 20, expressions[623]);
-  expressions[625] = BinaryenLocalGet(the_module, 0, 1);
-  expressions[626] = BinaryenDrop(the_module, expressions[625]);
-  expressions[627] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
-  expressions[628] = BinaryenLocalSet(the_module, 0, expressions[627]);
-  expressions[629] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
-  expressions[630] = BinaryenLocalTee(the_module, 0, expressions[629]);
-  expressions[631] = BinaryenDrop(the_module, expressions[630]);
-  expressions[632] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[633] = BinaryenLoad(the_module, 4, 1, 0, 0, 1, expressions[632]);
-  expressions[634] = BinaryenConst(the_module, BinaryenLiteralInt32(8));
-  expressions[635] = BinaryenLoad(the_module, 2, 1, 2, 1, 2, expressions[634]);
-  expressions[636] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-  expressions[637] = BinaryenLoad(the_module, 4, 1, 0, 0, 3, expressions[636]);
-  expressions[638] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
-  expressions[639] = BinaryenLoad(the_module, 8, 1, 2, 8, 4, expressions[638]);
-  expressions[640] = BinaryenStore(the_module, 4, 0, 0, expressions[19], expressions[20], 1);
-  expressions[641] = BinaryenStore(the_module, 8, 2, 4, expressions[21], expressions[22], 2);
-  expressions[642] = BinaryenSelect(the_module, expressions[16], expressions[17], expressions[18]);
-  expressions[643] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
-  expressions[644] = BinaryenReturn(the_module, expressions[643]);
-  expressions[645] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
-  expressions[646] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
-  expressions[647] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
-  expressions[648] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
+  expressions[640] = BinaryenUnary(the_module, 20, expressions[639]);
+  expressions[641] = BinaryenLocalGet(the_module, 0, 1);
+  expressions[642] = BinaryenDrop(the_module, expressions[641]);
+  expressions[643] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
+  expressions[644] = BinaryenLocalSet(the_module, 0, expressions[643]);
+  expressions[645] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
+  expressions[646] = BinaryenLocalTee(the_module, 0, expressions[645]);
+  expressions[647] = BinaryenDrop(the_module, expressions[646]);
+  expressions[648] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[649] = BinaryenLoad(the_module, 4, 1, 0, 0, 1, expressions[648]);
+  expressions[650] = BinaryenConst(the_module, BinaryenLiteralInt32(8));
+  expressions[651] = BinaryenLoad(the_module, 2, 1, 2, 1, 2, expressions[650]);
+  expressions[652] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[653] = BinaryenLoad(the_module, 4, 1, 0, 0, 3, expressions[652]);
+  expressions[654] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
+  expressions[655] = BinaryenLoad(the_module, 8, 1, 2, 8, 4, expressions[654]);
+  expressions[656] = BinaryenStore(the_module, 4, 0, 0, expressions[19], expressions[20], 1);
+  expressions[657] = BinaryenStore(the_module, 8, 2, 4, expressions[21], expressions[22], 2);
+  expressions[658] = BinaryenSelect(the_module, expressions[16], expressions[17], expressions[18]);
+  expressions[659] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
+  expressions[660] = BinaryenReturn(the_module, expressions[659]);
+  expressions[661] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
+  expressions[662] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
+  expressions[663] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
+  expressions[664] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
-    BinaryenExpressionRef operands[] = { expressions[645], expressions[646], expressions[647], expressions[648] };
-    expressions[649] = BinaryenReturnCall(the_module, "kitchen()sinker", operands, 4, 1);
+    BinaryenExpressionRef operands[] = { expressions[661], expressions[662], expressions[663], expressions[664] };
+    expressions[665] = BinaryenReturnCall(the_module, "kitchen()sinker", operands, 4, 1);
   }
-  expressions[650] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
-  expressions[651] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
-  expressions[652] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
-  expressions[653] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
-  expressions[654] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
+  expressions[666] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
+  expressions[667] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
+  expressions[668] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
+  expressions[669] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
+  expressions[670] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
-    BinaryenExpressionRef operands[] = { expressions[651], expressions[652], expressions[653], expressions[654] };
-    expressions[655] = BinaryenReturnCallIndirect(the_module, expressions[650], operands, 4, "iiIfF");
+    BinaryenExpressionRef operands[] = { expressions[667], expressions[668], expressions[669], expressions[670] };
+    expressions[671] = BinaryenReturnCallIndirect(the_module, expressions[666], operands, 4, "iiIfF");
   }
-  expressions[656] = BinaryenPop(the_module, 1);
-  expressions[657] = BinaryenPush(the_module, expressions[656]);
-  expressions[658] = BinaryenPop(the_module, 2);
-  expressions[659] = BinaryenPush(the_module, expressions[658]);
-  expressions[660] = BinaryenPop(the_module, 3);
-  expressions[661] = BinaryenPush(the_module, expressions[660]);
-  expressions[662] = BinaryenPop(the_module, 4);
-  expressions[663] = BinaryenPush(the_module, expressions[662]);
-  expressions[664] = BinaryenPop(the_module, 5);
-  expressions[665] = BinaryenPush(the_module, expressions[664]);
-  expressions[666] = BinaryenPop(the_module, 6);
-  expressions[667] = BinaryenPush(the_module, expressions[666]);
-  expressions[668] = BinaryenNop(the_module);
-  expressions[669] = BinaryenUnreachable(the_module);
+  expressions[672] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[672] };
+    expressions[673] = BinaryenThrow(the_module, "a-event", operands, 1);
+  }
+  expressions[674] = BinaryenPop(the_module, 7);
+  expressions[675] = BinaryenLocalSet(the_module, 5, expressions[674]);
+  expressions[676] = BinaryenLocalGet(the_module, 5, 7);
+  expressions[677] = BinaryenBrOnExn(the_module, "try-block", "a-event", expressions[676]);
+  expressions[678] = BinaryenRethrow(the_module, expressions[677]);
+  {
+    BinaryenExpressionRef children[] = { expressions[678] };
+    expressions[679] = BinaryenBlock(the_module, "try-block", children, 1, 1);
+  }
+  expressions[680] = BinaryenDrop(the_module, expressions[679]);
+  {
+    BinaryenExpressionRef children[] = { expressions[675], expressions[680] };
+    expressions[681] = BinaryenBlock(the_module, NULL, children, 2, 0);
+  }
+  expressions[682] = BinaryenTry(the_module, expressions[673], expressions[681]);
+  expressions[683] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[684] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[685] = BinaryenAtomicLoad(the_module, 4, 0, 1, expressions[684]);
+  expressions[686] = BinaryenAtomicStore(the_module, 4, 0, expressions[683], expressions[685], 1);
+  expressions[687] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[688] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[689] = BinaryenConst(the_module, BinaryenLiteralInt64(0));
+  expressions[690] = BinaryenAtomicWait(the_module, expressions[687], expressions[688], expressions[689], 1);
+  expressions[691] = BinaryenDrop(the_module, expressions[690]);
+  expressions[692] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[693] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[694] = BinaryenAtomicNotify(the_module, expressions[692], expressions[693]);
+  expressions[695] = BinaryenDrop(the_module, expressions[694]);
+  expressions[696] = BinaryenAtomicFence(the_module);
+  expressions[697] = BinaryenPop(the_module, 1);
+  expressions[698] = BinaryenPush(the_module, expressions[697]);
+  expressions[699] = BinaryenPop(the_module, 2);
+  expressions[700] = BinaryenPush(the_module, expressions[699]);
+  expressions[701] = BinaryenPop(the_module, 3);
+  expressions[702] = BinaryenPush(the_module, expressions[701]);
+  expressions[703] = BinaryenPop(the_module, 4);
+  expressions[704] = BinaryenPush(the_module, expressions[703]);
+  expressions[705] = BinaryenPop(the_module, 5);
+  expressions[706] = BinaryenPush(the_module, expressions[705]);
+  expressions[707] = BinaryenPop(the_module, 7);
+  expressions[708] = BinaryenPush(the_module, expressions[707]);
+  expressions[709] = BinaryenNop(the_module);
+  expressions[710] = BinaryenUnreachable(the_module);
   BinaryenExpressionGetId(expressions[30]);
   BinaryenExpressionGetType(expressions[30]);
   BinaryenUnaryGetOp(expressions[30]);
@@ -3330,26 +4965,26 @@ getExpressionInfo={"id":15,"type":3,"op":6}
  (f32.const -33.61199951171875)
 )
 
-  expressions[670] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
-  BinaryenExpressionGetId(expressions[670]);
-  BinaryenExpressionGetType(expressions[670]);
-  BinaryenConstGetValueI32(expressions[670]);
+  expressions[711] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  BinaryenExpressionGetId(expressions[711]);
+  BinaryenExpressionGetType(expressions[711]);
+  BinaryenConstGetValueI32(expressions[711]);
 getExpressionInfo(i32.const)={"id":14,"type":1,"value":5}
-  expressions[671] = BinaryenConst(the_module, BinaryenLiteralInt64(30064771078));
-  BinaryenExpressionGetId(expressions[671]);
-  BinaryenExpressionGetType(expressions[671]);
-  BinaryenConstGetValueI64Low(expressions[671]);
-  BinaryenConstGetValueI64High(expressions[671]);
+  expressions[712] = BinaryenConst(the_module, BinaryenLiteralInt64(30064771078));
+  BinaryenExpressionGetId(expressions[712]);
+  BinaryenExpressionGetType(expressions[712]);
+  BinaryenConstGetValueI64Low(expressions[712]);
+  BinaryenConstGetValueI64High(expressions[712]);
 getExpressionInfo(i64.const)={"id":14,"type":2,"value":{"low":6,"high":7}}
-  expressions[672] = BinaryenConst(the_module, BinaryenLiteralFloat32(8.5));
-  BinaryenExpressionGetId(expressions[672]);
-  BinaryenExpressionGetType(expressions[672]);
-  BinaryenConstGetValueF32(expressions[672]);
+  expressions[713] = BinaryenConst(the_module, BinaryenLiteralFloat32(8.5));
+  BinaryenExpressionGetId(expressions[713]);
+  BinaryenExpressionGetType(expressions[713]);
+  BinaryenConstGetValueF32(expressions[713]);
 getExpressionInfo(f32.const)={"id":14,"type":3,"value":8.5}
-  expressions[673] = BinaryenConst(the_module, BinaryenLiteralFloat64(9.5));
-  BinaryenExpressionGetId(expressions[673]);
-  BinaryenExpressionGetType(expressions[673]);
-  BinaryenConstGetValueF64(expressions[673]);
+  expressions[714] = BinaryenConst(the_module, BinaryenLiteralFloat64(9.5));
+  BinaryenExpressionGetId(expressions[714]);
+  BinaryenExpressionGetType(expressions[714]);
+  BinaryenConstGetValueF64(expressions[714]);
 getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   {
     BinaryenExpressionRef children[] = { expressions[24], expressions[26], expressions[28], expressions[30], expressions[32], 
@@ -3387,44 +5022,41 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        expressions[514], expressions[516], expressions[519], expressions[522], expressions[525], expressions[528], 
        expressions[531], expressions[534], expressions[537], expressions[540], expressions[543], expressions[546], 
        expressions[549], expressions[552], expressions[555], expressions[558], expressions[561], expressions[564], 
-       expressions[567], expressions[570], expressions[573], expressions[577], expressions[581], expressions[582], 
-       expressions[586], expressions[590], expressions[591], expressions[592], expressions[593], expressions[595], 
-       expressions[597], expressions[598], expressions[600], expressions[602], expressions[603], expressions[604], 
-       expressions[606], expressions[612], expressions[617], expressions[624], expressions[626], expressions[628], 
-       expressions[631], expressions[633], expressions[635], expressions[637], expressions[639], expressions[640], 
-       expressions[641], expressions[642], expressions[644], expressions[649], expressions[655], expressions[657], 
-       expressions[659], expressions[661], expressions[663], expressions[665], expressions[667], expressions[668], 
-       expressions[669] };
-    expressions[674] = BinaryenBlock(the_module, "the-value", children, 252, 0);
+       expressions[567], expressions[570], expressions[573], expressions[577], expressions[581], expressions[585], 
+       expressions[589], expressions[593], expressions[597], expressions[598], expressions[602], expressions[606], 
+       expressions[607], expressions[608], expressions[609], expressions[611], expressions[613], expressions[614], 
+       expressions[616], expressions[618], expressions[619], expressions[620], expressions[622], expressions[628], 
+       expressions[633], expressions[640], expressions[642], expressions[644], expressions[647], expressions[649], 
+       expressions[651], expressions[653], expressions[655], expressions[656], expressions[657], expressions[658], 
+       expressions[660], expressions[665], expressions[671], expressions[682], expressions[686], expressions[691], 
+       expressions[695], expressions[696], expressions[698], expressions[700], expressions[702], expressions[704], 
+       expressions[706], expressions[708], expressions[709], expressions[710] };
+    expressions[715] = BinaryenBlock(the_module, "the-value", children, 261, 0);
   }
-  expressions[675] = BinaryenDrop(the_module, expressions[674]);
+  expressions[716] = BinaryenDrop(the_module, expressions[715]);
   {
-    BinaryenExpressionRef children[] = { expressions[675] };
-    expressions[676] = BinaryenBlock(the_module, "the-nothing", children, 1, 0);
+    BinaryenExpressionRef children[] = { expressions[716] };
+    expressions[717] = BinaryenBlock(the_module, "the-nothing", children, 1, 0);
   }
-  expressions[677] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[718] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
-    BinaryenExpressionRef children[] = { expressions[676], expressions[677] };
-    expressions[678] = BinaryenBlock(the_module, "the-body", children, 2, 0);
+    BinaryenExpressionRef children[] = { expressions[717], expressions[718] };
+    expressions[719] = BinaryenBlock(the_module, "the-body", children, 2, 0);
   }
   {
-    BinaryenType varTypes[] = { 1 };
-    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[678]);
+    BinaryenType varTypes[] = { 1, 7 };
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[1], varTypes, 2, expressions[719]);
   }
-  expressions[679] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[679]);
-  {
-    BinaryenType paramTypes[] = { 1 };
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
-  }
-  BinaryenAddEvent(the_module, "a-event", 0, functionTypes[1]);
+  expressions[720] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[720]);
   {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
   BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[2]);
-  BinaryenAddGlobalImport(the_module, "a-global-imp", "module", "base", 1);
-  BinaryenAddEventImport(the_module, "a-event-imp", "module", "base", 0, functionTypes[1]);
+  BinaryenAddGlobalImport(the_module, "a-global-imp", "module", "base", 1, 0);
+  BinaryenAddGlobalImport(the_module, "a-mut-global-imp", "module", "base", 1, 1);
+  BinaryenAddEventImport(the_module, "a-event-imp", "module", "base", 0, functionTypes[0]);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   exports[1] = BinaryenAddGlobalExport(the_module, "a-global", "a-global-exp");
   exports[2] = BinaryenAddEventExport(the_module, "a-event", "a-event-exp");
@@ -3440,29 +5072,30 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   BinaryenFunctionGetResult(functions[0]);
   BinaryenFunctionGetNumVars(functions[0]);
   BinaryenFunctionGetVar(functions[0], 0);
+  BinaryenFunctionGetVar(functions[0], 1);
   BinaryenFunctionGetBody(functions[0]);
   {
     const char* funcNames[] = { "kitchen()sinker" };
     BinaryenSetFunctionTable(the_module, 1, 4294967295, funcNames, 1);
   }
-  expressions[680] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[721] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char segment1[] = { 73, 32, 97, 109, 32, 112, 97, 115, 115, 105, 118, 101 };
     const char* segments[] = { segment0, segment1 };
     int8_t segmentPassive[] = { 0, 1 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[680], expressions[0] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[721], expressions[0] };
     BinaryenIndex segmentSizes[] = { 12, 12 };
-    BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 0);
+    BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
   }
   {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[681] = BinaryenNop(the_module);
+  expressions[722] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[681]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[722]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
@@ -3470,20 +5103,20 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     functionTypes[4] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
-  BinaryenModuleSetFeatures(the_module, 255);
+  BinaryenModuleSetFeatures(the_module, 511);
   BinaryenModuleGetFeatures(the_module);
-  BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module
- (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $vi (func (param i32)))
+ (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
  (type $4 (func))
  (import "module" "base" (global $a-global-imp i32))
+ (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
- (memory $0 1 256)
+ (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
  (table $0 1 funcref)
@@ -3497,6 +5130,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (start $starter)
  (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
+  (local $5 exnref)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
@@ -4686,6 +6320,34 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
+      (drop
+       (f32x4.qfma
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.qfms
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.qfma
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.qfms
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
       (memory.init 0
        (i32.const 1024)
        (i32.const 0)
@@ -4842,6 +6504,1515 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
        (f64.const 3.7)
        (i32.const 2449)
       )
+      (try
+       (throw $a-event
+        (i32.const 0)
+       )
+       (catch
+        (local.set $5
+         (exnref.pop)
+        )
+        (drop
+         (block $try-block (result i32)
+          (rethrow
+           (br_on_exn $try-block $a-event
+            (local.get $5)
+           )
+          )
+         )
+        )
+       )
+      )
+      (i32.atomic.store
+       (i32.const 0)
+       (i32.atomic.load
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i32.atomic.wait
+        (i32.const 0)
+        (i32.const 0)
+        (i64.const 0)
+       )
+      )
+      (drop
+       (atomic.notify
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (atomic.fence)
+      (push
+       (i32.pop)
+      )
+      (push
+       (i64.pop)
+      )
+      (push
+       (f32.pop)
+      )
+      (push
+       (f64.pop)
+      )
+      (push
+       (v128.pop)
+      )
+      (push
+       (exnref.pop)
+      )
+      (nop)
+      (unreachable)
+     )
+    )
+   )
+   (i32.const 42)
+  )
+ )
+ (func $starter (; 2 ;) (type $v)
+  (nop)
+ )
+)
+
+  BinaryenModuleValidate(the_module);
+  BinaryenModulePrint(the_module);
+(module
+ (type $vi (func (param i32)))
+ (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $fiF (func (param i32 f64) (result f32)))
+ (type $v (func))
+ (type $4 (func))
+ (import "module" "base" (global $a-global-imp i32))
+ (import "module" "base" (global $a-mut-global-imp (mut i32)))
+ (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
+ (memory $0 (shared 1 256))
+ (data (i32.const 10) "hello, world")
+ (data passive "I am passive")
+ (table $0 1 funcref)
+ (elem (i32.const 0) "$kitchen()sinker")
+ (global $a-global i32 (i32.const 1))
+ (event $a-event (attr 0) (param i32))
+ (export "kitchen_sinker" (func "$kitchen()sinker"))
+ (export "a-global-exp" (global $a-global))
+ (export "a-event-exp" (event $a-event))
+ (export "mem" (memory $0))
+ (start $starter)
+ (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+  (local $4 i32)
+  (local $5 exnref)
+  (block $the-body (result i32)
+   (block $the-nothing
+    (drop
+     (block $the-value (result i32)
+      (drop
+       (i32.clz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.ctz
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.popcnt
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.neg
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.abs
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.ceil
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.floor
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.trunc
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.nearest
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.sqrt
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_i32_s
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_i32_u
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i32.wrap_i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.trunc_f32_s
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_f32_s
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_f32_u
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_f32_u
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_f64_s
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_f64_s
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.trunc_f64_u
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_f64_u
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.trunc_sat_f32_s
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_sat_f32_s
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_sat_f32_u
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_sat_f32_u
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_sat_f64_s
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_sat_f64_s
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.trunc_sat_f64_u
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_sat_f64_u
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.reinterpret_f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.reinterpret_f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.convert_i32_s
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_i32_s
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_i32_u
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_i32_u
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_i64_s
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_i64_s
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f32.convert_i64_u
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_i64_u
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.promote_f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.demote_f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.reinterpret_i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.reinterpret_i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i8x16.splat
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i16x8.splat
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i32x4.splat
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i64x2.splat
+        (i64.const 1958505087099)
+       )
+      )
+      (drop
+       (f32x4.splat
+        (f32.const 42)
+       )
+      )
+      (drop
+       (f64x2.splat
+        (f64.const 42)
+       )
+      )
+      (drop
+       (v128.not
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.all_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.abs
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.sqrt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.abs
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.neg
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.sqrt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.trunc_sat_f64x2_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.trunc_sat_f64x2_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.convert_i32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.convert_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.convert_i64x2_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.convert_i64x2_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32.add
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f64.sub
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (i32.div_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.div_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.rem_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.rem_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.and
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.or
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.xor
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.shl
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.shr_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.shr_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.rotl
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.rotr
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (f32.div
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.copysign
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f32.min
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.max
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (i32.eq
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f32.ne
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (i32.lt_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.lt_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.le_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.le_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.gt_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.gt_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.ge_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.ge_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (f32.lt
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.le
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f64.gt
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f32.ge
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (i8x16.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.lt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.lt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.gt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.gt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.le_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.le_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.ge_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.ge_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.lt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.lt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.gt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.gt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.le_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.le_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.ge_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.ge_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.lt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.lt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.gt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.gt_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.le_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.le_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.ge_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.ge_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.lt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.gt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.le
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.ge
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.ge
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.lt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.gt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.le
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.ge
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (drop
+       (i8x16.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.add_saturate_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.add_saturate_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.sub_saturate_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.sub_saturate_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.add_saturate_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.add_saturate_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.sub_saturate_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.sub_saturate_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.div
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.min
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.max
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.add
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.sub
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.div
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.min
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.max
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.extract_lane_s 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.extract_lane_u 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extract_lane_s 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extract_lane_u 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.extract_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.extract_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.extract_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.extract_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i8x16.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i32x4.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 42)
+       )
+      )
+      (drop
+       (i64x2.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i64.const 184683593770)
+       )
+      )
+      (drop
+       (f32x4.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (f32.const 42)
+       )
+      )
+      (drop
+       (f64x2.replace_lane 1
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (f64.const 42)
+       )
+      )
+      (drop
+       (i8x16.shl
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i8x16.shr_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i8x16.shr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i16x8.shl
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i16x8.shr_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i16x8.shr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i32x4.shl
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i32x4.shr_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i32x4.shr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64x2.shl
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64x2.shr_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64x2.shr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (i32.const 1)
+       )
+      )
+      (drop
+       (v8x16.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.bitselect
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.qfma
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.qfms
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.qfma
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.qfms
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (memory.init 0
+       (i32.const 1024)
+       (i32.const 0)
+       (i32.const 12)
+      )
+      (data.drop 0)
+      (memory.copy
+       (i32.const 2048)
+       (i32.const 1024)
+       (i32.const 12)
+      )
+      (memory.fill
+       (i32.const 0)
+       (i32.const 42)
+       (i32.const 1024)
+      )
+      (block
+      )
+      (if
+       (i32.const 1)
+       (drop
+        (i32.const 2)
+       )
+       (drop
+        (i32.const 3)
+       )
+      )
+      (if
+       (i32.const 4)
+       (drop
+        (i32.const 5)
+       )
+      )
+      (drop
+       (loop $in (result i32)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (loop (result i32)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (br_if $the-value
+        (i32.const 1)
+        (i32.const 0)
+       )
+      )
+      (br_if $the-nothing
+       (i32.const 2)
+      )
+      (br $the-value
+       (i32.const 3)
+      )
+      (br $the-nothing)
+      (br_table $the-value $the-value
+       (i32.const 1)
+       (i32.const 0)
+      )
+      (br_table $the-nothing $the-nothing
+       (i32.const 2)
+      )
+      (drop
+       (i32.eqz
+        (call "$kitchen()sinker"
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.trunc_f32_s
+         (call $an-imported
+          (i32.const 13)
+          (f64.const 3.7)
+         )
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (call_indirect (type $iiIfF)
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+         (i32.const 2449)
+        )
+       )
+      )
+      (drop
+       (local.get $0)
+      )
+      (local.set $0
+       (i32.const 101)
+      )
+      (drop
+       (local.tee $0
+        (i32.const 102)
+       )
+      )
+      (drop
+       (i32.load
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64.load16_s offset=2 align=1
+        (i32.const 8)
+       )
+      )
+      (drop
+       (f32.load
+        (i32.const 2)
+       )
+      )
+      (drop
+       (f64.load offset=2
+        (i32.const 9)
+       )
+      )
+      (i32.store
+       (i32.const 10)
+       (i32.const 11)
+      )
+      (i64.store offset=2 align=4
+       (i32.const 110)
+       (i64.const 111)
+      )
+      (drop
+       (select
+        (i32.const 3)
+        (i32.const 5)
+        (i32.const 1)
+       )
+      )
+      (return
+       (i32.const 1337)
+      )
+      (return_call "$kitchen()sinker"
+       (i32.const 13)
+       (i64.const 37)
+       (f32.const 1.2999999523162842)
+       (f64.const 3.7)
+      )
+      (return_call_indirect (type $iiIfF)
+       (i32.const 13)
+       (i64.const 37)
+       (f32.const 1.2999999523162842)
+       (f64.const 3.7)
+       (i32.const 2449)
+      )
+      (try
+       (throw $a-event
+        (i32.const 0)
+       )
+       (catch
+        (local.set $5
+         (exnref.pop)
+        )
+        (drop
+         (block $try-block (result i32)
+          (rethrow
+           (br_on_exn $try-block $a-event
+            (local.get $5)
+           )
+          )
+         )
+        )
+       )
+      )
+      (i32.atomic.store
+       (i32.const 0)
+       (i32.atomic.load
+        (i32.const 0)
+       )
+      )
+      (drop
+       (i32.atomic.wait
+        (i32.const 0)
+        (i32.const 0)
+        (i64.const 0)
+       )
+      )
+      (drop
+       (atomic.notify
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (atomic.fence)
       (push
        (i32.pop)
       )

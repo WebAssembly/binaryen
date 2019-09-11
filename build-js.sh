@@ -52,7 +52,7 @@ if [ "$1" == "-g" ]; then
   EMCC_ARGS="$EMCC_ARGS -O2" # need emcc js opts to be decently fast
   EMCC_ARGS="$EMCC_ARGS --llvm-opts 0 --llvm-lto 0"
   EMCC_ARGS="$EMCC_ARGS -profiling"
-  EMCC_ARGS="$EMCC_ARGS -s ASSERTIONS=1"
+  EMCC_ARGS="$EMCC_ARGS -s ASSERTIONS=0" # 0 as a temporary workaround for https://github.com/emscripten-core/emscripten/pull/9360
 else
   EMCC_ARGS="$EMCC_ARGS -Oz"
   EMCC_ARGS="$EMCC_ARGS --llvm-lto 1"
@@ -103,6 +103,7 @@ mkdir -p ${OUT}
   $BINARYEN_SRC/passes/DataFlowOpts.cpp \
   $BINARYEN_SRC/passes/DeadCodeElimination.cpp \
   $BINARYEN_SRC/passes/Directize.cpp \
+  $BINARYEN_SRC/passes/DuplicateImportElimination.cpp \
   $BINARYEN_SRC/passes/DuplicateFunctionElimination.cpp \
   $BINARYEN_SRC/passes/ExtractFunction.cpp \
   $BINARYEN_SRC/passes/Flatten.cpp \
@@ -185,6 +186,7 @@ export_function "_BinaryenTypeInt64"
 export_function "_BinaryenTypeFloat32"
 export_function "_BinaryenTypeFloat64"
 export_function "_BinaryenTypeVec128"
+export_function "_BinaryenTypeAnyref"
 export_function "_BinaryenTypeExnref"
 export_function "_BinaryenTypeUnreachable"
 export_function "_BinaryenTypeAuto"
@@ -217,15 +219,20 @@ export_function "_BinaryenAtomicCmpxchgId"
 export_function "_BinaryenAtomicRMWId"
 export_function "_BinaryenAtomicWaitId"
 export_function "_BinaryenAtomicNotifyId"
+export_function "_BinaryenAtomicFenceId"
 export_function "_BinaryenSIMDExtractId"
 export_function "_BinaryenSIMDReplaceId"
 export_function "_BinaryenSIMDShuffleId"
-export_function "_BinaryenSIMDBitselectId"
+export_function "_BinaryenSIMDTernaryId"
 export_function "_BinaryenSIMDShiftId"
 export_function "_BinaryenMemoryInitId"
 export_function "_BinaryenDataDropId"
 export_function "_BinaryenMemoryCopyId"
 export_function "_BinaryenMemoryFillId"
+export_function "_BinaryenTryId"
+export_function "_BinaryenThrowId"
+export_function "_BinaryenRethrowId"
+export_function "_BinaryenBrOnExnId"
 export_function "_BinaryenPushId"
 export_function "_BinaryenPopId"
 
@@ -245,6 +252,8 @@ export_function "_BinaryenFeatureNontrappingFPToInt"
 export_function "_BinaryenFeatureSignExt"
 export_function "_BinaryenFeatureSIMD128"
 export_function "_BinaryenFeatureExceptionHandling"
+export_function "_BinaryenFeatureTailCall"
+export_function "_BinaryenFeatureReferenceTypes"
 export_function "_BinaryenFeatureAll"
 
 # Literals
@@ -513,6 +522,10 @@ export_function "_BinaryenSubVecI64x2"
 export_function "_BinaryenAbsVecF32x4"
 export_function "_BinaryenNegVecF32x4"
 export_function "_BinaryenSqrtVecF32x4"
+export_function "_BinaryenQFMAVecF32x4"
+export_function "_BinaryenQFMSVecF32x4"
+export_function "_BinaryenQFMAVecF32x4"
+export_function "_BinaryenQFMSVecF32x4"
 export_function "_BinaryenAddVecF32x4"
 export_function "_BinaryenSubVecF32x4"
 export_function "_BinaryenMulVecF32x4"
@@ -522,6 +535,8 @@ export_function "_BinaryenMaxVecF32x4"
 export_function "_BinaryenAbsVecF64x2"
 export_function "_BinaryenNegVecF64x2"
 export_function "_BinaryenSqrtVecF64x2"
+export_function "_BinaryenQFMAVecF64x2"
+export_function "_BinaryenQFMSVecF64x2"
 export_function "_BinaryenAddVecF64x2"
 export_function "_BinaryenSubVecF64x2"
 export_function "_BinaryenMulVecF64x2"
@@ -569,15 +584,20 @@ export_function "_BinaryenAtomicRMW"
 export_function "_BinaryenAtomicCmpxchg"
 export_function "_BinaryenAtomicWait"
 export_function "_BinaryenAtomicNotify"
+export_function "_BinaryenAtomicFence"
 export_function "_BinaryenSIMDExtract"
 export_function "_BinaryenSIMDReplace"
 export_function "_BinaryenSIMDShuffle"
-export_function "_BinaryenSIMDBitselect"
+export_function "_BinaryenSIMDTernary"
 export_function "_BinaryenSIMDShift"
 export_function "_BinaryenMemoryInit"
 export_function "_BinaryenDataDrop"
 export_function "_BinaryenMemoryCopy"
 export_function "_BinaryenMemoryFill"
+export_function "_BinaryenTry"
+export_function "_BinaryenThrow"
+export_function "_BinaryenRethrow"
+export_function "_BinaryenBrOnExn"
 export_function "_BinaryenPush"
 export_function "_BinaryenPop"
 
@@ -711,6 +731,9 @@ export_function "_BinaryenAtomicWaitGetExpectedType"
 export_function "_BinaryenAtomicNotifyGetPtr"
 export_function "_BinaryenAtomicNotifyGetNotifyCount"
 
+# 'AtomicFence' expression operations
+export_function "_BinaryenAtomicFenceGetOrder"
+
 # 'SIMDExtract' expression operations
 export_function "_BinaryenSIMDExtractGetOp"
 export_function "_BinaryenSIMDExtractGetVec"
@@ -727,10 +750,11 @@ export_function "_BinaryenSIMDShuffleGetLeft"
 export_function "_BinaryenSIMDShuffleGetRight"
 export_function "_BinaryenSIMDShuffleGetMask"
 
-# 'SIMDBitselect' expression operations
-export_function "_BinaryenSIMDBitselectGetLeft"
-export_function "_BinaryenSIMDBitselectGetRight"
-export_function "_BinaryenSIMDBitselectGetCond"
+# 'SIMDTernary' expression operations
+export_function "_BinaryenSIMDTernaryGetOp"
+export_function "_BinaryenSIMDTernaryGetA"
+export_function "_BinaryenSIMDTernaryGetB"
+export_function "_BinaryenSIMDTernaryGetC"
 
 # 'SIMDShift' expression operations
 export_function "_BinaryenSIMDShiftGetOp"
@@ -755,6 +779,23 @@ export_function "_BinaryenMemoryCopyGetSize"
 export_function "_BinaryenMemoryFillGetDest"
 export_function "_BinaryenMemoryFillGetValue"
 export_function "_BinaryenMemoryFillGetSize"
+
+# 'Try' expression operations
+export_function "_BinaryenTryGetBody"
+export_function "_BinaryenTryGetCatchBody"
+
+# 'Throw' expression operations
+export_function "_BinaryenThrowGetEvent"
+export_function "_BinaryenThrowGetNumOperands"
+export_function "_BinaryenThrowGetOperand"
+
+# 'Rethrow' expression operations
+export_function "_BinaryenRethrowGetExnref"
+
+# 'BrOnExn' expression operations
+export_function "_BinaryenBrOnExnGetEvent"
+export_function "_BinaryenBrOnExnGetName"
+export_function "_BinaryenBrOnExnGetExnref"
 
 # 'Push' expression operations
 export_function "_BinaryenPushGetValue"

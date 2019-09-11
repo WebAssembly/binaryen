@@ -180,6 +180,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitAtomicNotify(AtomicNotify* curr) {
       visitor.visitAddress(curr->offset);
     }
+    void visitAtomicFence(AtomicFence* curr) { visitor.visitInt(curr->order); }
     void visitSIMDExtract(SIMDExtract* curr) {
       visitor.visitInt(curr->op);
       visitor.visitInt(curr->index);
@@ -193,7 +194,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
         visitor.visitInt(x);
       }
     }
-    void visitSIMDBitselect(SIMDBitselect* curr) {}
+    void visitSIMDTernary(SIMDTernary* curr) { visitor.visitInt(curr->op); }
     void visitSIMDShift(SIMDShift* curr) { visitor.visitInt(curr->op); }
     void visitMemoryInit(MemoryInit* curr) {
       visitor.visitIndex(curr->segment);
@@ -210,6 +211,13 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     void visitHost(Host* curr) {
       visitor.visitInt(curr->op);
       visitor.visitNonScopeName(curr->nameOperand);
+    }
+    void visitTry(Try* curr) {}
+    void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
+    void visitRethrow(Rethrow* curr) {}
+    void visitBrOnExn(BrOnExn* curr) {
+      visitor.visitScopeName(curr->name);
+      visitor.visitNonScopeName(curr->event);
     }
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) {}

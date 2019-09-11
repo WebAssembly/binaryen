@@ -57,6 +57,7 @@ function test_types() {
   console.log("BinaryenTypeFloat32: " + Binaryen.f32);
   console.log("BinaryenTypeFloat64: " + Binaryen.f64);
   console.log("BinaryenTypeVec128: " + Binaryen.v128);
+  console.log("BinaryenTypeAnyref: " + Binaryen.anyref);
   console.log("BinaryenTypeExnref: " + Binaryen.exnref);
   console.log("BinaryenTypeUnreachable: " + Binaryen.unreachable);
   console.log("BinaryenTypeAuto: " + Binaryen.auto);
@@ -71,6 +72,8 @@ function test_features() {
   console.log("Binaryen.Features.SignExt: " + Binaryen.Features.SignExt);
   console.log("Binaryen.Features.SIMD128: " + Binaryen.Features.SIMD128);
   console.log("Binaryen.Features.ExceptionHandling: " + Binaryen.Features.ExceptionHandling);
+  console.log("Binaryen.Features.TailCall: " + Binaryen.Features.TailCall);
+  console.log("Binaryen.Features.ReferenceTypes: " + Binaryen.Features.ReferenceTypes);
   console.log("Binaryen.Features.All: " + Binaryen.Features.All);
 }
 
@@ -105,12 +108,16 @@ function test_ids() {
   console.log("BinaryenSIMDExtractId: " + Binaryen.SIMDExtractId);
   console.log("BinaryenSIMDReplaceId: " + Binaryen.SIMDReplaceId);
   console.log("BinaryenSIMDShuffleId: " + Binaryen.SIMDShuffleId);
-  console.log("BinaryenSIMDBitselectId: " + Binaryen.SIMDBitselectId);
+  console.log("BinaryenSIMDTernaryId: " + Binaryen.SIMDTernaryId);
   console.log("BinaryenSIMDShiftId: " + Binaryen.SIMDShiftId);
   console.log("MemoryInitId: " + Binaryen.MemoryInitId);
   console.log("DataDropId: " + Binaryen.DataDropId);
   console.log("MemoryCopyId: " + Binaryen.MemoryCopyId);
   console.log("MemoryFillId: " + Binaryen.MemoryFillId);
+  console.log("TryId: " + Binaryen.TryId);
+  console.log("ThrowId: " + Binaryen.ThrowId);
+  console.log("RethrowId: " + Binaryen.RethrowId);
+  console.log("BrOnExnId: " + Binaryen.BrOnExnId);
   console.log("PushId: " + Binaryen.PushId);
   console.log("PopId: " + Binaryen.PopId);
 }
@@ -120,6 +127,10 @@ function test_core() {
   // Module creation
 
   module = new Binaryen.Module();
+
+  // Create an event
+  var vi = module.addFunctionType("vi", Binaryen.none, [Binaryen.i32]);
+  var event_ = module.addEvent("a-event", 0, vi);
 
   // Literals and consts
 
@@ -359,6 +370,10 @@ function test_core() {
     // Other SIMD
     module.v8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.qfma(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.qfms(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.qfma(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.qfms(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // Bulk memory
     module.memory.init(0, makeInt32(1024), makeInt32(0), makeInt32(12)),
     module.data.drop(0),
@@ -401,6 +416,46 @@ function test_core() {
     // Tail Call
     module.returnCall("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], Binaryen.i32),
     module.returnCallIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF"),
+
+    // Exception handling
+    module.try(
+      module.throw("a-event", [module.i32.const(0)]),
+      module.block(null, [
+        module.local.set(5, module.exnref.pop()),
+        module.drop(
+          module.block("try-block", [
+            module.rethrow(
+              module.br_on_exn("try-block", "a-event",
+                module.local.get(5, Binaryen.exnref)),
+            )
+          ], Binaryen.i32)
+        )
+      ]
+      )
+    ),
+
+    // Atomics
+    module.i32.atomic.store(0,
+      module.i32.const(0),
+      module.i32.atomic.load(0,
+        module.i32.const(0)
+      )
+    ),
+    module.drop(
+      module.i32.atomic.wait(
+        module.i32.const(0),
+        module.i32.const(0),
+        module.i64.const(0)
+      )
+    ),
+    module.drop(
+      module.atomic.notify(
+        module.i32.const(0),
+        module.i32.const(0)
+      )
+    ),
+    module.atomic.fence(),
+
     // Push and pop
     module.push(module.i32.pop()),
     module.push(module.i64.pop()),
@@ -429,21 +484,18 @@ function test_core() {
   var body = module.block("the-body", [ nothing, makeInt32(42) ]);
 
   // Create the function
-  var sinker = module.addFunction("kitchen()sinker", iiIfF, [ Binaryen.i32 ], body);
+  var sinker = module.addFunction("kitchen()sinker", iiIfF, [ Binaryen.i32, Binaryen.exnref ], body);
 
   // Create a global
   var initExpr = module.i32.const(1);
   var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
 
-  // Create an event
-  var vi = module.addFunctionType("vi", Binaryen.none, [Binaryen.i32]);
-  var event_ = module.addEvent("a-event", 0, vi);
-
   // Imports
 
   var fiF = module.addFunctionType("fiF", Binaryen.f32, [ Binaryen.i32, Binaryen.f64 ]);
   module.addFunctionImport("an-imported", "module", "base", fiF);
-  module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32);
+  module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32, false);
+  module.addGlobalImport("a-mut-global-imp", "module", "base", Binaryen.i32, true);
   module.addEventImport("a-event-imp", "module", "base", 0, vi);
 
   // Exports
@@ -469,7 +521,7 @@ function test_core() {
       offset: null,
       data: "I am passive".split('').map(function(x) { return x.charCodeAt(0) })
     }
-  ]);
+  ], true);
 
   // Start function. One per module
 
@@ -487,6 +539,7 @@ function test_core() {
   var features = Binaryen.Features.All;
   module.setFeatures(features);
   assert(module.getFeatures() == features);
+  console.log(module.emitText());
 
   // Verify it validates
   assert(module.validate());

@@ -7,9 +7,17 @@
 char op[27] = {'\0'};
 strncpy(op, s[0]->c_str(), 26);
 switch (op[0]) {
-  case 'a':
-    if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
-    goto parse_error;
+  case 'a': {
+    switch (op[7]) {
+      case 'f':
+        if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
+        goto parse_error;
+      case 'n':
+        if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
   case 'b': {
     switch (op[1]) {
       case 'l':
@@ -25,6 +33,9 @@ switch (op[0]) {
               case 'i':
                 if (strcmp(op, "br_if") == 0) { return makeBreak(s); }
                 goto parse_error;
+              case 'o':
+                if (strcmp(op, "br_on_exn") == 0) { return makeBrOnExn(s); }
+                goto parse_error;
               case 't':
                 if (strcmp(op, "br_table") == 0) { return makeBreakTable(s); }
                 goto parse_error;
@@ -38,12 +49,20 @@ switch (op[0]) {
     }
   }
   case 'c': {
-    switch (op[4]) {
-      case '\0':
-        if (strcmp(op, "call") == 0) { return makeCall(s, /*isReturn=*/false); }
-        goto parse_error;
-      case '_':
-        if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
+    switch (op[2]) {
+      case 'l': {
+        switch (op[4]) {
+          case '\0':
+            if (strcmp(op, "call") == 0) { return makeCall(s, /*isReturn=*/false); }
+            goto parse_error;
+          case '_':
+            if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      case 't':
+        if (strcmp(op, "catch") == 0) { return makeCatch(s); }
         goto parse_error;
       default: goto parse_error;
     }
@@ -319,6 +338,17 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'q': {
+                switch (op[9]) {
+                  case 'a':
+                    if (strcmp(op, "f32x4.qfma") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::QFMAF32x4); }
+                    goto parse_error;
+                  case 's':
+                    if (strcmp(op, "f32x4.qfms") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::QFMSF32x4); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'r':
                 if (strcmp(op, "f32x4.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecF32x4, 4); }
                 goto parse_error;
@@ -585,6 +615,17 @@ switch (op[0]) {
                     goto parse_error;
                   case 'g':
                     if (strcmp(op, "f64x2.neg") == 0) { return makeUnary(s, UnaryOp::NegVecF64x2); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'q': {
+                switch (op[9]) {
+                  case 'a':
+                    if (strcmp(op, "f64x2.qfma") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::QFMAF64x2); }
+                    goto parse_error;
+                  case 's':
+                    if (strcmp(op, "f64x2.qfms") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::QFMSF64x2); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -2237,18 +2278,26 @@ switch (op[0]) {
     if (strcmp(op, "push") == 0) { return makePush(s); }
     goto parse_error;
   case 'r': {
-    switch (op[6]) {
-      case '\0':
-        if (strcmp(op, "return") == 0) { return makeReturn(s); }
+    switch (op[3]) {
+      case 'h':
+        if (strcmp(op, "rethrow") == 0) { return makeRethrow(s); }
         goto parse_error;
-      case '_': {
-        switch (op[11]) {
+      case 'u': {
+        switch (op[6]) {
           case '\0':
-            if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+            if (strcmp(op, "return") == 0) { return makeReturn(s); }
             goto parse_error;
-          case '_':
-            if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
-            goto parse_error;
+          case '_': {
+            switch (op[11]) {
+              case '\0':
+                if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+                goto parse_error;
+              case '_':
+                if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           default: goto parse_error;
         }
       }
@@ -2258,9 +2307,25 @@ switch (op[0]) {
   case 's':
     if (strcmp(op, "select") == 0) { return makeSelect(s); }
     goto parse_error;
-  case 't':
-    if (strcmp(op, "then") == 0) { return makeThenOrElse(s); }
-    goto parse_error;
+  case 't': {
+    switch (op[1]) {
+      case 'h': {
+        switch (op[2]) {
+          case 'e':
+            if (strcmp(op, "then") == 0) { return makeThenOrElse(s); }
+            goto parse_error;
+          case 'r':
+            if (strcmp(op, "throw") == 0) { return makeThrow(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      case 'r':
+        if (strcmp(op, "try") == 0) { return makeTry(s); }
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
   case 'u':
     if (strcmp(op, "unreachable") == 0) { return makeUnreachable(); }
     goto parse_error;
@@ -2272,7 +2337,7 @@ switch (op[0]) {
             if (strcmp(op, "v128.and") == 0) { return makeBinary(s, BinaryOp::AndVec128); }
             goto parse_error;
           case 'b':
-            if (strcmp(op, "v128.bitselect") == 0) { return makeSIMDBitselect(s); }
+            if (strcmp(op, "v128.bitselect") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::Bitselect); }
             goto parse_error;
           case 'c':
             if (strcmp(op, "v128.const") == 0) { return makeConst(s, v128); }

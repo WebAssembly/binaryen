@@ -255,6 +255,7 @@ private:
   void addTable(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
+  void addMemoryFuncs(Ref ast, Module* wasm);
   void addMemoryGrowthFuncs(Ref ast, Module* wasm);
 
   Wasm2JSBuilder() = delete;
@@ -608,8 +609,8 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         exports, fromName(export_->name, NameScope::Top), memory);
     }
   }
-  if (wasm->memory.exists && wasm->memory.max > wasm->memory.initial) {
-    addMemoryGrowthFuncs(ast, wasm);
+  if (wasm->memory.exists) {
+    addMemoryFuncs(ast, wasm);
   }
   ast->push_back(
     ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
@@ -1013,43 +1014,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Expression* defaultBody = nullptr; // default must be last in asm.js
 
     Ref visitSwitch(Switch* curr) {
-#if 0
-      // Simple switch emitting. This is valid but may lead to block nesting of a size
-      // that JS engines can't handle.
-      Ref ret = ValueBuilder::makeBlock();
-      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      Ref theSwitch =
-        ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
-      ret[1]->push_back(theSwitch);
-      // First, group the switch targets.
-      std::map<Name, std::vector<Index>> targetIndexes;
-      for (size_t i = 0; i < curr->targets.size(); i++) {
-        targetIndexes[curr->targets[i]].push_back(i);
-      }
-      // Emit group by group.
-      for (auto& pair : targetIndexes) {
-        auto target = pair.first;
-        auto& indexes = pair.second;
-        if (target != curr->default_) {
-          for (auto i : indexes) {
-            ValueBuilder::appendCaseToSwitch(theSwitch,
-                                             ValueBuilder::makeNum(i));
-          }
-          ValueBuilder::appendCodeToSwitch(
-            theSwitch, blockify(makeBreakOrContinue(target)), false);
-        } else {
-          // For the group going to the same place as the default, we can just
-          // emit the default itself, which we do at the end.
-        }
-      }
-      // TODO: if the group the default is in is not the largest, we can turn
-      // the largest into
-      //       the default by using a local and a check on the range
-      ValueBuilder::appendDefaultToSwitch(theSwitch);
-      ValueBuilder::appendCodeToSwitch(
-        theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
-      return ret;
-#else
       // Even without optimizations, we work hard here to emit minimal and
       // especially minimally-nested code, since otherwise we may get block
       // nesting of a size that JS engines can't handle.
@@ -1064,6 +1028,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // Emit first any hoisted groups.
       auto& hoistedCases = switchProcessor.hoistedSwitchCases[curr];
       std::set<Name> emittedTargets;
+      bool hoistedEndsWithUnreachable = false;
       for (auto& case_ : hoistedCases) {
         auto target = case_.target;
         auto& code = case_.code;
@@ -1080,8 +1045,23 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         for (auto* c : code) {
           ValueBuilder::appendCodeToSwitch(
             theSwitch, blockify(visit(c, NO_RESULT)), false);
+          hoistedEndsWithUnreachable = c->type == unreachable;
         }
       }
+      // After the hoisted cases, if any remain we must make sure not to
+      // fall through into them. If no code was hoisted, this is unnecessary,
+      // and if the hoisted code ended with an unreachable it also is not
+      // necessary.
+      bool stoppedFurtherFallthrough = false;
+      auto stopFurtherFallthrough = [&]() {
+        if (!stoppedFurtherFallthrough && !hoistedCases.empty() &&
+            !hoistedEndsWithUnreachable) {
+          stoppedFurtherFallthrough = true;
+          ValueBuilder::appendCodeToSwitch(
+            theSwitch, blockify(ValueBuilder::makeBreak(IString())), false);
+        }
+      };
+
       // Emit any remaining groups by just emitting branches to their code,
       // which will appear outside the switch.
       for (auto& pair : targetIndexes) {
@@ -1090,6 +1070,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         if (emittedTargets.count(target)) {
           continue;
         }
+        stopFurtherFallthrough();
         if (target != curr->default_) {
           for (auto i : indexes) {
             ValueBuilder::appendCaseToSwitch(theSwitch,
@@ -1106,12 +1087,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // the largest into
       //       the default by using a local and a check on the range
       if (!emittedTargets.count(curr->default_)) {
+        stopFurtherFallthrough();
         ValueBuilder::appendDefaultToSwitch(theSwitch);
         ValueBuilder::appendCodeToSwitch(
           theSwitch, blockify(makeBreakOrContinue(curr->default_)), false);
       }
       return theSwitch;
-#endif
     }
 
     Ref visitCall(Call* curr) {
@@ -1836,6 +1817,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
+    Ref visitAtomicFence(AtomicFence* curr) {
+      // Sequentially consistent fences can be lowered to no operation
+      return ValueBuilder::makeToplevel();
+    }
     Ref visitSIMDExtract(SIMDExtract* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE();
@@ -1848,7 +1833,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
-    Ref visitSIMDBitselect(SIMDBitselect* curr) {
+    Ref visitSIMDTernary(SIMDTernary* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
@@ -1869,6 +1854,22 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE();
     }
     Ref visitMemoryFill(MemoryFill* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitTry(Try* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitThrow(Throw* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitRethrow(Rethrow* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
+    Ref visitBrOnExn(BrOnExn* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
@@ -1898,6 +1899,22 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
   };
 
   return ExpressionProcessor(this, m, func, standaloneFunction).process();
+}
+
+void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
+  Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
+  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
+    makeAsmCoercion(ValueBuilder::makeBinary(
+                      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
+                                            IString("byteLength")),
+                      DIV,
+                      ValueBuilder::makeInt(Memory::kPageSize)),
+                    AsmType::ASM_INT)));
+  ast->push_back(memorySizeFunc);
+
+  if (wasm->memory.max > wasm->memory.initial) {
+    addMemoryGrowthFuncs(ast, wasm);
+  }
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
@@ -2016,16 +2033,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast, Module* wasm) {
   memoryGrowFunc[3]->push_back(
     ValueBuilder::makeReturn(ValueBuilder::makeName(IString("oldPages"))));
 
-  Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
-  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
-    makeAsmCoercion(ValueBuilder::makeBinary(
-                      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER),
-                                            IString("byteLength")),
-                      DIV,
-                      ValueBuilder::makeInt(Memory::kPageSize)),
-                    AsmType::ASM_INT)));
   ast->push_back(memoryGrowFunc);
-  ast->push_back(memorySizeFunc);
 }
 
 // Wasm2JSGlue emits the core of the module - the functions etc. that would
@@ -2231,14 +2239,14 @@ void Wasm2JSGlue::emitMemory(
     function(mem) {
       var _mem = new Uint8Array(mem);
       return function(offset, s) {
-        var bytes;
+        var bytes, i;
         if (typeof Buffer === 'undefined') {
           bytes = atob(s);
-          for (var i = 0; i < bytes.length; i++)
+          for (i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes.charCodeAt(i);
         } else {
           bytes = Buffer.from(s, 'base64');
-          for (var i = 0; i < bytes.length; i++)
+          for (i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes[i];
         }
       }

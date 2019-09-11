@@ -21,6 +21,7 @@
 #ifndef wasm_support_string_h
 #define wasm_support_string_h
 
+#include <cctype>
 #include <string>
 #include <vector>
 
@@ -102,6 +103,15 @@ inline bool wildcardMatch(const std::string& pattern,
     }
   }
   return value.size() == pattern.size();
+}
+
+// Removes any extra whitespace or \0.
+inline std::string trim(const std::string& input) {
+  size_t size = input.size();
+  while (size > 0 && (isspace(input[size - 1]) || input[size - 1] == '\0')) {
+    size--;
+  }
+  return input.substr(0, size);
 }
 
 } // namespace String

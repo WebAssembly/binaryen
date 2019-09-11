@@ -268,6 +268,7 @@ struct PrintExpressionContents
       o << " offset=" << curr->offset;
     }
   }
+  void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);
     switch (curr->op) {
@@ -329,9 +330,25 @@ struct PrintExpressionContents
       o << " " << std::to_string(mask_index);
     }
   }
-  void visitSIMDBitselect(SIMDBitselect* curr) {
+  void visitSIMDTernary(SIMDTernary* curr) {
     prepareColor(o);
-    o << "v128.bitselect";
+    switch (curr->op) {
+      case Bitselect:
+        o << "v128.bitselect";
+        break;
+      case QFMAF32x4:
+        o << "f32x4.qfma";
+        break;
+      case QFMSF32x4:
+        o << "f32x4.qfms";
+        break;
+      case QFMAF64x2:
+        o << "f64x2.qfma";
+        break;
+      case QFMSF64x2:
+        o << "f64x2.qfms";
+        break;
+    }
   }
   void visitSIMDShift(SIMDShift* curr) {
     prepareColor(o);
@@ -1162,6 +1179,23 @@ struct PrintExpressionContents
         break;
     }
   }
+  void visitTry(Try* curr) {
+    printMedium(o, "try");
+    if (isConcreteType(curr->type)) {
+      o << " (result " << printType(curr->type) << ')';
+    }
+  }
+  void visitThrow(Throw* curr) {
+    printMedium(o, "throw ");
+    printName(curr->event, o);
+  }
+  void visitRethrow(Rethrow* curr) { printMedium(o, "rethrow"); }
+  void visitBrOnExn(BrOnExn* curr) {
+    printMedium(o, "br_on_exn ");
+    printName(curr->name, o);
+    o << " ";
+    printName(curr->event, o);
+  }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPush(Push* curr) { prepareColor(o) << "push"; }
@@ -1260,6 +1294,20 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << maybeNewLine;
   }
 
+  // loop, if, and try can contain implicit blocks. But they are not needed to
+  // be printed in some cases.
+  void maybePrintImplicitBlock(Expression* curr, bool allowMultipleInsts) {
+    auto block = curr->dynCast<Block>();
+    if (!full && block && block->name.isNull() &&
+        (allowMultipleInsts || block->list.size() == 1)) {
+      for (auto expression : block->list) {
+        printFullLine(expression);
+      }
+    } else {
+      printFullLine(curr);
+    }
+  }
+
   void visitBlock(Block* curr) {
     // special-case Block, because Block nesting (in their first element) can be
     // incredibly deep
@@ -1319,22 +1367,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->condition);
-    // ifTrue and False have implict blocks, avoid printing them if possible
-    if (!full && curr->ifTrue->is<Block>() &&
-        curr->ifTrue->dynCast<Block>()->name.isNull() &&
-        curr->ifTrue->dynCast<Block>()->list.size() == 1) {
-      printFullLine(curr->ifTrue->dynCast<Block>()->list.back());
-    } else {
-      printFullLine(curr->ifTrue);
-    }
+    maybePrintImplicitBlock(curr->ifTrue, false);
     if (curr->ifFalse) {
-      if (!full && curr->ifFalse->is<Block>() &&
-          curr->ifFalse->dynCast<Block>()->name.isNull() &&
-          curr->ifFalse->dynCast<Block>()->list.size() == 1) {
-        printFullLine(curr->ifFalse->dynCast<Block>()->list.back());
-      } else {
-        printFullLine(curr->ifFalse);
-      }
+      maybePrintImplicitBlock(curr->ifFalse, false);
     }
     decIndent();
     if (full) {
@@ -1345,16 +1380,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
-    auto block = curr->body->dynCast<Block>();
-    if (!full && block && block->name.isNull()) {
-      // wasm spec has loops containing children directly, while our ast
-      // has a single child for simplicity. print out the optimal form.
-      for (auto expression : block->list) {
-        printFullLine(expression);
-      }
-    } else {
-      printFullLine(curr->body);
-    }
+    maybePrintImplicitBlock(curr->body, true);
     decIndent();
     if (full) {
       o << " ;; end loop";
@@ -1496,6 +1522,11 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->notifyCount);
     decIndent();
   }
+  void visitAtomicFence(AtomicFence* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
   void visitSIMDExtract(SIMDExtract* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
@@ -1519,13 +1550,13 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->right);
     decIndent();
   }
-  void visitSIMDBitselect(SIMDBitselect* curr) {
+  void visitSIMDTernary(SIMDTernary* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
-    printFullLine(curr->left);
-    printFullLine(curr->right);
-    printFullLine(curr->cond);
+    printFullLine(curr->a);
+    printFullLine(curr->b);
+    printFullLine(curr->c);
     decIndent();
   }
   void visitSIMDShift(SIMDShift* curr) {
@@ -1630,6 +1661,54 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << ')';
       }
     }
+  }
+  // try-catch-end is written in the folded wast format as
+  // (try
+  //   ...
+  //  (catch
+  //    ...
+  //  )
+  // )
+  // The parenthesis wrapping 'catch' is just a syntax and does not affect
+  // nested depths of instructions within.
+  void visitTry(Try* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    maybePrintImplicitBlock(curr->body, true);
+    doIndent(o, indent);
+    o << "(catch";
+    incIndent();
+    maybePrintImplicitBlock(curr->catchBody, true);
+    decIndent();
+    o << "\n";
+    decIndent();
+    if (full) {
+      o << " ;; end try";
+    }
+  }
+  void visitThrow(Throw* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    for (auto operand : curr->operands) {
+      printFullLine(operand);
+    }
+    decIndent();
+  }
+  void visitRethrow(Rethrow* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->exnref);
+    decIndent();
+  }
+  void visitBrOnExn(BrOnExn* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->exnref);
+    decIndent();
   }
   void visitNop(Nop* curr) {
     o << '(';
@@ -2043,6 +2122,25 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size "
         << section.data.size();
+      bool isPrintable = true;
+      for (auto c : section.data) {
+        if (!isprint(c)) {
+          isPrintable = false;
+          break;
+        }
+      }
+      if (isPrintable) {
+        o << ", contents: ";
+        // std::quoted is not available in all the supported compilers yet.
+        o << '"';
+        for (auto c : section.data) {
+          if (c == '\\' || c == '"') {
+            o << '\\';
+          }
+          o << c;
+        }
+        o << '"';
+      }
       o << maybeNewLine;
     }
     decIndent();
@@ -2198,7 +2296,8 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       }
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryBegin: {
         doIndent();
         PrintExpressionContents(func, o).visit(inst->origin);
         indent++;
@@ -2206,7 +2305,8 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       }
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryEnd: {
         indent--;
         doIndent();
         o << "end";
@@ -2216,6 +2316,13 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         indent--;
         doIndent();
         o << "else";
+        indent++;
+        break;
+      }
+      case StackInst::Catch: {
+        indent--;
+        doIndent();
+        o << "catch";
         indent++;
         break;
       }

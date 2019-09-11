@@ -199,6 +199,13 @@
 //      (aside from the asyncify.* imports, which are always assumed to).
 //      Each entry can end in a '*' in which case it is matched as a prefix.
 //
+//      The list of imports can be a response file (which is convenient if it
+//      is long, or you don't want to bother escaping it on the commandline
+//      etc.), e.g. --pass-arg=asyncify-imports@@file.txt will load the
+//      contents of file.txt (note the double "@@" - the first is the
+//      separator for --pass-arg, and the second is the usual convention for
+//      indicating a response file).
+//
 //   --pass-arg=asyncify-ignore-imports
 //
 //      Ignore all imports (except for bynsyncify.*), that is, assume none of
@@ -224,11 +231,15 @@
 //      really know what are doing, and need to optimize every bit of speed
 //      and size.
 //
+//      As with --asyncify-imports, you can use a response file here.
+//
 //   --pass-arg=asyncify-whitelist@name1,name2,name3
 //
 //      If the whitelist is provided, then only the functions in the list
 //      will be instrumented. Like the blacklist, getting this wrong will
 //      break your application.
+//
+//      As with --asyncify-imports, you can use a response file here.
 //
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
@@ -241,6 +252,7 @@
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/file.h"
 #include "support/string.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
@@ -1029,8 +1041,8 @@ struct Asyncify : public Pass {
     MemoryUtils::ensureExists(module->memory);
 
     // Find which things can change the state.
-    auto stateChangingImports =
-      runner->options.getArgumentOrDefault("asyncify-imports", "");
+    auto stateChangingImports = String::trim(read_possible_response_file(
+      runner->options.getArgumentOrDefault("asyncify-imports", "")));
     auto ignoreImports =
       runner->options.getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =
@@ -1039,9 +1051,13 @@ struct Asyncify : public Pass {
     auto ignoreIndirect =
       runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
     String::Split blacklist(
-      runner->options.getArgumentOrDefault("asyncify-blacklist", ""), ",");
+      String::trim(read_possible_response_file(
+        runner->options.getArgumentOrDefault("asyncify-blacklist", ""))),
+      ",");
     String::Split whitelist(
-      runner->options.getArgumentOrDefault("asyncify-whitelist", ""), ",");
+      String::trim(read_possible_response_file(
+        runner->options.getArgumentOrDefault("asyncify-whitelist", ""))),
+      ",");
 
     blacklist = handleBracketingOperators(blacklist);
     whitelist = handleBracketingOperators(whitelist);

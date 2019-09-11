@@ -147,6 +147,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
+      case anyref: // anyref cannot be loaded from memory
       case exnref: // exnref cannot be loaded from memory
       case none:
         WASM_UNREACHABLE();
@@ -246,6 +247,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
+      case anyref: // anyref cannot be stored from memory
       case exnref: // exnref cannot be stored in memory
       case none:
       case unreachable:
@@ -420,6 +422,11 @@ void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   emitMemoryAccess(4, 4, 0);
 }
 
+void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
+  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicFence)
+    << int8_t(curr->order);
+}
+
 void BinaryInstWriter::visitSIMDExtract(SIMDExtract* curr) {
   o << int8_t(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
@@ -484,8 +491,25 @@ void BinaryInstWriter::visitSIMDShuffle(SIMDShuffle* curr) {
   }
 }
 
-void BinaryInstWriter::visitSIMDBitselect(SIMDBitselect* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Bitselect);
+void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case Bitselect:
+      o << U32LEB(BinaryConsts::V128Bitselect);
+      break;
+    case QFMAF32x4:
+      o << U32LEB(BinaryConsts::F32x4QFMA);
+      break;
+    case QFMSF32x4:
+      o << U32LEB(BinaryConsts::F32x4QFMS);
+      break;
+    case QFMAF64x2:
+      o << U32LEB(BinaryConsts::F64x2QFMA);
+      break;
+    case QFMSF64x2:
+      o << U32LEB(BinaryConsts::F64x2QFMS);
+      break;
+  }
 }
 
 void BinaryInstWriter::visitSIMDShift(SIMDShift* curr) {
@@ -580,6 +604,7 @@ void BinaryInstWriter::visitConst(Const* curr) {
       }
       break;
     }
+    case anyref: // there's no anyref.const
     case exnref: // there's no exnref.const
     case none:
     case unreachable:
@@ -1396,6 +1421,32 @@ void BinaryInstWriter::visitHost(Host* curr) {
   o << U32LEB(0); // Reserved flags field
 }
 
+void BinaryInstWriter::visitTry(Try* curr) {
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  o << int8_t(BinaryConsts::Try);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
+}
+
+void BinaryInstWriter::emitCatch() {
+  assert(!breakStack.empty());
+  breakStack.pop_back();
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  o << int8_t(BinaryConsts::Catch);
+}
+
+void BinaryInstWriter::visitThrow(Throw* curr) {
+  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getEventIndex(curr->event));
+}
+
+void BinaryInstWriter::visitRethrow(Rethrow* curr) {
+  o << int8_t(BinaryConsts::Rethrow);
+}
+
+void BinaryInstWriter::visitBrOnExn(BrOnExn* curr) {
+  o << int8_t(BinaryConsts::BrOnExn) << U32LEB(getBreakIndex(curr->name))
+    << U32LEB(parent.getEventIndex(curr->event));
+}
+
 void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }
 
 void BinaryInstWriter::visitUnreachable(Unreachable* curr) {
@@ -1466,12 +1517,24 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       mappedLocals[i] = index + currLocalsByType[v128] - 1;
       continue;
     }
+    index += numLocalsByType[v128];
+    if (type == anyref) {
+      mappedLocals[i] = index + currLocalsByType[anyref] - 1;
+      continue;
+    }
+    index += numLocalsByType[anyref];
+    if (type == exnref) {
+      mappedLocals[i] = index + currLocalsByType[exnref] - 1;
+      continue;
+    }
     WASM_UNREACHABLE();
   }
   // Emit them.
   o << U32LEB((numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
               (numLocalsByType[f32] ? 1 : 0) + (numLocalsByType[f64] ? 1 : 0) +
-              (numLocalsByType[v128] ? 1 : 0));
+              (numLocalsByType[v128] ? 1 : 0) +
+              (numLocalsByType[anyref] ? 1 : 0) +
+              (numLocalsByType[exnref] ? 1 : 0));
   if (numLocalsByType[i32]) {
     o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
   }
@@ -1486,6 +1549,12 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   }
   if (numLocalsByType[v128]) {
     o << U32LEB(numLocalsByType[v128]) << binaryType(v128);
+  }
+  if (numLocalsByType[anyref]) {
+    o << U32LEB(numLocalsByType[anyref]) << binaryType(anyref);
+  }
+  if (numLocalsByType[exnref]) {
+    o << U32LEB(numLocalsByType[exnref]) << binaryType(exnref);
   }
 }
 
@@ -1513,6 +1582,8 @@ void StackIRGenerator::emit(Expression* curr) {
     stackInst = makeStackInst(StackInst::IfBegin, curr);
   } else if (curr->is<Loop>()) {
     stackInst = makeStackInst(StackInst::LoopBegin, curr);
+  } else if (curr->is<Try>()) {
+    stackInst = makeStackInst(StackInst::TryBegin, curr);
   } else {
     stackInst = makeStackInst(curr);
   }
@@ -1527,6 +1598,8 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
     stackInst = makeStackInst(StackInst::IfEnd, curr);
   } else if (curr->is<Loop>()) {
     stackInst = makeStackInst(StackInst::LoopEnd, curr);
+  } else if (curr->is<Try>()) {
+    stackInst = makeStackInst(StackInst::TryEnd, curr);
   } else {
     WASM_UNREACHABLE();
   }
@@ -1579,6 +1652,10 @@ void StackIRToBinaryWriter::write() {
       }
       case StackInst::IfElse: {
         writer.emitIfElse();
+        break;
+      }
+      case StackInst::Catch: {
+        writer.emitCatch();
         break;
       }
       default:

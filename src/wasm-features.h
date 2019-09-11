@@ -33,7 +33,8 @@ struct FeatureSet {
     SignExt = 1 << 5,
     ExceptionHandling = 1 << 6,
     TailCall = 1 << 7,
-    All = (1 << 8) - 1
+    ReferenceTypes = 1 << 8,
+    All = (1 << 9) - 1
   };
 
   static std::string toString(Feature f) {
@@ -54,6 +55,8 @@ struct FeatureSet {
         return "exception-handling";
       case TailCall:
         return "tail-call";
+      case ReferenceTypes:
+        return "reference-types";
       default:
         WASM_UNREACHABLE();
     }
@@ -72,6 +75,7 @@ struct FeatureSet {
   bool hasSignExt() const { return features & SignExt; }
   bool hasExceptionHandling() const { return features & ExceptionHandling; }
   bool hasTailCall() const { return features & TailCall; }
+  bool hasReferenceTypes() const { return features & ReferenceTypes; }
   bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
@@ -86,6 +90,7 @@ struct FeatureSet {
   void setSignExt(bool v = true) { set(SignExt, v); }
   void setExceptionHandling(bool v = true) { set(ExceptionHandling, v); }
   void setTailCall(bool v = true) { set(TailCall, v); }
+  void setReferenceTypes(bool v = true) { set(ReferenceTypes, v); }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   void enable(const FeatureSet& other) { features |= other.features; }
@@ -117,6 +122,9 @@ struct FeatureSet {
     }
     if (hasTailCall()) {
       f(TailCall);
+    }
+    if (hasReferenceTypes()) {
+      f(ReferenceTypes);
     }
   }
 

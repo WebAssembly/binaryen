@@ -11,6 +11,6 @@ outfile = os.path.join(root, 'src', 'passes',
 out = open(outfile, 'w')
 
 for line in open(infile):
-  out.write('"' + line.strip().replace('"', '\\"') + '\\n"\n')
+    out.write('"' + line.strip().replace('"', '\\"') + '\\n"\n')
 
 out.close()

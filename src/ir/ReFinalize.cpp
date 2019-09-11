@@ -62,6 +62,8 @@ void ReFinalize::visitBlock(Block* curr) {
         auto type = iter->second;
         if (type == none) {
           // we need to fix this up. set the values to unreachables
+          // note that we don't need to handle br_on_exn here, because its value
+          // type is never none
           for (auto* br : FindAll<Break>(curr).list) {
             handleBranchForVisitBlock(br, curr->name, getModule());
           }
@@ -139,10 +141,11 @@ void ReFinalize::visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicNotify(AtomicNotify* curr) { curr->finalize(); }
+void ReFinalize::visitAtomicFence(AtomicFence* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
-void ReFinalize::visitSIMDBitselect(SIMDBitselect* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
 void ReFinalize::visitDataDrop(DataDrop* curr) { curr->finalize(); }
@@ -155,6 +158,13 @@ void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
 void ReFinalize::visitHost(Host* curr) { curr->finalize(); }
+void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
+void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
+void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
+void ReFinalize::visitBrOnExn(BrOnExn* curr) {
+  curr->finalize();
+  updateBreakValueType(curr->name, curr->getSingleSentType());
+}
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPush(Push* curr) { curr->finalize(); }

@@ -91,12 +91,9 @@ private:
         size = getTypeSize(value.type);
         break;
       }
-      case v128: {
-        // v128 not implemented yet
-        return false;
-      }
-      case exnref: {
-        // exnref cannot have literals
+      case v128:     // v128 not implemented yet
+      case anyref:   // anyref cannot have literals
+      case exnref: { // exnref cannot have literals
         return false;
       }
       case none:

@@ -168,6 +168,10 @@ function asmFunc(global, env, buffer) {
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
  FUNCTION_TABLE[3] = internal;
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
  return {
   "main": main, 
   "other": other, 
@@ -183,14 +187,14 @@ var writeSegment = (
     function(mem) {
       var _mem = new Uint8Array(mem);
       return function(offset, s) {
-        var bytes;
+        var bytes, i;
         if (typeof Buffer === 'undefined') {
           bytes = atob(s);
-          for (var i = 0; i < bytes.length; i++)
+          for (i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes.charCodeAt(i);
         } else {
           bytes = Buffer.from(s, 'base64');
-          for (var i = 0; i < bytes.length; i++)
+          for (i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes[i];
         }
       }

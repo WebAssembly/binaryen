@@ -25,6 +25,10 @@ function asmFunc(global, env, buffer) {
  // EMSCRIPTEN_START_FUNCS;
  // EMSCRIPTEN_END_FUNCS;
  var FUNCTION_TABLE = [];
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
  function __wasm_memory_grow(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
   var oldPages = __wasm_memory_size() | 0;
@@ -48,10 +52,6 @@ function asmFunc(global, env, buffer) {
   return oldPages;
  }
  
- function __wasm_memory_size() {
-  return buffer.byteLength / 65536 | 0;
- }
- 
  return {
   "memory": Object.create(Object.prototype, {
    "grow": {
@@ -71,14 +71,14 @@ var writeSegment = (
     function(mem) {
       var _mem = new Uint8Array(mem);
       return function(offset, s) {
-        var bytes;
+        var bytes, i;
         if (typeof Buffer === 'undefined') {
           bytes = atob(s);
-          for (var i = 0; i < bytes.length; i++)
+          for (i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes.charCodeAt(i);
         } else {
           bytes = Buffer.from(s, 'base64');
-          for (var i = 0; i < bytes.length; i++)
+          for (i = 0; i < bytes.length; i++)
             _mem[offset + i] = bytes[i];
         }
       }

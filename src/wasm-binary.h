@@ -381,7 +381,9 @@ enum EncodedType {
   v128 = -0x5, // 0x7b
   // elem_type
   AnyFunc = -0x10, // 0x70
-  // reference type
+  // opaque reference type
+  anyref = -0x11, // 0x6f
+  // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
   Func = -0x20, // 0x60
@@ -406,6 +408,7 @@ extern const char* SignExtFeature;
 extern const char* SIMD128Feature;
 extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
+extern const char* ReferenceTypesFeature;
 
 enum Subsection {
   NameFunction = 1,
@@ -613,15 +616,18 @@ enum ASTNodes {
   I64ExtendS16 = 0xc3,
   I64ExtendS32 = 0xc4,
 
+  // prefixes
+
   MiscPrefix = 0xfc,
   SIMDPrefix = 0xfd,
-  AtomicPrefix = 0xfe
-};
+  AtomicPrefix = 0xfe,
 
-enum AtomicOpcodes {
+  // atomic opcodes
+
   AtomicNotify = 0x00,
   I32AtomicWait = 0x01,
   I64AtomicWait = 0x02,
+  AtomicFence = 0x03,
 
   I32AtomicLoad = 0x10,
   I64AtomicLoad = 0x11,
@@ -691,10 +697,10 @@ enum AtomicOpcodes {
   I64AtomicCmpxchg8U = 0x4c,
   I64AtomicCmpxchg16U = 0x4d,
   I64AtomicCmpxchg32U = 0x4e,
-  AtomicCmpxchgOps_End = 0x4e
-};
+  AtomicCmpxchgOps_End = 0x4e,
 
-enum TruncSatOpcodes {
+  // truncsat opcodes
+
   I32STruncSatF32 = 0x00,
   I32UTruncSatF32 = 0x01,
   I32STruncSatF64 = 0x02,
@@ -703,9 +709,9 @@ enum TruncSatOpcodes {
   I64UTruncSatF32 = 0x05,
   I64STruncSatF64 = 0x06,
   I64UTruncSatF64 = 0x07,
-};
 
-enum SIMDOpcodes {
+  // SIMD opcodes
+
   V128Load = 0x00,
   V128Store = 0x01,
   V128Const = 0x02,
@@ -823,6 +829,8 @@ enum SIMDOpcodes {
   F32x4Abs = 0x95,
   F32x4Neg = 0x96,
   F32x4Sqrt = 0x97,
+  F32x4QFMA = 0x98,
+  F32x4QFMS = 0x99,
   F32x4Add = 0x9a,
   F32x4Sub = 0x9b,
   F32x4Mul = 0x9c,
@@ -832,6 +840,8 @@ enum SIMDOpcodes {
   F64x2Abs = 0xa0,
   F64x2Neg = 0xa1,
   F64x2Sqrt = 0xa2,
+  F64x2QFMA = 0xa3,
+  F64x2QFMS = 0xa4,
   F64x2Add = 0xa5,
   F64x2Sub = 0xa6,
   F64x2Mul = 0xa7,
@@ -845,14 +855,22 @@ enum SIMDOpcodes {
   F32x4ConvertSI32x4 = 0xaf,
   F32x4ConvertUI32x4 = 0xb0,
   F64x2ConvertSI64x2 = 0xb1,
-  F64x2ConvertUI64x2 = 0xb2
-};
+  F64x2ConvertUI64x2 = 0xb2,
 
-enum BulkMemoryOpcodes {
+  // bulk memory opcodes
+
   MemoryInit = 0x08,
   DataDrop = 0x09,
   MemoryCopy = 0x0a,
-  MemoryFill = 0x0b
+  MemoryFill = 0x0b,
+
+  // exception handling opcodes
+
+  Try = 0x06,
+  Catch = 0x07,
+  Throw = 0x08,
+  Rethrow = 0x09,
+  BrOnExn = 0x0a
 };
 
 enum MemoryAccess {
@@ -892,6 +910,9 @@ inline S32LEB binaryType(Type type) {
       break;
     case v128:
       ret = BinaryConsts::EncodedType::v128;
+      break;
+    case anyref:
+      ret = BinaryConsts::EncodedType::anyref;
       break;
     case exnref:
       ret = BinaryConsts::EncodedType::exnref;
@@ -1184,6 +1205,8 @@ public:
   void readNextDebugLocation();
   void readSourceMapHeader();
 
+  void handleBrOnExnNotTaken(Expression* curr);
+
   // AST reading
   int depth = 0; // only for debugging
 
@@ -1192,7 +1215,7 @@ public:
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(Type type);
+  Expression* getBlockOrSingleton(Type type, unsigned numPops = 0);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
@@ -1214,6 +1237,7 @@ public:
   bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
   bool maybeVisitAtomicWait(Expression*& out, uint8_t code);
   bool maybeVisitAtomicNotify(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicFence(Expression*& out, uint8_t code);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);
@@ -1226,7 +1250,7 @@ public:
   bool maybeVisitSIMDExtract(Expression*& out, uint32_t code);
   bool maybeVisitSIMDReplace(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShuffle(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDBitselect(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDTernary(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
@@ -1238,6 +1262,10 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
 
   void throwError(std::string text);
 };

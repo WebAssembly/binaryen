@@ -52,10 +52,6 @@ public:
   void parse(int argc, const char* argv[]);
 
 private:
-  Options() = delete;
-  Options(const Options&) = delete;
-  Options& operator=(const Options&) = delete;
-
   struct Option {
     std::string longName;
     std::string shortName;

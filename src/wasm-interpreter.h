@@ -863,24 +863,30 @@ public:
     Literal right = flow.value;
     return left.shuffleV8x16(right, curr->mask);
   }
-  Flow visitSIMDBitselect(SIMDBitselect* curr) {
+  Flow visitSIMDTernary(SIMDTernary* curr) {
     NOTE_ENTER("SIMDBitselect");
-    Flow flow = this->visit(curr->left);
+    Flow flow = this->visit(curr->a);
     if (flow.breaking()) {
       return flow;
     }
-    Literal left = flow.value;
-    flow = this->visit(curr->right);
+    Literal a = flow.value;
+    flow = this->visit(curr->b);
     if (flow.breaking()) {
       return flow;
     }
-    Literal right = flow.value;
-    flow = this->visit(curr->cond);
+    Literal b = flow.value;
+    flow = this->visit(curr->c);
     if (flow.breaking()) {
       return flow;
     }
-    Literal cond = flow.value;
-    return cond.bitselectV128(left, right);
+    Literal c = flow.value;
+    switch (curr->op) {
+      case Bitselect:
+        return c.bitselectV128(a, b);
+      default:
+        // TODO: implement qfma/qfms
+        WASM_UNREACHABLE();
+    }
   }
   Flow visitSIMDShift(SIMDShift* curr) {
     NOTE_ENTER("SIMDShift");
@@ -1029,6 +1035,12 @@ public:
       return Literal(uint64_t(val));
     }
   }
+  Flow visitAtomicFence(AtomicFence*) {
+    // Wasm currently supports only sequentially consistent atomics, in which
+    // case atomic_fence can be lowered to nothing.
+    NOTE_ENTER("AtomicFence");
+    return Flow();
+  }
 
   Flow visitCall(Call*) { WASM_UNREACHABLE(); }
   Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE(); }
@@ -1048,6 +1060,10 @@ public:
   Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
   Flow visitPush(Push*) { WASM_UNREACHABLE(); }
   Flow visitPop(Pop*) { WASM_UNREACHABLE(); }
+  Flow visitTry(Try*) { WASM_UNREACHABLE(); }
+  Flow visitThrow(Throw*) { WASM_UNREACHABLE(); }
+  Flow visitRethrow(Rethrow*) { WASM_UNREACHABLE(); }
+  Flow visitBrOnExn(BrOnExn*) { WASM_UNREACHABLE(); }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE(); }
 };
@@ -1138,6 +1154,7 @@ public:
           return Literal(load64u(addr)).castToF64();
         case v128:
           return Literal(load128(addr).data());
+        case anyref: // anyref cannot be loaded from memory
         case exnref: // exnref cannot be loaded from memory
         case none:
         case unreachable:
@@ -1192,6 +1209,7 @@ public:
         case v128:
           store128(addr, value.getv128());
           break;
+        case anyref: // anyref cannot be stored from memory
         case exnref: // exnref cannot be stored in memory
         case none:
         case unreachable:

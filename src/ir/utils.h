@@ -128,10 +128,11 @@ struct ReFinalize
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicNotify(AtomicNotify* curr);
+  void visitAtomicFence(AtomicFence* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
@@ -144,6 +145,10 @@ struct ReFinalize
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitPush(Push* curr);
@@ -187,10 +192,11 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
   void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
   void visitAtomicNotify(AtomicNotify* curr) { curr->finalize(); }
+  void visitAtomicFence(AtomicFence* curr) { curr->finalize(); }
   void visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
   void visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
   void visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
-  void visitSIMDBitselect(SIMDBitselect* curr) { curr->finalize(); }
+  void visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
   void visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
   void visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
   void visitDataDrop(DataDrop* curr) { curr->finalize(); }
@@ -203,6 +209,10 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitDrop(Drop* curr) { curr->finalize(); }
   void visitReturn(Return* curr) { curr->finalize(); }
   void visitHost(Host* curr) { curr->finalize(); }
+  void visitTry(Try* curr) { curr->finalize(); }
+  void visitThrow(Throw* curr) { curr->finalize(); }
+  void visitRethrow(Rethrow* curr) { curr->finalize(); }
+  void visitBrOnExn(BrOnExn* curr) { curr->finalize(); }
   void visitNop(Nop* curr) { curr->finalize(); }
   void visitUnreachable(Unreachable* curr) { curr->finalize(); }
   void visitPush(Push* curr) { curr->finalize(); }

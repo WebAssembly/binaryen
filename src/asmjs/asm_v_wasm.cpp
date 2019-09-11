@@ -53,8 +53,10 @@ AsmType wasmToAsmType(Type type) {
       return ASM_INT64;
     case v128:
       assert(false && "v128 not implemented yet");
+    case anyref:
+      assert(false && "anyref is not supported by asm2wasm");
     case exnref:
-      assert(false && "exnref is not in asm2wasm");
+      assert(false && "exnref is not supported by asm2wasm");
     case none:
       return ASM_NONE;
     case unreachable:
@@ -75,6 +77,8 @@ char getSig(Type type) {
       return 'd';
     case v128:
       return 'V';
+    case anyref:
+      return 'a';
     case exnref:
       return 'e';
     case none:
@@ -105,6 +109,8 @@ Type sigToType(char sig) {
       return f64;
     case 'V':
       return v128;
+    case 'a':
+      return anyref;
     case 'e':
       return exnref;
     case 'v':

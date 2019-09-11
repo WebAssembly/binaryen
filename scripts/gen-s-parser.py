@@ -211,6 +211,7 @@ instructions = [
     ("atomic.notify",           "makeAtomicNotify(s)"),
     ("i32.atomic.wait",         "makeAtomicWait(s, i32)"),
     ("i64.atomic.wait",         "makeAtomicWait(s, i64)"),
+    ("atomic.fence",            "makeAtomicFence(s)"),
     ("i32.atomic.load8_u",      "makeLoad(s, i32, /*isAtomic=*/true)"),
     ("i32.atomic.load16_u",     "makeLoad(s, i32, /*isAtomic=*/true)"),
     ("i32.atomic.load",         "makeLoad(s, i32, /*isAtomic=*/true)"),
@@ -354,7 +355,7 @@ instructions = [
     ("v128.and",             "makeBinary(s, BinaryOp::AndVec128)"),
     ("v128.or",              "makeBinary(s, BinaryOp::OrVec128)"),
     ("v128.xor",             "makeBinary(s, BinaryOp::XorVec128)"),
-    ("v128.bitselect",       "makeSIMDBitselect(s)"),
+    ("v128.bitselect",       "makeSIMDTernary(s, SIMDTernaryOp::Bitselect)"),
     ("i8x16.neg",            "makeUnary(s, UnaryOp::NegVecI8x16)"),
     ("i8x16.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI8x16)"),
     ("i8x16.all_true",       "makeUnary(s, UnaryOp::AllTrueVecI8x16)"),
@@ -401,6 +402,8 @@ instructions = [
     ("f32x4.abs",            "makeUnary(s, UnaryOp::AbsVecF32x4)"),
     ("f32x4.neg",            "makeUnary(s, UnaryOp::NegVecF32x4)"),
     ("f32x4.sqrt",           "makeUnary(s, UnaryOp::SqrtVecF32x4)"),
+    ("f32x4.qfma",           "makeSIMDTernary(s, SIMDTernaryOp::QFMAF32x4)"),
+    ("f32x4.qfms",           "makeSIMDTernary(s, SIMDTernaryOp::QFMSF32x4)"),
     ("f32x4.add",            "makeBinary(s, BinaryOp::AddVecF32x4)"),
     ("f32x4.sub",            "makeBinary(s, BinaryOp::SubVecF32x4)"),
     ("f32x4.mul",            "makeBinary(s, BinaryOp::MulVecF32x4)"),
@@ -410,6 +413,8 @@ instructions = [
     ("f64x2.abs",            "makeUnary(s, UnaryOp::AbsVecF64x2)"),
     ("f64x2.neg",            "makeUnary(s, UnaryOp::NegVecF64x2)"),
     ("f64x2.sqrt",           "makeUnary(s, UnaryOp::SqrtVecF64x2)"),
+    ("f64x2.qfma",           "makeSIMDTernary(s, SIMDTernaryOp::QFMAF64x2)"),
+    ("f64x2.qfms",           "makeSIMDTernary(s, SIMDTernaryOp::QFMSF64x2)"),
     ("f64x2.add",            "makeBinary(s, BinaryOp::AddVecF64x2)"),
     ("f64x2.sub",            "makeBinary(s, BinaryOp::SubVecF64x2)"),
     ("f64x2.mul",            "makeBinary(s, BinaryOp::MulVecF64x2)"),
@@ -423,148 +428,154 @@ instructions = [
     ("f32x4.convert_i32x4_s",   "makeUnary(s, UnaryOp::ConvertSVecI32x4ToVecF32x4)"),
     ("f32x4.convert_i32x4_u",   "makeUnary(s, UnaryOp::ConvertUVecI32x4ToVecF32x4)"),
     ("f64x2.convert_i64x2_s",   "makeUnary(s, UnaryOp::ConvertSVecI64x2ToVecF64x2)"),
-    ("f64x2.convert_i64x2_u",   "makeUnary(s, UnaryOp::ConvertUVecI64x2ToVecF64x2)")
+    ("f64x2.convert_i64x2_u",   "makeUnary(s, UnaryOp::ConvertUVecI64x2ToVecF64x2)"),
+    # exception handling instructions
+    ("try",                  "makeTry(s)"),
+    ("throw",                "makeThrow(s)"),
+    ("catch",                "makeCatch(s)"),
+    ("rethrow",              "makeRethrow(s)"),
+    ("br_on_exn",            "makeBrOnExn(s)")
 ]
 
 
 class CodePrinter:
-  indents = 0
+    indents = 0
 
-  def __enter__(self):
-    CodePrinter.indents += 1
+    def __enter__(self):
+        CodePrinter.indents += 1
 
-  def __exit__(self, *args):
-    CodePrinter.indents -= 1
+    def __exit__(self, *args):
+        CodePrinter.indents -= 1
 
-  def indent(self):
-    # call in a 'with' statement
-    return self
+    def indent(self):
+        # call in a 'with' statement
+        return self
 
-  def print_line(self, line):
-    print("  " * CodePrinter.indents + line)
+    def print_line(self, line):
+        print("  " * CodePrinter.indents + line)
 
 
 class Node:
-  def __init__(self, expr=None, children=None, inst=None):
-    # the expression to return if this is the string has ended
-    self.expr = expr
-    # map unique strings to children nodes
-    self.children = children if children else {}
-    # full instruction leading to this node
-    self.inst = inst
+    def __init__(self, expr=None, children=None, inst=None):
+        # the expression to return if this is the string has ended
+        self.expr = expr
+        # map unique strings to children nodes
+        self.children = children if children else {}
+        # full instruction leading to this node
+        self.inst = inst
 
-  def _common_prefix(a, b):
-    """Return the common prefix of two strings."""
-    prefix = []
-    while a and b and a[0] == b[0]:
-      prefix.append(a[0])
-      a = a[1:]
-      b = b[1:]
-    return "".join(prefix)
+    def _common_prefix(a, b):
+        """Return the common prefix of two strings."""
+        prefix = []
+        while a and b and a[0] == b[0]:
+            prefix.append(a[0])
+            a = a[1:]
+            b = b[1:]
+        return "".join(prefix)
 
-  def do_insert(self, full_inst, inst, expr):
-    if inst is "":
-      assert self.expr is None, "Repeated instruction " + full_inst
-      self.expr = expr
-      self.inst = full_inst
-      return
-    # find key with shared prefix
-    prefix, key = "", None
-    for k in self.children:
-      prefix = Node._common_prefix(inst, k)
-      if prefix is not "":
-        key = k
-        break
-    if key is None:
-      # unique prefix, insert and stop
-      self.children[inst] = Node(expr, inst=full_inst)
-      return
-    key_remainder = key[len(prefix):]
-    if key_remainder is not "":
-      # split key and move everything after the prefix to a new node
-      child = self.children.pop(key)
-      self.children[prefix] = Node(children={key_remainder: child})
-      # update key for recursive insert
-      key = prefix
-    # chop off prefix and recurse
-    self.children[key].do_insert(full_inst, inst[len(key):], expr)
+    def do_insert(self, full_inst, inst, expr):
+        if not inst:
+            assert self.expr is None, "Repeated instruction " + full_inst
+            self.expr = expr
+            self.inst = full_inst
+            return
+        # find key with shared prefix
+        prefix, key = "", None
+        for k in self.children:
+            prefix = Node._common_prefix(inst, k)
+            if prefix:
+                key = k
+                break
+        if key is None:
+            # unique prefix, insert and stop
+            self.children[inst] = Node(expr, inst=full_inst)
+            return
+        key_remainder = key[len(prefix):]
+        if key_remainder:
+            # split key and move everything after the prefix to a new node
+            child = self.children.pop(key)
+            self.children[prefix] = Node(children={key_remainder: child})
+            # update key for recursive insert
+            key = prefix
+        # chop off prefix and recurse
+        self.children[key].do_insert(full_inst, inst[len(key):], expr)
 
-  def insert(self, inst, expr):
-    self.do_insert(inst, inst, expr)
+    def insert(self, inst, expr):
+        self.do_insert(inst, inst, expr)
 
 
 def instruction_parser():
-  """Build a trie out of all the instructions, then emit it as C++ code."""
-  trie = Node()
-  inst_length = 0
-  for inst, expr in instructions:
-    inst_length = max(inst_length, len(inst))
-    trie.insert(inst, expr)
+    """Build a trie out of all the instructions, then emit it as C++ code."""
+    trie = Node()
+    inst_length = 0
+    for inst, expr in instructions:
+        inst_length = max(inst_length, len(inst))
+        trie.insert(inst, expr)
 
-  printer = CodePrinter()
+    printer = CodePrinter()
 
-  printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
-  printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
+    printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
+    printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
 
-  def print_leaf(expr, inst):
-    printer.print_line("if (strcmp(op, \"{inst}\") == 0) {{ return {expr}; }}"
-                       .format(inst=inst, expr=expr))
-    printer.print_line("goto parse_error;")
+    def print_leaf(expr, inst):
+        printer.print_line("if (strcmp(op, \"{inst}\") == 0) {{ return {expr}; }}"
+                           .format(inst=inst, expr=expr))
+        printer.print_line("goto parse_error;")
 
-  def emit(node, idx=0):
-    assert node.children
-    printer.print_line("switch (op[{}]) {{".format(idx))
-    with printer.indent():
-      if node.expr:
-        printer.print_line("case '\\0':")
+    def emit(node, idx=0):
+        assert node.children
+        printer.print_line("switch (op[{}]) {{".format(idx))
         with printer.indent():
-          print_leaf(node.expr, node.inst)
-      children = sorted(node.children.items(), key=lambda pair: pair[0])
-      for prefix, child in children:
-        if child.children:
-          printer.print_line("case '{}': {{".format(prefix[0]))
-          with printer.indent():
-            emit(child, idx + len(prefix))
-          printer.print_line("}")
-        else:
-          assert child.expr
-          printer.print_line("case '{}':".format(prefix[0]))
-          with printer.indent():
-            print_leaf(child.expr, child.inst)
-      printer.print_line("default: goto parse_error;")
-    printer.print_line("}")
+            if node.expr:
+                printer.print_line("case '\\0':")
+                with printer.indent():
+                    print_leaf(node.expr, node.inst)
+            children = sorted(node.children.items(), key=lambda pair: pair[0])
+            for prefix, child in children:
+                if child.children:
+                    printer.print_line("case '{}': {{".format(prefix[0]))
+                    with printer.indent():
+                        emit(child, idx + len(prefix))
+                    printer.print_line("}")
+                else:
+                    assert child.expr
+                    printer.print_line("case '{}':".format(prefix[0]))
+                    with printer.indent():
+                        print_leaf(child.expr, child.inst)
+            printer.print_line("default: goto parse_error;")
+        printer.print_line("}")
 
-  emit(trie)
-  printer.print_line("parse_error:")
-  with printer.indent():
-    printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
+    emit(trie)
+    printer.print_line("parse_error:")
+    with printer.indent():
+        printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
 
 
 def print_header():
-  print("// DO NOT EDIT! This file generated by scripts/gen-s-parser.py\n")
-  print("// clang-format off\n")
+    print("// DO NOT EDIT! This file generated by scripts/gen-s-parser.py\n")
+    print("// clang-format off\n")
 
 
 def print_footer():
-  print("\n// clang-format on")
+    print("\n// clang-format on")
 
 
 def generate_with_guard(generator, guard):
-  print("#ifdef {}".format(guard))
-  print("#undef {}".format(guard))
-  generator()
-  print("#endif // {}".format(guard))
+    print("#ifdef {}".format(guard))
+    print("#undef {}".format(guard))
+    generator()
+    print("#endif // {}".format(guard))
 
 
 def main():
-  if sys.version_info.major != 3:
-    import datetime
-    print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
-    sys.exit(1)
-  print_header()
-  generate_with_guard(instruction_parser, "INSTRUCTION_PARSER")
-  print_footer()
+    if sys.version_info.major != 3:
+        import datetime
+        print("It's " + str(datetime.datetime.now().year) + "! Use Python 3!")
+        sys.exit(1)
+    print_header()
+    generate_with_guard(instruction_parser, "INSTRUCTION_PARSER")
+    print_footer()
 
 
 if __name__ == "__main__":
-  main()
+    main()

@@ -194,10 +194,11 @@ private:
   makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes, const char* extra);
   Expression* makeAtomicWait(Element& s, Type type);
   Expression* makeAtomicNotify(Element& s);
+  Expression* makeAtomicFence(Element& s);
   Expression* makeSIMDExtract(Element& s, SIMDExtractOp op, size_t lanes);
   Expression* makeSIMDReplace(Element& s, SIMDReplaceOp op, size_t lanes);
   Expression* makeSIMDShuffle(Element& s);
-  Expression* makeSIMDBitselect(Element& s);
+  Expression* makeSIMDTernary(Element& s, SIMDTernaryOp op);
   Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
   Expression* makeMemoryInit(Element& s);
   Expression* makeDataDrop(Element& s);
@@ -221,6 +222,11 @@ private:
   Expression* makeBreak(Element& s);
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
+  Expression* makeTry(Element& s);
+  Expression* makeCatch(Element& s);
+  Expression* makeThrow(Element& s);
+  Expression* makeRethrow(Element& s);
+  Expression* makeBrOnExn(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

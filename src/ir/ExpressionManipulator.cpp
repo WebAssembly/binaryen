@@ -157,6 +157,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeAtomicNotify(
         copy(curr->ptr), copy(curr->notifyCount), curr->offset);
     }
+    Expression* visitAtomicFence(AtomicFence* curr) {
+      return builder.makeAtomicFence();
+    }
     Expression* visitSIMDExtract(SIMDExtract* curr) {
       return builder.makeSIMDExtract(curr->op, copy(curr->vec), curr->index);
     }
@@ -168,9 +171,9 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeSIMDShuffle(
         copy(curr->left), copy(curr->right), curr->mask);
     }
-    Expression* visitSIMDBitselect(SIMDBitselect* curr) {
-      return builder.makeSIMDBitselect(
-        copy(curr->left), copy(curr->right), copy(curr->cond));
+    Expression* visitSIMDTernary(SIMDTernary* curr) {
+      return builder.makeSIMDTernary(
+        curr->op, copy(curr->a), copy(curr->b), copy(curr->c));
     }
     Expression* visitSIMDShift(SIMDShift* curr) {
       return builder.makeSIMDShift(
@@ -219,11 +222,31 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
         builder.makeHost(curr->op, curr->nameOperand, std::move(operands));
       return ret;
     }
+    Expression* visitTry(Try* curr) {
+      return builder.makeTry(
+        copy(curr->body), copy(curr->catchBody), curr->type);
+    }
+    Expression* visitThrow(Throw* curr) {
+      std::vector<Expression*> operands;
+      for (Index i = 0; i < curr->operands.size(); i++) {
+        operands.push_back(copy(curr->operands[i]));
+      }
+      return builder.makeThrow(curr->event, std::move(operands));
+    }
+    Expression* visitRethrow(Rethrow* curr) {
+      return builder.makeRethrow(copy(curr->exnref));
+    }
+    Expression* visitBrOnExn(BrOnExn* curr) {
+      return builder.makeBrOnExn(
+        curr->name, curr->event, copy(curr->exnref), curr->eventParams);
+    }
     Expression* visitNop(Nop* curr) { return builder.makeNop(); }
     Expression* visitUnreachable(Unreachable* curr) {
       return builder.makeUnreachable();
     }
-    Expression* visitPush(Push* curr) { return builder.makePush(curr->value); }
+    Expression* visitPush(Push* curr) {
+      return builder.makePush(copy(curr->value));
+    }
     Expression* visitPop(Pop* curr) { return builder.makePop(curr->type); }
   };
 

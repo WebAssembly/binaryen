@@ -3,6 +3,7 @@
   (memory (shared 1 1))
   (table 0 funcref)
   (global $g (mut f32) (f32.const 0))
+  (event $e (attr 0) (param i32))
 
   (func $foo (param i32) (result i32) (i32.const 0))
 
@@ -39,9 +40,24 @@
       (unreachable)
     )
 
-    ;; If a br_if's type is unreachable, emit an extra unreachable after it
+    ;; If a try is unreachable, i.e., both the 'try' and 'catch' bodies are
+    ;; unreachable, we emit an extra unreachable after the try.
+    (try
+      (unreachable)
+      (catch
+        (unreachable)
+      )
+    )
+
+    ;; If a br_if/br_on_exn's type is unreachable, emit an extra unreachable
+    ;; after it
     (block
       (br_if 0 (unreachable))
+    )
+    (drop
+      (block (result i32)
+        (br_on_exn 0 $e (unreachable))
+      )
     )
 
     ;; If a br_table is not reachable, emit an unreachable instead
@@ -174,7 +190,5 @@
         (i32.const 0)
       )
     )
-
-    ;; TODO Add exception handling instructions
   )
 )

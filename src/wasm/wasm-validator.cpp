@@ -254,6 +254,7 @@ public:
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
+  void noteBreak(Name name, Type valueType, Expression* curr);
   void visitBreak(Break* curr);
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
@@ -269,10 +270,11 @@ public:
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicNotify(AtomicNotify* curr);
+  void visitAtomicFence(AtomicFence* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
@@ -284,6 +286,10 @@ public:
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -519,11 +525,15 @@ void FunctionValidator::visitIf(If* curr) {
 void FunctionValidator::noteBreak(Name name,
                                   Expression* value,
                                   Expression* curr) {
-  Type valueType = none;
-  Index arity = 0;
   if (value) {
-    valueType = value->type;
-    shouldBeUnequal(valueType, none, curr, "breaks must have a valid value");
+    shouldBeUnequal(value->type, none, curr, "breaks must have a valid value");
+  }
+  noteBreak(name, value ? value->type : none, curr);
+}
+
+void FunctionValidator::noteBreak(Name name, Type valueType, Expression* curr) {
+  Index arity = 0;
+  if (valueType != none) {
     arity = 1;
   }
   auto iter = breakInfos.find(name);
@@ -908,6 +918,21 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
     "AtomicNotify notifyCount type must be i32");
 }
 
+void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(getModule()->features.hasAtomics(),
+               curr,
+               "Atomic operation (atomics are disabled)");
+  shouldBeFalse(!getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
+  shouldBeTrue(curr->order == 0,
+               curr,
+               "Currently only sequentially consistent atomics are supported, "
+               "so AtomicFence's order should be 0");
+}
+
 void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
@@ -1005,17 +1030,17 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
   }
 }
 
-void FunctionValidator::visitSIMDBitselect(SIMDBitselect* curr) {
+void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->type, v128, curr, "v128.bitselect must have type v128");
+    curr->type, v128, curr, "SIMD ternary must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->left->type, v128, curr, "expected operand of type v128");
+    curr->a->type, v128, curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->right->type, v128, curr, "expected operand of type v128");
+    curr->b->type, v128, curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->cond->type, v128, curr, "expected operand of type v128");
+    curr->c->type, v128, curr, "expected operand of type v128");
 }
 
 void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
@@ -1125,6 +1150,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       shouldBeEqual(
         bytes, uint8_t(16), curr, "expected v128 operation to touch 16 bytes");
       break;
+    case anyref: // anyref cannot be stored in memory
     case exnref: // exnref cannot be stored in memory
     case none:
       WASM_UNREACHABLE();
@@ -1581,6 +1607,94 @@ void FunctionValidator::visitHost(Host* curr) {
   }
 }
 
+void FunctionValidator::visitTry(Try* curr) {
+  if (curr->type != unreachable) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->body->type,
+      curr->type,
+      curr->body,
+      "try's type does not match try body's type");
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->catchBody->type,
+      curr->type,
+      curr->catchBody,
+      "try's type does not match catch's body type");
+  }
+  if (isConcreteType(curr->body->type)) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->catchBody->type,
+      curr->body->type,
+      curr->catchBody,
+      "try's body type must match catch's body type");
+  }
+  if (isConcreteType(curr->catchBody->type)) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->body->type,
+      curr->catchBody->type,
+      curr->body,
+      "try's body type must match catch's body type");
+  }
+}
+
+void FunctionValidator::visitThrow(Throw* curr) {
+  if (!info.validateGlobally) {
+    return;
+  }
+  shouldBeEqual(
+    curr->type, unreachable, curr, "throw's type must be unreachable");
+  auto* event = getModule()->getEventOrNull(curr->event);
+  if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
+    return;
+  }
+  if (!shouldBeTrue(curr->operands.size() == event->params.size(),
+                    curr,
+                    "event's param numbers must match")) {
+    return;
+  }
+  for (size_t i = 0; i < curr->operands.size(); i++) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
+                                           event->params[i],
+                                           curr->operands[i],
+                                           "event param types must match") &&
+        !info.quiet) {
+      getStream() << "(on argument " << i << ")\n";
+    }
+  }
+}
+
+void FunctionValidator::visitRethrow(Rethrow* curr) {
+  shouldBeEqual(
+    curr->type, unreachable, curr, "rethrow's type must be unreachable");
+  shouldBeEqual(curr->exnref->type,
+                exnref,
+                curr->exnref,
+                "rethrow's argument must be exnref type");
+}
+
+void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
+  Event* event = getModule()->getEventOrNull(curr->event);
+  shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
+  shouldBeTrue(event->params == curr->eventParams,
+               curr,
+               "br_on_exn's event params and event's params are different");
+  noteBreak(curr->name, curr->getSingleSentType(), curr);
+  shouldBeTrue(curr->exnref->type == unreachable ||
+                 curr->exnref->type == exnref,
+               curr,
+               "br_on_exn's argument must be unreachable or exnref type");
+  if (curr->exnref->type == unreachable) {
+    shouldBeTrue(curr->type == unreachable,
+                 curr,
+                 "If exnref argument's type is unreachable, br_on_exn should "
+                 "be unreachable too");
+  } else {
+    shouldBeTrue(curr->type == exnref,
+                 curr,
+                 "br_on_exn's type should be exnref unless its exnref argument "
+                 "is unreachable");
+  }
+}
+
 void FunctionValidator::visitFunction(Function* curr) {
   FeatureSet typeFeatures = getFeatures(curr->result);
   for (auto type : curr->params) {
@@ -1691,6 +1805,7 @@ void FunctionValidator::validateAlignment(
     case v128:
     case unreachable:
       break;
+    case anyref: // anyref cannot be stored in memory
     case exnref: // exnref cannot be stored in memory
     case none:
       WASM_UNREACHABLE();
