@@ -241,6 +241,12 @@
 //
 //      As with --asyncify-imports, you can use a response file here.
 //
+//  --pass-arg=asyncify-asserts
+//
+//      This enables extra assertions in the output, like checking if we in
+//      an unwind/rewind in an invalid place (this can be helpful for manual
+//      tweaking of the whitelist/blacklist).
+//
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
 //      of their original range.
@@ -363,9 +369,10 @@ public:
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState,
                  const String::Split& blacklistInput,
-                 const String::Split& whitelistInput)
+                 const String::Split& whitelistInput,
+                 bool assertions)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      globals(module) {
+      globals(module), assertions(assertions) {
 
     blacklist.insert(blacklistInput.begin(), blacklistInput.end());
     whitelist.insert(whitelistInput.begin(), whitelistInput.end());
@@ -561,6 +568,7 @@ public:
   GlobalHelper globals;
   std::set<Name> blacklist;
   std::set<Name> whitelist;
+  bool assertions;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -622,13 +630,16 @@ struct AsyncifyFlow : public Pass {
   runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
     func = func_;
+    builder = make_unique<AsyncifyBuilder>(*module);
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
+      if (analyzer.assertions) {
+        addAssertionsInNonInstrumented(func);
+      }
       return;
     }
     // Rewrite the function body.
-    builder = make_unique<AsyncifyBuilder>(*module);
     // Each function we enter will pop one from the stack, which is the index
     // of the next call to make.
     auto* block = builder->makeBlock(
@@ -841,6 +852,14 @@ private:
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_GET_CALL_INDEX, {}, none);
   }
+
+  // Given a function that is not instrumented - because we proved it doesn't
+  // need it, or depending on the whitelist/blacklist - add assertions that
+  // verify that property at runtime. Specifically, we should not enter
+  // the function if rewinding, and not be unwinding after any call.
+  void addAssertionsInNonInstrumented(Function* func) {
+    func->body = builder.makeSequence(
+  }
 };
 
 // Instrument local saving/restoring.
@@ -1049,7 +1068,8 @@ struct Asyncify : public Pass {
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
     auto ignoreIndirect =
-      runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
+      runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "") ==
+      "";
     String::Split blacklist(
       String::trim(read_possible_response_file(
         runner->options.getArgumentOrDefault("asyncify-blacklist", ""))),
@@ -1058,6 +1078,8 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(
         runner->options.getArgumentOrDefault("asyncify-whitelist", ""))),
       ",");
+    auto assertions =
+      runner->options.getArgumentOrDefault("asyncify-assertions", "") != "";
 
     blacklist = handleBracketingOperators(blacklist);
     whitelist = handleBracketingOperators(whitelist);
@@ -1105,9 +1127,10 @@ struct Asyncify : public Pass {
     // Scan the module.
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
-                            ignoreIndirect == "",
+                            ignoreIndirect,
                             blacklist,
-                            whitelist);
+                            whitelist,
+                            assertions);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
