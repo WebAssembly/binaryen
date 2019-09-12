@@ -139,7 +139,7 @@ int main(int argc, const char* argv[]) {
          })
     .add("--wasi",
          "",
-         "Emit a wasi-compatible wasm file, with exported_start etc.",
+         "Emit a wasi-compatible wasm file, with exported _start etc.",
          Options::Arguments::Zero,
          [&wasi](Options* o, const std::string&) { wasi = true; })
     .add_positional("INFILE",
