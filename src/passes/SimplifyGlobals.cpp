@@ -252,9 +252,7 @@ struct SimplifyGlobals : public Pass {
         constantGlobals.insert(global->name);
       }
     }
-    if (!constantGlobals.empty()) {
-      ConstantGlobalApplier(&constantGlobals, optimize).run(runner, module);
-    }
+    ConstantGlobalApplier(&constantGlobals, optimize).run(runner, module);
   }
 };
 
