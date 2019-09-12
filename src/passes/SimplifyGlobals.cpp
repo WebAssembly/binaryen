@@ -84,26 +84,61 @@ private:
 };
 
 struct ConstantGlobalApplier
-  : public WalkerPass<PostWalker<ConstantGlobalApplier>> {
+  : public WalkerPass<LinearExecutionWalker<ConstantGlobalApplier>> {
   bool isFunctionParallel() override { return true; }
 
-  ConstantGlobalApplier(NameSet* constantGlobals)
-    : constantGlobals(constantGlobals) {}
+  ConstantGlobalApplier(NameSet* constantGlobals, bool optimize)
+    : constantGlobals(constantGlobals), optimize(optimize) {}
 
   ConstantGlobalApplier* create() override {
-    return new ConstantGlobalApplier(constantGlobals);
+    return new ConstantGlobalApplier(constantGlobals, optimize);
+  }
+
+  void visitGlobalSet(GlobalSet* curr) {
+    if (auto* c = curr->value->dynCast<Const>()) {
+      currConstantGlobals[curr->name] = c->value;
+    }
   }
 
   void visitGlobalGet(GlobalGet* curr) {
+    // Check if the global is known to be constant all the time.
     if (constantGlobals->count(curr->name)) {
       auto* global = getModule()->getGlobal(curr->name);
       assert(global->init->is<Const>());
       replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
+      replaced = true;
+      return;
+    }
+    // Check if the global has a known value in this linear trace.
+    auto iter = currConstantGlobals.find(curr->name);
+    if (iter != currConstantGlobals.end()) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeConst(iter->second));
+      replaced = true;
+    }
+  }
+
+  static void doNoteNonLinear(ConstantGlobalApplier* self,
+                              Expression** currp) {
+    self->currConstantGlobals.clear();
+  }
+
+  void visitFunction(Function* curr) {
+    if (replaced && optimize) {
+      PassRunner runner(getModule(), getPassRunner()->options);
+      runner.setIsNested(true);
+      runner.addDefaultFunctionOptimizationPasses();
+      runner.runOnFunction(curr);
     }
   }
 
 private:
   NameSet* constantGlobals;
+  bool optimize;
+  bool replaced = false;
+
+  // The globals currently constant in the linear trace.
+  std::map<Name, Literal> currConstantGlobals;
 };
 
 } // anonymous namespace
@@ -113,6 +148,9 @@ struct SimplifyGlobals : public Pass {
   Module* module;
 
   GlobalInfoMap map;
+  bool optimize;
+
+  SimplifyGlobals(bool optimize=false) : optimize(optimize) {}
 
   void run(PassRunner* runner_, Module* module_) override {
     runner = runner_;
@@ -215,11 +253,15 @@ struct SimplifyGlobals : public Pass {
       }
     }
     if (!constantGlobals.empty()) {
-      ConstantGlobalApplier(&constantGlobals).run(runner, module);
+      ConstantGlobalApplier(&constantGlobals, optimize).run(runner, module);
     }
   }
 };
 
-Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(); }
+Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(false); }
+
+Pass* createSimplifyGlobalsOptimizingPass() {
+  return new SimplifyGlobals(true);
+}
 
 } // namespace wasm
