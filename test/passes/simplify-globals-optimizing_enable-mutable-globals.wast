@@ -89,4 +89,22 @@
     (local.get $x)
   )
 )
+(module
+  (global $g1 (mut i32) (i32.const 1))
+  (global $g2 (mut i32) (i32.const 1))
+  (func $f (param $x i32) (result i32)
+    (global.set $g1 (i32.const 100))
+    (global.set $g2 (local.get $x))
+    (local.set $x
+      (i32.add
+        (i32.add
+          (global.get $g1)
+          (global.get $g1)
+        )
+        (global.get $g2)
+      )
+    )
+    (local.get $x)
+  )
+)
 

@@ -66,42 +66,6 @@
  (global $gb (mut i32) (i32.const 5))
  (global $gc i32 (i32.const 5))
  (func $foo (; 0 ;) (type $FUNCSIG$v)
-  (drop
-   (i32.const 1)
-  )
-  (drop
-   (i32.const 1)
-  )
-  (drop
-   (f64.const -3.4)
-  )
-  (drop
-   (f64.const -2.8)
-  )
-  (drop
-   (i32.const 2)
-  )
-  (drop
-   (i32.const 2)
-  )
-  (drop
-   (i32.const 3)
-  )
-  (drop
-   (i32.const 3)
-  )
-  (drop
-   (i32.const 4)
-  )
-  (drop
-   (global.get $ga)
-  )
-  (drop
-   (global.get $gb)
-  )
-  (drop
-   (i32.const 5)
-  )
   (global.set $ga
    (i32.const 6)
   )
@@ -114,27 +78,26 @@
  (type $FUNCSIG$ii (func (param i32) (result i32)))
  (global $g1 (mut i32) (i32.const 1))
  (global $g2 (mut i32) (i32.const 1))
- (func $f (; 0 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $f (; 0 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
   (global.set $g2
-   (local.get $x)
+   (local.get $0)
   )
   (if
-   (local.get $x)
+   (local.get $0)
    (return
     (i32.const 0)
    )
   )
-  (local.set $x
-   (i32.add
-    (global.get $g1)
-    (global.get $g2)
-   )
-  )
   (if
-   (local.get $x)
+   (local.tee $0
+    (i32.add
+     (global.get $g1)
+     (global.get $g2)
+    )
+   )
    (return
     (i32.const 1)
    )
@@ -143,14 +106,28 @@
    (i32.const 200)
   )
   (global.set $g2
-   (local.get $x)
+   (local.get $0)
   )
-  (local.set $x
-   (i32.add
-    (i32.const 200)
-    (global.get $g2)
-   )
+  (i32.add
+   (global.get $g2)
+   (i32.const 200)
   )
-  (local.get $x)
+ )
+)
+(module
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (global $g1 (mut i32) (i32.const 1))
+ (global $g2 (mut i32) (i32.const 1))
+ (func $f (; 0 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+  (global.set $g1
+   (i32.const 100)
+  )
+  (global.set $g2
+   (local.get $0)
+  )
+  (i32.add
+   (global.get $g2)
+   (i32.const 200)
+  )
  )
 )

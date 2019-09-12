@@ -270,7 +270,7 @@ void PassRegistry::registerPasses() {
   registerPass("simplify-globals-optimizing",
                "miscellaneous globals-related optimizations, and optimizes "
                "where we replaced global.gets with constants",
-               createSimplifyGlobalsPass);
+               createSimplifyGlobalsOptimizingPass);
   registerPass("simplify-locals",
                "miscellaneous locals-related optimizations",
                createSimplifyLocalsPass);
