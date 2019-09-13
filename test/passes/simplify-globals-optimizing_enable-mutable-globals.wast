@@ -107,4 +107,21 @@
     (local.get $x)
   )
 )
+(module
+  (global $g1 (mut i32) (i32.const 1))
+  (func $no (param $x i32) (result i32)
+    (global.set $g1 (i32.const 100))
+    (drop (call $no (i32.const 200))) ;; invalidate
+    (global.get $g1)
+  )
+  (func $no2 (param $x i32) (result i32)
+    (global.set $g1 (i32.const 100))
+    (global.set $g1 (local.get $x)) ;; invalidate
+    (global.get $g1)
+  )
+  (func $yes (param $x i32) (result i32)
+    (global.set $g1 (i32.const 100))
+    (global.get $g1)
+  )
+)
 

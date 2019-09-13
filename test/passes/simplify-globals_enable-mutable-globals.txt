@@ -177,3 +177,33 @@
   (local.get $x)
  )
 )
+(module
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (global $g1 (mut i32) (i32.const 1))
+ (func $no (; 0 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+  (global.set $g1
+   (i32.const 100)
+  )
+  (drop
+   (call $no
+    (i32.const 200)
+   )
+  )
+  (global.get $g1)
+ )
+ (func $no2 (; 1 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+  (global.set $g1
+   (i32.const 100)
+  )
+  (global.set $g1
+   (local.get $x)
+  )
+  (global.get $g1)
+ )
+ (func $yes (; 2 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+  (global.set $g1
+   (i32.const 100)
+  )
+  (i32.const 100)
+ )
+)

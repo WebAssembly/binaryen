@@ -29,6 +29,7 @@
 
 #include <atomic>
 
+#include "ir/effects.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -84,7 +85,7 @@ private:
 };
 
 struct ConstantGlobalApplier
-  : public WalkerPass<LinearExecutionWalker<ConstantGlobalApplier>> {
+  : public WalkerPass<LinearExecutionWalker<ConstantGlobalApplier, UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
   bool isFunctionParallel() override { return true; }
 
   ConstantGlobalApplier(NameSet* constantGlobals, bool optimize)
@@ -94,27 +95,38 @@ struct ConstantGlobalApplier
     return new ConstantGlobalApplier(constantGlobals, optimize);
   }
 
-  void visitGlobalSet(GlobalSet* curr) {
-    if (auto* c = curr->value->dynCast<Const>()) {
-      currConstantGlobals[curr->name] = c->value;
-    }
-  }
-
-  void visitGlobalGet(GlobalGet* curr) {
-    // Check if the global is known to be constant all the time.
-    if (constantGlobals->count(curr->name)) {
-      auto* global = getModule()->getGlobal(curr->name);
-      assert(global->init->is<Const>());
-      replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
-      replaced = true;
+  void visitExpression(Expression* curr) {
+    if (auto* set = curr->dynCast<GlobalSet>()) {
+      if (auto* c = set->value->dynCast<Const>()) {
+        currConstantGlobals[set->name] = c->value;
+      } else {
+        currConstantGlobals.erase(set->name);
+      }
+      return;
+    } else if (auto* get = curr->dynCast<GlobalGet>()) {
+      // Check if the global is known to be constant all the time.
+      if (constantGlobals->count(get->name)) {
+        auto* global = getModule()->getGlobal(get->name);
+        assert(global->init->is<Const>());
+        replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
+        replaced = true;
+        return;
+      }
+      // Check if the global has a known value in this linear trace.
+      auto iter = currConstantGlobals.find(get->name);
+      if (iter != currConstantGlobals.end()) {
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeConst(iter->second));
+        replaced = true;
+      }
       return;
     }
-    // Check if the global has a known value in this linear trace.
-    auto iter = currConstantGlobals.find(curr->name);
-    if (iter != currConstantGlobals.end()) {
-      Builder builder(*getModule());
-      replaceCurrent(builder.makeConst(iter->second));
-      replaced = true;
+    // Otherwise, invalidate if we need to.
+    EffectAnalyzer effects(getPassOptions());
+    effects.visit(curr);
+    assert(effects.globalsWritten.empty()); // handled above
+    if (effects.calls) {
+      currConstantGlobals.clear();
     }
   }
 
