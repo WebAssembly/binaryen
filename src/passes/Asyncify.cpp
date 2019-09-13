@@ -874,8 +874,18 @@ private:
       func->body);
     // Add a check around every call.
     struct Walker : PostWalker<Walker> {
-      void visitCall(Call* curr) { handleCall(curr); }
-      void visitCallIndirect(CallIndirect* curr) { handleCall(curr); }
+      void visitCall(Call* curr) {
+        // Tail calls will need another type of check, as they wouldn't reach
+        // this assertion.
+        assert(!curr->isReturn);
+        handleCall(curr);
+      }
+      void visitCallIndirect(CallIndirect* curr) {
+        // Tail calls will need another type of check, as they wouldn't reach
+        // this assertion.
+        assert(!curr->isReturn);
+        handleCall(curr);
+      }
       void handleCall(Expression* call) {
         auto* check = builder->makeIf(
           builder->makeBinary(NeInt32,
