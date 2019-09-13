@@ -22,9 +22,16 @@
 //  * If an immutable global is a copy of another, use the earlier one,
 //    to allow removal of the copies later.
 //  * Apply the constant values of immutable globals.
+//  * Apply the constant values of previous global.sets, in a linear
+//    execution trace.
 //
 // Some globals may not have uses after these changes, which we leave
 // to other passes to optimize.
+//
+// This pass has a "optimize" variant (similar to inlining and DAE)
+// that also runs general function optimizations where we managed to replace
+// a constant value. That is helpful as such a replacement often opens up
+// further optimization opportunities.
 //
 
 #include <atomic>
