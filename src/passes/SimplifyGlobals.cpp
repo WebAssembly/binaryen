@@ -85,7 +85,9 @@ private:
 };
 
 struct ConstantGlobalApplier
-  : public WalkerPass<LinearExecutionWalker<ConstantGlobalApplier, UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
+  : public WalkerPass<
+      LinearExecutionWalker<ConstantGlobalApplier,
+                            UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
   bool isFunctionParallel() override { return true; }
 
   ConstantGlobalApplier(NameSet* constantGlobals, bool optimize)
@@ -130,8 +132,7 @@ struct ConstantGlobalApplier
     }
   }
 
-  static void doNoteNonLinear(ConstantGlobalApplier* self,
-                              Expression** currp) {
+  static void doNoteNonLinear(ConstantGlobalApplier* self, Expression** currp) {
     self->currConstantGlobals.clear();
   }
 
@@ -162,7 +163,7 @@ struct SimplifyGlobals : public Pass {
   GlobalInfoMap map;
   bool optimize;
 
-  SimplifyGlobals(bool optimize=false) : optimize(optimize) {}
+  SimplifyGlobals(bool optimize = false) : optimize(optimize) {}
 
   void run(PassRunner* runner_, Module* module_) override {
     runner = runner_;
