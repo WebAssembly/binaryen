@@ -1794,10 +1794,9 @@ Literal saturating_narrow(
   typename TwiceWidth<typename std::make_signed<T>::type>::type val) {
   using WideT = typename TwiceWidth<typename std::make_signed<T>::type>::type;
   if (val > WideT(std::numeric_limits<T>::max())) {
-    return Literal(int32_t(std::numeric_limits<T>::max()));
-  }
-  if (val < WideT(std::numeric_limits<T>::min())) {
-    return Literal(int32_t(std::numeric_limits<T>::min()));
+    val = std::numeric_limits<T>::max();
+  } else if (val < WideT(std::numeric_limits<T>::min())) {
+    val = std::numeric_limits<T>::min();
   }
   return Literal(int32_t(val));
 }
