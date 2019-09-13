@@ -241,6 +241,12 @@
 //
 //      As with --asyncify-imports, you can use a response file here.
 //
+//  --pass-arg=asyncify-asserts
+//
+//      This enables extra asserts in the output, like checking if we in
+//      an unwind/rewind in an invalid place (this can be helpful for manual
+//      tweaking of the whitelist/blacklist).
+//
 // TODO When wasm has GC, extending the live ranges of locals can keep things
 //      alive unnecessarily. We may want to set locals to null at the end
 //      of their original range.
@@ -363,9 +369,10 @@ public:
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState,
                  const String::Split& blacklistInput,
-                 const String::Split& whitelistInput)
+                 const String::Split& whitelistInput,
+                 bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      globals(module) {
+      globals(module), asserts(asserts) {
 
     blacklist.insert(blacklistInput.begin(), blacklistInput.end());
     whitelist.insert(whitelistInput.begin(), whitelistInput.end());
@@ -561,6 +568,7 @@ public:
   GlobalHelper globals;
   std::set<Name> blacklist;
   std::set<Name> whitelist;
+  bool asserts;
 };
 
 // Checks if something performs a call: either a direct or indirect call,
@@ -606,6 +614,10 @@ public:
                       makeGlobalGet(ASYNCIFY_STATE, i32),
                       makeConst(Literal(int32_t(value))));
   }
+
+  Expression* makeNegatedStateCheck(State value) {
+    return makeUnary(EqZInt32, makeStateCheck(value));
+  }
 };
 
 // Instrument control flow, around calls and adding skips for rewinding.
@@ -622,13 +634,16 @@ struct AsyncifyFlow : public Pass {
   runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
     func = func_;
+    builder = make_unique<AsyncifyBuilder>(*module);
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
+      if (analyzer->asserts) {
+        addAssertsInNonInstrumented(func);
+      }
       return;
     }
     // Rewrite the function body.
-    builder = make_unique<AsyncifyBuilder>(*module);
     // Each function we enter will pop one from the stack, which is the index
     // of the next call to make.
     auto* block = builder->makeBlock(
@@ -841,6 +856,65 @@ private:
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_GET_CALL_INDEX, {}, none);
   }
+
+  // Given a function that is not instrumented - because we proved it doesn't
+  // need it, or depending on the whitelist/blacklist - add assertions that
+  // verify that property at runtime.
+  // Note that it is ok to run code while sleeping (if you are careful not
+  // to break assumptions in the program!) - so what is actually
+  // checked here is if the state *changes* in an uninstrumented function.
+  // That is, if in an uninstrumented function, a sleep should not begin
+  // from any call.
+  void addAssertsInNonInstrumented(Function* func) {
+    auto oldState = builder->addVar(func, i32);
+    // Add a check at the function entry.
+    func->body = builder->makeSequence(
+      builder->makeLocalSet(oldState,
+                            builder->makeGlobalGet(ASYNCIFY_STATE, i32)),
+      func->body);
+    // Add a check around every call.
+    struct Walker : PostWalker<Walker> {
+      void visitCall(Call* curr) {
+        // Tail calls will need another type of check, as they wouldn't reach
+        // this assertion.
+        assert(!curr->isReturn);
+        handleCall(curr);
+      }
+      void visitCallIndirect(CallIndirect* curr) {
+        // Tail calls will need another type of check, as they wouldn't reach
+        // this assertion.
+        assert(!curr->isReturn);
+        handleCall(curr);
+      }
+      void handleCall(Expression* call) {
+        auto* check = builder->makeIf(
+          builder->makeBinary(NeInt32,
+                              builder->makeGlobalGet(ASYNCIFY_STATE, i32),
+                              builder->makeLocalGet(oldState, i32)),
+          builder->makeUnreachable());
+        Expression* rep;
+        if (isConcreteType(call->type)) {
+          auto temp = builder->addVar(func, call->type);
+          rep = builder->makeBlock({
+            builder->makeLocalSet(temp, call),
+            check,
+            builder->makeLocalGet(temp, call->type),
+          });
+        } else {
+          rep = builder->makeSequence(call, check);
+        }
+        replaceCurrent(rep);
+      }
+      Function* func;
+      AsyncifyBuilder* builder;
+      Index oldState;
+    };
+    Walker walker;
+    walker.func = func;
+    walker.builder = builder.get();
+    walker.oldState = oldState;
+    walker.walk(func->body);
+  }
 };
 
 // Instrument local saving/restoring.
@@ -1048,8 +1122,8 @@ struct Asyncify : public Pass {
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
-    auto ignoreIndirect =
-      runner->options.getArgumentOrDefault("asyncify-ignore-indirect", "");
+    auto ignoreIndirect = runner->options.getArgumentOrDefault(
+                            "asyncify-ignore-indirect", "") == "";
     String::Split blacklist(
       String::trim(read_possible_response_file(
         runner->options.getArgumentOrDefault("asyncify-blacklist", ""))),
@@ -1058,6 +1132,8 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(
         runner->options.getArgumentOrDefault("asyncify-whitelist", ""))),
       ",");
+    auto asserts =
+      runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
 
     blacklist = handleBracketingOperators(blacklist);
     whitelist = handleBracketingOperators(whitelist);
@@ -1105,9 +1181,10 @@ struct Asyncify : public Pass {
     // Scan the module.
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
-                            ignoreIndirect == "",
+                            ignoreIndirect,
                             blacklist,
-                            whitelist);
+                            whitelist,
+                            asserts);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module);
