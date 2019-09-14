@@ -133,7 +133,7 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$1($0) {
   i64toi32_i32$HIGH_BITS = 0;
-  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  setTempRet0(0);
   return $0;
  }
  

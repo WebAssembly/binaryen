@@ -92,6 +92,7 @@ Pass* createRedundantSetEliminationPass();
 Pass* createSafeHeapPass();
 Pass* createSimplifyLocalsPass();
 Pass* createSimplifyGlobalsPass();
+Pass* createSimplifyGlobalsOptimizingPass();
 Pass* createSimplifyLocalsNoNestingPass();
 Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();
