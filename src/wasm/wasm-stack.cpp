@@ -917,6 +917,38 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F64x2ConvertUI64x2);
       break;
+    case WidenLowSVecI8x16ToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8WidenLowSI8x16);
+      break;
+    case WidenHighSVecI8x16ToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8WidenHighSI8x16);
+      break;
+    case WidenLowUVecI8x16ToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8WidenLowUI8x16);
+      break;
+    case WidenHighUVecI8x16ToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8WidenHighUI8x16);
+      break;
+    case WidenLowSVecI16x8ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4WidenLowSI16x8);
+      break;
+    case WidenHighSVecI16x8ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4WidenHighSI16x8);
+      break;
+    case WidenLowUVecI16x8ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4WidenLowUI16x8);
+      break;
+    case WidenHighUVecI16x8ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4WidenHighUI16x8);
+      break;
     case InvalidUnary:
       WASM_UNREACHABLE();
   }
@@ -1394,6 +1426,24 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case MaxVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Max);
       break;
+
+    case NarrowSVecI16x8ToVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I8x16NarrowSI16x8);
+      break;
+    case NarrowUVecI16x8ToVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I8x16NarrowUI16x8);
+      break;
+    case NarrowSVecI32x4ToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8NarrowSI32x4);
+      break;
+    case NarrowUVecI32x4ToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8NarrowUI32x4);
+      break;
+
     case InvalidBinary:
       WASM_UNREACHABLE();
   }

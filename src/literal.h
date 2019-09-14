@@ -386,6 +386,18 @@ public:
   Literal convertUToF32x4() const;
   Literal convertSToF64x2() const;
   Literal convertUToF64x2() const;
+  Literal narrowSToVecI8x16(const Literal& other) const;
+  Literal narrowUToVecI8x16(const Literal& other) const;
+  Literal narrowSToVecI16x8(const Literal& other) const;
+  Literal narrowUToVecI16x8(const Literal& other) const;
+  Literal widenLowSToVecI16x8() const;
+  Literal widenHighSToVecI16x8() const;
+  Literal widenLowUToVecI16x8() const;
+  Literal widenHighUToVecI16x8() const;
+  Literal widenLowSToVecI32x4() const;
+  Literal widenHighSToVecI32x4() const;
+  Literal widenLowUToVecI32x4() const;
+  Literal widenHighUToVecI32x4() const;
 
 private:
   Literal addSatSI8(const Literal& other) const;

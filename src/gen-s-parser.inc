@@ -778,13 +778,29 @@ switch (op[0]) {
             if (strcmp(op, "i16x8.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI16x8); }
             goto parse_error;
           case 'n': {
-            switch (op[8]) {
-              case '\0':
-                if (strcmp(op, "i16x8.ne") == 0) { return makeBinary(s, BinaryOp::NeVecI16x8); }
-                goto parse_error;
-              case 'g':
-                if (strcmp(op, "i16x8.neg") == 0) { return makeUnary(s, UnaryOp::NegVecI16x8); }
-                goto parse_error;
+            switch (op[7]) {
+              case 'a': {
+                switch (op[19]) {
+                  case 's':
+                    if (strcmp(op, "i16x8.narrow_i32x4_s") == 0) { return makeBinary(s, BinaryOp::NarrowSVecI32x4ToVecI16x8); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i16x8.narrow_i32x4_u") == 0) { return makeBinary(s, BinaryOp::NarrowUVecI32x4ToVecI16x8); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'e': {
+                switch (op[8]) {
+                  case '\0':
+                    if (strcmp(op, "i16x8.ne") == 0) { return makeBinary(s, BinaryOp::NeVecI16x8); }
+                    goto parse_error;
+                  case 'g':
+                    if (strcmp(op, "i16x8.neg") == 0) { return makeUnary(s, UnaryOp::NegVecI16x8); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }
@@ -831,6 +847,33 @@ switch (op[0]) {
                       default: goto parse_error;
                     }
                   }
+                  default: goto parse_error;
+                }
+              }
+              default: goto parse_error;
+            }
+          }
+          case 'w': {
+            switch (op[12]) {
+              case 'h': {
+                switch (op[23]) {
+                  case 's':
+                    if (strcmp(op, "i16x8.widen_high_i8x16_s") == 0) { return makeUnary(s, UnaryOp::WidenHighSVecI8x16ToVecI16x8); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i16x8.widen_high_i8x16_u") == 0) { return makeUnary(s, UnaryOp::WidenHighUVecI8x16ToVecI16x8); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'l': {
+                switch (op[22]) {
+                  case 's':
+                    if (strcmp(op, "i16x8.widen_low_i8x16_s") == 0) { return makeUnary(s, UnaryOp::WidenLowSVecI8x16ToVecI16x8); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i16x8.widen_low_i8x16_u") == 0) { return makeUnary(s, UnaryOp::WidenLowUVecI8x16ToVecI16x8); }
+                    goto parse_error;
                   default: goto parse_error;
                 }
               }
@@ -1440,6 +1483,33 @@ switch (op[0]) {
                   case 'u':
                     if (strcmp(op, "i32x4.trunc_sat_f32x4_u") == 0) { return makeUnary(s, UnaryOp::TruncSatUVecF32x4ToVecI32x4); }
                     goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'w': {
+                switch (op[12]) {
+                  case 'h': {
+                    switch (op[23]) {
+                      case 's':
+                        if (strcmp(op, "i32x4.widen_high_i16x8_s") == 0) { return makeUnary(s, UnaryOp::WidenHighSVecI16x8ToVecI32x4); }
+                        goto parse_error;
+                      case 'u':
+                        if (strcmp(op, "i32x4.widen_high_i16x8_u") == 0) { return makeUnary(s, UnaryOp::WidenHighUVecI16x8ToVecI32x4); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'l': {
+                    switch (op[22]) {
+                      case 's':
+                        if (strcmp(op, "i32x4.widen_low_i16x8_s") == 0) { return makeUnary(s, UnaryOp::WidenLowSVecI16x8ToVecI32x4); }
+                        goto parse_error;
+                      case 'u':
+                        if (strcmp(op, "i32x4.widen_low_i16x8_u") == 0) { return makeUnary(s, UnaryOp::WidenLowUVecI16x8ToVecI32x4); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
@@ -2161,13 +2231,29 @@ switch (op[0]) {
             if (strcmp(op, "i8x16.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI8x16); }
             goto parse_error;
           case 'n': {
-            switch (op[8]) {
-              case '\0':
-                if (strcmp(op, "i8x16.ne") == 0) { return makeBinary(s, BinaryOp::NeVecI8x16); }
-                goto parse_error;
-              case 'g':
-                if (strcmp(op, "i8x16.neg") == 0) { return makeUnary(s, UnaryOp::NegVecI8x16); }
-                goto parse_error;
+            switch (op[7]) {
+              case 'a': {
+                switch (op[19]) {
+                  case 's':
+                    if (strcmp(op, "i8x16.narrow_i16x8_s") == 0) { return makeBinary(s, BinaryOp::NarrowSVecI16x8ToVecI8x16); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i8x16.narrow_i16x8_u") == 0) { return makeBinary(s, BinaryOp::NarrowUVecI16x8ToVecI8x16); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'e': {
+                switch (op[8]) {
+                  case '\0':
+                    if (strcmp(op, "i8x16.ne") == 0) { return makeBinary(s, BinaryOp::NeVecI8x16); }
+                    goto parse_error;
+                  case 'g':
+                    if (strcmp(op, "i8x16.neg") == 0) { return makeUnary(s, UnaryOp::NegVecI8x16); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }

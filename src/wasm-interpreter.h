@@ -448,6 +448,22 @@ public:
         return value.convertSToF64x2();
       case ConvertUVecI64x2ToVecF64x2:
         return value.convertUToF64x2();
+      case WidenLowSVecI8x16ToVecI16x8:
+        return value.widenLowSToVecI16x8();
+      case WidenHighSVecI8x16ToVecI16x8:
+        return value.widenHighSToVecI16x8();
+      case WidenLowUVecI8x16ToVecI16x8:
+        return value.widenLowUToVecI16x8();
+      case WidenHighUVecI8x16ToVecI16x8:
+        return value.widenHighUToVecI16x8();
+      case WidenLowSVecI16x8ToVecI32x4:
+        return value.widenLowSToVecI32x4();
+      case WidenHighSVecI16x8ToVecI32x4:
+        return value.widenHighSToVecI32x4();
+      case WidenLowUVecI16x8ToVecI32x4:
+        return value.widenLowUToVecI32x4();
+      case WidenHighUVecI16x8ToVecI32x4:
+        return value.widenHighUToVecI32x4();
       case InvalidUnary:
         WASM_UNREACHABLE();
     }
@@ -788,6 +804,15 @@ public:
         return left.minF64x2(right);
       case MaxVecF64x2:
         return left.maxF64x2(right);
+
+      case NarrowSVecI16x8ToVecI8x16:
+        return left.narrowSToVecI8x16(right);
+      case NarrowUVecI16x8ToVecI8x16:
+        return left.narrowUToVecI8x16(right);
+      case NarrowSVecI32x4ToVecI16x8:
+        return left.narrowSToVecI16x8(right);
+      case NarrowUVecI32x4ToVecI16x8:
+        return left.narrowUToVecI16x8(right);
 
       case InvalidBinary:
         WASM_UNREACHABLE();

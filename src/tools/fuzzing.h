@@ -1946,7 +1946,15 @@ private:
                                     ConvertSVecI32x4ToVecF32x4,
                                     ConvertUVecI32x4ToVecF32x4,
                                     ConvertSVecI64x2ToVecF64x2,
-                                    ConvertUVecI64x2ToVecF64x2),
+                                    ConvertUVecI64x2ToVecF64x2,
+                                    WidenLowSVecI8x16ToVecI16x8,
+                                    WidenHighSVecI8x16ToVecI16x8,
+                                    WidenLowUVecI8x16ToVecI16x8,
+                                    WidenHighUVecI8x16ToVecI16x8,
+                                    WidenLowSVecI16x8ToVecI32x4,
+                                    WidenHighSVecI16x8ToVecI32x4,
+                                    WidenLowUVecI16x8ToVecI32x4,
+                                    WidenHighUVecI16x8ToVecI32x4),
                                make(v128)});
         }
         WASM_UNREACHABLE();
@@ -2161,7 +2169,11 @@ private:
                                  MulVecF64x2,
                                  DivVecF64x2,
                                  MinVecF64x2,
-                                 MaxVecF64x2),
+                                 MaxVecF64x2,
+                                 NarrowSVecI16x8ToVecI8x16,
+                                 NarrowUVecI16x8ToVecI8x16,
+                                 NarrowSVecI32x4ToVecI16x8,
+                                 NarrowUVecI32x4ToVecI16x8),
                             make(v128),
                             make(v128)});
       }
