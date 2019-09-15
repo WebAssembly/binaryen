@@ -262,16 +262,16 @@ extern "C" {
 
 // Core types
 
-BinaryenType BinaryenTypeNone(void) { return none; }
-BinaryenType BinaryenTypeInt32(void) { return i32; }
-BinaryenType BinaryenTypeInt64(void) { return i64; }
-BinaryenType BinaryenTypeFloat32(void) { return f32; }
-BinaryenType BinaryenTypeFloat64(void) { return f64; }
-BinaryenType BinaryenTypeVec128(void) { return v128; }
-BinaryenType BinaryenTypeAnyref(void) { return anyref; }
-BinaryenType BinaryenTypeExnref(void) { return exnref; }
-BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
-BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
+BINARYEN_API BinaryenType BinaryenTypeNone(void) { return none; }
+BINARYEN_API BinaryenType BinaryenTypeInt32(void) { return i32; }
+BINARYEN_API BinaryenType BinaryenTypeInt64(void) { return i64; }
+BINARYEN_API BinaryenType BinaryenTypeFloat32(void) { return f32; }
+BINARYEN_API BinaryenType BinaryenTypeFloat64(void) { return f64; }
+BINARYEN_API BinaryenType BinaryenTypeVec128(void) { return v128; }
+BINARYEN_API BinaryenType BinaryenTypeAnyref(void) { return anyref; }
+BINARYEN_API BinaryenType BinaryenTypeExnref(void) { return exnref; }
+BINARYEN_API BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
+BINARYEN_API BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 
 WASM_DEPRECATED BinaryenType BinaryenNone(void) { return none; }
 WASM_DEPRECATED BinaryenType BinaryenInt32(void) { return i32; }
@@ -282,153 +282,193 @@ WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
 // Expression ids
 
-BinaryenExpressionId BinaryenInvalidId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenInvalidId(void) {
   return Expression::Id::InvalidId;
 }
-BinaryenExpressionId BinaryenBlockId(void) { return Expression::Id::BlockId; }
-BinaryenExpressionId BinaryenIfId(void) { return Expression::Id::IfId; }
-BinaryenExpressionId BinaryenLoopId(void) { return Expression::Id::LoopId; }
-BinaryenExpressionId BinaryenBreakId(void) { return Expression::Id::BreakId; }
-BinaryenExpressionId BinaryenSwitchId(void) { return Expression::Id::SwitchId; }
-BinaryenExpressionId BinaryenCallId(void) { return Expression::Id::CallId; }
-BinaryenExpressionId BinaryenCallIndirectId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenBlockId(void) {
+  return Expression::Id::BlockId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenIfId(void) {
+  return Expression::Id::IfId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenLoopId(void) {
+  return Expression::Id::LoopId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenBreakId(void) {
+  return Expression::Id::BreakId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenSwitchId(void) {
+  return Expression::Id::SwitchId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenCallId(void) {
+  return Expression::Id::CallId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenCallIndirectId(void) {
   return Expression::Id::CallIndirectId;
 }
-BinaryenExpressionId BinaryenLocalGetId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenLocalGetId(void) {
   return Expression::Id::LocalGetId;
 }
-BinaryenExpressionId BinaryenLocalSetId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenLocalSetId(void) {
   return Expression::Id::LocalSetId;
 }
-BinaryenExpressionId BinaryenGlobalGetId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenGlobalGetId(void) {
   return Expression::Id::GlobalGetId;
 }
-BinaryenExpressionId BinaryenGlobalSetId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenGlobalSetId(void) {
   return Expression::Id::GlobalSetId;
 }
-BinaryenExpressionId BinaryenLoadId(void) { return Expression::Id::LoadId; }
-BinaryenExpressionId BinaryenStoreId(void) { return Expression::Id::StoreId; }
-BinaryenExpressionId BinaryenConstId(void) { return Expression::Id::ConstId; }
-BinaryenExpressionId BinaryenUnaryId(void) { return Expression::Id::UnaryId; }
-BinaryenExpressionId BinaryenBinaryId(void) { return Expression::Id::BinaryId; }
-BinaryenExpressionId BinaryenSelectId(void) { return Expression::Id::SelectId; }
-BinaryenExpressionId BinaryenDropId(void) { return Expression::Id::DropId; }
-BinaryenExpressionId BinaryenReturnId(void) { return Expression::Id::ReturnId; }
-BinaryenExpressionId BinaryenHostId(void) { return Expression::Id::HostId; }
-BinaryenExpressionId BinaryenNopId(void) { return Expression::Id::NopId; }
-BinaryenExpressionId BinaryenUnreachableId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenLoadId(void) {
+  return Expression::Id::LoadId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenStoreId(void) {
+  return Expression::Id::StoreId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenConstId(void) {
+  return Expression::Id::ConstId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenUnaryId(void) {
+  return Expression::Id::UnaryId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenBinaryId(void) {
+  return Expression::Id::BinaryId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenSelectId(void) {
+  return Expression::Id::SelectId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenDropId(void) {
+  return Expression::Id::DropId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenReturnId(void) {
+  return Expression::Id::ReturnId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenHostId(void) {
+  return Expression::Id::HostId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenNopId(void) {
+  return Expression::Id::NopId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenUnreachableId(void) {
   return Expression::Id::UnreachableId;
 }
-BinaryenExpressionId BinaryenAtomicCmpxchgId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenAtomicCmpxchgId(void) {
   return Expression::Id::AtomicCmpxchgId;
 }
-BinaryenExpressionId BinaryenAtomicRMWId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenAtomicRMWId(void) {
   return Expression::Id::AtomicRMWId;
 }
-BinaryenExpressionId BinaryenAtomicWaitId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenAtomicWaitId(void) {
   return Expression::Id::AtomicWaitId;
 }
-BinaryenExpressionId BinaryenAtomicNotifyId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenAtomicNotifyId(void) {
   return Expression::Id::AtomicNotifyId;
 }
-BinaryenExpressionId BinaryenAtomicFenceId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenAtomicFenceId(void) {
   return Expression::Id::AtomicFenceId;
 }
-BinaryenExpressionId BinaryenSIMDExtractId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenSIMDExtractId(void) {
   return Expression::Id::SIMDExtractId;
 }
-BinaryenExpressionId BinaryenSIMDReplaceId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenSIMDReplaceId(void) {
   return Expression::Id::SIMDReplaceId;
 }
-BinaryenExpressionId BinaryenSIMDShuffleId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenSIMDShuffleId(void) {
   return Expression::Id::SIMDShuffleId;
 }
-BinaryenExpressionId BinaryenSIMDTernaryId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenSIMDTernaryId(void) {
   return Expression::Id::SIMDTernaryId;
 }
-BinaryenExpressionId BinaryenSIMDShiftId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenSIMDShiftId(void) {
   return Expression::Id::SIMDShiftId;
 }
-BinaryenExpressionId BinaryenMemoryInitId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenMemoryInitId(void) {
   return Expression::Id::MemoryInitId;
 }
-BinaryenExpressionId BinaryenDataDropId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenDataDropId(void) {
   return Expression::Id::DataDropId;
 }
-BinaryenExpressionId BinaryenMemoryCopyId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenMemoryCopyId(void) {
   return Expression::Id::MemoryCopyId;
 }
-BinaryenExpressionId BinaryenMemoryFillId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenMemoryFillId(void) {
   return Expression::Id::MemoryFillId;
 }
-BinaryenExpressionId BinaryenTryId(void) { return Expression::Id::TryId; }
-BinaryenExpressionId BinaryenThrowId(void) { return Expression::Id::ThrowId; }
-BinaryenExpressionId BinaryenRethrowId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenTryId(void) {
+  return Expression::Id::TryId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenThrowId(void) {
+  return Expression::Id::ThrowId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenRethrowId(void) {
   return Expression::Id::RethrowId;
 }
-BinaryenExpressionId BinaryenBrOnExnId(void) {
+BINARYEN_API BinaryenExpressionId BinaryenBrOnExnId(void) {
   return Expression::Id::BrOnExnId;
 }
-BinaryenExpressionId BinaryenPushId(void) { return Expression::Id::PushId; }
-BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
+BINARYEN_API BinaryenExpressionId BinaryenPushId(void) {
+  return Expression::Id::PushId;
+}
+BINARYEN_API BinaryenExpressionId BinaryenPopId(void) {
+  return Expression::Id::PopId;
+}
 
 // External kinds
 
-BinaryenExternalKind BinaryenExternalFunction(void) {
+BINARYEN_API BinaryenExternalKind BinaryenExternalFunction(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Function);
 }
-BinaryenExternalKind BinaryenExternalTable(void) {
+BINARYEN_API BinaryenExternalKind BinaryenExternalTable(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Table);
 }
-BinaryenExternalKind BinaryenExternalMemory(void) {
+BINARYEN_API BinaryenExternalKind BinaryenExternalMemory(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Memory);
 }
-BinaryenExternalKind BinaryenExternalGlobal(void) {
+BINARYEN_API BinaryenExternalKind BinaryenExternalGlobal(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Global);
 }
-BinaryenExternalKind BinaryenExternalEvent(void) {
+BINARYEN_API BinaryenExternalKind BinaryenExternalEvent(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Event);
 }
 
 // Features
 
-BinaryenFeatures BinaryenFeatureMVP(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureMVP(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::MVP);
 }
-BinaryenFeatures BinaryenFeatureAtomics(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureAtomics(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::Atomics);
 }
-BinaryenFeatures BinaryenFeatureBulkMemory(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureBulkMemory(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::BulkMemory);
 }
-BinaryenFeatures BinaryenFeatureMutableGlobals(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureMutableGlobals(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::MutableGlobals);
 }
-BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::TruncSat);
 }
-BinaryenFeatures BinaryenFeatureSignExt(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureSignExt(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::SignExt);
 }
-BinaryenFeatures BinaryenFeatureSIMD128(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureSIMD128(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::SIMD);
 }
-BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::ExceptionHandling);
 }
-BinaryenFeatures BinaryenFeatureTailCall(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::TailCall);
 }
-BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::ReferenceTypes);
 }
-BinaryenFeatures BinaryenFeatureAll(void) {
+BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Feature::All);
 }
 
 // Modules
 
-BinaryenModuleRef BinaryenModuleCreate(void) {
+BINARYEN_API BinaryenModuleRef BinaryenModuleCreate(void) {
   if (tracing) {
     std::cout << "  the_module = BinaryenModuleCreate();\n";
     std::cout << "  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);\n";
@@ -437,7 +477,7 @@ BinaryenModuleRef BinaryenModuleCreate(void) {
 
   return new Module();
 }
-void BinaryenModuleDispose(BinaryenModuleRef module) {
+BINARYEN_API void BinaryenModuleDispose(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleDispose(the_module);\n";
     std::cout << "  functionTypes.clear();\n";
@@ -461,11 +501,12 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
 
 // Function types
 
-BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module,
-                                                const char* name,
-                                                BinaryenType result,
-                                                BinaryenType* paramTypes,
-                                                BinaryenIndex numParams) {
+BINARYEN_API BinaryenFunctionTypeRef
+BinaryenAddFunctionType(BinaryenModuleRef module,
+                        const char* name,
+                        BinaryenType result,
+                        BinaryenType* paramTypes,
+                        BinaryenIndex numParams) {
   auto* wasm = (Module*)module;
   auto ret = make_unique<FunctionType>();
   if (name) {
@@ -506,7 +547,8 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module,
   std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
   return wasm->addFunctionType(std::move(ret));
 }
-void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name) {
+BINARYEN_API void BinaryenRemoveFunctionType(BinaryenModuleRef module,
+                                             const char* name) {
   if (tracing) {
     std::cout << "  BinaryenRemoveFunctionType(the_module, ";
     traceNameOrNULL(name);
@@ -524,404 +566,495 @@ void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name) {
   }
 }
 
-BinaryenLiteral BinaryenLiteralInt32(int32_t x) {
+BINARYEN_API BinaryenLiteral BinaryenLiteralInt32(int32_t x) {
   return toBinaryenLiteral(Literal(x));
 }
-BinaryenLiteral BinaryenLiteralInt64(int64_t x) {
+BINARYEN_API BinaryenLiteral BinaryenLiteralInt64(int64_t x) {
   return toBinaryenLiteral(Literal(x));
 }
-BinaryenLiteral BinaryenLiteralFloat32(float x) {
+BINARYEN_API BinaryenLiteral BinaryenLiteralFloat32(float x) {
   return toBinaryenLiteral(Literal(x));
 }
-BinaryenLiteral BinaryenLiteralFloat64(double x) {
+BINARYEN_API BinaryenLiteral BinaryenLiteralFloat64(double x) {
   return toBinaryenLiteral(Literal(x));
 }
-BinaryenLiteral BinaryenLiteralVec128(const uint8_t x[16]) {
+BINARYEN_API BinaryenLiteral BinaryenLiteralVec128(const uint8_t x[16]) {
   return toBinaryenLiteral(Literal(x));
 }
-BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x) {
+BINARYEN_API BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x) {
   return toBinaryenLiteral(Literal(x).castToF32());
 }
-BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x) {
+BINARYEN_API BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x) {
   return toBinaryenLiteral(Literal(x).castToF64());
 }
 
 // Expressions
 
-BinaryenOp BinaryenClzInt32(void) { return ClzInt32; }
-BinaryenOp BinaryenCtzInt32(void) { return CtzInt32; }
-BinaryenOp BinaryenPopcntInt32(void) { return PopcntInt32; }
-BinaryenOp BinaryenNegFloat32(void) { return NegFloat32; }
-BinaryenOp BinaryenAbsFloat32(void) { return AbsFloat32; }
-BinaryenOp BinaryenCeilFloat32(void) { return CeilFloat32; }
-BinaryenOp BinaryenFloorFloat32(void) { return FloorFloat32; }
-BinaryenOp BinaryenTruncFloat32(void) { return TruncFloat32; }
-BinaryenOp BinaryenNearestFloat32(void) { return NearestFloat32; }
-BinaryenOp BinaryenSqrtFloat32(void) { return SqrtFloat32; }
-BinaryenOp BinaryenEqZInt32(void) { return EqZInt32; }
-BinaryenOp BinaryenClzInt64(void) { return ClzInt64; }
-BinaryenOp BinaryenCtzInt64(void) { return CtzInt64; }
-BinaryenOp BinaryenPopcntInt64(void) { return PopcntInt64; }
-BinaryenOp BinaryenNegFloat64(void) { return NegFloat64; }
-BinaryenOp BinaryenAbsFloat64(void) { return AbsFloat64; }
-BinaryenOp BinaryenCeilFloat64(void) { return CeilFloat64; }
-BinaryenOp BinaryenFloorFloat64(void) { return FloorFloat64; }
-BinaryenOp BinaryenTruncFloat64(void) { return TruncFloat64; }
-BinaryenOp BinaryenNearestFloat64(void) { return NearestFloat64; }
-BinaryenOp BinaryenSqrtFloat64(void) { return SqrtFloat64; }
-BinaryenOp BinaryenEqZInt64(void) { return EqZInt64; }
-BinaryenOp BinaryenExtendSInt32(void) { return ExtendSInt32; }
-BinaryenOp BinaryenExtendUInt32(void) { return ExtendUInt32; }
-BinaryenOp BinaryenWrapInt64(void) { return WrapInt64; }
-BinaryenOp BinaryenTruncSFloat32ToInt32(void) { return TruncSFloat32ToInt32; }
-BinaryenOp BinaryenTruncSFloat32ToInt64(void) { return TruncSFloat32ToInt64; }
-BinaryenOp BinaryenTruncUFloat32ToInt32(void) { return TruncUFloat32ToInt32; }
-BinaryenOp BinaryenTruncUFloat32ToInt64(void) { return TruncUFloat32ToInt64; }
-BinaryenOp BinaryenTruncSFloat64ToInt32(void) { return TruncSFloat64ToInt32; }
-BinaryenOp BinaryenTruncSFloat64ToInt64(void) { return TruncSFloat64ToInt64; }
-BinaryenOp BinaryenTruncUFloat64ToInt32(void) { return TruncUFloat64ToInt32; }
-BinaryenOp BinaryenTruncUFloat64ToInt64(void) { return TruncUFloat64ToInt64; }
-BinaryenOp BinaryenReinterpretFloat32(void) { return ReinterpretFloat32; }
-BinaryenOp BinaryenReinterpretFloat64(void) { return ReinterpretFloat64; }
-BinaryenOp BinaryenExtendS8Int32(void) { return ExtendS8Int32; }
-BinaryenOp BinaryenExtendS16Int32(void) { return ExtendS16Int32; }
-BinaryenOp BinaryenExtendS8Int64(void) { return ExtendS8Int64; }
-BinaryenOp BinaryenExtendS16Int64(void) { return ExtendS16Int64; }
-BinaryenOp BinaryenExtendS32Int64(void) { return ExtendS32Int64; }
-BinaryenOp BinaryenConvertSInt32ToFloat32(void) {
+BINARYEN_API BinaryenOp BinaryenClzInt32(void) { return ClzInt32; }
+BINARYEN_API BinaryenOp BinaryenCtzInt32(void) { return CtzInt32; }
+BINARYEN_API BinaryenOp BinaryenPopcntInt32(void) { return PopcntInt32; }
+BINARYEN_API BinaryenOp BinaryenNegFloat32(void) { return NegFloat32; }
+BINARYEN_API BinaryenOp BinaryenAbsFloat32(void) { return AbsFloat32; }
+BINARYEN_API BinaryenOp BinaryenCeilFloat32(void) { return CeilFloat32; }
+BINARYEN_API BinaryenOp BinaryenFloorFloat32(void) { return FloorFloat32; }
+BINARYEN_API BinaryenOp BinaryenTruncFloat32(void) { return TruncFloat32; }
+BINARYEN_API BinaryenOp BinaryenNearestFloat32(void) { return NearestFloat32; }
+BINARYEN_API BinaryenOp BinaryenSqrtFloat32(void) { return SqrtFloat32; }
+BINARYEN_API BinaryenOp BinaryenEqZInt32(void) { return EqZInt32; }
+BINARYEN_API BinaryenOp BinaryenClzInt64(void) { return ClzInt64; }
+BINARYEN_API BinaryenOp BinaryenCtzInt64(void) { return CtzInt64; }
+BINARYEN_API BinaryenOp BinaryenPopcntInt64(void) { return PopcntInt64; }
+BINARYEN_API BinaryenOp BinaryenNegFloat64(void) { return NegFloat64; }
+BINARYEN_API BinaryenOp BinaryenAbsFloat64(void) { return AbsFloat64; }
+BINARYEN_API BinaryenOp BinaryenCeilFloat64(void) { return CeilFloat64; }
+BINARYEN_API BinaryenOp BinaryenFloorFloat64(void) { return FloorFloat64; }
+BINARYEN_API BinaryenOp BinaryenTruncFloat64(void) { return TruncFloat64; }
+BINARYEN_API BinaryenOp BinaryenNearestFloat64(void) { return NearestFloat64; }
+BINARYEN_API BinaryenOp BinaryenSqrtFloat64(void) { return SqrtFloat64; }
+BINARYEN_API BinaryenOp BinaryenEqZInt64(void) { return EqZInt64; }
+BINARYEN_API BinaryenOp BinaryenExtendSInt32(void) { return ExtendSInt32; }
+BINARYEN_API BinaryenOp BinaryenExtendUInt32(void) { return ExtendUInt32; }
+BINARYEN_API BinaryenOp BinaryenWrapInt64(void) { return WrapInt64; }
+BINARYEN_API BinaryenOp BinaryenTruncSFloat32ToInt32(void) {
+  return TruncSFloat32ToInt32;
+}
+BINARYEN_API BinaryenOp BinaryenTruncSFloat32ToInt64(void) {
+  return TruncSFloat32ToInt64;
+}
+BINARYEN_API BinaryenOp BinaryenTruncUFloat32ToInt32(void) {
+  return TruncUFloat32ToInt32;
+}
+BINARYEN_API BinaryenOp BinaryenTruncUFloat32ToInt64(void) {
+  return TruncUFloat32ToInt64;
+}
+BINARYEN_API BinaryenOp BinaryenTruncSFloat64ToInt32(void) {
+  return TruncSFloat64ToInt32;
+}
+BINARYEN_API BinaryenOp BinaryenTruncSFloat64ToInt64(void) {
+  return TruncSFloat64ToInt64;
+}
+BINARYEN_API BinaryenOp BinaryenTruncUFloat64ToInt32(void) {
+  return TruncUFloat64ToInt32;
+}
+BINARYEN_API BinaryenOp BinaryenTruncUFloat64ToInt64(void) {
+  return TruncUFloat64ToInt64;
+}
+BINARYEN_API BinaryenOp BinaryenReinterpretFloat32(void) {
+  return ReinterpretFloat32;
+}
+BINARYEN_API BinaryenOp BinaryenReinterpretFloat64(void) {
+  return ReinterpretFloat64;
+}
+BINARYEN_API BinaryenOp BinaryenExtendS8Int32(void) { return ExtendS8Int32; }
+BINARYEN_API BinaryenOp BinaryenExtendS16Int32(void) { return ExtendS16Int32; }
+BINARYEN_API BinaryenOp BinaryenExtendS8Int64(void) { return ExtendS8Int64; }
+BINARYEN_API BinaryenOp BinaryenExtendS16Int64(void) { return ExtendS16Int64; }
+BINARYEN_API BinaryenOp BinaryenExtendS32Int64(void) { return ExtendS32Int64; }
+BINARYEN_API BinaryenOp BinaryenConvertSInt32ToFloat32(void) {
   return ConvertSInt32ToFloat32;
 }
-BinaryenOp BinaryenConvertSInt32ToFloat64(void) {
+BINARYEN_API BinaryenOp BinaryenConvertSInt32ToFloat64(void) {
   return ConvertSInt32ToFloat64;
 }
-BinaryenOp BinaryenConvertUInt32ToFloat32(void) {
+BINARYEN_API BinaryenOp BinaryenConvertUInt32ToFloat32(void) {
   return ConvertUInt32ToFloat32;
 }
-BinaryenOp BinaryenConvertUInt32ToFloat64(void) {
+BINARYEN_API BinaryenOp BinaryenConvertUInt32ToFloat64(void) {
   return ConvertUInt32ToFloat64;
 }
-BinaryenOp BinaryenConvertSInt64ToFloat32(void) {
+BINARYEN_API BinaryenOp BinaryenConvertSInt64ToFloat32(void) {
   return ConvertSInt64ToFloat32;
 }
-BinaryenOp BinaryenConvertSInt64ToFloat64(void) {
+BINARYEN_API BinaryenOp BinaryenConvertSInt64ToFloat64(void) {
   return ConvertSInt64ToFloat64;
 }
-BinaryenOp BinaryenConvertUInt64ToFloat32(void) {
+BINARYEN_API BinaryenOp BinaryenConvertUInt64ToFloat32(void) {
   return ConvertUInt64ToFloat32;
 }
-BinaryenOp BinaryenConvertUInt64ToFloat64(void) {
+BINARYEN_API BinaryenOp BinaryenConvertUInt64ToFloat64(void) {
   return ConvertUInt64ToFloat64;
 }
-BinaryenOp BinaryenPromoteFloat32(void) { return PromoteFloat32; }
-BinaryenOp BinaryenDemoteFloat64(void) { return DemoteFloat64; }
-BinaryenOp BinaryenReinterpretInt32(void) { return ReinterpretInt32; }
-BinaryenOp BinaryenReinterpretInt64(void) { return ReinterpretInt64; }
-BinaryenOp BinaryenAddInt32(void) { return AddInt32; }
-BinaryenOp BinaryenSubInt32(void) { return SubInt32; }
-BinaryenOp BinaryenMulInt32(void) { return MulInt32; }
-BinaryenOp BinaryenDivSInt32(void) { return DivSInt32; }
-BinaryenOp BinaryenDivUInt32(void) { return DivUInt32; }
-BinaryenOp BinaryenRemSInt32(void) { return RemSInt32; }
-BinaryenOp BinaryenRemUInt32(void) { return RemUInt32; }
-BinaryenOp BinaryenAndInt32(void) { return AndInt32; }
-BinaryenOp BinaryenOrInt32(void) { return OrInt32; }
-BinaryenOp BinaryenXorInt32(void) { return XorInt32; }
-BinaryenOp BinaryenShlInt32(void) { return ShlInt32; }
-BinaryenOp BinaryenShrUInt32(void) { return ShrUInt32; }
-BinaryenOp BinaryenShrSInt32(void) { return ShrSInt32; }
-BinaryenOp BinaryenRotLInt32(void) { return RotLInt32; }
-BinaryenOp BinaryenRotRInt32(void) { return RotRInt32; }
-BinaryenOp BinaryenEqInt32(void) { return EqInt32; }
-BinaryenOp BinaryenNeInt32(void) { return NeInt32; }
-BinaryenOp BinaryenLtSInt32(void) { return LtSInt32; }
-BinaryenOp BinaryenLtUInt32(void) { return LtUInt32; }
-BinaryenOp BinaryenLeSInt32(void) { return LeSInt32; }
-BinaryenOp BinaryenLeUInt32(void) { return LeUInt32; }
-BinaryenOp BinaryenGtSInt32(void) { return GtSInt32; }
-BinaryenOp BinaryenGtUInt32(void) { return GtUInt32; }
-BinaryenOp BinaryenGeSInt32(void) { return GeSInt32; }
-BinaryenOp BinaryenGeUInt32(void) { return GeUInt32; }
-BinaryenOp BinaryenAddInt64(void) { return AddInt64; }
-BinaryenOp BinaryenSubInt64(void) { return SubInt64; }
-BinaryenOp BinaryenMulInt64(void) { return MulInt64; }
-BinaryenOp BinaryenDivSInt64(void) { return DivSInt64; }
-BinaryenOp BinaryenDivUInt64(void) { return DivUInt64; }
-BinaryenOp BinaryenRemSInt64(void) { return RemSInt64; }
-BinaryenOp BinaryenRemUInt64(void) { return RemUInt64; }
-BinaryenOp BinaryenAndInt64(void) { return AndInt64; }
-BinaryenOp BinaryenOrInt64(void) { return OrInt64; }
-BinaryenOp BinaryenXorInt64(void) { return XorInt64; }
-BinaryenOp BinaryenShlInt64(void) { return ShlInt64; }
-BinaryenOp BinaryenShrUInt64(void) { return ShrUInt64; }
-BinaryenOp BinaryenShrSInt64(void) { return ShrSInt64; }
-BinaryenOp BinaryenRotLInt64(void) { return RotLInt64; }
-BinaryenOp BinaryenRotRInt64(void) { return RotRInt64; }
-BinaryenOp BinaryenEqInt64(void) { return EqInt64; }
-BinaryenOp BinaryenNeInt64(void) { return NeInt64; }
-BinaryenOp BinaryenLtSInt64(void) { return LtSInt64; }
-BinaryenOp BinaryenLtUInt64(void) { return LtUInt64; }
-BinaryenOp BinaryenLeSInt64(void) { return LeSInt64; }
-BinaryenOp BinaryenLeUInt64(void) { return LeUInt64; }
-BinaryenOp BinaryenGtSInt64(void) { return GtSInt64; }
-BinaryenOp BinaryenGtUInt64(void) { return GtUInt64; }
-BinaryenOp BinaryenGeSInt64(void) { return GeSInt64; }
-BinaryenOp BinaryenGeUInt64(void) { return GeUInt64; }
-BinaryenOp BinaryenAddFloat32(void) { return AddFloat32; }
-BinaryenOp BinaryenSubFloat32(void) { return SubFloat32; }
-BinaryenOp BinaryenMulFloat32(void) { return MulFloat32; }
-BinaryenOp BinaryenDivFloat32(void) { return DivFloat32; }
-BinaryenOp BinaryenCopySignFloat32(void) { return CopySignFloat32; }
-BinaryenOp BinaryenMinFloat32(void) { return MinFloat32; }
-BinaryenOp BinaryenMaxFloat32(void) { return MaxFloat32; }
-BinaryenOp BinaryenEqFloat32(void) { return EqFloat32; }
-BinaryenOp BinaryenNeFloat32(void) { return NeFloat32; }
-BinaryenOp BinaryenLtFloat32(void) { return LtFloat32; }
-BinaryenOp BinaryenLeFloat32(void) { return LeFloat32; }
-BinaryenOp BinaryenGtFloat32(void) { return GtFloat32; }
-BinaryenOp BinaryenGeFloat32(void) { return GeFloat32; }
-BinaryenOp BinaryenAddFloat64(void) { return AddFloat64; }
-BinaryenOp BinaryenSubFloat64(void) { return SubFloat64; }
-BinaryenOp BinaryenMulFloat64(void) { return MulFloat64; }
-BinaryenOp BinaryenDivFloat64(void) { return DivFloat64; }
-BinaryenOp BinaryenCopySignFloat64(void) { return CopySignFloat64; }
-BinaryenOp BinaryenMinFloat64(void) { return MinFloat64; }
-BinaryenOp BinaryenMaxFloat64(void) { return MaxFloat64; }
-BinaryenOp BinaryenEqFloat64(void) { return EqFloat64; }
-BinaryenOp BinaryenNeFloat64(void) { return NeFloat64; }
-BinaryenOp BinaryenLtFloat64(void) { return LtFloat64; }
-BinaryenOp BinaryenLeFloat64(void) { return LeFloat64; }
-BinaryenOp BinaryenGtFloat64(void) { return GtFloat64; }
-BinaryenOp BinaryenGeFloat64(void) { return GeFloat64; }
-BinaryenOp BinaryenMemorySize(void) { return MemorySize; }
-BinaryenOp BinaryenMemoryGrow(void) { return MemoryGrow; }
-BinaryenOp BinaryenAtomicRMWAdd(void) { return AtomicRMWOp::Add; }
-BinaryenOp BinaryenAtomicRMWSub(void) { return AtomicRMWOp::Sub; }
-BinaryenOp BinaryenAtomicRMWAnd(void) { return AtomicRMWOp::And; }
-BinaryenOp BinaryenAtomicRMWOr(void) { return AtomicRMWOp::Or; }
-BinaryenOp BinaryenAtomicRMWXor(void) { return AtomicRMWOp::Xor; }
-BinaryenOp BinaryenAtomicRMWXchg(void) { return AtomicRMWOp::Xchg; }
-BinaryenOp BinaryenTruncSatSFloat32ToInt32(void) {
+BINARYEN_API BinaryenOp BinaryenPromoteFloat32(void) { return PromoteFloat32; }
+BINARYEN_API BinaryenOp BinaryenDemoteFloat64(void) { return DemoteFloat64; }
+BINARYEN_API BinaryenOp BinaryenReinterpretInt32(void) {
+  return ReinterpretInt32;
+}
+BINARYEN_API BinaryenOp BinaryenReinterpretInt64(void) {
+  return ReinterpretInt64;
+}
+BINARYEN_API BinaryenOp BinaryenAddInt32(void) { return AddInt32; }
+BINARYEN_API BinaryenOp BinaryenSubInt32(void) { return SubInt32; }
+BINARYEN_API BinaryenOp BinaryenMulInt32(void) { return MulInt32; }
+BINARYEN_API BinaryenOp BinaryenDivSInt32(void) { return DivSInt32; }
+BINARYEN_API BinaryenOp BinaryenDivUInt32(void) { return DivUInt32; }
+BINARYEN_API BinaryenOp BinaryenRemSInt32(void) { return RemSInt32; }
+BINARYEN_API BinaryenOp BinaryenRemUInt32(void) { return RemUInt32; }
+BINARYEN_API BinaryenOp BinaryenAndInt32(void) { return AndInt32; }
+BINARYEN_API BinaryenOp BinaryenOrInt32(void) { return OrInt32; }
+BINARYEN_API BinaryenOp BinaryenXorInt32(void) { return XorInt32; }
+BINARYEN_API BinaryenOp BinaryenShlInt32(void) { return ShlInt32; }
+BINARYEN_API BinaryenOp BinaryenShrUInt32(void) { return ShrUInt32; }
+BINARYEN_API BinaryenOp BinaryenShrSInt32(void) { return ShrSInt32; }
+BINARYEN_API BinaryenOp BinaryenRotLInt32(void) { return RotLInt32; }
+BINARYEN_API BinaryenOp BinaryenRotRInt32(void) { return RotRInt32; }
+BINARYEN_API BinaryenOp BinaryenEqInt32(void) { return EqInt32; }
+BINARYEN_API BinaryenOp BinaryenNeInt32(void) { return NeInt32; }
+BINARYEN_API BinaryenOp BinaryenLtSInt32(void) { return LtSInt32; }
+BINARYEN_API BinaryenOp BinaryenLtUInt32(void) { return LtUInt32; }
+BINARYEN_API BinaryenOp BinaryenLeSInt32(void) { return LeSInt32; }
+BINARYEN_API BinaryenOp BinaryenLeUInt32(void) { return LeUInt32; }
+BINARYEN_API BinaryenOp BinaryenGtSInt32(void) { return GtSInt32; }
+BINARYEN_API BinaryenOp BinaryenGtUInt32(void) { return GtUInt32; }
+BINARYEN_API BinaryenOp BinaryenGeSInt32(void) { return GeSInt32; }
+BINARYEN_API BinaryenOp BinaryenGeUInt32(void) { return GeUInt32; }
+BINARYEN_API BinaryenOp BinaryenAddInt64(void) { return AddInt64; }
+BINARYEN_API BinaryenOp BinaryenSubInt64(void) { return SubInt64; }
+BINARYEN_API BinaryenOp BinaryenMulInt64(void) { return MulInt64; }
+BINARYEN_API BinaryenOp BinaryenDivSInt64(void) { return DivSInt64; }
+BINARYEN_API BinaryenOp BinaryenDivUInt64(void) { return DivUInt64; }
+BINARYEN_API BinaryenOp BinaryenRemSInt64(void) { return RemSInt64; }
+BINARYEN_API BinaryenOp BinaryenRemUInt64(void) { return RemUInt64; }
+BINARYEN_API BinaryenOp BinaryenAndInt64(void) { return AndInt64; }
+BINARYEN_API BinaryenOp BinaryenOrInt64(void) { return OrInt64; }
+BINARYEN_API BinaryenOp BinaryenXorInt64(void) { return XorInt64; }
+BINARYEN_API BinaryenOp BinaryenShlInt64(void) { return ShlInt64; }
+BINARYEN_API BinaryenOp BinaryenShrUInt64(void) { return ShrUInt64; }
+BINARYEN_API BinaryenOp BinaryenShrSInt64(void) { return ShrSInt64; }
+BINARYEN_API BinaryenOp BinaryenRotLInt64(void) { return RotLInt64; }
+BINARYEN_API BinaryenOp BinaryenRotRInt64(void) { return RotRInt64; }
+BINARYEN_API BinaryenOp BinaryenEqInt64(void) { return EqInt64; }
+BINARYEN_API BinaryenOp BinaryenNeInt64(void) { return NeInt64; }
+BINARYEN_API BinaryenOp BinaryenLtSInt64(void) { return LtSInt64; }
+BINARYEN_API BinaryenOp BinaryenLtUInt64(void) { return LtUInt64; }
+BINARYEN_API BinaryenOp BinaryenLeSInt64(void) { return LeSInt64; }
+BINARYEN_API BinaryenOp BinaryenLeUInt64(void) { return LeUInt64; }
+BINARYEN_API BinaryenOp BinaryenGtSInt64(void) { return GtSInt64; }
+BINARYEN_API BinaryenOp BinaryenGtUInt64(void) { return GtUInt64; }
+BINARYEN_API BinaryenOp BinaryenGeSInt64(void) { return GeSInt64; }
+BINARYEN_API BinaryenOp BinaryenGeUInt64(void) { return GeUInt64; }
+BINARYEN_API BinaryenOp BinaryenAddFloat32(void) { return AddFloat32; }
+BINARYEN_API BinaryenOp BinaryenSubFloat32(void) { return SubFloat32; }
+BINARYEN_API BinaryenOp BinaryenMulFloat32(void) { return MulFloat32; }
+BINARYEN_API BinaryenOp BinaryenDivFloat32(void) { return DivFloat32; }
+BINARYEN_API BinaryenOp BinaryenCopySignFloat32(void) {
+  return CopySignFloat32;
+}
+BINARYEN_API BinaryenOp BinaryenMinFloat32(void) { return MinFloat32; }
+BINARYEN_API BinaryenOp BinaryenMaxFloat32(void) { return MaxFloat32; }
+BINARYEN_API BinaryenOp BinaryenEqFloat32(void) { return EqFloat32; }
+BINARYEN_API BinaryenOp BinaryenNeFloat32(void) { return NeFloat32; }
+BINARYEN_API BinaryenOp BinaryenLtFloat32(void) { return LtFloat32; }
+BINARYEN_API BinaryenOp BinaryenLeFloat32(void) { return LeFloat32; }
+BINARYEN_API BinaryenOp BinaryenGtFloat32(void) { return GtFloat32; }
+BINARYEN_API BinaryenOp BinaryenGeFloat32(void) { return GeFloat32; }
+BINARYEN_API BinaryenOp BinaryenAddFloat64(void) { return AddFloat64; }
+BINARYEN_API BinaryenOp BinaryenSubFloat64(void) { return SubFloat64; }
+BINARYEN_API BinaryenOp BinaryenMulFloat64(void) { return MulFloat64; }
+BINARYEN_API BinaryenOp BinaryenDivFloat64(void) { return DivFloat64; }
+BINARYEN_API BinaryenOp BinaryenCopySignFloat64(void) {
+  return CopySignFloat64;
+}
+BINARYEN_API BinaryenOp BinaryenMinFloat64(void) { return MinFloat64; }
+BINARYEN_API BinaryenOp BinaryenMaxFloat64(void) { return MaxFloat64; }
+BINARYEN_API BinaryenOp BinaryenEqFloat64(void) { return EqFloat64; }
+BINARYEN_API BinaryenOp BinaryenNeFloat64(void) { return NeFloat64; }
+BINARYEN_API BinaryenOp BinaryenLtFloat64(void) { return LtFloat64; }
+BINARYEN_API BinaryenOp BinaryenLeFloat64(void) { return LeFloat64; }
+BINARYEN_API BinaryenOp BinaryenGtFloat64(void) { return GtFloat64; }
+BINARYEN_API BinaryenOp BinaryenGeFloat64(void) { return GeFloat64; }
+BINARYEN_API BinaryenOp BinaryenMemorySize(void) { return MemorySize; }
+BINARYEN_API BinaryenOp BinaryenMemoryGrow(void) { return MemoryGrow; }
+BINARYEN_API BinaryenOp BinaryenAtomicRMWAdd(void) { return AtomicRMWOp::Add; }
+BINARYEN_API BinaryenOp BinaryenAtomicRMWSub(void) { return AtomicRMWOp::Sub; }
+BINARYEN_API BinaryenOp BinaryenAtomicRMWAnd(void) { return AtomicRMWOp::And; }
+BINARYEN_API BinaryenOp BinaryenAtomicRMWOr(void) { return AtomicRMWOp::Or; }
+BINARYEN_API BinaryenOp BinaryenAtomicRMWXor(void) { return AtomicRMWOp::Xor; }
+BINARYEN_API BinaryenOp BinaryenAtomicRMWXchg(void) {
+  return AtomicRMWOp::Xchg;
+}
+BINARYEN_API BinaryenOp BinaryenTruncSatSFloat32ToInt32(void) {
   return TruncSatSFloat32ToInt32;
 }
-BinaryenOp BinaryenTruncSatSFloat32ToInt64(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatSFloat32ToInt64(void) {
   return TruncSatSFloat32ToInt64;
 }
-BinaryenOp BinaryenTruncSatUFloat32ToInt32(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatUFloat32ToInt32(void) {
   return TruncSatUFloat32ToInt32;
 }
-BinaryenOp BinaryenTruncSatUFloat32ToInt64(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatUFloat32ToInt64(void) {
   return TruncSatUFloat32ToInt64;
 }
-BinaryenOp BinaryenTruncSatSFloat64ToInt32(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatSFloat64ToInt32(void) {
   return TruncSatSFloat64ToInt32;
 }
-BinaryenOp BinaryenTruncSatSFloat64ToInt64(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatSFloat64ToInt64(void) {
   return TruncSatSFloat64ToInt64;
 }
-BinaryenOp BinaryenTruncSatUFloat64ToInt32(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatUFloat64ToInt32(void) {
   return TruncSatUFloat64ToInt32;
 }
-BinaryenOp BinaryenTruncSatUFloat64ToInt64(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatUFloat64ToInt64(void) {
   return TruncSatUFloat64ToInt64;
 }
-BinaryenOp BinaryenSplatVecI8x16(void) { return SplatVecI8x16; }
-BinaryenOp BinaryenExtractLaneSVecI8x16(void) { return ExtractLaneSVecI8x16; }
-BinaryenOp BinaryenExtractLaneUVecI8x16(void) { return ExtractLaneUVecI8x16; }
-BinaryenOp BinaryenReplaceLaneVecI8x16(void) { return ReplaceLaneVecI8x16; }
-BinaryenOp BinaryenSplatVecI16x8(void) { return SplatVecI16x8; }
-BinaryenOp BinaryenExtractLaneSVecI16x8(void) { return ExtractLaneSVecI16x8; }
-BinaryenOp BinaryenExtractLaneUVecI16x8(void) { return ExtractLaneUVecI16x8; }
-BinaryenOp BinaryenReplaceLaneVecI16x8(void) { return ReplaceLaneVecI16x8; }
-BinaryenOp BinaryenSplatVecI32x4(void) { return SplatVecI32x4; }
-BinaryenOp BinaryenExtractLaneVecI32x4(void) { return ExtractLaneVecI32x4; }
-BinaryenOp BinaryenReplaceLaneVecI32x4(void) { return ReplaceLaneVecI32x4; }
-BinaryenOp BinaryenSplatVecI64x2(void) { return SplatVecI64x2; }
-BinaryenOp BinaryenExtractLaneVecI64x2(void) { return ExtractLaneVecI64x2; }
-BinaryenOp BinaryenReplaceLaneVecI64x2(void) { return ReplaceLaneVecI64x2; }
-BinaryenOp BinaryenSplatVecF32x4(void) { return SplatVecF32x4; }
-BinaryenOp BinaryenExtractLaneVecF32x4(void) { return ExtractLaneVecF32x4; }
-BinaryenOp BinaryenReplaceLaneVecF32x4(void) { return ReplaceLaneVecF32x4; }
-BinaryenOp BinaryenSplatVecF64x2(void) { return SplatVecF64x2; }
-BinaryenOp BinaryenExtractLaneVecF64x2(void) { return ExtractLaneVecF64x2; }
-BinaryenOp BinaryenReplaceLaneVecF64x2(void) { return ReplaceLaneVecF64x2; }
-BinaryenOp BinaryenEqVecI8x16(void) { return EqVecI8x16; }
-BinaryenOp BinaryenNeVecI8x16(void) { return NeVecI8x16; }
-BinaryenOp BinaryenLtSVecI8x16(void) { return LtSVecI8x16; }
-BinaryenOp BinaryenLtUVecI8x16(void) { return LtUVecI8x16; }
-BinaryenOp BinaryenGtSVecI8x16(void) { return GtSVecI8x16; }
-BinaryenOp BinaryenGtUVecI8x16(void) { return GtUVecI8x16; }
-BinaryenOp BinaryenLeSVecI8x16(void) { return LeSVecI8x16; }
-BinaryenOp BinaryenLeUVecI8x16(void) { return LeUVecI8x16; }
-BinaryenOp BinaryenGeSVecI8x16(void) { return GeSVecI8x16; }
-BinaryenOp BinaryenGeUVecI8x16(void) { return GeUVecI8x16; }
-BinaryenOp BinaryenEqVecI16x8(void) { return EqVecI16x8; }
-BinaryenOp BinaryenNeVecI16x8(void) { return NeVecI16x8; }
-BinaryenOp BinaryenLtSVecI16x8(void) { return LtSVecI16x8; }
-BinaryenOp BinaryenLtUVecI16x8(void) { return LtUVecI16x8; }
-BinaryenOp BinaryenGtSVecI16x8(void) { return GtSVecI16x8; }
-BinaryenOp BinaryenGtUVecI16x8(void) { return GtUVecI16x8; }
-BinaryenOp BinaryenLeSVecI16x8(void) { return LeSVecI16x8; }
-BinaryenOp BinaryenLeUVecI16x8(void) { return LeUVecI16x8; }
-BinaryenOp BinaryenGeSVecI16x8(void) { return GeSVecI16x8; }
-BinaryenOp BinaryenGeUVecI16x8(void) { return GeUVecI16x8; }
-BinaryenOp BinaryenEqVecI32x4(void) { return EqVecI32x4; }
-BinaryenOp BinaryenNeVecI32x4(void) { return NeVecI32x4; }
-BinaryenOp BinaryenLtSVecI32x4(void) { return LtSVecI32x4; }
-BinaryenOp BinaryenLtUVecI32x4(void) { return LtUVecI32x4; }
-BinaryenOp BinaryenGtSVecI32x4(void) { return GtSVecI32x4; }
-BinaryenOp BinaryenGtUVecI32x4(void) { return GtUVecI32x4; }
-BinaryenOp BinaryenLeSVecI32x4(void) { return LeSVecI32x4; }
-BinaryenOp BinaryenLeUVecI32x4(void) { return LeUVecI32x4; }
-BinaryenOp BinaryenGeSVecI32x4(void) { return GeSVecI32x4; }
-BinaryenOp BinaryenGeUVecI32x4(void) { return GeUVecI32x4; }
-BinaryenOp BinaryenEqVecF32x4(void) { return EqVecF32x4; }
-BinaryenOp BinaryenNeVecF32x4(void) { return NeVecF32x4; }
-BinaryenOp BinaryenLtVecF32x4(void) { return LtVecF32x4; }
-BinaryenOp BinaryenGtVecF32x4(void) { return GtVecF32x4; }
-BinaryenOp BinaryenLeVecF32x4(void) { return LeVecF32x4; }
-BinaryenOp BinaryenGeVecF32x4(void) { return GeVecF32x4; }
-BinaryenOp BinaryenEqVecF64x2(void) { return EqVecF64x2; }
-BinaryenOp BinaryenNeVecF64x2(void) { return NeVecF64x2; }
-BinaryenOp BinaryenLtVecF64x2(void) { return LtVecF64x2; }
-BinaryenOp BinaryenGtVecF64x2(void) { return GtVecF64x2; }
-BinaryenOp BinaryenLeVecF64x2(void) { return LeVecF64x2; }
-BinaryenOp BinaryenGeVecF64x2(void) { return GeVecF64x2; }
-BinaryenOp BinaryenNotVec128(void) { return NotVec128; }
-BinaryenOp BinaryenAndVec128(void) { return AndVec128; }
-BinaryenOp BinaryenOrVec128(void) { return OrVec128; }
-BinaryenOp BinaryenXorVec128(void) { return XorVec128; }
-BinaryenOp BinaryenBitselectVec128(void) { return Bitselect; }
-BinaryenOp BinaryenNegVecI8x16(void) { return NegVecI8x16; }
-BinaryenOp BinaryenAnyTrueVecI8x16(void) { return AnyTrueVecI8x16; }
-BinaryenOp BinaryenAllTrueVecI8x16(void) { return AllTrueVecI8x16; }
-BinaryenOp BinaryenShlVecI8x16(void) { return ShlVecI8x16; }
-BinaryenOp BinaryenShrSVecI8x16(void) { return ShrSVecI8x16; }
-BinaryenOp BinaryenShrUVecI8x16(void) { return ShrUVecI8x16; }
-BinaryenOp BinaryenAddVecI8x16(void) { return AddVecI8x16; }
-BinaryenOp BinaryenAddSatSVecI8x16(void) { return AddSatSVecI8x16; }
-BinaryenOp BinaryenAddSatUVecI8x16(void) { return AddSatUVecI8x16; }
-BinaryenOp BinaryenSubVecI8x16(void) { return SubVecI8x16; }
-BinaryenOp BinaryenSubSatSVecI8x16(void) { return SubSatSVecI8x16; }
-BinaryenOp BinaryenSubSatUVecI8x16(void) { return SubSatUVecI8x16; }
-BinaryenOp BinaryenMulVecI8x16(void) { return MulVecI8x16; }
-BinaryenOp BinaryenNegVecI16x8(void) { return NegVecI16x8; }
-BinaryenOp BinaryenAnyTrueVecI16x8(void) { return AnyTrueVecI16x8; }
-BinaryenOp BinaryenAllTrueVecI16x8(void) { return AllTrueVecI16x8; }
-BinaryenOp BinaryenShlVecI16x8(void) { return ShlVecI16x8; }
-BinaryenOp BinaryenShrSVecI16x8(void) { return ShrSVecI16x8; }
-BinaryenOp BinaryenShrUVecI16x8(void) { return ShrUVecI16x8; }
-BinaryenOp BinaryenAddVecI16x8(void) { return AddVecI16x8; }
-BinaryenOp BinaryenAddSatSVecI16x8(void) { return AddSatSVecI16x8; }
-BinaryenOp BinaryenAddSatUVecI16x8(void) { return AddSatUVecI16x8; }
-BinaryenOp BinaryenSubVecI16x8(void) { return SubVecI16x8; }
-BinaryenOp BinaryenSubSatSVecI16x8(void) { return SubSatSVecI16x8; }
-BinaryenOp BinaryenSubSatUVecI16x8(void) { return SubSatUVecI16x8; }
-BinaryenOp BinaryenMulVecI16x8(void) { return MulVecI16x8; }
-BinaryenOp BinaryenNegVecI32x4(void) { return NegVecI32x4; }
-BinaryenOp BinaryenAnyTrueVecI32x4(void) { return AnyTrueVecI32x4; }
-BinaryenOp BinaryenAllTrueVecI32x4(void) { return AllTrueVecI32x4; }
-BinaryenOp BinaryenShlVecI32x4(void) { return ShlVecI32x4; }
-BinaryenOp BinaryenShrSVecI32x4(void) { return ShrSVecI32x4; }
-BinaryenOp BinaryenShrUVecI32x4(void) { return ShrUVecI32x4; }
-BinaryenOp BinaryenAddVecI32x4(void) { return AddVecI32x4; }
-BinaryenOp BinaryenSubVecI32x4(void) { return SubVecI32x4; }
-BinaryenOp BinaryenMulVecI32x4(void) { return MulVecI32x4; }
-BinaryenOp BinaryenNegVecI64x2(void) { return NegVecI64x2; }
-BinaryenOp BinaryenAnyTrueVecI64x2(void) { return AnyTrueVecI64x2; }
-BinaryenOp BinaryenAllTrueVecI64x2(void) { return AllTrueVecI64x2; }
-BinaryenOp BinaryenShlVecI64x2(void) { return ShlVecI64x2; }
-BinaryenOp BinaryenShrSVecI64x2(void) { return ShrSVecI64x2; }
-BinaryenOp BinaryenShrUVecI64x2(void) { return ShrUVecI64x2; }
-BinaryenOp BinaryenAddVecI64x2(void) { return AddVecI64x2; }
-BinaryenOp BinaryenSubVecI64x2(void) { return SubVecI64x2; }
-BinaryenOp BinaryenAbsVecF32x4(void) { return AbsVecF32x4; }
-BinaryenOp BinaryenNegVecF32x4(void) { return NegVecF32x4; }
-BinaryenOp BinaryenSqrtVecF32x4(void) { return SqrtVecF32x4; }
-BinaryenOp BinaryenQFMAVecF32x4(void) { return QFMAF32x4; }
-BinaryenOp BinaryenQFMSVecF32x4(void) { return QFMSF32x4; }
-BinaryenOp BinaryenAddVecF32x4(void) { return AddVecF32x4; }
-BinaryenOp BinaryenSubVecF32x4(void) { return SubVecF32x4; }
-BinaryenOp BinaryenMulVecF32x4(void) { return MulVecF32x4; }
-BinaryenOp BinaryenDivVecF32x4(void) { return DivVecF32x4; }
-BinaryenOp BinaryenMinVecF32x4(void) { return MinVecF32x4; }
-BinaryenOp BinaryenMaxVecF32x4(void) { return MaxVecF32x4; }
-BinaryenOp BinaryenAbsVecF64x2(void) { return AbsVecF64x2; }
-BinaryenOp BinaryenNegVecF64x2(void) { return NegVecF64x2; }
-BinaryenOp BinaryenSqrtVecF64x2(void) { return SqrtVecF64x2; }
-BinaryenOp BinaryenQFMAVecF64x2(void) { return QFMAF64x2; }
-BinaryenOp BinaryenQFMSVecF64x2(void) { return QFMSF64x2; }
-BinaryenOp BinaryenAddVecF64x2(void) { return AddVecF64x2; }
-BinaryenOp BinaryenSubVecF64x2(void) { return SubVecF64x2; }
-BinaryenOp BinaryenMulVecF64x2(void) { return MulVecF64x2; }
-BinaryenOp BinaryenDivVecF64x2(void) { return DivVecF64x2; }
-BinaryenOp BinaryenMinVecF64x2(void) { return MinVecF64x2; }
-BinaryenOp BinaryenMaxVecF64x2(void) { return MaxVecF64x2; }
-BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void) {
+BINARYEN_API BinaryenOp BinaryenSplatVecI8x16(void) { return SplatVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenExtractLaneSVecI8x16(void) {
+  return ExtractLaneSVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenExtractLaneUVecI8x16(void) {
+  return ExtractLaneUVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenReplaceLaneVecI8x16(void) {
+  return ReplaceLaneVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenSplatVecI16x8(void) { return SplatVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenExtractLaneSVecI16x8(void) {
+  return ExtractLaneSVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenExtractLaneUVecI16x8(void) {
+  return ExtractLaneUVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenReplaceLaneVecI16x8(void) {
+  return ReplaceLaneVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenSplatVecI32x4(void) { return SplatVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenExtractLaneVecI32x4(void) {
+  return ExtractLaneVecI32x4;
+}
+BINARYEN_API BinaryenOp BinaryenReplaceLaneVecI32x4(void) {
+  return ReplaceLaneVecI32x4;
+}
+BINARYEN_API BinaryenOp BinaryenSplatVecI64x2(void) { return SplatVecI64x2; }
+BINARYEN_API BinaryenOp BinaryenExtractLaneVecI64x2(void) {
+  return ExtractLaneVecI64x2;
+}
+BINARYEN_API BinaryenOp BinaryenReplaceLaneVecI64x2(void) {
+  return ReplaceLaneVecI64x2;
+}
+BINARYEN_API BinaryenOp BinaryenSplatVecF32x4(void) { return SplatVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenExtractLaneVecF32x4(void) {
+  return ExtractLaneVecF32x4;
+}
+BINARYEN_API BinaryenOp BinaryenReplaceLaneVecF32x4(void) {
+  return ReplaceLaneVecF32x4;
+}
+BINARYEN_API BinaryenOp BinaryenSplatVecF64x2(void) { return SplatVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenExtractLaneVecF64x2(void) {
+  return ExtractLaneVecF64x2;
+}
+BINARYEN_API BinaryenOp BinaryenReplaceLaneVecF64x2(void) {
+  return ReplaceLaneVecF64x2;
+}
+BINARYEN_API BinaryenOp BinaryenEqVecI8x16(void) { return EqVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenNeVecI8x16(void) { return NeVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenLtSVecI8x16(void) { return LtSVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenLtUVecI8x16(void) { return LtUVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenGtSVecI8x16(void) { return GtSVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenGtUVecI8x16(void) { return GtUVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenLeSVecI8x16(void) { return LeSVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenLeUVecI8x16(void) { return LeUVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenGeSVecI8x16(void) { return GeSVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenGeUVecI8x16(void) { return GeUVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenEqVecI16x8(void) { return EqVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenNeVecI16x8(void) { return NeVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenLtSVecI16x8(void) { return LtSVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenLtUVecI16x8(void) { return LtUVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenGtSVecI16x8(void) { return GtSVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenGtUVecI16x8(void) { return GtUVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenLeSVecI16x8(void) { return LeSVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenLeUVecI16x8(void) { return LeUVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenGeSVecI16x8(void) { return GeSVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenGeUVecI16x8(void) { return GeUVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenEqVecI32x4(void) { return EqVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenNeVecI32x4(void) { return NeVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenLtSVecI32x4(void) { return LtSVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenLtUVecI32x4(void) { return LtUVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenGtSVecI32x4(void) { return GtSVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenGtUVecI32x4(void) { return GtUVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenLeSVecI32x4(void) { return LeSVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenLeUVecI32x4(void) { return LeUVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenGeSVecI32x4(void) { return GeSVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenGeUVecI32x4(void) { return GeUVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenEqVecF32x4(void) { return EqVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenNeVecF32x4(void) { return NeVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenLtVecF32x4(void) { return LtVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenGtVecF32x4(void) { return GtVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenLeVecF32x4(void) { return LeVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenGeVecF32x4(void) { return GeVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenEqVecF64x2(void) { return EqVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenNeVecF64x2(void) { return NeVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenLtVecF64x2(void) { return LtVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenGtVecF64x2(void) { return GtVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenLeVecF64x2(void) { return LeVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenGeVecF64x2(void) { return GeVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenNotVec128(void) { return NotVec128; }
+BINARYEN_API BinaryenOp BinaryenAndVec128(void) { return AndVec128; }
+BINARYEN_API BinaryenOp BinaryenOrVec128(void) { return OrVec128; }
+BINARYEN_API BinaryenOp BinaryenXorVec128(void) { return XorVec128; }
+BINARYEN_API BinaryenOp BinaryenBitselectVec128(void) { return Bitselect; }
+BINARYEN_API BinaryenOp BinaryenNegVecI8x16(void) { return NegVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenAnyTrueVecI8x16(void) {
+  return AnyTrueVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenAllTrueVecI8x16(void) {
+  return AllTrueVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenShlVecI8x16(void) { return ShlVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenShrSVecI8x16(void) { return ShrSVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenShrUVecI8x16(void) { return ShrUVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenAddVecI8x16(void) { return AddVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenAddSatSVecI8x16(void) {
+  return AddSatSVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenAddSatUVecI8x16(void) {
+  return AddSatUVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenSubVecI8x16(void) { return SubVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenSubSatSVecI8x16(void) {
+  return SubSatSVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenSubSatUVecI8x16(void) {
+  return SubSatUVecI8x16;
+}
+BINARYEN_API BinaryenOp BinaryenMulVecI8x16(void) { return MulVecI8x16; }
+BINARYEN_API BinaryenOp BinaryenNegVecI16x8(void) { return NegVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenAnyTrueVecI16x8(void) {
+  return AnyTrueVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenAllTrueVecI16x8(void) {
+  return AllTrueVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenShlVecI16x8(void) { return ShlVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenShrSVecI16x8(void) { return ShrSVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenShrUVecI16x8(void) { return ShrUVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenAddVecI16x8(void) { return AddVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenAddSatSVecI16x8(void) {
+  return AddSatSVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenAddSatUVecI16x8(void) {
+  return AddSatUVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenSubVecI16x8(void) { return SubVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenSubSatSVecI16x8(void) {
+  return SubSatSVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenSubSatUVecI16x8(void) {
+  return SubSatUVecI16x8;
+}
+BINARYEN_API BinaryenOp BinaryenMulVecI16x8(void) { return MulVecI16x8; }
+BINARYEN_API BinaryenOp BinaryenNegVecI32x4(void) { return NegVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenAnyTrueVecI32x4(void) {
+  return AnyTrueVecI32x4;
+}
+BINARYEN_API BinaryenOp BinaryenAllTrueVecI32x4(void) {
+  return AllTrueVecI32x4;
+}
+BINARYEN_API BinaryenOp BinaryenShlVecI32x4(void) { return ShlVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenShrSVecI32x4(void) { return ShrSVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenShrUVecI32x4(void) { return ShrUVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenAddVecI32x4(void) { return AddVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenSubVecI32x4(void) { return SubVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenMulVecI32x4(void) { return MulVecI32x4; }
+BINARYEN_API BinaryenOp BinaryenNegVecI64x2(void) { return NegVecI64x2; }
+BINARYEN_API BinaryenOp BinaryenAnyTrueVecI64x2(void) {
+  return AnyTrueVecI64x2;
+}
+BINARYEN_API BinaryenOp BinaryenAllTrueVecI64x2(void) {
+  return AllTrueVecI64x2;
+}
+BINARYEN_API BinaryenOp BinaryenShlVecI64x2(void) { return ShlVecI64x2; }
+BINARYEN_API BinaryenOp BinaryenShrSVecI64x2(void) { return ShrSVecI64x2; }
+BINARYEN_API BinaryenOp BinaryenShrUVecI64x2(void) { return ShrUVecI64x2; }
+BINARYEN_API BinaryenOp BinaryenAddVecI64x2(void) { return AddVecI64x2; }
+BINARYEN_API BinaryenOp BinaryenSubVecI64x2(void) { return SubVecI64x2; }
+BINARYEN_API BinaryenOp BinaryenAbsVecF32x4(void) { return AbsVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenNegVecF32x4(void) { return NegVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenSqrtVecF32x4(void) { return SqrtVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenQFMAVecF32x4(void) { return QFMAF32x4; }
+BINARYEN_API BinaryenOp BinaryenQFMSVecF32x4(void) { return QFMSF32x4; }
+BINARYEN_API BinaryenOp BinaryenAddVecF32x4(void) { return AddVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenSubVecF32x4(void) { return SubVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenMulVecF32x4(void) { return MulVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenDivVecF32x4(void) { return DivVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenMinVecF32x4(void) { return MinVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenMaxVecF32x4(void) { return MaxVecF32x4; }
+BINARYEN_API BinaryenOp BinaryenAbsVecF64x2(void) { return AbsVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenNegVecF64x2(void) { return NegVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenSqrtVecF64x2(void) { return SqrtVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenQFMAVecF64x2(void) { return QFMAF64x2; }
+BINARYEN_API BinaryenOp BinaryenQFMSVecF64x2(void) { return QFMSF64x2; }
+BINARYEN_API BinaryenOp BinaryenAddVecF64x2(void) { return AddVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenSubVecF64x2(void) { return SubVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenMulVecF64x2(void) { return MulVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenDivVecF64x2(void) { return DivVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenMinVecF64x2(void) { return MinVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenMaxVecF64x2(void) { return MaxVecF64x2; }
+BINARYEN_API BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void) {
   return TruncSatSVecF32x4ToVecI32x4;
 }
-BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void) {
   return TruncSatUVecF32x4ToVecI32x4;
 }
-BinaryenOp BinaryenTruncSatSVecF64x2ToVecI64x2(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatSVecF64x2ToVecI64x2(void) {
   return TruncSatSVecF64x2ToVecI64x2;
 }
-BinaryenOp BinaryenTruncSatUVecF64x2ToVecI64x2(void) {
+BINARYEN_API BinaryenOp BinaryenTruncSatUVecF64x2ToVecI64x2(void) {
   return TruncSatUVecF64x2ToVecI64x2;
 }
-BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void) {
+BINARYEN_API BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void) {
   return ConvertSVecI32x4ToVecF32x4;
 }
-BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void) {
+BINARYEN_API BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void) {
   return ConvertUVecI32x4ToVecF32x4;
 }
-BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void) {
+BINARYEN_API BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void) {
   return ConvertSVecI64x2ToVecF64x2;
 }
-BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void) {
+BINARYEN_API BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void) {
   return ConvertUVecI64x2ToVecF64x2;
 }
-BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
+BINARYEN_API BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
   return NarrowSVecI16x8ToVecI8x16;
 }
-BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void) {
+BINARYEN_API BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void) {
   return NarrowUVecI16x8ToVecI8x16;
 }
-BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void) {
+BINARYEN_API BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void) {
   return NarrowSVecI32x4ToVecI16x8;
 }
-BinaryenOp BinaryenNarrowUVecI32x4ToVecI16x8(void) {
+BINARYEN_API BinaryenOp BinaryenNarrowUVecI32x4ToVecI16x8(void) {
   return NarrowUVecI32x4ToVecI16x8;
 }
-BinaryenOp BinaryenWidenLowSVecI8x16ToVecI16x8(void) {
+BINARYEN_API BinaryenOp BinaryenWidenLowSVecI8x16ToVecI16x8(void) {
   return WidenLowSVecI8x16ToVecI16x8;
 }
-BinaryenOp BinaryenWidenHighSVecI8x16ToVecI16x8(void) {
+BINARYEN_API BinaryenOp BinaryenWidenHighSVecI8x16ToVecI16x8(void) {
   return WidenHighSVecI8x16ToVecI16x8;
 }
-BinaryenOp BinaryenWidenLowUVecI8x16ToVecI16x8(void) {
+BINARYEN_API BinaryenOp BinaryenWidenLowUVecI8x16ToVecI16x8(void) {
   return WidenLowUVecI8x16ToVecI16x8;
 }
-BinaryenOp BinaryenWidenHighUVecI8x16ToVecI16x8(void) {
+BINARYEN_API BinaryenOp BinaryenWidenHighUVecI8x16ToVecI16x8(void) {
   return WidenHighUVecI8x16ToVecI16x8;
 }
-BinaryenOp BinaryenWidenLowSVecI16x8ToVecI32x4(void) {
+BINARYEN_API BinaryenOp BinaryenWidenLowSVecI16x8ToVecI32x4(void) {
   return WidenLowSVecI16x8ToVecI32x4;
 }
-BinaryenOp BinaryenWidenHighSVecI16x8ToVecI32x4(void) {
+BINARYEN_API BinaryenOp BinaryenWidenHighSVecI16x8ToVecI32x4(void) {
   return WidenHighSVecI16x8ToVecI32x4;
 }
-BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void) {
+BINARYEN_API BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void) {
   return WidenLowUVecI16x8ToVecI32x4;
 }
-BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void) {
+BINARYEN_API BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void) {
   return WidenHighUVecI16x8ToVecI32x4;
 }
 
-BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
-                                    const char* name,
-                                    BinaryenExpressionRef* children,
-                                    BinaryenIndex numChildren,
-                                    BinaryenType type) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBlock(BinaryenModuleRef module,
+              const char* name,
+              BinaryenExpressionRef* children,
+              BinaryenIndex numChildren,
+              BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<Block>();
   if (name) {
     ret->name = name;
@@ -959,10 +1092,10 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module,
-                                 BinaryenExpressionRef condition,
-                                 BinaryenExpressionRef ifTrue,
-                                 BinaryenExpressionRef ifFalse) {
+BINARYEN_API BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module,
+                                              BinaryenExpressionRef condition,
+                                              BinaryenExpressionRef ifTrue,
+                                              BinaryenExpressionRef ifFalse) {
   auto* ret = ((Module*)module)->allocator.alloc<If>();
   ret->condition = (Expression*)condition;
   ret->ifTrue = (Expression*)ifTrue;
@@ -975,9 +1108,9 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
-                                   const char* name,
-                                   BinaryenExpressionRef body) {
+BINARYEN_API BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
+                                                const char* name,
+                                                BinaryenExpressionRef body) {
   auto* ret = Builder(*(Module*)module)
                 .makeLoop(name ? Name(name) : Name(), (Expression*)body);
 
@@ -987,10 +1120,11 @@ BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module,
-                                    const char* name,
-                                    BinaryenExpressionRef condition,
-                                    BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBreak(BinaryenModuleRef module,
+              const char* name,
+              BinaryenExpressionRef condition,
+              BinaryenExpressionRef value) {
   auto* ret = Builder(*(Module*)module)
                 .makeBreak(name, (Expression*)value, (Expression*)condition);
 
@@ -1000,12 +1134,13 @@ BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module,
-                                     const char** names,
-                                     BinaryenIndex numNames,
-                                     const char* defaultName,
-                                     BinaryenExpressionRef condition,
-                                     BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSwitch(BinaryenModuleRef module,
+               const char** names,
+               BinaryenIndex numNames,
+               const char* defaultName,
+               BinaryenExpressionRef condition,
+               BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<Switch>();
 
   if (tracing) {
@@ -1081,19 +1216,20 @@ static BinaryenExpressionRef makeBinaryenCall(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module,
-                                   const char* target,
-                                   BinaryenExpressionRef* operands,
-                                   BinaryenIndex numOperands,
-                                   BinaryenType returnType) {
+BINARYEN_API BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module,
+                                                const char* target,
+                                                BinaryenExpressionRef* operands,
+                                                BinaryenIndex numOperands,
+                                                BinaryenType returnType) {
   return makeBinaryenCall(
     module, target, operands, numOperands, returnType, false);
 }
-BinaryenExpressionRef BinaryenReturnCall(BinaryenModuleRef module,
-                                         const char* target,
-                                         BinaryenExpressionRef* operands,
-                                         BinaryenIndex numOperands,
-                                         BinaryenType returnType) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenReturnCall(BinaryenModuleRef module,
+                   const char* target,
+                   BinaryenExpressionRef* operands,
+                   BinaryenIndex numOperands,
+                   BinaryenType returnType) {
   return makeBinaryenCall(
     module, target, operands, numOperands, returnType, true);
 }
@@ -1141,15 +1277,16 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
-                                           BinaryenExpressionRef target,
-                                           BinaryenExpressionRef* operands,
-                                           BinaryenIndex numOperands,
-                                           const char* type) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenCallIndirect(BinaryenModuleRef module,
+                     BinaryenExpressionRef target,
+                     BinaryenExpressionRef* operands,
+                     BinaryenIndex numOperands,
+                     const char* type) {
   return makeBinaryenCallIndirect(
     module, target, operands, numOperands, type, false);
 }
-BinaryenExpressionRef
+BINARYEN_API BinaryenExpressionRef
 BinaryenReturnCallIndirect(BinaryenModuleRef module,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
@@ -1158,9 +1295,9 @@ BinaryenReturnCallIndirect(BinaryenModuleRef module,
   return makeBinaryenCallIndirect(
     module, target, operands, numOperands, type, true);
 }
-BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
-                                       BinaryenIndex index,
-                                       BinaryenType type) {
+BINARYEN_API BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
+                                                    BinaryenIndex index,
+                                                    BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<LocalGet>();
 
   if (tracing) {
@@ -1172,9 +1309,8 @@ BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenLocalSet(BinaryenModuleRef module,
-                                       BinaryenIndex index,
-                                       BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef BinaryenLocalSet(
+  BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
 
   if (tracing) {
@@ -1187,9 +1323,8 @@ BinaryenExpressionRef BinaryenLocalSet(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
-                                       BinaryenIndex index,
-                                       BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef BinaryenLocalTee(
+  BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
 
   if (tracing) {
@@ -1202,9 +1337,9 @@ BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
-                                        const char* name,
-                                        BinaryenType type) {
+BINARYEN_API BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
+                                                     const char* name,
+                                                     BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<GlobalGet>();
 
   if (tracing) {
@@ -1216,9 +1351,8 @@ BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenGlobalSet(BinaryenModuleRef module,
-                                        const char* name,
-                                        BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef BinaryenGlobalSet(
+  BinaryenModuleRef module, const char* name, BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<GlobalSet>();
 
   if (tracing) {
@@ -1230,13 +1364,13 @@ BinaryenExpressionRef BinaryenGlobalSet(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
-                                   uint32_t bytes,
-                                   int8_t signed_,
-                                   uint32_t offset,
-                                   uint32_t align,
-                                   BinaryenType type,
-                                   BinaryenExpressionRef ptr) {
+BINARYEN_API BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
+                                                uint32_t bytes,
+                                                int8_t signed_,
+                                                uint32_t offset,
+                                                uint32_t align,
+                                                BinaryenType type,
+                                                BinaryenExpressionRef ptr) {
   auto* ret = ((Module*)module)->allocator.alloc<Load>();
 
   if (tracing) {
@@ -1253,13 +1387,13 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
-                                    uint32_t bytes,
-                                    uint32_t offset,
-                                    uint32_t align,
-                                    BinaryenExpressionRef ptr,
-                                    BinaryenExpressionRef value,
-                                    BinaryenType type) {
+BINARYEN_API BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
+                                                 uint32_t bytes,
+                                                 uint32_t offset,
+                                                 uint32_t align,
+                                                 BinaryenExpressionRef ptr,
+                                                 BinaryenExpressionRef value,
+                                                 BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<Store>();
 
   if (tracing) {
@@ -1276,17 +1410,17 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module,
-                                    BinaryenLiteral value) {
+BINARYEN_API BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module,
+                                                 BinaryenLiteral value) {
   auto* ret = Builder(*(Module*)module).makeConst(fromBinaryenLiteral(value));
   if (tracing) {
     traceExpression(ret, "BinaryenConst", value);
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module,
-                                    BinaryenOp op,
-                                    BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module,
+                                                 BinaryenOp op,
+                                                 BinaryenExpressionRef value) {
   auto* ret =
     Builder(*(Module*)module).makeUnary(UnaryOp(op), (Expression*)value);
 
@@ -1296,10 +1430,10 @@ BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
-                                     BinaryenOp op,
-                                     BinaryenExpressionRef left,
-                                     BinaryenExpressionRef right) {
+BINARYEN_API BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
+                                                  BinaryenOp op,
+                                                  BinaryenExpressionRef left,
+                                                  BinaryenExpressionRef right) {
   auto* ret =
     Builder(*(Module*)module)
       .makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right);
@@ -1310,10 +1444,11 @@ BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module,
-                                     BinaryenExpressionRef condition,
-                                     BinaryenExpressionRef ifTrue,
-                                     BinaryenExpressionRef ifFalse) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSelect(BinaryenModuleRef module,
+               BinaryenExpressionRef condition,
+               BinaryenExpressionRef ifTrue,
+               BinaryenExpressionRef ifFalse) {
   auto* ret = ((Module*)module)->allocator.alloc<Select>();
 
   if (tracing) {
@@ -1326,8 +1461,8 @@ BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
-                                   BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
+                                                BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<Drop>();
 
   if (tracing) {
@@ -1338,8 +1473,8 @@ BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
-                                     BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
+                                                  BinaryenExpressionRef value) {
   auto* ret = Builder(*(Module*)module).makeReturn((Expression*)value);
 
   if (tracing) {
@@ -1348,11 +1483,11 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module,
-                                   BinaryenOp op,
-                                   const char* name,
-                                   BinaryenExpressionRef* operands,
-                                   BinaryenIndex numOperands) {
+BINARYEN_API BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module,
+                                                BinaryenOp op,
+                                                const char* name,
+                                                BinaryenExpressionRef* operands,
+                                                BinaryenIndex numOperands) {
   auto* ret = ((Module*)module)->allocator.alloc<Host>();
 
   if (tracing) {
@@ -1384,7 +1519,7 @@ BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
+BINARYEN_API BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
   auto* ret = ((Module*)module)->allocator.alloc<Nop>();
 
   if (tracing) {
@@ -1393,7 +1528,8 @@ BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenUnreachable(BinaryenModuleRef module) {
   auto* ret = ((Module*)module)->allocator.alloc<Unreachable>();
 
   if (tracing) {
@@ -1402,11 +1538,12 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
-                                         uint32_t bytes,
-                                         uint32_t offset,
-                                         BinaryenType type,
-                                         BinaryenExpressionRef ptr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicLoad(BinaryenModuleRef module,
+                   uint32_t bytes,
+                   uint32_t offset,
+                   BinaryenType type,
+                   BinaryenExpressionRef ptr) {
   auto* ret = Builder(*(Module*)module)
                 .makeAtomicLoad(bytes, offset, (Expression*)ptr, Type(type));
 
@@ -1416,12 +1553,13 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
-                                          uint32_t bytes,
-                                          uint32_t offset,
-                                          BinaryenExpressionRef ptr,
-                                          BinaryenExpressionRef value,
-                                          BinaryenType type) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicStore(BinaryenModuleRef module,
+                    uint32_t bytes,
+                    uint32_t offset,
+                    BinaryenExpressionRef ptr,
+                    BinaryenExpressionRef value,
+                    BinaryenType type) {
   auto* ret =
     Builder(*(Module*)module)
       .makeAtomicStore(
@@ -1434,13 +1572,14 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
-                                        BinaryenOp op,
-                                        BinaryenIndex bytes,
-                                        BinaryenIndex offset,
-                                        BinaryenExpressionRef ptr,
-                                        BinaryenExpressionRef value,
-                                        BinaryenType type) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicRMW(BinaryenModuleRef module,
+                  BinaryenOp op,
+                  BinaryenIndex bytes,
+                  BinaryenIndex offset,
+                  BinaryenExpressionRef ptr,
+                  BinaryenExpressionRef value,
+                  BinaryenType type) {
   auto* ret = Builder(*(Module*)module)
                 .makeAtomicRMW(AtomicRMWOp(op),
                                bytes,
@@ -1456,13 +1595,14 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
-                                            BinaryenIndex bytes,
-                                            BinaryenIndex offset,
-                                            BinaryenExpressionRef ptr,
-                                            BinaryenExpressionRef expected,
-                                            BinaryenExpressionRef replacement,
-                                            BinaryenType type) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicCmpxchg(BinaryenModuleRef module,
+                      BinaryenIndex bytes,
+                      BinaryenIndex offset,
+                      BinaryenExpressionRef ptr,
+                      BinaryenExpressionRef expected,
+                      BinaryenExpressionRef replacement,
+                      BinaryenType type) {
   auto* ret = Builder(*(Module*)module)
                 .makeAtomicCmpxchg(bytes,
                                    offset,
@@ -1484,11 +1624,12 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
-                                         BinaryenExpressionRef ptr,
-                                         BinaryenExpressionRef expected,
-                                         BinaryenExpressionRef timeout,
-                                         BinaryenType expectedType) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicWait(BinaryenModuleRef module,
+                   BinaryenExpressionRef ptr,
+                   BinaryenExpressionRef expected,
+                   BinaryenExpressionRef timeout,
+                   BinaryenType expectedType) {
   auto* ret = Builder(*(Module*)module)
                 .makeAtomicWait((Expression*)ptr,
                                 (Expression*)expected,
@@ -1503,9 +1644,10 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
-                                           BinaryenExpressionRef ptr,
-                                           BinaryenExpressionRef notifyCount) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicNotify(BinaryenModuleRef module,
+                     BinaryenExpressionRef ptr,
+                     BinaryenExpressionRef notifyCount) {
   auto* ret =
     Builder(*(Module*)module)
       .makeAtomicNotify((Expression*)ptr, (Expression*)notifyCount, 0);
@@ -1516,7 +1658,8 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicFence(BinaryenModuleRef module) {
   auto* ret = Builder(*(Module*)module).makeAtomicFence();
 
   if (tracing) {
@@ -1525,10 +1668,11 @@ BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module) {
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
-                                          BinaryenOp op,
-                                          BinaryenExpressionRef vec,
-                                          uint8_t index) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDExtract(BinaryenModuleRef module,
+                    BinaryenOp op,
+                    BinaryenExpressionRef vec,
+                    uint8_t index) {
   auto* ret = Builder(*(Module*)module)
                 .makeSIMDExtract(SIMDExtractOp(op), (Expression*)vec, index);
   if (tracing) {
@@ -1536,11 +1680,12 @@ BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module,
-                                          BinaryenOp op,
-                                          BinaryenExpressionRef vec,
-                                          uint8_t index,
-                                          BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDReplace(BinaryenModuleRef module,
+                    BinaryenOp op,
+                    BinaryenExpressionRef vec,
+                    uint8_t index,
+                    BinaryenExpressionRef value) {
   auto* ret =
     Builder(*(Module*)module)
       .makeSIMDReplace(
@@ -1550,10 +1695,11 @@ BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module,
-                                          BinaryenExpressionRef left,
-                                          BinaryenExpressionRef right,
-                                          const uint8_t mask_[16]) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDShuffle(BinaryenModuleRef module,
+                    BinaryenExpressionRef left,
+                    BinaryenExpressionRef right,
+                    const uint8_t mask_[16]) {
   std::array<uint8_t, 16> mask;
   memcpy(mask.data(), mask_, 16);
   auto* ret = Builder(*(Module*)module)
@@ -1573,11 +1719,12 @@ BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDTernary(BinaryenModuleRef module,
-                                          BinaryenOp op,
-                                          BinaryenExpressionRef a,
-                                          BinaryenExpressionRef b,
-                                          BinaryenExpressionRef c) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDTernary(BinaryenModuleRef module,
+                    BinaryenOp op,
+                    BinaryenExpressionRef a,
+                    BinaryenExpressionRef b,
+                    BinaryenExpressionRef c) {
   auto* ret =
     Builder(*(Module*)module)
       .makeSIMDTernary(
@@ -1587,10 +1734,11 @@ BinaryenExpressionRef BinaryenSIMDTernary(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module,
-                                        BinaryenOp op,
-                                        BinaryenExpressionRef vec,
-                                        BinaryenExpressionRef shift) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDShift(BinaryenModuleRef module,
+                  BinaryenOp op,
+                  BinaryenExpressionRef vec,
+                  BinaryenExpressionRef shift) {
   auto* ret =
     Builder(*(Module*)module)
       .makeSIMDShift(SIMDShiftOp(op), (Expression*)vec, (Expression*)shift);
@@ -1599,11 +1747,12 @@ BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
-                                         uint32_t segment,
-                                         BinaryenExpressionRef dest,
-                                         BinaryenExpressionRef offset,
-                                         BinaryenExpressionRef size) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryInit(BinaryenModuleRef module,
+                   uint32_t segment,
+                   BinaryenExpressionRef dest,
+                   BinaryenExpressionRef offset,
+                   BinaryenExpressionRef size) {
   auto* ret =
     Builder(*(Module*)module)
       .makeMemoryInit(
@@ -1614,8 +1763,8 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 
-BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
-                                       uint32_t segment) {
+BINARYEN_API BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
+                                                    uint32_t segment) {
   auto* ret = Builder(*(Module*)module).makeDataDrop(segment);
   if (tracing) {
     traceExpression(ret, "BinaryenDataDrop", segment);
@@ -1623,10 +1772,11 @@ BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 
-BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
-                                         BinaryenExpressionRef dest,
-                                         BinaryenExpressionRef source,
-                                         BinaryenExpressionRef size) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryCopy(BinaryenModuleRef module,
+                   BinaryenExpressionRef dest,
+                   BinaryenExpressionRef source,
+                   BinaryenExpressionRef size) {
   auto* ret = Builder(*(Module*)module)
                 .makeMemoryCopy(
                   (Expression*)dest, (Expression*)source, (Expression*)size);
@@ -1636,10 +1786,11 @@ BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 
-BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
-                                         BinaryenExpressionRef dest,
-                                         BinaryenExpressionRef value,
-                                         BinaryenExpressionRef size) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryFill(BinaryenModuleRef module,
+                   BinaryenExpressionRef dest,
+                   BinaryenExpressionRef value,
+                   BinaryenExpressionRef size) {
   auto* ret =
     Builder(*(Module*)module)
       .makeMemoryFill((Expression*)dest, (Expression*)value, (Expression*)size);
@@ -1648,15 +1799,16 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
-                                   BinaryenExpressionRef value) {
+BINARYEN_API BinaryenExpressionRef BinaryenPush(BinaryenModuleRef module,
+                                                BinaryenExpressionRef value) {
   auto* ret = Builder(*(Module*)module).makePush((Expression*)value);
   if (tracing) {
     traceExpression(ret, "BinaryenPush", value);
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
+BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
+                                               BinaryenType type) {
   auto* ret = Builder(*(Module*)module).makePop(Type(type));
   if (tracing) {
     traceExpression(ret, "BinaryenPop", type);
@@ -1664,9 +1816,10 @@ BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
   return static_cast<Expression*>(ret);
 }
 
-BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
-                                  BinaryenExpressionRef body,
-                                  BinaryenExpressionRef catchBody) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenTry(BinaryenModuleRef module,
+            BinaryenExpressionRef body,
+            BinaryenExpressionRef catchBody) {
   auto* ret = Builder(*(Module*)module)
                 .makeTry((Expression*)body, (Expression*)catchBody);
   if (tracing) {
@@ -1675,10 +1828,11 @@ BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 
-BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
-                                    const char* event,
-                                    BinaryenExpressionRef* operands,
-                                    BinaryenIndex numOperands) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenThrow(BinaryenModuleRef module,
+              const char* event,
+              BinaryenExpressionRef* operands,
+              BinaryenIndex numOperands) {
   std::vector<Expression*> args;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     args.push_back((Expression*)operands[i]);
@@ -1706,8 +1860,8 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 
-BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
-                                      BinaryenExpressionRef exnref) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenRethrow(BinaryenModuleRef module, BinaryenExpressionRef exnref) {
   auto* ret = Builder(*(Module*)module).makeRethrow((Expression*)exnref);
   if (tracing) {
     traceExpression(ret, "BinaryenRethrow", exnref);
@@ -1715,10 +1869,11 @@ BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 
-BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
-                                      const char* name,
-                                      const char* eventName,
-                                      BinaryenExpressionRef exnref) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBrOnExn(BinaryenModuleRef module,
+                const char* name,
+                const char* eventName,
+                BinaryenExpressionRef exnref) {
   Module* wasm = (Module*)module;
   Event* event = wasm->getEventOrNull(eventName);
   assert(event && "br_on_exn's event must exist");
@@ -1733,7 +1888,8 @@ BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
 
 // Expression utility
 
-BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionId
+BinaryenExpressionGetId(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionGetId(expressions[" << expressions[expr]
               << "]);\n";
@@ -1741,7 +1897,8 @@ BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr) {
 
   return ((Expression*)expr)->_id;
 }
-BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenType
+BinaryenExpressionGetType(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionGetType(expressions[" << expressions[expr]
               << "]);\n";
@@ -1749,7 +1906,7 @@ BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {
 
   return ((Expression*)expr)->type;
 }
-void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
+BINARYEN_API void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionPrint(expressions[" << expressions[expr]
               << "]);\n";
@@ -1762,7 +1919,7 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
 // Specific expression utility
 
 // Block
-const char* BinaryenBlockGetName(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenBlockGetName(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBlockGetName(expressions[" << expressions[expr]
               << "]);\n";
@@ -1772,7 +1929,8 @@ const char* BinaryenBlockGetName(BinaryenExpressionRef expr) {
   assert(expression->is<Block>());
   return static_cast<Block*>(expression)->name.c_str();
 }
-BinaryenIndex BinaryenBlockGetNumChildren(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenIndex
+BinaryenBlockGetNumChildren(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBlockGetNumChildren(expressions["
               << expressions[expr] << "]);\n";
@@ -1782,8 +1940,8 @@ BinaryenIndex BinaryenBlockGetNumChildren(BinaryenExpressionRef expr) {
   assert(expression->is<Block>());
   return static_cast<Block*>(expression)->list.size();
 }
-BinaryenExpressionRef BinaryenBlockGetChild(BinaryenExpressionRef expr,
-                                            BinaryenIndex index) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBlockGetChild(BinaryenExpressionRef expr, BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenBlockGetChild(expressions[" << expressions[expr]
               << "], " << index << ");\n";
@@ -1795,7 +1953,8 @@ BinaryenExpressionRef BinaryenBlockGetChild(BinaryenExpressionRef expr,
   return static_cast<Block*>(expression)->list[index];
 }
 // If
-BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenIfGetCondition(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenIfGetCondition(expressions[" << expressions[expr]
               << "]);\n";
@@ -1805,7 +1964,8 @@ BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr) {
   assert(expression->is<If>());
   return static_cast<If*>(expression)->condition;
 }
-BinaryenExpressionRef BinaryenIfGetIfTrue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenIfGetIfTrue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenIfGetIfTrue(expressions[" << expressions[expr]
               << "]);\n";
@@ -1815,7 +1975,8 @@ BinaryenExpressionRef BinaryenIfGetIfTrue(BinaryenExpressionRef expr) {
   assert(expression->is<If>());
   return static_cast<If*>(expression)->ifTrue;
 }
-BinaryenExpressionRef BinaryenIfGetIfFalse(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenIfGetIfFalse(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenIfGetIfFalse(expressions[" << expressions[expr]
               << "]);\n";
@@ -1826,7 +1987,7 @@ BinaryenExpressionRef BinaryenIfGetIfFalse(BinaryenExpressionRef expr) {
   return static_cast<If*>(expression)->ifFalse;
 }
 // Loop
-const char* BinaryenLoopGetName(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenLoopGetName(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoopGetName(expressions[" << expressions[expr]
               << "]);\n";
@@ -1836,7 +1997,8 @@ const char* BinaryenLoopGetName(BinaryenExpressionRef expr) {
   assert(expression->is<Loop>());
   return static_cast<Loop*>(expression)->name.c_str();
 }
-BinaryenExpressionRef BinaryenLoopGetBody(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenLoopGetBody(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoopGetBody(expressions[" << expressions[expr]
               << "]);\n";
@@ -1847,7 +2009,7 @@ BinaryenExpressionRef BinaryenLoopGetBody(BinaryenExpressionRef expr) {
   return static_cast<Loop*>(expression)->body;
 }
 // Break
-const char* BinaryenBreakGetName(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenBreakGetName(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBreakGetName(expressions[" << expressions[expr]
               << "]);\n";
@@ -1857,7 +2019,8 @@ const char* BinaryenBreakGetName(BinaryenExpressionRef expr) {
   assert(expression->is<Break>());
   return static_cast<Break*>(expression)->name.c_str();
 }
-BinaryenExpressionRef BinaryenBreakGetCondition(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBreakGetCondition(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBreakGetCondition(expressions[" << expressions[expr]
               << "]);\n";
@@ -1867,7 +2030,8 @@ BinaryenExpressionRef BinaryenBreakGetCondition(BinaryenExpressionRef expr) {
   assert(expression->is<Break>());
   return static_cast<Break*>(expression)->condition;
 }
-BinaryenExpressionRef BinaryenBreakGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBreakGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBreakGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -1878,7 +2042,8 @@ BinaryenExpressionRef BinaryenBreakGetValue(BinaryenExpressionRef expr) {
   return static_cast<Break*>(expression)->value;
 }
 // Switch
-BinaryenIndex BinaryenSwitchGetNumNames(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenIndex
+BinaryenSwitchGetNumNames(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSwitchGetNumNames(expressions[" << expressions[expr]
               << "]);\n";
@@ -1888,8 +2053,8 @@ BinaryenIndex BinaryenSwitchGetNumNames(BinaryenExpressionRef expr) {
   assert(expression->is<Switch>());
   return static_cast<Switch*>(expression)->targets.size();
 }
-const char* BinaryenSwitchGetName(BinaryenExpressionRef expr,
-                                  BinaryenIndex index) {
+BINARYEN_API const char* BinaryenSwitchGetName(BinaryenExpressionRef expr,
+                                               BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenSwitchGetName(expressions[" << expressions[expr]
               << "], " << index << ");\n";
@@ -1900,7 +2065,8 @@ const char* BinaryenSwitchGetName(BinaryenExpressionRef expr,
   assert(index < static_cast<Switch*>(expression)->targets.size());
   return static_cast<Switch*>(expression)->targets[index].c_str();
 }
-const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr) {
+BINARYEN_API const char*
+BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSwitchGetDefaultName(expressions["
               << expressions[expr] << "]);\n";
@@ -1910,7 +2076,8 @@ const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr) {
   assert(expression->is<Switch>());
   return static_cast<Switch*>(expression)->default_.c_str();
 }
-BinaryenExpressionRef BinaryenSwitchGetCondition(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSwitchGetCondition(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSwitchGetCondition(expressions["
               << expressions[expr] << "]);\n";
@@ -1920,7 +2087,8 @@ BinaryenExpressionRef BinaryenSwitchGetCondition(BinaryenExpressionRef expr) {
   assert(expression->is<Switch>());
   return static_cast<Switch*>(expression)->condition;
 }
-BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSwitchGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSwitchGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -1931,7 +2099,7 @@ BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr) {
   return static_cast<Switch*>(expression)->value;
 }
 // Call
-const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenCallGetTarget(expressions[" << expressions[expr]
               << "]);\n";
@@ -1941,7 +2109,8 @@ const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
   assert(expression->is<Call>());
   return static_cast<Call*>(expression)->target.c_str();
 }
-BinaryenIndex BinaryenCallGetNumOperands(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenIndex
+BinaryenCallGetNumOperands(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenCallGetNumOperands(expressions["
               << expressions[expr] << "]);\n";
@@ -1951,8 +2120,8 @@ BinaryenIndex BinaryenCallGetNumOperands(BinaryenExpressionRef expr) {
   assert(expression->is<Call>());
   return static_cast<Call*>(expression)->operands.size();
 }
-BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr,
-                                             BinaryenIndex index) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenCallGetOperand(expressions[" << expressions[expr]
               << "], " << index << ");\n";
@@ -1964,7 +2133,7 @@ BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr,
   return static_cast<Call*>(expression)->operands[index];
 }
 // CallIndirect
-BinaryenExpressionRef
+BINARYEN_API BinaryenExpressionRef
 BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenCallIndirectGetTarget(expressions["
@@ -1975,7 +2144,8 @@ BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {
   assert(expression->is<CallIndirect>());
   return static_cast<CallIndirect*>(expression)->target;
 }
-BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenIndex
+BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenCallIndirectGetNumOperands(expressions["
               << expressions[expr] << "]);\n";
@@ -1985,8 +2155,8 @@ BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
   assert(expression->is<CallIndirect>());
   return static_cast<CallIndirect*>(expression)->operands.size();
 }
-BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr,
-                                                     BinaryenIndex index) {
+BINARYEN_API BinaryenExpressionRef BinaryenCallIndirectGetOperand(
+  BinaryenExpressionRef expr, BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenCallIndirectGetOperand(expressions["
               << expressions[expr] << "], " << index << ");\n";
@@ -1998,7 +2168,8 @@ BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr,
   return static_cast<CallIndirect*>(expression)->operands[index];
 }
 // LocalGet
-BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenIndex
+BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLocalGetGetIndex(expressions[" << expressions[expr]
               << "]);\n";
@@ -2009,7 +2180,7 @@ BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {
   return static_cast<LocalGet*>(expression)->index;
 }
 // LocalSet
-int BinaryenLocalSetIsTee(BinaryenExpressionRef expr) {
+BINARYEN_API int BinaryenLocalSetIsTee(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLocalSetIsTee(expressions[" << expressions[expr]
               << "]);\n";
@@ -2019,7 +2190,8 @@ int BinaryenLocalSetIsTee(BinaryenExpressionRef expr) {
   assert(expression->is<LocalSet>());
   return static_cast<LocalSet*>(expression)->isTee();
 }
-BinaryenIndex BinaryenLocalSetGetIndex(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenIndex
+BinaryenLocalSetGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLocalSetGetIndex(expressions[" << expressions[expr]
               << "]);\n";
@@ -2029,7 +2201,8 @@ BinaryenIndex BinaryenLocalSetGetIndex(BinaryenExpressionRef expr) {
   assert(expression->is<LocalSet>());
   return static_cast<LocalSet*>(expression)->index;
 }
-BinaryenExpressionRef BinaryenLocalSetGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenLocalSetGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLocalSetGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2040,7 +2213,7 @@ BinaryenExpressionRef BinaryenLocalSetGetValue(BinaryenExpressionRef expr) {
   return static_cast<LocalSet*>(expression)->value;
 }
 // GlobalGet
-const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenGlobalGetGetName(expressions[" << expressions[expr]
               << "]);\n";
@@ -2051,7 +2224,7 @@ const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr) {
   return static_cast<GlobalGet*>(expression)->name.c_str();
 }
 // GlobalSet
-const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenGlobalSetGetName(expressions[" << expressions[expr]
               << "]);\n";
@@ -2061,7 +2234,8 @@ const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr) {
   assert(expression->is<GlobalSet>());
   return static_cast<GlobalSet*>(expression)->name.c_str();
 }
-BinaryenExpressionRef BinaryenGlobalSetGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenGlobalSetGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenGlobalSetGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2072,7 +2246,7 @@ BinaryenExpressionRef BinaryenGlobalSetGetValue(BinaryenExpressionRef expr) {
   return static_cast<GlobalSet*>(expression)->value;
 }
 // Host
-BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenHostGetOp(expressions[" << expressions[expr]
               << "]);\n";
@@ -2082,7 +2256,8 @@ BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<Host>());
   return static_cast<Host*>(expression)->op;
 }
-const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr) {
+BINARYEN_API const char*
+BinaryenHostGetNameOperand(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenHostGetNameOperand(expressions["
               << expressions[expr] << "]);\n";
@@ -2092,7 +2267,8 @@ const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr) {
   assert(expression->is<Host>());
   return static_cast<Host*>(expression)->nameOperand.c_str();
 }
-BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenIndex
+BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenHostGetNumOperands(expressions["
               << expressions[expr] << "]);\n";
@@ -2102,8 +2278,8 @@ BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
   assert(expression->is<Host>());
   return static_cast<Host*>(expression)->operands.size();
 }
-BinaryenExpressionRef BinaryenHostGetOperand(BinaryenExpressionRef expr,
-                                             BinaryenIndex index) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenHostGetOperand(BinaryenExpressionRef expr, BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenHostGetOperand(expressions[" << expressions[expr]
               << "], " << index << ");\n";
@@ -2115,7 +2291,7 @@ BinaryenExpressionRef BinaryenHostGetOperand(BinaryenExpressionRef expr,
   return static_cast<Host*>(expression)->operands[index];
 }
 // Load
-int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
+BINARYEN_API int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadIsAtomic(expressions[" << expressions[expr]
               << "]);\n";
@@ -2125,7 +2301,7 @@ int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->isAtomic;
 }
-int BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
+BINARYEN_API int BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadIsSigned(expressions[" << expressions[expr]
               << "]);\n";
@@ -2135,7 +2311,7 @@ int BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->signed_;
 }
-uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadGetBytes(expressions[" << expressions[expr]
               << "]);\n";
@@ -2145,7 +2321,7 @@ uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->bytes;
 }
-uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadGetOffset(expressions[" << expressions[expr]
               << "]);\n";
@@ -2155,7 +2331,7 @@ uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->offset;
 }
-uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadGetAlign(expressions[" << expressions[expr]
               << "]);\n";
@@ -2165,7 +2341,8 @@ uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->align;
 }
-BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenLoadGetPtr(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadGetPtr(expressions[" << expressions[expr]
               << "]);\n";
@@ -2176,7 +2353,7 @@ BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr) {
   return static_cast<Load*>(expression)->ptr;
 }
 // Store
-int BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
+BINARYEN_API int BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreIsAtomic(expressions[" << expressions[expr]
               << "]);\n";
@@ -2186,7 +2363,7 @@ int BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->isAtomic;
 }
-uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreGetBytes(expressions[" << expressions[expr]
               << "]);\n";
@@ -2196,7 +2373,7 @@ uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr) {
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->bytes;
 }
-uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreGetOffset(expressions[" << expressions[expr]
               << "]);\n";
@@ -2206,7 +2383,7 @@ uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr) {
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->offset;
 }
-uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreGetAlign(expressions[" << expressions[expr]
               << "]);\n";
@@ -2216,7 +2393,8 @@ uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr) {
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->align;
 }
-BinaryenExpressionRef BinaryenStoreGetPtr(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenStoreGetPtr(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreGetPtr(expressions[" << expressions[expr]
               << "]);\n";
@@ -2226,7 +2404,8 @@ BinaryenExpressionRef BinaryenStoreGetPtr(BinaryenExpressionRef expr) {
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->ptr;
 }
-BinaryenExpressionRef BinaryenStoreGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenStoreGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenStoreGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2237,7 +2416,7 @@ BinaryenExpressionRef BinaryenStoreGetValue(BinaryenExpressionRef expr) {
   return static_cast<Store*>(expression)->value;
 }
 // Const
-int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
+BINARYEN_API int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueI32(expressions[" << expressions[expr]
               << "]);\n";
@@ -2247,7 +2426,7 @@ int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.geti32();
 }
-int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
+BINARYEN_API int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueI64(expressions[" << expressions[expr]
               << "]);\n";
@@ -2257,7 +2436,7 @@ int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.geti64();
 }
-int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
+BINARYEN_API int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueI64Low(expressions["
               << expressions[expr] << "]);\n";
@@ -2268,7 +2447,7 @@ int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
   return (int32_t)(static_cast<Const*>(expression)->value.geti64() &
                    0xffffffff);
 }
-int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
+BINARYEN_API int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueI64High(expressions["
               << expressions[expr] << "]);\n";
@@ -2278,7 +2457,7 @@ int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return (int32_t)(static_cast<Const*>(expression)->value.geti64() >> 32);
 }
-float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
+BINARYEN_API float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueF32(expressions[" << expressions[expr]
               << "]);\n";
@@ -2288,7 +2467,7 @@ float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.getf32();
 }
-double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
+BINARYEN_API double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueF64(expressions[" << expressions[expr]
               << "]);\n";
@@ -2298,7 +2477,8 @@ double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.getf64();
 }
-void BinaryenConstGetValueV128(BinaryenExpressionRef expr, uint8_t* out) {
+BINARYEN_API void BinaryenConstGetValueV128(BinaryenExpressionRef expr,
+                                            uint8_t* out) {
   if (tracing) {
     std::cout << "  BinaryenConstGetValueV128(expressions[" << expressions[expr]
               << "], " << out << ");\n";
@@ -2309,7 +2489,7 @@ void BinaryenConstGetValueV128(BinaryenExpressionRef expr, uint8_t* out) {
   memcpy(out, static_cast<Const*>(expression)->value.getv128().data(), 16);
 }
 // Unary
-BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenUnaryGetOp(expressions[" << expressions[expr]
               << "]);\n";
@@ -2319,7 +2499,8 @@ BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<Unary>());
   return static_cast<Unary*>(expression)->op;
 }
-BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenUnaryGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenUnaryGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2330,7 +2511,7 @@ BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr) {
   return static_cast<Unary*>(expression)->value;
 }
 // Binary
-BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBinaryGetOp(expressions[" << expressions[expr]
               << "]);\n";
@@ -2340,7 +2521,8 @@ BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<Binary>());
   return static_cast<Binary*>(expression)->op;
 }
-BinaryenExpressionRef BinaryenBinaryGetLeft(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBinaryGetLeft(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBinaryGetLeft(expressions[" << expressions[expr]
               << "]);\n";
@@ -2350,7 +2532,8 @@ BinaryenExpressionRef BinaryenBinaryGetLeft(BinaryenExpressionRef expr) {
   assert(expression->is<Binary>());
   return static_cast<Binary*>(expression)->left;
 }
-BinaryenExpressionRef BinaryenBinaryGetRight(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBinaryGetRight(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBinaryGetRight(expressions[" << expressions[expr]
               << "]);\n";
@@ -2361,7 +2544,8 @@ BinaryenExpressionRef BinaryenBinaryGetRight(BinaryenExpressionRef expr) {
   return static_cast<Binary*>(expression)->right;
 }
 // Select
-BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSelectGetIfTrue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSelectGetIfTrue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2371,7 +2555,8 @@ BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr) {
   assert(expression->is<Select>());
   return static_cast<Select*>(expression)->ifTrue;
 }
-BinaryenExpressionRef BinaryenSelectGetIfFalse(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSelectGetIfFalse(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSelectGetIfFalse(expressions[" << expressions[expr]
               << "]);\n";
@@ -2381,7 +2566,8 @@ BinaryenExpressionRef BinaryenSelectGetIfFalse(BinaryenExpressionRef expr) {
   assert(expression->is<Select>());
   return static_cast<Select*>(expression)->ifFalse;
 }
-BinaryenExpressionRef BinaryenSelectGetCondition(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSelectGetCondition(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSelectGetCondition(expressions["
               << expressions[expr] << "]);\n";
@@ -2392,7 +2578,8 @@ BinaryenExpressionRef BinaryenSelectGetCondition(BinaryenExpressionRef expr) {
   return static_cast<Select*>(expression)->condition;
 }
 // Drop
-BinaryenExpressionRef BinaryenDropGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenDropGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenDropGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2403,7 +2590,8 @@ BinaryenExpressionRef BinaryenDropGetValue(BinaryenExpressionRef expr) {
   return static_cast<Drop*>(expression)->value;
 }
 // Return
-BinaryenExpressionRef BinaryenReturnGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenReturnGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenReturnGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2414,7 +2602,7 @@ BinaryenExpressionRef BinaryenReturnGetValue(BinaryenExpressionRef expr) {
   return static_cast<Return*>(expression)->value;
 }
 // AtomicRMW
-BinaryenOp BinaryenAtomicRMWGetOp(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenOp BinaryenAtomicRMWGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicRMWGetOp(expressions[" << expressions[expr]
               << "]);\n";
@@ -2424,7 +2612,7 @@ BinaryenOp BinaryenAtomicRMWGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicRMW>());
   return static_cast<AtomicRMW*>(expression)->op;
 }
-uint32_t BinaryenAtomicRMWGetBytes(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenAtomicRMWGetBytes(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicRMWGetBytes(expressions[" << expressions[expr]
               << "]);\n";
@@ -2434,7 +2622,7 @@ uint32_t BinaryenAtomicRMWGetBytes(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicRMW>());
   return static_cast<AtomicRMW*>(expression)->bytes;
 }
-uint32_t BinaryenAtomicRMWGetOffset(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenAtomicRMWGetOffset(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicRMWGetOffset(expressions["
               << expressions[expr] << "]);\n";
@@ -2444,7 +2632,8 @@ uint32_t BinaryenAtomicRMWGetOffset(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicRMW>());
   return static_cast<AtomicRMW*>(expression)->offset;
 }
-BinaryenExpressionRef BinaryenAtomicRMWGetPtr(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicRMWGetPtr(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicRMWGetPtr(expressions[" << expressions[expr]
               << "]);\n";
@@ -2454,7 +2643,8 @@ BinaryenExpressionRef BinaryenAtomicRMWGetPtr(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicRMW>());
   return static_cast<AtomicRMW*>(expression)->ptr;
 }
-BinaryenExpressionRef BinaryenAtomicRMWGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicRMWGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicRMWGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2465,7 +2655,8 @@ BinaryenExpressionRef BinaryenAtomicRMWGetValue(BinaryenExpressionRef expr) {
   return static_cast<AtomicRMW*>(expression)->value;
 }
 // AtomicCmpxchg
-uint32_t BinaryenAtomicCmpxchgGetBytes(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t
+BinaryenAtomicCmpxchgGetBytes(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicCmpxchgGetBytes(expressions["
               << expressions[expr] << "]);\n";
@@ -2475,7 +2666,8 @@ uint32_t BinaryenAtomicCmpxchgGetBytes(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicCmpxchg>());
   return static_cast<AtomicCmpxchg*>(expression)->bytes;
 }
-uint32_t BinaryenAtomicCmpxchgGetOffset(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t
+BinaryenAtomicCmpxchgGetOffset(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicCmpxchgGetOffset(expressions["
               << expressions[expr] << "]);\n";
@@ -2485,7 +2677,8 @@ uint32_t BinaryenAtomicCmpxchgGetOffset(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicCmpxchg>());
   return static_cast<AtomicCmpxchg*>(expression)->offset;
 }
-BinaryenExpressionRef BinaryenAtomicCmpxchgGetPtr(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicCmpxchgGetPtr(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicCmpxchgGetPtr(expressions["
               << expressions[expr] << "]);\n";
@@ -2495,7 +2688,7 @@ BinaryenExpressionRef BinaryenAtomicCmpxchgGetPtr(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicCmpxchg>());
   return static_cast<AtomicCmpxchg*>(expression)->ptr;
 }
-BinaryenExpressionRef
+BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicCmpxchgGetExpected(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicCmpxchgGetExpected(expressions["
@@ -2506,7 +2699,7 @@ BinaryenAtomicCmpxchgGetExpected(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicCmpxchg>());
   return static_cast<AtomicCmpxchg*>(expression)->expected;
 }
-BinaryenExpressionRef
+BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicCmpxchgGetReplacement(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicCmpxchgGetReplacement(expressions["
@@ -2518,7 +2711,8 @@ BinaryenAtomicCmpxchgGetReplacement(BinaryenExpressionRef expr) {
   return static_cast<AtomicCmpxchg*>(expression)->replacement;
 }
 // AtomicWait
-BinaryenExpressionRef BinaryenAtomicWaitGetPtr(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicWaitGetPtr(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicWaitGetPtr(expressions[" << expressions[expr]
               << "]);\n";
@@ -2528,7 +2722,7 @@ BinaryenExpressionRef BinaryenAtomicWaitGetPtr(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicWait>());
   return static_cast<AtomicWait*>(expression)->ptr;
 }
-BinaryenExpressionRef
+BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWaitGetExpected(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicWaitGetExpected(expressions["
@@ -2539,7 +2733,8 @@ BinaryenAtomicWaitGetExpected(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicWait>());
   return static_cast<AtomicWait*>(expression)->expected;
 }
-BinaryenExpressionRef BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicWaitGetTimeout(expressions["
               << expressions[expr] << "]);\n";
@@ -2549,7 +2744,8 @@ BinaryenExpressionRef BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicWait>());
   return static_cast<AtomicWait*>(expression)->timeout;
 }
-BinaryenType BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenType
+BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicWaitGetExpectedType(expressions["
               << expressions[expr] << "]);\n";
@@ -2560,7 +2756,8 @@ BinaryenType BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr) {
   return static_cast<AtomicWait*>(expression)->expectedType;
 }
 // AtomicNotify
-BinaryenExpressionRef BinaryenAtomicNotifyGetPtr(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenAtomicNotifyGetPtr(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicNotifyGetPtr(expressions["
               << expressions[expr] << "]);\n";
@@ -2570,7 +2767,7 @@ BinaryenExpressionRef BinaryenAtomicNotifyGetPtr(BinaryenExpressionRef expr) {
   assert(expression->is<AtomicNotify>());
   return static_cast<AtomicNotify*>(expression)->ptr;
 }
-BinaryenExpressionRef
+BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicNotifyGetNotifyCount(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicNotifyGetNotifyCount(expressions["
@@ -2582,7 +2779,7 @@ BinaryenAtomicNotifyGetNotifyCount(BinaryenExpressionRef expr) {
   return static_cast<AtomicNotify*>(expression)->notifyCount;
 }
 // AtomicFence
-uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
+BINARYEN_API uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenAtomicFenceGetOrder(expressions["
               << expressions[expr] << "]);\n";
@@ -2593,7 +2790,7 @@ uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
   return static_cast<AtomicFence*>(expression)->order;
 }
 // SIMDExtract
-BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDExtractGetOp(expressions[" << expressions[expr]
               << "]);\n";
@@ -2603,7 +2800,8 @@ BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDExtract>());
   return static_cast<SIMDExtract*>(expression)->op;
 }
-BinaryenExpressionRef BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDExtractGetVec(expressions[" << expressions[expr]
               << "]);\n";
@@ -2613,7 +2811,7 @@ BinaryenExpressionRef BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDExtract>());
   return static_cast<SIMDExtract*>(expression)->vec;
 }
-uint8_t BinaryenSIMDExtractGetIndex(BinaryenExpressionRef expr) {
+BINARYEN_API uint8_t BinaryenSIMDExtractGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDExtractGetIndex(expressions["
               << expressions[expr] << "]);\n";
@@ -2624,7 +2822,7 @@ uint8_t BinaryenSIMDExtractGetIndex(BinaryenExpressionRef expr) {
   return static_cast<SIMDExtract*>(expression)->index;
 }
 // SIMDReplace
-BinaryenOp BinaryenSIMDReplaceGetOp(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenOp BinaryenSIMDReplaceGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDReplaceGetOp(expressions[" << expressions[expr]
               << "]);\n";
@@ -2634,7 +2832,8 @@ BinaryenOp BinaryenSIMDReplaceGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDReplace>());
   return static_cast<SIMDReplace*>(expression)->op;
 }
-BinaryenExpressionRef BinaryenSIMDReplaceGetVec(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDReplaceGetVec(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDReplaceGetVec(expressions[" << expressions[expr]
               << "]);\n";
@@ -2644,7 +2843,7 @@ BinaryenExpressionRef BinaryenSIMDReplaceGetVec(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDReplace>());
   return static_cast<SIMDReplace*>(expression)->vec;
 }
-uint8_t BinaryenSIMDReplaceGetIndex(BinaryenExpressionRef expr) {
+BINARYEN_API uint8_t BinaryenSIMDReplaceGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDReplaceGetIndex(expressions["
               << expressions[expr] << "]);\n";
@@ -2654,7 +2853,8 @@ uint8_t BinaryenSIMDReplaceGetIndex(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDReplace>());
   return static_cast<SIMDReplace*>(expression)->index;
 }
-BinaryenExpressionRef BinaryenSIMDReplaceGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDReplaceGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDReplaceGetValue(expressions["
               << expressions[expr] << "]);\n";
@@ -2665,7 +2865,8 @@ BinaryenExpressionRef BinaryenSIMDReplaceGetValue(BinaryenExpressionRef expr) {
   return static_cast<SIMDReplace*>(expression)->value;
 }
 // SIMDShuffle
-BinaryenExpressionRef BinaryenSIMDShuffleGetLeft(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDShuffleGetLeft(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDShuffleGetLeft(expressions["
               << expressions[expr] << "]);\n";
@@ -2675,7 +2876,8 @@ BinaryenExpressionRef BinaryenSIMDShuffleGetLeft(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDShuffle>());
   return static_cast<SIMDShuffle*>(expression)->left;
 }
-BinaryenExpressionRef BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDShuffleGetRight(expressions["
               << expressions[expr] << "]);\n";
@@ -2685,7 +2887,8 @@ BinaryenExpressionRef BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDShuffle>());
   return static_cast<SIMDShuffle*>(expression)->right;
 }
-void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t* mask) {
+BINARYEN_API void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr,
+                                             uint8_t* mask) {
   if (tracing) {
     std::cout << "  BinaryenSIMDShuffleGetMask(expressions["
               << expressions[expr] << "], " << mask << ");\n";
@@ -2696,7 +2899,7 @@ void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t* mask) {
   memcpy(mask, static_cast<SIMDShuffle*>(expression)->mask.data(), 16);
 }
 // SIMDTernary
-BinaryenOp BinaryenSIMDTernaryGetOp(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenOp BinaryenSIMDTernaryGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDTernaryOp(expressions[" << expressions[expr]
               << "]);\n";
@@ -2706,7 +2909,8 @@ BinaryenOp BinaryenSIMDTernaryGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDTernary>());
   return static_cast<SIMDTernary*>(expression)->op;
 }
-BinaryenExpressionRef BinaryenSIMDTernaryGetA(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDTernaryGetA(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDTernaryGetA(expressions[" << expressions[expr]
               << "]);\n";
@@ -2716,7 +2920,8 @@ BinaryenExpressionRef BinaryenSIMDTernaryGetA(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDTernary>());
   return static_cast<SIMDTernary*>(expression)->a;
 }
-BinaryenExpressionRef BinaryenSIMDTernaryGetB(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDTernaryGetB(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDTernaryGetB(expressions[" << expressions[expr]
               << "]);\n";
@@ -2726,7 +2931,8 @@ BinaryenExpressionRef BinaryenSIMDTernaryGetB(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDTernary>());
   return static_cast<SIMDTernary*>(expression)->b;
 }
-BinaryenExpressionRef BinaryenSIMDTernaryGetC(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDTernaryGetC(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDTernaryGetC(expressions[" << expressions[expr]
               << "]);\n";
@@ -2737,7 +2943,7 @@ BinaryenExpressionRef BinaryenSIMDTernaryGetC(BinaryenExpressionRef expr) {
   return static_cast<SIMDTernary*>(expression)->c;
 }
 // SIMDShift
-BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDShiftGetOp(expressions[" << expressions[expr]
               << "]);\n";
@@ -2747,7 +2953,8 @@ BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDShift>());
   return static_cast<SIMDShift*>(expression)->op;
 }
-BinaryenExpressionRef BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDShiftGetVec(expressions[" << expressions[expr]
               << "]);\n";
@@ -2757,7 +2964,8 @@ BinaryenExpressionRef BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr) {
   assert(expression->is<SIMDShift>());
   return static_cast<SIMDShift*>(expression)->vec;
 }
-BinaryenExpressionRef BinaryenSIMDShiftGetShift(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDShiftGetShift(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSIMDShiftGetShift(expressions[" << expressions[expr]
               << "]);\n";
@@ -2768,7 +2976,7 @@ BinaryenExpressionRef BinaryenSIMDShiftGetShift(BinaryenExpressionRef expr) {
   return static_cast<SIMDShift*>(expression)->shift;
 }
 // MemoryInit
-uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryInitGetSegment(expressions["
               << expressions[expr] << "]);\n";
@@ -2778,7 +2986,8 @@ uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryInit>());
   return static_cast<MemoryInit*>(expression)->segment;
 }
-BinaryenExpressionRef BinaryenMemoryInitGetDest(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryInitGetDest(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryInitGetDest(expressions[" << expressions[expr]
               << "]);\n";
@@ -2788,7 +2997,8 @@ BinaryenExpressionRef BinaryenMemoryInitGetDest(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryInit>());
   return static_cast<MemoryInit*>(expression)->dest;
 }
-BinaryenExpressionRef BinaryenMemoryInitGetOffset(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryInitGetOffset(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryInitGetOffset(expressions["
               << expressions[expr] << "]);\n";
@@ -2798,7 +3008,8 @@ BinaryenExpressionRef BinaryenMemoryInitGetOffset(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryInit>());
   return static_cast<MemoryInit*>(expression)->offset;
 }
-BinaryenExpressionRef BinaryenMemoryInitGetSize(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryInitGetSize(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryInitGetSize(expressions[" << expressions[expr]
               << "]);\n";
@@ -2809,7 +3020,7 @@ BinaryenExpressionRef BinaryenMemoryInitGetSize(BinaryenExpressionRef expr) {
   return static_cast<MemoryInit*>(expression)->size;
 }
 // DataDrop
-uint32_t BinaryenDataDropGetSegment(BinaryenExpressionRef expr) {
+BINARYEN_API uint32_t BinaryenDataDropGetSegment(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenDataDropGetSegment(expressions["
               << expressions[expr] << "]);\n";
@@ -2820,7 +3031,8 @@ uint32_t BinaryenDataDropGetSegment(BinaryenExpressionRef expr) {
   return static_cast<DataDrop*>(expression)->segment;
 }
 // MemoryCopy
-BinaryenExpressionRef BinaryenMemoryCopyGetDest(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryCopyGetDest(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryCopyGetDest(expressions[" << expressions[expr]
               << "]);\n";
@@ -2830,7 +3042,8 @@ BinaryenExpressionRef BinaryenMemoryCopyGetDest(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryCopy>());
   return static_cast<MemoryCopy*>(expression)->dest;
 }
-BinaryenExpressionRef BinaryenMemoryCopyGetSource(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryCopyGetSource(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryCopyGetSource(expressions["
               << expressions[expr] << "]);\n";
@@ -2840,7 +3053,8 @@ BinaryenExpressionRef BinaryenMemoryCopyGetSource(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryCopy>());
   return static_cast<MemoryCopy*>(expression)->source;
 }
-BinaryenExpressionRef BinaryenMemoryCopyGetSize(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryCopyGetSize(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryCopyGetSize(expressions[" << expressions[expr]
               << "]);\n";
@@ -2851,7 +3065,8 @@ BinaryenExpressionRef BinaryenMemoryCopyGetSize(BinaryenExpressionRef expr) {
   return static_cast<MemoryCopy*>(expression)->size;
 }
 // MemoryFill
-BinaryenExpressionRef BinaryenMemoryFillGetDest(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryFillGetDest(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryFillGetDest(expressions[" << expressions[expr]
               << "]);\n";
@@ -2861,7 +3076,8 @@ BinaryenExpressionRef BinaryenMemoryFillGetDest(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryFill>());
   return static_cast<MemoryFill*>(expression)->dest;
 }
-BinaryenExpressionRef BinaryenMemoryFillGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryFillGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryFillGetValue(expressions["
               << expressions[expr] << "]);\n";
@@ -2871,7 +3087,8 @@ BinaryenExpressionRef BinaryenMemoryFillGetValue(BinaryenExpressionRef expr) {
   assert(expression->is<MemoryFill>());
   return static_cast<MemoryFill*>(expression)->value;
 }
-BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenMemoryFillGetSize(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenMemoryFillGetSize(expressions[" << expressions[expr]
               << "]);\n";
@@ -2882,7 +3099,8 @@ BinaryenExpressionRef BinaryenMemoryFillGetSize(BinaryenExpressionRef expr) {
   return static_cast<MemoryFill*>(expression)->size;
 }
 // Push
-BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenPushGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenPushGetValue(expressions[" << expressions[expr]
               << "]);\n";
@@ -2893,7 +3111,8 @@ BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
   return static_cast<Push*>(expression)->value;
 }
 // Try
-BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenTryGetBody(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenTryGetBody(expressions[" << expressions[expr]
               << "]);\n";
@@ -2903,7 +3122,8 @@ BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr) {
   assert(expression->is<Try>());
   return static_cast<Try*>(expression)->body;
 }
-BinaryenExpressionRef BinaryenTryGetCatchBody(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenTryGetCatchBody(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenTryGetCatchBody(expressions[" << expressions[expr]
               << "]);\n";
@@ -2914,7 +3134,7 @@ BinaryenExpressionRef BinaryenTryGetCatchBody(BinaryenExpressionRef expr) {
   return static_cast<Try*>(expression)->catchBody;
 }
 // Throw
-const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenThrowGetEvent(expressions[" << expressions[expr]
               << "]);\n";
@@ -2924,8 +3144,8 @@ const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {
   assert(expression->is<Throw>());
   return static_cast<Throw*>(expression)->event.c_str();
 }
-BinaryenExpressionRef BinaryenThrowGetOperand(BinaryenExpressionRef expr,
-                                              BinaryenIndex index) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenThrowGetOperand(BinaryenExpressionRef expr, BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenThrowGetOperand(expressions[" << expressions[expr]
               << "], " << index << ");\n";
@@ -2936,7 +3156,8 @@ BinaryenExpressionRef BinaryenThrowGetOperand(BinaryenExpressionRef expr,
   assert(index < static_cast<Throw*>(expression)->operands.size());
   return static_cast<Throw*>(expression)->operands[index];
 }
-BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenIndex
+BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenThrowGetNumOperands(expressions["
               << expressions[expr] << "]);\n";
@@ -2947,7 +3168,8 @@ BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
   return static_cast<Throw*>(expression)->operands.size();
 }
 // Rethrow
-BinaryenExpressionRef BinaryenRethrowGetExnref(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenRethrowGetExnref(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenRethrowGetExnref(expressions[" << expressions[expr]
               << "]);\n";
@@ -2958,7 +3180,7 @@ BinaryenExpressionRef BinaryenRethrowGetExnref(BinaryenExpressionRef expr) {
   return static_cast<Rethrow*>(expression)->exnref;
 }
 // BrOnExn
-const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBrOnExnGetEvent(expressions[" << expressions[expr]
               << "]);\n";
@@ -2968,7 +3190,7 @@ const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr) {
   assert(expression->is<BrOnExn>());
   return static_cast<BrOnExn*>(expression)->event.c_str();
 }
-const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr) {
+BINARYEN_API const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBrOnExnGetName(expressions[" << expressions[expr]
               << "]);\n";
@@ -2978,7 +3200,8 @@ const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr) {
   assert(expression->is<BrOnExn>());
   return static_cast<BrOnExn*>(expression)->name.c_str();
 }
-BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBrOnExnGetExnref(expressions[" << expressions[expr]
               << "]);\n";
@@ -2991,12 +3214,13 @@ BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
 
 // Functions
 
-BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
-                                        const char* name,
-                                        BinaryenFunctionTypeRef type,
-                                        BinaryenType* varTypes,
-                                        BinaryenIndex numVarTypes,
-                                        BinaryenExpressionRef body) {
+BINARYEN_API BinaryenFunctionRef
+BinaryenAddFunction(BinaryenModuleRef module,
+                    const char* name,
+                    BinaryenFunctionTypeRef type,
+                    BinaryenType* varTypes,
+                    BinaryenIndex numVarTypes,
+                    BinaryenExpressionRef body) {
   auto* wasm = (Module*)module;
   auto* ret = new Function;
 
@@ -3043,8 +3267,8 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
 
   return ret;
 }
-BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
-                                        const char* name) {
+BINARYEN_API BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
+                                                     const char* name) {
   if (tracing) {
     std::cout << "  BinaryenGetFunction(the_module, \"" << name << "\");\n";
   }
@@ -3052,7 +3276,8 @@ BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
   auto* wasm = (Module*)module;
   return wasm->getFunction(name);
 }
-void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
+BINARYEN_API void BinaryenRemoveFunction(BinaryenModuleRef module,
+                                         const char* name) {
   if (tracing) {
     std::cout << "  BinaryenRemoveFunction(the_module, \"" << name << "\");\n";
   }
@@ -3063,11 +3288,11 @@ void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
 
 // Globals
 
-BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
-                                    const char* name,
-                                    BinaryenType type,
-                                    int8_t mutable_,
-                                    BinaryenExpressionRef init) {
+BINARYEN_API BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
+                                                 const char* name,
+                                                 BinaryenType type,
+                                                 int8_t mutable_,
+                                                 BinaryenExpressionRef init) {
   auto* wasm = (Module*)module;
   auto* ret = new Global();
 
@@ -3086,8 +3311,8 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
   wasm->addGlobal(ret);
   return ret;
 }
-BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module,
-                                    const char* name) {
+BINARYEN_API BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module,
+                                                 const char* name) {
   if (tracing) {
     std::cout << "  BinaryenGetGlobal(the_module, \"" << name << "\");\n";
   }
@@ -3095,7 +3320,8 @@ BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module,
   auto* wasm = (Module*)module;
   return wasm->getGlobal(name);
 }
-void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
+BINARYEN_API void BinaryenRemoveGlobal(BinaryenModuleRef module,
+                                       const char* name) {
   if (tracing) {
     std::cout << "  BinaryenRemoveGlobal(the_module, \"" << name << "\");\n";
   }
@@ -3106,10 +3332,10 @@ void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
 
 // Events
 
-BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
-                                  const char* name,
-                                  uint32_t attribute,
-                                  BinaryenFunctionTypeRef type) {
+BINARYEN_API BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
+                                               const char* name,
+                                               uint32_t attribute,
+                                               BinaryenFunctionTypeRef type) {
   if (tracing) {
     std::cout << "  BinaryenAddEvent(the_module, \"" << name << "\", "
               << attribute << ", functionTypes[" << functionTypes[type]
@@ -3126,7 +3352,8 @@ BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
   return ret;
 }
 
-BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
+BINARYEN_API BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module,
+                                               const char* name) {
   if (tracing) {
     std::cout << "  BinaryenGetEvent(the_module, \"" << name << "\");\n";
   }
@@ -3134,7 +3361,8 @@ BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
   auto* wasm = (Module*)module;
   return wasm->getEvent(name);
 }
-void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name) {
+BINARYEN_API void BinaryenRemoveEvent(BinaryenModuleRef module,
+                                      const char* name) {
   if (tracing) {
     std::cout << "  BinaryenRemoveEvent(the_module, \"" << name << "\");\n";
   }
@@ -3145,11 +3373,12 @@ void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name) {
 
 // Imports
 
-void BinaryenAddFunctionImport(BinaryenModuleRef module,
-                               const char* internalName,
-                               const char* externalModuleName,
-                               const char* externalBaseName,
-                               BinaryenFunctionTypeRef functionType) {
+BINARYEN_API void
+BinaryenAddFunctionImport(BinaryenModuleRef module,
+                          const char* internalName,
+                          const char* externalModuleName,
+                          const char* externalBaseName,
+                          BinaryenFunctionTypeRef functionType) {
   auto* wasm = (Module*)module;
   auto* ret = new Function();
 
@@ -3166,10 +3395,10 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
   FunctionTypeUtils::fillFunction(ret, (FunctionType*)functionType);
   wasm->addFunction(ret);
 }
-void BinaryenAddTableImport(BinaryenModuleRef module,
-                            const char* internalName,
-                            const char* externalModuleName,
-                            const char* externalBaseName) {
+BINARYEN_API void BinaryenAddTableImport(BinaryenModuleRef module,
+                                         const char* internalName,
+                                         const char* externalModuleName,
+                                         const char* externalBaseName) {
   auto* wasm = (Module*)module;
 
   if (tracing) {
@@ -3181,11 +3410,11 @@ void BinaryenAddTableImport(BinaryenModuleRef module,
   wasm->table.module = externalModuleName;
   wasm->table.base = externalBaseName;
 }
-void BinaryenAddMemoryImport(BinaryenModuleRef module,
-                             const char* internalName,
-                             const char* externalModuleName,
-                             const char* externalBaseName,
-                             uint8_t shared) {
+BINARYEN_API void BinaryenAddMemoryImport(BinaryenModuleRef module,
+                                          const char* internalName,
+                                          const char* externalModuleName,
+                                          const char* externalBaseName,
+                                          uint8_t shared) {
   auto* wasm = (Module*)module;
 
   if (tracing) {
@@ -3198,12 +3427,12 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
   wasm->memory.base = externalBaseName;
   wasm->memory.shared = shared;
 }
-void BinaryenAddGlobalImport(BinaryenModuleRef module,
-                             const char* internalName,
-                             const char* externalModuleName,
-                             const char* externalBaseName,
-                             BinaryenType globalType,
-                             int mutable_) {
+BINARYEN_API void BinaryenAddGlobalImport(BinaryenModuleRef module,
+                                          const char* internalName,
+                                          const char* externalModuleName,
+                                          const char* externalBaseName,
+                                          BinaryenType globalType,
+                                          int mutable_) {
   auto* wasm = (Module*)module;
   auto* ret = new Global();
 
@@ -3220,12 +3449,12 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
   ret->mutable_ = mutable_ != 0;
   wasm->addGlobal(ret);
 }
-void BinaryenAddEventImport(BinaryenModuleRef module,
-                            const char* internalName,
-                            const char* externalModuleName,
-                            const char* externalBaseName,
-                            uint32_t attribute,
-                            BinaryenFunctionTypeRef eventType) {
+BINARYEN_API void BinaryenAddEventImport(BinaryenModuleRef module,
+                                         const char* internalName,
+                                         const char* externalModuleName,
+                                         const char* externalBaseName,
+                                         uint32_t attribute,
+                                         BinaryenFunctionTypeRef eventType) {
   auto* wasm = (Module*)module;
   auto* ret = new Event();
 
@@ -3251,9 +3480,10 @@ WASM_DEPRECATED BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module,
                                                     const char* externalName) {
   return BinaryenAddFunctionExport(module, internalName, externalName);
 }
-BinaryenExportRef BinaryenAddFunctionExport(BinaryenModuleRef module,
-                                            const char* internalName,
-                                            const char* externalName) {
+BINARYEN_API BinaryenExportRef
+BinaryenAddFunctionExport(BinaryenModuleRef module,
+                          const char* internalName,
+                          const char* externalName) {
   auto* wasm = (Module*)module;
   auto* ret = new Export();
 
@@ -3271,9 +3501,10 @@ BinaryenExportRef BinaryenAddFunctionExport(BinaryenModuleRef module,
   wasm->addExport(ret);
   return ret;
 }
-BinaryenExportRef BinaryenAddTableExport(BinaryenModuleRef module,
-                                         const char* internalName,
-                                         const char* externalName) {
+BINARYEN_API BinaryenExportRef
+BinaryenAddTableExport(BinaryenModuleRef module,
+                       const char* internalName,
+                       const char* externalName) {
   auto* wasm = (Module*)module;
   auto* ret = new Export();
 
@@ -3291,9 +3522,10 @@ BinaryenExportRef BinaryenAddTableExport(BinaryenModuleRef module,
   wasm->addExport(ret);
   return ret;
 }
-BinaryenExportRef BinaryenAddMemoryExport(BinaryenModuleRef module,
-                                          const char* internalName,
-                                          const char* externalName) {
+BINARYEN_API BinaryenExportRef
+BinaryenAddMemoryExport(BinaryenModuleRef module,
+                        const char* internalName,
+                        const char* externalName) {
   auto* wasm = (Module*)module;
   auto* ret = new Export();
 
@@ -3311,9 +3543,10 @@ BinaryenExportRef BinaryenAddMemoryExport(BinaryenModuleRef module,
   wasm->addExport(ret);
   return ret;
 }
-BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
-                                          const char* internalName,
-                                          const char* externalName) {
+BINARYEN_API BinaryenExportRef
+BinaryenAddGlobalExport(BinaryenModuleRef module,
+                        const char* internalName,
+                        const char* externalName) {
   auto* wasm = (Module*)module;
   auto* ret = new Export();
 
@@ -3331,9 +3564,10 @@ BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
   wasm->addExport(ret);
   return ret;
 }
-BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
-                                         const char* internalName,
-                                         const char* externalName) {
+BINARYEN_API BinaryenExportRef
+BinaryenAddEventExport(BinaryenModuleRef module,
+                       const char* internalName,
+                       const char* externalName) {
   auto* wasm = (Module*)module;
   auto* ret = new Export();
 
@@ -3351,7 +3585,8 @@ BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
   wasm->addExport(ret);
   return ret;
 }
-void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
+BINARYEN_API void BinaryenRemoveExport(BinaryenModuleRef module,
+                                       const char* externalName) {
   if (tracing) {
     std::cout << "  BinaryenRemoveExport(the_module, \"" << externalName
               << "\");\n";
@@ -3363,11 +3598,11 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
 
 // Function table. One per module
 
-void BinaryenSetFunctionTable(BinaryenModuleRef module,
-                              BinaryenIndex initial,
-                              BinaryenIndex maximum,
-                              const char** funcNames,
-                              BinaryenIndex numFuncNames) {
+BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
+                                           BinaryenIndex initial,
+                                           BinaryenIndex maximum,
+                                           const char** funcNames,
+                                           BinaryenIndex numFuncNames) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char* funcNames[] = { ";
@@ -3397,16 +3632,16 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
 
 // Memory. One per module
 
-void BinaryenSetMemory(BinaryenModuleRef module,
-                       BinaryenIndex initial,
-                       BinaryenIndex maximum,
-                       const char* exportName,
-                       const char** segments,
-                       int8_t* segmentPassive,
-                       BinaryenExpressionRef* segmentOffsets,
-                       BinaryenIndex* segmentSizes,
-                       BinaryenIndex numSegments,
-                       uint8_t shared) {
+BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
+                                    BinaryenIndex initial,
+                                    BinaryenIndex maximum,
+                                    const char* exportName,
+                                    const char** segments,
+                                    int8_t* segmentPassive,
+                                    BinaryenExpressionRef* segmentOffsets,
+                                    BinaryenIndex* segmentSizes,
+                                    BinaryenIndex numSegments,
+                                    uint8_t shared) {
   if (tracing) {
     std::cout << "  {\n";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
@@ -3497,7 +3732,8 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 
 // Start function. One per module
 
-void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
+BINARYEN_API void BinaryenSetStart(BinaryenModuleRef module,
+                                   BinaryenFunctionRef start) {
   if (tracing) {
     std::cout << "  BinaryenSetStart(the_module, functions[" << functions[start]
               << "]);\n";
@@ -3509,7 +3745,8 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
 
 // Features
 
-BinaryenFeatures BinaryenModuleGetFeatures(BinaryenModuleRef module) {
+BINARYEN_API BinaryenFeatures
+BinaryenModuleGetFeatures(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleGetFeatures(the_module);\n";
   }
@@ -3517,8 +3754,8 @@ BinaryenFeatures BinaryenModuleGetFeatures(BinaryenModuleRef module) {
   return wasm->features.features;
 }
 
-void BinaryenModuleSetFeatures(BinaryenModuleRef module,
-                               BinaryenFeatures features) {
+BINARYEN_API void BinaryenModuleSetFeatures(BinaryenModuleRef module,
+                                            BinaryenFeatures features) {
   if (tracing) {
     std::cout << "  BinaryenModuleSetFeatures(the_module, " << features
               << ");\n";
@@ -3531,7 +3768,7 @@ void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 // ========== Module Operations ==========
 //
 
-BinaryenModuleRef BinaryenModuleParse(const char* text) {
+BINARYEN_API BinaryenModuleRef BinaryenModuleParse(const char* text) {
   if (tracing) {
     std::cout << "  // BinaryenModuleRead\n";
   }
@@ -3548,7 +3785,7 @@ BinaryenModuleRef BinaryenModuleParse(const char* text) {
   return wasm;
 }
 
-void BinaryenModulePrint(BinaryenModuleRef module) {
+BINARYEN_API void BinaryenModulePrint(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModulePrint(the_module);\n";
   }
@@ -3556,7 +3793,7 @@ void BinaryenModulePrint(BinaryenModuleRef module) {
   WasmPrinter::printModule((Module*)module);
 }
 
-void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
+BINARYEN_API void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModulePrintAsmjs(the_module);\n";
   }
@@ -3574,7 +3811,7 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   glue.emitPost();
 }
 
-int BinaryenModuleValidate(BinaryenModuleRef module) {
+BINARYEN_API int BinaryenModuleValidate(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleValidate(the_module);\n";
   }
@@ -3583,7 +3820,7 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
   return WasmValidator().validate(*wasm) ? 1 : 0;
 }
 
-void BinaryenModuleOptimize(BinaryenModuleRef module) {
+BINARYEN_API void BinaryenModuleOptimize(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleOptimize(the_module);\n";
   }
@@ -3595,7 +3832,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.run();
 }
 
-int BinaryenGetOptimizeLevel(void) {
+BINARYEN_API int BinaryenGetOptimizeLevel(void) {
   if (tracing) {
     std::cout << "  BinaryenGetOptimizeLevel();\n";
   }
@@ -3603,7 +3840,7 @@ int BinaryenGetOptimizeLevel(void) {
   return globalPassOptions.optimizeLevel;
 }
 
-void BinaryenSetOptimizeLevel(int level) {
+BINARYEN_API void BinaryenSetOptimizeLevel(int level) {
   if (tracing) {
     std::cout << "  BinaryenSetOptimizeLevel(" << level << ");\n";
   }
@@ -3611,7 +3848,7 @@ void BinaryenSetOptimizeLevel(int level) {
   globalPassOptions.optimizeLevel = level;
 }
 
-int BinaryenGetShrinkLevel(void) {
+BINARYEN_API int BinaryenGetShrinkLevel(void) {
   if (tracing) {
     std::cout << "  BinaryenGetShrinkLevel();\n";
   }
@@ -3619,7 +3856,7 @@ int BinaryenGetShrinkLevel(void) {
   return globalPassOptions.shrinkLevel;
 }
 
-void BinaryenSetShrinkLevel(int level) {
+BINARYEN_API void BinaryenSetShrinkLevel(int level) {
   if (tracing) {
     std::cout << "  BinaryenSetShrinkLevel(" << level << ");\n";
   }
@@ -3627,7 +3864,7 @@ void BinaryenSetShrinkLevel(int level) {
   globalPassOptions.shrinkLevel = level;
 }
 
-int BinaryenGetDebugInfo(void) {
+BINARYEN_API int BinaryenGetDebugInfo(void) {
   if (tracing) {
     std::cout << "  BinaryenGetDebugInfo();\n";
   }
@@ -3635,7 +3872,7 @@ int BinaryenGetDebugInfo(void) {
   return globalPassOptions.debugInfo;
 }
 
-void BinaryenSetDebugInfo(int on) {
+BINARYEN_API void BinaryenSetDebugInfo(int on) {
   if (tracing) {
     std::cout << "  BinaryenSetDebugInfo(" << on << ");\n";
   }
@@ -3643,9 +3880,9 @@ void BinaryenSetDebugInfo(int on) {
   globalPassOptions.debugInfo = on != 0;
 }
 
-void BinaryenModuleRunPasses(BinaryenModuleRef module,
-                             const char** passes,
-                             BinaryenIndex numPasses) {
+BINARYEN_API void BinaryenModuleRunPasses(BinaryenModuleRef module,
+                                          const char** passes,
+                                          BinaryenIndex numPasses) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char* passes[] = { ";
@@ -3670,7 +3907,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module,
   passRunner.run();
 }
 
-void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
+BINARYEN_API void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleAutoDrop(the_module);\n";
   }
@@ -3706,8 +3943,9 @@ static BinaryenBufferSizes writeModule(BinaryenModuleRef module,
   return {bytes, sourceMapBytes};
 }
 
-size_t
-BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize) {
+BINARYEN_API size_t BinaryenModuleWrite(BinaryenModuleRef module,
+                                        char* output,
+                                        size_t outputSize) {
   if (tracing) {
     std::cout << "  // BinaryenModuleWrite\n";
   }
@@ -3716,9 +3954,9 @@ BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize) {
     .outputBytes;
 }
 
-size_t BinaryenModuleWriteText(BinaryenModuleRef module,
-                               char* output,
-                               size_t outputSize) {
+BINARYEN_API size_t BinaryenModuleWriteText(BinaryenModuleRef module,
+                                            char* output,
+                                            size_t outputSize) {
 
   if (tracing) {
     std::cout << "  // BinaryenModuleWriteTextr\n";
@@ -3736,12 +3974,13 @@ size_t BinaryenModuleWriteText(BinaryenModuleRef module,
   return std::min(outputSize, temp.size());
 }
 
-BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module,
-                                                     const char* url,
-                                                     char* output,
-                                                     size_t outputSize,
-                                                     char* sourceMap,
-                                                     size_t sourceMapSize) {
+BINARYEN_API BinaryenBufferSizes
+BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module,
+                                 const char* url,
+                                 char* output,
+                                 size_t outputSize,
+                                 char* sourceMap,
+                                 size_t sourceMapSize) {
   if (tracing) {
     std::cout << "  // BinaryenModuleWriteWithSourceMap\n";
   }
@@ -3752,7 +3991,7 @@ BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module,
     (Module*)module, output, outputSize, url, sourceMap, sourceMapSize);
 }
 
-BinaryenModuleAllocateAndWriteResult
+BINARYEN_API BinaryenModuleAllocateAndWriteResult
 BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
                                const char* sourceMapUrl) {
   if (tracing) {
@@ -3781,7 +4020,8 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
   return {binary, buffer.size(), sourceMap};
 }
 
-char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module) {
+BINARYEN_API char*
+BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module) {
   if (tracing) {
     std::cout << " // BinaryenModuleAllocateAndWriteText(the_module);";
   }
@@ -3796,7 +4036,8 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module) {
   return cout;
 }
 
-BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
+BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,
+                                                  size_t inputSize) {
   if (tracing) {
     std::cout << "  // BinaryenModuleRead\n";
   }
@@ -3815,7 +4056,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   return wasm;
 }
 
-void BinaryenModuleInterpret(BinaryenModuleRef module) {
+BINARYEN_API void BinaryenModuleInterpret(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleInterpret(the_module);\n";
   }
@@ -3825,8 +4066,8 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
   ModuleInstance instance(*wasm, &interface);
 }
 
-BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
-                                                 const char* filename) {
+BINARYEN_API BinaryenIndex BinaryenModuleAddDebugInfoFileName(
+  BinaryenModuleRef module, const char* filename) {
   if (tracing) {
     std::cout << "  BinaryenModuleAddDebugInfoFileName(the_module, \""
               << filename << "\");\n";
@@ -3838,8 +4079,9 @@ BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
   return index;
 }
 
-const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
-                                               BinaryenIndex index) {
+BINARYEN_API const char*
+BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
+                                   BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenModuleGetDebugInfoFileName(the_module, \"" << index
               << "\");\n";
@@ -3855,7 +4097,8 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 // ======== FunctionType Operations ========
 //
 
-const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
+BINARYEN_API const char*
+BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetName(functionsTypes["
               << functions[ftype] << "]);\n";
@@ -3863,7 +4106,8 @@ const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
 
   return ((FunctionType*)ftype)->name.c_str();
 }
-BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype) {
+BINARYEN_API BinaryenIndex
+BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetNumParams(functionsTypes["
               << functions[ftype] << "]);\n";
@@ -3871,8 +4115,8 @@ BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype) {
 
   return ((FunctionType*)ftype)->params.size();
 }
-BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
-                                          BinaryenIndex index) {
+BINARYEN_API BinaryenType BinaryenFunctionTypeGetParam(
+  BinaryenFunctionTypeRef ftype, BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetParam(functionsTypes["
               << functions[ftype] << "], " << index << ");\n";
@@ -3882,7 +4126,8 @@ BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
   assert(index < ft->params.size());
   return ft->params[index];
 }
-BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
+BINARYEN_API BinaryenType
+BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetResult(functionsTypes["
               << functions[ftype] << "]);\n";
@@ -3895,7 +4140,7 @@ BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
 // ========== Function Operations ==========
 //
 
-const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
+BINARYEN_API const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetName(functions[" << functions[func]
               << "]);\n";
@@ -3903,7 +4148,7 @@ const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
 
   return ((Function*)func)->name.c_str();
 }
-const char* BinaryenFunctionGetType(BinaryenFunctionRef func) {
+BINARYEN_API const char* BinaryenFunctionGetType(BinaryenFunctionRef func) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetType(functions[" << functions[func]
               << "]);\n";
@@ -3911,7 +4156,8 @@ const char* BinaryenFunctionGetType(BinaryenFunctionRef func) {
 
   return ((Function*)func)->type.c_str();
 }
-BinaryenIndex BinaryenFunctionGetNumParams(BinaryenFunctionRef func) {
+BINARYEN_API BinaryenIndex
+BinaryenFunctionGetNumParams(BinaryenFunctionRef func) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetNumParams(functions[" << functions[func]
               << "]);\n";
@@ -3919,8 +4165,8 @@ BinaryenIndex BinaryenFunctionGetNumParams(BinaryenFunctionRef func) {
 
   return ((Function*)func)->params.size();
 }
-BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func,
-                                      BinaryenIndex index) {
+BINARYEN_API BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func,
+                                                   BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetParam(functions[" << functions[func]
               << "], " << index << ");\n";
@@ -3930,7 +4176,7 @@ BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func,
   assert(index < fn->params.size());
   return fn->params[index];
 }
-BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func) {
+BINARYEN_API BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetResult(functions[" << functions[func]
               << "]);\n";
@@ -3938,7 +4184,8 @@ BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func) {
 
   return ((Function*)func)->result;
 }
-BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
+BINARYEN_API BinaryenIndex
+BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetNumVars(functions[" << functions[func]
               << "]);\n";
@@ -3946,8 +4193,8 @@ BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
 
   return ((Function*)func)->vars.size();
 }
-BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
-                                    BinaryenIndex index) {
+BINARYEN_API BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
+                                                 BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetVar(functions[" << functions[func]
               << "], " << index << ");\n";
@@ -3957,7 +4204,8 @@ BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
   assert(index < fn->vars.size());
   return fn->vars[index];
 }
-BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenFunctionGetBody(BinaryenFunctionRef func) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetBody(functions[" << functions[func]
               << "]);\n";
@@ -3965,8 +4213,8 @@ BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
 
   return ((Function*)func)->body;
 }
-void BinaryenFunctionOptimize(BinaryenFunctionRef func,
-                              BinaryenModuleRef module) {
+BINARYEN_API void BinaryenFunctionOptimize(BinaryenFunctionRef func,
+                                           BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenFunctionOptimize(functions[" << functions[func]
               << "], the_module);\n";
@@ -3978,10 +4226,10 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func,
   passRunner.addDefaultOptimizationPasses();
   passRunner.runOnFunction((Function*)func);
 }
-void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
-                               BinaryenModuleRef module,
-                               const char** passes,
-                               BinaryenIndex numPasses) {
+BINARYEN_API void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
+                                            BinaryenModuleRef module,
+                                            const char** passes,
+                                            BinaryenIndex numPasses) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char* passes[] = { ";
@@ -4005,11 +4253,11 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
   }
   passRunner.runOnFunction((Function*)func);
 }
-void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
-                                      BinaryenExpressionRef expr,
-                                      BinaryenIndex fileIndex,
-                                      BinaryenIndex lineNumber,
-                                      BinaryenIndex columnNumber) {
+BINARYEN_API void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
+                                                   BinaryenExpressionRef expr,
+                                                   BinaryenIndex fileIndex,
+                                                   BinaryenIndex lineNumber,
+                                                   BinaryenIndex columnNumber) {
   if (tracing) {
     std::cout << "  BinaryenFunctionSetDebugLocation(functions["
               << functions[func] << "], expressions[" << expressions[expr]
@@ -4032,7 +4280,7 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
 // =========== Global operations ===========
 //
 
-const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
+BINARYEN_API const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
   if (tracing) {
     std::cout << "  BinaryenGlobalGetName(globals[" << globals[global]
               << "]);\n";
@@ -4040,7 +4288,7 @@ const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
 
   return ((Global*)global)->name.c_str();
 }
-BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
+BINARYEN_API BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
   if (tracing) {
     std::cout << "  BinaryenGlobalGetType(globals[" << globals[global]
               << "]);\n";
@@ -4048,7 +4296,7 @@ BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
 
   return ((Global*)global)->type;
 }
-int BinaryenGlobalIsMutable(BinaryenGlobalRef global) {
+BINARYEN_API int BinaryenGlobalIsMutable(BinaryenGlobalRef global) {
   if (tracing) {
     std::cout << "  BinaryenGlobalIsMutable(globals[" << globals[global]
               << "]);\n";
@@ -4056,7 +4304,8 @@ int BinaryenGlobalIsMutable(BinaryenGlobalRef global) {
 
   return ((Global*)global)->mutable_;
 }
-BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
+BINARYEN_API BinaryenExpressionRef
+BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
   if (tracing) {
     std::cout << "  BinaryenGlobalGetInitExpr(globals[" << globals[global]
               << "]);\n";
@@ -4069,14 +4318,14 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 // =========== Event operations ===========
 //
 
-const char* BinaryenEventGetName(BinaryenEventRef event) {
+BINARYEN_API const char* BinaryenEventGetName(BinaryenEventRef event) {
   if (tracing) {
     std::cout << "  BinaryenEventGetName(events[" << events[event] << "]);\n";
   }
 
   return ((Event*)event)->name.c_str();
 }
-int BinaryenEventGetAttribute(BinaryenEventRef event) {
+BINARYEN_API int BinaryenEventGetAttribute(BinaryenEventRef event) {
   if (tracing) {
     std::cout << "  BinaryenEventGetAttribute(events[" << events[event]
               << "]);\n";
@@ -4084,14 +4333,14 @@ int BinaryenEventGetAttribute(BinaryenEventRef event) {
 
   return ((Event*)event)->attribute;
 }
-const char* BinaryenEventGetType(BinaryenEventRef event) {
+BINARYEN_API const char* BinaryenEventGetType(BinaryenEventRef event) {
   if (tracing) {
     std::cout << "  BinaryenEventGetType(events[" << events[event] << "]);\n";
   }
 
   return ((Event*)event)->type.c_str();
 }
-BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event) {
+BINARYEN_API BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event) {
   if (tracing) {
     std::cout << "  BinaryenEventGetNumParams(events[" << events[event]
               << "]);\n";
@@ -4099,8 +4348,8 @@ BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event) {
 
   return ((Event*)event)->params.size();
 }
-BinaryenType BinaryenEventGetParam(BinaryenEventRef event,
-                                   BinaryenIndex index) {
+BINARYEN_API BinaryenType BinaryenEventGetParam(BinaryenEventRef event,
+                                                BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenEventGetParam(events[" << events[event] << "], "
               << index << ");\n";
@@ -4115,7 +4364,8 @@ BinaryenType BinaryenEventGetParam(BinaryenEventRef event,
 // =========== Import operations ===========
 //
 
-const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
+BINARYEN_API const char*
+BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
   if (tracing) {
     std::cout << "  BinaryenFunctionImportGetModule(functions["
               << functions[import] << "]);\n";
@@ -4128,7 +4378,8 @@ const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
     return "";
   }
 }
-const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
+BINARYEN_API const char*
+BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
   if (tracing) {
     std::cout << "  BinaryenGlobalImportGetModule(globals[" << globals[import]
               << "]);\n";
@@ -4141,7 +4392,7 @@ const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
     return "";
   }
 }
-const char* BinaryenEventImportGetModule(BinaryenEventRef import) {
+BINARYEN_API const char* BinaryenEventImportGetModule(BinaryenEventRef import) {
   if (tracing) {
     std::cout << "  BinaryenEventImportGetModule(events[" << events[import]
               << "]);\n";
@@ -4154,7 +4405,8 @@ const char* BinaryenEventImportGetModule(BinaryenEventRef import) {
     return "";
   }
 }
-const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
+BINARYEN_API const char*
+BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
   if (tracing) {
     std::cout << "  BinaryenFunctionImportGetBase(functions["
               << functions[import] << "]);\n";
@@ -4167,7 +4419,7 @@ const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
     return "";
   }
 }
-const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
+BINARYEN_API const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
   if (tracing) {
     std::cout << "  BinaryenGlobalImportGetBase(globals[" << globals[import]
               << "]);\n";
@@ -4180,7 +4432,7 @@ const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
     return "";
   }
 }
-const char* BinaryenEventImportGetBase(BinaryenEventRef import) {
+BINARYEN_API const char* BinaryenEventImportGetBase(BinaryenEventRef import) {
   if (tracing) {
     std::cout << "  BinaryenEventImportGetBase(events[" << events[import]
               << "]);\n";
@@ -4198,7 +4450,8 @@ const char* BinaryenEventImportGetBase(BinaryenEventRef import) {
 // =========== Export operations ===========
 //
 
-BinaryenExternalKind BinaryenExportGetKind(BinaryenExportRef export_) {
+BINARYEN_API BinaryenExternalKind
+BinaryenExportGetKind(BinaryenExportRef export_) {
   if (tracing) {
     std::cout << "  BinaryenExportGetKind(exports[" << exports[export_]
               << "]);\n";
@@ -4206,7 +4459,7 @@ BinaryenExternalKind BinaryenExportGetKind(BinaryenExportRef export_) {
 
   return BinaryenExternalKind(((Export*)export_)->kind);
 }
-const char* BinaryenExportGetName(BinaryenExportRef export_) {
+BINARYEN_API const char* BinaryenExportGetName(BinaryenExportRef export_) {
   if (tracing) {
     std::cout << "  BinaryenExportGetName(exports[" << exports[export_]
               << "]);\n";
@@ -4214,7 +4467,7 @@ const char* BinaryenExportGetName(BinaryenExportRef export_) {
 
   return ((Export*)export_)->name.c_str();
 }
-const char* BinaryenExportGetValue(BinaryenExportRef export_) {
+BINARYEN_API const char* BinaryenExportGetValue(BinaryenExportRef export_) {
   if (tracing) {
     std::cout << "  BinaryenExportGetValue(exports[" << exports[export_]
               << "]);\n";
@@ -4227,7 +4480,7 @@ const char* BinaryenExportGetValue(BinaryenExportRef export_) {
 // ========== CFG / Relooper ==========
 //
 
-RelooperRef RelooperCreate(BinaryenModuleRef module) {
+BINARYEN_API RelooperRef RelooperCreate(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  the_relooper = RelooperCreate(the_module);\n";
   }
@@ -4236,8 +4489,8 @@ RelooperRef RelooperCreate(BinaryenModuleRef module) {
   return RelooperRef(new CFG::Relooper(wasm));
 }
 
-RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
-                                  BinaryenExpressionRef code) {
+BINARYEN_API RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
+                                               BinaryenExpressionRef code) {
   auto* R = (CFG::Relooper*)relooper;
   auto* ret = new CFG::Block((Expression*)code);
 
@@ -4253,10 +4506,10 @@ RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
   return RelooperRef(ret);
 }
 
-void RelooperAddBranch(RelooperBlockRef from,
-                       RelooperBlockRef to,
-                       BinaryenExpressionRef condition,
-                       BinaryenExpressionRef code) {
+BINARYEN_API void RelooperAddBranch(RelooperBlockRef from,
+                                    RelooperBlockRef to,
+                                    BinaryenExpressionRef condition,
+                                    BinaryenExpressionRef code) {
   if (tracing) {
     std::cout << "  RelooperAddBranch(relooperBlocks[" << relooperBlocks[from]
               << "], relooperBlocks[" << relooperBlocks[to] << "], expressions["
@@ -4269,9 +4522,10 @@ void RelooperAddBranch(RelooperBlockRef from,
   fromBlock->AddBranchTo(toBlock, (Expression*)condition, (Expression*)code);
 }
 
-RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper,
-                                            BinaryenExpressionRef code,
-                                            BinaryenExpressionRef condition) {
+BINARYEN_API RelooperBlockRef
+RelooperAddBlockWithSwitch(RelooperRef relooper,
+                           BinaryenExpressionRef code,
+                           BinaryenExpressionRef condition) {
   auto* R = (CFG::Relooper*)relooper;
   auto* ret = new CFG::Block((Expression*)code, (Expression*)condition);
 
@@ -4286,11 +4540,11 @@ RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper,
   return RelooperRef(ret);
 }
 
-void RelooperAddBranchForSwitch(RelooperBlockRef from,
-                                RelooperBlockRef to,
-                                BinaryenIndex* indexes,
-                                BinaryenIndex numIndexes,
-                                BinaryenExpressionRef code) {
+BINARYEN_API void RelooperAddBranchForSwitch(RelooperBlockRef from,
+                                             RelooperBlockRef to,
+                                             BinaryenIndex* indexes,
+                                             BinaryenIndex numIndexes,
+                                             BinaryenExpressionRef code) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    BinaryenIndex indexes[] = { ";
@@ -4321,9 +4575,8 @@ void RelooperAddBranchForSwitch(RelooperBlockRef from,
   fromBlock->AddSwitchBranchTo(toBlock, std::move(values), (Expression*)code);
 }
 
-BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
-                                               RelooperBlockRef entry,
-                                               BinaryenIndex labelHelper) {
+BINARYEN_API BinaryenExpressionRef RelooperRenderAndDispose(
+  RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper) {
   auto* R = (CFG::Relooper*)relooper;
   R->Calculate((CFG::Block*)entry);
   CFG::RelooperBuilder builder(*R->Module, labelHelper);
@@ -4345,7 +4598,7 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper,
 // ========= Other APIs =========
 //
 
-void BinaryenSetAPITracing(int on) {
+BINARYEN_API void BinaryenSetAPITracing(int on) {
   tracing = on;
 
   if (tracing) {
@@ -4373,7 +4626,7 @@ void BinaryenSetAPITracing(int on) {
 // ========= Utilities =========
 //
 
-BinaryenFunctionTypeRef
+BINARYEN_API BinaryenFunctionTypeRef
 BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module,
                                    BinaryenType result,
                                    BinaryenType* paramTypes,
@@ -4403,9 +4656,11 @@ BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module,
   return NULL;
 }
 
-void BinaryenSetColorsEnabled(int enabled) { Colors::setEnabled(enabled); }
+BINARYEN_API void BinaryenSetColorsEnabled(int enabled) {
+  Colors::setEnabled(enabled);
+}
 
-int BinaryenAreColorsEnabled() { return Colors::isEnabled(); }
+BINARYEN_API int BinaryenAreColorsEnabled() { return Colors::isEnabled(); }
 
 #ifdef __EMSCRIPTEN__
 // Override atexit - we don't need any global ctors to actually run, and
