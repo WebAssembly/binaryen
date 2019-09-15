@@ -197,9 +197,17 @@ struct FunctionImportsToIndirectCalls
             Expression* fptr = Builder(*module).makeGlobalGet(getter, i32);*/
             Name thunk(std::string("thunk_") + name.c_str());
             auto* funcThunk_check = getModule()->getFunctionOrNull(thunk);
-            if (!funcThunk_check) {
+            
+            // If null, generate an empty thunk that will force the
+            // wasm module to import it from JS. The thunk in this case is
+            // defined in the JS.
+            if (!funcThunk_check) { 
               auto* thunkFunc = Builder(*module).makeFunction(
-                thunk, std::move(func->params), func->result, {});
+                thunk, std::move(func->params), func->result, 
+                  {
+                    // call hotload
+                    // call the target function directly
+                  });
               thunkFunc->module = "env";
               thunkFunc->base = thunkFunc->name; // copied from ExtractFunction
                                                  // : public Pass
