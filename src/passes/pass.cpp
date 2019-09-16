@@ -140,7 +140,9 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js", "replace trapping operations with js semantics", createTrapModeJS);
   registerPass("untee", "removes local.tees, replacing them with sets and gets", createUnteePass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
-//  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
+  registerPass("ImportsToIndirectCalls", "turns imports into indirect calls",
+    createImportsToIndirectCallsPass);
+  //  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
 
 void PassRunner::addDefaultOptimizationPasses() {
