@@ -267,6 +267,10 @@ void PassRegistry::registerPasses() {
   registerPass("simplify-globals",
                "miscellaneous globals-related optimizations",
                createSimplifyGlobalsPass);
+  registerPass("simplify-globals-optimizing",
+               "miscellaneous globals-related optimizations, and optimizes "
+               "where we replaced global.gets with constants",
+               createSimplifyGlobalsOptimizingPass);
   registerPass("simplify-locals",
                "miscellaneous locals-related optimizations",
                createSimplifyLocalsPass);
@@ -416,7 +420,11 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   // optimizations show more functions as duplicate
   add("duplicate-function-elimination");
   add("duplicate-import-elimination");
-  add("simplify-globals");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+    add("simplify-globals-optimizing");
+  } else {
+    add("simplify-globals");
+  }
   add("remove-unused-module-elements");
   add("memory-packing");
   // may allow more inlining/dae/etc., need --converge for that

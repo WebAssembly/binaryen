@@ -394,6 +394,18 @@ Module['ConvertSVecI32x4ToVecF32x4'] = Module['_BinaryenConvertSVecI32x4ToVecF32
 Module['ConvertUVecI32x4ToVecF32x4'] = Module['_BinaryenConvertUVecI32x4ToVecF32x4']();
 Module['ConvertSVecI64x2ToVecF64x2'] = Module['_BinaryenConvertSVecI64x2ToVecF64x2']();
 Module['ConvertUVecI64x2ToVecF64x2'] = Module['_BinaryenConvertUVecI64x2ToVecF64x2']();
+Module['NarrowSVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowSVecI16x8ToVecI8x16']();
+Module['NarrowUVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowUVecI16x8ToVecI8x16']();
+Module['NarrowSVecI32x4ToVecI16x8'] = Module['_BinaryenNarrowSVecI32x4ToVecI16x8']();
+Module['NarrowUVecI32x4ToVecI16x8'] = Module['_BinaryenNarrowUVecI32x4ToVecI16x8']();
+Module['WidenLowSVecI8x16ToVecI16x8'] = Module['_BinaryenWidenLowSVecI8x16ToVecI16x8']();
+Module['WidenHighSVecI8x16ToVecI16x8'] = Module['_BinaryenWidenHighSVecI8x16ToVecI16x8']();
+Module['WidenLowUVecI8x16ToVecI16x8'] = Module['_BinaryenWidenLowUVecI8x16ToVecI16x8']();
+Module['WidenHighUVecI8x16ToVecI16x8'] = Module['_BinaryenWidenHighUVecI8x16ToVecI16x8']();
+Module['WidenLowSVecI16x8ToVecI32x4'] = Module['_BinaryenWidenLowSVecI16x8ToVecI32x4']();
+Module['WidenHighSVecI16x8ToVecI32x4'] = Module['_BinaryenWidenHighSVecI16x8ToVecI32x4']();
+Module['WidenLowUVecI16x8ToVecI32x4'] = Module['_BinaryenWidenLowUVecI16x8ToVecI32x4']();
+Module['WidenHighUVecI16x8ToVecI32x4'] = Module['_BinaryenWidenHighUVecI16x8ToVecI32x4']();
 
 // The size of a single literal in memory as used in Const creation,
 // which is a little different: we don't want users to need to make
@@ -1425,6 +1437,12 @@ function wrapModule(module, self) {
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI8x16'], left, right);
     },
+    'narrow_i16x8_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NarrowSVecI16x8ToVecI8x16'], left, right);
+    },
+    'narrow_i16x8_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NarrowUVecI16x8ToVecI8x16'], left, right);
+    },
   };
 
   self['i16x8'] = {
@@ -1509,6 +1527,24 @@ function wrapModule(module, self) {
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI16x8'], left, right);
     },
+    'narrow_i32x4_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NarrowSVecI32x4ToVecI16x8'], left, right);
+    },
+    'narrow_i32x4_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NarrowUVecI32x4ToVecI16x8'], left, right);
+    },
+    'widen_low_i8x16_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenLowSVecI8x16ToVecI16x8'], value);
+    },
+    'widen_high_i8x16_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenHighSVecI8x16ToVecI16x8'], value);
+    },
+    'widen_low_i8x16_u': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenLowUVecI8x16ToVecI16x8'], value);
+    },
+    'widen_high_i8x16_u': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenHighUVecI8x16ToVecI16x8'], value);
+    },
   };
 
   self['i32x4'] = {
@@ -1578,11 +1614,23 @@ function wrapModule(module, self) {
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI32x4'], left, right);
     },
-    'trunc_s/f32x4:sat': function(value) {
+    'trunc_sat_f32x4_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF32x4ToVecI32x4'], value);
     },
-    'trunc_u/f32x4:sat': function(value) {
+    'trunc_sat_f32x4_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatUVecF32x4ToVecI32x4'], value);
+    },
+    'widen_low_i16x8_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenLowSVecI16x8ToVecI32x4'], value);
+    },
+    'widen_high_i16x8_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenHighSVecI16x8ToVecI32x4'], value);
+    },
+    'widen_low_i16x8_u': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenLowUVecI16x8ToVecI32x4'], value);
+    },
+    'widen_high_i16x8_u': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenHighUVecI16x8ToVecI32x4'], value);
     },
   };
 
@@ -1620,10 +1668,10 @@ function wrapModule(module, self) {
     'sub': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecI64x2'], left, right);
     },
-    'trunc_s/f64x2:sat': function(value) {
+    'trunc_sat_f64x2_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF64x2ToVecI64x2'], value);
     },
-    'trunc_u/f64x2:sat': function(value) {
+    'trunc_sat_f64x2_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatUVecF64x2ToVecI64x2'], value);
     },
   };
@@ -1689,10 +1737,10 @@ function wrapModule(module, self) {
     'max': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxVecF32x4'], left, right);
     },
-    'convert_s/i32x4': function(value) {
+    'convert_i32x4_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertSVecI32x4ToVecF32x4'], value);
     },
-    'convert_u/i32x4': function(value) {
+    'convert_i32x4_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertUVecI32x4ToVecF32x4'], value);
     },
   };
@@ -1758,10 +1806,10 @@ function wrapModule(module, self) {
     'max': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxVecF64x2'], left, right);
     },
-    'convert_s/i64x2': function(value) {
+    'convert_i64x2_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertSVecI64x2ToVecF64x2'], value);
     },
-    'convert_u/i64x2': function(value) {
+    'convert_i64x2_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertUVecI64x2ToVecF64x2'], value);
     },
   };

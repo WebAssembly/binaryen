@@ -22,13 +22,21 @@
 //  * If an immutable global is a copy of another, use the earlier one,
 //    to allow removal of the copies later.
 //  * Apply the constant values of immutable globals.
+//  * Apply the constant values of previous global.sets, in a linear
+//    execution trace.
 //
 // Some globals may not have uses after these changes, which we leave
 // to other passes to optimize.
 //
+// This pass has a "optimize" variant (similar to inlining and DAE)
+// that also runs general function optimizations where we managed to replace
+// a constant value. That is helpful as such a replacement often opens up
+// further optimization opportunities.
+//
 
 #include <atomic>
 
+#include "ir/effects.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -84,26 +92,73 @@ private:
 };
 
 struct ConstantGlobalApplier
-  : public WalkerPass<PostWalker<ConstantGlobalApplier>> {
+  : public WalkerPass<
+      LinearExecutionWalker<ConstantGlobalApplier,
+                            UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
   bool isFunctionParallel() override { return true; }
 
-  ConstantGlobalApplier(NameSet* constantGlobals)
-    : constantGlobals(constantGlobals) {}
+  ConstantGlobalApplier(NameSet* constantGlobals, bool optimize)
+    : constantGlobals(constantGlobals), optimize(optimize) {}
 
   ConstantGlobalApplier* create() override {
-    return new ConstantGlobalApplier(constantGlobals);
+    return new ConstantGlobalApplier(constantGlobals, optimize);
   }
 
-  void visitGlobalGet(GlobalGet* curr) {
-    if (constantGlobals->count(curr->name)) {
-      auto* global = getModule()->getGlobal(curr->name);
-      assert(global->init->is<Const>());
-      replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
+  void visitExpression(Expression* curr) {
+    if (auto* set = curr->dynCast<GlobalSet>()) {
+      if (auto* c = set->value->dynCast<Const>()) {
+        currConstantGlobals[set->name] = c->value;
+      } else {
+        currConstantGlobals.erase(set->name);
+      }
+      return;
+    } else if (auto* get = curr->dynCast<GlobalGet>()) {
+      // Check if the global is known to be constant all the time.
+      if (constantGlobals->count(get->name)) {
+        auto* global = getModule()->getGlobal(get->name);
+        assert(global->init->is<Const>());
+        replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
+        replaced = true;
+        return;
+      }
+      // Check if the global has a known value in this linear trace.
+      auto iter = currConstantGlobals.find(get->name);
+      if (iter != currConstantGlobals.end()) {
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeConst(iter->second));
+        replaced = true;
+      }
+      return;
+    }
+    // Otherwise, invalidate if we need to.
+    EffectAnalyzer effects(getPassOptions());
+    effects.visit(curr);
+    assert(effects.globalsWritten.empty()); // handled above
+    if (effects.calls) {
+      currConstantGlobals.clear();
+    }
+  }
+
+  static void doNoteNonLinear(ConstantGlobalApplier* self, Expression** currp) {
+    self->currConstantGlobals.clear();
+  }
+
+  void visitFunction(Function* curr) {
+    if (replaced && optimize) {
+      PassRunner runner(getModule(), getPassRunner()->options);
+      runner.setIsNested(true);
+      runner.addDefaultFunctionOptimizationPasses();
+      runner.runOnFunction(curr);
     }
   }
 
 private:
   NameSet* constantGlobals;
+  bool optimize;
+  bool replaced = false;
+
+  // The globals currently constant in the linear trace.
+  std::map<Name, Literal> currConstantGlobals;
 };
 
 } // anonymous namespace
@@ -113,6 +168,9 @@ struct SimplifyGlobals : public Pass {
   Module* module;
 
   GlobalInfoMap map;
+  bool optimize;
+
+  SimplifyGlobals(bool optimize = false) : optimize(optimize) {}
 
   void run(PassRunner* runner_, Module* module_) override {
     runner = runner_;
@@ -214,12 +272,14 @@ struct SimplifyGlobals : public Pass {
         constantGlobals.insert(global->name);
       }
     }
-    if (!constantGlobals.empty()) {
-      ConstantGlobalApplier(&constantGlobals).run(runner, module);
-    }
+    ConstantGlobalApplier(&constantGlobals, optimize).run(runner, module);
   }
 };
 
-Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(); }
+Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(false); }
+
+Pass* createSimplifyGlobalsOptimizingPass() {
+  return new SimplifyGlobals(true);
+}
 
 } // namespace wasm

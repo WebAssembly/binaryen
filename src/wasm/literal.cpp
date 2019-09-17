@@ -1785,4 +1785,86 @@ Literal Literal::bitselectV128(const Literal& left,
   return andV128(left).orV128(notV128().andV128(right));
 }
 
+template<typename T> struct TwiceWidth {};
+template<> struct TwiceWidth<int8_t> { using type = int16_t; };
+template<> struct TwiceWidth<int16_t> { using type = int32_t; };
+
+template<typename T>
+Literal saturating_narrow(
+  typename TwiceWidth<typename std::make_signed<T>::type>::type val) {
+  using WideT = typename TwiceWidth<typename std::make_signed<T>::type>::type;
+  if (val > WideT(std::numeric_limits<T>::max())) {
+    val = std::numeric_limits<T>::max();
+  } else if (val < WideT(std::numeric_limits<T>::min())) {
+    val = std::numeric_limits<T>::min();
+  }
+  return Literal(int32_t(val));
+}
+
+template<size_t Lanes,
+         typename T,
+         LaneArray<Lanes / 2> (Literal::*IntoLanes)() const>
+Literal narrow(const Literal& low, const Literal& high) {
+  LaneArray<Lanes / 2> lowLanes = (low.*IntoLanes)();
+  LaneArray<Lanes / 2> highLanes = (high.*IntoLanes)();
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes / 2; ++i) {
+    result[i] = saturating_narrow<T>(lowLanes[i].geti32());
+    result[Lanes / 2 + i] = saturating_narrow<T>(highLanes[i].geti32());
+  }
+  return Literal(result);
+}
+
+Literal Literal::narrowSToVecI8x16(const Literal& other) const {
+  return narrow<16, int8_t, &Literal::getLanesSI16x8>(*this, other);
+}
+Literal Literal::narrowUToVecI8x16(const Literal& other) const {
+  return narrow<16, uint8_t, &Literal::getLanesSI16x8>(*this, other);
+}
+Literal Literal::narrowSToVecI16x8(const Literal& other) const {
+  return narrow<8, int16_t, &Literal::getLanesI32x4>(*this, other);
+}
+Literal Literal::narrowUToVecI16x8(const Literal& other) const {
+  return narrow<8, uint16_t, &Literal::getLanesI32x4>(*this, other);
+}
+
+enum class LaneOrder { Low, High };
+
+template<size_t Lanes,
+         LaneArray<Lanes * 2> (Literal::*IntoLanes)() const,
+         LaneOrder Side>
+Literal widen(const Literal& vec) {
+  LaneArray<Lanes* 2> lanes = (vec.*IntoLanes)();
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes; ++i) {
+    result[i] = lanes[(Side == LaneOrder::Low) ? i : i + Lanes];
+  }
+  return Literal(result);
+}
+
+Literal Literal::widenLowSToVecI16x8() const {
+  return widen<8, &Literal::getLanesSI8x16, LaneOrder::Low>(*this);
+}
+Literal Literal::widenHighSToVecI16x8() const {
+  return widen<8, &Literal::getLanesSI8x16, LaneOrder::High>(*this);
+}
+Literal Literal::widenLowUToVecI16x8() const {
+  return widen<8, &Literal::getLanesUI8x16, LaneOrder::Low>(*this);
+}
+Literal Literal::widenHighUToVecI16x8() const {
+  return widen<8, &Literal::getLanesUI8x16, LaneOrder::High>(*this);
+}
+Literal Literal::widenLowSToVecI32x4() const {
+  return widen<4, &Literal::getLanesSI16x8, LaneOrder::Low>(*this);
+}
+Literal Literal::widenHighSToVecI32x4() const {
+  return widen<4, &Literal::getLanesSI16x8, LaneOrder::High>(*this);
+}
+Literal Literal::widenLowUToVecI32x4() const {
+  return widen<4, &Literal::getLanesUI16x8, LaneOrder::Low>(*this);
+}
+Literal Literal::widenHighUToVecI32x4() const {
+  return widen<4, &Literal::getLanesUI16x8, LaneOrder::High>(*this);
+}
+
 } // namespace wasm

@@ -749,6 +749,14 @@ void Unary::finalize() {
     case ConvertUVecI32x4ToVecF32x4:
     case ConvertSVecI64x2ToVecF64x2:
     case ConvertUVecI64x2ToVecF64x2:
+    case WidenLowSVecI8x16ToVecI16x8:
+    case WidenHighSVecI8x16ToVecI16x8:
+    case WidenLowUVecI8x16ToVecI16x8:
+    case WidenHighUVecI8x16ToVecI16x8:
+    case WidenLowSVecI16x8ToVecI32x4:
+    case WidenHighSVecI16x8ToVecI32x4:
+    case WidenLowUVecI16x8ToVecI32x4:
+    case WidenHighUVecI16x8ToVecI32x4:
       type = v128;
       break;
     case AnyTrueVecI8x16:
@@ -761,6 +769,7 @@ void Unary::finalize() {
     case AllTrueVecI64x2:
       type = i32;
       break;
+
     case InvalidUnary:
       WASM_UNREACHABLE();
   }

@@ -174,6 +174,8 @@ enum UnaryOp {
   AbsVecF64x2,
   NegVecF64x2,
   SqrtVecF64x2,
+
+  // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,
   TruncSatUVecF32x4ToVecI32x4,
   TruncSatSVecF64x2ToVecI64x2,
@@ -182,6 +184,14 @@ enum UnaryOp {
   ConvertUVecI32x4ToVecF32x4,
   ConvertSVecI64x2ToVecF64x2,
   ConvertUVecI64x2ToVecF64x2,
+  WidenLowSVecI8x16ToVecI16x8,
+  WidenHighSVecI8x16ToVecI16x8,
+  WidenLowUVecI8x16ToVecI16x8,
+  WidenHighUVecI8x16ToVecI16x8,
+  WidenLowSVecI16x8ToVecI32x4,
+  WidenHighSVecI16x8ToVecI32x4,
+  WidenLowUVecI16x8ToVecI32x4,
+  WidenHighUVecI16x8ToVecI32x4,
 
   InvalidUnary
 };
@@ -374,6 +384,12 @@ enum BinaryOp {
   DivVecF64x2,
   MinVecF64x2,
   MaxVecF64x2,
+
+  // SIMD Conversion
+  NarrowSVecI16x8ToVecI8x16,
+  NarrowUVecI16x8ToVecI8x16,
+  NarrowSVecI32x4ToVecI16x8,
+  NarrowUVecI32x4ToVecI16x8,
 
   InvalidBinary
 };

@@ -73,7 +73,7 @@ OUT="$PWD/out"
 
 echo "generate embedded intrinsics module"
 
-python $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast $BINARYEN_SRC/passes/WasmIntrinsics.cpp
+python3 $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast $BINARYEN_SRC/passes/WasmIntrinsics.cpp
 
 echo "compiling source files"
 
@@ -550,6 +550,18 @@ export_function "_BinaryenConvertSVecI32x4ToVecF32x4"
 export_function "_BinaryenConvertUVecI32x4ToVecF32x4"
 export_function "_BinaryenConvertSVecI64x2ToVecF64x2"
 export_function "_BinaryenConvertUVecI64x2ToVecF64x2"
+export_function "_BinaryenNarrowSVecI16x8ToVecI8x16"
+export_function "_BinaryenNarrowUVecI16x8ToVecI8x16"
+export_function "_BinaryenNarrowSVecI32x4ToVecI16x8"
+export_function "_BinaryenNarrowUVecI32x4ToVecI16x8"
+export_function "_BinaryenWidenLowSVecI8x16ToVecI16x8"
+export_function "_BinaryenWidenHighSVecI8x16ToVecI16x8"
+export_function "_BinaryenWidenLowUVecI8x16ToVecI16x8"
+export_function "_BinaryenWidenHighUVecI8x16ToVecI16x8"
+export_function "_BinaryenWidenLowSVecI16x8ToVecI32x4"
+export_function "_BinaryenWidenHighSVecI16x8ToVecI32x4"
+export_function "_BinaryenWidenLowUVecI16x8ToVecI32x4"
+export_function "_BinaryenWidenHighUVecI16x8ToVecI32x4"
 
 # Expression creation
 export_function "_BinaryenBlock"

@@ -690,6 +690,30 @@ struct PrintExpressionContents
       case ConvertUVecI64x2ToVecF64x2:
         o << "f64x2.convert_i64x2_u";
         break;
+      case WidenLowSVecI8x16ToVecI16x8:
+        o << "i16x8.widen_low_i8x16_s";
+        break;
+      case WidenHighSVecI8x16ToVecI16x8:
+        o << "i16x8.widen_high_i8x16_s";
+        break;
+      case WidenLowUVecI8x16ToVecI16x8:
+        o << "i16x8.widen_low_i8x16_u";
+        break;
+      case WidenHighUVecI8x16ToVecI16x8:
+        o << "i16x8.widen_high_i8x16_u";
+        break;
+      case WidenLowSVecI16x8ToVecI32x4:
+        o << "i32x4.widen_low_i16x8_s";
+        break;
+      case WidenHighSVecI16x8ToVecI32x4:
+        o << "i32x4.widen_high_i16x8_s";
+        break;
+      case WidenLowUVecI16x8ToVecI32x4:
+        o << "i32x4.widen_low_i16x8_u";
+        break;
+      case WidenHighUVecI16x8ToVecI32x4:
+        o << "i32x4.widen_high_i16x8_u";
+        break;
       case InvalidUnary:
         WASM_UNREACHABLE();
     }
@@ -1159,6 +1183,19 @@ struct PrintExpressionContents
         break;
       case MaxVecF64x2:
         o << "f64x2.max";
+        break;
+
+      case NarrowSVecI16x8ToVecI8x16:
+        o << "i8x16.narrow_i16x8_s";
+        break;
+      case NarrowUVecI16x8ToVecI8x16:
+        o << "i8x16.narrow_i16x8_u";
+        break;
+      case NarrowSVecI32x4ToVecI16x8:
+        o << "i16x8.narrow_i32x4_s";
+        break;
+      case NarrowUVecI32x4ToVecI16x8:
+        o << "i16x8.narrow_i32x4_u";
         break;
 
       case InvalidBinary:
