@@ -229,7 +229,7 @@
 //      input might reach code paths you missed during testing, so it's hard
 //      to know you got this right), so this is not recommended unless you
 //      really know what are doing, and need to optimize every bit of speed
-//      and size.
+//      and size. '*' wildcard matching supported.
 //
 //      As with --asyncify-imports, you can use a response file here.
 //
@@ -237,7 +237,7 @@
 //
 //      If the whitelist is provided, then only the functions in the list
 //      will be instrumented. Like the blacklist, getting this wrong will
-//      break your application.
+//      break your application. '*' wildcard matching supported.
 //
 //      As with --asyncify-imports, you can use a response file here.
 //
@@ -368,14 +368,11 @@ public:
   ModuleAnalyzer(Module& module,
                  std::function<bool(Name, Name)> canImportChangeState,
                  bool canIndirectChangeState,
-                 const String::Split& blacklistInput,
-                 const String::Split& whitelistInput,
+                 const String::Split& blacklist,
+                 const String::Split& whitelist,
                  bool asserts)
     : module(module), canIndirectChangeState(canIndirectChangeState),
       globals(module), asserts(asserts) {
-
-    blacklist.insert(blacklistInput.begin(), blacklistInput.end());
-    whitelist.insert(whitelistInput.begin(), whitelistInput.end());
 
     // Scan to see which functions can directly change the state.
     // Also handle the asyncify imports, removing them (as we will implement
@@ -491,10 +488,18 @@ public:
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
-        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime &&
-            !blacklist.count(caller->name)) {
-          map[caller].canChangeState = true;
-          work.push(caller);
+        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime) {
+          bool matched = false;
+          for (auto& pattern : blacklist) {
+            if (String::wildcardMatch(pattern, std::string(caller->name.str))) {
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            map[caller].canChangeState = true;
+            work.push(caller);
+          }
         }
       }
     }
@@ -503,7 +508,12 @@ public:
       // Only the functions in the whitelist can change the state.
       for (auto& func : module.functions) {
         if (!func->imported()) {
-          map[func.get()].canChangeState = whitelist.count(func->name) > 0;
+          for (auto& pattern : whitelist) {
+            if (String::wildcardMatch(pattern, std::string(func->name.str))) {
+              map[func.get()].canChangeState = true;
+              break;
+            }
+          }
         }
       }
     }
@@ -566,8 +576,6 @@ public:
   }
 
   GlobalHelper globals;
-  std::set<Name> blacklist;
-  std::set<Name> whitelist;
   bool asserts;
 };
 
@@ -1145,9 +1153,11 @@ struct Asyncify : public Pass {
         auto escaped = WasmBinaryBuilder::escape(name);
         auto* func = module->getFunctionOrNull(escaped);
         if (!func) {
-          std::cerr << "warning: Asyncify " << which
-                    << "list contained a non-existing function name: " << name
-                    << " (" << escaped << ")\n";
+          if (name.find('*') == std::string::npos) {
+            std::cerr << "warning: Asyncify " << which
+                      << "list contained a non-existing function name: " << name
+                      << " (" << escaped << ")\n";
+          }
         } else if (func->imported()) {
           Fatal() << "Asyncify " << which
                   << "list contained an imported function name (use the import "

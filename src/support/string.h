@@ -96,7 +96,8 @@ inline bool wildcardMatch(const std::string& pattern,
       return false;
     }
     if (pattern[i] == '*') {
-      return true;
+      return wildcardMatch(pattern.substr(i+1, std::string::npos), value.substr(i, std::string::npos))
+	|| wildcardMatch(pattern.substr(i, std::string::npos), value.substr(i+1, std::string::npos));
     }
     if (pattern[i] != value[i]) {
       return false;
