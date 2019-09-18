@@ -50,7 +50,7 @@ int main(int argc, const char* argv[]) {
   bool legalizeJavaScriptFFI = true;
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
-  bool pureWasm = false;
+  bool standaloneWasm = false;
 
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
@@ -137,12 +137,12 @@ int main(int argc, const char* argv[]) {
          [&checkStackOverflow](Options* o, const std::string&) {
            checkStackOverflow = true;
          })
-    .add("--pure-wasm",
+    .add("--standalone-wasm",
          "",
          "Emit a wasm file that does not depend on JS, as much as possible,"
          " using wasi and other standard conventions etc. where possible",
          Options::Arguments::Zero,
-         [&pureWasm](Options* o, const std::string&) { pureWasm = true; })
+         [&standaloneWasm](Options* o, const std::string&) { standaloneWasm = true; })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [&infile](Options* o, const std::string& argument) {
@@ -241,11 +241,11 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (pureWasm) {
+  if (standaloneWasm) {
     // Export a standard wasi "_start" method.
     generator.exportWasiStart();
   } else {
-    // If not pure wasm then JS is relevant and we need dynCalls
+    // If not standalone wasm then JS is relevant and we need dynCalls.
     generator.generateDynCallThunks();
   }
 
