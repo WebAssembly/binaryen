@@ -511,7 +511,11 @@ def get_multiple_opt_choices():
     ret = []
     # core opts
     while 1:
-        ret += random.choice(opt_choices)
+        choice = random.choice(opt_choices)
+        if '--flatten' in ret and '--flatten' in choice:
+            print('avoiding multiple --flatten in a single command, due to exponential overhead')
+        else:
+            ret += choice
         if len(ret) > 20 or random.random() < 0.3:
             break
     # modifiers (if not already implied by a -O? option)
@@ -520,6 +524,7 @@ def get_multiple_opt_choices():
             ret += ['--optimize-level=' + str(random.randint(0, 3))]
         if random.random() < 0.5:
             ret += ['--shrink-level=' + str(random.randint(0, 3))]
+    assert ret.count('--flatten') <= 1
     return ret
 
 
