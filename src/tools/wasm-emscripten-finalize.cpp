@@ -142,7 +142,9 @@ int main(int argc, const char* argv[]) {
          "Emit a wasm file that does not depend on JS, as much as possible,"
          " using wasi and other standard conventions etc. where possible",
          Options::Arguments::Zero,
-         [&standaloneWasm](Options* o, const std::string&) { standaloneWasm = true; })
+         [&standaloneWasm](Options* o, const std::string&) {
+           standaloneWasm = true;
+         })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [&infile](Options* o, const std::string& argument) {
