@@ -454,21 +454,21 @@ public:
 
     std::set<Name> blacklist_names;
     std::set<Name> whitelist_names;
-    std::set<std::string> blacklist_patterns;
-    std::set<std::string> whitelist_patterns;
-    std::set<std::string> blacklist_patterns_matched;
-    std::set<std::string> whitelist_patterns_matched;
+    std::set<std::string> blacklistPatterns;
+    std::set<std::string> whitelistPatterns;
+    std::set<std::string> blacklistPatternsMatched;
+    std::set<std::string> whitelistPatternsMatched;
 
     // The lists contain human-readable strings. Turn them into the internal
     // escaped names for later comparisons
     auto processList = [&module](const String::Split& list,
                                  std::set<Name>& list_names,
-                                 std::set<std::string>& list_patterns,
+                                 std::set<std::string>& listPatterns,
                                  const std::string& which) {
       for (auto& name : list) {
         auto escaped = WasmBinaryBuilder::escape(name);
         if (name.find('*') != std::string::npos) {
-          list_patterns.insert(std::string(escaped.str));
+          listPatterns.insert(std::string(escaped.str));
         } else {
           auto* func = module.getFunctionOrNull(escaped);
           if (!func) {
@@ -486,8 +486,8 @@ public:
         }
       }
     };
-    processList(blacklist, blacklist_names, blacklist_patterns, "black");
-    processList(whitelist, whitelist_names, whitelist_patterns, "white");
+    processList(blacklist, blacklist_names, blacklistPatterns, "black");
+    processList(whitelist, whitelist_names, whitelistPatterns, "white");
 
     // Functions in the blacklist are assumed to not change the state.
     for (auto& name : blacklist_names) {
@@ -531,11 +531,11 @@ public:
             matched = true;
           }
           if (!matched) {
-            for (auto& pattern : blacklist_patterns) {
+            for (auto& pattern : blacklistPatterns) {
               if (String::wildcardMatch(pattern,
                                         std::string(caller->name.str))) {
                 matched = true;
-                blacklist_patterns_matched.insert(pattern);
+                blacklistPatternsMatched.insert(pattern);
                 break;
               }
             }
@@ -556,10 +556,10 @@ public:
           if (whitelist_names.count(func->name) > 0) {
             map[func.get()].canChangeState = true;
           } else {
-            for (auto& pattern : whitelist_patterns) {
+            for (auto& pattern : whitelistPatterns) {
               if (String::wildcardMatch(pattern, std::string(func->name.str))) {
                 map[func.get()].canChangeState = true;
-                whitelist_patterns_matched.insert(pattern);
+                whitelistPatternsMatched.insert(pattern);
                 break;
               }
             }
@@ -569,10 +569,10 @@ public:
     }
 
     auto checkPatternsMatches = [](std::set<std::string> patterns,
-                                   std::set<std::string> patterns_matched,
+                                   std::set<std::string> patternsMatched,
                                    const std::string& which) {
       for (auto& pattern : patterns) {
-        if (patterns_matched.count(pattern) == 0) {
+        if (patternsMatched.count(pattern) == 0) {
           std::cerr << "warning: Asyncify " << which
                     << "list contained a non-matching pattern: " << pattern
                     << "\n";
@@ -580,9 +580,9 @@ public:
       }
     };
     checkPatternsMatches(
-      blacklist_patterns, blacklist_patterns_matched, "black");
+      blacklistPatterns, blacklistPatternsMatched, "black");
     checkPatternsMatches(
-      whitelist_patterns, whitelist_patterns_matched, "white");
+      whitelistPatterns, whitelistPatternsMatched, "white");
   }
 
   bool needsInstrumentation(Function* func) {
