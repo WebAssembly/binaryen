@@ -397,7 +397,7 @@ public:
         struct Walker : PostWalker<Walker> {
           void visitCall(Call* curr) {
             if (curr->isReturn) {
-              Fatal() << "tail calls not yet supported in aysncify";
+              Fatal() << "tail calls not yet supported in asyncify";
             }
             auto* target = module->getFunction(curr->target);
             if (target->imported() && target->module == ASYNCIFY) {
@@ -426,7 +426,7 @@ public:
           }
           void visitCallIndirect(CallIndirect* curr) {
             if (curr->isReturn) {
-              Fatal() << "tail calls not yet supported in aysncify";
+              Fatal() << "tail calls not yet supported in asyncify";
             }
             if (canIndirectChangeState) {
               info->canChangeState = true;
