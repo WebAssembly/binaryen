@@ -452,8 +452,45 @@ public:
 
     map.swap(scanner.map);
 
+    std::set<Name> blacklist_names;
+    std::set<Name> whitelist_names;
+    std::set<std::string> blacklist_patterns;
+    std::set<std::string> whitelist_patterns;
+    std::set<std::string> blacklist_patterns_matched;
+    std::set<std::string> whitelist_patterns_matched;
+
+    // The lists contain human-readable strings. Turn them into the internal
+    // escaped names for later comparisons
+    auto processList = [&module](const String::Split& list,
+                                 std::set<Name>& list_names,
+                                 std::set<std::string>& list_patterns,
+                                 const std::string& which) {
+      for (auto& name : list) {
+        auto escaped = WasmBinaryBuilder::escape(name);
+        if (name.find('*') != std::string::npos) {
+          list_patterns.insert(std::string(escaped.str));
+        } else {
+          auto* func = module.getFunctionOrNull(escaped);
+          if (!func) {
+            std::cerr << "warning: Asyncify " << which
+                      << "list contained a non-existing function name: " << name
+                      << " (" << escaped << ")\n";
+          } else if (func->imported()) {
+            Fatal()
+              << "Asyncify " << which
+              << "list contained an imported function name (use the import "
+                 "list for imports): "
+              << name << '\n';
+          }
+          list_names.insert(escaped.str);
+        }
+      }
+    };
+    processList(blacklist, blacklist_names, blacklist_patterns, "black");
+    processList(whitelist, whitelist_names, whitelist_patterns, "white");
+
     // Functions in the blacklist are assumed to not change the state.
-    for (auto& name : blacklist) {
+    for (auto& name : blacklist_names) {
       if (auto* func = module.getFunctionOrNull(name)) {
         map[func].canChangeState = false;
       }
@@ -490,10 +527,17 @@ public:
       for (auto* caller : map[func].calledBy) {
         if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime) {
           bool matched = false;
-          for (auto& pattern : blacklist) {
-            if (String::wildcardMatch(pattern, std::string(caller->name.str))) {
-              matched = true;
-              break;
+          if (blacklist_names.count(caller->name)) {
+            matched = true;
+          }
+          if (!matched) {
+            for (auto& pattern : blacklist_patterns) {
+              if (String::wildcardMatch(pattern,
+                                        std::string(caller->name.str))) {
+                matched = true;
+                blacklist_patterns_matched.insert(pattern);
+                break;
+              }
             }
           }
           if (!matched) {
@@ -508,15 +552,37 @@ public:
       // Only the functions in the whitelist can change the state.
       for (auto& func : module.functions) {
         if (!func->imported()) {
-          for (auto& pattern : whitelist) {
-            if (String::wildcardMatch(pattern, std::string(func->name.str))) {
-              map[func.get()].canChangeState = true;
-              break;
+          map[func.get()].canChangeState = false;
+          if (whitelist_names.count(func->name) > 0) {
+            map[func.get()].canChangeState = true;
+          } else {
+            for (auto& pattern : whitelist_patterns) {
+              if (String::wildcardMatch(pattern, std::string(func->name.str))) {
+                map[func.get()].canChangeState = true;
+                whitelist_patterns_matched.insert(pattern);
+                break;
+              }
             }
           }
         }
       }
     }
+
+    auto checkPatternsMatches = [](std::set<std::string> patterns,
+                                   std::set<std::string> patterns_matched,
+                                   const std::string& which) {
+      for (auto& pattern : patterns) {
+        if (patterns_matched.count(pattern) == 0) {
+          std::cerr << "warning: Asyncify " << which
+                    << "list contained a non-matching pattern: " << pattern
+                    << "\n";
+        }
+      }
+    };
+    checkPatternsMatches(
+      blacklist_patterns, blacklist_patterns_matched, "black");
+    checkPatternsMatches(
+      whitelist_patterns, whitelist_patterns_matched, "white");
   }
 
   bool needsInstrumentation(Function* func) {
@@ -1145,30 +1211,6 @@ struct Asyncify : public Pass {
 
     blacklist = handleBracketingOperators(blacklist);
     whitelist = handleBracketingOperators(whitelist);
-
-    // The lists contain human-readable strings. Turn them into the internal
-    // escaped names for later comparisons
-    auto processList = [module](String::Split& list, const std::string& which) {
-      for (auto& name : list) {
-        auto escaped = WasmBinaryBuilder::escape(name);
-        auto* func = module->getFunctionOrNull(escaped);
-        if (!func) {
-          if (name.find('*') == std::string::npos) {
-            std::cerr << "warning: Asyncify " << which
-                      << "list contained a non-existing function name: " << name
-                      << " (" << escaped << ")\n";
-          }
-        } else if (func->imported()) {
-          Fatal() << "Asyncify " << which
-                  << "list contained an imported function name (use the import "
-                     "list for imports): "
-                  << name << '\n';
-        }
-        name = escaped.str;
-      }
-    };
-    processList(blacklist, "black");
-    processList(whitelist, "white");
 
     if (!blacklist.empty() && !whitelist.empty()) {
       Fatal() << "It makes no sense to use both a blacklist and a whitelist "

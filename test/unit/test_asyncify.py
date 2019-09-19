@@ -38,6 +38,10 @@ class AsyncifyTest(BinaryenTestCase):
             ('--pass-arg=asyncify-whitelist@main', None),
             ('--pass-arg=asyncify-blacklist@m*n', None),
             ('--pass-arg=asyncify-whitelist@m*n', None),
+            ('--pass-arg=asyncify-whitelist@main*', None),
+            ('--pass-arg=asyncify-whitelist@*main', None),
+            ('--pass-arg=asyncify-blacklist@non*existent', 'non*existent'),
+            ('--pass-arg=asyncify-whitelist@non*existent', 'non*existent'),
             ('--pass-arg=asyncify-whitelist@DOS_ReadFile(unsigned short, unsigned char*, unsigned short*, bool)', None),
         ]:
             print(arg, warning)
