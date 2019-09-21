@@ -1841,6 +1841,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE();
     }
+    Ref visitSIMDLoad(SIMDLoad* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE();
+    }
     Ref visitMemoryInit(MemoryInit* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE();

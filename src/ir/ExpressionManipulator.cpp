@@ -179,6 +179,10 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeSIMDShift(
         curr->op, copy(curr->vec), copy(curr->shift));
     }
+    Expression* visitSIMDLoad(SIMDLoad* curr) {
+      return builder.makeSIMDLoad(
+        curr->op, curr->offset, curr->align, copy(curr->ptr));
+    }
     Expression* visitConst(Const* curr) {
       return builder.makeConst(curr->value);
     }

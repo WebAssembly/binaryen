@@ -2340,9 +2340,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDConst(curr, opcode)) {
         break;
       }
-      if (maybeVisitSIMDLoad(curr, opcode)) {
-        break;
-      }
       if (maybeVisitSIMDStore(curr, opcode)) {
         break;
       }
@@ -2359,6 +2356,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitSIMDShift(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitSIMDLoad(curr, opcode)) {
         break;
       }
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
@@ -4158,21 +4158,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDConst(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::V128Load) {
-    return false;
-  }
-  auto* curr = allocator.alloc<Load>();
-  curr->type = v128;
-  curr->bytes = 16;
-  readMemoryAccess(curr->align, curr->offset);
-  curr->isAtomic = false;
-  curr->ptr = popNonVoidExpression();
-  curr->finalize();
-  out = curr;
-  return true;
-}
-
 bool WasmBinaryBuilder::maybeVisitSIMDStore(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::V128Store) {
     return false;
@@ -4389,6 +4374,46 @@ bool WasmBinaryBuilder::maybeVisitSIMDShift(Expression*& out, uint32_t code) {
   }
   curr->shift = popNonVoidExpression();
   curr->vec = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
+  if (code == BinaryConsts::V128Load) {
+    auto* curr = allocator.alloc<Load>();
+    curr->type = v128;
+    curr->bytes = 16;
+    readMemoryAccess(curr->align, curr->offset);
+    curr->isAtomic = false;
+    curr->ptr = popNonVoidExpression();
+    curr->finalize();
+    out = curr;
+    return true;
+  }
+  SIMDLoad* curr;
+  switch (code) {
+    case BinaryConsts::V8x16LoadSplat:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadSplatVec8x16;
+      break;
+    case BinaryConsts::V16x8LoadSplat:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadSplatVec16x8;
+      break;
+    case BinaryConsts::V32x4LoadSplat:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadSplatVec32x4;
+      break;
+    case BinaryConsts::V64x2LoadSplat:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadSplatVec64x2;
+      break;
+    default:
+      return false;
+  }
+  readMemoryAccess(curr->align, curr->offset);
+  curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;

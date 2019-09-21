@@ -554,6 +554,26 @@ void BinaryInstWriter::visitSIMDShift(SIMDShift* curr) {
   }
 }
 
+void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case LoadSplatVec8x16:
+      o << U32LEB(BinaryConsts::V8x16LoadSplat);
+      break;
+    case LoadSplatVec16x8:
+      o << U32LEB(BinaryConsts::V16x8LoadSplat);
+      break;
+    case LoadSplatVec32x4:
+      o << U32LEB(BinaryConsts::V32x4LoadSplat);
+      break;
+    case LoadSplatVec64x2:
+      o << U32LEB(BinaryConsts::V64x2LoadSplat);
+      break;
+  }
+  assert(curr->align);
+  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
+}
+
 void BinaryInstWriter::visitMemoryInit(MemoryInit* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryInit);

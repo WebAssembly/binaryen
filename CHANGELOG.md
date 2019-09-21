@@ -15,6 +15,7 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Added load_splat SIMD instructions
 - Binaryen.js instruction API changes:
   - `notify` -> `atomic.notify`
   - `i32.wait` / `i64.wait` -> `i32.atomic.wait` / `i64.atomic.wait`

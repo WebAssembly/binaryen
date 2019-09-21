@@ -110,6 +110,7 @@ function test_ids() {
   console.log("BinaryenSIMDShuffleId: " + Binaryen.SIMDShuffleId);
   console.log("BinaryenSIMDTernaryId: " + Binaryen.SIMDTernaryId);
   console.log("BinaryenSIMDShiftId: " + Binaryen.SIMDShiftId);
+  console.log("BinaryenSIMDLoadId: " + Binaryen.SIMDLoadId);
   console.log("MemoryInitId: " + Binaryen.MemoryInitId);
   console.log("DataDropId: " + Binaryen.DataDropId);
   console.log("MemoryCopyId: " + Binaryen.MemoryCopyId);
@@ -366,7 +367,7 @@ function test_core() {
     module.i64x2.replace_lane(module.v128.const(v128_bytes), 1, module.i64.const(42, 43)),
     module.f32x4.replace_lane(module.v128.const(v128_bytes), 1, module.f32.const(42)),
     module.f64x2.replace_lane(module.v128.const(v128_bytes), 1, module.f64.const(42)),
-    // // SIMD shift
+    // SIMD shift
     module.i8x16.shl(module.v128.const(v128_bytes), module.i32.const(1)),
     module.i8x16.shr_s(module.v128.const(v128_bytes), module.i32.const(1)),
     module.i8x16.shr_u(module.v128.const(v128_bytes), module.i32.const(1)),
@@ -379,6 +380,11 @@ function test_core() {
     module.i64x2.shl(module.v128.const(v128_bytes), module.i32.const(1)),
     module.i64x2.shr_s(module.v128.const(v128_bytes), module.i32.const(1)),
     module.i64x2.shr_u(module.v128.const(v128_bytes), module.i32.const(1)),
+    // SIMD load
+    module.v8x16.load_splat(0, 1, module.i32.const(128)),
+    module.v16x8.load_splat(16, 1, module.i32.const(128)),
+    module.v32x4.load_splat(16, 4, module.i32.const(128)),
+    module.v64x2.load_splat(0, 4, module.i32.const(128)),
     // Other SIMD
     module.v8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),

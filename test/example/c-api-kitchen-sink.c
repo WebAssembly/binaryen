@@ -1,4 +1,3 @@
-
 // We always need asserts here
 #ifdef NDEBUG
 #undef NDEBUG
@@ -482,6 +481,15 @@ void test_core() {
     makeSIMDShift(module, BinaryenShlVecI64x2()),
     makeSIMDShift(module, BinaryenShrSVecI64x2()),
     makeSIMDShift(module, BinaryenShrUVecI64x2()),
+    // SIMD load
+    BinaryenSIMDLoad(
+      module, BinaryenLoadSplatVec8x16(), 0, 1, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoadSplatVec16x8(), 16, 1, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoadSplatVec32x4(), 16, 4, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoadSplatVec64x2(), 0, 4, makeInt32(module, 128)),
     // Other SIMD
     makeSIMDShuffle(module),
     makeSIMDTernary(module, BinaryenBitselectVec128()),
