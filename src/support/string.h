@@ -87,16 +87,17 @@ inline String::Split handleBracketingOperators(String::Split split) {
   return ret;
 }
 
-// Does a simple wildcard match between a pattern and a value. Currently
-// supports a '*' at the end of the pattern.
+// Does a simple '*' wildcard match between a pattern and a value.
 inline bool wildcardMatch(const std::string& pattern,
                           const std::string& value) {
   for (size_t i = 0; i < pattern.size(); i++) {
+    if (pattern[i] == '*') {
+      return wildcardMatch(pattern.substr(i + 1), value.substr(i)) ||
+             (value.size() > 0 &&
+              wildcardMatch(pattern.substr(i), value.substr(i + 1)));
+    }
     if (i >= value.size()) {
       return false;
-    }
-    if (pattern[i] == '*') {
-      return true;
     }
     if (pattern[i] != value[i]) {
       return false;
