@@ -388,8 +388,8 @@ public:
     for (auto& pattern : patterns) {
       if (patternsMatched.count(pattern) == 0) {
         std::cerr << "warning: Asyncify " << designation
-                  << "list contained a non-matching pattern: " << unescaped[pattern]
-                  << " (" << pattern << ")\n";
+                  << "list contained a non-matching pattern: "
+                  << unescaped[pattern] << " (" << pattern << ")\n";
       }
     }
   }
