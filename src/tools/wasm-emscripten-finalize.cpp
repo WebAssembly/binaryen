@@ -197,6 +197,9 @@ int main(int argc, const char* argv[]) {
     if (dataEnd->type != Type::i32) {
       Fatal() << "__data_end global has wrong type";
     }
+    if (dataEnd->imported()) {
+      Fatal() << "__data_end must not be an imported global";
+    }
     Const* dataEndConst = dataEnd->init->cast<Const>();
     dataSize = dataEndConst->value.geti32() - globalBase;
   }
