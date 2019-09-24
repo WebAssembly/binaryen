@@ -428,7 +428,7 @@
   )
  )
  (func $v128.andnot (; 74 ;) (type $FUNCSIG$VVV) (param $0 v128) (param $1 v128) (result v128)
-  (v128.and_not
+  (v128.andnot
    (local.get $0)
    (local.get $1)
   )
