@@ -131,6 +131,7 @@ ELSE()
   SET(THREADS_PREFER_PTHREAD_FLAG ON)
   SET(CMAKE_THREAD_PREFER_PTHREAD ON)
   FIND_PACKAGE(Threads REQUIRED)
+  ADD_CXX_FLAG("-std=c++17")
   if (NOT EMSCRIPTEN)
     if (CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
       # wasm doesn't allow for x87 floating point math
