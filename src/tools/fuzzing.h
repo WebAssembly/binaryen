@@ -2492,8 +2492,16 @@ private:
   }
 
   Expression* makeSIMDLoad() {
-    SIMDLoadOp op = pick(
-      LoadSplatVec8x16, LoadSplatVec16x8, LoadSplatVec32x4, LoadSplatVec64x2);
+    SIMDLoadOp op = pick(LoadSplatVec8x16,
+                         LoadSplatVec16x8,
+                         LoadSplatVec32x4,
+                         LoadSplatVec64x2,
+                         LoadExtSVec8x8ToVecI16x8,
+                         LoadExtUVec8x8ToVecI16x8,
+                         LoadExtSVec16x4ToVecI32x4,
+                         LoadExtUVec16x4ToVecI32x4,
+                         LoadExtSVec32x2ToVecI64x2,
+                         LoadExtUVec32x2ToVecI64x2);
     Address offset = logify(get());
     Address align;
     switch (op) {
