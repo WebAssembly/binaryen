@@ -760,6 +760,17 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'o': {
+                switch (op[14]) {
+                  case 's':
+                    if (strcmp(op, "i16x8.load8x8_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtSVec8x8ToVecI16x8); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i16x8.load8x8_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtUVec8x8ToVecI16x8); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 't': {
                 switch (op[9]) {
                   case 's':
@@ -1410,6 +1421,17 @@ switch (op[0]) {
                         goto parse_error;
                       case 'u':
                         if (strcmp(op, "i32x4.le_u") == 0) { return makeBinary(s, BinaryOp::LeUVecI32x4); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'o': {
+                    switch (op[15]) {
+                      case 's':
+                        if (strcmp(op, "i32x4.load16x4_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtSVec16x4ToVecI32x4); }
+                        goto parse_error;
+                      case 'u':
+                        if (strcmp(op, "i32x4.load16x4_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtUVec16x4ToVecI32x4); }
                         goto parse_error;
                       default: goto parse_error;
                     }
@@ -2069,6 +2091,17 @@ switch (op[0]) {
               case 'e':
                 if (strcmp(op, "i64x2.extract_lane") == 0) { return makeSIMDExtract(s, SIMDExtractOp::ExtractLaneVecI64x2, 2); }
                 goto parse_error;
+              case 'l': {
+                switch (op[15]) {
+                  case 's':
+                    if (strcmp(op, "i64x2.load32x2_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtSVec32x2ToVecI64x2); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i64x2.load32x2_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtUVec32x2ToVecI64x2); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'n':
                 if (strcmp(op, "i64x2.neg") == 0) { return makeUnary(s, UnaryOp::NegVecI64x2); }
                 goto parse_error;

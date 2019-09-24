@@ -888,6 +888,24 @@ BinaryenOp BinaryenLoadSplatVec8x16(void) { return LoadSplatVec8x16; }
 BinaryenOp BinaryenLoadSplatVec16x8(void) { return LoadSplatVec16x8; }
 BinaryenOp BinaryenLoadSplatVec32x4(void) { return LoadSplatVec32x4; }
 BinaryenOp BinaryenLoadSplatVec64x2(void) { return LoadSplatVec64x2; }
+BinaryenOp BinaryenLoadExtSVec8x8ToVecI16x8(void) {
+  return LoadExtSVec8x8ToVecI16x8;
+}
+BinaryenOp BinaryenLoadExtUVec8x8ToVecI16x8(void) {
+  return LoadExtUVec8x8ToVecI16x8;
+}
+BinaryenOp BinaryenLoadExtSVec16x4ToVecI32x4(void) {
+  return LoadExtSVec16x4ToVecI32x4;
+}
+BinaryenOp BinaryenLoadExtUVec16x4ToVecI32x4(void) {
+  return LoadExtUVec16x4ToVecI32x4;
+}
+BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void) {
+  return LoadExtSVec32x2ToVecI64x2;
+}
+BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void) {
+  return LoadExtUVec32x2ToVecI64x2;
+}
 BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
   return NarrowSVecI16x8ToVecI8x16;
 }

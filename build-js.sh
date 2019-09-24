@@ -37,7 +37,7 @@ elif [ ! -d "$EMSCRIPTEN" ]; then
   exit 1
 fi
 
-EMCC_ARGS="-std=c++11 --memory-init-file 0"
+EMCC_ARGS="-std=gnu++17 --memory-init-file 0"
 EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
 EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
 EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=0"
@@ -556,6 +556,12 @@ export_function "_BinaryenLoadSplatVec8x16"
 export_function "_BinaryenLoadSplatVec16x8"
 export_function "_BinaryenLoadSplatVec32x4"
 export_function "_BinaryenLoadSplatVec64x2"
+export_function "_BinaryenLoadExtSVec8x8ToVecI16x8"
+export_function "_BinaryenLoadExtUVec8x8ToVecI16x8"
+export_function "_BinaryenLoadExtSVec16x4ToVecI32x4"
+export_function "_BinaryenLoadExtUVec16x4ToVecI32x4"
+export_function "_BinaryenLoadExtSVec32x2ToVecI64x2"
+export_function "_BinaryenLoadExtUVec32x2ToVecI64x2"
 export_function "_BinaryenNarrowSVecI16x8ToVecI8x16"
 export_function "_BinaryenNarrowUVecI16x8ToVecI8x16"
 export_function "_BinaryenNarrowSVecI32x4ToVecI16x8"

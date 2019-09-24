@@ -438,7 +438,13 @@ enum SIMDLoadOp {
   LoadSplatVec8x16,
   LoadSplatVec16x8,
   LoadSplatVec32x4,
-  LoadSplatVec64x2
+  LoadSplatVec64x2,
+  LoadExtSVec8x8ToVecI16x8,
+  LoadExtUVec8x8ToVecI16x8,
+  LoadExtSVec16x4ToVecI32x4,
+  LoadExtUVec16x4ToVecI32x4,
+  LoadExtSVec32x2ToVecI64x2,
+  LoadExtUVec32x2ToVecI64x2
 };
 
 enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };

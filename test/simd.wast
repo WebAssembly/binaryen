@@ -840,6 +840,26 @@
    (local.get $0)
   )
  )
+ (func $v8x16.load_splat (param $0 i32) (result v128)
+  (v8x16.load_splat
+   (local.get $0)
+  )
+ )
+ (func $v16x8.load_splat (param $0 i32) (result v128)
+  (v16x8.load_splat
+   (local.get $0)
+  )
+ )
+ (func $v32x4.load_splat (param $0 i32) (result v128)
+  (v32x4.load_splat
+   (local.get $0)
+  )
+ )
+ (func $v64x2.load_splat (param $0 i32) (result v128)
+  (v64x2.load_splat
+   (local.get $0)
+  )
+ )
  (func $i8x16.narrow_i16x8_s (param $0 v128) (param $1 v128) (result v128)
   (i8x16.narrow_i16x8_s
    (local.get $0)
@@ -901,6 +921,36 @@
  )
  (func $i32x4.widen_high_i16x8_u (param $0 v128) (result v128)
   (i32x4.widen_high_i16x8_u
+   (local.get $0)
+  )
+ )
+ (func $i16x8.load8x8_u (param $0 i32) (result v128)
+  (i16x8.load8x8_u
+   (local.get $0)
+  )
+ )
+ (func $i16x8.load8x8_s (param $0 i32) (result v128)
+  (i16x8.load8x8_s
+   (local.get $0)
+  )
+ )
+ (func $i32x4.load16x4_s (param $0 i32) (result v128)
+  (i32x4.load16x4_s
+   (local.get $0)
+  )
+ )
+ (func $i32x4.load16x4_u (param $0 i32) (result v128)
+  (i32x4.load16x4_u
+   (local.get $0)
+  )
+ )
+ (func $i64x2.load32x2_s (param $0 i32) (result v128)
+  (i64x2.load32x2_s
+   (local.get $0)
+  )
+ )
+ (func $i64x2.load32x2_u (param $0 i32) (result v128)
+  (i64x2.load32x2_u
    (local.get $0)
   )
  )

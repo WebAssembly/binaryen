@@ -386,6 +386,12 @@ function test_core() {
     module.v16x8.load_splat(16, 1, module.i32.const(128)),
     module.v32x4.load_splat(16, 4, module.i32.const(128)),
     module.v64x2.load_splat(0, 4, module.i32.const(128)),
+    module.i16x8.load8x8_s(0, 8, module.i32.const(128)),
+    module.i16x8.load8x8_u(0, 8, module.i32.const(128)),
+    module.i32x4.load16x4_s(0, 8, module.i32.const(128)),
+    module.i32x4.load16x4_u(0, 8, module.i32.const(128)),
+    module.i64x2.load32x2_s(0, 8, module.i32.const(128)),
+    module.i64x2.load32x2_u(0, 8, module.i32.const(128)),
     // Other SIMD
     module.v8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),

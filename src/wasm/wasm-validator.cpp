@@ -1064,9 +1064,25 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     curr->type, v128, curr, "load_splat must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type, i32, curr, "load_splat address must have type i32");
-  Type lane_t = curr->op == LoadSplatVec64x2 ? i64 : i32;
+  Type memAlignType = none;
+  switch (curr->op) {
+    case LoadSplatVec8x16:
+    case LoadSplatVec16x8:
+    case LoadSplatVec32x4:
+      memAlignType = i32;
+      break;
+    case LoadSplatVec64x2:
+    case LoadExtSVec8x8ToVecI16x8:
+    case LoadExtUVec8x8ToVecI16x8:
+    case LoadExtSVec16x4ToVecI32x4:
+    case LoadExtUVec16x4ToVecI32x4:
+    case LoadExtSVec32x2ToVecI64x2:
+    case LoadExtUVec32x2ToVecI64x2:
+      memAlignType = i64;
+      break;
+  }
   Index bytes = curr->getMemBytes();
-  validateAlignment(curr->align, lane_t, bytes, /*isAtomic=*/false, curr);
+  validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {

@@ -1086,6 +1086,8 @@ public:
   Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE(); }
   Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
   Flow visitSIMDLoad(SIMDLoad*) { WASM_UNREACHABLE(); }
+  Flow visitSIMDLoadSplat(SIMDLoad*) { WASM_UNREACHABLE(); }
+  Flow visitSIMDLoadExtend(SIMDLoad*) { WASM_UNREACHABLE(); }
   Flow visitPush(Push*) { WASM_UNREACHABLE(); }
   Flow visitPop(Pop*) { WASM_UNREACHABLE(); }
   Flow visitTry(Try*) { WASM_UNREACHABLE(); }
@@ -1702,6 +1704,23 @@ private:
     }
     Flow visitSIMDLoad(SIMDLoad* curr) {
       NOTE_ENTER("SIMDLoad");
+      switch (curr->op) {
+        case LoadSplatVec8x16:
+        case LoadSplatVec16x8:
+        case LoadSplatVec32x4:
+        case LoadSplatVec64x2:
+          return visitSIMDLoadSplat(curr);
+        case LoadExtSVec8x8ToVecI16x8:
+        case LoadExtUVec8x8ToVecI16x8:
+        case LoadExtSVec16x4ToVecI32x4:
+        case LoadExtUVec16x4ToVecI32x4:
+        case LoadExtSVec32x2ToVecI64x2:
+        case LoadExtUVec32x2ToVecI64x2:
+          return visitSIMDLoadExtend(curr);
+      }
+      WASM_UNREACHABLE();
+    }
+    Flow visitSIMDLoadSplat(SIMDLoad* curr) {
       Load load;
       load.type = i32;
       load.bytes = curr->getMemBytes();
@@ -1725,6 +1744,8 @@ private:
           load.type = i64;
           splat = &Literal::splatI64x2;
           break;
+        default:
+          WASM_UNREACHABLE();
       }
       load.finalize();
       Flow flow = this->visit(&load);
@@ -1732,6 +1753,61 @@ private:
         return flow;
       }
       return (flow.value.*splat)();
+    }
+    Flow visitSIMDLoadExtend(SIMDLoad* curr) {
+      Flow flow = this->visit(curr->ptr);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow);
+      Address src(uint32_t(flow.value.geti32()));
+      auto loadLane = [&](Address addr) {
+        switch (curr->op) {
+          case LoadExtSVec8x8ToVecI16x8:
+            return Literal(int32_t(instance.externalInterface->load8s(addr)));
+          case LoadExtUVec8x8ToVecI16x8:
+            return Literal(int32_t(instance.externalInterface->load8u(addr)));
+          case LoadExtSVec16x4ToVecI32x4:
+            return Literal(int32_t(instance.externalInterface->load16s(addr)));
+          case LoadExtUVec16x4ToVecI32x4:
+            return Literal(int32_t(instance.externalInterface->load16u(addr)));
+          case LoadExtSVec32x2ToVecI64x2:
+            return Literal(int64_t(instance.externalInterface->load32s(addr)));
+          case LoadExtUVec32x2ToVecI64x2:
+            return Literal(int64_t(instance.externalInterface->load32u(addr)));
+          default:
+            WASM_UNREACHABLE();
+        }
+        WASM_UNREACHABLE();
+      };
+      auto fillLanes = [&](auto lanes, size_t laneBytes) {
+        for (auto& lane : lanes) {
+          lane = loadLane(
+            instance.getFinalAddress(Literal(uint32_t(src)), laneBytes));
+          src = Address(uint32_t(src) + laneBytes);
+        }
+        return Literal(lanes);
+      };
+      switch (curr->op) {
+        case LoadExtSVec8x8ToVecI16x8:
+        case LoadExtUVec8x8ToVecI16x8: {
+          std::array<Literal, 8> lanes;
+          return fillLanes(lanes, 1);
+        }
+        case LoadExtSVec16x4ToVecI32x4:
+        case LoadExtUVec16x4ToVecI32x4: {
+          std::array<Literal, 4> lanes;
+          return fillLanes(lanes, 2);
+        }
+        case LoadExtSVec32x2ToVecI64x2:
+        case LoadExtUVec32x2ToVecI64x2: {
+          std::array<Literal, 2> lanes;
+          return fillLanes(lanes, 4);
+        }
+        default:
+          WASM_UNREACHABLE();
+      }
+      WASM_UNREACHABLE();
     }
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");
