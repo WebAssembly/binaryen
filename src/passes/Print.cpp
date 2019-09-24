@@ -406,6 +406,24 @@ struct PrintExpressionContents
       case LoadSplatVec64x2:
         o << "v64x2.load_splat";
         break;
+      case LoadExtSVec8x8ToVecI16x8:
+        o << "i16x8.load8x8_s";
+        break;
+      case LoadExtUVec8x8ToVecI16x8:
+        o << "i16x8.load8x8_u";
+        break;
+      case LoadExtSVec16x4ToVecI32x4:
+        o << "i32x4.load16x4_s";
+        break;
+      case LoadExtUVec16x4ToVecI32x4:
+        o << "i32x4.load16x4_u";
+        break;
+      case LoadExtSVec32x2ToVecI64x2:
+        o << "i64x2.load32x2_s";
+        break;
+      case LoadExtUVec32x2ToVecI64x2:
+        o << "i64x2.load32x2_u";
+        break;
     }
     restoreNormalColor(o);
     if (curr->offset) {

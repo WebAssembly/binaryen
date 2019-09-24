@@ -2506,6 +2506,12 @@ private:
         align = pick(1, 2, 4);
         break;
       case LoadSplatVec64x2:
+      case LoadExtSVec8x8ToVecI16x8:
+      case LoadExtUVec8x8ToVecI16x8:
+      case LoadExtSVec16x4ToVecI32x4:
+      case LoadExtUVec16x4ToVecI32x4:
+      case LoadExtSVec32x2ToVecI64x2:
+      case LoadExtUVec32x2ToVecI64x2:
         align = pick(1, 2, 4, 8);
         break;
     }

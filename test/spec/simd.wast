@@ -1,6 +1,7 @@
 (module
  (memory 1)
  (data (i32.const 128) "WASMSIMDGOESFAST")
+ (data (i32.const 256) "\80\90\a0\b0\c0\d0\e0\f0")
  (func (export "v128.load") (param $0 i32) (result v128) (v128.load (local.get $0)))
  (func (export "v128.store") (param $0 i32) (param $1 v128) (result v128)
    (v128.store offset=0 align=16 (local.get $0) (local.get $1))
@@ -190,6 +191,12 @@
  (func (export "i32x4.widen_high_i16x8_s") (param $0 v128) (result v128) (i32x4.widen_high_i16x8_s (local.get $0)))
  (func (export "i32x4.widen_low_i16x8_u") (param $0 v128) (result v128) (i32x4.widen_low_i16x8_u (local.get $0)))
  (func (export "i32x4.widen_high_i16x8_u") (param $0 v128) (result v128) (i32x4.widen_high_i16x8_u (local.get $0)))
+ (func (export "i16x8.load8x8_u") (param $0 i32) (result v128) (i16x8.load8x8_u (local.get $0)))
+ (func (export "i16x8.load8x8_s") (param $0 i32) (result v128) (i16x8.load8x8_s (local.get $0)))
+ (func (export "i32x4.load16x4_u") (param $0 i32) (result v128) (i32x4.load16x4_u (local.get $0)))
+ (func (export "i32x4.load16x4_s") (param $0 i32) (result v128) (i32x4.load16x4_s (local.get $0)))
+ (func (export "i64x2.load32x2_u") (param $0 i32) (result v128) (i64x2.load32x2_u (local.get $0)))
+ (func (export "i64x2.load32x2_s") (param $0 i32) (result v128) (i64x2.load32x2_s (local.get $0)))
 )
 
 ;; Basic v128 manipulation
@@ -751,3 +758,9 @@
 (assert_return (invoke "i32x4.widen_high_i16x8_s" (v128.const i16x8 0 1 -1 32768 32767 32769 16384 -16384)) (v128.const i32x4 32767 -32767 16384 -16384))
 (assert_return (invoke "i32x4.widen_low_i16x8_u" (v128.const i16x8 0 1 -1 32768 32767 32769 16384 -16384)) (v128.const i32x4 0 1 65535 32768))
 (assert_return (invoke "i32x4.widen_high_i16x8_u" (v128.const i16x8 0 1 -1 32768 32767 32769 16384 -16384)) (v128.const i32x4 32767 32769 16384 49152))
+(assert_return (invoke "i16x8.load8x8_s" (i32.const 256)) (v128.const i16x8 0xff80 0xff90 0xffa0 0xffb0 0xffc0 0xffd0 0xffe0 0xfff0))
+(assert_return (invoke "i16x8.load8x8_u" (i32.const 256)) (v128.const i16x8 0x0080 0x0090 0x00a0 0x00b0 0x00c0 0x00d0 0x00e0 0x00f0))
+(assert_return (invoke "i32x4.load16x4_s" (i32.const 256)) (v128.const i32x4 0xffff9080 0xffffb0a0 0xffffd0c0 0xfffff0e0))
+(assert_return (invoke "i32x4.load16x4_u" (i32.const 256)) (v128.const i32x4 0x00009080 0x0000b0a0 0x0000d0c0 0x0000f0e0))
+(assert_return (invoke "i64x2.load32x2_s" (i32.const 256)) (v128.const i64x2 0xffffffffb0a09080 0xfffffffff0e0d0c0))
+(assert_return (invoke "i64x2.load32x2_u" (i32.const 256)) (v128.const i64x2 0x00000000b0a09080 0x00000000f0e0d0c0))

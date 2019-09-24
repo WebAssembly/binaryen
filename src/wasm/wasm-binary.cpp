@@ -4409,6 +4409,30 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       curr = allocator.alloc<SIMDLoad>();
       curr->op = LoadSplatVec64x2;
       break;
+    case I16x8LoadExtSVec8x8:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadExtSVec8x8ToVecI16x8;
+      break;
+    case I16x8LoadExtUVec8x8:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LLoadExtUVec8x8ToVecI16x8;
+      break;
+    case I32x4LoadExtSVec16x4:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LLoadExtSVec16x4ToVecI32x4;
+      break;
+    case I32x4LoadExtUVec16x4:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LLoadExtUVec16x4ToVecI32x4;
+      break;
+    case I64x2LoadExtSVec32x2:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LLoadExtSVec32x2ToVecI64x2;
+      break;
+    case I64x2LoadExtUVec32x2:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LLoadExtUVec32x2ToVecI64x2;
+      break;
     default:
       return false;
   }

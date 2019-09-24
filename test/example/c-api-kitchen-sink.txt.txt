@@ -1292,6 +1292,36 @@
        )
       )
       (drop
+       (i16x8.load8x8_s
+        (i32.const 128)
+       )
+      )
+      (drop
+       (i16x8.load8x8_u
+        (i32.const 128)
+       )
+      )
+      (drop
+       (i32x4.load16x4_s
+        (i32.const 128)
+       )
+      )
+      (drop
+       (i32x4.load16x4_u
+        (i32.const 128)
+       )
+      )
+      (drop
+       (i64x2.load32x2_s
+        (i32.const 128)
+       )
+      )
+      (drop
+       (i64x2.load32x2_u
+        (i32.const 128)
+       )
+      )
+      (drop
        (v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)

@@ -399,6 +399,12 @@ Module['LoadSplatVec8x16'] = Module['_BinaryenLoadSplatVec8x16']();
 Module['LoadSplatVec16x8'] = Module['_BinaryenLoadSplatVec16x8']();
 Module['LoadSplatVec32x4'] = Module['_BinaryenLoadSplatVec32x4']();
 Module['LoadSplatVec64x2'] = Module['_BinaryenLoadSplatVec64x2']();
+Module['LoadExtSVec8x8ToVecI16x8'] = Module['_BinaryenLoadExtSVec8x8ToVecI16x8']();
+Module['LoadExtUVec8x8ToVecI16x8'] = Module['_BinaryenLoadExtUVec8x8ToVecI16x8']();
+Module['LoadExtSVec16x4ToVecI32x4'] = Module['_BinaryenLoadExtSVec16x4ToVecI32x4']();
+Module['LoadExtUVec16x4ToVecI32x4'] = Module['_BinaryenLoadExtUVec16x4ToVecI32x4']();
+Module['LoadExtSVec32x2ToVecI64x2'] = Module['_BinaryenLoadExtSVec32x2ToVecI64x2']();
+Module['LoadExtUVec32x2ToVecI64x2'] = Module['_BinaryenLoadExtUVec32x2ToVecI64x2']();
 Module['NarrowSVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowSVecI16x8ToVecI8x16']();
 Module['NarrowUVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowUVecI16x8ToVecI8x16']();
 Module['NarrowSVecI32x4ToVecI16x8'] = Module['_BinaryenNarrowSVecI32x4ToVecI16x8']();
@@ -1542,6 +1548,12 @@ function wrapModule(module, self) {
     'widen_high_i8x16_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['WidenHighUVecI8x16ToVecI16x8'], value);
     },
+    'load8x8_s': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec8x8ToVecI16x8'], offset, align, ptr);
+    },
+    'load8x8_u': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec8x8ToVecI16x8'], offset, align, ptr);
+    },
   };
 
   self['i32x4'] = {
@@ -1629,6 +1641,12 @@ function wrapModule(module, self) {
     'widen_high_i16x8_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['WidenHighUVecI16x8ToVecI32x4'], value);
     },
+    'load16x4_s': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec16x4ToVecI32x4'], offset, align, ptr);
+    },
+    'load16x4_u': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec16x4ToVecI32x4'], offset, align, ptr);
+    },
   };
 
   self['i64x2'] = {
@@ -1670,6 +1688,12 @@ function wrapModule(module, self) {
     },
     'trunc_sat_f64x2_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatUVecF64x2ToVecI64x2'], value);
+    },
+    'load32x2_s': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec32x2ToVecI64x2'], offset, align, ptr);
+    },
+    'load32x2_u': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec32x2ToVecI64x2'], offset, align, ptr);
     },
   };
 
