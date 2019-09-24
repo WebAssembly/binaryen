@@ -340,6 +340,7 @@ public:
   std::set<Name> names;
   std::set<std::string> patterns;
   std::set<std::string> patternsMatched;
+  std::map<std::string, std::string> unescaped;
 
   PatternMatcher(std::string designation,
                  Module& module,
@@ -349,8 +350,9 @@ public:
     // internal escaped names for later comparisons
     for (auto& name : list) {
       auto escaped = WasmBinaryBuilder::escape(name);
+      unescaped[escaped.str] = name;
       if (name.find('*') != std::string::npos) {
-        patterns.insert(std::string(escaped.str));
+        patterns.insert(escaped.str);
       } else {
         auto* func = module.getFunctionOrNull(escaped);
         if (!func) {
@@ -386,8 +388,8 @@ public:
     for (auto& pattern : patterns) {
       if (patternsMatched.count(pattern) == 0) {
         std::cerr << "warning: Asyncify " << designation
-                  << "list contained a non-matching pattern: " << pattern
-                  << "\n";
+                  << "list contained a non-matching pattern: "
+                  << unescaped[pattern] << " (" << pattern << ")\n";
       }
     }
   }
