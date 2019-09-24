@@ -1113,6 +1113,9 @@ struct PrintExpressionContents
       case XorVec128:
         o << "v128.xor";
         break;
+      case AndNotVec128:
+        o << "v128.andnot";
+        break;
 
       case AddVecI8x16:
         o << "i8x16.add";

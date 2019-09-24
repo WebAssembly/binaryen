@@ -411,6 +411,12 @@
    (local.get $1)
   )
  )
+ (func $v128.andnot (param $0 v128) (param $1 v128) (result v128)
+  (v128.andnot
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $v128.bitselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
   (v128.bitselect
    (local.get $0)

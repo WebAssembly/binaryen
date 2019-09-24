@@ -353,6 +353,7 @@ enum BinaryOp {
   AndVec128,
   OrVec128,
   XorVec128,
+  AndNotVec128,
   AddVecI8x16,
   AddSatSVecI8x16,
   AddSatUVecI8x16,

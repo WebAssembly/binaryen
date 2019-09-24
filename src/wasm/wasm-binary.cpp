@@ -3819,6 +3819,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = XorVec128;
       break;
+    case BinaryConsts::V128AndNot:
+      curr = allocator.alloc<Binary>();
+      curr->op = AndNotVec128;
+      break;
     case BinaryConsts::I8x16Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI8x16;
