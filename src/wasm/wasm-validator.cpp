@@ -1064,7 +1064,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     curr->type, v128, curr, "load_splat must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type, i32, curr, "load_splat address must have type i32");
-  Type memAlignType;
+  Type memAlignType = none;
   switch (curr->op) {
     case LoadSplatVec8x16:
     case LoadSplatVec16x8:
