@@ -558,6 +558,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case XorVec128:
         ret = 1;
         break;
+      case AndNotVec128:
+        ret = 1;
+        break;
       case AddVecI8x16:
         ret = 1;
         break;

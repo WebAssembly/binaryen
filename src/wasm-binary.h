@@ -782,6 +782,7 @@ enum ASTNodes {
   V128And = 0x4d,
   V128Or = 0x4e,
   V128Xor = 0x4f,
+  V128AndNot = 0xd8,
   V128Bitselect = 0x50,
   I8x16Neg = 0x51,
   I8x16AnyTrue = 0x52,

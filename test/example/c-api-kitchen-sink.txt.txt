@@ -914,6 +914,12 @@
        )
       )
       (drop
+       (v128.and_not
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i8x16.add
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)

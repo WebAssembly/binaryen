@@ -740,6 +740,8 @@ public:
         return left.orV128(right);
       case XorVec128:
         return left.xorV128(right);
+      case AndNotVec128:
+        return left.andV128(right.notV128());
 
       case AddVecI8x16:
         return left.addI8x16(right);
