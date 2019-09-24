@@ -28,3 +28,4 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] C API tested in test/example/c-api-kitchen-sink.c
  - [ ] JS API tested in test/binaryen.js/kitchen-sink.js
  - [ ] Tests added in test/spec
+ - [ ] Tests added in top-level test/
