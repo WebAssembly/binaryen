@@ -2338,7 +2338,7 @@ private:
     if (type != v128) {
       return makeSIMDExtract(type);
     }
-    switch (upTo(6)) {
+    switch (upTo(7)) {
       case 0:
         return makeUnary(v128);
       case 1:
@@ -2351,6 +2351,8 @@ private:
         return makeSIMDTernary();
       case 5:
         return makeSIMDShift();
+      case 6:
+        return makeSIMDLoad();
     }
     WASM_UNREACHABLE();
   }
@@ -2486,6 +2488,29 @@ private:
     Expression* vec = make(v128);
     Expression* shift = make(i32);
     return builder.makeSIMDShift(op, vec, shift);
+  }
+
+  Expression* makeSIMDLoad() {
+    SIMDLoadOp op = pick(
+      LoadSplatVec8x16, LoadSplatVec16x8, LoadSplatVec32x4, LoadSplatVec64x2);
+    Address offset = logify(get());
+    Address align;
+    switch (op) {
+      case LoadSplatVec8x16:
+        align = 1;
+        break;
+      case LoadSplatVec16x8:
+        align = pick(1, 2);
+        break;
+      case LoadSplatVec32x4:
+        align = pick(1, 2, 4);
+        break;
+      case LoadSplatVec64x2:
+        align = pick(1, 2, 4, 8);
+        break;
+    }
+    Expression* ptr = makePointer();
+    return builder.makeSIMDLoad(op, offset, align, ptr);
   }
 
   Expression* makeBulkMemory(Type type) {

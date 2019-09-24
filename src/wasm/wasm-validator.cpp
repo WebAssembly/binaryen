@@ -276,6 +276,7 @@ public:
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitSIMDLoad(SIMDLoad* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -1052,6 +1053,20 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
     curr->vec->type, v128, curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(
     curr->shift->type, i32, curr, "expected shift amount to have type i32");
+}
+
+void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, v128, curr, "load_splat must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "load_splat address must have type i32");
+  Type lane_t = curr->op == LoadSplatVec64x2 ? i64 : i32;
+  Index bytes = curr->getMemBytes();
+  validateAlignment(curr->align, lane_t, bytes, /*isAtomic=*/false, curr);
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {

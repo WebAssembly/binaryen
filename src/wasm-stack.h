@@ -109,6 +109,7 @@ public:
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitSIMDLoad(SIMDLoad* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -185,6 +186,7 @@ public:
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitSIMDLoad(SIMDLoad* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -580,6 +582,16 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitSIMDShift(SIMDShift* curr) {
   visit(curr->vec);
   visit(curr->shift);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+    return;
+  }
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitSIMDLoad(SIMDLoad* curr) {
+  visit(curr->ptr);
   if (curr->type == unreachable) {
     emitUnreachable();
     return;

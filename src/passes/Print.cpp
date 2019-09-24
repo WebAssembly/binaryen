@@ -391,6 +391,30 @@ struct PrintExpressionContents
         break;
     }
   }
+  void visitSIMDLoad(SIMDLoad* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case LoadSplatVec8x16:
+        o << "v8x16.load_splat";
+        break;
+      case LoadSplatVec16x8:
+        o << "v16x8.load_splat";
+        break;
+      case LoadSplatVec32x4:
+        o << "v32x4.load_splat";
+        break;
+      case LoadSplatVec64x2:
+        o << "v64x2.load_splat";
+        break;
+    }
+    restoreNormalColor(o);
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->getMemBytes()) {
+      o << " align=" << curr->align;
+    }
+  }
   void visitMemoryInit(MemoryInit* curr) {
     prepareColor(o);
     o << "memory.init " << curr->segment;
@@ -1602,6 +1626,13 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->vec);
     printFullLine(curr->shift);
+    decIndent();
+  }
+  void visitSIMDLoad(SIMDLoad* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
     decIndent();
   }
   void visitMemoryInit(MemoryInit* curr) {

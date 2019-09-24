@@ -1083,6 +1083,7 @@ public:
   Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE(); }
   Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE(); }
   Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
+  Flow visitSIMDLoad(SIMDLoad*) { WASM_UNREACHABLE(); }
   Flow visitPush(Push*) { WASM_UNREACHABLE(); }
   Flow visitPop(Pop*) { WASM_UNREACHABLE(); }
   Flow visitTry(Try*) { WASM_UNREACHABLE(); }
@@ -1696,6 +1697,39 @@ private:
       }
       // TODO: add threads support!
       return Literal(int32_t(0)); // none woken up
+    }
+    Flow visitSIMDLoad(SIMDLoad* curr) {
+      NOTE_ENTER("SIMDLoad");
+      Load load;
+      load.type = i32;
+      load.bytes = curr->getMemBytes();
+      load.signed_ = false;
+      load.offset = curr->offset;
+      load.align = curr->align;
+      load.isAtomic = false;
+      load.ptr = curr->ptr;
+      Literal (Literal::*splat)() const = nullptr;
+      switch (curr->op) {
+        case LoadSplatVec8x16:
+          splat = &Literal::splatI8x16;
+          break;
+        case LoadSplatVec16x8:
+          splat = &Literal::splatI16x8;
+          break;
+        case LoadSplatVec32x4:
+          splat = &Literal::splatI32x4;
+          break;
+        case LoadSplatVec64x2:
+          load.type = i64;
+          splat = &Literal::splatI64x2;
+          break;
+      }
+      load.finalize();
+      Flow flow = this->visit(&load);
+      if (flow.breaking()) {
+        return flow;
+      }
+      return (flow.value.*splat)();
     }
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");

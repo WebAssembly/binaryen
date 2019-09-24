@@ -76,6 +76,7 @@ Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
 Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
 Module['SIMDTernaryId'] = Module['_BinaryenSIMDTernaryId']();
 Module['SIMDShiftId'] = Module['_BinaryenSIMDShiftId']();
+Module['SIMDLoadId'] = Module['_BinaryenSIMDLoadId']();
 Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
 Module['DataDropId'] = Module['_BinaryenDataDropId']();
 Module['MemoryCopyId'] = Module['_BinaryenMemoryCopyId']();
@@ -394,6 +395,10 @@ Module['ConvertSVecI32x4ToVecF32x4'] = Module['_BinaryenConvertSVecI32x4ToVecF32
 Module['ConvertUVecI32x4ToVecF32x4'] = Module['_BinaryenConvertUVecI32x4ToVecF32x4']();
 Module['ConvertSVecI64x2ToVecF64x2'] = Module['_BinaryenConvertSVecI64x2ToVecF64x2']();
 Module['ConvertUVecI64x2ToVecF64x2'] = Module['_BinaryenConvertUVecI64x2ToVecF64x2']();
+Module['LoadSplatVec8x16'] = Module['_BinaryenLoadSplatVec8x16']();
+Module['LoadSplatVec16x8'] = Module['_BinaryenLoadSplatVec16x8']();
+Module['LoadSplatVec32x4'] = Module['_BinaryenLoadSplatVec32x4']();
+Module['LoadSplatVec64x2'] = Module['_BinaryenLoadSplatVec64x2']();
 Module['NarrowSVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowSVecI16x8ToVecI8x16']();
 Module['NarrowUVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowUVecI16x8ToVecI8x16']();
 Module['NarrowSVecI32x4ToVecI16x8'] = Module['_BinaryenNarrowSVecI32x4ToVecI16x8']();
@@ -1347,14 +1352,6 @@ function wrapModule(module, self) {
     }
   };
 
-  self['v8x16'] = {
-    'shuffle': function(left, right, mask) {
-      return preserveStack(function() {
-        return Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask));
-      });
-    },
-  };
-
   self['i8x16'] = {
     'splat': function(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI8x16'], value);
@@ -1811,6 +1808,35 @@ function wrapModule(module, self) {
     },
     'convert_i64x2_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertUVecI64x2ToVecF64x2'], value);
+    },
+  };
+
+  self['v8x16'] = {
+    'shuffle': function(left, right, mask) {
+      return preserveStack(function() {
+        return Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask));
+      });
+    },
+    'load_splat': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec8x16'], offset, align, ptr);
+    },
+  };
+
+  self['v16x8'] = {
+    'load_splat': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec16x8'], offset, align, ptr);
+    },
+  };
+
+  self['v32x4'] = {
+    'load_splat': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec32x4'], offset, align, ptr);
+    },
+  };
+
+  self['v64x2'] = {
+    'load_splat': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec64x2'], offset, align, ptr);
     },
   };
 
@@ -2451,6 +2477,15 @@ Module['getExpressionInfo'] = function(expr) {
         'op': Module['_BinaryenSIMDShiftGetOp'](expr),
         'vec': Module['_BinaryenSIMDShiftGetVec'](expr),
         'shift': Module['_BinaryenSIMDShiftGetShift'](expr)
+      };
+    case Module['SIMDLoadId']:
+      return {
+        'id': id,
+        'type': type,
+        'op': Module['_BinaryenSIMDLoadGetOp'](expr),
+        'offset': Module['_BinaryenSIMDLoadGetOffset'](expr),
+        'align': Module['_BinaryenSIMDLoadGetAlign'](expr),
+        'ptr': Module['_BinaryenSIMDLoadGetPtr'](expr)
       };
     case Module['MemoryInitId']:
       return {

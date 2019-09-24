@@ -1251,10 +1251,10 @@ static uint8_t parseMemBytes(const char*& s, uint8_t fallback) {
 static size_t parseMemAttributes(Element& s,
                                  Address* offset,
                                  Address* align,
-                                 Address fallback) {
+                                 Address fallbackAlign) {
   size_t i = 1;
   *offset = 0;
-  *align = fallback;
+  *align = fallbackAlign;
   while (!s[i]->isList()) {
     const char* str = s[i]->c_str();
     const char* eq = strchr(str, '=');
@@ -1489,6 +1489,30 @@ Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
   ret->op = op;
   ret->vec = parseExpression(s[1]);
   ret->shift = parseExpression(s[2]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
+  auto ret = allocator.alloc<SIMDLoad>();
+  ret->op = op;
+  Address defaultAlign;
+  switch (op) {
+    case LoadSplatVec8x16:
+      defaultAlign = 1;
+      break;
+    case LoadSplatVec16x8:
+      defaultAlign = 2;
+      break;
+    case LoadSplatVec32x4:
+      defaultAlign = 4;
+      break;
+    case LoadSplatVec64x2:
+      defaultAlign = 8;
+      break;
+  }
+  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, defaultAlign);
+  ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
 }

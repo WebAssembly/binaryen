@@ -433,6 +433,13 @@ enum SIMDShiftOp {
   ShrUVecI64x2
 };
 
+enum SIMDLoadOp {
+  LoadSplatVec8x16,
+  LoadSplatVec16x8,
+  LoadSplatVec32x4,
+  LoadSplatVec64x2
+};
+
 enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
 
 //
@@ -492,6 +499,7 @@ public:
     SIMDShuffleId,
     SIMDTernaryId,
     SIMDShiftId,
+    SIMDLoadId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -874,6 +882,20 @@ public:
   Expression* vec;
   Expression* shift;
 
+  void finalize();
+};
+
+class SIMDLoad : public SpecificExpression<Expression::SIMDLoadId> {
+public:
+  SIMDLoad() = default;
+  SIMDLoad(MixedArena& allocator) {}
+
+  SIMDLoadOp op;
+  Address offset;
+  Address align;
+  Expression* ptr;
+
+  Index getMemBytes();
   void finalize();
 };
 

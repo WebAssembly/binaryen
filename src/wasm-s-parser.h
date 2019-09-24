@@ -200,6 +200,7 @@ private:
   Expression* makeSIMDShuffle(Element& s);
   Expression* makeSIMDTernary(Element& s, SIMDTernaryOp op);
   Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
+  Expression* makeSIMDLoad(Element& s, SIMDLoadOp op);
   Expression* makeMemoryInit(Element& s);
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);

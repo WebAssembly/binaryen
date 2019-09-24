@@ -420,6 +420,16 @@ public:
     ret->finalize();
     return ret;
   }
+  SIMDLoad*
+  makeSIMDLoad(SIMDLoadOp op, Address offset, Address align, Expression* ptr) {
+    auto* ret = allocator.alloc<SIMDLoad>();
+    ret->op = op;
+    ret->offset = offset;
+    ret->align = align;
+    ret->ptr = ptr;
+    ret->finalize();
+    return ret;
+  }
   MemoryInit* makeMemoryInit(uint32_t segment,
                              Expression* dest,
                              Expression* offset,

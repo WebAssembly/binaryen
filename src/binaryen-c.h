@@ -131,6 +131,7 @@ BINARYEN_API BinaryenExpressionId BinaryenSIMDReplaceId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDShuffleId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDTernaryId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDShiftId(void);
+BINARYEN_API BinaryenExpressionId BinaryenSIMDLoadId(void);
 BINARYEN_API BinaryenExpressionId BinaryenMemoryInitId(void);
 BINARYEN_API BinaryenExpressionId BinaryenDataDropId(void);
 BINARYEN_API BinaryenExpressionId BinaryenMemoryCopyId(void);
@@ -522,6 +523,10 @@ BINARYEN_API BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void);
+BINARYEN_API BinaryenOp BinaryenLoadSplatVec8x16(void);
+BINARYEN_API BinaryenOp BinaryenLoadSplatVec16x8(void);
+BINARYEN_API BinaryenOp BinaryenLoadSplatVec32x4(void);
+BINARYEN_API BinaryenOp BinaryenLoadSplatVec64x2(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void);
@@ -736,6 +741,11 @@ BinaryenSIMDShift(BinaryenModuleRef module,
                   BinaryenOp op,
                   BinaryenExpressionRef vec,
                   BinaryenExpressionRef shift);
+BINARYEN_API BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
+                                                    BinaryenOp op,
+                                                    uint32_t offset,
+                                                    uint32_t align,
+                                                    BinaryenExpressionRef ptr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInit(BinaryenModuleRef module,
                    uint32_t segment,
@@ -961,6 +971,12 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDShiftGetShift(BinaryenExpressionRef expr);
+
+BINARYEN_API BinaryenOp BinaryenSIMDLoadGetOp(BinaryenExpressionRef expr);
+BINARYEN_API uint32_t BinaryenSIMDLoadGetOffset(BinaryenExpressionRef expr);
+BINARYEN_API uint32_t BinaryenSIMDLoadGetAlign(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDLoadGetPtr(BinaryenExpressionRef expr);
 
 BINARYEN_API uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr);
 BINARYEN_API BinaryenExpressionRef

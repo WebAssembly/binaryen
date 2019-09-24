@@ -307,6 +307,12 @@ struct EffectAnalyzer
   void visitSIMDShuffle(SIMDShuffle* curr) {}
   void visitSIMDTernary(SIMDTernary* curr) {}
   void visitSIMDShift(SIMDShift* curr) {}
+  void visitSIMDLoad(SIMDLoad* curr) {
+    readsMemory = true;
+    if (!ignoreImplicitTraps) {
+      implicitTrap = true;
+    }
+  }
   void visitMemoryInit(MemoryInit* curr) {
     writesMemory = true;
     if (!ignoreImplicitTraps) {
