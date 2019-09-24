@@ -355,6 +355,7 @@ instructions = [
     ("v128.and",             "makeBinary(s, BinaryOp::AndVec128)"),
     ("v128.or",              "makeBinary(s, BinaryOp::OrVec128)"),
     ("v128.xor",             "makeBinary(s, BinaryOp::XorVec128)"),
+    ("v128.andnot",          "makeBinary(s, BinaryOp::AndNotVec128)"),
     ("v128.bitselect",       "makeSIMDTernary(s, SIMDTernaryOp::Bitselect)"),
     ("i8x16.neg",            "makeUnary(s, UnaryOp::NegVecI8x16)"),
     ("i8x16.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI8x16)"),

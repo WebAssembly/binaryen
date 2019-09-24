@@ -317,6 +317,7 @@ function test_core() {
     module.v128.and(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.v128.or(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.v128.xor(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.v128.andnot(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.add_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.add_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),

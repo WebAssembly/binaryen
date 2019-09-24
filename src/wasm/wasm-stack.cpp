@@ -1361,7 +1361,9 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case XorVec128:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Xor);
       break;
-
+    case AndNotVec128:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128AndNot);
+      break;
     case AddVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Add);
       break;

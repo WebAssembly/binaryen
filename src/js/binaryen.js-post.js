@@ -321,6 +321,7 @@ Module['NotVec128'] = Module['_BinaryenNotVec128']();
 Module['AndVec128'] = Module['_BinaryenAndVec128']();
 Module['OrVec128'] = Module['_BinaryenOrVec128']();
 Module['XorVec128'] = Module['_BinaryenXorVec128']();
+Module['AndNotVec128'] = Module['_BinaryenAndNotVec128']();
 Module['BitselectVec128'] = Module['_BinaryenBitselectVec128']();
 Module['NegVecI8x16'] = Module['_BinaryenNegVecI8x16']();
 Module['AnyTrueVecI8x16'] = Module['_BinaryenAnyTrueVecI8x16']();
@@ -1341,14 +1342,17 @@ function wrapModule(module, self) {
     'not': function(value) {
       return Module['_BinaryenUnary'](module, Module['NotVec128'], value);
     },
-    'and': function(value) {
-      return Module['_BinaryenUnary'](module, Module['AndVec128'], value);
+    'and': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['AndVec128'], left, right);
     },
-    'or': function(value) {
-      return Module['_BinaryenUnary'](module, Module['OrVec128'], value);
+    'or': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['OrVec128'], left, right);
     },
-    'xor': function(value) {
-      return Module['_BinaryenUnary'](module, Module['XorVec128'], value);
+    'xor': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['XorVec128'], left, right);
+    },
+    'andnot': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['AndNotVec128'], left, right);
     },
     'bitselect': function(left, right, cond) {
       return Module['_BinaryenSIMDTernary'](module, Module['BitselectVec128'], left, right, cond);

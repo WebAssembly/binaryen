@@ -1331,6 +1331,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case AndVec128:
     case OrVec128:
     case XorVec128:
+    case AndNotVec128:
     case AddVecI8x16:
     case AddSatSVecI8x16:
     case AddSatUVecI8x16:

@@ -99,6 +99,7 @@
  (func (export "v128.and") (param $0 v128) (param $1 v128) (result v128) (v128.and (local.get $0) (local.get $1)))
  (func (export "v128.or") (param $0 v128) (param $1 v128) (result v128) (v128.or (local.get $0) (local.get $1)))
  (func (export "v128.xor") (param $0 v128) (param $1 v128) (result v128) (v128.xor (local.get $0) (local.get $1)))
+ (func (export "v128.andnot") (param $0 v128) (param $1 v128) (result v128) (v128.andnot (local.get $0) (local.get $1)))
  (func (export "v128.bitselect") (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
    (v128.bitselect (local.get $0) (local.get $1) (local.get $2))
  )
@@ -463,6 +464,7 @@
 (assert_return (invoke "v128.and" (v128.const i32x4 0 0 -1 -1) (v128.const i32x4 0 -1 0 -1)) (v128.const i32x4 0 0 0 -1))
 (assert_return (invoke "v128.or" (v128.const i32x4 0 0 -1 -1) (v128.const i32x4 0 -1 0 -1)) (v128.const i32x4 0 -1 -1 -1))
 (assert_return (invoke "v128.xor" (v128.const i32x4 0 0 -1 -1) (v128.const i32x4 0 -1 0 -1)) (v128.const i32x4 0 -1 -1 0))
+(assert_return (invoke "v128.andnot" (v128.const i32x4 0 0 -1 -1) (v128.const i32x4 0 -1 0 -1)) (v128.const i32x4 0 0 -1 0))
 (assert_return (invoke "v128.bitselect"
     (v128.const i32x4 0xAAAAAAAA 0xAAAAAAAA 0xAAAAAAAA 0xAAAAAAAA)
     (v128.const i32x4 0xBBBBBBBB 0xBBBBBBBB 0xBBBBBBBB 0xBBBBBBBB)

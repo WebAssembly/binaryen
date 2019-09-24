@@ -2454,9 +2454,17 @@ switch (op[0]) {
         switch (op[2]) {
           case '2': {
             switch (op[5]) {
-              case 'a':
-                if (strcmp(op, "v128.and") == 0) { return makeBinary(s, BinaryOp::AndVec128); }
-                goto parse_error;
+              case 'a': {
+                switch (op[8]) {
+                  case '\0':
+                    if (strcmp(op, "v128.and") == 0) { return makeBinary(s, BinaryOp::AndVec128); }
+                    goto parse_error;
+                  case 'n':
+                    if (strcmp(op, "v128.andnot") == 0) { return makeBinary(s, BinaryOp::AndNotVec128); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'b':
                 if (strcmp(op, "v128.bitselect") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::Bitselect); }
                 goto parse_error;

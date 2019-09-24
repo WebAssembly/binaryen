@@ -418,6 +418,7 @@ void test_core() {
     makeBinary(module, BinaryenAndVec128(), 5),
     makeBinary(module, BinaryenOrVec128(), 5),
     makeBinary(module, BinaryenXorVec128(), 5),
+    makeBinary(module, BinaryenAndNotVec128(), 5),
     makeBinary(module, BinaryenAddVecI8x16(), 5),
     makeBinary(module, BinaryenAddSatSVecI8x16(), 5),
     makeBinary(module, BinaryenAddSatUVecI8x16(), 5),
