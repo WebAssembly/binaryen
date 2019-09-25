@@ -1,0 +1,39 @@
+version: 2.1
+
+orbs:
+  win: circleci/windows@1.0.0
+
+executors:
+  bionic:
+    docker:
+      - image: buildpack-deps:bionic
+
+jobs:
+  flake8:
+    executor: bionic
+    steps:
+      - checkout
+      - run:
+          name: install pip
+          command: |
+            apt-get update -q
+            apt-get install -q -y python-pip python3-pip
+      - run: pip3 install flake8==3.7.8
+  clang-format:
+    executor: bionic
+    steps:
+      - checkout
+      - ./clang-format-diff.sh
+  # ensure generated parser is up to date
+  generated-code:
+    executor: bionic
+    steps:
+      - checkout
+      - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
+
+workflows:
+  lintchecks:
+    jobs:
+      - flake8
+      - clang-format
+      - generated-code
