@@ -305,7 +305,7 @@ def update_metadce_tests():
             print('..', t)
             t = os.path.join(options.binaryen_test, 'metadce', t)
             graph = t + '.graph.txt'
-            cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S']
+            cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S', '-all']
             stdout = run_command(cmd)
             actual = open('a.wast').read()
             out = t + '.dced'

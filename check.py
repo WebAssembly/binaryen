@@ -264,7 +264,7 @@ def run_wasm_metadce_tests():
             print('..', t)
             t = os.path.join(test_dir, t)
             graph = t + '.graph.txt'
-            cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S']
+            cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S', '-all']
             stdout = run_command(cmd)
             expected = t + '.dced'
             with open('a.wast') as seen:
