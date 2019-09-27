@@ -1218,6 +1218,9 @@ void EmscriptenGlueGenerator::exportWasiStart() {
     return;
   }
   Name _start = "_start";
+  if (wasm.getExportOrNull(_start)) {
+    return;
+  }
   Builder builder(wasm);
   auto* body = builder.makeDrop(builder.makeCall(
     main,
