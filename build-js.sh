@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # This file builds the js components using emscripten. You normally don't need
 # to run this, as the builds are bundled in the repo in bin/. Running this is
@@ -45,7 +46,6 @@ EMCC_ARGS="$EMCC_ARGS -s WASM=0"
 EMCC_ARGS="$EMCC_ARGS -s BINARYEN_ASYNC_COMPILATION=0"
 EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
 EMCC_ARGS="$EMCC_ARGS -s DISABLE_EXCEPTION_CATCHING=0" # Exceptions are thrown and caught when optimizing endless loops
-OUT_FILE_SUFFIX=
 
 if [ "$1" == "-g" ]; then
   EMCC_ARGS="$EMCC_ARGS -O2" # need emcc js opts to be decently fast
@@ -76,40 +76,45 @@ python $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast 
 
 echo "compiling source files"
 
-SOURCES=(`ls $BINARYEN_SRC/**/*.cpp`)
+# internal source files or directories to exclude
 EXCLUDE=(
   "$BINARYEN_SRC/support/archive.cpp"
   "$BINARYEN_SRC/support/command-line.cpp"
   "$BINARYEN_SRC/support/path.cpp"
   "$BINARYEN_SRC/tools/"
 )
+
+# external source files to include
 INCLUDE=()
-for source in ${SOURCES[@]}; do
-  for exclude in ${EXCLUDE[@]}; do
-    if [[ "$source" == "$exclude"* ]]; then
-      echo "  $source"
+
+mapfile -t SOURCES < <(ls $BINARYEN_SRC/**/*.cpp)
+for i in ${!SOURCES[@]}; do
+  for j in ${!EXCLUDE[@]}; do
+    if [[ "${SOURCES[$i]}" == "${EXCLUDE[$j]}"* ]]; then
       continue 2
     fi
   done
-  INCLUDE+=("$source")
-  echo "+ $source"
+  INCLUDE+=("${SOURCES[$i]}")
+  echo "  ${SOURCES[$i]}"
 done
 
-mkdir -p ${OUT}
+mkdir -p "${OUT}"
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   ${INCLUDE[@]} \
-  -I$BINARYEN_SRC \
-  -o ${OUT}/shared.o
+  -I"$BINARYEN_SRC" \
+  -o "${OUT}/shared.o"
 
 echo "building binaryen.js"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  $BINARYEN_SRC/binaryen-c.cpp \
-  $OUT/shared.o \
-  -I$BINARYEN_SRC/ \
-  -o $OUT/binaryen${OUT_FILE_SUFFIX}.js \
+  "$BINARYEN_SRC/binaryen-c.cpp" \
+  "$OUT/shared.o" \
+  -I"$BINARYEN_SRC" \
+  -o "$OUT/binaryen.js" \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
-  --post-js $BINARYEN_SRC/js/binaryen.js-post.js
+  --post-js "$BINARYEN_SRC/js/binaryen.js-post.js"
+
+echo "done: $OUT/binaryen.js"
