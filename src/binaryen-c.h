@@ -49,7 +49,10 @@
 
 #include "compiler-support.h"
 
-#if defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#define BINARYEN_API EMSCRIPTEN_KEEPALIVE
+#elif defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
 #define BINARYEN_API __declspec(dllexport)
 #else
 #define BINARYEN_API
