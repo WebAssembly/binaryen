@@ -1,8 +1,15 @@
 (module
  (type $FUNCSIG$v (func))
  (import "env" "js_func" (func $a_js_func))
+ (memory $0 1 1)
+ (data passive "Hello, datacount section!")
  (export "wasm_func_a" (func $a_wasm_func))
  (func $a_wasm_func (; 1 ;) (type $FUNCSIG$v)
+  (memory.init 0
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 25)
+  )
   (call $a_js_func)
  )
 )
