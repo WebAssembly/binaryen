@@ -37,7 +37,7 @@ elif [ ! -d "$EMSCRIPTEN" ]; then
   exit 1
 fi
 
-EMCC_ARGS="-std=gnu++17 --memory-init-file 0"
+EMCC_ARGS="-std=gnu++14 --memory-init-file 0"
 EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
 EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
 EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=0"
