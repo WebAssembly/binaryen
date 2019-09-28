@@ -86,7 +86,8 @@ EXCLUDE=(
 # external source files to include
 INCLUDE=()
 
-mapfile -t SOURCES < <(find $BINARYEN_SRC -name "*.cpp")
+readarray -d '' -t SOURCES < <(find $BINARYEN_SRC -name "*.cpp" -print0 | sort -z)
+EXCLUDE+=("$BINARYEN_SRC/binaryen-c.cpp")
 for i in ${!SOURCES[@]}; do
   for j in ${!EXCLUDE[@]}; do
     if [[ "${SOURCES[$i]}" == "${EXCLUDE[$j]}"* ]]; then
