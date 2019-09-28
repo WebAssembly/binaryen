@@ -44,7 +44,6 @@ EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
 EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=0"
 EMCC_ARGS="$EMCC_ARGS -s WASM=0"
 EMCC_ARGS="$EMCC_ARGS -s BINARYEN_ASYNC_COMPILATION=0"
-EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
 EMCC_ARGS="$EMCC_ARGS -s DISABLE_EXCEPTION_CATCHING=0" # Exceptions are thrown and caught when optimizing endless loops
 
 if [ "$1" == "-g" ]; then
@@ -72,7 +71,7 @@ OUT="$PWD/out"
 
 echo "generate embedded intrinsics module"
 
-python $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast $BINARYEN_SRC/passes/WasmIntrinsics.cpp
+python3 $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast $BINARYEN_SRC/passes/WasmIntrinsics.cpp
 
 echo "compiling source files"
 
@@ -87,7 +86,7 @@ EXCLUDE=(
 # external source files to include
 INCLUDE=()
 
-mapfile -t SOURCES < <(ls $BINARYEN_SRC/**/*.cpp)
+mapfile -t SOURCES < <(find $BINARYEN_SRC -name "*.cpp")
 for i in ${!SOURCES[@]}; do
   for j in ${!EXCLUDE[@]}; do
     if [[ "${SOURCES[$i]}" == "${EXCLUDE[$j]}"* ]]; then
