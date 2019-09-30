@@ -33,7 +33,9 @@ namespace MemoryUtils {
 // If ensuredSegmentSize is provided, then a segment is always emitted,
 // and of at least that size.
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
-inline bool flatten(Memory& memory, Index ensuredSegmentSize=0, Module* module=nullptr) {
+inline bool flatten(Memory& memory,
+                    Index ensuredSegmentSize = 0,
+                    Module* module = nullptr) {
   if (memory.segments.size() == 0) {
     if (ensuredSegmentSize > 0) {
       assert(module); // must provide a module if ensuring a size.
