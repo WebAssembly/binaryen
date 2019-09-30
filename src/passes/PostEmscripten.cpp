@@ -22,6 +22,7 @@
 #include <asmjs/shared-constants.h>
 #include <ir/import-utils.h>
 #include <ir/localize.h>
+#include <ir/memory-utils.h>
 #include <pass.h>
 #include <shared-constants.h>
 #include <wasm-builder.h>
@@ -79,6 +80,25 @@ struct PostEmscripten : public Pass {
         Builder builder(*module);
         func->body = builder.makeConst(Literal(int32_t(sbrkPtr)));
         func->module = func->base = Name();
+      }
+      // Apply the sbrk ptr value, if it was provided.
+      auto sbrkValStr =
+        runner->options.getArgumentOrDefault("emscripten-sbrk-val", "");
+      if (sbrkValStr != "") {
+        uint32_t sbrkVal = std::stoi(sbrkValStr);
+        // Flatten memory to make it simple to write to. Later passes can
+        // re-optimize it.
+        if (!MemoryUtils::flatten(module->memory)) {
+          Fatal() << "cannot apply sbrk-val since memory is not flattenable\n";
+        }
+        auto& segment = module->memory.segments[0];
+        auto offset = segment.offset->cast<Const>()->value.geti32();
+        auto start = sbrkPtr - offset;
+        auto end = start + sizeof(sbrkVal);
+        if (end > segment.data.size()) {
+          segment.data.resize(end);
+        }
+        memcpy(segment.data.data() + start, &sbrkVal, sizeof(sbrkVal));
       }
     }
 
