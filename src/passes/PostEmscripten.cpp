@@ -81,7 +81,11 @@ struct PostEmscripten : public Pass {
         func->body = builder.makeConst(Literal(int32_t(sbrkPtr)));
         func->module = func->base = Name();
       }
-      // Apply the sbrk ptr value, if it was provided.
+      // Apply the sbrk ptr value, if it was provided. This lets emscripten set
+      // up sbrk entirely in wasm, without depending on the JS side to init
+      // anything; this is necessary for standalone wasm mode, in which we do
+      // not have any JS. Otherwise, the JS would set this value during
+      // startup.
       auto sbrkValStr =
         runner->options.getArgumentOrDefault("emscripten-sbrk-val", "");
       if (sbrkValStr != "") {
