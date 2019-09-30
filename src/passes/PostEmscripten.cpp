@@ -86,19 +86,17 @@ struct PostEmscripten : public Pass {
         runner->options.getArgumentOrDefault("emscripten-sbrk-val", "");
       if (sbrkValStr != "") {
         uint32_t sbrkVal = std::stoi(sbrkValStr);
+        auto end = sbrkPtr + sizeof(sbrkVal);
         // Flatten memory to make it simple to write to. Later passes can
         // re-optimize it.
-        if (!MemoryUtils::flatten(module->memory)) {
+        MemoryUtils::ensureExists(module->memory);
+        if (!MemoryUtils::flatten(module->memory, end, module)) {
           Fatal() << "cannot apply sbrk-val since memory is not flattenable\n";
         }
         auto& segment = module->memory.segments[0];
-        auto offset = segment.offset->cast<Const>()->value.geti32();
-        auto start = sbrkPtr - offset;
-        auto end = start + sizeof(sbrkVal);
-        if (end > segment.data.size()) {
-          segment.data.resize(end);
-        }
-        memcpy(segment.data.data() + start, &sbrkVal, sizeof(sbrkVal));
+        assert(segment.offset->cast<Const>()->value.geti32() == 0);
+        assert(end <= segment.data.size());
+        memcpy(segment.data.data() + sbrkPtr, &sbrkVal, sizeof(sbrkVal));
       }
     }
 
