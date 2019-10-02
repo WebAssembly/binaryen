@@ -398,6 +398,7 @@ public:
   Literal widenHighSToVecI32x4() const;
   Literal widenLowUToVecI32x4() const;
   Literal widenHighUToVecI32x4() const;
+  Literal swizzleVec8x16(const Literal& other) const;
 
 private:
   Literal addSatSI8(const Literal& other) const;

@@ -2509,9 +2509,17 @@ switch (op[0]) {
           case 'l':
             if (strcmp(op, "v8x16.load_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadSplatVec8x16); }
             goto parse_error;
-          case 's':
-            if (strcmp(op, "v8x16.shuffle") == 0) { return makeSIMDShuffle(s); }
-            goto parse_error;
+          case 's': {
+            switch (op[7]) {
+              case 'h':
+                if (strcmp(op, "v8x16.shuffle") == 0) { return makeSIMDShuffle(s); }
+                goto parse_error;
+              case 'w':
+                if (strcmp(op, "v8x16.swizzle") == 0) { return makeBinary(s, BinaryOp::SwizzleVec8x16); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           default: goto parse_error;
         }
       }

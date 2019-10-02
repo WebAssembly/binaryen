@@ -954,4 +954,10 @@
    (local.get $0)
   )
  )
+ (func $v8x16.swizzle (param $0 v128) (param $1 v128) (result v128)
+  (v8x16.swizzle
+   (local.get $0)
+   (local.get $1)
+  )
+ )
 )

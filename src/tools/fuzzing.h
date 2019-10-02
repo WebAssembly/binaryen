@@ -2174,7 +2174,8 @@ private:
                                  NarrowSVecI16x8ToVecI8x16,
                                  NarrowUVecI16x8ToVecI8x16,
                                  NarrowSVecI32x4ToVecI16x8,
-                                 NarrowUVecI32x4ToVecI16x8),
+                                 NarrowUVecI32x4ToVecI16x8,
+                                 SwizzleVec8x16),
                             make(v128),
                             make(v128)});
       }

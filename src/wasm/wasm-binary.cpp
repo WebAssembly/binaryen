@@ -3963,6 +3963,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = NarrowUVecI32x4ToVecI16x8;
       break;
+    case BinaryConsts::V8x16Swizzle:
+      curr = allocator.alloc<Binary>();
+      curr->op = SwizzleVec8x16;
+      break;
     default:
       return false;
   }

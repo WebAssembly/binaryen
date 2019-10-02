@@ -392,6 +392,9 @@ enum BinaryOp {
   NarrowSVecI32x4ToVecI16x8,
   NarrowUVecI32x4ToVecI16x8,
 
+  // SIMD Swizzle
+  SwizzleVec8x16,
+
   InvalidBinary
 };
 

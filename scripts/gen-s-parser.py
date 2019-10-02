@@ -452,6 +452,7 @@ instructions = [
     ("i32x4.widen_high_i16x8_s", "makeUnary(s, UnaryOp::WidenHighSVecI16x8ToVecI32x4)"),
     ("i32x4.widen_low_i16x8_u",  "makeUnary(s, UnaryOp::WidenLowUVecI16x8ToVecI32x4)"),
     ("i32x4.widen_high_i16x8_u", "makeUnary(s, UnaryOp::WidenHighUVecI16x8ToVecI32x4)"),
+    ("v8x16.swizzle",            "makeBinary(s, BinaryOp::SwizzleVec8x16)"),
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),

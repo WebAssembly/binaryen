@@ -1867,4 +1867,15 @@ Literal Literal::widenHighUToVecI32x4() const {
   return widen<4, &Literal::getLanesUI16x8, LaneOrder::High>(*this);
 }
 
+Literal Literal::swizzleVec8x16(const Literal& other) const {
+  auto lanes = getLanesUI8x16();
+  auto indices = other.getLanesUI8x16();
+  LaneArray<16> result;
+  for (size_t i = 0; i < 16; ++i) {
+    size_t index = indices[i].geti32();
+    result[i] = lanes[index >= 16 ? 0 : index];
+  }
+  return Literal(result);
+}
+
 } // namespace wasm
