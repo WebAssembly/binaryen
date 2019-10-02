@@ -683,11 +683,9 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   std::vector<Address> segmentOffsets; // segment index => address offset
 
   struct AsmConst {
-
     std::set<std::string> sigs;
     Address id;
     Proxying proxy;
-
   };
 
   std::map<std::string, AsmConst> asmConsts;
