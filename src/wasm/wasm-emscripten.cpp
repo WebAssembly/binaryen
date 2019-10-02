@@ -663,33 +663,35 @@ std::string codeForConstAddr(Module& wasm,
   return escape(str);
 }
 
+enum class Proxying {
+  None,
+  Sync,
+  Async,
+};
+
+std::string proxyingSuffix(Proxying proxy) {
+  switch (proxy) {
+    case Proxying::None: return "";
+    case Proxying::Sync: return "sync_on_main_thread_";
+    case Proxying::Async: return "async_on_main_thread_";
+  }
+  WASM_UNREACHABLE();
+}
+
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
   std::vector<Address> segmentOffsets; // segment index => address offset
 
   struct AsmConst {
-    enum class Proxying {
-      None,
-      Sync,
-      Async,
-    };
 
     std::set<std::string> sigs;
     Address id;
     Proxying proxy;
 
-    std::string proxyString() {
-      switch (proxy) {
-        case Proxying::None: return "";
-        case Proxying::Sync: return "sync_on_main_thread_";
-        case Proxying::Async: return "async_on_main_thread_";
-      }
-      WASM_UNREACHABLE();
-    }
   };
 
   std::map<std::string, AsmConst> asmConsts;
-  std::set<std::string> allSigs;
+  std::set<std::pair<std::string, Proxying>> allSigs;
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
 
@@ -705,12 +707,13 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   void process();
 
 private:
-  std::string fixupNameWithSig(Name& name, std::string baseSig);
-  AsmConst& asmConstForCode(std::string code);
+  std::string fixupName(Name& name, std::string baseSig, Proxying proxy);
+  AsmConst& createAsmConst(std::string code, std::string sig, Name name);
   std::string asmConstSig(std::string baseSig);
-  Name nameForImportWithSig(std::string sig);
+  Name nameForImportWithSig(std::string sig, Proxying proxy);
   void queueImport(Name importName, std::string baseSig);
   void addImports();
+  Proxying proxyType(Name name);
 
   std::vector<std::unique_ptr<Function>> queuedImports;
 };
@@ -735,7 +738,7 @@ void AsmConstWalker::visitCall(Call* curr) {
   }
 
   auto baseSig = getSig(curr);
-  auto sig = fixupNameWithSig(curr->target, baseSig);
+  auto sig = asmConstSig(baseSig);
   auto* arg = curr->operands[0];
   while (!arg->dynCast<Const>()) {
     if (auto* get = arg->dynCast<LocalGet>()) {
@@ -770,17 +773,21 @@ void AsmConstWalker::visitCall(Call* curr) {
 
   auto* value = arg->cast<Const>();
   auto code = codeForConstAddr(wasm, segmentOffsets, value);
-  auto& asmConst = asmConstForCode(code);
-  asmConst.sigs.insert(sig);
-  if (importName.hasSubstring("_sync_on_main_thread")) {
-    asmConst.proxy = AsmConst::Proxying::Sync;
-  } else if (importName.hasSubstring("_async_on_main_thread")) {
-    asmConst.proxy = AsmConst::Proxying::Async;
-  }
+  auto& asmConst = createAsmConst(code, sig, importName);
+  fixupName(curr->target, baseSig, asmConst.proxy);
 
   // Replace the first argument to the call with a Const index
   Builder builder(wasm);
   curr->operands[0] = builder.makeConst(Literal(asmConst.id));
+}
+
+Proxying AsmConstWalker::proxyType(Name name) {
+  if (name.hasSubstring("_sync_on_main_thread")) {
+    return Proxying::Sync;
+  } else if (name.hasSubstring("_async_on_main_thread")) {
+    return Proxying::Async;
+  }
+  return Proxying::None;
 }
 
 void AsmConstWalker::visitTable(Table* curr) {
@@ -789,7 +796,8 @@ void AsmConstWalker::visitTable(Table* curr) {
       auto* func = wasm.getFunction(name);
       if (func->imported() && func->base.hasSubstring(EM_ASM_PREFIX)) {
         std::string baseSig = getSig(func);
-        fixupNameWithSig(name, baseSig);
+        auto proxy = proxyType(func->base);
+        fixupName(name, baseSig, proxy);
       }
     }
   }
@@ -803,23 +811,27 @@ void AsmConstWalker::process() {
   addImports();
 }
 
-std::string AsmConstWalker::fixupNameWithSig(Name& name, std::string baseSig) {
+std::string AsmConstWalker::fixupName(
+    Name& name, std::string baseSig, Proxying proxy) {
   auto sig = asmConstSig(baseSig);
-  auto importName = nameForImportWithSig(sig);
+  auto importName = nameForImportWithSig(sig, proxy);
   name = importName;
 
-  if (allSigs.count(sig) == 0) {
-    allSigs.insert(sig);
+  auto pair = std::make_pair(sig, proxy);
+  if (allSigs.count(pair) == 0) {
+    allSigs.insert(pair);
     queueImport(importName, baseSig);
   }
   return sig;
 }
 
-AsmConstWalker::AsmConst& AsmConstWalker::asmConstForCode(std::string code) {
+AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(
+    std::string code, std::string sig, Name name) {
   if (asmConsts.count(code) == 0) {
     AsmConst asmConst;
     asmConst.id = asmConsts.size();
-    asmConst.proxy = AsmConst::Proxying::None;
+    asmConst.sigs.insert(sig);
+    asmConst.proxy = proxyType(name);
 
     asmConsts[code] = asmConst;
   }
@@ -838,8 +850,9 @@ std::string AsmConstWalker::asmConstSig(std::string baseSig) {
   return sig;
 }
 
-Name AsmConstWalker::nameForImportWithSig(std::string sig) {
-  std::string fixedTarget = EM_ASM_PREFIX.str + std::string("_") + sig;
+Name AsmConstWalker::nameForImportWithSig(std::string sig, Proxying proxy) {
+  std::string fixedTarget = EM_ASM_PREFIX.str + std::string("_") +
+    proxyingSuffix(proxy) + sig;
   return Name(fixedTarget.c_str());
 }
 
@@ -1079,7 +1092,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
       meta << nextElement();
       meta << '"' << asmConst.id << "\": [\"" << code << "\", ";
       printSet(meta, asmConst.sigs);
-      meta << ", [\"" << asmConst.proxyString() << "\"]";
+      meta << ", [\"" << proxyingSuffix(asmConst.proxy) << "\"]";
 
       meta << "]";
     }
