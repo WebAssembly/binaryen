@@ -1873,7 +1873,7 @@ Literal Literal::swizzleVec8x16(const Literal& other) const {
   LaneArray<16> result;
   for (size_t i = 0; i < 16; ++i) {
     size_t index = indices[i].geti32();
-    result[i] = lanes[index >= 16 ? 0 : index];
+    result[i] = index >= 16 ? Literal(int32_t(0)) : lanes[index];
   }
   return Literal(result);
 }
