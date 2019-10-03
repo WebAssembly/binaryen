@@ -671,9 +671,12 @@ enum class Proxying {
 
 std::string proxyingSuffix(Proxying proxy) {
   switch (proxy) {
-    case Proxying::None: return "";
-    case Proxying::Sync: return "sync_on_main_thread_";
-    case Proxying::Async: return "async_on_main_thread_";
+    case Proxying::None:
+      return "";
+    case Proxying::Sync:
+      return "sync_on_main_thread_";
+    case Proxying::Async:
+      return "async_on_main_thread_";
   }
   WASM_UNREACHABLE();
 }
@@ -751,7 +754,7 @@ void AsmConstWalker::visitCall(Call* curr) {
                 << " (used by EM_ASM* macros) in function "
                 << getFunction()->name
                 << ".\nThis might be caused by aggressive compiler "
-                    "transformations. Consider using EM_JS instead.";
+                   "transformations. Consider using EM_JS instead.";
       }
     } else if (auto* value = arg->dynCast<Binary>()) {
       // In the dynamic linking case the address of the string constant
@@ -767,7 +770,6 @@ void AsmConstWalker::visitCall(Call* curr) {
       }
     }
   }
-
 
   auto* value = arg->cast<Const>();
   auto code = codeForConstAddr(wasm, segmentOffsets, value);
@@ -809,8 +811,8 @@ void AsmConstWalker::process() {
   addImports();
 }
 
-std::string AsmConstWalker::fixupName(
-    Name& name, std::string baseSig, Proxying proxy) {
+std::string
+AsmConstWalker::fixupName(Name& name, std::string baseSig, Proxying proxy) {
   auto sig = asmConstSig(baseSig);
   auto importName = nameForImportWithSig(sig, proxy);
   name = importName;
@@ -823,8 +825,8 @@ std::string AsmConstWalker::fixupName(
   return sig;
 }
 
-AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(
-    std::string code, std::string sig, Name name) {
+AsmConstWalker::AsmConst&
+AsmConstWalker::createAsmConst(std::string code, std::string sig, Name name) {
   if (asmConsts.count(code) == 0) {
     AsmConst asmConst;
     asmConst.id = asmConsts.size();
@@ -849,8 +851,8 @@ std::string AsmConstWalker::asmConstSig(std::string baseSig) {
 }
 
 Name AsmConstWalker::nameForImportWithSig(std::string sig, Proxying proxy) {
-  std::string fixedTarget = EM_ASM_PREFIX.str + std::string("_") +
-    proxyingSuffix(proxy) + sig;
+  std::string fixedTarget =
+    EM_ASM_PREFIX.str + std::string("_") + proxyingSuffix(proxy) + sig;
   return Name(fixedTarget.c_str());
 }
 
