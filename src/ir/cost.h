@@ -666,6 +666,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case NarrowUVecI32x4ToVecI16x8:
         ret = 1;
         break;
+      case SwizzleVec8x16:
+        ret = 1;
+        break;
       case InvalidBinary:
         WASM_UNREACHABLE();
     }

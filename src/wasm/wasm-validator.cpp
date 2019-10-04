@@ -1366,7 +1366,8 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case NarrowSVecI16x8ToVecI8x16:
     case NarrowUVecI16x8ToVecI8x16:
     case NarrowSVecI32x4ToVecI16x8:
-    case NarrowUVecI32x4ToVecI16x8: {
+    case NarrowUVecI32x4ToVecI16x8:
+    case SwizzleVec8x16: {
       shouldBeEqualOrFirstIsUnreachable(
         curr->left->type, v128, curr, "v128 op");
       shouldBeEqualOrFirstIsUnreachable(

@@ -942,6 +942,7 @@ BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void) {
 BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void) {
   return WidenHighUVecI16x8ToVecI32x4;
 }
+BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,

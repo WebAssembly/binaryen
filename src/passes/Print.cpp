@@ -1243,6 +1243,10 @@ struct PrintExpressionContents
         o << "i16x8.narrow_i32x4_u";
         break;
 
+      case SwizzleVec8x16:
+        o << "v8x16.swizzle";
+        break;
+
       case InvalidBinary:
         WASM_UNREACHABLE();
     }

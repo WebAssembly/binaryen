@@ -574,6 +574,7 @@ export_function "_BinaryenWidenLowSVecI16x8ToVecI32x4"
 export_function "_BinaryenWidenHighSVecI16x8ToVecI32x4"
 export_function "_BinaryenWidenLowUVecI16x8ToVecI32x4"
 export_function "_BinaryenWidenHighUVecI16x8ToVecI32x4"
+export_function "_BinaryenSwizzleVec8x16"
 
 # Expression creation
 export_function "_BinaryenBlock"

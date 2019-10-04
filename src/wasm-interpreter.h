@@ -816,6 +816,9 @@ public:
       case NarrowUVecI32x4ToVecI16x8:
         return left.narrowUToVecI16x8(right);
 
+      case SwizzleVec8x16:
+        return left.swizzleVec8x16(right);
+
       case InvalidBinary:
         WASM_UNREACHABLE();
     }
