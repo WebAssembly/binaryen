@@ -123,6 +123,8 @@ struct OptimizationOptions : public ToolOptions {
   }
 
   void runPasses(Module& wasm) {
+    passOptions.arguments["sideFunctions"] = extra["sideFunctions"];
+    printf("runPasses:%s\n", passOptions.arguments["sideFunctions"].c_str());
     PassRunner passRunner(&wasm, passOptions);
     if (debug) passRunner.setDebug(true);
     passRunner.setFeatures(passOptions.features);

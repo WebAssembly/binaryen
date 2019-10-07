@@ -64,6 +64,9 @@ struct PassOptions {
   bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
   bool debugInfo = false; // whether to try to preserve debug info through, which are special calls
   FeatureSet features = FeatureSet::All; // Which wasm features to accept, and be allowed to use
+  // Arbitrary string arguments from the commandline, which we forward to
+  // passes.
+  std::map<std::string, std::string> arguments;
 
   void setDefaultOptimizationOptions() {
     // -Os is our default
