@@ -7,6 +7,12 @@
   (local.get $0)
  )
  (func $1 (; 1 ;) (type $1)
+  (nop)
+ )
+ (func $2 (; 2 ;) (type $1)
+  (nop)
+ )
+ (func $3 (; 3 ;) (type $1)
   (local $0 exnref)
   (try
    (throw $event$0
