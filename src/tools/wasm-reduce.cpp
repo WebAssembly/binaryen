@@ -44,7 +44,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <Windows.h>
+#include <windows.h>
 // Create a string with last error message
 std::string GetLastErrorStdStr() {
   DWORD error = GetLastError();
