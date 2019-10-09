@@ -1768,7 +1768,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
-    maybePrintImplicitBlock(curr->body, true);
+    maybePrintImplicitBlock(curr->body, false);
     doIndent(o, indent);
     o << "(catch";
     incIndent();

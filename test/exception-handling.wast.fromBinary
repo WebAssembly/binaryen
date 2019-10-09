@@ -6,7 +6,13 @@
  (func $exnref_test (; 0 ;) (type $0) (param $0 exnref) (result exnref)
   (local.get $0)
  )
- (func $eh_test (; 1 ;) (type $1)
+ (func $foo (; 1 ;) (type $1)
+  (nop)
+ )
+ (func $bar (; 2 ;) (type $1)
+  (nop)
+ )
+ (func $eh_test (; 3 ;) (type $1)
   (local $0 exnref)
   (try
    (throw $event$0
