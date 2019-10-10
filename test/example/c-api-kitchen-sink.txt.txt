@@ -1569,6 +1569,24 @@
        )
       )
       (atomic.fence)
+      (push
+       (i32.pop)
+      )
+      (push
+       (i64.pop)
+      )
+      (push
+       (f32.pop)
+      )
+      (push
+       (f64.pop)
+      )
+      (push
+       (anyref.pop)
+      )
+      (push
+       (exnref.pop)
+      )
       (nop)
       (unreachable)
      )
