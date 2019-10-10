@@ -1590,6 +1590,24 @@ BinaryenFeatureAll: 511
        )
       )
       (atomic.fence)
+      (push
+       (i32.pop)
+      )
+      (push
+       (i64.pop)
+      )
+      (push
+       (f32.pop)
+      )
+      (push
+       (f64.pop)
+      )
+      (push
+       (anyref.pop)
+      )
+      (push
+       (exnref.pop)
+      )
       (nop)
       (unreachable)
      )
@@ -3659,8 +3677,20 @@ int main() {
   expressions[734] = BinaryenAtomicNotify(the_module, expressions[23], expressions[23]);
   expressions[735] = BinaryenDrop(the_module, expressions[734]);
   expressions[736] = BinaryenAtomicFence(the_module);
-  expressions[737] = BinaryenNop(the_module);
-  expressions[738] = BinaryenUnreachable(the_module);
+  expressions[737] = BinaryenPop(the_module, 1);
+  expressions[738] = BinaryenPush(the_module, expressions[737]);
+  expressions[739] = BinaryenPop(the_module, 2);
+  expressions[740] = BinaryenPush(the_module, expressions[739]);
+  expressions[741] = BinaryenPop(the_module, 3);
+  expressions[742] = BinaryenPush(the_module, expressions[741]);
+  expressions[743] = BinaryenPop(the_module, 4);
+  expressions[744] = BinaryenPush(the_module, expressions[743]);
+  expressions[745] = BinaryenPop(the_module, 6);
+  expressions[746] = BinaryenPush(the_module, expressions[745]);
+  expressions[747] = BinaryenPop(the_module, 7);
+  expressions[748] = BinaryenPush(the_module, expressions[747]);
+  expressions[749] = BinaryenNop(the_module);
+  expressions[750] = BinaryenUnreachable(the_module);
   BinaryenExpressionPrint(expressions[51]);
 (f32.neg
  (f32.const -33.61199951171875)
@@ -3712,27 +3742,28 @@ int main() {
        expressions[702], expressions[705], expressions[707], expressions[709], expressions[712], expressions[714], 
        expressions[716], expressions[718], expressions[720], expressions[721], expressions[722], expressions[723], 
        expressions[725], expressions[726], expressions[728], expressions[729], expressions[731], expressions[733], 
-       expressions[735], expressions[736], expressions[737], expressions[738] };
-    expressions[739] = BinaryenBlock(the_module, "the-value", children, 279, BinaryenTypeAuto());
+       expressions[735], expressions[736], expressions[738], expressions[740], expressions[742], expressions[744], 
+       expressions[746], expressions[748], expressions[749], expressions[750] };
+    expressions[751] = BinaryenBlock(the_module, "the-value", children, 285, BinaryenTypeAuto());
   }
-  expressions[740] = BinaryenDrop(the_module, expressions[739]);
+  expressions[752] = BinaryenDrop(the_module, expressions[751]);
   {
-    BinaryenExpressionRef children[] = { expressions[740] };
-    expressions[741] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
+    BinaryenExpressionRef children[] = { expressions[752] };
+    expressions[753] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
   }
-  expressions[742] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[754] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
-    BinaryenExpressionRef children[] = { expressions[741], expressions[742] };
-    expressions[743] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
+    BinaryenExpressionRef children[] = { expressions[753], expressions[754] };
+    expressions[755] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
   }
   {
     BinaryenType varTypes[] = { 1, 7 };
-    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 2, expressions[743]);
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 2, expressions[755]);
   }
-  expressions[744] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
-  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[744]);
-  expressions[745] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
-  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[745]);
+  expressions[756] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
+  globals[0] = BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[756]);
+  expressions[757] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
+  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[757]);
   {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
@@ -3744,13 +3775,13 @@ int main() {
     const char* funcNames[] = { "kitchen()sinker" };
     BinaryenSetFunctionTable(the_module, 1, 1, funcNames, 1);
   }
-  expressions[746] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[758] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char segment1[] = { 73, 32, 97, 109, 32, 112, 97, 115, 115, 105, 118, 101 };
     const char* segments[] = { segment0, segment1 };
     int8_t segmentPassive[] = { 0, 1 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[746], expressions[0] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[758], expressions[0] };
     BinaryenIndex segmentSizes[] = { 12, 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
   }
@@ -3758,10 +3789,10 @@ int main() {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[747] = BinaryenNop(the_module);
+  expressions[759] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[747]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[759]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
@@ -5341,6 +5372,24 @@ int main() {
        )
       )
       (atomic.fence)
+      (push
+       (i32.pop)
+      )
+      (push
+       (i64.pop)
+      )
+      (push
+       (f32.pop)
+      )
+      (push
+       (f64.pop)
+      )
+      (push
+       (anyref.pop)
+      )
+      (push
+       (exnref.pop)
+      )
       (nop)
       (unreachable)
      )

@@ -1872,6 +1872,12 @@ function wrapModule(module, self) {
     },
   };
 
+  self['anyref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
   self['exnref'] = {
     'pop': function() {
       return Module['_BinaryenPop'](module, Module['exnref']);

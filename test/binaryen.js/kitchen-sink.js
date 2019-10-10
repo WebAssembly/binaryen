@@ -488,6 +488,7 @@ function test_core() {
     module.push(module.f32.pop()),
     module.push(module.f64.pop()),
     module.push(module.v128.pop()),
+    module.push(module.anyref.pop()),
     module.push(module.exnref.pop()),
     // TODO: Host
     module.nop(),
