@@ -145,14 +145,17 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     addImport(curr, get_i64, "jiij");
     addImport(curr, get_f32, "fiif");
     addImport(curr, get_f64, "diid");
-    addImport(curr, get_anyref, "aiia");
-    addImport(curr, get_exnref, "eiie");
     addImport(curr, set_i32, "iiii");
     addImport(curr, set_i64, "jiij");
     addImport(curr, set_f32, "fiif");
     addImport(curr, set_f64, "diid");
-    addImport(curr, set_anyref, "aiia");
-    addImport(curr, set_exnref, "eiie");
+
+    if (curr->features.hasReferenceTypes()) {
+      addImport(curr, get_anyref, "aiia");
+      addImport(curr, get_exnref, "eiie");
+      addImport(curr, set_anyref, "aiia");
+      addImport(curr, set_exnref, "eiie");
+    }
   }
 
 private:
