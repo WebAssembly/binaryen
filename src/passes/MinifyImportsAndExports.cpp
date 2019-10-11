@@ -32,12 +32,13 @@
 #include <string>
 #include <unordered_set>
 
-#include <wasm.h>
-#include <pass.h>
-#include <shared-constants.h>
 #include <asmjs/shared-constants.h>
 #include <ir/import-utils.h>
 #include <ir/module-utils.h>
+#include <pass.h>
+#include <shared-constants.h>
+#include <wasm.h>
+#include "support/json.h"
 
 namespace wasm {
 
@@ -45,7 +46,7 @@ struct MinifyImportsAndExports : public Pass {
   bool minifyExports;
 
 public:
-  explicit MinifyImportsAndExports(bool minifyExports):minifyExports(minifyExports) {}
+  explicit MinifyImportsAndExports(bool minifyExports) : minifyExports(minifyExports) {}
 
 private:
   // Generates minified names that are valid in JS.
@@ -134,6 +135,60 @@ private:
     }
   };
 
+  // Super slow, need to optimize!!!
+  void minifyIAT(Module* module, std::map<Name, Name> oldToNew) {
+    // Minify the IAT
+    std::string serializedIAT("{");
+    for (int i = 0; i < module->userSections.size(); ++i) {
+      if (module->userSections[i].name.compare("IAT") == 0) {
+        for (int ii = 0; ii < module->userSections[i].data.size(); ++ii) {
+          serializedIAT += (char)module->userSections[i].data[ii];
+        }
+      }
+    }
+    serializedIAT += "}";
+    json::Value test;
+    test.parse((char*)serializedIAT.c_str());
+    json::Value::ObjectStorage* temp = test.obj;
+
+    std::map<json::IString, json::Ref> newStorageMap;
+    std::string deserializedMap;
+    for (auto& it : *temp) {
+      std::cout << it.first.str << "\n";
+      for (auto& pair : oldToNew) {
+        std::string tempString(pair.second.str);
+        std::string strAfterToken;
+        strAfterToken = tempString.substr(tempString.find('$') + 1);
+        if (it.first.str == strAfterToken) {
+          json::IString tempMinified(pair.first.str);
+          // json::Value tempChar(it.second->getInteger());
+          json::Ref iatIndex = json::Ref(new json::Value(it.second->getInteger()));
+          // json::Ref testRef(&tempChar);
+          //(*temp)[tempMinified] = testRef;
+          newStorageMap.emplace(tempMinified, iatIndex);
+        }
+      }
+    }
+
+    for (auto it = newStorageMap.begin(); it != newStorageMap.end();) {
+      deserializedMap += "\"" + std::string(it->first.str) + "\"" + std::string(":") +
+                         std::to_string((int)it->second->getNumber());
+
+      if (++it != newStorageMap.end()) {
+        deserializedMap += ",";
+      }
+    }
+
+    // Write back the minified IAT
+    for (int i = 0; i < module->userSections.size(); ++i) {
+      if (module->userSections[i].name.compare("IAT") == 0) {
+        module->userSections[i].data.assign(
+          deserializedMap.begin(), deserializedMap.begin() + deserializedMap.size());
+      }
+    }
+  }
+
+  #pragma optimize("", off)
   void run(PassRunner* runner, Module* module) override {
     // Minify the imported names.
     MinifiedNames names;
@@ -163,19 +218,19 @@ private:
       }
     }
     module->updateMaps();
+
+	minifyIAT(module, oldToNew);
+
     // Emit the mapping.
     for (auto& pair : oldToNew) {
       std::cout << pair.second.str << " => " << pair.first.str << '\n';
     }
   }
 };
+#pragma optimize("", on)
 
-Pass *createMinifyImportsPass() {
-  return new MinifyImportsAndExports(false);
-}
+Pass* createMinifyImportsPass() { return new MinifyImportsAndExports(false); }
 
-Pass *createMinifyImportsAndExportsPass() {
-  return new MinifyImportsAndExports(true);
-}
+Pass* createMinifyImportsAndExportsPass() { return new MinifyImportsAndExports(true); }
 
 } // namespace wasm
