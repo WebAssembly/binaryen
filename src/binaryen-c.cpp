@@ -4316,12 +4316,12 @@ void BinaryenAddCustomSection(BinaryenModuleRef module,
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char contents[] = { ";
-      for (BinaryenIndex i = 0; i < contentsSize; i++) {
-        if (i > 0) {
-          std::cout << ", ";
-        }
-        std::cout << int(contents[i]);
+    for (BinaryenIndex i = 0; i < contentsSize; i++) {
+      if (i > 0) {
+        std::cout << ", ";
       }
+      std::cout << int(contents[i]);
+    }
     std::cout << " };\n";
     std::cout << "    BinaryenAddCustomSection(the_module, ";
     traceNameOrNULL(name);
