@@ -637,7 +637,7 @@ void test_core() {
 
   // Function table. One per module
   const char* funcNames[] = { BinaryenFunctionGetName(sinker) };
-  BinaryenSetFunctionTable(module, 1, 1, funcNames, 1);
+  BinaryenSetFunctionTable(module, 1, 1, funcNames, 1, BinaryenConst(module, BinaryenLiteralInt32(0)));
 
   // Memory. One per module
 

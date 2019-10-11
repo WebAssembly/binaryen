@@ -1144,7 +1144,8 @@ BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
                                            BinaryenIndex initial,
                                            BinaryenIndex maximum,
                                            const char** funcNames,
-                                           BinaryenIndex numFuncNames);
+                                           BinaryenIndex numFuncNames,
+                                           BinaryenExpressionRef offset);
 
 // Memory. One per module
 
