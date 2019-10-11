@@ -363,29 +363,30 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.extra.count("output") == 0) {
-    std::cerr << "(no output file specified, not emitting output)\n";
-  } else {
-    if (options.debug) {
-      std::cerr << "writing..." << std::endl;
-    }
-    ModuleWriter writer;
-    writer.setDebug(options.debug);
-    writer.setBinary(emitBinary);
-    writer.setDebugInfo(options.passOptions.debugInfo);
-    if (outputSourceMapFilename.size()) {
-      writer.setSourceMapFilename(outputSourceMapFilename);
-      writer.setSourceMapUrl(outputSourceMapUrl);
-    }
-    writer.write(*curr, options.extra["output"]);
+    std::cerr << "no output file specified, not emitting output\n";
+    return 0;
+  }
 
-    if (extraFuzzCommand.size() > 0) {
-      auto secondOutput = runCommand(extraFuzzCommand);
-      std::cout << "[extra-fuzz-command second output:]\n"
-                << firstOutput << '\n';
-      if (firstOutput != secondOutput) {
-        std::cerr << "extra fuzz command output differs\n";
-        abort();
-      }
+  if (options.debug) {
+    std::cerr << "writing..." << std::endl;
+  }
+  ModuleWriter writer;
+  writer.setDebug(options.debug);
+  writer.setBinary(emitBinary);
+  writer.setDebugInfo(options.passOptions.debugInfo);
+  if (outputSourceMapFilename.size()) {
+    writer.setSourceMapFilename(outputSourceMapFilename);
+    writer.setSourceMapUrl(outputSourceMapUrl);
+  }
+  writer.write(*curr, options.extra["output"]);
+
+  if (extraFuzzCommand.size() > 0) {
+    auto secondOutput = runCommand(extraFuzzCommand);
+    std::cout << "[extra-fuzz-command second output:]\n" << firstOutput << '\n';
+    if (firstOutput != secondOutput) {
+      std::cerr << "extra fuzz command output differs\n";
+      abort();
     }
   }
+  return 0;
 }
