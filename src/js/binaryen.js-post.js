@@ -418,6 +418,7 @@ Module['WidenLowSVecI16x8ToVecI32x4'] = Module['_BinaryenWidenLowSVecI16x8ToVecI
 Module['WidenHighSVecI16x8ToVecI32x4'] = Module['_BinaryenWidenHighSVecI16x8ToVecI32x4']();
 Module['WidenLowUVecI16x8ToVecI32x4'] = Module['_BinaryenWidenLowUVecI16x8ToVecI32x4']();
 Module['WidenHighUVecI16x8ToVecI32x4'] = Module['_BinaryenWidenHighUVecI16x8ToVecI32x4']();
+Module['SwizzleVec8x16'] = Module['_BinaryenSwizzleVec8x16']();
 
 // The size of a single literal in memory as used in Const creation,
 // which is a little different: we don't want users to need to make
@@ -1845,6 +1846,9 @@ function wrapModule(module, self) {
         return Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask));
       });
     },
+    'swizzle': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['SwizzleVec8x16'], left, right);
+    },
     'load_splat': function(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec8x16'], offset, align, ptr);
     },
@@ -1866,6 +1870,12 @@ function wrapModule(module, self) {
     'load_splat': function(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec64x2'], offset, align, ptr);
     },
+  };
+
+  self['anyref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['anyref']);
+    }
   };
 
   self['exnref'] = {

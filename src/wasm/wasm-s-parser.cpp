@@ -1792,7 +1792,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     ret->body = parseExpression(*s[i++]);
   }
   if (!elementStartsWith(*s[i], "catch")) {
-    throw ParseException("catch clause does not exist");
+    throw ParseException("catch clause does not exist", s[i]->line, s[i]->col);
   }
   ret->catchBody = makeCatch(*s[i++]);
   ret->finalize(type);

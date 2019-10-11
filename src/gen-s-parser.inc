@@ -8,13 +8,21 @@ char op[27] = {'\0'};
 strncpy(op, s[0]->c_str(), 26);
 switch (op[0]) {
   case 'a': {
-    switch (op[7]) {
-      case 'f':
-        if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
-        goto parse_error;
+    switch (op[1]) {
       case 'n':
-        if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
+        if (strcmp(op, "anyref.pop") == 0) { return makePop(anyref); }
         goto parse_error;
+      case 't': {
+        switch (op[7]) {
+          case 'f':
+            if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
+            goto parse_error;
+          case 'n':
+            if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }
@@ -2509,9 +2517,17 @@ switch (op[0]) {
           case 'l':
             if (strcmp(op, "v8x16.load_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadSplatVec8x16); }
             goto parse_error;
-          case 's':
-            if (strcmp(op, "v8x16.shuffle") == 0) { return makeSIMDShuffle(s); }
-            goto parse_error;
+          case 's': {
+            switch (op[7]) {
+              case 'h':
+                if (strcmp(op, "v8x16.shuffle") == 0) { return makeSIMDShuffle(s); }
+                goto parse_error;
+              case 'w':
+                if (strcmp(op, "v8x16.swizzle") == 0) { return makeBinary(s, BinaryOp::SwizzleVec8x16); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           default: goto parse_error;
         }
       }

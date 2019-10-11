@@ -549,6 +549,7 @@ BINARYEN_API BinaryenOp BinaryenWidenLowSVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenWidenHighSVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenSwizzleVec8x16(void);
 
 typedef void* BinaryenExpressionRef;
 

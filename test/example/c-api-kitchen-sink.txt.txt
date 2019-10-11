@@ -1130,6 +1130,12 @@
        )
       )
       (drop
+       (v8x16.swizzle
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i8x16.extract_lane_s 0
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1563,6 +1569,24 @@
        )
       )
       (atomic.fence)
+      (push
+       (i32.pop)
+      )
+      (push
+       (i64.pop)
+      )
+      (push
+       (f32.pop)
+      )
+      (push
+       (f64.pop)
+      )
+      (push
+       (anyref.pop)
+      )
+      (push
+       (exnref.pop)
+      )
       (nop)
       (unreachable)
      )

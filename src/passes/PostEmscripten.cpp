@@ -22,6 +22,7 @@
 #include <asmjs/shared-constants.h>
 #include <ir/import-utils.h>
 #include <ir/localize.h>
+#include <ir/memory-utils.h>
 #include <pass.h>
 #include <shared-constants.h>
 #include <wasm-builder.h>
@@ -79,6 +80,27 @@ struct PostEmscripten : public Pass {
         Builder builder(*module);
         func->body = builder.makeConst(Literal(int32_t(sbrkPtr)));
         func->module = func->base = Name();
+      }
+      // Apply the sbrk ptr value, if it was provided. This lets emscripten set
+      // up sbrk entirely in wasm, without depending on the JS side to init
+      // anything; this is necessary for standalone wasm mode, in which we do
+      // not have any JS. Otherwise, the JS would set this value during
+      // startup.
+      auto sbrkValStr =
+        runner->options.getArgumentOrDefault("emscripten-sbrk-val", "");
+      if (sbrkValStr != "") {
+        uint32_t sbrkVal = std::stoi(sbrkValStr);
+        auto end = sbrkPtr + sizeof(sbrkVal);
+        // Flatten memory to make it simple to write to. Later passes can
+        // re-optimize it.
+        MemoryUtils::ensureExists(module->memory);
+        if (!MemoryUtils::flatten(module->memory, end, module)) {
+          Fatal() << "cannot apply sbrk-val since memory is not flattenable\n";
+        }
+        auto& segment = module->memory.segments[0];
+        assert(segment.offset->cast<Const>()->value.geti32() == 0);
+        assert(end <= segment.data.size());
+        memcpy(segment.data.data() + sbrkPtr, &sbrkVal, sizeof(sbrkVal));
       }
     }
 

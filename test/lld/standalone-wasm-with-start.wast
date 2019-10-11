@@ -1,0 +1,17 @@
+(module
+ (memory $0 2)
+ (table $0 1 1 funcref)
+ (elem (i32.const 0) $foo)
+ (global $global$0 (mut i32) (i32.const 66112))
+ (global $global$1 i32 (i32.const 66112))
+ (global $global$2 i32 (i32.const 576))
+ (export "memory" (memory $0))
+ (export "_start" (func $_start))
+ (export "__heap_base" (global $global$1))
+ (export "__data_end" (global $global$2))
+ (func $_start (result i32)
+  (nop)
+ )
+ (func $foo (result i32))
+)
+

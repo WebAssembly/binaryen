@@ -454,6 +454,7 @@ void test_core() {
     makeBinary(module, BinaryenNarrowUVecI16x8ToVecI8x16(), 5),
     makeBinary(module, BinaryenNarrowSVecI32x4ToVecI16x8(), 5),
     makeBinary(module, BinaryenNarrowUVecI32x4ToVecI16x8(), 5),
+    makeBinary(module, BinaryenSwizzleVec8x16(), 5),
     // SIMD lane manipulation
     makeSIMDExtract(module, BinaryenExtractLaneSVecI8x16()),
     makeSIMDExtract(module, BinaryenExtractLaneUVecI8x16()),
@@ -592,6 +593,13 @@ void test_core() {
       BinaryenAtomicWait(module, temp6, temp6, temp16, BinaryenTypeInt32())),
     BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6)),
     BinaryenAtomicFence(module),
+    // Push and pop
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeInt32())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeInt64())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeFloat32())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeFloat64())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeAnyref())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeExnref())),
 
     // TODO: Host
     BinaryenNop(module),

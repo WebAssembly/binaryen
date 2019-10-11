@@ -22,17 +22,31 @@
 
 #include "literal.h"
 #include "wasm-binary.h"
+#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace MemoryUtils {
-// flattens memory into a single data segment. returns true if successful
-inline bool flatten(Memory& memory) {
+// Flattens memory into a single data segment, or no segment. If there is
+// a segment, it starts at 0.
+// If ensuredSegmentSize is provided, then a segment is always emitted,
+// and of at least that size.
+// Returns true if successful (e.g. relocatable segments cannot be flattened).
+inline bool flatten(Memory& memory,
+                    Index ensuredSegmentSize = 0,
+                    Module* module = nullptr) {
   if (memory.segments.size() == 0) {
+    if (ensuredSegmentSize > 0) {
+      assert(module); // must provide a module if ensuring a size.
+      Builder builder(*module);
+      memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+      memory.segments[0].data.resize(ensuredSegmentSize);
+    }
     return true;
   }
   std::vector<char> data;
+  data.resize(ensuredSegmentSize);
   for (auto& segment : memory.segments) {
     if (segment.isPassive) {
       return false;

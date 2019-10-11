@@ -353,6 +353,7 @@ function test_core() {
     module.i8x16.narrow_i16x8_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.narrow_i32x4_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.narrow_i32x4_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.v8x16.swizzle(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // SIMD lane manipulation
     module.i8x16.extract_lane_s(module.v128.const(v128_bytes), 1),
     module.i8x16.extract_lane_u(module.v128.const(v128_bytes), 1),
@@ -487,6 +488,7 @@ function test_core() {
     module.push(module.f32.pop()),
     module.push(module.f64.pop()),
     module.push(module.v128.pop()),
+    module.push(module.anyref.pop()),
     module.push(module.exnref.pop()),
     // TODO: Host
     module.nop(),

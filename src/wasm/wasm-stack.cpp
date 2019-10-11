@@ -1484,6 +1484,11 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
         << U32LEB(BinaryConsts::I16x8NarrowUI32x4);
       break;
 
+    case SwizzleVec8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::V8x16Swizzle);
+      break;
+
     case InvalidBinary:
       WASM_UNREACHABLE();
   }
