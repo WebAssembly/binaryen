@@ -4307,6 +4307,37 @@ const char* BinaryenExportGetValue(BinaryenExportRef export_) {
 }
 
 //
+// ========= Custom sections =========
+//
+
+void BinaryenAddCustomSection(BinaryenModuleRef module,
+                              const char* name,
+                              const char* contents,
+                              BinaryenIndex contentsSize) {
+  if (tracing) {
+    std::cout << "  {\n";
+    std::cout << "    const char contents[] = { ";
+    for (BinaryenIndex i = 0; i < contentsSize; i++) {
+      if (i > 0) {
+        std::cout << ", ";
+      }
+      std::cout << int(contents[i]);
+    }
+    std::cout << " };\n";
+    std::cout << "    BinaryenAddCustomSection(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ", contents, " << contentsSize << ");\n";
+    std::cout << "  }\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm::UserSection customSection;
+  customSection.name = name;
+  customSection.data = std::vector<char>(contents, contents + contentsSize);
+  wasm->userSections.push_back(customSection);
+}
+
+//
 // ========== CFG / Relooper ==========
 //
 

@@ -1433,6 +1433,15 @@ BINARYEN_API const char* BinaryenExportGetName(BinaryenExportRef export_);
 BINARYEN_API const char* BinaryenExportGetValue(BinaryenExportRef export_);
 
 //
+// ========= Custom sections =========
+//
+
+BINARYEN_API void BinaryenAddCustomSection(BinaryenModuleRef module,
+                                           const char* name,
+                                           const char* contents,
+                                           BinaryenIndex contentsSize);
+
+//
 // ========== CFG / Relooper ==========
 //
 // General usage is (1) create a relooper, (2) create blocks, (3) add
