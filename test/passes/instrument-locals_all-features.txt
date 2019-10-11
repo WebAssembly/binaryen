@@ -127,21 +127,29 @@
   )
   (local.set $a
    (call $set_anyref
-    (i32.const 13)
+    (i32.const 14)
     (i32.const 4)
-    (anyref.pop)
+    (call $get_anyref
+     (i32.const 13)
+     (i32.const 4)
+     (local.get $a)
+    )
    )
   )
   (local.set $e
    (call $set_exnref
-    (i32.const 14)
+    (i32.const 16)
     (i32.const 5)
-    (exnref.pop)
+    (call $get_exnref
+     (i32.const 15)
+     (i32.const 5)
+     (local.get $e)
+    )
    )
   )
   (local.set $x
    (call $set_i32
-    (i32.const 15)
+    (i32.const 17)
     (i32.const 0)
     (i32.const 11)
    )
@@ -151,31 +159,45 @@
   )
   (local.set $z
    (call $set_f32
-    (i32.const 16)
+    (i32.const 18)
     (i32.const 2)
     (f32.const 33.209999084472656)
    )
   )
   (local.set $w
    (call $set_f64
-    (i32.const 17)
+    (i32.const 19)
     (i32.const 3)
     (f64.const 44.321)
    )
   )
   (local.set $a
    (call $set_anyref
-    (i32.const 18)
+    (i32.const 21)
     (i32.const 4)
-    (anyref.pop)
+    (call $get_anyref
+     (i32.const 20)
+     (i32.const 4)
+     (local.get $a)
+    )
    )
   )
   (local.set $e
    (call $set_exnref
-    (i32.const 19)
+    (i32.const 23)
     (i32.const 5)
-    (exnref.pop)
+    (call $get_exnref
+     (i32.const 22)
+     (i32.const 5)
+     (local.get $e)
+    )
    )
+  )
+  (local.set $a
+   (anyref.pop)
+  )
+  (local.set $e
+   (exnref.pop)
   )
  )
 )
