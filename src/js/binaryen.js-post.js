@@ -2104,6 +2104,11 @@ function wrapModule(module, self) {
   self['setFeatures'] = function(features) {
     Module['_BinaryenModuleSetFeatures'](module, features);
   };
+  self['addCustomSection'] = function(name, contents) {
+    return preserveStack(function() {
+      return Module['_BinaryenAddCustomSection'](module, strToStack(name), i8sToStack(contents), contents.length);
+    });
+  };
   self['emitText'] = function() {
     var old = out;
     var ret = '';
