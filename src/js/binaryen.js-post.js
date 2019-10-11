@@ -2056,11 +2056,12 @@ function wrapModule(module, self) {
       return Module['_BinaryenRemoveExport'](module, strToStack(externalName));
     });
   };
-  self['setFunctionTable'] = function(initial, maximum, funcNames) {
+  self['setFunctionTable'] = function(initial, maximum, funcNames, offset) {
     return preserveStack(function() {
       return Module['_BinaryenSetFunctionTable'](module, initial, maximum,
         i32sToStack(funcNames.map(strToStack)),
-        funcNames.length
+        funcNames.length,
+        offset || self['i32']['const'](0)
       );
     });
   };

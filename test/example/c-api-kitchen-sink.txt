@@ -3771,17 +3771,18 @@ int main() {
   BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[2]);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   BinaryenFunctionGetName(functions[0]);
+  expressions[758] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     const char* funcNames[] = { "kitchen()sinker" };
-    BinaryenSetFunctionTable(the_module, 1, 1, funcNames, 1);
+    BinaryenSetFunctionTable(the_module, 1, 1, funcNames, 1, expressions[758]);
   }
-  expressions[758] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[759] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char segment1[] = { 73, 32, 97, 109, 32, 112, 97, 115, 115, 105, 118, 101 };
     const char* segments[] = { segment0, segment1 };
     int8_t segmentPassive[] = { 0, 1 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[758], expressions[0] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[759], expressions[0] };
     BinaryenIndex segmentSizes[] = { 12, 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
   }
@@ -3789,10 +3790,10 @@ int main() {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[759] = BinaryenNop(the_module);
+  expressions[760] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[759]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[760]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {

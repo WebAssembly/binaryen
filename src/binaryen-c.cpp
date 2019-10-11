@@ -3449,7 +3449,8 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
                               BinaryenIndex initial,
                               BinaryenIndex maximum,
                               const char** funcNames,
-                              BinaryenIndex numFuncNames) {
+                              BinaryenIndex numFuncNames,
+                              BinaryenExpressionRef offset) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char* funcNames[] = { ";
@@ -3461,13 +3462,13 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
     }
     std::cout << " };\n";
     std::cout << "    BinaryenSetFunctionTable(the_module, " << initial << ", "
-              << maximum << ", funcNames, " << numFuncNames << ");\n";
+              << maximum << ", funcNames, " << numFuncNames << ", expressions["
+              << expressions[offset] << "]);\n";
     std::cout << "  }\n";
   }
 
   auto* wasm = (Module*)module;
-  Table::Segment segment(
-    wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))));
+  Table::Segment segment((Expression*)offset);
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
     segment.data.push_back(funcNames[i]);
   }

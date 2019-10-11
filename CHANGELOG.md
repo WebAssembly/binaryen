@@ -26,6 +26,7 @@ Current Trunk
 - Added `mutable` parameter to BinaryenAddGlobalImport.
 - Replace BinaryenSIMDBitselect* with BinaryenSIMDTernary* in the C API and add
   qfma/qfms instructions.
+- Added `offset` parameter to BinaryenSetFunctionTable.
 
 v88
 ---
