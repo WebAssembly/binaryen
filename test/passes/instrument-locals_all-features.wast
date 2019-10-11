@@ -25,13 +25,17 @@
     (local.set $y (i64.const 2))
     (local.set $z (f32.const 3.21))
     (local.set $w (f64.const 4.321))
-    (local.set $a (anyref.pop))
-    (local.set $e (exnref.pop))
+    (local.set $a (local.get $a))
+    (local.set $e (local.get $e))
 
     (local.set $x (i32.const 11))
     (local.set $y (i64.const 22))
     (local.set $z (f32.const 33.21))
     (local.set $w (f64.const 44.321))
+    (local.set $a (local.get $a))
+    (local.set $e (local.get $e))
+
+    ;; Pop instructions should not be instrumented
     (local.set $a (anyref.pop))
     (local.set $e (exnref.pop))
   )

@@ -105,6 +105,13 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   }
 
   void visitLocalSet(LocalSet* curr) {
+    // We don't instrument pop instructions. They are automatically deleted when
+    // writing binary and generated when reading binary, so they don't work with
+    // local set/get instrumentation.
+    if (curr->value->is<Pop>()) {
+      return;
+    }
+
     Builder builder(*getModule());
     Name import;
     switch (curr->value->type) {
