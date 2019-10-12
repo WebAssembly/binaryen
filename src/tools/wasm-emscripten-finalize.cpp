@@ -241,8 +241,12 @@ int main(int argc, const char* argv[]) {
       wasm.addExport(ex);
       initializerFunctions.push_back(F->name);
     }
-    if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-      initializerFunctions.push_back(e->name);
+    // Costructors get called from crt1 in wasm standalone mode.
+    // Unless there is no entry point.
+    if (!standaloneWasm || !wasm.getExportOrNull("_start")) {
+      if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
+        initializerFunctions.push_back(e->name);
+      }
     }
   }
 
