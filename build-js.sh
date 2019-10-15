@@ -18,7 +18,7 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "-help" ]; then
   echo "usage: $0 [-g]" >&2
   echo "  -g  produce debug build" >&2
   echo ""
-  echo "If EMSCRIPTEN is set in the envionment, emscripten will be loaded"
+  echo "If EMSCRIPTEN is set in the environment, emscripten will be loaded"
   echo "from that directory. Otherwise the location of emscripten is resolved"
   echo "through PATH."
   exit 1
@@ -811,6 +811,12 @@ export_function "_BinaryenMemoryFillGetDest"
 export_function "_BinaryenMemoryFillGetValue"
 export_function "_BinaryenMemoryFillGetSize"
 
+# 'Segments' query operations.
+export_function "_BinaryenGetNumMemorySegments"
+export_function "_BinaryenGetMemorySegmentByteOffset"
+export_function "_BinaryenGetMemorySegmentByteLength"
+export_function "_BinaryenCopyMemorySegmentData"
+
 # 'Try' expression operations
 export_function "_BinaryenTryGetBody"
 export_function "_BinaryenTryGetCatchBody"
@@ -840,12 +846,16 @@ export_function "_BinaryenGetFunctionTypeBySignature"
 export_function "_BinaryenAddFunction"
 export_function "_BinaryenGetFunction"
 export_function "_BinaryenRemoveFunction"
+export_function "_BinaryenGetNumFunctions"
+export_function "_BinaryenGetFunctionByIndex"
 export_function "_BinaryenAddGlobal"
 export_function "_BinaryenGetGlobal"
 export_function "_BinaryenRemoveGlobal"
 export_function "_BinaryenAddEvent"
 export_function "_BinaryenGetEvent"
 export_function "_BinaryenRemoveEvent"
+export_function "_BinaryenGetNumExports"
+export_function "_BinaryenGetExportByIndex"
 export_function "_BinaryenAddFunctionImport"
 export_function "_BinaryenAddTableImport"
 export_function "_BinaryenAddMemoryImport"
