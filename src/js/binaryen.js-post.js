@@ -2104,7 +2104,7 @@ function wrapModule(module, self) {
       'byteOffset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
       'data': (function(){
         var size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
-        var ptr = allocate(size, 'i8', ALLOC_NORMAL);
+        var ptr = _malloc(size);
         Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
         var res = new Uint8Array(size);
         res.set(new Uint8Array(buffer, ptr, size));
