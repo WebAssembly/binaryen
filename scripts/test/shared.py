@@ -129,8 +129,8 @@ if not options.binaryen_root:
 
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 
-test_out = options.binaryen_test_out or \
-           os.path.join(options.binaryen_root, 'out', 'test')
+test_out = (options.binaryen_test_out or
+            os.path.join(options.binaryen_root, 'out', 'test'))
 if not os.path.exists(test_out):
     os.makedirs(test_out)
 os.chdir(test_out)
