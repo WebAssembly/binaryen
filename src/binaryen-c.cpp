@@ -3150,10 +3150,10 @@ uint32_t BinaryenGetNumFunctions(BinaryenModuleRef module) {
   auto* wasm = (Module*)module;
   return wasm->functions.size();
 }
-BinaryenFunctionRef BinaryenGetFunctionByIndex(BinaryenModuleRef module, BinaryenIndex id) {
+BinaryenFunctionRef BinaryenGetFunctionByIndex(BinaryenModuleRef module,
+                                               BinaryenIndex id) {
   if (tracing) {
-    std::cout << "  BinaryenGetFunctionByIndex(the_module, " << id
-              << ");\n";
+    std::cout << "  BinaryenGetFunctionByIndex(the_module, " << id << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -3608,7 +3608,8 @@ uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
   auto* wasm = (Module*)module;
   return wasm->memory.segments.size();
 }
-int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id) {
+int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
+                                           BinaryenIndex id) {
   if (tracing) {
     std::cout << "  BinaryenGetMemorySegmentByteOffset(the_module, " << id
               << ");\n";
@@ -3621,7 +3622,8 @@ int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenInd
   Memory::Segment segment = wasm->memory.segments[id];
 
   int64_t ret;
-  auto globalOffset = [&](const Expression* const & expr, int64_t & result) -> bool {
+  auto globalOffset = [&](const Expression* const& expr,
+                          int64_t& result) -> bool {
     if (auto* c = expr->template dynCast<Const>()) {
       result = c->value.getInteger();
       return true;
@@ -3629,12 +3631,12 @@ int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenInd
     return false;
   };
 
-  if ( globalOffset(segment.offset, ret) ) {
+  if (globalOffset(segment.offset, ret)) {
     return ret;
   }
   if (auto* get = segment.offset->template dynCast<GlobalGet>()) {
     Global* global = wasm->getGlobal(get->name);
-    if ( globalOffset(global->init, ret) ) {
+    if (globalOffset(global->init, ret)) {
       return ret;
     }
   }
@@ -3642,7 +3644,8 @@ int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenInd
   Fatal() << "non-constant offsets aren't supported yet";
   return 0;
 }
-size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module, BinaryenIndex id) {
+size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
+                                          BinaryenIndex id) {
   if (tracing) {
     std::cout << "  BinaryenGetMemorySegmentByteLength(the_module, " << id
               << ");\n";
@@ -3659,9 +3662,8 @@ void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                    BinaryenIndex id,
                                    char* buffer) {
   if (tracing) {
-    std::cout << "  BinaryenCopyMemorySegmentData(the_module, " << id
-              << ", " << static_cast<void*>(buffer)
-              << ");\n";
+    std::cout << "  BinaryenCopyMemorySegmentData(the_module, " << id << ", "
+              << static_cast<void*>(buffer) << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -3671,8 +3673,6 @@ void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
   Memory::Segment segment = wasm->memory.segments[id];
   std::copy(segment.data.begin(), segment.data.end(), buffer);
 }
-
-
 
 // Start function. One per module
 
@@ -4409,10 +4409,10 @@ uint32_t BinaryenGetNumExports(BinaryenModuleRef module) {
   auto* wasm = (Module*)module;
   return wasm->exports.size();
 }
-BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module, BinaryenIndex id) {
+BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
+                                           BinaryenIndex id) {
   if (tracing) {
-    std::cout << "  BinaryenGetExportByIndex(the_module, " << id
-              << ");\n";
+    std::cout << "  BinaryenGetExportByIndex(the_module, " << id << ");\n";
   }
 
   auto* wasm = (Module*)module;
@@ -4421,7 +4421,6 @@ BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module, BinaryenInd
   }
   return wasm->exports[id].get();
 }
-
 
 //
 // ========= Custom sections =========
