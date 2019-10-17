@@ -3630,7 +3630,7 @@ int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
     return false;
   };
 
-  const Memory::Segment & segment = wasm->memory.segments[id];
+  const Memory::Segment& segment = wasm->memory.segments[id];
   if (globalOffset(segment.offset, ret)) {
     return ret;
   }
@@ -3655,7 +3655,7 @@ size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
   if (wasm->memory.segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  const Memory::Segment & segment = wasm->memory.segments[id];
+  const Memory::Segment& segment = wasm->memory.segments[id];
   return segment.data.size();
 }
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
@@ -3670,7 +3670,7 @@ void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
   if (wasm->memory.segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  const Memory::Segment & segment = wasm->memory.segments[id];
+  const Memory::Segment& segment = wasm->memory.segments[id];
   std::copy(segment.data.cbegin(), segment.data.cend(), buffer);
 }
 
