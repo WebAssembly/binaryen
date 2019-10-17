@@ -1033,6 +1033,8 @@ struct Reducer
 
 int main(int argc, const char* argv[]) {
   std::string input, test, working, command;
+  // By default, look for binaries alongside our own binary.
+  std::string binDir = argv[0];
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
        force = false;
   Options options("wasm-reduce",
@@ -1066,7 +1068,7 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            // Add separator just in case
-           Path::setBinaryenBinDir(argument + Path::getPathSeparator());
+           binDir = argument + Path::getPathSeparator();
          })
     .add("--text",
          "-S",
@@ -1109,6 +1111,8 @@ int main(int argc, const char* argv[]) {
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { input = argument; });
   options.parse(argc, argv);
+
+  Path::setBinaryenBinDir(binDir);
 
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";
