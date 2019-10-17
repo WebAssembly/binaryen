@@ -1061,8 +1061,8 @@ BINARYEN_API void BinaryenRemoveFunction(BinaryenModuleRef module,
 // Gets the number of functions in the module.
 BINARYEN_API uint32_t BinaryenGetNumFunctions(BinaryenModuleRef module);
 // Get function pointer from its index.
-BINARYEN_API BinaryenFunctionRef BinaryenGetFunctionByIndex(BinaryenModuleRef module,
-                                                            BinaryenIndex id);
+BINARYEN_API BinaryenFunctionRef
+BinaryenGetFunctionByIndex(BinaryenModuleRef module, BinaryenIndex id);
 
 // Imports
 
@@ -1171,14 +1171,13 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
 // Memory segments. Query utilities.
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
-BINARYEN_API int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
-                                                        BinaryenIndex id);
+BINARYEN_API int64_t
+BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                                        BinaryenIndex id);
 BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                                 BinaryenIndex id,
                                                 char* buffer);
-
 
 // Start function. One per module
 
@@ -1452,8 +1451,8 @@ BINARYEN_API const char* BinaryenExportGetValue(BinaryenExportRef export_);
 // Gets the number of exports in the module.
 BINARYEN_API uint32_t BinaryenGetNumExports(BinaryenModuleRef module);
 // Get export pointer from its index.
-BINARYEN_API BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
-                                                        BinaryenIndex id);
+BINARYEN_API BinaryenExportRef
+BinaryenGetExportByIndex(BinaryenModuleRef module, BinaryenIndex id);
 
 //
 // ========= Custom sections =========

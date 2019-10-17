@@ -6348,3 +6348,23 @@ optimized:
   relooperBlocks.clear();
   return 0;
 }
+(module
+ (type $v (func))
+ (memory $0 1 256)
+ (data (i32.const 10) "hello, world")
+ (data (global.get $a-global) "segment data 2")
+ (global $a-global i32 (i32.const 125))
+ (export "export0" (func $fn0))
+ (export "export1" (func $fn1))
+ (export "export2" (func $fn2))
+ (export "mem" (memory $0))
+ (func $fn0 (; 0 ;) (type $v)
+  (nop)
+ )
+ (func $fn1 (; 1 ;) (type $v)
+  (nop)
+ )
+ (func $fn2 (; 2 ;) (type $v)
+  (nop)
+ )
+)
