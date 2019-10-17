@@ -1,2 +1,2 @@
-getFunctionInfo={"name":"0","module":"","base":"","type":"0","params":[],"result":1,"vars":[],"body":5487104}
-getExpressionInfo(body)={"id":20,"type":1,"op":1,"nameOperand":"","operands":[5487136]}
+getFunctionInfo={"name":"0","module":"","base":"","type":"0","params":[],"result":1,"vars":[]}
+getExpressionInfo(body)={"id":20,"type":1,"op":1,"nameOperand":""}
