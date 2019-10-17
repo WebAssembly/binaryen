@@ -2261,11 +2261,10 @@ void Wasm2JSGlue::emitMemory(
   out << "var " << segmentWriter << " = (" << expr << ")(" << buffer << ");\n";
 
   auto globalOffset = [&](const Memory::Segment& segment) {
-    if (auto* c = segment.offset->template dynCast<Const>()) {
-      ;
+    if (auto* c = segment.offset->dynCast<Const>()) {
       return std::to_string(c->value.getInteger());
     }
-    if (auto* get = segment.offset->template dynCast<GlobalGet>()) {
+    if (auto* get = segment.offset->dynCast<GlobalGet>()) {
       auto internalName = get->name;
       auto importedName = wasm.getGlobal(internalName)->base;
       return accessGlobal(asmangle(importedName.str));

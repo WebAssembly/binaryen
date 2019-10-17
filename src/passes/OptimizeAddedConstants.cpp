@@ -143,7 +143,7 @@ private:
   // success, the returned offset can be added as a replacement for the
   // expression here.
   bool tryToOptimizeConstant(Expression* oneSide, Expression* otherSide) {
-    if (auto* c = oneSide->template dynCast<Const>()) {
+    if (auto* c = oneSide->dynCast<Const>()) {
       auto result = canOptimizeConstant(c->value);
       if (result.succeeded) {
         curr->offset = result.total;
@@ -161,8 +161,8 @@ private:
                                   Expression* otherSide,
                                   LocalGet* ptr,
                                   LocalSet* set) {
-    if (auto* c = oneSide->template dynCast<Const>()) {
-      if (otherSide->template is<Const>()) {
+    if (auto* c = oneSide->dynCast<Const>()) {
+      if (otherSide->is<Const>()) {
         // Both sides are constant - this is not optimized code, ignore.
         return false;
       }
@@ -191,7 +191,7 @@ private:
         // dominates the load, and it is ok to replace x with y + 10 there.
         Index index = -1;
         bool canReuseIndex = false;
-        if (auto* get = otherSide->template dynCast<LocalGet>()) {
+        if (auto* get = otherSide->dynCast<LocalGet>()) {
           if (localGraph->isSSA(get->index) && localGraph->isSSA(ptr->index)) {
             index = get->index;
             canReuseIndex = true;

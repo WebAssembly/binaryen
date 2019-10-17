@@ -1105,17 +1105,17 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     Index i = controlFlowStack.size() - 1;
     while (1) {
       auto* curr = controlFlowStack[i];
-      if (Block* block = curr->template dynCast<Block>()) {
+      if (Block* block = curr->dynCast<Block>()) {
         if (name == block->name) {
           return curr;
         }
-      } else if (Loop* loop = curr->template dynCast<Loop>()) {
+      } else if (Loop* loop = curr->dynCast<Loop>()) {
         if (name == loop->name) {
           return curr;
         }
       } else {
         // an if, ignorable
-        assert(curr->template is<If>());
+        assert(curr->is<If>());
       }
       if (i == 0) {
         return nullptr;
@@ -1175,11 +1175,11 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     Index i = expressionStack.size() - 1;
     while (1) {
       auto* curr = expressionStack[i];
-      if (Block* block = curr->template dynCast<Block>()) {
+      if (Block* block = curr->dynCast<Block>()) {
         if (name == block->name) {
           return curr;
         }
-      } else if (Loop* loop = curr->template dynCast<Loop>()) {
+      } else if (Loop* loop = curr->dynCast<Loop>()) {
         if (name == loop->name) {
           return curr;
         }
