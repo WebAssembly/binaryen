@@ -3619,22 +3619,22 @@ int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   if (wasm->memory.segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  Memory::Segment segment = wasm->memory.segments[id];
 
   int64_t ret;
   auto globalOffset = [&](const Expression* const& expr,
                           int64_t& result) -> bool {
-    if (auto* c = expr->template dynCast<Const>()) {
+    if (auto* c = expr->dynCast<Const>()) {
       result = c->value.getInteger();
       return true;
     }
     return false;
   };
 
+  const Memory::Segment & segment = wasm->memory.segments[id];
   if (globalOffset(segment.offset, ret)) {
     return ret;
   }
-  if (auto* get = segment.offset->template dynCast<GlobalGet>()) {
+  if (auto* get = segment.offset->dynCast<GlobalGet>()) {
     Global* global = wasm->getGlobal(get->name);
     if (globalOffset(global->init, ret)) {
       return ret;
@@ -3655,7 +3655,7 @@ size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
   if (wasm->memory.segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  Memory::Segment segment = wasm->memory.segments[id];
+  const Memory::Segment & segment = wasm->memory.segments[id];
   return segment.data.size();
 }
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
@@ -3670,8 +3670,8 @@ void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
   if (wasm->memory.segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  Memory::Segment segment = wasm->memory.segments[id];
-  std::copy(segment.data.begin(), segment.data.end(), buffer);
+  const Memory::Segment & segment = wasm->memory.segments[id];
+  std::copy(segment.data.cbegin(), segment.data.cend(), buffer);
 }
 
 // Start function. One per module
