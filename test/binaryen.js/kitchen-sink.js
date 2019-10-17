@@ -891,20 +891,26 @@ function test_for_each() {
   module = new Binaryen.Module();
 
   var v = module.addFunctionType("v", Binaryen.None, []);
-  var fn0 = module.addFunction("fn0", v, [], module.nop());
-  var fn1 = module.addFunction("fn1", v, [], module.nop());
-  var fn2 = module.addFunction("fn2", v, [], module.nop());
+
+  var fns = [
+    module.addFunction("fn0", v, [], module.nop()),
+    module.addFunction("fn1", v, [], module.nop()),
+    module.addFunction("fn2", v, [], module.nop())
+  ];
 
   var i;
   for (i = 0 ; i < module.getNumFunctions() ; i++) {
-    assert(module.getFunctionByIndex(i) === (0===i?fn0:(1===i?fn1:fn2)));
+    assert(module.getFunctionByIndex(i) === fns[i]);
   }
 
-  var exp0 = module.addFunctionExport("fn0", "export0");
-  var exp1 = module.addFunctionExport("fn1", "export1");
-  var exp2 = module.addFunctionExport("fn1", "export2");
+  var exps = [
+    module.addFunctionExport("fn0", "export0"),
+    module.addFunctionExport("fn1", "export1"),
+    module.addFunctionExport("fn2", "export2")
+  ];
+
   for (i = 0 ; i < module.getNumExports() ; i++) {
-    assert(module.getExportByIndex(i) === (0===i?exp0:(1===i?exp1:exp2)));
+    assert(module.getExportByIndex(i) === exps[i]);
   }
 
   var global = module.addGlobal("a-global", Binaryen.i32, false, module.i32.const(125))

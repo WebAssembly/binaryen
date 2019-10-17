@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <binaryen-c.h>
 
@@ -995,25 +996,28 @@ void test_color_status() {
 }
 
 void test_for_each() {
-  int i;
+  uint32_t i;
 
   BinaryenModuleRef module = BinaryenModuleCreate();
   {
     BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
-    BinaryenFunctionRef fn0 = BinaryenAddFunction(module, "fn0", v, NULL, 0, BinaryenNop(module));
-    BinaryenFunctionRef fn1 = BinaryenAddFunction(module, "fn1", v, NULL, 0, BinaryenNop(module));
-    BinaryenFunctionRef fn2 = BinaryenAddFunction(module, "fn2", v, NULL, 0, BinaryenNop(module));
+
+    BinaryenFunctionRef fns[3] = {0};
+    fns[0] = BinaryenAddFunction(module, "fn0", v, NULL, 0, BinaryenNop(module));
+    fns[1] = BinaryenAddFunction(module, "fn1", v, NULL, 0, BinaryenNop(module));
+    fns[2] = BinaryenAddFunction(module, "fn2", v, NULL, 0, BinaryenNop(module));
 
     for (i = 0; i < BinaryenGetNumFunctions(module) ; i++) {
-      assert(BinaryenGetFunctionByIndex(module, i) == (0==i?fn0:(1==i?fn1:fn2)));
+      assert(BinaryenGetFunctionByIndex(module, i) == fns[i]);
     }
 
-    BinaryenExportRef exp0 = BinaryenAddFunctionExport(module, "fn0", "export0");
-    BinaryenExportRef exp1 = BinaryenAddFunctionExport(module, "fn1", "export1");
-    BinaryenExportRef exp2 = BinaryenAddFunctionExport(module, "fn2", "export2");
+    BinaryenExportRef exps[3] = {0};
+    exps[0] = BinaryenAddFunctionExport(module, "fn0", "export0");
+    exps[1] = BinaryenAddFunctionExport(module, "fn1", "export1");
+    exps[2] = BinaryenAddFunctionExport(module, "fn2", "export2");
 
     for (i = 0; i < BinaryenGetNumExports(module) ; i++) {
-      assert(BinaryenGetExportByIndex(module, i) == (0==i?exp0:(1==i?exp1:exp2)));
+      assert(BinaryenGetExportByIndex(module, i) == exps[i]);
     }
 
     BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, 125));
@@ -1030,7 +1034,7 @@ void test_for_each() {
     for (i = 0; i < BinaryenGetNumMemorySegments(module) ; i++) {
       char out[15] = {0};
       assert(BinaryenGetMemorySegmentByteOffset(module, i) == (0==i?10:125));
-      assert(BinaryenGetMemorySegmentByteLength(module, i) == (0==i?12:14));
+      assert(BinaryenGetMemorySegmentByteLength(module, i) == segmentSizes[i]);
       BinaryenCopyMemorySegmentData(module, i, &out[0]);
       if (0 == i) {
         assert(0 == strcmp("hello, world", &out[0]));
