@@ -2151,7 +2151,7 @@ BinaryenExpressionRef BinaryenHostGetOperand(BinaryenExpressionRef expr,
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<Call>());
+  assert(expression->is<Host>());
   assert(index < static_cast<Host*>(expression)->operands.size());
   return static_cast<Host*>(expression)->operands[index];
 }
