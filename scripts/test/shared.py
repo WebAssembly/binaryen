@@ -58,8 +58,8 @@ def parse_args(args):
         help=('Specifies a path to the root of the Binaryen repository tree.'
               ' Default: the directory where this file check.py resides.'))
     parser.add_argument(
-        '--binaryen-test-out', dest='binaryen_test_out', default='',
-        help=('Specifies a path to the output directory for test files, which '
+        '--binaryen-out-dir', dest='binaryen_our_dir', default='',
+        help=('Specifies a path to the output directory for temp files, which '
               'is also where the test runner changes directory into.',
               ' Default:. out/test under the binaryen root.'))
     parser.add_argument(
@@ -129,11 +129,12 @@ if not options.binaryen_root:
 
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 
-test_out = (options.binaryen_test_out or
-            os.path.join(options.binaryen_root, 'out', 'test'))
-if not os.path.exists(test_out):
-    os.makedirs(test_out)
-os.chdir(test_out)
+if not options.out_dir:
+    options.out_dir = os.path.join(options.binaryen_root, 'out', 'test')
+
+if not os.path.exists(options.out_dir):
+    os.makedirs(options.out_dir)
+os.chdir(options.out_dir)
 
 
 # Finds the given executable 'program' in PATH.
