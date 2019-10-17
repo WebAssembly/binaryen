@@ -913,29 +913,28 @@ function test_for_each() {
     assert(module.getExportByIndex(i) === exps[i]);
   }
 
-  var global = module.addGlobal("a-global", Binaryen.i32, false, module.i32.const(125))
+  var expected_offsets = [10, 125];
+  var expected_data = ["hello, world", "segment data 2"];
+
+  var global = module.addGlobal("a-global", Binaryen.i32, false, module.i32.const(expected_offsets[1]))
   module.setMemory(1, 256, "mem", [
     {
       passive: false,
-      offset: module.i32.const(10),
-      data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
+      offset: module.i32.const(expected_offsets[0]),
+      data: expected_data[0].split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
       passive: false,
       offset: module.global.get("a-global"),
-      data: "segment data 2".split('').map(function(x) { return x.charCodeAt(0) })
+      data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
   for (i = 0 ; i < module.getNumMemorySegments() ; i++) {
     var segment = module.getMemorySegmentInfoByIndex(i);
-    assert((0===i?10:125) === segment.byteOffset);
+    assert(expected_offsets[i] === segment.byteOffset);
     var data8 = new Uint8Array(segment.data);
     var str = String.fromCharCode.apply(null, data8);
-    if (0 === i) {
-      assert("hello, world" === str);
-      continue;
-    }
-    assert("segment data 2" === str);
+    assert(expected_data[i] === str);
   }
 
   console.log(module.emitText());
