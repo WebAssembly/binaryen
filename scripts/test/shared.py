@@ -58,7 +58,7 @@ def parse_args(args):
         help=('Specifies a path to the root of the Binaryen repository tree.'
               ' Default: the directory where this file check.py resides.'))
     parser.add_argument(
-        '--binaryen-out-dir', dest='binaryen_our_dir', default='',
+        '--out-dir', dest='out_dir', default='',
         help=('Specifies a path to the output directory for temp files, which '
               'is also where the test runner changes directory into.',
               ' Default:. out/test under the binaryen root.'))
