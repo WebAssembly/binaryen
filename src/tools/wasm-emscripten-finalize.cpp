@@ -241,11 +241,21 @@ int main(int argc, const char* argv[]) {
       wasm.addExport(ex);
       initializerFunctions.push_back(F->name);
     }
-    // Costructors get called from crt1 in wasm standalone mode.
-    // Unless there is no entry point.
-    if (!standaloneWasm || !wasm.getExportOrNull("_start")) {
-      if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-        initializerFunctions.push_back(e->name);
+    auto* wasmCallCtors = wasm.getExportOrNull(WASM_CALL_CTORS);
+    auto* start = wasm.getExportOrNull("_start");
+    if (standaloneWasm) {
+      // In standalone mode crt1 will call the constructors, so no need to
+      // export wasmCallCtors. However, if there is no crt1 start then we
+      // leave the export so that the outside can call it (perhaps it is a
+      // custom runtime).
+      if (wasmCallCtors && start) {
+        wasm.removeExport(wasmCallCtors->name);
+      }
+    } else {
+      // In normal non-standalone mode, wasmCallCtors is a constructor that
+      // the JS will call.
+      if (wasmCallCtors) {
+        initializerFunctions.push_back(wasmCallCtors->name);
       }
     }
   }
