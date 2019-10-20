@@ -47,7 +47,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "compiler-support.h"
+#ifdef __GNUC__
+#define WASM_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define WASM_DEPRECATED __declspec(deprecated)
+#else
+#define WASM_DEPRECATED
+#endif
 
 #if defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
 #define BINARYEN_API __declspec(dllexport)
