@@ -3620,7 +3620,6 @@ int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
     Fatal() << "invalid segment id.";
   }
 
-  int64_t ret;
   auto globalOffset = [&](const Expression* const& expr,
                           int64_t& result) -> bool {
     if (auto* c = expr->dynCast<Const>()) {
@@ -3631,6 +3630,8 @@ int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   };
 
   const Memory::Segment& segment = wasm->memory.segments[id];
+
+  int64_t ret;
   if (globalOffset(segment.offset, ret)) {
     return ret;
   }
