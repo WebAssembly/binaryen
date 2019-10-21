@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <binaryen-c.h>
 
@@ -994,6 +995,59 @@ void test_color_status() {
     BinaryenSetColorsEnabled(old_state);
 }
 
+void test_for_each() {
+  uint32_t i;
+
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  {
+    BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
+
+    BinaryenFunctionRef fns[3] = {0};
+    fns[0] = BinaryenAddFunction(module, "fn0", v, NULL, 0, BinaryenNop(module));
+    fns[1] = BinaryenAddFunction(module, "fn1", v, NULL, 0, BinaryenNop(module));
+    fns[2] = BinaryenAddFunction(module, "fn2", v, NULL, 0, BinaryenNop(module));
+
+    for (i = 0; i < BinaryenGetNumFunctions(module) ; i++) {
+      assert(BinaryenGetFunctionByIndex(module, i) == fns[i]);
+    }
+
+    BinaryenExportRef exps[3] = {0};
+    exps[0] = BinaryenAddFunctionExport(module, "fn0", "export0");
+    exps[1] = BinaryenAddFunctionExport(module, "fn1", "export1");
+    exps[2] = BinaryenAddFunctionExport(module, "fn2", "export2");
+
+    for (i = 0; i < BinaryenGetNumExports(module) ; i++) {
+      assert(BinaryenGetExportByIndex(module, i) == exps[i]);
+    }
+
+    BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, 125));
+
+    const char* segments[] = { "hello, world", "segment data 2" };
+    int8_t segmentPassive[] = { 0, 0 };
+    BinaryenExpressionRef segmentOffsets[] = {
+      BinaryenConst(module, BinaryenLiteralInt32(10)),
+      BinaryenGlobalGet(module, "a-global", BinaryenTypeInt32())
+    };
+    BinaryenIndex segmentSizes[] = { 12, 14 };
+    BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 0);
+
+    for (i = 0; i < BinaryenGetNumMemorySegments(module) ; i++) {
+      char out[15] = {0};
+      assert(BinaryenGetMemorySegmentByteOffset(module, i) == (0==i?10:125));
+      assert(BinaryenGetMemorySegmentByteLength(module, i) == segmentSizes[i]);
+      BinaryenCopyMemorySegmentData(module, i, &out[0]);
+      if (0 == i) {
+        assert(0 == strcmp("hello, world", &out[0]));
+      }
+      else {
+        assert(0 == strcmp("segment data 2", &out[0]));
+      }
+    }
+  }
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_types();
   test_features();
@@ -1005,6 +1059,7 @@ int main() {
   test_nonvalid();
   test_tracing();
   test_color_status();
+  test_for_each();
 
   return 0;
 }
