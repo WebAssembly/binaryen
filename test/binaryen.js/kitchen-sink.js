@@ -944,9 +944,9 @@ function test_for_each() {
 function test_expression_info() {
   module = new Binaryen.Module();
 
-  // Issue #2396
+  // Issue #2392
   console.log("getExpressionInfo(memory.grow)=" + JSON.stringify(Binaryen.getExpressionInfo(module.memory.grow(1))));
-  
+
   module.dispose();
 }
 
