@@ -50,13 +50,10 @@
 
 #ifdef __GNUC__
 #define WASM_NORETURN __attribute__((noreturn))
-#define WASM_DEPRECATED __attribute__((deprecated))
 #elif defined(_MSC_VER)
 #define WASM_NORETURN __declspec(noreturn)
-#define WASM_DEPRECATED __declspec(deprecated)
 #else
 #define WASM_NORETURN
-#define WASM_DEPRECATED
 #endif
 
 // The code might contain TODOs or stubs that read some values but do nothing

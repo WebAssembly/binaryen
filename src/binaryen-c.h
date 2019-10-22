@@ -47,7 +47,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "compiler-support.h"
+#ifdef __GNUC__
+#define WASM_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define WASM_DEPRECATED __declspec(deprecated)
+#else
+#define WASM_DEPRECATED
+#endif
 
 #if defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
 #define BINARYEN_API __declspec(dllexport)
@@ -1058,6 +1064,12 @@ BINARYEN_API BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
 BINARYEN_API void BinaryenRemoveFunction(BinaryenModuleRef module,
                                          const char* name);
 
+// Gets the number of functions in the module.
+BINARYEN_API uint32_t BinaryenGetNumFunctions(BinaryenModuleRef module);
+// Get function pointer from its index.
+BINARYEN_API BinaryenFunctionRef
+BinaryenGetFunctionByIndex(BinaryenModuleRef module, BinaryenIndex id);
+
 // Imports
 
 BINARYEN_API void
@@ -1161,6 +1173,17 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex* segmentSizes,
                                     BinaryenIndex numSegments,
                                     uint8_t shared);
+
+// Memory segments. Query utilities.
+
+BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
+BINARYEN_API int64_t
+BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
+BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
+                                                       BinaryenIndex id);
+BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
+                                                BinaryenIndex id,
+                                                char* buffer);
 
 // Start function. One per module
 
@@ -1431,6 +1454,11 @@ BinaryenExportGetKind(BinaryenExportRef export_);
 BINARYEN_API const char* BinaryenExportGetName(BinaryenExportRef export_);
 // Gets the internal name of the specified export.
 BINARYEN_API const char* BinaryenExportGetValue(BinaryenExportRef export_);
+// Gets the number of exports in the module.
+BINARYEN_API uint32_t BinaryenGetNumExports(BinaryenModuleRef module);
+// Get export pointer from its index.
+BINARYEN_API BinaryenExportRef
+BinaryenGetExportByIndex(BinaryenModuleRef module, BinaryenIndex id);
 
 //
 // ========= Custom sections =========

@@ -3142,6 +3142,26 @@ void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
   auto* wasm = (Module*)module;
   wasm->removeFunction(name);
 }
+uint32_t BinaryenGetNumFunctions(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenGetNumFunctions(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->functions.size();
+}
+BinaryenFunctionRef BinaryenGetFunctionByIndex(BinaryenModuleRef module,
+                                               BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionByIndex(the_module, " << id << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->functions.size() <= id) {
+    Fatal() << "invalid function id.";
+  }
+  return wasm->functions[id].get();
+}
 
 // Globals
 
@@ -3576,6 +3596,83 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                                        segments[i],
                                        segmentSizes[i]);
   }
+}
+
+// Memory segments
+
+uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenGetNumMemorySegments(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->memory.segments.size();
+}
+int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
+                                           BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetMemorySegmentByteOffset(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+
+  auto globalOffset = [&](const Expression* const& expr,
+                          int64_t& result) -> bool {
+    if (auto* c = expr->dynCast<Const>()) {
+      result = c->value.getInteger();
+      return true;
+    }
+    return false;
+  };
+
+  const Memory::Segment& segment = wasm->memory.segments[id];
+
+  int64_t ret;
+  if (globalOffset(segment.offset, ret)) {
+    return ret;
+  }
+  if (auto* get = segment.offset->dynCast<GlobalGet>()) {
+    Global* global = wasm->getGlobal(get->name);
+    if (globalOffset(global->init, ret)) {
+      return ret;
+    }
+  }
+
+  Fatal() << "non-constant offsets aren't supported yet";
+  return 0;
+}
+size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
+                                          BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetMemorySegmentByteLength(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+  const Memory::Segment& segment = wasm->memory.segments[id];
+  return segment.data.size();
+}
+void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
+                                   BinaryenIndex id,
+                                   char* buffer) {
+  if (tracing) {
+    std::cout << "  BinaryenCopyMemorySegmentData(the_module, " << id << ", "
+              << static_cast<void*>(buffer) << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+  const Memory::Segment& segment = wasm->memory.segments[id];
+  std::copy(segment.data.cbegin(), segment.data.cend(), buffer);
 }
 
 // Start function. One per module
@@ -4304,6 +4401,26 @@ const char* BinaryenExportGetValue(BinaryenExportRef export_) {
   }
 
   return ((Export*)export_)->value.c_str();
+}
+uint32_t BinaryenGetNumExports(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenGetNumExports(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->exports.size();
+}
+BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
+                                           BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetExportByIndex(the_module, " << id << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->exports.size() <= id) {
+    Fatal() << "invalid export id.";
+  }
+  return wasm->exports[id].get();
 }
 
 //

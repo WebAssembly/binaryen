@@ -887,6 +887,60 @@ function test_internals() {
   console.log('sizeof Literal: ' + Binaryen['_BinaryenSizeofLiteral']());
 }
 
+function test_for_each() {
+  module = new Binaryen.Module();
+
+  var v = module.addFunctionType("v", Binaryen.None, []);
+
+  var fns = [
+    module.addFunction("fn0", v, [], module.nop()),
+    module.addFunction("fn1", v, [], module.nop()),
+    module.addFunction("fn2", v, [], module.nop())
+  ];
+
+  var i;
+  for (i = 0 ; i < module.getNumFunctions() ; i++) {
+    assert(module.getFunctionByIndex(i) === fns[i]);
+  }
+
+  var exps = [
+    module.addFunctionExport("fn0", "export0"),
+    module.addFunctionExport("fn1", "export1"),
+    module.addFunctionExport("fn2", "export2")
+  ];
+
+  for (i = 0 ; i < module.getNumExports() ; i++) {
+    assert(module.getExportByIndex(i) === exps[i]);
+  }
+
+  var expected_offsets = [10, 125];
+  var expected_data = ["hello, world", "segment data 2"];
+
+  var global = module.addGlobal("a-global", Binaryen.i32, false, module.i32.const(expected_offsets[1]))
+  module.setMemory(1, 256, "mem", [
+    {
+      passive: false,
+      offset: module.i32.const(expected_offsets[0]),
+      data: expected_data[0].split('').map(function(x) { return x.charCodeAt(0) })
+    },
+    {
+      passive: false,
+      offset: module.global.get("a-global"),
+      data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
+    }
+  ], false);
+  for (i = 0 ; i < module.getNumMemorySegments() ; i++) {
+    var segment = module.getMemorySegmentInfoByIndex(i);
+    assert(expected_offsets[i] === segment.byteOffset);
+    var data8 = new Uint8Array(segment.data);
+    var str = String.fromCharCode.apply(null, data8);
+    assert(expected_data[i] === str);
+  }
+
+  console.log(module.emitText());
+  module.dispose();
+}
+
 function main() {
   test_types();
   test_features();
@@ -899,6 +953,7 @@ function main() {
   test_tracing();
   test_parsing();
   test_internals();
+  test_for_each();
 }
 
 main();

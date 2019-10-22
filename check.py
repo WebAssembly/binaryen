@@ -29,7 +29,7 @@ from scripts.test.shared import (
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, options, tests, requested, warnings,
     has_shell_timeout, fail_if_not_identical_to_file, with_pass_debug,
-    validate_binary, test_out
+    validate_binary
 )
 
 # For shared.num_failures. Cannot import directly because modifications made in
@@ -84,7 +84,7 @@ def run_wasm_opt_tests():
     for extra_args in [[], ['--no-validation']]:
         wast = os.path.join(options.binaryen_test, 'hello_world.wast')
         delete_from_orbit('a.wast')
-        out = os.path.join(test_out, 'a.wast')
+        out = 'a.wast'
         cmd = WASM_OPT + [wast, '-o', out, '-S'] + extra_args
         run_command(cmd)
         fail_if_not_identical_to_file(open(out).read(), wast)

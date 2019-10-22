@@ -2096,6 +2096,23 @@ function wrapModule(module, self) {
       );
     });
   };
+  self['getNumMemorySegments'] = function() {
+    return Module['_BinaryenGetNumMemorySegments'](module);
+  }
+  self['getMemorySegmentInfoByIndex'] = function(id) {
+    return {
+      'byteOffset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
+      'data': (function(){
+        var size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
+        var ptr = _malloc(size);
+        Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
+        var res = new Uint8Array(size);
+        res.set(new Uint8Array(buffer, ptr, size));
+        _free(ptr);
+        return res.buffer;
+      })()
+    };
+  }
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
   };
@@ -2110,6 +2127,18 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddCustomSection'](module, strToStack(name), i8sToStack(contents), contents.length);
     });
   };
+  self['getNumExports'] = function() {
+    return Module['_BinaryenGetNumExports'](module);
+  }
+  self['getExportByIndex'] = function(id) {
+    return Module['_BinaryenGetExportByIndex'](module, id);
+  }
+  self['getNumFunctions'] = function() {
+    return Module['_BinaryenGetNumFunctions'](module);
+  }
+  self['getFunctionByIndex'] = function(id) {
+    return Module['_BinaryenGetFunctionByIndex'](module, id);
+  }
   self['emitText'] = function() {
     var old = out;
     var ret = '';
