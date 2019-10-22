@@ -941,6 +941,15 @@ function test_for_each() {
   module.dispose();
 }
 
+function test_expression_info() {
+  module = new Binaryen.Module();
+
+  // Issue #2396
+  console.log("getExpressionInfo(memory.grow)=" + JSON.stringify(Binaryen.getExpressionInfo(module.memory.grow(1))));
+  
+  module.dispose();
+}
+
 function main() {
   test_types();
   test_features();
@@ -954,6 +963,7 @@ function main() {
   test_parsing();
   test_internals();
   test_for_each();
+  test_expression_info();
 }
 
 main();
