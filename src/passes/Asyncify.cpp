@@ -253,6 +253,7 @@
 //
 
 #include "ir/effects.h"
+#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
@@ -1169,6 +1170,10 @@ private:
 
 } // anonymous namespace
 
+static std::string getFullImportName(Name module, Name base) {
+  return std::string(module.str) + '.' + base.str;
+}
+
 struct Asyncify : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
@@ -1209,7 +1214,7 @@ struct Asyncify : public Pass {
       if (allImportsCanChangeState) {
         return true;
       }
-      std::string full = std::string(module.str) + '.' + base.str;
+      auto full = getFullImportName(module, base);
       for (auto& listedImport : listedImports) {
         if (String::wildcardMatch(listedImport, full)) {
           return true;
@@ -1340,5 +1345,144 @@ private:
 };
 
 Pass* createAsyncifyPass() { return new Asyncify(); }
+
+// Helper passes that can be run after Asyncify.
+
+template<bool neverRewind, bool neverUnwind, bool importsAlwaysUnwind>
+struct ModAsyncify
+  : public WalkerPass<LinearExecutionWalker<
+      ModAsyncify<neverRewind, neverUnwind, importsAlwaysUnwind>>> {
+  bool isFunctionParallel() override { return true; }
+
+  ModAsyncify* create() override {
+    return new ModAsyncify<neverRewind, neverUnwind, importsAlwaysUnwind>();
+  }
+
+  void doWalkFunction(Function* func) {
+    // Find the asyncify state name.
+    auto* unwind = this->getModule()->getExport(ASYNCIFY_STOP_UNWIND);
+    auto* unwindFunc = this->getModule()->getFunction(unwind->value);
+    FindAll<GlobalSet> sets(unwindFunc->body);
+    assert(sets.list.size() == 1);
+    asyncifyStateName = sets.list[0]->name;
+    // Walk and optimize.
+    this->walk(func->body);
+  }
+
+  // Note that we don't just implement GetGlobal as we may know the value is
+  // *not* 0, 1, or 2, but not know the actual value. So what we can say depends
+  // on the comparison being done on it, and so we implement Binary and
+  // Select.
+
+  void visitBinary(Binary* curr) {
+    // Check if this is a comparison of the asyncify state to a specific
+    // constant, which we may know is impossible.
+    bool flip = false;
+    if (curr->op == NeInt32) {
+      flip = true;
+    } else if (curr->op != EqInt32) {
+      return;
+    }
+    auto* c = curr->right->dynCast<Const>();
+    if (!c) {
+      return;
+    }
+    auto* get = curr->left->dynCast<GlobalGet>();
+    if (!get || get->name != asyncifyStateName) {
+      return;
+    }
+    // This is a comparison of the state to a constant, check if we know the
+    // value.
+    int32_t value;
+    auto checkedValue = c->value.geti32();
+    if ((checkedValue == int(State::Unwinding) && neverUnwind) ||
+        (checkedValue == int(State::Rewinding) && neverRewind)) {
+      // We know the state is checked against an impossible value.
+      value = 0;
+    } else if (checkedValue == int(State::Unwinding) && this->unwinding) {
+      // We know we are in fact unwinding right now.
+      value = 1;
+      unsetUnwinding();
+    } else {
+      return;
+    }
+    if (flip) {
+      value = 1 - value;
+    }
+    Builder builder(*this->getModule());
+    this->replaceCurrent(builder.makeConst(Literal(int32_t(value))));
+  }
+
+  void visitSelect(Select* curr) {
+    auto* get = curr->condition->dynCast<GlobalGet>();
+    if (!get || get->name != asyncifyStateName) {
+      return;
+    }
+    // This is a comparison of the state to zero, which means we are checking
+    // "if running normally, run this code, but if rewinding, ignore it". If
+    // we know we'll never rewind, we can optimize this.
+    if (neverRewind) {
+      Builder builder(*this->getModule());
+      curr->condition = builder.makeConst(Literal(int32_t(0)));
+    }
+  }
+
+  void visitCall(Call* curr) {
+    unsetUnwinding();
+    if (!importsAlwaysUnwind) {
+      return;
+    }
+    auto* target = this->getModule()->getFunction(curr->target);
+    if (!target->imported()) {
+      return;
+    }
+    // This is an import that definitely unwinds. Await the next check of
+    // the state in this linear execution trace, which we can turn into a
+    // constant.
+    this->unwinding = true;
+  }
+
+  void visitCallIndirect(CallIndirect* curr) { unsetUnwinding(); }
+
+  static void doNoteNonLinear(
+    ModAsyncify<neverRewind, neverUnwind, importsAlwaysUnwind>* self,
+    Expression**) {
+    // When control flow branches, stop tracking an unwinding.
+    self->unsetUnwinding();
+  }
+
+  void visitGlobalSet(GlobalSet* set) {
+    // TODO: this could be more precise
+    unsetUnwinding();
+  }
+
+private:
+  Name asyncifyStateName;
+
+  // Whether we just did a call to an import that indicates we are unwinding.
+  bool unwinding = false;
+
+  void unsetUnwinding() { this->unwinding = false; }
+};
+
+//
+// Assume imports that may unwind will always unwind, and that rewinding never
+// happens.
+//
+
+Pass* createModAsyncifyAlwaysOnlyUnwindPass() {
+  return new ModAsyncify<true, false, true>();
+}
+
+//
+// Assume that we never unwind, but may still rewind.
+//
+struct ModAsyncifyNeverUnwind : public Pass {
+  void run(PassRunner* runner, Module* module) override {}
+};
+
+Pass* createModAsyncifyNeverUnwindPass() {
+  return new ModAsyncify<false, true, false>();
+}
 
 } // namespace wasm

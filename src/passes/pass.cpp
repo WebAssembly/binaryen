@@ -180,6 +180,13 @@ void PassRegistry::registerPasses() {
                "minifies both import and export names, and emits a mapping to "
                "the minified ones",
                createMinifyImportsAndExportsPass);
+  registerPass("mod-asyncify-always-and-only-unwind",
+               "apply the assumption that asyncify imports always unwind, "
+               "and we never rewind",
+               createModAsyncifyAlwaysOnlyUnwindPass);
+  registerPass("mod-asyncify-never-unwind",
+               "apply the assumption that asyncify never unwinds",
+               createModAsyncifyNeverUnwindPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("no-exit-runtime",
                "removes calls to atexit(), which is valid if the C runtime "
