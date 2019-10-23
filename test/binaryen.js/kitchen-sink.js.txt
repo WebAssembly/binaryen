@@ -9719,3 +9719,5 @@ sizeof Literal: 24
   (nop)
  )
 )
+
+getExpressionInfo(memory.grow)={"id":20,"type":1,"op":1,"nameOperand":"","operands":[1]}
