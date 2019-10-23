@@ -947,6 +947,9 @@ function test_expression_info() {
   // Issue #2392
   console.log("getExpressionInfo(memory.grow)=" + JSON.stringify(Binaryen.getExpressionInfo(module.memory.grow(1))));
 
+  // Issue #2396
+  console.log("getExpressionInfo(memory.grow)=" + JSON.stringify(Binaryen.getExpressionInfo(module.switch([ "label" ], "label", 0))));
+
   module.dispose();
 }
 
