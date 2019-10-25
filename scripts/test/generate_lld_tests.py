@@ -50,7 +50,8 @@ def generate_wast_files(llvm_bin, emscripten_root):
 
         compile_cmd = [
             os.path.join(llvm_bin, 'clang'), src_path, '-o', obj_path,
-            '--target=wasm32-unknown-unknown-wasm',
+            '--target=wasm32-emscripten',
+            '-mllvm', '-enable-emscripten-sjlj',
             '-c',
             '-nostdinc',
             '-Xclang', '-nobuiltininc',
