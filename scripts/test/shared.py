@@ -43,7 +43,6 @@ def parse_args(args):
         action='store_false',
         help=('If set, the whole test suite will run to completion independent of'
               ' earlier errors.'))
-
     parser.add_argument(
         '--interpreter', dest='interpreter', default='',
         help='Specifies the wasm interpreter executable to run tests on.')
@@ -60,7 +59,7 @@ def parse_args(args):
     parser.add_argument(
         '--out-dir', dest='out_dir', default='',
         help=('Specifies a path to the output directory for temp files, which '
-              'is also where the test runner changes directory into.',
+              'is also where the test runner changes directory into.'
               ' Default:. out/test under the binaryen root.'))
     parser.add_argument(
         '--valgrind', dest='valgrind', default='',

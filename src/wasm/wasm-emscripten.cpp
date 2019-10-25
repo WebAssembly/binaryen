@@ -1041,6 +1041,13 @@ struct FixInvokeFunctionNamesWalker
       wasm.removeFunction(importName);
     }
     ModuleUtils::renameFunctions(wasm, importRenames);
+    ImportInfo imports(wasm);
+    for (auto& pair : importRenames) {
+      // Update any associated GOT.func import.
+      if (auto g = imports.getImportedGlobal("GOT.func", pair.first)) {
+        g->base = pair.second;
+      }
+    }
   }
 };
 
