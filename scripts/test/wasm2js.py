@@ -94,7 +94,7 @@ def test_wasm2js_output():
                     fail_if_not_identical(out, '')
                     cmd = node[:]
                     cmd.append('a.2asm.asserts.mjs')
-                    out = run_command(cmd, expected_err='', err_ignore='The ESM module loader is experimental')
+                    out = run_command(cmd, expected_err='', err_ignore='ExperimentalWarning')
                     fail_if_not_identical(out, '')
 
             fail_if_not_identical_to_file(''.join(all_out), expected_file)
