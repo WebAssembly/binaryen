@@ -3961,7 +3961,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
   return {binary, buffer.size(), sourceMap};
 }
 
-char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module) {
+char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << " // BinaryenModuleAllocateAndWriteText(the_module);";
   }

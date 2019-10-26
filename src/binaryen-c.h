@@ -1308,7 +1308,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
 BINARYEN_API char*
-BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module);
+BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
 
 // Deserialize a module from binary form.
 BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,
