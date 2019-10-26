@@ -1307,8 +1307,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 // Serialize a module in s-expression form. Implicity allocates the returned
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
-BINARYEN_API char*
-BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
+BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
 
 // Deserialize a module from binary form.
 BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,
