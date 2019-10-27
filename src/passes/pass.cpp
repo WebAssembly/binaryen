@@ -207,6 +207,12 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
+  registerPass("post-assemblyscript",
+               "miscellaneous optimizations for AssemblyScript-generated code",
+               createPostAssemblyScriptPass);
+  registerPass("post-assemblyscript-finalize",
+               "miscellaneous optimizations for AssemblyScript-generated code",
+               createPostAssemblyScriptFinalizePass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);

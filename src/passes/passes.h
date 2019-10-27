@@ -71,6 +71,8 @@ Pass* createOptimizeStackIRPass();
 Pass* createPickLoadSignsPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();
 Pass* createModAsyncifyNeverUnwindPass();
+Pass* createPostAssemblyScriptPass();
+Pass* createPostAssemblyScriptFinalizePass();
 Pass* createPostEmscriptenPass();
 Pass* createPrecomputePass();
 Pass* createPrecomputePropagatePass();
