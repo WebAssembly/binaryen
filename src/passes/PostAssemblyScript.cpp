@@ -19,18 +19,18 @@
 // AssemblyScript output.
 //
 
-// #define POST_ASSEMBLYSCRIPT_DEBUG
-
-#include <list>
-
-#include <cfg/cfg-traversal.h>
-#include <ir/flat.h>
-#include <ir/local-graph.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm-printing.h>
-#include <wasm-traversal.h>
-#include <wasm.h>
+#include "ir/flat.h"
+#include "ir/local-graph.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
+#include <unordered_map>
+#include <unordered_set>
+#ifdef POST_ASSEMBLYSCRIPT_DEBUG
+#include "wasm-printing.h"
+#include <iostream>
+#endif
 
 namespace wasm {
 
@@ -41,10 +41,29 @@ static Name RELEASE = Name("~lib/rt/pure/__release");
 static Name ALLOC = Name("~lib/rt/tlsf/__alloc");
 static Name ALLOCARRAY = Name("~lib/rt/__allocArray");
 
-// A variant of LocalGraph that considers only assignments
-// when computing influences.
-struct AssignmentGraph : LocalGraph {
-  AssignmentGraph(Function* func) : LocalGraph(func) {}
+// A variant of LocalGraph that considers only assignments when computing
+// influences.
+//
+// This allows us to find locals aliasing a retain, while ignoring other
+// influences.
+//
+// For example, we are interested in
+//
+//   var a = __retain(X)
+//   var b = a;
+//   __release(b); // releases X
+//
+// but not in
+//
+//  var a = __retain(X);
+//  var b = someFunction(a);
+//  __release(b);
+//  return a;
+//
+// since the latter releases not 'X' but the reference returned by the call,
+// which is usually something else.
+struct AliasGraph : LocalGraph {
+  AliasGraph(Function* func) : LocalGraph(func) {}
   void computeInfluences() {
     for (auto& pair : locations) {
       auto* curr = pair.first;
@@ -63,8 +82,59 @@ struct AssignmentGraph : LocalGraph {
 };
 
 // A pass that eliminates redundant retain and release calls.
-// Does a cheap traversal first, remembering ARC-style patterns,
-// and goes all-in only if it finds any.
+//
+// Does a cheap traversal first, remembering ARC-style patterns, and goes all-in
+// only if it finds any.
+//
+// This is based on the assumption that the compiler is not allowed to emit
+// unbalanced retains or releases, except if a value is returned or otherwise
+// escapes in one branch. In turn, we do not have to deal with control
+// structures but can instead look for escapes reached (by any alias) using
+// AliasGraph.
+//
+// For example, in code like
+//
+//   var a = __retain(X);
+//   if (cond) {
+//     return a;
+//   }
+//   __release(a);
+//  return null;
+//
+// we cannot eliminate the retain/release pair because the implementation
+// dictates that returned references must remain retained for the caller since
+// dropping to RC=0 on the boundary would prematurely free the object.
+//
+// Typical patterns this recognizes are
+//
+//   var a = __retain(X);
+//   __release(a); // simple pair
+//
+//   var a = __retain(X);
+//   if (cond) {
+//     __release(a); // non-escaping...
+//   } else {
+//     __release(a); // ...balanced pair
+//   }
+//
+//   var a;
+//   if (cond) {
+//     a = __retain(X);
+//   } else {
+//     a = __retain(Y);
+//   }
+//   __release(a); // balanced retain
+//
+// including technically invalid patterns assumed to be not present in compiler
+// output, like:
+//
+//   var b = __retain(a);
+//   if (cond) {
+//     __release(b); // unbalanced release
+//   }
+//
+// To detect the latter, we'd have to follow control structures around, which
+// we don't do since it isn't neccessary / to keep the amount of work minimal.
 struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
 
 #ifndef POST_ASSEMBLYSCRIPT_DEBUG
@@ -79,8 +149,8 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
   // Gets that are releases, to location
   std::unordered_map<LocalGet*, Expression**> releases;
 
-  // Gets that are returns
-  std::unordered_set<LocalGet*> returns;
+  // Gets that are escapes
+  std::unordered_set<LocalGet*> escapes;
 
   void visitLocalSet(LocalSet* curr) {
     // local.set(X, __retain(...)) ?
@@ -106,7 +176,17 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
     auto* value = curr->value;
     if (value) {
       if (auto* localGet = value->dynCast<LocalGet>()) {
-        returns.insert(localGet);
+        escapes.insert(localGet);
+      }
+    }
+  }
+
+  void visitThrow(Throw* curr) {
+    // throw(..., local.get(X, ...), ...) ?
+    for (auto* operand : curr->operands) {
+      if (auto* localGet = operand->dynCast<LocalGet>()) {
+        escapes.insert(localGet);
+        break;
       }
     }
   }
@@ -133,15 +213,18 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
     }
   }
 
-  // Tests if a retain reaches a return
-  bool testReachesReturn(LocalSet* retain, AssignmentGraph& graph) {
+  // Tests if a retain reaches an escape and thus is
+  // considered necessary.
+  bool testReachesEscape(LocalSet* retain, AliasGraph& graph) {
     for (auto* localGet : graph.setInfluences[retain]) {
-      auto foundReturn = returns.find(localGet);
-      if (foundReturn != returns.end()) {
+      if (releases.find(localGet) != releases.end()) {
+        continue;
+      }
+      if (escapes.find(localGet) != escapes.end()) {
         return true;
       }
       for (auto* localSet : graph.getInfluences[localGet]) {
-        if (testReachesReturn(localSet, graph)) {
+        if (testReachesEscape(localSet, graph)) {
           return true;
         }
       }
@@ -151,7 +234,7 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
 
   // Collects all reachable releases of a retain
   void collectReleases(LocalSet* retain,
-                       AssignmentGraph& graph,
+                       AliasGraph& graph,
                        std::unordered_set<Expression**>& found) {
     for (auto* localGet : graph.setInfluences[retain]) {
       auto foundRelease = releases.find(localGet);
@@ -174,7 +257,8 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
   }
 
   // Tests if a retained value originates at an allocation
-  bool testRetainsAllocation(Expression* retained, AssignmentGraph& graph) {
+  // and thus is considered necessary.
+  bool testRetainsAllocation(Expression* retained, AliasGraph& graph) {
     if (auto* call = retained->dynCast<Call>()) {
       if (call->target == ALLOC || call->target == ALLOCARRAY) {
         return true;
@@ -201,28 +285,39 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
   }
 
   // Tests if a release has balanced retains
-  bool testBalancedRetains(LocalGet* release, AssignmentGraph& graph) {
+  bool testBalancedRetains(LocalGet* release,
+                           AliasGraph& graph,
+                           std::unordered_map<LocalGet*, bool>& cache) {
+    auto cached = cache.find(release);
+    if (cached != cache.end()) {
+      return cached->second;
+    }
     for (auto* localSet : graph.getSetses[release]) {
       if (localSet == nullptr) {
+        cache[release] = false;
         return false;
       }
       if (retains.find(localSet) == retains.end()) {
         if (auto* localGet = localSet->value->dynCast<LocalGet>()) {
-          if (!testBalancedRetains(localGet, graph)) {
+          if (!testBalancedRetains(localGet, graph, cache)) {
+            cache[release] = false;
             return false;
           }
         } else {
+          cache[release] = false;
           return false;
         }
       }
     }
+    cache[release] = true;
     return true;
   }
 
   void doWalkFunction(Function* func) {
     retains.clear();
     releases.clear();
-    returns.clear();
+    escapes.clear();
+
     Flat::verifyFlatness(func);
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
     std::cerr << "[PostAssemblyScript::OptimizeARC] walking " << func->name
@@ -235,31 +330,34 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
 #endif
       return;
     }
-    AssignmentGraph graph(func);
+
+    AliasGraph graph(func);
     graph.computeInfluences();
 
     std::unordered_set<Expression**> redundantRetains;
     std::unordered_set<Expression**> redundantReleases;
+    std::unordered_map<LocalGet*, bool> balancedRetainsCache;
 
     // For each retain, check that it
     //
-    // * doesn't reach a return (otherwise unbalanced)
-    // * doesn't retain an allocation (otherwise necessary)
+    // * doesn't reach an escape
+    // * doesn't retain an allocation
     // * reaches at least one release
     // * reaches only releases with balanced retains
     //
     for (auto& pair : retains) {
       auto* retain = pair.first;
       auto** retainLocation = pair.second;
-      if (!testReachesReturn(retain, graph)) {
+      if (!testReachesEscape(retain, graph)) {
         if (!testRetainsAllocation(getRetainedExpression(retain), graph)) {
-          std::unordered_set<Expression**> found;
-          collectReleases(retain, graph, found);
-          if (!found.empty()) {
+          std::unordered_set<Expression**> releaseLocations;
+          collectReleases(retain, graph, releaseLocations);
+          if (!releaseLocations.empty()) {
             bool allBalanced = true;
-            for (auto** getLocation : found) {
-              if (!testBalancedRetains(getReleaseByLocation(getLocation),
-                                       graph)) {
+            for (auto** releaseLocation : releaseLocations) {
+              if (!testBalancedRetains(getReleaseByLocation(releaseLocation),
+                                       graph,
+                                       balancedRetainsCache)) {
                 allBalanced = false;
                 break;
               }
@@ -271,7 +369,7 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
               std::cerr << " reaching\n";
 #endif
               redundantRetains.insert(retainLocation);
-              for (auto** getLocation : found) {
+              for (auto** getLocation : releaseLocations) {
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
                 std::cerr << "    ";
                 WasmPrinter::printExpression(*getLocation, std::cerr, true);
