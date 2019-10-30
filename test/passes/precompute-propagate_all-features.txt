@@ -3,6 +3,7 @@
  (type $FUNCSIG$ii (func (param i32) (result i32)))
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
+ (type $FUNCSIG$V (func (result v128)))
  (memory $0 10 10)
  (func $basic (; 0 ;) (type $FUNCSIG$vi) (param $p i32)
   (local $x i32)
@@ -253,5 +254,14 @@
   (return
    (i32.const 14)
   )
+ )
+ (func $simd-load (; 17 ;) (type $FUNCSIG$V) (result v128)
+  (local $x v128)
+  (local.set $x
+   (v8x16.load_splat
+    (i32.const 0)
+   )
+  )
+  (local.get $x)
  )
 )

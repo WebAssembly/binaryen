@@ -17,6 +17,7 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] Validation added to src/wasm/wasm-validator.cpp
  - [ ] Interpretation added to src/wasm-interpreter.h
  - [ ] Effects handled in src/ir/effects.h
+ - [ ] Precomputing handled in src/passes/Precompute.cpp
  - [ ] Hashing and comparing in src/ir/ExpressionAnalyzer.cpp
  - [ ] Parsing added in scripts/gen-s-parser.py and src/wasm/wasm-s-parser.cpp
  - [ ] Printing added in src/passes/Print.cpp

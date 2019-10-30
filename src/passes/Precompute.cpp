@@ -125,6 +125,7 @@ public:
   Flow visitAtomicNotify(AtomicNotify* curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
+  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryInit(MemoryInit* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitDataDrop(DataDrop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
