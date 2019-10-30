@@ -48,7 +48,12 @@
   )
   (drop
    (call $emscripten_asm_const_iii
-    (i32.const 0)
+    (i32.add
+     (local.tee $1
+      (global.get $gimport$3)
+     )
+     (i32.const 0)
+    )
     (i32.add
      (local.get $0)
      (i32.const 24)
@@ -75,7 +80,10 @@
    )
    (local.tee $2
     (call $emscripten_asm_const_iii
-     (i32.const 1)
+     (i32.add
+      (local.get $1)
+      (i32.const 33)
+     )
      (i32.add
       (local.get $0)
       (i32.const 24)
@@ -93,7 +101,10 @@
   )
   (drop
    (call $emscripten_asm_const_iii
-    (i32.const 2)
+    (i32.add
+     (local.get $1)
+     (i32.const 53)
+    )
     (i32.add
      (local.get $0)
      (i32.const 24)
@@ -207,9 +218,9 @@
 --BEGIN METADATA --
 {
   "asmConsts": {
-    "2": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]],
+    "53": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]],
     "0": ["{ Module.print(\"Hello world\"); }", ["iii"], [""]],
-    "1": ["{ return $0 + $1; }", ["iii"], [""]]
+    "33": ["{ return $0 + $1; }", ["iii"], [""]]
   },
   "staticBump": 0,
   "tableSize": 0,
