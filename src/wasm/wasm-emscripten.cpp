@@ -709,7 +709,8 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
 
 private:
   std::string fixupName(Name& name, std::string baseSig, Proxying proxy);
-  AsmConst& createAsmConst(uint32_t id, std::string code, std::string sig, Name name);
+  AsmConst&
+  createAsmConst(uint32_t id, std::string code, std::string sig, Name name);
   std::string asmConstSig(std::string baseSig);
   Name nameForImportWithSig(std::string sig, Proxying proxy);
   void queueImport(Name importName, std::string baseSig);
