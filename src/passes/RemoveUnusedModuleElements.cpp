@@ -116,6 +116,18 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       usesMemory = true;
     }
   }
+  void visitThrow(Throw* curr) {
+    if (reachable.count(ModuleElement(ModuleElementKind::Event, curr->event)) ==
+        0) {
+      queue.emplace_back(ModuleElementKind::Event, curr->event);
+    }
+  }
+  void visitBrOnExn(BrOnExn* curr) {
+    if (reachable.count(ModuleElement(ModuleElementKind::Event, curr->event)) ==
+        0) {
+      queue.emplace_back(ModuleElementKind::Event, curr->event);
+    }
+  }
 };
 
 // Finds function type usage
