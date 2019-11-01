@@ -41,6 +41,9 @@ static Name RELEASE = Name("~lib/rt/pure/__release");
 static Name ALLOC = Name("~lib/rt/tlsf/__alloc");
 static Name ALLOCARRAY = Name("~lib/rt/__allocArray");
 
+template<typename K, typename V> using Map = std::unordered_map<K, V>;
+template<typename T> using Set = std::unordered_set<T>;
+
 // A variant of LocalGraph that considers only assignments when computing
 // influences.
 //
@@ -81,14 +84,73 @@ struct AliasGraph : LocalGraph {
   }
 };
 
+// Tests if the given call calls retain. Note that this differs from what we
+// consider a full retain pattern, which must also set a local.
+static bool isRetainCall(Call* expr) {
+  // __retain(...)
+  return expr->target == RETAIN && expr->type == i32 &&
+         expr->operands.size() == 1 && expr->operands[0]->type == i32;
+}
+
+// Tests if a local.set is considered to be a full retain pattern.
+static bool isRetain(LocalSet* expr) {
+  // local.set(X, __retain(...))
+  if (auto* call = expr->value->dynCast<Call>()) {
+    return isRetainCall(call);
+  }
+  return false;
+}
+
+// Tests if the given location is that of a full retain pattern.
+static bool isRetainLocation(Expression** expr) {
+  if (expr != nullptr) {
+    if (auto localSet = (*expr)->dynCast<LocalSet>()) {
+      return isRetain(localSet);
+    }
+  }
+  return false;
+}
+
+// Tests if the given call calls release. Note that this differs from what we
+// consider a full release pattern, which must also get a local.
+static bool isReleaseCall(Call* expr) {
+  // __release(...)
+  return expr->target == RELEASE && expr->type == none &&
+         expr->operands.size() == 1 && expr->operands[0]->type == i32;
+}
+
+// Tests if the given location is that of a full release pattern. Note that
+// the local.get is our key when checking for releases to align with
+// AliasGraph, and not the outer call, which is also the reason why there is
+// no `isRelease` as we can't tell from the local.get alone.
+static bool isReleaseLocation(Expression** expr) {
+  // __release(local.get(X, ...))
+  if (expr != nullptr) {
+    if (auto* call = (*expr)->dynCast<Call>()) {
+      return isReleaseCall(call) && call->operands[0]->is<LocalGet>();
+    }
+  }
+  return false;
+}
+
+// Tests if the given call calls any allocation function.
+static bool isAllocCall(Call* expr) {
+  return (expr->target == ALLOC || expr->target == ALLOCARRAY) &&
+         expr->type == i32;
+}
+
 // A pass that eliminates redundant retain and release calls.
 //
 // Does a cheap traversal first, remembering ARC-style patterns, and goes all-in
 // only if it finds any.
 //
 // This is based on the assumption that the compiler is not allowed to emit
-// unbalanced retains or releases, except if a value is returned or otherwise
-// escapes in one branch. In turn, we do not have to deal with control
+// unbalanced retains or releases, except if
+//
+// * a value is returned or otherwise escapes in one branch or
+// * a branch is being internally unified by the compiler
+//
+// which we detect below. In turn, we do not have to deal with control
 // structures but can instead look for escapes reached (by any alias) using
 // AliasGraph.
 //
@@ -105,17 +167,21 @@ struct AliasGraph : LocalGraph {
 // dictates that returned references must remain retained for the caller since
 // dropping to RC=0 on the boundary would prematurely free the object.
 //
-// Typical patterns this recognizes are
+// Typical patterns this recognizes are simple pairs of the form
 //
 //   var a = __retain(X);
-//   __release(a); // simple pair
+//   __release(a);
+//
+// retains with balanced releases of the form
 //
 //   var a = __retain(X);
 //   if (cond) {
-//     __release(a); // non-escaping...
+//     __release(a);
 //   } else {
-//     __release(a); // ...balanced pair
+//     __release(a);
 //   }
+//
+// releases with balanced retains of the form
 //
 //   var a;
 //   if (cond) {
@@ -123,7 +189,7 @@ struct AliasGraph : LocalGraph {
 //   } else {
 //     a = __retain(Y);
 //   }
-//   __release(a); // balanced retain
+//   __release(a);
 //
 // including technically invalid patterns assumed to be not present in compiler
 // output, like:
@@ -137,42 +203,36 @@ struct AliasGraph : LocalGraph {
 // we don't do since it isn't neccessary / to keep the amount of work minimal.
 struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
 
-#ifndef POST_ASSEMBLYSCRIPT_DEBUG
   bool isFunctionParallel() override { return true; }
-#endif
 
   Pass* create() override { return new OptimizeARC; }
 
   // Sets that are retains, to location
-  std::unordered_map<LocalSet*, Expression**> retains;
+  Map<LocalSet*, Expression**> retains;
 
   // Gets that are releases, to location
-  std::unordered_map<LocalGet*, Expression**> releases;
+  Map<LocalGet*, Expression**> releases;
 
-  // Gets that are escapes
-  std::unordered_set<LocalGet*> escapes;
+  // Gets that are escapes, i.e. being returned or thrown
+  Set<LocalGet*> escapes;
 
   void visitLocalSet(LocalSet* curr) {
-    // local.set(X, __retain(...)) ?
-    if (auto* call = curr->value->dynCast<Call>()) {
-      if (call->target == RETAIN) {
-        retains[curr] = getCurrentPointer();
-      }
+    if (isRetain(curr)) {
+      retains[curr] = getCurrentPointer();
     }
   }
 
   void visitCall(Call* curr) {
-    // __release(local.get(X, ...)) ?
-    if (curr->target == RELEASE && curr->operands.size() == 1) {
-      auto* operand = curr->operands[0];
-      if (auto* localGet = operand->dynCast<LocalGet>()) {
-        releases[localGet] = getCurrentPointer();
-      }
+    auto** currp = getCurrentPointer();
+    if (isReleaseLocation(currp)) {
+      releases[curr->operands[0]->cast<LocalGet>()] = currp;
     }
   }
 
   void visitReturn(Return* curr) {
     // return(local.get(X, ...)) ?
+    // indicates that an object is returned from one function and given to
+    // another, so releasing it would be invalid.
     auto* value = curr->value;
     if (value) {
       if (auto* localGet = value->dynCast<LocalGet>()) {
@@ -183,6 +243,8 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
 
   void visitThrow(Throw* curr) {
     // throw(..., local.get(X, ...), ...) ?
+    // indicates that an object is thrown in one function and can be caught
+    // anywhere, like in another function, so releasing it would be invalid.
     for (auto* operand : curr->operands) {
       if (auto* localGet = operand->dynCast<LocalGet>()) {
         escapes.insert(localGet);
@@ -192,30 +254,20 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
   }
 
   void eliminateRetain(Expression** location) {
-    // assumes local.set(X, __retain(...))
+    assert(isRetainLocation(location));
     auto* localSet = (*location)->cast<LocalSet>();
-    auto* call = localSet->value->cast<Call>();
-    assert(call->target == RETAIN);
-    assert(call->operands.size() == 1);
-    localSet->value = call->operands[0];
+    localSet->value = localSet->value->cast<Call>()->operands[0];
   }
 
   void eliminateRelease(Expression** location) {
-    // assumes __release(local.get(X, ...))
-    if (auto* call = (*location)->dynCast<Call>()) {
-      assert(call->target == RELEASE);
-      assert(call->operands.size() == 1);
-      assert(call->operands[0]->is<LocalGet>());
-      Builder builder(*getModule());
-      *location = builder.makeNop();
-    } else {
-      assert((*location)->is<Nop>()); // already replaced
-    }
+    assert(isReleaseLocation(location));
+    Builder builder(*getModule());
+    *location = builder.makeNop();
   }
 
-  // Tests if a retain reaches an escape and thus is
-  // considered necessary.
-  bool testReachesEscape(LocalSet* retain, AliasGraph& graph) {
+  // Tests if a retain reaches an escape and thus is considered necessary.
+  bool
+  testReachesEscape(LocalSet* retain, AliasGraph& graph, Set<LocalSet*>& seen) {
     for (auto* localGet : graph.setInfluences[retain]) {
       if (releases.find(localGet) != releases.end()) {
         continue;
@@ -224,50 +276,9 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
         return true;
       }
       for (auto* localSet : graph.getInfluences[localGet]) {
-        if (testReachesEscape(localSet, graph)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  // Collects all reachable releases of a retain
-  void collectReleases(LocalSet* retain,
-                       AliasGraph& graph,
-                       std::unordered_set<Expression**>& found) {
-    for (auto* localGet : graph.setInfluences[retain]) {
-      auto foundRelease = releases.find(localGet);
-      if (foundRelease != releases.end()) {
-        found.insert(foundRelease->second);
-      } else {
-        for (auto* localSet : graph.getInfluences[localGet]) {
-          collectReleases(localSet, graph, found);
-        }
-      }
-    }
-  }
-
-  // Given a retain, gets the retained expression
-  static Expression* getRetainedExpression(LocalSet* retain) {
-    // assumes local.set(X, __retain(...))
-    auto* retainCall = retain->value->cast<Call>();
-    assert(retainCall->operands.size() == 1);
-    return retainCall->operands[0];
-  }
-
-  // Tests if a retained value originates at an allocation
-  // and thus is considered necessary.
-  bool testRetainsAllocation(Expression* retained, AliasGraph& graph) {
-    if (auto* call = retained->dynCast<Call>()) {
-      if (call->target == ALLOC || call->target == ALLOCARRAY) {
-        return true;
-      }
-    } else {
-      if (auto* localGet = retained->dynCast<LocalGet>()) {
-        for (auto* localSet : graph.getSetses[localGet]) {
-          if (localSet != nullptr &&
-              testRetainsAllocation(localSet->value, graph)) {
+        if (seen.find(localSet) == seen.end()) {
+          seen.insert(localSet);
+          if (testReachesEscape(localSet, graph, seen)) {
             return true;
           }
         }
@@ -276,48 +287,138 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
     return false;
   }
 
-  // Given a release location, gets the release
-  static LocalGet* getReleaseByLocation(Expression** releaseLocation) {
-    // assumes __release(local.get(X, ...))
-    auto* releaseCall = (*releaseLocation)->cast<Call>();
-    assert(releaseCall->operands.size() == 1);
-    return releaseCall->operands[0]->cast<LocalGet>();
+  bool testReachesEscape(LocalSet* retain, AliasGraph& graph) {
+    Set<LocalSet*> seen;
+    return testReachesEscape(retain, graph, seen);
   }
 
-  // Tests if a release has balanced retains
+  // Collects all reachable releases of a retain.
+  void collectReleases(LocalSet* retain,
+                       AliasGraph& graph,
+                       Set<Expression**>& found,
+                       Set<LocalSet*>& seen) {
+    for (auto* localGet : graph.setInfluences[retain]) {
+      auto foundRelease = releases.find(localGet);
+      if (foundRelease != releases.end()) {
+        found.insert(foundRelease->second);
+      } else {
+        for (auto* localSet : graph.getInfluences[localGet]) {
+          if (seen.find(localSet) == seen.end()) {
+            seen.insert(localSet);
+            collectReleases(localSet, graph, found, seen);
+          }
+        }
+      }
+    }
+  }
+
+  void collectReleases(LocalSet* retain,
+                       AliasGraph& graph,
+                       Set<Expression**>& found) {
+    Set<LocalSet*> seen;
+    collectReleases(retain, graph, found, seen);
+  }
+
+  // Given a retain, gets the retained expression
+  static Expression* getRetainedExpression(LocalSet* retain) {
+    assert(isRetain(retain));
+    return retain->value->cast<Call>()->operands[0];
+  }
+
+  // Tests if a retained value originates at an allocation and thus is
+  // considered necessary.
+  bool testRetainsAllocation(Expression* retained,
+                             AliasGraph& graph,
+                             Set<LocalSet*>& seen) {
+    if (auto* call = retained->dynCast<Call>()) {
+      if (call->target == ALLOC || call->target == ALLOCARRAY) {
+        return true;
+      }
+    } else {
+      if (auto* localGet = retained->dynCast<LocalGet>()) {
+        for (auto* localSet : graph.getSetses[localGet]) {
+          if (localSet != nullptr) {
+            if (seen.find(localSet) == seen.end()) {
+              seen.insert(localSet);
+              if (testRetainsAllocation(localSet->value, graph, seen)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  bool testRetainsAllocation(Expression* retained, AliasGraph& graph) {
+    Set<LocalSet*> seen;
+    return testRetainsAllocation(retained, graph, seen);
+  }
+
+  // Given a release location, gets the local.get that is our release indicator
+  static LocalGet* getReleaseByLocation(Expression** releaseLocation) {
+    assert(isReleaseLocation(releaseLocation));
+    return (*releaseLocation)->cast<Call>()->operands[0]->cast<LocalGet>();
+  }
+
+  // Tests if a release has balanced retains, that is it is being retained in
+  // any path leading to the release. For example
+  //
+  //   var c = somethingElse() || a;
+  //   ...
+  //
+  // which compiles to
+  //
+  //   if (!(b = somethingElse())) {
+  //     b = __retain(a);
+  //   }
+  //   var c = b;
+  //   ...
+  //   __release(c);
+  //
+  // is unbalanced since it reaches a retain and something else. Here, the
+  // compiler inserts the retain call because it must unify the two branches
+  // since the result of `somethingElse()` is known to be retained for the
+  // caller and the other branch must yield a retained value as well.
   bool testBalancedRetains(LocalGet* release,
                            AliasGraph& graph,
-                           std::unordered_map<LocalGet*, bool>& cache) {
+                           Map<LocalGet*, bool>& cache,
+                           Set<LocalGet*>& seen) {
     auto cached = cache.find(release);
     if (cached != cache.end()) {
       return cached->second;
     }
     for (auto* localSet : graph.getSetses[release]) {
       if (localSet == nullptr) {
-        cache[release] = false;
-        return false;
+        return cache[release] = false;
       }
       if (retains.find(localSet) == retains.end()) {
         if (auto* localGet = localSet->value->dynCast<LocalGet>()) {
-          if (!testBalancedRetains(localGet, graph, cache)) {
-            cache[release] = false;
-            return false;
+          if (seen.find(localGet) == seen.end()) {
+            seen.insert(localGet);
+            if (!testBalancedRetains(localGet, graph, cache, seen)) {
+              return cache[release] = false;
+            }
+          } else {
+            return cache[release] = false;
           }
         } else {
-          cache[release] = false;
-          return false;
+          return cache[release] = false;
         }
       }
     }
-    cache[release] = true;
-    return true;
+    return cache[release] = true;
+  }
+
+  bool testBalancedRetains(LocalGet* release,
+                           AliasGraph& graph,
+                           Map<LocalGet*, bool>& cache) {
+    Set<LocalGet*> seen;
+    return testBalancedRetains(release, graph, cache, seen);
   }
 
   void doWalkFunction(Function* func) {
-    retains.clear();
-    releases.clear();
-    escapes.clear();
-
     Flat::verifyFlatness(func);
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
     std::cerr << "[PostAssemblyScript::OptimizeARC] walking " << func->name
@@ -334,9 +435,9 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
     AliasGraph graph(func);
     graph.computeInfluences();
 
-    std::unordered_set<Expression**> redundantRetains;
-    std::unordered_set<Expression**> redundantReleases;
-    std::unordered_map<LocalGet*, bool> balancedRetainsCache;
+    Set<Expression**> redundantRetains;
+    Set<Expression**> redundantReleases;
+    Map<LocalGet*, bool> balancedRetainsCache;
 
     // For each retain, check that it
     //
@@ -350,7 +451,7 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
       auto** retainLocation = pair.second;
       if (!testReachesEscape(retain, graph)) {
         if (!testRetainsAllocation(getRetainedExpression(retain), graph)) {
-          std::unordered_set<Expression**> releaseLocations;
+          Set<Expression**> releaseLocations;
           collectReleases(retain, graph, releaseLocations);
           if (!releaseLocations.empty()) {
             bool allBalanced = true;
@@ -420,14 +521,27 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
   }
 };
 
-// Eliminating retains and releases makes it more likely
-// that other passes lead to collapsed release/retain pairs,
-// and this pass finalizes such output.
+// Eliminating retains and releases makes it more likely that other passes lead
+// to collapsed release/retain pairs that are not full retain or release
+// patterns, and this pass finalizes such pairs. Typical patterns are entire
+// unnecessary allocations of the form
+//
+//   __release(__retain(__alloc(...));
+//
+// otherwise unnecessary pairs of the form
+//
+//   __release(__retain(...));
+//
+// or retains/releases of constants which indicate data in static memory which
+// are unnecessary to refcount:
+//
+//  __retain("staticString");
+//
+//  __release("staticString");
+//
 struct FinalizeARC : public WalkerPass<PostWalker<FinalizeARC>> {
 
-#ifndef POST_ASSEMBLYSCRIPT_DEBUG
   bool isFunctionParallel() override { return true; }
-#endif
 
   Pass* create() override { return new FinalizeARC; }
 
@@ -436,13 +550,11 @@ struct FinalizeARC : public WalkerPass<PostWalker<FinalizeARC>> {
   uint32_t eliminatedReleases = 0;
 
   void visitCall(Call* curr) {
-    if (curr->target == RELEASE && curr->operands.size() == 1) {
+    if (isReleaseCall(curr)) {
       if (auto* releasedCall = curr->operands[0]->dynCast<Call>()) {
-        if (releasedCall->target == RETAIN &&
-            releasedCall->operands.size() == 1) {
+        if (isRetainCall(releasedCall)) {
           if (auto* retainedCall = releasedCall->operands[0]->dynCast<Call>()) {
-            if (retainedCall->target == ALLOC ||
-                retainedCall->target == ALLOCARRAY) {
+            if (isAllocCall(retainedCall)) {
               // __release(__retain(__alloc(...))) - unnecessary allocation
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
               std::cerr << "  finalizing ";
@@ -479,7 +591,7 @@ struct FinalizeARC : public WalkerPass<PostWalker<FinalizeARC>> {
         replaceCurrent(builder.makeNop());
         ++eliminatedReleases;
       }
-    } else if (curr->target == RETAIN && curr->operands.size() == 1) {
+    } else if (isRetainCall(curr)) {
       if (auto* retainedConst = curr->operands[0]->dynCast<Const>()) {
         // __retain(42) - unnecessary static retain
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
@@ -494,9 +606,6 @@ struct FinalizeARC : public WalkerPass<PostWalker<FinalizeARC>> {
   }
 
   void doWalkFunction(Function* func) {
-    eliminatedAllocations = 0;
-    eliminatedRetains = 0;
-    eliminatedReleases = 0;
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
     std::cerr << "[PostAssemblyScript::FinalizeARC] walking " << func->name
               << "\n";
