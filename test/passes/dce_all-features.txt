@@ -501,3 +501,34 @@
   )
  )
 )
+(module
+ (type $FUNCSIG$v (func))
+ (func $foo (; 0 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $try_unreachable (; 1 ;) (type $FUNCSIG$v)
+  (try
+   (unreachable)
+   (catch
+   )
+  )
+  (call $foo)
+ )
+ (func $catch_unreachable (; 2 ;) (type $FUNCSIG$v)
+  (try
+   (nop)
+   (catch
+    (unreachable)
+   )
+  )
+  (call $foo)
+ )
+ (func $both_unreachable (; 3 ;) (type $FUNCSIG$v)
+  (try
+   (unreachable)
+   (catch
+    (unreachable)
+   )
+  )
+ )
+)
