@@ -1339,6 +1339,10 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case SubSatSVecI8x16:
     case SubSatUVecI8x16:
     case MulVecI8x16:
+    case MinSVecI8x16:
+    case MinUVecI8x16:
+    case MaxSVecI8x16:
+    case MaxUVecI8x16:
     case AddVecI16x8:
     case AddSatSVecI16x8:
     case AddSatUVecI16x8:
@@ -1346,9 +1350,17 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case SubSatSVecI16x8:
     case SubSatUVecI16x8:
     case MulVecI16x8:
+    case MinSVecI16x8:
+    case MinUVecI16x8:
+    case MaxSVecI16x8:
+    case MaxUVecI16x8:
     case AddVecI32x4:
     case SubVecI32x4:
     case MulVecI32x4:
+    case MinSVecI32x4:
+    case MinUVecI32x4:
+    case MaxSVecI32x4:
+    case MaxUVecI32x4:
     case AddVecI64x2:
     case SubVecI64x2:
     case AddVecF32x4:

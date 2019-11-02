@@ -757,6 +757,14 @@ public:
         return left.subSaturateUI8x16(right);
       case MulVecI8x16:
         return left.mulI8x16(right);
+      case MinSVecI8x16:
+        return left.minSI8x16(right);
+      case MinUVecI8x16:
+        return left.minUI8x16(right);
+      case MaxSVecI8x16:
+        return left.maxSI8x16(right);
+      case MaxUVecI8x16:
+        return left.maxUI8x16(right);
       case AddVecI16x8:
         return left.addI16x8(right);
       case AddSatSVecI16x8:
@@ -771,12 +779,28 @@ public:
         return left.subSaturateUI16x8(right);
       case MulVecI16x8:
         return left.mulI16x8(right);
+      case MinSVecI16x8:
+        return left.minSI16x8(right);
+      case MinUVecI16x8:
+        return left.minUI16x8(right);
+      case MaxSVecI16x8:
+        return left.maxSI16x8(right);
+      case MaxUVecI16x8:
+        return left.maxUI16x8(right);
       case AddVecI32x4:
         return left.addI32x4(right);
       case SubVecI32x4:
         return left.subI32x4(right);
       case MulVecI32x4:
         return left.mulI32x4(right);
+      case MinSVecI32x4:
+        return left.minSI32x4(right);
+      case MinUVecI32x4:
+        return left.minUI32x4(right);
+      case MaxSVecI32x4:
+        return left.maxSI32x4(right);
+      case MaxUVecI32x4:
+        return left.maxUI32x4(right);
       case AddVecI64x2:
         return left.addI64x2(right);
       case SubVecI64x2:
