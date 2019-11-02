@@ -21,7 +21,7 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] Hashing and comparing in src/ir/ExpressionAnalyzer.cpp
  - [ ] Parsing added in scripts/gen-s-parser.py and src/wasm/wasm-s-parser.cpp
  - [ ] Printing added in src/passes/Print.cpp
- - [ ] Decoding added in src/wasm/wasm-binary.cpp
+ - [ ] Decoding added in src/wasm-binary.h and src/wasm/wasm-binary.cpp
  - [ ] Binary writing added in src/wasm-stack.h and src/wasm/wasm-stack.cpp
  - [ ] Support added to src/tools/fuzzing.h
  - [ ] C API support added in src/binaryen-c.h and src/binaryen-c.cpp
