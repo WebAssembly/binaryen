@@ -137,15 +137,26 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
-    case Type::anyref: // anyref type is opaque
-    case Type::exnref: // exnref type is opaque
-    case Type::none:
-    case Type::unreachable:
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
+      break;
+    default:
       WASM_UNREACHABLE("invalid type");
   }
 }
 
 bool Literal::operator==(const Literal& other) const {
+  if (type.isRef() && other.type.isRef()) {
+    if (type == nullref && other.type == nullref) {
+      return true;
+    }
+    if (type == funcref && other.type == funcref && func == other.func) {
+      return true;
+    }
+    return false;
+  }
   if (type != other.type) {
     return false;
   }
@@ -273,9 +284,19 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "i32x4 ";
       literal.printVec128(o, literal.getv128());
       break;
-    case Type::anyref: // anyref type is opaque
-    case Type::exnref: // exnref type is opaque
-    case Type::unreachable:
+    case Type::funcref:
+      o << "funcref(" << literal.func << ")";
+      break;
+    case Type::anyref:
+      o << "anyref";
+      break;
+    case Type::nullref:
+      o << "nullref";
+      break;
+    case Type::exnref:
+      o << "exnref";
+      break;
+    default:
       WASM_UNREACHABLE("invalid type");
   }
   restoreNormalColor(o);
@@ -476,11 +497,7 @@ Literal Literal::eqz() const {
       return eq(Literal(float(0)));
     case Type::f64:
       return eq(Literal(double(0)));
-    case Type::v128:
-    case Type::anyref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("invalid type");
@@ -496,11 +513,7 @@ Literal Literal::neg() const {
       return Literal(i32 ^ 0x80000000).castToF32();
     case Type::f64:
       return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
-    case Type::v128:
-    case Type::anyref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("invalid type");
@@ -516,11 +529,7 @@ Literal Literal::abs() const {
       return Literal(i32 & 0x7fffffff).castToF32();
     case Type::f64:
       return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
-    case Type::v128:
-    case Type::anyref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");
@@ -619,11 +628,7 @@ Literal Literal::add(const Literal& other) const {
       return Literal(getf32() + other.getf32());
     case Type::f64:
       return Literal(getf64() + other.getf64());
-    case Type::v128:
-    case Type::anyref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");
@@ -639,11 +644,7 @@ Literal Literal::sub(const Literal& other) const {
       return Literal(getf32() - other.getf32());
     case Type::f64:
       return Literal(getf64() - other.getf64());
-    case Type::v128:
-    case Type::anyref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");
@@ -730,11 +731,7 @@ Literal Literal::mul(const Literal& other) const {
       return Literal(getf32() * other.getf32());
     case Type::f64:
       return Literal(getf64() * other.getf64());
-    case Type::v128:
-    case Type::anyref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");
@@ -962,11 +959,7 @@ Literal Literal::eq(const Literal& other) const {
       return Literal(getf32() == other.getf32());
     case Type::f64:
       return Literal(getf64() == other.getf64());
-    case Type::v128:
-    case Type::anyref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");
@@ -982,11 +975,7 @@ Literal Literal::ne(const Literal& other) const {
       return Literal(getf32() != other.getf32());
     case Type::f64:
       return Literal(getf64() != other.getf64());
-    case Type::v128:
-    case Type::anyref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");

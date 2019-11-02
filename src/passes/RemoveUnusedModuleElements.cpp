@@ -116,6 +116,12 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       usesMemory = true;
     }
   }
+  void visitRefFunc(RefFunc* curr) {
+    if (reachable.count(
+          ModuleElement(ModuleElementKind::Function, curr->func)) == 0) {
+      queue.emplace_back(ModuleElementKind::Function, curr->func);
+    }
+  }
   void visitThrow(Throw* curr) {
     if (reachable.count(ModuleElement(ModuleElementKind::Event, curr->event)) ==
         0) {

@@ -653,6 +653,9 @@ switch (op[0]) {
           default: goto parse_error;
         }
       }
+      case 'u':
+        if (strcmp(op, "funcref.pop") == 0) { return makePop(funcref); }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -2474,30 +2477,57 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'n':
-    if (strcmp(op, "nop") == 0) { return makeNop(); }
-    goto parse_error;
+  case 'n': {
+    switch (op[1]) {
+      case 'o':
+        if (strcmp(op, "nop") == 0) { return makeNop(); }
+        goto parse_error;
+      case 'u':
+        if (strcmp(op, "nullref.pop") == 0) { return makePop(nullref); }
+        goto parse_error;
+      default: goto parse_error;
+    }
+  }
   case 'p':
     if (strcmp(op, "push") == 0) { return makePush(s); }
     goto parse_error;
   case 'r': {
-    switch (op[3]) {
-      case 'h':
-        if (strcmp(op, "rethrow") == 0) { return makeRethrow(s); }
-        goto parse_error;
-      case 'u': {
-        switch (op[6]) {
-          case '\0':
-            if (strcmp(op, "return") == 0) { return makeReturn(s); }
+    switch (op[2]) {
+      case 'f': {
+        switch (op[4]) {
+          case 'f':
+            if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
             goto parse_error;
-          case '_': {
-            switch (op[11]) {
+          case 'i':
+            if (strcmp(op, "ref.is_null") == 0) { return makeRefIsNull(s); }
+            goto parse_error;
+          case 'n':
+            if (strcmp(op, "ref.null") == 0) { return makeRefNull(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      case 't': {
+        switch (op[3]) {
+          case 'h':
+            if (strcmp(op, "rethrow") == 0) { return makeRethrow(s); }
+            goto parse_error;
+          case 'u': {
+            switch (op[6]) {
               case '\0':
-                if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+                if (strcmp(op, "return") == 0) { return makeReturn(s); }
                 goto parse_error;
-              case '_':
-                if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
-                goto parse_error;
+              case '_': {
+                switch (op[11]) {
+                  case '\0':
+                    if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+                    goto parse_error;
+                  case '_':
+                    if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }

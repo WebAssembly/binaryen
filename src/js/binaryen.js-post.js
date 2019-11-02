@@ -36,7 +36,9 @@ Module['i64'] = Module['_BinaryenTypeInt64']();
 Module['f32'] = Module['_BinaryenTypeFloat32']();
 Module['f64'] = Module['_BinaryenTypeFloat64']();
 Module['v128'] = Module['_BinaryenTypeVec128']();
+Module['funcref'] = Module['_BinaryenTypeFuncref']();
 Module['anyref'] = Module['_BinaryenTypeAnyref']();
+Module['nullref'] = Module['_BinaryenTypeNullref']();
 Module['exnref'] = Module['_BinaryenTypeExnref']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
@@ -100,6 +102,9 @@ Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
 Module['DataDropId'] = Module['_BinaryenDataDropId']();
 Module['MemoryCopyId'] = Module['_BinaryenMemoryCopyId']();
 Module['MemoryFillId'] = Module['_BinaryenMemoryFillId']();
+Module['RefNullId'] = Module['_BinaryenRefNullId']();
+Module['RefIsNullId'] = Module['_BinaryenRefIsNullId']();
+Module['RefFuncId'] = Module['_BinaryenRefFuncId']();
 Module['TryId'] = Module['_BinaryenTryId']();
 Module['ThrowId'] = Module['_BinaryenThrowId']();
 Module['RethrowId'] = Module['_BinaryenRethrowId']();
@@ -1946,9 +1951,21 @@ function wrapModule(module, self) {
     },
   };
 
+  self['funcref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['funcref']);
+    }
+  };
+
   self['anyref'] = {
     'pop': function() {
       return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
+  self['nullref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['nullref']);
     }
   };
 
@@ -1958,8 +1975,23 @@ function wrapModule(module, self) {
     }
   };
 
-  self['select'] = function(condition, ifTrue, ifFalse) {
-    return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse);
+  self['ref'] = {
+    'null': function() {
+      return Module['_BinaryenRefNull'](module);
+    },
+    'is_null': function(anyref) {
+      return Module['_BinaryenRefIsNull'](module, anyref);
+    },
+    'func': function(func) {
+      return preserveStack(function() {
+        return Module['_BinaryenRefFunc'](module, strToStack(func));
+      });
+    }
+  };
+
+  self['select'] = function(condition, ifTrue, ifFalse, type) {
+    return Module['_BinaryenSelect'](
+      module, condition, ifTrue, ifFalse, typeof type !== 'undefined' ? type : Module['auto']);
   };
   self['drop'] = function(value) {
     return Module['_BinaryenDrop'](module, value);
@@ -2641,6 +2673,23 @@ Module['getExpressionInfo'] = function(expr) {
         'dest': Module['_BinaryenMemoryFillGetDest'](expr),
         'value': Module['_BinaryenMemoryFillGetValue'](expr),
         'size': Module['_BinaryenMemoryFillGetSize'](expr)
+      };
+    case Module['RefNullId']:
+      return {
+        'id': id,
+        'type': type
+      };
+    case Module['RefIsNullId']:
+      return {
+        'id': id,
+        'type': type,
+        'anyref': Module['_BinaryenRefIsNullGetAnyref'](expr)
+      };
+    case Module['RefFuncId']:
+      return {
+        'id': id,
+        'type': type,
+        'func': UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr)),
       };
     case Module['TryId']:
       return {

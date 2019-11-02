@@ -120,6 +120,9 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -197,6 +200,9 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -684,6 +690,30 @@ void BinaryenIRWriter<SubType>::visitHost(Host* curr) {
       visit(curr->operands[0]);
       break;
     }
+  }
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefNull(RefNull* curr) {
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefIsNull(RefIsNull* curr) {
+  visit(curr->anyref);
+  if (curr->type == unreachable) {
+    emitUnreachable();
+    return;
+  }
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefFunc(RefFunc* curr) {
+  if (curr->type == unreachable) {
+    emitUnreachable();
+    return;
   }
   emit(curr);
 }

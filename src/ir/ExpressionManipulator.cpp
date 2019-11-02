@@ -58,7 +58,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
                             curr->type);
     }
     Expression* visitLoop(Loop* curr) {
-      return builder.makeLoop(curr->name, copy(curr->body));
+      return builder.makeLoop(curr->name, copy(curr->body), curr->type);
     }
     Expression* visitBreak(Break* curr) {
       return builder.makeBreak(
@@ -208,8 +208,10 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return builder.makeBinary(curr->op, copy(curr->left), copy(curr->right));
     }
     Expression* visitSelect(Select* curr) {
-      return builder.makeSelect(
-        copy(curr->condition), copy(curr->ifTrue), copy(curr->ifFalse));
+      return builder.makeSelect(copy(curr->condition),
+                                copy(curr->ifTrue),
+                                copy(curr->ifFalse),
+                                curr->type);
     }
     Expression* visitDrop(Drop* curr) {
       return builder.makeDrop(copy(curr->value));
@@ -225,6 +227,13 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       auto* ret =
         builder.makeHost(curr->op, curr->nameOperand, std::move(operands));
       return ret;
+    }
+    Expression* visitRefNull(RefNull* curr) { return builder.makeRefNull(); }
+    Expression* visitRefIsNull(RefIsNull* curr) {
+      return builder.makeRefIsNull(copy(curr->anyref));
+    }
+    Expression* visitRefFunc(RefFunc* curr) {
+      return builder.makeRefFunc(curr->func);
     }
     Expression* visitTry(Try* curr) {
       return builder.makeTry(

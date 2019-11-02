@@ -173,13 +173,19 @@ const char* getExpressionName(Expression* curr) {
       return "push";
     case Expression::Id::PopId:
       return "pop";
-    case Expression::TryId:
+    case Expression::Id::RefNullId:
+      return "ref.null";
+    case Expression::Id::RefIsNullId:
+      return "ref.is_null";
+    case Expression::Id::RefFuncId:
+      return "ref.func";
+    case Expression::Id::TryId:
       return "try";
-    case Expression::ThrowId:
+    case Expression::Id::ThrowId:
       return "throw";
-    case Expression::RethrowId:
+    case Expression::Id::RethrowId:
       return "rethrow";
-    case Expression::BrOnExnId:
+    case Expression::Id::BrOnExnId:
       return "br_on_exn";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
@@ -247,27 +253,6 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
     }
   }
 };
-
-static Type mergeTypes(std::vector<Type>& types) {
-  Type type = unreachable;
-  for (auto other : types) {
-    // once none, stop. it then indicates a poison value, that must not be
-    // consumed and ignore unreachable
-    if (type != none) {
-      if (other == none) {
-        type = none;
-      } else if (other != unreachable) {
-        if (type == unreachable) {
-          type = other;
-        } else if (type != other) {
-          // poison value, we saw multiple types; this should not be consumed
-          type = none;
-        }
-      }
-    }
-  }
-  return type;
-}
 
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
@@ -364,19 +349,7 @@ void If::finalize(Type type_) {
 }
 
 void If::finalize() {
-  if (ifFalse) {
-    if (ifTrue->type == ifFalse->type) {
-      type = ifTrue->type;
-    } else if (ifTrue->type.isConcrete() && ifFalse->type == unreachable) {
-      type = ifTrue->type;
-    } else if (ifFalse->type.isConcrete() && ifTrue->type == unreachable) {
-      type = ifFalse->type;
-    } else {
-      type = none;
-    }
-  } else {
-    type = none; // if without else
-  }
+  type = ifFalse ? getLeastUpperBound(ifTrue->type, ifFalse->type) : none;
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
@@ -828,13 +801,15 @@ void Binary::finalize() {
   }
 }
 
+void Select::finalize(Type type_) { type = type_; }
+
 void Select::finalize() {
   assert(ifTrue && ifFalse);
   if (ifTrue->type == unreachable || ifFalse->type == unreachable ||
       condition->type == unreachable) {
     type = unreachable;
   } else {
-    type = ifTrue->type;
+    type = getLeastUpperBound(ifTrue->type, ifFalse->type);
   }
 }
 
@@ -864,17 +839,19 @@ void Host::finalize() {
   }
 }
 
-void Try::finalize() {
-  if (body->type == catchBody->type) {
-    type = body->type;
-  } else if (body->type.isConcrete() && catchBody->type == unreachable) {
-    type = body->type;
-  } else if (catchBody->type.isConcrete() && body->type == unreachable) {
-    type = catchBody->type;
-  } else {
-    type = none;
+void RefNull::finalize() { type = nullref; }
+
+void RefIsNull::finalize() {
+  if (anyref->type == unreachable) {
+    type = unreachable;
+    return;
   }
+  type = i32;
 }
+
+void RefFunc::finalize() { type = funcref; }
+
+void Try::finalize() { type = getLeastUpperBound(body->type, catchBody->type); }
 
 void Try::finalize(Type type_) {
   type = type_;

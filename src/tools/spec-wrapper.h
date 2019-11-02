@@ -48,10 +48,13 @@ static std::string generateSpecWrapper(Module& wasm) {
         case v128:
           ret += "(v128.const i32x4 0 0 0 0)";
           break;
-        case anyref: // there's no anyref.const
-        case exnref: // there's no exnref.const
-        case none:
-        case unreachable:
+        case funcref:
+        case anyref:
+        case nullref:
+        case exnref:
+          ret += "(ref.null)";
+          break;
+        default:
           WASM_UNREACHABLE("unexpected type");
       }
       ret += " ";

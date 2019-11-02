@@ -74,7 +74,16 @@ struct Operation {
     name = element[i++]->str();
     for (size_t j = i; j < element.size(); j++) {
       Expression* argument = builder.parseExpression(*element[j]);
-      arguments.push_back(argument->dynCast<Const>()->value);
+      if (auto* c = argument->dynCast<Const>()) {
+        arguments.push_back(c->value);
+      } else if (argument->is<RefNull>()) {
+        arguments.push_back(Literal(nullref));
+      } else if (auto* refFunc = argument->dynCast<RefFunc>()) {
+        arguments.push_back(Literal(refFunc->func));
+      } else {
+        assert(false &&
+               "Functions should be invoked with constant expressions");
+      }
     }
   }
 

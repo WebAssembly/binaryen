@@ -228,7 +228,7 @@ class CompareVMs(TestCaseHandler):
                 break
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types']])
 
 
 # Fuzz the interpreter with --fuzz-exec. This tests everything in a single command (no
@@ -294,7 +294,7 @@ class Wasm2JS(TestCaseHandler):
         return out
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types']])
 
 
 class Asyncify(TestCaseHandler):
@@ -339,7 +339,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call']])
+        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types']])
 
 
 # The global list of all test case handlers

@@ -49,7 +49,9 @@ instructions = [
     ("f32.pop",        "makePop(f32)"),
     ("f64.pop",        "makePop(f64)"),
     ("v128.pop",       "makePop(v128)"),
+    ("funcref.pop",    "makePop(funcref)"),
     ("anyref.pop",     "makePop(anyref)"),
+    ("nullref.pop",    "makePop(nullref)"),
     ("exnref.pop",     "makePop(exnref)"),
     ("i32.load",       "makeLoad(s, i32, /*isAtomic=*/false)"),
     ("i64.load",       "makeLoad(s, i64, /*isAtomic=*/false)"),
@@ -467,6 +469,11 @@ instructions = [
     ("i32x4.widen_low_i16x8_u",  "makeUnary(s, UnaryOp::WidenLowUVecI16x8ToVecI32x4)"),
     ("i32x4.widen_high_i16x8_u", "makeUnary(s, UnaryOp::WidenHighUVecI16x8ToVecI32x4)"),
     ("v8x16.swizzle",            "makeBinary(s, BinaryOp::SwizzleVec8x16)"),
+    # reference types instructions
+    # TODO Add table instructions
+    ("ref.null",             "makeRefNull(s)"),
+    ("ref.is_null",          "makeRefIsNull(s)"),
+    ("ref.func",             "makeRefFunc(s)"),
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),

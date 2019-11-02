@@ -131,6 +131,7 @@ public:
   Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryFill(MemoryFill* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitHost(Host* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  // TODO implement exception handling
   Flow visitTry(Try* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitThrow(Throw* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitRethrow(Rethrow* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
@@ -177,7 +178,8 @@ struct Precompute
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
-    if (curr->is<Const>() || curr->is<Nop>()) {
+    if (curr->is<Const>() || curr->is<Nop>() || curr->is<RefNull>() ||
+        curr->is<RefFunc>()) {
       return;
     }
     // Until engines implement v128.const and we have SIMD-aware optimizations
@@ -208,14 +210,15 @@ struct Precompute
                 return;
               }
             }
-            ret->value = Builder(*getModule()).makeConst(flow.value);
+            ret->value = Builder(*getModule()).makeConstExpression(flow.value);
           } else {
             ret->value = nullptr;
           }
         } else {
           Builder builder(*getModule());
           replaceCurrent(builder.makeReturn(
-            flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
+            flow.value.type != none ? builder.makeConstExpression(flow.value)
+                                    : nullptr));
         }
         return;
       }
@@ -234,7 +237,7 @@ struct Precompute
               return;
             }
           }
-          br->value = Builder(*getModule()).makeConst(flow.value);
+          br->value = Builder(*getModule()).makeConstExpression(flow.value);
         } else {
           br->value = nullptr;
         }
@@ -243,13 +246,14 @@ struct Precompute
         Builder builder(*getModule());
         replaceCurrent(builder.makeBreak(
           flow.breakTo,
-          flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
+          flow.value.type != none ? builder.makeConstExpression(flow.value)
+                                  : nullptr));
       }
       return;
     }
     // this was precomputed
     if (flow.value.type.isConcrete()) {
-      replaceCurrent(Builder(*getModule()).makeConst(flow.value));
+      replaceCurrent(Builder(*getModule()).makeConstExpression(flow.value));
       worked = true;
     } else {
       ExpressionManipulator::nop(curr);
@@ -350,7 +354,7 @@ private:
           } else {
             curr = setValues[set];
           }
-          if (curr.isNull()) {
+          if (curr.isNone()) {
             // not a constant, give up
             value = Literal();
             break;

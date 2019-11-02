@@ -66,5 +66,24 @@
    )
   )
  )
+ (func $4 (; 4 ;)
+  (try
+   (nop)
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (drop
+     (block $label$3 (result i32)
+      (rethrow
+       (br_on_exn $label$3 $event$0
+        (ref.null)
+       )
+      )
+     )
+    )
+   )
+  )
+ )
 )
 

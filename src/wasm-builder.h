@@ -110,6 +110,12 @@ public:
     ret->finalize();
     return ret;
   }
+  Block* makeBlock(const std::vector<Expression*>& items, Type type) {
+    auto* ret = allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize(type);
+    return ret;
+  }
   Block* makeBlock(const ExpressionList& items) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
@@ -162,6 +168,13 @@ public:
     ret->name = name;
     ret->body = body;
     ret->finalize();
+    return ret;
+  }
+  Loop* makeLoop(Name name, Expression* body, Type type) {
+    auto* ret = allocator.alloc<Loop>();
+    ret->name = name;
+    ret->body = body;
+    ret->finalize(type);
     return ret;
   }
   Break* makeBreak(Name name,
@@ -459,6 +472,7 @@ public:
     return ret;
   }
   Const* makeConst(Literal value) {
+    assert(value.type.isNumber());
     auto* ret = allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;
@@ -488,6 +502,17 @@ public:
     ret->finalize();
     return ret;
   }
+  Select* makeSelect(Expression* condition,
+                     Expression* ifTrue,
+                     Expression* ifFalse,
+                     Type type) {
+    auto* ret = allocator.alloc<Select>();
+    ret->condition = condition;
+    ret->ifTrue = ifTrue;
+    ret->ifFalse = ifFalse;
+    ret->finalize(type);
+    return ret;
+  }
   Return* makeReturn(Expression* value = nullptr) {
     auto* ret = allocator.alloc<Return>();
     ret->value = value;
@@ -499,6 +524,23 @@ public:
     ret->op = op;
     ret->nameOperand = nameOperand;
     ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
+  RefNull* makeRefNull() {
+    auto* ret = allocator.alloc<RefNull>();
+    ret->finalize();
+    return ret;
+  }
+  RefIsNull* makeRefIsNull(Expression* anyref) {
+    auto* ret = allocator.alloc<RefIsNull>();
+    ret->anyref = anyref;
+    ret->finalize();
+    return ret;
+  }
+  RefFunc* makeRefFunc(Name func) {
+    auto* ret = allocator.alloc<RefFunc>();
+    ret->func = func;
     ret->finalize();
     return ret;
   }
@@ -567,6 +609,21 @@ public:
     ret->value = value;
     ret->finalize();
     return ret;
+  }
+
+  Expression* makeConstExpression(Literal value) {
+    switch (value.type) {
+      case nullref:
+        return makeRefNull();
+      case funcref:
+        if (value.func != "") {
+          return makeRefFunc(value.func);
+        }
+        return makeRefNull();
+      default:
+        assert(value.type.isNumber());
+        return makeConst(value);
+    }
   }
 
   // Additional utility functions for building on top of nodes
@@ -663,6 +720,13 @@ public:
     return block;
   }
 
+  Block* makeSequence(Expression* left, Expression* right, Type type) {
+    auto* block = makeBlock(left);
+    block->list.push_back(right);
+    block->finalize(type);
+    return block;
+  }
+
   // Grab a slice out of a block, replacing it with nops, and returning
   // either another block with the contents (if more than 1) or a single
   // expression
@@ -728,16 +792,15 @@ public:
         value = Literal(bytes.data());
         break;
       }
+      case funcref:
       case anyref:
-        // TODO Implement and return nullref
-        assert(false && "anyref not implemented yet");
+      case nullref:
       case exnref:
-        // TODO Implement and return nullref
-        assert(false && "exnref not implemented yet");
+        return ExpressionManipulator::refNull(curr);
       case none:
         return ExpressionManipulator::nop(curr);
       case unreachable:
-        return ExpressionManipulator::convert<T, Unreachable>(curr);
+        return ExpressionManipulator::unreachable(curr);
     }
     return makeConst(value);
   }

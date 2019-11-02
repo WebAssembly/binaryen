@@ -141,6 +141,17 @@ struct LegalizeJSInterface : public Pass {
           replaceCurrent(Builder(*getModule())
                            .makeCall(iter->second, curr->operands, curr->type));
         }
+
+        void visitRefFunc(RefFunc* curr) {
+          auto iter = illegalImportsToLegal->find(curr->func);
+          if (iter == illegalImportsToLegal->end()) {
+            return;
+          }
+          if (iter->second == getFunction()->name) {
+            return;
+          }
+          replaceCurrent(Builder(*getModule()).makeRefFunc(iter->second));
+        }
       };
 
       FixImports(&illegalImportsToLegal).run(runner, module);

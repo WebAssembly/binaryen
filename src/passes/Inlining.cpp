@@ -326,6 +326,30 @@ struct Inlining : public Pass {
         infos[name].usedGlobally = true;
       }
     }
+
+    // Functions referenced by 'ref.func' instructions cannot be inlined
+    ModuleUtils::ParallelFunctionAnalysis<NameInfoMap> refFuncAnalysis(
+      *module, [&](Function* func, NameInfoMap& infos) {
+        if (func->imported()) {
+          return;
+        }
+        struct RefFuncUseFinder : PostWalker<RefFuncUseFinder> {
+          Module& module;
+          NameInfoMap& infos;
+          RefFuncUseFinder(Module& module, NameInfoMap& infos)
+            : module(module), infos(infos) {}
+          void visitRefFunc(RefFunc* curr) {
+            infos[curr->func].usedGlobally = true;
+          }
+        };
+        RefFuncUseFinder(*module, infos).walk(func->body);
+      });
+    for (auto& p : refFuncAnalysis.map) {
+      auto& map = p.second;
+      for (auto& kv : map) {
+        infos[kv.first].usedGlobally |= kv.second.usedGlobally;
+      }
+    }
   }
 
   bool iteration(PassRunner* runner, Module* module) {
