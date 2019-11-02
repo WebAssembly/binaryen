@@ -17,7 +17,7 @@
 #ifndef wasm_support_name_h
 #define wasm_support_name_h
 
-#include <cstring>
+#include <string>
 
 #include "emscripten-optimizer/istring.h"
 

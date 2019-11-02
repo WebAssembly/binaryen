@@ -12,10 +12,12 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.assertIn(error, p.stderr)
         self.assertIn('Fatal: error in validating input', p.stderr)
         self.assertNotEqual(p.returncode, 0)
-        p = shared.run_process(shared.WASM_OPT +
-                               ['--mvp-features', flag, '--print', '-o',
-                                os.devnull],
-                               input=module, check=False, capture_output=True)
+        p = shared.run_process(
+            shared.WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull] +
+            flag.split(),
+            input=module,
+            check=False,
+            capture_output=True)
         self.assertEqual(p.returncode, 0)
 
     def check_simd(self, module, error):
@@ -28,7 +30,10 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-bulk-memory')
 
     def check_exception_handling(self, module, error):
-        self.check_feature(module, error, '--enable-exception-handling')
+        # Exception handling implies reference types
+        self.check_feature(module, error,
+                           '--enable-reference-types ' +
+                           '--enable-exception-handling')
 
     def check_tail_call(self, module, error):
         self.check_feature(module, error, '--enable-tail-call')

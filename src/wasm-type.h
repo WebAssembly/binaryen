@@ -36,7 +36,9 @@ public:
     f32,
     f64,
     v128,
+    funcref,
     anyref,
+    nullref,
     exnref,
     _last_value_type,
   };
@@ -64,7 +66,8 @@ public:
   bool isInteger() const { return id == i32 || id == i64; }
   bool isFloat() const { return id == f32 || id == f64; }
   bool isVector() const { return id == v128; };
-  bool isRef() const { return id == anyref || id == exnref; }
+  bool isNumber() const { return id >= i32 && id <= v128; }
+  bool isRef() const { return id >= funcref && id <= exnref; }
 
   // (In)equality must be defined for both Type and ValueType because it is
   // otherwise ambiguous whether to convert both this and other to int or
@@ -119,14 +122,25 @@ constexpr Type i64 = Type::i64;
 constexpr Type f32 = Type::f32;
 constexpr Type f64 = Type::f64;
 constexpr Type v128 = Type::v128;
+constexpr Type funcref = Type::funcref;
 constexpr Type anyref = Type::anyref;
+constexpr Type nullref = Type::nullref;
 constexpr Type exnref = Type::exnref;
 constexpr Type unreachable = Type::unreachable;
 
 unsigned getTypeSize(Type type);
 FeatureSet getFeatures(Type type);
 Type getType(unsigned size, bool float_);
+bool isLeftSubTypeOfRight(Type left, Type right);
 Type reinterpretType(Type type);
+Type getLeastUpperBound(Type a, Type b);
+template<typename T> Type mergeTypes(const T& types) {
+  Type type = unreachable;
+  for (auto other : types) {
+    type = getLeastUpperBound(type, other);
+  }
+  return type;
+}
 
 } // namespace wasm
 

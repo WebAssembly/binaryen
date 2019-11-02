@@ -375,5 +375,17 @@
    )
   )
  )
+ (func $subtype-test
+  (local $0 anyref)
+  (local $1 nullref)
+  (local $2 nullref)
+  (local.set $0
+   (local.get $1)
+  )
+  (local.set $2
+    ;; This should NOT become $0, because types of $0 and $1 are different
+   (local.get $1)
+  )
+ )
 )
 

@@ -64,7 +64,8 @@ namespace wasm {
 namespace Flat {
 
 inline bool isControlFlowStructure(Expression* curr) {
-  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>();
+  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
+         curr->is<Try>();
 }
 
 inline void verifyFlatness(Function* func) {
@@ -79,10 +80,10 @@ inline void verifyFlatness(Function* func) {
         verify(!curr->type.isConcrete(), "tees are not allowed, only sets");
       } else {
         for (auto* child : ChildIterator(curr)) {
-          verify(child->is<Const>() || child->is<LocalGet>() ||
+          verify(child->isConstExpression() || child->is<LocalGet>() ||
                    child->is<Unreachable>(),
-                 "instructions must only have const, local.get, or unreachable "
-                 "as children");
+                 "instructions must only have constant expressions, local.get, "
+                 "or unreachable as children");
         }
       }
     }

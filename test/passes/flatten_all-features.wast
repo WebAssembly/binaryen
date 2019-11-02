@@ -1019,4 +1019,24 @@
   (func $return (param $x i32) (result i32)
     (return (i32.sub (i32.const 1) (i32.const 2)))
   )
+
+  ;; subtypes
+
+  ;; br_if leaves a value on the stack if not taken, which later can be the last
+  ;; element of the enclosing innermost block and flow out. So in case br_if
+  ;; targets an outer branch whose return type is a supertype of the br_if's
+  ;; value type, we need the value to be set into two locals: one with the outer
+  ;; block's type, and one with its value type.
+  (func $subtype (result anyref) (local $0 nullref)
+    (block $label0 (result anyref)
+      (block (result nullref)
+        (local.tee $0
+          (br_if $label0
+            (ref.null)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
 )

@@ -850,8 +850,14 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
       return v128;
     }
   }
+  if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
+    return funcref;
+  }
   if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
     return anyref;
+  }
+  if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
+    return nullref;
   }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return exnref;
@@ -859,7 +865,7 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (allowError) {
     return none;
   }
-  throw ParseException("invalid wasm type");
+  throw ParseException(std::string("invalid wasm type: ") + str);
 }
 
 Type SExpressionWasmBuilder::stringToLaneType(const char* str) {
@@ -936,10 +942,16 @@ Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op) {
 
 Expression* SExpressionWasmBuilder::makeSelect(Element& s) {
   auto ret = allocator.alloc<Select>();
-  ret->ifTrue = parseExpression(s[1]);
-  ret->ifFalse = parseExpression(s[2]);
-  ret->condition = parseExpression(s[3]);
-  ret->finalize();
+  Index i = 1;
+  Type type = parseOptionalResultType(s, i);
+  ret->ifTrue = parseExpression(s[i++]);
+  ret->ifFalse = parseExpression(s[i++]);
+  ret->condition = parseExpression(s[i]);
+  if (type.isConcrete()) {
+    ret->finalize(type);
+  } else {
+    ret->finalize();
+  }
   return ret;
 }
 
@@ -1715,6 +1727,27 @@ Expression* SExpressionWasmBuilder::makeReturn(Element& s) {
   if (s.size() >= 2) {
     ret->value = parseExpression(s[1]);
   }
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
+  auto ret = allocator.alloc<RefNull>();
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefIsNull(Element& s) {
+  auto ret = allocator.alloc<RefIsNull>();
+  ret->anyref = parseExpression(s[1]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
+  auto func = getFunctionName(*s[1]);
+  auto ret = allocator.alloc<RefFunc>();
+  ret->func = func;
+  ret->finalize();
   return ret;
 }
 

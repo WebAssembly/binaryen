@@ -64,15 +64,15 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::f64:
       ret.i64 = x.reinterpreti64();
       break;
-    case Type::v128: {
+    case Type::v128:
       memcpy(&ret.v128, x.getv128Ptr(), 16);
       break;
-    }
-
-    case Type::anyref: // there's no anyref literals
-    case Type::exnref: // there's no exnref literals
-    case Type::none:
-    case Type::unreachable:
+    case Type::nullref:
+      break;
+    case Type::funcref:
+      ret.func = x.getFunc();
+      break;
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   return ret;
@@ -90,10 +90,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.i64).castToF64();
     case Type::v128:
       return Literal(x.v128);
-    case Type::anyref: // there's no anyref literals
-    case Type::exnref: // there's no exnref literals
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("invalid type");
@@ -209,10 +206,7 @@ void printArg(std::ostream& setup, std::ostream& out, BinaryenLiteral arg) {
       out << "BinaryenLiteralVec128(" << array << ")";
       break;
     }
-    case Type::anyref: // there's no anyref literals
-    case Type::exnref: // there's no exnref literals
-    case Type::none:
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
 }
@@ -265,7 +259,9 @@ BinaryenType BinaryenTypeInt64(void) { return i64; }
 BinaryenType BinaryenTypeFloat32(void) { return f32; }
 BinaryenType BinaryenTypeFloat64(void) { return f64; }
 BinaryenType BinaryenTypeVec128(void) { return v128; }
+BinaryenType BinaryenTypeFuncref(void) { return funcref; }
 BinaryenType BinaryenTypeAnyref(void) { return anyref; }
+BinaryenType BinaryenTypeNullref(void) { return nullref; }
 BinaryenType BinaryenTypeExnref(void) { return exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
@@ -396,6 +392,15 @@ BinaryenExpressionId BinaryenMemoryCopyId(void) {
 }
 BinaryenExpressionId BinaryenMemoryFillId(void) {
   return Expression::Id::MemoryFillId;
+}
+BinaryenExpressionId BinaryenRefNullId(void) {
+  return Expression::Id::RefNullId;
+}
+BinaryenExpressionId BinaryenRefIsNullId(void) {
+  return Expression::Id::RefIsNullId;
+}
+BinaryenExpressionId BinaryenRefFuncId(void) {
+  return Expression::Id::RefFuncId;
 }
 BinaryenExpressionId BinaryenTryId(void) { return Expression::Id::TryId; }
 BinaryenExpressionId BinaryenThrowId(void) { return Expression::Id::ThrowId; }
@@ -1330,17 +1335,22 @@ BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module,
                                      BinaryenExpressionRef condition,
                                      BinaryenExpressionRef ifTrue,
-                                     BinaryenExpressionRef ifFalse) {
+                                     BinaryenExpressionRef ifFalse,
+                                     BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<Select>();
 
   if (tracing) {
-    traceExpression(ret, "BinaryenSelect", condition, ifTrue, ifFalse);
+    traceExpression(ret, "BinaryenSelect", condition, ifTrue, ifFalse, type);
   }
 
   ret->condition = (Expression*)condition;
   ret->ifTrue = (Expression*)ifTrue;
   ret->ifFalse = (Expression*)ifFalse;
-  ret->finalize();
+  if (type != BinaryenTypeAuto()) {
+    ret->finalize(Type(type));
+  } else {
+    ret->finalize();
+  }
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
@@ -1691,6 +1701,32 @@ BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
   auto* ret = Builder(*(Module*)module).makePop(Type(type));
   if (tracing) {
     traceExpression(ret, "BinaryenPop", type);
+  }
+  return static_cast<Expression*>(ret);
+}
+
+BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module) {
+  auto* ret = Builder(*(Module*)module).makeRefNull();
+  if (tracing) {
+    traceExpression(ret, "BinaryenRefNull");
+  }
+  return static_cast<Expression*>(ret);
+}
+
+BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
+                                        BinaryenExpressionRef anyref) {
+  auto* ret = Builder(*(Module*)module).makeRefIsNull((Expression*)anyref);
+  if (tracing) {
+    traceExpression(ret, "BinaryenRefIsNull", anyref);
+  }
+  return static_cast<Expression*>(ret);
+}
+
+BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
+                                      const char* func) {
+  auto* ret = Builder(*(Module*)module).makeRefFunc(func);
+  if (tracing) {
+    traceExpression(ret, "BinaryenRefFunc", StringLit(func));
   }
   return static_cast<Expression*>(ret);
 }
@@ -2963,6 +2999,28 @@ BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Push>());
   return static_cast<Push*>(expression)->value;
+}
+// RefIsNull
+BinaryenExpressionRef BinaryenRefIsNullGetAnyref(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenRefIsNullGetAnyref(expressions["
+              << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefIsNull>());
+  return static_cast<RefIsNull*>(expression)->anyref;
+}
+// RefFunc
+const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenRefFuncGetFunc(expressions[" << expressions[expr]
+              << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefFunc>());
+  return static_cast<RefFunc*>(expression)->func.c_str();
 }
 // Try
 BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr) {

@@ -67,7 +67,11 @@ struct ExecutionResults {
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
-        if (func->sig.results != Type::none) {
+        // We cannot compare funcrefs by name because function names can change
+        // (after duplicate function elimination or roundtripping) while the
+        // function contents are still the same
+        if (func->sig.results != Type::none &&
+            func->sig.results != Type::funcref) {
           // this has a result
           results[exp->name] = run(func, wasm, instance);
           // ignore the result if we hit an unreachable and returned no value
@@ -100,17 +104,17 @@ struct ExecutionResults {
       auto name = iter.first;
       if (results.find(name) == results.end()) {
         std::cout << "[fuzz-exec] missing " << name << '\n';
-        abort();
+        return false;
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
       if (results[name] != other.results[name]) {
         std::cout << "not identical!\n";
-        abort();
+        return false;
       }
     }
     if (loggings != other.loggings) {
       std::cout << "logging not identical!\n";
-      abort();
+      return false;
     }
     return true;
   }
@@ -138,7 +142,7 @@ struct ExecutionResults {
       // call the method
       for (Type param : func->sig.params.expand()) {
         // zeros in arguments TODO: more?
-        arguments.push_back(Literal(param));
+        arguments.push_back(Literal::makeZero(param));
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {

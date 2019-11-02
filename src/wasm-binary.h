@@ -343,10 +343,12 @@ enum EncodedType {
   f32 = -0x3,  // 0x7d
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
-  // elem_type
-  AnyFunc = -0x10, // 0x70
+  // function reference type
+  funcref = -0x10, // 0x70
   // opaque reference type
   anyref = -0x11, // 0x6f
+  // null reference type
+  nullref = -0x12, // 0x6e
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
@@ -402,6 +404,7 @@ enum ASTNodes {
 
   Drop = 0x1a,
   Select = 0x1b,
+  SelectWithType = 0x1c, // added in reference types proposal
 
   LocalGet = 0x20,
   LocalSet = 0x21,
@@ -867,6 +870,12 @@ enum ASTNodes {
   MemoryCopy = 0x0a,
   MemoryFill = 0x0b,
 
+  // reference types opcodes
+
+  RefNull = 0xd0,
+  RefIsNull = 0xd1,
+  RefFunc = 0xd2,
+
   // exception handling opcodes
 
   Try = 0x06,
@@ -914,8 +923,14 @@ inline S32LEB binaryType(Type type) {
     case v128:
       ret = BinaryConsts::EncodedType::v128;
       break;
+    case funcref:
+      ret = BinaryConsts::EncodedType::funcref;
+      break;
     case anyref:
       ret = BinaryConsts::EncodedType::anyref;
+      break;
+    case nullref:
+      ret = BinaryConsts::EncodedType::nullref;
       break;
     case exnref:
       ret = BinaryConsts::EncodedType::exnref;
@@ -1143,8 +1158,8 @@ public:
   // we store function imports here before wasm.addFunctionImport after we know
   // their names
   std::vector<Function*> functionImports;
-  // at index i we have all calls to the function i
-  std::map<Index, std::vector<Call*>> functionCalls;
+  // at index i we have all refs to the function i
+  std::map<Index, std::vector<Expression*>> functionRefs;
   Function* currFunction = nullptr;
   // before we see a function (like global init expressions), there is no end of
   // function to check
@@ -1279,12 +1294,15 @@ public:
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
-  void visitSelect(Select* curr);
+  void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   bool maybeVisitHost(Expression*& out, uint8_t code);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);

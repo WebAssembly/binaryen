@@ -193,11 +193,23 @@ void test_types() {
   BinaryenTypeExpand(v128, &valueType);
   assert(valueType == v128);
 
+  BinaryenType funcref = BinaryenTypeFuncref();
+  printf("  // BinaryenTypeFuncref: %d\n", funcref);
+  assert(BinaryenTypeArity(funcref) == 1);
+  BinaryenTypeExpand(funcref, &valueType);
+  assert(valueType == funcref);
+
   BinaryenType anyref = BinaryenTypeAnyref();
   printf("  // BinaryenTypeAnyref: %d\n", anyref);
   assert(BinaryenTypeArity(anyref) == 1);
   BinaryenTypeExpand(anyref, &valueType);
   assert(valueType == anyref);
+
+  BinaryenType nullref = BinaryenTypeNullref();
+  printf("  // BinaryenTypeNullref: %d\n", nullref);
+  assert(BinaryenTypeArity(nullref) == 1);
+  BinaryenTypeExpand(nullref, &valueType);
+  assert(valueType == nullref);
 
   BinaryenType exnref = BinaryenTypeExnref();
   printf("  // BinaryenTypeExnref: %d\n", exnref);
@@ -273,6 +285,9 @@ void test_core() {
                         temp10 = makeInt32(module, 1), temp11 = makeInt32(module, 3), temp12 = makeInt32(module, 5),
                         temp13 = makeInt32(module, 10), temp14 = makeInt32(module, 11),
                         temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
+  BinaryenExpressionRef nullrefExpr = BinaryenRefNull(module);
+  BinaryenExpressionRef funcrefExpr =
+    BinaryenRefFunc(module, "kitchen()sinker");
 
   // Events
   BinaryenAddEvent(
@@ -661,7 +676,7 @@ void test_core() {
       module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9)),
     BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32()),
     BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64()),
-    BinaryenSelect(module, temp10, temp11, temp12),
+    BinaryenSelect(module, temp10, temp11, temp12, BinaryenTypeAuto()),
     BinaryenReturn(module, makeInt32(module, 1337)),
     // Tail call
     BinaryenReturnCall(
@@ -672,6 +687,11 @@ void test_core() {
                                4,
                                iIfF,
                                BinaryenTypeInt32()),
+    // Reference types
+    BinaryenRefIsNull(module, nullrefExpr),
+    BinaryenRefIsNull(module, funcrefExpr),
+    BinaryenSelect(
+      module, temp10, nullrefExpr, funcrefExpr, BinaryenTypeFuncref()),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics
@@ -692,7 +712,12 @@ void test_core() {
     BinaryenPush(module, BinaryenPop(module, BinaryenTypeInt64())),
     BinaryenPush(module, BinaryenPop(module, BinaryenTypeFloat32())),
     BinaryenPush(module, BinaryenPop(module, BinaryenTypeFloat64())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeFuncref())),
     BinaryenPush(module, BinaryenPop(module, BinaryenTypeAnyref())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeNullref())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeExnref())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeFuncref())),
+    BinaryenPush(module, BinaryenPop(module, BinaryenTypeNullref())),
     BinaryenPush(module, BinaryenPop(module, BinaryenTypeExnref())),
 
     // TODO: Host

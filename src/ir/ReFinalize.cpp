@@ -44,23 +44,13 @@ void ReFinalize::visitBlock(Block* curr) {
     curr->type = none;
     return;
   }
-  // do this quickly, without any validation
-  // last element determines type
+  // Get the least upper bound type of the last element and all branch return
+  // values
   curr->type = curr->list.back()->type;
-  // if concrete, it doesn't matter if we have an unreachable child, and we
-  // don't need to look at breaks
-  if (curr->type.isConcrete()) {
-    return;
-  }
-  // otherwise, we have no final fallthrough element to determine the type,
-  // could be determined by breaks
   if (curr->name.is()) {
     auto iter = breakValues.find(curr->name);
     if (iter != breakValues.end()) {
-      // there is a break to here
-      auto type = iter->second;
-      assert(type != unreachable); // we would have removed such branches
-      curr->type = type;
+      curr->type = getLeastUpperBound(curr->type, iter->second);
       return;
     }
   }
@@ -130,6 +120,9 @@ void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
 void ReFinalize::visitHost(Host* curr) { curr->finalize(); }
+void ReFinalize::visitRefNull(RefNull* curr) { curr->finalize(); }
+void ReFinalize::visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
+void ReFinalize::visitRefFunc(RefFunc* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
@@ -159,8 +152,12 @@ void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {
-  if (type != unreachable || breakValues.count(name) == 0) {
-    breakValues[name] = type;
+  if (type != Type::unreachable) {
+    if (breakValues.count(name) == 0) {
+      breakValues[name] = type;
+    } else {
+      breakValues[name] = getLeastUpperBound(breakValues[name], type);
+    }
   }
 }
 

@@ -592,7 +592,9 @@ struct Reducer
                 fixed = builder->makeUnary(TruncSFloat64ToInt32, child);
                 break;
               case v128:
+              case funcref:
               case anyref:
+              case nullref:
               case exnref:
                 continue; // not implemented yet
               case none:
@@ -615,7 +617,9 @@ struct Reducer
                 fixed = builder->makeUnary(TruncSFloat64ToInt64, child);
                 break;
               case v128:
+              case funcref:
               case anyref:
+              case nullref:
               case exnref:
                 continue; // not implemented yet
               case none:
@@ -638,7 +642,9 @@ struct Reducer
                 fixed = builder->makeUnary(DemoteFloat64, child);
                 break;
               case v128:
+              case funcref:
               case anyref:
+              case nullref:
               case exnref:
                 continue; // not implemented yet
               case none:
@@ -661,7 +667,9 @@ struct Reducer
               case f64:
                 WASM_UNREACHABLE("unexpected type");
               case v128:
+              case funcref:
               case anyref:
+              case nullref:
               case exnref:
                 continue; // not implemented yet
               case none:
@@ -671,7 +679,9 @@ struct Reducer
             break;
           }
           case v128:
+          case funcref:
           case anyref:
+          case nullref:
           case exnref:
             continue; // not implemented yet
           case none:
@@ -999,6 +1009,10 @@ struct Reducer
       return false;
     }
     // try to replace with a trivial value
+    if (curr->type.isRef()) {
+      RefNull* n = builder->makeRefNull();
+      return tryToReplaceCurrent(n);
+    }
     Const* c = builder->makeConst(Literal(int32_t(0)));
     if (tryToReplaceCurrent(c)) {
       return true;

@@ -344,4 +344,8 @@
     (i32.const 12)
    )
   )
+  ;; Check if Precompute pass does not crash on reference types
+  (func $reftype-test (result nullref)
+    (ref.null)
+  )
 )
