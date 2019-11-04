@@ -1124,6 +1124,12 @@
        )
       )
       (drop
+       (i32x4.dot_i16x8_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (f32x4.div
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)

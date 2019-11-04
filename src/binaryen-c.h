@@ -504,6 +504,7 @@ BINARYEN_API BinaryenOp BinaryenMinSVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenMinUVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenMaxSVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI64x2(void);

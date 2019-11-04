@@ -364,6 +364,7 @@ public:
   Literal minUI32x4(const Literal& other) const;
   Literal maxSI32x4(const Literal& other) const;
   Literal maxUI32x4(const Literal& other) const;
+  Literal dotSI16x8toI32x4(const Literal& other) const;
   Literal negI64x2() const;
   Literal anyTrueI64x2() const;
   Literal allTrueI64x2() const;

@@ -842,6 +842,9 @@ BinaryenOp BinaryenMinSVecI32x4(void) { return MinSVecI32x4; }
 BinaryenOp BinaryenMinUVecI32x4(void) { return MinUVecI32x4; }
 BinaryenOp BinaryenMaxSVecI32x4(void) { return MaxSVecI32x4; }
 BinaryenOp BinaryenMaxUVecI32x4(void) { return MaxUVecI32x4; }
+BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void) {
+  return DotSVecI16x8ToVecI32x4;
+}
 BinaryenOp BinaryenNegVecI64x2(void) { return NegVecI64x2; }
 BinaryenOp BinaryenAnyTrueVecI64x2(void) { return AnyTrueVecI64x2; }
 BinaryenOp BinaryenAllTrueVecI64x2(void) { return AllTrueVecI64x2; }

@@ -1222,6 +1222,9 @@ struct PrintExpressionContents
       case MaxUVecI32x4:
         o << "i32x4.max_u";
         break;
+      case DotSVecI16x8ToVecI32x4:
+        o << "i32x4.dot_i16x8_s";
+        break;
       case AddVecI64x2:
         o << "i64x2.add";
         break;

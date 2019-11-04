@@ -150,6 +150,7 @@
  (func (export "i32x4.min_u") (param $0 v128) (param $1 v128) (result v128) (i32x4.min_u (local.get $0) (local.get $1)))
  (func (export "i32x4.max_s") (param $0 v128) (param $1 v128) (result v128) (i32x4.max_s (local.get $0) (local.get $1)))
  (func (export "i32x4.max_u") (param $0 v128) (param $1 v128) (result v128) (i32x4.max_u (local.get $0) (local.get $1)))
+ (func (export "i32x4.dot_i16x8_s") (param $0 v128) (param $1 v128) (result v128) (i32x4.dot_i16x8_s (local.get $0) (local.get $1)))
  (func (export "i64x2.neg") (param $0 v128) (result v128) (i64x2.neg (local.get $0)))
  (func (export "i64x2.any_true") (param $0 v128) (result i32) (i64x2.any_true (local.get $0)))
  (func (export "i64x2.all_true") (param $0 v128) (result i32) (i64x2.all_true (local.get $0)))
@@ -724,6 +725,10 @@
 (assert_return
   (invoke "i32x4.max_u" (v128.const i32x4 0 0x80000001 42 0xc0000000) (v128.const i32x4 0xffffffff 42 0 0xb0000000))
   (v128.const i32x4 0xffffffff 0x80000001 42 0xc0000000)
+)
+(assert_return
+  (invoke "i32x4.dot_i16x8_s" (v128.const i32x4 0 1 2 3 4 5 6 7) (v128.const i32x4 -1 2 -3 4 5 6 -7 -8))
+  (v128.const i32x4 2 6 50 -98)
 )
 
 ;; i64x2 arithmetic

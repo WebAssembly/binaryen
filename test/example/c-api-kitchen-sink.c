@@ -454,6 +454,7 @@ void test_core() {
     makeBinary(module, BinaryenMinUVecI32x4(), 5),
     makeBinary(module, BinaryenMaxSVecI32x4(), 5),
     makeBinary(module, BinaryenMaxUVecI32x4(), 5),
+    makeBinary(module, BinaryenDotSVecI16x8ToVecI32x4(), 5),
     makeBinary(module, BinaryenDivVecF32x4(), 5),
     makeBinary(module, BinaryenMinVecF32x4(), 5),
     makeBinary(module, BinaryenMaxVecF32x4(), 5),

@@ -1409,6 +1409,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'd':
+                if (strcmp(op, "i32x4.dot_i16x8_s") == 0) { return makeBinary(s, BinaryOp::DotSVecI16x8ToVecI32x4); }
+                goto parse_error;
               case 'e': {
                 switch (op[7]) {
                   case 'q':

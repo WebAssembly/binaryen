@@ -1459,6 +1459,10 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case MaxUVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MaxU);
       break;
+    case DotSVecI16x8ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4DotSVecI16x8);
+      break;
     case AddVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Add);
       break;
