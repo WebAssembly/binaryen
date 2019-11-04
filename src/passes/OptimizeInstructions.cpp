@@ -1312,6 +1312,8 @@ private:
                    !EffectAnalyzer(getPassOptions(), binary->left)
                       .hasSideEffects()) {
           return binary->right;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::EqZ) {
+          return Builder(*getModule()).makeUnary(binary->left->type == i64 ? EqZInt64 : EqZInt32, binary->left);
         }
       }
       // operations on all 1s
