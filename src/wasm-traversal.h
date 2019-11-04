@@ -1075,6 +1075,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::PushId: {
         self->pushTask(SubType::doVisitPush, currp);
+        self->pushTask(SubType::scan, &curr->cast<Push>()->value);
         break;
       }
       case Expression::Id::PopId: {
