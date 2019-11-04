@@ -648,6 +648,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case MaxUVecI32x4:
         ret = 1;
         break;
+      case DotSVecI16x8ToVecI32x4:
+        ret = 1;
+        break;
       case AddVecI64x2:
         ret = 1;
         break;

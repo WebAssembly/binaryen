@@ -1829,6 +1829,17 @@ Literal Literal::maxF64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesF64x2, &Literal::max>(*this, other);
 }
 
+Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
+  LaneArray<8> lhs = getLanesSI16x8();
+  LaneArray<8> rhs = other.getLanesSI16x8();
+  LaneArray<4> result;
+  for (size_t i = 0; i < 4; ++i) {
+    result[i] = Literal(lhs[i * 2].geti32() * rhs[i * 2].geti32() +
+                        lhs[i * 2 + 1].geti32() * rhs[i * 2 + 1].geti32());
+  }
+  return Literal(result);
+}
+
 Literal Literal::bitselectV128(const Literal& left,
                                const Literal& right) const {
   return andV128(left).orV128(notV128().andV128(right));

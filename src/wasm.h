@@ -383,6 +383,7 @@ enum BinaryOp {
   MinUVecI32x4,
   MaxSVecI32x4,
   MaxUVecI32x4,
+  DotSVecI16x8ToVecI32x4,
   AddVecI64x2,
   SubVecI64x2,
   AddVecF32x4,

@@ -405,6 +405,7 @@ instructions = [
     ("i32x4.min_u",          "makeBinary(s, BinaryOp::MinUVecI32x4)"),
     ("i32x4.max_s",          "makeBinary(s, BinaryOp::MaxSVecI32x4)"),
     ("i32x4.max_u",          "makeBinary(s, BinaryOp::MaxUVecI32x4)"),
+    ("i32x4.dot_i16x8_s",    "makeBinary(s, BinaryOp::DotSVecI16x8ToVecI32x4)"),
     ("i64x2.neg",            "makeUnary(s, UnaryOp::NegVecI64x2)"),
     ("i64x2.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI64x2)"),
     ("i64x2.all_true",       "makeUnary(s, UnaryOp::AllTrueVecI64x2)"),

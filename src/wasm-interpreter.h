@@ -801,6 +801,8 @@ public:
         return left.maxSI32x4(right);
       case MaxUVecI32x4:
         return left.maxUI32x4(right);
+      case DotSVecI16x8ToVecI32x4:
+        return left.dotSI16x8toI32x4(right);
       case AddVecI64x2:
         return left.addI64x2(right);
       case SubVecI64x2:

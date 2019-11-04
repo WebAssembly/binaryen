@@ -697,6 +697,12 @@
    (local.get $1)
   )
  )
+ (func $i32x4.dot_i16x8_s (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.dot_i16x8_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $i64x2.neg (param $0 v128) (result v128)
   (i64x2.neg
    (local.get $0)

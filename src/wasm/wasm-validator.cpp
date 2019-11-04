@@ -1361,6 +1361,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MinUVecI32x4:
     case MaxSVecI32x4:
     case MaxUVecI32x4:
+    case DotSVecI16x8ToVecI32x4:
     case AddVecI64x2:
     case SubVecI64x2:
     case AddVecF32x4:
