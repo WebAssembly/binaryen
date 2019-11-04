@@ -532,3 +532,14 @@
   )
  )
 )
+(module
+ (type $FUNCSIG$v (func))
+ (func $foo (; 0 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $push_unreachable (; 1 ;) (type $FUNCSIG$v)
+  (push
+   (unreachable)
+  )
+ )
+)

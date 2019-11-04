@@ -768,3 +768,14 @@
     (call $foo) ;; should be dce'd
   )
 )
+
+;; Push-pop
+(module
+  (func $foo)
+  (func $push_unreachable
+    (push
+      (unreachable)
+    )
+    (call $foo) ;; should be dce'd
+  )
+)
