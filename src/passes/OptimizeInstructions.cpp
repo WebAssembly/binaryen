@@ -1312,6 +1312,8 @@ private:
                    !EffectAnalyzer(getPassOptions(), binary->left)
                       .hasSideEffects()) {
           return binary->right;
+        } else if (binary->op == EqInt64) {
+          return Builder(*getModule()).makeUnary(EqZInt64, binary->left);
         }
       }
       // operations on all 1s
