@@ -688,10 +688,11 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   struct AsmConst {
     std::set<std::string> sigs;
     Address id;
+    std::string code;
     Proxying proxy;
   };
 
-  std::map<std::string, AsmConst> asmConsts;
+  std::vector<AsmConst> asmConsts;
   std::set<std::pair<std::string, Proxying>> allSigs;
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
@@ -839,14 +840,13 @@ AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(uint32_t id,
                                                          std::string code,
                                                          std::string sig,
                                                          Name name) {
-  if (asmConsts.count(code) == 0) {
-    AsmConst asmConst;
-    asmConst.id = id;
-    asmConst.sigs.insert(sig);
-    asmConst.proxy = proxyType(name);
-    asmConsts[code] = asmConst;
-  }
-  return asmConsts[code];
+  AsmConst asmConst;
+  asmConst.id = id;
+  asmConst.code = code;
+  asmConst.sigs.insert(sig);
+  asmConst.proxy = proxyType(name);
+  asmConsts.push_back(asmConst);
+  return asmConsts.back();
 }
 
 std::string AsmConstWalker::asmConstSig(std::string baseSig) {
@@ -1105,11 +1105,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   if (!emAsmWalker.asmConsts.empty()) {
     meta << "  \"asmConsts\": {";
-    for (auto& pair : emAsmWalker.asmConsts) {
-      auto& code = pair.first;
-      auto& asmConst = pair.second;
+    for (auto& asmConst : emAsmWalker.asmConsts) {
       meta << nextElement();
-      meta << '"' << asmConst.id << "\": [\"" << code << "\", ";
+      meta << '"' << asmConst.id << "\": [\"" << asmConst.code << "\", ";
       printSet(meta, asmConst.sigs);
       meta << ", [\"" << proxyingSuffix(asmConst.proxy) << "\"]";
 
