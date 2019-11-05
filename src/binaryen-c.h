@@ -470,6 +470,10 @@ BINARYEN_API BinaryenOp BinaryenSubVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenSubSatSVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenSubSatUVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenMulVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenMinSVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenMinUVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenMaxSVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenMaxUVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI16x8(void);
@@ -483,6 +487,10 @@ BINARYEN_API BinaryenOp BinaryenSubVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenSubSatSVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenSubSatUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMulVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenMinSVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenMinUVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenMaxSVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenMaxUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI32x4(void);
@@ -492,6 +500,11 @@ BINARYEN_API BinaryenOp BinaryenShrUVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAddVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenSubVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenMulVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenMinSVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenMinUVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenMaxSVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenMaxUVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI64x2(void);
@@ -1307,8 +1320,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 // Serialize a module in s-expression form. Implicity allocates the returned
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
-BINARYEN_API char*
-BinaryenModuleAllocateAndWriteText(BinaryenModuleRef* module);
+BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
 
 // Deserialize a module from binary form.
 BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,

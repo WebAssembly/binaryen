@@ -3851,6 +3851,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI8x16;
       break;
+    case BinaryConsts::I8x16MinS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinSVecI8x16;
+      break;
+    case BinaryConsts::I8x16MinU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinUVecI8x16;
+      break;
+    case BinaryConsts::I8x16MaxS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxSVecI8x16;
+      break;
+    case BinaryConsts::I8x16MaxU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxUVecI8x16;
+      break;
     case BinaryConsts::I16x8Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI16x8;
@@ -3879,6 +3895,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI16x8;
       break;
+    case BinaryConsts::I16x8MinS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinSVecI16x8;
+      break;
+    case BinaryConsts::I16x8MinU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinUVecI16x8;
+      break;
+    case BinaryConsts::I16x8MaxS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxSVecI16x8;
+      break;
+    case BinaryConsts::I16x8MaxU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxUVecI16x8;
+      break;
     case BinaryConsts::I32x4Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI32x4;
@@ -3890,6 +3922,26 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I32x4Mul:
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI32x4;
+      break;
+    case BinaryConsts::I32x4MinS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinSVecI32x4;
+      break;
+    case BinaryConsts::I32x4MinU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinUVecI32x4;
+      break;
+    case BinaryConsts::I32x4MaxS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxSVecI32x4;
+      break;
+    case BinaryConsts::I32x4MaxU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxUVecI32x4;
+      break;
+    case BinaryConsts::I32x4DotSVecI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = DotSVecI16x8ToVecI32x4;
       break;
     case BinaryConsts::I64x2Add:
       curr = allocator.alloc<Binary>();

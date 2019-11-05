@@ -1156,6 +1156,18 @@ struct PrintExpressionContents
       case MulVecI8x16:
         o << "i8x16.mul";
         break;
+      case MinSVecI8x16:
+        o << "i8x16.min_s";
+        break;
+      case MinUVecI8x16:
+        o << "i8x16.min_u";
+        break;
+      case MaxSVecI8x16:
+        o << "i8x16.max_s";
+        break;
+      case MaxUVecI8x16:
+        o << "i8x16.max_u";
+        break;
       case AddVecI16x8:
         o << "i16x8.add";
         break;
@@ -1177,6 +1189,18 @@ struct PrintExpressionContents
       case MulVecI16x8:
         o << "i16x8.mul";
         break;
+      case MinSVecI16x8:
+        o << "i16x8.min_s";
+        break;
+      case MinUVecI16x8:
+        o << "i16x8.min_u";
+        break;
+      case MaxSVecI16x8:
+        o << "i16x8.max_s";
+        break;
+      case MaxUVecI16x8:
+        o << "i16x8.max_u";
+        break;
       case AddVecI32x4:
         o << "i32x4.add";
         break;
@@ -1185,6 +1209,21 @@ struct PrintExpressionContents
         break;
       case MulVecI32x4:
         o << "i32x4.mul";
+        break;
+      case MinSVecI32x4:
+        o << "i32x4.min_s";
+        break;
+      case MinUVecI32x4:
+        o << "i32x4.min_u";
+        break;
+      case MaxSVecI32x4:
+        o << "i32x4.max_s";
+        break;
+      case MaxUVecI32x4:
+        o << "i32x4.max_u";
+        break;
+      case DotSVecI16x8ToVecI32x4:
+        o << "i32x4.dot_i16x8_s";
         break;
       case AddVecI64x2:
         o << "i64x2.add";

@@ -30,7 +30,7 @@
   (local $t2 i32)
   (drop
    (call $emscripten_asm_const_i
-    (i32.const 0)
+    (i32.const 568)
    )
   )
   (local.set $t1
@@ -41,9 +41,9 @@
   )
   (drop
    (call $emscripten_asm_const_ii
-    (i32.const 2)
+    (local.get $t1)
     (call $emscripten_asm_const_iii
-     (i32.const 1)
+     (local.get $t2)
      (i32.const 13)
      (i32.const 27)
     )
@@ -87,9 +87,9 @@
 --BEGIN METADATA --
 {
   "asmConsts": {
-    "2": ["{ Module.print(\"Got \" + $0); }", ["ii"], [""]],
-    "0": ["{ Module.print(\"Hello world\"); }", ["i"], [""]],
-    "1": ["{ return $0 + $1; }", ["iii"], [""]]
+    "568": ["{ Module.print(\"Hello world\"); }", ["i"], [""]],
+    "601": ["{ return $0 + $1; }", ["iii"], [""]],
+    "621": ["{ Module.print(\"Got \" + $0); }", ["ii"], [""]]
   },
   "staticBump": 84,
   "tableSize": 1,

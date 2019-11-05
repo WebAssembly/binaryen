@@ -793,9 +793,36 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
-          case 'm':
-            if (strcmp(op, "i16x8.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI16x8); }
-            goto parse_error;
+          case 'm': {
+            switch (op[7]) {
+              case 'a': {
+                switch (op[10]) {
+                  case 's':
+                    if (strcmp(op, "i16x8.max_s") == 0) { return makeBinary(s, BinaryOp::MaxSVecI16x8); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i16x8.max_u") == 0) { return makeBinary(s, BinaryOp::MaxUVecI16x8); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'i': {
+                switch (op[10]) {
+                  case 's':
+                    if (strcmp(op, "i16x8.min_s") == 0) { return makeBinary(s, BinaryOp::MinSVecI16x8); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i16x8.min_u") == 0) { return makeBinary(s, BinaryOp::MinUVecI16x8); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'u':
+                if (strcmp(op, "i16x8.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI16x8); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 'n': {
             switch (op[7]) {
               case 'a': {
@@ -1382,6 +1409,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'd':
+                if (strcmp(op, "i32x4.dot_i16x8_s") == 0) { return makeBinary(s, BinaryOp::DotSVecI16x8ToVecI32x4); }
+                goto parse_error;
               case 'e': {
                 switch (op[7]) {
                   case 'q':
@@ -1458,9 +1488,36 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'm':
-                if (strcmp(op, "i32x4.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI32x4); }
-                goto parse_error;
+              case 'm': {
+                switch (op[7]) {
+                  case 'a': {
+                    switch (op[10]) {
+                      case 's':
+                        if (strcmp(op, "i32x4.max_s") == 0) { return makeBinary(s, BinaryOp::MaxSVecI32x4); }
+                        goto parse_error;
+                      case 'u':
+                        if (strcmp(op, "i32x4.max_u") == 0) { return makeBinary(s, BinaryOp::MaxUVecI32x4); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'i': {
+                    switch (op[10]) {
+                      case 's':
+                        if (strcmp(op, "i32x4.min_s") == 0) { return makeBinary(s, BinaryOp::MinSVecI32x4); }
+                        goto parse_error;
+                      case 'u':
+                        if (strcmp(op, "i32x4.min_u") == 0) { return makeBinary(s, BinaryOp::MinUVecI32x4); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'u':
+                    if (strcmp(op, "i32x4.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI32x4); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'n': {
                 switch (op[8]) {
                   case '\0':
@@ -2268,9 +2325,36 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
-          case 'm':
-            if (strcmp(op, "i8x16.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI8x16); }
-            goto parse_error;
+          case 'm': {
+            switch (op[7]) {
+              case 'a': {
+                switch (op[10]) {
+                  case 's':
+                    if (strcmp(op, "i8x16.max_s") == 0) { return makeBinary(s, BinaryOp::MaxSVecI8x16); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i8x16.max_u") == 0) { return makeBinary(s, BinaryOp::MaxUVecI8x16); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'i': {
+                switch (op[10]) {
+                  case 's':
+                    if (strcmp(op, "i8x16.min_s") == 0) { return makeBinary(s, BinaryOp::MinSVecI8x16); }
+                    goto parse_error;
+                  case 'u':
+                    if (strcmp(op, "i8x16.min_u") == 0) { return makeBinary(s, BinaryOp::MinUVecI8x16); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'u':
+                if (strcmp(op, "i8x16.mul") == 0) { return makeBinary(s, BinaryOp::MulVecI8x16); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 'n': {
             switch (op[7]) {
               case 'a': {

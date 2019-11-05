@@ -734,3 +734,48 @@
  )
 )
 
+;; Exception handling instruction support
+;; If either try body or catch body is reachable, the whole try construct is
+;; reachable
+(module
+  (func $foo)
+
+  (func $try_unreachable
+    (try
+      (unreachable)
+      (catch
+      )
+    )
+    (call $foo) ;; shouldn't be dce'd
+  )
+
+  (func $catch_unreachable
+    (try
+      (catch
+        (unreachable)
+      )
+    )
+    (call $foo) ;; shouldn't be dce'd
+  )
+
+  (func $both_unreachable
+    (try
+      (unreachable)
+      (catch
+        (unreachable)
+      )
+    )
+    (call $foo) ;; should be dce'd
+  )
+)
+
+;; Push-pop
+(module
+  (func $foo)
+  (func $push_unreachable
+    (push
+      (unreachable)
+    )
+    (call $foo) ;; should be dce'd
+  )
+)
