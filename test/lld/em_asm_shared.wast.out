@@ -218,9 +218,9 @@
 --BEGIN METADATA --
 {
   "asmConsts": {
-    "53": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]],
     "0": ["{ Module.print(\"Hello world\"); }", ["iii"], [""]],
-    "33": ["{ return $0 + $1; }", ["iii"], [""]]
+    "33": ["{ return $0 + $1; }", ["iii"], [""]],
+    "53": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]]
   },
   "staticBump": 0,
   "tableSize": 0,

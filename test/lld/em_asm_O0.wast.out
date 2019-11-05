@@ -87,9 +87,9 @@
 --BEGIN METADATA --
 {
   "asmConsts": {
-    "621": ["{ Module.print(\"Got \" + $0); }", ["ii"], [""]],
     "568": ["{ Module.print(\"Hello world\"); }", ["i"], [""]],
-    "601": ["{ return $0 + $1; }", ["iii"], [""]]
+    "601": ["{ return $0 + $1; }", ["iii"], [""]],
+    "621": ["{ Module.print(\"Got \" + $0); }", ["ii"], [""]]
   },
   "staticBump": 84,
   "tableSize": 1,
