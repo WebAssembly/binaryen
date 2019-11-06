@@ -388,7 +388,7 @@ private:
 
   void setupGlobals() {
     size_t index = 0;
-    for (auto type : {i32, i64, f32, f64}) {
+    for (auto type : getConcreteTypes()) {
       auto num = upTo(3);
       for (size_t i = 0; i < num; i++) {
         auto* glob =
@@ -455,7 +455,7 @@ private:
   }
 
   void addImportLoggingSupport() {
-    for (auto type : {i32, i64, f32, f64}) {
+    for (auto type : getConcreteTypes()) {
       auto* func = new Function;
       Name name = std::string("log-") + printType(type);
       func->name = name;
@@ -628,10 +628,10 @@ private:
       std::vector<Expression*> trimmed;
       size_t num = upToSquared(list.size());
       for (size_t i = 0; i < num; i++) {
-        trimmed.push_back(vectorPick(list));
+        trimmed.push_back(pick(list));
       }
       if (trimmed.empty()) {
-        trimmed.push_back(vectorPick(list));
+        trimmed.push_back(pick(list));
       }
       list.swap(trimmed);
     }
@@ -659,7 +659,7 @@ private:
           auto& candidates = scanner.exprsByType[curr->type];
           assert(!candidates.empty()); // this expression itself must be there
           replaceCurrent(
-            ExpressionManipulator::copy(parent.vectorPick(candidates), wasm));
+            ExpressionManipulator::copy(parent.pick(candidates), wasm));
         }
       }
     };
@@ -1128,7 +1128,7 @@ private:
     // we need to find a proper target to break to; try a few times
     int tries = TRIES;
     while (tries-- > 0) {
-      auto* target = vectorPick(breakableStack);
+      auto* target = pick(breakableStack);
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
       if (isConcreteType(type)) {
@@ -1206,7 +1206,7 @@ private:
     while (tries-- > 0) {
       Function* target = func;
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
-        target = vectorPick(wasm.functions).get();
+        target = pick(wasm.functions).get();
       }
       isReturn = type == unreachable && wasm.features.hasTailCall() &&
                  func->result == target->result;
@@ -1272,7 +1272,7 @@ private:
     if (locals.empty()) {
       return makeConst(type);
     }
-    return builder.makeLocalGet(vectorPick(locals), type);
+    return builder.makeLocalGet(pick(locals), type);
   }
 
   Expression* makeLocalSet(Type type) {
@@ -1289,9 +1289,9 @@ private:
     }
     auto* value = make(valueType);
     if (tee) {
-      return builder.makeLocalTee(vectorPick(locals), value);
+      return builder.makeLocalTee(pick(locals), value);
     } else {
-      return builder.makeLocalSet(vectorPick(locals), value);
+      return builder.makeLocalSet(pick(locals), value);
     }
   }
 
@@ -1300,7 +1300,7 @@ private:
     if (globals.empty()) {
       return makeConst(type);
     }
-    return builder.makeGlobalGet(vectorPick(globals), type);
+    return builder.makeGlobalGet(pick(globals), type);
   }
 
   Expression* makeGlobalSet(Type type) {
@@ -1311,7 +1311,7 @@ private:
       return makeTrivial(none);
     }
     auto* value = make(type);
-    return builder.makeGlobalSet(vectorPick(globals), value);
+    return builder.makeGlobalSet(pick(globals), value);
   }
 
   Expression* makePointer() {
@@ -2219,7 +2219,7 @@ private:
     std::vector<Name> names;
     Type valueType = unreachable;
     while (tries-- > 0) {
-      auto* target = vectorPick(breakableStack);
+      auto* target = pick(breakableStack);
       auto name = getTargetName(target);
       auto currValueType = getTargetType(target);
       if (names.empty()) {
@@ -2605,7 +2605,7 @@ private:
   // special makers
 
   Expression* makeLogging() {
-    auto type = pick(i32, i64, f32, f64);
+    auto type = getConcreteType();
     return builder.makeCall(
       std::string("log-") + printType(type), {make(type)}, none);
   }
@@ -2617,23 +2617,19 @@ private:
 
   // special getters
 
-  Type getType() {
-    return pick(FeatureOptions<Type>()
-                  .add(FeatureSet::MVP, i32, i64, f32, f64, none, unreachable)
-                  .add(FeatureSet::SIMD, v128));
-  }
-
   Type getReachableType() {
     return pick(FeatureOptions<Type>()
                   .add(FeatureSet::MVP, i32, i64, f32, f64, none)
                   .add(FeatureSet::SIMD, v128));
   }
 
-  Type getConcreteType() {
-    return pick(FeatureOptions<Type>()
-                  .add(FeatureSet::MVP, i32, i64, f32, f64)
-                  .add(FeatureSet::SIMD, v128));
+  std::vector<Type> getConcreteTypes() {
+    return items(FeatureOptions<Type>()
+                   .add(FeatureSet::MVP, i32, i64, f32, f64)
+                   .add(FeatureSet::SIMD, v128));
   }
+
+  Type getConcreteType() { return pick(getConcreteTypes()); }
 
   // statistical distributions
 
@@ -2676,7 +2672,7 @@ private:
   Index upToSquared(Index x) { return upTo(upTo(x)); }
 
   // pick from a vector
-  template<typename T> const T& vectorPick(const std::vector<T>& vec) {
+  template<typename T> const T& pick(const std::vector<T>& vec) {
     assert(!vec.empty());
     auto index = upTo(vec.size());
     return vec[index];
@@ -2727,7 +2723,7 @@ private:
     std::map<FeatureSet::Feature, std::vector<T>> options;
   };
 
-  template<typename T> const T pick(FeatureOptions<T>& picker) {
+  template<typename T> std::vector<T> items(FeatureOptions<T>& picker) {
     std::vector<T> matches;
     for (const auto& item : picker.options) {
       if (wasm.features.has(item.first)) {
@@ -2735,7 +2731,11 @@ private:
         matches.insert(matches.end(), item.second.begin(), item.second.end());
       }
     }
-    return vectorPick(matches);
+    return matches;
+  }
+
+  template<typename T> const T pick(FeatureOptions<T>& picker) {
+    return pick(items(picker));
   }
 
   // utilities
