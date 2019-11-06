@@ -166,7 +166,7 @@ def run_bynterp(wasm, args):
 
 
 def run_d8(wasm):
-  return run_vm([V8] + V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
+    return run_vm([V8] + V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
 
 
 # There are two types of test case handlers:
