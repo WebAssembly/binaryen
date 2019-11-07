@@ -22,7 +22,7 @@ import shutil
 import sys
 import time
 
-from test.shared import options, NODEJS, V8_OPTS
+from test.shared import options, NODEJS, V8_OPTS, V8
 
 
 # parameters
@@ -166,7 +166,7 @@ def run_bynterp(wasm, args):
 
 
 def run_d8(wasm):
-    return run_vm(['d8'] + V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
+    return run_vm([V8] + V8_OPTS + [in_binaryen('scripts', 'fuzz_shell.js'), '--', wasm])
 
 
 # There are two types of test case handlers:
@@ -200,10 +200,10 @@ class CompareVMs(TestCaseHandler):
     def run_vms(self, js, wasm):
         results = []
         results.append(fix_output(run_bynterp(wasm, ['--fuzz-exec-before'])))
-        results.append(fix_output(run_vm(['d8', js] + V8_OPTS + ['--', wasm])))
+        results.append(fix_output(run_vm([V8, js] + V8_OPTS + ['--', wasm])))
 
         # append to add results from VMs
-        # results += [fix_output(run_vm(['d8', js] + V8_OPTS + ['--', wasm]))]
+        # results += [fix_output(run_vm([V8, js] + V8_OPTS + ['--', wasm]))]
         # results += [fix_output(run_vm([os.path.expanduser('~/.jsvu/jsc'), js, '--', wasm]))]
         # spec has no mechanism to not halt on a trap. so we just check until the first trap, basically
         # run(['../spec/interpreter/wasm', wasm])
