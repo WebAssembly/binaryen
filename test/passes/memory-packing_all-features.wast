@@ -99,6 +99,14 @@
 
   (data passive "")
 
+  (data passive "\00\00\00\00\00")
+
+  (data passive "nonzero")
+
+  (data passive "") ;; not referenced
+
+  (data passive "\00\00\00\00\00") ;; not referenced
+
   (func $zeroes-at-start
     (memory.init 1
       (i32.const 0)
@@ -257,6 +265,21 @@
       (i32.const 1)
     )
     (data.drop 15)
+  )
+
+  (func $multiple-drop-empty
+    (data.drop 16)
+    (data.drop 16)
+  )
+
+  (func $multiple-drop-zeroes
+    (data.drop 17)
+    (data.drop 17)
+  )
+
+  (func $multiple-drop-nonzero
+    (data.drop 18)
+    (data.drop 18)
   )
 )
 

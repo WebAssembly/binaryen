@@ -63,22 +63,9 @@ struct MemoryPacking : public Pass {
       // Remove segments that are never used
       // TODO: remove unused portions of partially used segments as well
       for (ssize_t i = segments.size() - 1; i >= 0; --i) {
-        if (segments[i].isPassive) {
-          bool used = false;
-          for (auto* e : referers[i]) {
-            if (e->is<MemoryInit>()) {
-              used = true;
-              break;
-            }
-          }
-          if (!used) {
-            // Replace data.drops with nops and remove unused segment
-            for (auto* drop : referers[i]) {
-              ExpressionManipulator::nop(drop);
-            }
-            segments.erase(segments.begin() + i);
-            referers.erase(referers.begin() + i);
-          }
+        if (segments[i].isPassive && referers[i].size() == 0) {
+          segments.erase(segments.begin() + i);
+          referers.erase(referers.begin() + i);
         }
       }
     }
@@ -90,16 +77,11 @@ struct MemoryPacking : public Pass {
     for (size_t origIndex = 0; origIndex < segments.size(); ++origIndex) {
       auto& segment = segments[origIndex];
 
-      // Skip empty segments
-      if (segment.data.size() == 0) {
-        continue;
-      }
-
       bool canSplit = true;
       if (segment.isPassive) {
-        // Do not try to split if there is a nonconstant offset or size
         for (auto* referer : referers[origIndex]) {
           if (auto* init = referer->dynCast<MemoryInit>()) {
+            // Do not try to split if there is a nonconstant offset or size
             if (!init->offset->is<Const>() || !init->size->is<Const>()) {
               canSplit = false;
             }
@@ -152,6 +134,14 @@ struct MemoryPacking : public Pass {
                             offset,
                             &segment.data[range.start],
                             range.end - range.start);
+      }
+
+      // Passive segments should not be removed entirely because data.drops need
+      // something to refer to. They cannot simply be eliminated because
+      // emulating their trapping semantics would be more work than just keeping
+      // them.
+      if (segment.isPassive && packed.size() == firstNewIndex) {
+        packed.emplace_back(true, nullptr, nullptr, 0);
       }
 
       // Update replacements to reflect final splitting scheme for this segment
@@ -414,8 +404,8 @@ struct MemoryPacking : public Pass {
         if (result) {
           replaceCurrent(result);
         } else {
-          // All-zero segment has been entirely eliminated
-          ExpressionManipulator::nop(curr);
+          // All-zero or empty segment, just update index
+          curr->segment = segmentIndex;
         }
       }
     } replacer(replacements);
