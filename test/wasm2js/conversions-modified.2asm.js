@@ -623,7 +623,20 @@ function asmFunc(global, env, buffer) {
   "f32_reinterpret_i32": $21, 
   "f64_reinterpret_i64": legalstub$22, 
   "i32_reinterpret_f32": $23, 
-  "i64_reinterpret_f64": legalstub$24
+  "i64_reinterpret_f64": legalstub$24, 
+  "orig$i64_extend_s_i32": $0, 
+  "orig$i64_extend_u_i32": $1, 
+  "orig$i32_wrap_i64": $2, 
+  "orig$i64_trunc_s_f32": $7, 
+  "orig$i64_trunc_u_f32": $8, 
+  "orig$i64_trunc_s_f64": $9, 
+  "orig$i64_trunc_u_f64": $10, 
+  "orig$f32_convert_s_i64": $12, 
+  "orig$f64_convert_s_i64": $14, 
+  "orig$f32_convert_u_i64": $16, 
+  "orig$f64_convert_u_i64": $18, 
+  "orig$f64_reinterpret_i64": $22, 
+  "orig$i64_reinterpret_f64": $24
  };
 }
 
@@ -654,3 +667,16 @@ export var f32_reinterpret_i32 = retasmFunc.f32_reinterpret_i32;
 export var f64_reinterpret_i64 = retasmFunc.f64_reinterpret_i64;
 export var i32_reinterpret_f32 = retasmFunc.i32_reinterpret_f32;
 export var i64_reinterpret_f64 = retasmFunc.i64_reinterpret_f64;
+export var orig$i64_extend_s_i32 = retasmFunc.orig$i64_extend_s_i32;
+export var orig$i64_extend_u_i32 = retasmFunc.orig$i64_extend_u_i32;
+export var orig$i32_wrap_i64 = retasmFunc.orig$i32_wrap_i64;
+export var orig$i64_trunc_s_f32 = retasmFunc.orig$i64_trunc_s_f32;
+export var orig$i64_trunc_u_f32 = retasmFunc.orig$i64_trunc_u_f32;
+export var orig$i64_trunc_s_f64 = retasmFunc.orig$i64_trunc_s_f64;
+export var orig$i64_trunc_u_f64 = retasmFunc.orig$i64_trunc_u_f64;
+export var orig$f32_convert_s_i64 = retasmFunc.orig$f32_convert_s_i64;
+export var orig$f64_convert_s_i64 = retasmFunc.orig$f64_convert_s_i64;
+export var orig$f32_convert_u_i64 = retasmFunc.orig$f32_convert_u_i64;
+export var orig$f64_convert_u_i64 = retasmFunc.orig$f64_convert_u_i64;
+export var orig$f64_reinterpret_i64 = retasmFunc.orig$f64_reinterpret_i64;
+export var orig$i64_reinterpret_f64 = retasmFunc.orig$i64_reinterpret_f64;

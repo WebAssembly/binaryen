@@ -237,7 +237,9 @@ function asmFunc(global, env, buffer) {
  var FUNCTION_TABLE = [];
  return {
   "a": legalstub$popcnt64, 
-  "b": legalstub$ctz64
+  "b": legalstub$ctz64, 
+  "orig$a": popcnt64, 
+  "orig$b": ctz64
  };
 }
 
@@ -245,3 +247,5 @@ var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export var a = retasmFunc.a;
 export var b = retasmFunc.b;
+export var orig$a = retasmFunc.orig$a;
+export var orig$b = retasmFunc.orig$b;

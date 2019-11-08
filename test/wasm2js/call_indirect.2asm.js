@@ -688,7 +688,15 @@ function asmFunc(global, env, buffer) {
   "even": even, 
   "odd": odd, 
   "runaway": runaway, 
-  "mutual_runaway": mutual_runaway1
+  "mutual_runaway": mutual_runaway1, 
+  "orig$type_i64": $17, 
+  "orig$type_index": $20, 
+  "orig$type_first_i64": $22, 
+  "orig$type_second_i64": $26, 
+  "orig$dispatch": $29, 
+  "orig$dispatch_structural": $30, 
+  "orig$fac": fac, 
+  "orig$fib": fib
  };
 }
 
@@ -715,3 +723,11 @@ export var even = retasmFunc.even;
 export var odd = retasmFunc.odd;
 export var runaway = retasmFunc.runaway;
 export var mutual_runaway = retasmFunc.mutual_runaway;
+export var orig$type_i64 = retasmFunc.orig$type_i64;
+export var orig$type_index = retasmFunc.orig$type_index;
+export var orig$type_first_i64 = retasmFunc.orig$type_first_i64;
+export var orig$type_second_i64 = retasmFunc.orig$type_second_i64;
+export var orig$dispatch = retasmFunc.orig$dispatch;
+export var orig$dispatch_structural = retasmFunc.orig$dispatch_structural;
+export var orig$fac = retasmFunc.orig$fac;
+export var orig$fib = retasmFunc.orig$fib;

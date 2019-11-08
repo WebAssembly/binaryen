@@ -234,7 +234,9 @@ function asmFunc(global, env, buffer) {
   "i32_no_fold_cmp_s_offset": $0, 
   "i32_no_fold_cmp_u_offset": $1, 
   "i64_no_fold_cmp_s_offset": legalstub$2, 
-  "i64_no_fold_cmp_u_offset": legalstub$3
+  "i64_no_fold_cmp_u_offset": legalstub$3, 
+  "orig$i64_no_fold_cmp_s_offset": $2, 
+  "orig$i64_no_fold_cmp_u_offset": $3
  };
 }
 
@@ -244,6 +246,8 @@ export var i32_no_fold_cmp_s_offset = retasmFunc.i32_no_fold_cmp_s_offset;
 export var i32_no_fold_cmp_u_offset = retasmFunc.i32_no_fold_cmp_u_offset;
 export var i64_no_fold_cmp_s_offset = retasmFunc.i64_no_fold_cmp_s_offset;
 export var i64_no_fold_cmp_u_offset = retasmFunc.i64_no_fold_cmp_u_offset;
+export var orig$i64_no_fold_cmp_s_offset = retasmFunc.orig$i64_no_fold_cmp_s_offset;
+export var orig$i64_no_fold_cmp_u_offset = retasmFunc.orig$i64_no_fold_cmp_u_offset;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
@@ -327,13 +331,15 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  "i64_no_fold_wrap_extend_s": legalstub$0
+  "i64_no_fold_wrap_extend_s": legalstub$0, 
+  "orig$i64_no_fold_wrap_extend_s": $0
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export var i64_no_fold_wrap_extend_s = retasmFunc.i64_no_fold_wrap_extend_s;
+export var orig$i64_no_fold_wrap_extend_s = retasmFunc.orig$i64_no_fold_wrap_extend_s;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
@@ -416,13 +422,15 @@ function asmFunc(global, env, buffer) {
  
  var FUNCTION_TABLE = [];
  return {
-  "i64_no_fold_wrap_extend_u": legalstub$0
+  "i64_no_fold_wrap_extend_u": legalstub$0, 
+  "orig$i64_no_fold_wrap_extend_u": $0
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export var i64_no_fold_wrap_extend_u = retasmFunc.i64_no_fold_wrap_extend_u;
+export var orig$i64_no_fold_wrap_extend_u = retasmFunc.orig$i64_no_fold_wrap_extend_u;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
@@ -617,7 +625,9 @@ function asmFunc(global, env, buffer) {
   "i32_no_fold_shl_shr_s": $0, 
   "i32_no_fold_shl_shr_u": $1, 
   "i64_no_fold_shl_shr_s": legalstub$2, 
-  "i64_no_fold_shl_shr_u": legalstub$3
+  "i64_no_fold_shl_shr_u": legalstub$3, 
+  "orig$i64_no_fold_shl_shr_s": $2, 
+  "orig$i64_no_fold_shl_shr_u": $3
  };
 }
 
@@ -627,6 +637,8 @@ export var i32_no_fold_shl_shr_s = retasmFunc.i32_no_fold_shl_shr_s;
 export var i32_no_fold_shl_shr_u = retasmFunc.i32_no_fold_shl_shr_u;
 export var i64_no_fold_shl_shr_s = retasmFunc.i64_no_fold_shl_shr_s;
 export var i64_no_fold_shl_shr_u = retasmFunc.i64_no_fold_shl_shr_u;
+export var orig$i64_no_fold_shl_shr_s = retasmFunc.orig$i64_no_fold_shl_shr_s;
+export var orig$i64_no_fold_shl_shr_u = retasmFunc.orig$i64_no_fold_shl_shr_u;
 import { setTempRet0 } from 'env';
 
 function asmFunc(global, env, buffer) {
@@ -821,7 +833,9 @@ function asmFunc(global, env, buffer) {
   "i32_no_fold_shr_s_shl": $0, 
   "i32_no_fold_shr_u_shl": $1, 
   "i64_no_fold_shr_s_shl": legalstub$2, 
-  "i64_no_fold_shr_u_shl": legalstub$3
+  "i64_no_fold_shr_u_shl": legalstub$3, 
+  "orig$i64_no_fold_shr_s_shl": $2, 
+  "orig$i64_no_fold_shr_u_shl": $3
  };
 }
 
@@ -831,6 +845,8 @@ export var i32_no_fold_shr_s_shl = retasmFunc.i32_no_fold_shr_s_shl;
 export var i32_no_fold_shr_u_shl = retasmFunc.i32_no_fold_shr_u_shl;
 export var i64_no_fold_shr_s_shl = retasmFunc.i64_no_fold_shr_s_shl;
 export var i64_no_fold_shr_u_shl = retasmFunc.i64_no_fold_shr_u_shl;
+export var orig$i64_no_fold_shr_s_shl = retasmFunc.orig$i64_no_fold_shr_s_shl;
+export var orig$i64_no_fold_shr_u_shl = retasmFunc.orig$i64_no_fold_shr_u_shl;
 import { setTempRet0 } from 'env';
 
 
@@ -1667,7 +1683,9 @@ function asmFunc(global, env, buffer) {
   "i32_no_fold_div_s_mul": $0, 
   "i32_no_fold_div_u_mul": $1, 
   "i64_no_fold_div_s_mul": legalstub$2, 
-  "i64_no_fold_div_u_mul": legalstub$3
+  "i64_no_fold_div_u_mul": legalstub$3, 
+  "orig$i64_no_fold_div_s_mul": $2, 
+  "orig$i64_no_fold_div_u_mul": $3
  };
 }
 
@@ -1677,6 +1695,8 @@ export var i32_no_fold_div_s_mul = retasmFunc.i32_no_fold_div_s_mul;
 export var i32_no_fold_div_u_mul = retasmFunc.i32_no_fold_div_u_mul;
 export var i64_no_fold_div_s_mul = retasmFunc.i64_no_fold_div_s_mul;
 export var i64_no_fold_div_u_mul = retasmFunc.i64_no_fold_div_u_mul;
+export var orig$i64_no_fold_div_s_mul = retasmFunc.orig$i64_no_fold_div_s_mul;
+export var orig$i64_no_fold_div_u_mul = retasmFunc.orig$i64_no_fold_div_u_mul;
 import { setTempRet0 } from 'env';
 
 
@@ -2513,7 +2533,9 @@ function asmFunc(global, env, buffer) {
   "i32_no_fold_mul_div_s": $0, 
   "i32_no_fold_mul_div_u": $1, 
   "i64_no_fold_mul_div_s": legalstub$2, 
-  "i64_no_fold_mul_div_u": legalstub$3
+  "i64_no_fold_mul_div_u": legalstub$3, 
+  "orig$i64_no_fold_mul_div_s": $2, 
+  "orig$i64_no_fold_mul_div_u": $3
  };
 }
 
@@ -2523,6 +2545,8 @@ export var i32_no_fold_mul_div_s = retasmFunc.i32_no_fold_mul_div_s;
 export var i32_no_fold_mul_div_u = retasmFunc.i32_no_fold_mul_div_u;
 export var i64_no_fold_mul_div_s = retasmFunc.i64_no_fold_mul_div_s;
 export var i64_no_fold_mul_div_u = retasmFunc.i64_no_fold_mul_div_u;
+export var orig$i64_no_fold_mul_div_s = retasmFunc.orig$i64_no_fold_mul_div_s;
+export var orig$i64_no_fold_mul_div_u = retasmFunc.orig$i64_no_fold_mul_div_u;
 import { setTempRet0 } from 'env';
 
 
@@ -3201,7 +3225,8 @@ function asmFunc(global, env, buffer) {
  var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_div_s_2": $0, 
-  "i64_no_fold_div_s_2": legalstub$1
+  "i64_no_fold_div_s_2": legalstub$1, 
+  "orig$i64_no_fold_div_s_2": $1
  };
 }
 
@@ -3209,6 +3234,7 @@ var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
 export var i32_no_fold_div_s_2 = retasmFunc.i32_no_fold_div_s_2;
 export var i64_no_fold_div_s_2 = retasmFunc.i64_no_fold_div_s_2;
+export var orig$i64_no_fold_div_s_2 = retasmFunc.orig$i64_no_fold_div_s_2;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
 
@@ -3904,7 +3930,8 @@ function asmFunc(global, env, buffer) {
  var FUNCTION_TABLE = [];
  return {
   "i32_no_fold_rem_s_2": $0, 
-  "i64_no_fold_rem_s_2": legalstub$1
+  "i64_no_fold_rem_s_2": legalstub$1, 
+  "orig$i64_no_fold_rem_s_2": $1
  };
 }
 
@@ -3912,6 +3939,7 @@ var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0,getTempRet0},memasmFunc);
 export var i32_no_fold_rem_s_2 = retasmFunc.i32_no_fold_rem_s_2;
 export var i64_no_fold_rem_s_2 = retasmFunc.i64_no_fold_rem_s_2;
+export var orig$i64_no_fold_rem_s_2 = retasmFunc.orig$i64_no_fold_rem_s_2;
 import { setTempRet0 } from 'env';
 
 
@@ -4654,7 +4682,9 @@ function asmFunc(global, env, buffer) {
   "i32_div_s_3": $0, 
   "i32_div_u_3": $1, 
   "i64_div_s_3": legalstub$2, 
-  "i64_div_u_3": legalstub$3
+  "i64_div_u_3": legalstub$3, 
+  "orig$i64_div_s_3": $2, 
+  "orig$i64_div_u_3": $3
  };
 }
 
@@ -4664,6 +4694,8 @@ export var i32_div_s_3 = retasmFunc.i32_div_s_3;
 export var i32_div_u_3 = retasmFunc.i32_div_u_3;
 export var i64_div_s_3 = retasmFunc.i64_div_s_3;
 export var i64_div_u_3 = retasmFunc.i64_div_u_3;
+export var orig$i64_div_s_3 = retasmFunc.orig$i64_div_s_3;
+export var orig$i64_div_u_3 = retasmFunc.orig$i64_div_u_3;
 import { setTempRet0 } from 'env';
 
 
@@ -5406,7 +5438,9 @@ function asmFunc(global, env, buffer) {
   "i32_div_s_3": $0, 
   "i32_div_u_3": $1, 
   "i64_div_s_3": legalstub$2, 
-  "i64_div_u_3": legalstub$3
+  "i64_div_u_3": legalstub$3, 
+  "orig$i64_div_s_3": $2, 
+  "orig$i64_div_u_3": $3
  };
 }
 
@@ -5416,6 +5450,8 @@ export var i32_div_s_3 = retasmFunc.i32_div_s_3;
 export var i32_div_u_3 = retasmFunc.i32_div_u_3;
 export var i64_div_s_3 = retasmFunc.i64_div_s_3;
 export var i64_div_u_3 = retasmFunc.i64_div_u_3;
+export var orig$i64_div_s_3 = retasmFunc.orig$i64_div_s_3;
+export var orig$i64_div_u_3 = retasmFunc.orig$i64_div_u_3;
 import { setTempRet0 } from 'env';
 
 
@@ -6158,7 +6194,9 @@ function asmFunc(global, env, buffer) {
   "i32_div_s_5": $0, 
   "i32_div_u_5": $1, 
   "i64_div_s_5": legalstub$2, 
-  "i64_div_u_5": legalstub$3
+  "i64_div_u_5": legalstub$3, 
+  "orig$i64_div_s_5": $2, 
+  "orig$i64_div_u_5": $3
  };
 }
 
@@ -6168,6 +6206,8 @@ export var i32_div_s_5 = retasmFunc.i32_div_s_5;
 export var i32_div_u_5 = retasmFunc.i32_div_u_5;
 export var i64_div_s_5 = retasmFunc.i64_div_s_5;
 export var i64_div_u_5 = retasmFunc.i64_div_u_5;
+export var orig$i64_div_s_5 = retasmFunc.orig$i64_div_s_5;
+export var orig$i64_div_u_5 = retasmFunc.orig$i64_div_u_5;
 import { setTempRet0 } from 'env';
 
 
@@ -6910,7 +6950,9 @@ function asmFunc(global, env, buffer) {
   "i32_div_s_7": $0, 
   "i32_div_u_7": $1, 
   "i64_div_s_7": legalstub$2, 
-  "i64_div_u_7": legalstub$3
+  "i64_div_u_7": legalstub$3, 
+  "orig$i64_div_s_7": $2, 
+  "orig$i64_div_u_7": $3
  };
 }
 
@@ -6920,6 +6962,8 @@ export var i32_div_s_7 = retasmFunc.i32_div_s_7;
 export var i32_div_u_7 = retasmFunc.i32_div_u_7;
 export var i64_div_s_7 = retasmFunc.i64_div_s_7;
 export var i64_div_u_7 = retasmFunc.i64_div_u_7;
+export var orig$i64_div_s_7 = retasmFunc.orig$i64_div_s_7;
+export var orig$i64_div_u_7 = retasmFunc.orig$i64_div_u_7;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
 
@@ -7679,7 +7723,9 @@ function asmFunc(global, env, buffer) {
   "i32_rem_s_3": $0, 
   "i32_rem_u_3": $1, 
   "i64_rem_s_3": legalstub$2, 
-  "i64_rem_u_3": legalstub$3
+  "i64_rem_u_3": legalstub$3, 
+  "orig$i64_rem_s_3": $2, 
+  "orig$i64_rem_u_3": $3
  };
 }
 
@@ -7689,6 +7735,8 @@ export var i32_rem_s_3 = retasmFunc.i32_rem_s_3;
 export var i32_rem_u_3 = retasmFunc.i32_rem_u_3;
 export var i64_rem_s_3 = retasmFunc.i64_rem_s_3;
 export var i64_rem_u_3 = retasmFunc.i64_rem_u_3;
+export var orig$i64_rem_s_3 = retasmFunc.orig$i64_rem_s_3;
+export var orig$i64_rem_u_3 = retasmFunc.orig$i64_rem_u_3;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
 
@@ -8448,7 +8496,9 @@ function asmFunc(global, env, buffer) {
   "i32_rem_s_5": $0, 
   "i32_rem_u_5": $1, 
   "i64_rem_s_5": legalstub$2, 
-  "i64_rem_u_5": legalstub$3
+  "i64_rem_u_5": legalstub$3, 
+  "orig$i64_rem_s_5": $2, 
+  "orig$i64_rem_u_5": $3
  };
 }
 
@@ -8458,6 +8508,8 @@ export var i32_rem_s_5 = retasmFunc.i32_rem_s_5;
 export var i32_rem_u_5 = retasmFunc.i32_rem_u_5;
 export var i64_rem_s_5 = retasmFunc.i64_rem_s_5;
 export var i64_rem_u_5 = retasmFunc.i64_rem_u_5;
+export var orig$i64_rem_s_5 = retasmFunc.orig$i64_rem_s_5;
+export var orig$i64_rem_u_5 = retasmFunc.orig$i64_rem_u_5;
 import { setTempRet0 } from 'env';
 import { getTempRet0 } from 'env';
 
@@ -9217,7 +9269,9 @@ function asmFunc(global, env, buffer) {
   "i32_rem_s_7": $0, 
   "i32_rem_u_7": $1, 
   "i64_rem_s_7": legalstub$2, 
-  "i64_rem_u_7": legalstub$3
+  "i64_rem_u_7": legalstub$3, 
+  "orig$i64_rem_s_7": $2, 
+  "orig$i64_rem_u_7": $3
  };
 }
 
@@ -9227,3 +9281,5 @@ export var i32_rem_s_7 = retasmFunc.i32_rem_s_7;
 export var i32_rem_u_7 = retasmFunc.i32_rem_u_7;
 export var i64_rem_s_7 = retasmFunc.i64_rem_s_7;
 export var i64_rem_u_7 = retasmFunc.i64_rem_u_7;
+export var orig$i64_rem_s_7 = retasmFunc.orig$i64_rem_s_7;
+export var orig$i64_rem_u_7 = retasmFunc.orig$i64_rem_u_7;

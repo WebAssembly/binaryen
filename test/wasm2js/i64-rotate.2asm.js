@@ -446,7 +446,9 @@ function asmFunc(global, env, buffer) {
  var FUNCTION_TABLE = [];
  return {
   "rotl": legalstub$1, 
-  "rotr": legalstub$2
+  "rotr": legalstub$2, 
+  "orig$rotl": $1, 
+  "orig$rotr": $2
  };
 }
 
@@ -454,3 +456,5 @@ var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var rotl = retasmFunc.rotl;
 export var rotr = retasmFunc.rotr;
+export var orig$rotl = retasmFunc.orig$rotl;
+export var orig$rotr = retasmFunc.orig$rotr;

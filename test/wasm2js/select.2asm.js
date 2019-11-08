@@ -155,7 +155,8 @@ function asmFunc(global, env, buffer) {
   "select_f32": $2, 
   "select_f64": $3, 
   "select_trap_l": $4, 
-  "select_trap_r": $5
+  "select_trap_r": $5, 
+  "orig$select_i64": $1
  };
 }
 
@@ -167,3 +168,4 @@ export var select_f32 = retasmFunc.select_f32;
 export var select_f64 = retasmFunc.select_f64;
 export var select_trap_l = retasmFunc.select_trap_l;
 export var select_trap_r = retasmFunc.select_trap_r;
+export var orig$select_i64 = retasmFunc.orig$select_i64;

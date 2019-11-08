@@ -394,7 +394,18 @@ function asmFunc(global, env, buffer) {
   "i64_neg_zero": legalstub$18, 
   "i64_not_octal": legalstub$19, 
   "i64_unsigned_decimal": legalstub$20, 
-  "i64_plus_sign": legalstub$21
+  "i64_plus_sign": legalstub$21, 
+  "orig$i64_test": $11, 
+  "orig$i64_umax": $12, 
+  "orig$i64_smax": $13, 
+  "orig$i64_neg_smax": $14, 
+  "orig$i64_smin": $15, 
+  "orig$i64_alt_smin": $16, 
+  "orig$i64_inc_smin": $17, 
+  "orig$i64_neg_zero": $18, 
+  "orig$i64_not_octal": $19, 
+  "orig$i64_unsigned_decimal": $20, 
+  "orig$i64_plus_sign": $21
  };
 }
 
@@ -422,3 +433,14 @@ export var i64_neg_zero = retasmFunc.i64_neg_zero;
 export var i64_not_octal = retasmFunc.i64_not_octal;
 export var i64_unsigned_decimal = retasmFunc.i64_unsigned_decimal;
 export var i64_plus_sign = retasmFunc.i64_plus_sign;
+export var orig$i64_test = retasmFunc.orig$i64_test;
+export var orig$i64_umax = retasmFunc.orig$i64_umax;
+export var orig$i64_smax = retasmFunc.orig$i64_smax;
+export var orig$i64_neg_smax = retasmFunc.orig$i64_neg_smax;
+export var orig$i64_smin = retasmFunc.orig$i64_smin;
+export var orig$i64_alt_smin = retasmFunc.orig$i64_alt_smin;
+export var orig$i64_inc_smin = retasmFunc.orig$i64_inc_smin;
+export var orig$i64_neg_zero = retasmFunc.orig$i64_neg_zero;
+export var orig$i64_not_octal = retasmFunc.orig$i64_not_octal;
+export var orig$i64_unsigned_decimal = retasmFunc.orig$i64_unsigned_decimal;
+export var orig$i64_plus_sign = retasmFunc.orig$i64_plus_sign;

@@ -123,7 +123,8 @@ function asmFunc(global, env, buffer) {
   "i32_store": $4, 
   "i64_store": $5, 
   "f32_store": $4, 
-  "f64_store": $7
+  "f64_store": $7, 
+  "orig$i64_load": $1
  };
 }
 
@@ -137,3 +138,4 @@ export var i32_store = retasmFunc.i32_store;
 export var i64_store = retasmFunc.i64_store;
 export var f32_store = retasmFunc.f32_store;
 export var f64_store = retasmFunc.f64_store;
+export var orig$i64_load = retasmFunc.orig$i64_load;

@@ -793,7 +793,17 @@ function asmFunc(global, env, buffer) {
   "ge_u_i64": legalstub$7, 
   "gt_u_i64": legalstub$8, 
   "le_u_i64": legalstub$9, 
-  "lt_u_i64": legalstub$10
+  "lt_u_i64": legalstub$10, 
+  "orig$eq_i64": $1, 
+  "orig$ne_i64": $2, 
+  "orig$ge_s_i64": $3, 
+  "orig$gt_s_i64": $4, 
+  "orig$le_s_i64": $5, 
+  "orig$lt_s_i64": $6, 
+  "orig$ge_u_i64": $7, 
+  "orig$gt_u_i64": $8, 
+  "orig$le_u_i64": $9, 
+  "orig$lt_u_i64": $10
  };
 }
 
@@ -809,3 +819,13 @@ export var ge_u_i64 = retasmFunc.ge_u_i64;
 export var gt_u_i64 = retasmFunc.gt_u_i64;
 export var le_u_i64 = retasmFunc.le_u_i64;
 export var lt_u_i64 = retasmFunc.lt_u_i64;
+export var orig$eq_i64 = retasmFunc.orig$eq_i64;
+export var orig$ne_i64 = retasmFunc.orig$ne_i64;
+export var orig$ge_s_i64 = retasmFunc.orig$ge_s_i64;
+export var orig$gt_s_i64 = retasmFunc.orig$gt_s_i64;
+export var orig$le_s_i64 = retasmFunc.orig$le_s_i64;
+export var orig$lt_s_i64 = retasmFunc.orig$lt_s_i64;
+export var orig$ge_u_i64 = retasmFunc.orig$ge_u_i64;
+export var orig$gt_u_i64 = retasmFunc.orig$gt_u_i64;
+export var orig$le_u_i64 = retasmFunc.orig$le_u_i64;
+export var orig$lt_u_i64 = retasmFunc.orig$lt_u_i64;

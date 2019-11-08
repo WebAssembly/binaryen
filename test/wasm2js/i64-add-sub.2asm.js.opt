@@ -20,33 +20,45 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $1($0, $1_1, $2, $3, $4, $5) {
+ function $1($0, $1_1, $2_1, $3, $4, $5) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  $2 = $2 | 0;
+  $2_1 = $2_1 | 0;
   $3 = $3 | 0;
   $4 = $4 | 0;
   $5 = $5 | 0;
   $1_1 = $1_1 + $3 | 0;
-  $0 = $0 + $2 | 0;
-  if ($0 >>> 0 < $2 >>> 0) {
+  $0 = $0 + $2_1 | 0;
+  if ($0 >>> 0 < $2_1 >>> 0) {
    $1_1 = $1_1 + 1 | 0
   }
   return ($0 | 0) == ($4 | 0) & ($1_1 | 0) == ($5 | 0);
  }
  
- function legalstub$1($0, $1_1, $2, $3, $4, $5) {
-  return $1($0, $1_1, $2, $3, $4, $5);
+ function $2($0, $1_1, $2_1, $3, $4, $5) {
+  $0 = $0 | 0;
+  $1_1 = $1_1 | 0;
+  $2_1 = $2_1 | 0;
+  $3 = $3 | 0;
+  $4 = $4 | 0;
+  $5 = $5 | 0;
+  return ($4 | 0) == ($0 - $2_1 | 0) & ($5 | 0) == ($1_1 - (($0 >>> 0 < $2_1 >>> 0) + $3 | 0) | 0);
  }
  
- function legalstub$2($0, $1_1, $2, $3, $4, $5) {
-  return ($4 | 0) == ($0 - $2 | 0) & ($5 | 0) == ($1_1 - (($0 >>> 0 < $2 >>> 0) + $3 | 0) | 0);
+ function legalstub$1($0, $1_1, $2_1, $3, $4, $5) {
+  return $1($0, $1_1, $2_1, $3, $4, $5);
+ }
+ 
+ function legalstub$2($0, $1_1, $2_1, $3, $4, $5) {
+  return $2($0, $1_1, $2_1, $3, $4, $5);
  }
  
  var FUNCTION_TABLE = [];
  return {
   "check_add_i64": legalstub$1, 
-  "check_sub_i64": legalstub$2
+  "check_sub_i64": legalstub$2, 
+  "orig$check_add_i64": $1, 
+  "orig$check_sub_i64": $2
  };
 }
 
@@ -54,3 +66,5 @@ var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var check_add_i64 = retasmFunc.check_add_i64;
 export var check_sub_i64 = retasmFunc.check_sub_i64;
+export var orig$check_add_i64 = retasmFunc.orig$check_add_i64;
+export var orig$check_sub_i64 = retasmFunc.orig$check_sub_i64;

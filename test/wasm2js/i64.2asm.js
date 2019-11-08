@@ -3556,7 +3556,36 @@ function asmFunc(global, env, buffer) {
   "gt_s": legalstub$25, 
   "gt_u": legalstub$26, 
   "ge_s": legalstub$27, 
-  "ge_u": legalstub$28
+  "ge_u": legalstub$28, 
+  "orig$add": $0, 
+  "orig$sub": $1, 
+  "orig$mul": $2, 
+  "orig$div_s": $3, 
+  "orig$div_u": $4, 
+  "orig$rem_s": $5, 
+  "orig$rem_u": $6, 
+  "orig$and": $7, 
+  "orig$or": $8, 
+  "orig$xor": $9, 
+  "orig$shl": $10, 
+  "orig$shr_s": $11, 
+  "orig$shr_u": $12, 
+  "orig$rotl": $13, 
+  "orig$rotr": $14, 
+  "orig$clz": $15, 
+  "orig$ctz": $16, 
+  "orig$popcnt": $17, 
+  "orig$eqz": $18, 
+  "orig$eq": $19, 
+  "orig$ne": $20, 
+  "orig$lt_s": $21, 
+  "orig$lt_u": $22, 
+  "orig$le_s": $23, 
+  "orig$le_u": $24, 
+  "orig$gt_s": $25, 
+  "orig$gt_u": $26, 
+  "orig$ge_s": $27, 
+  "orig$ge_u": $28
  };
 }
 
@@ -3591,3 +3620,32 @@ export var gt_s = retasmFunc.gt_s;
 export var gt_u = retasmFunc.gt_u;
 export var ge_s = retasmFunc.ge_s;
 export var ge_u = retasmFunc.ge_u;
+export var orig$add = retasmFunc.orig$add;
+export var orig$sub = retasmFunc.orig$sub;
+export var orig$mul = retasmFunc.orig$mul;
+export var orig$div_s = retasmFunc.orig$div_s;
+export var orig$div_u = retasmFunc.orig$div_u;
+export var orig$rem_s = retasmFunc.orig$rem_s;
+export var orig$rem_u = retasmFunc.orig$rem_u;
+export var orig$and = retasmFunc.orig$and;
+export var orig$or = retasmFunc.orig$or;
+export var orig$xor = retasmFunc.orig$xor;
+export var orig$shl = retasmFunc.orig$shl;
+export var orig$shr_s = retasmFunc.orig$shr_s;
+export var orig$shr_u = retasmFunc.orig$shr_u;
+export var orig$rotl = retasmFunc.orig$rotl;
+export var orig$rotr = retasmFunc.orig$rotr;
+export var orig$clz = retasmFunc.orig$clz;
+export var orig$ctz = retasmFunc.orig$ctz;
+export var orig$popcnt = retasmFunc.orig$popcnt;
+export var orig$eqz = retasmFunc.orig$eqz;
+export var orig$eq = retasmFunc.orig$eq;
+export var orig$ne = retasmFunc.orig$ne;
+export var orig$lt_s = retasmFunc.orig$lt_s;
+export var orig$lt_u = retasmFunc.orig$lt_u;
+export var orig$le_s = retasmFunc.orig$le_s;
+export var orig$le_u = retasmFunc.orig$le_u;
+export var orig$gt_s = retasmFunc.orig$gt_s;
+export var orig$gt_u = retasmFunc.orig$gt_u;
+export var orig$ge_s = retasmFunc.orig$ge_s;
+export var orig$ge_u = retasmFunc.orig$ge_u;

@@ -651,7 +651,9 @@ function asmFunc(global, env, buffer) {
   "effects": fx, 
   "while_": legalstub$16, 
   "for_": legalstub$17, 
-  "nesting": $18
+  "nesting": $18, 
+  "orig$while": $16, 
+  "orig$for": $17
  };
 }
 
@@ -675,3 +677,5 @@ export var effects = retasmFunc.effects;
 export var while_ = retasmFunc.while_;
 export var for_ = retasmFunc.for_;
 export var nesting = retasmFunc.nesting;
+export var orig$while = retasmFunc.orig$while;
+export var orig$for = retasmFunc.orig$for;
