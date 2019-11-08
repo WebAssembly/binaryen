@@ -285,9 +285,25 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
         .c_str());
     ensureFunctionImport(&wasm, getter, "i");
-    Expression* call = builder.makeCall(getter, {}, i32);
-    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
-    block->list.push_back(globalSet);
+    
+    auto& table = wasm.table;
+    auto& segment = table.segments[0];
+    int32_t index = segment.data.size();
+    
+    segment.data.push_back(getter);
+    Name gblName(std::string("g$") + std::string(g->base.c_str()));
+    auto* gbl = wasm.addGlobal(builder.makeGlobal(gblName,
+                         i32,
+                         builder.makeConst(Literal(int32_t(index))),
+                         Builder::Immutable));
+	
+	if (!wasm.getExportOrNull(gbl->base)) {
+      auto* ret = new Export();
+      ret->value = gbl->name;
+      ret->name = gbl->name;
+      ret->kind = ExternalKind::Global;
+      wasm.addExport(ret);
+	}
   }
 
   wasm.addFunction(assignFunc);
