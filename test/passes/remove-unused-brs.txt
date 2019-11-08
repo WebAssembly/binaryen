@@ -2,15 +2,15 @@
  (type $0 (func (param i32)))
  (type $1 (func))
  (type $2 (func (result i32)))
- (type $3 (func (param i32 i32) (result i32)))
- (type $4 (func (param i32 i32)))
- (type $5 (func (param f32 i32 f32 i32 i32 f64 f32) (result i32)))
- (type $6 (func (param i32) (result i64)))
- (type $7 (func (result i64)))
- (type $8 (func (result f32)))
- (type $9 (func (param i32) (result f32)))
- (type $10 (func (param i32) (result i32)))
- (type $11 (func (param i32 f64 i32 f64 f32 f32) (result i32)))
+ (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+ (type $FUNCSIG$vii (func (param i32 i32)))
+ (type $FUNCSIG$ififiidf (func (param f32 i32 f32 i32 i32 f64 f32) (result i32)))
+ (type $FUNCSIG$ji (func (param i32) (result i64)))
+ (type $FUNCSIG$j (func (result i64)))
+ (type $FUNCSIG$f (func (result f32)))
+ (type $FUNCSIG$fi (func (param i32) (result f32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $FUNCSIG$iididff (func (param i32 f64 i32 f64 f32 f32) (result i32)))
  (memory $0 256 256)
  (func $b0-yes (; 0 ;) (type $0) (param $i1 i32)
   (block $topmost
@@ -767,7 +767,7 @@
    )
   )
  )
- (func $if-to-br_if-conflict (; 28 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $if-to-br_if-conflict (; 28 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (block $leave
    (local.set $y
     (block $out (result i32)
@@ -794,7 +794,7 @@
    (local.get $y)
   )
  )
- (func $if-to-br_if-conflict2 (; 29 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $if-to-br_if-conflict2 (; 29 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (block $leave
    (local.set $y
     (block $out (result i32)
@@ -821,7 +821,7 @@
    (local.get $y)
   )
  )
- (func $if-to-br_if-value-sideeffect (; 30 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $if-to-br_if-value-sideeffect (; 30 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (block $leave
    (local.set $y
     (block $out (result i32)
@@ -849,7 +849,7 @@
    (local.get $y)
   )
  )
- (func $fuzz (; 31 ;) (type $4) (param $j i32) (param $g i32)
+ (func $fuzz (; 31 ;) (type $FUNCSIG$vii) (param $j i32) (param $g i32)
   (loop $label$continue$d
    (block $label$break$c
     (block $label$break$d
@@ -977,14 +977,14 @@
    )
   )
  )
- (func $untaken-brs-might-prevent-block-removal (; 36 ;) (type $5) (param $0 f32) (param $1 i32) (param $2 f32) (param $3 i32) (param $4 i32) (param $5 f64) (param $6 f32) (result i32)
+ (func $untaken-brs-might-prevent-block-removal (; 36 ;) (type $FUNCSIG$ififiidf) (param $0 f32) (param $1 i32) (param $2 f32) (param $3 i32) (param $4 i32) (param $5 f64) (param $6 f32) (result i32)
   (block $label$0 (result i32)
    (block $label$1
     (br_if $label$1
      (i32.const 607395945)
     )
     (br_if $label$1
-     (unreachable.load16_s offset=3 align=1
+     (i32.load offset=3 align=1
       (select
        (call $untaken-brs-might-prevent-block-removal
         (f32.const 1.4904844647389837e-07)
@@ -1012,7 +1012,7 @@
    (i32.const 1935947830)
   )
  )
- (func $unexitable-loops-result (; 37 ;) (type $6) (param $0 i32) (result i64)
+ (func $unexitable-loops-result (; 37 ;) (type $FUNCSIG$ji) (param $0 i32) (result i64)
   (loop $label$0
    (loop $label$1
     (br_if $label$0
@@ -1067,7 +1067,7 @@
    )
   )
  )
- (func $unreachable-if-that-could-be-a-br_if (; 41 ;) (type $7) (result i64)
+ (func $unreachable-if-that-could-be-a-br_if (; 41 ;) (type $FUNCSIG$j) (result i64)
   (loop $label$3 (result i64)
    (drop
     (if (result f64)
@@ -1094,7 +1094,7 @@
    )
   )
  )
- (func $no-flow-through-if-without-else (; 43 ;) (type $8) (result f32)
+ (func $no-flow-through-if-without-else (; 43 ;) (type $FUNCSIG$f) (result f32)
   (local $0 i32)
   (local $2 f32)
   (if (result f32)
@@ -1115,7 +1115,7 @@
    (f32.const -9223372036854775808)
   )
  )
- (func $unreachable-return-loop-value (; 44 ;) (type $7) (result i64)
+ (func $unreachable-return-loop-value (; 44 ;) (type $FUNCSIG$j) (result i64)
   (loop $loop
    (if
     (i32.const 1)
@@ -1129,7 +1129,7 @@
    (br $loop)
   )
  )
- (func $obviously-flows-out-maybe (; 45 ;) (type $9) (param $var$0 i32) (result f32)
+ (func $obviously-flows-out-maybe (; 45 ;) (type $FUNCSIG$fi) (param $var$0 i32) (result f32)
   (block $label$1 (result f32)
    (br $label$1
     (f32.const 1)
@@ -1338,7 +1338,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad (; 54 ;) (type $10) (param $a i32) (result i32)
+ (func $br-to-table-bad (; 54 ;) (type $FUNCSIG$ii) (param $a i32) (result i32)
   (block $value (result i32)
    (block $x
     (block $y
@@ -1361,7 +1361,7 @@
    (i32.const 2000)
   )
  )
- (func $br-to-table-bad2 (; 55 ;) (type $10) (param $a i32) (result i32)
+ (func $br-to-table-bad2 (; 55 ;) (type $FUNCSIG$ii) (param $a i32) (result i32)
   (block $value (result i32)
    (block $x
     (block $y
@@ -1805,7 +1805,7 @@
   )
   (i32.const 3)
  )
- (func $undo-if-return (; 73 ;) (type $10) (param $p i32) (result i32)
+ (func $undo-if-return (; 73 ;) (type $FUNCSIG$ii) (param $p i32) (result i32)
   (local $x i32)
   (block $out
    (block
@@ -1836,7 +1836,7 @@
   )
   (local.get $p)
  )
- (func $if-unreachable-but-declares-value (; 74 ;) (type $11) (param $var$0 i32) (param $var$1 f64) (param $var$2 i32) (param $var$3 f64) (param $var$4 f32) (param $var$5 f32) (result i32)
+ (func $if-unreachable-but-declares-value (; 74 ;) (type $FUNCSIG$iididff) (param $var$0 i32) (param $var$1 f64) (param $var$2 i32) (param $var$3 f64) (param $var$4 f32) (param $var$5 f32) (result i32)
   (local $var$6 f64)
   (if
    (i32.const 0)
@@ -1937,7 +1937,7 @@
    )
   )
  )
- (func $drop-restructure-if (; 81 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if (; 81 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (if (result i32)
    (local.get $y)
    (local.get $x)
@@ -1947,7 +1947,7 @@
    )
   )
  )
- (func $drop-restructure-if-final (; 82 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if-final (; 82 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (if (result i32)
    (local.get $y)
    (local.get $x)
@@ -1957,7 +1957,7 @@
    )
   )
  )
- (func $drop-restructure-if-middle (; 83 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if-middle (; 83 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (if (result i32)
    (local.get $y)
    (local.get $x)
@@ -1968,7 +1968,7 @@
    )
   )
  )
- (func $drop-restructure-if-bad (; 84 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if-bad (; 84 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (block $label$2 (result i32)
    (drop
     (br_if $label$2
@@ -1981,7 +1981,7 @@
    (i32.const 0)
   )
  )
- (func $drop-restructure-if-bad-2 (; 85 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $drop-restructure-if-bad-2 (; 85 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (block $label$2 (result i32)
    (drop
     (br_if $label$2
@@ -2157,7 +2157,7 @@
    )
   )
  )
- (func $switch-threading-multi (; 99 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+ (func $switch-threading-multi (; 99 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (block $block$5$break
    (block $block$4$break
     (loop $shape$1$continue
@@ -2287,7 +2287,7 @@
   )
   (local.get $x)
  )
- (func $if-one-side-tee-etc (; 105 ;) (type $10) (param $0 i32) (result i32)
+ (func $if-one-side-tee-etc (; 105 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -2308,7 +2308,7 @@
   )
   (i32.const 0)
  )
- (func $ifs-copies-recursive (; 106 ;) (type $10) (param $20 i32) (result i32)
+ (func $ifs-copies-recursive (; 106 ;) (type $FUNCSIG$ii) (param $20 i32) (result i32)
   (if
    (i32.const 1)
    (local.set $20
@@ -2382,7 +2382,7 @@
    (br $top)
   )
  )
- (func $loop-end-set (; 111 ;) (type $10) (param $x i32) (result i32)
+ (func $loop-end-set (; 111 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (loop $loop
    (nop)
    (br_if $loop
@@ -2394,7 +2394,7 @@
   )
   (local.get $x)
  )
- (func $loop-end-value (; 112 ;) (type $10) (param $x i32) (result i32)
+ (func $loop-end-value (; 112 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
   (loop $loop (result i32)
    (nop)
    (br_if $loop
@@ -2428,6 +2428,57 @@
      )
     )
     (nop)
+   )
+  )
+ )
+ (func $if_br_if (; 115 ;) (type $1)
+  (local $0 i32)
+  (block $label$1
+   (br_if $label$1
+    (select
+     (local.tee $0
+      (i32.const 1024)
+     )
+     (i32.const 0)
+     (i32.eqz
+      (i32.const -4)
+     )
+    )
+   )
+   (br_if $label$1
+    (select
+     (i32.const 1025)
+     (i32.const 0)
+     (i32.eqz
+      (i32.const -5)
+     )
+    )
+   )
+   (br_if $label$1
+    (select
+     (local.tee $0
+      (i32.const 1025)
+     )
+     (i32.const 0)
+     (i32.eqz
+      (i32.const -6)
+     )
+    )
+   )
+   (if
+    (i32.const 1026)
+    (br_if $label$1
+     (local.tee $0
+      (i32.const -7)
+     )
+    )
+   )
+   (i32.store
+    (i32.const 1024)
+    (i32.add
+     (local.get $0)
+     (i32.const 1)
+    )
    )
   )
  )

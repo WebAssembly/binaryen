@@ -1,9 +1,0 @@
-(module
- (type $0$0 (func))
- (import "env" "__memory_base" (global $__memory_base i32))
- (import "env" "__table_base" (global $__table_base i32))
- (export "__post_instantiate" (func $0$0))
- (func $0$0 (; 0 ;) (type $0$0)
-  (nop)
- )
-)

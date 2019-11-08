@@ -168,11 +168,11 @@
     (nop) (local.get 0) (nop) (nop) (local.get 0) (nop) (nop) (i32.le_s)
   )
 
-  (func (export "as-grow_memory-last") (param i32) (result i32)
-    (local.get 0) (nop) (grow_memory)
+  (func (export "as-memory.grow-last") (param i32) (result i32)
+    (local.get 0) (nop) (memory.grow)
   )
-  (func (export "as-grow_memory-everywhere") (param i32) (result i32)
-    (nop) (nop) (local.get 0) (nop) (nop) (grow_memory)
+  (func (export "as-memory.grow-everywhere") (param i32) (result i32)
+    (nop) (nop) (local.get 0) (nop) (nop) (memory.grow)
   )
 )
 
@@ -239,8 +239,8 @@
 (assert_return (invoke "as-compare-last" (i32.const 3)) (i32.const 0))
 (assert_return (invoke "as-compare-everywhere" (i32.const 3)) (i32.const 1))
 
-(assert_return (invoke "as-grow_memory-last" (i32.const 2)) (i32.const 1))
-(assert_return (invoke "as-grow_memory-everywhere" (i32.const 12)) (i32.const 3))
+(assert_return (invoke "as-memory.grow-last" (i32.const 2)) (i32.const 1))
+(assert_return (invoke "as-memory.grow-everywhere" (i32.const 12)) (i32.const 3))
 
 (assert_invalid
   (module (func $type-i32 (result i32) (nop)))

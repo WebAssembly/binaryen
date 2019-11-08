@@ -1,0 +1,283 @@
+(module
+ (type $f (func))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$vi (func (param i32)))
+ (import "env" "import" (func $import))
+ (import "env" "import2" (func $import2 (result i32)))
+ (import "env" "import3" (func $import3 (param i32)))
+ (memory $0 1 2)
+ (table $0 2 2 funcref)
+ (elem (i32.const 0) $calls-import2-drop $calls-import2-drop)
+ (global $__asyncify_state (mut i32) (i32.const 0))
+ (global $__asyncify_data (mut i32) (i32.const 0))
+ (export "asyncify_start_unwind" (func $asyncify_start_unwind))
+ (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
+ (export "asyncify_start_rewind" (func $asyncify_start_rewind))
+ (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
+ (func $calls-import (; 3 ;) (type $f)
+  (call $import)
+  (nop)
+ )
+ (func $calls-import2-drop (; 4 ;) (type $f)
+  (local $0 i32)
+  (local.set $0
+   (call $import2)
+  )
+  (drop
+   (local.get $0)
+  )
+  (nop)
+ )
+ (func $calls-import2-if-else (; 5 ;) (type $FUNCSIG$vi) (param $x i32)
+  (local $1 i32)
+  (block
+   (local.set $1
+    (local.get $x)
+   )
+   (if
+    (local.get $1)
+    (block
+     (call $import3
+      (i32.const 1)
+     )
+     (nop)
+    )
+    (block
+     (call $import3
+      (i32.const 2)
+     )
+     (nop)
+    )
+   )
+  )
+  (nop)
+ )
+ (func $calls-indirect (; 6 ;) (type $FUNCSIG$vi) (param $x i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local $5 i32)
+  (if
+   (i32.eq
+    (global.get $__asyncify_state)
+    (i32.const 2)
+   )
+   (block
+    (i32.store
+     (global.get $__asyncify_data)
+     (i32.add
+      (i32.load
+       (global.get $__asyncify_data)
+      )
+      (i32.const -8)
+     )
+    )
+    (local.set $4
+     (i32.load
+      (global.get $__asyncify_data)
+     )
+    )
+    (local.set $x
+     (i32.load
+      (local.get $4)
+     )
+    )
+    (local.set $1
+     (i32.load offset=4
+      (local.get $4)
+     )
+    )
+   )
+  )
+  (local.set $2
+   (block $__asyncify_unwind (result i32)
+    (block
+     (block
+      (if
+       (i32.eq
+        (global.get $__asyncify_state)
+        (i32.const 2)
+       )
+       (block
+        (i32.store
+         (global.get $__asyncify_data)
+         (i32.add
+          (i32.load
+           (global.get $__asyncify_data)
+          )
+          (i32.const -4)
+         )
+        )
+        (local.set $3
+         (i32.load
+          (i32.load
+           (global.get $__asyncify_data)
+          )
+         )
+        )
+       )
+      )
+      (block
+       (if
+        (i32.eq
+         (global.get $__asyncify_state)
+         (i32.const 0)
+        )
+        (local.set $1
+         (local.get $x)
+        )
+       )
+       (if
+        (if (result i32)
+         (i32.eq
+          (global.get $__asyncify_state)
+          (i32.const 0)
+         )
+         (i32.const 1)
+         (i32.eq
+          (local.get $3)
+          (i32.const 0)
+         )
+        )
+        (block
+         (call_indirect (type $f)
+          (local.get $1)
+         )
+         (if
+          (i32.eq
+           (global.get $__asyncify_state)
+           (i32.const 1)
+          )
+          (br $__asyncify_unwind
+           (i32.const 0)
+          )
+         )
+        )
+       )
+       (if
+        (i32.eq
+         (global.get $__asyncify_state)
+         (i32.const 0)
+        )
+        (nop)
+       )
+      )
+     )
+     (return)
+    )
+   )
+  )
+  (block
+   (i32.store
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (local.get $2)
+   )
+   (i32.store
+    (global.get $__asyncify_data)
+    (i32.add
+     (i32.load
+      (global.get $__asyncify_data)
+     )
+     (i32.const 4)
+    )
+   )
+  )
+  (block
+   (local.set $5
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+   )
+   (i32.store
+    (local.get $5)
+    (local.get $x)
+   )
+   (i32.store offset=4
+    (local.get $5)
+    (local.get $1)
+   )
+   (i32.store
+    (global.get $__asyncify_data)
+    (i32.add
+     (i32.load
+      (global.get $__asyncify_data)
+     )
+     (i32.const 8)
+    )
+   )
+  )
+ )
+ (func $asyncify_start_unwind (; 7 ;) (param $0 i32)
+  (global.set $__asyncify_state
+   (i32.const 1)
+  )
+  (global.set $__asyncify_data
+   (local.get $0)
+  )
+  (if
+   (i32.gt_u
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (i32.load offset=4
+     (global.get $__asyncify_data)
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $asyncify_stop_unwind (; 8 ;)
+  (global.set $__asyncify_state
+   (i32.const 0)
+  )
+  (if
+   (i32.gt_u
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (i32.load offset=4
+     (global.get $__asyncify_data)
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $asyncify_start_rewind (; 9 ;) (param $0 i32)
+  (global.set $__asyncify_state
+   (i32.const 2)
+  )
+  (global.set $__asyncify_data
+   (local.get $0)
+  )
+  (if
+   (i32.gt_u
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (i32.load offset=4
+     (global.get $__asyncify_data)
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $asyncify_stop_rewind (; 10 ;)
+  (global.set $__asyncify_state
+   (i32.const 0)
+  )
+  (if
+   (i32.gt_u
+    (i32.load
+     (global.get $__asyncify_data)
+    )
+    (i32.load offset=4
+     (global.get $__asyncify_data)
+    )
+   )
+   (unreachable)
+  )
+ )
+)

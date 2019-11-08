@@ -1,11 +1,6 @@
 set -e
-echo "travis-test pre-test"
-python -c "import check ; check.run_binaryen_js_tests()"
 echo "travis-test build"
-ls -al bin/
 ./build-js.sh -g
-ls -al bin/
-echo "travis-test post-test"
-python -c "import check ; check.run_binaryen_js_tests()"
+echo "travis-test test"
+python -m scripts.test.binaryenjs
 echo "travis-test yay!"
-

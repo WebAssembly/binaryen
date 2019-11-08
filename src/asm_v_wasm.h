@@ -17,8 +17,8 @@
 #ifndef wasm_asm_v_wasm_h
 #define wasm_asm_v_wasm_h
 
-#include "mixed_arena.h"
 #include "emscripten-optimizer/optimizer.h"
+#include "mixed_arena.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -29,13 +29,23 @@ AsmType wasmToAsmType(Type type);
 
 char getSig(Type type);
 
-std::string getSig(const FunctionType *type);
+template<typename ListType>
+std::string getSig(const ListType& params, Type result) {
+  std::string ret;
+  ret += getSig(result);
+  for (auto param : params) {
+    ret += getSig(param);
+  }
+  return ret;
+}
 
-std::string getSig(Function *func);
+std::string getSig(const FunctionType* type);
+std::string getSig(Function* func);
 
 template<typename T,
-         typename std::enable_if<std::is_base_of<Expression, T>::value>::type* = nullptr>
-std::string getSig(T *call) {
+         typename std::enable_if<std::is_base_of<Expression, T>::value>::type* =
+           nullptr>
+std::string getSig(T* call) {
   std::string ret;
   ret += getSig(call->type);
   for (auto operand : call->operands) {
@@ -66,9 +76,18 @@ std::string getSigFromStructs(Type result, const ListType& operands) {
 
 Type sigToType(char sig);
 
-FunctionType sigToFunctionType(std::string sig);
+FunctionType sigToFunctionType(const std::string& sig);
 
-FunctionType* ensureFunctionType(std::string sig, Module* wasm);
+FunctionType*
+ensureFunctionType(const std::string& sig, Module* wasm, Name name = Name());
+
+template<typename ListType>
+FunctionType* ensureFunctionType(const ListType& params,
+                                 Type result,
+                                 Module* wasm,
+                                 Name name = Name()) {
+  return ensureFunctionType(getSig(params, result), wasm, name);
+}
 
 // converts an f32 to an f64 if necessary
 Expression* ensureDouble(Expression* expr, MixedArena& allocator);

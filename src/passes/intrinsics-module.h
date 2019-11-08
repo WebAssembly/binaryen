@@ -24,4 +24,3 @@ extern const char* IntrinsicsModuleWast;
 } // namespace wasm
 
 #endif // passes_intrinsics_module_h
-

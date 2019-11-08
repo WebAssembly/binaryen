@@ -17,6 +17,8 @@
 #ifndef wasm_wasm_type_h
 #define wasm_wasm_type_h
 
+#include "wasm-features.h"
+
 namespace wasm {
 
 enum Type {
@@ -26,19 +28,25 @@ enum Type {
   f32,
   f64,
   v128,
-  unreachable // none means no type, e.g. a block can have no return type. but
-              // unreachable is different, as it can be "ignored" when doing
-              // type checking across branches
+  anyref,
+  exnref,
+  // none means no type, e.g. a block can have no return type. but unreachable
+  // is different, as it can be "ignored" when doing type checking across
+  // branches
+  unreachable
 };
 
 const char* printType(Type type);
 unsigned getTypeSize(Type type);
+FeatureSet getFeatures(Type type);
 Type getType(unsigned size, bool float_);
 Type getReachableType(Type a, Type b);
 bool isConcreteType(Type type);
 bool isFloatType(Type type);
 bool isIntegerType(Type type);
 bool isVectorType(Type type);
+bool isReferenceType(Type type);
+Type reinterpretType(Type type);
 
 } // namespace wasm
 

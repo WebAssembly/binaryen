@@ -67,6 +67,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      WebAssembly's official text format is primarily a linear instruction list
      (with s-expression extensions). Binaryen can't read the linear style, but
      it can read a wasm text file if it contains only s-expressions.
+   * Binaryen uses Stack IR to optimize "stacky" code (that can't be
+     represented in structured form).
+   * In rare cases stacky code must be represented in Binaryen IR as well, like
+     popping a value in an exception catch. To support that Binaryen IR has
+     `push` and `pop` instructions.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
@@ -103,6 +108,19 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      emitted when generating wasm. Instead its list of operands will be directly
      used in the containing node. Such a block is sometimes called an "implicit
      block".
+ * Multivalue
+   * Binaryen will not represent multivalue instructions and values directly.
+     Binaryen's main focus is on optimization of wasm, and therefore the question
+     of whether we should have multivalue in the main IR is whether it justifes
+     the extra complexity there. Experiments show that the shrinking of code
+     size thanks to multivalue is useful but small, just 1-3% or so. Given that,
+     we prefer to keep the main IR simple, and focus on multivalue optimizations
+     in Stack IR, which is more suitable for such things.
+   * Binaryen does still need to implement the "ABI" level of multivalue, that
+     is, we need multivalue calls because those may cross module boundaries,
+     and so they are observable externally. To support that, Binaryen may use
+     `push` and `pop` as mentioned earlier; another option is to add LLVM-like
+     `extractvalue/composevalue` instructions.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
@@ -131,23 +149,22 @@ Notes when working with Binaryen IR:
 
 This repository contains code that builds the following tools in `bin/`:
 
- * **wasm-shell**: A shell that can load and interpret WebAssembly code. It can
-   also run the spec test suite.
+ * **wasm-opt**: Loads WebAssembly and runs Binaryen IR passes on it.
  * **wasm-as**: Assembles WebAssembly in text format (currently S-Expression
    format) into binary format (going through Binaryen IR).
  * **wasm-dis**: Un-assembles WebAssembly in binary format into text format
    (going through Binaryen IR).
- * **wasm-opt**: Loads WebAssembly and runs Binaryen IR passes on it.
+ * **wasm2js**: A WebAssembly-to-JS compiler. This is used by Emscripten to
+   generate JavaScript as an alternative to WebAssembly.
+ * **wasm-shell**: A shell that can load and interpret WebAssembly code. It can
+   also run the spec test suite.
+ * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
+   performs emscripten-specific passes over it.
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, using Emscripten's asm
    optimizer infrastructure. This is used by Emscripten in Binaryen mode when it
    uses Emscripten's fastcomp asm.js backend.
- * **wasm2js**: A WebAssembly-to-JS compiler (still experimental).
- * **wasm-merge**: Combines wasm files into a single big wasm file (without
-   sophisticated linking).
  * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of
    time. Used by Emscripten.
- * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
-   performs emscripten-specific passes over it.
  * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
 
 Usage instructions for each are below.
@@ -226,9 +243,79 @@ Some more notes:
  * See `bin/wasm-opt --help` for the full list of options and passes.
  * Passing `--debug` will emit some debugging info.
 
+### wasm2js
+
+Run
+
+```
+bin/wasm2js [input.wasm file]
+```
+
+This will print out JavaScript to the console.
+
+For example, try
+
+```
+$ bin/wasm2js test/hello_world.wast
+```
+
+That output contains
+
+```
+ function add(x, y) {
+  x = x | 0;
+  y = y | 0;
+  return x + y | 0 | 0;
+ }
+```
+
+as a translation of
+
+```
+ (func $add (; 0 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (i32.add
+   (local.get $x)
+   (local.get $y)
+  )
+ )
+```
+
+wasm2js's output is in ES6 module format - basically, it converts a wasm
+module into an ES6 module (to run on older browsers and Node.js versions
+you can use Babel etc. to convert it to ES5). Let's look at a full example
+of calling that hello world wast; first, create the main JS file:
+
+```javascript
+// main.mjs
+import { add } from "./hello_world.mjs";
+console.log('the sum of 1 and 2 is:', add(1, 2));
+```
+
+The run this (note that you need a new enough Node.js with ES6 module
+support):
+
+```shell
+$ bin/wasm2js test/hello_world.wast -o hello_world.mjs
+$ node --experimental-modules main.mjs
+the sum of 1 and 2 is: 3
+```
+
+Things keep to in mind with wasm2js's output:
+
+ * You should run wasm2js with optimizations for release builds, using `-O`
+   or another optimization level. That will optimize along the entire pipeline
+   (wasm and JS). It won't do everything a JS minifer would, though, like
+   minify whitespace, so you should still run a normal JS minifer afterwards.
+ * It is not possible to match WebAssembly semantics 100% precisely with fast
+   JavaScript code. For example, every load and store may trap, and to make
+   JavaScript do the same we'd need to add checks everywhere, which would be
+   large and slow. Instead, wasm2js assumes loads and stores do not trap, that
+   int/float conversions do not trap, and so forth. There may also be slight
+   differences in corner cases of conversions, like non-trapping float to int.
+
 ### asm2wasm
 
-run
+Run
 
 ```
 bin/asm2wasm [input.asm.js file]
@@ -296,7 +383,7 @@ The `check.py` script supports some options:
  * If an interpreter is provided, we run the output through it, checking for
    parse errors.
  * If tests are provided, we run exactly those. If none are provided, we run
-   them all.
+   them all. To see what tests are available, run `./check.py --list-suites`.
  * Some tests require `emcc` or `nodejs` in the path. They will not run if the
    tool cannot be found, and you'll see a warning.
  * We have tests from upstream in `tests/spec`, in git submodules. Running
@@ -317,41 +404,6 @@ The `check.py` script supports some options:
 
 ## FAQ
 
-* How does `asm2wasm` relate to the new WebAssembly backend which is being
-  developed in upstream LLVM?
-
-This is separate from that. `asm2wasm` focuses on compiling asm.js to
-WebAssembly, as emitted by Emscripten's asm.js backend. This is useful because
-while in the long term Emscripten hopes to use the new WebAssembly backend, the
-`asm2wasm` route is a very quick and easy way to generate WebAssembly output.
-It will also be useful for benchmarking the new backend as it progresses.
-
-* How about compiling WebAssembly to asm.js (the opposite direction of
-  `asm2wasm`)? Wouldn't that be useful for polyfilling?
-
-Experimentation with this is happening, in `wasm2js`.
-
-This would be useful, but it is a much harder task, due to some decisions made
-in WebAssembly. For example, WebAssembly can have control flow nested inside
-expressions, which can't directly map to asm.js. It could be supported by
-outlining the code to another function, or to compiling it down into new basic
-blocks and control-flow-free instructions, but it is hard to do so in a way that
-is both fast to do and emits code that is fast to execute. On the other hand,
-compiling asm.js to WebAssembly is almost straightforward.
-
-We just have to do more work on `wasm2js` and see how efficient we can make it.
-
-* Can `asm2wasm` compile any asm.js code?
-
-Almost. Some decisions made in WebAssembly preclude that, for example, there are
-no global variables. That means that `asm2wasm` has to map asm.js global
-variables onto locations in memory, but then it must know of a safe zone in
-memory in which to do so, and that information is not directly available in
-asm.js.
-
-`asm2wasm` do some integration with Emscripten in order to work around these
-issues, like asking Emscripten to reserve same space for the globals, etc.
-
 * Why the weird name for the project?
 
 "Binaryen" is a combination of **binary** - since WebAssembly is a binary format
@@ -368,7 +420,7 @@ under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**. Help
 would be appreciated on Windows and OS X as most of the core devs are on Linux.
 
 [compiling to WebAssembly]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen
-[win32]: https://github.com/brakmic/brakmic/blob/master/webassembly/COMPILING_WIN32.ms
+[win32]: https://github.com/brakmic/bazaar/blob/master/webassembly/COMPILING_WIN32.md
 [C API]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api-1
 [control flow graph]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api
 [JS_API]: https://github.com/WebAssembly/binaryen/wiki/binaryen.js-API

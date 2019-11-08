@@ -29,44 +29,47 @@
 namespace wasm {
 
 namespace Flags {
-  enum BinaryOption {
-    Binary,
-    Text
-  };
-  enum DebugOption {
-    Debug,
-    Release
-  };
-}
+enum BinaryOption { Binary, Text };
+enum DebugOption { Debug, Release };
+} // namespace Flags
+
+std::vector<char> read_stdin(Flags::DebugOption);
 
 template<typename T>
-T read_file(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug);
+T read_file(const std::string& filename,
+            Flags::BinaryOption binary,
+            Flags::DebugOption debug);
+
 // Declare the valid explicit specializations.
-extern template std::string read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
-extern template std::vector<char> read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
+extern template std::string
+read_file<>(const std::string&, Flags::BinaryOption, Flags::DebugOption);
+extern template std::vector<char>
+read_file<>(const std::string&, Flags::BinaryOption, Flags::DebugOption);
+
+// Given a string which may be a response file (i.e., a filename starting
+// with "@"), if it is a response file read it and return that, or if it
+// is not a response file, return it as is.
+std::string read_possible_response_file(const std::string&);
 
 class Output {
- public:
+public:
   // An empty filename will open stdout instead.
-  Output(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug);
+  Output(const std::string& filename,
+         Flags::BinaryOption binary,
+         Flags::DebugOption debug);
   ~Output() = default;
-  template<typename T>
-  std::ostream &operator<<(const T &v) {
-    return out << v;
-  }
+  template<typename T> std::ostream& operator<<(const T& v) { return out << v; }
 
-  std::ostream& getStream() {
-    return out;
-  }
+  std::ostream& getStream() { return out; }
 
   std::ostream& write(const char* s, std::streamsize c) {
     return out.write(s, c);
   }
 
- private:
+private:
   Output() = delete;
-  Output(const Output &) = delete;
-  Output &operator=(const Output &) = delete;
+  Output(const Output&) = delete;
+  Output& operator=(const Output&) = delete;
   std::ofstream outfile;
   std::ostream out;
 };
@@ -79,4 +82,4 @@ size_t file_size(std::string filename);
 
 } // namespace wasm
 
-#endif  // wasm_support_file_h
+#endif // wasm_support_file_h

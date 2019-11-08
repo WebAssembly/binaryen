@@ -18,9 +18,9 @@
 // Shared execution result checking code
 //
 
-#include "wasm.h"
-#include "shell-interface.h"
 #include "ir/import-utils.h"
+#include "shell-interface.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -59,9 +59,12 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings);
     try {
       ModuleInstance instance(wasm, &interface);
-      // execute all exported methods (that are therefore preserved through opts)
+      // execute all exported methods (that are therefore preserved through
+      // opts)
       for (auto& exp : wasm.exports) {
-        if (exp->kind != ExternalKind::Function) continue;
+        if (exp->kind != ExternalKind::Function) {
+          continue;
+        }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
         if (func->result != none) {
@@ -69,7 +72,8 @@ struct ExecutionResults {
           results[exp->name] = run(func, wasm, instance);
           // ignore the result if we hit an unreachable and returned no value
           if (isConcreteType(results[exp->name].type)) {
-            std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name] << '\n';
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => "
+                      << results[exp->name] << '\n';
           }
         } else {
           // no result, run it anyhow (it might modify memory etc.)
@@ -111,9 +115,7 @@ struct ExecutionResults {
     return true;
   }
 
-  bool operator!=(ExecutionResults& other) {
-    return !((*this) == other);
-  }
+  bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
   Literal run(Function* func, Module& wasm) {
     LoggingExternalInterface interface(loggings);

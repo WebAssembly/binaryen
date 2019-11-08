@@ -38,15 +38,17 @@
 #include <pass.h>
 #include <shared-constants.h>
 #include <wasm.h>
-#include "support/json.h"
 
 namespace wasm {
+
+static Name WASI_UNSTABLE("wasi_unstable");
 
 struct MinifyImportsAndExports : public Pass {
   bool minifyExports;
 
 public:
-  explicit MinifyImportsAndExports(bool minifyExports) : minifyExports(minifyExports) {}
+  explicit MinifyImportsAndExports(bool minifyExports)
+    : minifyExports(minifyExports) {}
 
 private:
   // Generates minified names that are valid in JS.
@@ -54,8 +56,8 @@ private:
   class MinifiedNames {
   public:
     MinifiedNames() {
-      // Reserved words in JS up to size 4 - size 5 and above would mean we use an astronomical
-      // number of symbols, which is not realistic anyhow.
+      // Reserved words in JS up to size 4 - size 5 and above would mean we use
+      // an astronomical number of symbols, which is not realistic anyhow.
       reserved.insert("do");
       reserved.insert("if");
       reserved.insert("in");
@@ -72,7 +74,8 @@ private:
       reserved.insert("this");
       reserved.insert("with");
 
-      validInitialChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
+      validInitialChars =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
       validLaterChars = validInitialChars + "0123456789";
 
       minifiedState.push_back(0);
@@ -121,95 +124,51 @@ private:
         size_t i = 0;
         while (1) {
           minifiedState[i]++;
-          if (minifiedState[i] < (i == 0 ? validInitialChars : validLaterChars).size()) {
+          if (minifiedState[i] <
+              (i == 0 ? validInitialChars : validLaterChars).size()) {
             break;
           }
           // Overflow.
           minifiedState[i] = 0;
           i++;
           if (i == minifiedState.size()) {
-            minifiedState.push_back(-1); // will become 0 after increment in next loop head
+            // will become 0 after increment in next loop head
+            minifiedState.push_back(-1);
           }
         }
       }
     }
   };
 
-  // Super slow, need to optimize!!!
-  void minifyIAT(Module* module, std::map<Name, Name> oldToNew) {
-    // Minify the IAT
-    std::string serializedIAT("{");
-    for (int i = 0; i < module->userSections.size(); ++i) {
-      if (module->userSections[i].name.compare("IAT") == 0) {
-        for (int ii = 0; ii < module->userSections[i].data.size(); ++ii) {
-          serializedIAT += (char)module->userSections[i].data[ii];
-        }
-      }
-    }
-    serializedIAT += "}";
-    json::Value test;
-    test.parse((char*)serializedIAT.c_str());
-    json::Value::ObjectStorage* temp = test.obj;
-
-    std::map<json::IString, json::Ref> newStorageMap;
-    std::string deserializedMap;
-    for (auto& it : *temp) {
-      std::cout << it.first.str << "\n";
-      for (auto& pair : oldToNew) {
-        std::string tempString(pair.second.str);
-        std::string strAfterToken;
-        strAfterToken = tempString.substr(tempString.find('$') + 1);
-        if (it.first.str == strAfterToken) {
-          json::IString tempMinified(pair.first.str);
-          // json::Value tempChar(it.second->getInteger());
-          json::Ref iatIndex = json::Ref(new json::Value(it.second->getInteger()));
-          // json::Ref testRef(&tempChar);
-          //(*temp)[tempMinified] = testRef;
-          newStorageMap.emplace(tempMinified, iatIndex);
-        }
-      }
-    }
-
-    for (auto it = newStorageMap.begin(); it != newStorageMap.end();) {
-      deserializedMap += "\"" + std::string(it->first.str) + "\"" + std::string(":") +
-                         std::to_string((int)it->second->getNumber());
-
-      if (++it != newStorageMap.end()) {
-        deserializedMap += ",";
-      }
-    }
-
-    // Write back the minified IAT
-    for (int i = 0; i < module->userSections.size(); ++i) {
-      if (module->userSections[i].name.compare("IAT") == 0) {
-        module->userSections[i].data.assign(
-          deserializedMap.begin(), deserializedMap.begin() + deserializedMap.size());
-      }
-    }
-  }
-
-  #pragma optimize("", off)
   void run(PassRunner* runner, Module* module) override {
     // Minify the imported names.
     MinifiedNames names;
     size_t soFar = 0;
     std::map<Name, Name> oldToNew;
+    std::map<Name, Name> newToOld;
     auto process = [&](Name& name) {
       // do not minifiy special imports, they must always exist
-      if (name == MEMORY_BASE || name == TABLE_BASE) {
+      if (name == MEMORY_BASE || name == TABLE_BASE || name == STACK_POINTER) {
         return;
       }
-      auto newName = names.getName(soFar++);
-      oldToNew[newName] = name;
-      name = newName;
+      auto iter = oldToNew.find(name);
+      if (iter == oldToNew.end()) {
+        auto newName = names.getName(soFar++);
+        oldToNew[name] = newName;
+        newToOld[newName] = name;
+        name = newName;
+      } else {
+        name = iter->second;
+      }
     };
     auto processImport = [&](Importable* curr) {
-      if (curr->module == ENV) {
+      if (curr->module == ENV || curr->module == WASI_UNSTABLE) {
         process(curr->base);
       }
     };
     ModuleUtils::iterImportedGlobals(*module, processImport);
     ModuleUtils::iterImportedFunctions(*module, processImport);
+    ModuleUtils::iterImportedEvents(*module, processImport);
 
     if (minifyExports) {
       // Minify the exported names.
@@ -218,19 +177,17 @@ private:
       }
     }
     module->updateMaps();
-
-	minifyIAT(module, oldToNew);
-
     // Emit the mapping.
-    for (auto& pair : oldToNew) {
+    for (auto& pair : newToOld) {
       std::cout << pair.second.str << " => " << pair.first.str << '\n';
     }
   }
 };
-#pragma optimize("", on)
 
 Pass* createMinifyImportsPass() { return new MinifyImportsAndExports(false); }
 
-Pass* createMinifyImportsAndExportsPass() { return new MinifyImportsAndExports(true); }
+Pass* createMinifyImportsAndExportsPass() {
+  return new MinifyImportsAndExports(true);
+}
 
 } // namespace wasm

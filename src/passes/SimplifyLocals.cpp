@@ -46,33 +46,40 @@
 // removing redundant locals.
 //
 
-#include <wasm.h>
+#include "ir/equivalent_sets.h"
+#include <ir/branch-utils.h>
+#include <ir/effects.h>
+#include <ir/find_all.h>
+#include <ir/local-utils.h>
+#include <ir/manipulation.h>
+#include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
-#include <pass.h>
-#include <ir/branch-utils.h>
-#include <ir/count.h>
-#include <ir/effects.h>
-#include "ir/equivalent_sets.h"
-#include <ir/find_all.h>
-#include <ir/manipulation.h>
+#include <wasm.h>
 
 namespace wasm {
 
 // Main class
 
-template<bool allowTee = true, bool allowStructure = true, bool allowNesting = true>
-struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>> {
+template<bool allowTee = true,
+         bool allowStructure = true,
+         bool allowNesting = true>
+struct SimplifyLocals
+  : public WalkerPass<LinearExecutionWalker<
+      SimplifyLocals<allowTee, allowStructure, allowNesting>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SimplifyLocals<allowTee, allowStructure, allowNesting>(); }
+  Pass* create() override {
+    return new SimplifyLocals<allowTee, allowStructure, allowNesting>();
+  }
 
   // information for a local.set we can sink
   struct SinkableInfo {
     Expression** item;
     EffectAnalyzer effects;
 
-    SinkableInfo(Expression** item, PassOptions& passOptions) : item(item), effects(passOptions, *item) {}
+    SinkableInfo(Expression** item, PassOptions& passOptions)
+      : item(item), effects(passOptions, *item) {}
   };
 
   // a list of sinkables in a linear execution trace
@@ -110,9 +117,11 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   bool firstCycle;
 
   // local => # of local.gets for it
-  GetLocalCounter getCounter;
+  LocalGetCounter getCounter;
 
-  static void doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
+  static void
+  doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
+                  Expression** currp) {
     // Main processing.
     auto* curr = *currp;
     if (curr->is<Break>()) {
@@ -121,12 +130,14 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         // value means the block already has a return value
         self->unoptimizableBlocks.insert(br->name);
       } else {
-        self->blockBreaks[br->name].push_back({ currp, std::move(self->sinkables) });
+        self->blockBreaks[br->name].push_back(
+          {currp, std::move(self->sinkables)});
       }
     } else if (curr->is<Block>()) {
       return; // handled in visitBlock
     } else if (curr->is<If>()) {
-      assert(!curr->cast<If>()->ifFalse); // if-elses are handled by doNoteIf* methods
+      assert(!curr->cast<If>()
+                ->ifFalse); // if-elses are handled by doNoteIf* methods
     } else if (curr->is<Switch>()) {
       auto* sw = curr->cast<Switch>();
       auto targets = BranchUtils::getUniqueTargets(sw);
@@ -138,13 +149,17 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     self->sinkables.clear();
   }
 
-  static void doNoteIfCondition(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
+  static void doNoteIfCondition(
+    SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
+    Expression** currp) {
     // we processed the condition of this if-else, and now control flow branches
     // into either the true or the false sides
     self->sinkables.clear();
   }
 
-  static void doNoteIfTrue(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
+  static void
+  doNoteIfTrue(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
+               Expression** currp) {
     auto* iff = (*currp)->dynCast<If>();
     if (iff->ifFalse) {
       // We processed the ifTrue side of this if-else, save it on the stack.
@@ -159,7 +174,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
   }
 
-  static void doNoteIfFalse(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
+  static void
+  doNoteIfFalse(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
+                Expression** currp) {
     // we processed the ifFalse side of this if-else, we can now try to
     // mere with the ifTrue side and optimize a return value, if possible
     auto* iff = (*currp)->cast<If>();
@@ -199,22 +216,25 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
   }
 
-  void visitGetLocal(GetLocal *curr) {
+  void optimizeLocalGet(LocalGet* curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
-      auto* set = (*found->second.item)->template cast<SetLocal>(); // the set we may be sinking
+      auto* set = (*found->second.item)
+                    ->template cast<LocalSet>(); // the set we may be sinking
       bool oneUse = firstCycle || getCounter.num[curr->index] == 1;
-      auto* get = set->value->template dynCast<GetLocal>(); // the set's value may be a get (i.e., the set is a copy)
-      // if nesting is not allowed, and this might cause nesting, check if the sink would cause such a thing
+      // the set's value may be a get (i.e., the set is a copy)
+      auto* get = set->value->template dynCast<LocalGet>();
+      // if nesting is not allowed, and this might cause nesting, check if the
+      // sink would cause such a thing
       if (!allowNesting) {
         // a get is always ok to sink
         if (!get) {
           assert(expressionStack.size() >= 2);
           assert(expressionStack[expressionStack.size() - 1] == curr);
           auto* parent = expressionStack[expressionStack.size() - 2];
-          bool parentIsSet = parent->template is<SetLocal>();
-          // if the parent of this get is a set, we can sink into the set's value,
-          // it would not be nested.
+          bool parentIsSet = parent->template is<LocalSet>();
+          // if the parent of this get is a set, we can sink into the set's
+          // value, it would not be nested.
           if (!parentIsSet) {
             return;
           }
@@ -238,7 +258,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         assert(!set->isTee());
         set->setTee(true);
       }
-      // reuse the getlocal that is dying
+      // reuse the local.get that is dying
       *found->second.item = curr;
       ExpressionManipulator::nop(curr);
       sinkables.erase(found);
@@ -248,7 +268,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   void visitDrop(Drop* curr) {
     // collapse drop-tee into set, which can occur if a get was sunk into a tee
-    auto* set = curr->value->dynCast<SetLocal>();
+    auto* set = curr->value->dynCast<LocalSet>();
     if (set) {
       assert(set->isTee());
       set->setTee(false);
@@ -271,9 +291,11 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   // a full expression stack is used when !allowNesting, so that we can check if
   // a sink would cause nesting
-  std::vector<Expression*> expressionStack;
+  ExpressionStack expressionStack;
 
-  static void visitPre(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
+  static void
+  visitPre(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
+           Expression** currp) {
     Expression* curr = *currp;
 
     EffectAnalyzer effects(self->getPassOptions());
@@ -286,20 +308,75 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
   }
 
-  static void visitPost(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
-    // perform main SetLocal processing here, since we may be the result of
-    // replaceCurrent, i.e., the visitor was not called.
-    auto* set = (*currp)->dynCast<SetLocal>();
+  static void
+  visitPost(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
+            Expression** currp) {
+    // Handling invalidations in the case where the current node is a get
+    // that we sink into is not trivial in general. In the simple case,
+    // all current sinkables are compatible with each other (otherwise one
+    // would have invalidated a previous one, and removed it). Given that, if
+    // we sink one of the sinkables, then that new code cannot invalidate any
+    // other sinkable - we've already compared them. However, a tricky case
+    // is when a sinkable contains another sinkable,
+    //
+    //  (local.set $x
+    //   (block (result i32)
+    //    (A (local.get $y))
+    //    (local.set $y B)
+    //   )
+    //  )
+    //  (C (local.get $y))
+    //  (D (local.get $x))
+    //
+    // If we sink the set of $y, we have
+    //
+    //  (local.set $x
+    //   (block (result i32)
+    //    (A (local.get $y))
+    //    (nop)
+    //   )
+    //  )
+    //  (C B)
+    //  (D (local.get $x))
+    //
+    // There is now a risk that the set of $x should be invalidated, because
+    // if we sink it then A may happen after B (imagine that B contains
+    // something dangerous for that). To verify the risk, we could recursively
+    // scan all of B, but that is less efficient. Instead, the key thing is
+    // that if we sink out an inner part of a set, we should just leave further
+    // work on it to a later iteration. This is achieved by checking for
+    // invalidation on the original node, the local.get $y, which is guaranteed
+    // to invalidate the parent whose inner part was removed (since the inner
+    // part has a set, and the original node is a get of that same local).
+    //
+    // To implement this, if the current node is a get, note it and use it
+    // for invalidations later down. We must note it since optimizing the get
+    // may perform arbitrary changes to the graph, including reuse the get.
+
+    Expression* original = *currp;
+
+    LocalGet originalGet;
+
+    if (auto* get = (*currp)->dynCast<LocalGet>()) {
+      // Note: no visitor for LocalGet, so that we can handle it here.
+      originalGet = *get;
+      original = &originalGet;
+      self->optimizeLocalGet(get);
+    }
+
+    // perform main LocalSet processing here, since we may be the result of
+    // replaceCurrent, i.e., no visitor for LocalSet, like LocalGet above.
+    auto* set = (*currp)->dynCast<LocalSet>();
 
     if (set) {
-      // if we see a set that was already potentially-sinkable, then the previous
-      // store is dead, leave just the value
+      // if we see a set that was already potentially-sinkable, then the
+      // previous store is dead, leave just the value
       auto found = self->sinkables.find(set->index);
       if (found != self->sinkables.end()) {
-        auto* previous = (*found->second.item)->template cast<SetLocal>();
+        auto* previous = (*found->second.item)->template cast<LocalSet>();
         assert(!previous->isTee());
         auto* previousValue = previous->value;
-        Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(previous);
+        Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(previous);
         drop->value = previousValue;
         drop->finalize();
         self->sinkables.erase(found);
@@ -308,14 +385,15 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
 
     EffectAnalyzer effects(self->getPassOptions());
-    if (effects.checkPost(*currp)) {
+    if (effects.checkPost(original)) {
       self->checkInvalidations(effects);
     }
 
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp, self->getPassOptions())));
+      self->sinkables.emplace(
+        std::make_pair(index, SinkableInfo(currp, self->getPassOptions())));
     }
 
     if (!allowNesting) {
@@ -323,11 +401,16 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
   }
 
-  bool canSink(SetLocal* set) {
+  bool canSink(LocalSet* set) {
     // we can never move a tee
-    if (set->isTee()) return false;
-    // if in the first cycle, or not allowing tees, then we cannot sink if >1 use as that would make a tee
-    if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1) return false;
+    if (set->isTee()) {
+      return false;
+    }
+    // if in the first cycle, or not allowing tees, then we cannot sink if >1
+    // use as that would make a tee
+    if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1) {
+      return false;
+    }
     return true;
   }
 
@@ -338,19 +421,24 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   void optimizeLoopReturn(Loop* loop) {
     // If there is a sinkable thing in an eligible loop, we can optimize
     // it in a trivial way to the outside of the loop.
-    if (loop->type != none) return;
-    if (sinkables.empty()) return;
+    if (loop->type != none) {
+      return;
+    }
+    if (sinkables.empty()) {
+      return;
+    }
     Index goodIndex = sinkables.begin()->first;
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
     auto* block = loop->body->dynCast<Block>();
-    if (!block || block->name.is() || block->list.size() == 0  || !block->list.back()->is<Nop>()) {
+    if (!block || block->name.is() || block->list.size() == 0 ||
+        !block->list.back()->is<Nop>()) {
       loopsToEnlarge.push_back(loop);
       return;
     }
     Builder builder(*this->getModule());
     auto** item = sinkables.at(goodIndex).item;
-    auto* set = (*item)->template cast<SetLocal>();
+    auto* set = (*item)->template cast<LocalSet>();
     block->list[block->list.size() - 1] = set->value;
     *item = builder.makeNop();
     block->finalize();
@@ -371,8 +459,13 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
     auto breaks = std::move(blockBreaks[block->name]);
     blockBreaks.erase(block->name);
-    if (breaks.size() == 0) return; // block has no branches TODO we might optimize trivial stuff here too
-    assert(!(*breaks[0].brp)->template cast<Break>()->value); // block does not already have a return value (if one break has one, they all do)
+    if (breaks.size() == 0) {
+      // block has no branches TODO we might optimize trivial stuff here too
+      return;
+    }
+    // block does not already have a return value (if one break has one, they
+    // all do)
+    assert(!(*breaks[0].brp)->template cast<Break>()->value);
     // look for a local.set that is present in them all
     bool found = false;
     Index sharedIndex = -1;
@@ -391,7 +484,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         break;
       }
     }
-    if (!found) return;
+    if (!found) {
+      return;
+    }
     // If one of our brs is a br_if, then we will give it a value. since
     // the value executes before the condition, it is dangerous if we are
     // moving code out of the condition,
@@ -411,23 +506,23 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // so we must check for that.
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
-      auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
+      auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->template cast<Break>();
-      auto* set = (*breakSetLocalPointer)->template cast<SetLocal>();
+      auto* set = (*breakLocalSetPointer)->template cast<LocalSet>();
       if (br->condition) {
         // TODO: optimize
-        FindAll<SetLocal> findAll(br->condition);
+        FindAll<LocalSet> findAll(br->condition);
         for (auto* otherSet : findAll.list) {
           if (otherSet == set) {
             // the set is indeed in the condition, so we can't just move it
             // but maybe there are no effects? see if, ignoring the set
             // itself, there is any risk
             Nop nop;
-            *breakSetLocalPointer = &nop;
+            *breakLocalSetPointer = &nop;
             EffectAnalyzer condition(this->getPassOptions(), br->condition);
             EffectAnalyzer value(this->getPassOptions(), set);
-            *breakSetLocalPointer = set;
+            *breakLocalSetPointer = set;
             if (condition.invalidates(value)) {
               // indeed, we can't do this, stop
               return;
@@ -446,25 +541,29 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       blocksToEnlarge.push_back(block);
       return;
     }
-    // move block local.set's value to the end, in return position, and nop the set
-    auto* blockSetLocalPointer = sinkables.at(sharedIndex).item;
-    auto* value = (*blockSetLocalPointer)->template cast<SetLocal>()->value;
+    // move block local.set's value to the end, in return position, and nop the
+    // set
+    auto* blockLocalSetPointer = sinkables.at(sharedIndex).item;
+    auto* value = (*blockLocalSetPointer)->template cast<LocalSet>()->value;
     block->list[block->list.size() - 1] = value;
     block->type = value->type;
-    ExpressionManipulator::nop(*blockSetLocalPointer);
+    ExpressionManipulator::nop(*blockLocalSetPointer);
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
-      auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
+      auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->template cast<Break>();
       assert(!br->value);
-      // if the break is conditional, then we must set the value here - if the break is not reached, we must still have the new value in the local
-      auto* set = (*breakSetLocalPointer)->template cast<SetLocal>();
+      // if the break is conditional, then we must set the value here - if the
+      // break is not reached, we must still have the new value in the local
+      auto* set = (*breakLocalSetPointer)->template cast<LocalSet>();
       if (br->condition) {
         br->value = set;
         set->setTee(true);
-        *breakSetLocalPointer = this->getModule()->allocator.template alloc<Nop>();
-        // in addition, as this is a conditional br that now has a value, it now returns a value, so it must be dropped
+        *breakLocalSetPointer =
+          this->getModule()->allocator.template alloc<Nop>();
+        // in addition, as this is a conditional br that now has a value, it now
+        // returns a value, so it must be dropped
         br->finalize();
         *brp = Builder(*this->getModule()).makeDrop(br);
       } else {
@@ -473,8 +572,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       }
     }
     // finally, create a local.set on the block itself
-    auto* newSetLocal = Builder(*this->getModule()).makeSetLocal(sharedIndex, block);
-    this->replaceCurrent(newSetLocal);
+    auto* newLocalSet =
+      Builder(*this->getModule()).makeLocalSet(sharedIndex, block);
+    this->replaceCurrent(newLocalSet);
     sinkables.clear();
     anotherCycle = true;
   }
@@ -484,7 +584,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     assert(iff->ifFalse);
     // if this if already has a result, or is unreachable code, we have
     // nothing to do
-    if (iff->type != none) return;
+    if (iff->type != none) {
+      return;
+    }
     // We now have the sinkables from both sides of the if, and can look
     // for something to sink. That is either a shared index on both sides,
     // *or* if one side is unreachable, we can sink anything from the other,
@@ -527,35 +629,43 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         }
       }
     }
-    if (!found) return;
+    if (!found) {
+      return;
+    }
     // great, we can optimize!
     // ensure we have a place to write the return values for, if not, we
     // need another cycle
-    auto* ifTrueBlock  = iff->ifTrue->dynCast<Block>();
+    auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
     if (iff->ifTrue->type != unreachable) {
-      if (!ifTrueBlock  || ifTrueBlock->name.is() || ifTrueBlock->list.size() == 0  || !ifTrueBlock->list.back()->is<Nop>()) {
+      if (!ifTrueBlock || ifTrueBlock->name.is() ||
+          ifTrueBlock->list.size() == 0 ||
+          !ifTrueBlock->list.back()->is<Nop>()) {
         ifsToEnlarge.push_back(iff);
         return;
       }
     }
     auto* ifFalseBlock = iff->ifFalse->dynCast<Block>();
     if (iff->ifFalse->type != unreachable) {
-      if (!ifFalseBlock  || ifFalseBlock->name.is() || ifFalseBlock->list.size() == 0  || !ifFalseBlock->list.back()->is<Nop>()) {
+      if (!ifFalseBlock || ifFalseBlock->name.is() ||
+          ifFalseBlock->list.size() == 0 ||
+          !ifFalseBlock->list.back()->is<Nop>()) {
         ifsToEnlarge.push_back(iff);
         return;
       }
     }
     // all set, go
     if (iff->ifTrue->type != unreachable) {
-      auto *ifTrueItem = ifTrue.at(goodIndex).item;
-      ifTrueBlock->list[ifTrueBlock->list.size() - 1] = (*ifTrueItem)->template cast<SetLocal>()->value;
+      auto* ifTrueItem = ifTrue.at(goodIndex).item;
+      ifTrueBlock->list[ifTrueBlock->list.size() - 1] =
+        (*ifTrueItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifTrueItem);
       ifTrueBlock->finalize();
       assert(ifTrueBlock->type != none);
     }
     if (iff->ifFalse->type != unreachable) {
-      auto *ifFalseItem = ifFalse.at(goodIndex).item;
-      ifFalseBlock->list[ifFalseBlock->list.size() - 1] = (*ifFalseItem)->template cast<SetLocal>()->value;
+      auto* ifFalseItem = ifFalse.at(goodIndex).item;
+      ifFalseBlock->list[ifFalseBlock->list.size() - 1] =
+        (*ifFalseItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifFalseItem);
       ifFalseBlock->finalize();
       assert(ifFalseBlock->type != none);
@@ -563,8 +673,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     iff->finalize(); // update type
     assert(iff->type != none);
     // finally, create a local.set on the iff itself
-    auto* newSetLocal = Builder(*this->getModule()).makeSetLocal(goodIndex, iff);
-    *currp = newSetLocal;
+    auto* newLocalSet =
+      Builder(*this->getModule()).makeLocalSet(goodIndex, iff);
+    *currp = newLocalSet;
     anotherCycle = true;
   }
 
@@ -592,27 +703,32 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   // arm into a one-sided if.
   void optimizeIfReturn(If* iff, Expression** currp) {
     // If this if is unreachable code, we have nothing to do.
-    if (iff->type != none || iff->ifTrue->type != none) return;
+    if (iff->type != none || iff->ifTrue->type != none) {
+      return;
+    }
     // Anything sinkable is good for us.
-    if (sinkables.empty()) return;
+    if (sinkables.empty()) {
+      return;
+    }
     Index goodIndex = sinkables.begin()->first;
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
     auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
-    if (!ifTrueBlock || ifTrueBlock->name.is() || ifTrueBlock->list.size() == 0  || !ifTrueBlock->list.back()->is<Nop>()) {
+    if (!ifTrueBlock || ifTrueBlock->name.is() ||
+        ifTrueBlock->list.size() == 0 || !ifTrueBlock->list.back()->is<Nop>()) {
       ifsToEnlarge.push_back(iff);
       return;
     }
     // Update the ifTrue side.
     Builder builder(*this->getModule());
     auto** item = sinkables.at(goodIndex).item;
-    auto* set = (*item)->template cast<SetLocal>();
+    auto* set = (*item)->template cast<LocalSet>();
     ifTrueBlock->list[ifTrueBlock->list.size() - 1] = set->value;
     *item = builder.makeNop();
     ifTrueBlock->finalize();
     assert(ifTrueBlock->type != none);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeGetLocal(set->index, set->value->type);
+    iff->ifFalse = builder.makeLocalGet(set->index, set->value->type);
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;
@@ -625,7 +741,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   }
 
   // override scan to add a pre and a post check task to all nodes
-  static void scan(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
+  static void scan(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
+                   Expression** currp) {
     self->pushTask(visitPost, currp);
 
     auto* curr = *currp;
@@ -633,15 +750,29 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     if (auto* iff = curr->dynCast<If>()) {
       // handle if in a special manner, using the ifStack for if-elses etc.
       if (iff->ifFalse) {
-        self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::doNoteIfFalse, currp);
-        self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::scan, &iff->ifFalse);
+        self->pushTask(
+          SimplifyLocals<allowTee, allowStructure, allowNesting>::doNoteIfFalse,
+          currp);
+        self->pushTask(
+          SimplifyLocals<allowTee, allowStructure, allowNesting>::scan,
+          &iff->ifFalse);
       }
-      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::doNoteIfTrue, currp);
-      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::scan, &iff->ifTrue);
-      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::doNoteIfCondition, currp);
-      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::scan, &iff->condition);
+      self->pushTask(
+        SimplifyLocals<allowTee, allowStructure, allowNesting>::doNoteIfTrue,
+        currp);
+      self->pushTask(
+        SimplifyLocals<allowTee, allowStructure, allowNesting>::scan,
+        &iff->ifTrue);
+      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::
+                       doNoteIfCondition,
+                     currp);
+      self->pushTask(
+        SimplifyLocals<allowTee, allowStructure, allowNesting>::scan,
+        &iff->condition);
     } else {
-      WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>>::scan(self, currp);
+      WalkerPass<LinearExecutionWalker<
+        SimplifyLocals<allowTee, allowStructure, allowNesting>>>::scan(self,
+                                                                       currp);
     }
 
     self->pushTask(visitPre, currp);
@@ -685,11 +816,14 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   bool runMainOptimizations(Function* func) {
     anotherCycle = false;
-    WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>>::doWalkFunction(func);
+    WalkerPass<LinearExecutionWalker<
+      SimplifyLocals<allowTee, allowStructure, allowNesting>>>::
+      doWalkFunction(func);
     // enlarge blocks that were marked, for the next round
     if (blocksToEnlarge.size() > 0) {
       for (auto* block : blocksToEnlarge) {
-        block->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+        block->list.push_back(
+          this->getModule()->allocator.template alloc<Nop>());
       }
       blocksToEnlarge.clear();
       anotherCycle = true;
@@ -697,16 +831,22 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // enlarge ifs that were marked, for the next round
     if (ifsToEnlarge.size() > 0) {
       for (auto* iff : ifsToEnlarge) {
-        auto ifTrue = Builder(*this->getModule()).blockifyWithName(iff->ifTrue, Name());
+        auto ifTrue =
+          Builder(*this->getModule()).blockifyWithName(iff->ifTrue, Name());
         iff->ifTrue = ifTrue;
-        if (ifTrue->list.size() == 0 || !ifTrue->list.back()->template is<Nop>()) {
-          ifTrue->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+        if (ifTrue->list.size() == 0 ||
+            !ifTrue->list.back()->template is<Nop>()) {
+          ifTrue->list.push_back(
+            this->getModule()->allocator.template alloc<Nop>());
         }
         if (iff->ifFalse) {
-          auto ifFalse = Builder(*this->getModule()).blockifyWithName(iff->ifFalse, Name());
+          auto ifFalse =
+            Builder(*this->getModule()).blockifyWithName(iff->ifFalse, Name());
           iff->ifFalse = ifFalse;
-          if (ifFalse->list.size() == 0 || !ifFalse->list.back()->template is<Nop>()) {
-            ifFalse->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+          if (ifFalse->list.size() == 0 ||
+              !ifFalse->list.back()->template is<Nop>()) {
+            ifFalse->list.push_back(
+              this->getModule()->allocator.template alloc<Nop>());
           }
         }
       }
@@ -716,10 +856,13 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // enlarge loops that were marked, for the next round
     if (loopsToEnlarge.size() > 0) {
       for (auto* loop : loopsToEnlarge) {
-        auto block = Builder(*this->getModule()).blockifyWithName(loop->body, Name());
+        auto block =
+          Builder(*this->getModule()).blockifyWithName(loop->body, Name());
         loop->body = block;
-        if (block->list.size() == 0 || !block->list.back()->template is<Nop>()) {
-          block->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+        if (block->list.size() == 0 ||
+            !block->list.back()->template is<Nop>()) {
+          block->list.push_back(
+            this->getModule()->allocator.template alloc<Nop>());
         }
       }
       loopsToEnlarge.clear();
@@ -750,8 +893,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     //    )
     //   )
     // will inhibit us creating an if return value.
-    struct EquivalentOptimizer : public LinearExecutionWalker<EquivalentOptimizer> {
-      std::vector<Index>* numGetLocals;
+    struct EquivalentOptimizer
+      : public LinearExecutionWalker<EquivalentOptimizer> {
+      std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;
       Module* module;
 
@@ -760,19 +904,20 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       // We track locals containing the same value.
       EquivalentSets equivalences;
 
-      static void doNoteNonLinear(EquivalentOptimizer* self, Expression** currp) {
-        // TODO do this across non-linear paths too, in coalesce-locals perhaps? (would inhibit structure
-        //      opts here, though.
+      static void doNoteNonLinear(EquivalentOptimizer* self,
+                                  Expression** currp) {
+        // TODO do this across non-linear paths too, in coalesce-locals perhaps?
+        //      (would inhibit structure opts here, though.
         self->equivalences.clear();
       }
 
-      void visitSetLocal(SetLocal *curr) {
+      void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
         auto* value = curr->value;
-        while (auto* subSet = value->dynCast<SetLocal>()) {
+        while (auto* subSet = value->dynCast<LocalSet>()) {
           value = subSet->value;
         }
-        if (auto* get = value->dynCast<GetLocal>()) {
+        if (auto* get = value->dynCast<LocalGet>()) {
           if (equivalences.check(curr->index, get->index)) {
             // This is an unnecessary copy!
             if (removeEquivalentSets) {
@@ -794,17 +939,17 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         }
       }
 
-      void visitGetLocal(GetLocal *curr) {
+      void visitLocalGet(LocalGet* curr) {
         // Canonicalize gets: if some are equivalent, then we can pick more
         // then one, and other passes may benefit from having more uniformity.
         if (auto* set = equivalences.getEquivalents(curr->index)) {
           // Pick the index with the most uses - maximizing the chance to
           // lower one's uses to zero.
-          // Helper method that returns the # of gets *ignoring the current get*,
-          // as we want to see what is best overall, treating this one as
+          // Helper method that returns the # of gets *ignoring the current
+          // get*, as we want to see what is best overall, treating this one as
           // to be decided upon.
           auto getNumGetsIgnoringCurr = [&](Index index) {
-            auto ret = (*numGetLocals)[index];
+            auto ret = (*numLocalGets)[index];
             if (index == curr->index) {
               assert(ret >= 1);
               ret--;
@@ -821,12 +966,12 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
           assert(best != Index(-1));
           // Due to ordering, the best index may be different from us but have
           // the same # of locals - make sure we actually improve.
-          if (best != curr->index &&
-              getNumGetsIgnoringCurr(best) > getNumGetsIgnoringCurr(curr->index)) {
+          if (best != curr->index && getNumGetsIgnoringCurr(best) >
+                                       getNumGetsIgnoringCurr(curr->index)) {
             // Update the get counts.
-            (*numGetLocals)[best]++;
-            assert((*numGetLocals)[curr->index] >= 1);
-            (*numGetLocals)[curr->index]--;
+            (*numLocalGets)[best]++;
+            assert((*numLocalGets)[curr->index] >= 1);
+            (*numLocalGets)[curr->index]--;
             // Make the change.
             curr->index = best;
             anotherCycle = true;
@@ -837,58 +982,34 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
     EquivalentOptimizer eqOpter;
     eqOpter.module = this->getModule();
-    eqOpter.numGetLocals = &getCounter.num;
+    eqOpter.numLocalGets = &getCounter.num;
     eqOpter.removeEquivalentSets = allowStructure;
     eqOpter.walkFunction(func);
 
     // We may have already had a local with no uses, or we may have just
     // gotten there thanks to the EquivalentOptimizer. If there are such
     // locals, remove all their sets.
-    struct UneededSetRemover : public PostWalker<UneededSetRemover> {
-      std::vector<Index>* numGetLocals;
+    UnneededSetRemover setRemover(getCounter, func, this->getPassOptions());
 
-      bool anotherCycle = false;
-
-      void visitSetLocal(SetLocal *curr) {
-        if ((*numGetLocals)[curr->index] == 0) {
-          auto* value = curr->value;
-          if (curr->isTee()) {
-            this->replaceCurrent(value);
-          } else {
-            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
-            drop->value = value;
-            drop->finalize();
-          }
-          anotherCycle = true;
-        }
-      }
-    };
-
-    UneededSetRemover setRemover;
-    setRemover.numGetLocals = &getCounter.num;
-    setRemover.walkFunction(func);
-
-    return eqOpter.anotherCycle || setRemover.anotherCycle;
+    return eqOpter.anotherCycle || setRemover.removed;
   }
 };
 
-Pass *createSimplifyLocalsPass() {
-  return new SimplifyLocals<true, true>();
-}
+Pass* createSimplifyLocalsPass() { return new SimplifyLocals<true, true>(); }
 
-Pass *createSimplifyLocalsNoTeePass() {
+Pass* createSimplifyLocalsNoTeePass() {
   return new SimplifyLocals<false, true>();
 }
 
-Pass *createSimplifyLocalsNoStructurePass() {
+Pass* createSimplifyLocalsNoStructurePass() {
   return new SimplifyLocals<true, false>();
 }
 
-Pass *createSimplifyLocalsNoTeeNoStructurePass() {
+Pass* createSimplifyLocalsNoTeeNoStructurePass() {
   return new SimplifyLocals<false, false>();
 }
 
-Pass *createSimplifyLocalsNoNestingPass() {
+Pass* createSimplifyLocalsNoNestingPass() {
   return new SimplifyLocals<false, false, false>();
 }
 

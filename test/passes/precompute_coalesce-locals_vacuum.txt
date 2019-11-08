@@ -1,6 +1,6 @@
 (module
- (type $0 (func (param i32) (result i32)))
- (func $nested-br_if-value (; 0 ;) (type $0) (param $0 i32) (result i32)
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (func $nested-br_if-value (; 0 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (loop $label$0
    (br $label$0)
   )

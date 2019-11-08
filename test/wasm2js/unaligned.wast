@@ -1,4 +1,6 @@
 (module
+  (memory 1 1)
+
   (func (export "i32.load") (result i32)
     (i32.load align=1 (i32.const 0)))
   (func (export "i64.load") (result i64)

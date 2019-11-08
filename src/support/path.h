@@ -28,7 +28,9 @@ namespace wasm {
 
 namespace Path {
 
-std::string getPathSeparator();
+char getPathSeparator();
+std::string getDirName(const std::string& path);
+std::string getBaseName(const std::string& path);
 
 // Get the binaryen root dor.
 std::string getBinaryenRoot();
@@ -37,10 +39,10 @@ std::string getBinaryenRoot();
 std::string getBinaryenBinDir();
 
 // Set the binaryen bin dir (allows tools to change it based on user input).
-void setBinaryenBinDir(std::string dir);
+void setBinaryenBinDir(const std::string& dir);
 
 // Gets the path to a binaryen binary tool, like wasm-opt.
-std::string getBinaryenBinaryTool(std::string name);
+std::string getBinaryenBinaryTool(const std::string& name);
 
 } // namespace Path
 

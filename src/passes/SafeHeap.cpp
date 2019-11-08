@@ -20,26 +20,30 @@
 // top of sbrk()-addressible memory, and incorrect alignment notation.
 //
 
-#include "wasm.h"
-#include "pass.h"
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "wasm-builder.h"
 #include "ir/bits.h"
 #include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
+#include "ir/load-utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
-const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR"),
-           SEGFAULT_IMPORT("segfault"),
-           ALIGNFAULT_IMPORT("alignfault");
+static const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR");
+static const Name GET_SBRK_PTR_IMPORT("emscripten_get_sbrk_ptr");
+static const Name GET_SBRK_PTR_EXPORT("_emscripten_get_sbrk_ptr");
+static const Name SBRK("sbrk");
+static const Name SEGFAULT_IMPORT("segfault");
+static const Name ALIGNFAULT_IMPORT("alignfault");
 
 static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
   ret += printType(curr->type);
   ret += "_" + std::to_string(curr->bytes) + "_";
-  if (!isFloatType(curr->type) && !curr->signed_) {
+  if (LoadUtils::isSignRelevant(curr) && !curr->signed_) {
     ret += "U_";
   }
   if (curr->isAtomic) {
@@ -68,63 +72,75 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   AccessInstrumenter* create() override { return new AccessInstrumenter; }
 
   void visitLoad(Load* curr) {
-    if (curr->type == unreachable) return;
+    if (curr->type == unreachable) {
+      return;
+    }
     Builder builder(*getModule());
     replaceCurrent(
-      builder.makeCall(
-        getLoadName(curr),
-        {
-          curr->ptr,
-          builder.makeConst(Literal(int32_t(curr->offset))),
-        },
-        curr->type
-      )
-    );
+      builder.makeCall(getLoadName(curr),
+                       {
+                         curr->ptr,
+                         builder.makeConst(Literal(int32_t(curr->offset))),
+                       },
+                       curr->type));
   }
 
   void visitStore(Store* curr) {
-    if (curr->type == unreachable) return;
+    if (curr->type == unreachable) {
+      return;
+    }
     Builder builder(*getModule());
     replaceCurrent(
-      builder.makeCall(
-        getStoreName(curr),
-        {
-          curr->ptr,
-          builder.makeConst(Literal(int32_t(curr->offset))),
-          curr->value,
-        },
-        none
-      )
-    );
+      builder.makeCall(getStoreName(curr),
+                       {
+                         curr->ptr,
+                         builder.makeConst(Literal(int32_t(curr->offset))),
+                         curr->value,
+                       },
+                       none));
   }
 };
 
 struct SafeHeap : public Pass {
+  PassOptions options;
+
   void run(PassRunner* runner, Module* module) override {
+    options = runner->options;
     // add imports
     addImports(module);
     // instrument loads and stores
-    PassRunner instrumenter(module);
-    instrumenter.setIsNested(true);
-    instrumenter.add<AccessInstrumenter>();
-    instrumenter.run();
+    AccessInstrumenter().run(runner, module);
     // add helper checking funcs and imports
-    addGlobals(module, runner->options.features);
+    addGlobals(module, module->features);
   }
 
-  Name dynamicTopPtr, segfault, alignfault;
+  Name dynamicTopPtr, getSbrkPtr, sbrk, segfault, alignfault;
 
   void addImports(Module* module) {
     ImportInfo info(*module);
+    // Older emscripten imports env.DYNAMICTOP_PTR.
+    // Newer emscripten imports emscripten_get_sbrk_ptr(), which is later
+    // optimized to have the number in the binary (or in the case of fastcomp,
+    // emscripten_get_sbrk_ptr is an asm.js library function so it is inside
+    // the wasm, and discoverable via an export).
     if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
       dynamicTopPtr = existing->name;
+    } else if (auto* existing =
+                 info.getImportedFunction(ENV, GET_SBRK_PTR_IMPORT)) {
+      getSbrkPtr = existing->name;
+    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR_EXPORT)) {
+      getSbrkPtr = existing->value;
+    } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
+      sbrk = existing->name;
     } else {
-      auto* import = new Global;
-      import->name = dynamicTopPtr = DYNAMICTOP_PTR_IMPORT;
+      auto* import = new Function;
+      import->name = getSbrkPtr = GET_SBRK_PTR_IMPORT;
       import->module = ENV;
-      import->base = DYNAMICTOP_PTR_IMPORT;
-      import->type = i32;
-      module->addGlobal(import);
+      import->base = GET_SBRK_PTR_IMPORT;
+      auto* functionType = ensureFunctionType("i", module);
+      import->type = functionType->name;
+      FunctionTypeUtils::fillFunction(import, functionType);
+      module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
       segfault = existing->name;
@@ -152,32 +168,39 @@ struct SafeHeap : public Pass {
     }
   }
 
-  bool isPossibleAtomicOperation(Index align, Index bytes, bool shared, Type type) {
+  bool
+  isPossibleAtomicOperation(Index align, Index bytes, bool shared, Type type) {
     return align == bytes && shared && isIntegerType(type);
   }
 
   void addGlobals(Module* module, FeatureSet features) {
     // load funcs
     Load load;
-    for (auto type : { i32, i64, f32, f64, v128 }) {
-      if (type == v128 && !features.hasSIMD()) continue;
+    for (auto type : {i32, i64, f32, f64, v128}) {
+      if (type == v128 && !features.hasSIMD()) {
+        continue;
+      }
       load.type = type;
-      for (Index bytes : { 1, 2, 4, 8, 16 }) {
+      for (Index bytes : {1, 2, 4, 8, 16}) {
         load.bytes = bytes;
-        if (bytes > getTypeSize(type) ||
-            (type == f32 && bytes != 4) ||
-            (type == f64 && bytes != 8) ||
-            (type == v128 && bytes != 16)) continue;
-        for (auto signed_ : { true, false }) {
+        if (bytes > getTypeSize(type) || (type == f32 && bytes != 4) ||
+            (type == f64 && bytes != 8) || (type == v128 && bytes != 16)) {
+          continue;
+        }
+        for (auto signed_ : {true, false}) {
           load.signed_ = signed_;
-          if (isFloatType(type) && signed_) continue;
-          for (Index align : { 1, 2, 4, 8, 16 }) {
+          if (isFloatType(type) && signed_) {
+            continue;
+          }
+          for (Index align : {1, 2, 4, 8, 16}) {
             load.align = align;
-            if (align > bytes) continue;
-            for (auto isAtomic : { true, false }) {
+            if (align > bytes) {
+              continue;
+            }
+            for (auto isAtomic : {true, false}) {
               load.isAtomic = isAtomic;
-              if (isAtomic &&
-                  !isPossibleAtomicOperation(align, bytes, module->memory.shared, type)) {
+              if (isAtomic && !isPossibleAtomicOperation(
+                                align, bytes, module->memory.shared, type)) {
                 continue;
               }
               addLoadFunc(load, module);
@@ -188,23 +211,29 @@ struct SafeHeap : public Pass {
     }
     // store funcs
     Store store;
-    for (auto valueType : { i32, i64, f32, f64, v128 }) {
-      if (valueType == v128 && !features.hasSIMD()) continue;
+    for (auto valueType : {i32, i64, f32, f64, v128}) {
+      if (valueType == v128 && !features.hasSIMD()) {
+        continue;
+      }
       store.valueType = valueType;
       store.type = none;
-      for (Index bytes : { 1, 2, 4, 8, 16 }) {
+      for (Index bytes : {1, 2, 4, 8, 16}) {
         store.bytes = bytes;
         if (bytes > getTypeSize(valueType) ||
             (valueType == f32 && bytes != 4) ||
             (valueType == f64 && bytes != 8) ||
-            (valueType == v128 && bytes != 16)) continue;
-        for (Index align : { 1, 2, 4, 8, 16 }) {
+            (valueType == v128 && bytes != 16)) {
+          continue;
+        }
+        for (Index align : {1, 2, 4, 8, 16}) {
           store.align = align;
-          if (align > bytes) continue;
-          for (auto isAtomic : { true, false }) {
+          if (align > bytes) {
+            continue;
+          }
+          for (auto isAtomic : {true, false}) {
             store.isAtomic = isAtomic;
-            if (isAtomic &&
-                !isPossibleAtomicOperation(align, bytes, module->memory.shared, valueType)) {
+            if (isAtomic && !isPossibleAtomicOperation(
+                              align, bytes, module->memory.shared, valueType)) {
               continue;
             }
             addStoreFunc(store, module);
@@ -216,38 +245,32 @@ struct SafeHeap : public Pass {
 
   // creates a function for a particular style of load
   void addLoadFunc(Load style, Module* module) {
+    auto name = getLoadName(&style);
+    if (module->getFunctionOrNull(name)) {
+      return;
+    }
     auto* func = new Function;
-    func->name = getLoadName(&style);
+    func->name = name;
     func->params.push_back(i32); // pointer
     func->params.push_back(i32); // offset
-    func->vars.push_back(i32); // pointer + offset
+    func->vars.push_back(i32);   // pointer + offset
     func->result = style.type;
     Builder builder(*module);
     auto* block = builder.makeBlock();
-    block->list.push_back(
-      builder.makeSetLocal(
-        2,
-        builder.makeBinary(
-          AddInt32,
-          builder.makeGetLocal(0, i32),
-          builder.makeGetLocal(1, i32)
-        )
-      )
-    );
+    block->list.push_back(builder.makeLocalSet(
+      2,
+      builder.makeBinary(
+        AddInt32, builder.makeLocalGet(0, i32), builder.makeLocalGet(1, i32))));
     // check for reading past valid memory: if pointer + offset + bytes
-    block->list.push_back(
-      makeBoundsCheck(style.type, builder, 2, style.bytes)
-    );
+    block->list.push_back(makeBoundsCheck(style.type, builder, 2, style.bytes));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(
-        makeAlignCheck(style.align, builder, 2)
-      );
+      block->list.push_back(makeAlignCheck(style.align, builder, 2));
     }
     // do the load
     auto* load = module->allocator.alloc<Load>();
     *load = style; // basically the same as the template we are given!
-    load->ptr = builder.makeGetLocal(2, i32);
+    load->ptr = builder.makeLocalGet(2, i32);
     Expression* last = load;
     if (load->isAtomic && load->signed_) {
       // atomic loads cannot be signed, manually sign it
@@ -262,40 +285,35 @@ struct SafeHeap : public Pass {
 
   // creates a function for a particular type of store
   void addStoreFunc(Store style, Module* module) {
+    auto name = getStoreName(&style);
+    if (module->getFunctionOrNull(name)) {
+      return;
+    }
     auto* func = new Function;
-    func->name = getStoreName(&style);
-    func->params.push_back(i32); // pointer
-    func->params.push_back(i32); // offset
+    func->name = name;
+    func->params.push_back(i32);             // pointer
+    func->params.push_back(i32);             // offset
     func->params.push_back(style.valueType); // value
-    func->vars.push_back(i32); // pointer + offset
+    func->vars.push_back(i32);               // pointer + offset
     func->result = none;
     Builder builder(*module);
     auto* block = builder.makeBlock();
-    block->list.push_back(
-      builder.makeSetLocal(
-        3,
-        builder.makeBinary(
-          AddInt32,
-          builder.makeGetLocal(0, i32),
-          builder.makeGetLocal(1, i32)
-        )
-      )
-    );
+    block->list.push_back(builder.makeLocalSet(
+      3,
+      builder.makeBinary(
+        AddInt32, builder.makeLocalGet(0, i32), builder.makeLocalGet(1, i32))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
-      makeBoundsCheck(style.valueType, builder, 3, style.bytes)
-    );
+      makeBoundsCheck(style.valueType, builder, 3, style.bytes));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(
-        makeAlignCheck(style.align, builder, 3)
-      );
+      block->list.push_back(makeAlignCheck(style.align, builder, 3));
     }
     // do the store
     auto* store = module->allocator.alloc<Store>();
     *store = style; // basically the same as the template we are given!
-    store->ptr = builder.makeGetLocal(3, i32);
-    store->value = builder.makeGetLocal(2, style.valueType);
+    store->ptr = builder.makeLocalGet(3, i32);
+    store->value = builder.makeLocalGet(2, style.valueType);
     block->list.push_back(store);
     block->finalize(none);
     func->body = block;
@@ -304,43 +322,45 @@ struct SafeHeap : public Pass {
 
   Expression* makeAlignCheck(Address align, Builder& builder, Index local) {
     return builder.makeIf(
-      builder.makeBinary(
-        AndInt32,
-        builder.makeGetLocal(local, i32),
-        builder.makeConst(Literal(int32_t(align - 1)))
-      ),
-      builder.makeCall(alignfault, {}, none)
-    );
+      builder.makeBinary(AndInt32,
+                         builder.makeLocalGet(local, i32),
+                         builder.makeConst(Literal(int32_t(align - 1)))),
+      builder.makeCall(alignfault, {}, none));
   }
 
-  Expression* makeBoundsCheck(Type type, Builder& builder, Index local, Index bytes) {
+  Expression*
+  makeBoundsCheck(Type type, Builder& builder, Index local, Index bytes) {
+    auto upperOp = options.lowMemoryUnused ? LtUInt32 : EqInt32;
+    auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
+    Expression* brkLocation;
+    if (sbrk.is()) {
+      brkLocation =
+        builder.makeCall(sbrk, {builder.makeConst(Literal(int32_t(0)))}, i32);
+    } else {
+      Expression* sbrkPtr;
+      if (dynamicTopPtr.is()) {
+        sbrkPtr = builder.makeGlobalGet(dynamicTopPtr, i32);
+      } else {
+        sbrkPtr = builder.makeCall(getSbrkPtr, {}, i32);
+      }
+      brkLocation = builder.makeLoad(4, false, 0, 4, sbrkPtr, i32);
+    }
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
-        builder.makeBinary(
-          EqInt32,
-          builder.makeGetLocal(local, i32),
-          builder.makeConst(Literal(int32_t(0)))
-        ),
+        builder.makeBinary(upperOp,
+                           builder.makeLocalGet(local, i32),
+                           builder.makeConst(Literal(int32_t(upperBound)))),
         builder.makeBinary(
           GtUInt32,
-          builder.makeBinary(
-            AddInt32,
-            builder.makeGetLocal(local, i32),
-            builder.makeConst(Literal(int32_t(bytes)))
-          ),
-          builder.makeLoad(4, false, 0, 4,
-            builder.makeGetGlobal(dynamicTopPtr, i32), i32
-          )
-        )
-      ),
-      builder.makeCall(segfault, {}, none)
-    );
+          builder.makeBinary(AddInt32,
+                             builder.makeLocalGet(local, i32),
+                             builder.makeConst(Literal(int32_t(bytes)))),
+          brkLocation)),
+      builder.makeCall(segfault, {}, none));
   }
 };
 
-Pass *createSafeHeapPass() {
-  return new SafeHeap();
-}
+Pass* createSafeHeapPass() { return new SafeHeap(); }
 
 } // namespace wasm

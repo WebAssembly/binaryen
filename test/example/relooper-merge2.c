@@ -84,7 +84,7 @@ int main() {
     };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
 
@@ -92,7 +92,7 @@ int main() {
       BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()),
       BinaryenBinary(module,
         BinaryenRemUInt32(),
-        BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+        BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
         BinaryenConst(module, BinaryenLiteralInt32(1))
       )
     );
@@ -106,7 +106,7 @@ int main() {
     };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
 
@@ -121,7 +121,7 @@ int main() {
     };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
 
@@ -136,7 +136,7 @@ int main() {
     };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
 
@@ -150,7 +150,7 @@ int main() {
     };
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
+      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
 
@@ -206,7 +206,7 @@ int main() {
   BinaryenAddFunctionImport(module, "print", "spectest", "print", vi);
 
   // memory
-  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, 0, 0);
+  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0);
 
   // optionally, optimize
   if (0) BinaryenModuleOptimize(module);

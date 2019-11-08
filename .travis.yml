@@ -1,5 +1,5 @@
 sudo: false
-dist: trusty
+dist: bionic
 language: cpp
 
 stages:
@@ -9,8 +9,32 @@ stages:
     # to save time and resources.
     if: type != pull_request AND (branch = master OR tag IS present)
 
+DEPLOY_TO_GITHUB: &DEPLOY_TO_GITHUB
+  before_deploy:
+    - PKGNAME="binaryen-$TRAVIS_TAG-$ARCH"
+    - mv bin binaryen-$TRAVIS_TAG
+    - tar -czf $PKGNAME.tar.gz binaryen-$TRAVIS_TAG
+    - shasum -a 256 $PKGNAME.tar.gz > $PKGNAME.tar.gz.sha256
+  deploy:
+    provider: releases
+    api_key:
+      secure: "cu6CD5BaycXdCylvcs+Fho5+OVTkh9mZwH8RTnNpXo9hAQzLJDFgcNBHeXHEHtcp4IWf/YZSMu48UKnpU9sP5iF0AS4rtuEBJk5gOKkgB8GWnuIOePFkfANAZMN+EncuUwhAdN56iOAESXqnlHYgmJjyRVCHOxiezuWTOYui4lxoIAdxvOMJc3E9yfzUq4Epm2GDszSDN7ObmRIJpVgDXD9Sze1Xv4IkbIwc0biCmduGGLp3ow2KM+RZ4tOF0c8P0ki49vOFHr6n2Vmqg0QCiVNd4JJBRBCGn6Tzip2jsTQewnUUvpYCZafLeRV//v//voNA6ZUz91yXR23GIhkfdlyuqnz3/7l335Sa749M1lpYfSRWvwg9mJEqP66mxqTrWzj1xSItr9T+p0WhSmRN/4UEJPuItYPSma6kfv+H7qhLa3ZYKECH8hHW79grYmUWtiX0vQVIgnctJGgboPNLfG/1mNtmCI241wK0S3zvL2okdZH8/PqxfllYHMBTUp9lUrop8eoLKPgHZPm6+V20dgTUgOuGTZzTWwQ7Uk/Pg8JMUgkre5y0eo6pP3z0vDW1NNFNhouJ5oGkAeK/HAznr8Q0zWWF1vGFhoyC8ok/IJ7yKxK9scJVPBDe4oox6tr1zlsxzNEYE0/mY3JjuWV0z8RgjrIAbRe8IpGTkYz5VOM="
+    file: binaryen-$TRAVIS_TAG-*.tar.gz*
+    file_glob: true
+    skip_cleanup: true
+    on:
+      tags: true
+
 jobs:
   include:
+    # OSX Binary
+    - env: JOB=dist-osx MACOSX_DEPLOYMENT_TARGET=10.9 ARCH=x86_64-apple-darwin
+      os: osx
+      stage: build
+      script:
+        - cmake . && make
+      <<: *DEPLOY_TO_GITHUB
+
     # Build with clang and run tests on the host system (Ubuntu).
     - &test-ubuntu
       stage: test
@@ -21,28 +45,31 @@ jobs:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['cmake', 'g++-5']
+          packages: ['cmake', 'g++-5', 'python3-pip']
       before_install:
         - export ASAN_OPTIONS="symbolize=1"
       install:
-        - nvm install 10
-        - nvm use 10
-        - pip install --user flake8==3.4.1
+        - nvm install 12
+        - nvm use 12
+        - pip3 install --user flake8==3.7.8
         # get jsvu in order to get more js engines
         - npm install jsvu -g
         - export PATH="${HOME}/.jsvu:${PATH}"
-        - jsvu --os=linux64 --engines=spidermonkey
+        - jsvu --os=linux64 --engines=spidermonkey,v8
       script:
         - set -o errexit
         - flake8
+        - ./clang-format-diff.sh
         # ensure generated parser is up to date
         - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
         - mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
-        - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_INSTALL_PREFIX=install
+        - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS" -DCMAKE_INSTALL_PREFIX=install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        # clang-tidy-diff.sh may not exist when BUILD_SUBDIR is a subdirectory
+        - if [ -f clang-tidy-diff.sh ]; then ./clang-tidy-diff.sh; fi
         - make -j2 install
         - cd ${TRAVIS_BUILD_DIR}
-        - ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
+        - python3 ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
 
     - <<: *test-ubuntu
       env: |
@@ -60,13 +87,14 @@ jobs:
     - <<: *test-ubuntu
       env: |
         COMPILER_FLAGS="-fsanitize=thread"
+        LINKER_FLAGS="-fsanitize=thread"
 
-    # Build with gcc 5 and run tests on the host system (Ubuntu).
+    # Build with gcc 7 and run tests on the host system (Ubuntu).
     - <<: *test-ubuntu
       compiler: gcc
       env: |
-        CC="gcc-5"
-        CXX="g++-5"
+        CC="gcc-7"
+        CXX="g++-7"
 
     # Build the .js outputs using emcc
     - &test-emcc
@@ -93,15 +121,15 @@ jobs:
       compiler: gcc
       env: ARCH=x86_64
       before_install:
-        - docker run -w /src -dit --name alpine -v $(pwd):/src node:10-alpine
+        - docker run -w /src -dit --name alpine -v $(pwd):/src node:13-alpine
         - alpine() { docker exec -it alpine "$@"; }
       install:
         - alpine apk update
-        - alpine apk add build-base cmake git python2
+        - alpine apk add build-base cmake git python2 python3 clang
       script:
         - alpine cmake .
         - alpine make -j2
-        - alpine ./check.py
+        - alpine python3 ./check.py
 
     # Build statically linked release binaries with gcc 6.3 on Alpine Linux
     # (inside chroot). If building a tagged commit, then deploy release tarball
@@ -109,14 +137,16 @@ jobs:
     - &build-alpine
       <<: *test-alpine
       stage: build
-      env: ARCH=x86_64
+      env: ARCH=x86_64-linux
       # Don't run before_script inherited from *test-alpine.
       before_script: skip
       script:
         - alpine cmake -DCMAKE_BUILD_TYPE=Release
                        -DCMAKE_VERBOSE_MAKEFILE=ON
-                       -DCMAKE_CXX_FLAGS="-static -no-pie"
-                       -DCMAKE_C_FLAGS="-static -no-pie" .
+                       -DCMAKE_CXX_FLAGS="-static"
+                       -DCMAKE_C_FLAGS="-static" .
+                       -DCMAKE_C_COMPILER=clang
+                       -DCMAKE_CXX_COMPILER=clang++
         - alpine make -j2
         - alpine find bin/ -type f -perm -u=x -exec strip {} +
         - alpine ls -lh bin/
@@ -124,20 +154,7 @@ jobs:
         - if [ -n "$(find bin/ -type f -perm -u=x -exec file {} + | grep -Fvw 'statically linked')" ]; then
               file bin/*; false;
           fi
-      before_deploy:
-        - PKGNAME="binaryen-$TRAVIS_TAG-$ARCH-linux"
-        - mv bin binaryen-$TRAVIS_TAG
-        - tar -czf $PKGNAME.tar.gz binaryen-$TRAVIS_TAG
-        - sha256sum $PKGNAME.tar.gz > $PKGNAME.tar.gz.sha256
-      deploy:
-        provider: releases
-        api_key:
-          secure: "cu6CD5BaycXdCylvcs+Fho5+OVTkh9mZwH8RTnNpXo9hAQzLJDFgcNBHeXHEHtcp4IWf/YZSMu48UKnpU9sP5iF0AS4rtuEBJk5gOKkgB8GWnuIOePFkfANAZMN+EncuUwhAdN56iOAESXqnlHYgmJjyRVCHOxiezuWTOYui4lxoIAdxvOMJc3E9yfzUq4Epm2GDszSDN7ObmRIJpVgDXD9Sze1Xv4IkbIwc0biCmduGGLp3ow2KM+RZ4tOF0c8P0ki49vOFHr6n2Vmqg0QCiVNd4JJBRBCGn6Tzip2jsTQewnUUvpYCZafLeRV//v//voNA6ZUz91yXR23GIhkfdlyuqnz3/7l335Sa749M1lpYfSRWvwg9mJEqP66mxqTrWzj1xSItr9T+p0WhSmRN/4UEJPuItYPSma6kfv+H7qhLa3ZYKECH8hHW79grYmUWtiX0vQVIgnctJGgboPNLfG/1mNtmCI241wK0S3zvL2okdZH8/PqxfllYHMBTUp9lUrop8eoLKPgHZPm6+V20dgTUgOuGTZzTWwQ7Uk/Pg8JMUgkre5y0eo6pP3z0vDW1NNFNhouJ5oGkAeK/HAznr8Q0zWWF1vGFhoyC8ok/IJ7yKxK9scJVPBDe4oox6tr1zlsxzNEYE0/mY3JjuWV0z8RgjrIAbRe8IpGTkYz5VOM="
-        file: binaryen-$TRAVIS_TAG-*.tar.gz*
-        file_glob: true
-        skip_cleanup: true
-        on:
-          tags: true
+      <<: *DEPLOY_TO_GITHUB
 
     # Build binaries for other architectures using QEMU user-mode emulation.
     # Note: We don't run tests for these architectures, because some fail under
@@ -145,13 +162,13 @@ jobs:
     # Note: We had to remove ppc64le, because it takes more than 50 minutes
     #       (Travis limit) to build. :(
     - <<: *build-alpine
-      env: ARCH=x86
+      env: ARCH=x86-linux
 
     - <<: *build-alpine
-      env: ARCH=aarch64
+      env: ARCH=aarch64-linux
 
     - <<: *build-alpine
-      env: ARCH=armhf
+      env: ARCH=armhf-linux
 
 notifications:
   email: false

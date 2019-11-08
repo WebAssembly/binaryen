@@ -1,5 +1,5 @@
+
 function asmFunc(global, env, buffer) {
- "use asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -20,28 +20,36 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function even(n) {
   n = n | 0;
   var $6 = 0;
-  if ((n | 0) == (0 | 0)) $6 = 1; else $6 = odd(n - 1 | 0 | 0) | 0;
+  if ((n | 0) == (0 | 0)) {
+   $6 = 1
+  } else {
+   $6 = odd(n - 1 | 0 | 0) | 0
+  }
   return $6 | 0;
  }
  
  function odd(n) {
   n = n | 0;
   var $6 = 0;
-  if ((n | 0) == (0 | 0)) $6 = 0; else $6 = even(n - 1 | 0 | 0) | 0;
+  if ((n | 0) == (0 | 0)) {
+   $6 = 0
+  } else {
+   $6 = even(n - 1 | 0 | 0) | 0
+  }
   return $6 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
-  even: even, 
-  odd: odd
+  "even": even, 
+  "odd": odd
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const even = retasmFunc.even;
-export const odd = retasmFunc.odd;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var even = retasmFunc.even;
+export var odd = retasmFunc.odd;

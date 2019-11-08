@@ -25,14 +25,14 @@
 namespace wasm {
 
 namespace ABI {
-  enum LinkType : unsigned {
-    WASM_STACK_POINTER  = 0x1,
-    WASM_SYMBOL_INFO    = 0x2,
-    WASM_DATA_SIZE      = 0x3,
-    WASM_DATA_ALIGNMENT = 0x4,
-    WASM_SEGMENT_INFO   = 0x5,
-    WASM_INIT_FUNCS     = 0x6,
-  };
+enum LinkType : unsigned {
+  WASM_STACK_POINTER = 0x1,
+  WASM_SYMBOL_INFO = 0x2,
+  WASM_DATA_SIZE = 0x3,
+  WASM_DATA_ALIGNMENT = 0x4,
+  WASM_SEGMENT_INFO = 0x5,
+  WASM_INIT_FUNCS = 0x6,
+};
 } // namespace ABI
 
 } // namespace wasm

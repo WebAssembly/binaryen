@@ -4,7 +4,7 @@
   var func = mod.addFunction("test", funcType, [],
     mod.block("", [
       mod.drop(
-        mod.getGlobal("missing", Binaryen.i32)
+        mod.global.get("missing", Binaryen.i32)
       )
     ])
   );
@@ -18,7 +18,7 @@
   var func = mod.addFunction("test", funcType, [],
     mod.block("", [
       mod.drop(
-        mod.getLocal(0, Binaryen.i32)
+        mod.local.get(0, Binaryen.i32)
       )
     ])
   );

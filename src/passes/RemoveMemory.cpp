@@ -18,8 +18,8 @@
 // Removeds memory segments, leaving only code in the module.
 //
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -29,8 +29,6 @@ struct RemoveMemory : public Pass {
   }
 };
 
-Pass *createRemoveMemoryPass() {
-  return new RemoveMemory();
-}
+Pass* createRemoveMemoryPass() { return new RemoveMemory(); }
 
 } // namespace wasm

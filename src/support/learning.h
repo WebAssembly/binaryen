@@ -33,7 +33,8 @@ namespace wasm {
 // The Generator must implement the following:
 //
 //  * Genome* makeRandom(); - make a random element
-//  * Genome* makeMixture(Genome* one, Genome* two); - make a new element by mixing two
+//  * Genome* makeMixture(Genome* one, Genome* two); - make a new element by
+//    mixing two
 //
 // Fitness is the type of the fitness values, e.g. uint32_t. More is better.
 //
@@ -51,19 +52,20 @@ class GeneticLearner {
   std::vector<unique_ptr> population;
 
   void sort() {
-    std::sort(population.begin(), population.end(), [](const unique_ptr& left, const unique_ptr& right) {
-      return left->getFitness() > right->getFitness();
-    });
+    std::sort(population.begin(),
+              population.end(),
+              [](const unique_ptr& left, const unique_ptr& right) {
+                return left->getFitness() > right->getFitness();
+              });
   }
 
   std::mt19937 noise;
 
-  size_t randomIndex() {
-    return noise() % population.size();
-  }
+  size_t randomIndex() { return noise() % population.size(); }
 
 public:
-  GeneticLearner(Generator& generator, size_t size) : generator(generator), noise(1337) {
+  GeneticLearner(Generator& generator, size_t size)
+    : generator(generator), noise(1337) {
     population.resize(size);
     for (size_t i = 0; i < size; i++) {
       population[i] = unique_ptr(generator.makeRandom());
@@ -71,27 +73,26 @@ public:
     sort();
   }
 
-  Genome* getBest() {
-    return population[0].get();
-  }
+  Genome* getBest() { return population[0].get(); }
 
-  unique_ptr acquireBest() {
-    return population[0];
-  }
+  unique_ptr acquireBest() { return population[0]; }
 
   void runGeneration() {
     size_t size = population.size();
 
-    // we have a mix of promoted from the last generation, mixed from the last generation, and random
+    // we have a mix of promoted from the last generation, mixed from the last
+    // generation, and random
     const size_t promoted = (25 * size) / 100;
     const size_t mixed = (50 * size) / 100;
 
     // promoted just stay in place
-    // mixtures are computed, then added back in (as we still need them as we work)
+    // mixtures are computed, then added back in (as we still need them as we
+    // work)
     std::vector<unique_ptr> mixtures;
     mixtures.resize(mixed);
     for (size_t i = 0; i < mixed; i++) {
-      mixtures[i] = unique_ptr(generator.makeMixture(population[randomIndex()].get(), population[randomIndex()].get()));
+      mixtures[i] = unique_ptr(generator.makeMixture(
+        population[randomIndex()].get(), population[randomIndex()].get()));
     }
     for (size_t i = 0; i < mixed; i++) {
       population[promoted + i].swap(mixtures[i]);
@@ -106,6 +107,6 @@ public:
   }
 };
 
-}  // namespace wasm
+} // namespace wasm
 
-#endif  // wasm_learning_h
+#endif // wasm_learning_h

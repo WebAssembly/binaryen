@@ -34,49 +34,10 @@
 #include "literal.h"
 #include "mixed_arena.h"
 #include "support/name.h"
+#include "wasm-features.h"
 #include "wasm-type.h"
 
 namespace wasm {
-
-struct FeatureSet {
-  enum Feature : uint32_t {
-    MVP = 0,
-    Atomics = 1 << 0,
-    MutableGlobals = 1 << 1,
-    TruncSat = 1 << 2,
-    SIMD = 1 << 3,
-    BulkMemory = 1 << 4,
-    All = Atomics | MutableGlobals | TruncSat | SIMD | BulkMemory
-  };
-
-  FeatureSet() : features(MVP) {}
-  FeatureSet(uint32_t features) : features(features) {}
-
-  bool isMVP() const { return features == MVP; }
-  bool has(Feature f) { return (features & f) == f; }
-  bool hasAtomics() const { return features & Atomics; }
-  bool hasMutableGlobals() const { return features & MutableGlobals; }
-  bool hasTruncSat() const { return features & TruncSat; }
-  bool hasSIMD() const { return features & SIMD; }
-  bool hasBulkMemory() const { return features & BulkMemory; }
-  bool hasAll() const { return features & All; }
-
-  void makeMVP() { features = MVP; }
-  void set(Feature f, bool v = true) { features = v ? (features | f) : (features & ~f); }
-  void setAtomics(bool v = true) { set(Atomics, v); }
-  void setMutableGlobals(bool v = true) { set(MutableGlobals, v); }
-  void setTruncSat(bool v = true) { set(TruncSat, v); }
-  void setSIMD(bool v = true) { set(SIMD, v); }
-  void setBulkMemory(bool v = true) { set(BulkMemory, v); }
-  void setAll(bool v = true) { features = v ? All : MVP; }
-
-  bool operator<=(const FeatureSet& other) {
-    return !(features & ~other.features);
-  }
-
-private:
-  uint32_t features;
-};
 
 // An index in a wasm module
 typedef uint32_t Index;
@@ -95,121 +56,423 @@ struct Address {
     return *this;
   }
   operator address_t() const { return addr; }
-  Address& operator++() { ++addr; return *this; }
+  Address& operator++() {
+    ++addr;
+    return *this;
+  }
 };
-
-// An offset into memory
-typedef int32_t Offset;
-
-// Types
-
 
 // Operators
 
 enum UnaryOp {
-  ClzInt32, ClzInt64, CtzInt32, CtzInt64, PopcntInt32, PopcntInt64, // int
-  NegFloat32, NegFloat64, AbsFloat32, AbsFloat64, CeilFloat32, CeilFloat64, FloorFloat32, FloorFloat64, TruncFloat32, TruncFloat64, NearestFloat32, NearestFloat64, SqrtFloat32, SqrtFloat64, // float
+  // int
+  ClzInt32,
+  ClzInt64,
+  CtzInt32,
+  CtzInt64,
+  PopcntInt32,
+  PopcntInt64,
+
+  // float
+  NegFloat32,
+  NegFloat64,
+  AbsFloat32,
+  AbsFloat64,
+  CeilFloat32,
+  CeilFloat64,
+  FloorFloat32,
+  FloorFloat64,
+  TruncFloat32,
+  TruncFloat64,
+  NearestFloat32,
+  NearestFloat64,
+  SqrtFloat32,
+  SqrtFloat64,
+
   // relational
-  EqZInt32, EqZInt64,
+  EqZInt32,
+  EqZInt64,
+
   // conversions
-  ExtendSInt32, ExtendUInt32, // extend i32 to i64
-  WrapInt64, // i64 to i32
-  TruncSFloat32ToInt32, TruncSFloat32ToInt64, TruncUFloat32ToInt32, TruncUFloat32ToInt64, TruncSFloat64ToInt32, TruncSFloat64ToInt64, TruncUFloat64ToInt32, TruncUFloat64ToInt64, // float to int
-  ReinterpretFloat32, ReinterpretFloat64, // reintepret bits to int
-  ConvertSInt32ToFloat32, ConvertSInt32ToFloat64, ConvertUInt32ToFloat32, ConvertUInt32ToFloat64, ConvertSInt64ToFloat32, ConvertSInt64ToFloat64, ConvertUInt64ToFloat32, ConvertUInt64ToFloat64, // int to float
-  PromoteFloat32, // f32 to f64
-  DemoteFloat64, // f64 to f32
-  ReinterpretInt32, ReinterpretInt64, // reinterpret bits to float
-  // The following sign-extention operators go along with wasm atomics support.
+  // extend i32 to i64
+  ExtendSInt32,
+  ExtendUInt32,
+  // i64 to i32
+  WrapInt64,
+  // float to int
+  TruncSFloat32ToInt32,
+  TruncSFloat32ToInt64,
+  TruncUFloat32ToInt32,
+  TruncUFloat32ToInt64,
+  TruncSFloat64ToInt32,
+  TruncSFloat64ToInt64,
+  TruncUFloat64ToInt32,
+  TruncUFloat64ToInt64,
+  // reintepret bits to int
+  ReinterpretFloat32,
+  ReinterpretFloat64,
+  // int to float
+  ConvertSInt32ToFloat32,
+  ConvertSInt32ToFloat64,
+  ConvertUInt32ToFloat32,
+  ConvertUInt32ToFloat64,
+  ConvertSInt64ToFloat32,
+  ConvertSInt64ToFloat64,
+  ConvertUInt64ToFloat32,
+  ConvertUInt64ToFloat64,
+  // f32 to f64
+  PromoteFloat32,
+  // f64 to f32
+  DemoteFloat64,
+  // reinterpret bits to float
+  ReinterpretInt32,
+  ReinterpretInt64,
+
   // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
   // because the input integer is in an i64 value insetad of an i32 value.
-  ExtendS8Int32, ExtendS16Int32, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64,
+  ExtendS8Int32,
+  ExtendS16Int32,
+  ExtendS8Int64,
+  ExtendS16Int64,
+  ExtendS32Int64,
+
   // Saturating float-to-int
-  TruncSatSFloat32ToInt32, TruncSatUFloat32ToInt32, TruncSatSFloat64ToInt32, TruncSatUFloat64ToInt32,
-  TruncSatSFloat32ToInt64, TruncSatUFloat32ToInt64, TruncSatSFloat64ToInt64, TruncSatUFloat64ToInt64,
+  TruncSatSFloat32ToInt32,
+  TruncSatUFloat32ToInt32,
+  TruncSatSFloat64ToInt32,
+  TruncSatUFloat64ToInt32,
+  TruncSatSFloat32ToInt64,
+  TruncSatUFloat32ToInt64,
+  TruncSatSFloat64ToInt64,
+  TruncSatUFloat64ToInt64,
+
   // SIMD splats
-  SplatVecI8x16, SplatVecI16x8, SplatVecI32x4, SplatVecI64x2, SplatVecF32x4, SplatVecF64x2,
+  SplatVecI8x16,
+  SplatVecI16x8,
+  SplatVecI32x4,
+  SplatVecI64x2,
+  SplatVecF32x4,
+  SplatVecF64x2,
+
   // SIMD arithmetic
   NotVec128,
-  NegVecI8x16, AnyTrueVecI8x16, AllTrueVecI8x16, NegVecI16x8, AnyTrueVecI16x8, AllTrueVecI16x8,
-  NegVecI32x4, AnyTrueVecI32x4, AllTrueVecI32x4, NegVecI64x2, AnyTrueVecI64x2, AllTrueVecI64x2,
-  AbsVecF32x4, NegVecF32x4, SqrtVecF32x4, AbsVecF64x2, NegVecF64x2, SqrtVecF64x2,
-  TruncSatSVecF32x4ToVecI32x4, TruncSatUVecF32x4ToVecI32x4, TruncSatSVecF64x2ToVecI64x2, TruncSatUVecF64x2ToVecI64x2,
-  ConvertSVecI32x4ToVecF32x4, ConvertUVecI32x4ToVecF32x4, ConvertSVecI64x2ToVecF64x2, ConvertUVecI64x2ToVecF64x2,
+  NegVecI8x16,
+  AnyTrueVecI8x16,
+  AllTrueVecI8x16,
+  NegVecI16x8,
+  AnyTrueVecI16x8,
+  AllTrueVecI16x8,
+  NegVecI32x4,
+  AnyTrueVecI32x4,
+  AllTrueVecI32x4,
+  NegVecI64x2,
+  AnyTrueVecI64x2,
+  AllTrueVecI64x2,
+  AbsVecF32x4,
+  NegVecF32x4,
+  SqrtVecF32x4,
+  AbsVecF64x2,
+  NegVecF64x2,
+  SqrtVecF64x2,
+
+  // SIMD conversions
+  TruncSatSVecF32x4ToVecI32x4,
+  TruncSatUVecF32x4ToVecI32x4,
+  TruncSatSVecF64x2ToVecI64x2,
+  TruncSatUVecF64x2ToVecI64x2,
+  ConvertSVecI32x4ToVecF32x4,
+  ConvertUVecI32x4ToVecF32x4,
+  ConvertSVecI64x2ToVecF64x2,
+  ConvertUVecI64x2ToVecF64x2,
+  WidenLowSVecI8x16ToVecI16x8,
+  WidenHighSVecI8x16ToVecI16x8,
+  WidenLowUVecI8x16ToVecI16x8,
+  WidenHighUVecI8x16ToVecI16x8,
+  WidenLowSVecI16x8ToVecI32x4,
+  WidenHighSVecI16x8ToVecI32x4,
+  WidenLowUVecI16x8ToVecI32x4,
+  WidenHighUVecI16x8ToVecI32x4,
 
   InvalidUnary
 };
 
 enum BinaryOp {
-  AddInt32, SubInt32, MulInt32, // int or float
-  DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, // int
-  // relational ops
-  EqInt32, NeInt32, // int or float
-  LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32, // int
+  // int or float
+  AddInt32,
+  SubInt32,
+  MulInt32,
 
-  AddInt64, SubInt64, MulInt64, // int or float
-  DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64, // int
-  // relational ops
-  EqInt64, NeInt64, // int or float
-  LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64, // int
+  // int
+  DivSInt32,
+  DivUInt32,
+  RemSInt32,
+  RemUInt32,
+  AndInt32,
+  OrInt32,
+  XorInt32,
+  ShlInt32,
+  ShrUInt32,
+  ShrSInt32,
+  RotLInt32,
+  RotRInt32,
 
-  AddFloat32, SubFloat32, MulFloat32, // int or float
-  DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32, // float
   // relational ops
-  EqFloat32, NeFloat32, // int or float
-  LtFloat32, LeFloat32, GtFloat32, GeFloat32, // float
+  // int or float
+  EqInt32,
+  NeInt32,
+  // int
+  LtSInt32,
+  LtUInt32,
+  LeSInt32,
+  LeUInt32,
+  GtSInt32,
+  GtUInt32,
+  GeSInt32,
+  GeUInt32,
 
-  AddFloat64, SubFloat64, MulFloat64, // int or float
-  DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64, // float
+  // int or float
+  AddInt64,
+  SubInt64,
+  MulInt64,
+
+  // int
+  DivSInt64,
+  DivUInt64,
+  RemSInt64,
+  RemUInt64,
+  AndInt64,
+  OrInt64,
+  XorInt64,
+  ShlInt64,
+  ShrUInt64,
+  ShrSInt64,
+  RotLInt64,
+  RotRInt64,
+
   // relational ops
-  EqFloat64, NeFloat64, // int or float
-  LtFloat64, LeFloat64, GtFloat64, GeFloat64, // float
+  // int or float
+  EqInt64,
+  NeInt64,
+  // int
+  LtSInt64,
+  LtUInt64,
+  LeSInt64,
+  LeUInt64,
+  GtSInt64,
+  GtUInt64,
+  GeSInt64,
+  GeUInt64,
+
+  // int or float
+  AddFloat32,
+  SubFloat32,
+  MulFloat32,
+
+  // float
+  DivFloat32,
+  CopySignFloat32,
+  MinFloat32,
+  MaxFloat32,
+
+  // relational ops
+  // int or float
+  EqFloat32,
+  NeFloat32,
+  // float
+  LtFloat32,
+  LeFloat32,
+  GtFloat32,
+  GeFloat32,
+
+  // int or float
+  AddFloat64,
+  SubFloat64,
+  MulFloat64,
+
+  // float
+  DivFloat64,
+  CopySignFloat64,
+  MinFloat64,
+  MaxFloat64,
+
+  // relational ops
+  // int or float
+  EqFloat64,
+  NeFloat64,
+  // float
+  LtFloat64,
+  LeFloat64,
+  GtFloat64,
+  GeFloat64,
+
   // SIMD relational ops (return vectors)
-  EqVecI8x16, NeVecI8x16, LtSVecI8x16, LtUVecI8x16, GtSVecI8x16, GtUVecI8x16, LeSVecI8x16, LeUVecI8x16, GeSVecI8x16, GeUVecI8x16,
-  EqVecI16x8, NeVecI16x8, LtSVecI16x8, LtUVecI16x8, GtSVecI16x8, GtUVecI16x8, LeSVecI16x8, LeUVecI16x8, GeSVecI16x8, GeUVecI16x8,
-  EqVecI32x4, NeVecI32x4, LtSVecI32x4, LtUVecI32x4, GtSVecI32x4, GtUVecI32x4, LeSVecI32x4, LeUVecI32x4, GeSVecI32x4, GeUVecI32x4,
-  EqVecF32x4, NeVecF32x4, LtVecF32x4, GtVecF32x4, LeVecF32x4, GeVecF32x4,
-  EqVecF64x2, NeVecF64x2, LtVecF64x2, GtVecF64x2, LeVecF64x2, GeVecF64x2,
+  EqVecI8x16,
+  NeVecI8x16,
+  LtSVecI8x16,
+  LtUVecI8x16,
+  GtSVecI8x16,
+  GtUVecI8x16,
+  LeSVecI8x16,
+  LeUVecI8x16,
+  GeSVecI8x16,
+  GeUVecI8x16,
+  EqVecI16x8,
+  NeVecI16x8,
+  LtSVecI16x8,
+  LtUVecI16x8,
+  GtSVecI16x8,
+  GtUVecI16x8,
+  LeSVecI16x8,
+  LeUVecI16x8,
+  GeSVecI16x8,
+  GeUVecI16x8,
+  EqVecI32x4,
+  NeVecI32x4,
+  LtSVecI32x4,
+  LtUVecI32x4,
+  GtSVecI32x4,
+  GtUVecI32x4,
+  LeSVecI32x4,
+  LeUVecI32x4,
+  GeSVecI32x4,
+  GeUVecI32x4,
+  EqVecF32x4,
+  NeVecF32x4,
+  LtVecF32x4,
+  GtVecF32x4,
+  LeVecF32x4,
+  GeVecF32x4,
+  EqVecF64x2,
+  NeVecF64x2,
+  LtVecF64x2,
+  GtVecF64x2,
+  LeVecF64x2,
+  GeVecF64x2,
+
   // SIMD arithmetic
-  AndVec128, OrVec128, XorVec128,
-  AddVecI8x16, AddSatSVecI8x16, AddSatUVecI8x16, SubVecI8x16, SubSatSVecI8x16, SubSatUVecI8x16, MulVecI8x16,
-  AddVecI16x8, AddSatSVecI16x8, AddSatUVecI16x8, SubVecI16x8, SubSatSVecI16x8, SubSatUVecI16x8, MulVecI16x8,
-  AddVecI32x4, SubVecI32x4, MulVecI32x4, AddVecI64x2, SubVecI64x2,
-  AddVecF32x4, SubVecF32x4, MulVecF32x4, DivVecF32x4, MinVecF32x4, MaxVecF32x4,
-  AddVecF64x2, SubVecF64x2, MulVecF64x2, DivVecF64x2, MinVecF64x2, MaxVecF64x2,
+  AndVec128,
+  OrVec128,
+  XorVec128,
+  AndNotVec128,
+  AddVecI8x16,
+  AddSatSVecI8x16,
+  AddSatUVecI8x16,
+  SubVecI8x16,
+  SubSatSVecI8x16,
+  SubSatUVecI8x16,
+  MulVecI8x16,
+  MinSVecI8x16,
+  MinUVecI8x16,
+  MaxSVecI8x16,
+  MaxUVecI8x16,
+  AddVecI16x8,
+  AddSatSVecI16x8,
+  AddSatUVecI16x8,
+  SubVecI16x8,
+  SubSatSVecI16x8,
+  SubSatUVecI16x8,
+  MulVecI16x8,
+  MinSVecI16x8,
+  MinUVecI16x8,
+  MaxSVecI16x8,
+  MaxUVecI16x8,
+  AddVecI32x4,
+  SubVecI32x4,
+  MulVecI32x4,
+  MinSVecI32x4,
+  MinUVecI32x4,
+  MaxSVecI32x4,
+  MaxUVecI32x4,
+  DotSVecI16x8ToVecI32x4,
+  AddVecI64x2,
+  SubVecI64x2,
+  AddVecF32x4,
+  SubVecF32x4,
+  MulVecF32x4,
+  DivVecF32x4,
+  MinVecF32x4,
+  MaxVecF32x4,
+  AddVecF64x2,
+  SubVecF64x2,
+  MulVecF64x2,
+  DivVecF64x2,
+  MinVecF64x2,
+  MaxVecF64x2,
+
+  // SIMD Conversion
+  NarrowSVecI16x8ToVecI8x16,
+  NarrowUVecI16x8ToVecI8x16,
+  NarrowSVecI32x4ToVecI16x8,
+  NarrowUVecI32x4ToVecI16x8,
+
+  // SIMD Swizzle
+  SwizzleVec8x16,
 
   InvalidBinary
 };
 
-enum HostOp {
-  CurrentMemory, GrowMemory
-};
+enum HostOp { MemorySize, MemoryGrow };
 
-enum AtomicRMWOp {
-  Add, Sub, And, Or, Xor, Xchg
-};
+enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
 
 enum SIMDExtractOp {
-  ExtractLaneSVecI8x16, ExtractLaneUVecI8x16, ExtractLaneSVecI16x8, ExtractLaneUVecI16x8,
-  ExtractLaneVecI32x4, ExtractLaneVecI64x2, ExtractLaneVecF32x4, ExtractLaneVecF64x2
+  ExtractLaneSVecI8x16,
+  ExtractLaneUVecI8x16,
+  ExtractLaneSVecI16x8,
+  ExtractLaneUVecI16x8,
+  ExtractLaneVecI32x4,
+  ExtractLaneVecI64x2,
+  ExtractLaneVecF32x4,
+  ExtractLaneVecF64x2
 };
 
 enum SIMDReplaceOp {
-  ReplaceLaneVecI8x16, ReplaceLaneVecI16x8, ReplaceLaneVecI32x4, ReplaceLaneVecI64x2, ReplaceLaneVecF32x4, ReplaceLaneVecF64x2
+  ReplaceLaneVecI8x16,
+  ReplaceLaneVecI16x8,
+  ReplaceLaneVecI32x4,
+  ReplaceLaneVecI64x2,
+  ReplaceLaneVecF32x4,
+  ReplaceLaneVecF64x2
 };
 
 enum SIMDShiftOp {
-  ShlVecI8x16, ShrSVecI8x16, ShrUVecI8x16, ShlVecI16x8, ShrSVecI16x8, ShrUVecI16x8,
-  ShlVecI32x4, ShrSVecI32x4, ShrUVecI32x4, ShlVecI64x2, ShrSVecI64x2, ShrUVecI64x2
+  ShlVecI8x16,
+  ShrSVecI8x16,
+  ShrUVecI8x16,
+  ShlVecI16x8,
+  ShrSVecI16x8,
+  ShrUVecI16x8,
+  ShlVecI32x4,
+  ShrSVecI32x4,
+  ShrUVecI32x4,
+  ShlVecI64x2,
+  ShrSVecI64x2,
+  ShrUVecI64x2
 };
+
+enum SIMDLoadOp {
+  LoadSplatVec8x16,
+  LoadSplatVec16x8,
+  LoadSplatVec32x4,
+  LoadSplatVec64x2,
+  LoadExtSVec8x8ToVecI16x8,
+  LoadExtUVec8x8ToVecI16x8,
+  LoadExtSVec16x4ToVecI32x4,
+  LoadExtUVec16x4ToVecI32x4,
+  LoadExtSVec32x2ToVecI64x2,
+  LoadExtUVec32x2ToVecI64x2
+};
+
+enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
 
 //
 // Expressions
 //
-// Note that little is provided in terms of constructors for these. The rationale
-// is that writing  new Something(a, b, c, d, e)  is not the clearest, and it would
-// be better to write   new Something(name=a, leftOperand=b...  etc., but C++
-// lacks named operands, so in asm2wasm etc. you will see things like
+// Note that little is provided in terms of constructors for these. The
+// rationale is that writing  new Something(a, b, c, d, e)  is not the clearest,
+// and it would be better to write   new Something(name=a, leftOperand=b...
+// etc., but C++ lacks named operands, so in asm2wasm etc. you will see things
+// like
 //   auto x = new Something();
 //   x->name = a;
 //   x->leftOperand = b;
@@ -234,10 +497,10 @@ public:
     SwitchId,
     CallId,
     CallIndirectId,
-    GetLocalId,
-    SetLocalId,
-    GetGlobalId,
-    SetGlobalId,
+    LocalGetId,
+    LocalSetId,
+    GlobalGetId,
+    GlobalSetId,
     LoadId,
     StoreId,
     ConstId,
@@ -252,16 +515,24 @@ public:
     AtomicRMWId,
     AtomicCmpxchgId,
     AtomicWaitId,
-    AtomicWakeId,
+    AtomicNotifyId,
+    AtomicFenceId,
     SIMDExtractId,
     SIMDReplaceId,
     SIMDShuffleId,
-    SIMDBitselectId,
+    SIMDTernaryId,
     SIMDShiftId,
+    SIMDLoadId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
     MemoryFillId,
+    PushId,
+    PopId,
+    TryId,
+    ThrowId,
+    RethrowId,
+    BrOnExnId,
     NumExpressionIds
   };
   Id _id;
@@ -273,20 +544,24 @@ public:
 
   void finalize() {}
 
-  template<class T>
-  bool is() {
-    return int(_id) == int(T::SpecificId);
-  }
+  template<class T> bool is() const { return int(_id) == int(T::SpecificId); }
 
-  template<class T>
-  T* dynCast() {
+  template<class T> T* dynCast() {
     return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
   }
 
-  template<class T>
-  T* cast() {
+  template<class T> const T* dynCast() const {
+    return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
+  }
+
+  template<class T> T* cast() {
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
+  }
+
+  template<class T> const T* cast() const {
+    assert(int(_id) == int(T::SpecificId));
+    return (const T*)this;
   }
 };
 
@@ -294,8 +569,7 @@ const char* getExpressionName(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
-template<Expression::Id SID>
-class SpecificExpression : public Expression {
+template<Expression::Id SID> class SpecificExpression : public Expression {
 public:
   enum {
     SpecificId = SID // compile-time access to the type for the class
@@ -317,19 +591,20 @@ public:
   Name name;
   ExpressionList list;
 
-  // set the type purely based on its contents. this scans the block, so it is not fast.
+  // set the type purely based on its contents. this scans the block, so it is
+  // not fast.
   void finalize();
 
   // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed
-  // (which may require scanning the block)
+  // s-expression or binary, as explicit types are given. the only additional
+  // work this does is to set the type to unreachable in the cases that is
+  // needed (which may require scanning the block)
   void finalize(Type type_);
 
-  // set the type given you know its type, and you know if there is a break to this
-  // block. this avoids the need to scan the contents of the block in the case that
-  // it might be unreachable, so it is recommended if you already know the type
-  // and breakability anyhow.
+  // set the type given you know its type, and you know if there is a break to
+  // this block. this avoids the need to scan the contents of the block in the
+  // case that it might be unreachable, so it is recommended if you already know
+  // the type and breakability anyhow.
   void finalize(Type type_, bool hasBreak);
 };
 
@@ -343,8 +618,9 @@ public:
   Expression* ifFalse;
 
   // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
+  // s-expression or binary, as explicit types are given. the only additional
+  // work this does is to set the type to unreachable in the cases that is
+  // needed.
   void finalize(Type type_);
 
   // set the type purely based on its contents.
@@ -360,8 +636,9 @@ public:
   Expression* body;
 
   // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
+  // s-expression or binary, as explicit types are given. the only additional
+  // work this does is to set the type to unreachable in the cases that is
+  // needed.
   void finalize(Type type_);
 
   // set the type purely based on its contents.
@@ -371,9 +648,7 @@ public:
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
   Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() {
-    type = unreachable;
-  }
+  Break(MixedArena& allocator) : Break() { type = unreachable; }
 
   Name name;
   Expression* value;
@@ -384,9 +659,7 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator) {
-    type = unreachable;
-  }
+  Switch(MixedArena& allocator) : targets(allocator) { type = unreachable; }
 
   ArenaVector<Name> targets;
   Name default_;
@@ -402,6 +675,7 @@ public:
 
   ExpressionList operands;
   Name target;
+  bool isReturn = false;
 
   void finalize();
 };
@@ -415,6 +689,7 @@ public:
   FunctionType() = default;
 
   bool structuralComparison(FunctionType& b);
+  bool structuralComparison(const std::vector<Type>& params, Type result);
 
   bool operator==(FunctionType& b);
   bool operator!=(FunctionType& b);
@@ -427,22 +702,23 @@ public:
   ExpressionList operands;
   Name fullType;
   Expression* target;
+  bool isReturn = false;
 
   void finalize();
 };
 
-class GetLocal : public SpecificExpression<Expression::GetLocalId> {
+class LocalGet : public SpecificExpression<Expression::LocalGetId> {
 public:
-  GetLocal() = default;
-  GetLocal(MixedArena& allocator) {}
+  LocalGet() = default;
+  LocalGet(MixedArena& allocator) {}
 
   Index index;
 };
 
-class SetLocal : public SpecificExpression<Expression::SetLocalId> {
+class LocalSet : public SpecificExpression<Expression::LocalSetId> {
 public:
-  SetLocal() = default;
-  SetLocal(MixedArena& allocator) {}
+  LocalSet() = default;
+  LocalSet(MixedArena& allocator) {}
 
   void finalize();
 
@@ -453,18 +729,18 @@ public:
   void setTee(bool is);
 };
 
-class GetGlobal : public SpecificExpression<Expression::GetGlobalId> {
+class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
 public:
-  GetGlobal() = default;
-  GetGlobal(MixedArena& allocator) {}
+  GlobalGet() = default;
+  GlobalGet(MixedArena& allocator) {}
 
   Name name;
 };
 
-class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
+class GlobalSet : public SpecificExpression<Expression::GlobalSetId> {
 public:
-  SetGlobal() = default;
-  SetGlobal(MixedArena& allocator) {}
+  GlobalSet() = default;
+  GlobalSet(MixedArena& allocator) {}
 
   Name name;
   Expression* value;
@@ -506,7 +782,7 @@ public:
 };
 
 class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
- public:
+public:
   AtomicRMW() = default;
   AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
 
@@ -520,7 +796,7 @@ class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
 };
 
 class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
- public:
+public:
   AtomicCmpxchg() = default;
   AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
 
@@ -534,7 +810,7 @@ class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
 };
 
 class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
- public:
+public:
   AtomicWait() = default;
   AtomicWait(MixedArena& allocator) : AtomicWait() {}
 
@@ -547,20 +823,31 @@ class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
   void finalize();
 };
 
-class AtomicWake : public SpecificExpression<Expression::AtomicWakeId> {
- public:
-  AtomicWake() = default;
-  AtomicWake(MixedArena& allocator) : AtomicWake() {}
+class AtomicNotify : public SpecificExpression<Expression::AtomicNotifyId> {
+public:
+  AtomicNotify() = default;
+  AtomicNotify(MixedArena& allocator) : AtomicNotify() {}
 
   Address offset;
   Expression* ptr;
-  Expression* wakeCount;
+  Expression* notifyCount;
 
   void finalize();
 };
 
+class AtomicFence : public SpecificExpression<Expression::AtomicFenceId> {
+public:
+  AtomicFence() = default;
+  AtomicFence(MixedArena& allocator) : AtomicFence() {}
+
+  // Current wasm threads only supports sequentialy consistent atomics, but
+  // other orderings may be added in the future. This field is reserved for
+  // that, and currently set to 0.
+  uint8_t order = 0;
+};
+
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
- public:
+public:
   SIMDExtract() = default;
   SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
 
@@ -572,7 +859,7 @@ class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
 };
 
 class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
- public:
+public:
   SIMDReplace() = default;
   SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
 
@@ -585,7 +872,7 @@ class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
 };
 
 class SIMDShuffle : public SpecificExpression<Expression::SIMDShuffleId> {
- public:
+public:
   SIMDShuffle() = default;
   SIMDShuffle(MixedArena& allocator) : SIMDShuffle() {}
 
@@ -596,20 +883,21 @@ class SIMDShuffle : public SpecificExpression<Expression::SIMDShuffleId> {
   void finalize();
 };
 
-class SIMDBitselect : public SpecificExpression<Expression::SIMDBitselectId> {
- public:
-  SIMDBitselect() = default;
-  SIMDBitselect(MixedArena& allocator) : SIMDBitselect() {}
+class SIMDTernary : public SpecificExpression<Expression::SIMDTernaryId> {
+public:
+  SIMDTernary() = default;
+  SIMDTernary(MixedArena& allocator) : SIMDTernary() {}
 
-  Expression* left;
-  Expression* right;
-  Expression* cond;
+  SIMDTernaryOp op;
+  Expression* a;
+  Expression* b;
+  Expression* c;
 
   void finalize();
 };
 
 class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
- public:
+public:
   SIMDShift() = default;
   SIMDShift(MixedArena& allocator) : SIMDShift() {}
 
@@ -620,12 +908,26 @@ class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
   void finalize();
 };
 
+class SIMDLoad : public SpecificExpression<Expression::SIMDLoadId> {
+public:
+  SIMDLoad() = default;
+  SIMDLoad(MixedArena& allocator) {}
+
+  SIMDLoadOp op;
+  Address offset;
+  Address align;
+  Expression* ptr;
+
+  Index getMemBytes();
+  void finalize();
+};
+
 class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
- public:
+public:
   MemoryInit() = default;
   MemoryInit(MixedArena& allocator) : MemoryInit() {}
 
-  uint32_t segment;
+  Index segment;
   Expression* dest;
   Expression* offset;
   Expression* size;
@@ -634,17 +936,17 @@ class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
 };
 
 class DataDrop : public SpecificExpression<Expression::DataDropId> {
- public:
+public:
   DataDrop() = default;
   DataDrop(MixedArena& allocator) : DataDrop() {}
 
-  uint32_t segment;
+  Index segment;
 
   void finalize();
 };
 
 class MemoryCopy : public SpecificExpression<Expression::MemoryCopyId> {
- public:
+public:
   MemoryCopy() = default;
   MemoryCopy(MixedArena& allocator) : MemoryCopy() {}
 
@@ -656,7 +958,7 @@ class MemoryCopy : public SpecificExpression<Expression::MemoryCopyId> {
 };
 
 class MemoryFill : public SpecificExpression<Expression::MemoryFillId> {
- public:
+public:
   MemoryFill() = default;
   MemoryFill(MixedArena& allocator) : MemoryFill() {}
 
@@ -733,9 +1035,7 @@ public:
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() {
-    type = unreachable;
-  }
+  Return() { type = unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value = nullptr;
@@ -754,10 +1054,79 @@ public:
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
-  Unreachable() {
-    type = unreachable;
-  }
+  Unreachable() { type = unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
+};
+
+// A multivalue push. This represents a push of a value, which will be
+// used in the next return. That is, a multivalue return is done by
+// pushing some values, then doing a return (with a value as well).
+// For more on this design, see the readme.
+class Push : public SpecificExpression<Expression::PushId> {
+public:
+  Push() = default;
+  Push(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+// A multivalue pop. This represents a pop of a value, which arrived
+// from a multivalue call or other situation where there are things on
+// the stack. That is, a multivalue-returning call is done by doing
+// the call, receiving the first value normally, and receiving the others
+// via calls to pop.
+class Pop : public SpecificExpression<Expression::PopId> {
+public:
+  Pop() = default;
+  Pop(MixedArena& allocator) {}
+};
+
+class Try : public SpecificExpression<Expression::TryId> {
+public:
+  Try(MixedArena& allocator) {}
+
+  Expression* body;
+  Expression* catchBody;
+
+  void finalize();
+  void finalize(Type type_);
+};
+
+class Throw : public SpecificExpression<Expression::ThrowId> {
+public:
+  Throw(MixedArena& allocator) : operands(allocator) {}
+
+  Name event;
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class Rethrow : public SpecificExpression<Expression::RethrowId> {
+public:
+  Rethrow(MixedArena& allocator) {}
+
+  Expression* exnref;
+
+  void finalize();
+};
+
+class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
+public:
+  BrOnExn() { type = unreachable; }
+  BrOnExn(MixedArena& allocator) : BrOnExn() {}
+
+  Name name;
+  Name event;
+  Expression* exnref;
+  // This is duplicate info of param types stored in Event, but this is required
+  // for us to know the type of the value sent to the target block.
+  std::vector<Type> eventParams;
+
+  void finalize();
+  Type getSingleSentType();
 };
 
 // Globals
@@ -766,9 +1135,7 @@ struct Importable {
   // If these are set, then this is an import, as module.base
   Name module, base;
 
-  bool imported() {
-    return module.is();
-  }
+  bool imported() { return module.is(); }
 };
 
 // Forward declarations of Stack IR, as functions can contain it, see
@@ -784,7 +1151,7 @@ public:
   Type result = none;
   std::vector<Type> params; // function locals are
   std::vector<Type> vars;   // params plus vars
-  Name type; // if null, it is implicit in params and result
+  Name type;                // if null, it is implicit in params and result
 
   // The body of the function
   Expression* body = nullptr;
@@ -805,11 +1172,19 @@ public:
 
   struct DebugLocation {
     uint32_t fileIndex, lineNumber, columnNumber;
-    bool operator==(const DebugLocation& other) const { return fileIndex == other.fileIndex && lineNumber == other.lineNumber && columnNumber == other.columnNumber; }
-    bool operator!=(const DebugLocation& other) const { return !(*this == other); }
+    bool operator==(const DebugLocation& other) const {
+      return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
+             columnNumber == other.columnNumber;
+    }
+    bool operator!=(const DebugLocation& other) const {
+      return !(*this == other);
+    }
     bool operator<(const DebugLocation& other) const {
-      return fileIndex != other.fileIndex ? fileIndex < other.fileIndex :
-        lineNumber != other.lineNumber ? lineNumber < other.lineNumber : columnNumber < other.columnNumber;
+      return fileIndex != other.fileIndex
+               ? fileIndex < other.fileIndex
+               : lineNumber != other.lineNumber
+                   ? lineNumber < other.lineNumber
+                   : columnNumber < other.columnNumber;
     }
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
@@ -843,12 +1218,15 @@ enum class ExternalKind {
   Table = 1,
   Memory = 2,
   Global = 3,
+  Event = 4,
   Invalid = -1
 };
 
 class Export {
 public:
-  Name name;  // exported name - note that this is the key, as the internal name is non-unique (can have multiple exports for an internal, also over kinds)
+  // exported name - note that this is the key, as the internal name is
+  // non-unique (can have multiple exports for an internal, also over kinds)
+  Name name;
   Name value; // internal name
   ExternalKind kind;
 };
@@ -870,17 +1248,16 @@ public:
     }
   };
 
-  // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or imported.
-  // The table can exist but be empty and have no defined initial or max size.
+  // Currently the wasm object always 'has' one Table. It 'exists' if it has
+  // been defined or imported. The table can exist but be empty and have no
+  // defined initial or max size.
   bool exists = false;
   Name name;
   Address initial = 0;
   Address max = kMaxSize;
   std::vector<Segment> segments;
 
-  Table() {
-    name = Name::fromInt(0);
-  }
+  Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
 };
 
@@ -889,20 +1266,28 @@ public:
   static const Address::address_t kPageSize = 64 * 1024;
   static const Address::address_t kUnlimitedSize = Address::address_t(-1);
   // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
-  static const Address::address_t kMaxSize = (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
+  static const Address::address_t kMaxSize =
+    (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
   static const Address::address_t kPageMask = ~(kPageSize - 1);
 
   struct Segment {
-    Expression* offset;
+    bool isPassive = false;
+    Expression* offset = nullptr;
     std::vector<char> data; // TODO: optimize
     Segment() = default;
     Segment(Expression* offset) : offset(offset) {}
-    Segment(Expression* offset, const char* init, Address size) : offset(offset) {
+    Segment(Expression* offset, const char* init, Address size)
+      : offset(offset) {
       data.resize(size);
       std::copy_n(init, size, data.begin());
     }
     Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
+    }
+    Segment(bool isPassive, Expression* offset, const char* init, Address size)
+      : isPassive(isPassive), offset(offset) {
+      data.resize(size);
+      std::copy_n(init, size, data.begin());
     }
   };
 
@@ -915,9 +1300,7 @@ public:
   // See comment in Table.
   bool shared = false;
 
-  Memory() {
-    name = Name::fromInt(0);
-  }
+  Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
 };
 
@@ -927,6 +1310,24 @@ public:
   Type type;
   Expression* init;
   bool mutable_ = false;
+};
+
+// Kinds of event attributes.
+enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
+
+class Event : public Importable {
+public:
+  Name name;
+  // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
+  uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
+  // Type string in the format of function type. Return type is considered as a
+  // void type. So if you have an event whose type is (i32, i32), the type
+  // string will be "vii".
+  Name type;
+  // This is duplicate info of 'Name type', but we store this anyway because
+  // we plan to remove FunctionType in future.
+  // TODO remove either this or FunctionType
+  std::vector<Type> params;
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.
@@ -939,11 +1340,13 @@ public:
 
 class Module {
 public:
-  // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
+  // wasm contents (generally you shouldn't access these from outside, except
+  // maybe for iterating; use add*() and the get() functions)
   std::vector<std::unique_ptr<FunctionType>> functionTypes;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
+  std::vector<std::unique_ptr<Event>> events;
 
   Table table;
   Memory memory;
@@ -952,32 +1355,46 @@ public:
   std::vector<UserSection> userSections;
   std::vector<std::string> debugInfoFileNames;
 
+  // `features` are the features allowed to be used in this module and should be
+  // respected regardless of the value of`hasFeaturesSection`.
+  // `hasFeaturesSection` means we read a features section and will emit one
+  // too.
+  FeatureSet features = FeatureSet::MVP;
+  bool hasFeaturesSection = false;
+
   MixedArena allocator;
 
 private:
-  // TODO: add a build option where Names are just indices, and then these methods are not needed
+  // TODO: add a build option where Names are just indices, and then these
+  // methods are not needed
   std::map<Name, FunctionType*> functionTypesMap;
-  std::map<Name, Export*> exportsMap; // exports map is by the *exported* name, which is unique
+  // exports map is by the *exported* name, which is unique
+  std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
   std::map<Name, Global*> globalsMap;
+  std::map<Name, Event*> eventsMap;
 
 public:
-  Module() = default;;
+  Module() = default;
 
   FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
+  Event* getEvent(Name name);
 
   FunctionType* getFunctionTypeOrNull(Name name);
   Export* getExportOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
+  Event* getEventOrNull(Name name);
 
   FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
-  void addExport(Export* curr);
-  void addFunction(Function* curr);
-  void addGlobal(Global* curr);
+  Export* addExport(Export* curr);
+  Function* addFunction(Function* curr);
+  Function* addFunction(std::unique_ptr<Function> curr);
+  Global* addGlobal(Global* curr);
+  Event* addEvent(Event* curr);
 
   void addStart(const Name& s);
 
@@ -985,6 +1402,7 @@ public:
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeGlobal(Name name);
+  void removeEvent(Name name);
 
   void updateMaps();
 
@@ -999,6 +1417,6 @@ template<> struct hash<wasm::Address> {
     return std::hash<wasm::Address::address_t>()(a.addr);
   }
 };
-}
+} // namespace std
 
 #endif // wasm_wasm_h

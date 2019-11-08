@@ -1,4 +1,5 @@
 (module
+  (memory 1)
   (func $push1
     (local $x i32)
     (block $out

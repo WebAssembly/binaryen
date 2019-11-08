@@ -17,23 +17,28 @@
 #ifndef wasm_ir_branch_h
 #define wasm_ir_branch_h
 
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
 namespace BranchUtils {
 
-// Some branches are obviously not actually reachable (e.g. (br $out (unreachable)))
+// Some branches are obviously not actually reachable (e.g. (br $out
+// (unreachable)))
 
 inline bool isBranchReachable(Break* br) {
-  return !(br->value     && br->value->type     == unreachable) &&
+  return !(br->value && br->value->type == unreachable) &&
          !(br->condition && br->condition->type == unreachable);
 }
 
 inline bool isBranchReachable(Switch* sw) {
-  return !(sw->value && sw->value->type     == unreachable) &&
-                        sw->condition->type != unreachable;
+  return !(sw->value && sw->value->type == unreachable) &&
+         sw->condition->type != unreachable;
+}
+
+inline bool isBranchReachable(BrOnExn* br) {
+  return br->exnref->type != unreachable;
 }
 
 inline bool isBranchReachable(Expression* expr) {
@@ -41,15 +46,13 @@ inline bool isBranchReachable(Expression* expr) {
     return isBranchReachable(br);
   } else if (auto* sw = expr->dynCast<Switch>()) {
     return isBranchReachable(sw);
+  } else if (auto* br = expr->dynCast<BrOnExn>()) {
+    return isBranchReachable(br);
   }
   WASM_UNREACHABLE();
 }
 
-inline std::set<Name> getUniqueTargets(Break* br) {
-  std::set<Name> ret;
-  ret.insert(br->name);
-  return ret;
-}
+inline std::set<Name> getUniqueTargets(Break* br) { return {br->name}; }
 
 inline std::set<Name> getUniqueTargets(Switch* sw) {
   std::set<Name> ret;
@@ -59,6 +62,8 @@ inline std::set<Name> getUniqueTargets(Switch* sw) {
   ret.insert(sw->default_);
   return ret;
 }
+
+inline std::set<Name> getUniqueTargets(BrOnExn* br) { return {br->name}; }
 
 // If we branch to 'from', change that to 'to' instead.
 inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
@@ -79,6 +84,11 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
       sw->default_ = to;
       worked = true;
     }
+  } else if (auto* br = branch->dynCast<BrOnExn>()) {
+    if (br->name == from) {
+      br->name = to;
+      worked = true;
+    }
   } else {
     WASM_UNREACHABLE();
   }
@@ -91,15 +101,14 @@ inline std::set<Name> getExitingBranches(Expression* ast) {
   struct Scanner : public PostWalker<Scanner> {
     std::set<Name> targets;
 
-    void visitBreak(Break* curr) {
-      targets.insert(curr->name);
-    }
+    void visitBreak(Break* curr) { targets.insert(curr->name); }
     void visitSwitch(Switch* curr) {
-      for (auto target : targets) {
+      for (auto target : curr->targets) {
         targets.insert(target);
       }
       targets.insert(curr->default_);
     }
+    void visitBrOnExn(BrOnExn* curr) { targets.insert(curr->name); }
     void visitBlock(Block* curr) {
       if (curr->name.is()) {
         targets.erase(curr->name);
@@ -154,38 +163,72 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 
   BranchSeeker(Name target) : target(target) {}
 
-  void noteFound(Expression* value) {
+  void noteFound(Expression* value) { noteFound(value ? value->type : none); }
+
+  void noteFound(Type type) {
     found++;
-    if (found == 1) valueType = unreachable;
-    if (!value) valueType = none;
-    else if (value->type != unreachable) valueType = value->type;
+    if (found == 1) {
+      valueType = unreachable;
+    }
+    if (type != unreachable) {
+      valueType = type;
+    }
   }
 
-  void visitBreak(Break *curr) {
+  void visitBreak(Break* curr) {
     if (!named) {
       // ignore an unreachable break
-      if (curr->condition && curr->condition->type == unreachable) return;
-      if (curr->value && curr->value->type == unreachable) return;
+      if (curr->condition && curr->condition->type == unreachable) {
+        return;
+      }
+      if (curr->value && curr->value->type == unreachable) {
+        return;
+      }
     }
     // check the break
-    if (curr->name == target) noteFound(curr->value);
+    if (curr->name == target) {
+      noteFound(curr->value);
+    }
   }
 
-  void visitSwitch(Switch *curr) {
+  void visitSwitch(Switch* curr) {
     if (!named) {
       // ignore an unreachable switch
-      if (curr->condition->type == unreachable) return;
-      if (curr->value && curr->value->type == unreachable) return;
+      if (curr->condition->type == unreachable) {
+        return;
+      }
+      if (curr->value && curr->value->type == unreachable) {
+        return;
+      }
     }
     // check the switch
     for (auto name : curr->targets) {
-      if (name == target) noteFound(curr->value);
+      if (name == target) {
+        noteFound(curr->value);
+      }
     }
-    if (curr->default_ == target) noteFound(curr->value);
+    if (curr->default_ == target) {
+      noteFound(curr->value);
+    }
+  }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    if (!named) {
+      // ignore an unreachable br_on_exn
+      if (curr->exnref->type == unreachable) {
+        return;
+      }
+    }
+    // check the br_on_exn
+    if (curr->name == target) {
+      noteFound(curr->getSingleSentType());
+    }
   }
 
   static bool hasReachable(Expression* tree, Name target) {
-    if (!target.is()) return false;
+    if (!target.is()) {
+      return false;
+    }
     BranchSeeker seeker(target);
     seeker.named = false;
     seeker.walk(tree);
@@ -193,7 +236,9 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 
   static Index countReachable(Expression* tree, Name target) {
-    if (!target.is()) return 0;
+    if (!target.is()) {
+      return 0;
+    }
     BranchSeeker seeker(target);
     seeker.named = false;
     seeker.walk(tree);
@@ -201,14 +246,18 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 
   static bool hasNamed(Expression* tree, Name target) {
-    if (!target.is()) return false;
+    if (!target.is()) {
+      return false;
+    }
     BranchSeeker seeker(target);
     seeker.walk(tree);
     return seeker.found > 0;
   }
 
   static Index countNamed(Expression* tree, Name target) {
-    if (!target.is()) return 0;
+    if (!target.is()) {
+      return 0;
+    }
     BranchSeeker seeker(target);
     seeker.walk(tree);
     return seeker.found;
@@ -220,4 +269,3 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 } // namespace wasm
 
 #endif // wasm_ir_branch_h
-

@@ -1,5 +1,5 @@
+
 function asmFunc(global, env, buffer) {
- "almost asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -20,25 +20,30 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0(var$0) {
   var$0 = var$0 | 0;
-  return __wasm_grow_memory(var$0 | 0) | 0;
+  return __wasm_memory_grow(var$0 | 0) | 0;
  }
  
  function $1() {
-  return __wasm_current_memory() | 0;
+  return __wasm_memory_size() | 0;
  }
  
- function __wasm_grow_memory(pagesToAdd) {
+ var FUNCTION_TABLE = [];
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
+ function __wasm_memory_grow(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
-  var oldPages = __wasm_current_memory() | 0;
+  var oldPages = __wasm_memory_size() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
    var newHEAP8 = new global.Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
    HEAP8 = newHEAP8;
+   HEAP8 = new global.Int8Array(newBuffer);
    HEAP16 = new global.Int16Array(newBuffer);
    HEAP32 = new global.Int32Array(newBuffer);
    HEAPU8 = new global.Uint8Array(newBuffer);
@@ -51,29 +56,25 @@ function asmFunc(global, env, buffer) {
   return oldPages;
  }
  
- function __wasm_current_memory() {
-  return buffer.byteLength / 65536 | 0;
- }
- 
  return {
-  memory: Object.create(Object.prototype, {
-   grow: {
-    value: __wasm_grow_memory
+  "memory": Object.create(Object.prototype, {
+   "grow": {
+    "value": __wasm_memory_grow
    }, 
-   buffer: {
-    get: function () {
+   "buffer": {
+    "get": function () {
      return buffer;
     }
     
    }
   }), 
-  grow: $0, 
-  current: $1
+  "grow": $0, 
+  "current": $1
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const memory = retasmFunc.memory;
-export const grow = retasmFunc.grow;
-export const current = retasmFunc.current;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var memory = retasmFunc.memory;
+export var grow = retasmFunc.grow;
+export var current = retasmFunc.current;

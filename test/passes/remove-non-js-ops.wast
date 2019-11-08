@@ -1,4 +1,5 @@
 (module
+ (memory 1)
  (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
    (f64.copysign (local.get $0) (local.get $1)))
  (func $copysign32 (param $0 f32) (param $1 f32) (result f32)

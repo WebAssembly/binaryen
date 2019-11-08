@@ -2039,5 +2039,53 @@
     )
    )
   )
+ (func $if_br_if
+  (local $0 i32)
+  (block $label$1
+   (if
+    (local.tee $0 ;; note side effect; it's ok
+     (i32.const 1024)
+    )
+    (br_if $label$1
+     (i32.eqz
+      (i32.const -4)
+     )
+    )
+   )
+   (if
+    (i32.const 1025)
+    (br_if $label$1
+     (i32.eqz
+      (i32.const -5)
+     )
+    )
+   )
+   (if
+    (local.tee $0 ;; note side effect; it's ok
+     (i32.const 1025)
+    )
+    (br_if $label$1
+     (i32.eqz
+      (i32.const -6)
+     )
+    )
+   )
+   (if
+    (i32.const 1026)
+    (br_if $label$1
+     (local.tee $0 ;; but here it is *not* ok
+      (i32.const -7)
+     )
+    )
+   )
+   (i32.store
+    (i32.const 1024)
+    (i32.add
+     (local.get $0)
+     (i32.const 1)
+    )
+   )
+  )
+ )
 )
 

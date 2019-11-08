@@ -15,17 +15,17 @@
  */
 
 //
-// Prints the call graph in .dot format. You can use http://www.graphviz.org/ to view .dot files.
+// Prints the call graph in .dot format. You can use http://www.graphviz.org/ to
+// view .dot files.
 //
 
-
-#include <memory>
 #include <iomanip>
+#include <memory>
 
-#include "wasm.h"
-#include "pass.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
+#include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -33,7 +33,7 @@ struct PrintCallGraph : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
-    std::ostream &o = std::cout;
+    std::ostream& o = std::cout;
     o << "digraph call {\n"
          "  rankdir = LR;\n"
          "  subgraph cluster_key {\n"
@@ -42,35 +42,40 @@ struct PrintCallGraph : public Pass {
          "    label = \"Key\";\n"
          "    \"Import\" [style=\"filled\", fillcolor=\"turquoise\"];\n"
          "    \"Export\" [style=\"filled\", fillcolor=\"gray\"];\n"
-         "    \"Indirect Target\" [style=\"filled, rounded\", fillcolor=\"white\"];\n"
-         "    \"A\" -> \"B\" [style=\"filled, rounded\", label = \"Direct Call\"];\n"
+         "    \"Indirect Target\" [style=\"filled, rounded\", "
+         "fillcolor=\"white\"];\n"
+         "    \"A\" -> \"B\" [style=\"filled, rounded\", label = \"Direct "
+         "Call\"];\n"
          "  }\n\n"
          "  node [shape=box, fontname=courier, fontsize=10];\n";
 
     // Defined functions
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
-      std::cout << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
+      std::cout << "  \"" << curr->name
+                << "\" [style=\"filled\", fillcolor=\"white\"];\n";
     });
 
     // Imported functions
     ModuleUtils::iterImportedFunctions(*module, [&](Function* curr) {
-      o << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
+      o << "  \"" << curr->name
+        << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
     });
 
     // Exports
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         Function* func = module->getFunction(curr->value);
-        o << "  \"" << func->name << "\" [style=\"filled\", fillcolor=\"gray\"];\n";
+        o << "  \"" << func->name
+          << "\" [style=\"filled\", fillcolor=\"gray\"];\n";
       }
     }
 
     struct CallPrinter : public PostWalker<CallPrinter> {
-      Module *module;
-      Function *currFunction;
+      Module* module;
+      Function* currFunction;
       std::set<Name> visitedTargets; // Used to avoid printing duplicate edges.
       std::vector<Function*> allIndirectTargets;
-      CallPrinter(Module *module) : module(module) {
+      CallPrinter(Module* module) : module(module) {
         // Walk function bodies.
         ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
           currFunction = curr;
@@ -78,11 +83,14 @@ struct PrintCallGraph : public Pass {
           walk(curr->body);
         });
       }
-      void visitCall(Call *curr) {
+      void visitCall(Call* curr) {
         auto* target = module->getFunction(curr->target);
-        if (visitedTargets.count(target->name) > 0) return;
+        if (visitedTargets.count(target->name) > 0) {
+          return;
+        }
         visitedTargets.insert(target->name);
-        std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name << "\"; // call\n";
+        std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name
+                  << "\"; // call\n";
       }
     };
     CallPrinter printer(module);
@@ -99,8 +107,6 @@ struct PrintCallGraph : public Pass {
   }
 };
 
-Pass *createPrintCallGraphPass() {
-  return new PrintCallGraph();
-}
+Pass* createPrintCallGraphPass() { return new PrintCallGraph(); }
 
 } // namespace wasm

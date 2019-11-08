@@ -15,15 +15,15 @@
  */
 
 #include "wasm.h"
-#include "wasm-traversal.h"
 #include "ir/branch-utils.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 
 // shared constants
 
-Name WASM("wasm"),
-     RETURN_FLOW("*return:)*");
+Name WASM("wasm");
+Name RETURN_FLOW("*return:)*");
 
 namespace BinaryConsts {
 namespace UserSections {
@@ -32,89 +32,157 @@ const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
 const char* Linking = "linking";
 const char* Producers = "producers";
-}
-}
+const char* TargetFeatures = "target_features";
+const char* AtomicsFeature = "atomics";
+const char* BulkMemoryFeature = "bulk-memory";
+const char* ExceptionHandlingFeature = "exception-handling";
+const char* MutableGlobalsFeature = "mutable-globals";
+const char* TruncSatFeature = "nontrapping-fptoint";
+const char* SignExtFeature = "sign-ext";
+const char* SIMD128Feature = "simd128";
+const char* TailCallFeature = "tail-call";
+const char* ReferenceTypesFeature = "reference-types";
+} // namespace UserSections
+} // namespace BinaryConsts
 
-Name GROW_WASM_MEMORY("__growWasmMemory"),
-     MEMORY_BASE("__memory_base"),
-     TABLE_BASE("__table_base"),
-     GET_TEMP_RET0("getTempRet0"),
-     SET_TEMP_RET0("setTempRet0"),
-     NEW_SIZE("newSize"),
-     MODULE("module"),
-     START("start"),
-     FUNC("func"),
-     PARAM("param"),
-     RESULT("result"),
-     MEMORY("memory"),
-     DATA("data"),
-     SEGMENT("segment"),
-     EXPORT("export"),
-     IMPORT("import"),
-     TABLE("table"),
-     ELEM("elem"),
-     LOCAL("local"),
-     TYPE("type"),
-     CALL("call"),
-     CALL_INDIRECT("call_indirect"),
-     BLOCK("block"),
-     BR_IF("br_if"),
-     THEN("then"),
-     ELSE("else"),
-     _NAN("NaN"),
-     _INFINITY("Infinity"),
-     NEG_INFINITY("-infinity"),
-     NEG_NAN("-nan"),
-     CASE("case"),
-     BR("br"),
-     FUNCREF("funcref"),
-     FAKE_RETURN("fake_return_waka123"),
-     MUT("mut"),
-     SPECTEST("spectest"),
-     PRINT("print"),
-     EXIT("exit");
+Name GROW_WASM_MEMORY("__growWasmMemory");
+Name WASM_CALL_CTORS("__wasm_call_ctors");
+Name MEMORY_BASE("__memory_base");
+Name TABLE_BASE("__table_base");
+Name STACK_POINTER("__stack_pointer");
+Name GET_TEMP_RET0("getTempRet0");
+Name SET_TEMP_RET0("setTempRet0");
+Name NEW_SIZE("newSize");
+Name MODULE("module");
+Name START("start");
+Name FUNC("func");
+Name PARAM("param");
+Name RESULT("result");
+Name MEMORY("memory");
+Name DATA("data");
+Name PASSIVE("passive");
+Name EXPORT("export");
+Name IMPORT("import");
+Name TABLE("table");
+Name ELEM("elem");
+Name LOCAL("local");
+Name TYPE("type");
+Name CALL("call");
+Name CALL_INDIRECT("call_indirect");
+Name BLOCK("block");
+Name BR_IF("br_if");
+Name THEN("then");
+Name ELSE("else");
+Name _NAN("NaN");
+Name _INFINITY("Infinity");
+Name NEG_INFINITY("-infinity");
+Name NEG_NAN("-nan");
+Name CASE("case");
+Name BR("br");
+Name FUNCREF("funcref");
+Name FAKE_RETURN("fake_return_waka123");
+Name MUT("mut");
+Name SPECTEST("spectest");
+Name PRINT("print");
+Name EXIT("exit");
+Name SHARED("shared");
+Name EVENT("event");
+Name ATTR("attr");
 
 // Expressions
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
-    case Expression::Id::InvalidId: WASM_UNREACHABLE();
-    case Expression::Id::BlockId: return "block";
-    case Expression::Id::IfId: return "if";
-    case Expression::Id::LoopId: return "loop";
-    case Expression::Id::BreakId: return "break";
-    case Expression::Id::SwitchId: return "switch";
-    case Expression::Id::CallId: return "call";
-    case Expression::Id::CallIndirectId: return "call_indirect";
-    case Expression::Id::GetLocalId: return "local.get";
-    case Expression::Id::SetLocalId: return "local.set";
-    case Expression::Id::GetGlobalId: return "global.get";
-    case Expression::Id::SetGlobalId: return "global.set";
-    case Expression::Id::LoadId: return "load";
-    case Expression::Id::StoreId: return "store";
-    case Expression::Id::ConstId: return "const";
-    case Expression::Id::UnaryId: return "unary";
-    case Expression::Id::BinaryId: return "binary";
-    case Expression::Id::SelectId: return "select";
-    case Expression::Id::DropId: return "drop";
-    case Expression::Id::ReturnId: return "return";
-    case Expression::Id::HostId: return "host";
-    case Expression::Id::NopId: return "nop";
-    case Expression::Id::UnreachableId: return "unreachable";
-    case Expression::Id::AtomicCmpxchgId: return "atomic_cmpxchg";
-    case Expression::Id::AtomicRMWId: return "atomic_rmw";
-    case Expression::Id::AtomicWaitId: return "atomic_wait";
-    case Expression::Id::AtomicWakeId: return "atomic_wake";
-    case Expression::Id::SIMDExtractId: return "simd_extract";
-    case Expression::Id::SIMDReplaceId: return "simd_replace";
-    case Expression::Id::SIMDShuffleId: return "simd_shuffle";
-    case Expression::Id::SIMDBitselectId: return "simd_bitselect";
-    case Expression::Id::SIMDShiftId: return "simd_shift";
-    case Expression::Id::MemoryInitId: return "memory_init";
-    case Expression::Id::DataDropId: return "data_drop";
-    case Expression::Id::MemoryCopyId: return "memory_copy";
-    case Expression::Id::MemoryFillId: return "memory_fill";
-    case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
+    case Expression::Id::InvalidId:
+      WASM_UNREACHABLE();
+    case Expression::Id::BlockId:
+      return "block";
+    case Expression::Id::IfId:
+      return "if";
+    case Expression::Id::LoopId:
+      return "loop";
+    case Expression::Id::BreakId:
+      return "break";
+    case Expression::Id::SwitchId:
+      return "switch";
+    case Expression::Id::CallId:
+      return "call";
+    case Expression::Id::CallIndirectId:
+      return "call_indirect";
+    case Expression::Id::LocalGetId:
+      return "local.get";
+    case Expression::Id::LocalSetId:
+      return "local.set";
+    case Expression::Id::GlobalGetId:
+      return "global.get";
+    case Expression::Id::GlobalSetId:
+      return "global.set";
+    case Expression::Id::LoadId:
+      return "load";
+    case Expression::Id::StoreId:
+      return "store";
+    case Expression::Id::ConstId:
+      return "const";
+    case Expression::Id::UnaryId:
+      return "unary";
+    case Expression::Id::BinaryId:
+      return "binary";
+    case Expression::Id::SelectId:
+      return "select";
+    case Expression::Id::DropId:
+      return "drop";
+    case Expression::Id::ReturnId:
+      return "return";
+    case Expression::Id::HostId:
+      return "host";
+    case Expression::Id::NopId:
+      return "nop";
+    case Expression::Id::UnreachableId:
+      return "unreachable";
+    case Expression::Id::AtomicCmpxchgId:
+      return "atomic_cmpxchg";
+    case Expression::Id::AtomicRMWId:
+      return "atomic_rmw";
+    case Expression::Id::AtomicWaitId:
+      return "atomic_wait";
+    case Expression::Id::AtomicNotifyId:
+      return "atomic_notify";
+    case Expression::Id::AtomicFenceId:
+      return "atomic_fence";
+    case Expression::Id::SIMDExtractId:
+      return "simd_extract";
+    case Expression::Id::SIMDReplaceId:
+      return "simd_replace";
+    case Expression::Id::SIMDShuffleId:
+      return "simd_shuffle";
+    case Expression::Id::SIMDTernaryId:
+      return "simd_ternary";
+    case Expression::Id::SIMDShiftId:
+      return "simd_shift";
+    case Expression::Id::SIMDLoadId:
+      return "simd_load";
+    case Expression::Id::MemoryInitId:
+      return "memory_init";
+    case Expression::Id::DataDropId:
+      return "data_drop";
+    case Expression::Id::MemoryCopyId:
+      return "memory_copy";
+    case Expression::Id::MemoryFillId:
+      return "memory_fill";
+    case Expression::Id::PushId:
+      return "push";
+    case Expression::Id::PopId:
+      return "pop";
+    case Expression::TryId:
+      return "try";
+    case Expression::ThrowId:
+      return "throw";
+    case Expression::RethrowId:
+      return "rethrow";
+    case Expression::BrOnExnId:
+      return "br_on_exn";
+    case Expression::Id::NumExpressionIds:
+      WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }
@@ -126,8 +194,8 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   Name targetName;
   std::vector<Type> types;
 
-
-  TypeSeeker(Expression* target, Name targetName) : target(target), targetName(targetName) {
+  TypeSeeker(Expression* target, Name targetName)
+    : target(target), targetName(targetName) {
     Expression* temp = target;
     walk(temp);
   }
@@ -140,9 +208,19 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
-      if (name == targetName) types.push_back(curr->value ? curr->value->type : none);
+      if (name == targetName) {
+        types.push_back(curr->value ? curr->value->type : none);
+      }
     }
-    if (curr->default_ == targetName) types.push_back(curr->value ? curr->value->type : none);
+    if (curr->default_ == targetName) {
+      types.push_back(curr->value ? curr->value->type : none);
+    }
+  }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    if (curr->name == targetName) {
+      types.push_back(curr->getSingleSentType());
+    }
   }
 
   void visitBlock(Block* curr) {
@@ -153,7 +231,9 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
         types.push_back(none);
       }
     } else if (curr->name == targetName) {
-      types.clear(); // ignore all breaks til now, they were captured by someone with the same name
+      // ignore all breaks til now, they were captured by someone with the same
+      // name
+      types.clear();
     }
   }
 
@@ -161,7 +241,9 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
     if (curr == target) {
       types.push_back(curr->body->type);
     } else if (curr->name == targetName) {
-      types.clear(); // ignore all breaks til now, they were captured by someone with the same name
+      // ignore all breaks til now, they were captured by someone with the same
+      // name
+      types.clear();
     }
   }
 };
@@ -169,8 +251,8 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 static Type mergeTypes(std::vector<Type>& types) {
   Type type = unreachable;
   for (auto other : types) {
-    // once none, stop. it then indicates a poison value, that must not be consumed
-    // and ignore unreachable
+    // once none, stop. it then indicates a poison value, that must not be
+    // consumed and ignore unreachable
     if (type != none) {
       if (other == none) {
         type = none;
@@ -178,7 +260,8 @@ static Type mergeTypes(std::vector<Type>& types) {
         if (type == unreachable) {
           type = other;
         } else if (type != other) {
-          type = none; // poison value, we saw multiple types; this should not be consumed
+          // poison value, we saw multiple types; this should not be consumed
+          type = none;
         }
       }
     }
@@ -188,17 +271,26 @@ static Type mergeTypes(std::vector<Type>& types) {
 
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
-static void handleUnreachable(Block* block, bool breakabilityKnown=false, bool hasBreak=false) {
-  if (block->type == unreachable) return; // nothing to do
-  if (block->list.size() == 0) return; // nothing to do
+static void handleUnreachable(Block* block,
+                              bool breakabilityKnown = false,
+                              bool hasBreak = false) {
+  if (block->type == unreachable) {
+    return; // nothing to do
+  }
+  if (block->list.size() == 0) {
+    return; // nothing to do
+  }
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
   // or the final child flows out a value)
-  if (isConcreteType(block->type)) return;
+  if (isConcreteType(block->type)) {
+    return;
+  }
   // look for an unreachable child
   for (auto* child : block->list) {
     if (child->type == unreachable) {
-      // there is an unreachable child, so we are unreachable, unless we have a break
+      // there is an unreachable child, so we are unreachable, unless we have a
+      // break
       if (!breakabilityKnown) {
         hasBreak = BranchUtils::BranchSeeker::hasNamed(block, block->name);
       }
@@ -222,9 +314,13 @@ void Block::finalize() {
       //  (return)
       //  (i32.const 10)
       // )
-      if (isConcreteType(type)) return;
+      if (isConcreteType(type)) {
+        return;
+      }
       // if we are unreachable, we are done
-      if (type == unreachable) return;
+      if (type == unreachable) {
+        return;
+      }
       // we may still be unreachable if we have an unreachable
       // child
       for (auto* child : list) {
@@ -260,7 +356,9 @@ void Block::finalize(Type type_, bool hasBreak) {
 
 void If::finalize(Type type_) {
   type = type_;
-  if (type == none && (condition->type == unreachable || (ifFalse && ifTrue->type == unreachable && ifFalse->type == unreachable))) {
+  if (type == none && (condition->type == unreachable ||
+                       (ifFalse && ifTrue->type == unreachable &&
+                        ifFalse->type == unreachable))) {
     type = unreachable;
   }
 }
@@ -299,9 +397,7 @@ void Loop::finalize(Type type_) {
   }
 }
 
-void Loop::finalize() {
-  type = body->type;
-}
+void Loop::finalize() { type = body->type; }
 
 void Break::finalize() {
   if (condition) {
@@ -317,12 +413,9 @@ void Break::finalize() {
   }
 }
 
-void Switch::finalize() {
-  type = unreachable;
-}
+void Switch::finalize() { type = unreachable; }
 
-template<typename T>
-void handleUnreachableOperands(T* curr) {
+template<typename T> void handleUnreachableOperands(T* curr) {
   for (auto* child : curr->operands) {
     if (child->type == unreachable) {
       curr->type = unreachable;
@@ -333,43 +426,61 @@ void handleUnreachableOperands(T* curr) {
 
 void Call::finalize() {
   handleUnreachableOperands(this);
+  if (isReturn) {
+    type = unreachable;
+  }
 }
 
 void CallIndirect::finalize() {
   handleUnreachableOperands(this);
+  if (isReturn) {
+    type = unreachable;
+  }
   if (target->type == unreachable) {
     type = unreachable;
   }
 }
 
 bool FunctionType::structuralComparison(FunctionType& b) {
-  if (result != b.result) return false;
-  if (params.size() != b.params.size()) return false;
+  return structuralComparison(b.params, b.result);
+}
+
+bool FunctionType::structuralComparison(const std::vector<Type>& otherParams,
+                                        Type otherResult) {
+  if (result != otherResult) {
+    return false;
+  }
+  if (params.size() != otherParams.size()) {
+    return false;
+  }
   for (size_t i = 0; i < params.size(); i++) {
-    if (params[i] != b.params[i]) return false;
+    if (params[i] != otherParams[i]) {
+      return false;
+    }
   }
   return true;
 }
 
 bool FunctionType::operator==(FunctionType& b) {
-  if (name != b.name) return false;
+  if (name != b.name) {
+    return false;
+  }
   return structuralComparison(b);
 }
-bool FunctionType::operator!=(FunctionType& b) {
-  return !(*this == b);
-}
+bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
 
-bool SetLocal::isTee() {
-  return type != none;
-}
+bool LocalSet::isTee() { return type != none; }
 
-void SetLocal::setTee(bool is) {
-  if (is) type = value->type;
-  else type = none;
+void LocalSet::setTee(bool is) {
+  if (is) {
+    type = value->type;
+  } else {
+    type = none;
+  }
   finalize(); // type may need to be unreachable
 }
 
-void SetLocal::finalize() {
+void LocalSet::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
   } else if (isTee()) {
@@ -379,7 +490,7 @@ void SetLocal::finalize() {
   }
 }
 
-void SetGlobal::finalize() {
+void GlobalSet::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
   }
@@ -407,21 +518,23 @@ void AtomicRMW::finalize() {
 }
 
 void AtomicCmpxchg::finalize() {
-  if (ptr->type == unreachable || expected->type == unreachable || replacement->type == unreachable) {
+  if (ptr->type == unreachable || expected->type == unreachable ||
+      replacement->type == unreachable) {
     type = unreachable;
   }
 }
 
 void AtomicWait::finalize() {
   type = i32;
-  if (ptr->type == unreachable || expected->type == unreachable || timeout->type == unreachable) {
+  if (ptr->type == unreachable || expected->type == unreachable ||
+      timeout->type == unreachable) {
     type = unreachable;
   }
 }
 
-void AtomicWake::finalize() {
+void AtomicNotify::finalize() {
   type = i32;
-  if (ptr->type == unreachable || wakeCount->type == unreachable) {
+  if (ptr->type == unreachable || notifyCount->type == unreachable) {
     type = unreachable;
   }
 }
@@ -433,11 +546,20 @@ void SIMDExtract::finalize() {
     case ExtractLaneUVecI8x16:
     case ExtractLaneSVecI16x8:
     case ExtractLaneUVecI16x8:
-    case ExtractLaneVecI32x4: type = i32; break;
-    case ExtractLaneVecI64x2: type = i64; break;
-    case ExtractLaneVecF32x4: type = f32; break;
-    case ExtractLaneVecF64x2: type = f64; break;
-    default: WASM_UNREACHABLE();
+    case ExtractLaneVecI32x4:
+      type = i32;
+      break;
+    case ExtractLaneVecI64x2:
+      type = i64;
+      break;
+    case ExtractLaneVecF32x4:
+      type = f32;
+      break;
+    case ExtractLaneVecF64x2:
+      type = f64;
+      break;
+    default:
+      WASM_UNREACHABLE();
   }
   if (vec->type == unreachable) {
     type = unreachable;
@@ -460,10 +582,11 @@ void SIMDShuffle::finalize() {
   }
 }
 
-void SIMDBitselect::finalize() {
-  assert(left && right && cond);
+void SIMDTernary::finalize() {
+  assert(a && b && c);
   type = v128;
-  if (left->type == unreachable || right->type == unreachable || cond->type == unreachable) {
+  if (a->type == unreachable || b->type == unreachable ||
+      c->type == unreachable) {
     type = unreachable;
   }
 }
@@ -471,19 +594,19 @@ void SIMDBitselect::finalize() {
 void MemoryInit::finalize() {
   assert(dest && offset && size);
   type = none;
-  if (dest->type == unreachable || offset->type == unreachable || size->type == unreachable) {
+  if (dest->type == unreachable || offset->type == unreachable ||
+      size->type == unreachable) {
     type = unreachable;
   }
 }
 
-void DataDrop::finalize() {
-  type = none;
-}
+void DataDrop::finalize() { type = none; }
 
 void MemoryCopy::finalize() {
   assert(dest && source && size);
   type = none;
-  if (dest->type == unreachable || source->type == unreachable || size->type == unreachable) {
+  if (dest->type == unreachable || source->type == unreachable ||
+      size->type == unreachable) {
     type = unreachable;
   }
 }
@@ -491,7 +614,8 @@ void MemoryCopy::finalize() {
 void MemoryFill::finalize() {
   assert(dest && value && size);
   type = none;
-  if (dest->type == unreachable || value->type == unreachable || size->type == unreachable) {
+  if (dest->type == unreachable || value->type == unreachable ||
+      size->type == unreachable) {
     type = unreachable;
   }
 }
@@ -504,19 +628,43 @@ void SIMDShift::finalize() {
   }
 }
 
+void SIMDLoad::finalize() {
+  assert(ptr);
+  type = v128;
+  if (ptr->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+Index SIMDLoad::getMemBytes() {
+  switch (op) {
+    case LoadSplatVec8x16:
+      return 1;
+    case LoadSplatVec16x8:
+      return 2;
+    case LoadSplatVec32x4:
+      return 4;
+    case LoadSplatVec64x2:
+    case LoadExtSVec8x8ToVecI16x8:
+    case LoadExtUVec8x8ToVecI16x8:
+    case LoadExtSVec16x4ToVecI32x4:
+    case LoadExtUVec16x4ToVecI32x4:
+    case LoadExtSVec32x2ToVecI64x2:
+    case LoadExtUVec32x2ToVecI64x2:
+      return 8;
+  }
+  WASM_UNREACHABLE();
+}
+
 Const* Const::set(Literal value_) {
   value = value_;
   type = value.type;
   return this;
 }
 
-void Const::finalize() {
-  type = value.type;
-}
+void Const::finalize() { type = value.type; }
 
-bool Unary::isRelational() {
-  return op == EqZInt32 || op == EqZInt64;
-}
+bool Unary::isRelational() { return op == EqZInt32 || op == EqZInt64; }
 
 void Unary::finalize() {
   if (value->type == unreachable) {
@@ -543,14 +691,33 @@ void Unary::finalize() {
     case FloorFloat64:
     case TruncFloat64:
     case NearestFloat64:
-    case SqrtFloat64: type = value->type; break;
+    case SqrtFloat64:
+      type = value->type;
+      break;
     case EqZInt32:
-    case EqZInt64: type = i32; break;
-    case ExtendS8Int32: case ExtendS16Int32: type = i32; break;
-    case ExtendSInt32: case ExtendUInt32: case ExtendS8Int64: case ExtendS16Int64: case ExtendS32Int64: type = i64; break;
-    case WrapInt64: type = i32; break;
-    case PromoteFloat32: type = f64; break;
-    case DemoteFloat64: type = f32; break;
+    case EqZInt64:
+      type = i32;
+      break;
+    case ExtendS8Int32:
+    case ExtendS16Int32:
+      type = i32;
+      break;
+    case ExtendSInt32:
+    case ExtendUInt32:
+    case ExtendS8Int64:
+    case ExtendS16Int64:
+    case ExtendS32Int64:
+      type = i64;
+      break;
+    case WrapInt64:
+      type = i32;
+      break;
+    case PromoteFloat32:
+      type = f64;
+      break;
+    case DemoteFloat64:
+      type = f32;
+      break;
     case TruncSFloat32ToInt32:
     case TruncUFloat32ToInt32:
     case TruncSFloat64ToInt32:
@@ -559,7 +726,9 @@ void Unary::finalize() {
     case TruncSatUFloat32ToInt32:
     case TruncSatSFloat64ToInt32:
     case TruncSatUFloat64ToInt32:
-    case ReinterpretFloat32: type = i32; break;
+    case ReinterpretFloat32:
+      type = i32;
+      break;
     case TruncSFloat32ToInt64:
     case TruncUFloat32ToInt64:
     case TruncSFloat64ToInt64:
@@ -568,17 +737,23 @@ void Unary::finalize() {
     case TruncSatUFloat32ToInt64:
     case TruncSatSFloat64ToInt64:
     case TruncSatUFloat64ToInt64:
-    case ReinterpretFloat64: type = i64; break;
+    case ReinterpretFloat64:
+      type = i64;
+      break;
     case ReinterpretInt32:
     case ConvertSInt32ToFloat32:
     case ConvertUInt32ToFloat32:
     case ConvertSInt64ToFloat32:
-    case ConvertUInt64ToFloat32: type = f32; break;
+    case ConvertUInt64ToFloat32:
+      type = f32;
+      break;
     case ReinterpretInt64:
     case ConvertSInt32ToFloat64:
     case ConvertUInt32ToFloat64:
     case ConvertSInt64ToFloat64:
-    case ConvertUInt64ToFloat64: type = f64; break;
+    case ConvertUInt64ToFloat64:
+      type = f64;
+      break;
     case SplatVecI8x16:
     case SplatVecI16x8:
     case SplatVecI32x4:
@@ -603,7 +778,17 @@ void Unary::finalize() {
     case ConvertSVecI32x4ToVecF32x4:
     case ConvertUVecI32x4ToVecF32x4:
     case ConvertSVecI64x2ToVecF64x2:
-    case ConvertUVecI64x2ToVecF64x2: type = v128; break;
+    case ConvertUVecI64x2ToVecF64x2:
+    case WidenLowSVecI8x16ToVecI16x8:
+    case WidenHighSVecI8x16ToVecI16x8:
+    case WidenLowUVecI8x16ToVecI16x8:
+    case WidenHighUVecI8x16ToVecI16x8:
+    case WidenLowSVecI16x8ToVecI32x4:
+    case WidenHighSVecI16x8ToVecI32x4:
+    case WidenLowUVecI16x8ToVecI32x4:
+    case WidenHighUVecI16x8ToVecI32x4:
+      type = v128;
+      break;
     case AnyTrueVecI8x16:
     case AllTrueVecI8x16:
     case AnyTrueVecI16x8:
@@ -611,8 +796,12 @@ void Unary::finalize() {
     case AnyTrueVecI32x4:
     case AllTrueVecI32x4:
     case AnyTrueVecI64x2:
-    case AllTrueVecI64x2: type = i32; break;
-    case InvalidUnary: WASM_UNREACHABLE();
+    case AllTrueVecI64x2:
+      type = i32;
+      break;
+
+    case InvalidUnary:
+      WASM_UNREACHABLE();
   }
 }
 
@@ -649,8 +838,10 @@ bool Binary::isRelational() {
     case LtFloat32:
     case LeFloat32:
     case GtFloat32:
-    case GeFloat32: return true;
-    default: return false;
+    case GeFloat32:
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -667,7 +858,8 @@ void Binary::finalize() {
 
 void Select::finalize() {
   assert(ifTrue && ifFalse);
-  if (ifTrue->type == unreachable || ifFalse->type == unreachable || condition->type == unreachable) {
+  if (ifTrue->type == unreachable || ifFalse->type == unreachable ||
+      condition->type == unreachable) {
     type = unreachable;
   } else {
     type = ifTrue->type;
@@ -684,11 +876,11 @@ void Drop::finalize() {
 
 void Host::finalize() {
   switch (op) {
-    case CurrentMemory: {
+    case MemorySize: {
       type = i32;
       break;
     }
-    case GrowMemory: {
+    case MemoryGrow: {
       // if the single operand is not reachable, so are we
       if (operands[0]->type == unreachable) {
         type = unreachable;
@@ -700,33 +892,71 @@ void Host::finalize() {
   }
 }
 
-size_t Function::getNumParams() {
-  return params.size();
+void Try::finalize() {
+  if (body->type == catchBody->type) {
+    type = body->type;
+  } else if (isConcreteType(body->type) && catchBody->type == unreachable) {
+    type = body->type;
+  } else if (isConcreteType(catchBody->type) && body->type == unreachable) {
+    type = catchBody->type;
+  } else {
+    type = none;
+  }
 }
 
-size_t Function::getNumVars() {
-  return vars.size();
+void Try::finalize(Type type_) {
+  type = type_;
+  if (type == none && body->type == unreachable &&
+      catchBody->type == unreachable) {
+    type = unreachable;
+  }
 }
 
-size_t Function::getNumLocals() {
-  return params.size() + vars.size();
+void Throw::finalize() { type = unreachable; }
+
+void Rethrow::finalize() { type = unreachable; }
+
+void BrOnExn::finalize() {
+  if (exnref->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = Type::exnref;
+  }
 }
 
-bool Function::isParam(Index index) {
-  return index < params.size();
+// br_on_exn's type is exnref, which it pushes onto the stack when it is not
+// taken, but the type of the value it pushes onto the stack when it is taken
+// should be the event type. So this is the type we 'send' to the block end when
+// it is taken. Currently we don't support multi value return from a block, we
+// pick the type of the first param from the event.
+// TODO Remove this function and generalize event type after multi-value support
+Type BrOnExn::getSingleSentType() {
+  return eventParams.empty() ? none : eventParams.front();
 }
 
-bool Function::isVar(Index index) {
-  return index >= params.size();
+void Push::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = none;
+  }
 }
+
+size_t Function::getNumParams() { return params.size(); }
+
+size_t Function::getNumVars() { return vars.size(); }
+
+size_t Function::getNumLocals() { return params.size() + vars.size(); }
+
+bool Function::isParam(Index index) { return index < params.size(); }
+
+bool Function::isVar(Index index) { return index >= params.size(); }
 
 bool Function::hasLocalName(Index index) const {
   return localNames.find(index) != localNames.end();
 }
 
-Name Function::getLocalName(Index index) {
-  return localNames.at(index);
-}
+Name Function::getLocalName(Index index) { return localNames.at(index); }
 
 Name Function::getLocalNameOrDefault(Index index) {
   auto nameIt = localNames.find(index);
@@ -753,9 +983,7 @@ Index Function::getLocalIndex(Name name) {
   return iter->second;
 }
 
-Index Function::getVarIndexBase() {
-  return params.size();
-}
+Index Function::getVarIndexBase() { return params.size(); }
 
 Type Function::getLocalType(Index index) {
   if (isParam(index)) {
@@ -767,9 +995,7 @@ Type Function::getLocalType(Index index) {
   }
 }
 
-void Function::clearNames() {
-  localNames.clear();
-}
+void Function::clearNames() { localNames.clear(); }
 
 void Function::clearDebugInfo() {
   localIndices.clear();
@@ -805,7 +1031,16 @@ Function* Module::getFunction(Name name) {
 Global* Module::getGlobal(Name name) {
   auto iter = globalsMap.find(name);
   if (iter == globalsMap.end()) {
+    assert(false);
     Fatal() << "Module::getGlobal: " << name << " does not exist";
+  }
+  return iter->second;
+}
+
+Event* Module::getEvent(Name name) {
+  auto iter = eventsMap.find(name);
+  if (iter == eventsMap.end()) {
+    Fatal() << "Module::getEvent: " << name << " does not exist";
   }
   return iter->second;
 }
@@ -842,6 +1077,14 @@ Global* Module::getGlobalOrNull(Name name) {
   return iter->second;
 }
 
+Event* Module::getEventOrNull(Name name) {
+  auto iter = eventsMap.find(name);
+  if (iter == eventsMap.end()) {
+    return nullptr;
+  }
+  return iter->second;
+}
+
 FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunctionType: empty name";
@@ -855,7 +1098,7 @@ FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
   return p;
 }
 
-void Module::addExport(Export* curr) {
+Export* Module::addExport(Export* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addExport: empty name";
   }
@@ -864,9 +1107,11 @@ void Module::addExport(Export* curr) {
   }
   exports.push_back(std::unique_ptr<Export>(curr));
   exportsMap[curr->name] = curr;
+  return curr;
 }
 
-void Module::addFunction(Function* curr) {
+// TODO(@warchant): refactor all usages to use variant with unique_ptr
+Function* Module::addFunction(Function* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunction: empty name";
   }
@@ -875,22 +1120,50 @@ void Module::addFunction(Function* curr) {
   }
   functions.push_back(std::unique_ptr<Function>(curr));
   functionsMap[curr->name] = curr;
+  return curr;
 }
 
-void Module::addGlobal(Global* curr) {
+Function* Module::addFunction(std::unique_ptr<Function> curr) {
+  if (!curr->name.is()) {
+    Fatal() << "Module::addFunction: empty name";
+  }
+  if (getFunctionOrNull(curr->name)) {
+    Fatal() << "Module::addFunction: " << curr->name << " already exists";
+  }
+  auto* ret = functionsMap[curr->name] = curr.get();
+  functions.push_back(std::move(curr));
+  return ret;
+}
+
+Global* Module::addGlobal(Global* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addGlobal: empty name";
   }
   if (getGlobalOrNull(curr->name)) {
     Fatal() << "Module::addGlobal: " << curr->name << " already exists";
   }
-  globals.push_back(std::unique_ptr<Global>(curr));
+
+  globals.emplace_back(curr);
+
   globalsMap[curr->name] = curr;
+  return curr;
 }
 
-void Module::addStart(const Name& s) {
-  start = s;
+Event* Module::addEvent(Event* curr) {
+  if (!curr->name.is()) {
+    Fatal() << "Module::addEvent: empty name";
+  }
+  if (getEventOrNull(curr->name)) {
+    Fatal() << "Module::addEvent: " << curr->name << " already exists";
+  }
+
+  events.emplace_back(curr);
+
+  eventsMap[curr->name] = curr;
+  return curr;
 }
+
+void Module::addStart(const Name& s) { start = s; }
 
 void Module::removeFunctionType(Name name) {
   for (size_t i = 0; i < functionTypes.size(); i++) {
@@ -932,6 +1205,16 @@ void Module::removeGlobal(Name name) {
   globalsMap.erase(name);
 }
 
+void Module::removeEvent(Name name) {
+  for (size_t i = 0; i < events.size(); i++) {
+    if (events[i]->name == name) {
+      events.erase(events.begin() + i);
+      break;
+    }
+  }
+  eventsMap.erase(name);
+}
+
 // TODO: remove* for other elements
 
 void Module::updateMaps() {
@@ -951,10 +1234,12 @@ void Module::updateMaps() {
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
   }
+  eventsMap.clear();
+  for (auto& curr : events) {
+    eventsMap[curr->name] = curr.get();
+  }
 }
 
-void Module::clearDebugInfo() {
-  debugInfoFileNames.clear();
-}
+void Module::clearDebugInfo() { debugInfoFileNames.clear(); }
 
 } // namespace wasm

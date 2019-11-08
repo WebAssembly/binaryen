@@ -52,26 +52,6 @@
 )
 
 (assert_invalid
-  (module (import "m" "a" (global (mut i32))))
-  "mutable globals cannot be imported"
-)
-
-(assert_invalid
-  (module (global (import "m" "a") (mut i32)))
-  "mutable globals cannot be imported"
-)
-
-(assert_invalid
-  (module (global (mut f32) (f32.const 0)) (export "a" (global 0)))
-  "mutable globals cannot be exported"
-)
-
-(assert_invalid
-  (module (global (export "a") (mut f32) (f32.const 0)))
-  "mutable globals cannot be exported"
-)
-
-(assert_invalid
   (module (global f32 (f32.neg (f32.const 0))))
   "constant expression required"
 )

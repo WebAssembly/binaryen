@@ -5,6 +5,13 @@
 ;; these pretty early so they can continue to be optimized by further passes
 ;; (aka inlining and whatnot)
 ;;
+;; LOCAL MODS done by hand afterwards:
+;;  * Remove hardcoded address 1024 (apparently a free memory location rustc
+;;    thinks is ok to use?); add intrinsic functions, which load/store to
+;;    special scratch space, wasm2js_scratch_load_i32 etc.
+;;  * Fix function type of __wasm_ctz_i64, which was wrong somehow,
+;;    i32, i32 => i32 instead of i64 => i64
+;;
 ;; [1]: https://gist.github.com/alexcrichton/e7ea67bcdd17ce4b6254e66f77165690
 
 (module
@@ -13,7 +20,10 @@
  (type $2 (func (param f64) (result f64)))
  (type $3 (func (param i32) (result i32)))
  (type $4 (func (param i32 i32) (result i32)))
+ (type $5 (func (param i64) (result i64)))
  (import "env" "memory" (memory $0 17))
+ (import "env" "wasm2js_scratch_load_i64" (func $wasm2js_scratch_load_i64 (result i64)))
+ (import "env" "wasm2js_scratch_store_i64" (func $wasm2js_scratch_store_i64 (param i64)))
  (export "__wasm_i64_sdiv" (func $__wasm_i64_sdiv))
  (export "__wasm_i64_udiv" (func $__wasm_i64_udiv))
  (export "__wasm_i64_srem" (func $__wasm_i64_srem))
@@ -127,9 +137,7 @@
     (local.get $var$1)
    )
   )
-  (i64.load
-   (i32.const 1024)
-  )
+  (call $wasm2js_scratch_load_i64)
  )
  ;; lowering of the i64.mul instruction, return $var0 * $var$1
  (func $__wasm_i64_mul (; 4 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
@@ -192,7 +200,7 @@
   (i32.const 32)
  )
  ;; lowering of the i64.ctz instruction, counting the number of zeros in $var$0
- (func $__wasm_ctz_i64 (; 8 ;) (type $4) (param $var$0 i64) (result i64)
+ (func $__wasm_ctz_i64 (; 8 ;) (type $5) (param $var$0 i64) (result i64)
   (if
    (i32.eqz
     (i64.eqz
@@ -570,8 +578,7 @@
                (i64.const 4294967296)
               )
              )
-             (i64.store
-              (i32.const 1024)
+             (call $wasm2js_scratch_store_i64
               (i64.extend_i32_u
                (i32.sub
                 (local.tee $var$2
@@ -632,8 +639,7 @@
               (local.get $var$3)
              )
             )
-            (i64.store
-             (i32.const 1024)
+            (call $wasm2js_scratch_store_i64
              (i64.or
               (i64.shl
                (i64.extend_i32_u
@@ -713,8 +719,7 @@
          )
          (br $label$3)
         )
-        (i64.store
-         (i32.const 1024)
+        (call $wasm2js_scratch_store_i64
          (i64.shl
           (i64.extend_i32_u
            (i32.sub
@@ -756,8 +761,7 @@
        )
        (br $label$2)
       )
-      (i64.store
-       (i32.const 1024)
+      (call $wasm2js_scratch_store_i64
        (i64.extend_i32_u
         (i32.and
          (local.get $var$4)
@@ -888,8 +892,7 @@
       )
      )
     )
-    (i64.store
-     (i32.const 1024)
+    (call $wasm2js_scratch_store_i64
      (local.get $var$5)
     )
     (return
@@ -902,8 +905,7 @@
      )
     )
    )
-   (i64.store
-    (i32.const 1024)
+   (call $wasm2js_scratch_store_i64
     (local.get $var$0)
    )
    (local.set $var$0

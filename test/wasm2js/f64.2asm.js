@@ -1,5 +1,27 @@
+
+
+  var scratchBuffer = new ArrayBuffer(8);
+  var i32ScratchView = new Int32Array(scratchBuffer);
+  var f32ScratchView = new Float32Array(scratchBuffer);
+  var f64ScratchView = new Float64Array(scratchBuffer);
+  
+  function wasm2js_scratch_load_i32(index) {
+    return i32ScratchView[index];
+  }
+      
+  function wasm2js_scratch_store_i32(index, value) {
+    i32ScratchView[index] = value;
+  }
+      
+  function wasm2js_scratch_load_f64() {
+    return f64ScratchView[0];
+  }
+      
+  function wasm2js_scratch_store_f64(value) {
+    f64ScratchView[0] = value;
+  }
+      
 function asmFunc(global, env, buffer) {
- "use asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -20,7 +42,6 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = +x;
   y = +y;
@@ -95,25 +116,19 @@ function asmFunc(global, env, buffer) {
  function $13(x, y) {
   x = +x;
   y = +y;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
-  wasm2js_i32$0 = 0;
-  wasm2js_f64$0 = x;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0;
+  wasm2js_scratch_store_f64(+x);
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$2 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$1 = 2147483647;
-  i64toi32_i32$3 = 4294967295;
+  i64toi32_i32$3 = -1;
   i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1 | 0;
   $4_1 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
   $4$hi = i64toi32_i32$1;
-  wasm2js_i32$0 = 0;
-  wasm2js_f64$0 = y;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$1 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = i64toi32_i32$1;
-  i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
-  i64toi32_i32$2 = 2147483648;
+  wasm2js_scratch_store_f64(+y);
+  i64toi32_i32$1 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  i64toi32_i32$0 = wasm2js_scratch_load_i32(0 | 0) | 0;
+  i64toi32_i32$2 = -2147483648;
   i64toi32_i32$3 = 0;
   i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2 | 0;
   $7_1 = i64toi32_i32$0 & i64toi32_i32$3 | 0;
@@ -123,67 +138,66 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $7$hi;
   i64toi32_i32$3 = $7_1;
   i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = i64toi32_i32$1 | i64toi32_i32$3 | 0;
-  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = i64toi32_i32$0;
-  HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  return +(+HEAPF64[0 >> 3]);
+  wasm2js_scratch_store_i32(0 | 0, i64toi32_i32$1 | i64toi32_i32$3 | 0 | 0);
+  wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
+  return +(+wasm2js_scratch_load_f64());
  }
  
  function __wasm_nearest_f64(var$0) {
   var$0 = +var$0;
-  var var$1 = 0.0, var$2 = 0.0, wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
+  var var$1 = 0.0, var$2 = 0.0;
   var$1 = Math_floor(var$0);
   var$2 = var$0 - var$1;
-  if ((var$2 < .5 | 0) == (0 | 0)) block : {
-   var$0 = Math_ceil(var$0);
-   if (var$2 > .5) return +var$0;
-   var$2 = var$1 * .5;
-   var$1 = (wasm2js_f64$0 = var$1, wasm2js_f64$1 = var$0, wasm2js_i32$0 = var$2 - Math_floor(var$2) == 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
-  };
+  if (!(var$2 < .5)) {
+   block : {
+    var$0 = Math_ceil(var$0);
+    if (var$2 > .5) {
+     return +var$0
+    }
+    var$2 = var$1 * .5;
+    var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
+   }
+  }
   return +var$1;
  }
  
  function __wasm_trunc_f64(var$0) {
   var$0 = +var$0;
-  var wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
-  return +(wasm2js_f64$0 = Math_ceil(var$0), wasm2js_f64$1 = Math_floor(var$0), wasm2js_i32$0 = var$0 < 0.0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1);
+  return +(var$0 < 0.0 ? Math_ceil(var$0) : Math_floor(var$0));
  }
  
+ var FUNCTION_TABLE = [];
  return {
-  add: $0, 
-  sub: $1, 
-  mul: $2, 
-  div: $3, 
-  sqrt: $4, 
-  min: $5, 
-  max: $6, 
-  ceil: $7, 
-  floor: $8, 
-  trunc: $9, 
-  nearest: $10, 
-  abs: $11, 
-  neg: $12, 
-  copysign: $13
+  "add": $0, 
+  "sub": $1, 
+  "mul": $2, 
+  "div": $3, 
+  "sqrt": $4, 
+  "min": $5, 
+  "max": $6, 
+  "ceil": $7, 
+  "floor": $8, 
+  "trunc": $9, 
+  "nearest": $10, 
+  "abs": $11, 
+  "neg": $12, 
+  "copysign": $13
  };
 }
 
-const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const add = retasmFunc.add;
-export const sub = retasmFunc.sub;
-export const mul = retasmFunc.mul;
-export const div = retasmFunc.div;
-export const sqrt = retasmFunc.sqrt;
-export const min = retasmFunc.min;
-export const max = retasmFunc.max;
-export const ceil = retasmFunc.ceil;
-export const floor = retasmFunc.floor;
-export const trunc = retasmFunc.trunc;
-export const nearest = retasmFunc.nearest;
-export const abs = retasmFunc.abs;
-export const neg = retasmFunc.neg;
-export const copysign = retasmFunc.copysign;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var add = retasmFunc.add;
+export var sub = retasmFunc.sub;
+export var mul = retasmFunc.mul;
+export var div = retasmFunc.div;
+export var sqrt = retasmFunc.sqrt;
+export var min = retasmFunc.min;
+export var max = retasmFunc.max;
+export var ceil = retasmFunc.ceil;
+export var floor = retasmFunc.floor;
+export var trunc = retasmFunc.trunc;
+export var nearest = retasmFunc.nearest;
+export var abs = retasmFunc.abs;
+export var neg = retasmFunc.neg;
+export var copysign = retasmFunc.copysign;

@@ -134,12 +134,12 @@
 
 (assert_return (invoke "even" (i64.const 0)) (i32.const 44))
 (assert_return (invoke "even" (i64.const 1)) (i32.const 99))
-(assert_return (invoke "even" (i64.const 100)) (i32.const 44))
-(assert_return (invoke "even" (i64.const 77)) (i32.const 99))
+(assert_return (invoke "even" (i64.const 10)) (i32.const 44))
+(assert_return (invoke "even" (i64.const 7)) (i32.const 99))
 (assert_return (invoke "odd" (i64.const 0)) (i32.const 99))
 (assert_return (invoke "odd" (i64.const 1)) (i32.const 44))
-(assert_return (invoke "odd" (i64.const 200)) (i32.const 99))
-(assert_return (invoke "odd" (i64.const 77)) (i32.const 44))
+(assert_return (invoke "odd" (i64.const 20)) (i32.const 99))
+(assert_return (invoke "odd" (i64.const 7)) (i32.const 44))
 
 (assert_trap (invoke "runaway") "call stack exhausted")
 (assert_trap (invoke "mutual-runaway") "call stack exhausted")

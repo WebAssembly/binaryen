@@ -18,11 +18,11 @@
 // Operations on Stack IR.
 //
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-stack.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
+#include "pass.h"
+#include "wasm-stack.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -36,40 +36,14 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
-    BufferWithRandomAccess buffer;
-    // a shim for the parent that a stackWriter expects - we don't need
-    // it to do anything, as we are just writing to Stack IR
-    struct Parent {
-      Module* module;
-      Parent(Module* module) : module(module) {}
-
-      Module* getModule() {
-        return module;
-      }
-      void writeDebugLocation(Expression* curr, Function* func) {
-        WASM_UNREACHABLE();
-      }
-      Index getFunctionIndex(Name name) {
-        WASM_UNREACHABLE();
-      }
-      Index getFunctionTypeIndex(Name name) {
-        WASM_UNREACHABLE();
-      }
-      Index getGlobalIndex(Name name) {
-        WASM_UNREACHABLE();
-      }
-    } parent(getModule());
-    StackWriter<StackWriterMode::Binaryen2Stack, Parent> stackWriter(parent, buffer, false);
-    stackWriter.setFunction(func);
-    stackWriter.visitPossibleBlockContents(func->body);
+    StackIRGenerator stackIRGen(getModule()->allocator, func);
+    stackIRGen.write();
     func->stackIR = make_unique<StackIR>();
-    func->stackIR->swap(stackWriter.stackIR);
+    func->stackIR->swap(stackIRGen.getStackIR());
   }
 };
 
-Pass* createGenerateStackIRPass() {
-  return new GenerateStackIR();
-}
+Pass* createGenerateStackIRPass() { return new GenerateStackIR(); }
 
 // Optimize
 
@@ -79,8 +53,8 @@ class StackIROptimizer {
   StackIR& insts;
 
 public:
-  StackIROptimizer(Function* func, PassOptions& passOptions) :
-    func(func), passOptions(passOptions), insts(*func->stackIR.get()) {
+  StackIROptimizer(Function* func, PassOptions& passOptions)
+    : func(func), passOptions(passOptions), insts(*func->stackIR.get()) {
     assert(func->stackIR);
   }
 
@@ -103,7 +77,9 @@ private:
     bool inUnreachableCode = false;
     for (Index i = 0; i < insts.size(); i++) {
       auto* inst = insts[i];
-      if (!inst) continue;
+      if (!inst) {
+        continue;
+      }
       if (inUnreachableCode) {
         // Does the unreachable code end here?
         if (isControlFlowBarrier(inst)) {
@@ -139,7 +115,7 @@ private:
     localGraph.computeInfluences();
     // We maintain a stack of relevant values. This contains:
     //  * a null for each actual value that the value stack would have
-    //  * an index of each SetLocal that *could* be on the value
+    //  * an index of each LocalSet that *could* be on the value
     //    stack at that location.
     const Index null = -1;
     std::vector<Index> values;
@@ -151,12 +127,16 @@ private:
 #endif
     for (Index i = 0; i < insts.size(); i++) {
       auto* inst = insts[i];
-      if (!inst) continue;
+      if (!inst) {
+        continue;
+      }
       // First, consume values from the stack as required.
       auto consumed = getNumConsumedValues(inst);
 #ifdef STACK_OPT_DEBUG
-      std::cout << "  " << i << " : " << *inst << ", " << values.size() << " on stack, will consume " << consumed << "\n    ";
-      for (auto s : values) std::cout << s << ' ';
+      std::cout << "  " << i << " : " << *inst << ", " << values.size()
+                << " on stack, will consume " << consumed << "\n    ";
+      for (auto s : values)
+        std::cout << s << ' ';
       std::cout << '\n';
 #endif
       // TODO: currently we run dce before this, but if we didn't, we'd need
@@ -191,7 +171,7 @@ private:
       // This is something we should handle, look into it.
       if (isConcreteType(inst->type)) {
         bool optimized = false;
-        if (auto* get = inst->origin->dynCast<GetLocal>()) {
+        if (auto* get = inst->origin->dynCast<LocalGet>()) {
           // This is a potential optimization opportunity! See if we
           // can reach the set.
           if (values.size() > 0) {
@@ -199,8 +179,10 @@ private:
             while (1) {
               // If there's an actual value in the way, we've failed.
               auto index = values[j];
-              if (index == null) break;
-              auto* set = insts[index]->origin->cast<SetLocal>();
+              if (index == null) {
+                break;
+              }
+              auto* set = insts[index]->origin->cast<LocalSet>();
               if (set->index == get->index) {
                 // This might be a proper set-get pair, where the set is
                 // used by this get and nothing else, check that.
@@ -228,7 +210,9 @@ private:
                 }
               }
               // We failed here. Can we look some more?
-              if (j == 0) break;
+              if (j == 0) {
+                break;
+              }
               j--;
             }
           }
@@ -237,7 +221,7 @@ private:
           // This is an actual regular value on the value stack.
           values.push_back(null);
         }
-      } else if (inst->origin->is<SetLocal>() && inst->type == none) {
+      } else if (inst->origin->is<LocalSet>() && inst->type == none) {
         // This set is potentially optimizable later, add to stack.
         values.push_back(i);
       }
@@ -250,7 +234,9 @@ private:
   //       a branch to that if body
   void removeUnneededBlocks() {
     for (auto*& inst : insts) {
-      if (!inst) continue;
+      if (!inst) {
+        continue;
+      }
       if (auto* block = inst->origin->dynCast<Block>()) {
         if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
           // TODO optimize, maybe run remove-unused-names
@@ -272,9 +258,7 @@ private:
       case StackInst::LoopEnd: {
         return true;
       }
-      default: {
-        return false;
-      }
+      default: { return false; }
     }
   }
 
@@ -286,9 +270,7 @@ private:
       case StackInst::LoopBegin: {
         return true;
       }
-      default: {
-        return false;
-      }
+      default: { return false; }
     }
   }
 
@@ -300,15 +282,11 @@ private:
       case StackInst::LoopEnd: {
         return true;
       }
-      default: {
-        return false;
-      }
+      default: { return false; }
     }
   }
 
-  bool isControlFlow(StackInst* inst) {
-    return inst->op != StackInst::Basic;
-  }
+  bool isControlFlow(StackInst* inst) { return inst->op != StackInst::Basic; }
 
   // Remove the instruction at index i. If the instruction
   // is control flow, and so has been expanded to multiple
@@ -359,9 +337,6 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   }
 };
 
-Pass* createOptimizeStackIRPass() {
-  return new OptimizeStackIR();
-}
+Pass* createOptimizeStackIRPass() { return new OptimizeStackIR(); }
 
 } // namespace wasm
-

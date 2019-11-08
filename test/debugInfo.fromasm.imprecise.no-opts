@@ -11,6 +11,7 @@
  (export "fib" (func $fib))
  (export "switch_reach" (func $switch_reach))
  (export "nofile" (func $nofile))
+ (export "inlineInto" (func $inlineInto))
  (func $add (; 0 ;) (param $x i32) (param $y i32) (result i32)
   ;;@ tests/hello_world.c:5:0
   (local.set $x
@@ -274,5 +275,41 @@
  (func $nofile (; 5 ;)
   ;;@ (unknown):1337:0
   (call $nofile)
+ )
+ (func $inlineMe (; 6 ;) (param $x i32) (param $y i32) (result i32)
+  ;;@ inline_me.c:120:0
+  (local.set $x
+   (i32.add
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  ;;@ inline_me.c:121:0
+  (local.set $y
+   (i32.add
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  ;;@ inline_me.c:122:0
+  (local.set $x
+   (i32.add
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  ;;@ inline_me.c:123:0
+  (return
+   (local.get $x)
+  )
+ )
+ (func $inlineInto (; 7 ;) (param $x i32) (param $y i32) (result i32)
+  ;;@ inline_me.c:125:0
+  (return
+   (call $inlineMe
+    (local.get $x)
+    (local.get $y)
+   )
+  )
  )
 )

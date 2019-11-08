@@ -5,6 +5,9 @@ add_custom_command(
 
 SET(passes_SOURCES
   pass.cpp
+  AlignmentLowering.cpp
+  Asyncify.cpp
+  AvoidReinterprets.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
@@ -12,6 +15,8 @@ SET(passes_SOURCES
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
+  Directize.cpp
+  DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
   Flatten.cpp
@@ -21,6 +26,7 @@ SET(passes_SOURCES
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   LegalizeJSInterface.cpp
+  LimitSegments.cpp
   LocalCSE.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
@@ -31,14 +37,18 @@ SET(passes_SOURCES
   MinifyImportsAndExports.cpp
   NameList.cpp
   NoExitRuntime.cpp
+  OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
   PrintCallGraph.cpp
+  PrintFeatures.cpp
+  PrintFunctionMap.cpp
   StackIR.cpp
   Strip.cpp
+  StripTargetFeatures.cpp
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
   ReReloop.cpp
@@ -52,6 +62,7 @@ SET(passes_SOURCES
   ReorderFunctions.cpp
   TrapMode.cpp
   SafeHeap.cpp
+  SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
   SpillPointers.cpp

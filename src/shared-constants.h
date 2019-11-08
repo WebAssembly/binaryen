@@ -21,45 +21,50 @@
 
 namespace wasm {
 
-extern Name GROW_WASM_MEMORY,
-            MEMORY_BASE,
-            TABLE_BASE,
-            GET_TEMP_RET0,
-            SET_TEMP_RET0,
-            NEW_SIZE,
-            MODULE,
-            START,
-            FUNC,
-            PARAM,
-            RESULT,
-            MEMORY,
-            DATA,
-            SEGMENT,
-            EXPORT,
-            IMPORT,
-            TABLE,
-            ELEM,
-            LOCAL,
-            TYPE,
-            CALL,
-            CALL_IMPORT,
-            CALL_INDIRECT,
-            BLOCK,
-            BR_IF,
-            THEN,
-            ELSE,
-            _NAN,
-            _INFINITY,
-            NEG_INFINITY,
-            NEG_NAN,
-            CASE,
-            BR,
-            FUNCREF,
-            FAKE_RETURN,
-            MUT,
-            SPECTEST,
-            PRINT,
-            EXIT;
+extern Name GROW_WASM_MEMORY;
+extern Name WASM_CALL_CTORS;
+extern Name MEMORY_BASE;
+extern Name TABLE_BASE;
+extern Name STACK_POINTER;
+extern Name GET_TEMP_RET0;
+extern Name SET_TEMP_RET0;
+extern Name NEW_SIZE;
+extern Name MODULE;
+extern Name START;
+extern Name FUNC;
+extern Name PARAM;
+extern Name RESULT;
+extern Name MEMORY;
+extern Name DATA;
+extern Name PASSIVE;
+extern Name EXPORT;
+extern Name IMPORT;
+extern Name TABLE;
+extern Name ELEM;
+extern Name LOCAL;
+extern Name TYPE;
+extern Name CALL;
+extern Name CALL_IMPORT;
+extern Name CALL_INDIRECT;
+extern Name BLOCK;
+extern Name BR_IF;
+extern Name THEN;
+extern Name ELSE;
+extern Name _NAN;
+extern Name _INFINITY;
+extern Name NEG_INFINITY;
+extern Name NEG_NAN;
+extern Name CASE;
+extern Name BR;
+extern Name FUNCREF;
+extern Name FAKE_RETURN;
+extern Name MUT;
+extern Name SPECTEST;
+extern Name PRINT;
+extern Name EXIT;
+extern Name SHARED;
+extern Name EVENT;
+extern Name ATTR;
 
 } // namespace wasm
 

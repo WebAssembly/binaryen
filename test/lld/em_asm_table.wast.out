@@ -8,7 +8,7 @@
  (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
  (table $0 159609 funcref)
  (elem (i32.const 1) $fimport$0 $emscripten_asm_const_iii)
- (global $global$0 (mut i32) (i32.const 16384))
+ (global $global$0 (mut i32) (i32.const 1024))
  (global $global$1 i32 (i32.const 1048))
  (export "__data_end" (global $global$1))
  (export "stackSave" (func $stackSave))
@@ -41,7 +41,7 @@
   )
  )
  (func $__growWasmMemory (; 5 ;) (param $newSize i32) (result i32)
-  (grow_memory
+  (memory.grow
    (local.get $newSize)
   )
  )
@@ -80,7 +80,6 @@
     "_dynCall_iiii"
   ],
   "exports": [
-    "__data_end",
     "stackSave",
     "stackAlloc",
     "stackRestore",
@@ -88,8 +87,14 @@
     "dynCall_vii",
     "dynCall_iiii"
   ],
+  "namedGlobals": {
+    "__data_end" : "1048"
+  },
   "invokeFuncs": [
-  ]
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 0
 }
 -- END METADATA --
 ;)

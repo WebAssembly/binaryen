@@ -1,6 +1,6 @@
 (module
  (type $0 (func (param i32 i32) (result i32)))
- (type $1 (func (result f64)))
+ (type $FUNCSIG$d (func (result f64)))
  (memory $0 0)
  (func $conditionals (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
@@ -322,7 +322,7 @@
    (local.get $1)
   )
  )
- (func $conditionalize-if-type-change (; 5 ;) (type $1) (result f64)
+ (func $conditionalize-if-type-change (; 5 ;) (type $FUNCSIG$d) (result f64)
   (local $0 i32)
   (drop
    (loop $label$1 (result f32)

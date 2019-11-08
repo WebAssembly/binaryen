@@ -6,7 +6,6 @@
  (func $test64 (; 1 ;) (; has Stack IR ;) (result i64)
   (local $0 i64)
   (local $1 i64)
-  (local $2 i32)
   (i64.atomic.store
    (i32.const 4656)
    (i64.const 92)
@@ -32,7 +31,7 @@
           (i64.atomic.rmw.sub
            (i32.const 1024)
            (i64.atomic.rmw.add
-            (local.get $2)
+            (i32.const 0)
             (i64.const 26)
            )
           )

@@ -32,10 +32,10 @@
 
 #include <map>
 
-#include <wasm.h>
 #include <pass.h>
 #include <wasm-binary.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -66,16 +66,15 @@ struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
     if (!prelude.empty()) {
       Builder builder(*getModule());
       // merge-blocks can optimize this into a single block later in most cases
-      curr->body = builder.makeSequence(
-        builder.makeBlock(prelude),
-        curr->body
-      );
+      curr->body = builder.makeSequence(builder.makeBlock(prelude), curr->body);
     }
   }
 
 private:
   bool worthHoisting(Literal value, Index num) {
-    if (num < MIN_USES) return false;
+    if (num < MIN_USES) {
+      return false;
+    }
     // measure the size of the constant
     Index size = 0;
     switch (value.type) {
@@ -92,8 +91,9 @@ private:
         size = getTypeSize(value.type);
         break;
       }
-      case v128: {
-        // v128 not implemented yet
+      case v128:     // v128 not implemented yet
+      case anyref:   // anyref cannot have literals
+      case exnref: { // exnref cannot have literals
         return false;
       }
       case none:
@@ -112,8 +112,7 @@ private:
     return after < before;
   }
 
-  template<typename T>
-  Index getWrittenSize(const T& thing) {
+  template<typename T> Index getWrittenSize(const T& thing) {
     BufferWithRandomAccess buffer;
     buffer << thing;
     return buffer.size();
@@ -125,19 +124,14 @@ private:
     auto type = (*(vec[0]))->type;
     Builder builder(*getModule());
     auto temp = builder.addVar(getFunction(), type);
-    auto* ret = builder.makeSetLocal(
-      temp,
-      *(vec[0])
-    );
+    auto* ret = builder.makeLocalSet(temp, *(vec[0]));
     for (auto item : vec) {
-      *item = builder.makeGetLocal(temp, type);
+      *item = builder.makeLocalGet(temp, type);
     }
     return ret;
   }
 };
 
-Pass *createConstHoistingPass() {
-  return new ConstHoisting();
-}
+Pass* createConstHoistingPass() { return new ConstHoisting(); }
 
 } // namespace wasm

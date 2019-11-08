@@ -1158,12 +1158,12 @@
   (type $0 (func))
   (func $erase (type $0)
     (drop
-      (current_memory)
+      (memory.size)
     )
   )
   (func $other (type $0)
     (drop
-      (current_memory)
+      (memory.size)
     )
   )
 )
@@ -1172,14 +1172,14 @@
   (type $0 (func))
   (func $erase (type $0)
     (drop
-      (grow_memory
+      (memory.grow
         (i32.const 10)
       )
     )
   )
   (func $other (type $0)
     (drop
-      (grow_memory
+      (memory.grow
         (i32.const 10)
       )
     )
@@ -1190,14 +1190,14 @@
   (type $0 (func))
   (func $keep (type $0)
     (drop
-      (grow_memory
+      (memory.grow
         (i32.const 10)
       )
     )
   )
   (func $other (type $0)
     (drop
-      (grow_memory
+      (memory.grow
         (i32.const 11)
       )
     )
@@ -1208,12 +1208,12 @@
   (type $0 (func))
   (func $keep (type $0)
     (drop
-      (current_memory)
+      (memory.size)
     )
   )
   (func $other (type $0)
     (drop
-      (grow_memory
+      (memory.grow
         (i32.const 10)
       )
     )

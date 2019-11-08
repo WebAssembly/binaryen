@@ -1,10 +1,10 @@
 (module
- (type $0 (func))
+ (type $FUNCSIG$v (func))
  (export "$zoo (.bar)" (func $1))
- (func $foo\20\28.bar\29 (; 0 ;) (type $0)
+ (func $foo\20\28.bar\29 (; 0 ;) (type $FUNCSIG$v)
   (nop)
  )
- (func $1 (; 1 ;) (type $0)
+ (func $1 (; 1 ;) (type $FUNCSIG$v)
   (call $foo\20\28.bar\29)
  )
 )

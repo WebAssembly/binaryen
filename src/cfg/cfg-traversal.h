@@ -30,8 +30,8 @@
 #ifndef cfg_traversal_h
 #define cfg_traversal_h
 
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -47,21 +47,23 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   BasicBlock* entry; // the entry block
 
-  BasicBlock* makeBasicBlock() { // override this with code to create a BasicBlock if necessary
-    return new BasicBlock();
-  }
+  // override this with code to create a BasicBlock if necessary
+  BasicBlock* makeBasicBlock() { return new BasicBlock(); }
 
   // internal details
 
   std::vector<std::unique_ptr<BasicBlock>> basicBlocks; // all the blocks
-  std::vector<BasicBlock*> loopTops; // blocks that are the tops of loops, i.e., have backedges to them
+  // blocks that are the tops of loops, i.e., have backedges to them
+  std::vector<BasicBlock*> loopTops;
 
   // traversal state
-  BasicBlock* currBasicBlock; // the current block in play during traversal. can be nullptr if unreachable,
-                              // but note that we don't do a deep unreachability analysis - just enough
-                              // to avoid constructing obviously-unreachable blocks (we do a full reachability
-                              // analysis on the CFG once it is constructed).
-  std::map<Expression*, std::vector<BasicBlock*>> branches; // a block or loop => its branches
+  // the current block in play during traversal. can be nullptr if unreachable,
+  // but note that we don't do a deep unreachability analysis - just enough to
+  // avoid constructing obviously-unreachable blocks (we do a full reachability
+  // analysis on the CFG once it is constructed).
+  BasicBlock* currBasicBlock;
+  // a block or loop => its branches
+  std::map<Expression*, std::vector<BasicBlock*>> branches;
   std::vector<BasicBlock*> ifStack;
   std::vector<BasicBlock*> loopStack;
 
@@ -70,27 +72,33 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     basicBlocks.push_back(std::unique_ptr<BasicBlock>(currBasicBlock));
   }
 
-  void startUnreachableBlock() {
-    currBasicBlock = nullptr;
-  }
+  void startUnreachableBlock() { currBasicBlock = nullptr; }
 
   static void doStartUnreachableBlock(SubType* self, Expression** currp) {
     self->startUnreachableBlock();
   }
 
   void link(BasicBlock* from, BasicBlock* to) {
-    if (!from || !to) return; // if one of them is not reachable, ignore
+    if (!from || !to) {
+      return; // if one of them is not reachable, ignore
+    }
     from->out.push_back(to);
     to->in.push_back(from);
   }
 
   static void doEndBlock(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
-    if (!curr->name.is()) return;
+    if (!curr->name.is()) {
+      return;
+    }
     auto iter = self->branches.find(curr);
-    if (iter == self->branches.end()) return;
+    if (iter == self->branches.end()) {
+      return;
+    }
     auto& origins = iter->second;
-    if (origins.size() == 0) return;
+    if (origins.size() == 0) {
+      return;
+    }
     // we have branches to here, so we need a new block
     auto* last = self->currBasicBlock;
     self->startBasicBlock();
@@ -106,19 +114,22 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     auto* last = self->currBasicBlock;
     self->startBasicBlock();
     self->link(last, self->currBasicBlock); // ifTrue
-    self->ifStack.push_back(last); // the block before the ifTrue
+    self->ifStack.push_back(last);          // the block before the ifTrue
   }
 
   static void doStartIfFalse(SubType* self, Expression** currp) {
     self->ifStack.push_back(self->currBasicBlock); // the ifTrue fallthrough
     self->startBasicBlock();
-    self->link(self->ifStack[self->ifStack.size() - 2], self->currBasicBlock); // before if -> ifFalse
+    self->link(self->ifStack[self->ifStack.size() - 2],
+               self->currBasicBlock); // before if -> ifFalse
   }
 
   static void doEndIf(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
     self->startBasicBlock();
-    self->link(last, self->currBasicBlock); // last one is ifFalse's fallthrough if there was one, otherwise it's the ifTrue fallthrough
+    // last one is ifFalse's fallthrough if there was one, otherwise it's the
+    // ifTrue fallthrough
+    self->link(last, self->currBasicBlock);
     if ((*currp)->cast<If>()->ifFalse) {
       // we just linked ifFalse, need to link ifTrue to the end
       self->link(self->ifStack.back(), self->currBasicBlock);
@@ -133,7 +144,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doStartLoop(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
     self->startBasicBlock();
-    self->loopTops.push_back(self->currBasicBlock); // a loop with no backedges would still be counted here, but oh well
+    // a loop with no backedges would still be counted here, but oh well
+    self->loopTops.push_back(self->currBasicBlock);
     self->link(last, self->currBasicBlock);
     self->loopStack.push_back(self->currBasicBlock);
   }
@@ -157,7 +169,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doEndBreak(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Break>();
-    self->branches[self->findBreakTarget(curr->name)].push_back(self->currBasicBlock); // branch to the target
+    self->branches[self->findBreakTarget(curr->name)].push_back(
+      self->currBasicBlock); // branch to the target
     if (curr->condition) {
       auto* last = self->currBasicBlock;
       self->startBasicBlock();
@@ -169,15 +182,18 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doEndSwitch(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Switch>();
-    std::set<Name> seen; // we might see the same label more than once; do not spam branches
+    // we might see the same label more than once; do not spam branches
+    std::set<Name> seen;
     for (Name target : curr->targets) {
       if (!seen.count(target)) {
-        self->branches[self->findBreakTarget(target)].push_back(self->currBasicBlock); // branch to the target
+        self->branches[self->findBreakTarget(target)].push_back(
+          self->currBasicBlock); // branch to the target
         seen.insert(target);
       }
     }
     if (!seen.count(curr->default_)) {
-      self->branches[self->findBreakTarget(curr->default_)].push_back(self->currBasicBlock); // branch to the target
+      self->branches[self->findBreakTarget(curr->default_)].push_back(
+        self->currBasicBlock); // branch to the target
     }
     self->startUnreachableBlock();
   }
@@ -258,7 +274,9 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       queue.erase(iter);
       alive.insert(curr);
       for (auto* out : curr->out) {
-        if (!alive.count(out)) queue.insert(out);
+        if (!alive.count(out)) {
+          queue.insert(out);
+        }
       }
     }
     return alive;
@@ -271,21 +289,30 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         block->out.clear();
         continue;
       }
-      block->in.erase(std::remove_if(block->in.begin(), block->in.end(), [&alive](BasicBlock* other) {
-        return !alive.count(other);
-      }), block->in.end());
-      block->out.erase(std::remove_if(block->out.begin(), block->out.end(), [&alive](BasicBlock* other) {
-        return !alive.count(other);
-      }), block->out.end());
+      block->in.erase(std::remove_if(block->in.begin(),
+                                     block->in.end(),
+                                     [&alive](BasicBlock* other) {
+                                       return !alive.count(other);
+                                     }),
+                      block->in.end());
+      block->out.erase(std::remove_if(block->out.begin(),
+                                      block->out.end(),
+                                      [&alive](BasicBlock* other) {
+                                        return !alive.count(other);
+                                      }),
+                       block->out.end());
     }
   }
 
-  // TODO: utility method for optimizing cfg, removing empty blocks depending on their .content
+  // TODO: utility method for optimizing cfg, removing empty blocks depending on
+  // their .content
 
   std::map<BasicBlock*, size_t> debugIds;
 
   void generateDebugIds() {
-    if (debugIds.size() > 0) return;
+    if (debugIds.size() > 0) {
+      return;
+    }
     for (auto& block : basicBlocks) {
       debugIds[block.get()] = debugIds.size();
     }
@@ -300,12 +327,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       block->contents.dump(static_cast<SubType*>(this)->getFunction());
       for (auto& in : block->in) {
         assert(debugIds.count(in) > 0);
-        assert(std::find(in->out.begin(), in->out.end(), block.get()) != in->out.end()); // must be a parallel link back
+        assert(std::find(in->out.begin(), in->out.end(), block.get()) !=
+               in->out.end()); // must be a parallel link back
       }
       for (auto& out : block->out) {
         assert(debugIds.count(out) > 0);
         std::cout << "    out: " << debugIds[out] << "\n";
-        assert(std::find(out->in.begin(), out->in.end(), block.get()) != out->in.end()); // must be a parallel link back
+        assert(std::find(out->in.begin(), out->in.end(), block.get()) !=
+               out->in.end()); // must be a parallel link back
       }
       checkDuplicates(block->in);
       checkDuplicates(block->out);

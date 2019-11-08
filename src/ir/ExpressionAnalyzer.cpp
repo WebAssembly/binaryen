@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-#include "support/hash.h"
 #include "ir/iteration.h"
 #include "ir/load-utils.h"
 #include "ir/utils.h"
+#include "support/hash.h"
+#include "support/small_vector.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
 // Given a stack of expressions, checks if the topmost is used as a result.
-// For example, if the parent is a block and the node is before the last position,
-// it is not used.
-bool ExpressionAnalyzer::isResultUsed(std::vector<Expression*> stack, Function* func) {
+// For example, if the parent is a block and the node is before the last
+// position, it is not used.
+bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
   for (int i = int(stack.size()) - 2; i >= 0; i--) {
     auto* curr = stack[i];
     auto* above = stack[i + 1];
@@ -32,18 +35,26 @@ bool ExpressionAnalyzer::isResultUsed(std::vector<Expression*> stack, Function* 
     if (curr->is<Block>()) {
       auto* block = curr->cast<Block>();
       for (size_t j = 0; j < block->list.size() - 1; j++) {
-        if (block->list[j] == above) return false;
+        if (block->list[j] == above) {
+          return false;
+        }
       }
       assert(block->list.back() == above);
       // continue down
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
-      if (above == iff->condition) return true;
-      if (!iff->ifFalse) return false;
+      if (above == iff->condition) {
+        return true;
+      }
+      if (!iff->ifFalse) {
+        return false;
+      }
       assert(above == iff->ifTrue || above == iff->ifFalse);
       // continue down
     } else {
-      if (curr->is<Drop>()) return false;
+      if (curr->is<Drop>()) {
+        return false;
+      }
       return true; // all other node types use the result
     }
   }
@@ -52,552 +63,429 @@ bool ExpressionAnalyzer::isResultUsed(std::vector<Expression*> stack, Function* 
 }
 
 // Checks if a value is dropped.
-bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
+bool ExpressionAnalyzer::isResultDropped(ExpressionStack& stack) {
   for (int i = int(stack.size()) - 2; i >= 0; i--) {
     auto* curr = stack[i];
     auto* above = stack[i + 1];
     if (curr->is<Block>()) {
       auto* block = curr->cast<Block>();
       for (size_t j = 0; j < block->list.size() - 1; j++) {
-        if (block->list[j] == above) return false;
+        if (block->list[j] == above) {
+          return false;
+        }
       }
       assert(block->list.back() == above);
       // continue down
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
-      if (above == iff->condition) return false;
-      if (!iff->ifFalse) return false;
+      if (above == iff->condition) {
+        return false;
+      }
+      if (!iff->ifFalse) {
+        return false;
+      }
       assert(above == iff->ifTrue || above == iff->ifFalse);
       // continue down
     } else {
-      if (curr->is<Drop>()) return true; // dropped
+      if (curr->is<Drop>()) {
+        return true; // dropped
+      }
       return false; // all other node types use the result
     }
   }
   return false;
 }
 
+//
+// Allows visiting the immediate fields of the expression. This is
+// useful for comparisons and hashing.
+//
+// The passed-in visitor object must implement:
+//  * visitScopeName - a Name that represents a block or loop scope
+//  * visitNonScopeName - a non-scope name
+//  * visitInt - anything that has a short enumeration, including
+//               opcodes, # of bytes in a load, bools, etc. - must be
+//               guaranteed to fit in an int32 or less.
+//  * visitLiteral - a Literal
+//  * visitType - a Type
+//  * visitIndex - an Index
+//  * visitAddress - an Address
+//
 
-bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, ExprComparer comparer) {
-  std::vector<Name> nameStack;
-  std::map<Name, std::vector<Name>> rightNames; // for each name on the left, the stack of names on the right (a stack, since names are scoped and can nest duplicatively
-  Nop popNameMarker;
-  std::vector<Expression*> leftStack;
-  std::vector<Expression*> rightStack;
+namespace {
 
-  auto noteNames = [&](Name left, Name right) {
-    if (left.is() != right.is()) return false;
-    if (left.is()) {
-      nameStack.push_back(left);
-      rightNames[left].push_back(right);
-      leftStack.push_back(&popNameMarker);
-      rightStack.push_back(&popNameMarker);
-    }
-    return true;
-  };
-  auto checkNames = [&](Name left, Name right) {
-    auto iter = rightNames.find(left);
-    if (iter == rightNames.end()) return left == right; // non-internal name
-    return iter->second.back() == right;
-  };
-  auto popName = [&]() {
-    auto left = nameStack.back();
-    nameStack.pop_back();
-    rightNames[left].pop_back();
-  };
+template<typename T> void visitImmediates(Expression* curr, T& visitor) {
+  struct ImmediateVisitor : public OverriddenVisitor<ImmediateVisitor> {
+    T& visitor;
 
-  leftStack.push_back(left);
-  rightStack.push_back(right);
+    ImmediateVisitor(Expression* curr, T& visitor) : visitor(visitor) {
+      this->visit(curr);
+    }
 
-  while (leftStack.size() > 0 && rightStack.size() > 0) {
-    left = leftStack.back();
-    leftStack.pop_back();
-    right = rightStack.back();
-    rightStack.pop_back();
-    if (!left != !right) return false;
-    if (!left) continue;
-    if (left == &popNameMarker) {
-      popName();
-      continue;
+    void visitBlock(Block* curr) { visitor.visitScopeName(curr->name); }
+    void visitIf(If* curr) {}
+    void visitLoop(Loop* curr) { visitor.visitScopeName(curr->name); }
+    void visitBreak(Break* curr) { visitor.visitScopeName(curr->name); }
+    void visitSwitch(Switch* curr) {
+      for (auto target : curr->targets) {
+        visitor.visitScopeName(target);
+      }
+      visitor.visitScopeName(curr->default_);
     }
-    if (comparer(left, right)) continue; // comparison hook, before all the rest
-    // continue with normal structural comparison
-    if (left->_id != right->_id) return false;
-    // Compare immediate values
-    #define CHECK(clazz, what) \
-      if (left->cast<clazz>()->what != right->cast<clazz>()->what) return false;
-    switch (left->_id) {
-      case Expression::Id::BlockId: {
-        if (!noteNames(left->cast<Block>()->name, right->cast<Block>()->name)) return false;
-        CHECK(Block, list.size());
-        break;
+    void visitCall(Call* curr) {
+      visitor.visitNonScopeName(curr->target);
+      visitor.visitInt(curr->isReturn);
+    }
+    void visitCallIndirect(CallIndirect* curr) {
+      visitor.visitNonScopeName(curr->fullType);
+      visitor.visitInt(curr->isReturn);
+    }
+    void visitLocalGet(LocalGet* curr) { visitor.visitIndex(curr->index); }
+    void visitLocalSet(LocalSet* curr) { visitor.visitIndex(curr->index); }
+    void visitGlobalGet(GlobalGet* curr) {
+      visitor.visitNonScopeName(curr->name);
+    }
+    void visitGlobalSet(GlobalSet* curr) {
+      visitor.visitNonScopeName(curr->name);
+    }
+    void visitLoad(Load* curr) {
+      visitor.visitInt(curr->bytes);
+      if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
+        visitor.visitInt(curr->signed_);
       }
-      case Expression::Id::LoopId: {
-        if (!noteNames(left->cast<Loop>()->name, right->cast<Loop>()->name)) return false;
-        break;
-      }
-      case Expression::Id::BreakId: {
-        if (!checkNames(left->cast<Break>()->name, right->cast<Break>()->name)) return false;
-        break;
-      }
-      case Expression::Id::SwitchId: {
-        CHECK(Switch, targets.size());
-        for (Index i = 0; i < left->cast<Switch>()->targets.size(); i++) {
-          if (!checkNames(left->cast<Switch>()->targets[i], right->cast<Switch>()->targets[i])) return false;
-        }
-        if (!checkNames(left->cast<Switch>()->default_, right->cast<Switch>()->default_)) return false;
-        break;
-      }
-      case Expression::Id::CallId: {
-        CHECK(Call, target);
-        CHECK(Call, operands.size());
-        break;
-      }
-      case Expression::Id::CallIndirectId: {
-        CHECK(CallIndirect, fullType);
-        CHECK(CallIndirect, operands.size());
-        break;
-      }
-      case Expression::Id::GetLocalId: {
-        CHECK(GetLocal, index);
-        break;
-      }
-      case Expression::Id::SetLocalId: {
-        CHECK(SetLocal, index);
-        CHECK(SetLocal, type); // for tee/set
-        break;
-      }
-      case Expression::Id::GetGlobalId: {
-        CHECK(GetGlobal, name);
-        break;
-      }
-      case Expression::Id::SetGlobalId: {
-        CHECK(SetGlobal, name);
-        break;
-      }
-      case Expression::Id::LoadId: {
-        CHECK(Load, bytes);
-        if (LoadUtils::isSignRelevant(left->cast<Load>()) &&
-            LoadUtils::isSignRelevant(right->cast<Load>())) {
-          CHECK(Load, signed_);
-        }
-        CHECK(Load, offset);
-        CHECK(Load, align);
-        CHECK(Load, isAtomic);
-        break;
-      }
-      case Expression::Id::StoreId: {
-        CHECK(Store, bytes);
-        CHECK(Store, offset);
-        CHECK(Store, align);
-        CHECK(Store, valueType);
-        CHECK(Store, isAtomic);
-        break;
-      }
-      case Expression::Id::AtomicCmpxchgId: {
-        CHECK(AtomicCmpxchg, bytes);
-        CHECK(AtomicCmpxchg, offset);
-        break;
-      }
-      case Expression::Id::AtomicRMWId: {
-        CHECK(AtomicRMW, op);
-        CHECK(AtomicRMW, bytes);
-        CHECK(AtomicRMW, offset);
-        break;
-      }
-      case Expression::Id::AtomicWaitId: {
-        CHECK(AtomicWait, expectedType);
-        break;
-      }
-      case Expression::Id::AtomicWakeId: {
-        break;
-      }
-      case Expression::Id::SIMDExtractId: {
-        CHECK(SIMDExtract, op);
-        CHECK(SIMDExtract, index);
-        break;
-      }
-      case Expression::Id::SIMDReplaceId: {
-        CHECK(SIMDReplace, op);
-        CHECK(SIMDReplace, index);
-        break;
-      }
-      case Expression::Id::SIMDShuffleId: {
-        CHECK(SIMDShuffle, mask);
-        break;
-      }
-      case Expression::Id::SIMDBitselectId: {
-        break;
-      }
-      case Expression::Id::SIMDShiftId: {
-        CHECK(SIMDShift, op);
-        break;
-      }
-      case Expression::Id::MemoryInitId: {
-        CHECK(MemoryInit, segment);
-        break;
-      }
-      case Expression::Id::DataDropId: {
-        CHECK(DataDrop, segment);
-        break;
-      }
-      case Expression::Id::MemoryCopyId: {
-        break;
-      }
-      case Expression::Id::MemoryFillId: {
-        break;
-      }
-      case Expression::Id::ConstId: {
-        if (left->cast<Const>()->value != right->cast<Const>()->value) {
-          return false;
-        }
-        break;
-      }
-      case Expression::Id::UnaryId: {
-        CHECK(Unary, op);
-        break;
-      }
-      case Expression::Id::BinaryId: {
-        CHECK(Binary, op);
-        break;
-      }
-      case Expression::Id::HostId: {
-        CHECK(Host, op);
-        CHECK(Host, nameOperand);
-        CHECK(Host, operands.size());
-        break;
-      }
-      case Expression::Id::NopId: {
-        break;
-      }
-      case Expression::Id::UnreachableId: {
-        break;
-      }
-      case Expression::Id::InvalidId:
-      case Expression::Id::NumExpressionIds: {
-        WASM_UNREACHABLE();
-      }
-      case Expression::Id::IfId:
-      case Expression::Id::SelectId:
-      case Expression::Id::DropId:
-      case Expression::Id::ReturnId: {
-        break; // some nodes have no immediate fields
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+      visitor.visitInt(curr->isAtomic);
+    }
+    void visitStore(Store* curr) {
+      visitor.visitInt(curr->bytes);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+      visitor.visitInt(curr->isAtomic);
+      visitor.visitInt(curr->valueType);
+    }
+    void visitAtomicRMW(AtomicRMW* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitInt(curr->bytes);
+      visitor.visitAddress(curr->offset);
+    }
+    void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      visitor.visitInt(curr->bytes);
+      visitor.visitAddress(curr->offset);
+    }
+    void visitAtomicWait(AtomicWait* curr) {
+      visitor.visitAddress(curr->offset);
+      visitor.visitType(curr->expectedType);
+    }
+    void visitAtomicNotify(AtomicNotify* curr) {
+      visitor.visitAddress(curr->offset);
+    }
+    void visitAtomicFence(AtomicFence* curr) { visitor.visitInt(curr->order); }
+    void visitSIMDExtract(SIMDExtract* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitInt(curr->index);
+    }
+    void visitSIMDReplace(SIMDReplace* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitInt(curr->index);
+    }
+    void visitSIMDShuffle(SIMDShuffle* curr) {
+      for (auto x : curr->mask) {
+        visitor.visitInt(x);
       }
     }
-    // Add child nodes
-    for (auto* child : ChildIterator(left)) {
-      leftStack.push_back(child);
+    void visitSIMDTernary(SIMDTernary* curr) { visitor.visitInt(curr->op); }
+    void visitSIMDShift(SIMDShift* curr) { visitor.visitInt(curr->op); }
+    void visitSIMDLoad(SIMDLoad* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
     }
-    for (auto* child : ChildIterator(right)) {
-      rightStack.push_back(child);
+    void visitMemoryInit(MemoryInit* curr) {
+      visitor.visitIndex(curr->segment);
     }
-    #undef CHECK
-  }
-  if (leftStack.size() > 0 || rightStack.size() > 0) return false;
-  return true;
+    void visitDataDrop(DataDrop* curr) { visitor.visitIndex(curr->segment); }
+    void visitMemoryCopy(MemoryCopy* curr) {}
+    void visitMemoryFill(MemoryFill* curr) {}
+    void visitConst(Const* curr) { visitor.visitLiteral(curr->value); }
+    void visitUnary(Unary* curr) { visitor.visitInt(curr->op); }
+    void visitBinary(Binary* curr) { visitor.visitInt(curr->op); }
+    void visitSelect(Select* curr) {}
+    void visitDrop(Drop* curr) {}
+    void visitReturn(Return* curr) {}
+    void visitHost(Host* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitNonScopeName(curr->nameOperand);
+    }
+    void visitTry(Try* curr) {}
+    void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
+    void visitRethrow(Rethrow* curr) {}
+    void visitBrOnExn(BrOnExn* curr) {
+      visitor.visitScopeName(curr->name);
+      visitor.visitNonScopeName(curr->event);
+    }
+    void visitNop(Nop* curr) {}
+    void visitUnreachable(Unreachable* curr) {}
+    void visitPush(Push* curr) {}
+    void visitPop(Pop* curr) {}
+  } singleton(curr, visitor);
 }
 
+} // namespace
+
+bool ExpressionAnalyzer::flexibleEqual(Expression* left,
+                                       Expression* right,
+                                       ExprComparer comparer) {
+  struct Comparer {
+    // for each name on the left, the corresponding name on the right
+    std::map<Name, Name> rightNames;
+    std::vector<Expression*> leftStack;
+    std::vector<Expression*> rightStack;
+
+    struct Immediates {
+      Comparer& parent;
+
+      Immediates(Comparer& parent) : parent(parent) {}
+
+      SmallVector<Name, 1> scopeNames;
+      SmallVector<Name, 1> nonScopeNames;
+      SmallVector<int32_t, 3> ints;
+      SmallVector<Literal, 1> literals;
+      SmallVector<Type, 1> types;
+      SmallVector<Index, 1> indexes;
+      SmallVector<Address, 2> addresses;
+
+      void visitScopeName(Name curr) { scopeNames.push_back(curr); }
+      void visitNonScopeName(Name curr) { nonScopeNames.push_back(curr); }
+      void visitInt(int32_t curr) { ints.push_back(curr); }
+      void visitLiteral(Literal curr) { literals.push_back(curr); }
+      void visitType(Type curr) { types.push_back(curr); }
+      void visitIndex(Index curr) { indexes.push_back(curr); }
+      void visitAddress(Address curr) { addresses.push_back(curr); }
+
+      // Comparison is by value, except for names, which must match.
+      bool operator==(const Immediates& other) {
+        if (scopeNames.size() != other.scopeNames.size()) {
+          return false;
+        }
+        for (Index i = 0; i < scopeNames.size(); i++) {
+          auto leftName = scopeNames[i];
+          auto rightName = other.scopeNames[i];
+          auto iter = parent.rightNames.find(leftName);
+          // If it's not found, that means it was defined out of the expression
+          // being compared, in which case we can just treat it literally - it
+          // must be exactly identical.
+          if (iter != parent.rightNames.end()) {
+            leftName = iter->second;
+          }
+          if (leftName != rightName) {
+            return false;
+          }
+        }
+        if (nonScopeNames != other.nonScopeNames) {
+          return false;
+        }
+        if (ints != other.ints) {
+          return false;
+        }
+        if (literals != other.literals) {
+          return false;
+        }
+        if (types != other.types) {
+          return false;
+        }
+        if (indexes != other.indexes) {
+          return false;
+        }
+        if (addresses != other.addresses) {
+          return false;
+        }
+        return true;
+      }
+
+      bool operator!=(const Immediates& other) { return !(*this == other); }
+
+      void clear() {
+        scopeNames.clear();
+        nonScopeNames.clear();
+        ints.clear();
+        literals.clear();
+        types.clear();
+        indexes.clear();
+        addresses.clear();
+      }
+    };
+
+    bool noteNames(Name left, Name right) {
+      if (left.is() != right.is()) {
+        return false;
+      }
+      if (left.is()) {
+        assert(rightNames.find(left) == rightNames.end());
+        rightNames[left] = right;
+      }
+      return true;
+    }
+
+    bool compare(Expression* left, Expression* right, ExprComparer comparer) {
+      Immediates leftImmediates(*this), rightImmediates(*this);
+
+      // The empty name is the same on both sides.
+      rightNames[Name()] = Name();
+
+      leftStack.push_back(left);
+      rightStack.push_back(right);
+
+      while (leftStack.size() > 0 && rightStack.size() > 0) {
+        left = leftStack.back();
+        leftStack.pop_back();
+        right = rightStack.back();
+        rightStack.pop_back();
+        if (!left != !right) {
+          return false;
+        }
+        if (!left) {
+          continue;
+        }
+        if (comparer(left, right)) {
+          continue; // comparison hook, before all the rest
+        }
+        // continue with normal structural comparison
+        if (left->_id != right->_id) {
+          return false;
+        }
+        // Blocks and loops introduce scoping.
+        if (auto* block = left->dynCast<Block>()) {
+          if (!noteNames(block->name, right->cast<Block>()->name)) {
+            return false;
+          }
+        } else if (auto* loop = left->dynCast<Loop>()) {
+          if (!noteNames(loop->name, right->cast<Loop>()->name)) {
+            return false;
+          }
+        } else {
+          // For all other nodes, compare their immediate values
+          visitImmediates(left, leftImmediates);
+          visitImmediates(right, rightImmediates);
+          if (leftImmediates != rightImmediates) {
+            return false;
+          }
+          leftImmediates.clear();
+          rightImmediates.clear();
+        }
+        // Add child nodes.
+        Index counter = 0;
+        for (auto* child : ChildIterator(left)) {
+          leftStack.push_back(child);
+          counter++;
+        }
+        for (auto* child : ChildIterator(right)) {
+          rightStack.push_back(child);
+          counter--;
+        }
+        // The number of child nodes must match (e.g. return has an optional
+        // one).
+        if (counter != 0) {
+          return false;
+        }
+      }
+      if (leftStack.size() > 0 || rightStack.size() > 0) {
+        return false;
+      }
+      return true;
+    }
+  };
+
+  return Comparer().compare(left, right, comparer);
+}
 
 // hash an expression, ignoring superficial details like specific internal names
 HashType ExpressionAnalyzer::hash(Expression* curr) {
-  HashType digest = 0;
+  struct Hasher {
+    HashType digest = 0;
 
-  auto hash = [&digest](HashType hash) {
-    digest = rehash(digest, hash);
-  };
-  auto hash64 = [&digest](uint64_t hash) {
-    digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
-  };
+    Index internalCounter = 0;
+    // for each internal name, its unique id
+    std::map<Name, Index> internalNames;
+    ExpressionStack stack;
 
-  std::vector<Name> nameStack;
-  Index internalCounter = 0;
-  std::map<Name, std::vector<Index>> internalNames; // for each internal name, a vector if unique ids
-  Nop popNameMarker;
-  std::vector<Expression*> stack;
-
-  auto noteName = [&](Name curr) {
-    if (curr.is()) {
-      nameStack.push_back(curr);
-      internalNames[curr].push_back(internalCounter++);
-      stack.push_back(&popNameMarker);
-    }
-    return true;
-  };
-  auto hashName = [&](Name curr) {
-    auto iter = internalNames.find(curr);
-    if (iter == internalNames.end()) hash64(uint64_t(curr.str));
-    else hash(iter->second.back());
-  };
-  auto popName = [&]() {
-    auto curr = nameStack.back();
-    nameStack.pop_back();
-    internalNames[curr].pop_back();
-  };
-
-  stack.push_back(curr);
-
-  while (stack.size() > 0) {
-    curr = stack.back();
-    stack.pop_back();
-    if (!curr) continue;
-    if (curr == &popNameMarker) {
-      popName();
-      continue;
-    }
-    hash(curr->_id);
-    // we often don't need to hash the type, as it is tied to other values
-    // we are hashing anyhow, but there are exceptions: for example, a
-    // local.get's type is determined by the function, so if we are
-    // hashing only expression fragments, then two from different
-    // functions may turn out the same even if the type differs. Likewise,
-    // if we hash between modules, then we need to take int account
-    // call_imports type, etc. The simplest thing is just to hash the
-    // type for all of them.
-    hash(curr->type);
-
-    #define PUSH(clazz, what) \
-      stack.push_back(curr->cast<clazz>()->what);
-    #define HASH(clazz, what) \
-      hash(curr->cast<clazz>()->what);
-    #define HASH64(clazz, what) \
-      hash64(curr->cast<clazz>()->what);
-    #define HASH_NAME(clazz, what) \
-      hash64(uint64_t(curr->cast<clazz>()->what.str));
-    #define HASH_PTR(clazz, what) \
-      hash64(uint64_t(curr->cast<clazz>()->what));
-    switch (curr->_id) {
-      case Expression::Id::BlockId: {
-        noteName(curr->cast<Block>()->name);
-        HASH(Block, list.size());
-        for (Index i = 0; i < curr->cast<Block>()->list.size(); i++) {
-          PUSH(Block, list[i]);
-        }
-        break;
-      }
-      case Expression::Id::IfId: {
-        PUSH(If, condition);
-        PUSH(If, ifTrue);
-        PUSH(If, ifFalse);
-        break;
-      }
-      case Expression::Id::LoopId: {
-        noteName(curr->cast<Loop>()->name);
-        PUSH(Loop, body);
-        break;
-      }
-      case Expression::Id::BreakId: {
-        hashName(curr->cast<Break>()->name);
-        PUSH(Break, condition);
-        PUSH(Break, value);
-        break;
-      }
-      case Expression::Id::SwitchId: {
-        HASH(Switch, targets.size());
-        for (Index i = 0; i < curr->cast<Switch>()->targets.size(); i++) {
-          hashName(curr->cast<Switch>()->targets[i]);
-        }
-        hashName(curr->cast<Switch>()->default_);
-        PUSH(Switch, condition);
-        PUSH(Switch, value);
-        break;
-      }
-      case Expression::Id::CallId: {
-        HASH_NAME(Call, target);
-        HASH(Call, operands.size());
-        for (Index i = 0; i < curr->cast<Call>()->operands.size(); i++) {
-          PUSH(Call, operands[i]);
-        }
-        break;
-      }
-      case Expression::Id::CallIndirectId: {
-        PUSH(CallIndirect, target);
-        HASH_NAME(CallIndirect, fullType);
-        HASH(CallIndirect, operands.size());
-        for (Index i = 0; i < curr->cast<CallIndirect>()->operands.size(); i++) {
-          PUSH(CallIndirect, operands[i]);
-        }
-        break;
-      }
-      case Expression::Id::GetLocalId: {
-        HASH(GetLocal, index);
-        break;
-      }
-      case Expression::Id::SetLocalId: {
-        HASH(SetLocal, index);
-        PUSH(SetLocal, value);
-        break;
-      }
-      case Expression::Id::GetGlobalId: {
-        HASH_NAME(GetGlobal, name);
-        break;
-      }
-      case Expression::Id::SetGlobalId: {
-        HASH_NAME(SetGlobal, name);
-        PUSH(SetGlobal, value);
-        break;
-      }
-      case Expression::Id::LoadId: {
-        HASH(Load, bytes);
-        if (LoadUtils::isSignRelevant(curr->cast<Load>())) {
-          HASH(Load, signed_);
-        }
-        HASH(Load, offset);
-        HASH(Load, align);
-        HASH(Load, isAtomic);
-        PUSH(Load, ptr);
-        break;
-      }
-      case Expression::Id::StoreId: {
-        HASH(Store, bytes);
-        HASH(Store, offset);
-        HASH(Store, align);
-        HASH(Store, valueType);
-        HASH(Store, isAtomic);
-        PUSH(Store, ptr);
-        PUSH(Store, value);
-        break;
-      }
-      case Expression::Id::AtomicCmpxchgId: {
-        HASH(AtomicCmpxchg, bytes);
-        HASH(AtomicCmpxchg, offset);
-        PUSH(AtomicCmpxchg, ptr);
-        PUSH(AtomicCmpxchg, expected);
-        PUSH(AtomicCmpxchg, replacement);
-        break;
-      }
-      case Expression::Id::AtomicRMWId: {
-        HASH(AtomicRMW, op);
-        HASH(AtomicRMW, bytes);
-        HASH(AtomicRMW, offset);
-        PUSH(AtomicRMW, ptr);
-        PUSH(AtomicRMW, value);
-        break;
-      }
-      case Expression::Id::AtomicWaitId: {
-        HASH(AtomicWait, offset);
-        HASH(AtomicWait, expectedType);
-        PUSH(AtomicWait, ptr);
-        PUSH(AtomicWait, expected);
-        PUSH(AtomicWait, timeout);
-        break;
-      }
-      case Expression::Id::AtomicWakeId: {
-        HASH(AtomicWake, offset);
-        PUSH(AtomicWake, ptr);
-        PUSH(AtomicWake, wakeCount);
-        break;
-      }
-      case Expression::Id::SIMDExtractId: {
-        HASH(SIMDExtract, op);
-        HASH(SIMDExtract, index);
-        PUSH(SIMDExtract, vec);
-        break;
-      }
-      case Expression::Id::SIMDReplaceId: {
-        HASH(SIMDReplace, op);
-        HASH(SIMDReplace, index);
-        PUSH(SIMDReplace, vec);
-        PUSH(SIMDReplace, value);
-        break;
-      }
-      case Expression::Id::SIMDShuffleId: {
-        for (size_t i = 0; i < 16; ++i) {
-          HASH(SIMDShuffle, mask[i]);
-        }
-        PUSH(SIMDShuffle, left);
-        PUSH(SIMDShuffle, right);
-        break;
-      }
-      case Expression::Id::SIMDBitselectId: {
-        PUSH(SIMDBitselect, left);
-        PUSH(SIMDBitselect, right);
-        PUSH(SIMDBitselect, cond);
-        break;
-      }
-      case Expression::Id::SIMDShiftId: {
-        HASH(SIMDShift, op);
-        PUSH(SIMDShift, vec);
-        PUSH(SIMDShift, shift);
-        break;
-      }
-      case Expression::Id::MemoryInitId: {
-        HASH(MemoryInit, segment);
-        PUSH(MemoryInit, dest);
-        PUSH(MemoryInit, offset);
-        PUSH(MemoryInit, size);
-        break;
-      }
-      case Expression::Id::DataDropId: {
-        HASH(DataDrop, segment);
-        break;
-      }
-      case Expression::Id::MemoryCopyId: {
-        PUSH(MemoryCopy, dest);
-        PUSH(MemoryCopy, source);
-        PUSH(MemoryCopy, size);
-        break;
-      }
-      case Expression::Id::MemoryFillId: {
-        PUSH(MemoryFill, dest);
-        PUSH(MemoryFill, value);
-        PUSH(MemoryFill, size);
-        break;
-      }
-      case Expression::Id::ConstId: {
-        auto* c = curr->cast<Const>();
-        hash(c->type);
-        hash(std::hash<Literal>()(c->value));
-        break;
-      }
-      case Expression::Id::UnaryId: {
-        HASH(Unary, op);
-        PUSH(Unary, value);
-        break;
-      }
-      case Expression::Id::BinaryId: {
-        HASH(Binary, op);
-        PUSH(Binary, left);
-        PUSH(Binary, right);
-        break;
-      }
-      case Expression::Id::SelectId: {
-        PUSH(Select, ifTrue);
-        PUSH(Select, ifFalse);
-        PUSH(Select, condition);
-        break;
-      }
-      case Expression::Id::DropId: {
-        PUSH(Drop, value);
-        break;
-      }
-      case Expression::Id::ReturnId: {
-        PUSH(Return, value);
-        break;
-      }
-      case Expression::Id::HostId: {
-        HASH(Host, op);
-        HASH_NAME(Host, nameOperand);
-        HASH(Host, operands.size());
-        for (Index i = 0; i < curr->cast<Host>()->operands.size(); i++) {
-          PUSH(Host, operands[i]);
-        }
-        break;
-      }
-      case Expression::Id::NopId: {
-        break;
-      }
-      case Expression::Id::UnreachableId: {
-        break;
-      }
-      case Expression::Id::InvalidId:
-      case Expression::Id::NumExpressionIds: {
-        WASM_UNREACHABLE();
+    void noteScopeName(Name curr) {
+      if (curr.is()) {
+        internalNames[curr] = internalCounter++;
       }
     }
-    #undef HASH
-    #undef PUSH
-  }
-  return digest;
+
+    Hasher(Expression* curr) {
+      stack.push_back(curr);
+
+      while (stack.size() > 0) {
+        curr = stack.back();
+        stack.pop_back();
+        if (!curr) {
+          continue;
+        }
+        hash(curr->_id);
+        // we often don't need to hash the type, as it is tied to other values
+        // we are hashing anyhow, but there are exceptions: for example, a
+        // local.get's type is determined by the function, so if we are
+        // hashing only expression fragments, then two from different
+        // functions may turn out the same even if the type differs. Likewise,
+        // if we hash between modules, then we need to take int account
+        // call_imports type, etc. The simplest thing is just to hash the
+        // type for all of them.
+        hash(curr->type);
+        // Blocks and loops introduce scoping.
+        if (auto* block = curr->dynCast<Block>()) {
+          noteScopeName(block->name);
+        } else if (auto* loop = curr->dynCast<Loop>()) {
+          noteScopeName(loop->name);
+        } else {
+          // For all other nodes, compare their immediate values
+          visitImmediates(curr, *this);
+        }
+        // Hash children
+        Index counter = 0;
+        for (auto* child : ChildIterator(curr)) {
+          stack.push_back(child);
+          counter++;
+        }
+        // Sometimes children are optional, e.g. return, so we must hash
+        // their number as well.
+        hash(counter);
+      }
+    }
+
+    void hash(HashType hash) { digest = rehash(digest, hash); }
+    void hash64(uint64_t hash) {
+      digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
+    }
+
+    void visitScopeName(Name curr) {
+      // Names are relative, we give the same hash for
+      // (block $x (br $x))
+      // (block $y (br $y))
+      static_assert(sizeof(Index) == sizeof(int32_t),
+                    "wasm64 will need changes here");
+      assert(internalNames.find(curr) != internalNames.end());
+      return hash(internalNames[curr]);
+    }
+    void visitNonScopeName(Name curr) { return hash64(uint64_t(curr.str)); }
+    void visitInt(int32_t curr) { hash(curr); }
+    void visitLiteral(Literal curr) { hash(std::hash<Literal>()(curr)); }
+    void visitType(Type curr) { hash(int32_t(curr)); }
+    void visitIndex(Index curr) {
+      static_assert(sizeof(Index) == sizeof(int32_t),
+                    "wasm64 will need changes here");
+      hash(int32_t(curr));
+    }
+    void visitAddress(Address curr) {
+      static_assert(sizeof(Address) == sizeof(int32_t),
+                    "wasm64 will need changes here");
+      hash(int32_t(curr));
+    }
+  };
+
+  return Hasher(curr).digest;
 }
 
 } // namespace wasm

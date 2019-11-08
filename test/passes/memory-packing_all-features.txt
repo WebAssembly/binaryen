@@ -1,0 +1,47 @@
+(module
+ (import "env" "memory" (memory $0 2048 2048))
+ (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
+ (data (i32.const 1024) "waka this CAN be optimized")
+ (data (i32.const 1107) "we DO know where it will go")
+ (data (i32.const 2057) "zeros before")
+ (data (i32.const 3000) "zeros after")
+ (data (i32.const 4000) "zeros\00in\00the\00middle")
+ (data (i32.const 4035) "nice skip here")
+ (data (i32.const 4066) "another\00but no")
+ (import "env" "memoryBase" (global $memoryBase i32))
+)
+(module
+ (import "env" "memory" (memory $0 2048 2048))
+ (import "env" "memoryBase" (global $memoryBase i32))
+)
+(module
+ (import "env" "memory" (memory $0 2048 2048))
+ (import "env" "memoryBase" (global $memoryBase i32))
+)
+(module
+ (type $FUNCSIG$v (func))
+ (memory $0 1 1)
+ (func $foo (; 0 ;) (type $FUNCSIG$v)
+  (block
+   (drop
+    (i32.const 0)
+   )
+   (drop
+    (i32.const 0)
+   )
+   (drop
+    (i32.const 0)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $bar (; 1 ;) (type $FUNCSIG$v)
+  (drop
+   (loop $loop-in (result i32)
+    (unreachable)
+    (i32.const 42)
+   )
+  )
+ )
+)

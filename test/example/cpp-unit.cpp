@@ -10,7 +10,7 @@ using namespace wasm;
 int main() 
 {
   // Some optimizations assume that the cost of a get is zero, e.g. local-cse.
-  GetLocal get;
+  LocalGet get;
   assert(CostAnalyzer(&get).cost == 0);
 
   std::cout << "Success.\n";

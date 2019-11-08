@@ -1,5 +1,5 @@
+
 function asmFunc(global, env, buffer) {
- "use asm";
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);
@@ -20,18 +20,18 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var i64toi32_i32$HIGH_BITS = 0;
  function add(x, y) {
   x = x | 0;
   y = y | 0;
   return x + y | 0 | 0;
  }
  
+ var FUNCTION_TABLE = [];
  return {
-  add: add
+  "add": add
  };
 }
 
-const memasmFunc = new ArrayBuffer(16777216);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const add = retasmFunc.add;
+var memasmFunc = new ArrayBuffer(65536);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export var add = retasmFunc.add;

@@ -19,29 +19,30 @@
 #include <sstream>
 #include <unordered_set>
 
-#include "wasm.h"
-#include "wasm-printing.h"
-#include "wasm-validator.h"
-#include "ir/utils.h"
 #include "ir/branch-utils.h"
 #include "ir/features.h"
 #include "ir/module-utils.h"
+#include "ir/utils.h"
 #include "support/colors.h"
+#include "wasm-printing.h"
+#include "wasm-validator.h"
+#include "wasm.h"
 
 namespace wasm {
 
 // Print anything that can be streamed to an ostream
 template<typename T,
-  typename std::enable_if<
-    !std::is_base_of<Expression, typename std::remove_pointer<T>::type>::value
-  >::type* = nullptr>
+         typename std::enable_if<!std::is_base_of<
+           Expression,
+           typename std::remove_pointer<T>::type>::value>::type* = nullptr>
 inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
   stream << curr << std::endl;
   return stream;
 }
 
 // Extra overload for Expressions, to print type info too
-inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
+inline std::ostream& printModuleComponent(Expression* curr,
+                                          std::ostream& stream) {
   WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
   return stream;
 }
@@ -50,7 +51,6 @@ inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream
 struct ValidationInfo {
   bool validateWeb;
   bool validateGlobally;
-  FeatureSet features;
   bool quiet;
 
   std::atomic<bool> valid;
@@ -61,14 +61,14 @@ struct ValidationInfo {
   std::mutex mutex;
   std::unordered_map<Function*, std::unique_ptr<std::ostringstream>> outputs;
 
-  ValidationInfo() {
-    valid.store(true);
-  }
+  ValidationInfo() { valid.store(true); }
 
   std::ostringstream& getStream(Function* func) {
     std::unique_lock<std::mutex> lock(mutex);
     auto iter = outputs.find(func);
-    if (iter != outputs.end()) return *(iter->second.get());
+    if (iter != outputs.end()) {
+      return *(iter->second.get());
+    }
     auto& ret = outputs[func] = make_unique<std::ostringstream>();
     return *ret.get();
   }
@@ -79,7 +79,9 @@ struct ValidationInfo {
   std::ostream& fail(S text, T curr, Function* func) {
     valid.store(false);
     auto& stream = getStream(func);
-    if (quiet) return stream;
+    if (quiet) {
+      return stream;
+    }
     auto& ret = printFailureHeader(func);
     ret << text << ", on \n";
     return printModuleComponent(curr, ret);
@@ -87,7 +89,9 @@ struct ValidationInfo {
 
   std::ostream& printFailureHeader(Function* func) {
     auto& stream = getStream(func);
-    if (quiet) return stream;
+    if (quiet) {
+      return stream;
+    }
     Colors::red(stream);
     if (func) {
       stream << "[wasm-validator error in function ";
@@ -105,7 +109,10 @@ struct ValidationInfo {
   // checking utilities
 
   template<typename T>
-  bool shouldBeTrue(bool result, T curr, const char* text, Function* func = nullptr) {
+  bool shouldBeTrue(bool result,
+                    T curr,
+                    const char* text,
+                    Function* func = nullptr) {
     if (!result) {
       fail("unexpected false: " + std::string(text), curr, func);
       return false;
@@ -113,7 +120,10 @@ struct ValidationInfo {
     return result;
   }
   template<typename T>
-  bool shouldBeFalse(bool result, T curr, const char* text, Function* func = nullptr) {
+  bool shouldBeFalse(bool result,
+                     T curr,
+                     const char* text,
+                     Function* func = nullptr) {
     if (result) {
       fail("unexpected true: " + std::string(text), curr, func);
       return false;
@@ -122,7 +132,8 @@ struct ValidationInfo {
   }
 
   template<typename T, typename S>
-  bool shouldBeEqual(S left, S right, T curr, const char* text, Function* func = nullptr) {
+  bool shouldBeEqual(
+    S left, S right, T curr, const char* text, Function* func = nullptr) {
     if (left != right) {
       std::ostringstream ss;
       ss << left << " != " << right << ": " << text;
@@ -133,7 +144,8 @@ struct ValidationInfo {
   }
 
   template<typename T, typename S>
-  bool shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text, Function* func = nullptr) {
+  bool shouldBeEqualOrFirstIsUnreachable(
+    S left, S right, T curr, const char* text, Function* func = nullptr) {
     if (left != unreachable && left != right) {
       std::ostringstream ss;
       ss << left << " != " << right << ": " << text;
@@ -144,7 +156,8 @@ struct ValidationInfo {
   }
 
   template<typename T, typename S>
-  bool shouldBeUnequal(S left, S right, T curr, const char* text, Function* func = nullptr) {
+  bool shouldBeUnequal(
+    S left, S right, T curr, const char* text, Function* func = nullptr) {
     if (left == right) {
       std::ostringstream ss;
       ss << left << " == " << right << ": " << text;
@@ -154,17 +167,20 @@ struct ValidationInfo {
     return true;
   }
 
-  void shouldBeIntOrUnreachable(Type ty, Expression* curr, const char* text, Function* func = nullptr) {
+  void shouldBeIntOrUnreachable(Type ty,
+                                Expression* curr,
+                                const char* text,
+                                Function* func = nullptr) {
     switch (ty) {
       case i32:
       case i64:
       case unreachable: {
         break;
       }
-      default: fail(text, curr, func);
+      default:
+        fail(text, curr, func);
     }
   }
-
 };
 
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
@@ -179,10 +195,7 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   FunctionValidator(ValidationInfo* info) : info(*info) {}
 
   struct BreakInfo {
-    enum {
-      UnsetArity = Index(-1),
-      PoisonArity = Index(-2)
-    };
+    enum { UnsetArity = Index(-1), PoisonArity = Index(-2) };
 
     Type type;
     Index arity;
@@ -199,7 +212,9 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
   Type returnType = unreachable; // type used in returns
 
-  std::unordered_set<Name> labelNames; // Binaryen IR requires that label names must be unique - IR generators must ensure that
+  // Binaryen IR requires that label names must be unique - IR generators must
+  // ensure that
+  std::unordered_set<Name> labelNames;
 
   void noteLabelName(Name name);
 
@@ -208,14 +223,18 @@ public:
 
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
-    if (curr->name.is()) self->breakInfos[curr->name];
+    if (curr->name.is()) {
+      self->breakInfos[curr->name];
+    }
   }
 
   void visitBlock(Block* curr);
 
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
-    if (curr->name.is()) self->breakInfos[curr->name];
+    if (curr->name.is()) {
+      self->breakInfos[curr->name];
+    }
   }
 
   void visitLoop(Loop* curr);
@@ -226,30 +245,38 @@ public:
     PostWalker<FunctionValidator>::scan(self, currp);
 
     auto* curr = *currp;
-    if (curr->is<Block>()) self->pushTask(visitPreBlock, currp);
-    if (curr->is<Loop>()) self->pushTask(visitPreLoop, currp);
+    if (curr->is<Block>()) {
+      self->pushTask(visitPreBlock, currp);
+    }
+    if (curr->is<Loop>()) {
+      self->pushTask(visitPreLoop, currp);
+    }
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
+  void noteBreak(Name name, Type valueType, Expression* curr);
   void visitBreak(Break* curr);
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
-  void visitGetLocal(GetLocal* curr);
-  void visitSetLocal(SetLocal* curr);
-  void visitGetGlobal(GetGlobal* curr);
-  void visitSetGlobal(SetGlobal* curr);
+  void visitConst(Const* curr);
+  void visitLocalGet(LocalGet* curr);
+  void visitLocalSet(LocalSet* curr);
+  void visitGlobalGet(GlobalGet* curr);
+  void visitGlobalSet(GlobalSet* curr);
   void visitLoad(Load* curr);
   void visitStore(Store* curr);
   void visitAtomicRMW(AtomicRMW* curr);
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicWake(AtomicWake* curr);
+  void visitAtomicNotify(AtomicNotify* curr);
+  void visitAtomicFence(AtomicFence* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitSIMDLoad(SIMDLoad* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -260,13 +287,15 @@ public:
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitTry(Try* curr);
+  void visitThrow(Throw* curr);
+  void visitRethrow(Rethrow* curr);
+  void visitBrOnExn(BrOnExn* curr);
   void visitFunction(Function* curr);
 
   // helpers
 private:
-  std::ostream& getStream() {
-    return info.getStream(getFunction());
-  }
+  std::ostream& getStream() { return info.getStream(getFunction()); }
 
   template<typename T>
   bool shouldBeTrue(bool result, T curr, const char* text) {
@@ -283,8 +312,10 @@ private:
   }
 
   template<typename T, typename S>
-  bool shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text) {
-    return info.shouldBeEqualOrFirstIsUnreachable(left, right, curr, text, getFunction());
+  bool
+  shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text) {
+    return info.shouldBeEqualOrFirstIsUnreachable(
+      left, right, curr, text, getFunction());
   }
 
   template<typename T, typename S>
@@ -296,16 +327,21 @@ private:
     return info.shouldBeIntOrUnreachable(ty, curr, text, getFunction());
   }
 
-  void validateAlignment(size_t align, Type type, Index bytes, bool isAtomic,
-                         Expression* curr);
+  void validateAlignment(
+    size_t align, Type type, Index bytes, bool isAtomic, Expression* curr);
   void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
 };
 
 void FunctionValidator::noteLabelName(Name name) {
-  if (!name.is()) return;
+  if (!name.is()) {
+    return;
+  }
   bool inserted;
   std::tie(std::ignore, inserted) = labelNames.insert(name);
-  shouldBeTrue(inserted, name, "names in Binaryen IR must be unique - IR generators must ensure that");
+  shouldBeTrue(
+    inserted,
+    name,
+    "names in Binaryen IR must be unique - IR generators must ensure that");
 }
 
 void FunctionValidator::visitBlock(Block* curr) {
@@ -317,25 +353,46 @@ void FunctionValidator::visitBlock(Block* curr) {
     auto& info = iter->second;
     if (info.hasBeenSet()) {
       if (isConcreteType(curr->type)) {
-        shouldBeTrue(info.arity != 0, curr, "break arities must be > 0 if block has a value");
+        shouldBeTrue(info.arity != 0,
+                     curr,
+                     "break arities must be > 0 if block has a value");
       } else {
-        shouldBeTrue(info.arity == 0, curr, "break arities must be 0 if block has no value");
+        shouldBeTrue(info.arity == 0,
+                     curr,
+                     "break arities must be 0 if block has no value");
       }
-      // none or unreachable means a poison value that we should ignore - if consumed, it will error
+      // none or unreachable means a poison value that we should ignore - if
+      // consumed, it will error
       if (isConcreteType(info.type) && isConcreteType(curr->type)) {
-        shouldBeEqual(curr->type, info.type, curr, "block+breaks must have right type if breaks return a value");
+        shouldBeEqual(
+          curr->type,
+          info.type,
+          curr,
+          "block+breaks must have right type if breaks return a value");
       }
-      if (isConcreteType(curr->type) && info.arity && info.type != unreachable) {
-        shouldBeEqual(curr->type, info.type, curr, "block+breaks must have right type if breaks have arity");
+      if (isConcreteType(curr->type) && info.arity &&
+          info.type != unreachable) {
+        shouldBeEqual(curr->type,
+                      info.type,
+                      curr,
+                      "block+breaks must have right type if breaks have arity");
       }
-      shouldBeTrue(info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
+      shouldBeTrue(
+        info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
       if (curr->list.size() > 0) {
         auto last = curr->list.back()->type;
         if (isConcreteType(last) && info.type != unreachable) {
-          shouldBeEqual(last, info.type, curr, "block+breaks must have right type if block ends with a reachable value");
+          shouldBeEqual(last,
+                        info.type,
+                        curr,
+                        "block+breaks must have right type if block ends with "
+                        "a reachable value");
         }
         if (last == none) {
-          shouldBeTrue(info.arity == Index(0), curr, "if block ends with a none, breaks cannot send a value of any type");
+          shouldBeTrue(info.arity == Index(0),
+                       curr,
+                       "if block ends with a none, breaks cannot send a value "
+                       "of any type");
         }
       }
     }
@@ -343,25 +400,44 @@ void FunctionValidator::visitBlock(Block* curr) {
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
-      if (!shouldBeTrue(!isConcreteType(curr->list[i]->type), curr, "non-final block elements returning a value must be drop()ed (binaryen's autodrop option might help you)") && !info.quiet) {
-        getStream() << "(on index " << i << ":\n" << curr->list[i] << "\n), type: " << curr->list[i]->type << "\n";
+      if (!shouldBeTrue(
+            !isConcreteType(curr->list[i]->type),
+            curr,
+            "non-final block elements returning a value must be drop()ed "
+            "(binaryen's autodrop option might help you)") &&
+          !info.quiet) {
+        getStream() << "(on index " << i << ":\n"
+                    << curr->list[i] << "\n), type: " << curr->list[i]->type
+                    << "\n";
       }
     }
   }
   if (curr->list.size() > 0) {
     auto backType = curr->list.back()->type;
     if (!isConcreteType(curr->type)) {
-      shouldBeFalse(isConcreteType(backType), curr, "if block is not returning a value, final element should not flow out a value");
+      shouldBeFalse(isConcreteType(backType),
+                    curr,
+                    "if block is not returning a value, final element should "
+                    "not flow out a value");
     } else {
       if (isConcreteType(backType)) {
-        shouldBeEqual(curr->type, backType, curr, "block with value and last element with value must match types");
+        shouldBeEqual(
+          curr->type,
+          backType,
+          curr,
+          "block with value and last element with value must match types");
       } else {
-        shouldBeUnequal(backType, none, curr, "block with value must not have last element that is none");
+        shouldBeUnequal(
+          backType,
+          none,
+          curr,
+          "block with value must not have last element that is none");
       }
     }
   }
   if (isConcreteType(curr->type)) {
-    shouldBeTrue(curr->list.size() > 0, curr, "block with a value must not be empty");
+    shouldBeTrue(
+      curr->list.size() > 0, curr, "block with a value must not be empty");
   }
 }
 
@@ -372,53 +448,100 @@ void FunctionValidator::visitLoop(Loop* curr) {
     assert(iter != breakInfos.end()); // we set it ourselves
     auto& info = iter->second;
     if (info.hasBeenSet()) {
-      shouldBeEqual(info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
+      shouldBeEqual(
+        info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
     }
     breakInfos.erase(iter);
   }
   if (curr->type == none) {
-    shouldBeFalse(isConcreteType(curr->body->type), curr, "bad body for a loop that has no value");
+    shouldBeFalse(isConcreteType(curr->body->type),
+                  curr,
+                  "bad body for a loop that has no value");
   }
 }
 
 void FunctionValidator::visitIf(If* curr) {
-  shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "if condition must be valid");
+  shouldBeTrue(curr->condition->type == unreachable ||
+                 curr->condition->type == i32,
+               curr,
+               "if condition must be valid");
   if (!curr->ifFalse) {
-    shouldBeFalse(isConcreteType(curr->ifTrue->type), curr, "if without else must not return a value in body");
+    shouldBeFalse(isConcreteType(curr->ifTrue->type),
+                  curr,
+                  "if without else must not return a value in body");
     if (curr->condition->type != unreachable) {
-      shouldBeEqual(curr->type, none, curr, "if without else and reachable condition must be none");
+      shouldBeEqual(curr->type,
+                    none,
+                    curr,
+                    "if without else and reachable condition must be none");
     }
   } else {
     if (curr->type != unreachable) {
-      shouldBeEqualOrFirstIsUnreachable(curr->ifTrue->type, curr->type, curr, "returning if-else's true must have right type");
-      shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type, curr->type, curr, "returning if-else's false must have right type");
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->ifTrue->type,
+        curr->type,
+        curr,
+        "returning if-else's true must have right type");
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->ifFalse->type,
+        curr->type,
+        curr,
+        "returning if-else's false must have right type");
     } else {
       if (curr->condition->type != unreachable) {
-        shouldBeEqual(curr->ifTrue->type, unreachable, curr, "unreachable if-else must have unreachable true");
-        shouldBeEqual(curr->ifFalse->type, unreachable, curr, "unreachable if-else must have unreachable false");
+        shouldBeEqual(curr->ifTrue->type,
+                      unreachable,
+                      curr,
+                      "unreachable if-else must have unreachable true");
+        shouldBeEqual(curr->ifFalse->type,
+                      unreachable,
+                      curr,
+                      "unreachable if-else must have unreachable false");
       }
     }
     if (isConcreteType(curr->ifTrue->type)) {
-      shouldBeEqual(curr->type, curr->ifTrue->type, curr, "if type must match concrete ifTrue");
-      shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type, curr->ifTrue->type, curr, "other arm must match concrete ifTrue");
+      shouldBeEqual(curr->type,
+                    curr->ifTrue->type,
+                    curr,
+                    "if type must match concrete ifTrue");
+      shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type,
+                                        curr->ifTrue->type,
+                                        curr,
+                                        "other arm must match concrete ifTrue");
     }
     if (isConcreteType(curr->ifFalse->type)) {
-      shouldBeEqual(curr->type, curr->ifFalse->type, curr, "if type must match concrete ifFalse");
-      shouldBeEqualOrFirstIsUnreachable(curr->ifTrue->type, curr->ifFalse->type, curr, "other arm must match concrete ifFalse");
+      shouldBeEqual(curr->type,
+                    curr->ifFalse->type,
+                    curr,
+                    "if type must match concrete ifFalse");
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->ifTrue->type,
+        curr->ifFalse->type,
+        curr,
+        "other arm must match concrete ifFalse");
     }
   }
 }
 
-void FunctionValidator::noteBreak(Name name, Expression* value, Expression* curr) {
-  Type valueType = none;
-  Index arity = 0;
+void FunctionValidator::noteBreak(Name name,
+                                  Expression* value,
+                                  Expression* curr) {
   if (value) {
-    valueType = value->type;
-    shouldBeUnequal(valueType, none, curr, "breaks must have a valid value");
+    shouldBeUnequal(value->type, none, curr, "breaks must have a valid value");
+  }
+  noteBreak(name, value ? value->type : none, curr);
+}
+
+void FunctionValidator::noteBreak(Name name, Type valueType, Expression* curr) {
+  Index arity = 0;
+  if (valueType != none) {
     arity = 1;
   }
   auto iter = breakInfos.find(name);
-  if (!shouldBeTrue(iter != breakInfos.end(), curr, "all break targets must be valid")) return;
+  if (!shouldBeTrue(
+        iter != breakInfos.end(), curr, "all break targets must be valid")) {
+    return;
+  }
   auto& info = iter->second;
   if (!info.hasBeenSet()) {
     info = BreakInfo(valueType, arity);
@@ -437,8 +560,15 @@ void FunctionValidator::noteBreak(Name name, Expression* value, Expression* curr
 }
 void FunctionValidator::visitBreak(Break* curr) {
   noteBreak(curr->name, curr->value, curr);
+  if (curr->value) {
+    shouldBeTrue(
+      curr->value->type != none, curr, "break value must not have none type");
+  }
   if (curr->condition) {
-    shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "break condition must be i32");
+    shouldBeTrue(curr->condition->type == unreachable ||
+                   curr->condition->type == i32,
+                 curr,
+                 "break condition must be i32");
   }
 }
 
@@ -447,245 +577,625 @@ void FunctionValidator::visitSwitch(Switch* curr) {
     noteBreak(target, curr->value, curr);
   }
   noteBreak(curr->default_, curr->value, curr);
-  shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "br_table condition must be i32");
+  shouldBeTrue(curr->condition->type == unreachable ||
+                 curr->condition->type == i32,
+               curr,
+               "br_table condition must be i32");
 }
 
 void FunctionValidator::visitCall(Call* curr) {
-  if (!info.validateGlobally) return;
+  shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
+               curr,
+               "return_call requires tail calls to be enabled");
+  if (!info.validateGlobally) {
+    return;
+  }
   auto* target = getModule()->getFunctionOrNull(curr->target);
-  if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
-  if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
+  if (!shouldBeTrue(!!target, curr, "call target must exist")) {
+    return;
+  }
+  if (!shouldBeTrue(curr->operands.size() == target->params.size(),
+                    curr,
+                    "call param number must match")) {
+    return;
+  }
   for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match") && !info.quiet) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
+                                           target->params[i],
+                                           curr,
+                                           "call param types must match") &&
+        !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
+    }
+  }
+  if (curr->isReturn) {
+    shouldBeEqual(curr->type,
+                  unreachable,
+                  curr,
+                  "return_call should have unreachable type");
+    shouldBeEqual(
+      getFunction()->result,
+      target->result,
+      curr,
+      "return_call callee return type must match caller return type");
+  } else {
+    if (curr->type == unreachable) {
+      bool hasUnreachableOperand =
+        std::any_of(curr->operands.begin(),
+                    curr->operands.end(),
+                    [](Expression* op) { return op->type == unreachable; });
+      shouldBeTrue(
+        hasUnreachableOperand,
+        curr,
+        "calls may only be unreachable if they have unreachable operands");
+    } else {
+      shouldBeEqual(curr->type,
+                    target->result,
+                    curr,
+                    "call type must match callee return type");
     }
   }
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
-  if (!info.validateGlobally) return;
+  shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
+               curr,
+               "return_call_indirect requires tail calls to be enabled");
+  if (!info.validateGlobally) {
+    return;
+  }
   auto* type = getModule()->getFunctionTypeOrNull(curr->fullType);
-  if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) return;
-  shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
-  if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
+  if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) {
+    return;
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->target->type, i32, curr, "indirect call target must be an i32");
+  if (!shouldBeTrue(curr->operands.size() == type->params.size(),
+                    curr,
+                    "call param number must match")) {
+    return;
+  }
   for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !info.quiet) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
+                                           type->params[i],
+                                           curr,
+                                           "call param types must match") &&
+        !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
   }
-}
-
-void FunctionValidator::visitGetLocal(GetLocal* curr) {
-  shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "local.get index must be small enough");
-  shouldBeTrue(isConcreteType(curr->type), curr, "local.get must have a valid type - check what you provided when you constructed the node");
-  shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index), curr, "local.get must have proper type");
-}
-
-void FunctionValidator::visitSetLocal(SetLocal* curr) {
-  shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "local.set index must be small enough");
-  if (curr->value->type != unreachable) {
-    if (curr->type != none) { // tee is ok anyhow
-      shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "local.set type must be correct");
+  if (curr->isReturn) {
+    shouldBeEqual(curr->type,
+                  unreachable,
+                  curr,
+                  "return_call_indirect should have unreachable type");
+    shouldBeEqual(
+      getFunction()->result,
+      type->result,
+      curr,
+      "return_call_indirect callee return type must match caller return type");
+  } else {
+    if (curr->type == unreachable) {
+      if (curr->target->type != unreachable) {
+        bool hasUnreachableOperand =
+          std::any_of(curr->operands.begin(),
+                      curr->operands.end(),
+                      [](Expression* op) { return op->type == unreachable; });
+        shouldBeTrue(hasUnreachableOperand,
+                     curr,
+                     "call_indirects may only be unreachable if they have "
+                     "unreachable operands");
+      }
+    } else {
+      shouldBeEqual(curr->type,
+                    type->result,
+                    curr,
+                    "call_indirect type must match callee return type");
     }
-    shouldBeEqual(getFunction()->getLocalType(curr->index), curr->value->type, curr, "local.set type must match function");
   }
 }
 
-void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
-  if (!info.validateGlobally) return;
-  shouldBeTrue(getModule()->getGlobalOrNull(curr->name), curr, "global.get name must be valid");
+void FunctionValidator::visitConst(Const* curr) {
+  shouldBeTrue(getFeatures(curr->type) <= getModule()->features,
+               curr,
+               "all used features should be allowed");
 }
 
-void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
-  if (!info.validateGlobally) return;
+void FunctionValidator::visitLocalGet(LocalGet* curr) {
+  shouldBeTrue(curr->index < getFunction()->getNumLocals(),
+               curr,
+               "local.get index must be small enough");
+  shouldBeTrue(isConcreteType(curr->type),
+               curr,
+               "local.get must have a valid type - check what you provided "
+               "when you constructed the node");
+  shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index),
+               curr,
+               "local.get must have proper type");
+}
+
+void FunctionValidator::visitLocalSet(LocalSet* curr) {
+  shouldBeTrue(curr->index < getFunction()->getNumLocals(),
+               curr,
+               "local.set index must be small enough");
+  if (curr->value->type != unreachable) {
+    if (curr->type != none) { // tee is ok anyhow
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->value->type, curr->type, curr, "local.set type must be correct");
+    }
+    shouldBeEqual(getFunction()->getLocalType(curr->index),
+                  curr->value->type,
+                  curr,
+                  "local.set type must match function");
+  }
+}
+
+void FunctionValidator::visitGlobalGet(GlobalGet* curr) {
+  if (!info.validateGlobally) {
+    return;
+  }
+  shouldBeTrue(getModule()->getGlobalOrNull(curr->name),
+               curr,
+               "global.get name must be valid");
+}
+
+void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
+  if (!info.validateGlobally) {
+    return;
+  }
   auto* global = getModule()->getGlobalOrNull(curr->name);
-  if (shouldBeTrue(global, curr, "global.set name must be valid (and not an import; imports can't be modified)")) {
+  if (shouldBeTrue(global,
+                   curr,
+                   "global.set name must be valid (and not an import; imports "
+                   "can't be modified)")) {
     shouldBeTrue(global->mutable_, curr, "global.set global must be mutable");
-    shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "global.set value must have right type");
+    shouldBeEqualOrFirstIsUnreachable(curr->value->type,
+                                      global->type,
+                                      curr,
+                                      "global.set value must have right type");
   }
 }
 
 void FunctionValidator::visitLoad(Load* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
   if (curr->isAtomic) {
-    shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
-    shouldBeTrue(curr->type == i32 || curr->type == i64 || curr->type == unreachable, curr, "Atomic load should be i32 or i64");
+    shouldBeTrue(getModule()->features.hasAtomics(),
+                 curr,
+                 "Atomic operation (atomics are disabled)");
+    shouldBeTrue(curr->type == i32 || curr->type == i64 ||
+                   curr->type == unreachable,
+                 curr,
+                 "Atomic load should be i32 or i64");
   }
-  if (curr->type == v128) shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
-  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
+  if (curr->type == v128) {
+    shouldBeTrue(getModule()->features.hasSIMD(),
+                 curr,
+                 "SIMD operation (SIMD is disabled)");
+  }
+  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "load pointer type must be i32");
   if (curr->isAtomic) {
     shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
-    shouldBeIntOrUnreachable(curr->type, curr, "atomic loads must be of integers");
+    shouldBeIntOrUnreachable(
+      curr->type, curr, "atomic loads must be of integers");
   }
 }
 
 void FunctionValidator::visitStore(Store* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
   if (curr->isAtomic) {
-    shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
-    shouldBeTrue(curr->valueType == i32 || curr->valueType == i64 || curr->valueType == unreachable, curr, "Atomic store should be i32 or i64");
+    shouldBeTrue(getModule()->features.hasAtomics(),
+                 curr,
+                 "Atomic operation (atomics are disabled)");
+    shouldBeTrue(curr->valueType == i32 || curr->valueType == i64 ||
+                   curr->valueType == unreachable,
+                 curr,
+                 "Atomic store should be i32 or i64");
   }
-  if (curr->valueType == v128) shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
-  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
+  if (curr->valueType == v128) {
+    shouldBeTrue(getModule()->features.hasSIMD(),
+                 curr,
+                 "SIMD operation (SIMD is disabled)");
+  }
+  shouldBeFalse(curr->isAtomic && !getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
-  validateAlignment(curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
-  shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
-  shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
+  validateAlignment(
+    curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "store pointer type must be i32");
+  shouldBeUnequal(
+    curr->value->type, none, curr, "store value type must not be none");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->value->type, curr->valueType, curr, "store value type must match");
   if (curr->isAtomic) {
-    shouldBeIntOrUnreachable(curr->valueType, curr, "atomic stores must be of integers");
+    shouldBeIntOrUnreachable(
+      curr->valueType, curr, "atomic stores must be of integers");
   }
 }
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
-  shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(getModule()->features.hasAtomics(),
+               curr,
+               "Atomic operation (atomics are disabled)");
+  shouldBeFalse(!getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->value->type, curr, "AtomicRMW result type must match operand");
-  shouldBeIntOrUnreachable(curr->type, curr, "Atomic operations are only valid on int types");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->type,
+                                    curr->value->type,
+                                    curr,
+                                    "AtomicRMW result type must match operand");
+  shouldBeIntOrUnreachable(
+    curr->type, curr, "Atomic operations are only valid on int types");
 }
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-  shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(getModule()->features.hasAtomics(),
+               curr,
+               "Atomic operation (atomics are disabled)");
+  shouldBeFalse(!getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "cmpxchg pointer type must be i32");
-  if (curr->expected->type != unreachable && curr->replacement->type != unreachable) {
-    shouldBeEqual(curr->expected->type, curr->replacement->type, curr, "cmpxchg operand types must match");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "cmpxchg pointer type must be i32");
+  if (curr->expected->type != unreachable &&
+      curr->replacement->type != unreachable) {
+    shouldBeEqual(curr->expected->type,
+                  curr->replacement->type,
+                  curr,
+                  "cmpxchg operand types must match");
   }
-  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->expected->type, curr, "Cmpxchg result type must match expected");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->replacement->type, curr, "Cmpxchg result type must match replacement");
-  shouldBeIntOrUnreachable(curr->expected->type, curr, "Atomic operations are only valid on int types");
+  shouldBeEqualOrFirstIsUnreachable(curr->type,
+                                    curr->expected->type,
+                                    curr,
+                                    "Cmpxchg result type must match expected");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type,
+    curr->replacement->type,
+    curr,
+    "Cmpxchg result type must match replacement");
+  shouldBeIntOrUnreachable(curr->expected->type,
+                           curr,
+                           "Atomic operations are only valid on int types");
 }
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
-  shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWait must have type i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWait pointer type must be i32");
-  shouldBeIntOrUnreachable(curr->expected->type, curr, "AtomicWait expected type must be int");
-  shouldBeEqualOrFirstIsUnreachable(curr->expected->type, curr->expectedType, curr, "AtomicWait expected type must match operand");
-  shouldBeEqualOrFirstIsUnreachable(curr->timeout->type, i64, curr, "AtomicWait timeout type must be i64");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(getModule()->features.hasAtomics(),
+               curr,
+               "Atomic operation (atomics are disabled)");
+  shouldBeFalse(!getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, i32, curr, "AtomicWait must have type i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "AtomicWait pointer type must be i32");
+  shouldBeIntOrUnreachable(
+    curr->expected->type, curr, "AtomicWait expected type must be int");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->expected->type,
+    curr->expectedType,
+    curr,
+    "AtomicWait expected type must match operand");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->timeout->type, i64, curr, "AtomicWait timeout type must be i64");
 }
 
-void FunctionValidator::visitAtomicWake(AtomicWake* curr) {
-  shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
-  shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWake must have type i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWake pointer type must be i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->wakeCount->type, i32, curr, "AtomicWake wakeCount type must be i32");
+void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(getModule()->features.hasAtomics(),
+               curr,
+               "Atomic operation (atomics are disabled)");
+  shouldBeFalse(!getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, i32, curr, "AtomicNotify must have type i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "AtomicNotify pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->notifyCount->type,
+    i32,
+    curr,
+    "AtomicNotify notifyCount type must be i32");
+}
+
+void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(getModule()->features.hasAtomics(),
+               curr,
+               "Atomic operation (atomics are disabled)");
+  shouldBeFalse(!getModule()->memory.shared,
+                curr,
+                "Atomic operation with non-shared memory");
+  shouldBeTrue(curr->order == 0,
+               curr,
+               "Currently only sequentially consistent atomics are supported, "
+               "so AtomicFence's order should be 0");
 }
 
 void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
-  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "extract_lane must operate on a v128");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->vec->type, v128, curr, "extract_lane must operate on a v128");
   Type lane_t = none;
   size_t lanes = 0;
   switch (curr->op) {
     case ExtractLaneSVecI8x16:
-    case ExtractLaneUVecI8x16: lane_t = i32; lanes = 16; break;
+    case ExtractLaneUVecI8x16:
+      lane_t = i32;
+      lanes = 16;
+      break;
     case ExtractLaneSVecI16x8:
-    case ExtractLaneUVecI16x8: lane_t = i32; lanes = 8; break;
-    case ExtractLaneVecI32x4: lane_t = i32; lanes = 4; break;
-    case ExtractLaneVecI64x2: lane_t = i64; lanes = 2; break;
-    case ExtractLaneVecF32x4: lane_t = f32; lanes = 4; break;
-    case ExtractLaneVecF64x2: lane_t = f64; lanes = 2; break;
+    case ExtractLaneUVecI16x8:
+      lane_t = i32;
+      lanes = 8;
+      break;
+    case ExtractLaneVecI32x4:
+      lane_t = i32;
+      lanes = 4;
+      break;
+    case ExtractLaneVecI64x2:
+      lane_t = i64;
+      lanes = 2;
+      break;
+    case ExtractLaneVecF32x4:
+      lane_t = f32;
+      lanes = 4;
+      break;
+    case ExtractLaneVecF64x2:
+      lane_t = f64;
+      lanes = 2;
+      break;
   }
-  shouldBeEqualOrFirstIsUnreachable(curr->type, lane_t, curr, "extract_lane must have same type as vector lane");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type,
+    lane_t,
+    curr,
+    "extract_lane must have same type as vector lane");
   shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
 }
 
 void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
-  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "replace_lane must have type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "replace_lane must operate on a v128");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, v128, curr, "replace_lane must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->vec->type, v128, curr, "replace_lane must operate on a v128");
   Type lane_t = none;
   size_t lanes = 0;
   switch (curr->op) {
-    case ReplaceLaneVecI8x16: lane_t = i32; lanes = 16; break;
-    case ReplaceLaneVecI16x8: lane_t = i32; lanes = 8; break;
-    case ReplaceLaneVecI32x4: lane_t = i32; lanes = 4; break;
-    case ReplaceLaneVecI64x2: lane_t = i64; lanes = 2; break;
-    case ReplaceLaneVecF32x4: lane_t = f32; lanes = 4; break;
-    case ReplaceLaneVecF64x2: lane_t = f64; lanes = 2; break;
+    case ReplaceLaneVecI8x16:
+      lane_t = i32;
+      lanes = 16;
+      break;
+    case ReplaceLaneVecI16x8:
+      lane_t = i32;
+      lanes = 8;
+      break;
+    case ReplaceLaneVecI32x4:
+      lane_t = i32;
+      lanes = 4;
+      break;
+    case ReplaceLaneVecI64x2:
+      lane_t = i64;
+      lanes = 2;
+      break;
+    case ReplaceLaneVecF32x4:
+      lane_t = f32;
+      lanes = 4;
+      break;
+    case ReplaceLaneVecF64x2:
+      lane_t = f64;
+      lanes = 2;
+      break;
   }
-  shouldBeEqualOrFirstIsUnreachable(curr->value->type, lane_t, curr, "unexpected value type");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->value->type, lane_t, curr, "unexpected value type");
   shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
 }
 
 void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
-  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "v128.shuffle must have type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->left->type, v128, curr, "expected operand of type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->right->type, v128, curr, "expected operand of type v128");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, v128, curr, "v128.shuffle must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->left->type, v128, curr, "expected operand of type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->right->type, v128, curr, "expected operand of type v128");
   for (uint8_t index : curr->mask) {
     shouldBeTrue(index < 32, curr, "Invalid lane index in mask");
   }
 }
 
-void FunctionValidator::visitSIMDBitselect(SIMDBitselect* curr) {
-  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "v128.bitselect must have type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->left->type, v128, curr, "expected operand of type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->right->type, v128, curr, "expected operand of type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->cond->type, v128, curr, "expected operand of type v128");
+void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, v128, curr, "SIMD ternary must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->a->type, v128, curr, "expected operand of type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->b->type, v128, curr, "expected operand of type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->c->type, v128, curr, "expected operand of type v128");
 }
 
 void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
-  shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "vector shift must have type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "expected operand of type v128");
-  shouldBeEqualOrFirstIsUnreachable(curr->shift->type, i32, curr, "expected shift amount to have type i32");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, v128, curr, "vector shift must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->vec->type, v128, curr, "expected operand of type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->shift->type, i32, curr, "expected shift amount to have type i32");
+}
+
+void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, v128, curr, "load_splat must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "load_splat address must have type i32");
+  Type memAlignType = none;
+  switch (curr->op) {
+    case LoadSplatVec8x16:
+    case LoadSplatVec16x8:
+    case LoadSplatVec32x4:
+      memAlignType = i32;
+      break;
+    case LoadSplatVec64x2:
+    case LoadExtSVec8x8ToVecI16x8:
+    case LoadExtUVec8x8ToVecI16x8:
+    case LoadExtSVec16x4ToVecI32x4:
+    case LoadExtUVec16x4ToVecI32x4:
+    case LoadExtSVec32x2ToVecI64x2:
+    case LoadExtUVec32x2ToVecI64x2:
+      memAlignType = i64;
+      break;
+  }
+  Index bytes = curr->getMemBytes();
+  validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
-  shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.init must have type none");
-  shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.init dest must be an i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->offset->type, i32, curr, "memory.init offset must be an i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->size->type, i32, curr, "memory.init size must be an i32");
-  shouldBeTrue(curr->segment < getModule()->memory.segments.size(), curr, "memory.init segment index out of bounds");
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "Bulk memory operation (bulk memory is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, none, curr, "memory.init must have type none");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, i32, curr, "memory.init dest must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->offset->type, i32, curr, "memory.init offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, i32, curr, "memory.init size must be an i32");
+  if (!shouldBeTrue(getModule()->memory.exists,
+                    curr,
+                    "Memory operations require a memory")) {
+    return;
+  }
+  shouldBeTrue(curr->segment < getModule()->memory.segments.size(),
+               curr,
+               "memory.init segment index out of bounds");
 }
 
 void FunctionValidator::visitDataDrop(DataDrop* curr) {
-  shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "data.drop must have type none");
-  shouldBeTrue(curr->segment < getModule()->memory.segments.size(), curr, "data.drop segment index out of bounds");
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "Bulk memory operation (bulk memory is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, none, curr, "data.drop must have type none");
+  if (!shouldBeTrue(getModule()->memory.exists,
+                    curr,
+                    "Memory operations require a memory")) {
+    return;
+  }
+  shouldBeTrue(curr->segment < getModule()->memory.segments.size(),
+               curr,
+               "data.drop segment index out of bounds");
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
-  shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.copy must have type none");
-  shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.copy dest must be an i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->source->type, i32, curr, "memory.copy source must be an i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->size->type, i32, curr, "memory.copy size must be an i32");
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "Bulk memory operation (bulk memory is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, none, curr, "memory.copy must have type none");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, i32, curr, "memory.copy dest must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->source->type, i32, curr, "memory.copy source must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, i32, curr, "memory.copy size must be an i32");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
-  shouldBeTrue(info.features.hasBulkMemory(), curr, "Bulk memory operation (bulk memory is disabled)");
-  shouldBeEqualOrFirstIsUnreachable(curr->type, none, curr, "memory.fill must have type none");
-  shouldBeEqualOrFirstIsUnreachable(curr->dest->type, i32, curr, "memory.fill dest must be an i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->value->type, i32, curr, "memory.fill value must be an i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->size->type, i32, curr, "memory.fill size must be an i32");
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "Bulk memory operation (bulk memory is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, none, curr, "memory.fill must have type none");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, i32, curr, "memory.fill dest must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->value->type, i32, curr, "memory.fill value must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, i32, curr, "memory.fill size must be an i32");
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
 }
 
-void FunctionValidator::validateMemBytes(uint8_t bytes, Type type, Expression* curr) {
+void FunctionValidator::validateMemBytes(uint8_t bytes,
+                                         Type type,
+                                         Expression* curr) {
   switch (type) {
-    case i32: shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4, curr, "expected i32 operation to touch 1, 2, or 4 bytes"); break;
-    case i64: shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4 || bytes == 8, curr, "expected i64 operation to touch 1, 2, 4, or 8 bytes"); break;
-    case f32: shouldBeEqual(bytes, uint8_t(4), curr, "expected f32 operation to touch 4 bytes"); break;
-    case f64: shouldBeEqual(bytes, uint8_t(8), curr, "expected f64 operation to touch 8 bytes"); break;
-    case v128: shouldBeEqual(bytes, uint8_t(16), curr, "expected v128 operation to touch 16 bytes"); break;
-    case none: WASM_UNREACHABLE();
-    case unreachable: break;
+    case i32:
+      shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4,
+                   curr,
+                   "expected i32 operation to touch 1, 2, or 4 bytes");
+      break;
+    case i64:
+      shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4 || bytes == 8,
+                   curr,
+                   "expected i64 operation to touch 1, 2, 4, or 8 bytes");
+      break;
+    case f32:
+      shouldBeEqual(
+        bytes, uint8_t(4), curr, "expected f32 operation to touch 4 bytes");
+      break;
+    case f64:
+      shouldBeEqual(
+        bytes, uint8_t(8), curr, "expected f64 operation to touch 8 bytes");
+      break;
+    case v128:
+      shouldBeEqual(
+        bytes, uint8_t(16), curr, "expected v128 operation to touch 16 bytes");
+      break;
+    case anyref: // anyref cannot be stored in memory
+    case exnref: // exnref cannot be stored in memory
+    case none:
+      WASM_UNREACHABLE();
+    case unreachable:
+      break;
   }
 }
 
 void FunctionValidator::visitBinary(Binary* curr) {
   if (curr->left->type != unreachable && curr->right->type != unreachable) {
-    shouldBeEqual(curr->left->type, curr->right->type, curr, "binary child types must be equal");
+    shouldBeEqual(curr->left->type,
+                  curr->right->type,
+                  curr,
+                  "binary child types must be equal");
   }
   switch (curr->op) {
     case AddInt32:
@@ -821,6 +1331,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case AndVec128:
     case OrVec128:
     case XorVec128:
+    case AndNotVec128:
     case AddVecI8x16:
     case AddSatSVecI8x16:
     case AddSatUVecI8x16:
@@ -828,6 +1339,10 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case SubSatSVecI8x16:
     case SubSatUVecI8x16:
     case MulVecI8x16:
+    case MinSVecI8x16:
+    case MinUVecI8x16:
+    case MaxSVecI8x16:
+    case MaxUVecI8x16:
     case AddVecI16x8:
     case AddSatSVecI16x8:
     case AddSatUVecI16x8:
@@ -835,9 +1350,18 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case SubSatSVecI16x8:
     case SubSatUVecI16x8:
     case MulVecI16x8:
+    case MinSVecI16x8:
+    case MinUVecI16x8:
+    case MaxSVecI16x8:
+    case MaxUVecI16x8:
     case AddVecI32x4:
     case SubVecI32x4:
     case MulVecI32x4:
+    case MinSVecI32x4:
+    case MinUVecI32x4:
+    case MaxSVecI32x4:
+    case MaxUVecI32x4:
+    case DotSVecI16x8ToVecI32x4:
     case AddVecI64x2:
     case SubVecI64x2:
     case AddVecF32x4:
@@ -851,30 +1375,47 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MulVecF64x2:
     case DivVecF64x2:
     case MinVecF64x2:
-    case MaxVecF64x2:  {
-      shouldBeEqualOrFirstIsUnreachable(curr->left->type, v128, curr, "v128 op");
-      shouldBeEqualOrFirstIsUnreachable(curr->right->type, v128, curr, "v128 op");
+    case MaxVecF64x2:
+    case NarrowSVecI16x8ToVecI8x16:
+    case NarrowUVecI16x8ToVecI8x16:
+    case NarrowSVecI32x4ToVecI16x8:
+    case NarrowUVecI32x4ToVecI16x8:
+    case SwizzleVec8x16: {
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->left->type, v128, curr, "v128 op");
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->right->type, v128, curr, "v128 op");
       break;
     }
-    case InvalidBinary: WASM_UNREACHABLE();
+    case InvalidBinary:
+      WASM_UNREACHABLE();
   }
-  shouldBeTrue(Features::get(curr->op) <= info.features, curr, "all used features should be allowed");
+  shouldBeTrue(Features::get(curr->op) <= getModule()->features,
+               curr,
+               "all used features should be allowed");
 }
 
 void FunctionValidator::visitUnary(Unary* curr) {
-  shouldBeUnequal(curr->value->type, none, curr, "unaries must not receive a none as their input");
-  if (curr->value->type == unreachable) return; // nothing to check
+  shouldBeUnequal(curr->value->type,
+                  none,
+                  curr,
+                  "unaries must not receive a none as their input");
+  if (curr->value->type == unreachable) {
+    return; // nothing to check
+  }
   switch (curr->op) {
     case ClzInt32:
     case CtzInt32:
     case PopcntInt32: {
-      shouldBeEqual(curr->value->type, i32, curr, "i32 unary value type must be correct");
+      shouldBeEqual(
+        curr->value->type, i32, curr, "i32 unary value type must be correct");
       break;
     }
     case ClzInt64:
     case CtzInt64:
     case PopcntInt64: {
-      shouldBeEqual(curr->value->type, i64, curr, "i64 unary value type must be correct");
+      shouldBeEqual(
+        curr->value->type, i64, curr, "i64 unary value type must be correct");
       break;
     }
     case NegFloat32:
@@ -884,7 +1425,8 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case TruncFloat32:
     case NearestFloat32:
     case SqrtFloat32: {
-      shouldBeEqual(curr->value->type, f32, curr, "f32 unary value type must be correct");
+      shouldBeEqual(
+        curr->value->type, f32, curr, "f32 unary value type must be correct");
       break;
     }
     case NegFloat64:
@@ -894,7 +1436,8 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case TruncFloat64:
     case NearestFloat64:
     case SqrtFloat64: {
-      shouldBeEqual(curr->value->type, f64, curr, "f64 unary value type must be correct");
+      shouldBeEqual(
+        curr->value->type, f64, curr, "f64 unary value type must be correct");
       break;
     }
     case EqZInt32: {
@@ -909,13 +1452,15 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case ExtendUInt32:
     case ExtendS8Int32:
     case ExtendS16Int32: {
-      shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct");
+      shouldBeEqual(
+        curr->value->type, i32, curr, "extend type must be correct");
       break;
     }
     case ExtendS8Int64:
     case ExtendS16Int64:
     case ExtendS32Int64: {
-      shouldBeEqual(curr->value->type, i64, curr, "extend type must be correct");
+      shouldBeEqual(
+        curr->value->type, i64, curr, "extend type must be correct");
       break;
     }
     case WrapInt64: {
@@ -951,41 +1496,49 @@ void FunctionValidator::visitUnary(Unary* curr) {
       break;
     }
     case ReinterpretFloat32: {
-      shouldBeEqual(curr->value->type, f32, curr, "reinterpret/f32 type must be correct");
+      shouldBeEqual(
+        curr->value->type, f32, curr, "reinterpret/f32 type must be correct");
       break;
     }
     case ReinterpretFloat64: {
-      shouldBeEqual(curr->value->type, f64, curr, "reinterpret/f64 type must be correct");
+      shouldBeEqual(
+        curr->value->type, f64, curr, "reinterpret/f64 type must be correct");
       break;
     }
     case ConvertUInt32ToFloat32:
     case ConvertUInt32ToFloat64:
     case ConvertSInt32ToFloat32:
     case ConvertSInt32ToFloat64: {
-      shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct");
+      shouldBeEqual(
+        curr->value->type, i32, curr, "convert type must be correct");
       break;
     }
     case ConvertUInt64ToFloat32:
     case ConvertUInt64ToFloat64:
     case ConvertSInt64ToFloat32:
     case ConvertSInt64ToFloat64: {
-      shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct");
+      shouldBeEqual(
+        curr->value->type, i64, curr, "convert type must be correct");
       break;
     }
     case PromoteFloat32: {
-      shouldBeEqual(curr->value->type, f32, curr, "promote type must be correct");
+      shouldBeEqual(
+        curr->value->type, f32, curr, "promote type must be correct");
       break;
     }
     case DemoteFloat64: {
-      shouldBeEqual(curr->value->type, f64, curr, "demote type must be correct");
+      shouldBeEqual(
+        curr->value->type, f64, curr, "demote type must be correct");
       break;
     }
     case ReinterpretInt32: {
-      shouldBeEqual(curr->value->type, i32, curr, "reinterpret/i32 type must be correct");
+      shouldBeEqual(
+        curr->value->type, i32, curr, "reinterpret/i32 type must be correct");
       break;
     }
     case ReinterpretInt64: {
-      shouldBeEqual(curr->value->type, i64, curr, "reinterpret/i64 type must be correct");
+      shouldBeEqual(
+        curr->value->type, i64, curr, "reinterpret/i64 type must be correct");
       break;
     }
     case SplatVecI8x16:
@@ -1025,6 +1578,14 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case ConvertUVecI32x4ToVecF32x4:
     case ConvertSVecI64x2ToVecF64x2:
     case ConvertUVecI64x2ToVecF64x2:
+    case WidenLowSVecI8x16ToVecI16x8:
+    case WidenHighSVecI8x16ToVecI16x8:
+    case WidenLowUVecI8x16ToVecI16x8:
+    case WidenHighUVecI8x16ToVecI16x8:
+    case WidenLowSVecI16x8ToVecI32x4:
+    case WidenHighSVecI16x8ToVecI32x4:
+    case WidenLowUVecI16x8ToVecI32x4:
+    case WidenHighUVecI16x8ToVecI32x4:
       shouldBeEqual(curr->type, v128, curr, "expected v128 type");
       shouldBeEqual(curr->value->type, v128, curr, "expected v128 operand");
       break;
@@ -1036,25 +1597,39 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case AllTrueVecI32x4:
     case AnyTrueVecI64x2:
     case AllTrueVecI64x2:
-      shouldBeEqual(curr->type, i32, curr, "expected boolean reduction to have i32 type");
+      shouldBeEqual(
+        curr->type, i32, curr, "expected boolean reduction to have i32 type");
       shouldBeEqual(curr->value->type, v128, curr, "expected v128 operand");
       break;
-    case InvalidUnary: WASM_UNREACHABLE();
+    case InvalidUnary:
+      WASM_UNREACHABLE();
   }
-  shouldBeTrue(Features::get(curr->op) <= info.features, curr, "all used features should be allowed");
+  shouldBeTrue(Features::get(curr->op) <= getModule()->features,
+               curr,
+               "all used features should be allowed");
 }
 
 void FunctionValidator::visitSelect(Select* curr) {
   shouldBeUnequal(curr->ifTrue->type, none, curr, "select left must be valid");
-  shouldBeUnequal(curr->ifFalse->type, none, curr, "select right must be valid");
-  shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "select condition must be valid");
+  shouldBeUnequal(
+    curr->ifFalse->type, none, curr, "select right must be valid");
+  shouldBeTrue(curr->condition->type == unreachable ||
+                 curr->condition->type == i32,
+               curr,
+               "select condition must be valid");
   if (curr->ifTrue->type != unreachable && curr->ifFalse->type != unreachable) {
-    shouldBeEqual(curr->ifTrue->type, curr->ifFalse->type, curr, "select sides must be equal");
+    shouldBeEqual(curr->ifTrue->type,
+                  curr->ifFalse->type,
+                  curr,
+                  "select sides must be equal");
   }
 }
 
 void FunctionValidator::visitDrop(Drop* curr) {
-  shouldBeTrue(isConcreteType(curr->value->type) || curr->value->type == unreachable, curr, "can only drop a valid value");
+  shouldBeTrue(isConcreteType(curr->value->type) ||
+                 curr->value->type == unreachable,
+               curr,
+               "can only drop a valid value");
 }
 
 void FunctionValidator::visitReturn(Return* curr) {
@@ -1062,7 +1637,8 @@ void FunctionValidator::visitReturn(Return* curr) {
     if (returnType == unreachable) {
       returnType = curr->value->type;
     } else if (curr->value->type != unreachable) {
-      shouldBeEqual(curr->value->type, returnType, curr, "function results must match");
+      shouldBeEqual(
+        curr->value->type, returnType, curr, "function results must match");
     }
   } else {
     returnType = none;
@@ -1070,42 +1646,159 @@ void FunctionValidator::visitReturn(Return* curr) {
 }
 
 void FunctionValidator::visitHost(Host* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
   switch (curr->op) {
-    case GrowMemory: {
-      shouldBeEqual(curr->operands.size(), size_t(1), curr, "grow_memory must have 1 operand");
-      shouldBeEqualOrFirstIsUnreachable(curr->operands[0]->type, i32, curr, "grow_memory must have i32 operand");
+    case MemoryGrow: {
+      shouldBeEqual(curr->operands.size(),
+                    size_t(1),
+                    curr,
+                    "memory.grow must have 1 operand");
+      shouldBeEqualOrFirstIsUnreachable(curr->operands[0]->type,
+                                        i32,
+                                        curr,
+                                        "memory.grow must have i32 operand");
       break;
     }
-    case CurrentMemory: break;
+    case MemorySize:
+      break;
+  }
+}
+
+void FunctionValidator::visitTry(Try* curr) {
+  if (curr->type != unreachable) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->body->type,
+      curr->type,
+      curr->body,
+      "try's type does not match try body's type");
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->catchBody->type,
+      curr->type,
+      curr->catchBody,
+      "try's type does not match catch's body type");
+  }
+  if (isConcreteType(curr->body->type)) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->catchBody->type,
+      curr->body->type,
+      curr->catchBody,
+      "try's body type must match catch's body type");
+  }
+  if (isConcreteType(curr->catchBody->type)) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->body->type,
+      curr->catchBody->type,
+      curr->body,
+      "try's body type must match catch's body type");
+  }
+}
+
+void FunctionValidator::visitThrow(Throw* curr) {
+  if (!info.validateGlobally) {
+    return;
+  }
+  shouldBeEqual(
+    curr->type, unreachable, curr, "throw's type must be unreachable");
+  auto* event = getModule()->getEventOrNull(curr->event);
+  if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
+    return;
+  }
+  if (!shouldBeTrue(curr->operands.size() == event->params.size(),
+                    curr,
+                    "event's param numbers must match")) {
+    return;
+  }
+  for (size_t i = 0; i < curr->operands.size(); i++) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
+                                           event->params[i],
+                                           curr->operands[i],
+                                           "event param types must match") &&
+        !info.quiet) {
+      getStream() << "(on argument " << i << ")\n";
+    }
+  }
+}
+
+void FunctionValidator::visitRethrow(Rethrow* curr) {
+  shouldBeEqual(
+    curr->type, unreachable, curr, "rethrow's type must be unreachable");
+  shouldBeEqual(curr->exnref->type,
+                exnref,
+                curr->exnref,
+                "rethrow's argument must be exnref type");
+}
+
+void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
+  Event* event = getModule()->getEventOrNull(curr->event);
+  shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
+  shouldBeTrue(event->params == curr->eventParams,
+               curr,
+               "br_on_exn's event params and event's params are different");
+  noteBreak(curr->name, curr->getSingleSentType(), curr);
+  shouldBeTrue(curr->exnref->type == unreachable ||
+                 curr->exnref->type == exnref,
+               curr,
+               "br_on_exn's argument must be unreachable or exnref type");
+  if (curr->exnref->type == unreachable) {
+    shouldBeTrue(curr->type == unreachable,
+                 curr,
+                 "If exnref argument's type is unreachable, br_on_exn should "
+                 "be unreachable too");
+  } else {
+    shouldBeTrue(curr->type == exnref,
+                 curr,
+                 "br_on_exn's type should be exnref unless its exnref argument "
+                 "is unreachable");
   }
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
+  FeatureSet typeFeatures = getFeatures(curr->result);
   for (auto type : curr->params) {
+    typeFeatures |= getFeatures(type);
     shouldBeTrue(isConcreteType(type), curr, "params must be concretely typed");
   }
   for (auto type : curr->vars) {
+    typeFeatures |= getFeatures(type);
     shouldBeTrue(isConcreteType(type), curr, "vars must be concretely typed");
   }
+  shouldBeTrue(typeFeatures <= getModule()->features,
+               curr,
+               "all used types should be allowed");
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
   if (curr->body->type != unreachable) {
-    shouldBeEqual(curr->result, curr->body->type, curr->body, "function body type must match, if function returns");
+    shouldBeEqual(curr->result,
+                  curr->body->type,
+                  curr->body,
+                  "function body type must match, if function returns");
   }
   if (returnType != unreachable) {
-    shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
+    shouldBeEqual(curr->result,
+                  returnType,
+                  curr->body,
+                  "function result must match, if function has returns");
   }
-  shouldBeTrue(breakInfos.empty(), curr->body, "all named break targets must exist");
+  shouldBeTrue(
+    breakInfos.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
-  // if function has a named type, it must match up with the function's params and result
+  // if function has a named type, it must match up with the function's params
+  // and result
   if (info.validateGlobally && curr->type.is()) {
     auto* ft = getModule()->getFunctionType(curr->type);
-    shouldBeTrue(ft->params == curr->params, curr->name, "function params must match its declared type");
-    shouldBeTrue(ft->result == curr->result, curr->name, "function result must match its declared type");
+    shouldBeTrue(ft->params == curr->params,
+                 curr->name,
+                 "function params must match its declared type");
+    shouldBeTrue(ft->result == curr->result,
+                 curr->name,
+                 "function result must match its declared type");
   }
   if (curr->imported()) {
-    shouldBeTrue(curr->type.is(), curr->name, "imported functions must have a function type");
+    shouldBeTrue(curr->type.is(),
+                 curr->name,
+                 "imported functions must have a function type");
   }
   // validate optional local names
   std::set<Name> seen;
@@ -1116,9 +1809,13 @@ void FunctionValidator::visitFunction(Function* curr) {
 }
 
 static bool checkOffset(Expression* curr, Address add, Address max) {
-  if (curr->is<GetGlobal>()) return true;
+  if (curr->is<GlobalGet>()) {
+    return true;
+  }
   auto* c = curr->dynCast<Const>();
-  if (!c) return false;
+  if (!c) {
+    return false;
+  }
   uint64_t raw = c->value.getInteger();
   if (raw > std::numeric_limits<Address::address_t>::max()) {
     return false;
@@ -1130,10 +1827,13 @@ static bool checkOffset(Expression* curr, Address add, Address max) {
   return offset + add <= max;
 }
 
-void FunctionValidator::validateAlignment(size_t align, Type type, Index bytes,
-                                      bool isAtomic, Expression* curr) {
+void FunctionValidator::validateAlignment(
+  size_t align, Type type, Index bytes, bool isAtomic, Expression* curr) {
   if (isAtomic) {
-    shouldBeEqual(align, (size_t)bytes, curr, "atomic accesses must have natural alignment");
+    shouldBeEqual(align,
+                  (size_t)bytes,
+                  curr,
+                  "atomic accesses must have natural alignment");
     return;
   }
   switch (align) {
@@ -1141,8 +1841,9 @@ void FunctionValidator::validateAlignment(size_t align, Type type, Index bytes,
     case 2:
     case 4:
     case 8:
-    case 16: break;
-    default:{
+    case 16:
+      break;
+    default: {
       info.fail("bad alignment: " + std::to_string(align), curr, getFunction());
       break;
     }
@@ -1160,13 +1861,19 @@ void FunctionValidator::validateAlignment(size_t align, Type type, Index bytes,
       break;
     }
     case v128:
-    case unreachable: break;
-    case none: WASM_UNREACHABLE();
+    case unreachable:
+      break;
+    case anyref: // anyref cannot be stored in memory
+    case exnref: // exnref cannot be stored in memory
+    case none:
+      WASM_UNREACHABLE();
   }
 }
 
 static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
-  struct BinaryenIRValidator : public PostWalker<BinaryenIRValidator, UnifiedExpressionVisitor<BinaryenIRValidator>> {
+  struct BinaryenIRValidator
+    : public PostWalker<BinaryenIRValidator,
+                        UnifiedExpressionVisitor<BinaryenIRValidator>> {
     ValidationInfo& info;
 
     std::unordered_set<Expression*> seen;
@@ -1175,7 +1882,8 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
     void visitExpression(Expression* curr) {
       auto scope = getFunction() ? getFunction()->name : Name("(global scope)");
-      // check if a node type is 'stale', i.e., we forgot to finalize() the node.
+      // check if a node type is 'stale', i.e., we forgot to finalize() the
+      // node.
       auto oldType = curr->type;
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
@@ -1185,21 +1893,25 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         //
         //  (drop (block (result i32) (unreachable)))
         //
-        // The block has an added type, not derived from the ast itself, so it is
-        // ok for it to be either i32 or unreachable.
+        // The block has an added type, not derived from the ast itself, so it
+        // is ok for it to be either i32 or unreachable.
         if (!(isConcreteType(oldType) && newType == unreachable)) {
           std::ostringstream ss;
-          ss << "stale type found in " << scope << " on " << curr << "\n(marked as " << printType(oldType) << ", should be " << printType(newType) << ")\n";
+          ss << "stale type found in " << scope << " on " << curr
+             << "\n(marked as " << printType(oldType) << ", should be "
+             << printType(newType) << ")\n";
           info.fail(ss.str(), curr, getFunction());
         }
         curr->type = oldType;
       }
-      // check if a node is a duplicate - expressions must not be seen more than once
+      // check if a node is a duplicate - expressions must not be seen more than
+      // once
       bool inserted;
       std::tie(std::ignore, inserted) = seen.insert(curr);
       if (!inserted) {
         std::ostringstream ss;
-        ss << "expression seen more than once in the tree in " << scope << " on " << curr << '\n';
+        ss << "expression seen more than once in the tree in " << scope
+           << " on " << curr << '\n';
         info.fail(ss.str(), curr, getFunction());
       }
     }
@@ -1214,15 +1926,22 @@ static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
     if (info.validateWeb) {
       auto* functionType = module.getFunctionType(curr->type);
-      info.shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
+      info.shouldBeUnequal(functionType->result,
+                           i64,
+                           curr->name,
+                           "Imported function must not have i64 return type");
       for (Type param : functionType->params) {
-        info.shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
+        info.shouldBeUnequal(param,
+                             i64,
+                             curr->name,
+                             "Imported function must not have i64 parameters");
       }
     }
   });
-  if (!info.features.hasMutableGlobals()) {
+  if (!module.features.hasMutableGlobals()) {
     ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
-      info.shouldBeFalse(curr->mutable_, curr->name, "Imported global cannot be mutable");
+      info.shouldBeFalse(
+        curr->mutable_, curr->name, "Imported global cannot be mutable");
     });
   }
 }
@@ -1232,14 +1951,23 @@ static void validateExports(Module& module, ValidationInfo& info) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
         Function* f = module.getFunction(curr->value);
-        info.shouldBeUnequal(f->result, i64, f->name, "Exported function must not have i64 return type");
+        info.shouldBeUnequal(f->result,
+                             i64,
+                             f->name,
+                             "Exported function must not have i64 return type");
         for (auto param : f->params) {
-          info.shouldBeUnequal(param, i64, f->name, "Exported function must not have i64 parameters");
+          info.shouldBeUnequal(
+            param,
+            i64,
+            f->name,
+            "Exported function must not have i64 parameters");
         }
       }
-    } else if (curr->kind == ExternalKind::Global && !info.features.hasMutableGlobals()) {
+    } else if (curr->kind == ExternalKind::Global &&
+               !module.features.hasMutableGlobals()) {
       if (Global* g = module.getGlobalOrNull(curr->value)) {
-        info.shouldBeFalse(g->mutable_, g->name, "Exported global cannot be mutable");
+        info.shouldBeFalse(
+          g->mutable_, g->name, "Exported global cannot be mutable");
       }
     }
   }
@@ -1247,27 +1975,52 @@ static void validateExports(Module& module, ValidationInfo& info) {
   for (auto& exp : module.exports) {
     Name name = exp->value;
     if (exp->kind == ExternalKind::Function) {
-      info.shouldBeTrue(module.getFunctionOrNull(name), name, "module function exports must be found");
+      info.shouldBeTrue(module.getFunctionOrNull(name),
+                        name,
+                        "module function exports must be found");
     } else if (exp->kind == ExternalKind::Global) {
-      info.shouldBeTrue(module.getGlobalOrNull(name), name, "module global exports must be found");
+      info.shouldBeTrue(module.getGlobalOrNull(name),
+                        name,
+                        "module global exports must be found");
     } else if (exp->kind == ExternalKind::Table) {
-      info.shouldBeTrue(name == Name("0") || name == module.table.name, name, "module table exports must be found");
+      info.shouldBeTrue(name == Name("0") || name == module.table.name,
+                        name,
+                        "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
-      info.shouldBeTrue(name == Name("0") || name == module.memory.name, name, "module memory exports must be found");
+      info.shouldBeTrue(name == Name("0") || name == module.memory.name,
+                        name,
+                        "module memory exports must be found");
+    } else if (exp->kind == ExternalKind::Event) {
+      info.shouldBeTrue(module.getEventOrNull(name),
+                        name,
+                        "module event exports must be found");
     } else {
       WASM_UNREACHABLE();
     }
     Name exportName = exp->name;
-    info.shouldBeFalse(exportNames.count(exportName) > 0, exportName, "module exports must be unique");
+    info.shouldBeFalse(exportNames.count(exportName) > 0,
+                       exportName,
+                       "module exports must be unique");
     exportNames.insert(exportName);
   }
 }
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
-    info.shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
-    info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
-    if (!info.shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !info.quiet) {
+    info.shouldBeTrue(getFeatures(curr->type) <= module.features,
+                      curr->name,
+                      "all used types should be allowed");
+    info.shouldBeTrue(
+      curr->init != nullptr, curr->name, "global init must be non-null");
+    assert(curr->init);
+    info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GlobalGet>(),
+                      curr->name,
+                      "global init must be valid");
+    if (!info.shouldBeEqual(curr->type,
+                            curr->init->type,
+                            curr->init,
+                            "global init must have correct type") &&
+        !info.quiet) {
       info.getStream(nullptr) << "(on global " << curr->name << ")\n";
     }
   });
@@ -1275,24 +2028,59 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 
 static void validateMemory(Module& module, ValidationInfo& info) {
   auto& curr = module.memory;
-  info.shouldBeFalse(curr.initial > curr.max, "memory", "memory max >= initial");
-  info.shouldBeTrue(!curr.hasMax() || curr.max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB, or unlimited");
-  info.shouldBeTrue(!curr.shared || curr.hasMax(), "memory", "shared memory must have max size");
-  if (curr.shared) info.shouldBeTrue(info.features.hasAtomics(), "memory", "memory is shared, but atomics are disabled");
+  info.shouldBeFalse(
+    curr.initial > curr.max, "memory", "memory max >= initial");
+  info.shouldBeTrue(curr.initial <= Memory::kMaxSize,
+                    "memory",
+                    "initial memory must be <= 4GB");
+  info.shouldBeTrue(!curr.hasMax() || curr.max <= Memory::kMaxSize,
+                    "memory",
+                    "max memory must be <= 4GB, or unlimited");
+  info.shouldBeTrue(!curr.shared || curr.hasMax(),
+                    "memory",
+                    "shared memory must have max size");
+  if (curr.shared) {
+    info.shouldBeTrue(module.features.hasAtomics(),
+                      "memory",
+                      "memory is shared, but atomics are disabled");
+  }
   for (auto& segment : curr.segments) {
-    if (!info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;
-    info.shouldBeTrue(checkOffset(segment.offset, segment.data.size(), curr.initial * Memory::kPageSize), segment.offset, "segment offset should be reasonable");
     Index size = segment.data.size();
+    if (segment.isPassive) {
+      info.shouldBeTrue(module.features.hasBulkMemory(),
+                        segment.offset,
+                        "nonzero segment flags (bulk memory is disabled)");
+      info.shouldBeEqual(segment.offset,
+                         (Expression*)nullptr,
+                         segment.offset,
+                         "passive segment should not have an offset");
+    } else {
+      if (!info.shouldBeEqual(segment.offset->type,
+                              i32,
+                              segment.offset,
+                              "segment offset should be i32")) {
+        continue;
+      }
+      info.shouldBeTrue(checkOffset(segment.offset,
+                                    segment.data.size(),
+                                    curr.initial * Memory::kPageSize),
+                        segment.offset,
+                        "segment offset should be reasonable");
+      if (segment.offset->is<Const>()) {
+        Index start = segment.offset->cast<Const>()->value.geti32();
+        Index end = start + size;
+        info.shouldBeTrue(end <= curr.initial * Memory::kPageSize,
+                          segment.data.size(),
+                          "segment size should fit in memory (end)");
+      }
+    }
     // If the memory is imported we don't actually know its initial size.
     // Specifically wasm dll's import a zero sized memory which is perfectly
     // valid.
     if (!curr.imported()) {
-      info.shouldBeTrue(size <= curr.initial * Memory::kPageSize, segment.data.size(), "segment size should fit in memory (initial)");
-    }
-    if (segment.offset->is<Const>()) {
-      Index start = segment.offset->cast<Const>()->value.geti32();
-      Index end = start + size;
-      info.shouldBeTrue(end <= curr.initial * Memory::kPageSize, segment.data.size(), "segment size should fit in memory (end)");
+      info.shouldBeTrue(size <= curr.initial * Memory::kPageSize,
+                        segment.data.size(),
+                        "segment size should fit in memory (initial)");
     }
   }
 }
@@ -1300,11 +2088,46 @@ static void validateMemory(Module& module, ValidationInfo& info) {
 static void validateTable(Module& module, ValidationInfo& info) {
   auto& curr = module.table;
   for (auto& segment : curr.segments) {
-    info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32");
-    info.shouldBeTrue(checkOffset(segment.offset, segment.data.size(), module.table.initial * Table::kPageSize), segment.offset, "segment offset should be reasonable");
+    info.shouldBeEqual(segment.offset->type,
+                       i32,
+                       segment.offset,
+                       "segment offset should be i32");
+    info.shouldBeTrue(checkOffset(segment.offset,
+                                  segment.data.size(),
+                                  module.table.initial * Table::kPageSize),
+                      segment.offset,
+                      "segment offset should be reasonable");
     for (auto name : segment.data) {
-      info.shouldBeTrue(module.getFunctionOrNull(name), name, "segment name should be valid");
+      info.shouldBeTrue(
+        module.getFunctionOrNull(name), name, "segment name should be valid");
     }
+  }
+}
+
+static void validateEvents(Module& module, ValidationInfo& info) {
+  if (!module.events.empty()) {
+    info.shouldBeTrue(module.features.hasExceptionHandling(),
+                      module.events[0]->name,
+                      "Module has events (event-handling is disabled)");
+  }
+  for (auto& curr : module.events) {
+    info.shouldBeTrue(
+      curr->type.is(), curr->name, "Event should have a valid type");
+    FunctionType* ft = module.getFunctionType(curr->type);
+    info.shouldBeEqual(
+      ft->result, none, curr->name, "Event type's result type should be none");
+    info.shouldBeEqual(curr->attribute,
+                       (unsigned)0,
+                       curr->attribute,
+                       "Currently only attribute 0 is supported");
+    for (auto type : curr->params) {
+      info.shouldBeTrue(isIntegerType(type) || isFloatType(type),
+                        curr->name,
+                        "Values in an event should have integer or float type");
+    }
+    info.shouldBeTrue(curr->params == ft->params,
+                      curr->name,
+                      "Event's function type and internal type should match");
   }
 }
 
@@ -1312,27 +2135,27 @@ static void validateModule(Module& module, ValidationInfo& info) {
   // start
   if (module.start.is()) {
     auto func = module.getFunctionOrNull(module.start);
-    if (info.shouldBeTrue(func != nullptr, module.start, "start must be found")) {
-      info.shouldBeTrue(func->params.size() == 0, module.start, "start must have 0 params");
-      info.shouldBeTrue(func->result == none, module.start, "start must not return a value");
+    if (info.shouldBeTrue(
+          func != nullptr, module.start, "start must be found")) {
+      info.shouldBeTrue(
+        func->params.size() == 0, module.start, "start must have 0 params");
+      info.shouldBeTrue(
+        func->result == none, module.start, "start must not return a value");
     }
   }
 }
 
-// TODO: If we want the validator to be part of libwasm rather than libpasses, then
-// Using PassRunner::getPassDebug causes a circular dependence. We should fix that,
-// perhaps by moving some of the pass infrastructure into libsupport.
-bool WasmValidator::validate(Module& module, FeatureSet features, Flags flags) {
+// TODO: If we want the validator to be part of libwasm rather than libpasses,
+// then Using PassRunner::getPassDebug causes a circular dependence. We should
+// fix that, perhaps by moving some of the pass infrastructure into libsupport.
+bool WasmValidator::validate(Module& module, Flags flags) {
   ValidationInfo info;
   info.validateWeb = (flags & Web) != 0;
   info.validateGlobally = (flags & Globally) != 0;
-  info.features = features;
   info.quiet = (flags & Quiet) != 0;
   // parallel wasm logic validation
   PassRunner runner(&module);
-  runner.add<FunctionValidator>(&info);
-  runner.setIsNested(true);
-  runner.run();
+  FunctionValidator(&info).run(&runner, &module);
   // validate globally
   if (info.validateGlobally) {
     validateImports(module, info);
@@ -1340,6 +2163,7 @@ bool WasmValidator::validate(Module& module, FeatureSet features, Flags flags) {
     validateGlobals(module, info);
     validateMemory(module, info);
     validateTable(module, info);
+    validateEvents(module, info);
     validateModule(module, info);
   }
   // validate additional internal IR details when in pass-debug mode

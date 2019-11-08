@@ -25,7 +25,8 @@ namespace wasm {
 typedef uint32_t HashType;
 
 inline HashType rehash(HashType x, HashType y) {
-  // see http://www.cse.yorku.ca/~oz/hash.html and https://stackoverflow.com/a/2595226/1176841
+  // see http://www.cse.yorku.ca/~oz/hash.html and
+  // https://stackoverflow.com/a/2595226/1176841
   HashType hash = 5381;
   while (x) {
     hash = ((hash << 5) + hash) ^ (x & 0xff);

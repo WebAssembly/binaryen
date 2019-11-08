@@ -17,8 +17,8 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
-#include "wasm.h"
 #include "ir/utils.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -28,13 +28,23 @@ namespace FunctionUtils {
 // everything but their name (which can't be the same, in the same
 // module!) - same params, vars, body, result, etc.
 inline bool equal(Function* left, Function* right) {
-  if (left->getNumParams() != right->getNumParams()) return false;
-  if (left->getNumVars() != right->getNumVars()) return false;
-  for (Index i = 0; i < left->getNumLocals(); i++) {
-    if (left->getLocalType(i) != right->getLocalType(i)) return false;
+  if (left->getNumParams() != right->getNumParams()) {
+    return false;
   }
-  if (left->result != right->result) return false;
-  if (left->type != right->type) return false;
+  if (left->getNumVars() != right->getNumVars()) {
+    return false;
+  }
+  for (Index i = 0; i < left->getNumLocals(); i++) {
+    if (left->getLocalType(i) != right->getLocalType(i)) {
+      return false;
+    }
+  }
+  if (left->result != right->result) {
+    return false;
+  }
+  if (left->type != right->type) {
+    return false;
+  }
   if (!left->imported() && !right->imported()) {
     return ExpressionAnalyzer::equal(left->body, right->body);
   }
@@ -46,4 +56,3 @@ inline bool equal(Function* left, Function* right) {
 } // namespace wasm
 
 #endif // wasm_ir_function_h
-

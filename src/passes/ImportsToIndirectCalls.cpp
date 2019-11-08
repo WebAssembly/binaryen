@@ -250,7 +250,7 @@ struct FunctionImportsToIndirectCalls
             auto module = getModule();
 
             Name getter(std::string("g$") + realName.c_str());
-            Expression* fptr = Builder(*module).makeGetGlobal(getter, i32);
+            Expression* fptr = Builder(*module).makeGlobalGet(getter, i32);
 
             auto fnType = module->getFunctionType(func->type);
             auto indirectCall = Builder(*module).makeCallIndirect(fnType, fptr, args);
@@ -273,7 +273,7 @@ struct FunctionImportsToIndirectCalls
             // Global is already added in EmscriptenGlueGenerator::generateAssignGOTEntriesFunction
             auto module = getModule();
             Name getter(std::string("g$") + realName.c_str());
-            Expression* fptr = Builder(*module).makeGetGlobal(getter, i32);
+            Expression* fptr = Builder(*module).makeGlobalGet(getter, i32);
 
             auto fnType = module->getFunctionType(func->type);
             auto indirectCall = Builder(*module).makeCallIndirect(fnType, fptr, args);
@@ -442,10 +442,10 @@ struct ImportsToIndirectCalls : public Pass {
     if (!isSideModule) {
       // Generate the dynamic loaders first. If not, the original imports will
       // be removed by the pass.
-      generator.generateApplyRelocations(mainInfo["imports"]);
+      //generator.generateApplyRelocations(mainInfo["imports"]);
       FunctionImportsToIndirectCalls(mainInfo["imports"]).run(runner, module);
     } else {
-      generator.generatePostInstantiateFunction(mainInfo["exports"]);
+      //generator.generatePostInstantiateFunction(mainInfo["exports"]);
       FunctionImportsToIndirectCalls(mainInfo["exports"]).run(runner, module);
     }
   }

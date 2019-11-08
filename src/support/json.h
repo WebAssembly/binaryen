@@ -50,12 +50,8 @@ struct Value {
     Ref() = default;
     Ref(Value* value) : std::shared_ptr<Value>(value) {}
 
-    Ref& operator[](size_t x) {
-      return (*this->get())[x];
-    }
-    Ref& operator[](IString x) {
-      return (*this->get())[x];
-    }
+    Ref& operator[](size_t x) { return (*this->get())[x]; }
+    Ref& operator[](IString x) { return (*this->get())[x]; }
   };
 
   enum Type {
@@ -72,7 +68,9 @@ struct Value {
   typedef std::vector<Ref> ArrayStorage;
   typedef std::unordered_map<IString, Ref> ObjectStorage;
 
-#ifdef _MSC_VER // MSVC does not allow unrestricted unions: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
+  // MSVC does not allow unrestricted unions:
+  // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
+#ifdef _MSC_VER
   IString str;
 #endif
   union { // TODO: optimize
@@ -80,29 +78,24 @@ struct Value {
     IString str;
 #endif
     double num = 0;
-    ArrayStorage *arr; // manually allocated/freed
+    ArrayStorage* arr; // manually allocated/freed
     bool boo;
-    ObjectStorage *obj; // manually allocated/freed
+    ObjectStorage* obj; // manually allocated/freed
     Ref ref;
   };
 
   // constructors all copy their input
   Value() {}
-  explicit Value(const char *s) : type(Null) {
-    setString(s);
-  }
-  explicit Value(double n) : type(Null) {
-    setNumber(n);
-  }
-  explicit Value(ArrayStorage &a) : type(Null) {
+  explicit Value(const char* s) : type(Null) { setString(s); }
+  explicit Value(double n) : type(Null) { setNumber(n); }
+  explicit Value(ArrayStorage& a) : type(Null) {
     setArray();
     *arr = a;
   }
-  // no bool constructor - would endanger the double one (int might convert the wrong way)
+  // no bool constructor - would endanger the double one (int might convert the
+  // wrong way)
 
-  ~Value() {
-    free();
-  }
+  ~Value() { free(); }
 
   void free() {
     if (type == Array) {
@@ -116,13 +109,13 @@ struct Value {
     num = 0;
   }
 
-  Value& setString(const char *s) {
+  Value& setString(const char* s) {
     free();
     type = String;
     str.set(s);
     return *this;
   }
-  Value& setString(const IString &s) {
+  Value& setString(const IString& s) {
     free();
     type = String;
     str.set(s);
@@ -134,14 +127,14 @@ struct Value {
     num = n;
     return *this;
   }
-  Value& setArray(ArrayStorage &a) {
+  Value& setArray(ArrayStorage& a) {
     free();
     type = Array;
     arr = new ArrayStorage;
     *arr = a;
     return *this;
   }
-  Value& setArray(size_t size_hint=0) {
+  Value& setArray(size_t size_hint = 0) {
     free();
     type = Array;
     arr = new ArrayStorage;
@@ -153,7 +146,8 @@ struct Value {
     type = Null;
     return *this;
   }
-  Value& setBool(bool b) { // Bool in the name, as otherwise might overload over int
+  Value&
+  setBool(bool b) { // Bool in the name, as otherwise might overload over int
     free();
     type = Bool;
     boo = b;
@@ -168,12 +162,14 @@ struct Value {
 
   bool isString() { return type == String; }
   bool isNumber() { return type == Number; }
-  bool isArray()  { return type == Array; }
-  bool isNull()   { return type == Null; }
-  bool isBool()   { return type == Bool; }
+  bool isArray() { return type == Array; }
+  bool isNull() { return type == Null; }
+  bool isBool() { return type == Bool; }
   bool isObject() { return type == Object; }
 
-  bool isBool(bool b) { return type == Bool && b == boo; } // avoid overloading == as it might overload over int
+  bool isBool(bool b) {
+    return type == Bool && b == boo;
+  } // avoid overloading == as it might overload over int
 
   const char* getCString() {
     assert(isString());
@@ -228,7 +224,9 @@ struct Value {
   }
 
   bool operator==(const Value& other) {
-    if (type != other.type) return false;
+    if (type != other.type) {
+      return false;
+    }
     switch (other.type) {
       case String:
         return str == other.str;
@@ -249,17 +247,23 @@ struct Value {
   }
 
   char* parse(char* curr) {
-    #define is_json_space(x) (x == 32 || x == 9 || x == 10 || x == 13) /* space, tab, linefeed/newline, or return */
-    #define skip() { while (*curr && is_json_space(*curr)) curr++; }
+#define is_json_space(x)                                                       \
+  (x == 32 || x == 9 || x == 10 ||                                             \
+   x == 13) /* space, tab, linefeed/newline, or return */
+#define skip()                                                                 \
+  {                                                                            \
+    while (*curr && is_json_space(*curr))                                      \
+      curr++;                                                                  \
+  }
     skip();
     if (*curr == '"') {
       // String
       curr++;
-      char *close = strchr(curr, '"');
+      char* close = strchr(curr, '"');
       assert(close);
       *close = 0; // end this string, and reuse it straight from the input
       setString(curr);
-      curr = close+1;
+      curr = close + 1;
     } else if (*curr == '[') {
       // Array
       curr++;
@@ -270,7 +274,9 @@ struct Value {
         arr->push_back(temp);
         curr = temp->parse(curr);
         skip();
-        if (*curr == ']') break;
+        if (*curr == ']') {
+          break;
+        }
         assert(*curr == ',');
         curr++;
         skip();
@@ -299,11 +305,11 @@ struct Value {
       while (*curr != '}') {
         assert(*curr == '"');
         curr++;
-        char *close = strchr(curr, '"');
+        char* close = strchr(curr, '"');
         assert(close);
         *close = 0; // end this string, and reuse it straight from the input
         IString key(curr);
-        curr = close+1;
+        curr = close + 1;
         skip();
         assert(*curr == ':');
         curr++;
@@ -312,7 +318,9 @@ struct Value {
         curr = value->parse(curr);
         (*obj)[key] = value;
         skip();
-        if (*curr == '}') break;
+        if (*curr == '}') {
+          break;
+        }
         assert(*curr == ',');
         curr++;
         skip();
@@ -320,14 +328,14 @@ struct Value {
       curr++;
     } else {
       // Number
-      char *after;
+      char* after;
       setNumber(strtod(curr, &after));
       curr = after;
     }
     return curr;
   }
 
-  void stringify(std::ostream &os, bool pretty=false);
+  void stringify(std::ostream& os, bool pretty = false);
 
   // String operations
 
@@ -343,7 +351,9 @@ struct Value {
   void setSize(size_t size) {
     assert(isArray());
     auto old = arr->size();
-    if (old != size) arr->resize(size);
+    if (old != size) {
+      arr->resize(size);
+    }
     if (old < size) {
       for (auto i = old; i < size; i++) {
         (*arr)[i] = Ref(new Value());
@@ -370,7 +380,9 @@ struct Value {
 
   Ref back() {
     assert(isArray());
-    if (arr->size() == 0) return nullptr;
+    if (arr->size() == 0) {
+      return nullptr;
+    }
     return arr->back();
   }
 

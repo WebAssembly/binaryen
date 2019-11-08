@@ -201,7 +201,7 @@
   (memory (import "Mm" "mem") 1 8)
 
   (func (export "grow") (param $a i32) (result i32)
-    (grow_memory (local.get 0))
+    (memory.grow (local.get 0))
   )
 )
 

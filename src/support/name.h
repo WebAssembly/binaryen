@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_support_string_h
-#define wasm_support_string_h
+#ifndef wasm_support_name_h
+#define wasm_support_name_h
 
 #include <cstring>
 
@@ -41,7 +41,8 @@ struct Name : public cashew::IString {
 
   friend std::ostream& operator<<(std::ostream& o, Name name) {
     if (name.str) {
-      return o << '$' << name.str; // reference interpreter requires we prefix all names
+      // reference interpreter requires we prefix all names
+      return o << '$' << name.str;
     } else {
       return o << "(null Name)";
     }
@@ -64,5 +65,4 @@ template<> struct hash<wasm::Name> : hash<cashew::IString> {};
 
 } // namespace std
 
-
-#endif // wasm_support_string_h
+#endif // wasm_support_name_h

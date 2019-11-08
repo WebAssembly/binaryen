@@ -1,0 +1,27 @@
+(module
+ (type $FUNCSIG$v (func))
+ (memory $0 (shared 1 1))
+ (func $test (; 0 ;) (type $FUNCSIG$v)
+  (i32.load
+   (unreachable)
+  )
+  (f32.store
+   (unreachable)
+   (f32.const 0)
+  )
+  (i32.atomic.rmw.add
+   (unreachable)
+   (i64.const 0)
+  )
+  (i32.atomic.rmw.cmpxchg
+   (unreachable)
+   (i64.const 0)
+   (i64.const 1)
+  )
+  (i64.atomic.wait
+   (unreachable)
+   (i64.const 0)
+   (i64.const 0)
+  )
+ )
+)

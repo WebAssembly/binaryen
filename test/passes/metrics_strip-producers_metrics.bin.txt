@@ -1,10 +1,20 @@
 total
+ [events]       : 0       
+ [exports]      : 1       
  [funcs]        : 1       
+ [globals]      : 0       
+ [imports]      : 0       
  [total]        : 1       
+ [vars]         : 0       
  nop            : 1       
 total
+ [events]       : 0       
+ [exports]      : 1       
  [funcs]        : 1       
+ [globals]      : 0       
+ [imports]      : 0       
  [total]        : 1       
+ [vars]         : 0       
  nop            : 1       
 (module
  (type $0 (func))

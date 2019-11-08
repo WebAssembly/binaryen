@@ -6,6 +6,7 @@ SET(wasm_SOURCES
   wasm-interpreter.cpp
   wasm-io.cpp
   wasm-s-parser.cpp
+  wasm-stack.cpp
   wasm-type.cpp
   wasm-validator.cpp
 )

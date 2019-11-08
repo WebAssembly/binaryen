@@ -15,47 +15,16 @@
  */
 
 //
-// Flattens code, removing nesting.e.g. an if return value would be
-// converted to a local
-//
-//  (i32.add
-//    (if (..condition..)
-//      (..if true..)
-//      (..if false..)
-//    )
-//    (i32.const 1)
-//  )
-// =>
-//  (if (..condition..)
-//    (local.set $temp
-//      (..if true..)
-//    )
-//    (local.set $temp
-//      (..if false..)
-//    )
-//  )
-//  (i32.add
-//    (local.get $temp)
-//    (i32.const 1)
-//  )
-//
-// Formally, this pass flattens in the precise sense of
-// making the AST have these properties:
-//
-//  1. The operands of an instruction must be a local.get or a const.
-//     anything else is written to a local earlier.
-//  2. Disallow block, loop, and if return values, i.e., do not use
-//     control flow to pass around values.
-//  3. Disallow local.tee, setting a local is always done in a local.set
-//     on a non-nested-expression location.
+// Flattens code into "Flat IR" form. See ir/flat.h.
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/flat.h>
 #include <ir/utils.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -74,12 +43,15 @@ namespace wasm {
 // Once exception is that we allow an (unreachable) node, which is used
 // when we move something unreachable to another place, and need a
 // placeholder. We will never reach that (unreachable) anyhow
-struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
+struct Flatten
+  : public WalkerPass<
+      ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Flatten; }
 
-  // For each expression, a bunch of expressions that should execute right before it
+  // For each expression, a bunch of expressions that should execute right
+  // before it
   std::unordered_map<Expression*, std::vector<Expression*>> preludes;
 
   // Break values are sent through a temp local
@@ -89,10 +61,12 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
-    if (isControlFlowStructure(curr)) {
+    if (Flat::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
-      assert(preludes.find(curr) == preludes.end()); // no one should have given us preludes, they are on the children
+
+      // no one should have given us preludes, they are on the children
+      assert(preludes.find(curr) == preludes.end());
       if (auto* block = curr->dynCast<Block>()) {
         // make a new list, where each item's preludes are added before it
         ExpressionList newList(getModule()->allocator);
@@ -121,11 +95,11 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
           }
           auto*& last = block->list.back();
           if (isConcreteType(last->type)) {
-            last = builder.makeSetLocal(temp, last);
+            last = builder.makeLocalSet(temp, last);
           }
           block->finalize(none);
           // and we leave just a get of the value
-          auto* rep = builder.makeGetLocal(temp, type);
+          auto* rep = builder.makeLocalGet(temp, type);
           replaceCurrent(rep);
           // the whole block is now a prelude
           ourPreludes.push_back(block);
@@ -143,18 +117,21 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
         if (isConcreteType(type)) {
           Index temp = builder.addVar(getFunction(), type);
           if (isConcreteType(iff->ifTrue->type)) {
-            iff->ifTrue = builder.makeSetLocal(temp, iff->ifTrue);
+            iff->ifTrue = builder.makeLocalSet(temp, iff->ifTrue);
           }
           if (iff->ifFalse && isConcreteType(iff->ifFalse->type)) {
-            iff->ifFalse = builder.makeSetLocal(temp, iff->ifFalse);
+            iff->ifFalse = builder.makeLocalSet(temp, iff->ifFalse);
           }
           // the whole if (+any preludes from the condition) is now a prelude
           prelude = rep;
           // and we leave just a get of the value
-          rep = builder.makeGetLocal(temp, type);
+          rep = builder.makeLocalGet(temp, type);
         }
         iff->ifTrue = getPreludesWithExpression(originalIfTrue, iff->ifTrue);
-        if (iff->ifFalse) iff->ifFalse = getPreludesWithExpression(originalIfFalse, iff->ifFalse);
+        if (iff->ifFalse) {
+          iff->ifFalse =
+            getPreludesWithExpression(originalIfFalse, iff->ifFalse);
+        }
         iff->finalize();
         if (prelude) {
           ReFinalizeNode().visit(prelude);
@@ -168,9 +145,9 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
         auto type = loop->type;
         if (isConcreteType(type)) {
           Index temp = builder.addVar(getFunction(), type);
-          loop->body = builder.makeSetLocal(temp, loop->body);
+          loop->body = builder.makeLocalSet(temp, loop->body);
           // and we leave just a get of the value
-          rep = builder.makeGetLocal(temp, type);
+          rep = builder.makeLocalGet(temp, type);
           // the whole if is now a prelude
           ourPreludes.push_back(loop);
           loop->type = none;
@@ -188,7 +165,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
         ourPreludes.swap(iter->second);
       }
       // special handling
-      if (auto* set = curr->dynCast<SetLocal>()) {
+      if (auto* set = curr->dynCast<LocalSet>()) {
         if (set->isTee()) {
           // we disallow local.tee
           if (set->value->type == unreachable) {
@@ -197,7 +174,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
             // use a set in a prelude + a get
             set->setTee(false);
             ourPreludes.push_back(set);
-            replaceCurrent(builder.makeGetLocal(set->index, set->value->type));
+            replaceCurrent(builder.makeLocalGet(set->index, set->value->type));
           }
         }
       } else if (auto* br = curr->dynCast<Break>()) {
@@ -206,12 +183,12 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
           if (isConcreteType(type)) {
             // we are sending a value. use a local instead
             Index temp = getTempForBreakTarget(br->name, type);
-            ourPreludes.push_back(builder.makeSetLocal(temp, br->value));
+            ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
               if (isConcreteType(br->type)) {
-                replaceCurrent(builder.makeGetLocal(temp, type));
+                replaceCurrent(builder.makeLocalGet(temp, type));
               } else {
                 assert(br->type == unreachable);
                 replaceCurrent(builder.makeUnreachable());
@@ -231,14 +208,13 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
           if (isConcreteType(type)) {
             // we are sending a value. use a local instead
             Index temp = builder.addVar(getFunction(), type);
-            ourPreludes.push_back(builder.makeSetLocal(temp, sw->value));
+            ourPreludes.push_back(builder.makeLocalSet(temp, sw->value));
             // we don't know which break target will be hit - assign to them all
             auto names = BranchUtils::getUniqueTargets(sw);
             for (auto name : names) {
-              ourPreludes.push_back(builder.makeSetLocal(
-                getTempForBreakTarget(name, type),
-                builder.makeGetLocal(temp, type)
-              ));
+              ourPreludes.push_back(
+                builder.makeLocalSet(getTempForBreakTarget(name, type),
+                                     builder.makeLocalGet(temp, type)));
             }
             sw->value = nullptr;
             sw->finalize();
@@ -268,14 +244,14 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
         // use a local
         auto type = curr->type;
         Index temp = builder.addVar(getFunction(), type);
-        ourPreludes.push_back(builder.makeSetLocal(temp, curr));
-        replaceCurrent(builder.makeGetLocal(temp, type));
+        ourPreludes.push_back(builder.makeLocalSet(temp, curr));
+        replaceCurrent(builder.makeLocalGet(temp, type));
       }
     }
     // next, finish up: migrate our preludes if we can
     if (!ourPreludes.empty()) {
       auto* parent = getParent();
-      if (parent && !isControlFlowStructure(parent)) {
+      if (parent && !Flat::isControlFlowStructure(parent)) {
         auto& parentPreludes = preludes[parent];
         for (auto* prelude : ourPreludes) {
           parentPreludes.push_back(prelude);
@@ -298,10 +274,6 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
   }
 
 private:
-  bool isControlFlowStructure(Expression* curr) {
-    return curr->is<Block>() || curr->is<If>() || curr->is<Loop>();
-  }
-
   // gets an expression, either by itself, or in a block with its
   // preludes (which we use up) before it
   Expression* getPreludesWithExpression(Expression* curr) {
@@ -310,9 +282,12 @@ private:
 
   // gets an expression, either by itself, or in a block with some
   // preludes (which we use up) for another expression before it
-  Expression* getPreludesWithExpression(Expression* preluder, Expression* after) {
+  Expression* getPreludesWithExpression(Expression* preluder,
+                                        Expression* after) {
     auto iter = preludes.find(preluder);
-    if (iter == preludes.end()) return after;
+    if (iter == preludes.end()) {
+      return after;
+    }
     // we have preludes
     auto& thePreludes = iter->second;
     auto* ret = Builder(*getModule()).makeBlock(thePreludes);
@@ -329,14 +304,12 @@ private:
     if (iter != breakTemps.end()) {
       return iter->second;
     } else {
-      return breakTemps[name] = Builder(*getModule()).addVar(getFunction(), type);
+      return breakTemps[name] =
+               Builder(*getModule()).addVar(getFunction(), type);
     }
   }
 };
 
-Pass *createFlattenPass() {
-  return new Flatten();
-}
+Pass* createFlattenPass() { return new Flatten(); }
 
 } // namespace wasm
-

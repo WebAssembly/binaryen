@@ -89,14 +89,10 @@ public:
   }
 
   // Adds a new user to a node. Called when we add or change a value of a node.
-  void addUser(Node* node, Node* newUser) {
-    users[node].insert(newUser);
-  }
+  void addUser(Node* node, Node* newUser) { users[node].insert(newUser); }
 
   // Remove all uses of a node. Called when a node is being removed.
-  void removeAllUsesOf(Node* node) {
-    users.erase(node);
-  }
+  void removeAllUsesOf(Node* node) { users.erase(node); }
 };
 
 } // namespace DataFlow

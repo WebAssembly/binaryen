@@ -1,19 +1,19 @@
 (module
- (type $0 (func))
- (func $a (; 0 ;) (type $0)
+ (type $FUNCSIG$v (func))
+ (func $a (; 0 ;) (type $FUNCSIG$v)
   (if
    (i32.const 1)
    (unreachable)
   )
  )
- (func $b (; 1 ;) (type $0)
+ (func $b (; 1 ;) (type $FUNCSIG$v)
   (if
    (i32.const 1)
    (unreachable)
    (unreachable)
   )
  )
- (func $a-block (; 2 ;) (type $0)
+ (func $a-block (; 2 ;) (type $FUNCSIG$v)
   (block $block
    (if
     (i32.const 1)
@@ -21,7 +21,7 @@
    )
   )
  )
- (func $b-block (; 3 ;) (type $0)
+ (func $b-block (; 3 ;) (type $FUNCSIG$v)
   (block $block
    (if
     (i32.const 1)
@@ -30,7 +30,7 @@
    )
   )
  )
- (func $a-prepost (; 4 ;) (type $0)
+ (func $a-prepost (; 4 ;) (type $FUNCSIG$v)
   (nop)
   (if
    (i32.const 1)
@@ -38,7 +38,7 @@
   )
   (nop)
  )
- (func $b-prepost (; 5 ;) (type $0)
+ (func $b-prepost (; 5 ;) (type $FUNCSIG$v)
   (nop)
   (if
    (i32.const 1)
@@ -47,7 +47,7 @@
   )
   (nop)
  )
- (func $a-block-prepost (; 6 ;) (type $0)
+ (func $a-block-prepost (; 6 ;) (type $FUNCSIG$v)
   (nop)
   (block $block
    (if
@@ -57,7 +57,7 @@
   )
   (nop)
  )
- (func $b-block-prepost (; 7 ;) (type $0)
+ (func $b-block-prepost (; 7 ;) (type $FUNCSIG$v)
   (nop)
   (block $block
    (if
@@ -68,7 +68,7 @@
   )
   (nop)
  )
- (func $recurse (; 8 ;) (type $0)
+ (func $recurse (; 8 ;) (type $FUNCSIG$v)
   (block $a
    (nop)
    (block $b
@@ -79,7 +79,7 @@
    (nop)
   )
  )
- (func $recurse-b (; 9 ;) (type $0)
+ (func $recurse-b (; 9 ;) (type $FUNCSIG$v)
   (block $a
    (nop)
    (block $b

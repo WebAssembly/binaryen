@@ -21,21 +21,21 @@
 #include <exception>
 
 #include "ir/trapping.h"
+#include "optimization-options.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
 #include "wasm-io.h"
+#include "wasm-printing.h"
 #include "wasm-validator.h"
-#include "optimization-options.h"
 
 #include "asm2wasm.h"
 
 using namespace cashew;
 using namespace wasm;
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[]) {
   bool legalizeJavaScriptFFI = true;
   TrapMode trapMode = TrapMode::JS;
   bool wasmOnly = false;
@@ -44,81 +44,131 @@ int main(int argc, const char *argv[]) {
   std::string symbolMap;
   bool emitBinary = true;
 
-  OptimizationOptions options("asm2wasm", "Translate asm.js files to .wast files");
+  OptimizationOptions options("asm2wasm",
+                              "Translate asm.js files to .wast files");
   options
-      .add("--output", "-o", "Output file (stdout if not specified)",
-           Options::Arguments::One,
-           [](Options *o, const std::string& argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
-      .add("--mapped-globals", "-n", "Mapped globals", Options::Arguments::One,
-           [](Options *o, const std::string& argument) {
-             std::cerr << "warning: the --mapped-globals/-m option is deprecated (a mapped globals file is no longer needed as we use wasm globals)" << std::endl;
-           })
-      .add("--mem-init", "-t", "Import a memory initialization file into the output module", Options::Arguments::One,
-           [](Options *o, const std::string& argument) {
-             o->extra["mem init"] = argument;
-           })
-      .add("--mem-base", "-mb", "Set the location to write the memory initialization (--mem-init) file (GLOBAL_BASE in emscripten). If not provided, the __memory_base global import is used.", Options::Arguments::One,
-           [](Options *o, const std::string& argument) {
-             o->extra["mem base"] = argument;
-           })
-      .add("--mem-max", "-mm", "Set the maximum size of memory in the wasm module (in bytes). -1 means no limit. Without this, TOTAL_MEMORY is used (as it is used for the initial value), or if memory growth is enabled, no limit is set. This overrides both of those.", Options::Arguments::One,
-           [](Options *o, const std::string& argument) {
-             o->extra["mem max"] = argument;
-           })
-      .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
-           [](Options *o, const std::string& argument) {
-             o->extra["total memory"] = argument;
-           })
-      .add("--table-max", "-tM", "Set the maximum size of the table. Without this, it is set depending on how many functions are in the module. -1 means no limit", Options::Arguments::One,
-           [](Options *o, const std::string& argument) {
-             o->extra["table max"] = argument;
-           })
-      .add("--no-opts", "-n", "Disable optimization passes (deprecated)", Options::Arguments::Zero,
-           [](Options *o, const std::string& ) {
-             std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
-           })
-      .add("--trap-mode", "",
-           "Strategy for handling potentially trapping instructions. Valid "
-             "values are \"allow\", \"js\", and \"clamp\"",
-           Options::Arguments::One,
-           [&trapMode](Options *o, const std::string& argument) {
-             try {
-               trapMode = trapModeFromString(argument);
-             } catch (std::invalid_argument& e) {
-               std::cerr << "Error: " << e.what() << "\n";
-               exit(EXIT_FAILURE);
-             }
-           })
-      .add("--wasm-only", "-w", "Input is in WebAssembly-only format, and not actually valid asm.js", Options::Arguments::Zero,
-           [&wasmOnly](Options *o, const std::string& ) {
-             wasmOnly = true;
-           })
-      .add("--no-legalize-javascript-ffi", "-nj", "Do not fully legalize (i64->i32, f32->f64) the imports and exports for interfacing with JS", Options::Arguments::Zero,
-           [&legalizeJavaScriptFFI](Options *o, const std::string& ) {
-             legalizeJavaScriptFFI = false;
-           })
-      .add("--debuginfo", "-g", "Emit names section in wasm binary (or full debuginfo in wast)",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { options.passOptions.debugInfo = true; })
-      .add("--source-map", "-sm", "Emit source map (if using binary output) to the specified file",
-           Options::Arguments::One,
-           [&sourceMapFilename](Options *o, const std::string& argument) { sourceMapFilename = argument; })
-      .add("--source-map-url", "-su", "Use specified string as source map URL",
-           Options::Arguments::One,
-           [&sourceMapUrl](Options *o, const std::string& argument) { sourceMapUrl = argument; })
-      .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
-           Options::Arguments::One,
-           [&](Options *o, const std::string& argument) { symbolMap = argument; })
-      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& argument) { emitBinary = false; })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
+    .add("--output",
+         "-o",
+         "Output file (stdout if not specified)",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["output"] = argument;
+           Colors::setEnabled(false);
+         })
+    .add(
+      "--mapped-globals",
+      "-n",
+      "Mapped globals",
+      Options::Arguments::One,
+      [](Options* o, const std::string& argument) {
+        std::cerr
+          << "warning: the --mapped-globals/-m option is deprecated (a mapped "
+             "globals file is no longer needed as we use wasm globals)"
+          << std::endl;
+      })
+    .add("--mem-init",
+         "-t",
+         "Import a memory initialization file into the output module",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["mem init"] = argument;
+         })
+    .add("--mem-base",
+         "-mb",
+         "Set the location to write the memory initialization (--mem-init) "
+         "file (GLOBAL_BASE in emscripten). If not provided, the __memory_base "
+         "global import is used.",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["mem base"] = argument;
+         })
+    .add("--mem-max",
+         "-mm",
+         "Set the maximum size of memory in the wasm module (in bytes). -1 "
+         "means no limit. Without this, TOTAL_MEMORY is used (as it is used "
+         "for the initial value), or if memory growth is enabled, no limit is "
+         "set. This overrides both of those.",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["mem max"] = argument;
+         })
+    .add("--total-memory",
+         "-m",
+         "Total memory size",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["total memory"] = argument;
+         })
+    .add("--table-max",
+         "-tM",
+         "Set the maximum size of the table. Without this, it is set depending "
+         "on how many functions are in the module. -1 means no limit",
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["table max"] = argument;
+         })
+    .add("--no-opts",
+         "-n",
+         "Disable optimization passes (deprecated)",
+         Options::Arguments::Zero,
+         [](Options* o, const std::string&) {
+           std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
+         })
+    .add("--trap-mode",
+         "",
+         "Strategy for handling potentially trapping instructions. Valid "
+         "values are \"allow\", \"js\", and \"clamp\"",
+         Options::Arguments::One,
+         [&trapMode](Options* o, const std::string& argument) {
+           try {
+             trapMode = trapModeFromString(argument);
+           } catch (std::invalid_argument& e) {
+             std::cerr << "Error: " << e.what() << "\n";
+             exit(EXIT_FAILURE);
+           }
+         })
+    .add("--wasm-only",
+         "-w",
+         "Input is in WebAssembly-only format, and not actually valid asm.js",
+         Options::Arguments::Zero,
+         [&wasmOnly](Options* o, const std::string&) { wasmOnly = true; })
+    .add("--no-legalize-javascript-ffi",
+         "-nj",
+         "Do not fully legalize (i64->i32, f32->f64) the imports and exports "
+         "for interfacing with JS",
+         Options::Arguments::Zero,
+         [&legalizeJavaScriptFFI](Options* o, const std::string&) {
+           legalizeJavaScriptFFI = false;
+         })
+    .add("--source-map",
+         "-sm",
+         "Emit source map (if using binary output) to the specified file",
+         Options::Arguments::One,
+         [&sourceMapFilename](Options* o, const std::string& argument) {
+           sourceMapFilename = argument;
+         })
+    .add("--source-map-url",
+         "-su",
+         "Use specified string as source map URL",
+         Options::Arguments::One,
+         [&sourceMapUrl](Options* o, const std::string& argument) {
+           sourceMapUrl = argument;
+         })
+    .add("--symbolmap",
+         "-s",
+         "Emit a symbol map (indexes => names)",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { symbolMap = argument; })
+    .add("--emit-text",
+         "-S",
+         "Emit text instead of binary for the output file",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { emitBinary = false; })
+    .add_positional("INFILE",
+                    Options::Arguments::One,
+                    [](Options* o, const std::string& argument) {
+                      o->extra["infile"] = argument;
+                    });
   options.parse(argc, argv);
 
   // finalize arguments
@@ -129,32 +179,41 @@ int main(int argc, const char *argv[]) {
 
   if (options.runningDefaultOptimizationPasses()) {
     if (options.passes.size() > 1) {
-      Fatal() << "asm2wasm can only run default optimization passes (-O, -Ox, etc.), and not specific additional passes";
+      Fatal() << "asm2wasm can only run default optimization passes (-O, -Ox, "
+                 "etc.), and not specific additional passes";
     }
   }
 
-  const auto &tm_it = options.extra.find("total memory");
-  size_t totalMemory =
-      tm_it == options.extra.end() ? 16 * 1024 * 1024 : atoll(tm_it->second.c_str());
+  const auto& tm_it = options.extra.find("total memory");
+  size_t totalMemory = tm_it == options.extra.end()
+                         ? 16 * 1024 * 1024
+                         : atoll(tm_it->second.c_str());
   if (totalMemory & ~Memory::kPageMask) {
-    std::cerr << "Error: total memory size " << totalMemory <<
-        " is not a multiple of the 64k wasm page size\n";
+    std::cerr << "Error: total memory size " << totalMemory
+              << " is not a multiple of the 64k wasm page size\n";
     exit(EXIT_FAILURE);
   }
 
   Asm2WasmPreProcessor pre;
   // wasm binaries can contain a names section, but not full debug info --
   // debug info is disabled if a map file is not specified with wasm binary
-  pre.debugInfo = options.passOptions.debugInfo && (!emitBinary || sourceMapFilename.size());
-  auto input(
-      read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
-  char *start = pre.process(input.data());
+  pre.debugInfo =
+    options.passOptions.debugInfo && (!emitBinary || sourceMapFilename.size());
+  auto input(read_file<std::vector<char>>(options.extra["infile"],
+                                          Flags::Text,
+                                          options.debug ? Flags::Debug
+                                                        : Flags::Release));
+  char* start = pre.process(input.data());
 
-  if (options.debug) std::cerr << "parsing..." << std::endl;
+  if (options.debug) {
+    std::cerr << "parsing..." << std::endl;
+  }
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(start);
 
-  if (options.debug) std::cerr << "wasming..." << std::endl;
+  if (options.debug) {
+    std::cerr << "wasming..." << std::endl;
+  }
   Module wasm;
 
   // set up memory
@@ -162,37 +221,48 @@ int main(int argc, const char *argv[]) {
 
   // import mem init file, if provided (do this before compiling the module,
   // since the optimizer should see the memory segments)
-  const auto &memInit = options.extra.find("mem init");
+  const auto& memInit = options.extra.find("mem init");
   if (memInit != options.extra.end()) {
     auto filename = memInit->second.c_str();
-    auto data(read_file<std::vector<char>>(filename, Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
+    auto data(read_file<std::vector<char>>(
+      filename, Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
     // create the memory segment
     Expression* init;
-    const auto &memBase = options.extra.find("mem base");
+    const auto& memBase = options.extra.find("mem base");
     if (memBase == options.extra.end()) {
-      init = Builder(wasm).makeGetGlobal(MEMORY_BASE, i32);
+      init = Builder(wasm).makeGlobalGet(MEMORY_BASE, i32);
     } else {
-      init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
+      init = Builder(wasm).makeConst(
+        Literal(int32_t(atoi(memBase->second.c_str()))));
     }
     wasm.memory.segments.emplace_back(init, data);
   }
 
+  // set up the module's features, needed by optimization and validation passes
+  options.applyFeatures(wasm);
+
   // compile the code
-  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm,
+                           pre,
+                           options.debug,
+                           trapMode,
+                           options.passOptions,
+                           legalizeJavaScriptFFI,
+                           options.runningDefaultOptimizationPasses(),
+                           wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // finalize the imported mem init
   if (memInit != options.extra.end()) {
     if (options.runningDefaultOptimizationPasses()) {
       PassRunner runner(&wasm);
-      runner.setFeatures(options.getFeatures());
       runner.add("memory-packing");
       runner.run();
     }
   }
 
   // Set the max memory size, if requested
-  const auto &memMax = options.extra.find("mem max");
+  const auto& memMax = options.extra.find("mem max");
   if (memMax != options.extra.end()) {
     uint64_t max = strtoull(memMax->second.c_str(), nullptr, 10);
     if (max != uint64_t(-1)) {
@@ -202,7 +272,7 @@ int main(int argc, const char *argv[]) {
     }
   }
   // Set the table sizes, if requested
-  const auto &tableMax = options.extra.find("table max");
+  const auto& tableMax = options.extra.find("table max");
   if (tableMax != options.extra.end()) {
     int max = atoi(tableMax->second.c_str());
     if (max >= 0) {
@@ -213,13 +283,15 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.passOptions.validate) {
-    if (!WasmValidator().validate(wasm, options.passOptions.features)) {
+    if (!WasmValidator().validate(wasm)) {
       WasmPrinter::printModule(&wasm);
       Fatal() << "error in validating output";
     }
   }
 
-  if (options.debug) std::cerr << "emitting..." << std::endl;
+  if (options.debug) {
+    std::cerr << "emitting..." << std::endl;
+  }
   ModuleWriter writer;
   writer.setDebug(options.debug);
   writer.setDebugInfo(options.passOptions.debugInfo);
@@ -231,5 +303,7 @@ int main(int argc, const char *argv[]) {
   }
   writer.write(wasm, options.extra["output"]);
 
-  if (options.debug) std::cerr << "done." << std::endl;
+  if (options.debug) {
+    std::cerr << "done." << std::endl;
+  }
 }

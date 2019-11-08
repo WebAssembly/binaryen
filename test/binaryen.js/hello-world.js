@@ -1,3 +1,6 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
 
 // "hello world" type example: create a function that adds two i32s and
 // returns the result
@@ -11,8 +14,8 @@ var iii = module.addFunctionType('iii', Binaryen.i32, [Binaryen.i32, Binaryen.i3
 
 // Start to create the function, starting with the contents: Get the 0 and
 // 1 arguments, and add them, then return them
-var left = module.getLocal(0, Binaryen.i32);
-var right = module.getLocal(1, Binaryen.i32);
+var left = module.local.get(0, Binaryen.i32);
+var right = module.local.get(1, Binaryen.i32);
 var add = module.i32.add(left, right);
 var ret = module.return(add);
 
@@ -38,6 +41,7 @@ console.log('optimized:\n\n' + module.emitText());
 var binary = module.emitBinary();
 console.log('binary size: ' + binary.length);
 console.log();
+assert(module.validate());
 
 // We don't need the Binaryen module anymore, so we can tell it to
 // clean itself up

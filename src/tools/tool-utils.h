@@ -34,4 +34,3 @@ inline std::string removeSpecificSuffix(std::string str, std::string suffix) {
 }
 
 } // namespace wasm
-

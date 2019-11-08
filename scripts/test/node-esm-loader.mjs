@@ -7,7 +7,9 @@ import Module from 'module';
 const builtins = Module.builtinModules;
 
 const baseURL = new URL('file://');
-baseURL.pathname = `${process.cwd()}/`;
+const binaryen_root = path.dirname(path.dirname(process.cwd()));
+baseURL.pathname = `${binaryen_root}/`;
+
 
 export function resolve(specifier, parentModuleURL = baseURL, defaultResolve) {
   if (builtins.includes(specifier)) {
@@ -16,17 +18,18 @@ export function resolve(specifier, parentModuleURL = baseURL, defaultResolve) {
       format: 'builtin'
     };
   }
-  // Resolve the 'spectest' module to our special module which has some builtins
-  if (specifier == 'spectest') {
-    const resolved = new URL('./scripts/test/spectest.js', parentModuleURL);
+  // Resolve special modules used in our test suite.
+  if (specifier == 'spectest' || specifier == 'env' || specifier == 'mod.ule') {
+    const resolved = new URL('./scripts/test/' + specifier + '.js', baseURL);
     return {
       url: resolved.href,
-      format: 'esm'
+      format: 'module'
     };
   }
+
   const resolved = new URL(specifier, parentModuleURL);
   return {
     url: resolved.href,
-    format: 'esm'
+    format: 'module'
   };
 }

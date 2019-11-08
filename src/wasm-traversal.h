@@ -27,15 +27,15 @@
 #ifndef wasm_wasm_traversal_h
 #define wasm_wasm_traversal_h
 
-#include "wasm.h"
+#include "support/small_vector.h"
 #include "support/threads.h"
+#include "wasm.h"
 
 namespace wasm {
 
 // A generic visitor, defaulting to doing nothing on each visit
 
-template<typename SubType, typename ReturnType = void>
-struct Visitor {
+template<typename SubType, typename ReturnType = void> struct Visitor {
   // Expression visitors
   ReturnType visitBlock(Block* curr) { return ReturnType(); }
   ReturnType visitIf(If* curr) { return ReturnType(); }
@@ -44,21 +44,23 @@ struct Visitor {
   ReturnType visitSwitch(Switch* curr) { return ReturnType(); }
   ReturnType visitCall(Call* curr) { return ReturnType(); }
   ReturnType visitCallIndirect(CallIndirect* curr) { return ReturnType(); }
-  ReturnType visitGetLocal(GetLocal* curr) { return ReturnType(); }
-  ReturnType visitSetLocal(SetLocal* curr) { return ReturnType(); }
-  ReturnType visitGetGlobal(GetGlobal* curr) { return ReturnType(); }
-  ReturnType visitSetGlobal(SetGlobal* curr) { return ReturnType(); }
+  ReturnType visitLocalGet(LocalGet* curr) { return ReturnType(); }
+  ReturnType visitLocalSet(LocalSet* curr) { return ReturnType(); }
+  ReturnType visitGlobalGet(GlobalGet* curr) { return ReturnType(); }
+  ReturnType visitGlobalSet(GlobalSet* curr) { return ReturnType(); }
   ReturnType visitLoad(Load* curr) { return ReturnType(); }
   ReturnType visitStore(Store* curr) { return ReturnType(); }
   ReturnType visitAtomicRMW(AtomicRMW* curr) { return ReturnType(); }
   ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return ReturnType(); }
   ReturnType visitAtomicWait(AtomicWait* curr) { return ReturnType(); }
-  ReturnType visitAtomicWake(AtomicWake* curr) { return ReturnType(); }
+  ReturnType visitAtomicNotify(AtomicNotify* curr) { return ReturnType(); }
+  ReturnType visitAtomicFence(AtomicFence* curr) { return ReturnType(); }
   ReturnType visitSIMDExtract(SIMDExtract* curr) { return ReturnType(); }
   ReturnType visitSIMDReplace(SIMDReplace* curr) { return ReturnType(); }
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return ReturnType(); }
-  ReturnType visitSIMDBitselect(SIMDBitselect* curr) { return ReturnType(); }
+  ReturnType visitSIMDTernary(SIMDTernary* curr) { return ReturnType(); }
   ReturnType visitSIMDShift(SIMDShift* curr) { return ReturnType(); }
+  ReturnType visitSIMDLoad(SIMDLoad* curr) { return ReturnType(); }
   ReturnType visitMemoryInit(MemoryInit* curr) { return ReturnType(); }
   ReturnType visitDataDrop(DataDrop* curr) { return ReturnType(); }
   ReturnType visitMemoryCopy(MemoryCopy* curr) { return ReturnType(); }
@@ -70,8 +72,14 @@ struct Visitor {
   ReturnType visitDrop(Drop* curr) { return ReturnType(); }
   ReturnType visitReturn(Return* curr) { return ReturnType(); }
   ReturnType visitHost(Host* curr) { return ReturnType(); }
+  ReturnType visitTry(Try* curr) { return ReturnType(); }
+  ReturnType visitThrow(Throw* curr) { return ReturnType(); }
+  ReturnType visitRethrow(Rethrow* curr) { return ReturnType(); }
+  ReturnType visitBrOnExn(BrOnExn* curr) { return ReturnType(); }
   ReturnType visitNop(Nop* curr) { return ReturnType(); }
   ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
+  ReturnType visitPush(Push* curr) { return ReturnType(); }
+  ReturnType visitPop(Pop* curr) { return ReturnType(); }
   // Module-level visitors
   ReturnType visitFunctionType(FunctionType* curr) { return ReturnType(); }
   ReturnType visitExport(Export* curr) { return ReturnType(); }
@@ -79,56 +87,109 @@ struct Visitor {
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
+  ReturnType visitEvent(Event* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
 
   ReturnType visit(Expression* curr) {
     assert(curr);
 
-    #define DELEGATE(CLASS_TO_VISIT) \
-      return static_cast<SubType*>(this)-> \
-          visit##CLASS_TO_VISIT(static_cast<CLASS_TO_VISIT*>(curr))
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                   \
+    static_cast<CLASS_TO_VISIT*>(curr))
 
     switch (curr->_id) {
-      case Expression::Id::BlockId: DELEGATE(Block);
-      case Expression::Id::IfId: DELEGATE(If);
-      case Expression::Id::LoopId: DELEGATE(Loop);
-      case Expression::Id::BreakId: DELEGATE(Break);
-      case Expression::Id::SwitchId: DELEGATE(Switch);
-      case Expression::Id::CallId: DELEGATE(Call);
-      case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
-      case Expression::Id::GetLocalId: DELEGATE(GetLocal);
-      case Expression::Id::SetLocalId: DELEGATE(SetLocal);
-      case Expression::Id::GetGlobalId: DELEGATE(GetGlobal);
-      case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
-      case Expression::Id::LoadId: DELEGATE(Load);
-      case Expression::Id::StoreId: DELEGATE(Store);
-      case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
-      case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
-      case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
-      case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
-      case Expression::Id::SIMDExtractId: DELEGATE(SIMDExtract);
-      case Expression::Id::SIMDReplaceId: DELEGATE(SIMDReplace);
-      case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
-      case Expression::Id::SIMDBitselectId: DELEGATE(SIMDBitselect);
-      case Expression::Id::SIMDShiftId: DELEGATE(SIMDShift);
-      case Expression::Id::MemoryInitId: DELEGATE(MemoryInit);
-      case Expression::Id::DataDropId: DELEGATE(DataDrop);
-      case Expression::Id::MemoryCopyId: DELEGATE(MemoryCopy);
-      case Expression::Id::MemoryFillId: DELEGATE(MemoryFill);
-      case Expression::Id::ConstId: DELEGATE(Const);
-      case Expression::Id::UnaryId: DELEGATE(Unary);
-      case Expression::Id::BinaryId: DELEGATE(Binary);
-      case Expression::Id::SelectId: DELEGATE(Select);
-      case Expression::Id::DropId: DELEGATE(Drop);
-      case Expression::Id::ReturnId: DELEGATE(Return);
-      case Expression::Id::HostId: DELEGATE(Host);
-      case Expression::Id::NopId: DELEGATE(Nop);
-      case Expression::Id::UnreachableId: DELEGATE(Unreachable);
+      case Expression::Id::BlockId:
+        DELEGATE(Block);
+      case Expression::Id::IfId:
+        DELEGATE(If);
+      case Expression::Id::LoopId:
+        DELEGATE(Loop);
+      case Expression::Id::BreakId:
+        DELEGATE(Break);
+      case Expression::Id::SwitchId:
+        DELEGATE(Switch);
+      case Expression::Id::CallId:
+        DELEGATE(Call);
+      case Expression::Id::CallIndirectId:
+        DELEGATE(CallIndirect);
+      case Expression::Id::LocalGetId:
+        DELEGATE(LocalGet);
+      case Expression::Id::LocalSetId:
+        DELEGATE(LocalSet);
+      case Expression::Id::GlobalGetId:
+        DELEGATE(GlobalGet);
+      case Expression::Id::GlobalSetId:
+        DELEGATE(GlobalSet);
+      case Expression::Id::LoadId:
+        DELEGATE(Load);
+      case Expression::Id::StoreId:
+        DELEGATE(Store);
+      case Expression::Id::AtomicRMWId:
+        DELEGATE(AtomicRMW);
+      case Expression::Id::AtomicCmpxchgId:
+        DELEGATE(AtomicCmpxchg);
+      case Expression::Id::AtomicWaitId:
+        DELEGATE(AtomicWait);
+      case Expression::Id::AtomicNotifyId:
+        DELEGATE(AtomicNotify);
+      case Expression::Id::AtomicFenceId:
+        DELEGATE(AtomicFence);
+      case Expression::Id::SIMDExtractId:
+        DELEGATE(SIMDExtract);
+      case Expression::Id::SIMDReplaceId:
+        DELEGATE(SIMDReplace);
+      case Expression::Id::SIMDShuffleId:
+        DELEGATE(SIMDShuffle);
+      case Expression::Id::SIMDTernaryId:
+        DELEGATE(SIMDTernary);
+      case Expression::Id::SIMDShiftId:
+        DELEGATE(SIMDShift);
+      case Expression::Id::SIMDLoadId:
+        DELEGATE(SIMDLoad);
+      case Expression::Id::MemoryInitId:
+        DELEGATE(MemoryInit);
+      case Expression::Id::DataDropId:
+        DELEGATE(DataDrop);
+      case Expression::Id::MemoryCopyId:
+        DELEGATE(MemoryCopy);
+      case Expression::Id::MemoryFillId:
+        DELEGATE(MemoryFill);
+      case Expression::Id::ConstId:
+        DELEGATE(Const);
+      case Expression::Id::UnaryId:
+        DELEGATE(Unary);
+      case Expression::Id::BinaryId:
+        DELEGATE(Binary);
+      case Expression::Id::SelectId:
+        DELEGATE(Select);
+      case Expression::Id::DropId:
+        DELEGATE(Drop);
+      case Expression::Id::ReturnId:
+        DELEGATE(Return);
+      case Expression::Id::HostId:
+        DELEGATE(Host);
+      case Expression::Id::TryId:
+        DELEGATE(Try);
+      case Expression::Id::ThrowId:
+        DELEGATE(Throw);
+      case Expression::Id::RethrowId:
+        DELEGATE(Rethrow);
+      case Expression::Id::BrOnExnId:
+        DELEGATE(BrOnExn);
+      case Expression::Id::NopId:
+        DELEGATE(Nop);
+      case Expression::Id::UnreachableId:
+        DELEGATE(Unreachable);
+      case Expression::Id::PushId:
+        DELEGATE(Push);
+      case Expression::Id::PopId:
+        DELEGATE(Pop);
       case Expression::Id::InvalidId:
-      default: WASM_UNREACHABLE();
+      default:
+        WASM_UNREACHABLE();
     }
 
-    #undef DELEGATE
+#undef DELEGATE
   }
 };
 
@@ -136,12 +197,15 @@ struct Visitor {
 
 template<typename SubType, typename ReturnType = void>
 struct OverriddenVisitor {
-  // Expression visitors, which must be overridden
-  #define UNIMPLEMENTED(CLASS_TO_VISIT) \
-    ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { \
-      static_assert(&SubType::visit##CLASS_TO_VISIT != &OverriddenVisitor<SubType, ReturnType>::visit##CLASS_TO_VISIT, "Derived class must implement visit" #CLASS_TO_VISIT); \
-      WASM_UNREACHABLE(); \
-    }
+// Expression visitors, which must be overridden
+#define UNIMPLEMENTED(CLASS_TO_VISIT)                                          \
+  ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
+    static_assert(                                                             \
+      &SubType::visit##CLASS_TO_VISIT !=                                       \
+        &OverriddenVisitor<SubType, ReturnType>::visit##CLASS_TO_VISIT,        \
+      "Derived class must implement visit" #CLASS_TO_VISIT);                   \
+    WASM_UNREACHABLE();                                                        \
+  }
 
   UNIMPLEMENTED(Block);
   UNIMPLEMENTED(If);
@@ -150,21 +214,23 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Switch);
   UNIMPLEMENTED(Call);
   UNIMPLEMENTED(CallIndirect);
-  UNIMPLEMENTED(GetLocal);
-  UNIMPLEMENTED(SetLocal);
-  UNIMPLEMENTED(GetGlobal);
-  UNIMPLEMENTED(SetGlobal);
+  UNIMPLEMENTED(LocalGet);
+  UNIMPLEMENTED(LocalSet);
+  UNIMPLEMENTED(GlobalGet);
+  UNIMPLEMENTED(GlobalSet);
   UNIMPLEMENTED(Load);
   UNIMPLEMENTED(Store);
   UNIMPLEMENTED(AtomicRMW);
   UNIMPLEMENTED(AtomicCmpxchg);
   UNIMPLEMENTED(AtomicWait);
-  UNIMPLEMENTED(AtomicWake);
+  UNIMPLEMENTED(AtomicNotify);
+  UNIMPLEMENTED(AtomicFence);
   UNIMPLEMENTED(SIMDExtract);
   UNIMPLEMENTED(SIMDReplace);
   UNIMPLEMENTED(SIMDShuffle);
-  UNIMPLEMENTED(SIMDBitselect);
+  UNIMPLEMENTED(SIMDTernary);
   UNIMPLEMENTED(SIMDShift);
+  UNIMPLEMENTED(SIMDLoad);
   UNIMPLEMENTED(MemoryInit);
   UNIMPLEMENTED(DataDrop);
   UNIMPLEMENTED(MemoryCopy);
@@ -176,66 +242,125 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Drop);
   UNIMPLEMENTED(Return);
   UNIMPLEMENTED(Host);
+  UNIMPLEMENTED(Try);
+  UNIMPLEMENTED(Throw);
+  UNIMPLEMENTED(Rethrow);
+  UNIMPLEMENTED(BrOnExn);
   UNIMPLEMENTED(Nop);
   UNIMPLEMENTED(Unreachable);
+  UNIMPLEMENTED(Push);
+  UNIMPLEMENTED(Pop);
   UNIMPLEMENTED(FunctionType);
   UNIMPLEMENTED(Export);
   UNIMPLEMENTED(Global);
   UNIMPLEMENTED(Function);
   UNIMPLEMENTED(Table);
   UNIMPLEMENTED(Memory);
+  UNIMPLEMENTED(Event);
   UNIMPLEMENTED(Module);
 
-  #undef UNIMPLEMENTED
+#undef UNIMPLEMENTED
 
   ReturnType visit(Expression* curr) {
     assert(curr);
 
-    #define DELEGATE(CLASS_TO_VISIT) \
-      return static_cast<SubType*>(this)-> \
-          visit##CLASS_TO_VISIT(static_cast<CLASS_TO_VISIT*>(curr))
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                   \
+    static_cast<CLASS_TO_VISIT*>(curr))
 
     switch (curr->_id) {
-      case Expression::Id::BlockId: DELEGATE(Block);
-      case Expression::Id::IfId: DELEGATE(If);
-      case Expression::Id::LoopId: DELEGATE(Loop);
-      case Expression::Id::BreakId: DELEGATE(Break);
-      case Expression::Id::SwitchId: DELEGATE(Switch);
-      case Expression::Id::CallId: DELEGATE(Call);
-      case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
-      case Expression::Id::GetLocalId: DELEGATE(GetLocal);
-      case Expression::Id::SetLocalId: DELEGATE(SetLocal);
-      case Expression::Id::GetGlobalId: DELEGATE(GetGlobal);
-      case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
-      case Expression::Id::LoadId: DELEGATE(Load);
-      case Expression::Id::StoreId: DELEGATE(Store);
-      case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
-      case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
-      case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
-      case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
-      case Expression::Id::SIMDExtractId: DELEGATE(SIMDExtract);
-      case Expression::Id::SIMDReplaceId: DELEGATE(SIMDReplace);
-      case Expression::Id::SIMDShuffleId: DELEGATE(SIMDShuffle);
-      case Expression::Id::SIMDBitselectId: DELEGATE(SIMDBitselect);
-      case Expression::Id::SIMDShiftId: DELEGATE(SIMDShift);
-      case Expression::Id::MemoryInitId: DELEGATE(MemoryInit);
-      case Expression::Id::DataDropId: DELEGATE(DataDrop);
-      case Expression::Id::MemoryCopyId: DELEGATE(MemoryCopy);
-      case Expression::Id::MemoryFillId: DELEGATE(MemoryFill);
-      case Expression::Id::ConstId: DELEGATE(Const);
-      case Expression::Id::UnaryId: DELEGATE(Unary);
-      case Expression::Id::BinaryId: DELEGATE(Binary);
-      case Expression::Id::SelectId: DELEGATE(Select);
-      case Expression::Id::DropId: DELEGATE(Drop);
-      case Expression::Id::ReturnId: DELEGATE(Return);
-      case Expression::Id::HostId: DELEGATE(Host);
-      case Expression::Id::NopId: DELEGATE(Nop);
-      case Expression::Id::UnreachableId: DELEGATE(Unreachable);
+      case Expression::Id::BlockId:
+        DELEGATE(Block);
+      case Expression::Id::IfId:
+        DELEGATE(If);
+      case Expression::Id::LoopId:
+        DELEGATE(Loop);
+      case Expression::Id::BreakId:
+        DELEGATE(Break);
+      case Expression::Id::SwitchId:
+        DELEGATE(Switch);
+      case Expression::Id::CallId:
+        DELEGATE(Call);
+      case Expression::Id::CallIndirectId:
+        DELEGATE(CallIndirect);
+      case Expression::Id::LocalGetId:
+        DELEGATE(LocalGet);
+      case Expression::Id::LocalSetId:
+        DELEGATE(LocalSet);
+      case Expression::Id::GlobalGetId:
+        DELEGATE(GlobalGet);
+      case Expression::Id::GlobalSetId:
+        DELEGATE(GlobalSet);
+      case Expression::Id::LoadId:
+        DELEGATE(Load);
+      case Expression::Id::StoreId:
+        DELEGATE(Store);
+      case Expression::Id::AtomicRMWId:
+        DELEGATE(AtomicRMW);
+      case Expression::Id::AtomicCmpxchgId:
+        DELEGATE(AtomicCmpxchg);
+      case Expression::Id::AtomicWaitId:
+        DELEGATE(AtomicWait);
+      case Expression::Id::AtomicNotifyId:
+        DELEGATE(AtomicNotify);
+      case Expression::Id::AtomicFenceId:
+        DELEGATE(AtomicFence);
+      case Expression::Id::SIMDExtractId:
+        DELEGATE(SIMDExtract);
+      case Expression::Id::SIMDReplaceId:
+        DELEGATE(SIMDReplace);
+      case Expression::Id::SIMDShuffleId:
+        DELEGATE(SIMDShuffle);
+      case Expression::Id::SIMDTernaryId:
+        DELEGATE(SIMDTernary);
+      case Expression::Id::SIMDShiftId:
+        DELEGATE(SIMDShift);
+      case Expression::Id::SIMDLoadId:
+        DELEGATE(SIMDLoad);
+      case Expression::Id::MemoryInitId:
+        DELEGATE(MemoryInit);
+      case Expression::Id::DataDropId:
+        DELEGATE(DataDrop);
+      case Expression::Id::MemoryCopyId:
+        DELEGATE(MemoryCopy);
+      case Expression::Id::MemoryFillId:
+        DELEGATE(MemoryFill);
+      case Expression::Id::ConstId:
+        DELEGATE(Const);
+      case Expression::Id::UnaryId:
+        DELEGATE(Unary);
+      case Expression::Id::BinaryId:
+        DELEGATE(Binary);
+      case Expression::Id::SelectId:
+        DELEGATE(Select);
+      case Expression::Id::DropId:
+        DELEGATE(Drop);
+      case Expression::Id::ReturnId:
+        DELEGATE(Return);
+      case Expression::Id::HostId:
+        DELEGATE(Host);
+      case Expression::Id::TryId:
+        DELEGATE(Try);
+      case Expression::Id::ThrowId:
+        DELEGATE(Throw);
+      case Expression::Id::RethrowId:
+        DELEGATE(Rethrow);
+      case Expression::Id::BrOnExnId:
+        DELEGATE(BrOnExn);
+      case Expression::Id::NopId:
+        DELEGATE(Nop);
+      case Expression::Id::UnreachableId:
+        DELEGATE(Unreachable);
+      case Expression::Id::PushId:
+        DELEGATE(Push);
+      case Expression::Id::PopId:
+        DELEGATE(Pop);
       case Expression::Id::InvalidId:
-      default: WASM_UNREACHABLE();
+      default:
+        WASM_UNREACHABLE();
     }
 
-    #undef DELEGATE
+#undef DELEGATE
   }
 };
 
@@ -248,41 +373,135 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitExpression(Expression* curr) { return ReturnType(); }
 
   // redirects
-  ReturnType visitBlock(Block* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitIf(If* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitLoop(Loop* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitBreak(Break* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSwitch(Switch* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitCall(Call* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitCallIndirect(CallIndirect* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitGetLocal(GetLocal* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSetLocal(SetLocal* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitGetGlobal(GetGlobal* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSetGlobal(SetGlobal* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitLoad(Load* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitStore(Store* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitAtomicRMW(AtomicRMW* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitAtomicWait(AtomicWait* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitAtomicWake(AtomicWake* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSIMDExtract(SIMDExtract* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSIMDReplace(SIMDReplace* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSIMDBitselect(SIMDBitselect* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSIMDShift(SIMDShift* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitMemoryInit(MemoryInit* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitDataDrop(DataDrop* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitMemoryCopy(MemoryCopy* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitMemoryFill(MemoryFill* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitConst(Const* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitUnary(Unary* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitBinary(Binary* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitSelect(Select* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitDrop(Drop* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitReturn(Return* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitHost(Host* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitNop(Nop* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitUnreachable(Unreachable* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitBlock(Block* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitIf(If* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitLoop(Loop* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitBreak(Break* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSwitch(Switch* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitCall(Call* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitCallIndirect(CallIndirect* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitLocalGet(LocalGet* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitLocalSet(LocalSet* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitGlobalGet(GlobalGet* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitGlobalSet(GlobalSet* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitLoad(Load* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitStore(Store* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitAtomicRMW(AtomicRMW* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitAtomicWait(AtomicWait* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitAtomicNotify(AtomicNotify* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitAtomicFence(AtomicFence* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSIMDExtract(SIMDExtract* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSIMDReplace(SIMDReplace* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSIMDShuffle(SIMDShuffle* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSIMDTernary(SIMDTernary* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSIMDShift(SIMDShift* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSIMDLoad(SIMDLoad* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitMemoryInit(MemoryInit* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitDataDrop(DataDrop* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitMemoryCopy(MemoryCopy* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitMemoryFill(MemoryFill* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitConst(Const* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitUnary(Unary* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitBinary(Binary* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSelect(Select* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitDrop(Drop* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitReturn(Return* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitHost(Host* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitTry(Try* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitThrow(Throw* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitRethrow(Rethrow* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitBrOnExn(BrOnExn* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitNop(Nop* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitUnreachable(Unreachable* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitPush(Push* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitPop(Pop* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
 };
 
 //
@@ -301,26 +520,31 @@ struct Walker : public VisitorType {
   // just one visit*() method is called by the traversal; if you replace a node,
   // and you want to process the output, you must do that explicitly).
   Expression* replaceCurrent(Expression* expression) {
+    // Copy debug info, if present.
+    if (currFunction) {
+      auto& debugLocations = currFunction->debugLocations;
+      if (!debugLocations.empty()) {
+        auto* curr = getCurrent();
+        auto iter = debugLocations.find(curr);
+        if (iter != debugLocations.end()) {
+          auto location = iter->second;
+          debugLocations.erase(iter);
+          debugLocations[expression] = location;
+        }
+      }
+    }
     return *replacep = expression;
   }
 
-  Expression* getCurrent() {
-    return *replacep;
-  }
+  Expression* getCurrent() { return *replacep; }
 
-  Expression** getCurrentPointer() {
-    return replacep;
-  }
+  Expression** getCurrentPointer() { return replacep; }
 
   // Get the current module
-  Module* getModule() {
-    return currModule;
-  }
+  Module* getModule() { return currModule; }
 
   // Get the current function
-  Function* getFunction() {
-    return currFunction;
-  }
+  Function* getFunction() { return currFunction; }
 
   // Walk starting
 
@@ -336,6 +560,10 @@ struct Walker : public VisitorType {
     setFunction(nullptr);
   }
 
+  void walkEvent(Event* event) {
+    static_cast<SubType*>(this)->visitEvent(event);
+  }
+
   void walkFunctionInModule(Function* func, Module* module) {
     setModule(module);
     setFunction(func);
@@ -346,9 +574,7 @@ struct Walker : public VisitorType {
   }
 
   // override this to provide custom functionality
-  void doWalkFunction(Function* func) {
-    walk(func->body);
-  }
+  void doWalkFunction(Function* func) { walk(func->body); }
 
   void walkTable(Table* table) {
     for (auto& segment : table->segments) {
@@ -359,7 +585,9 @@ struct Walker : public VisitorType {
 
   void walkMemory(Memory* memory) {
     for (auto& segment : memory->segments) {
-      walk(segment.offset);
+      if (!segment.isPassive) {
+        walk(segment.offset);
+      }
     }
     static_cast<SubType*>(this)->visitMemory(memory);
   }
@@ -395,6 +623,13 @@ struct Walker : public VisitorType {
         self->walkFunction(curr.get());
       }
     }
+    for (auto& curr : module->events) {
+      if (curr->imported()) {
+        self->visitEvent(curr.get());
+      } else {
+        self->walkEvent(curr.get());
+      }
+    }
     self->walkTable(&module->table);
     self->walkMemory(&module->memory);
   }
@@ -408,6 +643,7 @@ struct Walker : public VisitorType {
   struct Task {
     TaskFunc func;
     Expression** currp;
+    Task() {}
     Task(TaskFunc func, Expression** currp) : func(func), currp(currp) {}
   };
 
@@ -442,55 +678,146 @@ struct Walker : public VisitorType {
 
   // task hooks to call visitors
 
-  static void doVisitBlock(SubType* self, Expression** currp)        { self->visitBlock((*currp)->cast<Block>()); }
-  static void doVisitIf(SubType* self, Expression** currp)           { self->visitIf((*currp)->cast<If>()); }
-  static void doVisitLoop(SubType* self, Expression** currp)         { self->visitLoop((*currp)->cast<Loop>()); }
-  static void doVisitBreak(SubType* self, Expression** currp)        { self->visitBreak((*currp)->cast<Break>()); }
-  static void doVisitSwitch(SubType* self, Expression** currp)       { self->visitSwitch((*currp)->cast<Switch>()); }
-  static void doVisitCall(SubType* self, Expression** currp)         { self->visitCall((*currp)->cast<Call>()); }
-  static void doVisitCallIndirect(SubType* self, Expression** currp) { self->visitCallIndirect((*currp)->cast<CallIndirect>()); }
-  static void doVisitGetLocal(SubType* self, Expression** currp)     { self->visitGetLocal((*currp)->cast<GetLocal>()); }
-  static void doVisitSetLocal(SubType* self, Expression** currp)     { self->visitSetLocal((*currp)->cast<SetLocal>()); }
-  static void doVisitGetGlobal(SubType* self, Expression** currp)    { self->visitGetGlobal((*currp)->cast<GetGlobal>()); }
-  static void doVisitSetGlobal(SubType* self, Expression** currp)    { self->visitSetGlobal((*currp)->cast<SetGlobal>()); }
-  static void doVisitLoad(SubType* self, Expression** currp)         { self->visitLoad((*currp)->cast<Load>()); }
-  static void doVisitStore(SubType* self, Expression** currp)        { self->visitStore((*currp)->cast<Store>()); }
-  static void doVisitAtomicRMW(SubType* self, Expression** currp)    { self->visitAtomicRMW((*currp)->cast<AtomicRMW>()); }
-  static void doVisitAtomicCmpxchg(SubType* self, Expression** currp){ self->visitAtomicCmpxchg((*currp)->cast<AtomicCmpxchg>()); }
-  static void doVisitAtomicWait(SubType* self, Expression** currp)   { self->visitAtomicWait((*currp)->cast<AtomicWait>()); }
-  static void doVisitAtomicWake(SubType* self, Expression** currp)   { self->visitAtomicWake((*currp)->cast<AtomicWake>()); }
-  static void doVisitSIMDExtract(SubType* self, Expression** currp)  { self->visitSIMDExtract((*currp)->cast<SIMDExtract>()); }
-  static void doVisitSIMDReplace(SubType* self, Expression** currp)  { self->visitSIMDReplace((*currp)->cast<SIMDReplace>()); }
-  static void doVisitSIMDShuffle(SubType* self, Expression** currp)  { self->visitSIMDShuffle((*currp)->cast<SIMDShuffle>()); }
-  static void doVisitSIMDBitselect(SubType* self, Expression** currp) { self->visitSIMDBitselect((*currp)->cast<SIMDBitselect>()); }
-  static void doVisitSIMDShift(SubType* self, Expression** currp)    { self->visitSIMDShift((*currp)->cast<SIMDShift>()); }
-  static void doVisitMemoryInit(SubType* self, Expression** currp)   { self->visitMemoryInit((*currp)->cast<MemoryInit>()); }
-  static void doVisitDataDrop(SubType* self, Expression** currp)     { self->visitDataDrop((*currp)->cast<DataDrop>()); }
-  static void doVisitMemoryCopy(SubType* self, Expression** currp)   { self->visitMemoryCopy((*currp)->cast<MemoryCopy>()); }
-  static void doVisitMemoryFill(SubType* self, Expression** currp)   { self->visitMemoryFill((*currp)->cast<MemoryFill>()); }
-  static void doVisitConst(SubType* self, Expression** currp)        { self->visitConst((*currp)->cast<Const>()); }
-  static void doVisitUnary(SubType* self, Expression** currp)        { self->visitUnary((*currp)->cast<Unary>()); }
-  static void doVisitBinary(SubType* self, Expression** currp)       { self->visitBinary((*currp)->cast<Binary>()); }
-  static void doVisitSelect(SubType* self, Expression** currp)       { self->visitSelect((*currp)->cast<Select>()); }
-  static void doVisitDrop(SubType* self, Expression** currp)         { self->visitDrop((*currp)->cast<Drop>()); }
-  static void doVisitReturn(SubType* self, Expression** currp)       { self->visitReturn((*currp)->cast<Return>()); }
-  static void doVisitHost(SubType* self, Expression** currp)         { self->visitHost((*currp)->cast<Host>()); }
-  static void doVisitNop(SubType* self, Expression** currp)          { self->visitNop((*currp)->cast<Nop>()); }
-  static void doVisitUnreachable(SubType* self, Expression** currp)  { self->visitUnreachable((*currp)->cast<Unreachable>()); }
-
-  void setModule(Module* module) {
-    currModule = module;
+  static void doVisitBlock(SubType* self, Expression** currp) {
+    self->visitBlock((*currp)->cast<Block>());
+  }
+  static void doVisitIf(SubType* self, Expression** currp) {
+    self->visitIf((*currp)->cast<If>());
+  }
+  static void doVisitLoop(SubType* self, Expression** currp) {
+    self->visitLoop((*currp)->cast<Loop>());
+  }
+  static void doVisitBreak(SubType* self, Expression** currp) {
+    self->visitBreak((*currp)->cast<Break>());
+  }
+  static void doVisitSwitch(SubType* self, Expression** currp) {
+    self->visitSwitch((*currp)->cast<Switch>());
+  }
+  static void doVisitCall(SubType* self, Expression** currp) {
+    self->visitCall((*currp)->cast<Call>());
+  }
+  static void doVisitCallIndirect(SubType* self, Expression** currp) {
+    self->visitCallIndirect((*currp)->cast<CallIndirect>());
+  }
+  static void doVisitLocalGet(SubType* self, Expression** currp) {
+    self->visitLocalGet((*currp)->cast<LocalGet>());
+  }
+  static void doVisitLocalSet(SubType* self, Expression** currp) {
+    self->visitLocalSet((*currp)->cast<LocalSet>());
+  }
+  static void doVisitGlobalGet(SubType* self, Expression** currp) {
+    self->visitGlobalGet((*currp)->cast<GlobalGet>());
+  }
+  static void doVisitGlobalSet(SubType* self, Expression** currp) {
+    self->visitGlobalSet((*currp)->cast<GlobalSet>());
+  }
+  static void doVisitLoad(SubType* self, Expression** currp) {
+    self->visitLoad((*currp)->cast<Load>());
+  }
+  static void doVisitStore(SubType* self, Expression** currp) {
+    self->visitStore((*currp)->cast<Store>());
+  }
+  static void doVisitAtomicRMW(SubType* self, Expression** currp) {
+    self->visitAtomicRMW((*currp)->cast<AtomicRMW>());
+  }
+  static void doVisitAtomicCmpxchg(SubType* self, Expression** currp) {
+    self->visitAtomicCmpxchg((*currp)->cast<AtomicCmpxchg>());
+  }
+  static void doVisitAtomicWait(SubType* self, Expression** currp) {
+    self->visitAtomicWait((*currp)->cast<AtomicWait>());
+  }
+  static void doVisitAtomicNotify(SubType* self, Expression** currp) {
+    self->visitAtomicNotify((*currp)->cast<AtomicNotify>());
+  }
+  static void doVisitAtomicFence(SubType* self, Expression** currp) {
+    self->visitAtomicFence((*currp)->cast<AtomicFence>());
+  }
+  static void doVisitSIMDExtract(SubType* self, Expression** currp) {
+    self->visitSIMDExtract((*currp)->cast<SIMDExtract>());
+  }
+  static void doVisitSIMDReplace(SubType* self, Expression** currp) {
+    self->visitSIMDReplace((*currp)->cast<SIMDReplace>());
+  }
+  static void doVisitSIMDShuffle(SubType* self, Expression** currp) {
+    self->visitSIMDShuffle((*currp)->cast<SIMDShuffle>());
+  }
+  static void doVisitSIMDTernary(SubType* self, Expression** currp) {
+    self->visitSIMDTernary((*currp)->cast<SIMDTernary>());
+  }
+  static void doVisitSIMDShift(SubType* self, Expression** currp) {
+    self->visitSIMDShift((*currp)->cast<SIMDShift>());
+  }
+  static void doVisitSIMDLoad(SubType* self, Expression** currp) {
+    self->visitSIMDLoad((*currp)->cast<SIMDLoad>());
+  }
+  static void doVisitMemoryInit(SubType* self, Expression** currp) {
+    self->visitMemoryInit((*currp)->cast<MemoryInit>());
+  }
+  static void doVisitDataDrop(SubType* self, Expression** currp) {
+    self->visitDataDrop((*currp)->cast<DataDrop>());
+  }
+  static void doVisitMemoryCopy(SubType* self, Expression** currp) {
+    self->visitMemoryCopy((*currp)->cast<MemoryCopy>());
+  }
+  static void doVisitMemoryFill(SubType* self, Expression** currp) {
+    self->visitMemoryFill((*currp)->cast<MemoryFill>());
+  }
+  static void doVisitConst(SubType* self, Expression** currp) {
+    self->visitConst((*currp)->cast<Const>());
+  }
+  static void doVisitUnary(SubType* self, Expression** currp) {
+    self->visitUnary((*currp)->cast<Unary>());
+  }
+  static void doVisitBinary(SubType* self, Expression** currp) {
+    self->visitBinary((*currp)->cast<Binary>());
+  }
+  static void doVisitSelect(SubType* self, Expression** currp) {
+    self->visitSelect((*currp)->cast<Select>());
+  }
+  static void doVisitDrop(SubType* self, Expression** currp) {
+    self->visitDrop((*currp)->cast<Drop>());
+  }
+  static void doVisitReturn(SubType* self, Expression** currp) {
+    self->visitReturn((*currp)->cast<Return>());
+  }
+  static void doVisitHost(SubType* self, Expression** currp) {
+    self->visitHost((*currp)->cast<Host>());
+  }
+  static void doVisitTry(SubType* self, Expression** currp) {
+    self->visitTry((*currp)->cast<Try>());
+  }
+  static void doVisitThrow(SubType* self, Expression** currp) {
+    self->visitThrow((*currp)->cast<Throw>());
+  }
+  static void doVisitRethrow(SubType* self, Expression** currp) {
+    self->visitRethrow((*currp)->cast<Rethrow>());
+  }
+  static void doVisitBrOnExn(SubType* self, Expression** currp) {
+    self->visitBrOnExn((*currp)->cast<BrOnExn>());
+  }
+  static void doVisitNop(SubType* self, Expression** currp) {
+    self->visitNop((*currp)->cast<Nop>());
+  }
+  static void doVisitUnreachable(SubType* self, Expression** currp) {
+    self->visitUnreachable((*currp)->cast<Unreachable>());
+  }
+  static void doVisitPush(SubType* self, Expression** currp) {
+    self->visitPush((*currp)->cast<Push>());
+  }
+  static void doVisitPop(SubType* self, Expression** currp) {
+    self->visitPop((*currp)->cast<Pop>());
   }
 
-  void setFunction(Function* func) {
-    currFunction = func;
-  }
+  void setModule(Module* module) { currModule = module; }
+
+  void setFunction(Function* func) { currFunction = func; }
 
 private:
-  Expression** replacep = nullptr; // the address of the current node, used to replace it
-  std::vector<Task> stack; // stack of tasks
+  // the address of the current node, used to replace it
+  Expression** replacep = nullptr;
+  SmallVector<Task, 10> stack;      // stack of tasks
   Function* currFunction = nullptr; // current function being processed
-  Module* currModule = nullptr; // current module being processed
+  Module* currModule = nullptr;     // current module being processed
 };
 
 // Walks in post-order, i.e., children first. When there isn't an obvious
@@ -500,10 +827,10 @@ template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct PostWalker : public Walker<SubType, VisitorType> {
 
   static void scan(SubType* self, Expression** currp) {
-
     Expression* curr = *currp;
     switch (curr->_id) {
-      case Expression::Id::InvalidId: abort();
+      case Expression::Id::InvalidId:
+        abort();
       case Expression::Id::BlockId: {
         self->pushTask(SubType::doVisitBlock, currp);
         auto& list = curr->cast<Block>()->list;
@@ -553,22 +880,23 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         }
         break;
       }
-      case Expression::Id::GetLocalId: {
-        self->pushTask(SubType::doVisitGetLocal, currp); // TODO: optimize leaves with a direct call?
+      case Expression::Id::LocalGetId: {
+        // TODO: optimize leaves with a direct call?
+        self->pushTask(SubType::doVisitLocalGet, currp);
         break;
       }
-      case Expression::Id::SetLocalId: {
-        self->pushTask(SubType::doVisitSetLocal, currp);
-        self->pushTask(SubType::scan, &curr->cast<SetLocal>()->value);
+      case Expression::Id::LocalSetId: {
+        self->pushTask(SubType::doVisitLocalSet, currp);
+        self->pushTask(SubType::scan, &curr->cast<LocalSet>()->value);
         break;
       }
-      case Expression::Id::GetGlobalId: {
-        self->pushTask(SubType::doVisitGetGlobal, currp);
+      case Expression::Id::GlobalGetId: {
+        self->pushTask(SubType::doVisitGlobalGet, currp);
         break;
       }
-      case Expression::Id::SetGlobalId: {
-        self->pushTask(SubType::doVisitSetGlobal, currp);
-        self->pushTask(SubType::scan, &curr->cast<SetGlobal>()->value);
+      case Expression::Id::GlobalSetId: {
+        self->pushTask(SubType::doVisitGlobalSet, currp);
+        self->pushTask(SubType::scan, &curr->cast<GlobalSet>()->value);
         break;
       }
       case Expression::Id::LoadId: {
@@ -590,7 +918,8 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::AtomicCmpxchgId: {
         self->pushTask(SubType::doVisitAtomicCmpxchg, currp);
-        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->replacement);
+        self->pushTask(SubType::scan,
+                       &curr->cast<AtomicCmpxchg>()->replacement);
         self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->expected);
         self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->ptr);
         break;
@@ -602,10 +931,14 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<AtomicWait>()->ptr);
         break;
       }
-      case Expression::Id::AtomicWakeId: {
-        self->pushTask(SubType::doVisitAtomicWake, currp);
-        self->pushTask(SubType::scan, &curr->cast<AtomicWake>()->wakeCount);
-        self->pushTask(SubType::scan, &curr->cast<AtomicWake>()->ptr);
+      case Expression::Id::AtomicNotifyId: {
+        self->pushTask(SubType::doVisitAtomicNotify, currp);
+        self->pushTask(SubType::scan, &curr->cast<AtomicNotify>()->notifyCount);
+        self->pushTask(SubType::scan, &curr->cast<AtomicNotify>()->ptr);
+        break;
+      }
+      case Expression::Id::AtomicFenceId: {
+        self->pushTask(SubType::doVisitAtomicFence, currp);
         break;
       }
       case Expression::Id::SIMDExtractId: {
@@ -625,11 +958,11 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<SIMDShuffle>()->left);
         break;
       }
-      case Expression::Id::SIMDBitselectId: {
-        self->pushTask(SubType::doVisitSIMDBitselect, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->cond);
-        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->right);
-        self->pushTask(SubType::scan, &curr->cast<SIMDBitselect>()->left);
+      case Expression::Id::SIMDTernaryId: {
+        self->pushTask(SubType::doVisitSIMDTernary, currp);
+        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->c);
+        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->b);
+        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->a);
         break;
       }
       case Expression::Id::SIMDShiftId: {
@@ -638,31 +971,36 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<SIMDShift>()->vec);
         break;
       }
+      case Expression::Id::SIMDLoadId: {
+        self->pushTask(SubType::doVisitSIMDLoad, currp);
+        self->pushTask(SubType::scan, &curr->cast<SIMDLoad>()->ptr);
+        break;
+      }
       case Expression::Id::MemoryInitId: {
         self->pushTask(SubType::doVisitMemoryInit, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->dest);
-        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->offset);
         self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->size);
+        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->offset);
+        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->dest);
         break;
-        }
+      }
       case Expression::Id::DataDropId: {
         self->pushTask(SubType::doVisitDataDrop, currp);
         break;
-        }
+      }
       case Expression::Id::MemoryCopyId: {
         self->pushTask(SubType::doVisitMemoryCopy, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->dest);
-        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->source);
         self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->size);
+        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->source);
+        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->dest);
         break;
-        }
+      }
       case Expression::Id::MemoryFillId: {
         self->pushTask(SubType::doVisitMemoryFill, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->dest);
-        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->value);
         self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->size);
+        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->value);
+        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->dest);
         break;
-        }
+      }
       case Expression::Id::ConstId: {
         self->pushTask(SubType::doVisitConst, currp);
         break;
@@ -703,6 +1041,30 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         }
         break;
       }
+      case Expression::Id::TryId: {
+        self->pushTask(SubType::doVisitTry, currp);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+        break;
+      }
+      case Expression::Id::ThrowId: {
+        self->pushTask(SubType::doVisitThrow, currp);
+        auto& list = curr->cast<Throw>()->operands;
+        for (int i = int(list.size()) - 1; i >= 0; i--) {
+          self->pushTask(SubType::scan, &list[i]);
+        }
+        break;
+      }
+      case Expression::Id::RethrowId: {
+        self->pushTask(SubType::doVisitRethrow, currp);
+        self->pushTask(SubType::scan, &curr->cast<Rethrow>()->exnref);
+        break;
+      }
+      case Expression::Id::BrOnExnId: {
+        self->pushTask(SubType::doVisitBrOnExn, currp);
+        self->pushTask(SubType::scan, &curr->cast<BrOnExn>()->exnref);
+        break;
+      }
       case Expression::Id::NopId: {
         self->pushTask(SubType::doVisitNop, currp);
         break;
@@ -711,10 +1073,24 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitUnreachable, currp);
         break;
       }
-      case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
+      case Expression::Id::PushId: {
+        self->pushTask(SubType::doVisitPush, currp);
+        self->pushTask(SubType::scan, &curr->cast<Push>()->value);
+        break;
+      }
+      case Expression::Id::PopId: {
+        self->pushTask(SubType::doVisitPop, currp);
+        break;
+      }
+      case Expression::Id::NumExpressionIds:
+        WASM_UNREACHABLE();
     }
   }
 };
+
+// Stacks of expressions tend to be limited in size (although, sometimes
+// super-nested blocks exist for br_table).
+typedef SmallVector<Expression*, 10> ExpressionStack;
 
 // Traversal with a control-flow stack.
 
@@ -722,7 +1098,7 @@ template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   ControlFlowWalker() = default;
 
-  std::vector<Expression*> controlFlowStack; // contains blocks, loops, and ifs
+  ExpressionStack controlFlowStack; // contains blocks, loops, and ifs
 
   // Uses the control flow stack to find the target of a break to a name
   Expression* findBreakTarget(Name name) {
@@ -731,14 +1107,20 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     while (1) {
       auto* curr = controlFlowStack[i];
       if (Block* block = curr->template dynCast<Block>()) {
-        if (name == block->name) return curr;
+        if (name == block->name) {
+          return curr;
+        }
       } else if (Loop* loop = curr->template dynCast<Loop>()) {
-        if (name == loop->name) return curr;
+        if (name == loop->name) {
+          return curr;
+        }
       } else {
         // an if, ignorable
         assert(curr->template is<If>());
       }
-      if (i == 0) return nullptr;
+      if (i == 0) {
+        return nullptr;
+      }
       i--;
     }
   }
@@ -748,7 +1130,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   }
 
   static void doPostVisitControlFlow(SubType* self, Expression** currp) {
-    // note that we might be popping something else, as we may have been replaced
+    // note that we might be popping something else, as we may have been
+    // replaced
     self->controlFlowStack.pop_back();
   }
 
@@ -785,7 +1168,7 @@ template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
   ExpressionStackWalker() = default;
 
-  std::vector<Expression*> expressionStack;
+  ExpressionStack expressionStack;
 
   // Uses the control flow stack to find the target of a break to a name
   Expression* findBreakTarget(Name name) {
@@ -794,19 +1177,27 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     while (1) {
       auto* curr = expressionStack[i];
       if (Block* block = curr->template dynCast<Block>()) {
-        if (name == block->name) return curr;
+        if (name == block->name) {
+          return curr;
+        }
       } else if (Loop* loop = curr->template dynCast<Loop>()) {
-        if (name == loop->name) return curr;
+        if (name == loop->name) {
+          return curr;
+        }
       } else {
         WASM_UNREACHABLE();
       }
-      if (i == 0) return nullptr;
+      if (i == 0) {
+        return nullptr;
+      }
       i--;
     }
   }
 
   Expression* getParent() {
-    if (expressionStack.size() == 1) return nullptr;
+    if (expressionStack.size() == 1) {
+      return nullptr;
+    }
     assert(expressionStack.size() >= 2);
     return expressionStack[expressionStack.size() - 2];
   }
@@ -861,7 +1252,8 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
     Expression* curr = *currp;
 
     switch (curr->_id) {
-      case Expression::Id::InvalidId: abort();
+      case Expression::Id::InvalidId:
+        abort();
       case Expression::Id::BlockId: {
         self->pushTask(SubType::doVisitBlock, currp);
         if (curr->cast<Block>()->name.is()) {
@@ -907,6 +1299,35 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitReturn, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
         self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
+        break;
+      }
+      case Expression::Id::TryId: {
+        self->pushTask(SubType::doVisitTry, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+        break;
+      }
+      case Expression::Id::ThrowId: {
+        self->pushTask(SubType::doVisitThrow, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        auto& list = curr->cast<Throw>()->operands;
+        for (int i = int(list.size()) - 1; i >= 0; i--) {
+          self->pushTask(SubType::scan, &list[i]);
+        }
+        break;
+      }
+      case Expression::Id::RethrowId: {
+        self->pushTask(SubType::doVisitRethrow, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<Rethrow>()->exnref);
+        break;
+      }
+      case Expression::Id::BrOnExnId: {
+        self->pushTask(SubType::doVisitBrOnExn, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<BrOnExn>()->exnref);
         break;
       }
       case Expression::Id::UnreachableId: {

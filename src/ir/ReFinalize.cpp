@@ -51,10 +51,10 @@ void ReFinalize::visitBlock(Block* curr) {
   // if concrete, it doesn't matter if we have an unreachable child, and we
   // don't need to look at breaks
   if (isConcreteType(curr->type)) {
-    // make sure our branches make sense for us - we may have just made ourselves
-    // concrete for a value flowing out, while branches did not send a value. such
-    // branches could not have been actually taken before, that is, there were in
-    // unreachable code, but we do still need to fix them up here.
+    // make sure our branches make sense for us - we may have just made
+    // ourselves concrete for a value flowing out, while branches did not send a
+    // value. such branches could not have been actually taken before, that is,
+    // there were in unreachable code, but we do still need to fix them up here.
     if (!isConcreteType(old)) {
       auto iter = breakValues.find(curr->name);
       if (iter != breakValues.end()) {
@@ -62,6 +62,8 @@ void ReFinalize::visitBlock(Block* curr) {
         auto type = iter->second;
         if (type == none) {
           // we need to fix this up. set the values to unreachables
+          // note that we don't need to handle br_on_exn here, because its value
+          // type is never none
           for (auto* br : FindAll<Break>(curr).list) {
             handleBranchForVisitBlock(br, curr->name, getModule());
           }
@@ -91,7 +93,9 @@ void ReFinalize::visitBlock(Block* curr) {
       return;
     }
   }
-  if (curr->type == unreachable) return;
+  if (curr->type == unreachable) {
+    return;
+  }
   // type is none, but we might be unreachable
   if (curr->type == none) {
     for (auto* child : curr->list) {
@@ -127,21 +131,23 @@ void ReFinalize::visitSwitch(Switch* curr) {
 }
 void ReFinalize::visitCall(Call* curr) { curr->finalize(); }
 void ReFinalize::visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
-void ReFinalize::visitGetLocal(GetLocal* curr) { curr->finalize(); }
-void ReFinalize::visitSetLocal(SetLocal* curr) { curr->finalize(); }
-void ReFinalize::visitGetGlobal(GetGlobal* curr) { curr->finalize(); }
-void ReFinalize::visitSetGlobal(SetGlobal* curr) { curr->finalize(); }
+void ReFinalize::visitLocalGet(LocalGet* curr) { curr->finalize(); }
+void ReFinalize::visitLocalSet(LocalSet* curr) { curr->finalize(); }
+void ReFinalize::visitGlobalGet(GlobalGet* curr) { curr->finalize(); }
+void ReFinalize::visitGlobalSet(GlobalSet* curr) { curr->finalize(); }
 void ReFinalize::visitLoad(Load* curr) { curr->finalize(); }
 void ReFinalize::visitStore(Store* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
-void ReFinalize::visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
+void ReFinalize::visitAtomicNotify(AtomicNotify* curr) { curr->finalize(); }
+void ReFinalize::visitAtomicFence(AtomicFence* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
-void ReFinalize::visitSIMDBitselect(SIMDBitselect* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDLoad(SIMDLoad* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
 void ReFinalize::visitDataDrop(DataDrop* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
@@ -153,8 +159,17 @@ void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
 void ReFinalize::visitHost(Host* curr) { curr->finalize(); }
+void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
+void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
+void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
+void ReFinalize::visitBrOnExn(BrOnExn* curr) {
+  curr->finalize();
+  updateBreakValueType(curr->name, curr->getSingleSentType());
+}
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
+void ReFinalize::visitPush(Push* curr) { curr->finalize(); }
+void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
@@ -170,6 +185,7 @@ void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
+void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {

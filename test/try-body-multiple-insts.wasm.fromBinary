@@ -1,0 +1,26 @@
+(module
+ (type $0 (func))
+ (func $0 (; 0 ;) (type $0)
+  (nop)
+ )
+ (func $1 (; 1 ;) (type $0)
+  (nop)
+ )
+ (func $2 (; 2 ;) (type $0)
+  (local $0 exnref)
+  (try
+   (block
+    (call $0)
+    (call $1)
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (call $0)
+    (call $1)
+   )
+  )
+ )
+)
+

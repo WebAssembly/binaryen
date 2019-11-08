@@ -17,10 +17,10 @@
 #ifndef wasm_ir_features_h
 #define wasm_ir_features_h
 
-#include <wasm.h>
+#include <ir/iteration.h>
 #include <wasm-binary.h>
 #include <wasm-traversal.h>
-#include <ir/iteration.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -74,6 +74,14 @@ inline FeatureSet get(UnaryOp op) {
     case ConvertSVecI64x2ToVecF64x2:
     case ConvertUVecI64x2ToVecF64x2: {
       ret.setSIMD();
+      break;
+    }
+    case ExtendS8Int32:
+    case ExtendS16Int32:
+    case ExtendS8Int64:
+    case ExtendS16Int64:
+    case ExtendS32Int64: {
+      ret.setSignExt();
       break;
     }
     default: {}

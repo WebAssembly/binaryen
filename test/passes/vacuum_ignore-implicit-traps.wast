@@ -1,4 +1,5 @@
 (module
+  (memory 1)
   (func $load-would-normally-have-side-effects (result i32)
    (i64.ge_s
     (block (result i64)

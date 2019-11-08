@@ -1,2 +1,0 @@
-*.a binary
-bin/binaryen.js -diff

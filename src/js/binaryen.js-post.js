@@ -37,6 +37,8 @@ Module['i64'] = Module['_BinaryenTypeInt64']();
 Module['f32'] = Module['_BinaryenTypeFloat32']();
 Module['f64'] = Module['_BinaryenTypeFloat64']();
 Module['v128'] = Module['_BinaryenTypeVec128']();
+Module['anyref'] = Module['_BinaryenTypeAnyref']();
+Module['exnref'] = Module['_BinaryenTypeExnref']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
@@ -49,10 +51,10 @@ Module['BreakId'] = Module['_BinaryenBreakId']();
 Module['SwitchId'] = Module['_BinaryenSwitchId']();
 Module['CallId'] = Module['_BinaryenCallId']();
 Module['CallIndirectId'] = Module['_BinaryenCallIndirectId']();
-Module['GetLocalId'] = Module['_BinaryenGetLocalId']();
-Module['SetLocalId'] = Module['_BinaryenSetLocalId']();
-Module['GetGlobalId'] = Module['_BinaryenGetGlobalId']();
-Module['SetGlobalId'] = Module['_BinaryenSetGlobalId']();
+Module['LocalGetId'] = Module['_BinaryenLocalGetId']();
+Module['LocalSetId'] = Module['_BinaryenLocalSetId']();
+Module['GlobalGetId'] = Module['_BinaryenGlobalGetId']();
+Module['GlobalSetId'] = Module['_BinaryenGlobalSetId']();
 Module['LoadId'] = Module['_BinaryenLoadId']();
 Module['StoreId'] = Module['_BinaryenStoreId']();
 Module['ConstId'] = Module['_BinaryenConstId']();
@@ -67,22 +69,46 @@ Module['UnreachableId'] = Module['_BinaryenUnreachableId']();
 Module['AtomicCmpxchgId'] = Module['_BinaryenAtomicCmpxchgId']();
 Module['AtomicRMWId'] = Module['_BinaryenAtomicRMWId']();
 Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
-Module['AtomicWakeId'] = Module['_BinaryenAtomicWakeId']();
+Module['AtomicNotifyId'] = Module['_BinaryenAtomicNotifyId']();
+Module['AtomicFenceId'] = Module['_BinaryenAtomicFenceId']();
 Module['SIMDExtractId'] = Module['_BinaryenSIMDExtractId']();
 Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
 Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
-Module['SIMDBitselectId'] = Module['_BinaryenSIMDBitselectId']();
+Module['SIMDTernaryId'] = Module['_BinaryenSIMDTernaryId']();
 Module['SIMDShiftId'] = Module['_BinaryenSIMDShiftId']();
+Module['SIMDLoadId'] = Module['_BinaryenSIMDLoadId']();
 Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
 Module['DataDropId'] = Module['_BinaryenDataDropId']();
 Module['MemoryCopyId'] = Module['_BinaryenMemoryCopyId']();
 Module['MemoryFillId'] = Module['_BinaryenMemoryFillId']();
+Module['TryId'] = Module['_BinaryenTryId']();
+Module['ThrowId'] = Module['_BinaryenThrowId']();
+Module['RethrowId'] = Module['_BinaryenRethrowId']();
+Module['BrOnExnId'] = Module['_BinaryenBrOnExnId']();
+Module['PushId'] = Module['_BinaryenPushId']();
+Module['PopId'] = Module['_BinaryenPopId']();
 
 // External kinds
 Module['ExternalFunction'] = Module['_BinaryenExternalFunction']();
 Module['ExternalTable'] = Module['_BinaryenExternalTable']();
 Module['ExternalMemory'] = Module['_BinaryenExternalMemory']();
 Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
+Module['ExternalEvent'] = Module['_BinaryenExternalEvent']();
+
+// Features
+Module['Features'] = {
+  'MVP': Module['_BinaryenFeatureMVP'](),
+  'Atomics': Module['_BinaryenFeatureAtomics'](),
+  'BulkMemory': Module['_BinaryenFeatureBulkMemory'](),
+  'MutableGlobals': Module['_BinaryenFeatureMutableGlobals'](),
+  'NontrappingFPToInt': Module['_BinaryenFeatureNontrappingFPToInt'](),
+  'SignExt': Module['_BinaryenFeatureSignExt'](),
+  'SIMD128': Module['_BinaryenFeatureSIMD128'](),
+  'ExceptionHandling': Module['_BinaryenFeatureExceptionHandling'](),
+  'TailCall': Module['_BinaryenFeatureTailCall'](),
+  'ReferenceTypes': Module['_BinaryenFeatureReferenceTypes'](),
+  'All': Module['_BinaryenFeatureAll']()
+};
 
 // Operations
 Module['ClzInt32'] = Module['_BinaryenClzInt32']();
@@ -221,8 +247,8 @@ Module['LtFloat64'] = Module['_BinaryenLtFloat64']();
 Module['LeFloat64'] = Module['_BinaryenLeFloat64']();
 Module['GtFloat64'] = Module['_BinaryenGtFloat64']();
 Module['GeFloat64'] = Module['_BinaryenGeFloat64']();
-Module['CurrentMemory'] = Module['_BinaryenCurrentMemory']();
-Module['GrowMemory'] = Module['_BinaryenGrowMemory']();
+Module['MemorySize'] = Module['_BinaryenMemorySize']();
+Module['MemoryGrow'] = Module['_BinaryenMemoryGrow']();
 Module['AtomicRMWAdd'] = Module['_BinaryenAtomicRMWAdd']();
 Module['AtomicRMWSub'] = Module['_BinaryenAtomicRMWSub']();
 Module['AtomicRMWAnd'] = Module['_BinaryenAtomicRMWAnd']();
@@ -295,6 +321,8 @@ Module['NotVec128'] = Module['_BinaryenNotVec128']();
 Module['AndVec128'] = Module['_BinaryenAndVec128']();
 Module['OrVec128'] = Module['_BinaryenOrVec128']();
 Module['XorVec128'] = Module['_BinaryenXorVec128']();
+Module['AndNotVec128'] = Module['_BinaryenAndNotVec128']();
+Module['BitselectVec128'] = Module['_BinaryenBitselectVec128']();
 Module['NegVecI8x16'] = Module['_BinaryenNegVecI8x16']();
 Module['AnyTrueVecI8x16'] = Module['_BinaryenAnyTrueVecI8x16']();
 Module['AllTrueVecI8x16'] = Module['_BinaryenAllTrueVecI8x16']();
@@ -308,6 +336,10 @@ Module['SubVecI8x16'] = Module['_BinaryenSubVecI8x16']();
 Module['SubSatSVecI8x16'] = Module['_BinaryenSubSatSVecI8x16']();
 Module['SubSatUVecI8x16'] = Module['_BinaryenSubSatUVecI8x16']();
 Module['MulVecI8x16'] = Module['_BinaryenMulVecI8x16']();
+Module['MinSVecI8x16'] = Module['_BinaryenMinSVecI8x16']();
+Module['MinUVecI8x16'] = Module['_BinaryenMinUVecI8x16']();
+Module['MaxSVecI8x16'] = Module['_BinaryenMaxSVecI8x16']();
+Module['MaxUVecI8x16'] = Module['_BinaryenMaxUVecI8x16']();
 Module['NegVecI16x8'] = Module['_BinaryenNegVecI16x8']();
 Module['AnyTrueVecI16x8'] = Module['_BinaryenAnyTrueVecI16x8']();
 Module['AllTrueVecI16x8'] = Module['_BinaryenAllTrueVecI16x8']();
@@ -321,6 +353,11 @@ Module['SubVecI16x8'] = Module['_BinaryenSubVecI16x8']();
 Module['SubSatSVecI16x8'] = Module['_BinaryenSubSatSVecI16x8']();
 Module['SubSatUVecI16x8'] = Module['_BinaryenSubSatUVecI16x8']();
 Module['MulVecI16x8'] = Module['_BinaryenMulVecI16x8']();
+Module['MinSVecI16x8'] = Module['_BinaryenMinSVecI16x8']();
+Module['MinUVecI16x8'] = Module['_BinaryenMinUVecI16x8']();
+Module['MaxSVecI16x8'] = Module['_BinaryenMaxSVecI16x8']();
+Module['MaxUVecI16x8'] = Module['_BinaryenMaxUVecI16x8']();
+Module['DotSVecI16x8ToVecI32x4'] = Module['_BinaryenDotSVecI16x8ToVecI32x4']();
 Module['NegVecI32x4'] = Module['_BinaryenNegVecI32x4']();
 Module['AnyTrueVecI32x4'] = Module['_BinaryenAnyTrueVecI32x4']();
 Module['AllTrueVecI32x4'] = Module['_BinaryenAllTrueVecI32x4']();
@@ -330,6 +367,10 @@ Module['ShrUVecI32x4'] = Module['_BinaryenShrUVecI32x4']();
 Module['AddVecI32x4'] = Module['_BinaryenAddVecI32x4']();
 Module['SubVecI32x4'] = Module['_BinaryenSubVecI32x4']();
 Module['MulVecI32x4'] = Module['_BinaryenMulVecI32x4']();
+Module['MinSVecI32x4'] = Module['_BinaryenMinSVecI32x4']();
+Module['MinUVecI32x4'] = Module['_BinaryenMinUVecI32x4']();
+Module['MaxSVecI32x4'] = Module['_BinaryenMaxSVecI32x4']();
+Module['MaxUVecI32x4'] = Module['_BinaryenMaxUVecI32x4']();
 Module['NegVecI64x2'] = Module['_BinaryenNegVecI64x2']();
 Module['AnyTrueVecI64x2'] = Module['_BinaryenAnyTrueVecI64x2']();
 Module['AllTrueVecI64x2'] = Module['_BinaryenAllTrueVecI64x2']();
@@ -341,6 +382,8 @@ Module['SubVecI64x2'] = Module['_BinaryenSubVecI64x2']();
 Module['AbsVecF32x4'] = Module['_BinaryenAbsVecF32x4']();
 Module['NegVecF32x4'] = Module['_BinaryenNegVecF32x4']();
 Module['SqrtVecF32x4'] = Module['_BinaryenSqrtVecF32x4']();
+Module['QFMAVecF32x4'] = Module['_BinaryenQFMAVecF32x4']();
+Module['QFMSVecF32x4'] = Module['_BinaryenQFMSVecF32x4']();
 Module['AddVecF32x4'] = Module['_BinaryenAddVecF32x4']();
 Module['SubVecF32x4'] = Module['_BinaryenSubVecF32x4']();
 Module['MulVecF32x4'] = Module['_BinaryenMulVecF32x4']();
@@ -350,6 +393,8 @@ Module['MaxVecF32x4'] = Module['_BinaryenMaxVecF32x4']();
 Module['AbsVecF64x2'] = Module['_BinaryenAbsVecF64x2']();
 Module['NegVecF64x2'] = Module['_BinaryenNegVecF64x2']();
 Module['SqrtVecF64x2'] = Module['_BinaryenSqrtVecF64x2']();
+Module['QFMAVecF64x2'] = Module['_BinaryenQFMAVecF64x2']();
+Module['QFMSVecF64x2'] = Module['_BinaryenQFMSVecF64x2']();
 Module['AddVecF64x2'] = Module['_BinaryenAddVecF64x2']();
 Module['SubVecF64x2'] = Module['_BinaryenSubVecF64x2']();
 Module['MulVecF64x2'] = Module['_BinaryenMulVecF64x2']();
@@ -364,6 +409,36 @@ Module['ConvertSVecI32x4ToVecF32x4'] = Module['_BinaryenConvertSVecI32x4ToVecF32
 Module['ConvertUVecI32x4ToVecF32x4'] = Module['_BinaryenConvertUVecI32x4ToVecF32x4']();
 Module['ConvertSVecI64x2ToVecF64x2'] = Module['_BinaryenConvertSVecI64x2ToVecF64x2']();
 Module['ConvertUVecI64x2ToVecF64x2'] = Module['_BinaryenConvertUVecI64x2ToVecF64x2']();
+Module['LoadSplatVec8x16'] = Module['_BinaryenLoadSplatVec8x16']();
+Module['LoadSplatVec16x8'] = Module['_BinaryenLoadSplatVec16x8']();
+Module['LoadSplatVec32x4'] = Module['_BinaryenLoadSplatVec32x4']();
+Module['LoadSplatVec64x2'] = Module['_BinaryenLoadSplatVec64x2']();
+Module['LoadExtSVec8x8ToVecI16x8'] = Module['_BinaryenLoadExtSVec8x8ToVecI16x8']();
+Module['LoadExtUVec8x8ToVecI16x8'] = Module['_BinaryenLoadExtUVec8x8ToVecI16x8']();
+Module['LoadExtSVec16x4ToVecI32x4'] = Module['_BinaryenLoadExtSVec16x4ToVecI32x4']();
+Module['LoadExtUVec16x4ToVecI32x4'] = Module['_BinaryenLoadExtUVec16x4ToVecI32x4']();
+Module['LoadExtSVec32x2ToVecI64x2'] = Module['_BinaryenLoadExtSVec32x2ToVecI64x2']();
+Module['LoadExtUVec32x2ToVecI64x2'] = Module['_BinaryenLoadExtUVec32x2ToVecI64x2']();
+Module['NarrowSVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowSVecI16x8ToVecI8x16']();
+Module['NarrowUVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowUVecI16x8ToVecI8x16']();
+Module['NarrowSVecI32x4ToVecI16x8'] = Module['_BinaryenNarrowSVecI32x4ToVecI16x8']();
+Module['NarrowUVecI32x4ToVecI16x8'] = Module['_BinaryenNarrowUVecI32x4ToVecI16x8']();
+Module['WidenLowSVecI8x16ToVecI16x8'] = Module['_BinaryenWidenLowSVecI8x16ToVecI16x8']();
+Module['WidenHighSVecI8x16ToVecI16x8'] = Module['_BinaryenWidenHighSVecI8x16ToVecI16x8']();
+Module['WidenLowUVecI8x16ToVecI16x8'] = Module['_BinaryenWidenLowUVecI8x16ToVecI16x8']();
+Module['WidenHighUVecI8x16ToVecI16x8'] = Module['_BinaryenWidenHighUVecI8x16ToVecI16x8']();
+Module['WidenLowSVecI16x8ToVecI32x4'] = Module['_BinaryenWidenLowSVecI16x8ToVecI32x4']();
+Module['WidenHighSVecI16x8ToVecI32x4'] = Module['_BinaryenWidenHighSVecI16x8ToVecI32x4']();
+Module['WidenLowUVecI16x8ToVecI32x4'] = Module['_BinaryenWidenLowUVecI16x8ToVecI32x4']();
+Module['WidenHighUVecI16x8ToVecI32x4'] = Module['_BinaryenWidenHighUVecI16x8ToVecI32x4']();
+Module['SwizzleVec8x16'] = Module['_BinaryenSwizzleVec8x16']();
+
+// The size of a single literal in memory as used in Const creation,
+// which is a little different: we don't want users to need to make
+// their own Literals, as the C API handles them by value, which means
+// we would leak them. Instead, Const creation is fused together with
+// an intermediate stack allocation of this size to pass the value.
+var sizeOfLiteral = _BinaryenSizeofLiteral();
 
 // 'Module' interface
 Module['Module'] = function(module) {
@@ -428,43 +503,45 @@ function wrapModule(module, self) {
       return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
     });
   };
+  self['returnCall'] = function(name, operands, type) {
+    return preserveStack(function() {
+      return Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
+    });
+  };
+  self['returnCallIndirect'] = function(target, operands, type) {
+    return preserveStack(function() {
+      return Module['_BinaryenReturnCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
+    });
+  };
 
   self['local'] = {
     'get': function(index, type) {
-      return Module['_BinaryenGetLocal'](module, index, type);
+      return Module['_BinaryenLocalGet'](module, index, type);
     },
     'set': function(index, value) {
-      return Module['_BinaryenSetLocal'](module, index, value);
+      return Module['_BinaryenLocalSet'](module, index, value);
     },
     'tee': function(index, value) {
-      return Module['_BinaryenTeeLocal'](module, index, value);
+      return Module['_BinaryenLocalTee'](module, index, value);
     }
   }
-
-  self['getLocal'] = self['local']['get'];
-  self['setLocal'] = self['local']['set'];
-  self['teeLocal'] = self['local']['tee'];
 
   self['global'] = {
     'get': function(name, type) {
-      return Module['_BinaryenGetGlobal'](module, strToStack(name), type);
+      return Module['_BinaryenGlobalGet'](module, strToStack(name), type);
     },
     'set': function(name, value) {
-      return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
+      return Module['_BinaryenGlobalSet'](module, strToStack(name), value);
     }
   }
 
-  self['getGlobal'] = self['global']['get'];
-  self['setGlobal'] = self['global']['set'];
-
-  self['currentMemory'] = self['current_memory'] = function() {
-    return Module['_BinaryenHost'](module, Module['CurrentMemory']);
-  }
-  self['growMemory'] = self['grow_memory'] = function(value) {
-    return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
-  }
-
   self['memory'] = {
+    'size': function() {
+      return Module['_BinaryenHost'](module, Module['MemorySize']);
+    },
+    'grow': function(value) {
+      return Module['_BinaryenHost'](module, Module['MemoryGrow'], null, i32sToStack([value]), 1);
+    },
     'init': function(segment, dest, offset, size) {
       return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size);
     },
@@ -481,13 +558,6 @@ function wrapModule(module, self) {
       return Module['_BinaryenDataDrop'](module, segment);
     }
   }
-
-  // The Const creation API is a little different: we don't want users to
-  // need to make their own Literals, as the C API handles them by value,
-  // which means we would leak them. Instead, this is the only API that
-  // accepts Literals, so fuse it with Literal creation
-  var temp = _malloc(Module['_BinaryenSizeofLiteral']()); // a single literal in memory. the LLVM C ABI
-                                                          // makes us pass pointers to this.
 
   self['i32'] = {
     'load': function(offset, align, ptr) {
@@ -515,8 +585,11 @@ function wrapModule(module, self) {
       return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i32']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralInt32'](temp, x);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralInt32'](tempLiteral, x);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'clz': function(value) {
       return Module['_BinaryenUnary'](module, Module['ClzInt32'], value);
@@ -649,7 +722,7 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUInt32'], left, right);
     },
-    'atomic':{
+    'atomic': {
       'load': function(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i32'], ptr);
       },
@@ -737,10 +810,13 @@ function wrapModule(module, self) {
           return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'])
         },
       },
+      'wait': function(ptr, expected, timeout) {
+        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
+      }
     },
-    'wait': function(ptr, expected, timeout) {
-      return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
-    },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['i32']);
+    }
   };
 
   self['i64'] = {
@@ -778,8 +854,11 @@ function wrapModule(module, self) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64']);
     },
     'const': function(x, y) {
-      Module['_BinaryenLiteralInt64'](temp, x, y);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralInt64'](tempLiteral, x, y);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'clz': function(value) {
       return Module['_BinaryenUnary'](module, Module['ClzInt64'], value);
@@ -918,7 +997,7 @@ function wrapModule(module, self) {
     'ge_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeUInt64'], left, right);
     },
-    'atomic':{
+    'atomic': {
       'load': function(offset, ptr) {
         return Module['_BinaryenAtomicLoad'](module, 8, offset, Module['i64'], ptr);
       },
@@ -1035,10 +1114,13 @@ function wrapModule(module, self) {
           return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'])
         },
       },
+      'wait': function(ptr, expected, timeout) {
+        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
+      }
     },
-    'wait': function(ptr, expected, timeout) {
-      return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
-    },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['i64']);
+    }
   };
 
   self['f32'] = {
@@ -1049,12 +1131,18 @@ function wrapModule(module, self) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['f32']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralFloat32'](temp, x);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralFloat32'](tempLiteral, x);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'const_bits': function(x) {
-      Module['_BinaryenLiteralFloat32Bits'](temp, x);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralFloat32Bits'](tempLiteral, x);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegFloat32'], value);
@@ -1138,6 +1226,9 @@ function wrapModule(module, self) {
     'ge': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeFloat32'], left, right);
     },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['f32']);
+    }
   };
 
   self['f64'] = {
@@ -1148,12 +1239,18 @@ function wrapModule(module, self) {
       return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['f64']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralFloat64'](temp, x);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralFloat64'](tempLiteral, x);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'const_bits': function(x, y) {
-      Module['_BinaryenLiteralFloat64Bits'](temp, x, y);
-      return Module['_BinaryenConst'](module, temp);
+      return preserveStack(function() {
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralFloat64Bits'](tempLiteral, x, y);
+        return Module['_BinaryenConst'](module, tempLiteral);
+      });
     },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegFloat64'], value);
@@ -1237,6 +1334,9 @@ function wrapModule(module, self) {
     'ge': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['GeFloat64'], left, right);
     },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['f64']);
+    }
   };
 
   self['v128'] = {
@@ -1248,33 +1348,32 @@ function wrapModule(module, self) {
     },
     'const': function(i8s) {
       return preserveStack(function() {
-        Module['_BinaryenLiteralVec128'](temp, i8sToStack(i8s));
-        return Module['_BinaryenConst'](module, temp);
+        var tempLiteral = stackAlloc(sizeOfLiteral);
+        Module['_BinaryenLiteralVec128'](tempLiteral, i8sToStack(i8s));
+        return Module['_BinaryenConst'](module, tempLiteral);
       });
     },
     'not': function(value) {
       return Module['_BinaryenUnary'](module, Module['NotVec128'], value);
     },
-    'and': function(value) {
-      return Module['_BinaryenUnary'](module, Module['AndVec128'], value);
+    'and': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['AndVec128'], left, right);
     },
-    'or': function(value) {
-      return Module['_BinaryenUnary'](module, Module['OrVec128'], value);
+    'or': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['OrVec128'], left, right);
     },
-    'xor': function(value) {
-      return Module['_BinaryenUnary'](module, Module['XorVec128'], value);
+    'xor': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['XorVec128'], left, right);
+    },
+    'andnot': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['AndNotVec128'], left, right);
     },
     'bitselect': function(left, right, cond) {
-      return Module['_BinaryenSIMDBitselect'](module, left, right, cond);
-    }
-  };
-
-  self['v8x16'] = {
-    'shuffle': function(left, right, mask) {
-      return preserveStack(function() {
-        return Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask));
-      });
+      return Module['_BinaryenSIMDTernary'](module, Module['BitselectVec128'], left, right, cond);
     },
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['v128']);
+    }
   };
 
   self['i8x16'] = {
@@ -1358,6 +1457,24 @@ function wrapModule(module, self) {
     },
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI8x16'], left, right);
+    },
+    'min_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinSVecI8x16'], left, right);
+    },
+    'min_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinUVecI8x16'], left, right);
+    },
+    'max_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxSVecI8x16'], left, right);
+    },
+    'max_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxUVecI8x16'], left, right);
+    },
+    'narrow_i16x8_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NarrowSVecI16x8ToVecI8x16'], left, right);
+    },
+    'narrow_i16x8_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NarrowUVecI16x8ToVecI8x16'], left, right);
     },
   };
 
@@ -1443,6 +1560,42 @@ function wrapModule(module, self) {
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI16x8'], left, right);
     },
+    'min_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinSVecI16x8'], left, right);
+    },
+    'min_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinUVecI16x8'], left, right);
+    },
+    'max_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxSVecI16x8'], left, right);
+    },
+    'max_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxUVecI16x8'], left, right);
+    },
+    'narrow_i32x4_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NarrowSVecI32x4ToVecI16x8'], left, right);
+    },
+    'narrow_i32x4_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NarrowUVecI32x4ToVecI16x8'], left, right);
+    },
+    'widen_low_i8x16_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenLowSVecI8x16ToVecI16x8'], value);
+    },
+    'widen_high_i8x16_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenHighSVecI8x16ToVecI16x8'], value);
+    },
+    'widen_low_i8x16_u': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenLowUVecI8x16ToVecI16x8'], value);
+    },
+    'widen_high_i8x16_u': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenHighUVecI8x16ToVecI16x8'], value);
+    },
+    'load8x8_s': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec8x8ToVecI16x8'], offset, align, ptr);
+    },
+    'load8x8_u': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec8x8ToVecI16x8'], offset, align, ptr);
+    },
   };
 
   self['i32x4'] = {
@@ -1512,11 +1665,44 @@ function wrapModule(module, self) {
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI32x4'], left, right);
     },
-    'trunc_s/f32x4:sat': function(value) {
+    'min_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinSVecI32x4'], left, right);
+    },
+    'min_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinUVecI32x4'], left, right);
+    },
+    'max_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxSVecI32x4'], left, right);
+    },
+    'max_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxUVecI32x4'], left, right);
+    },
+    'dot_i16x8_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['DotSVecI16x8ToVecI32x4'], left, right);
+    },
+    'trunc_sat_f32x4_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF32x4ToVecI32x4'], value);
     },
-    'trunc_u/f32x4:sat': function(value) {
+    'trunc_sat_f32x4_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatUVecF32x4ToVecI32x4'], value);
+    },
+    'widen_low_i16x8_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenLowSVecI16x8ToVecI32x4'], value);
+    },
+    'widen_high_i16x8_s': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenHighSVecI16x8ToVecI32x4'], value);
+    },
+    'widen_low_i16x8_u': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenLowUVecI16x8ToVecI32x4'], value);
+    },
+    'widen_high_i16x8_u': function(value) {
+      return Module['_BinaryenUnary'](module, Module['WidenHighUVecI16x8ToVecI32x4'], value);
+    },
+    'load16x4_s': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec16x4ToVecI32x4'], offset, align, ptr);
+    },
+    'load16x4_u': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec16x4ToVecI32x4'], offset, align, ptr);
     },
   };
 
@@ -1554,11 +1740,17 @@ function wrapModule(module, self) {
     'sub': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubVecI64x2'], left, right);
     },
-    'trunc_s/f64x2:sat': function(value) {
+    'trunc_sat_f64x2_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF64x2ToVecI64x2'], value);
     },
-    'trunc_u/f64x2:sat': function(value) {
+    'trunc_sat_f64x2_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatUVecF64x2ToVecI64x2'], value);
+    },
+    'load32x2_s': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec32x2ToVecI64x2'], offset, align, ptr);
+    },
+    'load32x2_u': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec32x2ToVecI64x2'], offset, align, ptr);
     },
   };
 
@@ -1599,6 +1791,12 @@ function wrapModule(module, self) {
     'sqrt': function(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtVecF32x4'], value);
     },
+    'qfma': function(a, b, c) {
+      return Module['_BinaryenSIMDTernary'](module, Module['QFMAVecF32x4'], a, b, c);
+    },
+    'qfms': function(a, b, c) {
+      return Module['_BinaryenSIMDTernary'](module, Module['QFMSVecF32x4'], a, b, c);
+    },
     'add': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecF32x4'], left, right);
     },
@@ -1617,10 +1815,10 @@ function wrapModule(module, self) {
     'max': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxVecF32x4'], left, right);
     },
-    'convert_s/i32x4': function(value) {
+    'convert_i32x4_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertSVecI32x4ToVecF32x4'], value);
     },
-    'convert_u/i32x4': function(value) {
+    'convert_i32x4_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertUVecI32x4ToVecF32x4'], value);
     },
   };
@@ -1662,6 +1860,12 @@ function wrapModule(module, self) {
     'sqrt': function(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtVecF64x2'], value);
     },
+    'qfma': function(a, b, c) {
+      return Module['_BinaryenSIMDTernary'](module, Module['QFMAVecF64x2'], a, b, c);
+    },
+    'qfms': function(a, b, c) {
+      return Module['_BinaryenSIMDTernary'](module, Module['QFMSVecF64x2'], a, b, c);
+    },
     'add': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecF64x2'], left, right);
     },
@@ -1680,12 +1884,56 @@ function wrapModule(module, self) {
     'max': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxVecF64x2'], left, right);
     },
-    'convert_s/i64x2': function(value) {
+    'convert_i64x2_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertSVecI64x2ToVecF64x2'], value);
     },
-    'convert_u/i64x2': function(value) {
+    'convert_i64x2_u': function(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertUVecI64x2ToVecF64x2'], value);
     },
+  };
+
+  self['v8x16'] = {
+    'shuffle': function(left, right, mask) {
+      return preserveStack(function() {
+        return Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask));
+      });
+    },
+    'swizzle': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['SwizzleVec8x16'], left, right);
+    },
+    'load_splat': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec8x16'], offset, align, ptr);
+    },
+  };
+
+  self['v16x8'] = {
+    'load_splat': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec16x8'], offset, align, ptr);
+    },
+  };
+
+  self['v32x4'] = {
+    'load_splat': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec32x4'], offset, align, ptr);
+    },
+  };
+
+  self['v64x2'] = {
+    'load_splat': function(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec64x2'], offset, align, ptr);
+    },
+  };
+
+  self['anyref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['anyref']);
+    }
+  };
+
+  self['exnref'] = {
+    'pop': function() {
+      return Module['_BinaryenPop'](module, Module['exnref']);
+    }
   };
 
   self['select'] = function(condition, ifTrue, ifFalse) {
@@ -1709,8 +1957,34 @@ function wrapModule(module, self) {
   self['unreachable'] = function() {
     return Module['_BinaryenUnreachable'](module);
   };
-  self['wake'] = function(ptr, wakeCount) {
-    return Module['_BinaryenAtomicWake'](module, ptr, wakeCount);
+
+  self['atomic'] = {
+    'notify': function(ptr, notifyCount) {
+      return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
+    },
+    'fence': function() {
+      return Module['_BinaryenAtomicFence'](module);
+    }
+  };
+
+  self['try'] = function(body, catchBody) {
+    return Module['_BinaryenTry'](module, body, catchBody);
+  };
+  self['throw'] = function(event_, operands) {
+    return preserveStack(function() {
+      return Module['_BinaryenThrow'](module, strToStack(event_), i32sToStack(operands), operands.length);
+    });
+  };
+  self['rethrow'] = function(exnref) {
+    return Module['_BinaryenRethrow'](module, exnref);
+  };
+  self['br_on_exn'] = function(label, event_, exnref) {
+    return preserveStack(function() {
+      return Module['_BinaryenBrOnExn'](module, strToStack(label), strToStack(event_), exnref);
+    });
+  };
+  self['push'] = function(value) {
+    return Module['_BinaryenPush'](module, value);
   };
 
   // 'Module' operations
@@ -1729,7 +2003,7 @@ function wrapModule(module, self) {
     });
   };
   self['removeFunctionType'] = function(name) {
-    return preserveStack(function () {
+    return preserveStack(function() {
       return Module['_BinaryenRemoveFunctionType'](module, strToStack(name));
     });
   };
@@ -1753,11 +2027,31 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddGlobal'](module, strToStack(name), type, mutable, init);
     });
   }
+  self['getGlobal'] = function(name) {
+    return preserveStack(function() {
+      return Module['_BinaryenGetGlobal'](module, strToStack(name));
+    });
+  };
   self['removeGlobal'] = function(name) {
-    return preserveStack(function () {
+    return preserveStack(function() {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
     });
   }
+  self['addEvent'] = function(name, attribute, eventType) {
+    return preserveStack(function() {
+      return Module['_BinaryenAddEvent'](module, strToStack(name), attribute, eventType);
+    });
+  };
+  self['getEvent'] = function(name) {
+    return preserveStack(function() {
+      return Module['_BinaryenGetEvent'](module, strToStack(name));
+    });
+  };
+  self['removeEvent'] = function(name) {
+    return preserveStack(function() {
+      return Module['_BinaryenRemoveEvent'](module, strToStack(name));
+    });
+  };
   self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, functionType) {
     return preserveStack(function() {
       return Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), functionType);
@@ -1773,9 +2067,14 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared);
     });
   };
-  self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType) {
+  self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType, mutable) {
     return preserveStack(function() {
-      return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType);
+      return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable);
+    });
+  };
+  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, eventType) {
+    return preserveStack(function() {
+      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, eventType);
     });
   };
   self['addExport'] = // deprecated
@@ -1799,21 +2098,27 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddGlobalExport'](module, strToStack(internalName), strToStack(externalName));
     });
   };
+  self['addEventExport'] = function(internalName, externalName) {
+    return preserveStack(function() {
+      return Module['_BinaryenAddEventExport'](module, strToStack(internalName), strToStack(externalName));
+    });
+  };
   self['removeExport'] = function(externalName) {
     return preserveStack(function() {
       return Module['_BinaryenRemoveExport'](module, strToStack(externalName));
     });
   };
-  self['setFunctionTable'] = function(initial, maximum, funcNames) {
+  self['setFunctionTable'] = function(initial, maximum, funcNames, offset) {
     return preserveStack(function() {
       return Module['_BinaryenSetFunctionTable'](module, initial, maximum,
         i32sToStack(funcNames.map(strToStack)),
-        funcNames.length
+        funcNames.length,
+        offset || self['i32']['const'](0)
       );
     });
   };
   self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
-    // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
+    // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
     return preserveStack(function() {
       return Module['_BinaryenSetMemory'](
@@ -1821,6 +2126,11 @@ function wrapModule(module, self) {
         i32sToStack(
           segments.map(function(segment) {
             return allocate(segment.data, 'i8', ALLOC_STACK);
+          })
+        ),
+        i8sToStack(
+          segments.map(function(segment) {
+            return segment.passive;
           })
         ),
         i32sToStack(
@@ -1838,9 +2148,49 @@ function wrapModule(module, self) {
       );
     });
   };
+  self['getNumMemorySegments'] = function() {
+    return Module['_BinaryenGetNumMemorySegments'](module);
+  }
+  self['getMemorySegmentInfoByIndex'] = function(id) {
+    return {
+      'byteOffset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
+      'data': (function(){
+        var size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
+        var ptr = _malloc(size);
+        Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
+        var res = new Uint8Array(size);
+        res.set(new Uint8Array(buffer, ptr, size));
+        _free(ptr);
+        return res.buffer;
+      })()
+    };
+  }
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
   };
+  self['getFeatures'] = function() {
+    return Module['_BinaryenModuleGetFeatures'](module);
+  };
+  self['setFeatures'] = function(features) {
+    Module['_BinaryenModuleSetFeatures'](module, features);
+  };
+  self['addCustomSection'] = function(name, contents) {
+    return preserveStack(function() {
+      return Module['_BinaryenAddCustomSection'](module, strToStack(name), i8sToStack(contents), contents.length);
+    });
+  };
+  self['getNumExports'] = function() {
+    return Module['_BinaryenGetNumExports'](module);
+  }
+  self['getExportByIndex'] = function(id) {
+    return Module['_BinaryenGetExportByIndex'](module, id);
+  }
+  self['getNumFunctions'] = function() {
+    return Module['_BinaryenGetNumFunctions'](module);
+  }
+  self['getFunctionByIndex'] = function(id) {
+    return Module['_BinaryenGetFunctionByIndex'](module, id);
+  }
   self['emitText'] = function() {
     var old = out;
     var ret = '';
@@ -1900,10 +2250,11 @@ function wrapModule(module, self) {
   };
   self['emitBinary'] = function(sourceMapUrl) {
     return preserveStack(function() {
-      Module['_BinaryenModuleAllocateAndWrite'](temp, module, strToStack(sourceMapUrl));
-      var binaryPtr    = HEAPU32[ temp >>> 2     ];
-      var binaryBytes  = HEAPU32[(temp >>> 2) + 1];
-      var sourceMapPtr = HEAPU32[(temp >>> 2) + 2];
+      var tempBuffer = stackAlloc(_BinaryenSizeofAllocateAndWriteResult());
+      Module['_BinaryenModuleAllocateAndWrite'](tempBuffer, module, strToStack(sourceMapUrl));
+      var binaryPtr    = HEAPU32[ tempBuffer >>> 2     ];
+      var binaryBytes  = HEAPU32[(tempBuffer >>> 2) + 1];
+      var sourceMapPtr = HEAPU32[(tempBuffer >>> 2) + 2];
       try {
         var buffer = new Uint8Array(binaryBytes);
         buffer.set(HEAPU8.subarray(binaryPtr, binaryPtr + binaryBytes));
@@ -2016,7 +2367,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetName']).map(Pointer_stringify),
+        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetName']).map(UTF8ToString),
         'defaultName': UTF8ToString(Module['_BinaryenSwitchGetDefaultName'](expr)),
         'condition': Module['_BinaryenSwitchGetCondition'](expr),
         'value': Module['_BinaryenSwitchGetValue'](expr)
@@ -2035,32 +2386,32 @@ Module['getExpressionInfo'] = function(expr) {
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
         'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperand'])
       };
-    case Module['GetLocalId']:
+    case Module['LocalGetId']:
       return {
         'id': id,
         'type': type,
-        'index': Module['_BinaryenGetLocalGetIndex'](expr)
+        'index': Module['_BinaryenLocalGetGetIndex'](expr)
       };
-    case Module['SetLocalId']:
+    case Module['LocalSetId']:
       return {
         'id': id,
         'type': type,
-        'isTee': Boolean(Module['_BinaryenSetLocalIsTee'](expr)),
-        'index': Module['_BinaryenSetLocalGetIndex'](expr),
-        'value': Module['_BinaryenSetLocalGetValue'](expr)
+        'isTee': Boolean(Module['_BinaryenLocalSetIsTee'](expr)),
+        'index': Module['_BinaryenLocalSetGetIndex'](expr),
+        'value': Module['_BinaryenLocalSetGetValue'](expr)
       };
-    case Module['GetGlobalId']:
+    case Module['GlobalGetId']:
       return {
         'id': id,
         'type': type,
-        'name': UTF8ToString(Module['_BinaryenGetGlobalGetName'](expr))
+        'name': UTF8ToString(Module['_BinaryenGlobalGetGetName'](expr))
       };
-    case Module['SetGlobalId']:
+    case Module['GlobalSetId']:
       return {
         'id': id,
         'type': type,
-        'name': UTF8ToString(Module['_BinaryenSetGlobalGetName'](expr)),
-        'value': Module['_BinaryenSetGlobalGetValue'](expr)
+        'name': UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr)),
+        'value': Module['_BinaryenGlobalSetGetValue'](expr)
       };
     case Module['LoadId']:
       return {
@@ -2090,7 +2441,18 @@ Module['getExpressionInfo'] = function(expr) {
         case Module['i32']: value = Module['_BinaryenConstGetValueI32'](expr); break;
         case Module['i64']: value = { 'low': Module['_BinaryenConstGetValueI64Low'](expr), 'high': Module['_BinaryenConstGetValueI64High'](expr) }; break;
         case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
-        case Module['f64']: value =  Module['_BinaryenConstGetValueF64'](expr); break;
+        case Module['f64']: value = Module['_BinaryenConstGetValueF64'](expr); break;
+        case Module['v128']: {
+          preserveStack(function() {
+            var tempBuffer = stackAlloc(16);
+            Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
+            value = new Array(16);
+            for (var i = 0 ; i < 16; i++) {
+              value[i] = HEAPU8[tempBuffer + i];
+            }
+          });
+          break;
+        }
         default: throw Error('unexpected type: ' + type);
       }
       return {
@@ -2136,6 +2498,7 @@ Module['getExpressionInfo'] = function(expr) {
       };
     case Module['NopId']:
     case Module['UnreachableId']:
+    case Module['PopId']:
       return {
         'id': id,
         'type': type
@@ -2177,12 +2540,18 @@ Module['getExpressionInfo'] = function(expr) {
         'timeout': Module['_BinaryenAtomicWaitGetTimeout'](expr),
         'expectedType': Module['_BinaryenAtomicWaitGetExpectedType'](expr)
       };
-    case Module['AtomicWakeId']:
+    case Module['AtomicNotifyId']:
       return {
         'id': id,
         'type': type,
-        'ptr': Module['_BinaryenAtomicWakeGetPtr'](expr),
-        'wakeCount': Module['_BinaryenAtomicWakeGetWakeCount'](expr)
+        'ptr': Module['_BinaryenAtomicNotifyGetPtr'](expr),
+        'notifyCount': Module['_BinaryenAtomicNotifyGetNotifyCount'](expr)
+      };
+    case Module['AtomicFenceId']:
+      return {
+        'id': id,
+        'type': type,
+        'order': Module['_BinaryenAtomicFenceGetOrder'](expr)
       };
     case Module['SIMDExtractId']:
       return {
@@ -2203,11 +2572,11 @@ Module['getExpressionInfo'] = function(expr) {
       };
     case Module['SIMDShuffleId']:
       return preserveStack(function() {
-        var ret = stackAlloc(16);
-        Module['_BinaryenSIMDShuffleGetMask'](expr, ret);
-        var mask = [];
+        var tempBuffer = stackAlloc(16);
+        Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
+        var mask = new Array(16);
         for (var i = 0 ; i < 16; i++) {
-          mask[i] = HEAP8[ret + i];
+          mask[i] = HEAPU8[tempBuffer + i];
         }
         return {
           'id': id,
@@ -2217,13 +2586,14 @@ Module['getExpressionInfo'] = function(expr) {
           'mask': mask
         };
       });
-    case Module['SIMDBitselectId']:
+    case Module['SIMDTernaryId']:
       return {
         'id': id,
         'type': type,
-        'left': Module['_BinaryenSIMDBitselectGetLeft'](expr),
-        'right': Module['_BinaryenSIMDBitselectGetRight'](expr),
-        'cond': Module['_BinaryenSIMDBitselectGetCond'](expr)
+        'op': Module['_BinaryenSIMDTernaryGetOp'](expr),
+        'a': Module['_BinaryenSIMDTernaryGetA'](expr),
+        'b': Module['_BinaryenSIMDTernaryGetB'](expr),
+        'c': Module['_BinaryenSIMDTernaryGetC'](expr)
       };
     case Module['SIMDShiftId']:
       return {
@@ -2232,6 +2602,15 @@ Module['getExpressionInfo'] = function(expr) {
         'op': Module['_BinaryenSIMDShiftGetOp'](expr),
         'vec': Module['_BinaryenSIMDShiftGetVec'](expr),
         'shift': Module['_BinaryenSIMDShiftGetShift'](expr)
+      };
+    case Module['SIMDLoadId']:
+      return {
+        'id': id,
+        'type': type,
+        'op': Module['_BinaryenSIMDLoadGetOp'](expr),
+        'offset': Module['_BinaryenSIMDLoadGetOffset'](expr),
+        'align': Module['_BinaryenSIMDLoadGetAlign'](expr),
+        'ptr': Module['_BinaryenSIMDLoadGetPtr'](expr)
       };
     case Module['MemoryInitId']:
       return {
@@ -2259,6 +2638,39 @@ Module['getExpressionInfo'] = function(expr) {
         'dest': Module['_BinaryenMemoryFillGetDest'](expr),
         'value': Module['_BinaryenMemoryFillGetValue'](expr),
         'size': Module['_BinaryenMemoryFillGetSize'](expr)
+      };
+    case Module['TryId']:
+      return {
+        'id': id,
+        'type': type,
+        'body': Module['_BinaryenTryGetBody'](expr),
+        'catchBody': Module['_BinaryenTryGetCatchBody'](expr)
+      };
+    case Module['ThrowId']:
+      return {
+        'id': id,
+        'type': type,
+        'event': UTF8ToString(Module['_BinaryenThrowGetEvent'](expr)),
+        'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperand'])
+      };
+    case Module['RethrowId']:
+      return {
+        'id': id,
+        'type': type,
+        'exnref': Module['_BinaryenRethrowGetExnref'](expr)
+      };
+    case Module['BrOnExnId']:
+      return {
+        'id': id,
+        'type': type,
+        'name': UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr)),
+        'event': UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr)),
+        'exnref': Module['_BinaryenBrOnExnGetExnref'](expr)
+      };
+    case Module['PushId']:
+      return {
+        'id': id,
+        'value': Module['_BinaryenPushGetValue'](expr)
       };
 
     default:
@@ -2290,12 +2702,25 @@ Module['getFunctionInfo'] = function(func) {
 };
 
 // Obtains information about a 'Global'
-Module['getGlobalInfo'] = function(func) {
+Module['getGlobalInfo'] = function(global) {
   return {
-    'name': UTF8ToString(Module['_BinaryenGlobalGetName'](func)),
-    'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](func)),
-    'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](func)),
-    'type': UTF8ToString(Module['_BinaryenGlobalGetType'](func))
+    'name': UTF8ToString(Module['_BinaryenGlobalGetName'](global)),
+    'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global)),
+    'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global)),
+    'type': Module['_BinaryenGlobalGetType'](global),
+    'mutable': Boolean(Module['_BinaryenGlobalIsMutable'](global)),
+    'init': Module['_BinaryenGlobalGetInitExpr'](global)
+  };
+};
+
+// Obtains information about a 'Event'
+Module['getEventInfo'] = function(event_) {
+  return {
+    'name': UTF8ToString(Module['_BinaryenEventGetName'](event_)),
+    'module': UTF8ToString(Module['_BinaryenEventImportGetModule'](event_)),
+    'base': UTF8ToString(Module['_BinaryenEventImportGetBase'](event_)),
+    'attribute': Module['_BinaryenEventGetAttribute'](event_),
+    'type': UTF8ToString(Module['_BinaryenEventGetType'](event_))
   };
 };
 

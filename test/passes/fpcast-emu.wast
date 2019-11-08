@@ -67,4 +67,14 @@
   )
  )
 )
+(module
+ (table 42 42 funcref)
+ (elem (i32.const 0) $a $b)
+ (export "dynCall_vf" (func $dynCall_vf))
+ (export "dynCall_vd" (func $min_vd))
+ (func $a (param $0 f32))
+ (func $b (param $0 f64))
+ (func $dynCall_vf (param $0 f32))
+ (func $min_vd (param $0 f32))
+)
 

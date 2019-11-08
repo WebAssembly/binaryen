@@ -15,7 +15,11 @@
  */
 
 //
-// Computes code at compile time where possible.
+// Computes code at compile time where possible, replacing it with the
+// computed constant.
+//
+// The "propagate" variant of this pass also propagates constants across
+// sets and gets, which implements a standard constant propagation.
 //
 // Possible nondeterminism: WebAssembly NaN signs are nondeterministic,
 // and this pass may optimize e.g. a float 0 / 0 into +nan while a VM may
@@ -23,53 +27,66 @@
 // looked at.
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm-interpreter.h>
-#include <ir/utils.h>
 #include <ir/literal-utils.h>
 #include <ir/local-graph.h>
 #include <ir/manipulation.h>
+#include <ir/properties.h>
+#include <ir/utils.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm-interpreter.h>
+#include <wasm.h>
 
 namespace wasm {
 
 static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
 
-typedef std::unordered_map<GetLocal*, Literal> GetValues;
+// Limit evaluation depth for 2 reasons: first, it is highly unlikely
+// that we can do anything useful to precompute a hugely nested expression
+// (we should succed at smaller parts of it first). Second, a low limit is
+// helpful to avoid platform differences in native stack sizes.
+static const Index MAX_DEPTH = 50;
 
-// Precomputes an expression. Errors if we hit anything that can't be precomputed.
-class PrecomputingExpressionRunner : public ExpressionRunner<PrecomputingExpressionRunner> {
+typedef std::unordered_map<LocalGet*, Literal> GetValues;
+
+// Precomputes an expression. Errors if we hit anything that can't be
+// precomputed.
+class PrecomputingExpressionRunner
+  : public ExpressionRunner<PrecomputingExpressionRunner> {
   Module* module;
 
   // map gets to constant values, if they are known to be constant
   GetValues& getValues;
 
-  // Whether we are trying to precompute down to an expression (which we can do on
-  // say 5 + 6) or to a value (which we can't do on a local.tee that flows a 7
-  // through it). When we want to replace the expression, we can only do so
-  // when it has no side effects. When we don't care about replacing the expression,
-  // we just want to know if it will contain a known constant.
+  // Whether we are trying to precompute down to an expression (which we can do
+  // on say 5 + 6) or to a value (which we can't do on a local.tee that flows a
+  // 7 through it). When we want to replace the expression, we can only do so
+  // when it has no side effects. When we don't care about replacing the
+  // expression, we just want to know if it will contain a known constant.
   bool replaceExpression;
 
 public:
-  PrecomputingExpressionRunner(Module* module, GetValues& getValues, bool replaceExpression) : module(module), getValues(getValues), replaceExpression(replaceExpression) {}
+  PrecomputingExpressionRunner(Module* module,
+                               GetValues& getValues,
+                               bool replaceExpression)
+    : ExpressionRunner<PrecomputingExpressionRunner>(MAX_DEPTH), module(module),
+      getValues(getValues), replaceExpression(replaceExpression) {}
 
-  struct NonstandaloneException {}; // TODO: use a flow with a special name, as this is likely very slow
+  struct NonstandaloneException {
+  }; // TODO: use a flow with a special name, as this is likely very slow
 
   Flow visitLoop(Loop* curr) {
     // loops might be infinite, so must be careful
-    // but we can't tell if non-infinite, since we don't have state, so loops are just impossible to optimize for now
+    // but we can't tell if non-infinite, since we don't have state, so loops
+    // are just impossible to optimize for now
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
 
-  Flow visitCall(Call* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
+  Flow visitCall(Call* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitCallIndirect(CallIndirect* curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitGetLocal(GetLocal *curr) {
+  Flow visitLocalGet(LocalGet* curr) {
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {
       auto value = iter->second;
@@ -79,7 +96,7 @@ public:
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitSetLocal(SetLocal *curr) {
+  Flow visitLocalSet(LocalSet* curr) {
     // If we don't need to replace the whole expression, see if there
     // is a value flowing through a tee.
     if (!replaceExpression) {
@@ -90,44 +107,43 @@ public:
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitGetGlobal(GetGlobal *curr) {
+  Flow visitGlobalGet(GlobalGet* curr) {
     auto* global = module->getGlobal(curr->name);
     if (!global->imported() && !global->mutable_) {
       return visit(global->init);
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitSetGlobal(SetGlobal *curr) {
+  Flow visitGlobalSet(GlobalSet* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitLoad(Load* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitStore(Store* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitLoad(Load *curr) {
+  Flow visitAtomicWait(AtomicWait* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitAtomicNotify(AtomicNotify* curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitStore(Store *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitAtomicRMW(AtomicRMW *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitAtomicWait(AtomicWait *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitAtomicWake(AtomicWake *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitHost(Host *curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
+  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitMemoryInit(MemoryInit* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitDataDrop(DataDrop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitMemoryFill(MemoryFill* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitHost(Host* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitTry(Try* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitThrow(Throw* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitRethrow(Rethrow* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitBrOnExn(BrOnExn* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitPush(Push* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
+  Flow visitPop(Pop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
 
-  void trap(const char* why) override {
-    throw NonstandaloneException();
-  }
+  void trap(const char* why) override { throw NonstandaloneException(); }
 };
 
-struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
+struct Precompute
+  : public WalkerPass<
+      PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Precompute(propagate); }
@@ -159,18 +175,29 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   }
 
   void visitExpression(Expression* curr) {
-    // TODO: if local.get, only replace with a constant if we don't care about size...?
-    if (curr->is<Const>() || curr->is<Nop>()) return;
+    // TODO: if local.get, only replace with a constant if we don't care about
+    // size...?
+    if (curr->is<Const>() || curr->is<Nop>()) {
+      return;
+    }
     // Until engines implement v128.const and we have SIMD-aware optimizations
     // that can break large v128.const instructions into smaller consts and
     // splats, do not try to precompute v128 expressions.
-    if (curr->type == v128) return;
+    if (isVectorType(curr->type)) {
+      return;
+    }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
+    if (isVectorType(flow.value.type)) {
+      return;
+    }
     if (flow.breaking()) {
-      if (flow.breakTo == NOTPRECOMPUTABLE_FLOW) return;
+      if (flow.breakTo == NOTPRECOMPUTABLE_FLOW) {
+        return;
+      }
       if (flow.breakTo == RETURN_FLOW) {
-        // this expression causes a return. if it's already a return, reuse the node
+        // this expression causes a return. if it's already a return, reuse the
+        // node
         if (auto* ret = curr->dynCast<Return>()) {
           if (flow.value.type != none) {
             // reuse a const value if there is one
@@ -187,11 +214,13 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
           }
         } else {
           Builder builder(*getModule());
-          replaceCurrent(builder.makeReturn(flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
+          replaceCurrent(builder.makeReturn(
+            flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
         }
         return;
       }
-      // this expression causes a break, emit it directly. if it's already a br, reuse the node.
+      // this expression causes a break, emit it directly. if it's already a br,
+      // reuse the node.
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
@@ -212,7 +241,9 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
         br->finalize();
       } else {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeBreak(flow.breakTo, flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
+        replaceCurrent(builder.makeBreak(
+          flow.breakTo,
+          flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
       }
       return;
     }
@@ -235,7 +266,9 @@ private:
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     try {
-      return PrecomputingExpressionRunner(getModule(), getValues, replaceExpression).visit(curr);
+      return PrecomputingExpressionRunner(
+               getModule(), getValues, replaceExpression)
+        .visit(curr);
     } catch (PrecomputingExpressionRunner::NonstandaloneException&) {
       return Flow(NOTPRECOMPUTABLE_FLOW);
     }
@@ -267,6 +300,7 @@ private:
     // compute all dependencies
     LocalGraph localGraph(func);
     localGraph.computeInfluences();
+    localGraph.computeSSAIndexes();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     std::unordered_set<Expression*> work;
@@ -274,7 +308,8 @@ private:
       auto* curr = pair.first;
       work.insert(curr);
     }
-    std::unordered_map<SetLocal*, Literal> setValues; // the constant value, or none if not a constant
+    // the constant value, or none if not a constant
+    std::unordered_map<LocalSet*, Literal> setValues;
     // propagate constant values
     while (!work.empty()) {
       auto iter = work.begin();
@@ -283,17 +318,22 @@ private:
       // see if this set or get is actually a constant value, and if so,
       // mark it as such and add everything it influences to the work list,
       // as they may be constant too.
-      if (auto* set = curr->dynCast<SetLocal>()) {
-        if (setValues[set].isConcrete()) continue; // already known constant
-        auto value = setValues[set] = precomputeValue(set->value);
+      if (auto* set = curr->dynCast<LocalSet>()) {
+        if (setValues[set].isConcrete()) {
+          continue; // already known constant
+        }
+        auto value = setValues[set] =
+          precomputeValue(Properties::getFallthrough(set->value));
         if (value.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
             work.insert(get);
           }
         }
       } else {
-        auto* get = curr->cast<GetLocal>();
-        if (getValues[get].isConcrete()) continue; // already known constant
+        auto* get = curr->cast<LocalGet>();
+        if (getValues[get].isConcrete()) {
+          continue; // already known constant
+        }
         // for this get to have constant value, all sets must agree
         Literal value;
         bool first = true;
@@ -340,12 +380,8 @@ private:
   }
 };
 
-Pass *createPrecomputePass() {
-  return new Precompute(false);
-}
+Pass* createPrecomputePass() { return new Precompute(false); }
 
-Pass *createPrecomputePropagatePass() {
-  return new Precompute(true);
-}
+Pass* createPrecomputePropagatePass() { return new Precompute(true); }
 
 } // namespace wasm

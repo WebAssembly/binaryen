@@ -1,7 +1,7 @@
 (module
- (type $0 (func (param i32) (result f64)))
+ (type $FUNCSIG$di (func (param i32) (result f64)))
  (global $global$3 (mut f64) (f64.const 0))
- (func $1 (; 0 ;) (type $0) (param $x i32) (result f64)
+ (func $1 (; 0 ;) (type $FUNCSIG$di) (param $x i32) (result f64)
   (local $var$0 f64)
   (block $label$0 (result f64)
    (local.set $var$0

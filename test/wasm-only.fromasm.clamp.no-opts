@@ -7,20 +7,19 @@
  (type $legaltype$illegalImport (func (param f64 i32 i32 i32)))
  (type $FUNCSIG$i (func (result i32)))
  (type $legaltype$illegalImportResult (func (result i32)))
- (type $legaltype$_fabsf (func (param f64) (result f64)))
  (type $legaltype$do_i64 (func (result i32)))
  (import "env" "memory" (memory $memory 256 256))
  (import "env" "table" (table $table 3 3 funcref))
- (elem (global.get $__table_base) $legalfunc$illegalImport $legalfunc$_fabsf $legalfunc$do_i64)
+ (elem (global.get $__table_base) $legalfunc$illegalImport $_fabsf $legalfunc$do_i64)
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
+ (import "env" "_fabsf" (func $_fabsf (param f32) (result f32)))
  (import "env" "abort" (func $abort))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (import "env" "illegalImport" (func $legalimport$illegalImport (param f64 i32 i32 i32)))
  (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
- (import "env" "_fabsf" (func $legalimport$_fabsf (param f64) (result f64)))
  (import "env" "do_i64" (func $legalimport$do_i64 (result i32)))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (export "test64" (func $test64))
@@ -1834,7 +1833,7 @@
  )
  (func $__emscripten_dceable_type_decls (; 36 ;)
   (drop
-   (call $legalfunc$_fabsf
+   (call $_fabsf
     (f32.const 0)
    )
   )
@@ -1904,16 +1903,7 @@
    )
   )
  )
- (func $legalfunc$_fabsf (; 41 ;) (param $0 f32) (result f32)
-  (f32.demote_f64
-   (call $legalimport$_fabsf
-    (f64.promote_f32
-     (local.get $0)
-    )
-   )
-  )
- )
- (func $legalfunc$do_i64 (; 42 ;) (result i64)
+ (func $legalfunc$do_i64 (; 41 ;) (result i64)
   (i64.or
    (i64.extend_i32_u
     (call $legalimport$do_i64)

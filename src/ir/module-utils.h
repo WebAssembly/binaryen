@@ -17,9 +17,10 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
-#include "wasm.h"
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
+#include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -33,6 +34,7 @@ namespace ModuleUtils {
 struct BinaryIndexes {
   std::unordered_map<Name, Index> functionIndexes;
   std::unordered_map<Name, Index> globalIndexes;
+  std::unordered_map<Name, Index> eventIndexes;
 
   BinaryIndexes(Module& wasm) {
     auto addGlobal = [&](Global* curr) {
@@ -65,6 +67,21 @@ struct BinaryIndexes {
       }
     }
     assert(functionIndexes.size() == wasm.functions.size());
+    auto addEvent = [&](Event* curr) {
+      auto index = eventIndexes.size();
+      eventIndexes[curr->name] = index;
+    };
+    for (auto& curr : wasm.events) {
+      if (curr->imported()) {
+        addEvent(curr.get());
+      }
+    }
+    for (auto& curr : wasm.events) {
+      if (!curr->imported()) {
+        addEvent(curr.get());
+      }
+    }
+    assert(eventIndexes.size() == wasm.events.size());
   }
 };
 
@@ -74,7 +91,8 @@ inline Function* copyFunction(Function* func, Module& out) {
   ret->result = func->result;
   ret->params = func->params;
   ret->vars = func->vars;
-  ret->type = Name(); // start with no named type; the names in the other module may differ
+  // start with no named type; the names in the other module may differ
+  ret->type = Name();
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->debugLocations = func->debugLocations;
@@ -103,6 +121,16 @@ inline Global* copyGlobal(Global* global, Module& out) {
   return ret;
 }
 
+inline Event* copyEvent(Event* event, Module& out) {
+  auto* ret = new Event();
+  ret->name = event->name;
+  ret->attribute = event->attribute;
+  ret->type = event->type;
+  ret->params = event->params;
+  out.addEvent(ret);
+  return ret;
+}
+
 inline void copyModule(Module& in, Module& out) {
   // we use names throughout, not raw points, so simple copying is fine
   // for everything *but* expressions
@@ -117,6 +145,9 @@ inline void copyModule(Module& in, Module& out) {
   }
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
+  }
+  for (auto& curr : in.events) {
+    copyEvent(curr.get(), out);
   }
   out.table = in.table;
   for (auto& segment : out.table.segments) {
@@ -137,8 +168,7 @@ inline void copyModule(Module& in, Module& out) {
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
 // call this redirect all of its uses.
-template<typename T>
-inline void renameFunctions(Module& wasm, T& map) {
+template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& pair : map) {
     if (Function* F = wasm.getFunctionOrNull(pair.first)) {
@@ -185,36 +215,31 @@ inline void renameFunction(Module& wasm, Name oldName, Name newName) {
 
 // Convenient iteration over imported/non-imported module elements
 
-template<typename T>
-inline void iterImportedMemories(Module& wasm, T visitor) {
+template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
   if (wasm.memory.exists && wasm.memory.imported()) {
     visitor(&wasm.memory);
   }
 }
 
-template<typename T>
-inline void iterDefinedMemories(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
   if (wasm.memory.exists && !wasm.memory.imported()) {
     visitor(&wasm.memory);
   }
 }
 
-template<typename T>
-inline void iterImportedTables(Module& wasm, T visitor) {
+template<typename T> inline void iterImportedTables(Module& wasm, T visitor) {
   if (wasm.table.exists && wasm.table.imported()) {
     visitor(&wasm.table);
   }
 }
 
-template<typename T>
-inline void iterDefinedTables(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
   if (wasm.table.exists && !wasm.table.imported()) {
     visitor(&wasm.table);
   }
 }
 
-template<typename T>
-inline void iterImportedGlobals(Module& wasm, T visitor) {
+template<typename T> inline void iterImportedGlobals(Module& wasm, T visitor) {
   for (auto& import : wasm.globals) {
     if (import->imported()) {
       visitor(import.get());
@@ -222,8 +247,7 @@ inline void iterImportedGlobals(Module& wasm, T visitor) {
   }
 }
 
-template<typename T>
-inline void iterDefinedGlobals(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedGlobals(Module& wasm, T visitor) {
   for (auto& import : wasm.globals) {
     if (!import->imported()) {
       visitor(import.get());
@@ -240,8 +264,7 @@ inline void iterImportedFunctions(Module& wasm, T visitor) {
   }
 }
 
-template<typename T>
-inline void iterDefinedFunctions(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
   for (auto& import : wasm.functions) {
     if (!import->imported()) {
       visitor(import.get());
@@ -249,9 +272,77 @@ inline void iterDefinedFunctions(Module& wasm, T visitor) {
   }
 }
 
+template<typename T> inline void iterImportedEvents(Module& wasm, T visitor) {
+  for (auto& import : wasm.events) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
+  for (auto& import : wasm.events) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+// Performs a parallel map on function in the module, emitting a map object
+// of function => result.
+// TODO: use in inlining and elsewhere
+template<typename T> struct ParallelFunctionMap {
+
+  typedef std::map<Function*, T> Map;
+  Map map;
+
+  typedef std::function<void(Function*, T&)> Func;
+
+  struct Info {
+    Map* map;
+    Func work;
+  };
+
+  ParallelFunctionMap(Module& wasm, Func work) {
+    // Fill in map, as we operate on it in parallel (each function to its own
+    // entry).
+    for (auto& func : wasm.functions) {
+      map[func.get()];
+    }
+
+    // Run on the imports first. TODO: parallelize this too
+    for (auto& func : wasm.functions) {
+      if (func->imported()) {
+        work(func.get(), map[func.get()]);
+      }
+    }
+
+    // Run on the implemented functions.
+    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
+      bool isFunctionParallel() override { return true; }
+
+      Mapper(Info* info) : info(info) {}
+
+      Mapper* create() override { return new Mapper(info); }
+
+      void doWalkFunction(Function* curr) {
+        assert((*info->map).count(curr));
+        info->work(curr, (*info->map)[curr]);
+      }
+
+    private:
+      Info* info;
+    };
+
+    Info info = {&map, work};
+
+    PassRunner runner(&wasm);
+    Mapper(&info).run(&runner, &wasm);
+  }
+};
+
 } // namespace ModuleUtils
 
 } // namespace wasm
 
 #endif // wasm_ir_module_h
-

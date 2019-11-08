@@ -1,0 +1,236 @@
+function instantiate(asmLibraryArg, wasmMemory, wasmTable) {
+
+function asmFunc(global, env, buffer) {
+ var memory = env.memory;
+ var FUNCTION_TABLE = wasmTable;
+ var HEAP8 = new global.Int8Array(buffer);
+ var HEAP16 = new global.Int16Array(buffer);
+ var HEAP32 = new global.Int32Array(buffer);
+ var HEAPU8 = new global.Uint8Array(buffer);
+ var HEAPU16 = new global.Uint16Array(buffer);
+ var HEAPU32 = new global.Uint32Array(buffer);
+ var HEAPF32 = new global.Float32Array(buffer);
+ var HEAPF64 = new global.Float64Array(buffer);
+ var Math_imul = global.Math.imul;
+ var Math_fround = global.Math.fround;
+ var Math_abs = global.Math.abs;
+ var Math_clz32 = global.Math.clz32;
+ var Math_min = global.Math.min;
+ var Math_max = global.Math.max;
+ var Math_floor = global.Math.floor;
+ var Math_ceil = global.Math.ceil;
+ var Math_sqrt = global.Math.sqrt;
+ var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
+ var syscall$6 = env.__syscall6;
+ var syscall$54 = env.__syscall54;
+ // EMSCRIPTEN_START_FUNCS;
+ function main() {
+  syscall$6(1, 2) | 0;
+  syscall$54(3, 4) | 0;
+  FUNCTION_TABLE[HEAP32[257]]();
+ }
+ 
+ function other() {
+  main();
+ }
+ 
+ function foo() {
+  abort();
+ }
+ 
+ function bar() {
+  HEAP32[4] = 3;
+  HEAPF32[4] = 7;
+  HEAPF64[2] = 11;
+  HEAP8[16] = 15;
+  HEAP16[8] = 19;
+  if (HEAP32[25] == 1) {
+   bar()
+  }
+  if (HEAP32[26] < 2) {
+   bar()
+  }
+  if (HEAPU32[27] < 3) {
+   bar()
+  }
+  if (HEAP16[56] == 1) {
+   bar()
+  }
+  if (HEAP16[58] < 2) {
+   bar()
+  }
+  if (HEAPU16[60] < 2) {
+   bar()
+  }
+  if (HEAP16[62] >>> 0 < 3) {
+   bar()
+  }
+  if (HEAPU16[64] < 3) {
+   bar()
+  }
+  if (HEAP8[132] < 2) {
+   bar()
+  }
+  if (HEAPU8[136] < 2) {
+   bar()
+  }
+  if (HEAP8[140] >>> 0 < 3) {
+   bar()
+  }
+  if (HEAPU8[144] < 3) {
+   bar()
+  }
+  if (bools(314159) >>> 7) {
+   bar()
+  }
+  if (bools(314159) >> 8) {
+   bar()
+  }
+  if (~~getf32()) {
+   bar()
+  }
+  if (~~getf32()) {
+   bar()
+  }
+  if (~~getf64()) {
+   bar()
+  }
+  if (~~getf64()) {
+   bar()
+  }
+  if ((geti32() + geti32() | 0) + geti32()) {
+   bar()
+  }
+  if (geti32() + (geti32() + geti32() | 0)) {
+   bar()
+  }
+  if (geti32() + geti32() + (geti32() + geti32())) {
+   bar()
+  }
+  if (geti32() + geti32() + (geti32() + geti32()) + (geti32() + geti32() + (geti32() + geti32()))) {
+   bar()
+  }
+ }
+ 
+ function geti32() {
+  return geti32();
+ }
+ 
+ function getf32() {
+  return getf32();
+ }
+ 
+ function getf64() {
+  return getf64();
+ }
+ 
+ function __growWasmMemory($0) {
+  $0 = $0 | 0;
+  return abort() | 0;
+ }
+ 
+ function internal($0) {
+  return $0;
+ }
+ 
+ function sub_zero($0) {
+  $0 = $0 | 0;
+  return $0 + 5 | 0;
+ }
+ 
+ function select($0) {
+  $0 = $0 | 0;
+  return ($0 ? $0 : HEAP32[4]) | 0;
+ }
+ 
+ function bools($0) {
+  $0 = $0 | 0;
+  bools(HEAP8[0] & 1);
+  bools(HEAP8[0] & 1);
+  bools(HEAP16[0] & 1);
+  bools(HEAP16[0] & 1);
+  bools(HEAP32[0] & 1);
+  bools(HEAPU8[0] & 2);
+  bools($0 ^ 1);
+  if (!$0) {
+   bools(2)
+  }
+  if ($0 ^ 2) {
+   bools(2)
+  }
+  bools(!!$0);
+  abort();
+ }
+ 
+ // EMSCRIPTEN_END_FUNCS;
+ FUNCTION_TABLE[1] = foo;
+ FUNCTION_TABLE[2] = bar;
+ FUNCTION_TABLE[3] = internal;
+ function __wasm_memory_size() {
+  return buffer.byteLength / 65536 | 0;
+ }
+ 
+ return {
+  "main": main, 
+  "other": other, 
+  "__growWasmMemory": __growWasmMemory, 
+  "exported": internal, 
+  "sub_zero": sub_zero, 
+  "select": select, 
+  "bools": bools
+ };
+}
+
+var writeSegment = (
+    function(mem) {
+      var _mem = new Uint8Array(mem);
+      return function(offset, s) {
+        var bytes, i;
+        if (typeof Buffer === 'undefined') {
+          bytes = atob(s);
+          for (i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes.charCodeAt(i);
+        } else {
+          bytes = Buffer.from(s, 'base64');
+          for (i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes[i];
+        }
+      }
+    }
+  )(wasmMemory.buffer);
+writeSegment(1024, "aGVsbG8sIHdvcmxkIQoAAJwMAAAtKyAgIDBYMHgAKG51bGwp");
+writeSegment(1072, "EQAKABEREQAAAAAFAAAAAAAACQAAAAAL");
+writeSegment(1104, "EQAPChEREQMKBwABEwkLCwAACQYLAAALAAYRAAAAERER");
+writeSegment(1153, "Cw==");
+writeSegment(1162, "EQAKChEREQAKAAACAAkLAAAACQALAAAL");
+writeSegment(1211, "DA==");
+writeSegment(1223, "DAAAAAAMAAAAAAkMAAAAAAAMAAAM");
+writeSegment(1269, "Dg==");
+writeSegment(1281, "DQAAAAQNAAAAAAkOAAAAAAAOAAAO");
+writeSegment(1327, "EA==");
+writeSegment(1339, "DwAAAAAPAAAAAAkQAAAAAAAQAAAQAAASAAAAEhIS");
+writeSegment(1394, "EgAAABISEgAAAAAAAAk=");
+writeSegment(1443, "Cw==");
+writeSegment(1455, "CgAAAAAKAAAAAAkLAAAAAAALAAAL");
+writeSegment(1501, "DA==");
+writeSegment(1513, "DAAAAAAMAAAAAAkMAAAAAAAMAAAMAAAwMTIzNDU2Nzg5QUJDREVGLTBYKzBYIDBYLTB4KzB4IDB4AGluZgBJTkYAbmFuAE5BTgAu");
+return asmFunc({
+    'Int8Array': Int8Array,
+    'Int16Array': Int16Array,
+    'Int32Array': Int32Array,
+    'Uint8Array': Uint8Array,
+    'Uint16Array': Uint16Array,
+    'Uint32Array': Uint32Array,
+    'Float32Array': Float32Array,
+    'Float64Array': Float64Array,
+    'NaN': NaN,
+    'Infinity': Infinity,
+    'Math': Math
+  },
+  asmLibraryArg,
+  wasmMemory.buffer
+)
+
+}

@@ -27,21 +27,41 @@
 // TODO: consider adding a "proper" phi node to the AST, that passes
 //       can utilize
 //
+// There is also a "no-merge" variant of this pass. That will ignore
+// sets leading to merges, that is, it only creates new SSA indexes
+// for sets whose gets have just that set, e.g.
+//
+//  x = ..
+//  f(x, x)
+//  x = ..
+//  g(x, x)
+// =>
+//  x = ..
+//  f(x, x)
+//  x' = ..
+//  g(x', x')
+//
+// This "untangles" local indexes in a way that helps other passes,
+// while not creating copies with overlapping lifetimes that can
+// lead to a code size increase. In particular, the new variables
+// added by ssa-nomerge can be easily removed by the coalesce-locals
+// pass.
+//
 
 #include <iterator>
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
-#include "support/permutations.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
+#include "pass.h"
+#include "support/permutations.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
 // A set we know is impossible / not in the ast
-static SetLocal IMPOSSIBLE_SET;
+static LocalSet IMPOSSIBLE_SET;
 
 // Tracks assignments to locals, assuming single-assignment form, i.e.,
 // each assignment creates a new variable.
@@ -49,33 +69,56 @@ static SetLocal IMPOSSIBLE_SET;
 struct SSAify : public Pass {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SSAify; }
+  Pass* create() override { return new SSAify(allowMerges); }
+
+  SSAify(bool allowMerges) : allowMerges(allowMerges) {}
+
+  bool allowMerges;
 
   Module* module;
   Function* func;
-  std::vector<Expression*> functionPrepends; // things we add to the function prologue
+  // things we add to the function prologue
+  std::vector<Expression*> functionPrepends;
 
-  void runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
+  void
+  runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
     func = func_;
     LocalGraph graph(func);
+    graph.computeInfluences();
+    graph.computeSSAIndexes();
     // create new local indexes, one for each set
-    createNewIndexes();
-    // we now know the sets for each get, and can compute get indexes and handle phis
+    createNewIndexes(graph);
+    // we now know the sets for each get, and can compute get indexes and handle
+    // phis
     computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
   }
 
-  void createNewIndexes() {
-    FindAll<SetLocal> sets(func->body);
+  void createNewIndexes(LocalGraph& graph) {
+    FindAll<LocalSet> sets(func->body);
     for (auto* set : sets.list) {
-      set->index = addLocal(func->getLocalType(set->index));
+      // Indexes already in SSA form do not need to be modified - there is
+      // already just one set for that index. Otherwise, use a new index, unless
+      // merges are disallowed.
+      if (!graph.isSSA(set->index) && (allowMerges || !hasMerges(set, graph))) {
+        set->index = addLocal(func->getLocalType(set->index));
+      }
     }
   }
 
+  bool hasMerges(LocalSet* set, LocalGraph& graph) {
+    for (auto* get : graph.setInfluences[set]) {
+      if (graph.getSetses[get].size() > 1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void computeGetsAndPhis(LocalGraph& graph) {
-    FindAll<GetLocal> gets(func->body);
+    FindAll<LocalGet> gets(func->body);
     for (auto* get : gets.list) {
       auto& sets = graph.getSetses[get];
       if (sets.size() == 0) {
@@ -92,9 +135,13 @@ struct SSAify : public Pass {
             // leave it, it's fine
           } else {
             // zero it out
-            (*graph.locations[get]) = LiteralUtils::makeZero(get->type, *module);
+            (*graph.locations[get]) =
+              LiteralUtils::makeZero(get->type, *module);
           }
         }
+        continue;
+      }
+      if (!allowMerges) {
         continue;
       }
       // more than 1 set, need a phi: a new local written to at each of the sets
@@ -107,10 +154,7 @@ struct SSAify : public Pass {
         if (set) {
           // a set exists, just add a tee of its value
           auto* value = set->value;
-          auto* tee = builder.makeTeeLocal(
-            new_,
-            value
-          );
+          auto* tee = builder.makeLocalTee(new_, value);
           set->value = tee;
           // the value may have been something we tracked the location
           // of. if so, update that, since we moved it into the tee
@@ -123,10 +167,8 @@ struct SSAify : public Pass {
           if (func->isParam(old)) {
             // we add a set with the proper
             // param value at the beginning of the function
-            auto* set = builder.makeSetLocal(
-              new_,
-              builder.makeGetLocal(old, func->getLocalType(old))
-            );
+            auto* set = builder.makeLocalSet(
+              new_, builder.makeLocalGet(old, func->getLocalType(old)));
             functionPrepends.push_back(set);
           } else {
             // this is a zero init, so we don't need to do anything actually
@@ -136,9 +178,7 @@ struct SSAify : public Pass {
     }
   }
 
-  Index addLocal(Type type) {
-    return Builder::addVar(func, type);
-  }
+  Index addLocal(Type type) { return Builder::addVar(func, type); }
 
   void addPrepends() {
     if (functionPrepends.size() > 0) {
@@ -154,9 +194,8 @@ struct SSAify : public Pass {
   }
 };
 
-Pass *createSSAifyPass() {
-  return new SSAify();
-}
+Pass* createSSAifyPass() { return new SSAify(true); }
+
+Pass* createSSAifyNoMergePass() { return new SSAify(false); }
 
 } // namespace wasm
-

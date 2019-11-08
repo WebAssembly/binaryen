@@ -15,72 +15,141 @@
  */
 
 #include "wasm-type.h"
+#include "wasm-features.h"
 
-#include <cstdlib>
 #include "compiler-support.h"
+#include <cstdlib>
 
 namespace wasm {
 
 const char* printType(Type type) {
   switch (type) {
-    case Type::none: return "none";
-    case Type::i32: return "i32";
-    case Type::i64: return "i64";
-    case Type::f32: return "f32";
-    case Type::f64: return "f64";
-    case Type::v128: return "v128";
-    case Type::unreachable: return "unreachable";
+    case Type::none:
+      return "none";
+    case Type::i32:
+      return "i32";
+    case Type::i64:
+      return "i64";
+    case Type::f32:
+      return "f32";
+    case Type::f64:
+      return "f64";
+    case Type::v128:
+      return "v128";
+    case Type::anyref:
+      return "anyref";
+    case Type::exnref:
+      return "exnref";
+    case Type::unreachable:
+      return "unreachable";
   }
   WASM_UNREACHABLE();
 }
 
 unsigned getTypeSize(Type type) {
   switch (type) {
-    case Type::i32: return 4;
-    case Type::i64: return 8;
-    case Type::f32: return 4;
-    case Type::f64: return 8;
-    case Type::v128: return 16;
+    case Type::i32:
+      return 4;
+    case Type::i64:
+      return 8;
+    case Type::f32:
+      return 4;
+    case Type::f64:
+      return 8;
+    case Type::v128:
+      return 16;
+    case Type::anyref: // anyref type is opaque
+    case Type::exnref: // exnref type is opaque
     case Type::none:
-    case Type::unreachable: WASM_UNREACHABLE();
+    case Type::unreachable:
+      WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }
 
+FeatureSet getFeatures(Type type) {
+  switch (type) {
+    case v128:
+      return FeatureSet::SIMD;
+    case anyref:
+      return FeatureSet::ReferenceTypes;
+    case exnref:
+      return FeatureSet::ExceptionHandling;
+    default:
+      return FeatureSet();
+  }
+}
+
 Type getType(unsigned size, bool float_) {
-  if (size < 4) return Type::i32;
-  if (size == 4) return float_ ? Type::f32 : Type::i32;
-  if (size == 8) return float_ ? Type::f64 : Type::i64;
-  if (size == 16) return Type::v128;
+  if (size < 4) {
+    return Type::i32;
+  }
+  if (size == 4) {
+    return float_ ? Type::f32 : Type::i32;
+  }
+  if (size == 8) {
+    return float_ ? Type::f64 : Type::i64;
+  }
+  if (size == 16) {
+    return Type::v128;
+  }
   WASM_UNREACHABLE();
 }
 
-Type getReachableType(Type a, Type b) {
-  return a != unreachable ? a : b;
-}
+Type getReachableType(Type a, Type b) { return a != unreachable ? a : b; }
 
-bool isConcreteType(Type type) {
-  return type != none && type != unreachable;
-}
+bool isConcreteType(Type type) { return type != none && type != unreachable; }
 
 bool isIntegerType(Type type) {
   switch (type) {
     case i32:
-    case i64: return true;
-    default: return false;
+    case i64:
+      return true;
+    default:
+      return false;
   }
 }
 
 bool isFloatType(Type type) {
   switch (type) {
     case f32:
-    case f64: return true;
-    default: return false;
+    case f64:
+      return true;
+    default:
+      return false;
   }
 }
 
-bool isVectorType(Type type) {
-  return type == v128;
+bool isVectorType(Type type) { return type == v128; }
+
+bool isReferenceType(Type type) {
+  switch (type) {
+    case anyref:
+    case exnref:
+      return true;
+    default:
+      return false;
+  }
+}
+
+Type reinterpretType(Type type) {
+  switch (type) {
+    case Type::i32:
+      return f32;
+    case Type::i64:
+      return f64;
+    case Type::f32:
+      return i32;
+    case Type::f64:
+      return i64;
+    case Type::v128:
+    case Type::anyref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable:
+      WASM_UNREACHABLE();
+  }
+  WASM_UNREACHABLE();
 }
 
 } // namespace wasm

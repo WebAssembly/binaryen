@@ -1,10 +1,10 @@
 (module
- (type $0 (func (param i32 i64)))
- (type $1 (func (param f32)))
- (type $2 (func (param f64)))
+ (type $FUNCSIG$vij (func (param i32 i64)))
+ (type $FUNCSIG$vf (func (param f32)))
+ (type $FUNCSIG$vd (func (param f64)))
  (type $FUNCSIG$id (func (param f64) (result i32)))
  (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
- (func $test_div (; 1 ;) (type $0) (param $0 i32) (param $1 i64)
+ (func $test_div (; 1 ;) (type $FUNCSIG$vij) (param $0 i32) (param $1 i64)
   (drop
    (call $i32s-div
     (local.get $0)
@@ -30,7 +30,7 @@
    )
   )
  )
- (func $test_rem (; 2 ;) (type $0) (param $0 i32) (param $1 i64)
+ (func $test_rem (; 2 ;) (type $FUNCSIG$vij) (param $0 i32) (param $1 i64)
   (drop
    (call $i32s-rem
     (local.get $0)
@@ -56,7 +56,7 @@
    )
   )
  )
- (func $test_f32_to_int (; 3 ;) (type $1) (param $0 f32)
+ (func $test_f32_to_int (; 3 ;) (type $FUNCSIG$vf) (param $0 f32)
   (drop
    (call $f64-to-int
     (f64.promote_f32
@@ -82,7 +82,7 @@
    )
   )
  )
- (func $test_f64_to_int (; 4 ;) (type $2) (param $0 f64)
+ (func $test_f64_to_int (; 4 ;) (type $FUNCSIG$vd) (param $0 f64)
   (drop
    (call $f64-to-int
     (local.get $0)

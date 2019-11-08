@@ -1,0 +1,66 @@
+(module
+ (type $FUNCSIG$ee (func (param exnref) (result exnref)))
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$vi (func (param i32)))
+ (event $e0 (attr 0) (param i32))
+ (func $exnref_test (; 0 ;) (type $FUNCSIG$ee) (param $0 exnref) (result exnref)
+  (local.get $0)
+ )
+ (func $foo (; 1 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $bar (; 2 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $eh_test (; 3 ;) (type $FUNCSIG$v)
+  (local $exn exnref)
+  (try
+   (throw $e0
+    (i32.const 0)
+   )
+   (catch
+    (local.set $exn
+     (exnref.pop)
+    )
+    (drop
+     (block $l0 (result i32)
+      (rethrow
+       (br_on_exn $l0 $e0
+        (local.get $exn)
+       )
+      )
+     )
+    )
+   )
+  )
+  (block $l1
+   (try
+    (br $l1)
+    (catch
+     (br $l1)
+    )
+   )
+  )
+  (try
+   (nop)
+   (catch
+    (drop
+     (exnref.pop)
+    )
+   )
+  )
+  (try
+   (block $block
+    (call $foo)
+    (call $bar)
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (call $foo)
+    (call $bar)
+   )
+  )
+ )
+)

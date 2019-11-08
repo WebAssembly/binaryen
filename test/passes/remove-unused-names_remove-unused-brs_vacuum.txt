@@ -15,14 +15,7 @@
  (type $13 (func (param i32 i32 i32 i32 i32)))
  (type $14 (func (param f64 i32) (result f64)))
  (type $15 (func (param i32 i32 i32 i32) (result i32)))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (type $FUNCSIG$vii (func (param i32 i32)))
- (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
- (type $FUNCSIG$id (func (param f64) (result i32)))
- (type $23 (func (param i32) (result i64)))
+ (type $FUNCSIG$ji (func (param i32) (result i64)))
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table $0 18 18 funcref))
  (import "env" "DYNAMICTOP_PTR" (global $import$0 i32))
@@ -114,7 +107,7 @@
  (func $23 (; 24 ;) (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (unreachable)
  )
- (func $unexitable-loops-result (; 25 ;) (type $23) (param $0 i32) (result i64)
+ (func $unexitable-loops-result (; 25 ;) (type $FUNCSIG$ji) (param $0 i32) (result i64)
   (loop $label$0
    (loop $label$1
     (br_if $label$0

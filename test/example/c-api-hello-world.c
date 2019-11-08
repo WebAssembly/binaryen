@@ -11,8 +11,8 @@ int main() {
   BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenTypeInt32(), params, 2);
 
   // Get the 0 and 1 arguments, and add them
-  BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
-                        y = BinaryenGetLocal(module, 1, BinaryenTypeInt32());
+  BinaryenExpressionRef x = BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
+                        y = BinaryenLocalGet(module, 1, BinaryenTypeInt32());
   BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
 
   // Create the add function

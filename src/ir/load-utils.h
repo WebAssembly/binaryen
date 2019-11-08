@@ -28,18 +28,17 @@ namespace LoadUtils {
 // fill in bits either signed or unsigned wise)
 inline bool isSignRelevant(Load* load) {
   auto type = load->type;
-  if (load->type == unreachable) return false;
+  if (load->type == unreachable) {
+    return false;
+  }
   return !isFloatType(type) && load->bytes < getTypeSize(type);
 }
 
 // check if a load can be signed (which some opts want to do)
-inline bool canBeSigned(Load* load) {
-  return !load->isAtomic;
-}
+inline bool canBeSigned(Load* load) { return !load->isAtomic; }
 
 } // namespace LoadUtils
 
 } // namespace wasm
 
 #endif // wasm_ir_load_h
-

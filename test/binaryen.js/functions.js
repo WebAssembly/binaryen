@@ -1,3 +1,7 @@
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
@@ -33,8 +37,6 @@ console.log(Binaryen.emitText(funcInfo.body));
 
 module.removeFunction("a-function");
 
-module.addGlobal("a-global", Binaryen.i32, false, funcInfo.body);
-
-module.validate();
+assert(module.validate());
 
 console.log(module.emitText());

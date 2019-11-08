@@ -22,6 +22,8 @@ or validation
 Usage: Provide the filename of the wast.
 '''
 
+from __future__ import print_function
+
 import os
 import random
 import shutil
@@ -46,94 +48,92 @@ PASSES = [
 # main
 
 wast = sys.argv[1]
-print '>>> wast:', wast
+print('>>> wast:', wast)
 
 args = sys.argv[2:]
 
 
 def run():
-  try:
-    cmd = ['bin/wasm-opt', wast]
-    print 'run', cmd
-    subprocess.check_call(cmd, stderr=open('/dev/null'))
-  except Exception, e:
-    return ">>> !!! ", e, " !!!"
-  return 'ok'
+    try:
+        cmd = ['bin/wasm-opt', wast]
+        print('run', cmd)
+        subprocess.check_call(cmd, stderr=open('/dev/null'))
+    except Exception as e:
+        return ">>> !!! ", e, " !!!"
+    return 'ok'
 
 
 original_wast = None
 
 try:
-  # get normal output
+    # get normal output
 
-  normal = run()
-  print '>>> normal output:\n', normal
-  assert normal, 'must be output'
+    normal = run()
+    print('>>> normal output:\n', normal)
+    assert normal, 'must be output'
 
-  # ensure we actually use the wast
+    # ensure we actually use the wast
 
-  original_wast = wast + '.original.wast'
-  shutil.move(wast, original_wast)
+    original_wast = wast + '.original.wast'
+    shutil.move(wast, original_wast)
 
-  def apply_passes(passes):
-    wasm_opt = os.path.join('bin', 'wasm-opt')
-    subprocess.check_call([wasm_opt, original_wast] + passes + ['-o', wast],
-                          stderr=open('/dev/null'))
+    def apply_passes(passes):
+        wasm_opt = os.path.join('bin', 'wasm-opt')
+        subprocess.check_call([wasm_opt, original_wast] + passes + ['-o', wast],
+                              stderr=open('/dev/null'))
 
-  # loop, looking for failures
+    # loop, looking for failures
 
-  def simplify(passes):
-    # passes is known to fail, try to simplify down by removing
-    more = True
-    while more:
-      more = False
-      print '>>> trying to reduce:', ' '.join(passes),
-      print '  [' + str(len(passes)) + ']'
-      for i in range(len(passes)):
-        smaller = passes[:i] + passes[i + 1:]
-        print '>>>>>> try to reduce to:', ' '.join(smaller),
-        print '  [' + str(len(smaller)) + ']'
-        try:
-          apply_passes(smaller)
-          assert run() == normal
-        except Exception:
-          # this failed too, so it's a good reduction
-          passes = smaller
-          print '>>> reduction successful'
-          more = True
-          break
-    print '>>> reduced to:', ' '.join(passes)
+    def simplify(passes):
+        # passes is known to fail, try to simplify down by removing
+        more = True
+        while more:
+            more = False
+            print('>>> trying to reduce:', ' '.join(passes), '  [' + str(len(passes)) + ']')
+            for i in range(len(passes)):
+                smaller = passes[:i] + passes[i + 1:]
+                print('>>>>>> try to reduce to:', ' '.join(smaller), '  [' + str(len(smaller)) + ']')
+                try:
+                    apply_passes(smaller)
+                    assert run() == normal
+                except Exception:
+                    # this failed too, so it's a good reduction
+                    passes = smaller
+                    print('>>> reduction successful')
+                    more = True
+                    break
+        print('>>> reduced to:', ' '.join(passes))
 
-  tested = set()
+    tested = set()
 
-  def pick_passes():
-    # return '--waka'.split(' ')
-    ret = []
+    def pick_passes():
+        # return '--waka'.split(' ')
+        ret = []
+        while 1:
+            str_ret = str(ret)
+            if random.random() < 0.5 and str_ret not in tested:
+                tested.add(str_ret)
+                return ret
+            ret.append('--' + random.choice(PASSES))
+
+    counter = 0
+
     while 1:
-      str_ret = str(ret)
-      if random.random() < 0.5 and str_ret not in tested:
-        tested.add(str_ret)
-        return ret
-      ret.append('--' + random.choice(PASSES))
-
-  counter = 0
-
-  while 1:
-    passes = pick_passes()
-    print '>>> [' + str(counter) + '] testing:', ' '.join(passes)
-    counter += 1
-    try:
-      apply_passes(passes)
-    except Exception, e:
-      print e
-      simplify(passes)
-      break
-    seen = run()
-    if seen != normal:
-      print '>>> bad output:\n', seen
-      simplify(passes)
-      break
+        passes = pick_passes()
+        print('>>> [' + str(counter) + '] testing:', ' '.join(passes))
+        counter += 1
+        try:
+            apply_passes(passes)
+        except Exception as e:
+            print(e)
+            simplify(passes)
+            break
+        seen = run()
+        if seen != normal:
+            print('>>> bad output:\n', seen)
+            simplify(passes)
+            break
 
 finally:
-  if original_wast:
-    shutil.move(original_wast, wast)
+    if original_wast:
+        shutil.move(original_wast, wast)

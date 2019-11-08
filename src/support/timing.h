@@ -33,23 +33,19 @@ class Timer {
 public:
   Timer(std::string name = "") : name(name) {}
 
-  void start() {
-    startTime = std::chrono::steady_clock::now();
-  }
+  void start() { startTime = std::chrono::steady_clock::now(); }
 
   void stop() {
-    total += std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
+    total += std::chrono::duration<double>(std::chrono::steady_clock::now() -
+                                           startTime)
+               .count();
   }
 
-  double getTotal() {
-    return total;
-  }
+  double getTotal() { return total; }
 
-  void dump() {
-    std::cerr << "<Timer " << name << ": " << getTotal() << ">\n";
-  }
+  void dump() { std::cerr << "<Timer " << name << ": " << getTotal() << ">\n"; }
 };
 
 } // namespace wasm
 
-#endif  // wasm_support_timing_h
+#endif // wasm_support_timing_h

@@ -7,9 +7,8 @@
  (export "fac-opt" (func $4))
  (func $0 (; 0 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (if (result i64)
-   (i64.eq
+   (i64.eqz
     (local.get $0)
-    (i64.const 0)
    )
    (i64.const 1)
    (i64.mul
@@ -25,9 +24,8 @@
  )
  (func $1 (; 1 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (if (result i64)
-   (i64.eq
+   (i64.eqz
     (local.get $0)
-    (i64.const 0)
    )
    (i64.const 1)
    (i64.mul
@@ -51,9 +49,10 @@
   )
   (loop $label$3
    (if
-    (i64.ne
-     (local.get $0)
-     (i64.const 0)
+    (i32.eqz
+     (i64.eqz
+      (local.get $0)
+     )
     )
     (block
      (local.set $1

@@ -43,8 +43,8 @@
 #include <sstream>
 #include <unordered_set>
 
-#include "wasm.h"
 #include "wasm-printing.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -57,7 +57,7 @@ struct WasmValidator {
   };
   typedef uint32_t Flags;
 
-  bool validate(Module& module, FeatureSet features = FeatureSet::MVP, Flags flags = Globally);
+  bool validate(Module& module, Flags flags = Globally);
 };
 
 } // namespace wasm

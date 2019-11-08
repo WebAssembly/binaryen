@@ -38,7 +38,7 @@ class Archive {
   // because most things in these buffers are not nul-terminated
   using Buffer = std::vector<char>;
 
- public:
+public:
   struct SubBuffer {
     const uint8_t* data;
     uint32_t len;
@@ -56,7 +56,7 @@ class Archive {
     }
     Child getNext(bool& error) const;
 
-   public:
+  public:
     Child(){};
     Child(const Archive* parent, const uint8_t* data, bool* error);
     // Size of actual member data (no header/padding)
@@ -69,8 +69,8 @@ class Archive {
   class child_iterator {
     friend class Archive;
     Child child;
-    bool error = false;  // TODO: use std::error_code instead?
-   public:
+    bool error = false; // TODO: use std::error_code instead?
+  public:
     child_iterator() = default;
     explicit child_iterator(bool error) : error(error) {}
     child_iterator(const Child& c) : child(c) {}
@@ -94,7 +94,7 @@ class Archive {
   child_iterator child_end() const;
   void dump() const;
 
- private:
+private:
   void setFirstRegular(const Child& c) { firstRegularData = c.data; }
   Buffer& data;
   SubBuffer symbolTable;
@@ -102,4 +102,4 @@ class Archive {
   const uint8_t* firstRegularData;
 };
 
-#endif  // wasm_support_archive_h
+#endif // wasm_support_archive_h

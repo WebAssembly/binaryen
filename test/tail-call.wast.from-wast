@@ -1,0 +1,13 @@
+(module
+ (type $void (func))
+ (table $0 1 1 funcref)
+ (elem (i32.const 0) $foo)
+ (func $foo (; 0 ;) (type $void)
+  (return_call $bar)
+ )
+ (func $bar (; 1 ;) (type $void)
+  (return_call_indirect (type $void)
+   (i32.const 0)
+  )
+ )
+)

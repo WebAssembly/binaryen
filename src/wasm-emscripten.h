@@ -33,11 +33,8 @@ public:
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
-  void generateStackInitialization(Address addr);
-  Function* generateAssignGOTEntriesFunction(const std::vector<std::string>& sideFunctions, bool mainModule = true);
-  void generateApplyRelocations(const std::vector<std::string>& sideFunctions);
-  void generatePostInstantiateFunction(const std::vector<std::string>& sideFunctions);
-  int getTableIdx(const Name& fnName);
+  Function* generateAssignGOTEntriesFunction();
+  void generatePostInstantiateFunction();
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.
@@ -47,19 +44,24 @@ public:
   // and restore functions.
   void replaceStackPointerGlobal();
 
-  // Create thunks to support emscripten's addFunction functionality. Creates (#
-  // of reserved function pointers) thunks for each indirectly called function
-  // signature.
-  void generateJSCallThunks(unsigned numReservedFunctionPointers);
+  // Remove the import of a mutable __stack_pointer and instead initialize the
+  // stack pointer from an immutable import.
+  void internalizeStackPointerGlobal();
 
-  std::string generateEmscriptenMetadata(Address staticBump,
-    std::vector<Name> const& initializerFunctions, unsigned numReservedFunctionPointers);
+  std::string
+  generateEmscriptenMetadata(Address staticBump,
+                             std::vector<Name> const& initializerFunctions);
 
   void fixInvokeFunctionNames();
 
+  void enforceStackLimit();
+
+  void exportWasiStart();
+
   // Emits the data segments to a file. The file contains data from address base
-  // onwards (we must pass in base, as we can't tell it from the wasm - the first
-  // segment may start after a run of zeros, but we need those zeros in the file).
+  // onwards (we must pass in base, as we can't tell it from the wasm - the
+  // first segment may start after a run of zeros, but we need those zeros in
+  // the file).
   void separateDataSegments(Output* outfile, Address base);
 
 private:
@@ -67,13 +69,19 @@ private:
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
+  // Used by generateDynCallThunk to track all the dynCall functions created
+  // so far.
+  std::unordered_set<std::string> sigs;
 
   Global* getStackPointerGlobal();
   Expression* generateLoadStackPointer();
-  Expression* generateStoreStackPointer(Expression* value);
+  Expression* generateStoreStackPointer(Function* func, Expression* value);
+  void generateDynCallThunk(std::string sig);
   void generateStackSaveFunction();
   void generateStackAllocFunction();
   void generateStackRestoreFunction();
+  void generateSetStackLimitFunction();
+  Name importStackOverflowHandler();
 };
 
 } // namespace wasm

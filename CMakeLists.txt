@@ -1,11 +1,27 @@
 PROJECT(binaryen C CXX)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1.3)
 INCLUDE(GNUInstallDirs)
 
 IF(NOT CMAKE_BUILD_TYPE)
   MESSAGE(STATUS "No build type selected, default to Release")
   SET(CMAKE_BUILD_TYPE "Release")
 ENDIF()
+
+FIND_PACKAGE(Git QUIET REQUIRED)
+EXECUTE_PROCESS(COMMAND
+             "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags
+         RESULT_VARIABLE
+             GIT_HASH_RESULT
+         OUTPUT_VARIABLE
+             GIT_HASH
+         OUTPUT_STRIP_TRAILING_WHITESPACE)
+IF(${GIT_HASH_RESULT})
+  MESSAGE(WARNING "Error running git describe to determine version")
+  SET(BINARYEN_VERSION_INFO "(unable to determine version)")
+ELSE()
+  SET(BINARYEN_VERSION_INFO "${GIT_HASH}")
+ENDIF()
+CONFIGURE_FILE(config.h.in config.h)
 
 OPTION(BUILD_STATIC_LIB "Build as a static library" OFF)
 
@@ -52,6 +68,9 @@ ENDFUNCTION()
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+# Add output directory to include path so config.h can be found
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+
 # Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
 FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/bin")
@@ -92,6 +111,11 @@ IF(MSVC)
         CMAKE_C_FLAGS_MINSIZEREL)
       string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
         "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+
+      # Compile with `/MT` to link against `libcmt.lib`, removing a dependency
+      # on `msvcrt.dll`. May result in slightly larger binaries but they should
+      # be more portable across systems.
+      string(REPLACE "/MD" "/MT" ${flags_var_to_scrub} "${${flags_var_to_scrub}}")
     endforeach()
   endif()
 
@@ -107,7 +131,7 @@ ELSE()
   SET(THREADS_PREFER_PTHREAD_FLAG ON)
   SET(CMAKE_THREAD_PREFER_PTHREAD ON)
   FIND_PACKAGE(Threads REQUIRED)
-  ADD_CXX_FLAG("-std=c++11")
+  ADD_CXX_FLAG("-std=c++14")
   if (NOT EMSCRIPTEN)
     if (CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
       # wasm doesn't allow for x87 floating point math
@@ -124,6 +148,10 @@ ELSE()
   ADD_COMPILE_FLAG("-Wextra")
   ADD_COMPILE_FLAG("-Wno-unused-parameter")
   ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
+  # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two
+  # flags once we resolve the issue.
+  ADD_COMPILE_FLAG("-Wno-implicit-int-float-conversion")
+  ADD_COMPILE_FLAG("-Wno-unknown-warning-option")
   ADD_COMPILE_FLAG("-Wswitch") # we explicitly expect this in the code
   IF(WIN32)
     ADD_COMPILE_FLAG("-D_GNU_SOURCE")
@@ -164,6 +192,7 @@ SET(binaryen_SOURCES
 )
 IF(BUILD_STATIC_LIB)
   ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES})
+  ADD_DEFINITIONS(-DBUILD_STATIC_LIBRARY)
 ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
@@ -174,8 +203,8 @@ INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # if binaryen.js was built (using "./build-js.sh", currently
 # optional), install it
-IF(EXISTS "${PROJECT_SOURCE_DIR}/bin/binaryen.js")
-  INSTALL(FILES bin/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
+IF(EXISTS "${PROJECT_SOURCE_DIR}/out/binaryen.js")
+  INSTALL(FILES out/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
 ENDIF()
 
 SET(wasm-shell_SOURCES
@@ -184,7 +213,7 @@ SET(wasm-shell_SOURCES
 ADD_EXECUTABLE(wasm-shell
                ${wasm-shell_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -194,19 +223,9 @@ SET(wasm-opt_SOURCES
 ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-SET(wasm-merge_SOURCES
-  src/tools/wasm-merge.cpp
-)
-ADD_EXECUTABLE(wasm-merge
-               ${wasm-merge_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD 11)
-SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD_REQUIRED ON)
-INSTALL(TARGETS wasm-merge DESTINATION bin)
 
 SET(wasm-metadce_SOURCES
   src/tools/wasm-metadce.cpp
@@ -214,7 +233,7 @@ SET(wasm-metadce_SOURCES
 ADD_EXECUTABLE(wasm-metadce
                ${wasm-metadce_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-metadce wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-SET_PROPERTY(TARGET wasm-metadce PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-metadce PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-metadce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-metadce DESTINATION bin)
 
@@ -224,7 +243,7 @@ SET(asm2wasm_SOURCES
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
 TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer passes wasm asmjs ir cfg support)
-SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -234,7 +253,7 @@ SET(wasm2js_SOURCES
 ADD_EXECUTABLE(wasm2js
                ${wasm2js_SOURCES})
 TARGET_LINK_LIBRARIES(wasm2js passes wasm asmjs emscripten-optimizer ir cfg support)
-SET_PROPERTY(TARGET wasm2js PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm2js PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm2js PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm2js DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -244,7 +263,7 @@ SET(wasm-emscripten-finalize_SOURCES
 ADD_EXECUTABLE(wasm-emscripten-finalize
                ${wasm-emscripten-finalize_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-emscripten-finalize passes wasm asmjs ir cfg support)
-SET_PROPERTY(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-emscripten-finalize DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -254,7 +273,7 @@ SET(wasm_as_SOURCES
 ADD_EXECUTABLE(wasm-as
                ${wasm_as_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-as wasm asmjs passes ir cfg support wasm)
-SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -264,7 +283,7 @@ SET(wasm_dis_SOURCES
 ADD_EXECUTABLE(wasm-dis
                ${wasm_dis_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs ir cfg support)
-SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -274,7 +293,7 @@ SET(wasm-ctor-eval_SOURCES
 ADD_EXECUTABLE(wasm-ctor-eval
                ${wasm-ctor-eval_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-ctor-eval emscripten-optimizer passes wasm asmjs ir cfg support)
-SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)
 
@@ -284,7 +303,7 @@ SET(wasm-reduce_SOURCES
 ADD_EXECUTABLE(wasm-reduce
                 ${wasm-reduce_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-reduce wasm asmjs passes wasm ir cfg support)
-SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 

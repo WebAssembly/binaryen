@@ -6,6 +6,5 @@ getExpressionInfo(body)={"id":14,"value":3}
 
 (module
  (type $i (func (result i32)))
- (global $a-global i32 (i32.const 3))
 )
 
