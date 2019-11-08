@@ -51,15 +51,28 @@ struct LegalizeJSInterface : public Pass {
 
   void run(PassRunner* runner, Module* module) override {
     // for each illegal export, we must export a legalized stub instead
+    std::vector<Export*> newExports;
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
         auto* func = module->getFunction(ex->value);
         if (isIllegal(func) && shouldBeLegalized(ex.get(), func)) {
+          // Provide a legal function for the export.
           auto legalName = makeLegalStub(func, module);
           ex->value = legalName;
+          // Also export the original function, before legalization. This is
+          // not normally useful for JS, except in cases like dynamic linking
+          // where the JS loader code must copy exported wasm functions into the
+          // table, and they must not be legalized as other wasm code will do an
+          // indirect call to them.
+          Builder builder(*module);
+          auto newName = std::string("orig$") + func->name.str;
+          newExports.push_back(builder.makeExport(newName, func->name, ExternalKind::Function));
         }
       }
+    }
+    for (auto* ex : newExports) {
+      module->addExport(ex);
     }
     // Avoid iterator invalidation later.
     std::vector<Function*> originalFunctions;
