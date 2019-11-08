@@ -257,7 +257,8 @@ struct MemoryPacking : public Pass {
             return;
           }
         }
-        if (!getModule()->memory.segments[curr->segment].isPassive) {
+        Memory::Segment& segment = getModule()->memory.segments[curr->segment];
+        if (!segment.isPassive || segment.data.size() == 0) {
           replaceCurrent(builder.blockify(
             builder.makeDrop(curr->dest),
             builder.makeDrop(curr->offset),

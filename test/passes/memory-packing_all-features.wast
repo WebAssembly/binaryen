@@ -97,6 +97,8 @@
 
   (data passive "")
 
+  (data passive "")
+
   (func $zeroes-at-start
     (memory.init 1
       (i32.const 0)
@@ -246,6 +248,15 @@
       (i32.const 0)
     )
     (data.drop 14)
+  )
+
+  (func $empty-nonzero-size
+    (memory.init 15
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 1)
+    )
+    (data.drop 15)
   )
 )
 

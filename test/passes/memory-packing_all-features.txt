@@ -341,6 +341,21 @@
   )
   (nop)
  )
+ (func $empty-nonzero-size (; 14 ;) (type $FUNCSIG$v)
+  (block
+   (drop
+    (i32.const 0)
+   )
+   (drop
+    (i32.const 0)
+   )
+   (if
+    (i32.const 1)
+    (unreachable)
+   )
+  )
+  (nop)
+ )
 )
 (module
  (type $FUNCSIG$v (func))
