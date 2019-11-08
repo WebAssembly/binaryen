@@ -14,7 +14,7 @@
  (export "__post_instantiate" (func $__post_instantiate))
  (export "runPostSets" (func $runPostSets))
  (export "_global" (global $_global))
- (func $__ZN3FooC2Ev (; 2 ;) (; has Stack IR ;) (param $0 i32)
+ (func $__ZN3FooC2Ev (; 2 ;) (param $0 i32)
   (local.set $0
    (global.get $STACKTOP)
   )
@@ -42,10 +42,10 @@
    (local.get $0)
   )
  )
- (func $runPostSets (; 3 ;) (; has Stack IR ;)
+ (func $runPostSets (; 3 ;)
   (nop)
  )
- (func $__post_instantiate (; 4 ;) (; has Stack IR ;)
+ (func $__post_instantiate (; 4 ;)
   (global.set $STACKTOP
    (i32.add
     (global.get $memoryBase$asm2wasm$import)

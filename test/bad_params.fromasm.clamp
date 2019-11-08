@@ -3,7 +3,7 @@
  (data (global.get $__memory_base) "bad_params.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))
  (export "ex" (func $ex))
- (func $ex (; 0 ;) (; has Stack IR ;)
+ (func $ex (; 0 ;)
   (nop)
  )
 )

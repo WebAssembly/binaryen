@@ -3,7 +3,7 @@
  (data (global.get $__memory_base) "hello_world.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))
  (export "add" (func $add))
- (func $add (; 0 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $add (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
