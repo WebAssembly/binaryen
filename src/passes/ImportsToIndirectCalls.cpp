@@ -30,10 +30,15 @@
 #include "support/json.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-emscripten.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 #include <fstream>
 #include <map>
+
+std::vector<wasm::Name> tableClone;
+typedef std::map<std::string, std::vector<std::string>> mainInfoType;
+mainInfoType mainInfo;
 
 void json::Value::stringify(std::ostream& os, bool pretty) {
   static int indent = 0;
@@ -129,6 +134,7 @@ void json::Value::stringify(std::ostream& os, bool pretty) {
 namespace wasm {
 
 namespace {
+bool isSideModule = false;
 
 struct FunctionImportsToIndirectCalls
   : public WalkerPass<PostWalker<FunctionImportsToIndirectCalls>> {
@@ -136,120 +142,81 @@ struct FunctionImportsToIndirectCalls
 
   Pass* create() override { return new FunctionImportsToIndirectCalls(); }
 
-  FunctionImportsToIndirectCalls(std::string sideFnFile) {
+  FunctionImportsToIndirectCalls(std::vector<std::string> sideFns) {
     IAT.name = "IAT";
-    // myfile.open("added_indirects.json", std::ios::out);
-    myfile.open(sideFnFile, std::ios::in);
-    char delimiter = ',';
-    std::string token;
-    std::string output;
-    while (std::getline(myfile, output)) {
-      std::istringstream line(output);
-      while (std::getline(line, token, delimiter)) {
-        sideFunctions.push_back(token);
-      }
-    }
+    wasmImports = sideFns;
   }
 
   FunctionImportsToIndirectCalls() {}
 
   ~FunctionImportsToIndirectCalls() { myfile.close(); }
 
-#pragma optimize("", off)
   void visitCallIndirect(CallIndirect* curr) {
-    // if (auto* c = curr->target->dynCast<Const>()) {
-    //  Index index = c->value.geti32();
-    //  // If the index is invalid, or the type is wrong, we can
-    //  // emit an unreachable here, since in Binaryen it is ok to
-    //  // reorder/replace traps when optimizing (but never to
-    //  // remove them, at least not by default).
-    //  if (index >= flatTable->names.size()) {
-    //    replaceWithUnreachable(curr);
-    //    return;
-    //  }
-    //  auto name = flatTable->names[index];
-    //  if (!name.is()) {
-    //    replaceWithUnreachable(curr);
-    //    return;
-    //  }
-    //  auto* func = getModule()->getFunction(name);
-    //  if (getSig(getModule()->getFunctionType(curr->fullType)) !=
-    //      getSig(func)) {
-    //    replaceWithUnreachable(curr);
-    //    return;
-    //  }
-    //  // Everything looks good!
-    //  replaceCurrent(
-    //    Builder(*getModule())
-    //      .makeCall(name, curr->operands, curr->type, curr->isReturn));
-    //}
+     if (auto* c = curr->target->dynCast<Const>()) {
+      Index index = c->value.geti32();
+      if (index >= getModule()->table.segments[0].data.size()) {
+        std::cout << "index exceeds table size\n";
+        return;
+      }
+      auto name = getModule()->table.segments[0].data[index];
+      if (!name.is()) {
+        std::cout << "name is invalid!!!\n";
+        return;
+      }
+      auto* func = getModule()->getFunction(name);
+      if (func->imported()) {
+        name = func->base;
+        if (name.hasSubstring("ZL9init_versv_4518"))
+          printf("name:%s!!!\n", name.c_str());
 
-    // if (auto* c = curr->target->dynCast<Const>()) {
-    //  Index index = c->value.geti32();
-    //  if (index >= getModule()->table.segments[0].data.size()) {
-    //    std::cout << "index exceeds table size\n";
-    //    return;
-    //  }
-    //  auto name = getModule()->table.segments[0].data[index];
-    //  if (!name.is()) {
-    //    std::cout << "name is invalid!!!\n";
-    //    return;
-    //  }
-    //  auto* func = getModule()->getFunction(name);
-    //  if (func->imported()) {
-    //    name = func->base;
-    //    if (name.hasSubstring("ZL9init_versv_4518"))
-    //      printf("name:%s!!!\n", name.c_str());
+        // We only replace user imported functions e.g. functions that are not in the JS library
+        if (std::find(wasmImports.begin(), wasmImports.end(), name.c_str()) == wasmImports.end()) {
+          return;
+        }
 
-    //    // We only replace user imported functions e.g. functions that are not in the JS library
-    //    if (std::find(sideFunctions.begin(), sideFunctions.end(), name.c_str()) ==
-    //        sideFunctions.end()) {
-    //      return;
-    //    }
+        std::vector<Expression*> args;
+        for (int i = 0; i < curr->operands.size(); ++i) {
+          args.push_back(curr->operands[i]);
+        }
 
-    //    std::vector<Expression*> args;
-    //    for (int i = 0; i < curr->operands.size(); ++i) {
-    //      args.push_back(curr->operands[i]);
-    //    }
+        auto module = getModule();
+        auto sig = getSig(func);
 
-    //    auto module = getModule();
-    //    auto sig = getSig(func);
+        if (sig.empty()) {
+          printf("sig:%s is empty!!!\n", sig.c_str());
+        }
+        Name delayLoaderName(std::string("dl$") + name.c_str() + '$' + sig);
+        auto* delayLoaderFn = getModule()->getFunctionOrNull(delayLoaderName);
 
-    //    if (sig.empty()) {
-    //      printf("sig:%s is empty!!!\n", sig.c_str());
-    //    }
-    //    Name delayLoaderName(std::string("dl$") + name.c_str() + '$' + sig);
-    //    auto* delayLoaderFn = getModule()->getFunctionOrNull(delayLoaderName);
+        // If null, generate an empty dl that will force the
+        // wasm module to import it from JS. The dl in this case is
+        // defined in the JS.
+        if (!delayLoaderFn) {
+          auto* delayLoaderFn2 =
+            Builder(*module).makeFunction(delayLoaderName, std::move(func->params), func->result,
+              {
+                // call dlopen
+                // call the target function directly
+              });
 
-    //    // If null, generate an empty dl that will force the
-    //    // wasm module to import it from JS. The dl in this case is
-    //    // defined in the JS.
-    //    if (!delayLoaderFn) {
-    //      auto* delayLoaderFn2 =
-    //        Builder(*module).makeFunction(delayLoaderName, std::move(func->params), func->result,
-    //          {
-    //            // call dlopen
-    //            // call the target function directly
-    //          });
+          if (!delayLoaderFn2) {
+            printf("delayLoaderFn2 is null!!! for delayLoaderName:%s\n", delayLoaderName.c_str());
+            return;
+          }
 
-    //      if (!delayLoaderFn2) {
-    //        printf("delayLoaderFn2 is null!!! for delayLoaderName:%s\n", delayLoaderName.c_str());
-    //        return;
-    //      }
+          delayLoaderFn2->module = "env";
+          delayLoaderFn2->base = delayLoaderName; // copied from ExtractFunction
+                                                  // : public Pass
+          module->addFunction(delayLoaderFn2);
 
-    //      delayLoaderFn2->module = "env";
-    //      delayLoaderFn2->base = delayLoaderName; // copied from ExtractFunction
-    //                                              // : public Pass
-    //      module->addFunction(delayLoaderFn2);
-
-    //      // Name thunkInternal(std::string("__Z13sideyInternali"));
-    //      module->table.segments[0].data[index] = delayLoaderName;
-    //    }
-    //  }
-    //}
+          // Name thunkInternal(std::string("__Z13sideyInternali"));
+          module->table.segments[0].data[index] = delayLoaderName;
+        }
+      }
+    }
   }
 
-#pragma optimize("", off)
+//#pragma optimize("", off)
   void visitCall(Call* curr) {
     auto name = curr->target;
     auto* func = getModule()->getFunctionOrNull(name);
@@ -259,131 +226,60 @@ struct FunctionImportsToIndirectCalls
       return;
     }
 
-    if (name.hasSubstring("ZL9init_versv_4518"))
-      printf("name:%s!!!\n", name.c_str());
-
     if (!name.isNull()) {
       if (func) {
         if (func->imported()) {
           auto realName = func->base;
-          
-          // We only replace user imported functions e.g. functions that are not in the JS library
-          if (std::find(sideFunctions.begin(), sideFunctions.end(), realName.c_str()) ==
-              sideFunctions.end()) {
-            return;
-          }
 
-          std::vector<Expression*> args;
-          for (int i = 0; i < curr->operands.size(); ++i) {
-            args.push_back(curr->operands[i]);
-          }
+          if (!isSideModule) {
 
-          auto module = getModule();
-          /*auto* import = new Global;
-          Name getter(std::string("g$") + name.c_str());
-          import->name = getter;
-          import->module = "env";
-          import->base = getter;
-          import->type = i32;
-          auto global = module->addGlobal(import);
-          Expression* fptr = Builder(*module).makeGlobalGet(getter, i32);*/
-
-          if (realName.hasSubstring("__ZN16AcQueryEntityImp23PickMatchesRolloverHintEl")) {
-            // printf("visitCall imported fn:%s sig:%s!!!\n", name.c_str(), sig.c_str());
-            printf("visitCall imported fn:%s!!!\n", realName.c_str());
-          }
-            
-
-          auto sig = getSig(func);
-
-          if (sig.empty()) {
-            printf("sig:%s is empty!!!\n", sig.c_str());
-          }
-
-          //Name delayLoaderName(std::string("dl$") + name.c_str() + '$' + sig);
-
-          // We will not add the signature because for some reason or another, the same fn can have 2 sigs!!!
-          // e.g. name:__ZN11AcApViewImp13OnLButtonDownEj7AcPointIiE sig:viii sig:v
-          Name delayLoaderName(std::string("dl$") + realName.c_str());
-          auto* delayLoaderFn = getModule()->getFunctionOrNull(delayLoaderName);
-
-          // If null, generate an empty dl that will force the
-          // wasm module to import it from JS. The dl in this case is
-          // defined in the JS.
-          if (!delayLoaderFn) {
-            auto* delayLoaderFn2 =
-              Builder(*module).makeFunction(delayLoaderName, std::move(func->params), func->result,
-                {
-                  // call dlopen
-                  // call the target function directly
-                });
-
-            if (!delayLoaderFn2) {
-              printf("delayLoaderFn2 is null!!! for delayLoaderName:%s\n", delayLoaderName.c_str());
+            // We only replace user imported functions e.g. functions that are not in the JS library
+            if (std::find(wasmImports.begin(), wasmImports.end(), realName.c_str()) ==
+                wasmImports.end()) {
               return;
             }
 
-            delayLoaderFn2->module = "env";
-            delayLoaderFn2->base = delayLoaderName; // copied from ExtractFunction
-                                                    // : public Pass
-            module->addFunction(delayLoaderFn2);
+			if (realName.hasSubstring("sidey"))
+              std::cout << "visitCall fnName:" << realName << "\n";
 
-            // Name thunkInternal(std::string("__Z13sideyInternali"));
-
-            // If the original import function already exists in the table, replace it with the delayLoader
-            // else, add it to the table
-            bool funcFound = false;
-            uint32_t insertIdx = 0;
-            for (int i = 0; i < module->table.segments[0].data.size(); ++i) {
-              if (module->table.segments[0].data[i] == name) {
-                module->table.segments[0].data[i] = delayLoaderName;
-                funcFound = true;
-                insertIdx = i;
-                std::cout << "Found :" << name << " in table. Inserting " << delayLoaderName << " at idx:" << insertIdx << "\n";
-                break;
-              }
-            }
-            
-            if (funcFound == false) {
-              module->table.segments[0].data.push_back(delayLoaderName);
-              insertIdx = module->table.initial;
-              module->table.initial = module->table.initial + 1;
-              /*std::cout << "Cannot find :" << name << " in table!!! Inserting " << delayLoaderName
-                        << " at idx:" << insertIdx << "\n";*/
+            std::vector<Expression*> args;
+            for (int i = 0; i < curr->operands.size(); ++i) {
+              args.push_back(curr->operands[i]);
             }
 
-            std::string pair;
-            if (!IAT.data.empty())
-              IAT.data.emplace_back(',');
-            pair = "\"" + std::string(realName.c_str()) + "\"" + ":" + std::to_string(insertIdx);
-            std::copy(pair.begin(), pair.end(), std::back_inserter(IAT.data));
+            auto module = getModule();
 
-            if (realName.hasSubstring("__ZN16AcQueryEntityImp23PickMatchesRolloverHintEl"))
-              std::cout << "visitCall pair:" << pair << "\n";
+            Name getter(std::string("g$") + realName.c_str());
+            Expression* fptr = Builder(*module).makeGetGlobal(getter, i32);
 
-            /*json::Value add_indirects;
-            add_indirects.setObject();
-            json::Ref value = json::Ref(new json::Value(module->table.initial));
-            add_indirects["add_indirects"] = value;
-            add_indirects.stringify(myfile);*/
+            auto fnType = module->getFunctionType(func->type);
+            auto indirectCall = Builder(*module).makeCallIndirect(fnType, fptr, args);
 
-            delayLoaderToTableIdx[delayLoaderName] = insertIdx;
-            /*printf("delayLoaderToTableIdx: key:%s value:%d\n", delayLoaderName.c_str(),
-              module->table.initial);*/
-            
-            // printf("delayLoaderToTableIdx: table.initial:%d\n", module->table.initial);
+            replaceCurrent(indirectCall);
+          } else {
+            // TODO: We need the list of exported main functions here!!!
+            if (std::find(mainInfo["exports"].begin(), mainInfo["exports"].end(),
+                  realName.c_str()) == mainInfo["exports"].end()) {
+              return;
+            }
+
+            //std::cout << "Side Module converting:" << realName.c_str() << "\n";
+
+            std::vector<Expression*> args;
+            for (int i = 0; i < curr->operands.size(); ++i) {
+              args.push_back(curr->operands[i]);
+            }
+
+            // Global is already added in EmscriptenGlueGenerator::generateAssignGOTEntriesFunction
+            auto module = getModule();
+            Name getter(std::string("g$") + realName.c_str());
+            Expression* fptr = Builder(*module).makeGetGlobal(getter, i32);
+
+            auto fnType = module->getFunctionType(func->type);
+            auto indirectCall = Builder(*module).makeCallIndirect(fnType, fptr, args);
+
+            replaceCurrent(indirectCall);
           }
-          auto fnType = module->getFunctionType(func->type);
-          auto idx = Literal(int32_t(delayLoaderToTableIdx[delayLoaderName]));
-          // printf("Assign: delayLoaderName:%s idx:%d\n", delayLoaderName.c_str(),
-          // delayLoaderToTableIdx[delayLoaderName]);
-          auto* fptr = Builder(*module).makeConst(idx);
-          // Latest upstream will have support for tail calls
-          // auto indirectCall = Builder(*module).makeCallIndirect(
-          // fnType, fptr, args, curr->isReturn);
-          auto indirectCall = Builder(*module).makeCallIndirect(fnType, fptr, args);
-
-          replaceCurrent(indirectCall);
         }
       }
     }
@@ -401,82 +297,67 @@ struct FunctionImportsToIndirectCalls
   }
 
   void visitTable(Table* curr) {
-    for (auto& segment : curr->segments) {
 
-      visit(segment.offset);
-      for (int i = 0; i < segment.data.size(); ++i) {
-        auto name = segment.data[i];
-        /*std::cout << ' ';
-        printName(name, std::cout);*/
+    if (!isSideModule) {
+      // Handle the case where the imported fn is already in the table because it may be
+      // called indirectly.
+      for (auto& segment : curr->segments) {
+        visit(segment.offset);
+        for (int i = 0; i < segment.data.size(); ++i) {
+          auto name = segment.data[i];
 
-        if (name.isNull())
-          continue;
+          if (name.isNull())
+            continue;
 
-        auto* func = getModule()->getFunctionOrNull(name);
+          auto* func = getModule()->getFunctionOrNull(name);
 
-        if (!func) {
-          printf("func:%s does not exist!!!\n", name.c_str());
-          continue;
-        }
-        if (func->imported()) {
-          name = func->base;
-          if (name.hasSubstring("__ZN16AcQueryEntityImp23PickMatchesRolloverHintEl"))
-            printf("visitTable imported fn:%s!!!\n", name.c_str());
-
-          // We only replace user imported functions e.g. functions that are not in the JS
-          // library
-          if (std::find(sideFunctions.begin(), sideFunctions.end(), name.c_str()) ==
-              sideFunctions.end()) {
+          if (!func) {
+            printf("func:%s does not exist!!!\n", name.c_str());
             continue;
           }
+          if (func->imported()) {
+            name = func->base;
 
-          auto sig = getSig(func);
-
-          if (sig.empty()) {
-            printf("sig:%s is empty!!!\n", sig.c_str());
-          }
-          //Name delayLoaderName(std::string("dl$") + name.c_str() + '$' + sig);
-
-          // We will not add the signature because for some reason or another, the same fn can have
-          // 2 sigs!!! e.g. name:__ZN11AcApViewImp13OnLButtonDownEj7AcPointIiE sig:viii sig:v
-          Name delayLoaderName(std::string("dl$") + name.c_str());
-
-          auto* delayLoaderFn = getModule()->getFunctionOrNull(delayLoaderName);
-
-          // If null, generate an empty dl that will force the
-          // wasm module to import it from JS. The dl in this case is
-          // defined in the JS.
-          if (!delayLoaderFn) {
-            auto* delayLoaderFn2 =
-              Builder(*getModule())
-                .makeFunction(delayLoaderName, std::move(func->params), func->result,
-                  {
-                    // call dlopen
-                    // call the target function directly
-                  });
-
-            if (!delayLoaderFn2) {
-              printf("delayLoaderFn2 is null!!! for delayLoaderName:%s\n", delayLoaderName.c_str());
+            // We only replace user imported functions e.g. functions that are not in the JS
+            // library
+            if (std::find(wasmImports.begin(), wasmImports.end(), name.c_str()) ==
+                wasmImports.end()) {
               continue;
             }
 
-            delayLoaderFn2->module = "env";
-            delayLoaderFn2->base = delayLoaderName; // copied from ExtractFunction
-                                                    // : public Pass
-            getModule()->addFunction(delayLoaderFn2);
+            // We will not add the signature because for some reason or another, the same fn can
+            // have 2 sigs!!! e.g. name:__ZN11AcApViewImp13OnLButtonDownEj7AcPointIiE sig:viii sig:v
+            Name dynamicLoaderName(std::string("fp$") + name.c_str() + std::string("$") +
+                                   getSig(func) + std::string("$") + std::to_string(i));
+
+            auto* dynamicLoaderFn = getModule()->getFunctionOrNull(dynamicLoaderName);
+
+            // If null, generate an empty dl that will force the
+            // wasm module to import it from JS. The dl in this case is
+            // defined in the JS.
+            if (!dynamicLoaderFn) {
+              auto* dynamicLoaderFn =
+                Builder(*getModule())
+                  .makeFunction(dynamicLoaderName, std::move(func->params), func->result,
+                    {
+                      // call dlopen
+                      // call the target function directly
+                    });
+
+              if (!dynamicLoaderFn) {
+                printf(
+                  "delayLoaderFn2 is null!!! for delayLoaderName:%s\n", dynamicLoaderName.c_str());
+                continue;
+              }
+
+              dynamicLoaderFn->module = "env";
+              dynamicLoaderFn->base = dynamicLoaderName; // copied from ExtractFunction:public Pass
+              getModule()->addFunction(dynamicLoaderFn);
+            }
+            getModule()->removeFunction(name);
+            // std::cout << "visitTable: Replace fn with: " << dynamicLoaderName.c_str() << "\n";
+            segment.data[i] = dynamicLoaderName.c_str();
           }
-
-          // For table entries replacement, we need to replace them even if the delayloader already exists
-          // Name thunkInternal(std::string("__Z13sideyInternali"));
-          segment.data[i] = delayLoaderName;
-
-          std::string pair;
-          if (!IAT.data.empty())
-            IAT.data.emplace_back(',');
-          pair = "\"" + std::string(name.c_str()) + "\"" + ":" + std::to_string(i);
-          std::copy(pair.begin(), pair.end(), std::back_inserter(IAT.data));
-          if (name.hasSubstring("ZN11AcApViewImp13OnLButtonDownEj7AcPointIiE"))
-            std::cout << "visitTable pair:" << pair << "\n";
         }
       }
     }
@@ -491,53 +372,81 @@ private:
   std::ifstream myfile;
   UserSection IAT;
   std::map<Name, int> delayLoaderToTableIdx;
-  std::vector<std::string> sideFunctions;
+  std::vector<std::string> wasmImports;
+  std::vector<std::string> mainFunctions;
 };
 
-std::vector<wasm::Name> tableClone;
+mainInfoType getFunctions(const std::string& mainInfoFileName) {
+  mainInfoType mainInfoTemp;
+  std::ifstream myfile;
+  myfile.open(mainInfoFileName, std::ios::in);
+
+  if (!myfile) {
+    std::cout << mainInfoFileName << " not found!!!\n";
+    return mainInfoTemp;
+  }
+
+  char delimiter = ',';
+  std::string token;
+  std::string output;
+  while (std::getline(myfile, output)) {
+    std::istringstream line(output);
+    std::getline(line, token, ':');
+    std::string header = token;
+    std::vector<std::string> functions;
+    mainInfoTemp[header] = functions;
+    while (std::getline(line, token, delimiter)) {
+      mainInfoTemp[header].push_back(token);
+    }
+  }
+  return mainInfoTemp;
+}
 
 struct ImportsToIndirectCalls : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    if (!module->table.exists) {
-      Fatal() << "Table does not exist in module!!!";
-      return;
-    }
+    //if (!module->table.exists) {
+    //  Fatal() << "Table does not exist in module!!!";
+    //  return;
+    //}
 
-    // Create a segment if it does not already exist
-    if (module->table.segments.empty()) {
-      Table::Segment segment(module->allocator.alloc<Const>()->set(Literal(int32_t(0))));
+    //// Create a segment if it does not already exist
+    //if (module->table.segments.empty()) {
+    //  Table::Segment segment(module->allocator.alloc<Const>()->set(Literal(int32_t(0))));
 
-      module->table.initial = 0;
-      module->table.max = 0;
-      module->table.exists = true;
-      module->table.segments.push_back(segment);
-    }
+    //  module->table.initial = 0;
+    //  module->table.max = 0;
+    //  module->table.exists = true;
+    //  module->table.segments.push_back(segment);
+    //}
 
-    for (auto& segment : module->table.segments) {
-      // Don't print empty segments
-      if (segment.data.empty()) {
-        continue;
-      }
+    //for (auto& segment : module->table.segments) {
+    //  // Don't print empty segments
+    //  if (segment.data.empty()) {
+    //    continue;
+    //  }
 
-      /*for (auto i = 0; ++i; segment.data.size()) {
-        printf("Idx:%d name:%s\n", i, segment.data[i].c_str());
-        tableClone.push_back(segment.data[i]);
-      }*/
-    }
+    //  /*for (auto i = 0; ++i; segment.data.size()) {
+    //    printf("Idx:%d name:%s\n", i, segment.data[i].c_str());
+    //    tableClone.push_back(segment.data[i]);
+    //  }*/
+    //}
 
-    std::string sideFnFileName = runner->options.arguments["sideFunctions"];
-    printf("sideFnFileName:%s\n", sideFnFileName.c_str());
-    // Ugly hack to see if current module is a side module
-    bool isSideModule = false;
-    for (auto& func : module->functions) {
-      if (func->name.hasSubstring("post_instantiate")) {
-        isSideModule = true;
-      }
-    }
+    std::string mainInfoFileName = runner->options.arguments["mainInfo"];
+    printf("ImportsToIndirectCalls.run mainInfoFileName:%s\n", mainInfoFileName.c_str());
+    mainInfo = getFunctions(mainInfoFileName);
+
+	auto* post_instantiate = module->getExportOrNull("__post_instantiate");
+
+	isSideModule = post_instantiate ? true : false;
+    EmscriptenGlueGenerator generator(*module);
     if (!isSideModule) {
-      FunctionImportsToIndirectCalls(sideFnFileName).run(runner, module);
+      // Generate the dynamic loaders first. If not, the original imports will
+      // be removed by the pass.
+      generator.generateApplyRelocations(mainInfo["imports"]);
+      FunctionImportsToIndirectCalls(mainInfo["imports"]).run(runner, module);
     } else {
-      std::cout << "Side Module detected!!! Ignoring\n";
+      generator.generatePostInstantiateFunction(mainInfo["exports"]);
+      FunctionImportsToIndirectCalls(mainInfo["exports"]).run(runner, module);
     }
   }
 };

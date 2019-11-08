@@ -17,10 +17,9 @@
 #ifndef wasm_wasm_emscripten_h
 #define wasm_wasm_emscripten_h
 
-#include "wasm.h"
-#include "wasm-builder.h"
 #include "support/file.h"
-
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -29,14 +28,16 @@ namespace wasm {
 class EmscriptenGlueGenerator {
 public:
   EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset = Address(0))
-    : wasm(wasm),
-      builder(wasm),
-      stackPointerOffset(stackPointerOffset),
-      useStackPointerGlobal(stackPointerOffset == 0) { }
+    : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
+      useStackPointerGlobal(stackPointerOffset == 0) {}
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
   void generateStackInitialization(Address addr);
+  Function* generateAssignGOTEntriesFunction(const std::vector<std::string>& sideFunctions, bool mainModule = true);
+  void generateApplyRelocations(const std::vector<std::string>& sideFunctions);
+  void generatePostInstantiateFunction(const std::vector<std::string>& sideFunctions);
+  int getTableIdx(const Name& fnName);
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.
@@ -51,9 +52,8 @@ public:
   // signature.
   void generateJSCallThunks(unsigned numReservedFunctionPointers);
 
-  std::string generateEmscriptenMetadata(
-      Address staticBump, std::vector<Name> const& initializerFunctions,
-      unsigned numReservedFunctionPointers);
+  std::string generateEmscriptenMetadata(Address staticBump,
+    std::vector<Name> const& initializerFunctions, unsigned numReservedFunctionPointers);
 
   void fixInvokeFunctionNames();
 
