@@ -65,9 +65,14 @@ struct LegalizeJSInterface : public Pass {
           // where the JS loader code must copy exported wasm functions into the
           // table, and they must not be legalized as other wasm code will do an
           // indirect call to them.
-          Builder builder(*module);
-          auto newName = std::string("orig$") + func->name.str;
-          newExports.push_back(builder.makeExport(newName, func->name, ExternalKind::Function));
+          // However, don't do this for imported functions, as those would be
+          // legalized in their actual module anyhow.
+          if (!func->imported()) {
+            Builder builder(*module);
+            Name newName = std::string("orig$") + ex->name.str;
+            newExports.push_back(
+              builder.makeExport(newName, func->name, ExternalKind::Function));
+          }
         }
       }
     }

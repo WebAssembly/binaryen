@@ -8,6 +8,7 @@
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (export "test64" (func $legalstub$test64))
+ (export "orig$test64" (func $test64))
  (func $test64 (; 1 ;) (result i64)
   (local $x i64)
   (local $y i64)
