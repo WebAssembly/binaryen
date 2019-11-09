@@ -8,7 +8,6 @@
  (import "env" "invoke_vj" (func $legalimport$invoke_vj (param i32 i32)))
  (export "func" (func $func))
  (export "dynCall_foo" (func $legalstub$dyn))
- (export "orig$dynCall_foo" (func $dyn))
  (func $func (; 3 ;) (type $FUNCSIG$j) (result i64)
   (drop
    (call $imported)
