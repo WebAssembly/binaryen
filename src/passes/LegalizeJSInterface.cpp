@@ -67,7 +67,9 @@ struct LegalizeJSInterface : public Pass {
           // indirect call to them.
           // However, don't do this for imported functions, as those would be
           // legalized in their actual module anyhow.
-          if (!func->imported()) {
+          // It also makes no sense to do this for dynCalls, as they are only
+          // called from JS.
+          if (!func->imported() && !isDynCall(ex->name)) {
             Builder builder(*module);
             Name newName = std::string("orig$") + ex->name.str;
             newExports.push_back(
@@ -154,13 +156,17 @@ private:
     return t->result == i64;
   }
 
+  bool isDynCall(Name name) {
+    return name.startsWith("dynCall_");
+  }
+
   // Check if an export should be legalized.
   bool shouldBeLegalized(Export* ex, Function* func) {
     if (full) {
       return true;
     }
     // We are doing minimal legalization - just what JS needs.
-    return ex->name.startsWith("dynCall_");
+    return isDynCall(ex->name);
   }
 
   // Check if an import should be legalized.
