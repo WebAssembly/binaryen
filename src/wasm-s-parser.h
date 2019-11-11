@@ -224,7 +224,7 @@ private:
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
   Expression* makeTry(Element& s);
-  Expression* makeCatch(Element& s);
+  Expression* makeCatch(Element& s, Type type);
   Expression* makeThrow(Element& s);
   Expression* makeRethrow(Element& s);
   Expression* makeBrOnExn(Element& s);

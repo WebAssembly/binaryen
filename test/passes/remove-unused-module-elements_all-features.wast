@@ -271,13 +271,15 @@
  (import "env" "e" (event $e-import (attr 0) (param i32)))
  (start $start)
  (func $start (local $exn exnref) (; 0 ;)
-  (throw $e-throw (i32.const 0))
-  (catch
-   (local.set $exn (exnref.pop))
-   (drop
-    (block $l0 (result i32)
-     (rethrow
-      (br_on_exn $l0 $e-bronexn (local.get $exn))
+  (try
+   (throw $e-throw (i32.const 0))
+   (catch
+    (local.set $exn (exnref.pop))
+    (drop
+     (block $l0 (result i32)
+      (rethrow
+       (br_on_exn $l0 $e-bronexn (local.get $exn))
+      )
      )
     )
    )

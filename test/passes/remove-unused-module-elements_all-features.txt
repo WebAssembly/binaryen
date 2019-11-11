@@ -289,18 +289,20 @@
  (start $start)
  (func $start (; 0 ;) (type $FUNCSIG$v)
   (local $exn exnref)
-  (throw $e-throw
-   (i32.const 0)
-  )
-  (block
-   (local.set $exn
-    (exnref.pop)
+  (try
+   (throw $e-throw
+    (i32.const 0)
    )
-   (drop
-    (block $l0 (result i32)
-     (rethrow
-      (br_on_exn $l0 $e-bronexn
-       (local.get $exn)
+   (catch
+    (local.set $exn
+     (exnref.pop)
+    )
+    (drop
+     (block $l0 (result i32)
+      (rethrow
+       (br_on_exn $l0 $e-bronexn
+        (local.get $exn)
+       )
       )
      )
     )
