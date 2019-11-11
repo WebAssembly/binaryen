@@ -52,8 +52,11 @@ struct LegalizeJSInterface : public Pass {
   LegalizeJSInterface(bool full) : full(full) {}
 
   void run(PassRunner* runner, Module* module) override {
-    auto exportOriginals = !String::trim(read_possible_response_file(
-      runner->options.getArgumentOrDefault("legalize-js-interface-export-originals", ""))).empty();
+    auto exportOriginals =
+      !String::trim(
+         read_possible_response_file(runner->options.getArgumentOrDefault(
+           "legalize-js-interface-export-originals", "")))
+         .empty();
 
     // for each illegal export, we must export a legalized stub instead
     std::vector<Export*> newExports;
@@ -68,18 +71,17 @@ struct LegalizeJSInterface : public Pass {
           if (exportOriginals) {
             // Also export the original function, before legalization. This is
             // not normally useful for JS, except in cases like dynamic linking
-            // where the JS loader code must copy exported wasm functions into the
-            // table, and they must not be legalized as other wasm code will do an
-            // indirect call to them.
-            // However, don't do this for imported functions, as those would be
-            // legalized in their actual module anyhow.
-            // It also makes no sense to do this for dynCalls, as they are only
-            // called from JS.
+            // where the JS loader code must copy exported wasm functions into
+            // the table, and they must not be legalized as other wasm code will
+            // do an indirect call to them. However, don't do this for imported
+            // functions, as those would be legalized in their actual module
+            // anyhow. It also makes no sense to do this for dynCalls, as they
+            // are only called from JS.
             if (!func->imported() && !isDynCall(ex->name)) {
               Builder builder(*module);
               Name newName = std::string("orig$") + ex->name.str;
-              newExports.push_back(
-                builder.makeExport(newName, func->name, ExternalKind::Function));
+              newExports.push_back(builder.makeExport(
+                newName, func->name, ExternalKind::Function));
             }
           }
         }
