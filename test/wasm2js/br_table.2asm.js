@@ -13364,11 +13364,7 @@ function asmFunc(global, env, buffer) {
   "nested_br_if_value": $62, 
   "nested_br_if_value_cond": $63, 
   "nested_br_table_value": $64, 
-  "nested_br_table_value_index": $65, 
-  "orig$type_i64_value": $6, 
-  "orig$as_return_value": $30, 
-  "orig$as_loadN_address": $47, 
-  "orig$as_binary_right": $54
+  "nested_br_table_value_index": $65
  };
 }
 
@@ -13438,7 +13434,3 @@ export var nested_br_if_value = retasmFunc.nested_br_if_value;
 export var nested_br_if_value_cond = retasmFunc.nested_br_if_value_cond;
 export var nested_br_table_value = retasmFunc.nested_br_table_value;
 export var nested_br_table_value_index = retasmFunc.nested_br_table_value_index;
-export var orig$type_i64_value = retasmFunc.orig$type_i64_value;
-export var orig$as_return_value = retasmFunc.orig$as_return_value;
-export var orig$as_loadN_address = retasmFunc.orig$as_loadN_address;
-export var orig$as_binary_right = retasmFunc.orig$as_binary_right;

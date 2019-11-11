@@ -20,58 +20,54 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $1($0, $1_1, $2_1, $3, $4, $5) {
+ function $1($0, $1_1, $2_1, $3, $4) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
   $2_1 = $2_1 | 0;
   $3 = $3 | 0;
   $4 = $4 | 0;
-  $5 = $5 | 0;
-  $3 = $0;
-  $0 = $2_1 & 31;
+  var $5 = 0;
+  $5 = $2_1 & 31;
   if (32 <= ($2_1 & 63) >>> 0) {
-   $1_1 = $3 << $0;
+   $1_1 = $0 << $5;
    $0 = 0;
   } else {
-   $1_1 = (1 << $0) - 1 & $3 >>> 32 - $0 | $1_1 << $0;
-   $0 = $3 << $0;
+   $1_1 = (1 << $5) - 1 & $0 >>> 32 - $5 | $1_1 << $5;
+   $0 = $0 << $5;
   }
-  return ($0 | 0) == ($4 | 0) & ($1_1 | 0) == ($5 | 0);
+  return ($0 | 0) == ($3 | 0) & ($1_1 | 0) == ($4 | 0);
  }
  
- function $2($0, $1_1, $2_1, $3, $4, $5) {
+ function $2($0, $1_1, $2_1, $3, $4) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
   $2_1 = $2_1 | 0;
   $3 = $3 | 0;
   $4 = $4 | 0;
-  $5 = $5 | 0;
-  $3 = $0;
-  $0 = $2_1 & 31;
+  var $5 = 0;
+  $5 = $2_1 & 31;
   if (32 <= ($2_1 & 63) >>> 0) {
    $2_1 = $1_1 >> 31;
-   $0 = $1_1 >> $0;
+   $0 = $1_1 >> $5;
   } else {
-   $2_1 = $1_1 >> $0;
-   $0 = ((1 << $0) - 1 & $1_1) << 32 - $0 | $3 >>> $0;
+   $2_1 = $1_1 >> $5;
+   $0 = ((1 << $5) - 1 & $1_1) << 32 - $5 | $0 >>> $5;
   }
-  return ($0 | 0) == ($4 | 0) & ($2_1 | 0) == ($5 | 0);
+  return ($0 | 0) == ($3 | 0) & ($2_1 | 0) == ($4 | 0);
  }
  
  function legalstub$1($0, $1_1, $2_1, $3, $4, $5) {
-  return $1($0, $1_1, $2_1, $3, $4, $5);
+  return $1($0, $1_1, $2_1, $4, $5);
  }
  
  function legalstub$2($0, $1_1, $2_1, $3, $4, $5) {
-  return $2($0, $1_1, $2_1, $3, $4, $5);
+  return $2($0, $1_1, $2_1, $4, $5);
  }
  
  var FUNCTION_TABLE = [];
  return {
   "shl_i64": legalstub$1, 
-  "shr_i64": legalstub$2, 
-  "orig$shl_i64": $1, 
-  "orig$shr_i64": $2
+  "shr_i64": legalstub$2
  };
 }
 
@@ -79,5 +75,3 @@ var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var shl_i64 = retasmFunc.shl_i64;
 export var shr_i64 = retasmFunc.shr_i64;
-export var orig$shl_i64 = retasmFunc.orig$shl_i64;
-export var orig$shr_i64 = retasmFunc.orig$shr_i64;

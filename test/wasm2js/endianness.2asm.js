@@ -693,15 +693,7 @@ function asmFunc(global, env, buffer) {
   "i64_store32": legalstub$19, 
   "i64_store": legalstub$20, 
   "f32_store": $21, 
-  "f64_store": $22, 
-  "orig$i64_load16_s": $9, 
-  "orig$i64_load16_u": $10, 
-  "orig$i64_load32_s": $11, 
-  "orig$i64_load32_u": $12, 
-  "orig$i64_load": $13, 
-  "orig$i64_store16": $18, 
-  "orig$i64_store32": $19, 
-  "orig$i64_store": $20
+  "f64_store": $22
  };
 }
 
@@ -724,11 +716,3 @@ export var i64_store32 = retasmFunc.i64_store32;
 export var i64_store = retasmFunc.i64_store;
 export var f32_store = retasmFunc.f32_store;
 export var f64_store = retasmFunc.f64_store;
-export var orig$i64_load16_s = retasmFunc.orig$i64_load16_s;
-export var orig$i64_load16_u = retasmFunc.orig$i64_load16_u;
-export var orig$i64_load32_s = retasmFunc.orig$i64_load32_s;
-export var orig$i64_load32_u = retasmFunc.orig$i64_load32_u;
-export var orig$i64_load = retasmFunc.orig$i64_load;
-export var orig$i64_store16 = retasmFunc.orig$i64_store16;
-export var orig$i64_store32 = retasmFunc.orig$i64_store32;
-export var orig$i64_store = retasmFunc.orig$i64_store;

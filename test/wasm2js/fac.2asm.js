@@ -576,12 +576,7 @@ function asmFunc(global, env, buffer) {
   "fac_rec_named": legalstub$fac_rec_named, 
   "fac_iter": legalstub$2, 
   "fac_iter_named": legalstub$3, 
-  "fac_opt": legalstub$4, 
-  "orig$fac_rec": $0, 
-  "orig$fac_rec_named": fac_rec_named, 
-  "orig$fac_iter": $2, 
-  "orig$fac_iter_named": $3, 
-  "orig$fac_opt": $4
+  "fac_opt": legalstub$4
  };
 }
 
@@ -592,8 +587,3 @@ export var fac_rec_named = retasmFunc.fac_rec_named;
 export var fac_iter = retasmFunc.fac_iter;
 export var fac_iter_named = retasmFunc.fac_iter_named;
 export var fac_opt = retasmFunc.fac_opt;
-export var orig$fac_rec = retasmFunc.orig$fac_rec;
-export var orig$fac_rec_named = retasmFunc.orig$fac_rec_named;
-export var orig$fac_iter = retasmFunc.orig$fac_iter;
-export var orig$fac_iter_named = retasmFunc.orig$fac_iter_named;
-export var orig$fac_opt = retasmFunc.orig$fac_opt;

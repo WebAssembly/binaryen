@@ -575,12 +575,7 @@ function asmFunc(global, env, buffer) {
   "fac_stack": legalstub$1, 
   "fac_stack_raw": legalstub$2, 
   "fac_mixed": legalstub$3, 
-  "fac_mixed_raw": legalstub$4, 
-  "orig$fac_expr": $0, 
-  "orig$fac_stack": $1, 
-  "orig$fac_stack_raw": $2, 
-  "orig$fac_mixed": $3, 
-  "orig$fac_mixed_raw": $4
+  "fac_mixed_raw": legalstub$4
  };
 }
 
@@ -591,8 +586,3 @@ export var fac_stack = retasmFunc.fac_stack;
 export var fac_stack_raw = retasmFunc.fac_stack_raw;
 export var fac_mixed = retasmFunc.fac_mixed;
 export var fac_mixed_raw = retasmFunc.fac_mixed_raw;
-export var orig$fac_expr = retasmFunc.orig$fac_expr;
-export var orig$fac_stack = retasmFunc.orig$fac_stack;
-export var orig$fac_stack_raw = retasmFunc.orig$fac_stack_raw;
-export var orig$fac_mixed = retasmFunc.orig$fac_mixed;
-export var orig$fac_mixed_raw = retasmFunc.orig$fac_mixed_raw;

@@ -521,13 +521,7 @@ function asmFunc(global, env, buffer) {
   "i32_clz": $6, 
   "i32_ctz": $7, 
   "check_clz_i64": legalstub$8, 
-  "check_ctz_i64": legalstub$9, 
-  "orig$check_popcnt_i64": $2, 
-  "orig$check_extend_ui32": $3, 
-  "orig$check_extend_si32": $4, 
-  "orig$check_eqz_i64": $5, 
-  "orig$check_clz_i64": $8, 
-  "orig$check_ctz_i64": $9
+  "check_ctz_i64": legalstub$9
  };
 }
 
@@ -542,9 +536,3 @@ export var i32_clz = retasmFunc.i32_clz;
 export var i32_ctz = retasmFunc.i32_ctz;
 export var check_clz_i64 = retasmFunc.check_clz_i64;
 export var check_ctz_i64 = retasmFunc.check_ctz_i64;
-export var orig$check_popcnt_i64 = retasmFunc.orig$check_popcnt_i64;
-export var orig$check_extend_ui32 = retasmFunc.orig$check_extend_ui32;
-export var orig$check_extend_si32 = retasmFunc.orig$check_extend_si32;
-export var orig$check_eqz_i64 = retasmFunc.orig$check_eqz_i64;
-export var orig$check_clz_i64 = retasmFunc.orig$check_clz_i64;
-export var orig$check_ctz_i64 = retasmFunc.orig$check_ctz_i64;

@@ -509,11 +509,7 @@ function asmFunc(global, env, buffer) {
   "f32_to_i64": $47, 
   "f64_to_i64": $48, 
   "f32_to_u64": $49, 
-  "f64_to_u64": $50, 
-  "orig$i64_to_f32": $43, 
-  "orig$i64_to_f64": $44, 
-  "orig$u64_to_f32": $45, 
-  "orig$u64_to_f64": $46
+  "f64_to_u64": $50
  };
 }
 
@@ -567,7 +563,3 @@ export var f32_to_i64 = retasmFunc.f32_to_i64;
 export var f64_to_i64 = retasmFunc.f64_to_i64;
 export var f32_to_u64 = retasmFunc.f32_to_u64;
 export var f64_to_u64 = retasmFunc.f64_to_u64;
-export var orig$i64_to_f32 = retasmFunc.orig$i64_to_f32;
-export var orig$i64_to_f64 = retasmFunc.orig$i64_to_f64;
-export var orig$u64_to_f32 = retasmFunc.orig$u64_to_f32;
-export var orig$u64_to_f64 = retasmFunc.orig$u64_to_f64;

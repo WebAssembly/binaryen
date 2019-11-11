@@ -101,8 +101,7 @@ function asmFunc(global, env, buffer) {
  var FUNCTION_TABLE = [];
  return {
   "i32_roundtrip": $1, 
-  "i64_roundtrip": legalstub$2, 
-  "orig$i64_roundtrip": $2
+  "i64_roundtrip": legalstub$2
  };
 }
 
@@ -110,4 +109,3 @@ var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var i32_roundtrip = retasmFunc.i32_roundtrip;
 export var i64_roundtrip = retasmFunc.i64_roundtrip;
-export var orig$i64_roundtrip = retasmFunc.orig$i64_roundtrip;

@@ -20,124 +20,76 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $1($0, $1_1, $2_1, $3_1) {
+ function $3($0, $1, $2, $3_1) {
   $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
   $3_1 = $3_1 | 0;
-  return ($0 | 0) == ($2_1 | 0) & ($1_1 | 0) == ($3_1 | 0);
+  return (($1 | 0) > ($3_1 | 0) ? 1 : ($1 | 0) >= ($3_1 | 0) ? ($0 >>> 0 < $2 >>> 0 ? 0 : 1) : 0) | 0;
  }
  
- function $2($0, $1_1, $2_1, $3_1) {
+ function $4($0, $1, $2, $3_1) {
   $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
   $3_1 = $3_1 | 0;
-  return ($0 | 0) != ($2_1 | 0) | ($1_1 | 0) != ($3_1 | 0);
+  return (($1 | 0) > ($3_1 | 0) ? 1 : ($1 | 0) >= ($3_1 | 0) ? ($0 >>> 0 <= $2 >>> 0 ? 0 : 1) : 0) | 0;
  }
  
- function $3($0, $1_1, $2_1, $3_1) {
+ function $5($0, $1, $2, $3_1) {
   $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
   $3_1 = $3_1 | 0;
-  return (($1_1 | 0) > ($3_1 | 0) ? 1 : ($1_1 | 0) >= ($3_1 | 0) ? ($0 >>> 0 < $2_1 >>> 0 ? 0 : 1) : 0) | 0;
+  return (($1 | 0) < ($3_1 | 0) ? 1 : ($1 | 0) <= ($3_1 | 0) ? ($0 >>> 0 > $2 >>> 0 ? 0 : 1) : 0) | 0;
  }
  
- function $4($0, $1_1, $2_1, $3_1) {
+ function $6($0, $1, $2, $3_1) {
   $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
   $3_1 = $3_1 | 0;
-  return (($1_1 | 0) > ($3_1 | 0) ? 1 : ($1_1 | 0) >= ($3_1 | 0) ? ($0 >>> 0 <= $2_1 >>> 0 ? 0 : 1) : 0) | 0;
+  return (($1 | 0) < ($3_1 | 0) ? 1 : ($1 | 0) <= ($3_1 | 0) ? ($0 >>> 0 >= $2 >>> 0 ? 0 : 1) : 0) | 0;
  }
  
- function $5($0, $1_1, $2_1, $3_1) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
-  return (($1_1 | 0) < ($3_1 | 0) ? 1 : ($1_1 | 0) <= ($3_1 | 0) ? ($0 >>> 0 > $2_1 >>> 0 ? 0 : 1) : 0) | 0;
+ function legalstub$1($0, $1, $2, $3_1) {
+  return ($0 | 0) == ($2 | 0) & ($1 | 0) == ($3_1 | 0);
  }
  
- function $6($0, $1_1, $2_1, $3_1) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
-  return (($1_1 | 0) < ($3_1 | 0) ? 1 : ($1_1 | 0) <= ($3_1 | 0) ? ($0 >>> 0 >= $2_1 >>> 0 ? 0 : 1) : 0) | 0;
+ function legalstub$2($0, $1, $2, $3_1) {
+  return ($0 | 0) != ($2 | 0) | ($1 | 0) != ($3_1 | 0);
  }
  
- function $7($0, $1_1, $2_1, $3_1) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
-  return ($1_1 | 0) == ($3_1 | 0) & $0 >>> 0 >= $2_1 >>> 0 | $1_1 >>> 0 > $3_1 >>> 0;
+ function legalstub$3($0, $1, $2, $3_1) {
+  return $3($0, $1, $2, $3_1);
  }
  
- function $8($0, $1_1, $2_1, $3_1) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
-  return ($1_1 | 0) == ($3_1 | 0) & $0 >>> 0 > $2_1 >>> 0 | $1_1 >>> 0 > $3_1 >>> 0;
+ function legalstub$4($0, $1, $2, $3_1) {
+  return $4($0, $1, $2, $3_1);
  }
  
- function $9($0, $1_1, $2_1, $3_1) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
-  return ($1_1 | 0) == ($3_1 | 0) & $0 >>> 0 <= $2_1 >>> 0 | $1_1 >>> 0 < $3_1 >>> 0;
+ function legalstub$5($0, $1, $2, $3_1) {
+  return $5($0, $1, $2, $3_1);
  }
  
- function $10($0, $1_1, $2_1, $3_1) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
-  return ($1_1 | 0) == ($3_1 | 0) & $0 >>> 0 < $2_1 >>> 0 | $1_1 >>> 0 < $3_1 >>> 0;
+ function legalstub$6($0, $1, $2, $3_1) {
+  return $6($0, $1, $2, $3_1);
  }
  
- function legalstub$1($0, $1_1, $2_1, $3_1) {
-  return $1($0, $1_1, $2_1, $3_1);
+ function legalstub$7($0, $1, $2, $3_1) {
+  return ($1 | 0) == ($3_1 | 0) & $0 >>> 0 >= $2 >>> 0 | $1 >>> 0 > $3_1 >>> 0;
  }
  
- function legalstub$2($0, $1_1, $2_1, $3_1) {
-  return $2($0, $1_1, $2_1, $3_1);
+ function legalstub$8($0, $1, $2, $3_1) {
+  return ($1 | 0) == ($3_1 | 0) & $0 >>> 0 > $2 >>> 0 | $1 >>> 0 > $3_1 >>> 0;
  }
  
- function legalstub$3($0, $1_1, $2_1, $3_1) {
-  return $3($0, $1_1, $2_1, $3_1);
+ function legalstub$9($0, $1, $2, $3_1) {
+  return ($1 | 0) == ($3_1 | 0) & $0 >>> 0 <= $2 >>> 0 | $1 >>> 0 < $3_1 >>> 0;
  }
  
- function legalstub$4($0, $1_1, $2_1, $3_1) {
-  return $4($0, $1_1, $2_1, $3_1);
- }
- 
- function legalstub$5($0, $1_1, $2_1, $3_1) {
-  return $5($0, $1_1, $2_1, $3_1);
- }
- 
- function legalstub$6($0, $1_1, $2_1, $3_1) {
-  return $6($0, $1_1, $2_1, $3_1);
- }
- 
- function legalstub$7($0, $1_1, $2_1, $3_1) {
-  return $7($0, $1_1, $2_1, $3_1);
- }
- 
- function legalstub$8($0, $1_1, $2_1, $3_1) {
-  return $8($0, $1_1, $2_1, $3_1);
- }
- 
- function legalstub$9($0, $1_1, $2_1, $3_1) {
-  return $9($0, $1_1, $2_1, $3_1);
- }
- 
- function legalstub$10($0, $1_1, $2_1, $3_1) {
-  return $10($0, $1_1, $2_1, $3_1);
+ function legalstub$10($0, $1, $2, $3_1) {
+  return ($1 | 0) == ($3_1 | 0) & $0 >>> 0 < $2 >>> 0 | $1 >>> 0 < $3_1 >>> 0;
  }
  
  var FUNCTION_TABLE = [];
@@ -151,17 +103,7 @@ function asmFunc(global, env, buffer) {
   "ge_u_i64": legalstub$7, 
   "gt_u_i64": legalstub$8, 
   "le_u_i64": legalstub$9, 
-  "lt_u_i64": legalstub$10, 
-  "orig$eq_i64": $1, 
-  "orig$ne_i64": $2, 
-  "orig$ge_s_i64": $3, 
-  "orig$gt_s_i64": $4, 
-  "orig$le_s_i64": $5, 
-  "orig$lt_s_i64": $6, 
-  "orig$ge_u_i64": $7, 
-  "orig$gt_u_i64": $8, 
-  "orig$le_u_i64": $9, 
-  "orig$lt_u_i64": $10
+  "lt_u_i64": legalstub$10
  };
 }
 
@@ -177,13 +119,3 @@ export var ge_u_i64 = retasmFunc.ge_u_i64;
 export var gt_u_i64 = retasmFunc.gt_u_i64;
 export var le_u_i64 = retasmFunc.le_u_i64;
 export var lt_u_i64 = retasmFunc.lt_u_i64;
-export var orig$eq_i64 = retasmFunc.orig$eq_i64;
-export var orig$ne_i64 = retasmFunc.orig$ne_i64;
-export var orig$ge_s_i64 = retasmFunc.orig$ge_s_i64;
-export var orig$gt_s_i64 = retasmFunc.orig$gt_s_i64;
-export var orig$le_s_i64 = retasmFunc.orig$le_s_i64;
-export var orig$lt_s_i64 = retasmFunc.orig$lt_s_i64;
-export var orig$ge_u_i64 = retasmFunc.orig$ge_u_i64;
-export var orig$gt_u_i64 = retasmFunc.orig$gt_u_i64;
-export var orig$le_u_i64 = retasmFunc.orig$le_u_i64;
-export var orig$lt_u_i64 = retasmFunc.orig$lt_u_i64;

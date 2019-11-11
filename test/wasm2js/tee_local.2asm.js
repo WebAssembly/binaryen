@@ -331,12 +331,7 @@ function asmFunc(global, env, buffer) {
   "type_param_f64": $7, 
   "type_mixed": legalstub$8, 
   "write": legalstub$9, 
-  "result": legalstub$10, 
-  "orig$type_local_i64": $1, 
-  "orig$type_param_i64": $5, 
-  "orig$type_mixed": $8, 
-  "orig$write": $9, 
-  "orig$result": $10
+  "result": legalstub$10
  };
 }
 
@@ -353,8 +348,3 @@ export var type_param_f64 = retasmFunc.type_param_f64;
 export var type_mixed = retasmFunc.type_mixed;
 export var write = retasmFunc.write;
 export var result = retasmFunc.result;
-export var orig$type_local_i64 = retasmFunc.orig$type_local_i64;
-export var orig$type_param_i64 = retasmFunc.orig$type_param_i64;
-export var orig$type_mixed = retasmFunc.orig$type_mixed;
-export var orig$write = retasmFunc.orig$write;
-export var orig$result = retasmFunc.orig$result;

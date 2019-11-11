@@ -788,16 +788,7 @@ function asmFunc(global, env, buffer) {
   "signature_explicit_reused": $76, 
   "signature_implicit_reused": $77, 
   "signature_explicit_duplicate": $78, 
-  "signature_implicit_duplicate": $79, 
-  "orig$local_first_i64": $24, 
-  "orig$local_second_i64": $28, 
-  "orig$param_first_i64": $33, 
-  "orig$param_second_i64": $37, 
-  "orig$param_mixed": $40, 
-  "orig$value_i64": $44, 
-  "orig$return_i64": $51, 
-  "orig$break_i64": $57, 
-  "orig$init_local_i64": $68
+  "signature_implicit_duplicate": $79
  };
 }
 
@@ -857,12 +848,3 @@ export var signature_explicit_reused = retasmFunc.signature_explicit_reused;
 export var signature_implicit_reused = retasmFunc.signature_implicit_reused;
 export var signature_explicit_duplicate = retasmFunc.signature_explicit_duplicate;
 export var signature_implicit_duplicate = retasmFunc.signature_implicit_duplicate;
-export var orig$local_first_i64 = retasmFunc.orig$local_first_i64;
-export var orig$local_second_i64 = retasmFunc.orig$local_second_i64;
-export var orig$param_first_i64 = retasmFunc.orig$param_first_i64;
-export var orig$param_second_i64 = retasmFunc.orig$param_second_i64;
-export var orig$param_mixed = retasmFunc.orig$param_mixed;
-export var orig$value_i64 = retasmFunc.orig$value_i64;
-export var orig$return_i64 = retasmFunc.orig$return_i64;
-export var orig$break_i64 = retasmFunc.orig$break_i64;
-export var orig$init_local_i64 = retasmFunc.orig$init_local_i64;

@@ -187,8 +187,7 @@ function asmFunc(global, env, buffer) {
   "stmt": $0, 
   "expr": legalstub$1, 
   "arg": $2, 
-  "corner": $3, 
-  "orig$expr": $1
+  "corner": $3
  };
 }
 
@@ -198,4 +197,3 @@ export var stmt = retasmFunc.stmt;
 export var expr = retasmFunc.expr;
 export var arg = retasmFunc.arg;
 export var corner = retasmFunc.corner;
-export var orig$expr = retasmFunc.orig$expr;

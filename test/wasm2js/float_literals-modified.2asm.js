@@ -1152,37 +1152,7 @@ function asmFunc(global, env, buffer) {
   "f64_dec_min_normal": legalstub$56, 
   "f64_dec_max_subnormal": legalstub$57, 
   "f64_dec_max_finite": legalstub$58, 
-  "f64_dec_trailing_dot": legalstub$59, 
-  "orig$f64_nan": $30, 
-  "orig$f64_positive_nan": $31, 
-  "orig$f64_negative_nan": $32, 
-  "orig$f64_plain_nan": $33, 
-  "orig$f64_informally_known_as_plain_snan": $34, 
-  "orig$f64_all_ones_nan": $35, 
-  "orig$f64_misc_nan": $36, 
-  "orig$f64_misc_positive_nan": $37, 
-  "orig$f64_misc_negative_nan": $38, 
-  "orig$f64_infinity": $39, 
-  "orig$f64_positive_infinity": $40, 
-  "orig$f64_negative_infinity": $41, 
-  "orig$f64_zero": $42, 
-  "orig$f64_positive_zero": $43, 
-  "orig$f64_negative_zero": $44, 
-  "orig$f64_misc": $45, 
-  "orig$f64_min_positive": $46, 
-  "orig$f64_min_normal": $47, 
-  "orig$f64_max_subnormal": $48, 
-  "orig$f64_max_finite": $49, 
-  "orig$f64_trailing_dot": $50, 
-  "orig$f64_dec_zero": $51, 
-  "orig$f64_dec_positive_zero": $52, 
-  "orig$f64_dec_negative_zero": $53, 
-  "orig$f64_dec_misc": $54, 
-  "orig$f64_dec_min_positive": $55, 
-  "orig$f64_dec_min_normal": $56, 
-  "orig$f64_dec_max_subnormal": $57, 
-  "orig$f64_dec_max_finite": $58, 
-  "orig$f64_dec_trailing_dot": $59
+  "f64_dec_trailing_dot": legalstub$59
  };
 }
 
@@ -1248,33 +1218,3 @@ export var f64_dec_min_normal = retasmFunc.f64_dec_min_normal;
 export var f64_dec_max_subnormal = retasmFunc.f64_dec_max_subnormal;
 export var f64_dec_max_finite = retasmFunc.f64_dec_max_finite;
 export var f64_dec_trailing_dot = retasmFunc.f64_dec_trailing_dot;
-export var orig$f64_nan = retasmFunc.orig$f64_nan;
-export var orig$f64_positive_nan = retasmFunc.orig$f64_positive_nan;
-export var orig$f64_negative_nan = retasmFunc.orig$f64_negative_nan;
-export var orig$f64_plain_nan = retasmFunc.orig$f64_plain_nan;
-export var orig$f64_informally_known_as_plain_snan = retasmFunc.orig$f64_informally_known_as_plain_snan;
-export var orig$f64_all_ones_nan = retasmFunc.orig$f64_all_ones_nan;
-export var orig$f64_misc_nan = retasmFunc.orig$f64_misc_nan;
-export var orig$f64_misc_positive_nan = retasmFunc.orig$f64_misc_positive_nan;
-export var orig$f64_misc_negative_nan = retasmFunc.orig$f64_misc_negative_nan;
-export var orig$f64_infinity = retasmFunc.orig$f64_infinity;
-export var orig$f64_positive_infinity = retasmFunc.orig$f64_positive_infinity;
-export var orig$f64_negative_infinity = retasmFunc.orig$f64_negative_infinity;
-export var orig$f64_zero = retasmFunc.orig$f64_zero;
-export var orig$f64_positive_zero = retasmFunc.orig$f64_positive_zero;
-export var orig$f64_negative_zero = retasmFunc.orig$f64_negative_zero;
-export var orig$f64_misc = retasmFunc.orig$f64_misc;
-export var orig$f64_min_positive = retasmFunc.orig$f64_min_positive;
-export var orig$f64_min_normal = retasmFunc.orig$f64_min_normal;
-export var orig$f64_max_subnormal = retasmFunc.orig$f64_max_subnormal;
-export var orig$f64_max_finite = retasmFunc.orig$f64_max_finite;
-export var orig$f64_trailing_dot = retasmFunc.orig$f64_trailing_dot;
-export var orig$f64_dec_zero = retasmFunc.orig$f64_dec_zero;
-export var orig$f64_dec_positive_zero = retasmFunc.orig$f64_dec_positive_zero;
-export var orig$f64_dec_negative_zero = retasmFunc.orig$f64_dec_negative_zero;
-export var orig$f64_dec_misc = retasmFunc.orig$f64_dec_misc;
-export var orig$f64_dec_min_positive = retasmFunc.orig$f64_dec_min_positive;
-export var orig$f64_dec_min_normal = retasmFunc.orig$f64_dec_min_normal;
-export var orig$f64_dec_max_subnormal = retasmFunc.orig$f64_dec_max_subnormal;
-export var orig$f64_dec_max_finite = retasmFunc.orig$f64_dec_max_finite;
-export var orig$f64_dec_trailing_dot = retasmFunc.orig$f64_dec_trailing_dot;

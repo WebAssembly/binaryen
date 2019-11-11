@@ -20,25 +20,16 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- function $1($0, $1_1, $2) {
-  $0 = $0 | 0;
-  $1_1 = $1_1 | 0;
-  $2 = $2 | 0;
-  return !$2 & ($0 | 0) == ($1_1 | 0);
- }
- 
- function legalstub$1($0, $1_1, $2) {
-  return $1($0, $1_1, $2);
+ function legalstub$1($0, $1, $2) {
+  return !$2 & ($0 | 0) == ($1 | 0);
  }
  
  var FUNCTION_TABLE = [];
  return {
-  "check_extend_ui32": legalstub$1, 
-  "orig$check_extend_ui32": $1
+  "check_extend_ui32": legalstub$1
  };
 }
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export var check_extend_ui32 = retasmFunc.check_extend_ui32;
-export var orig$check_extend_ui32 = retasmFunc.orig$check_extend_ui32;
