@@ -26,8 +26,6 @@
  (export "illegalParam" (func $legalstub$illegalParam))
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "keepAlive" (func $keepAlive))
- (export "orig$illegalParam" (func $illegalParam))
- (export "orig$illegalResult" (func $illegalResult))
  (func $loads (; 7 ;)
   (local $i i32)
   (local $f f32)

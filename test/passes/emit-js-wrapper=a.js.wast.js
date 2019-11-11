@@ -81,17 +81,3 @@ try {
 } catch (e) {
   console.log('exception!' /* + e */);
 }
-if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
-try {
-  console.log('[fuzz-exec] calling $orig$types');
-  instance.exports.orig$types(0, 0, 0, 0, 0);
-} catch (e) {
-  console.log('exception!' /* + e */);
-}
-if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
-try {
-  console.log('[fuzz-exec] calling $orig$types3');
-  console.log('[fuzz-exec] note result: $orig$types3 => ' + literal(instance.exports.orig$types3(0, 0, 0), 'i64'));
-} catch (e) {
-  console.log('exception!' /* + e */);
-}

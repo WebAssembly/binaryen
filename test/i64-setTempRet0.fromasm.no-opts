@@ -13,7 +13,6 @@
  (global $tempRet0 (mut i32) (i32.const 0))
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "imports" (func $imports))
- (export "orig$illegalResult" (func $illegalResult))
  (func $illegalResult (; 3 ;) (result i64)
   (return
    (i64.const 8589934593)

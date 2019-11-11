@@ -9,11 +9,7 @@
  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "imports" (func $imports))
- (export "orig$illegalResult" (func $illegalResult))
- (func $illegalResult (; 3 ;) (; has Stack IR ;) (result i64)
-  (i64.const 8589934593)
- )
- (func $imports (; 4 ;) (; has Stack IR ;) (result i32)
+ (func $imports (; 3 ;) (; has Stack IR ;) (result i32)
   (i32.wrap_i64
    (i64.or
     (i64.extend_i32_u
@@ -28,7 +24,7 @@
    )
   )
  )
- (func $legalstub$illegalResult (; 5 ;) (; has Stack IR ;) (result i32)
+ (func $legalstub$illegalResult (; 4 ;) (; has Stack IR ;) (result i32)
   (call $setTempRet0
    (i32.const 2)
   )

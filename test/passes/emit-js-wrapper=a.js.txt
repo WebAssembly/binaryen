@@ -11,8 +11,6 @@
  (export "types" (func $legalstub$types))
  (export "types2" (func $types2))
  (export "types3" (func $legalstub$types3))
- (export "orig$types" (func $types))
- (export "orig$types3" (func $types3))
  (func $add (; 1 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
   (i32.add
    (local.get $x)
