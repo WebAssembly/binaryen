@@ -38,7 +38,6 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "shared-constants.h"
-#include "support/file.h"
 #include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -52,12 +51,8 @@ struct LegalizeJSInterface : public Pass {
   LegalizeJSInterface(bool full) : full(full) {}
 
   void run(PassRunner* runner, Module* module) override {
-    auto exportOriginals =
-      !String::trim(
-         read_possible_response_file(runner->options.getArgumentOrDefault(
-           "legalize-js-interface-export-originals", "")))
-         .empty();
-
+    auto exportOriginals = !runner->options.getArgumentOrDefault(
+           "legalize-js-interface-export-originals", "").empty();
     // for each illegal export, we must export a legalized stub instead
     std::vector<Export*> newExports;
     for (auto& ex : module->exports) {
