@@ -307,6 +307,10 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool i
         ret->kind = ExternalKind::Global;
         wasm.addExport(ret);
       }
+
+      Expression* call = builder.makeGlobalGet(gbl->name, gbl->type);
+      GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+      block->list.push_back(globalSet);
     } else {
       Expression* call = builder.makeCall(getter, {}, i32);
       GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
