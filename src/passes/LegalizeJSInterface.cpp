@@ -38,7 +38,6 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "shared-constants.h"
-#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 #include <utility>
