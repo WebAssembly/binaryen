@@ -156,9 +156,7 @@ private:
     return t->result == i64;
   }
 
-  bool isDynCall(Name name) {
-    return name.startsWith("dynCall_");
-  }
+  bool isDynCall(Name name) { return name.startsWith("dynCall_"); }
 
   // Check if an export should be legalized.
   bool shouldBeLegalized(Export* ex, Function* func) {
