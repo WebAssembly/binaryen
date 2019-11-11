@@ -51,8 +51,10 @@ struct LegalizeJSInterface : public Pass {
   LegalizeJSInterface(bool full) : full(full) {}
 
   void run(PassRunner* runner, Module* module) override {
-    auto exportOriginals = !runner->options.getArgumentOrDefault(
-           "legalize-js-interface-export-originals", "").empty();
+    auto exportOriginals =
+      !runner->options
+         .getArgumentOrDefault("legalize-js-interface-export-originals", "")
+         .empty();
     // for each illegal export, we must export a legalized stub instead
     std::vector<Export*> newExports;
     for (auto& ex : module->exports) {
