@@ -67,16 +67,18 @@ struct FeatureSet {
 
   bool isMVP() const { return features == MVP; }
   bool has(Feature f) { return (features & f) == f; }
-  bool hasAtomics() const { return features & Atomics; }
-  bool hasMutableGlobals() const { return features & MutableGlobals; }
-  bool hasTruncSat() const { return features & TruncSat; }
-  bool hasSIMD() const { return features & SIMD; }
-  bool hasBulkMemory() const { return features & BulkMemory; }
-  bool hasSignExt() const { return features & SignExt; }
-  bool hasExceptionHandling() const { return features & ExceptionHandling; }
-  bool hasTailCall() const { return features & TailCall; }
-  bool hasReferenceTypes() const { return features & ReferenceTypes; }
-  bool hasAll() const { return features & All; }
+  bool hasAtomics() const { return bool(features & Atomics); }
+  bool hasMutableGlobals() const { return bool(features & MutableGlobals); }
+  bool hasTruncSat() const { return bool(features & TruncSat); }
+  bool hasSIMD() const { return bool(features & SIMD); }
+  bool hasBulkMemory() const { return bool(features & BulkMemory); }
+  bool hasSignExt() const { return bool(features & SignExt); }
+  bool hasExceptionHandling() const {
+    return bool(features & ExceptionHandling);
+  }
+  bool hasTailCall() const { return bool(features & TailCall); }
+  bool hasReferenceTypes() const { return bool(features & ReferenceTypes); }
+  bool hasAll() const { return bool(features & All); }
 
   void makeMVP() { features = MVP; }
   void set(Feature f, bool v = true) {
