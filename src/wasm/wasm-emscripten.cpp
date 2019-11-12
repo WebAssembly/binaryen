@@ -281,16 +281,20 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool i
         Fatal() << "GOT.func entry with no import/export: " << g->base;
       }
     }
-
-    Name getter(
-      (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
-        .c_str());
-    ensureFunctionImport(&wasm, getter, "i");
     
     if (!isSideModule) {
       auto& table = wasm.table;
       auto& segment = table.segments[0];
       int32_t index = segment.data.size();
+
+      // Need to get the tableBase here
+      index += 1;
+
+      Name getter(
+        (std::string("dl$") + g->base.c_str() + std::string("$") + getSig(f))
+          .c_str());
+
+      ensureFunctionImport(&wasm, getter, getSig(f));
 
       segment.data.push_back(getter);
       Name gblName(std::string("g$") + std::string(g->base.c_str()));
@@ -312,6 +316,12 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool i
       GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
       block->list.push_back(globalSet);
     } else {
+      Name getter(
+        (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
+          .c_str());
+
+      ensureFunctionImport(&wasm, getter, "i");
+
       Expression* call = builder.makeCall(getter, {}, i32);
       GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
       block->list.push_back(globalSet);
