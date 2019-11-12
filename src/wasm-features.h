@@ -73,7 +73,9 @@ struct FeatureSet {
   bool hasSIMD() const { return bool(features & SIMD); }
   bool hasBulkMemory() const { return bool(features & BulkMemory); }
   bool hasSignExt() const { return bool(features & SignExt); }
-  bool hasExceptionHandling() const { return bool(features & ExceptionHandling); }
+  bool hasExceptionHandling() const {
+    return bool(features & ExceptionHandling);
+  }
   bool hasTailCall() const { return bool(features & TailCall); }
   bool hasReferenceTypes() const { return bool(features & ReferenceTypes); }
   bool hasAll() const { return bool(features & All); }
