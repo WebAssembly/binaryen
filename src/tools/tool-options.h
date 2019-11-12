@@ -78,6 +78,23 @@ struct ToolOptions : public Options {
            Options::Arguments::Zero,
            [this](Options* o, const std::string& argument) {
              passOptions.validate = false;
+           })
+      .add("--pass-arg",
+           "-pa",
+           "An argument passed along to optimization passes being run. Must be "
+           "in the form KEY@VALUE",
+           Options::Arguments::N,
+           [this](Options*, const std::string& argument) {
+             std::string key, value;
+             auto colon = argument.find('@');
+             if (colon == std::string::npos) {
+               key = argument;
+               value = "1";
+             } else {
+               key = argument.substr(0, colon);
+               value = argument.substr(colon + 1);
+             }
+             passOptions.arguments[key] = value;
            });
   }
 

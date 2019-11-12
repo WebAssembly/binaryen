@@ -261,6 +261,7 @@ int main(int argc, const char* argv[]) {
   // Legalize the wasm.
   {
     PassRunner passRunner(&wasm);
+    passRunner.setOptions(options.passOptions);
     passRunner.setDebug(options.debug);
     passRunner.setDebugInfo(debugInfo);
     passRunner.add(ABI::getLegalizationPass(
