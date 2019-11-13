@@ -265,7 +265,6 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(
     block->list.push_back(globalSet);
   }
 
-  int32_t index = tableBase;
   for (Global* g : gotFuncEntries) {
     Function* f = nullptr;
     // The function has to exist either as export or an import.
@@ -286,7 +285,7 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(
     if (!isSideModule) {
       auto& table = wasm.table;
       auto& segment = table.segments[0];
-
+      int32_t index = segment.data.size() + tableBase;
       Name getter(
         (std::string("dl$") + g->base.c_str() + std::string("$") + getSig(f))
           .c_str());
