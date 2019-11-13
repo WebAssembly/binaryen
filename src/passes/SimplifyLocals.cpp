@@ -607,15 +607,15 @@ struct SimplifyLocals
     Index goodIndex = -1;
     bool found = false;
     if (iff->ifTrue->type == Type::unreachable) {
-      assert(iff->ifFalse->type !=
-             Type::unreachable); // since the if type is none
+      // since the if type is none
+      assert(iff->ifFalse->type != Type::unreachable);
       if (!ifFalse.empty()) {
         goodIndex = ifFalse.begin()->first;
         found = true;
       }
     } else if (iff->ifFalse->type == Type::unreachable) {
-      assert(iff->ifTrue->type !=
-             Type::unreachable); // since the if type is none
+      // since the if type is none
+      assert(iff->ifTrue->type != Type::unreachable);
       if (!ifTrue.empty()) {
         goodIndex = ifTrue.begin()->first;
         found = true;

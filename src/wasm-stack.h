@@ -415,7 +415,7 @@ void BinaryenIRWriter<SubType>::visitCall(Call* curr) {
   // unreachable. But in binary format, this becomes:
   // unreachable
   // i32.eqz
-  // f32.add       ;; validation failure; it takes an Type::i32!
+  // f32.add       ;; validation failure; it takes an i32!
   // And here f32.add causes validation failure in wasm validation. So in this
   // case we add an unreachable to prevent following instructions to consume
   // the current value (here i32.eqz).

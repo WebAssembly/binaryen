@@ -310,7 +310,7 @@ void Block::finalize() {
       type = list.back()->type;
       // and even if we have an unreachable child somewhere,
       // we still mark ourselves as having that type,
-      // (block (result Type::i32)
+      // (block (result i32)
       //  (return)
       //  (i32.const 10)
       // )
@@ -381,7 +381,7 @@ void If::finalize() {
   }
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
-  // (if (result Type::i32)
+  // (if (result i32)
   //  (unreachable)
   //  (i32.const 10)
   //  (i32.const 20

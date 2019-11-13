@@ -73,8 +73,8 @@ struct DeadCodeElimination
     // we normally have already reduced unreachable code into (unreachable)
     // nodes, so we would not get to this place at all anyhow, the breaking
     // instruction itself would be removed. However, an exception are things
-    // like  (block (result Type::i32) (call $x) (unreachable)) , which has type
-    // Type::i32 despite not being exited.
+    // like  (block (result i32) (call $x) (unreachable)) , which has type i32
+    // despite not being exited.
     // TODO: optimize such cases
     if (reachable) {
       reachableBreaks.insert(name);

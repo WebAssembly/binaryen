@@ -531,8 +531,8 @@ private:
             if (previous->params[i] == Type::none) {
               previous->params[i] = type->params[i]; // use a more concrete type
             } else if (previous->params[i] != type->params[i]) {
-              previous->params[i] =
-                Type::f64; // overloaded type, make it a double
+              // overloaded type, make it a double
+              previous->params[i] = Type::f64;
             }
           } else {
             previous->params.push_back(type->params[i]); // add a new param
@@ -544,8 +544,8 @@ private:
           previous->result = type->result; // use a more concrete type
         } else if (previous->result != type->result &&
                    type->result != Type::Type::none) {
-          previous->result =
-            Type::f64; // overloaded return type, make it a double
+          // overloaded return type, make it a double
+          previous->result = Type::f64;
         }
       }
     } else {
@@ -1968,8 +1968,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     if (what == BINARY) {
       if ((ast[1] == OR || ast[1] == TRSHIFT) && ast[3]->isNumber() &&
           ast[3]->getNumber() == 0) {
-        auto ret =
-          process(ast[2]); // just look through the ()|0 or ()>>>0 coercion
+        // just look through the ()|0 or ()>>>0 coercion
+        auto ret = process(ast[2]);
         fixCallType(ret, Type::i32);
         return ret;
       }

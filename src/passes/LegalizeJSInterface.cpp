@@ -17,10 +17,10 @@
 //
 // i64 values are not valid in JS, and must be handled in some other
 // way. This pass transforms all i64s in params and results in imports
-// and exports into pairs of Type::i32, Type::i32 (low, high). If JS on the
-// outside calls with that ABI, then everything should then just work, using
-// stub methods added in this pass, that thunk i64s into Type::i32, Type::i32
-// and vice versa as necessary.
+// and exports into pairs of i32, i32 (low, high). If JS on the outside
+// calls with that ABI, then everything should then just work, using
+// stub methods added in this pass, that thunk i64s into i32, i32 and
+// vice versa as necessary.
 //
 // We can also legalize in a "minimal" way, that is, only JS-specific
 // components, that only JS will care about, such as dynCall methods
