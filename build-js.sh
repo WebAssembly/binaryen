@@ -75,7 +75,7 @@ python3 "$BINARYEN_SCRIPTS/embedwast.py" "$BINARYEN_SRC/passes/wasm-intrinsics.w
 
 echo "compiling source files"
 
-mkdir -p $OUT
+mkdir -p "$OUT"
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   "$BINARYEN_SRC/asmjs/asm_v_wasm.cpp" \
