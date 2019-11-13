@@ -50,16 +50,41 @@ struct LegalizeJSInterface : public Pass {
   LegalizeJSInterface(bool full) : full(full) {}
 
   void run(PassRunner* runner, Module* module) override {
+    auto exportOriginals =
+      !runner->options
+         .getArgumentOrDefault("legalize-js-interface-export-originals", "")
+         .empty();
     // for each illegal export, we must export a legalized stub instead
+    std::vector<Export*> newExports;
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
         auto* func = module->getFunction(ex->value);
         if (isIllegal(func) && shouldBeLegalized(ex.get(), func)) {
+          // Provide a legal function for the export.
           auto legalName = makeLegalStub(func, module);
           ex->value = legalName;
+          if (exportOriginals) {
+            // Also export the original function, before legalization. This is
+            // not normally useful for JS, except in cases like dynamic linking
+            // where the JS loader code must copy exported wasm functions into
+            // the table, and they must not be legalized as other wasm code will
+            // do an indirect call to them. However, don't do this for imported
+            // functions, as those would be legalized in their actual module
+            // anyhow. It also makes no sense to do this for dynCalls, as they
+            // are only called from JS.
+            if (!func->imported() && !isDynCall(ex->name)) {
+              Builder builder(*module);
+              Name newName = std::string("orig$") + ex->name.str;
+              newExports.push_back(builder.makeExport(
+                newName, func->name, ExternalKind::Function));
+            }
+          }
         }
       }
+    }
+    for (auto* ex : newExports) {
+      module->addExport(ex);
     }
     // Avoid iterator invalidation later.
     std::vector<Function*> originalFunctions;
@@ -136,13 +161,15 @@ private:
     return t->result == i64;
   }
 
+  bool isDynCall(Name name) { return name.startsWith("dynCall_"); }
+
   // Check if an export should be legalized.
   bool shouldBeLegalized(Export* ex, Function* func) {
     if (full) {
       return true;
     }
     // We are doing minimal legalization - just what JS needs.
-    return ex->name.startsWith("dynCall_");
+    return isDynCall(ex->name);
   }
 
   // Check if an import should be legalized.

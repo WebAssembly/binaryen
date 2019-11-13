@@ -153,6 +153,7 @@ struct PassRunner {
   PassRunner(const PassRunner&) = delete;
   PassRunner& operator=(const PassRunner&) = delete;
 
+  void setOptions(PassOptions newOptions) { options = newOptions; }
   void setDebug(bool debug) {
     options.debug = debug;
     // validate everything by default if debugging

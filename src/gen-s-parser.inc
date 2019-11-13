@@ -57,20 +57,12 @@ switch (op[0]) {
     }
   }
   case 'c': {
-    switch (op[2]) {
-      case 'l': {
-        switch (op[4]) {
-          case '\0':
-            if (strcmp(op, "call") == 0) { return makeCall(s, /*isReturn=*/false); }
-            goto parse_error;
-          case '_':
-            if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
-            goto parse_error;
-          default: goto parse_error;
-        }
-      }
-      case 't':
-        if (strcmp(op, "catch") == 0) { return makeCatch(s); }
+    switch (op[4]) {
+      case '\0':
+        if (strcmp(op, "call") == 0) { return makeCall(s, /*isReturn=*/false); }
+        goto parse_error;
+      case '_':
+        if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
         goto parse_error;
       default: goto parse_error;
     }
