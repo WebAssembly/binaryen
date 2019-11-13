@@ -3623,8 +3623,8 @@ uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
   auto* wasm = (Module*)module;
   return wasm->memory.segments.size();
 }
-int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
-                                           BinaryenIndex id) {
+uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
+                                            BinaryenIndex id) {
   if (tracing) {
     std::cout << "  BinaryenGetMemorySegmentByteOffset(the_module, " << id
               << ");\n";
