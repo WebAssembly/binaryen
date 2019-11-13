@@ -54,9 +54,9 @@ template<typename LocalInfoProvider>
 Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
   if (auto* const_ = curr->dynCast<Const>()) {
     switch (curr->type) {
-      case i32:
+      case Type::i32:
         return 32 - const_->value.countLeadingZeroes().geti32();
-      case i64:
+      case Type::i64:
         return 64 - const_->value.countLeadingZeroes().geti64();
       default:
         WASM_UNREACHABLE();
@@ -179,11 +179,11 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
     }
   }
   switch (curr->type) {
-    case i32:
+    case Type::i32:
       return 32;
-    case i64:
+    case Type::i64:
       return 64;
-    case unreachable:
+    case Type::unreachable:
       return 64; // not interesting, but don't crash
     default:
       WASM_UNREACHABLE();
@@ -232,7 +232,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
       return;
     }
     auto type = getFunction()->getLocalType(curr->index);
-    if (type != i32 && type != i64) {
+    if (type != Type::i32 && type != Type::i64) {
       return;
     }
     // an integer var, worth processing
@@ -261,9 +261,9 @@ struct LocalScanner : PostWalker<LocalScanner> {
 
   Index getBitsForType(Type type) {
     switch (type) {
-      case i32:
+      case Type::i32:
         return 32;
-      case i64:
+      case Type::i64:
         return 64;
       default:
         return -1;
@@ -334,7 +334,7 @@ struct OptimizeInstructions
     // might change (if might not be unreachable if just one arm is, for
     // example). this optimization pass focuses on actually executing code. the
     // only exceptions are control flow changes
-    if (curr->type == unreachable && !curr->is<Break>() &&
+    if (curr->type == Type::unreachable && !curr->is<Break>() &&
         !curr->is<Switch>() && !curr->is<If>()) {
       return nullptr;
     }
@@ -567,7 +567,7 @@ struct OptimizeInstructions
           }
         }
         // math operations on a constant power of 2 right side can be optimized
-        if (right->type == i32) {
+        if (right->type == Type::i32) {
           uint32_t c = right->value.geti32();
           if (IsPowerOf2(c)) {
             if (binary->op == MulInt32) {
@@ -744,7 +744,7 @@ struct OptimizeInstructions
             std::swap(iff->ifTrue, iff->ifFalse);
           }
         }
-        if (iff->condition->type != unreachable &&
+        if (iff->condition->type != Type::unreachable &&
             ExpressionAnalyzer::equal(iff->ifTrue, iff->ifFalse)) {
           // sides are identical, fold
           // if we can replace the if with one arm, and no side effects in the
@@ -763,7 +763,7 @@ struct OptimizeInstructions
               // the types diff. as the condition is reachable, that means the
               // if must be concrete while the arm is not
               assert(isConcreteType(iff->type) &&
-                     iff->ifTrue->type == unreachable);
+                     iff->ifTrue->type == Type::unreachable);
               // emit a block with a forced type
               auto* ret = builder.makeBlock();
               if (needCondition) {
@@ -847,7 +847,7 @@ struct OptimizeInstructions
       if (auto* binary = store->value->dynCast<Binary>()) {
         if (binary->op == AndInt32) {
           if (auto* right = binary->right->dynCast<Const>()) {
-            if (right->type == i32) {
+            if (right->type == Type::i32) {
               auto mask = right->value.geti32();
               if ((store->bytes == 1 && mask == 0xff) ||
                   (store->bytes == 2 && mask == 0xffff)) {
@@ -866,7 +866,7 @@ struct OptimizeInstructions
       } else if (auto* unary = store->value->dynCast<Unary>()) {
         if (unary->op == WrapInt64) {
           // instead of wrapping to 32, just store some of the bits in the i64
-          store->valueType = i64;
+          store->valueType = Type::i64;
           store->value = unary->value;
         }
       }
@@ -968,11 +968,11 @@ private:
         return makeZeroExt(ext, Properties::getSignExtBits(binary));
       }
     } else if (auto* block = boolean->dynCast<Block>()) {
-      if (block->type == i32 && block->list.size() > 0) {
+      if (block->type == Type::i32 && block->list.size() > 0) {
         block->list.back() = optimizeBoolean(block->list.back());
       }
     } else if (auto* iff = boolean->dynCast<If>()) {
-      if (iff->type == i32) {
+      if (iff->type == Type::i32) {
         iff->ifTrue = optimizeBoolean(iff->ifTrue);
         iff->ifFalse = optimizeBoolean(iff->ifFalse);
       }
@@ -1469,7 +1469,7 @@ private:
       case LtUInt32:
       case GtSInt32:
       case GtUInt32:
-        return LiteralUtils::makeZero(i32, *getModule());
+        return LiteralUtils::makeZero(Type::i32, *getModule());
       case AndInt32:
       case OrInt32:
       case AndInt64:
@@ -1485,7 +1485,7 @@ private:
       case LeUInt64:
       case GeSInt64:
       case GeUInt64:
-        return LiteralUtils::makeFromInt32(1, i32, *getModule());
+        return LiteralUtils::makeFromInt32(1, Type::i32, *getModule());
       default:
         return nullptr;
     }

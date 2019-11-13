@@ -592,7 +592,7 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
     auto newParams = parseParamOrLocal(*s[i++], localIndex);
     namedParams.insert(namedParams.end(), newParams.begin(), newParams.end());
   }
-  result = none;
+  result = Type::none;
   if (i < s.size() && elementStartsWith(*s[i], RESULT)) {
     paramOrResultExists = true;
     result = parseResult(*s[i++]);
@@ -773,7 +773,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   // parse typeuse: type/param/result
   FunctionType* functionType = nullptr;
   std::vector<NameType> params;
-  Type result = none;
+  Type result = Type::none;
   i = parseTypeUse(s, i, functionType, params, result);
   assert(functionType && "functionType should've been set by parseTypeUse");
 
@@ -873,58 +873,58 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
                                           bool prefix) {
   if (str[0] == 'i') {
     if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
-      return i32;
+      return Type::i32;
     }
     if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) {
-      return i64;
+      return Type::i64;
     }
   }
   if (str[0] == 'f') {
     if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
-      return f32;
+      return Type::f32;
     }
     if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) {
-      return f64;
+      return Type::f64;
     }
   }
   if (str[0] == 'v') {
     if (str[1] == '1' && str[2] == '2' && str[3] == '8' &&
         (prefix || str[4] == 0)) {
-      return v128;
+      return Type::v128;
     }
   }
   if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
-    return anyref;
+    return Type::anyref;
   }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
-    return exnref;
+    return Type::exnref;
   }
   if (allowError) {
-    return none;
+    return Type::none;
   }
   throw ParseException("invalid wasm type");
 }
 
 Type SExpressionWasmBuilder::stringToLaneType(const char* str) {
   if (strcmp(str, "i8x16") == 0) {
-    return i32;
+    return Type::i32;
   }
   if (strcmp(str, "i16x8") == 0) {
-    return i32;
+    return Type::i32;
   }
   if (strcmp(str, "i32x4") == 0) {
-    return i32;
+    return Type::i32;
   }
   if (strcmp(str, "i64x2") == 0) {
-    return i64;
+    return Type::i64;
   }
   if (strcmp(str, "f32x4") == 0) {
-    return f32;
+    return Type::f32;
   }
   if (strcmp(str, "f64x2") == 0) {
-    return f64;
+    return Type::f64;
   }
-  return none;
+  return Type::none;
 }
 
 Function::DebugLocation
@@ -1094,7 +1094,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     if (i < s.size() && s[i]->isStr()) {
       // could be a name or a type
       if (s[i]->dollared() ||
-          stringToType(s[i]->str(), true /* allowError */) == none) {
+          stringToType(s[i]->str(), true /* allowError */) == Type::none) {
         sName = s[i++]->str();
       } else {
         sName = "block";
@@ -1178,7 +1178,7 @@ static Literal makeLanes(Element& s, MixedArena& allocator, Type lane_t) {
 }
 
 Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
-  if (type != v128) {
+  if (type != Type::v128) {
     auto ret = parseConst(s[1]->str(), type, allocator);
     if (!ret) {
       throw ParseException("bad const");
@@ -1191,28 +1191,28 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   size_t lanes = s.size() - 2;
   switch (lanes) {
     case 2: {
-      if (lane_t != i64 && lane_t != f64) {
+      if (lane_t != Type::i64 && lane_t != Type::f64) {
         throw ParseException("Unexpected v128 literal lane type");
       }
       ret->value = makeLanes<2>(s, allocator, lane_t);
       break;
     }
     case 4: {
-      if (lane_t != i32 && lane_t != f32) {
+      if (lane_t != Type::i32 && lane_t != Type::f32) {
         throw ParseException("Unexpected v128 literal lane type");
       }
       ret->value = makeLanes<4>(s, allocator, lane_t);
       break;
     }
     case 8: {
-      if (lane_t != i32) {
+      if (lane_t != Type::i32) {
         throw ParseException("Unexpected v128 literal lane type");
       }
       ret->value = makeLanes<8>(s, allocator, lane_t);
       break;
     }
     case 16: {
-      if (lane_t != i32) {
+      if (lane_t != Type::i32) {
         throw ParseException("Unexpected v128 literal lane type");
       }
       ret->value = makeLanes<16>(s, allocator, lane_t);
@@ -1403,7 +1403,7 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
 
 Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   auto ret = allocator.alloc<AtomicWait>();
-  ret->type = i32;
+  ret->type = Type::i32;
   ret->expectedType = type;
   ret->ptr = parseExpression(s[1]);
   ret->expected = parseExpression(s[2]);
@@ -1414,7 +1414,7 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
 
 Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   auto ret = allocator.alloc<AtomicNotify>();
-  ret->type = i32;
+  ret->type = Type::i32;
   ret->ptr = parseExpression(s[1]);
   ret->notifyCount = parseExpression(s[2]);
   ret->finalize();
@@ -1625,7 +1625,7 @@ SExpressionWasmBuilder::makeMaybeBlock(Element& s, size_t i, Type type) {
 
 Type SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
   if (s.size() == i) {
-    return none;
+    return Type::none;
   }
 
   // TODO(sbc): Remove support for old result syntax (bare streing) once the
@@ -1637,7 +1637,7 @@ Type SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
   Element& params = *s[i];
   IString id = params[0]->str();
   if (id != RESULT) {
-    return none;
+    return Type::none;
   }
 
   i++;
@@ -1985,7 +1985,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     }
     const char* input = curr[j]->c_str();
     auto* offset = allocator.alloc<Const>();
-    offset->type = i32;
+    offset->type = Type::i32;
     offset->value = Literal(int32_t(offsetValue));
     if (auto size = strlen(input)) {
       std::vector<char> data;
@@ -2228,7 +2228,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   globalCounter++;
   globalNames.push_back(global->name);
   bool mutable_ = false;
-  Type type = none;
+  Type type = Type::none;
   bool exported = false;
   Name importModule, importBase;
   while (i < s.size() && s[i]->isList()) {
@@ -2259,7 +2259,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   if (exported && mutable_) {
     throw ParseException("cannot export a mutable global", s.line, s.col);
   }
-  if (type == none) {
+  if (type == Type::none) {
     type = stringToType(s[i++]->str());
   }
   if (importModule.is()) {

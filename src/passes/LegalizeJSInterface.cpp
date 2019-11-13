@@ -17,10 +17,10 @@
 //
 // i64 values are not valid in JS, and must be handled in some other
 // way. This pass transforms all i64s in params and results in imports
-// and exports into pairs of i32, i32 (low, high). If JS on the outside
-// calls with that ABI, then everything should then just work, using
-// stub methods added in this pass, that thunk i64s into i32, i32 and
-// vice versa as necessary.
+// and exports into pairs of Type::i32, Type::i32 (low, high). If JS on the
+// outside calls with that ABI, then everything should then just work, using
+// stub methods added in this pass, that thunk i64s into Type::i32, Type::i32
+// and vice versa as necessary.
 //
 // We can also legalize in a "minimal" way, that is, only JS-specific
 // components, that only JS will care about, such as dynCall methods
@@ -154,11 +154,11 @@ private:
 
   template<typename T> bool isIllegal(T* t) {
     for (auto param : t->params) {
-      if (param == i64) {
+      if (param == Type::i64) {
         return true;
       }
     }
-    return t->result == i64;
+    return t->result == Type::i64;
   }
 
   bool isDynCall(Name name) { return name.startsWith("dynCall_"); }
@@ -193,11 +193,11 @@ private:
     call->type = func->result;
 
     for (auto param : func->params) {
-      if (param == i64) {
+      if (param == Type::i64) {
         call->operands.push_back(I64Utilities::recreateI64(
           builder, legal->params.size(), legal->params.size() + 1));
-        legal->params.push_back(i32);
-        legal->params.push_back(i32);
+        legal->params.push_back(Type::i32);
+        legal->params.push_back(Type::i32);
       } else {
         call->operands.push_back(
           builder.makeLocalGet(legal->params.size(), param));
@@ -205,14 +205,14 @@ private:
       }
     }
 
-    if (func->result == i64) {
+    if (func->result == Type::i64) {
       Function* f = getFunctionOrImport(module, SET_TEMP_RET0, "vi");
-      legal->result = i32;
-      auto index = Builder::addVar(legal, Name(), i64);
+      legal->result = Type::i32;
+      auto index = Builder::addVar(legal, Name(), Type::i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeLocalSet(index, call));
       block->list.push_back(builder.makeCall(
-        f->name, {I64Utilities::getI64High(builder, index)}, none));
+        f->name, {I64Utilities::getI64High(builder, index)}, Type::none));
       block->list.push_back(I64Utilities::getI64Low(builder, index));
       block->finalize();
       legal->body = block;
@@ -248,13 +248,13 @@ private:
     auto* imFunctionType = ensureFunctionType(getSig(im), module);
 
     for (auto param : imFunctionType->params) {
-      if (param == i64) {
+      if (param == Type::i64) {
         call->operands.push_back(
           I64Utilities::getI64Low(builder, func->params.size()));
         call->operands.push_back(
           I64Utilities::getI64High(builder, func->params.size()));
-        type->params.push_back(i32);
-        type->params.push_back(i32);
+        type->params.push_back(Type::i32);
+        type->params.push_back(Type::i32);
       } else {
         call->operands.push_back(
           builder.makeLocalGet(func->params.size(), param));
@@ -263,12 +263,12 @@ private:
       func->params.push_back(param);
     }
 
-    if (imFunctionType->result == i64) {
+    if (imFunctionType->result == Type::i64) {
       Function* f = getFunctionOrImport(module, GET_TEMP_RET0, "i");
-      call->type = i32;
+      call->type = Type::i32;
       Expression* get = builder.makeCall(f->name, {}, call->type);
       func->body = I64Utilities::recreateI64(builder, call, get);
-      type->result = i32;
+      type->result = Type::i32;
     } else {
       call->type = imFunctionType->result;
       func->body = call;

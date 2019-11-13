@@ -190,7 +190,7 @@ void WasmBinaryWriter::writeTypes() {
     for (auto param : type->params) {
       o << binaryType(param);
     }
-    if (type->result == none) {
+    if (type->result == Type::none) {
       o << U32LEB(0);
     } else {
       o << U32LEB(1);
@@ -1076,21 +1076,21 @@ Type WasmBinaryBuilder::getType() {
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
     case BinaryConsts::EncodedType::Empty:
-      return none;
+      return Type::none;
     case BinaryConsts::EncodedType::i32:
-      return i32;
+      return Type::i32;
     case BinaryConsts::EncodedType::i64:
-      return i64;
+      return Type::i64;
     case BinaryConsts::EncodedType::f32:
-      return f32;
+      return Type::f32;
     case BinaryConsts::EncodedType::f64:
-      return f64;
+      return Type::f64;
     case BinaryConsts::EncodedType::v128:
-      return v128;
+      return Type::v128;
     case BinaryConsts::EncodedType::anyref:
-      return anyref;
+      return Type::anyref;
     case BinaryConsts::EncodedType::exnref:
-      return exnref;
+      return Type::exnref;
     default: { throwError("invalid wasm type: " + std::to_string(type)); }
   }
   WASM_UNREACHABLE();
@@ -1223,7 +1223,7 @@ void WasmBinaryBuilder::readSignatures() {
     }
     auto numResults = getU32LEB();
     if (numResults == 0) {
-      curr->result = none;
+      curr->result = Type::none;
     } else {
       if (numResults != 1) {
         throwError("signature must have 1 result");
@@ -1745,7 +1745,7 @@ void WasmBinaryBuilder::processExpressions() {
       return;
     }
     expressionStack.push_back(curr);
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       // once we see something unreachable, we don't want to add anything else
       // to the stack, as it could be stacky code that is non-representable in
       // our AST. but we do need to skip it
@@ -1838,7 +1838,7 @@ Expression* WasmBinaryBuilder::popExpression() {
 
 Expression* WasmBinaryBuilder::popNonVoidExpression() {
   auto* ret = popExpression();
-  if (ret->type != none) {
+  if (ret->type != Type::none) {
     return ret;
   }
   // we found a void, so this is stacky code that we must handle carefully
@@ -1849,7 +1849,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   while (1) {
     auto* curr = popExpression();
     expressions.push_back(curr);
-    if (curr->type != none) {
+    if (curr->type != Type::none) {
       break;
     }
   }
@@ -1865,7 +1865,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
     block->list[0] = builder.makeLocalSet(local, block->list[0]);
     block->list.push_back(builder.makeLocalGet(local, type));
   } else {
-    assert(type == unreachable);
+    assert(type == Type::unreachable);
     // nothing to do here - unreachable anyhow
   }
   block->finalize();
@@ -2428,7 +2428,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
   }
   expressionStack.resize(start);
   // if we have a consumable item and need it, use it
-  if (consumable != NONE && curr->list.back()->type == none) {
+  if (consumable != NONE && curr->list.back()->type == Type::none) {
     requireFunctionContext(
       "need an extra var in a non-function context, invalid wasm");
     Builder builder(wasm);
@@ -2450,7 +2450,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
   while (1) {
     curr->type = getType();
     curr->name = getNextLabel();
-    breakStack.push_back({curr->name, curr->type != none});
+    breakStack.push_back({curr->name, curr->type != Type::none});
     stack.push_back(curr);
     if (more() && input[pos] == BinaryConsts::Block) {
       // a recursion
@@ -2498,12 +2498,13 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
 Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
                                                    unsigned numPops) {
   Name label = getNextLabel();
-  breakStack.push_back({label, type != none && type != unreachable});
+  breakStack.push_back(
+    {label, type != Type::none && type != Type::unreachable});
   auto start = expressionStack.size();
 
   Builder builder(wasm);
   for (unsigned i = 0; i < numPops; i++) {
-    auto* pop = builder.makePop(exnref);
+    auto* pop = builder.makePop(Type::exnref);
     expressionStack.push_back(pop);
   }
 
@@ -2754,82 +2755,82 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
       case BinaryConsts::I32LoadMem8S:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i32;
+        curr->type = Type::i32;
         curr->signed_ = true;
         break;
       case BinaryConsts::I32LoadMem8U:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i32;
+        curr->type = Type::i32;
         curr->signed_ = false;
         break;
       case BinaryConsts::I32LoadMem16S:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i32;
+        curr->type = Type::i32;
         curr->signed_ = true;
         break;
       case BinaryConsts::I32LoadMem16U:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i32;
+        curr->type = Type::i32;
         curr->signed_ = false;
         break;
       case BinaryConsts::I32LoadMem:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i32;
+        curr->type = Type::i32;
         break;
       case BinaryConsts::I64LoadMem8S:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem8U:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem16S:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem16U:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem32S:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem32U:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i64;
+        curr->type = Type::i64;
         curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem:
         curr = allocator.alloc<Load>();
         curr->bytes = 8;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       case BinaryConsts::F32LoadMem:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = f32;
+        curr->type = Type::f32;
         break;
       case BinaryConsts::F64LoadMem:
         curr = allocator.alloc<Load>();
         curr->bytes = 8;
-        curr->type = f64;
+        curr->type = Type::f64;
         break;
       default:
         return false;
@@ -2842,37 +2843,37 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
       case BinaryConsts::I32AtomicLoad8U:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i32;
+        curr->type = Type::i32;
         break;
       case BinaryConsts::I32AtomicLoad16U:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i32;
+        curr->type = Type::i32;
         break;
       case BinaryConsts::I32AtomicLoad:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i32;
+        curr->type = Type::i32;
         break;
       case BinaryConsts::I64AtomicLoad8U:
         curr = allocator.alloc<Load>();
         curr->bytes = 1;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad16U:
         curr = allocator.alloc<Load>();
         curr->bytes = 2;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad32U:
         curr = allocator.alloc<Load>();
         curr->bytes = 4;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad:
         curr = allocator.alloc<Load>();
         curr->bytes = 8;
-        curr->type = i64;
+        curr->type = Type::i64;
         break;
       default:
         return false;
@@ -2900,47 +2901,47 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out,
       case BinaryConsts::I32StoreMem8:
         curr = allocator.alloc<Store>();
         curr->bytes = 1;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I32StoreMem16:
         curr = allocator.alloc<Store>();
         curr->bytes = 2;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I32StoreMem:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I64StoreMem8:
         curr = allocator.alloc<Store>();
         curr->bytes = 1;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64StoreMem16:
         curr = allocator.alloc<Store>();
         curr->bytes = 2;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64StoreMem32:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64StoreMem:
         curr = allocator.alloc<Store>();
         curr->bytes = 8;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::F32StoreMem:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = f32;
+        curr->valueType = Type::f32;
         break;
       case BinaryConsts::F64StoreMem:
         curr = allocator.alloc<Store>();
         curr->bytes = 8;
-        curr->valueType = f64;
+        curr->valueType = Type::f64;
         break;
       default:
         return false;
@@ -2950,37 +2951,37 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out,
       case BinaryConsts::I32AtomicStore8:
         curr = allocator.alloc<Store>();
         curr->bytes = 1;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I32AtomicStore16:
         curr = allocator.alloc<Store>();
         curr->bytes = 2;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I32AtomicStore:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = i32;
+        curr->valueType = Type::i32;
         break;
       case BinaryConsts::I64AtomicStore8:
         curr = allocator.alloc<Store>();
         curr->bytes = 1;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64AtomicStore16:
         curr = allocator.alloc<Store>();
         curr->bytes = 2;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64AtomicStore32:
         curr = allocator.alloc<Store>();
         curr->bytes = 4;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       case BinaryConsts::I64AtomicStore:
         curr = allocator.alloc<Store>();
         curr->bytes = 8;
-        curr->valueType = i64;
+        curr->valueType = Type::i64;
         break;
       default:
         return false;
@@ -3015,25 +3016,25 @@ bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
   // Handle the cases for all the valid types for a particular opcode
 #define SET_FOR_OP(Op)                                                         \
   case BinaryConsts::I32AtomicRMW##Op:                                         \
-    SET(Op, i32, 4);                                                           \
+    SET(Op, Type::i32, 4);                                                     \
     break;                                                                     \
   case BinaryConsts::I32AtomicRMW##Op##8U:                                     \
-    SET(Op, i32, 1);                                                           \
+    SET(Op, Type::i32, 1);                                                     \
     break;                                                                     \
   case BinaryConsts::I32AtomicRMW##Op##16U:                                    \
-    SET(Op, i32, 2);                                                           \
+    SET(Op, Type::i32, 2);                                                     \
     break;                                                                     \
   case BinaryConsts::I64AtomicRMW##Op:                                         \
-    SET(Op, i64, 8);                                                           \
+    SET(Op, Type::i64, 8);                                                     \
     break;                                                                     \
   case BinaryConsts::I64AtomicRMW##Op##8U:                                     \
-    SET(Op, i64, 1);                                                           \
+    SET(Op, Type::i64, 1);                                                     \
     break;                                                                     \
   case BinaryConsts::I64AtomicRMW##Op##16U:                                    \
-    SET(Op, i64, 2);                                                           \
+    SET(Op, Type::i64, 2);                                                     \
     break;                                                                     \
   case BinaryConsts::I64AtomicRMW##Op##32U:                                    \
-    SET(Op, i64, 4);                                                           \
+    SET(Op, Type::i64, 4);                                                     \
     break;
 
   switch (code) {
@@ -3079,25 +3080,25 @@ bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out,
 
   switch (code) {
     case BinaryConsts::I32AtomicCmpxchg:
-      SET(i32, 4);
+      SET(Type::i32, 4);
       break;
     case BinaryConsts::I64AtomicCmpxchg:
-      SET(i64, 8);
+      SET(Type::i64, 8);
       break;
     case BinaryConsts::I32AtomicCmpxchg8U:
-      SET(i32, 1);
+      SET(Type::i32, 1);
       break;
     case BinaryConsts::I32AtomicCmpxchg16U:
-      SET(i32, 2);
+      SET(Type::i32, 2);
       break;
     case BinaryConsts::I64AtomicCmpxchg8U:
-      SET(i64, 1);
+      SET(Type::i64, 1);
       break;
     case BinaryConsts::I64AtomicCmpxchg16U:
-      SET(i64, 2);
+      SET(Type::i64, 2);
       break;
     case BinaryConsts::I64AtomicCmpxchg32U:
-      SET(i64, 4);
+      SET(Type::i64, 4);
       break;
     default:
       WASM_UNREACHABLE();
@@ -3128,15 +3129,15 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
 
   switch (code) {
     case BinaryConsts::I32AtomicWait:
-      curr->expectedType = i32;
+      curr->expectedType = Type::i32;
       break;
     case BinaryConsts::I64AtomicWait:
-      curr->expectedType = i64;
+      curr->expectedType = Type::i64;
       break;
     default:
       WASM_UNREACHABLE();
   }
-  curr->type = i32;
+  curr->type = Type::i32;
   if (debug) {
     std::cerr << "zz node: AtomicWait" << std::endl;
   }
@@ -3162,7 +3163,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicNotify(Expression*& out, uint8_t code) {
     std::cerr << "zz node: AtomicNotify" << std::endl;
   }
 
-  curr->type = i32;
+  curr->type = Type::i32;
   curr->notifyCount = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   Address readAlign;
@@ -4224,7 +4225,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDStore(Expression*& out, uint32_t code) {
   }
   auto* curr = allocator.alloc<Store>();
   curr->bytes = 16;
-  curr->valueType = v128;
+  curr->valueType = Type::v128;
   readMemoryAccess(curr->align, curr->offset);
   curr->isAtomic = false;
   curr->value = popNonVoidExpression();
@@ -4442,7 +4443,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDShift(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::V128Load) {
     auto* curr = allocator.alloc<Load>();
-    curr->type = v128;
+    curr->type = Type::v128;
     curr->bytes = 16;
     readMemoryAccess(curr->align, curr->offset);
     curr->isAtomic = false;
@@ -4518,7 +4519,7 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
     std::cerr << "zz node: Return" << std::endl;
   }
   requireFunctionContext("return");
-  if (currFunction->result != none) {
+  if (currFunction->result != Type::none) {
     curr->value = popNonVoidExpression();
   }
   curr->finalize();

@@ -21,7 +21,7 @@ namespace wasm {
 void BinaryInstWriter::visitBlock(Block* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Block);
-  o << binaryType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
 }
 
 void BinaryInstWriter::visitIf(If* curr) {
@@ -30,7 +30,7 @@ void BinaryInstWriter::visitIf(If* curr) {
   // instead)
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::If);
-  o << binaryType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
 }
 
 void BinaryInstWriter::emitIfElse() {
@@ -43,7 +43,7 @@ void BinaryInstWriter::emitIfElse() {
 void BinaryInstWriter::visitLoop(Loop* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Loop);
-  o << binaryType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
 }
 
 void BinaryInstWriter::visitBreak(Break* curr) {
@@ -94,7 +94,7 @@ void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
 void BinaryInstWriter::visitLoad(Load* curr) {
   if (!curr->isAtomic) {
     switch (curr->type) {
-      case i32: {
+      case Type::i32: {
         switch (curr->bytes) {
           case 1:
             o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem8S
@@ -112,7 +112,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         }
         break;
       }
-      case i64: {
+      case Type::i64: {
         switch (curr->bytes) {
           case 1:
             o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem8S
@@ -134,28 +134,28 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         }
         break;
       }
-      case f32:
+      case Type::f32:
         o << int8_t(BinaryConsts::F32LoadMem);
         break;
-      case f64:
+      case Type::f64:
         o << int8_t(BinaryConsts::F64LoadMem);
         break;
-      case v128:
+      case Type::v128:
         o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Load);
         break;
-      case unreachable:
+      case Type::unreachable:
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
-      case anyref: // anyref cannot be loaded from memory
-      case exnref: // exnref cannot be loaded from memory
-      case none:
+      case Type::anyref: // anyref cannot be loaded from memory
+      case Type::exnref: // exnref cannot be loaded from memory
+      case Type::none:
         WASM_UNREACHABLE();
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
     switch (curr->type) {
-      case i32: {
+      case Type::i32: {
         switch (curr->bytes) {
           case 1:
             o << int8_t(BinaryConsts::I32AtomicLoad8U);
@@ -171,7 +171,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         }
         break;
       }
-      case i64: {
+      case Type::i64: {
         switch (curr->bytes) {
           case 1:
             o << int8_t(BinaryConsts::I64AtomicLoad8U);
@@ -190,7 +190,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         }
         break;
       }
-      case unreachable:
+      case Type::unreachable:
         return;
       default:
         WASM_UNREACHABLE();
@@ -202,7 +202,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
 void BinaryInstWriter::visitStore(Store* curr) {
   if (!curr->isAtomic) {
     switch (curr->valueType) {
-      case i32: {
+      case Type::i32: {
         switch (curr->bytes) {
           case 1:
             o << int8_t(BinaryConsts::I32StoreMem8);
@@ -218,7 +218,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
         }
         break;
       }
-      case i64: {
+      case Type::i64: {
         switch (curr->bytes) {
           case 1:
             o << int8_t(BinaryConsts::I64StoreMem8);
@@ -237,26 +237,26 @@ void BinaryInstWriter::visitStore(Store* curr) {
         }
         break;
       }
-      case f32:
+      case Type::f32:
         o << int8_t(BinaryConsts::F32StoreMem);
         break;
-      case f64:
+      case Type::f64:
         o << int8_t(BinaryConsts::F64StoreMem);
         break;
-      case v128:
+      case Type::v128:
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
-      case anyref: // anyref cannot be stored from memory
-      case exnref: // exnref cannot be stored in memory
-      case none:
-      case unreachable:
+      case Type::anyref: // anyref cannot be stored from memory
+      case Type::exnref: // exnref cannot be stored in memory
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE();
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
     switch (curr->valueType) {
-      case i32: {
+      case Type::i32: {
         switch (curr->bytes) {
           case 1:
             o << int8_t(BinaryConsts::I32AtomicStore8);
@@ -272,7 +272,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
         }
         break;
       }
-      case i64: {
+      case Type::i64: {
         switch (curr->bytes) {
           case 1:
             o << int8_t(BinaryConsts::I64AtomicStore8);
@@ -304,7 +304,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 #define CASE_FOR_OP(Op)                                                        \
   case Op:                                                                     \
     switch (curr->type) {                                                      \
-      case i32:                                                                \
+      case Type::i32:                                                          \
         switch (curr->bytes) {                                                 \
           case 1:                                                              \
             o << int8_t(BinaryConsts::I32AtomicRMW##Op##8U);                   \
@@ -319,7 +319,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
             WASM_UNREACHABLE();                                                \
         }                                                                      \
         break;                                                                 \
-      case i64:                                                                \
+      case Type::i64:                                                          \
         switch (curr->bytes) {                                                 \
           case 1:                                                              \
             o << int8_t(BinaryConsts::I64AtomicRMW##Op##8U);                   \
@@ -360,7 +360,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->type) {
-    case i32:
+    case Type::i32:
       switch (curr->bytes) {
         case 1:
           o << int8_t(BinaryConsts::I32AtomicCmpxchg8U);
@@ -375,7 +375,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
           WASM_UNREACHABLE();
       }
       break;
-    case i64:
+    case Type::i64:
       switch (curr->bytes) {
         case 1:
           o << int8_t(BinaryConsts::I64AtomicCmpxchg8U);
@@ -402,12 +402,12 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->expectedType) {
-    case i32: {
+    case Type::i32: {
       o << int8_t(BinaryConsts::I32AtomicWait);
       emitMemoryAccess(4, 4, 0);
       break;
     }
-    case i64: {
+    case Type::i64: {
       o << int8_t(BinaryConsts::I64AtomicWait);
       emitMemoryAccess(8, 8, 0);
       break;
@@ -618,23 +618,23 @@ void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {
 
 void BinaryInstWriter::visitConst(Const* curr) {
   switch (curr->type) {
-    case i32: {
+    case Type::i32: {
       o << int8_t(BinaryConsts::I32Const) << S32LEB(curr->value.geti32());
       break;
     }
-    case i64: {
+    case Type::i64: {
       o << int8_t(BinaryConsts::I64Const) << S64LEB(curr->value.geti64());
       break;
     }
-    case f32: {
+    case Type::f32: {
       o << int8_t(BinaryConsts::F32Const) << curr->value.reinterpreti32();
       break;
     }
-    case f64: {
+    case Type::f64: {
       o << int8_t(BinaryConsts::F64Const) << curr->value.reinterpreti64();
       break;
     }
-    case v128: {
+    case Type::v128: {
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Const);
       std::array<uint8_t, 16> v = curr->value.getv128();
       for (size_t i = 0; i < 16; ++i) {
@@ -642,10 +642,10 @@ void BinaryInstWriter::visitConst(Const* curr) {
       }
       break;
     }
-    case anyref: // there's no anyref.const
-    case exnref: // there's no exnref.const
-    case none:
-    case unreachable:
+    case Type::anyref: // there's no anyref.const
+    case Type::exnref: // there's no exnref.const
+    case Type::none:
+    case Type::unreachable:
       WASM_UNREACHABLE();
   }
 }
@@ -1559,7 +1559,7 @@ void BinaryInstWriter::visitHost(Host* curr) {
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   o << int8_t(BinaryConsts::Try);
-  o << binaryType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != Type::unreachable ? curr->type : Type::none);
 }
 
 void BinaryInstWriter::emitCatch() {
@@ -1628,68 +1628,70 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     Type type = func->getLocalType(i);
     // increment now for simplicity, must decrement it in returns
     currLocalsByType[type]++;
-    if (type == i32) {
-      mappedLocals[i] = index + currLocalsByType[i32] - 1;
+    if (type == Type::i32) {
+      mappedLocals[i] = index + currLocalsByType[Type::i32] - 1;
       continue;
     }
-    index += numLocalsByType[i32];
-    if (type == i64) {
-      mappedLocals[i] = index + currLocalsByType[i64] - 1;
+    index += numLocalsByType[Type::i32];
+    if (type == Type::i64) {
+      mappedLocals[i] = index + currLocalsByType[Type::i64] - 1;
       continue;
     }
-    index += numLocalsByType[i64];
-    if (type == f32) {
-      mappedLocals[i] = index + currLocalsByType[f32] - 1;
+    index += numLocalsByType[Type::i64];
+    if (type == Type::f32) {
+      mappedLocals[i] = index + currLocalsByType[Type::f32] - 1;
       continue;
     }
-    index += numLocalsByType[f32];
-    if (type == f64) {
-      mappedLocals[i] = index + currLocalsByType[f64] - 1;
+    index += numLocalsByType[Type::f32];
+    if (type == Type::f64) {
+      mappedLocals[i] = index + currLocalsByType[Type::f64] - 1;
       continue;
     }
-    index += numLocalsByType[f64];
-    if (type == v128) {
-      mappedLocals[i] = index + currLocalsByType[v128] - 1;
+    index += numLocalsByType[Type::f64];
+    if (type == Type::v128) {
+      mappedLocals[i] = index + currLocalsByType[Type::v128] - 1;
       continue;
     }
-    index += numLocalsByType[v128];
-    if (type == anyref) {
-      mappedLocals[i] = index + currLocalsByType[anyref] - 1;
+    index += numLocalsByType[Type::v128];
+    if (type == Type::anyref) {
+      mappedLocals[i] = index + currLocalsByType[Type::anyref] - 1;
       continue;
     }
-    index += numLocalsByType[anyref];
-    if (type == exnref) {
-      mappedLocals[i] = index + currLocalsByType[exnref] - 1;
+    index += numLocalsByType[Type::anyref];
+    if (type == Type::exnref) {
+      mappedLocals[i] = index + currLocalsByType[Type::exnref] - 1;
       continue;
     }
     WASM_UNREACHABLE();
   }
   // Emit them.
-  o << U32LEB((numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
-              (numLocalsByType[f32] ? 1 : 0) + (numLocalsByType[f64] ? 1 : 0) +
-              (numLocalsByType[v128] ? 1 : 0) +
-              (numLocalsByType[anyref] ? 1 : 0) +
-              (numLocalsByType[exnref] ? 1 : 0));
-  if (numLocalsByType[i32]) {
-    o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
+  o << U32LEB((numLocalsByType[Type::i32] ? 1 : 0) +
+              (numLocalsByType[Type::i64] ? 1 : 0) +
+              (numLocalsByType[Type::f32] ? 1 : 0) +
+              (numLocalsByType[Type::f64] ? 1 : 0) +
+              (numLocalsByType[Type::v128] ? 1 : 0) +
+              (numLocalsByType[Type::anyref] ? 1 : 0) +
+              (numLocalsByType[Type::exnref] ? 1 : 0));
+  if (numLocalsByType[Type::i32]) {
+    o << U32LEB(numLocalsByType[Type::i32]) << binaryType(Type::i32);
   }
-  if (numLocalsByType[i64]) {
-    o << U32LEB(numLocalsByType[i64]) << binaryType(i64);
+  if (numLocalsByType[Type::i64]) {
+    o << U32LEB(numLocalsByType[Type::i64]) << binaryType(Type::i64);
   }
-  if (numLocalsByType[f32]) {
-    o << U32LEB(numLocalsByType[f32]) << binaryType(f32);
+  if (numLocalsByType[Type::f32]) {
+    o << U32LEB(numLocalsByType[Type::f32]) << binaryType(Type::f32);
   }
-  if (numLocalsByType[f64]) {
-    o << U32LEB(numLocalsByType[f64]) << binaryType(f64);
+  if (numLocalsByType[Type::f64]) {
+    o << U32LEB(numLocalsByType[Type::f64]) << binaryType(Type::f64);
   }
-  if (numLocalsByType[v128]) {
-    o << U32LEB(numLocalsByType[v128]) << binaryType(v128);
+  if (numLocalsByType[Type::v128]) {
+    o << U32LEB(numLocalsByType[Type::v128]) << binaryType(Type::v128);
   }
-  if (numLocalsByType[anyref]) {
-    o << U32LEB(numLocalsByType[anyref]) << binaryType(anyref);
+  if (numLocalsByType[Type::anyref]) {
+    o << U32LEB(numLocalsByType[Type::anyref]) << binaryType(Type::anyref);
   }
-  if (numLocalsByType[exnref]) {
-    o << U32LEB(numLocalsByType[exnref]) << binaryType(exnref);
+  if (numLocalsByType[Type::exnref]) {
+    o << U32LEB(numLocalsByType[Type::exnref]) << binaryType(Type::exnref);
   }
 }
 
@@ -1748,17 +1750,17 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   ret->origin = origin;
   auto stackType = origin->type;
   if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>()) {
-    if (stackType == unreachable) {
+    if (stackType == Type::unreachable) {
       // There are no unreachable blocks, loops, or ifs. we emit extra
       // unreachables to fix that up, so that they are valid as having none
       // type.
-      stackType = none;
+      stackType = Type::none;
     } else if (op != StackInst::BlockEnd && op != StackInst::IfEnd &&
                op != StackInst::LoopEnd) {
       // If a concrete type is returned, we mark the end of the construct has
       // having that type (as it is pushed to the value stack at that point),
       // other parts are marked as none).
-      stackType = none;
+      stackType = Type::none;
     }
   }
   ret->type = stackType;

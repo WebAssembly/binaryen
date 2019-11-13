@@ -43,23 +43,23 @@ Type asmToWasmType(AsmType asmType) {
 
 AsmType wasmToAsmType(Type type) {
   switch (type) {
-    case i32:
+    case Type::i32:
       return ASM_INT;
-    case f32:
+    case Type::f32:
       return ASM_FLOAT;
-    case f64:
+    case Type::f64:
       return ASM_DOUBLE;
-    case i64:
+    case Type::i64:
       return ASM_INT64;
-    case v128:
+    case Type::v128:
       assert(false && "v128 not implemented yet");
-    case anyref:
+    case Type::anyref:
       assert(false && "anyref is not supported by asm2wasm");
-    case exnref:
+    case Type::exnref:
       assert(false && "exnref is not supported by asm2wasm");
-    case none:
+    case Type::none:
       return ASM_NONE;
-    case unreachable:
+    case Type::unreachable:
       WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
@@ -67,23 +67,23 @@ AsmType wasmToAsmType(Type type) {
 
 char getSig(Type type) {
   switch (type) {
-    case i32:
+    case Type::i32:
       return 'i';
-    case i64:
+    case Type::i64:
       return 'j';
-    case f32:
+    case Type::f32:
       return 'f';
-    case f64:
+    case Type::f64:
       return 'd';
-    case v128:
+    case Type::v128:
       return 'V';
-    case anyref:
+    case Type::anyref:
       return 'a';
-    case exnref:
+    case Type::exnref:
       return 'e';
-    case none:
+    case Type::none:
       return 'v';
-    case unreachable:
+    case Type::unreachable:
       WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
@@ -100,21 +100,21 @@ std::string getSig(Function* func) {
 Type sigToType(char sig) {
   switch (sig) {
     case 'i':
-      return i32;
+      return Type::i32;
     case 'j':
-      return i64;
+      return Type::i64;
     case 'f':
-      return f32;
+      return Type::f32;
     case 'd':
-      return f64;
+      return Type::f64;
     case 'V':
-      return v128;
+      return Type::v128;
     case 'a':
-      return anyref;
+      return Type::anyref;
     case 'e':
-      return exnref;
+      return Type::exnref;
     case 'v':
-      return none;
+      return Type::none;
     default:
       abort();
   }
@@ -148,14 +148,14 @@ ensureFunctionType(const std::string& sig, Module* wasm, Name name) {
 }
 
 Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
-  if (expr->type == f32) {
+  if (expr->type == Type::f32) {
     auto conv = allocator.alloc<Unary>();
     conv->op = PromoteFloat32;
     conv->value = expr;
     conv->type = Type::f64;
     return conv;
   }
-  assert(expr->type == f64);
+  assert(expr->type == Type::f64);
   return expr;
 }
 

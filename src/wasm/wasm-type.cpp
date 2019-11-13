@@ -69,11 +69,11 @@ unsigned getTypeSize(Type type) {
 
 FeatureSet getFeatures(Type type) {
   switch (type) {
-    case v128:
+    case Type::v128:
       return FeatureSet::SIMD;
-    case anyref:
+    case Type::anyref:
       return FeatureSet::ReferenceTypes;
-    case exnref:
+    case Type::exnref:
       return FeatureSet::ExceptionHandling;
     default:
       return FeatureSet();
@@ -96,14 +96,16 @@ Type getType(unsigned size, bool float_) {
   WASM_UNREACHABLE();
 }
 
-Type getReachableType(Type a, Type b) { return a != unreachable ? a : b; }
+Type getReachableType(Type a, Type b) { return a != Type::unreachable ? a : b; }
 
-bool isConcreteType(Type type) { return type != none && type != unreachable; }
+bool isConcreteType(Type type) {
+  return type != Type::none && type != Type::unreachable;
+}
 
 bool isIntegerType(Type type) {
   switch (type) {
-    case i32:
-    case i64:
+    case Type::i32:
+    case Type::i64:
       return true;
     default:
       return false;
@@ -112,20 +114,20 @@ bool isIntegerType(Type type) {
 
 bool isFloatType(Type type) {
   switch (type) {
-    case f32:
-    case f64:
+    case Type::f32:
+    case Type::f64:
       return true;
     default:
       return false;
   }
 }
 
-bool isVectorType(Type type) { return type == v128; }
+bool isVectorType(Type type) { return type == Type::v128; }
 
 bool isReferenceType(Type type) {
   switch (type) {
-    case anyref:
-    case exnref:
+    case Type::anyref:
+    case Type::exnref:
       return true;
     default:
       return false;
@@ -135,13 +137,13 @@ bool isReferenceType(Type type) {
 Type reinterpretType(Type type) {
   switch (type) {
     case Type::i32:
-      return f32;
+      return Type::f32;
     case Type::i64:
-      return f64;
+      return Type::f64;
     case Type::f32:
-      return i32;
+      return Type::i32;
     case Type::f64:
-      return i64;
+      return Type::i64;
     case Type::v128:
     case Type::anyref:
     case Type::exnref:

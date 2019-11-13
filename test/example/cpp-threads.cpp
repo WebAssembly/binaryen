@@ -3,7 +3,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
- 
+
 #include <binaryen-c.h>
 
 int NUM_THREADS = 33;
@@ -37,8 +37,7 @@ void worker() {
   BinaryenModuleDispose(module);
 }
 
-int main() 
-{
+int main() {
   std::vector<std::thread> threads;
 
   std::cout << "create threads...\n";

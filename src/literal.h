@@ -58,8 +58,8 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
 
-  bool isConcrete() { return type != none; }
-  bool isNull() { return type == none; }
+  bool isConcrete() { return type != Type::none; }
+  bool isNull() { return type == Type::none; }
 
   inline static Literal makeFromInt32(int32_t x, Type type) {
     switch (type) {
@@ -82,8 +82,8 @@ public:
                                                Literal(int32_t(0))}});
       case Type::anyref: // there's no anyref literals
       case Type::exnref: // there's no exnref literals
-      case none:
-      case unreachable:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();

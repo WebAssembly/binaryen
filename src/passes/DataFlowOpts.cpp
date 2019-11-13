@@ -138,7 +138,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // XXX we should copy expr here, in principle, and definitely will need to
     //     when we do arbitrarily regenerated expressions
     auto* func = Builder(temp).makeFunction(
-      "temp", std::vector<Type>{}, none, std::vector<Type>{}, expr);
+      "temp", std::vector<Type>{}, Type::none, std::vector<Type>{}, expr);
     PassRunner runner(&temp);
     runner.setIsNested(true);
     runner.add("precompute");

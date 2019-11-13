@@ -50,7 +50,7 @@ public:
     : wasm::Builder(wasm), labelHelper(labelHelper) {}
 
   wasm::LocalGet* makeGetLabel() {
-    return makeLocalGet(labelHelper, wasm::i32);
+    return makeLocalGet(labelHelper, wasm::Type::i32);
   }
   wasm::LocalSet* makeSetLabel(wasm::Index value) {
     return makeLocalSet(labelHelper, makeConst(wasm::Literal(int32_t(value))));

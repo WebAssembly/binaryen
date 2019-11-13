@@ -59,7 +59,7 @@ bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
     }
   }
   // The value might be used, so it depends on if the function returns
-  return func->result != none;
+  return func->result != Type::none;
 }
 
 // Checks if a value is dropped.
@@ -150,7 +150,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
-      if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
+      if (curr->type != Type::unreachable &&
+          curr->bytes < getTypeSize(curr->type)) {
         visitor.visitInt(curr->signed_);
       }
       visitor.visitAddress(curr->offset);

@@ -72,28 +72,28 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     Builder builder(*getModule());
     Name import;
     switch (curr->type) {
-      case i32:
+      case Type::i32:
         import = get_i32;
         break;
-      case i64:
+      case Type::i64:
         return; // TODO
-      case f32:
+      case Type::f32:
         import = get_f32;
         break;
-      case f64:
+      case Type::f64:
         import = get_f64;
         break;
-      case v128:
+      case Type::v128:
         assert(false && "v128 not implemented yet");
-      case anyref:
+      case Type::anyref:
         import = get_anyref;
         break;
-      case exnref:
+      case Type::exnref:
         import = get_exnref;
         break;
-      case none:
+      case Type::none:
         WASM_UNREACHABLE();
-      case unreachable:
+      case Type::unreachable:
         WASM_UNREACHABLE();
     }
     replaceCurrent(
@@ -115,28 +115,28 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     Builder builder(*getModule());
     Name import;
     switch (curr->value->type) {
-      case i32:
+      case Type::i32:
         import = set_i32;
         break;
-      case i64:
+      case Type::i64:
         return; // TODO
-      case f32:
+      case Type::f32:
         import = set_f32;
         break;
-      case f64:
+      case Type::f64:
         import = set_f64;
         break;
-      case v128:
+      case Type::v128:
         assert(false && "v128 not implemented yet");
-      case anyref:
+      case Type::anyref:
         import = set_anyref;
         break;
-      case exnref:
+      case Type::exnref:
         import = set_exnref;
         break;
-      case unreachable:
+      case Type::unreachable:
         return; // nothing to do here
-      case none:
+      case Type::none:
         WASM_UNREACHABLE();
     }
     curr->value =

@@ -299,10 +299,10 @@ class GlobalHelper {
 
 public:
   GlobalHelper(Module& module) : module(module) {
-    map[i32] = "asyncify_fake_call_global_i32";
-    map[i64] = "asyncify_fake_call_global_i64";
-    map[f32] = "asyncify_fake_call_global_f32";
-    map[f64] = "asyncify_fake_call_global_f64";
+    map[Type::i32] = "asyncify_fake_call_global_i32";
+    map[Type::i64] = "asyncify_fake_call_global_i64";
+    map[Type::f32] = "asyncify_fake_call_global_f32";
+    map[Type::f64] = "asyncify_fake_call_global_f64";
     Builder builder(module);
     for (auto& pair : map) {
       auto type = pair.first;
@@ -327,7 +327,7 @@ public:
     if (iter != rev.end()) {
       return iter->second;
     }
-    return none;
+    return Type::none;
   }
 
 private:
@@ -655,8 +655,8 @@ public:
                     false,
                     int32_t(DataOffset::BStackPos),
                     4,
-                    makeGlobalGet(ASYNCIFY_DATA, i32),
-                    i32);
+                    makeGlobalGet(ASYNCIFY_DATA, Type::i32),
+                    Type::i32);
   }
 
   Expression* makeIncStackPos(int32_t by) {
@@ -667,14 +667,14 @@ public:
       4,
       int32_t(DataOffset::BStackPos),
       4,
-      makeGlobalGet(ASYNCIFY_DATA, i32),
+      makeGlobalGet(ASYNCIFY_DATA, Type::i32),
       makeBinary(AddInt32, makeGetStackPos(), makeConst(Literal(by))),
-      i32);
+      Type::i32);
   }
 
   Expression* makeStateCheck(State value) {
     return makeBinary(EqInt32,
-                      makeGlobalGet(ASYNCIFY_STATE, i32),
+                      makeGlobalGet(ASYNCIFY_STATE, Type::i32),
                       makeConst(Literal(int32_t(value))));
   }
 
@@ -714,7 +714,7 @@ struct AsyncifyFlow : public Pass {
                          State::Rewinding), // TODO: such checks can be !normal
                        makeCallIndexPop()),
        process(func->body)});
-    if (func->result != none) {
+    if (func->result != Type::none) {
       // Rewriting control flow may alter things; make sure the function ends in
       // something valid (which the optimizer can remove later).
       block->list.push_back(builder->makeUnreachable());
@@ -818,11 +818,11 @@ private:
         iff->finalize();
         return iff;
       }
-      auto conditionTemp = builder->addVar(func, i32);
+      auto conditionTemp = builder->addVar(func, Type::i32);
       // TODO: can avoid pre if the condition is a get or a const
       auto* pre =
         makeMaybeSkip(builder->makeLocalSet(conditionTemp, iff->condition));
-      iff->condition = builder->makeLocalGet(conditionTemp, i32);
+      iff->condition = builder->makeLocalGet(conditionTemp, Type::i32);
       iff->condition = builder->makeBinary(
         OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
       iff->ifTrue = process(iff->ifTrue);
@@ -834,7 +834,7 @@ private:
         builder->makeBinary(
           OrInt32,
           builder->makeUnary(EqZInt32,
-                             builder->makeLocalGet(conditionTemp, i32)),
+                             builder->makeLocalGet(conditionTemp, Type::i32)),
           builder->makeStateCheck(State::Rewinding)),
         process(otherArm));
       otherIf->finalize();
@@ -861,7 +861,7 @@ private:
     // TODO: stop doing this after code can no longer reach a call that may
     //       change the state
     assert(doesCall(curr));
-    assert(curr->type == none);
+    assert(curr->type == Type::none);
     // The case of a set is tricky: we must *not* execute the set when
     // unwinding, since at that point we have a fake value for the return,
     // and if we applied it to the local, it would end up saved and then
@@ -901,8 +901,9 @@ private:
     // it when we add its contents, later.)
     return builder->makeIf(
       builder->makeStateCheck(State::Unwinding),
-      builder->makeCall(
-        ASYNCIFY_UNWIND, {builder->makeConst(Literal(int32_t(index)))}, none),
+      builder->makeCall(ASYNCIFY_UNWIND,
+                        {builder->makeConst(Literal(int32_t(index)))},
+                        Type::none),
       ifNotUnwinding);
   }
 
@@ -911,13 +912,13 @@ private:
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_CHECK_CALL_INDEX,
                              {builder->makeConst(Literal(int32_t(index)))},
-                             i32);
+                             Type::i32);
   }
 
   Expression* makeCallIndexPop() {
     // Emit an intrinsic for this, as we store the index into a local, and
     // don't want it to be seen by asyncify itself.
-    return builder->makeCall(ASYNCIFY_GET_CALL_INDEX, {}, none);
+    return builder->makeCall(ASYNCIFY_GET_CALL_INDEX, {}, Type::none);
   }
 
   // Given a function that is not instrumented - because we proved it doesn't
@@ -929,11 +930,11 @@ private:
   // That is, if in an uninstrumented function, a sleep should not begin
   // from any call.
   void addAssertsInNonInstrumented(Function* func) {
-    auto oldState = builder->addVar(func, i32);
+    auto oldState = builder->addVar(func, Type::i32);
     // Add a check at the function entry.
     func->body = builder->makeSequence(
       builder->makeLocalSet(oldState,
-                            builder->makeGlobalGet(ASYNCIFY_STATE, i32)),
+                            builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32)),
       func->body);
     // Add a check around every call.
     struct Walker : PostWalker<Walker> {
@@ -952,8 +953,8 @@ private:
       void handleCall(Expression* call) {
         auto* check = builder->makeIf(
           builder->makeBinary(NeInt32,
-                              builder->makeGlobalGet(ASYNCIFY_STATE, i32),
-                              builder->makeLocalGet(oldState, i32)),
+                              builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32),
+                              builder->makeLocalGet(oldState, Type::i32)),
           builder->makeUnreachable());
         Expression* rep;
         if (isConcreteType(call->type)) {
@@ -999,11 +1000,12 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
         builder->makeIncStackPos(-4),
         builder->makeLocalSet(
           rewindIndex,
-          builder->makeLoad(4, false, 0, 4, builder->makeGetStackPos(), i32))));
+          builder->makeLoad(
+            4, false, 0, 4, builder->makeGetStackPos(), Type::i32))));
     } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
       replaceCurrent(builder->makeBinary(
         EqInt32,
-        builder->makeLocalGet(rewindIndex, i32),
+        builder->makeLocalGet(rewindIndex, Type::i32),
         builder->makeConst(
           Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))));
     }
@@ -1011,7 +1013,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
 
   void visitGlobalSet(GlobalSet* curr) {
     auto type = analyzer->globals.getTypeOrNone(curr->name);
-    if (type != none) {
+    if (type != Type::none) {
       replaceCurrent(
         builder->makeLocalSet(getFakeCallLocal(type), curr->value));
     }
@@ -1019,7 +1021,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
 
   void visitGlobalGet(GlobalGet* curr) {
     auto type = analyzer->globals.getTypeOrNone(curr->name);
-    if (type != none) {
+    if (type != Type::none) {
       replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
     }
   }
@@ -1046,14 +1048,14 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     // well as saving the locals.
     // An index is needed for getting the unwinding and rewinding call indexes
     // around TODO: can this be the same index?
-    auto unwindIndex = builder->addVar(func, i32);
-    rewindIndex = builder->addVar(func, i32);
+    auto unwindIndex = builder->addVar(func, Type::i32);
+    rewindIndex = builder->addVar(func, Type::i32);
     // Rewrite the function body.
     builder = make_unique<AsyncifyBuilder>(*getModule());
     walk(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
-    if (func->result == none) {
+    if (func->result == Type::none) {
       // The function may have ended without a return; ensure one.
       barrier = builder->makeReturn();
     } else {
@@ -1071,7 +1073,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
                             builder->makeSequence(func->body, barrier))),
        makeCallIndexPush(unwindIndex),
        makeLocalSaving()});
-    if (func->result != none) {
+    if (func->result != Type::none) {
       // If we unwind, we must still "return" a value, even if it will be
       // ignored on the outside.
       newBody->list.push_back(
@@ -1103,7 +1105,7 @@ private:
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
-    auto tempIndex = builder->addVar(func, i32);
+    auto tempIndex = builder->addVar(func, Type::i32);
     block->list.push_back(
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
@@ -1118,7 +1120,7 @@ private:
                           true,
                           offset,
                           STACK_ALIGN,
-                          builder->makeLocalGet(tempIndex, i32),
+                          builder->makeLocalGet(tempIndex, Type::i32),
                           type)));
       offset += size;
     }
@@ -1132,7 +1134,7 @@ private:
     }
     auto* func = getFunction();
     auto* block = builder->makeBlock();
-    auto tempIndex = builder->addVar(func, i32);
+    auto tempIndex = builder->addVar(func, Type::i32);
     block->list.push_back(
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
@@ -1145,7 +1147,7 @@ private:
         builder->makeStore(size,
                            offset,
                            STACK_ALIGN,
-                           builder->makeLocalGet(tempIndex, i32),
+                           builder->makeLocalGet(tempIndex, Type::i32),
                            builder->makeLocalGet(i, type),
                            type));
       offset += size;
@@ -1162,8 +1164,8 @@ private:
                          0,
                          4,
                          builder->makeGetStackPos(),
-                         builder->makeLocalGet(tempIndex, i32),
-                         i32),
+                         builder->makeLocalGet(tempIndex, Type::i32),
+                         Type::i32),
       builder->makeIncStackPos(4));
   }
 };
@@ -1289,11 +1291,11 @@ private:
   void addGlobals(Module* module) {
     Builder builder(*module);
     module->addGlobal(builder.makeGlobal(ASYNCIFY_STATE,
-                                         i32,
+                                         Type::i32,
                                          builder.makeConst(Literal(int32_t(0))),
                                          Builder::Mutable));
     module->addGlobal(builder.makeGlobal(ASYNCIFY_DATA,
-                                         i32,
+                                         Type::i32,
                                          builder.makeConst(Literal(int32_t(0))),
                                          Builder::Mutable));
   }
@@ -1303,14 +1305,14 @@ private:
     auto makeFunction = [&](Name name, bool setData, State state) {
       std::vector<Type> params;
       if (setData) {
-        params.push_back(i32);
+        params.push_back(Type::i32);
       }
       auto* body = builder.makeBlock();
       body->list.push_back(builder.makeGlobalSet(
         ASYNCIFY_STATE, builder.makeConst(Literal(int32_t(state)))));
       if (setData) {
-        body->list.push_back(
-          builder.makeGlobalSet(ASYNCIFY_DATA, builder.makeLocalGet(0, i32)));
+        body->list.push_back(builder.makeGlobalSet(
+          ASYNCIFY_DATA, builder.makeLocalGet(0, Type::i32)));
       }
       // Verify the data is valid.
       auto* stackPos =
@@ -1318,21 +1320,21 @@ private:
                          false,
                          int32_t(DataOffset::BStackPos),
                          4,
-                         builder.makeGlobalGet(ASYNCIFY_DATA, i32),
-                         i32);
+                         builder.makeGlobalGet(ASYNCIFY_DATA, Type::i32),
+                         Type::i32);
       auto* stackEnd =
         builder.makeLoad(4,
                          false,
                          int32_t(DataOffset::BStackEnd),
                          4,
-                         builder.makeGlobalGet(ASYNCIFY_DATA, i32),
-                         i32);
+                         builder.makeGlobalGet(ASYNCIFY_DATA, Type::i32),
+                         Type::i32);
       body->list.push_back(
         builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
                        builder.makeUnreachable()));
       body->finalize();
       auto* func = builder.makeFunction(
-        name, std::move(params), none, std::vector<Type>{}, body);
+        name, std::move(params), Type::none, std::vector<Type>{}, body);
       module->addFunction(func);
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };

@@ -277,7 +277,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
     if (maybeDrop(curr->list.back())) {
       reFinalize();
-      assert(curr->type == none || curr->type == unreachable);
+      assert(curr->type == Type::none || curr->type == Type::unreachable);
     }
   }
 
@@ -293,14 +293,14 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
     if (acted) {
       reFinalize();
-      assert(curr->type == none);
+      assert(curr->type == Type::none);
     }
   }
 
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
-    if (curr->result == none && isConcreteType(curr->body->type)) {
+    if (curr->result == Type::none && isConcreteType(curr->body->type)) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
     ReFinalize().walkFunctionInModule(curr, getModule());
@@ -319,20 +319,21 @@ struct I64Utilities {
   };
 
   static Expression* recreateI64(Builder& builder, Index low, Index high) {
-    return recreateI64(
-      builder, builder.makeLocalGet(low, i32), builder.makeLocalGet(high, i32));
+    return recreateI64(builder,
+                       builder.makeLocalGet(low, Type::i32),
+                       builder.makeLocalGet(high, Type::i32));
   };
 
   static Expression* getI64High(Builder& builder, Index index) {
     return builder.makeUnary(
       WrapInt64,
       builder.makeBinary(ShrUInt64,
-                         builder.makeLocalGet(index, i64),
+                         builder.makeLocalGet(index, Type::i64),
                          builder.makeConst(Literal(int64_t(32)))));
   }
 
   static Expression* getI64Low(Builder& builder, Index index) {
-    return builder.makeUnary(WrapInt64, builder.makeLocalGet(index, i64));
+    return builder.makeUnary(WrapInt64, builder.makeLocalGet(index, Type::i64));
   }
 };
 

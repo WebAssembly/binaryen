@@ -362,16 +362,20 @@ private:
           builder.makeBinary(
             AddInt32,
             builder.makeBinary(ShlInt32,
-                               builder.makeLocalGet(0, i32),
+                               builder.makeLocalGet(0, Type::i32),
                                builder.makeConst(Literal(uint32_t(5)))),
-            builder.makeLocalGet(0, i32)),
-          builder.makeLoad(
-            1, false, i, 1, builder.makeConst(Literal(uint32_t(0))), i32))));
+            builder.makeLocalGet(0, Type::i32)),
+          builder.makeLoad(1,
+                           false,
+                           i,
+                           1,
+                           builder.makeConst(Literal(uint32_t(0))),
+                           Type::i32))));
     }
-    contents.push_back(builder.makeLocalGet(0, i32));
+    contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
     auto* hasher = wasm.addFunction(builder.makeFunction(
-      "hashMemory", std::vector<Type>{}, i32, {i32}, body));
+      "hashMemory", std::vector<Type>{}, Type::i32, {Type::i32}, body));
     hasher->type = ensureFunctionType(getSig(hasher), &wasm)->name;
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
@@ -406,13 +410,13 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       // Events should have void return type and at least one param type
-      Type type = pick(i32, i64, f32, f64);
+      Type type = pick(Type::i32, Type::i64, Type::f32, Type::f64);
       std::string sig = std::string("v") + getSig(type);
       std::vector<Type> params;
       params.push_back(type);
       Index numValues = upToSquared(MAX_PARAMS - 1);
       for (Index i = 0; i < numValues; i++) {
-        type = pick(i32, i64, f32, f64);
+        type = pick(Type::i32, Type::i64, Type::f32, Type::f64);
         sig += getSig(type);
         params.push_back(type);
       }
@@ -435,14 +439,14 @@ private:
   void addHangLimitSupport() {
     auto* glob =
       builder.makeGlobal(HANG_LIMIT_GLOBAL,
-                         i32,
+                         Type::i32,
                          builder.makeConst(Literal(int32_t(HANG_LIMIT))),
                          Builder::Mutable);
     wasm.addGlobal(glob);
 
     auto* func = new Function;
     func->name = "hangLimitInitializer";
-    func->result = none;
+    func->result = Type::none;
     func->body = builder.makeGlobalSet(
       glob->name, builder.makeConst(Literal(int32_t(HANG_LIMIT))));
     wasm.addFunction(func);
@@ -462,7 +466,7 @@ private:
       func->module = "fuzzing-support";
       func->base = name;
       func->params.push_back(type);
-      func->result = none;
+      func->result = Type::none;
       func->type = ensureFunctionType(getSig(func), &wasm)->name;
       wasm.addFunction(func);
     }
@@ -472,12 +476,12 @@ private:
     return builder.makeSequence(
       builder.makeIf(
         builder.makeUnary(UnaryOp::EqZInt32,
-                          builder.makeGlobalGet(HANG_LIMIT_GLOBAL, i32)),
-        makeTrivial(unreachable)),
+                          builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32)),
+        makeTrivial(Type::unreachable)),
       builder.makeGlobalSet(
         HANG_LIMIT_GLOBAL,
         builder.makeBinary(BinaryOp::SubInt32,
-                           builder.makeGlobalGet(HANG_LIMIT_GLOBAL, i32),
+                           builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32),
                            builder.makeConst(Literal(int32_t(1))))));
   }
 
@@ -494,18 +498,18 @@ private:
         builder.makeConst(literal));
       wasm.addFunction(func);
     };
-    add("deNan32", f32, Literal(float(0)), EqFloat32);
-    add("deNan64", f64, Literal(double(0)), EqFloat64);
+    add("deNan32", Type::f32, Literal(float(0)), EqFloat32);
+    add("deNan64", Type::f64, Literal(double(0)), EqFloat64);
   }
 
   Expression* makeDeNanOp(Expression* expr) {
     if (allowNaNs) {
       return expr;
     }
-    if (expr->type == f32) {
-      return builder.makeCall("deNan32", {expr}, f32);
-    } else if (expr->type == f64) {
-      return builder.makeCall("deNan64", {expr}, f64);
+    if (expr->type == Type::f32) {
+      return builder.makeCall("deNan32", {expr}, Type::f32);
+    } else if (expr->type == Type::f64) {
+      return builder.makeCall("deNan64", {expr}, Type::f64);
     }
     return expr; // unreachable etc. is fine
   }
@@ -548,7 +552,7 @@ private:
     // with small chance, make the body unreachable
     auto bodyType = func->result;
     if (oneIn(10)) {
-      bodyType = unreachable;
+      bodyType = Type::unreachable;
     }
     // with reasonable chance make the body a block
     if (oneIn(2)) {
@@ -804,7 +808,7 @@ private:
     }
     auto* invoker = new Function;
     invoker->name = func->name.str + std::string("_invoker");
-    invoker->result = none;
+    invoker->result = Type::none;
     invoker->body = builder.makeBlock(invocations);
     wasm.addFunction(invoker);
     invoker->type = ensureFunctionType(getSig(invoker), &wasm)->name;
@@ -833,32 +837,32 @@ private:
         } else {
           return makeLocalGet(type);
         }
-      } else if (type == none) {
+      } else if (type == Type::none) {
         if (oneIn(2)) {
           return makeNop(type);
         } else {
           return makeLocalSet(type);
         }
       }
-      assert(type == unreachable);
+      assert(type == Type::unreachable);
       return makeTrivial(type);
     }
     nesting++;
     Expression* ret = nullptr;
     switch (type) {
-      case i32:
-      case i64:
-      case f32:
-      case f64:
-      case v128:
-      case anyref:
-      case exnref:
+      case Type::i32:
+      case Type::i64:
+      case Type::f32:
+      case Type::f64:
+      case Type::v128:
+      case Type::anyref:
+      case Type::exnref:
         ret = _makeConcrete(type);
         break;
-      case none:
+      case Type::none:
         ret = _makenone();
         break;
-      case unreachable:
+      case Type::unreachable:
         ret = _makeunreachable();
         break;
     }
@@ -908,7 +912,7 @@ private:
                           &Self::makeSelect,
                           &Self::makeGlobalGet)
                      .add(FeatureSet::SIMD, &Self::makeSIMD);
-    if (type == i32 || type == i64) {
+    if (type == Type::i32 || type == Type::i64) {
       options.add(FeatureSet::Atomics, &Self::makeAtomic);
     }
     return (this->*pick(options))(type);
@@ -925,19 +929,19 @@ private:
     }
     choice = upTo(100);
     if (choice < 50) {
-      return makeLocalSet(none);
+      return makeLocalSet(Type::none);
     }
     if (choice < 60) {
-      return makeBlock(none);
+      return makeBlock(Type::none);
     }
     if (choice < 70) {
-      return makeIf(none);
+      return makeIf(Type::none);
     }
     if (choice < 80) {
-      return makeLoop(none);
+      return makeLoop(Type::none);
     }
     if (choice < 90) {
-      return makeBreak(none);
+      return makeBreak(Type::none);
     }
     using Self = TranslateToFuzzReader;
     auto options = FeatureOptions<Expression* (Self::*)(Type)>()
@@ -955,41 +959,41 @@ private:
                           &Self::makeGlobalSet)
                      .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
                      .add(FeatureSet::Atomics, &Self::makeAtomic);
-    return (this->*pick(options))(none);
+    return (this->*pick(options))(Type::none);
   }
 
   Expression* _makeunreachable() {
     switch (upTo(15)) {
       case 0:
-        return makeBlock(unreachable);
+        return makeBlock(Type::unreachable);
       case 1:
-        return makeIf(unreachable);
+        return makeIf(Type::Type::unreachable);
       case 2:
-        return makeLoop(unreachable);
+        return makeLoop(Type::unreachable);
       case 3:
-        return makeBreak(unreachable);
+        return makeBreak(Type::unreachable);
       case 4:
-        return makeCall(unreachable);
+        return makeCall(Type::unreachable);
       case 5:
-        return makeCallIndirect(unreachable);
+        return makeCallIndirect(Type::unreachable);
       case 6:
-        return makeLocalSet(unreachable);
+        return makeLocalSet(Type::unreachable);
       case 7:
-        return makeStore(unreachable);
+        return makeStore(Type::unreachable);
       case 8:
-        return makeUnary(unreachable);
+        return makeUnary(Type::unreachable);
       case 9:
-        return makeBinary(unreachable);
+        return makeBinary(Type::unreachable);
       case 10:
-        return makeSelect(unreachable);
+        return makeSelect(Type::unreachable);
       case 11:
-        return makeSwitch(unreachable);
+        return makeSwitch(Type::unreachable);
       case 12:
-        return makeDrop(unreachable);
+        return makeDrop(Type::unreachable);
       case 13:
-        return makeReturn(unreachable);
+        return makeReturn(Type::unreachable);
       case 14:
-        return makeUnreachable(unreachable);
+        return makeUnreachable(Type::unreachable);
     }
     WASM_UNREACHABLE();
   }
@@ -1002,10 +1006,10 @@ private:
       } else {
         return makeConst(type);
       }
-    } else if (type == none) {
+    } else if (type == Type::none) {
       return makeNop(type);
     }
-    assert(type == unreachable);
+    assert(type == Type::unreachable);
     Expression* ret = nullptr;
     if (isConcreteType(func->result)) {
       ret = makeTrivial(func->result);
@@ -1034,13 +1038,13 @@ private:
       num++;
     }
     while (num > 0 && !finishedInput) {
-      ret->list.push_back(make(none));
+      ret->list.push_back(make(Type::none));
       num--;
     }
     // give a chance to make the final element an unreachable break, instead
     // of concrete - a common pattern (branch to the top of a loop etc.)
     if (!finishedInput && isConcreteType(type) && oneIn(2)) {
-      ret->list.push_back(makeBreak(unreachable));
+      ret->list.push_back(makeBreak(Type::unreachable));
     } else {
       ret->list.push_back(make(type));
     }
@@ -1052,8 +1056,8 @@ private:
     }
     if (ret->type != type) {
       // e.g. we might want an unreachable block, but a child breaks to it
-      assert(type == unreachable && ret->type == none);
-      return builder.makeSequence(ret, make(unreachable));
+      assert(type == Type::unreachable && ret->type == Type::none);
+      return builder.makeSequence(ret, make(Type::unreachable));
     }
     return ret;
   }
@@ -1070,7 +1074,7 @@ private:
     } else {
       // ensure a branch back. also optionally create some loop vars
       std::vector<Expression*> list;
-      list.push_back(makeMaybeBlock(none)); // primary contents
+      list.push_back(makeMaybeBlock(Type::none)); // primary contents
       // possible branch back
       list.push_back(builder.makeBreak(ret->name, nullptr, makeCondition()));
       list.push_back(make(type)); // final element, so we have the right type
@@ -1086,7 +1090,7 @@ private:
     // we want a 50-50 chance for the condition to be taken, for interesting
     // execution paths. by itself, there is bias (e.g. most consts are "yes")
     // so even that out with noise
-    auto* ret = make(i32);
+    auto* ret = make(Type::i32);
     if (oneIn(2)) {
       ret = builder.makeUnary(UnaryOp::EqZInt32, ret);
     }
@@ -1121,7 +1125,7 @@ private:
       return makeTrivial(type);
     }
     Expression* condition = nullptr;
-    if (type != unreachable) {
+    if (type != Type::unreachable) {
       hangStack.push_back(nullptr);
       condition = makeCondition();
     }
@@ -1140,8 +1144,8 @@ private:
         auto* ret = builder.makeBreak(name, make(type), condition);
         hangStack.pop_back();
         return ret;
-      } else if (type == none) {
-        if (valueType != none) {
+      } else if (type == Type::none) {
+        if (valueType != Type::Type::none) {
           // we need to break to a proper place
           continue;
         }
@@ -1149,8 +1153,8 @@ private:
         hangStack.pop_back();
         return ret;
       } else {
-        assert(type == unreachable);
-        if (valueType != none) {
+        assert(type == Type::unreachable);
+        if (valueType != Type::Type::none) {
           // we need to break to a proper place
           continue;
         }
@@ -1193,7 +1197,7 @@ private:
       }
     }
     // we failed to find something
-    if (type != unreachable) {
+    if (type != Type::unreachable) {
       hangStack.pop_back();
     }
     return makeTrivial(type);
@@ -1208,7 +1212,7 @@ private:
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
         target = pick(wasm.functions).get();
       }
-      isReturn = type == unreachable && wasm.features.hasTailCall() &&
+      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
                  func->result == target->result;
       if (target->result != type && !isReturn) {
         continue;
@@ -1237,7 +1241,7 @@ private:
     while (1) {
       // TODO: handle unreachable
       targetFn = wasm.getFunction(data[i]);
-      isReturn = type == unreachable && wasm.features.hasTailCall() &&
+      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
                  func->result == targetFn->result;
       if (targetFn->result == type || isReturn) {
         break;
@@ -1256,7 +1260,7 @@ private:
     if (!allowOOB || !oneIn(10)) {
       target = builder.makeConst(Literal(int32_t(i)));
     } else {
-      target = make(i32);
+      target = make(Type::i32);
     }
     std::vector<Expression*> args;
     for (auto type : targetFn->params) {
@@ -1276,7 +1280,7 @@ private:
   }
 
   Expression* makeLocalSet(Type type) {
-    bool tee = type != none;
+    bool tee = type != Type::none;
     Type valueType;
     if (tee) {
       valueType = type;
@@ -1304,18 +1308,18 @@ private:
   }
 
   Expression* makeGlobalSet(Type type) {
-    assert(type == none);
+    assert(type == Type::none);
     type = getConcreteType();
     auto& globals = globalsByType[type];
     if (globals.empty()) {
-      return makeTrivial(none);
+      return makeTrivial(Type::Type::none);
     }
     auto* value = make(type);
     return builder.makeGlobalSet(pick(globals), value);
   }
 
   Expression* makePointer() {
-    auto* ret = make(i32);
+    auto* ret = make(Type::i32);
     // with high probability, mask the pointer so it's in a reasonable
     // range. otherwise, most pointers are going to be out of range and
     // most memory ops will just trap
@@ -1330,7 +1334,7 @@ private:
     auto offset = logify(get());
     auto ptr = makePointer();
     switch (type) {
-      case i32: {
+      case Type::i32: {
         bool signed_ = get() & 1;
         switch (upTo(3)) {
           case 0:
@@ -1343,7 +1347,7 @@ private:
         }
         WASM_UNREACHABLE();
       }
-      case i64: {
+      case Type::i64: {
         bool signed_ = get() & 1;
         switch (upTo(4)) {
           case 0:
@@ -1359,23 +1363,23 @@ private:
         }
         WASM_UNREACHABLE();
       }
-      case f32: {
+      case Type::f32: {
         return builder.makeLoad(4, false, offset, pick(1, 2, 4), ptr, type);
       }
-      case f64: {
+      case Type::f64: {
         return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
       }
-      case v128: {
+      case Type::v128: {
         if (!wasm.features.hasSIMD()) {
           return makeTrivial(type);
         }
         return builder.makeLoad(
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
-      case anyref: // anyref cannot be loaded from memory
-      case exnref: // exnref cannot be loaded from memory
-      case none:
-      case unreachable:
+      case Type::anyref: // anyref cannot be loaded from memory
+      case Type::exnref: // exnref cannot be loaded from memory
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
@@ -1383,11 +1387,11 @@ private:
 
   Expression* makeLoad(Type type) {
     // exnref type cannot be stored in memory
-    if (!allowMemory || type == exnref) {
+    if (!allowMemory || type == Type::exnref) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicLoad(type);
-    if (type != i32 && type != i64) {
+    if (type != Type::i32 && type != Type::i64) {
       return ret;
     }
     if (!wasm.features.hasAtomics() || oneIn(2)) {
@@ -1403,7 +1407,7 @@ private:
   }
 
   Expression* makeNonAtomicStore(Type type) {
-    if (type == unreachable) {
+    if (type == Type::unreachable) {
       // make a normal store, then make it unreachable
       auto* ret = makeNonAtomicStore(getConcreteType());
       auto* store = ret->dynCast<Store>();
@@ -1412,14 +1416,14 @@ private:
       }
       switch (upTo(3)) {
         case 0:
-          store->ptr = make(unreachable);
+          store->ptr = make(Type::unreachable);
           break;
         case 1:
-          store->value = make(unreachable);
+          store->value = make(Type::unreachable);
           break;
         case 2:
-          store->ptr = make(unreachable);
-          store->value = make(unreachable);
+          store->ptr = make(Type::unreachable);
+          store->value = make(Type::unreachable);
           break;
       }
       store->finalize();
@@ -1427,14 +1431,14 @@ private:
     }
     // the type is none or unreachable. we also need to pick the value
     // type.
-    if (type == none) {
+    if (type == Type::none) {
       type = getConcreteType();
     }
     auto offset = logify(get());
     auto ptr = makePointer();
     auto value = make(type);
     switch (type) {
-      case i32: {
+      case Type::i32: {
         switch (upTo(3)) {
           case 0:
             return builder.makeStore(1, offset, 1, ptr, value, type);
@@ -1446,7 +1450,7 @@ private:
         }
         WASM_UNREACHABLE();
       }
-      case i64: {
+      case Type::i64: {
         switch (upTo(4)) {
           case 0:
             return builder.makeStore(1, offset, 1, ptr, value, type);
@@ -1461,23 +1465,23 @@ private:
         }
         WASM_UNREACHABLE();
       }
-      case f32: {
+      case Type::f32: {
         return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
       }
-      case f64: {
+      case Type::f64: {
         return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
       }
-      case v128: {
+      case Type::v128: {
         if (!wasm.features.hasSIMD()) {
           return makeTrivial(type);
         }
         return builder.makeStore(
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
-      case anyref: // anyref cannot be stored in memory
-      case exnref: // exnref cannot be stored in memory
-      case none:
-      case unreachable:
+      case Type::anyref: // anyref cannot be stored in memory
+      case Type::exnref: // exnref cannot be stored in memory
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
@@ -1493,7 +1497,7 @@ private:
     if (!store) {
       return ret;
     }
-    if (store->value->type != i32 && store->value->type != i64) {
+    if (store->value->type != Type::i32 && store->value->type != Type::i64) {
       return store;
     }
     if (!wasm.features.hasAtomics() || oneIn(2)) {
@@ -1507,51 +1511,51 @@ private:
   }
 
   Literal makeArbitraryLiteral(Type type) {
-    if (type == v128) {
+    if (type == Type::v128) {
       // generate each lane individually for random lane interpretation
       switch (upTo(6)) {
         case 0:
-          return Literal(std::array<Literal, 16>{{makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32),
-                                                  makeLiteral(i32)}});
+          return Literal(std::array<Literal, 16>{{makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32),
+                                                  makeLiteral(Type::i32)}});
         case 1:
-          return Literal(std::array<Literal, 8>{{makeLiteral(i32),
-                                                 makeLiteral(i32),
-                                                 makeLiteral(i32),
-                                                 makeLiteral(i32),
-                                                 makeLiteral(i32),
-                                                 makeLiteral(i32),
-                                                 makeLiteral(i32),
-                                                 makeLiteral(i32)}});
+          return Literal(std::array<Literal, 8>{{makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32)}});
         case 2:
-          return Literal(std::array<Literal, 4>{{makeLiteral(i32),
-                                                 makeLiteral(i32),
-                                                 makeLiteral(i32),
-                                                 makeLiteral(i32)}});
+          return Literal(std::array<Literal, 4>{{makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32),
+                                                 makeLiteral(Type::i32)}});
         case 3:
-          return Literal(
-            std::array<Literal, 2>{{makeLiteral(i64), makeLiteral(i64)}});
+          return Literal(std::array<Literal, 2>{
+            {makeLiteral(Type::i64), makeLiteral(Type::i64)}});
         case 4:
-          return Literal(std::array<Literal, 4>{{makeLiteral(f32),
-                                                 makeLiteral(f32),
-                                                 makeLiteral(f32),
-                                                 makeLiteral(f32)}});
+          return Literal(std::array<Literal, 4>{{makeLiteral(Type::f32),
+                                                 makeLiteral(Type::f32),
+                                                 makeLiteral(Type::f32),
+                                                 makeLiteral(Type::f32)}});
         case 5:
-          return Literal(
-            std::array<Literal, 2>{{makeLiteral(f64), makeLiteral(f64)}});
+          return Literal(std::array<Literal, 2>{
+            {makeLiteral(Type::f64), makeLiteral(Type::f64)}});
         default:
           WASM_UNREACHABLE();
       }
@@ -1561,19 +1565,19 @@ private:
       case 0: {
         // totally random, entire range
         switch (type) {
-          case i32:
+          case Type::i32:
             return Literal(get32());
-          case i64:
+          case Type::i64:
             return Literal(get64());
-          case f32:
+          case Type::f32:
             return Literal(getFloat());
-          case f64:
+          case Type::f64:
             return Literal(getDouble());
-          case v128:
-          case anyref: // anyref cannot have literals
-          case exnref: // exnref cannot have literals
-          case none:
-          case unreachable:
+          case Type::v128:
+          case Type::anyref: // anyref cannot have literals
+          case Type::exnref: // exnref cannot have literals
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE();
         }
         break;
@@ -1604,19 +1608,19 @@ private:
             WASM_UNREACHABLE();
         }
         switch (type) {
-          case i32:
+          case Type::i32:
             return Literal(int32_t(small));
-          case i64:
+          case Type::i64:
             return Literal(int64_t(small));
-          case f32:
+          case Type::f32:
             return Literal(float(small));
-          case f64:
+          case Type::f64:
             return Literal(double(small));
-          case v128:
-          case anyref: // anyref cannot have literals
-          case exnref: // exnref cannot have literals
-          case none:
-          case unreachable:
+          case Type::v128:
+          case Type::anyref: // anyref cannot have literals
+          case Type::exnref: // exnref cannot have literals
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE();
         }
         break;
@@ -1625,7 +1629,7 @@ private:
         // special values
         Literal value;
         switch (type) {
-          case i32:
+          case Type::i32:
             value =
               Literal(pick<int32_t>(0,
                                     std::numeric_limits<int8_t>::min(),
@@ -1638,7 +1642,7 @@ private:
                                     std::numeric_limits<uint16_t>::max(),
                                     std::numeric_limits<uint32_t>::max()));
             break;
-          case i64:
+          case Type::i64:
             value =
               Literal(pick<int64_t>(0,
                                     std::numeric_limits<int8_t>::min(),
@@ -1654,7 +1658,7 @@ private:
                                     std::numeric_limits<uint32_t>::max(),
                                     std::numeric_limits<uint64_t>::max()));
             break;
-          case f32:
+          case Type::f32:
             value = Literal(pick<float>(0,
                                         std::numeric_limits<float>::min(),
                                         std::numeric_limits<float>::max(),
@@ -1665,7 +1669,7 @@ private:
                                         std::numeric_limits<uint32_t>::max(),
                                         std::numeric_limits<uint64_t>::max()));
             break;
-          case f64:
+          case Type::f64:
             value = Literal(pick<double>(0,
                                          std::numeric_limits<float>::min(),
                                          std::numeric_limits<float>::max(),
@@ -1678,11 +1682,11 @@ private:
                                          std::numeric_limits<uint32_t>::max(),
                                          std::numeric_limits<uint64_t>::max()));
             break;
-          case v128:
-          case anyref: // anyref cannot have literals
-          case exnref: // exnref cannot have literals
-          case none:
-          case unreachable:
+          case Type::v128:
+          case Type::anyref: // anyref cannot have literals
+          case Type::exnref: // exnref cannot have literals
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE();
         }
         // tweak around special values
@@ -1698,23 +1702,23 @@ private:
         // powers of 2
         Literal value;
         switch (type) {
-          case i32:
+          case Type::i32:
             value = Literal(int32_t(1) << upTo(32));
             break;
-          case i64:
+          case Type::i64:
             value = Literal(int64_t(1) << upTo(64));
             break;
-          case f32:
+          case Type::f32:
             value = Literal(float(int64_t(1) << upTo(64)));
             break;
-          case f64:
+          case Type::f64:
             value = Literal(double(int64_t(1) << upTo(64)));
             break;
-          case v128:
-          case anyref: // anyref cannot have literals
-          case exnref: // exnref cannot have literals
-          case none:
-          case unreachable:
+          case Type::v128:
+          case Type::anyref: // anyref cannot have literals
+          case Type::exnref: // exnref cannot have literals
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE();
         }
         // maybe negative
@@ -1737,12 +1741,12 @@ private:
 
   Expression* makeConst(Type type) {
     switch (type) {
-      case anyref:
+      case Type::anyref:
         // There's no anyref.const.
         // TODO We should return a nullref once we implement instructions for
         // reference types proposal.
         assert(false && "anyref const is not implemented yet");
-      case exnref:
+      case Type::exnref:
         // There's no exnref.const.
         // TODO We should return a nullref once we implement instructions for
         // reference types proposal.
@@ -1762,31 +1766,32 @@ private:
   }
 
   Expression* makeUnary(Type type) {
-    if (type == unreachable) {
+    if (type == Type::unreachable) {
       if (auto* unary = makeUnary(getConcreteType())->dynCast<Unary>()) {
-        return makeDeNanOp(builder.makeUnary(unary->op, make(unreachable)));
+        return makeDeNanOp(
+          builder.makeUnary(unary->op, make(Type::unreachable)));
       }
       // give up
       return makeTrivial(type);
     }
     // There's no binary ops for exnref
-    if (type == exnref) {
+    if (type == Type::exnref) {
       makeTrivial(type);
     }
 
     switch (type) {
-      case i32: {
+      case Type::i32: {
         switch (getConcreteType()) {
-          case i32: {
+          case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
                 .add(FeatureSet::MVP, EqZInt32, ClzInt32, CtzInt32, PopcntInt32)
                 .add(FeatureSet::SignExt, ExtendS8Int32, ExtendS16Int32));
-            return buildUnary({op, make(i32)});
+            return buildUnary({op, make(Type::i32)});
           }
-          case i64:
-            return buildUnary({pick(EqZInt64, WrapInt64), make(i64)});
-          case f32: {
+          case Type::i64:
+            return buildUnary({pick(EqZInt64, WrapInt64), make(Type::i64)});
+          case Type::f32: {
             auto op = pick(FeatureOptions<UnaryOp>()
                              .add(FeatureSet::MVP,
                                   TruncSFloat32ToInt32,
@@ -1795,9 +1800,9 @@ private:
                              .add(FeatureSet::TruncSat,
                                   TruncSatSFloat32ToInt32,
                                   TruncSatUFloat32ToInt32));
-            return buildUnary({op, make(f32)});
+            return buildUnary({op, make(Type::f32)});
           }
-          case f64: {
+          case Type::f64: {
             auto op = pick(FeatureOptions<UnaryOp>()
                              .add(FeatureSet::MVP,
                                   TruncSFloat64ToInt32,
@@ -1805,9 +1810,9 @@ private:
                              .add(FeatureSet::TruncSat,
                                   TruncSatSFloat64ToInt32,
                                   TruncSatUFloat64ToInt32));
-            return buildUnary({op, make(f64)});
+            return buildUnary({op, make(Type::f64)});
           }
-          case v128: {
+          case Type::v128: {
             assert(wasm.features.hasSIMD());
             return buildUnary({pick(AnyTrueVecI8x16,
                                     AllTrueVecI8x16,
@@ -1817,17 +1822,17 @@ private:
                                     AllTrueVecI32x4,
                                     AnyTrueVecI64x2,
                                     AllTrueVecI64x2),
-                               make(v128)});
+                               make(Type::v128)});
           }
-          case anyref: // there's no unary ops for anyref
-          case exnref: // there's no unary ops for exnref
-          case none:
-          case unreachable:
+          case Type::anyref: // there's no unary ops for anyref
+          case Type::exnref: // there's no unary ops for exnref
+          case Type::none:
+          case Type::unreachable:
             WASM_UNREACHABLE();
         }
         WASM_UNREACHABLE();
       }
-      case i64: {
+      case Type::i64: {
         switch (upTo(4)) {
           case 0: {
             auto op =
@@ -1837,10 +1842,11 @@ private:
                           ExtendS8Int64,
                           ExtendS16Int64,
                           ExtendS32Int64));
-            return buildUnary({op, make(i64)});
+            return buildUnary({op, make(Type::i64)});
           }
           case 1:
-            return buildUnary({pick(ExtendSInt32, ExtendUInt32), make(i32)});
+            return buildUnary(
+              {pick(ExtendSInt32, ExtendUInt32), make(Type::i32)});
           case 2: {
             auto op = pick(FeatureOptions<UnaryOp>()
                              .add(FeatureSet::MVP,
@@ -1849,7 +1855,7 @@ private:
                              .add(FeatureSet::TruncSat,
                                   TruncSatSFloat32ToInt64,
                                   TruncSatUFloat32ToInt64));
-            return buildUnary({op, make(f32)});
+            return buildUnary({op, make(Type::f32)});
           }
           case 3: {
             auto op = pick(FeatureOptions<UnaryOp>()
@@ -1860,12 +1866,12 @@ private:
                              .add(FeatureSet::TruncSat,
                                   TruncSatSFloat64ToInt64,
                                   TruncSatUFloat64ToInt64));
-            return buildUnary({op, make(f64)});
+            return buildUnary({op, make(Type::f64)});
           }
         }
         WASM_UNREACHABLE();
       }
-      case f32: {
+      case Type::f32: {
         switch (upTo(4)) {
           case 0:
             return makeDeNanOp(buildUnary({pick(NegFloat32,
@@ -1875,22 +1881,22 @@ private:
                                                 TruncFloat32,
                                                 NearestFloat32,
                                                 SqrtFloat32),
-                                           make(f32)}));
+                                           make(Type::f32)}));
           case 1:
             return makeDeNanOp(buildUnary({pick(ConvertUInt32ToFloat32,
                                                 ConvertSInt32ToFloat32,
                                                 ReinterpretInt32),
-                                           make(i32)}));
+                                           make(Type::i32)}));
           case 2:
             return makeDeNanOp(
               buildUnary({pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32),
-                          make(i64)}));
+                          make(Type::i64)}));
           case 3:
-            return makeDeNanOp(buildUnary({DemoteFloat64, make(f64)}));
+            return makeDeNanOp(buildUnary({DemoteFloat64, make(Type::f64)}));
         }
         WASM_UNREACHABLE();
       }
-      case f64: {
+      case Type::f64: {
         switch (upTo(4)) {
           case 0:
             return makeDeNanOp(buildUnary({pick(NegFloat64,
@@ -1900,33 +1906,34 @@ private:
                                                 TruncFloat64,
                                                 NearestFloat64,
                                                 SqrtFloat64),
-                                           make(f64)}));
+                                           make(Type::f64)}));
           case 1:
             return makeDeNanOp(
               buildUnary({pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64),
-                          make(i32)}));
+                          make(Type::i32)}));
           case 2:
             return makeDeNanOp(buildUnary({pick(ConvertUInt64ToFloat64,
                                                 ConvertSInt64ToFloat64,
                                                 ReinterpretInt64),
-                                           make(i64)}));
+                                           make(Type::i64)}));
           case 3:
-            return makeDeNanOp(buildUnary({PromoteFloat32, make(f32)}));
+            return makeDeNanOp(buildUnary({PromoteFloat32, make(Type::f32)}));
         }
         WASM_UNREACHABLE();
       }
-      case v128: {
+      case Type::v128: {
         assert(wasm.features.hasSIMD());
         switch (upTo(5)) {
           case 0:
             return buildUnary(
-              {pick(SplatVecI8x16, SplatVecI16x8, SplatVecI32x4), make(i32)});
+              {pick(SplatVecI8x16, SplatVecI16x8, SplatVecI32x4),
+               make(Type::i32)});
           case 1:
-            return buildUnary({SplatVecI64x2, make(i64)});
+            return buildUnary({SplatVecI64x2, make(Type::i64)});
           case 2:
-            return buildUnary({SplatVecF32x4, make(f32)});
+            return buildUnary({SplatVecF32x4, make(Type::f32)});
           case 3:
-            return buildUnary({SplatVecF64x2, make(f64)});
+            return buildUnary({SplatVecF64x2, make(Type::f64)});
           case 4:
             return buildUnary({pick(NotVec128,
                                     NegVecI8x16,
@@ -1955,14 +1962,14 @@ private:
                                     WidenHighSVecI16x8ToVecI32x4,
                                     WidenLowUVecI16x8ToVecI32x4,
                                     WidenHighUVecI16x8ToVecI32x4),
-                               make(v128)});
+                               make(Type::v128)});
         }
         WASM_UNREACHABLE();
       }
-      case anyref: // there's no unary ops for anyref
-      case exnref: // there's no unary ops for exnref
-      case none:
-      case unreachable:
+      case Type::anyref: // there's no unary ops for anyref
+      case Type::exnref: // there's no unary ops for exnref
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
@@ -1973,10 +1980,10 @@ private:
   }
 
   Expression* makeBinary(Type type) {
-    if (type == unreachable) {
+    if (type == Type::unreachable) {
       if (auto* binary = makeBinary(getConcreteType())->dynCast<Binary>()) {
-        return makeDeNanOp(
-          buildBinary({binary->op, make(unreachable), make(unreachable)}));
+        return makeDeNanOp(buildBinary(
+          {binary->op, make(Type::unreachable), make(Type::unreachable)}));
       }
       // give up
       return makeTrivial(type);
@@ -1987,7 +1994,7 @@ private:
     }
 
     switch (type) {
-      case i32: {
+      case Type::i32: {
         switch (upTo(4)) {
           case 0:
             return buildBinary({pick(AddInt32,
@@ -2015,8 +2022,8 @@ private:
                                      GtUInt32,
                                      GeSInt32,
                                      GeUInt32),
-                                make(i32),
-                                make(i32)});
+                                make(Type::i32),
+                                make(Type::i32)});
           case 1:
             return buildBinary({pick(EqInt64,
                                      NeInt64,
@@ -2028,8 +2035,8 @@ private:
                                      GtUInt64,
                                      GeSInt64,
                                      GeUInt64),
-                                make(i64),
-                                make(i64)});
+                                make(Type::i64),
+                                make(Type::i64)});
           case 2:
             return buildBinary({pick(EqFloat32,
                                      NeFloat32,
@@ -2037,8 +2044,8 @@ private:
                                      LeFloat32,
                                      GtFloat32,
                                      GeFloat32),
-                                make(f32),
-                                make(f32)});
+                                make(Type::f32),
+                                make(Type::f32)});
           case 3:
             return buildBinary({pick(EqFloat64,
                                      NeFloat64,
@@ -2046,12 +2053,12 @@ private:
                                      LeFloat64,
                                      GtFloat64,
                                      GeFloat64),
-                                make(f64),
-                                make(f64)});
+                                make(Type::f64),
+                                make(Type::f64)});
         }
         WASM_UNREACHABLE();
       }
-      case i64: {
+      case Type::i64: {
         return buildBinary({pick(AddInt64,
                                  SubInt64,
                                  MulInt64,
@@ -2067,10 +2074,10 @@ private:
                                  ShrSInt64,
                                  RotLInt64,
                                  RotRInt64),
-                            make(i64),
-                            make(i64)});
+                            make(Type::i64),
+                            make(Type::i64)});
       }
-      case f32: {
+      case Type::f32: {
         return makeDeNanOp(buildBinary({pick(AddFloat32,
                                              SubFloat32,
                                              MulFloat32,
@@ -2078,10 +2085,10 @@ private:
                                              CopySignFloat32,
                                              MinFloat32,
                                              MaxFloat32),
-                                        make(f32),
-                                        make(f32)}));
+                                        make(Type::f32),
+                                        make(Type::f32)}));
       }
-      case f64: {
+      case Type::f64: {
         return makeDeNanOp(buildBinary({pick(AddFloat64,
                                              SubFloat64,
                                              MulFloat64,
@@ -2089,10 +2096,10 @@ private:
                                              CopySignFloat64,
                                              MinFloat64,
                                              MaxFloat64),
-                                        make(f64),
-                                        make(f64)}));
+                                        make(Type::f64),
+                                        make(Type::f64)}));
       }
-      case v128: {
+      case Type::v128: {
         assert(wasm.features.hasSIMD());
         return buildBinary({pick(EqVecI8x16,
                                  NeVecI8x16,
@@ -2189,13 +2196,13 @@ private:
                                  NarrowSVecI32x4ToVecI16x8,
                                  NarrowUVecI32x4ToVecI16x8,
                                  SwizzleVec8x16),
-                            make(v128),
-                            make(v128)});
+                            make(Type::v128),
+                            make(Type::v128)});
       }
-      case anyref: // there's no binary ops for anyref
-      case exnref: // there's no binary ops for exnref
-      case none:
-      case unreachable:
+      case Type::anyref: // there's no binary ops for anyref
+      case Type::exnref: // there's no binary ops for exnref
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
@@ -2206,18 +2213,18 @@ private:
   }
 
   Expression* makeSelect(Type type) {
-    return makeDeNanOp(buildSelect({make(i32), make(type), make(type)}));
+    return makeDeNanOp(buildSelect({make(Type::i32), make(type), make(type)}));
   }
 
   Expression* makeSwitch(Type type) {
-    assert(type == unreachable);
+    assert(type == Type::unreachable);
     if (breakableStack.empty()) {
       return make(type);
     }
     // we need to find proper targets to break to; try a bunch
     int tries = TRIES;
     std::vector<Name> names;
-    Type valueType = unreachable;
+    Type valueType = Type::Type::unreachable;
     while (tries-- > 0) {
       auto* target = pick(breakableStack);
       auto name = getTargetName(target);
@@ -2237,14 +2244,14 @@ private:
     }
     auto default_ = names.back();
     names.pop_back();
-    auto temp1 = make(i32),
+    auto temp1 = make(Type::i32),
          temp2 = isConcreteType(valueType) ? make(valueType) : nullptr;
     return builder.makeSwitch(names, default_, temp1, temp2);
   }
 
   Expression* makeDrop(Type type) {
     return builder.makeDrop(
-      make(type == unreachable ? type : getConcreteType()));
+      make(type == Type::unreachable ? type : getConcreteType()));
   }
 
   Expression* makeReturn(Type type) {
@@ -2253,12 +2260,12 @@ private:
   }
 
   Expression* makeNop(Type type) {
-    assert(type == none);
+    assert(type == Type::none);
     return builder.makeNop();
   }
 
   Expression* makeUnreachable(Type type) {
-    assert(type == unreachable);
+    assert(type == Type::unreachable);
     return builder.makeUnreachable();
   }
 
@@ -2268,26 +2275,26 @@ private:
       return makeTrivial(type);
     }
     wasm.memory.shared = true;
-    if (type == none) {
+    if (type == Type::none) {
       return builder.makeAtomicFence();
     }
-    if (type == i32 && oneIn(2)) {
+    if (type == Type::i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {
         auto* ptr = makePointer();
-        auto expectedType = pick(i32, i64);
+        auto expectedType = pick(Type::i32, Type::i64);
         auto* expected = make(expectedType);
-        auto* timeout = make(i64);
+        auto* timeout = make(Type::i64);
         return builder.makeAtomicWait(
           ptr, expected, timeout, expectedType, logify(get()));
       } else {
         auto* ptr = makePointer();
-        auto* count = make(i32);
+        auto* count = make(Type::i32);
         return builder.makeAtomicNotify(ptr, count, logify(get()));
       }
     }
     Index bytes;
     switch (type) {
-      case i32: {
+      case Type::i32: {
         switch (upTo(3)) {
           case 0:
             bytes = 1;
@@ -2303,7 +2310,7 @@ private:
         }
         break;
       }
-      case i64: {
+      case Type::i64: {
         switch (upTo(4)) {
           case 0:
             bytes = 1;
@@ -2350,14 +2357,14 @@ private:
 
   Expression* makeSIMD(Type type) {
     assert(wasm.features.hasSIMD());
-    if (type != v128) {
+    if (type != Type::v128) {
       return makeSIMDExtract(type);
     }
     switch (upTo(7)) {
       case 0:
-        return makeUnary(v128);
+        return makeUnary(Type::v128);
       case 1:
-        return makeBinary(v128);
+        return makeBinary(Type::v128);
       case 2:
         return makeSIMDReplace();
       case 3:
@@ -2375,30 +2382,30 @@ private:
   Expression* makeSIMDExtract(Type type) {
     auto op = static_cast<SIMDExtractOp>(0);
     switch (type) {
-      case i32:
+      case Type::i32:
         op = pick(ExtractLaneSVecI8x16,
                   ExtractLaneUVecI8x16,
                   ExtractLaneSVecI16x8,
                   ExtractLaneUVecI16x8,
                   ExtractLaneVecI32x4);
         break;
-      case i64:
+      case Type::i64:
         op = ExtractLaneVecI64x2;
         break;
-      case f32:
+      case Type::f32:
         op = ExtractLaneVecF32x4;
         break;
-      case f64:
+      case Type::f64:
         op = ExtractLaneVecF64x2;
         break;
-      case v128:
-      case anyref:
-      case exnref:
-      case none:
-      case unreachable:
+      case Type::v128:
+      case Type::anyref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE();
     }
-    Expression* vec = make(v128);
+    Expression* vec = make(Type::v128);
     uint8_t index = 0;
     switch (op) {
       case ExtractLaneSVecI8x16:
@@ -2428,33 +2435,33 @@ private:
                             ReplaceLaneVecI64x2,
                             ReplaceLaneVecF32x4,
                             ReplaceLaneVecF64x2);
-    Expression* vec = make(v128);
+    Expression* vec = make(Type::v128);
     uint8_t index;
     Type lane_t;
     switch (op) {
       case ReplaceLaneVecI8x16:
         index = upTo(16);
-        lane_t = i32;
+        lane_t = Type::i32;
         break;
       case ReplaceLaneVecI16x8:
         index = upTo(8);
-        lane_t = i32;
+        lane_t = Type::i32;
         break;
       case ReplaceLaneVecI32x4:
         index = upTo(4);
-        lane_t = i32;
+        lane_t = Type::i32;
         break;
       case ReplaceLaneVecI64x2:
         index = upTo(2);
-        lane_t = i64;
+        lane_t = Type::i64;
         break;
       case ReplaceLaneVecF32x4:
         index = upTo(4);
-        lane_t = f32;
+        lane_t = Type::f32;
         break;
       case ReplaceLaneVecF64x2:
         index = upTo(2);
-        lane_t = f64;
+        lane_t = Type::f64;
         break;
       default:
         WASM_UNREACHABLE();
@@ -2464,8 +2471,8 @@ private:
   }
 
   Expression* makeSIMDShuffle() {
-    Expression* left = make(v128);
-    Expression* right = make(v128);
+    Expression* left = make(Type::v128);
+    Expression* right = make(Type::v128);
     std::array<uint8_t, 16> mask;
     for (size_t i = 0; i < 16; ++i) {
       mask[i] = upTo(32);
@@ -2481,9 +2488,9 @@ private:
     //                         QFMAF64x2,
     //                         QFMSF64x2);
     SIMDTernaryOp op = Bitselect;
-    Expression* a = make(v128);
-    Expression* b = make(v128);
-    Expression* c = make(v128);
+    Expression* a = make(Type::v128);
+    Expression* b = make(Type::v128);
+    Expression* c = make(Type::v128);
     return builder.makeSIMDTernary(op, a, b, c);
   }
 
@@ -2500,8 +2507,8 @@ private:
                           ShlVecI64x2,
                           ShrSVecI64x2,
                           ShrUVecI64x2);
-    Expression* vec = make(v128);
-    Expression* shift = make(i32);
+    Expression* vec = make(Type::v128);
+    Expression* shift = make(Type::Type::i32);
     return builder.makeSIMDShift(op, vec, shift);
   }
 
@@ -2547,7 +2554,7 @@ private:
       return makeTrivial(type);
     }
     assert(wasm.features.hasBulkMemory());
-    assert(type == none);
+    assert(type == Type::none);
     switch (upTo(4)) {
       case 0:
         return makeMemoryInit();
@@ -2563,7 +2570,7 @@ private:
 
   Expression* makeMemoryInit() {
     if (!allowMemory) {
-      return makeTrivial(none);
+      return makeTrivial(Type::none);
     }
     uint32_t segment = upTo(wasm.memory.segments.size());
     size_t totalSize = wasm.memory.segments[segment].data.size();
@@ -2577,28 +2584,28 @@ private:
 
   Expression* makeDataDrop() {
     if (!allowMemory) {
-      return makeTrivial(none);
+      return makeTrivial(Type::none);
     }
     return builder.makeDataDrop(upTo(wasm.memory.segments.size()));
   }
 
   Expression* makeMemoryCopy() {
     if (!allowMemory) {
-      return makeTrivial(none);
+      return makeTrivial(Type::none);
     }
     Expression* dest = makePointer();
     Expression* source = makePointer();
-    Expression* size = make(i32);
+    Expression* size = make(Type::i32);
     return builder.makeMemoryCopy(dest, source, size);
   }
 
   Expression* makeMemoryFill() {
     if (!allowMemory) {
-      return makeTrivial(none);
+      return makeTrivial(Type::none);
     }
     Expression* dest = makePointer();
     Expression* value = makePointer();
-    Expression* size = make(i32);
+    Expression* size = make(Type::i32);
     return builder.makeMemoryFill(dest, value, size);
   }
 
@@ -2607,26 +2614,32 @@ private:
   Expression* makeLogging() {
     auto type = getConcreteType();
     return builder.makeCall(
-      std::string("log-") + printType(type), {make(type)}, none);
+      std::string("log-") + printType(type), {make(type)}, Type::none);
   }
 
   Expression* makeMemoryHashLogging() {
-    auto* hash = builder.makeCall(std::string("hashMemory"), {}, i32);
-    return builder.makeCall(std::string("log-i32"), {hash}, none);
+    auto* hash = builder.makeCall(std::string("hashMemory"), {}, Type::i32);
+    return builder.makeCall(std::string("log-i32"), {hash}, Type::none);
   }
 
   // special getters
 
   Type getReachableType() {
     return pick(FeatureOptions<Type>()
-                  .add(FeatureSet::MVP, i32, i64, f32, f64, none)
-                  .add(FeatureSet::SIMD, v128));
+                  .add(FeatureSet::MVP,
+                       Type::i32,
+                       Type::i64,
+                       Type::f32,
+                       Type::f64,
+                       Type::none)
+                  .add(FeatureSet::SIMD, Type::v128));
   }
 
   std::vector<Type> getConcreteTypes() {
-    return items(FeatureOptions<Type>()
-                   .add(FeatureSet::MVP, i32, i64, f32, f64)
-                   .add(FeatureSet::SIMD, v128));
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+        .add(FeatureSet::SIMD, Type::v128));
   }
 
   Type getConcreteType() { return pick(getConcreteTypes()); }
@@ -2753,7 +2766,7 @@ private:
     if (auto* block = target->dynCast<Block>()) {
       return block->type;
     } else if (target->is<Loop>()) {
-      return none;
+      return Type::none;
     }
     WASM_UNREACHABLE();
   }

@@ -91,7 +91,7 @@ static std::string generateJSWrapper(Module& wasm) {
     ret += "try {\n";
     ret += std::string("  console.log('[fuzz-exec] calling $") + exp->name.str +
            "');\n";
-    if (func->result != none) {
+    if (func->result != Type::none) {
       ret += std::string("  console.log('[fuzz-exec] note result: $") +
              exp->name.str + " => ' + literal(";
     } else {
@@ -107,12 +107,12 @@ static std::string generateJSWrapper(Module& wasm) {
         ret += ", ";
       }
       ret += "0";
-      if (param == i64) {
+      if (param == Type::i64) {
         ret += ", 0";
       }
     }
     ret += ")";
-    if (func->result != none) {
+    if (func->result != Type::none) {
       ret += ", '" + std::string(printType(func->result)) + "'))";
       // TODO: getTempRet
     }

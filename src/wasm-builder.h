@@ -27,7 +27,7 @@ namespace wasm {
 struct NameType {
   Name name;
   Type type;
-  NameType() : name(nullptr), type(none) {}
+  NameType() : name(nullptr), type(Type::none) {}
   NameType(Name name, Type type) : name(name), type(type) {}
 };
 
@@ -719,33 +719,33 @@ public:
     Literal value;
     // TODO: reuse node conditionally when possible for literals
     switch (curr->type) {
-      case i32:
+      case Type::i32:
         value = Literal(int32_t(0));
         break;
-      case i64:
+      case Type::i64:
         value = Literal(int64_t(0));
         break;
-      case f32:
+      case Type::f32:
         value = Literal(float(0));
         break;
-      case f64:
+      case Type::f64:
         value = Literal(double(0));
         break;
-      case v128: {
+      case Type::v128: {
         std::array<uint8_t, 16> bytes;
         bytes.fill(0);
         value = Literal(bytes.data());
         break;
       }
-      case anyref:
+      case Type::anyref:
         // TODO Implement and return nullref
         assert(false && "anyref not implemented yet");
-      case exnref:
+      case Type::exnref:
         // TODO Implement and return nullref
         assert(false && "exnref not implemented yet");
-      case none:
+      case Type::none:
         return ExpressionManipulator::nop(curr);
-      case unreachable:
+      case Type::unreachable:
         return ExpressionManipulator::convert<T, Unreachable>(curr);
     }
     return makeConst(value);

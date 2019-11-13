@@ -63,16 +63,6 @@ public:
   constexpr operator int() const { return id; }
 };
 
-constexpr Type none = Type::none;
-constexpr Type i32 = Type::i32;
-constexpr Type i64 = Type::i64;
-constexpr Type f32 = Type::f32;
-constexpr Type f64 = Type::f64;
-constexpr Type v128 = Type::v128;
-constexpr Type anyref = Type::anyref;
-constexpr Type exnref = Type::exnref;
-constexpr Type unreachable = Type::unreachable;
-
 const char* printType(Type type);
 unsigned getTypeSize(Type type);
 FeatureSet getFeatures(Type type);

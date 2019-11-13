@@ -21,7 +21,7 @@
 namespace wasm {
 
 static Type getValueType(Expression* value) {
-  return value ? value->type : none;
+  return value ? value->type : Type::none;
 }
 
 namespace {
@@ -41,7 +41,7 @@ void handleBranchForVisitBlock(T* curr, Name name, Module* module) {
 
 void ReFinalize::visitBlock(Block* curr) {
   if (curr->list.size() == 0) {
-    curr->type = none;
+    curr->type = Type::none;
     return;
   }
   auto old = curr->type;
@@ -60,7 +60,7 @@ void ReFinalize::visitBlock(Block* curr) {
       if (iter != breakValues.end()) {
         // there is a break to here
         auto type = iter->second;
-        if (type == none) {
+        if (type == Type::none) {
           // we need to fix this up. set the values to unreachables
           // note that we don't need to handle br_on_exn here, because its value
           // type is never none
@@ -88,19 +88,19 @@ void ReFinalize::visitBlock(Block* curr) {
     if (iter != breakValues.end()) {
       // there is a break to here
       auto type = iter->second;
-      assert(type != unreachable); // we would have removed such branches
+      assert(type != Type::unreachable); // we would have removed such branches
       curr->type = type;
       return;
     }
   }
-  if (curr->type == unreachable) {
+  if (curr->type == Type::unreachable) {
     return;
   }
   // type is none, but we might be unreachable
-  if (curr->type == none) {
+  if (curr->type == Type::none) {
     for (auto* child : curr->list) {
-      if (child->type == unreachable) {
-        curr->type = unreachable;
+      if (child->type == Type::unreachable) {
+        curr->type = Type::unreachable;
         break;
       }
     }
@@ -111,7 +111,7 @@ void ReFinalize::visitLoop(Loop* curr) { curr->finalize(); }
 void ReFinalize::visitBreak(Break* curr) {
   curr->finalize();
   auto valueType = getValueType(curr->value);
-  if (valueType == unreachable) {
+  if (valueType == Type::unreachable) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     updateBreakValueType(curr->name, valueType);
@@ -120,7 +120,7 @@ void ReFinalize::visitBreak(Break* curr) {
 void ReFinalize::visitSwitch(Switch* curr) {
   curr->finalize();
   auto valueType = getValueType(curr->value);
-  if (valueType == unreachable) {
+  if (valueType == Type::unreachable) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     for (auto target : curr->targets) {
@@ -174,7 +174,7 @@ void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
   // if the function has a return value
-  if (curr->result != none && curr->body->type == none) {
+  if (curr->result != Type::none && curr->body->type == Type::none) {
     Builder builder(*getModule());
     curr->body = builder.blockify(curr->body, builder.makeUnreachable());
   }
@@ -189,7 +189,7 @@ void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE(); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {
-  if (type != unreachable || breakValues.count(name) == 0) {
+  if (type != Type::unreachable || breakValues.count(name) == 0) {
     breakValues[name] = type;
   }
 }
@@ -197,7 +197,7 @@ void ReFinalize::updateBreakValueType(Name name, Type type) {
 // Replace an untaken branch/switch with an unreachable value.
 // A condition may also exist and may or may not be unreachable.
 void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
-  assert(value->type == unreachable);
+  assert(value->type == Type::unreachable);
   auto* replacement = value;
   if (condition) {
     Builder builder(*getModule());

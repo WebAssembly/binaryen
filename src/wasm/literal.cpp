@@ -149,7 +149,7 @@ bool Literal::operator==(const Literal& other) const {
   if (type != other.type) {
     return false;
   }
-  if (type == none) {
+  if (type == Type::none) {
     return true;
   }
   uint8_t bits[16], other_bits[16];

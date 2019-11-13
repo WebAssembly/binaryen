@@ -213,7 +213,7 @@ private:
           index = parent->getHelperIndex(set);
         }
         curr->offset = result.total;
-        curr->ptr = Builder(*module).makeLocalGet(index, i32);
+        curr->ptr = Builder(*module).makeLocalGet(index, Type::i32);
         return true;
       }
     }
@@ -304,7 +304,7 @@ struct OptimizeAddedConstants
       return iter->second;
     }
     return helperIndexes[set] =
-             Builder(*getModule()).addVar(getFunction(), i32);
+             Builder(*getModule()).addVar(getFunction(), Type::i32);
   }
 
   bool isPropagatable(LocalSet* set) { return propagatable.count(set); }
@@ -387,7 +387,7 @@ private:
           }
           auto* value = *target;
           Builder builder(*module);
-          *target = builder.makeLocalGet(index, i32);
+          *target = builder.makeLocalGet(index, Type::i32);
           replaceCurrent(
             builder.makeSequence(builder.makeLocalSet(index, value), curr));
         }

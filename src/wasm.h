@@ -538,7 +538,7 @@ public:
   Id _id;
 
   // the type of the expression: its *output*, not necessarily its input(s)
-  Type type = none;
+  Type type = Type::none;
 
   Expression(Id id) : _id(id) {}
 
@@ -648,7 +648,7 @@ public:
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
   Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() { type = unreachable; }
+  Break(MixedArena& allocator) : Break() { type = Type::unreachable; }
 
   Name name;
   Expression* value;
@@ -659,7 +659,9 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator) { type = unreachable; }
+  Switch(MixedArena& allocator) : targets(allocator) {
+    type = Type::unreachable;
+  }
 
   ArenaVector<Name> targets;
   Name default_;
@@ -683,7 +685,7 @@ public:
 class FunctionType {
 public:
   Name name;
-  Type result = none;
+  Type result = Type::none;
   std::vector<Type> params;
 
   FunctionType() = default;
@@ -1035,7 +1037,7 @@ public:
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() { type = unreachable; }
+  Return() { type = Type::unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value = nullptr;
@@ -1054,7 +1056,7 @@ public:
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
-  Unreachable() { type = unreachable; }
+  Unreachable() { type = Type::unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
 };
 
@@ -1115,7 +1117,7 @@ public:
 
 class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
 public:
-  BrOnExn() { type = unreachable; }
+  BrOnExn() { type = Type::unreachable; }
   BrOnExn(MixedArena& allocator) : BrOnExn() {}
 
   Name name;
@@ -1148,7 +1150,7 @@ typedef std::vector<StackInst*> StackIR;
 class Function : public Importable {
 public:
   Name name;
-  Type result = none;
+  Type result = Type::none;
   std::vector<Type> params; // function locals are
   std::vector<Type> vars;   // params plus vars
   Name type;                // if null, it is implicit in params and result

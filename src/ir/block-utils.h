@@ -50,7 +50,8 @@ simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
       // inside is unreachable (if both concrete, must match, and since no name
       // on block, we can't be branched to, so if singleton is unreachable, so
       // is the block)
-      assert(isConcreteType(block->type) && singleton->type == unreachable);
+      assert(isConcreteType(block->type) &&
+             singleton->type == Type::unreachable);
       // we could replace with unreachable, but would need to update all
       // the parent's types
     }

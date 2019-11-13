@@ -159,7 +159,9 @@ private:
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
   Type stringToLaneType(const char* str);
-  bool isType(cashew::IString str) { return stringToType(str, true) != none; }
+  bool isType(cashew::IString str) {
+    return stringToType(str, true) != Type::none;
+  }
 
 public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }

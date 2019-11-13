@@ -100,7 +100,7 @@ bool isTruncOpSigned(UnaryOp op) {
 Function* generateBinaryFunc(Module& wasm, Binary* curr) {
   BinaryOp op = curr->op;
   Type type = curr->type;
-  bool isI64 = type == i64;
+  bool isI64 = type == Type::i64;
   Builder builder(wasm);
   Expression* result = builder.makeBinary(
     op, builder.makeLocalGet(0, type), builder.makeLocalGet(1, type));
@@ -148,7 +148,7 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
   Type type = curr->value->type;
   Type retType = curr->type;
   UnaryOp truncOp = curr->op;
-  bool isF64 = type == f64;
+  bool isF64 = type == Type::f64;
 
   Builder builder(wasm);
 
@@ -282,12 +282,12 @@ Expression* makeTrappingUnary(Unary* curr,
   // slow ffi If i64, there is no "JS" way to handle this, as no i64s in JS, so
   // always clamp if we don't allow traps asm.js doesn't have unsigned
   // f64-to-int, so just use the signed one.
-  if (curr->type != i64 && mode == TrapMode::JS) {
+  if (curr->type != Type::i64 && mode == TrapMode::JS) {
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we
     // must emulate that
     ensureF64ToI64JSImport(trappingFunctions);
     Expression* f64Value = ensureDouble(curr->value, wasm.allocator);
-    return builder.makeCall(F64_TO_INT, {f64Value}, i32);
+    return builder.makeCall(F64_TO_INT, {f64Value}, Type::i32);
   }
 
   ensureUnaryFunc(curr, wasm, trappingFunctions);

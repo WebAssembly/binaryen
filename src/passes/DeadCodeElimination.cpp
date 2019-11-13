@@ -73,8 +73,8 @@ struct DeadCodeElimination
     // we normally have already reduced unreachable code into (unreachable)
     // nodes, so we would not get to this place at all anyhow, the breaking
     // instruction itself would be removed. However, an exception are things
-    // like  (block (result i32) (call $x) (unreachable)) , which has type i32
-    // despite not being exited.
+    // like  (block (result Type::i32) (call $x) (unreachable)) , which has type
+    // Type::i32 despite not being exited.
     // TODO: optimize such cases
     if (reachable) {
       reachableBreaks.insert(name);
@@ -82,10 +82,14 @@ struct DeadCodeElimination
   }
 
   // if a child exists and is unreachable, we can replace ourselves with it
-  bool isDead(Expression* child) { return child && child->type == unreachable; }
+  bool isDead(Expression* child) {
+    return child && child->type == Type::unreachable;
+  }
 
   // a similar check, assumes the child exists
-  bool isUnreachable(Expression* child) { return child->type == unreachable; }
+  bool isUnreachable(Expression* child) {
+    return child->type == Type::unreachable;
+  }
 
   // things that stop control flow
 
@@ -170,7 +174,7 @@ struct DeadCodeElimination
     if (!reachable && list.size() > 1) {
       // to do here: nothing to remove after it)
       for (Index i = 0; i < list.size() - 1; i++) {
-        if (list[i]->type == unreachable) {
+        if (list[i]->type == Type::unreachable) {
           list.resize(i + 1);
           break;
         }
@@ -387,7 +391,7 @@ struct DeadCodeElimination
 
   // we don't need to drop unreachable nodes
   Expression* drop(Expression* toDrop) {
-    if (toDrop->type == unreachable) {
+    if (toDrop->type == Type::unreachable) {
       return toDrop;
     }
     return Builder(*getModule()).makeDrop(toDrop);

@@ -209,7 +209,7 @@ struct EffectAnalyzer
     //      loop top, but no way to get out, then it is an infinite loop, and we
     //      consider that a branching side effect (note how the same logic does
     //      not apply to blocks).
-    if (curr->type == unreachable) {
+    if (curr->type == Type::unreachable) {
       branches = true;
     }
   }

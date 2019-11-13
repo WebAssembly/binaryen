@@ -152,7 +152,7 @@ struct SpillPointers
                                Function* func,
                                Module* module) {
     auto* call = *origin;
-    if (call->type == unreachable) {
+    if (call->type == Type::unreachable) {
       return; // the call is never reached anyhow, ignore
     }
     Builder builder(*module);

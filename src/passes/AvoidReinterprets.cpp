@@ -32,7 +32,8 @@ static bool canReplaceWithReinterpret(Load* load) {
   // a reinterpret of the same address. A partial load would see
   // more bytes and possibly invalid data, and an unreachable
   // pointer is just not interesting to handle.
-  return load->type != unreachable && load->bytes == getTypeSize(load->type);
+  return load->type != Type::unreachable &&
+         load->bytes == getTypeSize(load->type);
 }
 
 static Load* getSingleLoad(LocalGraph* localGraph, LocalGet* get) {
@@ -114,7 +115,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
       auto& info = pair.second;
       if (info.reinterpreted && canReplaceWithReinterpret(load)) {
         // We should use another load here, to avoid reinterprets.
-        info.ptrLocal = Builder::addVar(func, i32);
+        info.ptrLocal = Builder::addVar(func, Type::i32);
         info.reinterpretedLocal =
           Builder::addVar(func, reinterpretType(load->type));
       } else {
@@ -164,7 +165,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
           auto& info = iter->second;
           Builder builder(*module);
           auto* ptr = curr->ptr;
-          curr->ptr = builder.makeLocalGet(info.ptrLocal, i32);
+          curr->ptr = builder.makeLocalGet(info.ptrLocal, Type::i32);
           // Note that the other load can have its sign set to false - if the
           // original were an integer, the other is a float anyhow; and if
           // original were a float, we don't know what sign to use.
@@ -172,8 +173,8 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
             {builder.makeLocalSet(info.ptrLocal, ptr),
              builder.makeLocalSet(
                info.reinterpretedLocal,
-               makeReinterpretedLoad(curr,
-                                     builder.makeLocalGet(info.ptrLocal, i32))),
+               makeReinterpretedLoad(
+                 curr, builder.makeLocalGet(info.ptrLocal, Type::i32))),
              curr}));
         }
       }

@@ -67,7 +67,7 @@ struct ExecutionResults {
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
-        if (func->result != none) {
+        if (func->result != Type::none) {
           // this has a result
           results[exp->name] = run(func, wasm, instance);
           // ignore the result if we hit an unreachable and returned no value

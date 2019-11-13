@@ -58,7 +58,7 @@ static Name printableLocal(Index index, Function* func) {
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
 // format. Print something else to make it pass.
 static Type forceConcrete(Type type) {
-  return isConcreteType(type) ? type : i32;
+  return isConcreteType(type) ? type : Type::i32;
 }
 
 // Prints the internal contents of an expression: everything but
@@ -152,7 +152,8 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".load";
-    if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes < getTypeSize(curr->type)) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
@@ -178,7 +179,7 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".store";
-    if (curr->bytes < 4 || (curr->valueType == i64 && curr->bytes < 8)) {
+    if (curr->bytes < 4 || (curr->valueType == Type::i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
@@ -199,7 +200,7 @@ struct PrintExpressionContents
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
     prepareColor(o) << printType(forceConcrete(type)) << ".atomic.rmw";
-    if (type != unreachable && bytes != getTypeSize(type)) {
+    if (type != Type::unreachable && bytes != getTypeSize(type)) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
@@ -235,7 +236,8 @@ struct PrintExpressionContents
         o << "xchg";
         break;
     }
-    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes != getTypeSize(curr->type)) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -247,7 +249,8 @@ struct PrintExpressionContents
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     o << "cmpxchg";
-    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != Type::unreachable &&
+        curr->bytes != getTypeSize(curr->type)) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -1879,7 +1882,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
       o << ')';
     }
-    if (curr->result != none) {
+    if (curr->result != Type::none) {
       o << maybeSpace;
       o << '(';
       printMinor(o, "result ") << printType(curr->result) << ')';
@@ -2005,7 +2008,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
                                 << printType(curr->getLocalType(i)) << ')';
       }
     }
-    if (curr->result != none) {
+    if (curr->result != Type::none) {
       o << maybeSpace;
       o << '(';
       printMinor(o, "result ") << printType(curr->result) << ')';

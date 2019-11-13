@@ -201,7 +201,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     // see if there is a fallthrough
     bool hasFallthrough = true;
     for (auto* child : curr->list) {
-      if (child->type == unreachable) {
+      if (child->type == Type::unreachable) {
         hasFallthrough = false;
       }
     }
@@ -685,12 +685,12 @@ private:
     auto* old = getFunction()->body;
     auto* inner = builder.makeBlock();
     inner->name = innerName;
-    if (old->type == unreachable) {
+    if (old->type == Type::unreachable) {
       // the old body is not flowed out of anyhow, so just put it there
       inner->list.push_back(old);
     } else {
       // otherwise, we must not flow out to the merged code
-      if (old->type == none) {
+      if (old->type == Type::none) {
         inner->list.push_back(old);
         inner->list.push_back(builder.makeReturn());
       } else {
@@ -703,7 +703,7 @@ private:
         if (toplevel) {
           toplevel->finalize();
         }
-        if (old->type != unreachable) {
+        if (old->type != Type::unreachable) {
           inner->list.push_back(builder.makeReturn(old));
         } else {
           inner->list.push_back(old);

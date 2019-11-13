@@ -262,22 +262,22 @@ extern "C" {
 
 // Core types
 
-BinaryenType BinaryenTypeNone(void) { return none; }
-BinaryenType BinaryenTypeInt32(void) { return i32; }
-BinaryenType BinaryenTypeInt64(void) { return i64; }
-BinaryenType BinaryenTypeFloat32(void) { return f32; }
-BinaryenType BinaryenTypeFloat64(void) { return f64; }
-BinaryenType BinaryenTypeVec128(void) { return v128; }
-BinaryenType BinaryenTypeAnyref(void) { return anyref; }
-BinaryenType BinaryenTypeExnref(void) { return exnref; }
-BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
+BinaryenType BinaryenTypeNone(void) { return Type::none; }
+BinaryenType BinaryenTypeInt32(void) { return Type::i32; }
+BinaryenType BinaryenTypeInt64(void) { return Type::i64; }
+BinaryenType BinaryenTypeFloat32(void) { return Type::f32; }
+BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
+BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
+BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
+BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
+BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 
-WASM_DEPRECATED BinaryenType BinaryenNone(void) { return none; }
-WASM_DEPRECATED BinaryenType BinaryenInt32(void) { return i32; }
-WASM_DEPRECATED BinaryenType BinaryenInt64(void) { return i64; }
-WASM_DEPRECATED BinaryenType BinaryenFloat32(void) { return f32; }
-WASM_DEPRECATED BinaryenType BinaryenFloat64(void) { return f64; }
+WASM_DEPRECATED BinaryenType BinaryenNone(void) { return Type::none; }
+WASM_DEPRECATED BinaryenType BinaryenInt32(void) { return Type::i32; }
+WASM_DEPRECATED BinaryenType BinaryenInt64(void) { return Type::i64; }
+WASM_DEPRECATED BinaryenType BinaryenFloat32(void) { return Type::f32; }
+WASM_DEPRECATED BinaryenType BinaryenFloat64(void) { return Type::f64; }
 WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
 // Expression ids

@@ -930,31 +930,31 @@ inline S32LEB binaryType(Type type) {
   int ret = 0;
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
-    case none:
+    case Type::none:
       ret = BinaryConsts::EncodedType::Empty;
       break;
-    case i32:
+    case Type::i32:
       ret = BinaryConsts::EncodedType::i32;
       break;
-    case i64:
+    case Type::i64:
       ret = BinaryConsts::EncodedType::i64;
       break;
-    case f32:
+    case Type::f32:
       ret = BinaryConsts::EncodedType::f32;
       break;
-    case f64:
+    case Type::f64:
       ret = BinaryConsts::EncodedType::f64;
       break;
-    case v128:
+    case Type::v128:
       ret = BinaryConsts::EncodedType::v128;
       break;
-    case anyref:
+    case Type::anyref:
       ret = BinaryConsts::EncodedType::anyref;
       break;
-    case exnref:
+    case Type::exnref:
       ret = BinaryConsts::EncodedType::exnref;
       break;
-    case unreachable:
+    case Type::unreachable:
       WASM_UNREACHABLE();
   }
   return S32LEB(ret);

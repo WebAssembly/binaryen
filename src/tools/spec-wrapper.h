@@ -33,25 +33,25 @@ static std::string generateSpecWrapper(Module& wasm) {
     for (Type param : func->params) {
       // zeros in arguments TODO more?
       switch (param) {
-        case i32:
+        case Type::i32:
           ret += "(i32.const 0)";
           break;
-        case i64:
+        case Type::i64:
           ret += "(i64.const 0)";
           break;
-        case f32:
+        case Type::f32:
           ret += "(f32.const 0)";
           break;
-        case f64:
+        case Type::f64:
           ret += "(f64.const 0)";
           break;
-        case v128:
+        case Type::v128:
           ret += "(v128.const i32x4 0 0 0 0)";
           break;
-        case anyref: // there's no anyref.const
-        case exnref: // there's no exnref.const
-        case none:
-        case unreachable:
+        case Type::anyref: // there's no anyref.const
+        case Type::exnref: // there's no exnref.const
+        case Type::none:
+        case Type::unreachable:
           WASM_UNREACHABLE();
       }
       ret += " ";

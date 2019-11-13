@@ -35,7 +35,7 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
       return;
     }
     Type type = getModule()->getFunctionType(func->type)->result;
-    if (type == none) {
+    if (type == Type::none) {
       replaceCurrent(getModule()->allocator.alloc<Nop>());
     } else {
       Literal nopLiteral;

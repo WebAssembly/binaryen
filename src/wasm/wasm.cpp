@@ -202,18 +202,18 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitBreak(Break* curr) {
     if (curr->name == targetName) {
-      types.push_back(curr->value ? curr->value->type : none);
+      types.push_back(curr->value ? curr->value->type : Type::none);
     }
   }
 
   void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
       if (name == targetName) {
-        types.push_back(curr->value ? curr->value->type : none);
+        types.push_back(curr->value ? curr->value->type : Type::none);
       }
     }
     if (curr->default_ == targetName) {
-      types.push_back(curr->value ? curr->value->type : none);
+      types.push_back(curr->value ? curr->value->type : Type::none);
     }
   }
 
@@ -228,7 +228,7 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
       if (curr->list.size() > 0) {
         types.push_back(curr->list.back()->type);
       } else {
-        types.push_back(none);
+        types.push_back(Type::none);
       }
     } else if (curr->name == targetName) {
       // ignore all breaks til now, they were captured by someone with the same
@@ -249,19 +249,19 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 };
 
 static Type mergeTypes(std::vector<Type>& types) {
-  Type type = unreachable;
+  Type type = Type::unreachable;
   for (auto other : types) {
     // once none, stop. it then indicates a poison value, that must not be
     // consumed and ignore unreachable
-    if (type != none) {
-      if (other == none) {
-        type = none;
-      } else if (other != unreachable) {
-        if (type == unreachable) {
+    if (type != Type::none) {
+      if (other == Type::none) {
+        type = Type::none;
+      } else if (other != Type::unreachable) {
+        if (type == Type::unreachable) {
           type = other;
         } else if (type != other) {
           // poison value, we saw multiple types; this should not be consumed
-          type = none;
+          type = Type::none;
         }
       }
     }
@@ -274,7 +274,7 @@ static Type mergeTypes(std::vector<Type>& types) {
 static void handleUnreachable(Block* block,
                               bool breakabilityKnown = false,
                               bool hasBreak = false) {
-  if (block->type == unreachable) {
+  if (block->type == Type::unreachable) {
     return; // nothing to do
   }
   if (block->list.size() == 0) {
@@ -288,14 +288,14 @@ static void handleUnreachable(Block* block,
   }
   // look for an unreachable child
   for (auto* child : block->list) {
-    if (child->type == unreachable) {
+    if (child->type == Type::unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a
       // break
       if (!breakabilityKnown) {
         hasBreak = BranchUtils::BranchSeeker::hasNamed(block, block->name);
       }
       if (!hasBreak) {
-        block->type = unreachable;
+        block->type = Type::unreachable;
       }
       return;
     }
@@ -310,7 +310,7 @@ void Block::finalize() {
       type = list.back()->type;
       // and even if we have an unreachable child somewhere,
       // we still mark ourselves as having that type,
-      // (block (result i32)
+      // (block (result Type::i32)
       //  (return)
       //  (i32.const 10)
       // )
@@ -318,19 +318,19 @@ void Block::finalize() {
         return;
       }
       // if we are unreachable, we are done
-      if (type == unreachable) {
+      if (type == Type::unreachable) {
         return;
       }
       // we may still be unreachable if we have an unreachable
       // child
       for (auto* child : list) {
-        if (child->type == unreachable) {
-          type = unreachable;
+        if (child->type == Type::unreachable) {
+          type = Type::unreachable;
           return;
         }
       }
     } else {
-      type = none;
+      type = Type::none;
     }
     return;
   }
@@ -342,24 +342,24 @@ void Block::finalize() {
 
 void Block::finalize(Type type_) {
   type = type_;
-  if (type == none && list.size() > 0) {
+  if (type == Type::none && list.size() > 0) {
     handleUnreachable(this);
   }
 }
 
 void Block::finalize(Type type_, bool hasBreak) {
   type = type_;
-  if (type == none && list.size() > 0) {
+  if (type == Type::none && list.size() > 0) {
     handleUnreachable(this, true, hasBreak);
   }
 }
 
 void If::finalize(Type type_) {
   type = type_;
-  if (type == none && (condition->type == unreachable ||
-                       (ifFalse && ifTrue->type == unreachable &&
-                        ifFalse->type == unreachable))) {
-    type = unreachable;
+  if (type == Type::none && (condition->type == Type::unreachable ||
+                             (ifFalse && ifTrue->type == Type::unreachable &&
+                              ifFalse->type == Type::unreachable))) {
+    type = Type::unreachable;
   }
 }
 
@@ -367,33 +367,35 @@ void If::finalize() {
   if (ifFalse) {
     if (ifTrue->type == ifFalse->type) {
       type = ifTrue->type;
-    } else if (isConcreteType(ifTrue->type) && ifFalse->type == unreachable) {
+    } else if (isConcreteType(ifTrue->type) &&
+               ifFalse->type == Type::unreachable) {
       type = ifTrue->type;
-    } else if (isConcreteType(ifFalse->type) && ifTrue->type == unreachable) {
+    } else if (isConcreteType(ifFalse->type) &&
+               ifTrue->type == Type::unreachable) {
       type = ifFalse->type;
     } else {
-      type = none;
+      type = Type::none;
     }
   } else {
-    type = none; // if without else
+    type = Type::none; // if without else
   }
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
-  // (if (result i32)
+  // (if (result Type::i32)
   //  (unreachable)
   //  (i32.const 10)
   //  (i32.const 20
   // )
   // otherwise, if the condition is unreachable, so is the if
-  if (type == none && condition->type == unreachable) {
-    type = unreachable;
+  if (type == Type::none && condition->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void Loop::finalize(Type type_) {
   type = type_;
-  if (type == none && body->type == unreachable) {
-    type = unreachable;
+  if (type == Type::none && body->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
@@ -401,24 +403,24 @@ void Loop::finalize() { type = body->type; }
 
 void Break::finalize() {
   if (condition) {
-    if (condition->type == unreachable) {
-      type = unreachable;
+    if (condition->type == Type::unreachable) {
+      type = Type::unreachable;
     } else if (value) {
       type = value->type;
     } else {
-      type = none;
+      type = Type::none;
     }
   } else {
-    type = unreachable;
+    type = Type::unreachable;
   }
 }
 
-void Switch::finalize() { type = unreachable; }
+void Switch::finalize() { type = Type::unreachable; }
 
 template<typename T> void handleUnreachableOperands(T* curr) {
   for (auto* child : curr->operands) {
-    if (child->type == unreachable) {
-      curr->type = unreachable;
+    if (child->type == Type::unreachable) {
+      curr->type = Type::unreachable;
       break;
     }
   }
@@ -427,17 +429,17 @@ template<typename T> void handleUnreachableOperands(T* curr) {
 void Call::finalize() {
   handleUnreachableOperands(this);
   if (isReturn) {
-    type = unreachable;
+    type = Type::unreachable;
   }
 }
 
 void CallIndirect::finalize() {
   handleUnreachableOperands(this);
   if (isReturn) {
-    type = unreachable;
+    type = Type::unreachable;
   }
-  if (target->type == unreachable) {
-    type = unreachable;
+  if (target->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
@@ -469,73 +471,74 @@ bool FunctionType::operator==(FunctionType& b) {
 }
 bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
 
-bool LocalSet::isTee() { return type != none; }
+bool LocalSet::isTee() { return type != Type::none; }
 
 void LocalSet::setTee(bool is) {
   if (is) {
     type = value->type;
   } else {
-    type = none;
+    type = Type::none;
   }
   finalize(); // type may need to be unreachable
 }
 
 void LocalSet::finalize() {
-  if (value->type == unreachable) {
-    type = unreachable;
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
   } else if (isTee()) {
     type = value->type;
   } else {
-    type = none;
+    type = Type::none;
   }
 }
 
 void GlobalSet::finalize() {
-  if (value->type == unreachable) {
-    type = unreachable;
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void Load::finalize() {
-  if (ptr->type == unreachable) {
-    type = unreachable;
+  if (ptr->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void Store::finalize() {
-  assert(valueType != none); // must be set
-  if (ptr->type == unreachable || value->type == unreachable) {
-    type = unreachable;
+  assert(valueType != Type::none); // must be set
+  if (ptr->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
   } else {
-    type = none;
+    type = Type::none;
   }
 }
 
 void AtomicRMW::finalize() {
-  if (ptr->type == unreachable || value->type == unreachable) {
-    type = unreachable;
+  if (ptr->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void AtomicCmpxchg::finalize() {
-  if (ptr->type == unreachable || expected->type == unreachable ||
-      replacement->type == unreachable) {
-    type = unreachable;
+  if (ptr->type == Type::unreachable || expected->type == Type::unreachable ||
+      replacement->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void AtomicWait::finalize() {
-  type = i32;
-  if (ptr->type == unreachable || expected->type == unreachable ||
-      timeout->type == unreachable) {
-    type = unreachable;
+  type = Type::i32;
+  if (ptr->type == Type::unreachable || expected->type == Type::unreachable ||
+      timeout->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void AtomicNotify::finalize() {
-  type = i32;
-  if (ptr->type == unreachable || notifyCount->type == unreachable) {
-    type = unreachable;
+  type = Type::i32;
+  if (ptr->type == Type::unreachable ||
+      notifyCount->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
@@ -547,92 +550,92 @@ void SIMDExtract::finalize() {
     case ExtractLaneSVecI16x8:
     case ExtractLaneUVecI16x8:
     case ExtractLaneVecI32x4:
-      type = i32;
+      type = Type::i32;
       break;
     case ExtractLaneVecI64x2:
-      type = i64;
+      type = Type::i64;
       break;
     case ExtractLaneVecF32x4:
-      type = f32;
+      type = Type::f32;
       break;
     case ExtractLaneVecF64x2:
-      type = f64;
+      type = Type::f64;
       break;
     default:
       WASM_UNREACHABLE();
   }
-  if (vec->type == unreachable) {
-    type = unreachable;
+  if (vec->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void SIMDReplace::finalize() {
   assert(vec && value);
-  type = v128;
-  if (vec->type == unreachable || value->type == unreachable) {
-    type = unreachable;
+  type = Type::v128;
+  if (vec->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void SIMDShuffle::finalize() {
   assert(left && right);
-  type = v128;
-  if (left->type == unreachable || right->type == unreachable) {
-    type = unreachable;
+  type = Type::v128;
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void SIMDTernary::finalize() {
   assert(a && b && c);
-  type = v128;
-  if (a->type == unreachable || b->type == unreachable ||
-      c->type == unreachable) {
-    type = unreachable;
+  type = Type::v128;
+  if (a->type == Type::unreachable || b->type == Type::unreachable ||
+      c->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void MemoryInit::finalize() {
   assert(dest && offset && size);
-  type = none;
-  if (dest->type == unreachable || offset->type == unreachable ||
-      size->type == unreachable) {
-    type = unreachable;
+  type = Type::none;
+  if (dest->type == Type::unreachable || offset->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
-void DataDrop::finalize() { type = none; }
+void DataDrop::finalize() { type = Type::none; }
 
 void MemoryCopy::finalize() {
   assert(dest && source && size);
-  type = none;
-  if (dest->type == unreachable || source->type == unreachable ||
-      size->type == unreachable) {
-    type = unreachable;
+  type = Type::none;
+  if (dest->type == Type::unreachable || source->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void MemoryFill::finalize() {
   assert(dest && value && size);
-  type = none;
-  if (dest->type == unreachable || value->type == unreachable ||
-      size->type == unreachable) {
-    type = unreachable;
+  type = Type::none;
+  if (dest->type == Type::unreachable || value->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void SIMDShift::finalize() {
   assert(vec && shift);
-  type = v128;
-  if (vec->type == unreachable || shift->type == unreachable) {
-    type = unreachable;
+  type = Type::v128;
+  if (vec->type == Type::unreachable || shift->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
 void SIMDLoad::finalize() {
   assert(ptr);
-  type = v128;
-  if (ptr->type == unreachable) {
-    type = unreachable;
+  type = Type::v128;
+  if (ptr->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
@@ -667,8 +670,8 @@ void Const::finalize() { type = value.type; }
 bool Unary::isRelational() { return op == EqZInt32 || op == EqZInt64; }
 
 void Unary::finalize() {
-  if (value->type == unreachable) {
-    type = unreachable;
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
     return;
   }
   switch (op) {
@@ -696,27 +699,27 @@ void Unary::finalize() {
       break;
     case EqZInt32:
     case EqZInt64:
-      type = i32;
+      type = Type::i32;
       break;
     case ExtendS8Int32:
     case ExtendS16Int32:
-      type = i32;
+      type = Type::i32;
       break;
     case ExtendSInt32:
     case ExtendUInt32:
     case ExtendS8Int64:
     case ExtendS16Int64:
     case ExtendS32Int64:
-      type = i64;
+      type = Type::i64;
       break;
     case WrapInt64:
-      type = i32;
+      type = Type::i32;
       break;
     case PromoteFloat32:
-      type = f64;
+      type = Type::f64;
       break;
     case DemoteFloat64:
-      type = f32;
+      type = Type::f32;
       break;
     case TruncSFloat32ToInt32:
     case TruncUFloat32ToInt32:
@@ -727,7 +730,7 @@ void Unary::finalize() {
     case TruncSatSFloat64ToInt32:
     case TruncSatUFloat64ToInt32:
     case ReinterpretFloat32:
-      type = i32;
+      type = Type::i32;
       break;
     case TruncSFloat32ToInt64:
     case TruncUFloat32ToInt64:
@@ -738,21 +741,21 @@ void Unary::finalize() {
     case TruncSatSFloat64ToInt64:
     case TruncSatUFloat64ToInt64:
     case ReinterpretFloat64:
-      type = i64;
+      type = Type::i64;
       break;
     case ReinterpretInt32:
     case ConvertSInt32ToFloat32:
     case ConvertUInt32ToFloat32:
     case ConvertSInt64ToFloat32:
     case ConvertUInt64ToFloat32:
-      type = f32;
+      type = Type::f32;
       break;
     case ReinterpretInt64:
     case ConvertSInt32ToFloat64:
     case ConvertUInt32ToFloat64:
     case ConvertSInt64ToFloat64:
     case ConvertUInt64ToFloat64:
-      type = f64;
+      type = Type::f64;
       break;
     case SplatVecI8x16:
     case SplatVecI16x8:
@@ -787,7 +790,7 @@ void Unary::finalize() {
     case WidenHighSVecI16x8ToVecI32x4:
     case WidenLowUVecI16x8ToVecI32x4:
     case WidenHighUVecI16x8ToVecI32x4:
-      type = v128;
+      type = Type::v128;
       break;
     case AnyTrueVecI8x16:
     case AllTrueVecI8x16:
@@ -797,7 +800,7 @@ void Unary::finalize() {
     case AllTrueVecI32x4:
     case AnyTrueVecI64x2:
     case AllTrueVecI64x2:
-      type = i32;
+      type = Type::i32;
       break;
 
     case InvalidUnary:
@@ -847,10 +850,10 @@ bool Binary::isRelational() {
 
 void Binary::finalize() {
   assert(left && right);
-  if (left->type == unreachable || right->type == unreachable) {
-    type = unreachable;
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
   } else if (isRelational()) {
-    type = i32;
+    type = Type::i32;
   } else {
     type = left->type;
   }
@@ -858,34 +861,34 @@ void Binary::finalize() {
 
 void Select::finalize() {
   assert(ifTrue && ifFalse);
-  if (ifTrue->type == unreachable || ifFalse->type == unreachable ||
-      condition->type == unreachable) {
-    type = unreachable;
+  if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable ||
+      condition->type == Type::unreachable) {
+    type = Type::unreachable;
   } else {
     type = ifTrue->type;
   }
 }
 
 void Drop::finalize() {
-  if (value->type == unreachable) {
-    type = unreachable;
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
   } else {
-    type = none;
+    type = Type::none;
   }
 }
 
 void Host::finalize() {
   switch (op) {
     case MemorySize: {
-      type = i32;
+      type = Type::i32;
       break;
     }
     case MemoryGrow: {
       // if the single operand is not reachable, so are we
-      if (operands[0]->type == unreachable) {
-        type = unreachable;
+      if (operands[0]->type == Type::unreachable) {
+        type = Type::unreachable;
       } else {
-        type = i32;
+        type = Type::i32;
       }
       break;
     }
@@ -895,30 +898,32 @@ void Host::finalize() {
 void Try::finalize() {
   if (body->type == catchBody->type) {
     type = body->type;
-  } else if (isConcreteType(body->type) && catchBody->type == unreachable) {
+  } else if (isConcreteType(body->type) &&
+             catchBody->type == Type::unreachable) {
     type = body->type;
-  } else if (isConcreteType(catchBody->type) && body->type == unreachable) {
+  } else if (isConcreteType(catchBody->type) &&
+             body->type == Type::unreachable) {
     type = catchBody->type;
   } else {
-    type = none;
+    type = Type::none;
   }
 }
 
 void Try::finalize(Type type_) {
   type = type_;
-  if (type == none && body->type == unreachable &&
-      catchBody->type == unreachable) {
-    type = unreachable;
+  if (type == Type::none && body->type == Type::unreachable &&
+      catchBody->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
-void Throw::finalize() { type = unreachable; }
+void Throw::finalize() { type = Type::unreachable; }
 
-void Rethrow::finalize() { type = unreachable; }
+void Rethrow::finalize() { type = Type::unreachable; }
 
 void BrOnExn::finalize() {
-  if (exnref->type == unreachable) {
-    type = unreachable;
+  if (exnref->type == Type::unreachable) {
+    type = Type::unreachable;
   } else {
     type = Type::exnref;
   }
@@ -931,14 +936,14 @@ void BrOnExn::finalize() {
 // pick the type of the first param from the event.
 // TODO Remove this function and generalize event type after multi-value support
 Type BrOnExn::getSingleSentType() {
-  return eventParams.empty() ? none : eventParams.front();
+  return eventParams.empty() ? Type::none : eventParams.front();
 }
 
 void Push::finalize() {
-  if (value->type == unreachable) {
-    type = unreachable;
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
   } else {
-    type = none;
+    type = Type::none;
   }
 }
 
