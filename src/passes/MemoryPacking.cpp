@@ -248,7 +248,19 @@ struct MemoryPacking : public Pass {
           }
         }
         Memory::Segment& segment = getModule()->memory.segments[curr->segment];
-        if (!segment.isPassive || segment.data.size() == 0) {
+        bool outOfBounds = false;
+        if (auto* o = curr->offset->dynCast<Const>()) {
+          uint32_t offset = o->value.geti32();
+          if (offset > segment.data.size()) {
+            outOfBounds = true;
+          } else if (auto* s = curr->size->dynCast<Const>()) {
+            uint32_t size = s->value.geti32();
+            if (offset + size > segment.data.size() || offset + size < offset) {
+              outOfBounds = true;
+            }
+          }
+        }
+        if (!segment.isPassive || segment.data.size() == 0 || outOfBounds) {
           replaceCurrent(builder.blockify(
             builder.makeDrop(curr->dest),
             builder.makeDrop(curr->offset),
