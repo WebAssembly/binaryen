@@ -228,8 +228,8 @@ ensureFunctionImport(Module* module, Name name, std::string sig) {
 //
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
-wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule /*= false*/)
-{
+wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(
+  bool isSideModule /*= false*/, uint32_t tableBase) {
   std::vector<Global*> gotFuncEntries;
   std::vector<Global*> gotMemEntries;
   for (auto& g : wasm.globals) {
@@ -265,6 +265,7 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool i
     block->list.push_back(globalSet);
   }
 
+  int32_t index = tableBase;
   for (Global* g : gotFuncEntries) {
     Function* f = nullptr;
     // The function has to exist either as export or an import.
@@ -285,10 +286,6 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool i
     if (!isSideModule) {
       auto& table = wasm.table;
       auto& segment = table.segments[0];
-      int32_t index = segment.data.size();
-
-      // Need to get the tableBase here
-      index += 1;
 
       Name getter(
         (std::string("dl$") + g->base.c_str() + std::string("$") + getSig(f))
@@ -301,7 +298,7 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool i
       auto* gbl = wasm.addGlobal(
         builder.makeGlobal(gblName,
                            i32,
-                           builder.makeConst(Literal(int32_t(index))),
+                           builder.makeConst(Literal(int32_t(index++))),
                            Builder::Immutable));
 
       if (!wasm.getExportOrNull(gbl->base)) {
@@ -1168,7 +1165,13 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
 
   meta << "  \"staticBump\": " << staticBump << ",\n";
-  meta << "  \"tableSize\": " << wasm.table.initial.addr << ",\n";
+  uint32_t tableSize = 0;
+  if (wasm.table.segments.size() > 0) {
+    tableSize = wasm.table.segments[0].data.size();
+  } else {
+    tableSize = wasm.table.initial.addr;
+  }
+  meta << "  \"tableSize\": " << tableSize << ",\n";
 
   if (!initializerFunctions.empty()) {
     meta << "  \"initializers\": [";

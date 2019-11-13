@@ -50,6 +50,7 @@ int main(int argc, const char* argv[]) {
   bool legalizeJavaScriptFFI = true;
   bool checkStackOverflow = false;
   uint64_t globalBase = INVALID_BASE;
+  uint32_t tableBase = 0;
   bool standaloneWasm = false;
 
   ToolOptions options("wasm-emscripten-finalize",
@@ -79,6 +80,13 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&globalBase](Options*, const std::string& argument) {
            globalBase = std::stoull(argument);
+         })
+    .add("--table-base",
+         "",
+         "The address at which functions are placed in the table",
+         Options::Arguments::One,
+         [&tableBase](Options*, const std::string& argument) {
+           tableBase = std::stoull(argument);
          })
     // TODO(sbc): Remove this one this argument is no longer passed by
     // emscripten. See https://github.com/emscripten-core/emscripten/issues/8905
@@ -233,7 +241,7 @@ int main(int argc, const char* argv[]) {
     generator.internalizeStackPointerGlobal();
     generator.generateMemoryGrowthFunction();
     // For side modules these gets called via __post_instantiate
-    if (Function* F = generator.generateAssignGOTEntriesFunction()) {
+    if (Function* F = generator.generateAssignGOTEntriesFunction(false, tableBase)) {
       auto* ex = new Export();
       ex->value = F->name;
       ex->name = F->name;

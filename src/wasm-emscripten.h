@@ -33,7 +33,7 @@ public:
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
-  Function* generateAssignGOTEntriesFunction(bool isSideModule = false);
+  Function* generateAssignGOTEntriesFunction(bool isSideModule = false, uint32_t tableBase = 0);
   void generatePostInstantiateFunction();
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
