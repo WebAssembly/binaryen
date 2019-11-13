@@ -145,6 +145,20 @@ Notes when working with Binaryen IR:
    incorrectly.
  * For similar reasons, nodes should not appear in more than one functions.
 
+Notes on trap semantics and optimization:
+
+ * Binaryen's optimization passes generally do not change program semantics, but
+   an exception is made for traps. In particular, optimizations may change
+   operations that might implicitly trap to operations that will never trap but
+   are otherwise equivalent. For example, a trapping float-to-int conversion may
+   be changed to a nontrapping float-to-int conversion.
+ * By default, Binaryen's optimizations will assume that trapping instructions
+   may trap unless they can prove otherwise. This conservative assumption can
+   inhibit some optimizations, so users can tell the optimizer to assume that
+   implicit traps will never occur by passing `--ignore-implicit-traps`. This
+   option may cause output programs to trap when the input program would not
+   have trapped, so it should be used with caution.
+
 ## Tools
 
 This repository contains code that builds the following tools in `bin/`:
