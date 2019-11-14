@@ -249,6 +249,11 @@ struct TypeUpdater
         if (curr->type != unreachable) {
           return; // did not turn
         }
+      } else if (auto* tryy = curr->dynCast<Try>()) {
+        tryy->finalize();
+        if (curr->type != unreachable) {
+          return; // did not turn
+        }
       } else {
         curr->type = unreachable;
       }
@@ -291,6 +296,16 @@ struct TypeUpdater
   // can remove a concrete type and turn the if unreachable when it is
   // unreachable
   void maybeUpdateTypeToUnreachable(If* curr) {
+    if (!isConcreteType(curr->type)) {
+      return; // nothing concrete to change to unreachable
+    }
+    curr->finalize();
+    if (curr->type == unreachable) {
+      propagateTypesUp(curr);
+    }
+  }
+
+  void maybeUpdateTypeToUnreachable(Try* curr) {
     if (!isConcreteType(curr->type)) {
       return; // nothing concrete to change to unreachable
     }

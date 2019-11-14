@@ -212,6 +212,24 @@
         (i32.const 0)
       )
     )
+    (drop
+      (i64.eq
+        (i64.const 100)
+        (i64.const 0)
+      )
+    )
+    (drop
+      (i64.eq
+        (i64.const 0)
+        (i64.const 100)
+      )
+    )
+    (drop
+      (i64.eq
+        (i64.const 0)
+        (i64.const 0)
+      )
+    )
     (if
       (i32.eqz
         (i32.eqz

@@ -44,7 +44,27 @@
     )
    )
   )
-  (unreachable)
+  (try
+   (nop)
+   (catch
+    (drop
+     (exnref.pop)
+    )
+   )
+  )
+  (try
+   (block
+    (call $1)
+    (call $2)
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (call $1)
+    (call $2)
+   )
+  )
  )
 )
 

@@ -1597,7 +1597,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);
-    block->finalize(ret->type);
+    block->finalize(type);
     return block;
   }
   return ret;
@@ -1794,7 +1794,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   if (!elementStartsWith(*s[i], "catch")) {
     throw ParseException("catch clause does not exist", s[i]->line, s[i]->col);
   }
-  ret->catchBody = makeCatch(*s[i++]);
+  ret->catchBody = makeCatch(*s[i++], type);
   ret->finalize(type);
   nameMapper.popLabelName(label);
   // create a break target if we must
@@ -1802,13 +1802,13 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);
-    block->finalize(ret->type);
+    block->finalize(type);
     return block;
   }
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeCatch(Element& s) {
+Expression* SExpressionWasmBuilder::makeCatch(Element& s, Type type) {
   if (!elementStartsWith(s, "catch")) {
     throw ParseException("invalid catch clause", s.line, s.col);
   }
@@ -1816,7 +1816,10 @@ Expression* SExpressionWasmBuilder::makeCatch(Element& s) {
   for (size_t i = 1; i < s.size(); i++) {
     ret->list.push_back(parseExpression(s[i]));
   }
-  ret->finalize();
+  if (ret->list.size() == 1) {
+    return ret->list[0];
+  }
+  ret->finalize(type);
   return ret;
 }
 

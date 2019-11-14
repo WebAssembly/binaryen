@@ -499,6 +499,30 @@
    (local.get $1)
   )
  )
+ (func $i8x16.min_s (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.min_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i8x16.min_u (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.min_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i8x16.max_s (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.max_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i8x16.max_u (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.max_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $i16x8.neg (param $0 v128) (result v128)
   (i16x8.neg
    (local.get $0)
@@ -574,6 +598,30 @@
    (local.get $1)
   )
  )
+ (func $i16x8.min_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.min_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.min_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.min_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.max_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.max_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.max_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.max_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $i32x4.neg (param $0 v128) (result v128)
   (i32x4.neg
    (local.get $0)
@@ -621,6 +669,36 @@
  )
  (func $i32x4.mul (param $0 v128) (param $1 v128) (result v128)
   (i32x4.mul
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.min_s (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.min_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.min_u (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.min_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.max_s (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.max_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.max_u (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.max_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.dot_i16x8_s (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.dot_i16x8_s
    (local.get $0)
    (local.get $1)
   )

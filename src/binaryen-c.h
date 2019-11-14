@@ -55,7 +55,10 @@
 #define WASM_DEPRECATED
 #endif
 
-#if defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#define BINARYEN_API EMSCRIPTEN_KEEPALIVE
+#elif defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
 #define BINARYEN_API __declspec(dllexport)
 #else
 #define BINARYEN_API
@@ -470,6 +473,10 @@ BINARYEN_API BinaryenOp BinaryenSubVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenSubSatSVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenSubSatUVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenMulVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenMinSVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenMinUVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenMaxSVecI8x16(void);
+BINARYEN_API BinaryenOp BinaryenMaxUVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI16x8(void);
@@ -483,6 +490,10 @@ BINARYEN_API BinaryenOp BinaryenSubVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenSubSatSVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenSubSatUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMulVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenMinSVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenMinUVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenMaxSVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenMaxUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI32x4(void);
@@ -492,6 +503,11 @@ BINARYEN_API BinaryenOp BinaryenShrUVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAddVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenSubVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenMulVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenMinSVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenMinUVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenMaxSVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenMaxUVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI64x2(void);
@@ -1177,7 +1193,7 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
 // Memory segments. Query utilities.
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
-BINARYEN_API int64_t
+BINARYEN_API uint32_t
 BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                                        BinaryenIndex id);

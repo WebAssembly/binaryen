@@ -21,20 +21,57 @@
 
 namespace wasm {
 
-enum Type {
-  none,
-  i32,
-  i64,
-  f32,
-  f64,
-  v128,
-  anyref,
-  exnref,
-  // none means no type, e.g. a block can have no return type. but unreachable
-  // is different, as it can be "ignored" when doing type checking across
-  // branches
-  unreachable
+class Type {
+  uint32_t id;
+
+public:
+  enum ValueType : uint32_t {
+    none,
+    i32,
+    i64,
+    f32,
+    f64,
+    v128,
+    anyref,
+    exnref,
+    // none means no type, e.g. a block can have no return type. but unreachable
+    // is different, as it can be "ignored" when doing type checking across
+    // branches
+    unreachable
+  };
+
+  Type() = default;
+
+  // ValueType can be implicitly upgraded to Type
+  constexpr Type(ValueType id) : id(id){};
+
+  // But converting raw uint32_t is more dangerous, so make it explicit
+  constexpr explicit Type(uint32_t id) : id(id){};
+
+  // (In)equality must be defined for both Type and ValueType because it is
+  // otherwise ambiguous whether to convert both this and other to int or
+  // convert other to Type.
+  bool operator==(const Type& other) { return id == other.id; }
+
+  bool operator==(const ValueType& other) { return id == other; }
+
+  bool operator!=(const Type& other) { return id != other.id; }
+
+  bool operator!=(const ValueType& other) { return id != other; }
+
+  // Allows for using Types in switch statements
+  constexpr operator int() const { return id; }
 };
+
+constexpr Type none = Type::none;
+constexpr Type i32 = Type::i32;
+constexpr Type i64 = Type::i64;
+constexpr Type f32 = Type::f32;
+constexpr Type f64 = Type::f64;
+constexpr Type v128 = Type::v128;
+constexpr Type anyref = Type::anyref;
+constexpr Type exnref = Type::exnref;
+constexpr Type unreachable = Type::unreachable;
 
 const char* printType(Type type);
 unsigned getTypeSize(Type type);
