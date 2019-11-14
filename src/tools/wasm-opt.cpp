@@ -319,7 +319,9 @@ int main(int argc, const char* argv[]) {
   }
 
   if (!options.runningPasses()) {
-    std::cerr << "warning: no passes specified, not doing any work\n";
+    if (!options.quiet) {
+      std::cerr << "warning: no passes specified, not doing any work\n";
+    }
   } else {
     if (options.debug) {
       std::cerr << "running passes...\n";
@@ -365,7 +367,9 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.extra.count("output") == 0) {
-    std::cerr << "warning: no output file specified, not emitting output\n";
+    if (!options.quiet) {
+      std::cerr << "warning: no output file specified, not emitting output\n";
+    }
     return 0;
   }
 
