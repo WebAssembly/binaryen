@@ -67,9 +67,7 @@ struct ToolOptions : public Options {
            "-q",
            "Emit less verbose output and hide trivial warnings.",
            Arguments::Zero,
-           [this](Options*, const std::string&) {
-             quiet = true;
-           });
+           [this](Options*, const std::string&) { quiet = true; });
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
       .addFeature(FeatureSet::Atomics, "atomic operations")
