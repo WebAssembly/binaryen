@@ -23,7 +23,7 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] Printing added in src/passes/Print.cpp
  - [ ] Decoding added in src/wasm-binary.h and src/wasm/wasm-binary.cpp
  - [ ] Binary writing added in src/wasm-stack.h and src/wasm/wasm-stack.cpp
- - [ ] Support added in various classes inheriting OverridenVisitor (and possibly other non-OverridenVisitor classes as necessary)
+ - [ ] Support added in various classes inheriting OverriddenVisitor (and possibly other non-OverriddenVisitor classes as necessary)
  - [ ] Support added to src/tools/fuzzing.h
  - [ ] C API support added in src/binaryen-c.h and src/binaryen-c.cpp
  - [ ] JS API support added in src/js/binaryen.js-post.js
