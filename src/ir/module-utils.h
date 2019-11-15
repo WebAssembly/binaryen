@@ -367,7 +367,7 @@ struct WholeProgramAnalysis {
 
   // Propagate a property from a function to those that call it.
   void propagateChanges(std::function<bool (const T&)> hasProperty,
-                        std::function<bool (const T&, Function* func)> canHaveProperty,
+                        std::function<bool (const T&)> canHaveProperty,
                         std::function<void (T&)> addProperty) {
     // The work queue contains an item we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
@@ -380,7 +380,7 @@ struct WholeProgramAnalysis {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
         if (!hasProperty(map[caller]) &&
-            canHaveProperty(map[caller], caller)) {
+            canHaveProperty(map[caller])) {
           addProperty(map[caller]);
           work.push(caller);
         }

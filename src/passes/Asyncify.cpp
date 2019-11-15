@@ -418,6 +418,7 @@ class ModuleAnalyzer {
     // the top-most part is still marked as changing the state; so things
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
+    bool inBlacklist = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -513,6 +514,7 @@ public:
     // Functions in the blacklist are assumed to not change the state.
     for (auto& name : blacklist.names) {
       if (auto* func = module.getFunctionOrNull(name)) {
+        scanner.map[func].inBlacklist = true;
         scanner.map[func].canChangeState = false;
       }
     }
@@ -538,8 +540,8 @@ public:
     scanner.propagateChanges(
     [](const Info& info) {
       return info.canChangeState;
-    }, [&](const Info& info, Function* func) {
-      return !info.isBottomMostRuntime && !blacklist.match(func->name);
+    }, [](const Info& info) {
+      return !info.isBottomMostRuntime && !info.inBlacklist;
     }, [](Info& info) {
       info.canChangeState = true;
     });
