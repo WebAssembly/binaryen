@@ -364,28 +364,29 @@ struct WholeProgramAnalysis {
       }
     }
   }
-#if 0
-  // Perform a mathematical "close over" operation, propagating information
-  // in a whole-program analysis manner, stopping when no more changes occur.
-  void closeOver(..) {
+
+  // Propagate a property from a function to those that call it.
+  void propagateChanges(std::function<bool (const T&)> hasProperty,
+                        std::function<bool (const T&, Function* func)> canHaveProperty,
+                        std::function<void (T&)> addProperty) {
     // The work queue contains an item we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
-      if (map[func.get()].canChangeState) {
+      if (hasProperty(map[func.get()])) {
         work.push(func.get());
       }
     }
     while (!work.empty()) {
       auto* func = work.pop();
-      if (checkForChanges(func, map[func])) {
-        work.push(caller);
+      for (auto* caller : map[func].calledBy) {
+        if (!hasProperty(map[caller]) &&
+            canHaveProperty(map[caller], caller)) {
+          addProperty(map[caller]);
+          work.push(caller);
         }
       }
     }
-
-
   }
-#endif
 };
 
 } // namespace ModuleUtils

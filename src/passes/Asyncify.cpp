@@ -535,27 +535,16 @@ public:
       }
     }
 
-    map.swap(scanner.map);
+    scanner.propagateChanges(
+    [](const Info& info) {
+      return info.canChangeState;
+    }, [&](const Info& info, Function* func) {
+      return !info.isBottomMostRuntime && !blacklist.match(func->name);
+    }, [](Info& info) {
+      info.canChangeState = true;
+    });
 
-    // Close over, finding all functions that can reach something that can
-    // change the state.
-    // The work queue contains an item we just learned can change the state.
-    UniqueDeferredQueue<Function*> work;
-    for (auto& func : module.functions) {
-      if (map[func.get()].canChangeState) {
-        work.push(func.get());
-      }
-    }
-    while (!work.empty()) {
-      auto* func = work.pop();
-      for (auto* caller : map[func].calledBy) {
-        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime &&
-            !blacklist.match(caller->name)) {
-          map[caller].canChangeState = true;
-          work.push(caller);
-        }
-      }
-    }
+    map.swap(scanner.map);
 
     if (!whitelistInput.empty()) {
       // Only the functions in the whitelist can change the state.
