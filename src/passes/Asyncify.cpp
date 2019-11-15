@@ -404,7 +404,7 @@ class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
 
-  struct Info : public ModuleUtils::WholeProgramAnalysis<Info>::FunctionInfo {
+  struct Info : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // If this function can start an unwind/rewind.
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
@@ -441,7 +441,7 @@ public:
     // Also handle the asyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
     // name.
-    ModuleUtils::WholeProgramAnalysis<Info> scanner(
+    ModuleUtils::CallGraphPropertyAnalysis<Info> scanner(
       module, [&](Function* func, Info& info) {
         if (func->imported()) {
           // The relevant asyncify imports can definitely change the state.
@@ -543,7 +543,7 @@ public:
       module.removeFunction(name);
     }
 
-    scanner.propagateChanges(
+    scanner.propagateBack(
       [](const Info& info) { return info.canChangeState; },
       [](const Info& info) {
         return !info.isBottomMostRuntime && !info.inBlacklist;
