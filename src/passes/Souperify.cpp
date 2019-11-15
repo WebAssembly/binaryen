@@ -53,7 +53,6 @@ static int debug() {
   return ret;
 }
 
-
 namespace DataFlow {
 
 // Internal helper to find all the uses of a set.
@@ -497,23 +496,20 @@ struct Printer {
       }
       case Node::Type::Zext: {
 
-        
         auto* child = node->getValue(0);
-        
-        std::cout << "%" << indexing[node] ;
+        std::cout << "%" << indexing[node];
 
-        if(getSizeOfOperand(child) != getSizeOfOperand(node)){
-          std::cout << ':'
-                  << printType(child->getWasmType());
+        if (getSizeOfOperand(child) != getSizeOfOperand(node)) {
+          std::cout << ':' << printType(child->getWasmType());
 
           std::cout << " = zext ";
           printInternal(child);
           break;
-        }
-        else{
+        } else {
           std::cout << " = add ";
           printInternal(child);
-          std::cout << ", 0:" << printType(child->getWasmType()) << "; Replace bad zext operation";
+          std::cout << ", 0:" << printType(child->getWasmType())
+                    << "; Replace bad zext operation";
 
           break;
         }
@@ -552,12 +548,11 @@ struct Printer {
     }
   }
 
-
-  unsigned getExpressionWasmType(Expression* expr){
+  unsigned getExpressionWasmType(Expression* expr) {
 
     if (auto* binary = expr->dynCast<Binary>()) {
 
-      switch (binary->op){
+      switch (binary->op) {
         case AddInt32:
           return 32;
         case AddInt64:
@@ -611,68 +606,55 @@ struct Printer {
     return 32;
   }
 
-  unsigned getSizeOfOperand(Node* node){
+  unsigned getSizeOfOperand(Node* node) {
 
     node = getMaybeReplaced(node);
 
-    if(node->isConst()){
-      return getTypeSize(node->expr->cast<Const>()->value.type)*8;
+    if (node->isConst()) {
+      return getTypeSize(node->expr->cast<Const>()->value.type) * 8;
     }
 
-    if(node->type == Node::Type::Block){
+    if (node->type == Node::Type::Block) {
       return 32;
     }
 
-    if(node->type == Node::Type::Expr){
+    if (node->type == Node::Type::Expr) {
       return getExpressionWasmType(node->expr);
     }
-    return getTypeSize(node->getWasmType())*8;
+    return getTypeSize(node->getWasmType()) * 8;
   }
 
   unsigned counter = 0;
   // Emit an expression
   void printExpression(Node* node) {
     assert(node->isExpr());
-    
     auto* curr = node->expr;
     int toReplace = -1;
-    
     // Fix width, as a patch
-    if (curr->dynCast<Binary>()){
-        
+    if (curr->dynCast<Binary>()) {
+      auto* left = getMaybeReplaced(node->getValue(0));
+      auto* right = getMaybeReplaced(node->getValue(1));
+      unsigned sizeLeft = getSizeOfOperand(left);
+      unsigned sizeRight = getSizeOfOperand(right);
 
+      if (sizeLeft != sizeRight) {
+        unsigned count = counter++;
+        unsigned correct = 0;
 
-        auto* left = getMaybeReplaced(node->getValue(0));
-        auto* right = getMaybeReplaced(node->getValue(1));
-        
-        unsigned sizeLeft = getSizeOfOperand(left);
-        unsigned sizeRight = getSizeOfOperand(right);
-        
-        if(sizeLeft != sizeRight){
-            
-            unsigned count = counter++;
-            unsigned correct = 0;
-
-            if(sizeLeft < sizeRight){
-              correct = sizeRight; 
-              toReplace = 0; // left
-            }
-            else {
-              correct = sizeLeft;
-              toReplace = 1; // right
-            }
-
-            std::cout << "%extd" << count << ":i" << correct << " = zext ";
-            printInternal(left);
-            std:: cout << "; Fix width\n";  
-
-            
+        if (sizeLeft < sizeRight) {
+          correct = sizeRight;
+          toReplace = 0; // left
+        } else {
+          correct = sizeLeft;
+          toReplace = 1; // right
         }
+
+        std::cout << "%extd" << count << ":i" << correct << " = zext ";
+        printInternal(left);
+        std::cout << "; Fix width\n";
+      }
     }
-
     std::cout << "%" << indexing[node] << " = ";
-
-
     if (auto* c = curr->dynCast<Const>()) {
       print(c->value);
     } else if (auto* unary = curr->dynCast<Unary>()) {
@@ -696,7 +678,6 @@ struct Printer {
       auto* value = node->getValue(0);
       printInternal(value);
     } else if (auto* binary = curr->dynCast<Binary>()) {
-
 
       switch (binary->op) {
         case AddInt32:
@@ -788,18 +769,16 @@ struct Printer {
       }
       std::cout << ' ';
       auto* left = node->getValue(0);
-      if(toReplace == 0)
-        std::cout << "%extd" << (counter-1) ;
+      if (toReplace == 0)
+        std::cout << "%extd" << (counter - 1);
       else
         printInternal(left);
-      
-
       std::cout << ", ";
       auto* right = node->getValue(1);
 
-      if(toReplace == 1)
-        std::cout << "%extd" << (counter-1) ;   
-      else     
+      if (toReplace == 1)
+        std::cout << "%extd" << (counter - 1);
+      else
         printInternal(right);
 
     } else if (curr->is<Select>()) {
