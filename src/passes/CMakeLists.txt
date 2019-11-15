@@ -69,7 +69,6 @@ SET(passes_SOURCES
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
-  ImportsToIndirectCalls.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
 ADD_LIBRARY(passes STATIC ${passes_SOURCES})

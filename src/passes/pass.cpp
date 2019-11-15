@@ -332,8 +332,6 @@ void PassRegistry::registerPasses() {
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
   // registerPass(
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
-  registerPass("ImportsToIndirectCalls", "turns imports into indirect calls",
-    createImportsToIndirectCallsPass);
 }
 
 void PassRunner::addDefaultOptimizationPasses() {

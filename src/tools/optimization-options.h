@@ -204,9 +204,6 @@ struct OptimizationOptions : public ToolOptions {
   bool runningPasses() { return passes.size() > 0; }
 
   void runPasses(Module& wasm) {
-    passOptions.arguments["mainInfo"] = extra["mainInfo"];
-    printf("runPasses:%s\n", passOptions.arguments["mainInfo"].c_str());
-
     PassRunner passRunner(&wasm, passOptions);
     if (debug) {
       passRunner.setDebug(true);

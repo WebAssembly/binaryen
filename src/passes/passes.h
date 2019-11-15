@@ -111,7 +111,6 @@ Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
 Pass* createUnteePass();
 Pass* createVacuumPass();
-Pass* createImportsToIndirectCallsPass();
 } // namespace wasm
 
 #endif

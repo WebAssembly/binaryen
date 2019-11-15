@@ -228,8 +228,8 @@ ensureFunctionImport(Module* module, Name name, std::string sig) {
 //
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
-wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(
-  bool isSideModule /*= false*/, uint32_t tableBase) {
+wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule /*= false*/, 
+                                                                          uint32_t tableBase) {
   std::vector<Global*> gotFuncEntries;
   std::vector<Global*> gotMemEntries;
   for (auto& g : wasm.globals) {
@@ -315,9 +315,7 @@ wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(
       Name getter(
         (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
           .c_str());
-
       ensureFunctionImport(&wasm, getter, "i");
-
       Expression* call = builder.makeCall(getter, {}, i32);
       GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
       block->list.push_back(globalSet);

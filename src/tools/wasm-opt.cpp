@@ -78,7 +78,6 @@ int main(int argc, const char* argv[]) {
   std::string inputSourceMapFilename;
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
-  std::string inputMainInfoFilename;
 
   OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
@@ -194,13 +193,6 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
-         })
-
-    .add("--main-info", "-mi", "Import and export functions from the main module",
-         Options::Arguments::One,[&inputMainInfoFilename](Options* o, const std::string& argument) {
-         o->extra["mainInfo"] = argument;
-         printf("wasm-opt argument:%s\n", argument.c_str());
-         inputMainInfoFilename = argument;
          })
     .add_positional("INFILE",
                     Options::Arguments::One,
