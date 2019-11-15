@@ -512,10 +512,12 @@ public:
       });
 
     // Functions in the blacklist are assumed to not change the state.
-    for (auto& name : blacklist.names) {
-      if (auto* func = module.getFunctionOrNull(name)) {
-        scanner.map[func].inBlacklist = true;
-        scanner.map[func].canChangeState = false;
+    for (auto& pair : scanner.map) {
+      auto* func = pair.first;
+      auto& info = pair.second;
+      if (blacklist.match(func->name)) {
+        info.inBlacklist = true;
+        info.canChangeState = false;
       }
     }
 
