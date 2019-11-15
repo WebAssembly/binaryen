@@ -504,15 +504,13 @@ struct Printer {
 
           std::cout << " = zext ";
           printInternal(child);
-          break;
         } else {
           std::cout << " = add ";
           printInternal(child);
           std::cout << ", 0:" << printType(child->getWasmType())
                     << "; Replace bad zext operation";
-
-          break;
         }
+        break;
       }
       case Node::Type::Bad: {
         std::cout << "!!!BAD!!!";
@@ -769,17 +767,19 @@ struct Printer {
       }
       std::cout << ' ';
       auto* left = node->getValue(0);
-      if (toReplace == 0)
+      if (toReplace == 0) {
         std::cout << "%extd" << (counter - 1);
-      else
+      } else {
         printInternal(left);
+      }
       std::cout << ", ";
       auto* right = node->getValue(1);
 
-      if (toReplace == 1)
+      if (toReplace == 1) {
         std::cout << "%extd" << (counter - 1);
-      else
+      } else {
         printInternal(right);
+      }
 
     } else if (curr->is<Select>()) {
       std::cout << "select ";
