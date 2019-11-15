@@ -638,7 +638,7 @@ struct Printer {
     int toReplace = -1;
     
     // Fix width, as a patch
-    if (auto* binary = curr->dynCast<Binary>()){
+    if (curr->dynCast<Binary>()){
         
 
 
