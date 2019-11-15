@@ -53,6 +53,7 @@ static int debug() {
   return ret;
 }
 
+
 namespace DataFlow {
 
 // Internal helper to find all the uses of a set.
@@ -468,7 +469,7 @@ struct Printer {
           WasmPrinter::printExpression(node->expr, std::cout, true);
           std::cout << '\n';
         }
-        std::cout << "%" << indexing[node] << " = ";
+
         printExpression(node);
         break;
       }
@@ -486,7 +487,7 @@ struct Printer {
         std::cout << "blockpc %" << indexing[node->getValue(0)] << ' '
                   << node->index << ' ';
         printInternal(node->getValue(1));
-        std::cout << " 1:i1";
+        std::cout << " 1";
         break;
       }
       case Node::Type::Block: {
@@ -495,12 +496,27 @@ struct Printer {
         break;
       }
       case Node::Type::Zext: {
+
+        
         auto* child = node->getValue(0);
-        std::cout << "%" << indexing[node] << ':'
+        
+        std::cout << "%" << indexing[node] ;
+
+        if(getSizeOfOperand(child) != getSizeOfOperand(node)){
+          std::cout << ':'
                   << printType(child->getWasmType());
-        std::cout << " = zext ";
-        printInternal(child);
-        break;
+
+          std::cout << " = zext ";
+          printInternal(child);
+          break;
+        }
+        else{
+          std::cout << " = add ";
+          printInternal(child);
+          std::cout << ", 0:" << printType(child->getWasmType()) << "; Replace bad zext operation";
+
+          break;
+        }
       }
       case Node::Type::Bad: {
         std::cout << "!!!BAD!!!";
@@ -536,12 +552,125 @@ struct Printer {
     }
   }
 
-  // Emit an expression
 
+  unsigned getExpressionWasmType(Expression* expr){
+
+    if (auto* binary = expr->dynCast<Binary>()) {
+
+      switch (binary->op){
+        case AddInt32:
+          return 32;
+        case AddInt64:
+          return 64;
+        case AndInt32:
+        case DivUInt32:
+        case ShlInt32:
+        case MulInt32:
+        case SubInt32:
+        case ShrUInt32:
+        case RotLInt32:
+        case RotRInt32:
+        case XorInt32:
+        case OrInt32:
+        case RemUInt32:
+        case RemSInt32:
+          return 32;
+        case AndInt64:
+        case DivUInt64:
+        case ShlInt64:
+        case MulInt64:
+        case SubInt64:
+        case ShrUInt64:
+        case RotLInt64:
+        case RotRInt64:
+        case RemSInt64:
+        case RemUInt64:
+        case XorInt64:
+        case OrInt64:
+          return 64;
+        case LeSInt32:
+        case LeSInt64:
+        case LeUInt64:
+        case LeUInt32:
+        case LtSInt32:
+        case LtSInt64:
+        case LtUInt64:
+        case LtUInt32:
+        case EqInt32:
+        case EqInt64:
+        case NeInt32:
+        case NeInt64:
+          return 1;
+        default:
+          return 32;
+      }
+    }
+
+    return 32;
+  }
+
+  unsigned getSizeOfOperand(Node* node){
+
+    node = getMaybeReplaced(node);
+
+    if(node->isConst()){
+      return getTypeSize(node->expr->cast<Const>()->value.type)*8;
+    }
+
+    if(node->type == Node::Type::Block){
+      return 32;
+    }
+
+    if(node->type == Node::Type::Expr){
+      return getExpressionWasmType(node->expr);
+    }
+    return getTypeSize(node->getWasmType())*8;
+  }
+
+  unsigned counter = 0;
+  // Emit an expression
   void printExpression(Node* node) {
     assert(node->isExpr());
-    // TODO use a Visitor here?
+    
     auto* curr = node->expr;
+    int toReplace = -1;
+    
+    // Fix width, as a patch
+    if (auto* binary = curr->dynCast<Binary>()){
+        
+
+
+        auto* left = getMaybeReplaced(node->getValue(0));
+        auto* right = getMaybeReplaced(node->getValue(1));
+        
+        unsigned sizeLeft = getSizeOfOperand(left);
+        unsigned sizeRight = getSizeOfOperand(right);
+        
+        if(sizeLeft != sizeRight){
+            
+            unsigned count = counter++;
+            unsigned correct = 0;
+
+            if(sizeLeft < sizeRight){
+              correct = sizeRight; 
+              toReplace = 0; // left
+            }
+            else {
+              correct = sizeLeft;
+              toReplace = 1; // right
+            }
+
+            std::cout << "%extd" << count << ":i" << correct << " = zext ";
+            printInternal(left);
+            std:: cout << "; Fix width\n";  
+
+            
+        }
+    }
+
+    std::cout << "%" << indexing[node] << " = ";
+
+
     if (auto* c = curr->dynCast<Const>()) {
       print(c->value);
     } else if (auto* unary = curr->dynCast<Unary>()) {
@@ -565,6 +694,8 @@ struct Printer {
       auto* value = node->getValue(0);
       printInternal(value);
     } else if (auto* binary = curr->dynCast<Binary>()) {
+
+
       switch (binary->op) {
         case AddInt32:
         case AddInt64:
@@ -655,10 +786,20 @@ struct Printer {
       }
       std::cout << ' ';
       auto* left = node->getValue(0);
-      printInternal(left);
+      if(toReplace == 0)
+        std::cout << "%extd" << (counter-1) ;
+      else
+        printInternal(left);
+      
+
       std::cout << ", ";
       auto* right = node->getValue(1);
-      printInternal(right);
+
+      if(toReplace == 1)
+        std::cout << "%extd" << (counter-1) ;   
+      else     
+        printInternal(right);
+
     } else if (curr->is<Select>()) {
       std::cout << "select ";
       printInternal(node->getValue(0));
@@ -674,7 +815,7 @@ struct Printer {
   void printPathCondition(Node* condition) {
     std::cout << "pc ";
     printInternal(condition);
-    std::cout << " 1:i1\n";
+    std::cout << " 1\n";
   }
 
   // Checks if a value looks suspiciously optimizable.
