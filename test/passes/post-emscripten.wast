@@ -109,4 +109,21 @@
     (call $call)
   )
 )
-
+(module
+  (type $0 (func (param i32)))
+  (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
+  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
+  (import "env" "glob" (global $glob i32)) ;; non-constant table offset
+  (memory 256 256)
+  (table 7 7 funcref)
+  (elem (global.get $glob) $other_safe)
+  (func $exc
+    (call $invoke_vif
+      (i32.const 3) ;; other_safe()
+      (i32.const 42)
+      (f32.const 3.14159)
+    )
+  )
+  (func $other_safe (param i32) (param f32)
+  )
+)
