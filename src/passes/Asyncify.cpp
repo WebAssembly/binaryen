@@ -540,13 +540,11 @@ public:
     }
 
     scanner.propagateChanges(
-    [](const Info& info) {
-      return info.canChangeState;
-    }, [](const Info& info) {
-      return !info.isBottomMostRuntime && !info.inBlacklist;
-    }, [](Info& info) {
-      info.canChangeState = true;
-    });
+      [](const Info& info) { return info.canChangeState; },
+      [](const Info& info) {
+        return !info.isBottomMostRuntime && !info.inBlacklist;
+      },
+      [](Info& info) { info.canChangeState = true; });
 
     map.swap(scanner.map);
 

@@ -293,8 +293,7 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
 // of function => result, and makes it easy to do a whole-program analysis
 // of the result.
 // TODO: use in inlining and elsewhere
-template<typename T>
-struct WholeProgramAnalysis {
+template<typename T> struct WholeProgramAnalysis {
   Module& wasm;
 
   // The basic information for each function about whom it calls and who is
@@ -338,7 +337,8 @@ struct WholeProgramAnalysis {
       Mapper* create() override { return new Mapper(info); }
 
       void visitCall(Call* curr) {
-        (*info->map)[this->getFunction()].callsTo.insert(info->module->getFunction(curr->target));
+        (*info->map)[this->getFunction()].callsTo.insert(
+          info->module->getFunction(curr->target));
       }
 
       void visitFunction(Function* curr) {
@@ -366,9 +366,9 @@ struct WholeProgramAnalysis {
   }
 
   // Propagate a property from a function to those that call it.
-  void propagateChanges(std::function<bool (const T&)> hasProperty,
-                        std::function<bool (const T&)> canHaveProperty,
-                        std::function<void (T&)> addProperty) {
+  void propagateChanges(std::function<bool(const T&)> hasProperty,
+                        std::function<bool(const T&)> canHaveProperty,
+                        std::function<void(T&)> addProperty) {
     // The work queue contains an item we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
@@ -379,8 +379,7 @@ struct WholeProgramAnalysis {
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
-        if (!hasProperty(map[caller]) &&
-            canHaveProperty(map[caller])) {
+        if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
           addProperty(map[caller]);
           work.push(caller);
         }
