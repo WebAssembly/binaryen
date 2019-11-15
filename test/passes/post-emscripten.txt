@@ -92,6 +92,14 @@
    (i32.const 999)
    (f32.const 1.4140000343322754)
   )
+  (call $invoke_vif
+   (i32.add
+    (i32.const 1)
+    (i32.const 1)
+   )
+   (i32.const 42)
+   (f32.const 3.141590118408203)
+  )
  )
  (func $other_safe (; 5 ;) (type $FUNCSIG$vif) (param $0 i32) (param $1 f32)
   (nop)

@@ -81,6 +81,11 @@
       (i32.const 999)
       (f32.const 1.414)
     )
+    (call $invoke_vif
+      (i32.add (i32.const 1) (i32.const 1)) ;; nonconstant
+      (i32.const 42)
+      (f32.const 3.14159)
+    )
   )
   (func $other_safe (param i32) (param f32)
   )
