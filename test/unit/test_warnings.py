@@ -1,8 +1,6 @@
-import os
 import subprocess
-import tempfile
 
-from scripts.test.shared import WASM_OPT, WASM_DIS, WASM_SHELL, NODEJS, run_process
+from scripts.test.shared import WASM_OPT, run_process
 from .utils import BinaryenTestCase
 
 
