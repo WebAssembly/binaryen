@@ -20,6 +20,7 @@
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -289,21 +290,26 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
 }
 
 // Performs a parallel map on function in the module, emitting a map object
-// of function => result.
+// of function => result, and makes it easy to do a whole-program analysis
+// of the result.
 // TODO: use in inlining and elsewhere
-template<typename T> struct ParallelFunctionMap {
+template<typename T>
+struct WholeProgramAnalysis {
+  Module& wasm;
+
+  // The basic information for each function about whom it calls and who is
+  // called by it.
+  struct FunctionInfo {
+    std::set<Function*> callsTo;
+    std::set<Function*> calledBy;
+  };
 
   typedef std::map<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;
 
-  struct Info {
-    Map* map;
-    Func work;
-  };
-
-  ParallelFunctionMap(Module& wasm, Func work) {
+  WholeProgramAnalysis(Module& wasm, Func work) : wasm(wasm) {
     // Fill in map, as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
@@ -318,27 +324,68 @@ template<typename T> struct ParallelFunctionMap {
     }
 
     // Run on the implemented functions.
+    struct MapperInfo {
+      Module* module;
+      Map* map;
+      Func work;
+    };
+
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
 
-      Mapper(Info* info) : info(info) {}
+      Mapper(MapperInfo* info) : info(info) {}
 
       Mapper* create() override { return new Mapper(info); }
 
-      void doWalkFunction(Function* curr) {
+      void visitCall(Call* curr) {
+        (*info->map)[this->getFunction()].callsTo.insert(info->module->getFunction(curr->target));
+      }
+
+      void visitFunction(Function* curr) {
         assert((*info->map).count(curr));
         info->work(curr, (*info->map)[curr]);
       }
 
     private:
-      Info* info;
+      MapperInfo* info;
     };
 
-    Info info = {&map, work};
+    MapperInfo info = {&wasm, &map, work};
 
     PassRunner runner(&wasm);
     Mapper(&info).run(&runner, &wasm);
+
+    // Find what is called by what.
+    for (auto& pair : map) {
+      auto* func = pair.first;
+      auto& info = pair.second;
+      for (auto* target : info.callsTo) {
+        map[target].calledBy.insert(func);
+      }
+    }
   }
+#if 0
+  // Perform a mathematical "close over" operation, propagating information
+  // in a whole-program analysis manner, stopping when no more changes occur.
+  void closeOver(..) {
+    // The work queue contains an item we just learned can change the state.
+    UniqueDeferredQueue<Function*> work;
+    for (auto& func : wasm.functions) {
+      if (map[func.get()].canChangeState) {
+        work.push(func.get());
+      }
+    }
+    while (!work.empty()) {
+      auto* func = work.pop();
+      if (checkForChanges(func, map[func])) {
+        work.push(caller);
+        }
+      }
+    }
+
+
+  }
+#endif
 };
 
 } // namespace ModuleUtils
