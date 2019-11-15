@@ -55,7 +55,10 @@
 #define WASM_DEPRECATED
 #endif
 
-#if defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#define BINARYEN_API EMSCRIPTEN_KEEPALIVE
+#elif defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
 #define BINARYEN_API __declspec(dllexport)
 #else
 #define BINARYEN_API
@@ -1190,7 +1193,7 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
 // Memory segments. Query utilities.
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
-BINARYEN_API int64_t
+BINARYEN_API uint32_t
 BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                                        BinaryenIndex id);

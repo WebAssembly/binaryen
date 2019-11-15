@@ -19,13 +19,14 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] Effects handled in src/ir/effects.h
  - [ ] Precomputing handled in src/passes/Precompute.cpp
  - [ ] Hashing and comparing in src/ir/ExpressionAnalyzer.cpp
- - [ ] Parsing added in scripts/gen-s-parser.py and src/wasm/wasm-s-parser.cpp
+ - [ ] Parsing added in scripts/gen-s-parser.py, src/wasm-s-parser.h and src/wasm/wasm-s-parser.cpp
  - [ ] Printing added in src/passes/Print.cpp
  - [ ] Decoding added in src/wasm-binary.h and src/wasm/wasm-binary.cpp
  - [ ] Binary writing added in src/wasm-stack.h and src/wasm/wasm-stack.cpp
+ - [ ] Support added in various classes inheriting OverriddenVisitor (and possibly other non-OverriddenVisitor classes as necessary)
  - [ ] Support added to src/tools/fuzzing.h
  - [ ] C API support added in src/binaryen-c.h and src/binaryen-c.cpp
- - [ ] JS API support added in build-js.sh and src/js/binaryen.js-post.js
+ - [ ] JS API support added in src/js/binaryen.js-post.js
  - [ ] C API tested in test/example/c-api-kitchen-sink.c
  - [ ] JS API tested in test/binaryen.js/kitchen-sink.js
  - [ ] Tests added in test/spec

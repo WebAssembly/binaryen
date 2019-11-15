@@ -1033,28 +1033,24 @@ void test_for_each() {
       assert(BinaryenGetExportByIndex(module, i) == exps[i]);
     }
 
-    BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, 125));
-
     const char* segments[] = { "hello, world", "segment data 2" };
+    const uint32_t expected_offsets[] = { 10, 125 };
     int8_t segmentPassive[] = { 0, 0 };
+    BinaryenIndex segmentSizes[] = { 12, 14 };
+
     BinaryenExpressionRef segmentOffsets[] = {
-      BinaryenConst(module, BinaryenLiteralInt32(10)),
+      BinaryenConst(module, BinaryenLiteralInt32(expected_offsets[0])),
       BinaryenGlobalGet(module, "a-global", BinaryenTypeInt32())
     };
-    BinaryenIndex segmentSizes[] = { 12, 14 };
     BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 0);
+    BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, expected_offsets[1]));
 
     for (i = 0; i < BinaryenGetNumMemorySegments(module) ; i++) {
-      char out[15] = {0};
-      assert(BinaryenGetMemorySegmentByteOffset(module, i) == (0==i?10:125));
+      char out[15] = {};
+      assert(BinaryenGetMemorySegmentByteOffset(module, i) == expected_offsets[i]);
       assert(BinaryenGetMemorySegmentByteLength(module, i) == segmentSizes[i]);
-      BinaryenCopyMemorySegmentData(module, i, &out[0]);
-      if (0 == i) {
-        assert(0 == strcmp("hello, world", &out[0]));
-      }
-      else {
-        assert(0 == strcmp("segment data 2", &out[0]));
-      }
+      BinaryenCopyMemorySegmentData(module, i, out);
+      assert(0 == strcmp(segments[i], out));
     }
   }
   BinaryenModulePrint(module);
