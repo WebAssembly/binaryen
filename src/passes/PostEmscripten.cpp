@@ -34,9 +34,7 @@ namespace wasm {
 
 namespace {
 
-static bool isInvoke(Name name) {
-  return name.startsWith("invoke_");
-}
+static bool isInvoke(Name name) { return name.startsWith("invoke_"); }
 
 struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
   bool isFunctionParallel() override { return true; }
@@ -129,12 +127,16 @@ struct PostEmscripten : public Pass {
         hasInvokes = true;
       }
     }
-    if (!hasInvokes) return;
+    if (!hasInvokes) {
+      return;
+    }
     // Next, see if the Table is flat, which we need in order to see where
     // invokes go statically. (In dynamic linking, the table is not flat,
     // and we can't do this.)
     FlatTable flatTable(module->table);
-    if (!flatTable.valid) return;
+    if (!flatTable.valid) {
+      return;
+    }
     // This code has exceptions. Find functions that definitely cannot throw,
     // and remove invokes to them.
     struct Info : public ModuleUtils::WholeProgramAnalysis<Info>::FunctionInfo {
@@ -149,10 +151,9 @@ struct PostEmscripten : public Pass {
         }
       });
 
-    analyzer.propagateChanges(
-      [](const Info& info) { return info.canThrow; },
-      [](const Info& info) { return true; },
-      [](Info& info) { info.canThrow = true; });
+    analyzer.propagateChanges([](const Info& info) { return info.canThrow; },
+                              [](const Info& info) { return true; },
+                              [](Info& info) { info.canThrow = true; });
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
@@ -163,7 +164,8 @@ struct PostEmscripten : public Pass {
       std::map<Function*, Info>& map;
       FlatTable& flatTable;
 
-      OptimizeInvokes(std::map<Function*, Info>& map, FlatTable& flatTable) : map(map), flatTable(flatTable) {}
+      OptimizeInvokes(std::map<Function*, Info>& map, FlatTable& flatTable)
+        : map(map), flatTable(flatTable) {}
 
       void visitCall(Call* curr) {
         if (isInvoke(curr->target)) {
