@@ -572,6 +572,7 @@ struct Printer {
         case RotRInt32:
         case XorInt32:
         case OrInt32:
+        case DivSInt32:
         case RemUInt32:
         case RemSInt32:
           return 32;
@@ -587,6 +588,7 @@ struct Printer {
         case RemUInt64:
         case XorInt64:
         case OrInt64:
+        case DivSInt64:
           return 64;
         case LeSInt32:
         case LeSInt64:
