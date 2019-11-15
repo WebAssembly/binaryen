@@ -404,7 +404,8 @@ class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
 
-  struct Info : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
+  struct Info
+    : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // If this function can start an unwind/rewind.
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
@@ -543,12 +544,12 @@ public:
       module.removeFunction(name);
     }
 
-    scanner.propagateBack(
-      [](const Info& info) { return info.canChangeState; },
-      [](const Info& info) {
-        return !info.isBottomMostRuntime && !info.inBlacklist;
-      },
-      [](Info& info) { info.canChangeState = true; });
+    scanner.propagateBack([](const Info& info) { return info.canChangeState; },
+                          [](const Info& info) {
+                            return !info.isBottomMostRuntime &&
+                                   !info.inBlacklist;
+                          },
+                          [](Info& info) { info.canChangeState = true; });
 
     map.swap(scanner.map);
 
