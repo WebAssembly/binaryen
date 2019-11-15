@@ -120,7 +120,7 @@ struct PostEmscripten : public Pass {
   // and calls the pointer, catching and reporting any error. If we know no
   // exception will be thrown, we can simply skip the invoke.
   void optimizeExceptions(PassRunner* runner, Module* module) {
-    // First, check if this code even uses in.
+    // First, check if this code even uses invokes.
     bool hasInvokes = false;
     for (auto& imp : module->functions) {
       if (imp->imported() && imp->module == ENV && isInvoke(imp->base)) {
