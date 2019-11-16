@@ -14,5 +14,5 @@ class WarningsText(BinaryenTestCase):
         self.assertIn('warning: no output file specified, not emitting output', err)
 
     def test_quiet_suppresses_warnings(self):
-        err = run_process(WASM_OPT + [self.input_path('asyncify-pure.wast')], stderr=subprocess.PIPE).stderr
+        err = run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '-q'], stderr=subprocess.PIPE).stderr
         self.assertNotIn('warning', err)
