@@ -17,13 +17,13 @@
 # http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
 #
 
-PWD = $(abspath ${CURDIR})
+MAKEFILE_DIR = $(abspath ${CURDIR})
 
-BINARYEN_SCRIPTS = $(PWD)/../scripts
+BINARYEN_SCRIPTS = $(MAKEFILE_DIR)/../scripts
 
-OUT = $(PWD)/../out
+OUT = $(MAKEFILE_DIR)/../out
 
-BINARYEN_SRC = $(PWD)/../src
+BINARYEN_SRC = $(MAKEFILE_DIR)/../src
 
 CFLAGS = -O2 \
          -std=gnu++14
@@ -147,6 +147,7 @@ binaryen.debug.js: $(OBJECTS)
 	$(CXX) $(CFLAGS) $(LINKFLAGS) $(LINKFLAGS_DEBUG) $(OBJECTS) -o $(OUT)/binaryen.debug.js
 
 WasmIntrinsics.cpp:
+	echo "waka" $(MAKEFILE_DIR) $(BINARYEN_SCRIPTS) $(OUT) $(BINARYEN_SRC)
 	python3 $(BINARYEN_SCRIPTS)/embedwast.py $(BINARYEN_SRC)/passes/wasm-intrinsics.wast WasmIntrinsics.cpp
 	cp WasmIntrinsics.cpp $(BINARYEN_SRC)/WasmIntrinsics.cpp
   
