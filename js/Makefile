@@ -27,14 +27,14 @@ OUT = "$(PWD)/../out"
 BINARYEN_SRC = $(PWD)/../src
 
 CFLAGS = -O2 \
-         -std=gnu++14 \
-         -s ALLOW_MEMORY_GROWTH=1 \
-         -s BINARYEN_ASYNC_COMPILATION=0 \
-         -s DISABLE_EXCEPTION_CATCHING=0 \
+         -std=gnu++14
 
 LINKFLAGS = -s MODULARIZE_INSTANCE=1 \
             -s 'EXPORT_NAME="Binaryen"' \
             -s SINGLE_FILE \
+            -s ALLOW_MEMORY_GROWTH \
+            -s BINARYEN_ASYNC_COMPILATION=0 \
+            -fexceptions \
             --post-js "$(BINARYEN_SRC)/js/binaryen.js-post.js"
 
 LINKFLAGS_DEBUG = -O2 --profiling -s DEMANGLE_SUPPORT=1
