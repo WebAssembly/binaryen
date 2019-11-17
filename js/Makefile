@@ -37,9 +37,9 @@ LINKFLAGS = -s MODULARIZE_INSTANCE=1 \
             -s SINGLE_FILE \
             --post-js "$(BINARYEN_SRC)/js/binaryen.js-post.js"
 
-LINKFLAGS_DEBUG = -O2 --profiling -s -s DEMANGLE_SUPPORT=1
+LINKFLAGS_DEBUG = -O2 --profiling -s DEMANGLE_SUPPORT=1
 
-LINKFLAGS_RELEASE = -Os --closure 1
+LINKFLAGS_RELEASE = -Oz --closure 1
 
 OBJECTS = \
   $(BINARYEN_SRC)/asmjs/asm_v_wasm.o \
