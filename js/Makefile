@@ -136,7 +136,7 @@ OBJECTS = \
   $(BINARYEN_SRC)/wasm/wasm.o \
   $(BINARYEN_SRC)/binaryen-c.o
 
-all: binaryen.js
+all: WasmIntrinsics.cpp binaryen.js
 
 %.o: %.cpp
 	$(CXX) $(CFLAGS) -I$(BINARYEN_SRC) $< -o $@ -c
