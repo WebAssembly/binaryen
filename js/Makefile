@@ -17,7 +17,7 @@
 # http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
 #
 
-PWD = ${CURDIR}
+PWD = $(abspath ${CURDIR})
 
 BINARYEN_SCRIPTS = $(PWD)/../scripts
 
