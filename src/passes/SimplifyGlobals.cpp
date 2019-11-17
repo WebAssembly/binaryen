@@ -239,7 +239,7 @@ struct SimplifyGlobals : public Pass {
     }
   }
 
-  // Constant propagation part 1: even an mutable global with a constant
+  // Constant propagation part 1: even a mutable global with a constant
   // value can have that value propagated to another global that reads it,
   // since we do know the value during startup, it can't be modified until
   // code runs.
