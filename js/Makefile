@@ -34,6 +34,7 @@ CFLAGS = -O2 \
 
 LINKFLAGS = -s MODULARIZE_INSTANCE=1 \
             -s 'EXPORT_NAME="Binaryen"' \
+            -s SINGLE_FILE \
             --post-js "$(BINARYEN_SRC)/js/binaryen.js-post.js"
 
 LINKFLAGS_DEBUG = -O2 --profiling -s -s DEMANGLE_SUPPORT=1
