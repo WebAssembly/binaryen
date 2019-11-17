@@ -17,12 +17,11 @@
 # http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
 #
 
-# input sources relative to this script
-BINARYEN_SCRIPTS="$(PWD)/../scripts"
+PWD = ${CURDIR}
 
-OUT="$(PWD)/../out"
+BINARYEN_SCRIPTS = $(PWD)/../scripts
 
-OUT = "$(PWD)/../out"
+OUT = $(PWD)/../out
 
 BINARYEN_SRC = $(PWD)/../src
 
@@ -35,7 +34,7 @@ LINKFLAGS = -s MODULARIZE_INSTANCE=1 \
             -s ALLOW_MEMORY_GROWTH \
             -s BINARYEN_ASYNC_COMPILATION=0 \
             -fexceptions \
-            --post-js "$(BINARYEN_SRC)/js/binaryen.js-post.js"
+            --post-js $(BINARYEN_SRC)/js/binaryen.js-post.js
 
 LINKFLAGS_DEBUG = -O2 --profiling -s DEMANGLE_SUPPORT=1
 
@@ -136,9 +135,9 @@ OBJECTS = \
   $(BINARYEN_SRC)/wasm/wasm.o \
   $(BINARYEN_SRC)/binaryen-c.o
 
-all: WasmIntrinsics.cpp binaryen.js
+all: binaryen.js
 
-%.o: %.cpp
+%.o: %.cpp WasmIntrinsics.cpp
 	$(CXX) $(CFLAGS) -I$(BINARYEN_SRC) $< -o $@ -c
 
 binaryen.js: $(OBJECTS)
@@ -148,8 +147,8 @@ binaryen.debug.js: $(OBJECTS)
 	$(CXX) $(CFLAGS) $(LINKFLAGS) $(LINKFLAGS_DEBUG) $(OBJECTS) -o $(OUT)/binaryen.debug.js
 
 WasmIntrinsics.cpp:
-	python3 "$(BINARYEN_SCRIPTS)/embedwast.py" "$(BINARYEN_SRC)/passes/wasm-intrinsics.wast" "WasmIntrinsics.cpp"
-	cp "WasmIntrinsics.cpp" "$(BINARYEN_SRC)/WasmIntrinsics.cpp"
+	python3 $(BINARYEN_SCRIPTS)/embedwast.py $(BINARYEN_SRC)/passes/wasm-intrinsics.wast WasmIntrinsics.cpp
+	cp WasmIntrinsics.cpp $(BINARYEN_SRC)/WasmIntrinsics.cpp
   
 clean:
-	rm $(OBJECTS) $(OUT)/binaryen.js $(OUT)/binaryen.debug.js "WasmIntrinsics.cpp"
+	rm $(OBJECTS) $(OUT)/binaryen.js $(OUT)/binaryen.debug.js WasmIntrinsics.cpp
