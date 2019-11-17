@@ -156,6 +156,12 @@ This repository contains code that builds the following tools in `bin/`:
    (going through Binaryen IR).
  * **wasm2js**: A WebAssembly-to-JS compiler. This is used by Emscripten to
    generate JavaScript as an alternative to WebAssembly.
+ * **wasm-reduce**: A testcase reducer for WebAssembly files. Given a wasm file
+   that is interesting for some reason (say, it crashes a specific VM),
+   wasm-reduce can find a smaller wasm file that has the same property, which is
+   often easier to debug. See the
+   [docs](https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing)
+   for more details.
  * **wasm-shell**: A shell that can load and interpret WebAssembly code. It can
    also run the spec test suite.
  * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
