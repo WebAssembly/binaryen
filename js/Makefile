@@ -26,7 +26,8 @@ OUT = "$(PWD)/../out"
 
 BINARYEN_SRC = $(PWD)/../src
 
-CFLAGS = -std=gnu++14 \
+CFLAGS = -O2 \
+         -std=gnu++14 \
          -s ALLOW_MEMORY_GROWTH=1 \
          -s BINARYEN_ASYNC_COMPILATION=0 \
          -s DISABLE_EXCEPTION_CATCHING=0 \
@@ -150,4 +151,4 @@ WasmIntrinsics.cpp:
 	cp "WasmIntrinsics.cpp" "$(BINARYEN_SRC)/WasmIntrinsics.cpp"
   
 clean:
-	rm $(OUT)/binaryen.js $(OUT)/binaryen.debug.js "WasmIntrinsics.cpp"
+	rm $(OBJECTS) $(OUT)/binaryen.js $(OUT)/binaryen.debug.js "WasmIntrinsics.cpp"
