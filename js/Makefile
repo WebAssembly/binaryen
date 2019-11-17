@@ -145,7 +145,7 @@ binaryen.js: $(OBJECTS)
 	$(CXX) $(CFLAGS) $(LINKFLAGS) $(LINKFLAGS_RELEASE) $(OBJECTS) -o $(OUT)/binaryen.js
 
 binaryen.debug.js: $(OBJECTS)
-	$(CXX) $(CFLAGS) $(LINKFLAGS) $(LINKFLAGS_DEBUG) $(OBJECTS) -o $(OUT)/binaryen.js
+	$(CXX) $(CFLAGS) $(LINKFLAGS) $(LINKFLAGS_DEBUG) $(OBJECTS) -o $(OUT)/binaryen.debug.js
 
 WasmIntrinsics.cpp:
 	python3 "$(BINARYEN_SCRIPTS)/embedwast.py" "$(BINARYEN_SRC)/passes/wasm-intrinsics.wast" "WasmIntrinsics.cpp"
