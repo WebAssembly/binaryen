@@ -45,7 +45,7 @@ class AsyncifyTest(BinaryenTestCase):
             ('--pass-arg=asyncify-whitelist@DOS_ReadFile(unsigned short, unsigned char*, unsigned short*, bool)', None),
         ]:
             print(arg, warning)
-            err = run_process(WASM_OPT + [self.input_path('asyncify-pure.wast'), '--asyncify', arg], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.strip()
+            err = run_process(WASM_OPT + ['-q', self.input_path('asyncify-pure.wast'), '--asyncify', arg], stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.strip()
             if warning:
                 self.assertIn('warning', err)
                 self.assertIn(warning, err)

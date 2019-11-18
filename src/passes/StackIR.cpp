@@ -255,7 +255,9 @@ private:
       case StackInst::BlockEnd:
       case StackInst::IfElse:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::Catch:
+      case StackInst::TryEnd: {
         return true;
       }
       default: { return false; }
@@ -267,7 +269,8 @@ private:
     switch (inst->op) {
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryBegin: {
         return true;
       }
       default: { return false; }
@@ -279,7 +282,8 @@ private:
     switch (inst->op) {
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryEnd: {
         return true;
       }
       default: { return false; }

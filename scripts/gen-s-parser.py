@@ -470,7 +470,6 @@ instructions = [
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),
-    ("catch",                "makeCatch(s)"),
     ("rethrow",              "makeRethrow(s)"),
     ("br_on_exn",            "makeBrOnExn(s)")
 ]
