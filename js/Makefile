@@ -17,7 +17,7 @@
 # http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
 #
 
-MAKEFILE_DIR = $(abspath ${CURDIR})
+MAKEFILE_DIR = $(shell pwd)
 
 BINARYEN_SCRIPTS = $(MAKEFILE_DIR)/../scripts
 
