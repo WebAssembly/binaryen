@@ -27,6 +27,75 @@ DEPLOY_TO_GITHUB: &DEPLOY_TO_GITHUB
 
 jobs:
   include:
+    # OSX Binary
+    - env: JOB=dist-osx MACOSX_DEPLOYMENT_TARGET=10.9 ARCH=x86_64-apple-darwin
+      os: osx
+      stage: build
+      script:
+        - cmake . && make
+      <<: *DEPLOY_TO_GITHUB
+
+    # Build with clang and run tests on the host system (Ubuntu).
+    - &test-ubuntu
+      stage: test
+      compiler: clang
+      python:
+        - 2.7
+        - 3.6
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['cmake', 'g++-5', 'python3-pip']
+      before_install:
+        - export ASAN_OPTIONS="symbolize=1"
+      install:
+        - nvm install 12
+        - nvm use 12
+        - pip3 install --user flake8==3.7.8
+        # get jsvu in order to get more js engines
+        - npm install jsvu -g
+        - export PATH="${HOME}/.jsvu:${PATH}"
+        - jsvu --os=linux64 --engines=spidermonkey,v8
+      script:
+        - set -o errexit
+        - flake8
+        - ./clang-format-diff.sh
+        # ensure generated parser is up to date
+        - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
+        - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
+        - mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
+        - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS" -DCMAKE_INSTALL_PREFIX=install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        # clang-tidy-diff.sh may not exist when BUILD_SUBDIR is a subdirectory
+        - if [ -f clang-tidy-diff.sh ]; then ./clang-tidy-diff.sh; fi
+        - make -j2 install
+        - cd ${TRAVIS_BUILD_DIR}
+        - python3 ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
+
+    - <<: *test-ubuntu
+      env: |
+        BUILD_SUBDIR=out
+
+    - <<: *test-ubuntu
+      env: |
+        COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
+
+    # FIXME we currently must disable LSAN entirely, see #1351
+    #- <<: *test-ubuntu
+    #  env: |
+    #    COMPILER_FLAGS="-fsanitize=address"
+
+    - <<: *test-ubuntu
+      env: |
+        COMPILER_FLAGS="-fsanitize=thread"
+        LINKER_FLAGS="-fsanitize=thread"
+
+    # Build with gcc 7 and run tests on the host system (Ubuntu).
+    - <<: *test-ubuntu
+      compiler: gcc
+      env: |
+        CC="gcc-7"
+        CXX="g++-7"
+
     # Build the .js outputs using emcc
     - &test-emcc
       stage: test
@@ -42,6 +111,64 @@ jobs:
         # run binaryen.js tests before and after building, so we see if the bundled
         # version is good too
         - docker exec -it emscripten bash ./travis-emcc-tests.sh
+
+    # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+    # Note: Alpine uses musl libc.
+    - &test-alpine
+      stage: test
+      sudo: true
+      language: minimal
+      compiler: gcc
+      env: ARCH=x86_64
+      before_install:
+        - docker run -w /src -dit --name alpine -v $(pwd):/src node:13-alpine
+        - alpine() { docker exec -it alpine "$@"; }
+      install:
+        - alpine apk update
+        - alpine apk add build-base cmake git python2 python3 clang
+      script:
+        - alpine cmake .
+        - alpine make -j2
+        - alpine python3 ./check.py
+
+    # Build statically linked release binaries with gcc 6.3 on Alpine Linux
+    # (inside chroot). If building a tagged commit, then deploy release tarball
+    # to GitHub Releases.
+    - &build-alpine
+      <<: *test-alpine
+      stage: build
+      env: ARCH=x86_64-linux
+      # Don't run before_script inherited from *test-alpine.
+      before_script: skip
+      script:
+        - alpine cmake -DCMAKE_BUILD_TYPE=Release
+                       -DCMAKE_VERBOSE_MAKEFILE=ON
+                       -DCMAKE_CXX_FLAGS="-static"
+                       -DCMAKE_C_FLAGS="-static" .
+                       -DCMAKE_C_COMPILER=clang
+                       -DCMAKE_CXX_COMPILER=clang++
+        - alpine make -j2
+        - alpine find bin/ -type f -perm -u=x -exec strip {} +
+        - alpine ls -lh bin/
+        # Check if the built executables are really statically linked.
+        - if [ -n "$(find bin/ -type f -perm -u=x -exec file {} + | grep -Fvw 'statically linked')" ]; then
+              file bin/*; false;
+          fi
+      <<: *DEPLOY_TO_GITHUB
+
+    # Build binaries for other architectures using QEMU user-mode emulation.
+    # Note: We don't run tests for these architectures, because some fail under
+    #       QEMU/binfmt and it takes too long time (hits time limit on Travis).
+    # Note: We had to remove ppc64le, because it takes more than 50 minutes
+    #       (Travis limit) to build. :(
+    - <<: *build-alpine
+      env: ARCH=x86-linux
+
+    - <<: *build-alpine
+      env: ARCH=aarch64-linux
+
+    - <<: *build-alpine
+      env: ARCH=armhf-linux
 
 notifications:
   email: false
