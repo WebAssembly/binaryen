@@ -8,7 +8,7 @@
 #   emmake make
 #
 # Emscripten's em++ etc. will be accessed through the
-# env var EMSCRIPTEN, e.g. ${EMSCRIPTEN}/em++
+# env var $(CXX).
 #
 # To build a debug build, build binaryen.debug.js. The default target is
 # release.

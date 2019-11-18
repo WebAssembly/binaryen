@@ -18,7 +18,6 @@ CMakeFiles
 /.ninja_log
 /bin/
 /lib/
-js/WasmIntrinsics.cpp
 
 # files related to bulding in-tree on windows
 /.vs/
