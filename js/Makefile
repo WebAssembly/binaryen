@@ -147,7 +147,7 @@ binaryen.debug.js: $(OBJECTS)
 	$(CXX) $(CFLAGS) $(LINKFLAGS) $(LINKFLAGS_DEBUG) $(OBJECTS) -o $(OUT)/binaryen.debug.js
 
 WasmIntrinsics.cpp:
-	echo "waka" $(MAKEFILE_DIR) $(BINARYEN_SCRIPTS) $(OUT) $(BINARYEN_SRC)
+	echo "waka waka" $(MAKEFILE_DIR) $(BINARYEN_SCRIPTS) $(OUT) $(BINARYEN_SRC)
 	python3 $(BINARYEN_SCRIPTS)/embedwast.py $(BINARYEN_SRC)/passes/wasm-intrinsics.wast WasmIntrinsics.cpp
 	cp WasmIntrinsics.cpp $(BINARYEN_SRC)/WasmIntrinsics.cpp
   
