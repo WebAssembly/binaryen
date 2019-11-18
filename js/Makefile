@@ -141,15 +141,15 @@ all: binaryen.js
 	$(CXX) $(CFLAGS) -I$(BINARYEN_SRC) $< -o $@ -c
 
 binaryen.js: $(OBJECTS)
+	mkdir -p $(OUT)
 	$(CXX) $(CFLAGS) $(LINKFLAGS) $(LINKFLAGS_RELEASE) $(OBJECTS) -o $(OUT)/binaryen.js
 
 binaryen.debug.js: $(OBJECTS)
+	mkdir -p $(OUT)
 	$(CXX) $(CFLAGS) $(LINKFLAGS) $(LINKFLAGS_DEBUG) $(OBJECTS) -o $(OUT)/binaryen.debug.js
 
 $(BINARYEN_SRC)/passes/WasmIntrinsics.cpp:
-	echo "waka waka" $(MAKEFILE_DIR) $(BINARYEN_SCRIPTS) $(OUT) $(BINARYEN_SRC)
 	python3 $(BINARYEN_SCRIPTS)/embedwast.py $(BINARYEN_SRC)/passes/wasm-intrinsics.wast $(BINARYEN_SRC)/passes/WasmIntrinsics.cpp
-	ls -al $(BINARYEN_SRC)/passes/
 
 clean:
 	rm $(OBJECTS) $(OUT)/binaryen.js $(OUT)/binaryen.debug.js WasmIntrinsics.cpp
