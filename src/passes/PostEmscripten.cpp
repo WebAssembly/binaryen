@@ -139,7 +139,8 @@ struct PostEmscripten : public Pass {
     }
     // This code has exceptions. Find functions that definitely cannot throw,
     // and remove invokes to them.
-    struct Info : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
+    struct Info
+      : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
       bool canThrow = false;
     };
     ModuleUtils::CallGraphPropertyAnalysis<Info> analyzer(
