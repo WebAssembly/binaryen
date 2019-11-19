@@ -139,10 +139,10 @@ struct PostEmscripten : public Pass {
     }
     // This code has exceptions. Find functions that definitely cannot throw,
     // and remove invokes to them.
-    struct Info : public ModuleUtils::WholeProgramAnalysis<Info>::FunctionInfo {
+    struct Info : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
       bool canThrow = false;
     };
-    ModuleUtils::WholeProgramAnalysis<Info> analyzer(
+    ModuleUtils::CallGraphPropertyAnalysis<Info> analyzer(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           // Assume any import can throw. We may want to reduce this to just
