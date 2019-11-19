@@ -207,6 +207,12 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
+  registerPass("post-assemblyscript",
+               "eliminates redundant ARC patterns in AssemblyScript output",
+               createPostAssemblyScriptPass);
+  registerPass("post-assemblyscript-finalize",
+               "eliminates collapsed ARC patterns after other optimizations",
+               createPostAssemblyScriptFinalizePass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
