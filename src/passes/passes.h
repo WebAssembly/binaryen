@@ -100,6 +100,7 @@ Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();
 Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createStripDebugPass();
+Pass* createStripDWARFPass();
 Pass* createStripProducersPass();
 Pass* createStripTargetFeaturesPass();
 Pass* createSouperifyPass();
