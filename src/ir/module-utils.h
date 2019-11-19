@@ -289,11 +289,18 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
   }
 }
 
-// Performs a parallel map on function in the module, emitting a map object
-// of function => result, and makes it easy to do a whole-program analysis
-// of the result.
-// TODO: use in inlining and elsewhere
-template<typename T> struct WholeProgramAnalysis {
+// Helper class for analyzing the call graph.
+//
+// Provides hooks for running some initial calculation on each function (which
+// is done in parallel), writing to a FunctionInfo structure for each function. Then
+// you can call propagateBack() to propagate a property of interest to the
+// calling functions, transitively.
+//
+// For example, if some functions are known to call an import "foo", then you
+// can use this to find which functions call something that might eventually
+// reach foo, by initially marking the direct callers as "calling foo" and
+// propagating that backwards.
+template<typename T> struct CallGraphPropertyAnalysis {
   Module& wasm;
 
   // The basic information for each function about whom it calls and who is
@@ -308,7 +315,7 @@ template<typename T> struct WholeProgramAnalysis {
 
   typedef std::function<void(Function*, T&)> Func;
 
-  WholeProgramAnalysis(Module& wasm, Func work) : wasm(wasm) {
+  CallGraphPropertyAnalysis(Module& wasm, Func work) : wasm(wasm) {
     // Fill in map, as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
@@ -322,38 +329,31 @@ template<typename T> struct WholeProgramAnalysis {
       }
     }
 
-    // Run on the implemented functions.
-    struct MapperInfo {
+    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
+      bool isFunctionParallel() override { return true; }
+
+      Mapper(Module* module, Map* map, Func work) : module(module), map(map), work(work) {}
+
+      Mapper* create() override { return new Mapper(module, map, work); }
+
+      void visitCall(Call* curr) {
+        (*map)[this->getFunction()].callsTo.insert(
+          module->getFunction(curr->target));
+      }
+
+      void visitFunction(Function* curr) {
+        assert((*map).count(curr));
+        work(curr, (*map)[curr]);
+      }
+
+    private:
       Module* module;
       Map* map;
       Func work;
     };
 
-    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
-      bool isFunctionParallel() override { return true; }
-
-      Mapper(MapperInfo* info) : info(info) {}
-
-      Mapper* create() override { return new Mapper(info); }
-
-      void visitCall(Call* curr) {
-        (*info->map)[this->getFunction()].callsTo.insert(
-          info->module->getFunction(curr->target));
-      }
-
-      void visitFunction(Function* curr) {
-        assert((*info->map).count(curr));
-        info->work(curr, (*info->map)[curr]);
-      }
-
-    private:
-      MapperInfo* info;
-    };
-
-    MapperInfo info = {&wasm, &map, work};
-
     PassRunner runner(&wasm);
-    Mapper(&info).run(&runner, &wasm);
+    Mapper(&wasm, &map, work).run(&runner, &wasm);
 
     // Find what is called by what.
     for (auto& pair : map) {
@@ -366,10 +366,10 @@ template<typename T> struct WholeProgramAnalysis {
   }
 
   // Propagate a property from a function to those that call it.
-  void propagateChanges(std::function<bool(const T&)> hasProperty,
-                        std::function<bool(const T&)> canHaveProperty,
-                        std::function<void(T&)> addProperty) {
-    // The work queue contains an item we just learned can change the state.
+  void propagateBack(std::function<bool(const T&)> hasProperty,
+                     std::function<bool(const T&)> canHaveProperty,
+                     std::function<void(T&)> addProperty) {
+    // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
       if (hasProperty(map[func.get()])) {
@@ -379,6 +379,8 @@ template<typename T> struct WholeProgramAnalysis {
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
+        // If we don't already have the property, and we are not forbidden
+        // from getting it, then it propagates back to us now.
         if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
           addProperty(map[caller]);
           work.push(caller);

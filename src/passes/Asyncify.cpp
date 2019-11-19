@@ -404,7 +404,8 @@ class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
 
-  struct Info : public ModuleUtils::WholeProgramAnalysis<Info>::FunctionInfo {
+  struct Info
+    : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // If this function can start an unwind/rewind.
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
@@ -441,7 +442,7 @@ public:
     // Also handle the asyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
     // name.
-    ModuleUtils::WholeProgramAnalysis<Info> scanner(
+    ModuleUtils::CallGraphPropertyAnalysis<Info> scanner(
       module, [&](Function* func, Info& info) {
         if (func->imported()) {
           // The relevant asyncify imports can definitely change the state.
@@ -522,33 +523,33 @@ public:
     }
 
     // Remove the asyncify imports, if any, and any calls to them.
-    std::vector<Name> toDelete;
+    std::vector<Name> funcsToDelete;
     for (auto& pair : scanner.map) {
       auto* func = pair.first;
       auto& callsTo = pair.second.callsTo;
       if (func->imported() && func->module == ASYNCIFY) {
-        toDelete.push_back(func->name);
+        funcsToDelete.push_back(func->name);
       }
-      std::vector<Function*> toDelete;
+      std::vector<Function*> callersToDelete;
       for (auto* target : callsTo) {
         if (target->imported() && target->module == ASYNCIFY) {
-          toDelete.push_back(target);
+          callersToDelete.push_back(target);
         }
       }
-      for (auto* target : toDelete) {
+      for (auto* target : callersToDelete) {
         callsTo.erase(target);
       }
     }
-    for (auto name : toDelete) {
+    for (auto name : funcsToDelete) {
       module.removeFunction(name);
     }
 
-    scanner.propagateChanges(
-      [](const Info& info) { return info.canChangeState; },
-      [](const Info& info) {
-        return !info.isBottomMostRuntime && !info.inBlacklist;
-      },
-      [](Info& info) { info.canChangeState = true; });
+    scanner.propagateBack([](const Info& info) { return info.canChangeState; },
+                          [](const Info& info) {
+                            return !info.isBottomMostRuntime &&
+                                   !info.inBlacklist;
+                          },
+                          [](Info& info) { info.canChangeState = true; });
 
     map.swap(scanner.map);
 
