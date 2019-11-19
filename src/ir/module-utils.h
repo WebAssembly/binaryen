@@ -329,38 +329,31 @@ template<typename T> struct CallGraphPropertyAnalysis {
       }
     }
 
-    // Run on the implemented functions.
-    struct MapperInfo {
+    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
+      bool isFunctionParallel() override { return true; }
+
+      Mapper(Module* module, Map* map, Func work) : module(module), map(map), work(work) {}
+
+      Mapper* create() override { return new Mapper(module, map, work); }
+
+      void visitCall(Call* curr) {
+        (*map)[this->getFunction()].callsTo.insert(
+          module->getFunction(curr->target));
+      }
+
+      void visitFunction(Function* curr) {
+        assert((*map).count(curr));
+        work(curr, (*map)[curr]);
+      }
+
+    private:
       Module* module;
       Map* map;
       Func work;
     };
 
-    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
-      bool isFunctionParallel() override { return true; }
-
-      Mapper(MapperInfo* info) : info(info) {}
-
-      Mapper* create() override { return new Mapper(info); }
-
-      void visitCall(Call* curr) {
-        (*info->map)[this->getFunction()].callsTo.insert(
-          info->module->getFunction(curr->target));
-      }
-
-      void visitFunction(Function* curr) {
-        assert((*info->map).count(curr));
-        info->work(curr, (*info->map)[curr]);
-      }
-
-    private:
-      MapperInfo* info;
-    };
-
-    MapperInfo info = {&wasm, &map, work};
-
     PassRunner runner(&wasm);
-    Mapper(&info).run(&runner, &wasm);
+    Mapper(&wasm, &map, work).run(&runner, &wasm);
 
     // Find what is called by what.
     for (auto& pair : map) {
