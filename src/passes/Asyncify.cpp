@@ -261,7 +261,6 @@
 #include "pass.h"
 #include "support/file.h"
 #include "support/string.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -405,7 +404,8 @@ class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
 
-  struct Info {
+  struct Info
+    : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // If this function can start an unwind/rewind.
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
@@ -419,8 +419,7 @@ class ModuleAnalyzer {
     // the top-most part is still marked as changing the state; so things
     // that call it are instrumented. This is not done for the bottom.
     bool isTopMostRuntime = false;
-    std::set<Function*> callsTo;
-    std::set<Function*> calledBy;
+    bool inBlacklist = false;
   };
 
   typedef std::map<Function*, Info> Map;
@@ -443,7 +442,7 @@ public:
     // Also handle the asyncify imports, removing them (as we will implement
     // them later), and replace calls to them with calls to the later proper
     // name.
-    ModuleUtils::ParallelFunctionMap<Info> scanner(
+    ModuleUtils::CallGraphPropertyAnalysis<Info> scanner(
       module, [&](Function* func, Info& info) {
         if (func->imported()) {
           // The relevant asyncify imports can definitely change the state.
@@ -482,9 +481,7 @@ public:
                 Fatal() << "call to unidenfied asyncify import: "
                         << target->base;
               }
-              return;
             }
-            info->callsTo.insert(target);
           }
           void visitCallIndirect(CallIndirect* curr) {
             if (curr->isReturn) {
@@ -515,51 +512,46 @@ public:
         }
       });
 
-    map.swap(scanner.map);
-
     // Functions in the blacklist are assumed to not change the state.
-    for (auto& name : blacklist.names) {
-      if (auto* func = module.getFunctionOrNull(name)) {
-        map[func].canChangeState = false;
-      }
-    }
-
-    // Remove the asyncify imports, if any.
-    for (auto& pair : map) {
-      auto* func = pair.first;
-      if (func->imported() && func->module == ASYNCIFY) {
-        module.removeFunction(func->name);
-      }
-    }
-
-    // Find what is called by what.
-    for (auto& pair : map) {
+    for (auto& pair : scanner.map) {
       auto* func = pair.first;
       auto& info = pair.second;
-      for (auto* target : info.callsTo) {
-        map[target].calledBy.insert(func);
+      if (blacklist.match(func->name)) {
+        info.inBlacklist = true;
+        info.canChangeState = false;
       }
     }
 
-    // Close over, finding all functions that can reach something that can
-    // change the state.
-    // The work queue contains an item we just learned can change the state.
-    UniqueDeferredQueue<Function*> work;
-    for (auto& func : module.functions) {
-      if (map[func.get()].canChangeState) {
-        work.push(func.get());
+    // Remove the asyncify imports, if any, and any calls to them.
+    std::vector<Name> funcsToDelete;
+    for (auto& pair : scanner.map) {
+      auto* func = pair.first;
+      auto& callsTo = pair.second.callsTo;
+      if (func->imported() && func->module == ASYNCIFY) {
+        funcsToDelete.push_back(func->name);
       }
-    }
-    while (!work.empty()) {
-      auto* func = work.pop();
-      for (auto* caller : map[func].calledBy) {
-        if (!map[caller].canChangeState && !map[caller].isBottomMostRuntime &&
-            !blacklist.match(caller->name)) {
-          map[caller].canChangeState = true;
-          work.push(caller);
+      std::vector<Function*> callersToDelete;
+      for (auto* target : callsTo) {
+        if (target->imported() && target->module == ASYNCIFY) {
+          callersToDelete.push_back(target);
         }
       }
+      for (auto* target : callersToDelete) {
+        callsTo.erase(target);
+      }
     }
+    for (auto name : funcsToDelete) {
+      module.removeFunction(name);
+    }
+
+    scanner.propagateBack([](const Info& info) { return info.canChangeState; },
+                          [](const Info& info) {
+                            return !info.isBottomMostRuntime &&
+                                   !info.inBlacklist;
+                          },
+                          [](Info& info) { info.canChangeState = true; });
+
+    map.swap(scanner.map);
 
     if (!whitelistInput.empty()) {
       // Only the functions in the whitelist can change the state.
