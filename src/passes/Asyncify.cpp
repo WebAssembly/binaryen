@@ -523,24 +523,24 @@ public:
     }
 
     // Remove the asyncify imports, if any, and any calls to them.
-    std::vector<Name> toDelete;
+    std::vector<Name> funcsToDelete;
     for (auto& pair : scanner.map) {
       auto* func = pair.first;
       auto& callsTo = pair.second.callsTo;
       if (func->imported() && func->module == ASYNCIFY) {
-        toDelete.push_back(func->name);
+        funcsToDelete.push_back(func->name);
       }
-      std::vector<Function*> toDelete;
+      std::vector<Function*> callersToDelete;
       for (auto* target : callsTo) {
         if (target->imported() && target->module == ASYNCIFY) {
-          toDelete.push_back(target);
+          callersToDelete.push_back(target);
         }
       }
-      for (auto* target : toDelete) {
+      for (auto* target : callersToDelete) {
         callsTo.erase(target);
       }
     }
-    for (auto name : toDelete) {
+    for (auto name : funcsToDelete) {
       module.removeFunction(name);
     }
 

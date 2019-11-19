@@ -292,7 +292,7 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
 // Helper class for analyzing the call graph.
 //
 // Provides hooks for running some initial calculation on each function (which
-// is done in parallel), writing to an Info structure for each function. Then
+// is done in parallel), writing to a FunctionInfo structure for each function. Then
 // you can call propagateBack() to propagate a property of interest to the
 // calling functions, transitively.
 //
@@ -369,7 +369,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
                      std::function<void(T&)> addProperty) {
-    // The work queue contains an item we just learned can change the state.
+    // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
       if (hasProperty(map[func.get()])) {
@@ -379,6 +379,8 @@ template<typename T> struct CallGraphPropertyAnalysis {
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
+        // If we don't already have the property, and we are not forbidden
+        // from getting it, then it propagates back to us now.
         if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
           addProperty(map[caller]);
           work.push(caller);
