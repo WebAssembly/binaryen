@@ -175,7 +175,7 @@ struct PostEmscripten : public Pass {
           if (auto* index = curr->operands[0]->dynCast<Const>()) {
             auto actualTarget = flatTable.names.at(index->value.geti32());
             if (!map[getModule()->getFunction(actualTarget)].canThrow) {
-              // This invoke cannot throw!
+              // This invoke cannot throw! Make it a direct call.
               curr->target = actualTarget;
               for (Index i = 0; i < curr->operands.size() - 1; i++) {
                 curr->operands[i] = curr->operands[i + 1];
