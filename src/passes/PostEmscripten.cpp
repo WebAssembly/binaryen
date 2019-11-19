@@ -152,9 +152,9 @@ struct PostEmscripten : public Pass {
         }
       });
 
-    analyzer.propagateChanges([](const Info& info) { return info.canThrow; },
-                              [](const Info& info) { return true; },
-                              [](Info& info) { info.canThrow = true; });
+    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
+                           [](const Info& info) { return true; },
+                           [](Info& info) { info.canThrow = true; });
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
