@@ -292,8 +292,8 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
 // Helper class for analyzing the call graph.
 //
 // Provides hooks for running some initial calculation on each function (which
-// is done in parallel), writing to a FunctionInfo structure for each function. Then
-// you can call propagateBack() to propagate a property of interest to the
+// is done in parallel), writing to a FunctionInfo structure for each function.
+// Then you can call propagateBack() to propagate a property of interest to the
 // calling functions, transitively.
 //
 // For example, if some functions are known to call an import "foo", then you
@@ -332,7 +332,8 @@ template<typename T> struct CallGraphPropertyAnalysis {
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
 
-      Mapper(Module* module, Map* map, Func work) : module(module), map(map), work(work) {}
+      Mapper(Module* module, Map* map, Func work)
+        : module(module), map(map), work(work) {}
 
       Mapper* create() override { return new Mapper(module, map, work); }
 
