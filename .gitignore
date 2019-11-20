@@ -18,6 +18,7 @@ CMakeFiles
 /.ninja_log
 /bin/
 /lib/
+config.h
 
 # files related to bulding in-tree on windows
 /.vs/
