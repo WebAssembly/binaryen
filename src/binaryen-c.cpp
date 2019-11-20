@@ -273,6 +273,45 @@ BinaryenType BinaryenTypeExnref(void) { return exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 
+BinaryenType BinaryenTypeCreate(BinaryenType* valueTypes, uint32_t numTypes) {
+  std::vector<Type::ValueType> types;
+  types.reserve(numTypes);
+  for (size_t i = 0; i < numTypes; ++i) {
+    assert(Type(valueTypes[i]).isValueType());
+    types.push_back(static_cast<Type::ValueType>(valueTypes[i]));
+  }
+  Type result(types);
+
+  if (tracing) {
+    std::string array = getTemp();
+    std::cout << "  {\n";
+    std::cout << "    BinaryenType " << array << "[] = {";
+    for (size_t i = 0; i < numTypes; ++i) {
+      std::cout << int(valueTypes[i]);
+      if (i < numTypes - 1) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << "};\n";
+    std::cout << "    BinaryenTypeCreate(" << array << ", " << numTypes
+              << "); // " << int(result) << "\n";
+    std::cout << "  }\n";
+  }
+
+  return uint32_t(int(result));
+}
+
+uint32_t BinaryenTypeNumValTypes(BinaryenType t) {
+  return Type(t).getNumValueTypes();
+}
+
+void BinaryenTypeGetValTypes(BinaryenType t, BinaryenType* buf) {
+  std::vector<Type::ValueType> types = Type(t).getValueTypes();
+  for (size_t i = 0; i < types.size(); ++i) {
+    buf[i] = types[i];
+  }
+}
+
 WASM_DEPRECATED BinaryenType BinaryenNone(void) { return none; }
 WASM_DEPRECATED BinaryenType BinaryenInt32(void) { return i32; }
 WASM_DEPRECATED BinaryenType BinaryenInt64(void) { return i64; }

@@ -14,15 +14,101 @@
  * limitations under the License.
  */
 
+#include <shared_mutex>
+#include <unordered_map>
+
 #include "wasm-type.h"
 #include "wasm-features.h"
 
 #include "compiler-support.h"
-#include <cstdlib>
+
+template<> class std::hash<std::vector<wasm::Type::ValueType>> {
+public:
+  size_t operator()(const std::vector<wasm::Type::ValueType>& types) const {
+    size_t res = 0;
+    for (auto vt : types) {
+      res ^= hash<int>{}(vt);
+    }
+    return res;
+  }
+};
 
 namespace wasm {
 
-const char* printType(Type type) {
+namespace {
+
+// TODO: switch to std::shared_mutex in C++17
+std::shared_timed_mutex mutex;
+
+std::vector<std::vector<Type::ValueType>> typeLists = {
+  {},
+  {},
+  {Type::i32},
+  {Type::i64},
+  {Type::f32},
+  {Type::f64},
+  {Type::v128},
+  {Type::anyref},
+  {Type::exnref},
+};
+
+std::unordered_map<std::vector<Type::ValueType>, uint32_t> indices = {
+  {{}, Type::unreachable},
+  {{}, Type::none},
+  {{Type::i32}, Type::i32},
+  {{Type::i64}, Type::i64},
+  {{Type::f32}, Type::f32},
+  {{Type::f64}, Type::f64},
+  {{Type::v128}, Type::v128},
+  {{Type::anyref}, Type::anyref},
+  {{Type::exnref}, Type::exnref},
+};
+
+} // anonymous namespace
+
+Type::Type(const std::vector<ValueType>& types) {
+  auto lookup = [&]() {
+    auto indexIt = indices.find(types);
+    if (indexIt != indices.end()) {
+      id = indexIt->second;
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  {
+    // Try to look up previously interned type
+    std::shared_lock<std::shared_timed_mutex> lock(mutex);
+    if (lookup()) {
+      return;
+    }
+  }
+  {
+    // Add a new type if it hasn't been added concurrently
+    std::lock_guard<std::shared_timed_mutex> lock(mutex);
+    if (lookup()) {
+      return;
+    }
+    id = typeLists.size();
+    typeLists.push_back(types);
+    indices[types] = id;
+  }
+}
+
+size_t Type::getNumValueTypes() const {
+  std::shared_lock<std::shared_timed_mutex> lock(mutex);
+  assert(id < typeLists.size());
+  return typeLists[id].size();
+}
+
+const std::vector<Type::ValueType> Type::getValueTypes() const {
+  std::shared_lock<std::shared_timed_mutex> lock(mutex);
+  assert(id < typeLists.size());
+  return typeLists[id];
+}
+
+const std::string printType(Type type) {
   switch (type) {
     case Type::none:
       return "none";
@@ -42,8 +128,18 @@ const char* printType(Type type) {
       return "exnref";
     case Type::unreachable:
       return "unreachable";
+    default: {
+      std::vector<Type::ValueType> vts = type.getValueTypes();
+      std::string res("(");
+      for (size_t i = 0; i < vts.size() - 1; ++i) {
+        res += ", ";
+        res += printType(vts[i]);
+      }
+      res += printType(vts.back());
+      res += ")";
+      return res;
+    }
   }
-  WASM_UNREACHABLE();
 }
 
 unsigned getTypeSize(Type type) {

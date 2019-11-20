@@ -51,16 +51,43 @@ function makeDroppedInt32(x) {
 // tests
 
 function test_types() {
-  console.log("BinaryenTypeNone: " + Binaryen.none);
-  console.log("BinaryenTypeInt32: " + Binaryen.i32);
-  console.log("BinaryenTypeInt64: " + Binaryen.i64);
-  console.log("BinaryenTypeFloat32: " + Binaryen.f32);
-  console.log("BinaryenTypeFloat64: " + Binaryen.f64);
-  console.log("BinaryenTypeVec128: " + Binaryen.v128);
-  console.log("BinaryenTypeAnyref: " + Binaryen.anyref);
-  console.log("BinaryenTypeExnref: " + Binaryen.exnref);
-  console.log("BinaryenTypeUnreachable: " + Binaryen.unreachable);
-  console.log("BinaryenTypeAuto: " + Binaryen.auto);
+  console.log("  // BinaryenTypeNone: " + Binaryen.none);
+  console.log("  //", Binaryen.getValTypes(Binaryen.none));
+
+  console.log("  // BinaryenTypeUnreachable: " + Binaryen.unreachable);
+  console.log("  //", Binaryen.getValTypes(Binaryen.unreachable));
+
+  console.log("  // BinaryenTypeInt32: " + Binaryen.i32);
+  console.log("  //", Binaryen.getValTypes(Binaryen.i32));
+
+  console.log("  // BinaryenTypeInt64: " + Binaryen.i64);
+  console.log("  //", Binaryen.getValTypes(Binaryen.i64));
+
+  console.log("  // BinaryenTypeFloat32: " + Binaryen.f32);
+  console.log("  //", Binaryen.getValTypes(Binaryen.f32));
+
+  console.log("  // BinaryenTypeFloat64: " + Binaryen.f64);
+  console.log("  //", Binaryen.getValTypes(Binaryen.f64));
+
+  console.log("  // BinaryenTypeVec128: " + Binaryen.v128);
+  console.log("  //", Binaryen.getValTypes(Binaryen.v128));
+
+  console.log("  // BinaryenTypeAnyref: " + Binaryen.anyref);
+  console.log("  //", Binaryen.getValTypes(Binaryen.anyref));
+
+  console.log("  // BinaryenTypeExnref: " + Binaryen.exnref);
+  console.log("  //", Binaryen.getValTypes(Binaryen.exnref));
+
+  console.log("  // BinaryenTypeAuto: " + Binaryen.auto);
+
+  var i32_pair = Binaryen.createType([Binaryen.i32, Binaryen.i32]);
+  console.log("  //", i32_pair, Binaryen.getValTypes(i32_pair));
+
+  var duplicate_pair = Binaryen.createType([Binaryen.i32, Binaryen.i32]);
+  console.log("  //", duplicate_pair, Binaryen.getValTypes(duplicate_pair));
+
+  var f32_pair = Binaryen.createType([Binaryen.f32, Binaryen.f32]);
+  console.log("  //", f32_pair, Binaryen.getValTypes(f32_pair));
 }
 
 function test_features() {
@@ -862,6 +889,7 @@ function test_tracing() {
   Binaryen.setAPITracing(1);
   test_core();
   test_relooper();
+  test_types();
   Binaryen.setAPITracing(0);
 }
 

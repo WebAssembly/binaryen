@@ -42,6 +42,26 @@ Module['exnref'] = Module['_BinaryenTypeExnref']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
+Module['createType'] = function(valTypes) {
+  return preserveStack(function() {
+    var array = i32sToStack(valTypes);
+    return Module['_BinaryenTypeCreate'](array, valTypes.length);
+  });
+};
+
+Module['getValTypes'] = function(ty) {
+  return preserveStack(function() {
+    var numValTypes = Module['_BinaryenTypeNumValTypes'](ty);
+    var array = stackAlloc(numValTypes << 2);
+    Module['_BinaryenTypeGetValTypes'](ty, array);
+    var valTypes = [];
+    for (var i = 0; i < numValTypes; i++) {
+      valTypes.push(HEAPU32[(array >>> 2) + i]);
+    }
+    return valTypes;
+  });
+};
+
 // Expression ids
 Module['InvalidId'] = Module['_BinaryenInvalidId']();
 Module['BlockId'] = Module['_BinaryenBlockId']();

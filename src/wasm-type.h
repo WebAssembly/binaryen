@@ -18,6 +18,7 @@
 #define wasm_wasm_type_h
 
 #include "wasm-features.h"
+#include <vector>
 
 namespace wasm {
 
@@ -27,6 +28,7 @@ class Type {
 public:
   enum ValueType : uint32_t {
     none,
+    unreachable,
     i32,
     i64,
     f32,
@@ -34,10 +36,10 @@ public:
     v128,
     anyref,
     exnref,
+    _last_value_type,
     // none means no type, e.g. a block can have no return type. but unreachable
     // is different, as it can be "ignored" when doing type checking across
     // branches
-    unreachable
   };
 
   Type() = default;
@@ -47,6 +49,13 @@ public:
 
   // But converting raw uint32_t is more dangerous, so make it explicit
   constexpr explicit Type(uint32_t id) : id(id){};
+
+  explicit Type(const std::vector<ValueType>& types);
+
+  size_t getNumValueTypes() const;
+  const std::vector<ValueType> getValueTypes() const;
+
+  bool isValueType() { return id >= i32 && id < _last_value_type; }
 
   // (In)equality must be defined for both Type and ValueType because it is
   // otherwise ambiguous whether to convert both this and other to int or
@@ -60,7 +69,7 @@ public:
   bool operator!=(const ValueType& other) { return id != other; }
 
   // Allows for using Types in switch statements
-  constexpr operator int() const { return id; }
+  constexpr operator uint32_t() const { return id; }
 };
 
 constexpr Type none = Type::none;
@@ -73,7 +82,7 @@ constexpr Type anyref = Type::anyref;
 constexpr Type exnref = Type::exnref;
 constexpr Type unreachable = Type::unreachable;
 
-const char* printType(Type type);
+const std::string printType(Type type);
 unsigned getTypeSize(Type type);
 FeatureSet getFeatures(Type type);
 Type getType(unsigned size, bool float_);
