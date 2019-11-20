@@ -16,7 +16,7 @@
 import os
 from .support import run_command
 from .shared import (
-    fail_with_error, get_test_dir, get_tests, options,
+    fail_with_error, get_test_dir, get_tests,
     WASM_EMSCRIPTEN_FINALIZE, fail_if_not_identical_to_file
 )
 
