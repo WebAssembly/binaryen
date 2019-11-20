@@ -24,15 +24,13 @@ from collections import OrderedDict
 
 from scripts.test.support import run_command, split_wast, write_wast
 from scripts.test.shared import (
-    BIN_DIR, NATIVECC, NATIVEXX, NODEJS, WASM_AS, WASM_CTOR_EVAL, WASM_OPT,
-    WASM_SHELL, WASM_METADCE, WASM_DIS, WASM_REDUCE, CTOR_EVAL_TEST_DIR,
-    CRASH_TEST_DIR, EXAMPLE_TEST_DIR, METADCE_TEST_DIR, PASSES_TEST_DIR,
-    PRINT_TEST_DIR, REDUCE_TEST_DIR, SPEC_TEST_DIR, VALIDATOR_TEST_DIR,
-    WASM_BACKEND_TEST_DIR, binary_format_check, delete_from_orbit, fail,
-    fail_with_error, fail_if_not_identical, fail_if_not_contained,
-    has_vanilla_emcc, has_vanilla_llvm, minify_check, options, requested,
-    warnings, has_shell_timeout, fail_if_not_identical_to_file, with_pass_debug,
-    validate_binary, get_tests
+    BIN_DIR, NATIVECC, NATIVEXX, NODEJS, WASM_AS,
+    WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_METADCE, WASM_DIS, WASM_REDUCE,
+    binary_format_check, delete_from_orbit, fail, fail_with_error,
+    fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
+    has_vanilla_llvm, minify_check, options, requested, warnings,
+    has_shell_timeout, fail_if_not_identical_to_file, with_pass_debug,
+    validate_binary, get_test_dir, get_tests
 )
 
 # For shared.num_failures. Cannot import directly because modifications made in
@@ -104,13 +102,13 @@ def run_wasm_opt_tests():
 
     print('\n[ checking wasm-opt passes... ]\n')
 
-    for t in get_tests(PASSES_TEST_DIR, ['wast', 'wasm']):
+    for t in get_tests(get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         binary = '.wasm' in t
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base
         if passname.isdigit():
-            passname = open(os.path.join(PASSES_TEST_DIR, passname + '.passes')).read().strip()
+            passname = open(os.path.join(get_test_dir('passes'), passname + '.passes')).read().strip()
         opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
         actual = ''
         for module, asserts in split_wast(t):
@@ -129,7 +127,7 @@ def run_wasm_opt_tests():
                 fail_if_not_identical(curr, pass_debug)
             with_pass_debug(check)
 
-        expected_file = os.path.join(PASSES_TEST_DIR, base + ('.bin' if binary else '') + '.txt')
+        expected_file = os.path.join(get_test_dir('passes'), base + ('.bin' if binary else '') + '.txt')
         fail_if_not_identical_to_file(actual, expected_file)
 
         if 'emit-js-wrapper' in t:
@@ -141,22 +139,22 @@ def run_wasm_opt_tests():
 
     print('\n[ checking wasm-opt parsing & printing... ]\n')
 
-    for t in get_tests(PRINT_TEST_DIR, ['wast']):
+    for t in get_tests(get_test_dir('print'), ['.wast']):
         print('..', os.path.basename(t))
         wasm = os.path.basename(t).replace('.wast', '')
         cmd = WASM_OPT + [t, '--print', '-all']
         print('    ', ' '.join(cmd))
         actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
-        expected_file = os.path.join(PRINT_TEST_DIR, wasm + '.txt')
+        expected_file = os.path.join(get_test_dir('print'), wasm + '.txt')
         fail_if_not_identical_to_file(actual, expected_file)
-        cmd = WASM_OPT + [os.path.join(PRINT_TEST_DIR, t), '--print-minified', '-all']
+        cmd = WASM_OPT + [os.path.join(get_test_dir('print'), t), '--print-minified', '-all']
         print('    ', ' '.join(cmd))
         actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
-        fail_if_not_identical(actual.strip(), open(os.path.join(PRINT_TEST_DIR, wasm + '.minified.txt')).read().strip())
+        fail_if_not_identical(actual.strip(), open(os.path.join(get_test_dir('print'), wasm + '.minified.txt')).read().strip())
 
     print('\n[ checking wasm-opt testcases... ]\n')
 
-    for t in get_tests(options.binaryen_test, ['wast']):
+    for t in get_tests(options.binaryen_test, ['.wast']):
         print('..', os.path.basename(t))
         f = t + '.from-wast'
         cmd = WASM_OPT + [t, '--print', '-all']
@@ -172,7 +170,7 @@ def run_wasm_opt_tests():
 
     print('\n[ checking wasm-opt debugInfo read-write... ]\n')
 
-    for t in get_tests(options.binaryen_test, ['fromasm']):
+    for t in get_tests(options.binaryen_test, ['.fromasm']):
         if 'debugInfo' not in t:
             continue
         print('..', os.path.basename(t))
@@ -186,7 +184,7 @@ def run_wasm_opt_tests():
 def run_wasm_dis_tests():
     print('\n[ checking wasm-dis on provided binaries... ]\n')
 
-    for t in get_tests(options.binaryen_test, ['wasm']):
+    for t in get_tests(options.binaryen_test, ['.wasm']):
         print('..', os.path.basename(t))
         cmd = WASM_DIS + [t]
         if os.path.isfile(t + '.map'):
@@ -208,7 +206,7 @@ def run_wasm_dis_tests():
 def run_crash_tests():
     print("\n[ checking we don't crash on tricky inputs... ]\n")
 
-    for t in get_tests(CRASH_TEST_DIR, ['wast', 'wasm']):
+    for t in get_tests(get_test_dir('crash'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         cmd = WASM_OPT + [t]
         # expect a parse error to be reported
@@ -232,7 +230,7 @@ def run_dylink_tests():
 def run_ctor_eval_tests():
     print('\n[ checking wasm-ctor-eval... ]\n')
 
-    for t in get_tests(CTOR_EVAL_TEST_DIR, ['wast', 'wasm']):
+    for t in get_tests(get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
         cmd = WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
@@ -245,7 +243,7 @@ def run_ctor_eval_tests():
 def run_wasm_metadce_tests():
     print('\n[ checking wasm-metadce ]\n')
 
-    for t in get_tests(METADCE_TEST_DIR, ['wast', 'wasm']):
+    for t in get_tests(get_test_dir('metadce'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         graph = t + '.graph.txt'
         cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S', '-all']
@@ -264,7 +262,7 @@ def run_wasm_reduce_tests():
     print('\n[ checking wasm-reduce testcases]\n')
 
     # fixed testcases
-    for t in get_tests(REDUCE_TEST_DIR, ['wast']):
+    for t in get_tests(get_test_dir('reduce'), ['.wast']):
         print('..', os.path.basename(t))
         # convert to wasm
         run_command(WASM_AS + [t, '-o', 'a.wasm'])
@@ -295,7 +293,7 @@ def run_spec_tests():
         # FIXME we support old and new memory formats, for now, until 0xc, and so can't pass this old-style test.
         BLACKLIST = ['binary.wast']
         # FIXME to update the spec to 0xd, we need to implement (register "name") for import.wast
-        spec_tests = get_tests(SPEC_TEST_DIR, ['wast'])
+        spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
         spec_tests = [t for t in spec_tests if os.path.basename(t) not in BLACKLIST]
     else:
         spec_tests = options.spec_tests[:]
@@ -310,8 +308,7 @@ def run_spec_tests():
         def run_spec_test(wast):
             cmd = WASM_SHELL + [wast]
             # we must skip the stack machine portions of spec tests or apply other extra args
-            extra = {
-            }
+            extra = {}
             cmd = cmd + (extra.get(os.path.basename(wast)) or [])
             return run_command(cmd, stderr=subprocess.PIPE)
 
@@ -347,7 +344,7 @@ def run_spec_tests():
                 if actual != expected:
                     fail(actual, expected)
 
-        expected = os.path.join(SPEC_TEST_DIR, 'expected-output', os.path.basename(wast) + '.log')
+        expected = os.path.join(get_test_dir('spec'), 'expected-output', os.path.basename(wast) + '.log')
 
         # some spec tests should fail (actual process failure, not just assert_invalid)
         try:
@@ -395,7 +392,7 @@ def run_spec_tests():
                 open(result_wast, 'a').write('\n' + '\n'.join(asserts))
                 actual += run_spec_test(result_wast)
             # compare all the outputs to the expected output
-            check_expected(actual, os.path.join(SPEC_TEST_DIR, 'expected-output', os.path.basename(wast) + '.log'))
+            check_expected(actual, os.path.join(get_test_dir('spec'), 'expected-output', os.path.basename(wast) + '.log'))
         else:
             # handle unsplittable wast files
             run_spec_test(wast)
@@ -404,17 +401,17 @@ def run_spec_tests():
 def run_validator_tests():
     print('\n[ running validation tests... ]\n')
     # Ensure the tests validate by default
-    cmd = WASM_AS + [os.path.join(VALIDATOR_TEST_DIR, 'invalid_export.wast')]
+    cmd = WASM_AS + [os.path.join(get_test_dir('validator'), 'invalid_export.wast')]
     run_command(cmd)
-    cmd = WASM_AS + [os.path.join(VALIDATOR_TEST_DIR, 'invalid_import.wast')]
+    cmd = WASM_AS + [os.path.join(get_test_dir('validator'), 'invalid_import.wast')]
     run_command(cmd)
-    cmd = WASM_AS + ['--validate=web', os.path.join(VALIDATOR_TEST_DIR, 'invalid_export.wast')]
+    cmd = WASM_AS + ['--validate=web', os.path.join(get_test_dir('validator'), 'invalid_export.wast')]
     run_command(cmd, expected_status=1)
-    cmd = WASM_AS + ['--validate=web', os.path.join(VALIDATOR_TEST_DIR, 'invalid_import.wast')]
+    cmd = WASM_AS + ['--validate=web', os.path.join(get_test_dir('validator'), 'invalid_import.wast')]
     run_command(cmd, expected_status=1)
-    cmd = WASM_AS + ['--validate=none', os.path.join(VALIDATOR_TEST_DIR, 'invalid_return.wast')]
+    cmd = WASM_AS + ['--validate=none', os.path.join(get_test_dir('validator'), 'invalid_return.wast')]
     run_command(cmd)
-    cmd = WASM_AS + [os.path.join(VALIDATOR_TEST_DIR, 'invalid_number.wast')]
+    cmd = WASM_AS + [os.path.join(get_test_dir('validator'), 'invalid_number.wast')]
     run_command(cmd, expected_status=1)
 
 
@@ -439,7 +436,7 @@ def run_vanilla_tests():
         print('____' + ' '.join(command))
         subprocess.check_call(command)
 
-        for c in get_tests(WASM_BACKEND_TEST_DIR, 'cpp'):
+        for c in get_tests(get_test_dir('wasm_backend'), '.cpp'):
             print('..', os.path.basename(c))
             base = c.replace('.cpp', '').replace('.c', '')
             expected = open(os.path.join(base + '.txt')).read()
@@ -470,12 +467,12 @@ def run_gcc_tests():
         fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
         return
 
-    for t in sorted(os.listdir(EXAMPLE_TEST_DIR)):
+    for t in sorted(os.listdir(get_test_dir('example'))):
         output_file = 'example'
         cmd = ['-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-pthread', '-o', output_file]
         if t.endswith('.txt'):
             # check if there is a trace in the file, if so, we should build it
-            out = subprocess.check_output([os.path.join(options.binaryen_root, 'scripts', 'clean_c_api_trace.py'), os.path.join(EXAMPLE_TEST_DIR, t)])
+            out = subprocess.check_output([os.path.join(options.binaryen_root, 'scripts', 'clean_c_api_trace.py'), os.path.join(get_test_dir('example'), t)])
             if len(out) == 0:
                 print('  (no trace in ', t, ')')
                 continue
@@ -483,10 +480,10 @@ def run_gcc_tests():
             src = 'trace.cpp'
             with open(src, 'wb') as o:
                 o.write(out)
-            expected = os.path.join(EXAMPLE_TEST_DIR, t + '.txt')
+            expected = os.path.join(get_test_dir('example'), t + '.txt')
         else:
-            src = os.path.join(EXAMPLE_TEST_DIR, t)
-            expected = os.path.join(EXAMPLE_TEST_DIR, '.'.join(t.split('.')[:-1]) + '.txt')
+            src = os.path.join(get_test_dir('example'), t)
+            expected = os.path.join(get_test_dir('example'), '.'.join(t.split('.')[:-1]) + '.txt')
         if src.endswith(('.c', '.cpp')):
             # build the C file separately
             libpath = os.path.join(os.path.dirname(options.binaryen_bin),  'lib')

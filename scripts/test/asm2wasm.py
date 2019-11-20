@@ -27,7 +27,7 @@ from .shared import (
 def test_asm2wasm():
     print('[ checking asm2wasm testcases... ]\n')
 
-    for asm in get_tests(options.binaryen_test, ['asm.js']):
+    for asm in get_tests(options.binaryen_test, ['.asm.js']):
         basename = os.path.basename(asm)
         for precise in [0, 1, 2]:
             for opts in [1, 0]:

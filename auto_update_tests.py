@@ -22,11 +22,9 @@ from collections import OrderedDict
 
 from scripts.test.support import run_command, split_wast, write_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
-    ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS, WASM_CTOR_EVAL,
-    WASM_REDUCE, WASM_METADCE, BINARYEN_INSTALL_DIR, BINARYEN_JS_TEST_DIR,
-    CTOR_EVAL_TEST_DIR, EXAMPLE_TEST_DIR, METADCE_TEST_DIR, PASSES_TEST_DIR,
-    PRINT_TEST_DIR, REDUCE_TEST_DIR, BINARYEN_JS, has_shell_timeout, options,
-    requested, get_tests
+    ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS,
+    WASM_CTOR_EVAL, WASM_REDUCE, WASM_METADCE, BINARYEN_INSTALL_DIR,
+    BINARYEN_JS, has_shell_timeout, options, requested, get_test_dir, get_tests
 )
 
 from scripts.test import lld
@@ -35,7 +33,7 @@ from scripts.test import wasm2js
 
 def update_asm_js_tests():
     print('[ processing and updating testcases... ]\n')
-    for asm in get_tests(options.binaryen_test, ['asm.js']):
+    for asm in get_tests(options.binaryen_test, ['.asm.js']):
         basename = os.path.basename(asm)
         for precise in [0, 1, 2]:
             for opts in [1, 0]:
@@ -86,7 +84,7 @@ def update_wasm_opt_tests():
     open(wast, 'w').write(open('a.wast').read())
 
     print('\n[ checking wasm-opt parsing & printing... ]\n')
-    for t in get_tests(PRINT_TEST_DIR, ['wast']):
+    for t in get_tests(get_test_dir('print'), ['.wast']):
         print('..', os.path.basename(t))
         wasm = t.replace('.wast', '')
         cmd = WASM_OPT + [t, '--print', '-all']
@@ -102,7 +100,7 @@ def update_wasm_opt_tests():
             o.write(actual)
 
     print('\n[ checking wasm-opt passes... ]\n')
-    for t in get_tests(PASSES_TEST_DIR, ['wast', 'wasm']):
+    for t in get_tests(get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         binary = t.endswith('.wasm')
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
@@ -128,7 +126,7 @@ def update_wasm_opt_tests():
                     o.write(i.read())
 
     print('\n[ checking wasm-opt testcases... ]\n')
-    for t in get_tests(options.binaryen_test, ['wast']):
+    for t in get_tests(options.binaryen_test, ['.wast']):
         print('..', os.path.basename(t))
         f = t + '.from-wast'
         cmd = WASM_OPT + [t, '--print', '-all']
@@ -137,7 +135,7 @@ def update_wasm_opt_tests():
         open(f, 'w').write(actual)
 
     print('\n[ checking wasm-opt debugInfo read-write... ]\n')
-    for t in get_tests(options.binaryen_test, ['fromasm']):
+    for t in get_tests(options.binaryen_test, ['.fromasm']):
         if 'debugInfo' not in t:
             continue
         print('..', os.path.basename(t))
@@ -150,7 +148,7 @@ def update_wasm_opt_tests():
 
 def update_bin_fmt_tests():
     print('\n[ checking binary format testcases... ]\n')
-    for wast in get_tests(options.binaryen_test, ['wast']):
+    for wast in get_tests(options.binaryen_test, ['.wast']):
         for debug_info in [0, 1]:
             cmd = WASM_AS + [wast, '-o', 'a.wasm', '-all']
             if debug_info:
@@ -177,7 +175,7 @@ def update_bin_fmt_tests():
 
 def update_example_tests():
     print('\n[ checking example testcases... ]\n')
-    for t in get_tests(EXAMPLE_TEST_DIR):
+    for t in get_tests(get_test_dir('example')):
         basename = os.path.basename(t)
         output_file = os.path.join(options.binaryen_bin, 'example')
         libdir = os.path.join(BINARYEN_INSTALL_DIR, 'lib')
@@ -232,7 +230,7 @@ def update_example_tests():
 
 def update_wasm_dis_tests():
     print('\n[ checking wasm-dis on provided binaries... ]\n')
-    for t in get_tests(options.binaryen_test, ['wasm']):
+    for t in get_tests(options.binaryen_test, ['.wasm']):
         print('..', os.path.basename(t))
         cmd = WASM_DIS + [t]
         if os.path.isfile(t + '.map'):
@@ -253,8 +251,9 @@ def update_binaryen_js_tests():
 
     print('\n[ checking binaryen.js testcases... ]\n')
     node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
-    for s in get_tests(BINARYEN_JS_TEST_DIR, ['js']):
-        print(os.path.basename(s))
+    for s in get_tests(get_test_dir('binaryen.js', ['.js'])):
+        basename = os.path.basename(s)
+        print(basename)
         f = open('a.js', 'w')
         f.write(open(BINARYEN_JS).read())
         if NODEJS:
@@ -264,7 +263,7 @@ def update_binaryen_js_tests():
         f.close()
         if MOZJS or node_has_wasm or 'WebAssembly.' not in test_src:
             cmd = [MOZJS or NODEJS, 'a.js']
-            if 'fatal' not in os.path.basename(s):
+            if 'fatal' not in basename:
                 out = run_command(cmd, stderr=subprocess.STDOUT)
             else:
                 # expect an error - the specific error code will depend on the vm
@@ -272,12 +271,12 @@ def update_binaryen_js_tests():
             with open(s + '.txt', 'w') as o:
                 o.write(out)
         else:
-            print('Skipping ' + os.path.basename(s) + ' because WebAssembly might not be supported')
+            print('Skipping ' + basename + ' because WebAssembly might not be supported')
 
 
 def update_ctor_eval_tests():
     print('\n[ checking wasm-ctor-eval... ]\n')
-    for t in get_tests(CTOR_EVAL_TEST_DIR, ['wast', 'wasm']):
+    for t in get_tests(get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
         cmd = WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
@@ -290,7 +289,7 @@ def update_ctor_eval_tests():
 
 def update_metadce_tests():
     print('\n[ checking wasm-metadce... ]\n')
-    for t in get_tests(METADCE_TEST_DIR, ['wast', 'wasm']):
+    for t in get_tests(get_test_dir('metadce'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         graph = t + '.graph.txt'
         cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S', '-all']
@@ -307,7 +306,7 @@ def update_reduce_tests():
     if not has_shell_timeout():
         return
     print('\n[ checking wasm-reduce ]\n')
-    for t in get_tests(REDUCE_TEST_DIR, ['wast']):
+    for t in get_tests(get_test_dir('reduce'), ['.wast']):
         print('..', os.path.basename(t))
         # convert to wasm
         run_command(WASM_AS + [t, '-o', 'a.wasm'])
