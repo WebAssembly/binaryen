@@ -25,8 +25,8 @@ from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS, WASM_CTOR_EVAL,
     WASM_REDUCE, WASM_METADCE, BINARYEN_INSTALL_DIR, BINARYEN_JS_TEST_DIR,
     CTOR_EVAL_TEST_DIR, EXAMPLE_TEST_DIR, METADCE_TEST_DIR, PASSES_TEST_DIR,
-    PRINT_TEST_DIR, REDUCE_TEST_DIR, SPEC_TEST_DIR, BINARYEN_JS,
-    has_shell_timeout, options, requested, get_tests
+    PRINT_TEST_DIR, REDUCE_TEST_DIR, BINARYEN_JS, has_shell_timeout, options,
+    requested, get_tests
 )
 
 from scripts.test import lld

@@ -246,14 +246,14 @@ def run_wasm_metadce_tests():
     print('\n[ checking wasm-metadce ]\n')
 
     for t in get_tests(METADCE_TEST_DIR, ['wast', 'wasm']):
-            print('..', os.path.basename(t))
-            graph = t + '.graph.txt'
-            cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S', '-all']
-            stdout = run_command(cmd)
-            expected = t + '.dced'
-            with open('a.wast') as seen:
-                fail_if_not_identical_to_file(seen.read(), expected)
-            fail_if_not_identical_to_file(stdout, expected + '.stdout')
+        print('..', os.path.basename(t))
+        graph = t + '.graph.txt'
+        cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S', '-all']
+        stdout = run_command(cmd)
+        expected = t + '.dced'
+        with open('a.wast') as seen:
+            fail_if_not_identical_to_file(seen.read(), expected)
+        fail_if_not_identical_to_file(stdout, expected + '.stdout')
 
 
 def run_wasm_reduce_tests():
@@ -265,14 +265,14 @@ def run_wasm_reduce_tests():
 
     # fixed testcases
     for t in get_tests(REDUCE_TEST_DIR, ['wast']):
-            print('..', os.path.basename(t))
-            # convert to wasm
-            run_command(WASM_AS + [t, '-o', 'a.wasm'])
-            run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
-            expected = t + '.txt'
-            run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
-            with open('a.wast') as seen:
-                fail_if_not_identical_to_file(seen.read(), expected)
+        print('..', os.path.basename(t))
+        # convert to wasm
+        run_command(WASM_AS + [t, '-o', 'a.wasm'])
+        run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+        expected = t + '.txt'
+        run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
+        with open('a.wast') as seen:
+            fail_if_not_identical_to_file(seen.read(), expected)
 
     # run on a nontrivial fuzz testcase, for general coverage
     # this is very slow in ThreadSanitizer, so avoid it there
