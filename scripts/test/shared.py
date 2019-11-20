@@ -186,6 +186,21 @@ WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
 BINARYEN_JS = os.path.join(options.binaryen_root, 'out', 'binaryen.js')
 
+BINARYEN_JS_TEST_DIR = os.path.join(options.binaryen_test, 'binaryen.js')
+CRASH_TEST_DIR = os.path.join(options.binaryen_test, 'crash')
+CTOR_EVAL_TEST_DIR = os.path.join(options.binaryen_test, 'ctor-eval')
+EXAMPLE_TEST_DIR = os.path.join(options.binaryen_test, 'example')
+LLD_TEST_DIR = os.path.join(options.binaryen_test, 'lld')
+METADCE_TEST_DIR = os.path.join(options.binaryen_test, 'metadce')
+PASSES_TEST_DIR = os.path.join(options.binaryen_test, 'passes')
+PRINT_TEST_DIR = os.path.join(options.binaryen_test, 'print')
+REDUCE_TEST_DIR = os.path.join(options.binaryen_test, 'reduce')
+SPEC_TEST_DIR = os.path.join(options.binaryen_test, 'spec')
+UNIT_TEST_DIR = os.path.join(options.binaryen_test, 'unit')
+VALIDATOR_TEST_DIR = os.path.join(options.binaryen_test, 'validator')
+WASM2JS_TEST_DIR = os.path.join(options.binaryen_test, 'wasm2js')
+WASM_BACKEND_TEST_DIR = os.path.join(options.binaryen_test, 'wasm_backend')
+
 
 def wrap_with_valgrind(cmd):
     # Exit code 97 is arbitrary, used to easily detect when an error occurs that
@@ -373,10 +388,16 @@ def fail_if_not_identical_to_file(actual, expected_file):
         fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 
-if len(requested) == 0:
-    tests = sorted(os.listdir(os.path.join(options.binaryen_test)))
-else:
-    tests = requested[:]
+# Returns the list of test files in a given directory. 'extensions' is a list of
+# file extensions. If 'extensions' is empty, returns all files.
+def get_tests(test_dir, extensions=[]):
+    tests = []
+    if not extensions:
+        tests += glob.glob(os.path.join(test_dir, '*'))
+    for ext in extensions:
+        tests += glob.glob(os.path.join(test_dir, '*.' + ext))
+    return sorted(tests)
+
 
 if not options.interpreter:
     warn('no interpreter provided (did not test spec interpreter validation)')
