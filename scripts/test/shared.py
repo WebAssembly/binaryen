@@ -469,10 +469,6 @@ def minify_check(wast, verify_final_result=True):
         os.unlink('b.wast')
 
 
-def files_with_pattern(*path_pattern):
-    return sorted(glob.glob(os.path.join(*path_pattern)))
-
-
 # run a check with BINARYEN_PASS_DEBUG set, to do full validation
 def with_pass_debug(check):
     old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
