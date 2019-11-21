@@ -60,7 +60,7 @@ template<typename T> struct FindAllPointers {
 
   FindAllPointers(Expression* ast) {
     PointerFinder finder;
-    finder.id = T()._id;
+    finder.id = (Expression::Id)T::SpecificId;
     finder.list = &list;
     finder.walk(ast);
   }
