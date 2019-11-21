@@ -20,19 +20,18 @@ import subprocess
 from .support import run_command
 from .shared import (
     ASM2WASM, WASM_OPT, binary_format_check, delete_from_orbit,
-    fail_with_error, options, tests, fail_if_not_identical_to_file
+    fail_with_error, options, fail_if_not_identical_to_file, get_tests
 )
 
 
 def test_asm2wasm():
     print('[ checking asm2wasm testcases... ]\n')
 
-    for asm in tests:
-        if not asm.endswith('.asm.js'):
-            continue
+    for asm in get_tests(options.binaryen_test, ['.asm.js']):
+        basename = os.path.basename(asm)
         for precise in [0, 1, 2]:
             for opts in [1, 0]:
-                cmd = ASM2WASM + [os.path.join(options.binaryen_test, asm)]
+                cmd = ASM2WASM + [asm]
                 if 'threads' in asm:
                     cmd += ['--enable-threads']
                 wasm = asm.replace('.asm.js', '.fromasm')
@@ -48,22 +47,21 @@ def test_asm2wasm():
                         cmd += ['-O0']  # test that -O0 does nothing
                 else:
                     cmd += ['-O']
-                if 'debugInfo' in asm:
+                if 'debugInfo' in basename:
                     cmd += ['-g']
-                if 'noffi' in asm:
+                if 'noffi' in basename:
                     cmd += ['--no-legalize-javascript-ffi']
                 if precise and opts:
                     # test mem init importing
-                    open('a.mem', 'w').write(asm)
+                    open('a.mem', 'w').write(basename)
                     cmd += ['--mem-init=a.mem']
-                    if asm[0] == 'e':
+                    if basename[0] == 'e':
                         cmd += ['--mem-base=1024']
-                if '4GB' in asm:
+                if '4GB' in basename:
                     cmd += ['--mem-max=4294967296']
-                if 'i64' in asm or 'wasm-only' in asm or 'noffi' in asm:
+                if 'i64' in basename or 'wasm-only' in basename or 'noffi' in basename:
                     cmd += ['--wasm-only']
-                wasm = os.path.join(options.binaryen_test, wasm)
-                print('..', asm, wasm)
+                print('..', basename, os.path.basename(wasm))
 
                 def do_asm2wasm_test():
                     actual = run_command(cmd)

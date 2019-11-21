@@ -16,7 +16,7 @@
 import os
 from .support import run_command
 from .shared import (
-    fail_with_error, files_with_pattern, options,
+    fail_with_error, get_test_dir, get_tests,
     WASM_EMSCRIPTEN_FINALIZE, fail_if_not_identical_to_file
 )
 
@@ -35,7 +35,7 @@ def args_for_finalize(filename):
 def test_wasm_emscripten_finalize():
     print('\n[ checking wasm-emscripten-finalize testcases... ]\n')
 
-    for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
+    for wast_path in get_tests(get_test_dir('lld'), ['.wast']):
         print('..', wast_path)
         is_passive = '.passive.' in wast_path
         mem_file = wast_path + '.mem'
@@ -69,7 +69,7 @@ def test_wasm_emscripten_finalize():
 def update_lld_tests():
     print('\n[ updatring wasm-emscripten-finalize testcases... ]\n')
 
-    for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
+    for wast_path in get_tests(get_test_dir('lld'), ['.wast']):
         print('..', wast_path)
         is_passive = '.passive.' in wast_path
         mem_file = wast_path + '.mem'
