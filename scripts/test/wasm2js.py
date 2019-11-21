@@ -129,7 +129,7 @@ def update_wasm2js_tests():
                 continue
 
             asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
-            expected_file = os.path.join(get_test_dir('wasm2js', asm))
+            expected_file = os.path.join(get_test_dir('wasm2js'), asm)
             if opt:
                 expected_file += '.opt'
 

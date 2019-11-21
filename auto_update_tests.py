@@ -251,7 +251,7 @@ def update_binaryen_js_tests():
 
     print('\n[ checking binaryen.js testcases... ]\n')
     node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
-    for s in get_tests(get_test_dir('binaryen.js', ['.js'])):
+    for s in get_tests(get_test_dir('binaryen.js'), ['.js']):
         basename = os.path.basename(s)
         print(basename)
         f = open('a.js', 'w')
