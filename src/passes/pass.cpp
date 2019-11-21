@@ -129,9 +129,8 @@ void PassRegistry::registerPasses() {
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
-  registerPass("inline-main",
-               "inline __original_main into main",
-               createInlineMainPass);
+  registerPass(
+    "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
                "inline functions (you probably want inlining-optimizing)",
                createInliningPass);

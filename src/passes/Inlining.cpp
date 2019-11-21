@@ -426,7 +426,8 @@ struct InlineMainPass : public Pass {
   void run(PassRunner* runner, Module* module) override {
     auto* main = module->getFunctionOrNull(MAIN);
     auto* originalMain = module->getFunctionOrNull(ORIGINAL_MAIN);
-    if (!main || main->imported() || !originalMain || originalMain->imported()) {
+    if (!main || main->imported() || !originalMain ||
+        originalMain->imported()) {
       return;
     }
     FindAllPointers<Call> calls(main->body);
@@ -448,8 +449,6 @@ struct InlineMainPass : public Pass {
   }
 };
 
-Pass* createInlineMainPass() {
-  return new InlineMainPass();
-}
+Pass* createInlineMainPass() { return new InlineMainPass(); }
 
 } // namespace wasm
