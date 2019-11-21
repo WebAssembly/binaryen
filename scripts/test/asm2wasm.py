@@ -17,21 +17,18 @@
 import os
 import subprocess
 
-from .support import run_command
-from .shared import (
-    ASM2WASM, WASM_OPT, binary_format_check, delete_from_orbit,
-    fail_with_error, options, fail_if_not_identical_to_file, get_tests
-)
+from scripts.test import shared
+from scripts.test import support
 
 
 def test_asm2wasm():
     print('[ checking asm2wasm testcases... ]\n')
 
-    for asm in get_tests(options.binaryen_test, ['.asm.js']):
+    for asm in shared.get_tests(shared.options.binaryen_test, ['.asm.js']):
         basename = os.path.basename(asm)
         for precise in [0, 1, 2]:
             for opts in [1, 0]:
-                cmd = ASM2WASM + [asm]
+                cmd = shared.ASM2WASM + [asm]
                 if 'threads' in asm:
                     cmd += ['--enable-threads']
                 wasm = asm.replace('.asm.js', '.fromasm')
@@ -64,14 +61,14 @@ def test_asm2wasm():
                 print('..', basename, os.path.basename(wasm))
 
                 def do_asm2wasm_test():
-                    actual = run_command(cmd)
+                    actual = support.run_command(cmd)
 
                     # verify output
                     if not os.path.exists(wasm):
-                        fail_with_error('output .wast file %s does not exist' % wasm)
-                    fail_if_not_identical_to_file(actual, wasm)
+                        shared.fail_with_error('output .wast file %s does not exist' % wasm)
+                    shared.fail_if_not_identical_to_file(actual, wasm)
 
-                    binary_format_check(wasm, verify_final_result=False)
+                    shared.binary_format_check(wasm, verify_final_result=False)
 
                 # test both normally and with pass debug (so each inter-pass state
                 # is validated)
@@ -91,12 +88,12 @@ def test_asm2wasm():
                             del os.environ['BINARYEN_PASS_DEBUG']
 
                 # verify in wasm
-                if options.interpreter:
+                if shared.options.interpreter:
                     # remove imports, spec interpreter doesn't know what to do with them
-                    subprocess.check_call(WASM_OPT + ['--remove-imports', wasm],
+                    subprocess.check_call(shared.WASM_OPT + ['--remove-imports', wasm],
                                           stdout=open('ztemp.wast', 'w'),
                                           stderr=subprocess.PIPE)
-                    proc = subprocess.Popen([options.interpreter, 'ztemp.wast'],
+                    proc = subprocess.Popen([shared.options.interpreter, 'ztemp.wast'],
                                             stderr=subprocess.PIPE)
                     out, err = proc.communicate()
                     if proc.returncode != 0:
@@ -114,8 +111,8 @@ def test_asm2wasm():
                             print(err)
                         except Exception:
                             # failed to pretty-print
-                            fail_with_error('wasm interpreter error: ' + err)
-                        fail_with_error('wasm interpreter error')
+                            shared.fail_with_error('wasm interpreter error: ' + err)
+                        shared.fail_with_error('wasm interpreter error')
 
                 # verify debug info
                 if 'debugInfo' in asm:
@@ -123,11 +120,11 @@ def test_asm2wasm():
                     cmd += ['--source-map', jsmap,
                             '--source-map-url', 'http://example.org/' + jsmap,
                             '-o', 'a.wasm']
-                    run_command(cmd)
+                    support.run_command(cmd)
                     if not os.path.isfile(jsmap):
-                        fail_with_error('Debug info map not created: %s' % jsmap)
+                        shared.fail_with_error('Debug info map not created: %s' % jsmap)
                     with open(jsmap, 'rb') as actual:
-                        fail_if_not_identical_to_file(actual.read(), wasm + '.map')
+                        shared.fail_if_not_identical_to_file(actual.read(), wasm + '.map')
                     with open('a.wasm', 'rb') as binary:
                         url_section_name = bytes([16]) + bytes('sourceMappingURL', 'utf-8')
                         url = 'http://example.org/' + jsmap
@@ -136,21 +133,21 @@ def test_asm2wasm():
                         print(url_section_name)
                         binary_contents = binary.read()
                         if url_section_name not in binary_contents:
-                            fail_with_error('source map url section not found in binary')
+                            shared.fail_with_error('source map url section not found in binary')
                         url_section_index = binary_contents.index(url_section_name)
                         if url_section_contents not in binary_contents[url_section_index:]:
-                            fail_with_error('source map url not found in url section')
+                            shared.fail_with_error('source map url not found in url section')
 
 
 def test_asm2wasm_binary():
     print('\n[ checking asm2wasm binary reading/writing... ]\n')
 
-    asmjs = os.path.join(options.binaryen_test, 'hello_world.asm.js')
-    delete_from_orbit('a.wasm')
-    delete_from_orbit('b.wast')
-    run_command(ASM2WASM + [asmjs, '-o', 'a.wasm'])
+    asmjs = os.path.join(shared.options.binaryen_test, 'hello_world.asm.js')
+    shared.delete_from_orbit('a.wasm')
+    shared.delete_from_orbit('b.wast')
+    support.run_command(shared.ASM2WASM + [asmjs, '-o', 'a.wasm'])
     assert open('a.wasm', 'rb').read()[0] == 0, 'we emit binary by default'
-    run_command(ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
+    support.run_command(shared.ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
     assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
 
 
