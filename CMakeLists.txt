@@ -161,12 +161,19 @@ ELSE()
   ENDIF()
   ADD_DEBUG_COMPILE_FLAG("-O0")
   ADD_DEBUG_COMPILE_FLAG("-g3")
-  ADD_NONDEBUG_COMPILE_FLAG("-O2")
+  IF (EMSCRIPTEN)
+    # really focus on minimizing output size when compiling sources
+    ADD_NONDEBUG_COMPILE_FLAG("-Oz")
+  ELSE()
+    ADD_NONDEBUG_COMPILE_FLAG("-O2")
+  ENDIF()
   ADD_NONDEBUG_COMPILE_FLAG("-UNDEBUG") # Keep asserts.
 ENDIF()
 
 IF (EMSCRIPTEN)
-  add_link_options("-O3") # must appear after CMake's default -O2 at link
+  # link with -O3 for metadce and other powerful optimizations. note that we
+  # must use add_link_options so that this appears after CMake's default -O2
+  add_link_options("-O3")
   ADD_LINK_FLAG("-s SINGLE_FILE")
   ADD_LINK_FLAG("-s ALLOW_MEMORY_GROWTH=1")
   ADD_COMPILE_FLAG("-s DISABLE_EXCEPTION_CATCHING=0")
@@ -231,6 +238,7 @@ ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ir cfg support wasm)
 IF (EMSCRIPTEN)
+  # make wasm-opt immediately usable on Node.js
   target_link_options(wasm-opt PUBLIC -s NODERAWFS)
 ENDIF()
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 14)
@@ -328,7 +336,8 @@ SET(binaryen_js_SOURCES
 ADD_EXECUTABLE(binaryen_js
                ${binaryen_js_SOURCES})
 TARGET_LINK_LIBRARIES(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-target_link_options(binaryen_js PUBLIC "SHELL:-Os")
+# note that SHELL: is needed as otherwise cmake will coalesce -s link flags
+# in an incorrect way for emscripten
 target_link_options(binaryen_js PUBLIC "SHELL:-s WASM=0")
 target_link_options(binaryen_js PUBLIC "SHELL:-s WASM_ASYNC_COMPILATION=0")
 target_link_options(binaryen_js PUBLIC "SHELL:-s MODULARIZE_INSTANCE=1")
