@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <cassert>
 #include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
