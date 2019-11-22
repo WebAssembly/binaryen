@@ -317,6 +317,10 @@ SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+# binaryen.js
+#
+# Note that we can't emit binaryen.js directly, as there is libbinaryen already
+# declared earlier, so we create binaryen_js.js, which must then be copied.
 IF (EMSCRIPTEN)
 SET(binaryen_js_SOURCES
   src/binaryen-c.cpp
