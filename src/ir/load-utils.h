@@ -31,7 +31,7 @@ inline bool isSignRelevant(Load* load) {
   if (load->type == unreachable) {
     return false;
   }
-  return !isFloatType(type) && load->bytes < getTypeSize(type);
+  return !type.isFloat() && load->bytes < getTypeSize(type);
 }
 
 // check if a load can be signed (which some opts want to do)

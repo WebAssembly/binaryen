@@ -113,7 +113,7 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     ret += ")";
     if (func->result != none) {
-      ret += ", '" + std::string(printType(func->result)) + "'))";
+      ret += ", '" + func->result.toString() + "'))";
       // TODO: getTempRet
     }
     ret += ";\n";

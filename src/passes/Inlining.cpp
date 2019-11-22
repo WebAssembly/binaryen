@@ -190,7 +190,7 @@ struct Updater : public PostWalker<Updater> {
   template<typename T> void handleReturnCall(T* curr, Type targetType) {
     curr->isReturn = false;
     curr->type = targetType;
-    if (isConcreteType(targetType)) {
+    if (targetType.isConcrete()) {
       replaceCurrent(builder->makeBreak(returnName, curr));
     } else {
       replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
@@ -226,7 +226,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.str);
   if (call->isReturn) {
-    if (isConcreteType(retType)) {
+    if (retType.isConcrete()) {
       *action.callSite = builder.makeReturn(block);
     } else {
       *action.callSite = builder.makeSequence(block, builder.makeReturn());

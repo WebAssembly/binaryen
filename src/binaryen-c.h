@@ -97,8 +97,8 @@ BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 BINARYEN_API BinaryenType BinaryenTypeAuto(void);
 BINARYEN_API BinaryenType BinaryenTypeCreate(BinaryenType* valueTypes,
                                              uint32_t numTypes);
-BINARYEN_API uint32_t BinaryenTypeNumValTypes(BinaryenType t);
-BINARYEN_API void BinaryenTypeGetValTypes(BinaryenType t, BinaryenType* buf);
+BINARYEN_API uint32_t BinaryenTypeArity(BinaryenType t);
+BINARYEN_API void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf);
 
 WASM_DEPRECATED BinaryenType BinaryenNone(void);
 WASM_DEPRECATED BinaryenType BinaryenInt32(void);

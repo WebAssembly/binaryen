@@ -153,56 +153,56 @@ void test_types() {
 
   BinaryenType none = BinaryenTypeNone();
   printf("  // BinaryenTypeNone: %d\n", none);
-  assert(BinaryenTypeNumValTypes(none) == 0);
-  BinaryenTypeGetValTypes(none, &valueType);
+  assert(BinaryenTypeArity(none) == 0);
+  BinaryenTypeExpand(none, &valueType);
   assert(valueType == 0xdeadbeef);
 
   BinaryenType unreachable = BinaryenTypeUnreachable();
   printf("  // BinaryenTypeUnreachable: %d\n", unreachable);
-  assert(BinaryenTypeNumValTypes(unreachable) == 0);
-  BinaryenTypeGetValTypes(unreachable, &valueType);
+  assert(BinaryenTypeArity(unreachable) == 0);
+  BinaryenTypeExpand(unreachable, &valueType);
   assert(valueType == 0xdeadbeef);
 
   BinaryenType i32 = BinaryenTypeInt32();
   printf("  // BinaryenTypeInt32: %d\n", i32);
-  assert(BinaryenTypeNumValTypes(i32) == 1);
-  BinaryenTypeGetValTypes(i32, &valueType);
+  assert(BinaryenTypeArity(i32) == 1);
+  BinaryenTypeExpand(i32, &valueType);
   assert(valueType == i32);
 
   BinaryenType i64 = BinaryenTypeInt64();
   printf("  // BinaryenTypeInt64: %d\n", i64);
-  assert(BinaryenTypeNumValTypes(i64) == 1);
-  BinaryenTypeGetValTypes(i64, &valueType);
+  assert(BinaryenTypeArity(i64) == 1);
+  BinaryenTypeExpand(i64, &valueType);
   assert(valueType == i64);
 
   BinaryenType f32 = BinaryenTypeFloat32();
   printf("  // BinaryenTypeFloat32: %d\n", f32);
-  assert(BinaryenTypeNumValTypes(f32) == 1);
-  BinaryenTypeGetValTypes(f32, &valueType);
+  assert(BinaryenTypeArity(f32) == 1);
+  BinaryenTypeExpand(f32, &valueType);
   assert(valueType == f32);
 
   BinaryenType f64 = BinaryenTypeFloat64();
   printf("  // BinaryenTypeFloat64: %d\n", f64);
-  assert(BinaryenTypeNumValTypes(f64) == 1);
-  BinaryenTypeGetValTypes(f64, &valueType);
+  assert(BinaryenTypeArity(f64) == 1);
+  BinaryenTypeExpand(f64, &valueType);
   assert(valueType == f64);
 
   BinaryenType v128 = BinaryenTypeVec128();
   printf("  // BinaryenTypeVec128: %d\n", v128);
-  assert(BinaryenTypeNumValTypes(v128) == 1);
-  BinaryenTypeGetValTypes(v128, &valueType);
+  assert(BinaryenTypeArity(v128) == 1);
+  BinaryenTypeExpand(v128, &valueType);
   assert(valueType == v128);
 
   BinaryenType anyref = BinaryenTypeAnyref();
   printf("  // BinaryenTypeAnyref: %d\n", anyref);
-  assert(BinaryenTypeNumValTypes(anyref) == 1);
-  BinaryenTypeGetValTypes(anyref, &valueType);
+  assert(BinaryenTypeArity(anyref) == 1);
+  BinaryenTypeExpand(anyref, &valueType);
   assert(valueType == anyref);
 
   BinaryenType exnref = BinaryenTypeExnref();
   printf("  // BinaryenTypeExnref: %d\n", exnref);
-  assert(BinaryenTypeNumValTypes(exnref) == 1);
-  BinaryenTypeGetValTypes(exnref, &valueType);
+  assert(BinaryenTypeArity(exnref) == 1);
+  BinaryenTypeExpand(exnref, &valueType);
   assert(valueType == exnref);
 
   printf("  // BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
@@ -210,9 +210,9 @@ void test_types() {
   BinaryenType pair[] = {i32, i32};
 
   BinaryenType i32_pair = BinaryenTypeCreate(pair, 2);
-  assert(BinaryenTypeNumValTypes(i32_pair) == 2);
+  assert(BinaryenTypeArity(i32_pair) == 2);
   pair[0] = pair[1] = none;
-  BinaryenTypeGetValTypes(i32_pair, pair);
+  BinaryenTypeExpand(i32_pair, pair);
   assert(pair[0] == i32 && pair[1] == i32);
 
   BinaryenType duplicate_pair = BinaryenTypeCreate(pair, 2);

@@ -169,7 +169,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     assert(!node->isBad());
     Builder builder(*module);
     auto type = node->getWasmType();
-    if (!isConcreteType(type)) {
+    if (!type.isConcrete()) {
       return &bad;
     }
     auto* zero = makeZero(type);
@@ -397,7 +397,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &bad;
     }
-    assert(isConcreteType(curr->value->type));
+    assert(curr->value->type.isConcrete());
     sets.push_back(curr);
     expressionParentMap[curr] = parent;
     expressionParentMap[curr->value] = curr;
@@ -603,7 +603,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
 
   // Helpers.
 
-  bool isRelevantType(wasm::Type type) { return isIntegerType(type); }
+  bool isRelevantType(wasm::Type type) { return type.isInteger(); }
 
   bool isRelevantLocal(Index index) {
     return isRelevantType(func->getLocalType(index));

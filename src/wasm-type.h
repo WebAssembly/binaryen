@@ -18,12 +18,14 @@
 #define wasm_wasm_type_h
 
 #include "wasm-features.h"
+#include <ostream>
 #include <vector>
 
 namespace wasm {
 
 class Type {
   uint32_t id;
+  void init(const std::vector<Type>&);
 
 public:
   enum ValueType : uint32_t {
@@ -37,9 +39,6 @@ public:
     anyref,
     exnref,
     _last_value_type,
-    // none means no type, e.g. a block can have no return type. but unreachable
-    // is different, as it can be "ignored" when doing type checking across
-    // branches
   };
 
   Type() = default;
@@ -50,27 +49,51 @@ public:
   // But converting raw uint32_t is more dangerous, so make it explicit
   constexpr explicit Type(uint32_t id) : id(id){};
 
-  explicit Type(const std::vector<ValueType>& types);
+  // Construct from lists of elementary types
+  Type(std::initializer_list<Type> types);
+  explicit Type(const std::vector<Type>& types);
 
-  size_t getNumValueTypes() const;
-  const std::vector<ValueType> getValueTypes() const;
+  // Accessors
+  size_t size() const;
+  const std::vector<Type>& expand() const;
 
-  bool isValueType() { return id >= i32 && id < _last_value_type; }
+  // Predicates
+  bool isSingle() const { return id >= i32 && id < _last_value_type; }
+  bool isMulti() const { return id >= _last_value_type; }
+  bool isConcrete() const { return id >= i32; }
+  bool isInteger() const { return id == i32 || id == i64; }
+  bool isFloat() const { return id == f32 || id == f64; }
+  bool isVector() const { return id == v128; };
+  bool isRef() const { return id == anyref || id == exnref; }
 
   // (In)equality must be defined for both Type and ValueType because it is
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
-  bool operator==(const Type& other) { return id == other.id; }
-
-  bool operator==(const ValueType& other) { return id == other; }
-
-  bool operator!=(const Type& other) { return id != other.id; }
-
-  bool operator!=(const ValueType& other) { return id != other; }
+  bool operator==(const Type& other) const { return id == other.id; }
+  bool operator==(const ValueType& other) const { return id == other; }
+  bool operator!=(const Type& other) const { return id != other.id; }
+  bool operator!=(const ValueType& other) const { return id != other; }
 
   // Allows for using Types in switch statements
   constexpr operator uint32_t() const { return id; }
+  std::string toString() const;
 };
+
+struct ParamType {
+  Type type;
+  ParamType(Type type) : type(type) {}
+  std::string toString() const;
+};
+
+struct ResultType {
+  Type type;
+  ResultType(Type type) : type(type) {}
+  std::string toString() const;
+};
+
+std::ostream& operator<<(std::ostream& os, Type t);
+std::ostream& operator<<(std::ostream& os, ParamType t);
+std::ostream& operator<<(std::ostream& os, ResultType t);
 
 constexpr Type none = Type::none;
 constexpr Type i32 = Type::i32;
@@ -82,16 +105,9 @@ constexpr Type anyref = Type::anyref;
 constexpr Type exnref = Type::exnref;
 constexpr Type unreachable = Type::unreachable;
 
-const std::string printType(Type type);
 unsigned getTypeSize(Type type);
 FeatureSet getFeatures(Type type);
 Type getType(unsigned size, bool float_);
-Type getReachableType(Type a, Type b);
-bool isConcreteType(Type type);
-bool isFloatType(Type type);
-bool isIntegerType(Type type);
-bool isVectorType(Type type);
-bool isReferenceType(Type type);
 Type reinterpretType(Type type);
 
 } // namespace wasm
