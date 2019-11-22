@@ -129,6 +129,8 @@ void PassRegistry::registerPasses() {
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
+  registerPass(
+    "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
                "inline functions (you probably want inlining-optimizing)",
                createInliningPass);
@@ -207,6 +209,12 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
+  registerPass("post-assemblyscript",
+               "eliminates redundant ARC patterns in AssemblyScript output",
+               createPostAssemblyScriptPass);
+  registerPass("post-assemblyscript-finalize",
+               "eliminates collapsed ARC patterns after other optimizations",
+               createPostAssemblyScriptFinalizePass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
@@ -314,6 +322,7 @@ void PassRegistry::registerPasses() {
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
+  registerPass("strip-dwarf", "strip dwarf debug info", createStripDWARFPass);
   registerPass("strip-producers",
                "strip the wasm producers section",
                createStripProducersPass);

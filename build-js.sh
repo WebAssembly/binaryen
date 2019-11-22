@@ -125,6 +125,7 @@ mkdir -p "$OUT"
   "$BINARYEN_SRC/passes/OptimizeAddedConstants.cpp" \
   "$BINARYEN_SRC/passes/OptimizeInstructions.cpp" \
   "$BINARYEN_SRC/passes/PickLoadSigns.cpp" \
+  "$BINARYEN_SRC/passes/PostAssemblyScript.cpp" \
   "$BINARYEN_SRC/passes/PostEmscripten.cpp" \
   "$BINARYEN_SRC/passes/Precompute.cpp" \
   "$BINARYEN_SRC/passes/Print.cpp" \

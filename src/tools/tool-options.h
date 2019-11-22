@@ -22,13 +22,15 @@
 #include "support/command-line.h"
 
 //
-// Shared optimization options for commandline tools
+// Shared options for commandline tools
 //
 
 namespace wasm {
 
 struct ToolOptions : public Options {
   PassOptions passOptions;
+
+  bool quiet = false;
 
   ToolOptions(const std::string& command, const std::string& description)
     : Options(command, description) {
@@ -60,7 +62,12 @@ struct ToolOptions : public Options {
              detectFeatures = true;
              enabledFeatures.makeMVP();
              disabledFeatures.makeMVP();
-           });
+           })
+      .add("--quiet",
+           "-q",
+           "Emit less verbose output and hide trivial warnings.",
+           Arguments::Zero,
+           [this](Options*, const std::string&) { quiet = true; });
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
       .addFeature(FeatureSet::Atomics, "atomic operations")

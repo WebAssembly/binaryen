@@ -19,17 +19,13 @@ import os
 from .support import run_command, split_wast, write_wast
 from .shared import (
     WASM2JS, MOZJS, NODEJS, fail_if_not_identical, options,
-    fail_if_not_identical_to_file, with_pass_debug
+    fail_if_not_identical_to_file, with_pass_debug, get_test_dir, get_tests,
 )
 
-tests = sorted(os.listdir(os.path.join(options.binaryen_test)))
-spec_dir = os.path.join(options.binaryen_test, 'spec')
-spec_tests = [os.path.join(spec_dir, t)
-              for t in sorted(os.listdir(spec_dir))
-              if '.fail' not in t]
-wasm2js_dir = os.path.join(options.binaryen_test, 'wasm2js')
-extra_wasm2js_tests = [os.path.join(wasm2js_dir, t) for t in
-                       sorted(os.listdir(wasm2js_dir))]
+tests = get_tests(options.binaryen_test)
+spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+spec_tests = [t for t in spec_tests if '.fail' not in t]
+wasm2js_tests = get_tests(get_test_dir('wasm2js'), ['.wast'])
 assert_tests = ['wasm2js.wast.asserts']
 # These tests exercise functionality not supported by wasm2js
 wasm2js_blacklist = ['empty_imported_table.wast']
@@ -37,24 +33,20 @@ wasm2js_blacklist = ['empty_imported_table.wast']
 
 def test_wasm2js_output():
     for opt in (0, 1):
-        for wasm in tests + spec_tests + extra_wasm2js_tests:
-            if not wasm.endswith('.wast'):
-                continue
-            basename = os.path.basename(wasm)
+        for t in tests + spec_tests + wasm2js_tests:
+            basename = os.path.basename(t)
             if basename in wasm2js_blacklist:
                 continue
 
             asm = basename.replace('.wast', '.2asm.js')
-            expected_file = os.path.join(wasm2js_dir, asm)
+            expected_file = os.path.join(get_test_dir('wasm2js'), asm)
             if opt:
                 expected_file += '.opt'
 
             if not os.path.exists(expected_file):
                 continue
 
-            print('..', wasm)
-
-            t = os.path.join(options.binaryen_test, wasm)
+            print('..', os.path.basename(t))
 
             all_out = []
 
@@ -64,7 +56,7 @@ def test_wasm2js_output():
                 cmd = WASM2JS + ['split.wast', '-all']
                 if opt:
                     cmd += ['-O']
-                if 'emscripten' in wasm:
+                if 'emscripten' in t:
                     cmd += ['--emscripten']
                 out = run_command(cmd)
                 all_out.append(out)
@@ -109,7 +101,7 @@ def test_asserts_output():
         asserts_expected_file = os.path.join(options.binaryen_test, asserts)
         traps_expected_file = os.path.join(options.binaryen_test, traps)
 
-        wasm = os.path.join(wasm2js_dir, wasm)
+        wasm = os.path.join(get_test_dir('wasm2js'), wasm)
         cmd = WASM2JS + [wasm, '--allow-asserts', '-all']
         out = run_command(cmd)
         fail_if_not_identical_to_file(out, asserts_expected_file)
@@ -129,7 +121,7 @@ def update_wasm2js_tests():
     print('\n[ checking wasm2js ]\n')
 
     for opt in (0, 1):
-        for wasm in tests + spec_tests + extra_wasm2js_tests:
+        for wasm in tests + spec_tests + wasm2js_tests:
             if not wasm.endswith('.wast'):
                 continue
 
@@ -137,7 +129,7 @@ def update_wasm2js_tests():
                 continue
 
             asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
-            expected_file = os.path.join(wasm2js_dir, asm)
+            expected_file = os.path.join(get_test_dir('wasm2js'), asm)
             if opt:
                 expected_file += '.opt'
 
@@ -145,7 +137,7 @@ def update_wasm2js_tests():
             # exists - only some work so far. the tests in extra are in
             # the test/wasm2js dir and so are specific to wasm2js, and
             # we run all of those.
-            if wasm not in extra_wasm2js_tests and not os.path.exists(expected_file):
+            if wasm not in wasm2js_tests and not os.path.exists(expected_file):
                 continue
 
             print('..', wasm)
@@ -176,7 +168,7 @@ def update_wasm2js_tests():
         asserts_expected_file = os.path.join(options.binaryen_test, asserts)
         traps_expected_file = os.path.join(options.binaryen_test, traps)
 
-        cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts', '-all']
+        cmd = WASM2JS + [os.path.join(get_test_dir('wasm2js'), wasm), '--allow-asserts', '-all']
         out = run_command(cmd)
         with open(asserts_expected_file, 'w') as o:
             o.write(out)
