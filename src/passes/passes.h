@@ -45,6 +45,7 @@ Pass* createFullPrinterPass();
 Pass* createFunctionMetricsPass();
 Pass* createGenerateStackIRPass();
 Pass* createI64ToI32LoweringPass();
+Pass* createInlineMainPass();
 Pass* createInliningPass();
 Pass* createInliningOptimizingPass();
 Pass* createLegalizeJSInterfacePass();
