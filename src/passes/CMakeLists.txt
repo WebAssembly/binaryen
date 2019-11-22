@@ -72,4 +72,4 @@ SET(passes_SOURCES
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
-ADD_LIBRARY(passes STATIC ${passes_SOURCES})
+ADD_LIBRARY(passes OBJECT ${passes_SOURCES})
