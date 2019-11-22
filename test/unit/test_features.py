@@ -6,12 +6,15 @@ from . import utils
 
 class FeatureValidationTest(utils.BinaryenTestCase):
     def check_feature(self, module, error, flag):
-        p = shared.run_process(shared.WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull],
+        p = shared.run_process(shared.WASM_OPT +
+                               ['--mvp-features', '--print', '-o', os.devnull],
                                input=module, check=False, capture_output=True)
         self.assertIn(error, p.stderr)
         self.assertIn('Fatal: error in validating input', p.stderr)
         self.assertNotEqual(p.returncode, 0)
-        p = shared.run_process(shared.WASM_OPT + ['--mvp-features', flag, '--print', '-o', os.devnull],
+        p = shared.run_process(shared.WASM_OPT +
+                               ['--mvp-features', flag, '--print', '-o',
+                                os.devnull],
                                input=module, check=False, capture_output=True)
         self.assertEqual(p.returncode, 0)
 
@@ -247,7 +250,8 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
         p = shared.run_process(
-            shared.WASM_OPT + ['--print', '--enable-simd', '-o', os.devnull, path],
+            shared.WASM_OPT + ['--print', '--enable-simd', '-o', os.devnull,
+                               path],
             check=False, capture_output=True
         )
         self.assertNotEqual(p.returncode, 0)
@@ -258,8 +262,8 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_incompatible_features_forced(self):
         path = self.input_path('signext_target_feature.wasm')
         p = shared.run_process(
-            shared.WASM_OPT + ['--print', '--detect-features', '-mvp', '--enable-simd',
-                        '-o', os.devnull, path],
+            shared.WASM_OPT + ['--print', '--detect-features', '-mvp',
+                               '--enable-simd', '-o', os.devnull, path],
             check=False, capture_output=True
         )
         self.assertNotEqual(p.returncode, 0)
@@ -270,11 +274,15 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
                             opts=['-mvp', '--detect-features', '--enable-simd'])
 
     def test_emit_all_features(self):
-        p = shared.run_process(shared.WASM_OPT + ['--emit-target-features', '-all', '-o', '-'],
-                               input="(module)", check=False, capture_output=True, decode_output=False)
+        p = shared.run_process(shared.WASM_OPT +
+                               ['--emit-target-features', '-all', '-o', '-'],
+                               input="(module)", check=False,
+                               capture_output=True, decode_output=False)
         self.assertEqual(p.returncode, 0)
-        p2 = shared.run_process(shared.WASM_OPT + ['--print-features', '-o', os.devnull],
-                                input=p.stdout, check=False, capture_output=True)
+        p2 = shared.run_process(shared.WASM_OPT +
+                                ['--print-features', '-o', os.devnull],
+                                input=p.stdout, check=False,
+                                capture_output=True)
         self.assertEqual(p2.returncode, 0)
         self.assertEqual([
             '--enable-threads',

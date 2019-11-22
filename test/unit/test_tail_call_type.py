@@ -16,7 +16,8 @@ class TailCallTypeTest(utils.BinaryenTestCase):
      )
     )
 '''
-        p = shared.run_process(shared.WASM_OPT + ['--enable-tail-call', '-o', os.devnull],
+        p = shared.run_process(shared.WASM_OPT +
+                               ['--enable-tail-call', '-o', os.devnull],
                                input=module, check=False, capture_output=True)
         self.assertNotEqual(p.returncode, 0)
         self.assertIn(
@@ -35,7 +36,8 @@ class TailCallTypeTest(utils.BinaryenTestCase):
      )
     )
 '''
-        p = shared.run_process(shared.WASM_OPT + ['--enable-tail-call', '-o', os.devnull],
+        p = shared.run_process(shared.WASM_OPT +
+                               ['--enable-tail-call', '-o', os.devnull],
                                input=module, check=False, capture_output=True)
         self.assertNotEqual(p.returncode, 0)
         self.assertIn(

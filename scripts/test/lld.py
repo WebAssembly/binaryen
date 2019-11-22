@@ -48,18 +48,21 @@ def test_wasm_emscripten_finalize():
             if ext != '.out' and not os.path.exists(expected_file):
                 continue
 
-            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
+            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + \
+                ext_args
             cmd += args_for_finalize(os.path.basename(wast_path))
             actual = support.run_command(cmd)
 
             if not os.path.exists(expected_file):
                 print(actual)
-                shared.fail_with_error('output ' + expected_file + ' does not exist')
+                shared.fail_with_error('output ' + expected_file +
+                                       ' does not exist')
             shared.fail_if_not_identical_to_file(actual, expected_file)
             if ext == '.mem.out':
                 with open(mem_file) as mf:
                     mem = mf.read()
-                    shared.fail_if_not_identical_to_file(mem, wast_path + '.mem.mem')
+                    shared.fail_if_not_identical_to_file(mem, wast_path +
+                                                         '.mem.mem')
                 os.remove(mem_file)
 
 
@@ -81,7 +84,8 @@ def update_lld_tests():
             out_path = wast_path + ext
             if ext != '.out' and not os.path.exists(out_path):
                 continue
-            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
+            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + \
+                ext_args
             cmd += args_for_finalize(os.path.basename(wast_path))
             actual = support.run_command(cmd)
             with open(out_path, 'w') as o:
