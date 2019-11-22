@@ -165,6 +165,14 @@ ELSE()
   ADD_NONDEBUG_COMPILE_FLAG("-UNDEBUG") # Keep asserts.
 ENDIF()
 
+IF (EMSCRIPTEN)
+  add_link_options("-O3") # must appear after CMake's default -O2 at link
+  ADD_LINK_FLAG("-s SINGLE_FILE")
+  ADD_LINK_FLAG("-s ALLOW_MEMORY_GROWTH=1")
+  ADD_COMPILE_FLAG("-s DISABLE_EXCEPTION_CATCHING=0")
+  ADD_LINK_FLAG("-s DISABLE_EXCEPTION_CATCHING=0")
+ENDIF()
+
 # clang doesn't print colored diagnostics when invoked from Ninja
 IF (UNIX AND
     CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
@@ -185,7 +193,6 @@ ADD_SUBDIRECTORY(src/support)
 ADD_SUBDIRECTORY(src/wasm)
 
 # Sources.
-
 
 SET(binaryen_SOURCES
   src/binaryen-c.cpp
@@ -223,6 +230,9 @@ SET(wasm-opt_SOURCES
 ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
 TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+IF (EMSCRIPTEN)
+  target_link_options(wasm-opt PUBLIC -s NODERAWFS)
+ENDIF()
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -306,6 +316,25 @@ TARGET_LINK_LIBRARIES(wasm-reduce wasm asmjs passes wasm ir cfg support)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+IF (EMSCRIPTEN)
+SET(binaryen_js_SOURCES
+  src/binaryen-c.cpp
+)
+ADD_EXECUTABLE(binaryen_js
+               ${binaryen_js_SOURCES})
+TARGET_LINK_LIBRARIES(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+#target_link_options(binaryen_js PUBLIC -s DEMANGLE_SUPPORT=1)
+#target_link_options(binaryen_js PUBLIC -s WASM=0)
+target_link_options(binaryen_js PUBLIC "SHELL:-s WASM_ASYNC_COMPILATION=0")
+target_link_options(binaryen_js PUBLIC "SHELL:-s MODULARIZE_INSTANCE=1")
+target_link_options(binaryen_js PUBLIC "SHELL:-s NO_FILESYSTEM=0")
+target_link_options(binaryen_js PUBLIC "SHELL:-s 'EXPORT_NAME=\"Binaryen\"'")
+target_link_options(binaryen_js PUBLIC "SHELL:--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+SET_PROPERTY(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
+SET_PROPERTY(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
+ENDIF()
 
 # Testing
 #
