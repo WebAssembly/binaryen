@@ -283,7 +283,7 @@ static void handleUnreachable(Block* block,
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
   // or the final child flows out a value)
-  if (isConcreteType(block->type)) {
+  if (block->type.isConcrete()) {
     return;
   }
   // look for an unreachable child
@@ -314,7 +314,7 @@ void Block::finalize() {
       //  (return)
       //  (i32.const 10)
       // )
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         return;
       }
       // if we are unreachable, we are done
@@ -367,9 +367,9 @@ void If::finalize() {
   if (ifFalse) {
     if (ifTrue->type == ifFalse->type) {
       type = ifTrue->type;
-    } else if (isConcreteType(ifTrue->type) && ifFalse->type == unreachable) {
+    } else if (ifTrue->type.isConcrete() && ifFalse->type == unreachable) {
       type = ifTrue->type;
-    } else if (isConcreteType(ifFalse->type) && ifTrue->type == unreachable) {
+    } else if (ifFalse->type.isConcrete() && ifTrue->type == unreachable) {
       type = ifFalse->type;
     } else {
       type = none;
@@ -895,9 +895,9 @@ void Host::finalize() {
 void Try::finalize() {
   if (body->type == catchBody->type) {
     type = body->type;
-  } else if (isConcreteType(body->type) && catchBody->type == unreachable) {
+  } else if (body->type.isConcrete() && catchBody->type == unreachable) {
     type = body->type;
-  } else if (isConcreteType(catchBody->type) && body->type == unreachable) {
+  } else if (catchBody->type.isConcrete() && body->type == unreachable) {
     type = catchBody->type;
   } else {
     type = none;

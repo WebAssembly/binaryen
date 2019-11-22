@@ -103,7 +103,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       assert(!node->isConst());
       // If this is a concrete value (not e.g. an eqz of unreachable),
       // it can definitely be precomputed into a constant.
-      if (isConcreteType(node->expr->type)) {
+      if (node->expr->type.isConcrete()) {
         // This can be precomputed.
         // TODO not just all-constant inputs? E.g. i32.mul of 0 and X.
         optimizeExprToConstant(node);

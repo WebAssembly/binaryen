@@ -325,7 +325,7 @@ public:
     ret->value = value;
     ret->valueType = type;
     ret->finalize();
-    assert(isConcreteType(ret->value->type) ? ret->value->type == type : true);
+    assert(ret->value->type.isConcrete() ? ret->value->type == type : true);
     return ret;
   }
   Store* makeAtomicStore(unsigned bytes,
@@ -596,7 +596,7 @@ public:
 
   static Index addVar(Function* func, Name name, Type type) {
     // always ok to add a var, it does not affect other indices
-    assert(isConcreteType(type));
+    assert(type.isConcrete());
     Index index = func->getNumLocals();
     if (name.is()) {
       func->localIndices[name] = index;
@@ -701,7 +701,7 @@ public:
 
   // Drop an expression if it has a concrete type
   Expression* dropIfConcretelyTyped(Expression* curr) {
-    if (!isConcreteType(curr->type)) {
+    if (!curr->type.isConcrete()) {
       return curr;
     }
     return makeDrop(curr);

@@ -273,6 +273,42 @@ BinaryenType BinaryenTypeExnref(void) { return exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 
+BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
+  std::vector<Type> typeVec;
+  typeVec.reserve(numTypes);
+  for (size_t i = 0; i < numTypes; ++i) {
+    typeVec.push_back(Type(types[i]));
+  }
+  Type result(typeVec);
+
+  if (tracing) {
+    std::string array = getTemp();
+    std::cout << "  {\n";
+    std::cout << "    BinaryenType " << array << "[] = {";
+    for (size_t i = 0; i < numTypes; ++i) {
+      std::cout << uint32_t(types[i]);
+      if (i < numTypes - 1) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << "};\n";
+    std::cout << "    BinaryenTypeCreate(" << array << ", " << numTypes
+              << "); // " << uint32_t(result) << "\n";
+    std::cout << "  }\n";
+  }
+
+  return uint32_t(result);
+}
+
+uint32_t BinaryenTypeArity(BinaryenType t) { return Type(t).size(); }
+
+void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf) {
+  const std::vector<Type>& types = Type(t).expand();
+  for (size_t i = 0; i < types.size(); ++i) {
+    buf[i] = types[i];
+  }
+}
+
 WASM_DEPRECATED BinaryenType BinaryenNone(void) { return none; }
 WASM_DEPRECATED BinaryenType BinaryenInt32(void) { return i32; }
 WASM_DEPRECATED BinaryenType BinaryenInt64(void) { return i64; }

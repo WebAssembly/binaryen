@@ -42,6 +42,26 @@ Module['exnref'] = Module['_BinaryenTypeExnref']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
+Module['createType'] = function(types) {
+  return preserveStack(function() {
+    var array = i32sToStack(types);
+    return Module['_BinaryenTypeCreate'](array, types.length);
+  });
+};
+
+Module['expandType'] = function(ty) {
+  return preserveStack(function() {
+    var numTypes = Module['_BinaryenTypeArity'](ty);
+    var array = stackAlloc(numTypes << 2);
+    Module['_BinaryenTypeExpand'](ty, array);
+    var types = [];
+    for (var i = 0; i < numTypes; i++) {
+      types.push(HEAPU32[(array >>> 2) + i]);
+    }
+    return types;
+  });
+};
+
 // Expression ids
 Module['InvalidId'] = Module['_BinaryenInvalidId']();
 Module['BlockId'] = Module['_BinaryenBlockId']();

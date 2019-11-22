@@ -95,6 +95,10 @@ BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
 BINARYEN_API BinaryenType BinaryenTypeAuto(void);
+BINARYEN_API BinaryenType BinaryenTypeCreate(BinaryenType* valueTypes,
+                                             uint32_t numTypes);
+BINARYEN_API uint32_t BinaryenTypeArity(BinaryenType t);
+BINARYEN_API void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf);
 
 WASM_DEPRECATED BinaryenType BinaryenNone(void);
 WASM_DEPRECATED BinaryenType BinaryenInt32(void);

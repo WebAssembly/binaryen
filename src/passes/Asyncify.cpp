@@ -948,7 +948,7 @@ private:
                               builder->makeLocalGet(oldState, i32)),
           builder->makeUnreachable());
         Expression* rep;
-        if (isConcreteType(call->type)) {
+        if (call->type.isConcrete()) {
           auto temp = builder->addVar(func, call->type);
           rep = builder->makeBlock({
             builder->makeLocalSet(temp, call),

@@ -1098,7 +1098,7 @@ Type WasmBinaryBuilder::getType() {
 
 Type WasmBinaryBuilder::getConcreteType() {
   auto type = getType();
-  if (!isConcreteType(type)) {
+  if (!type.isConcrete()) {
     throw ParseException("non-concrete type when one expected");
   }
   return type;
@@ -1860,7 +1860,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   }
   requireFunctionContext("popping void where we need a new local");
   auto type = block->list[0]->type;
-  if (isConcreteType(type)) {
+  if (type.isConcrete()) {
     auto local = builder.addVar(currFunction, type);
     block->list[0] = builder.makeLocalSet(local, block->list[0]);
     block->list.push_back(builder.makeLocalGet(local, type));
@@ -2417,7 +2417,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
     if (i < end - 1) {
       // stacky&unreachable code may introduce elements that need to be dropped
       // in non-final positions
-      if (isConcreteType(item->type)) {
+      if (item->type.isConcrete()) {
         curr->list.back() = Builder(wasm).makeDrop(item);
         if (consumable == NONE) {
           // this is the first, and hence consumable value. note the location

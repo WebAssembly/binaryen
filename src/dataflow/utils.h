@@ -43,7 +43,7 @@ inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
   o << '[' << node << ' ';
   switch (node->type) {
     case Node::Type::Var:
-      o << "var " << printType(node->wasmType) << ' ' << node;
+      o << "var " << node->wasmType << ' ' << node;
       break;
     case Node::Type::Expr: {
       o << "expr ";

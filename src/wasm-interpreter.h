@@ -141,11 +141,11 @@ public:
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() &&
-        (isConcreteType(curr->type) || isConcreteType(ret.value.type))) {
+        (curr->type.isConcrete() || ret.value.type.isConcrete())) {
 #if 1 // def WASM_INTERPRETER_DEBUG
       if (ret.value.type != curr->type) {
-        std::cerr << "expected " << printType(curr->type) << ", seeing "
-                  << printType(ret.value.type) << " from\n"
+        std::cerr << "expected " << curr->type << ", seeing " << ret.value.type
+                  << " from\n"
                   << curr << '\n';
       }
 #endif
@@ -482,10 +482,10 @@ public:
     }
     Literal right = flow.value;
     NOTE_EVAL2(left, right);
-    assert(isConcreteType(curr->left->type) ? left.type == curr->left->type
-                                            : true);
-    assert(isConcreteType(curr->right->type) ? right.type == curr->right->type
-                                             : true);
+    assert(curr->left->type.isConcrete() ? left.type == curr->left->type
+                                         : true);
+    assert(curr->right->type.isConcrete() ? right.type == curr->right->type
+                                          : true);
     switch (curr->op) {
       case AddInt32:
       case AddInt64:
@@ -1451,9 +1451,8 @@ private:
           assert(function->isParam(i));
           if (function->params[i] != arguments[i].type) {
             std::cerr << "Function `" << function->name << "` expects type "
-                      << printType(function->params[i]) << " for parameter "
-                      << i << ", got " << printType(arguments[i].type) << "."
-                      << std::endl;
+                      << function->params[i] << " for parameter " << i
+                      << ", got " << arguments[i].type << "." << std::endl;
             WASM_UNREACHABLE();
           }
           locals[i] = arguments[i];

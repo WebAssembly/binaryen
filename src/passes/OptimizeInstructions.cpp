@@ -762,7 +762,7 @@ struct OptimizeInstructions
             } else {
               // the types diff. as the condition is reachable, that means the
               // if must be concrete while the arm is not
-              assert(isConcreteType(iff->type) &&
+              assert(iff->type.isConcrete() &&
                      iff->ifTrue->type == unreachable);
               // emit a block with a forced type
               auto* ret = builder.makeBlock();
@@ -1298,7 +1298,7 @@ private:
   Expression* optimizeWithConstantOnRight(Binary* binary) {
     auto type = binary->right->type;
     auto* right = binary->right->cast<Const>();
-    if (isIntegerType(type)) {
+    if (type.isInteger()) {
       // operations on zero
       if (right->value == Literal::makeFromInt32(0, type)) {
         if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
@@ -1351,7 +1351,7 @@ private:
         }
       }
     }
-    if (isIntegerType(type) || isFloatType(type)) {
+    if (type.isInteger() || type.isFloat()) {
       // note that this is correct even on floats with a NaN on the left,
       // as a NaN would skip the computation and just return the NaN,
       // and that is precisely what we do here. but, the same with -1
@@ -1375,7 +1375,7 @@ private:
   Expression* optimizeWithConstantOnLeft(Binary* binary) {
     auto type = binary->left->type;
     auto* left = binary->left->cast<Const>();
-    if (isIntegerType(type)) {
+    if (type.isInteger()) {
       // operations on zero
       if (left->value == Literal::makeFromInt32(0, type)) {
         if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
@@ -1397,7 +1397,7 @@ private:
     // x + 5 == 7
     //   =>
     //     x == 2
-    if (isIntegerType(binary->left->type)) {
+    if (binary->left->type.isInteger()) {
       if (binary->op == Abstract::getBinary(type, Abstract::Eq) ||
           binary->op == Abstract::getBinary(type, Abstract::Ne)) {
         if (auto* left = binary->left->dynCast<Binary>()) {

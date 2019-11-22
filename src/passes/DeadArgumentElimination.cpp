@@ -458,7 +458,7 @@ private:
       }
     } returnUpdater(func, module);
     // Remove any value flowing out.
-    if (isConcreteType(func->body->type)) {
+    if (func->body->type.isConcrete()) {
       func->body = builder.makeDrop(func->body);
     }
     // Remove the drops on the calls.
