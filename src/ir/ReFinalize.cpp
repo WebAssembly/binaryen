@@ -164,7 +164,7 @@ void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
 void ReFinalize::visitBrOnExn(BrOnExn* curr) {
   curr->finalize();
-  updateBreakValueType(curr->name, curr->getSingleSentType());
+  updateBreakValueType(curr->name, curr->sent);
 }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }

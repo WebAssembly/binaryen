@@ -3262,19 +3262,17 @@ void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
 BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                   const char* name,
                                   uint32_t attribute,
-                                  BinaryenFunctionTypeRef type) {
+                                  BinaryenType params) {
   if (tracing) {
     std::cout << "  BinaryenAddEvent(the_module, \"" << name << "\", "
-              << attribute << ", functionTypes[" << functionTypes[type]
-              << "]);\n";
+              << attribute << ", " << params << ");\n";
   }
 
   auto* wasm = (Module*)module;
   auto* ret = new Event();
   ret->name = name;
   ret->attribute = attribute;
-  ret->type = ((FunctionType*)type)->name;
-  ret->params = ((FunctionType*)type)->params;
+  ret->params = Type(params);
   wasm->addEvent(ret);
   return ret;
 }
@@ -3378,22 +3376,20 @@ void BinaryenAddEventImport(BinaryenModuleRef module,
                             const char* externalModuleName,
                             const char* externalBaseName,
                             uint32_t attribute,
-                            BinaryenFunctionTypeRef eventType) {
+                            BinaryenType params) {
   auto* wasm = (Module*)module;
   auto* ret = new Event();
 
   if (tracing) {
     std::cout << "  BinaryenAddEventImport(the_module, \"" << internalName
               << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << attribute << ", functionTypes["
-              << functionTypes[eventType] << "]);\n";
+              << "\", " << attribute << ", " << params << ");\n";
   }
 
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->type = ((FunctionType*)eventType)->name;
-  ret->params = ((FunctionType*)eventType)->params;
+  ret->params = Type(params);
   wasm->addEvent(ret);
 }
 
@@ -4315,31 +4311,12 @@ int BinaryenEventGetAttribute(BinaryenEventRef event) {
 
   return ((Event*)event)->attribute;
 }
-const char* BinaryenEventGetType(BinaryenEventRef event) {
+BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
   if (tracing) {
-    std::cout << "  BinaryenEventGetType(events[" << events[event] << "]);\n";
+    std::cout << "  BinaryenEventGetParams(events[" << events[event] << "]);\n";
   }
 
-  return ((Event*)event)->type.c_str();
-}
-BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event) {
-  if (tracing) {
-    std::cout << "  BinaryenEventGetNumParams(events[" << events[event]
-              << "]);\n";
-  }
-
-  return ((Event*)event)->params.size();
-}
-BinaryenType BinaryenEventGetParam(BinaryenEventRef event,
-                                   BinaryenIndex index) {
-  if (tracing) {
-    std::cout << "  BinaryenEventGetParam(events[" << events[event] << "], "
-              << index << ");\n";
-  }
-
-  auto* fn = (Event*)event;
-  assert(index < fn->params.size());
-  return fn->params[index];
+  return ((Event*)event)->params;
 }
 
 //

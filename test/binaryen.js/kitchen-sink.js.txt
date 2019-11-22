@@ -84,11 +84,10 @@ getExpressionInfo(i64.const)={"id":14,"type":3,"value":{"low":6,"high":7}}
 getExpressionInfo(f32.const)={"id":14,"type":4,"value":8.5}
 getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
 (module
- (type $vi (func (param i32)))
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $4 (func))
+ (type $3 (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
@@ -1768,11 +1767,10 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
 )
 
 (module
- (type $vi (func (param i32)))
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $4 (func))
+ (type $3 (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
@@ -3923,11 +3921,11 @@ optimized:
 
 module loaded from binary form:
 (module
- (type $0 (func (param i32 i32) (result i32)))
- (type $1 (func (param i32 i32)))
+ (type $0 (func (param i32 i32)))
+ (type $1 (func (param i32 i32) (result i32)))
  (global $global$0 i32 (i32.const 3))
  (event $event$0 (attr 0) (param i32 i32))
- (func $adder (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (; 0 ;) (type $1) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -3979,11 +3977,7 @@ int main() {
   RelooperRef the_relooper = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
-  {
-    BinaryenType paramTypes[] = { 2 };
-    functionTypes[0] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
-  }
-  BinaryenAddEvent(the_module, "a-event", 0, functionTypes[0]);
+  BinaryenAddEvent(the_module, "a-event", 0, 2);
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt64(2));
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralFloat32(3.14));
@@ -3992,7 +3986,7 @@ int main() {
   expressions[6] = BinaryenConst(the_module, BinaryenLiteralFloat64(NAN));
   {
     BinaryenType paramTypes[] = { 2, 3, 4, 5 };
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "iiIfF", 2, paramTypes, 4);
+    functionTypes[0] = BinaryenAddFunctionType(the_module, "iiIfF", 2, paramTypes, 4);
   }
   expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[8] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
@@ -5729,18 +5723,18 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
   }
   {
     BinaryenType varTypes[] = { 2, 8 };
-    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[1], varTypes, 2, expressions[814]);
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 2, expressions[814]);
   }
   expressions[815] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   globals[0] = BinaryenAddGlobal(the_module, "a-global", 2, 0, expressions[815]);
   {
     BinaryenType paramTypes[] = { 2, 5 };
-    functionTypes[2] = BinaryenAddFunctionType(the_module, "fiF", 4, paramTypes, 2);
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 4, paramTypes, 2);
   }
-  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[2]);
+  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
   BinaryenAddGlobalImport(the_module, "a-global-imp", "module", "base", 2, 0);
   BinaryenAddGlobalImport(the_module, "a-mut-global-imp", "module", "base", 2, 1);
-  BinaryenAddEventImport(the_module, "a-event-imp", "module", "base", 0, functionTypes[0]);
+  BinaryenAddEventImport(the_module, "a-event-imp", "module", "base", 0, 2);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   exports[1] = BinaryenAddGlobalExport(the_module, "a-global", "a-global-exp");
   exports[2] = BinaryenAddEventExport(the_module, "a-event", "a-event-exp");
@@ -5775,28 +5769,27 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
   }
   {
     BinaryenType paramTypes[] = { 0 };
-    functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
+    functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
   expressions[818] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[818]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[818]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
     BinaryenType paramTypes[] = { 0 };
-    functionTypes[4] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
+    functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
   BinaryenModuleSetFeatures(the_module, 511);
   BinaryenModuleGetFeatures(the_module);
   BinaryenModulePrint(the_module);
 (module
- (type $vi (func (param i32)))
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $4 (func))
+ (type $3 (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
@@ -7478,11 +7471,10 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module
- (type $vi (func (param i32)))
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $4 (func))
+ (type $3 (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
@@ -10150,7 +10142,6 @@ optimized:
 test_parsing text:
 (module
  (type $iii (func (param i32 i32) (result i32)))
- (type $vi (func (param i32)))
  (global $a-global i32 (i32.const 3))
  (event $a-event (attr 0) (param i32))
  (func $adder (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
@@ -10164,7 +10155,7 @@ test_parsing text:
 module loaded from text form:
 (module
  (type $iii (func (param i32 i32) (result i32)))
- (type $vi (func (param i32)))
+ (type $FUNCSIG$vi (func (param i32)))
  (global $a-global i32 (i32.const 3))
  (event $a-event (attr 0) (param i32))
  (func $ADD_ER (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)

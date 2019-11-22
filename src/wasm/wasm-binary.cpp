@@ -24,15 +24,40 @@
 namespace wasm {
 
 void WasmBinaryWriter::prepare() {
-  // we need function types for all our functions
-  for (auto& func : wasm->functions) {
-    if (func->type.isNull()) {
-      func->type = ensureFunctionType(getSig(func.get()), wasm)->name;
+  // Traverse binary to collect types and their frequency
+  struct TypeCounter : WalkerPass<PostWalker<TypeCounter>> {
+    std::unordered_map<Signature, size_t> counts;
+    void visitEvent(Event* curr) {
+      counts[Signature(curr->params, Type::none)]++;
     }
-    // TODO: depending on upstream flux
-    // https://github.com/WebAssembly/spec/pull/301 might want this:
-    // assert(!func->type.isNull());
+    void visitFunction(Function* curr) {
+      counts[Signature(Type(curr->params), curr->result)]++;
+    }
+    void visitCallIndirect(CallIndirect* curr) {
+      auto* type = getModule()->getFunctionType(curr->fullType);
+      counts[Signature(Type(type->params), type->result)]++;
+    }
+    Pass* create() { return new TypeCounter; }
+  } counter;
+  PassRunner runner(wasm);
+  runner.setIsNested(true);
+  counter.run(&runner, wasm);
+
+  std::vector<std::pair<Signature, size_t>> counts(counter.counts.begin(),
+                                                   counter.counts.end());
+  std::sort(counts.begin(), counts.end(), [&](auto a, auto b) {
+    // order by frequency then simplicity
+    if (a.second != b.second) {
+      return a.second > b.second;
+    } else {
+      return a.first < b.first;
+    }
+  });
+  for (Index i = 0; i < counts.size(); ++i) {
+    typeIndexes[counts[i].first] = i;
+    types.push_back(counts[i].first);
   }
+
   importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
@@ -173,41 +198,28 @@ void WasmBinaryWriter::writeMemory() {
 }
 
 void WasmBinaryWriter::writeTypes() {
-  if (wasm->functionTypes.size() == 0) {
+  if (types.size() == 0) {
     return;
   }
   if (debug) {
     std::cerr << "== writeTypes" << std::endl;
   }
   auto start = startSection(BinaryConsts::Section::Type);
-  o << U32LEB(wasm->functionTypes.size());
-  for (auto& type : wasm->functionTypes) {
+  o << U32LEB(typeIndexes.size());
+  for (Index i = 0; i < typeIndexes.size(); ++i) {
+    Signature& sig = types[i];
     if (debug) {
-      std::cerr << "write one" << std::endl;
+      std::cerr << "write " << sig.params << " -> " << sig.results << std::endl;
     }
     o << S32LEB(BinaryConsts::EncodedType::Func);
-    o << U32LEB(type->params.size());
-    for (auto param : type->params) {
-      o << binaryType(param);
-    }
-    if (type->result == none) {
-      o << U32LEB(0);
-    } else {
-      o << U32LEB(1);
-      o << binaryType(type->result);
+    for (auto& types : {sig.params.expand(), sig.results.expand()}) {
+      o << U32LEB(types.size());
+      for (auto type : types) {
+        o << binaryType(type);
+      }
     }
   }
   finishSection(start);
-}
-
-int32_t WasmBinaryWriter::getFunctionTypeIndex(Name type) {
-  // TODO: optimize
-  for (size_t i = 0; i < wasm->functionTypes.size(); i++) {
-    if (wasm->functionTypes[i]->name == type) {
-      return i;
-    }
-  }
-  abort();
 }
 
 void WasmBinaryWriter::writeImports() {
@@ -230,7 +242,7 @@ void WasmBinaryWriter::writeImports() {
     }
     writeImportHeader(func);
     o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getFunctionTypeIndex(func->type));
+    o << U32LEB(getTypeIndex(Signature(Type(func->params), func->result)));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     if (debug) {
@@ -248,7 +260,7 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(event);
     o << U32LEB(int32_t(ExternalKind::Event));
     o << U32LEB(event->attribute);
-    o << U32LEB(getFunctionTypeIndex(event->type));
+    o << U32LEB(getTypeIndex(Signature(event->params, Type::none)));
   });
   if (wasm->memory.imported()) {
     if (debug) {
@@ -289,7 +301,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
     if (debug) {
       std::cerr << "write one" << std::endl;
     }
-    o << U32LEB(getFunctionTypeIndex(func->type));
+    o << U32LEB(getTypeIndex(Signature(Type(func->params), func->result)));
   });
   finishSection(start);
 }
@@ -452,18 +464,27 @@ void WasmBinaryWriter::writeDataSegments() {
 }
 
 uint32_t WasmBinaryWriter::getFunctionIndex(Name name) {
-  assert(indexes.functionIndexes.count(name));
-  return indexes.functionIndexes[name];
+  auto it = indexes.functionIndexes.find(name);
+  assert(it != indexes.functionIndexes.end());
+  return it->second;
 }
 
 uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
-  assert(indexes.globalIndexes.count(name));
-  return indexes.globalIndexes[name];
+  auto it = indexes.globalIndexes.find(name);
+  assert(it != indexes.globalIndexes.end());
+  return it->second;
 }
 
 uint32_t WasmBinaryWriter::getEventIndex(Name name) {
-  assert(indexes.eventIndexes.count(name));
-  return indexes.eventIndexes[name];
+  auto it = indexes.eventIndexes.find(name);
+  assert(it != indexes.eventIndexes.end());
+  return it->second;
+}
+
+uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) {
+  auto it = typeIndexes.find(sig);
+  assert(it != typeIndexes.end());
+  return it->second;
 }
 
 void WasmBinaryWriter::writeFunctionTableDeclaration() {
@@ -521,7 +542,7 @@ void WasmBinaryWriter::writeEvents() {
       std::cerr << "write one" << std::endl;
     }
     o << U32LEB(event->attribute);
-    o << U32LEB(getFunctionTypeIndex(event->type));
+    o << U32LEB(getTypeIndex(Signature(event->params, Type::none)));
   });
 
   finishSection(start);
@@ -1364,10 +1385,8 @@ void WasmBinaryBuilder::readImports() {
           throwError("invalid event index " + std::to_string(index) + " / " +
                      std::to_string(wasm.functionTypes.size()));
         }
-        Name type = wasm.functionTypes[index]->name;
-        std::vector<Type> params = wasm.functionTypes[index]->params;
-        auto* curr =
-          builder.makeEvent(name, attribute, type, std::move(params));
+        Type params = Type(wasm.functionTypes[index]->params);
+        auto* curr = builder.makeEvent(name, attribute, params);
         curr->module = module;
         curr->base = base;
         wasm.addEvent(curr);
@@ -2039,10 +2058,9 @@ void WasmBinaryBuilder::readEvents() {
       throwError("invalid event index " + std::to_string(typeIndex) + " / " +
                  std::to_string(wasm.functionTypes.size()));
     }
-    Name type = wasm.functionTypes[typeIndex]->name;
-    std::vector<Type> params = wasm.functionTypes[typeIndex]->params;
-    wasm.addEvent(Builder::makeEvent(
-      "event$" + std::to_string(i), attribute, type, std::move(params)));
+    Type params = Type(wasm.functionTypes[typeIndex]->params);
+    wasm.addEvent(
+      Builder::makeEvent("event$" + std::to_string(i), attribute, params));
   }
 }
 
@@ -4637,7 +4655,7 @@ void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
 
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  curr->eventParams = event->params;
+  curr->sent = event->params;
   curr->finalize();
 }
 

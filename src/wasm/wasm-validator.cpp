@@ -1708,9 +1708,10 @@ void FunctionValidator::visitThrow(Throw* curr) {
                     "event's param numbers must match")) {
     return;
   }
+  const std::vector<Type>& paramTypes = event->params.expand();
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
-                                           event->params[i],
+                                           paramTypes[i],
                                            curr->operands[i],
                                            "event param types must match") &&
         !info.quiet) {
@@ -1731,10 +1732,10 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
   Event* event = getModule()->getEventOrNull(curr->event);
   shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
-  shouldBeTrue(event->params == curr->eventParams,
+  shouldBeTrue(event->params == curr->sent,
                curr,
                "br_on_exn's event params and event's params are different");
-  noteBreak(curr->name, curr->getSingleSentType(), curr);
+  noteBreak(curr->name, curr->sent, curr);
   shouldBeTrue(curr->exnref->type == unreachable ||
                  curr->exnref->type == exnref,
                curr,
@@ -2110,23 +2111,15 @@ static void validateEvents(Module& module, ValidationInfo& info) {
                       "Module has events (event-handling is disabled)");
   }
   for (auto& curr : module.events) {
-    info.shouldBeTrue(
-      curr->type.is(), curr->name, "Event should have a valid type");
-    FunctionType* ft = module.getFunctionType(curr->type);
-    info.shouldBeEqual(
-      ft->result, none, curr->name, "Event type's result type should be none");
     info.shouldBeEqual(curr->attribute,
                        (unsigned)0,
                        curr->attribute,
                        "Currently only attribute 0 is supported");
-    for (auto type : curr->params) {
+    for (auto type : curr->params.expand()) {
       info.shouldBeTrue(type.isInteger() || type.isFloat(),
                         curr->name,
                         "Values in an event should have integer or float type");
     }
-    info.shouldBeTrue(curr->params == ft->params,
-                      curr->name,
-                      "Event's function type and internal type should match");
   }
 }
 

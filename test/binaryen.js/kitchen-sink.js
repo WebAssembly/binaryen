@@ -157,8 +157,7 @@ function test_core() {
   module = new Binaryen.Module();
 
   // Create an event
-  var vi = module.addFunctionType("vi", Binaryen.none, [Binaryen.i32]);
-  var event_ = module.addEvent("a-event", 0, vi);
+  var event_ = module.addEvent("a-event", 0, Binaryen.i32);
 
   // Literals and consts
 
@@ -563,7 +562,7 @@ function test_core() {
   module.addFunctionImport("an-imported", "module", "base", fiF);
   module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32, false);
   module.addGlobalImport("a-mut-global-imp", "module", "base", Binaryen.i32, true);
-  module.addEventImport("a-event-imp", "module", "base", 0, vi);
+  module.addEventImport("a-event-imp", "module", "base", 0, Binaryen.i32);
 
   // Exports
 
@@ -823,14 +822,13 @@ function test_binaries() {
     module = new Binaryen.Module();
     module.setFeatures(Binaryen.Features.All);
     var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
-    var vii = module.addFunctionType("vii", Binaryen.none, [ Binaryen.i32, Binaryen.i32 ]);
     var x = module.local.get(0, Binaryen.i32),
         y = module.local.get(1, Binaryen.i32);
     var add = module.i32.add(x, y);
     var adder = module.addFunction("adder", iii, [], add);
     var initExpr = module.i32.const(3);
     var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
-    var event_ = module.addEvent("a-event", 0, vii);
+    var event_ = module.addEvent("a-event", 0, Binaryen.createType([Binaryen.i32, Binaryen.i32]));
     Binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
     Binaryen.setDebugInfo(false);
@@ -901,14 +899,13 @@ function test_parsing() {
   module.setFeatures(Binaryen.Features.All);
 
   var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
-  var vi = module.addFunctionType("vi", Binaryen.none, [ Binaryen.i32 ]);
   var x = module.local.get(0, Binaryen.i32),
       y = module.local.get(1, Binaryen.i32);
   var add = module.i32.add(x, y);
   var adder = module.addFunction("adder", iii, [], add);
   var initExpr = module.i32.const(3);
   var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
-  var event_ = module.addEvent("a-event", 0, vi);
+  var event_ = module.addEvent("a-event", 0, Binaryen.i32);
   text = module.emitText();
   module.dispose();
   module = null;

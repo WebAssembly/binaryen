@@ -301,9 +301,6 @@ struct RemoveUnusedModuleElements : public Pass {
     for (auto* call : analyzer.indirectCalls) {
       call->fullType = canonicalize(call->fullType);
     }
-    for (auto* event : analyzer.events) {
-      event->type = canonicalize(event->type);
-    }
     // remove no-longer used types
     module->functionTypes.erase(
       std::remove_if(module->functionTypes.begin(),

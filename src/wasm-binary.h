@@ -1002,7 +1002,6 @@ public:
   void writeStart();
   void writeMemory();
   void writeTypes();
-  int32_t getFunctionTypeIndex(Name type);
   void writeImports();
 
   void writeFunctionSignatures();
@@ -1017,6 +1016,7 @@ public:
   uint32_t getFunctionIndex(Name name);
   uint32_t getGlobalIndex(Name name);
   uint32_t getEventIndex(Name name);
+  uint32_t getTypeIndex(Signature sig);
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1060,6 +1060,8 @@ private:
   BufferWithRandomAccess& o;
   bool debug;
   ModuleUtils::BinaryIndexes indexes;
+  std::unordered_map<Signature, Index> typeIndexes;
+  std::vector<Signature> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;

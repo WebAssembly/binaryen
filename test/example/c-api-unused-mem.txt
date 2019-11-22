@@ -37,10 +37,9 @@
   (call $main)
  )
 )
-151
+148
 (module
  (type $0 (func))
- (type $1 (func))
  (memory $0 1024 1024)
  (export "memory" (memory $0))
  (export "main" (func $main))
@@ -70,7 +69,7 @@
    (unreachable)
   )
  )
- (func $__wasm_start (; 1 ;) (type $1)
+ (func $__wasm_start (; 1 ;) (type $0)
   (i32.store
    (i32.const 0)
    (i32.const 65535)

@@ -24,10 +24,9 @@ BinaryenFeatureAll: 511
 )
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
- (type $vi (func (param i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $4 (func))
+ (type $3 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
@@ -2285,11 +2284,7 @@ int main() {
   expressions[31] = BinaryenConst(the_module, BinaryenLiteralInt32(11));
   expressions[32] = BinaryenConst(the_module, BinaryenLiteralInt32(110));
   expressions[33] = BinaryenConst(the_module, BinaryenLiteralInt64(111));
-  {
-    BinaryenType paramTypes[] = { 2 };
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
-  }
-  BinaryenAddEvent(the_module, "a-event", 0, functionTypes[1]);
+  BinaryenAddEvent(the_module, "a-event", 0, 2);
   expressions[34] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[34] };
@@ -3963,9 +3958,9 @@ int main() {
   globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 4, 1, expressions[796]);
   {
     BinaryenType paramTypes[] = { 2, 5 };
-    functionTypes[2] = BinaryenAddFunctionType(the_module, "fiF", 4, paramTypes, 2);
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 4, paramTypes, 2);
   }
-  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[2]);
+  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   BinaryenFunctionGetName(functions[0]);
   expressions[797] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -3985,17 +3980,17 @@ int main() {
   }
   {
     BinaryenType paramTypes[] = { 0 };
-    functionTypes[3] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
+    functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
   expressions[799] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[3], varTypes, 0, expressions[799]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[799]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
     BinaryenType paramTypes[] = { 0 };
-    functionTypes[4] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
+    functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
   BinaryenModuleSetFeatures(the_module, 511);
@@ -4004,10 +3999,9 @@ int main() {
   BinaryenModulePrint(the_module);
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
- (type $vi (func (param i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $4 (func))
+ (type $3 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")

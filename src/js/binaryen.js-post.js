@@ -2740,7 +2740,7 @@ Module['getEventInfo'] = function(event_) {
     'module': UTF8ToString(Module['_BinaryenEventImportGetModule'](event_)),
     'base': UTF8ToString(Module['_BinaryenEventImportGetBase'](event_)),
     'attribute': Module['_BinaryenEventGetAttribute'](event_),
-    'type': UTF8ToString(Module['_BinaryenEventGetType'](event_))
+    'params': Module['_BinaryenEventGetParams'](event_)
   };
 };
 

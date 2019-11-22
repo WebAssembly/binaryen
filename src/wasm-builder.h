@@ -543,17 +543,14 @@ public:
   BrOnExn* makeBrOnExn(Name name, Event* event, Expression* exnref) {
     return makeBrOnExn(name, event->name, exnref, event->params);
   }
-  BrOnExn* makeBrOnExn(Name name,
-                       Name event,
-                       Expression* exnref,
-                       std::vector<Type>& eventParams) {
+  BrOnExn* makeBrOnExn(Name name, Name event, Expression* exnref, Type sent) {
     auto* ret = allocator.alloc<BrOnExn>();
     ret->name = name;
     ret->event = event;
     ret->exnref = exnref;
     // Copy params info into BrOnExn, because it is necessary when BrOnExn is
     // refinalized without the module.
-    ret->eventParams = eventParams;
+    ret->sent = sent;
     ret->finalize();
     return ret;
   }
@@ -765,15 +762,10 @@ public:
     return glob;
   }
 
-  // TODO Remove 'type' parameter once we remove FunctionType
-  static Event* makeEvent(Name name,
-                          uint32_t attribute,
-                          Name type,
-                          std::vector<Type>&& params) {
+  static Event* makeEvent(Name name, uint32_t attribute, Type params) {
     auto* event = new Event;
     event->name = name;
     event->attribute = attribute;
-    event->type = type;
     event->params = params;
     return event;
   }
