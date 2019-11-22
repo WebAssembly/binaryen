@@ -79,12 +79,14 @@ public:
   std::string toString() const;
 };
 
+// Wrapper type for formatting types as "(param i32 i64 f32)"
 struct ParamType {
   Type type;
   ParamType(Type type) : type(type) {}
   std::string toString() const;
 };
 
+// Wrapper type for formatting types as "(result i32 i64 f32)"
 struct ResultType {
   Type type;
   ResultType(Type type) : type(type) {}

@@ -29,7 +29,7 @@ public:
   size_t operator()(const std::vector<wasm::Type>& types) const {
     size_t res = 0;
     for (auto vt : types) {
-      res ^= hash<uint32_t>{}(vt);
+      res ^= std::hash<uint32_t>{}(vt);
     }
     return res;
   }
