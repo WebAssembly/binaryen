@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <shared_mutex>
 
 #include "support/bits.h"
 #include "wasm-binary.h"
@@ -24,18 +25,47 @@
 namespace wasm {
 
 void WasmBinaryWriter::prepare() {
-  // Traverse binary to collect types and their frequency
+  // We have to use static data to process modules in parallel, so only let one
+  // module be processed at a time.
+  // TODO: allow parallel passes to be constructed with arguments to avoid using
+  // static data.
+  static std::mutex prepMutex;
+  std::unique_lock<std::mutex> prepLock(prepMutex, std::defer_lock);
+  if (!prepLock.try_lock()) {
+    std::cerr << "warning: modules are not prepared for writing in parallel\n";
+    prepLock.lock();
+  }
+
+  // Collect function types and their frequencies
+  static std::unordered_map<Signature, size_t> counts;
+  counts.clear();
+  for (auto& curr : wasm->functions) {
+    counts[Signature(Type(curr->params), curr->result)]++;
+  }
+  for (auto& curr : wasm->events) {
+    counts[Signature(curr->params, Type::none)]++;
+  }
+
+  // Parallelize collection of call_indirect type counts
+  static std::shared_timed_mutex mutex;
   struct TypeCounter : WalkerPass<PostWalker<TypeCounter>> {
-    std::unordered_map<Signature, size_t> counts;
-    void visitEvent(Event* curr) {
-      counts[Signature(curr->params, Type::none)]++;
-    }
-    void visitFunction(Function* curr) {
-      counts[Signature(Type(curr->params), curr->result)]++;
-    }
+    bool isFunctionParallel() { return true; }
+    bool modifiesBinaryenIR() { return false; }
     void visitCallIndirect(CallIndirect* curr) {
       auto* type = getModule()->getFunctionType(curr->fullType);
-      counts[Signature(Type(type->params), type->result)]++;
+      Signature sig(Type(type->params), type->result);
+      {
+        std::shared_lock<std::shared_timed_mutex> lock(mutex);
+        auto it = counts.find(sig);
+        if (it != counts.end()) {
+          it->second++;
+          return;
+        }
+      }
+      {
+        std::lock_guard<std::shared_timed_mutex> lock(mutex);
+        counts[sig]++;
+      }
     }
     Pass* create() { return new TypeCounter; }
   } counter;
@@ -43,9 +73,9 @@ void WasmBinaryWriter::prepare() {
   runner.setIsNested(true);
   counter.run(&runner, wasm);
 
-  std::vector<std::pair<Signature, size_t>> counts(counter.counts.begin(),
-                                                   counter.counts.end());
-  std::sort(counts.begin(), counts.end(), [&](auto a, auto b) {
+  std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
+                                                   counts.end());
+  std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
     // order by frequency then simplicity
     if (a.second != b.second) {
       return a.second > b.second;
@@ -53,9 +83,9 @@ void WasmBinaryWriter::prepare() {
       return a.first < b.first;
     }
   });
-  for (Index i = 0; i < counts.size(); ++i) {
-    typeIndexes[counts[i].first] = i;
-    types.push_back(counts[i].first);
+  for (Index i = 0; i < sorted.size(); ++i) {
+    typeIndexes[sorted[i].first] = i;
+    types.push_back(sorted[i].first);
   }
 
   importInfo = wasm::make_unique<ImportInfo>(*wasm);

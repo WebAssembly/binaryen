@@ -27,7 +27,7 @@
 template<> class std::hash<std::vector<wasm::Type>> {
 public:
   size_t operator()(const std::vector<wasm::Type>& types) const {
-    uint32_t res = 0;
+    uint32_t res = wasm::rehash(0, uint32_t(types.size()));
     for (auto vt : types) {
       res = wasm::rehash(res, uint32_t(vt));
     }
