@@ -35,8 +35,8 @@ public:
   }
 };
 
-size_t
-std::hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
+size_t std::hash<wasm::Signature>::
+operator()(const wasm::Signature& sig) const {
   return std::hash<uint64_t>{}(uint64_t(sig.params) << 32 |
                                uint64_t(sig.results));
 }
