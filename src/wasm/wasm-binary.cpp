@@ -25,20 +25,9 @@
 namespace wasm {
 
 void WasmBinaryWriter::prepare() {
-  // We have to use static data to process modules in parallel, so only let one
-  // module be processed at a time.
-  // TODO: allow parallel passes to be constructed with arguments to avoid using
-  // static data.
-  static std::mutex prepMutex;
-  std::unique_lock<std::mutex> prepLock(prepMutex, std::defer_lock);
-  if (!prepLock.try_lock()) {
-    std::cerr << "warning: modules are not prepared for writing in parallel\n";
-    prepLock.lock();
-  }
-
   // Collect function types and their frequencies
-  static std::unordered_map<Signature, size_t> counts;
-  counts.clear();
+  using Counts = std::unordered_map<Signature, size_t>;
+  Counts counts;
   for (auto& curr : wasm->functions) {
     counts[Signature(Type(curr->params), curr->result)]++;
   }
@@ -47,8 +36,12 @@ void WasmBinaryWriter::prepare() {
   }
 
   // Parallelize collection of call_indirect type counts
-  static std::shared_timed_mutex mutex;
+  std::shared_timed_mutex mutex;
   struct TypeCounter : WalkerPass<PostWalker<TypeCounter>> {
+    Counts& counts;
+    std::shared_timed_mutex& mutex;
+    TypeCounter(Counts& counts, std::shared_timed_mutex& mutex)
+      : counts(counts), mutex(mutex) {}
     bool isFunctionParallel() { return true; }
     bool modifiesBinaryenIR() { return false; }
     void visitCallIndirect(CallIndirect* curr) {
@@ -67,8 +60,8 @@ void WasmBinaryWriter::prepare() {
         counts[sig]++;
       }
     }
-    Pass* create() { return new TypeCounter; }
-  } counter;
+    Pass* create() { return new TypeCounter(counts, mutex); }
+  } counter(counts, mutex);
   PassRunner runner(wasm);
   runner.setIsNested(true);
   counter.run(&runner, wasm);
