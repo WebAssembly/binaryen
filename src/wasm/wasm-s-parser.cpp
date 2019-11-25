@@ -1859,7 +1859,7 @@ Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
   assert(event && "br_on_exn's event must exist");
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  ret->sent = event->type.params;
+  ret->sent = event->sig.params;
   ret->finalize();
   return ret;
 }
@@ -2209,7 +2209,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     event->name = name;
     event->module = module;
     event->base = base;
-    event->type = Signature(Type(paramTypes), results);
+    event->sig = Signature(Type(paramTypes), results);
     wasm.addEvent(event.release());
   }
   // If there are more elements, they are invalid
@@ -2519,7 +2519,7 @@ void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
   Type results;
   FunctionType* fakeFunctionType; // just co call parseTypeUse
   i = parseTypeUse(s, i, fakeFunctionType, paramTypes, results);
-  event->type = Signature(Type(paramTypes), results);
+  event->sig = Signature(Type(paramTypes), results);
 
   // If there are more elements, they are invalid
   if (i < s.size()) {

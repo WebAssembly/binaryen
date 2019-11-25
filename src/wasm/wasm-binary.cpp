@@ -33,7 +33,7 @@ void WasmBinaryWriter::prepare() {
     counts[Signature(Type(curr->params), curr->result)]++;
   }
   for (auto& curr : wasm->events) {
-    counts[curr->type]++;
+    counts[curr->sig]++;
   }
 
   // Parallelize collection of call_indirect type counts
@@ -42,8 +42,8 @@ void WasmBinaryWriter::prepare() {
     std::shared_timed_mutex& mutex;
     TypeCounter(AtomicCounts& counts, std::shared_timed_mutex& mutex)
       : counts(counts), mutex(mutex) {}
-    bool isFunctionParallel() { return true; }
-    bool modifiesBinaryenIR() { return false; }
+    bool isFunctionParallel() override { return true; }
+    bool modifiesBinaryenIR() override { return false; }
     void visitCallIndirect(CallIndirect* curr) {
       auto* type = getModule()->getFunctionType(curr->fullType);
       Signature sig(Type(type->params), type->result);
@@ -240,16 +240,16 @@ void WasmBinaryWriter::writeTypes() {
     std::cerr << "== writeTypes" << std::endl;
   }
   auto start = startSection(BinaryConsts::Section::Type);
-  o << U32LEB(typeIndexes.size());
-  for (Index i = 0; i < typeIndexes.size(); ++i) {
+  o << U32LEB(types.size());
+  for (Index i = 0; i < types.size(); ++i) {
     Signature& sig = types[i];
     if (debug) {
       std::cerr << "write " << sig.params << " -> " << sig.results << std::endl;
     }
     o << S32LEB(BinaryConsts::EncodedType::Func);
-    for (auto& types : {sig.params.expand(), sig.results.expand()}) {
-      o << U32LEB(types.size());
-      for (auto type : types) {
+    for (auto& sigType : {sig.params, sig.results}) {
+      o << U32LEB(sigType.size());
+      for (auto type : sigType.expand()) {
         o << binaryType(type);
       }
     }
@@ -295,7 +295,7 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(event);
     o << U32LEB(int32_t(ExternalKind::Event));
     o << U32LEB(event->attribute);
-    o << U32LEB(getTypeIndex(event->type));
+    o << U32LEB(getTypeIndex(event->sig));
   });
   if (wasm->memory.imported()) {
     if (debug) {
@@ -498,25 +498,25 @@ void WasmBinaryWriter::writeDataSegments() {
   finishSection(start);
 }
 
-uint32_t WasmBinaryWriter::getFunctionIndex(Name name) {
+uint32_t WasmBinaryWriter::getFunctionIndex(Name name) const {
   auto it = indexes.functionIndexes.find(name);
   assert(it != indexes.functionIndexes.end());
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
+uint32_t WasmBinaryWriter::getGlobalIndex(Name name) const {
   auto it = indexes.globalIndexes.find(name);
   assert(it != indexes.globalIndexes.end());
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getEventIndex(Name name) {
+uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
   auto it = indexes.eventIndexes.find(name);
   assert(it != indexes.eventIndexes.end());
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) {
+uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) const {
   auto it = typeIndexes.find(sig);
   assert(it != typeIndexes.end());
   return it->second;
@@ -577,7 +577,7 @@ void WasmBinaryWriter::writeEvents() {
       std::cerr << "write one" << std::endl;
     }
     o << U32LEB(event->attribute);
-    o << U32LEB(getTypeIndex(event->type));
+    o << U32LEB(getTypeIndex(event->sig));
   });
 
   finishSection(start);
@@ -4657,7 +4657,7 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
   }
   auto* event = wasm.events[index].get();
   curr->event = event->name;
-  size_t num = event->type.params.size();
+  size_t num = event->sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
@@ -4691,7 +4691,7 @@ void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
 
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  curr->sent = event->type.params;
+  curr->sent = event->sig.params;
   curr->finalize();
 }
 

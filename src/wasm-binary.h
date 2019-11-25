@@ -1013,10 +1013,10 @@ public:
   void writeDataSegments();
   void writeEvents();
 
-  uint32_t getFunctionIndex(Name name);
-  uint32_t getGlobalIndex(Name name);
-  uint32_t getEventIndex(Name name);
-  uint32_t getTypeIndex(Signature sig);
+  uint32_t getFunctionIndex(Name name) const;
+  uint32_t getGlobalIndex(Name name) const;
+  uint32_t getEventIndex(Name name) const;
+  uint32_t getTypeIndex(Signature sig) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();

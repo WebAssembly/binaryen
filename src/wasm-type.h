@@ -17,7 +17,6 @@
 #ifndef wasm_wasm_type_h
 #define wasm_wasm_type_h
 
-#include "support/hash.h"
 #include "wasm-features.h"
 #include <ostream>
 #include <vector>

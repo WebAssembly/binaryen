@@ -100,7 +100,7 @@ inline Event* copyEvent(Event* event, Module& out) {
   auto* ret = new Event();
   ret->name = event->name;
   ret->attribute = event->attribute;
-  ret->type = event->type;
+  ret->sig = event->sig;
   out.addEvent(ret);
   return ret;
 }

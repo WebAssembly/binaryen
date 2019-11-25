@@ -1118,7 +1118,7 @@ BINARYEN_API void BinaryenAddEventImport(BinaryenModuleRef module,
                                          const char* externalModuleName,
                                          const char* externalBaseName,
                                          uint32_t attribute,
-                                         BinaryenType paramsg);
+                                         BinaryenType params);
 
 // Exports
 

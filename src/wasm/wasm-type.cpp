@@ -19,10 +19,10 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "wasm-type.h"
-#include "wasm-features.h"
-
 #include "compiler-support.h"
+#include "support/hash.h"
+#include "wasm-features.h"
+#include "wasm-type.h"
 
 template<> class std::hash<std::vector<wasm::Type>> {
 public:
