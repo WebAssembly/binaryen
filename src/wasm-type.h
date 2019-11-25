@@ -104,6 +104,7 @@ std::ostream& operator<<(std::ostream& os, ResultType t);
 struct Signature {
   Type params;
   Type results;
+  Signature() = default;
   Signature(Type params, Type results) : params(params), results(results) {}
   bool operator==(const Signature& other) const {
     return params == other.params && results == other.results;

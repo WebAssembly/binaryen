@@ -541,7 +541,7 @@ public:
     return ret;
   }
   BrOnExn* makeBrOnExn(Name name, Event* event, Expression* exnref) {
-    return makeBrOnExn(name, event->name, exnref, event->params);
+    return makeBrOnExn(name, event->name, exnref, event->type.params);
   }
   BrOnExn* makeBrOnExn(Name name, Name event, Expression* exnref, Type sent) {
     auto* ret = allocator.alloc<BrOnExn>();
@@ -762,11 +762,11 @@ public:
     return glob;
   }
 
-  static Event* makeEvent(Name name, uint32_t attribute, Type params) {
+  static Event* makeEvent(Name name, uint32_t attribute, Signature type) {
     auto* event = new Event;
     event->name = name;
     event->attribute = attribute;
-    event->params = params;
+    event->type = type;
     return event;
   }
 };

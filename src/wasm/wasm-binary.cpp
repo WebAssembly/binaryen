@@ -32,7 +32,7 @@ void WasmBinaryWriter::prepare() {
     counts[Signature(Type(curr->params), curr->result)]++;
   }
   for (auto& curr : wasm->events) {
-    counts[Signature(curr->params, Type::none)]++;
+    counts[curr->type]++;
   }
 
   // Parallelize collection of call_indirect type counts
@@ -283,7 +283,7 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(event);
     o << U32LEB(int32_t(ExternalKind::Event));
     o << U32LEB(event->attribute);
-    o << U32LEB(getTypeIndex(Signature(event->params, Type::none)));
+    o << U32LEB(getTypeIndex(event->type));
   });
   if (wasm->memory.imported()) {
     if (debug) {
@@ -565,7 +565,7 @@ void WasmBinaryWriter::writeEvents() {
       std::cerr << "write one" << std::endl;
     }
     o << U32LEB(event->attribute);
-    o << U32LEB(getTypeIndex(Signature(event->params, Type::none)));
+    o << U32LEB(getTypeIndex(event->type));
   });
 
   finishSection(start);
@@ -1409,7 +1409,8 @@ void WasmBinaryBuilder::readImports() {
                      std::to_string(wasm.functionTypes.size()));
         }
         Type params = Type(wasm.functionTypes[index]->params);
-        auto* curr = builder.makeEvent(name, attribute, params);
+        auto* curr =
+          builder.makeEvent(name, attribute, Signature(params, Type::none));
         curr->module = module;
         curr->base = base;
         wasm.addEvent(curr);
@@ -2082,8 +2083,8 @@ void WasmBinaryBuilder::readEvents() {
                  std::to_string(wasm.functionTypes.size()));
     }
     Type params = Type(wasm.functionTypes[typeIndex]->params);
-    wasm.addEvent(
-      Builder::makeEvent("event$" + std::to_string(i), attribute, params));
+    wasm.addEvent(Builder::makeEvent(
+      "event$" + std::to_string(i), attribute, Signature(params, Type::none)));
   }
 }
 
@@ -4644,7 +4645,7 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
   }
   auto* event = wasm.events[index].get();
   curr->event = event->name;
-  size_t num = event->params.size();
+  size_t num = event->type.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
@@ -4678,7 +4679,7 @@ void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
 
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  curr->sent = event->params;
+  curr->sent = event->type.params;
   curr->finalize();
 }
 

@@ -413,7 +413,7 @@ private:
       }
       auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
                                       WASM_EVENT_ATTRIBUTE_EXCEPTION,
-                                      Type(params));
+                                      Signature(Type(params), Type::none));
       wasm.addEvent(event);
     }
   }

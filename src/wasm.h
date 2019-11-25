@@ -1319,7 +1319,7 @@ public:
   Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
-  Type params;
+  Signature type;
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.

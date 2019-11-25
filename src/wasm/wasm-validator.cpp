@@ -1703,12 +1703,12 @@ void FunctionValidator::visitThrow(Throw* curr) {
   if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
     return;
   }
-  if (!shouldBeTrue(curr->operands.size() == event->params.size(),
+  if (!shouldBeTrue(curr->operands.size() == event->type.params.size(),
                     curr,
                     "event's param numbers must match")) {
     return;
   }
-  const std::vector<Type>& paramTypes = event->params.expand();
+  const std::vector<Type>& paramTypes = event->type.params.expand();
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
                                            paramTypes[i],
@@ -1732,7 +1732,7 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
   Event* event = getModule()->getEventOrNull(curr->event);
   shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
-  shouldBeTrue(event->params == curr->sent,
+  shouldBeTrue(event->type.params == curr->sent,
                curr,
                "br_on_exn's event params and event's params are different");
   noteBreak(curr->name, curr->sent, curr);
@@ -2115,7 +2115,11 @@ static void validateEvents(Module& module, ValidationInfo& info) {
                        (unsigned)0,
                        curr->attribute,
                        "Currently only attribute 0 is supported");
-    for (auto type : curr->params.expand()) {
+    info.shouldBeEqual(curr->type.results,
+                       Type(Type::none),
+                       curr->name,
+                       "Event type's result type should be none");
+    for (auto type : curr->type.params.expand()) {
       info.shouldBeTrue(type.isInteger() || type.isFloat(),
                         curr->name,
                         "Values in an event should have integer or float type");

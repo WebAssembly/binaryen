@@ -3272,7 +3272,7 @@ BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
   auto* ret = new Event();
   ret->name = name;
   ret->attribute = attribute;
-  ret->params = Type(params);
+  ret->type = Signature(Type(params), Type::none);
   wasm->addEvent(ret);
   return ret;
 }
@@ -3389,7 +3389,7 @@ void BinaryenAddEventImport(BinaryenModuleRef module,
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->params = Type(params);
+  ret->type = Signature(Type(params), Type::none);
   wasm->addEvent(ret);
 }
 
@@ -4316,7 +4316,7 @@ BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
     std::cout << "  BinaryenEventGetParams(events[" << events[event] << "]);\n";
   }
 
-  return ((Event*)event)->params;
+  return ((Event*)event)->type.params;
 }
 
 //

@@ -1859,7 +1859,7 @@ Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
   assert(event && "br_on_exn's event must exist");
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  ret->sent = event->params;
+  ret->sent = event->type.params;
   ret->finalize();
   return ret;
 }
@@ -2204,12 +2204,12 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     event->attribute = atoi(attrElem[1]->c_str());
     std::vector<Type> paramTypes;
     FunctionType* fakeFunctionType; // just to call parseTypeUse
-    Type fakeResult; // just to call parseTypeUse
-    j = parseTypeUse(inner, j, fakeFunctionType, paramTypes, fakeResult);
+    Type results;
+    j = parseTypeUse(inner, j, fakeFunctionType, paramTypes, results);
     event->name = name;
     event->module = module;
     event->base = base;
-    event->params = Type(paramTypes);
+    event->type = Signature(Type(paramTypes), results);
     wasm.addEvent(event.release());
   }
   // If there are more elements, they are invalid
@@ -2516,10 +2516,10 @@ void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
 
   // Parse typeuse
   std::vector<Type> paramTypes;
-  FunctionType* fakeFunctionType;
-  Type fakeResult; // just co call parseTypeUse
-  i = parseTypeUse(s, i, fakeFunctionType, paramTypes, fakeResult);
-  event->params = Type(paramTypes);
+  Type results;
+  FunctionType* fakeFunctionType; // just co call parseTypeUse
+  i = parseTypeUse(s, i, fakeFunctionType, paramTypes, results);
+  event->type = Signature(Type(paramTypes), results);
 
   // If there are more elements, they are invalid
   if (i < s.size()) {
