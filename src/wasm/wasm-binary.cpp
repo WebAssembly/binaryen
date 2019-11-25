@@ -27,6 +27,7 @@ namespace wasm {
 void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies
   using Counts = std::unordered_map<Signature, size_t>;
+  using AtomicCounts = std::unordered_map<Signature, std::atomic_size_t>;
   Counts counts;
   for (auto& curr : wasm->functions) {
     counts[Signature(Type(curr->params), curr->result)]++;
@@ -36,11 +37,10 @@ void WasmBinaryWriter::prepare() {
   }
 
   // Parallelize collection of call_indirect type counts
-  std::shared_timed_mutex mutex;
   struct TypeCounter : WalkerPass<PostWalker<TypeCounter>> {
-    Counts& counts;
+    AtomicCounts& counts;
     std::shared_timed_mutex& mutex;
-    TypeCounter(Counts& counts, std::shared_timed_mutex& mutex)
+    TypeCounter(AtomicCounts& counts, std::shared_timed_mutex& mutex)
       : counts(counts), mutex(mutex) {}
     bool isFunctionParallel() { return true; }
     bool modifiesBinaryenIR() { return false; }
@@ -61,10 +61,22 @@ void WasmBinaryWriter::prepare() {
       }
     }
     Pass* create() { return new TypeCounter(counts, mutex); }
-  } counter(counts, mutex);
+  };
+
+  std::shared_timed_mutex mutex;
+  AtomicCounts parallelCounts;
+  for (auto& kv : counts) {
+    parallelCounts[kv.first] = 0;
+  }
+
+  TypeCounter counter(parallelCounts, mutex);
   PassRunner runner(wasm);
   runner.setIsNested(true);
   counter.run(&runner, wasm);
+
+  for (auto& kv : parallelCounts) {
+    counts[kv.first] += kv.second;
+  }
 
   std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
                                                    counts.end());
