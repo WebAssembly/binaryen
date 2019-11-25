@@ -135,7 +135,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   Literal callImport(Function* import, LiteralList& arguments) override {
     if (import->module == SPECTEST && import->base == PRINT) {
       for (auto argument : arguments) {
-        std::cout << '(' << argument << ')' << '\n';
+        std::cout << argument << " : " << argument.type << '\n';
       }
       return Literal();
     } else if (import->module == ENV && import->base == EXIT) {
@@ -211,7 +211,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   void trap(const char* why) override {
-    std::cout << "[trap " << why << "]\n";
+    std::cerr << "[trap " << why << "]\n";
     throw TrapException();
   }
 };
