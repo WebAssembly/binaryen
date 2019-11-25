@@ -4088,7 +4088,7 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetName(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->name.c_str();
@@ -4096,7 +4096,7 @@ const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
 BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetNumParams(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->params.size();
@@ -4105,7 +4105,7 @@ BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
                                           BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetParam(functionsTypes["
-              << functions[ftype] << "], " << index << ");\n";
+              << functionTypes[ftype] << "], " << index << ");\n";
   }
 
   auto* ft = (FunctionType*)ftype;
@@ -4115,7 +4115,7 @@ BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
 BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetResult(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->result;
@@ -4521,7 +4521,7 @@ RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
   }
 
   R->AddBlock(ret);
-  return RelooperRef(ret);
+  return RelooperBlockRef(ret);
 }
 
 void RelooperAddBranch(RelooperBlockRef from,
@@ -4554,7 +4554,7 @@ RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper,
   }
 
   R->AddBlock(ret);
-  return RelooperRef(ret);
+  return RelooperBlockRef(ret);
 }
 
 void RelooperAddBranchForSwitch(RelooperBlockRef from,
