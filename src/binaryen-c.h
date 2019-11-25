@@ -65,7 +65,11 @@
 #endif
 
 #ifdef __cplusplus
-#define BINARYEN_REF(NAME) namespace wasm { class NAME; }; typedef class wasm::NAME* Binaryen##NAME##Ref;
+#define BINARYEN_REF(NAME)                                                     \
+  namespace wasm {                                                             \
+  class NAME;                                                                  \
+  };                                                                           \
+  typedef class wasm::NAME* Binaryen##NAME##Ref;
 #else
 #define BINARYEN_REF(NAME) typedef struct Binaryen##NAME* Binaryen##NAME##Ref;
 #endif
@@ -1503,9 +1507,9 @@ BINARYEN_API void BinaryenAddCustomSection(BinaryenModuleRef module,
 
 #ifdef __cplusplus
 namespace CFG {
-  struct Relooper;
-  struct Block;
-}
+struct Relooper;
+struct Block;
+} // namespace CFG
 typedef struct CFG::Relooper* RelooperRef;
 typedef struct CFG::Block* RelooperBlockRef;
 #else
