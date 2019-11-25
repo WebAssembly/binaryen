@@ -184,6 +184,16 @@ ADD_SUBDIRECTORY(src/passes)
 ADD_SUBDIRECTORY(src/support)
 ADD_SUBDIRECTORY(src/wasm)
 
+# Object files
+SET(binaryen_objs
+    $<TARGET_OBJECTS:passes>
+    $<TARGET_OBJECTS:wasm>
+    $<TARGET_OBJECTS:asmjs>
+    $<TARGET_OBJECTS:emscripten-optimizer>
+    $<TARGET_OBJECTS:ir>
+    $<TARGET_OBJECTS:cfg>
+    $<TARGET_OBJECTS:support>)
+
 # Sources.
 
 
@@ -191,12 +201,13 @@ SET(binaryen_SOURCES
   src/binaryen-c.cpp
 )
 IF(BUILD_STATIC_LIB)
-  ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES})
+  MESSAGE(STATUS "Building libbinaryen as statically linked library.")
+  ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES} ${binaryen_objs})
   ADD_DEFINITIONS(-DBUILD_STATIC_LIBRARY)
 ELSE()
-  ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
+  MESSAGE(STATUS "Building libbinaryen as shared library.")
+  ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 ENDIF()
-TARGET_LINK_LIBRARIES(binaryen passes wasm asmjs emscripten-optimizer ir cfg support)
 INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -210,9 +221,8 @@ ENDIF()
 SET(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
 )
-ADD_EXECUTABLE(wasm-shell
-               ${wasm-shell_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+ADD_EXECUTABLE(wasm-shell ${wasm-shell_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm-shell ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -220,9 +230,8 @@ INSTALL(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
 SET(wasm-opt_SOURCES
   src/tools/wasm-opt.cpp
 )
-ADD_EXECUTABLE(wasm-opt
-               ${wasm-opt_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+ADD_EXECUTABLE(wasm-opt ${wasm-opt_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm-opt ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -230,9 +239,8 @@ INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
 SET(wasm-metadce_SOURCES
   src/tools/wasm-metadce.cpp
 )
-ADD_EXECUTABLE(wasm-metadce
-               ${wasm-metadce_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-metadce wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+ADD_EXECUTABLE(wasm-metadce ${wasm-metadce_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm-metadce ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm-metadce PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-metadce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-metadce DESTINATION bin)
@@ -240,9 +248,8 @@ INSTALL(TARGETS wasm-metadce DESTINATION bin)
 SET(asm2wasm_SOURCES
   src/tools/asm2wasm.cpp
 )
-ADD_EXECUTABLE(asm2wasm
-               ${asm2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer passes wasm asmjs ir cfg support)
+ADD_EXECUTABLE(asm2wasm ${asm2wasm_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(asm2wasm ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -250,9 +257,8 @@ INSTALL(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 SET(wasm2js_SOURCES
   src/tools/wasm2js.cpp
 )
-ADD_EXECUTABLE(wasm2js
-               ${wasm2js_SOURCES})
-TARGET_LINK_LIBRARIES(wasm2js passes wasm asmjs emscripten-optimizer ir cfg support)
+ADD_EXECUTABLE(wasm2js ${wasm2js_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm2js ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm2js PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm2js PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm2js DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -260,9 +266,8 @@ INSTALL(TARGETS wasm2js DESTINATION ${CMAKE_INSTALL_BINDIR})
 SET(wasm-emscripten-finalize_SOURCES
   src/tools/wasm-emscripten-finalize.cpp
 )
-ADD_EXECUTABLE(wasm-emscripten-finalize
-               ${wasm-emscripten-finalize_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-emscripten-finalize passes wasm asmjs ir cfg support)
+ADD_EXECUTABLE(wasm-emscripten-finalize ${wasm-emscripten-finalize_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm-emscripten-finalize ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-emscripten-finalize DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -270,9 +275,8 @@ INSTALL(TARGETS wasm-emscripten-finalize DESTINATION ${CMAKE_INSTALL_BINDIR})
 SET(wasm_as_SOURCES
   src/tools/wasm-as.cpp
 )
-ADD_EXECUTABLE(wasm-as
-               ${wasm_as_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-as wasm asmjs passes ir cfg support wasm)
+ADD_EXECUTABLE(wasm-as ${wasm_as_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm-as ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -280,9 +284,8 @@ INSTALL(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
 SET(wasm_dis_SOURCES
   src/tools/wasm-dis.cpp
 )
-ADD_EXECUTABLE(wasm-dis
-               ${wasm_dis_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-dis wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+ADD_EXECUTABLE(wasm-dis ${wasm_dis_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm-dis ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -290,9 +293,8 @@ INSTALL(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})
 SET(wasm-ctor-eval_SOURCES
   src/tools/wasm-ctor-eval.cpp
 )
-ADD_EXECUTABLE(wasm-ctor-eval
-               ${wasm-ctor-eval_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-ctor-eval emscripten-optimizer passes wasm asmjs ir cfg support)
+ADD_EXECUTABLE(wasm-ctor-eval ${wasm-ctor-eval_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm-ctor-eval ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)
@@ -300,9 +302,8 @@ INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)
 SET(wasm-reduce_SOURCES
   src/tools/wasm-reduce.cpp
 )
-ADD_EXECUTABLE(wasm-reduce
-                ${wasm-reduce_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-reduce wasm asmjs passes wasm ir cfg support)
+ADD_EXECUTABLE(wasm-reduce ${wasm-reduce_SOURCES} ${binaryen_objs})
+TARGET_LINK_LIBRARIES(wasm-reduce ${CMAKE_THREAD_LIBS_INIT})
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
