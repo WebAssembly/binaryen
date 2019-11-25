@@ -3,10 +3,9 @@
 )
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
- (type $vi (func (param i32)))
  (type $fiF (func (param i32 f64) (result f32)))
  (type $v (func))
- (type $4 (func))
+ (type $3 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")

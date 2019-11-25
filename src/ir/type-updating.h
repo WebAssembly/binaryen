@@ -154,7 +154,7 @@ struct TypeUpdater
     } else if (auto* sw = curr->dynCast<Switch>()) {
       applySwitchChanges(sw, change);
     } else if (auto* br = curr->dynCast<BrOnExn>()) {
-      noteBreakChange(br->name, change, br->getSingleSentType());
+      noteBreakChange(br->name, change, br->sent);
     }
   }
 
