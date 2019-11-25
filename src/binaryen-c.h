@@ -65,6 +65,12 @@
 #endif
 
 #ifdef __cplusplus
+#define BINARYEN_REF(NAME) namespace wasm { class NAME; }; typedef class wasm::NAME* Binaryen##NAME##Ref;
+#else
+#define BINARYEN_REF(NAME) typedef struct Binaryen##NAME* Binaryen##NAME##Ref;
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -198,14 +204,14 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 // A module can also contain a function table for indirect calls, a memory,
 // and a start method.
 
-typedef struct BinaryenModule* BinaryenModuleRef;
+BINARYEN_REF(Module);
 
 BINARYEN_API BinaryenModuleRef BinaryenModuleCreate(void);
 BINARYEN_API void BinaryenModuleDispose(BinaryenModuleRef module);
 
 // Function types
 
-typedef struct BinaryenFunctionType* BinaryenFunctionTypeRef;
+BINARYEN_REF(FunctionType);
 
 // Add a new function type. This is thread-safe.
 // Note: name can be NULL, in which case we auto-generate a name
@@ -574,7 +580,7 @@ BINARYEN_API BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenSwizzleVec8x16(void);
 
-typedef struct BinaryenExpression* BinaryenExpressionRef;
+BINARYEN_REF(Expression);
 
 // Block: name can be NULL. Specifying BinaryenUndefined() as the 'type'
 //        parameter indicates that the block's type shall be figured out
@@ -1060,7 +1066,7 @@ BinaryenPushGetValue(BinaryenExpressionRef expr);
 
 // Functions
 
-typedef struct BinaryenFunction* BinaryenFunctionRef;
+BINARYEN_REF(Function);
 
 // Adds a function to the module. This is thread-safe.
 // @varTypes: the types of variables. In WebAssembly, vars share
@@ -1123,7 +1129,7 @@ BINARYEN_API void BinaryenAddEventImport(BinaryenModuleRef module,
 
 // Exports
 
-typedef struct BinaryenExport* BinaryenExportRef;
+BINARYEN_REF(Export);
 
 WASM_DEPRECATED BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module,
                                                     const char* internalName,
@@ -1145,7 +1151,7 @@ BINARYEN_API void BinaryenRemoveExport(BinaryenModuleRef module,
 
 // Globals
 
-typedef struct BinaryenGlobal* BinaryenGlobalRef;
+BINARYEN_REF(Global);
 
 BINARYEN_API BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                                  const char* name,
@@ -1160,7 +1166,7 @@ BINARYEN_API void BinaryenRemoveGlobal(BinaryenModuleRef module,
 
 // Events
 
-typedef struct BinaryenEvent* BinaryenEventRef;
+BINARYEN_REF(Event);
 
 BINARYEN_API BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                                const char* name,
@@ -1495,8 +1501,17 @@ BINARYEN_API void BinaryenAddCustomSection(BinaryenModuleRef module,
 // For more details, see src/cfg/Relooper.h and
 // https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api
 
+#ifdef __cplusplus
+namespace CFG {
+  struct Relooper;
+  struct Block;
+}
+typedef struct CFG::Relooper* RelooperRef;
+typedef struct CFG::Block* RelooperBlockRef;
+#else
 typedef struct Relooper* RelooperRef;
 typedef struct RelooperBlock* RelooperBlockRef;
+#endif
 
 // Create a relooper instance
 BINARYEN_API RelooperRef RelooperCreate(BinaryenModuleRef module);
