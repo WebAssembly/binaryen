@@ -3977,7 +3977,7 @@ int main() {
   RelooperRef the_relooper = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
-  BinaryenAddEvent(the_module, "a-event", 0, 2);
+  BinaryenAddEvent(the_module, "a-event", 0, 2, 0);
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt64(2));
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralFloat32(3.14));
@@ -5734,7 +5734,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
   BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
   BinaryenAddGlobalImport(the_module, "a-global-imp", "module", "base", 2, 0);
   BinaryenAddGlobalImport(the_module, "a-mut-global-imp", "module", "base", 2, 1);
-  BinaryenAddEventImport(the_module, "a-event-imp", "module", "base", 0, 2);
+  BinaryenAddEventImport(the_module, "a-event-imp", "module", "base", 0, 2, 0);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   exports[1] = BinaryenAddGlobalExport(the_module, "a-global", "a-global-exp");
   exports[2] = BinaryenAddEventExport(the_module, "a-event", "a-event-exp");

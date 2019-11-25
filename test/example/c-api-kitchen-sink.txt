@@ -2284,7 +2284,7 @@ int main() {
   expressions[31] = BinaryenConst(the_module, BinaryenLiteralInt32(11));
   expressions[32] = BinaryenConst(the_module, BinaryenLiteralInt32(110));
   expressions[33] = BinaryenConst(the_module, BinaryenLiteralInt64(111));
-  BinaryenAddEvent(the_module, "a-event", 0, 2);
+  BinaryenAddEvent(the_module, "a-event", 0, 2, 0);
   expressions[34] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[34] };

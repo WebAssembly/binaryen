@@ -272,7 +272,8 @@ void test_core() {
                         temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
 
   // Events
-  BinaryenAddEvent(module, "a-event", 0, BinaryenTypeInt32());
+  BinaryenAddEvent(
+    module, "a-event", 0, BinaryenTypeInt32(), BinaryenTypeNone());
 
   // Exception handling
 

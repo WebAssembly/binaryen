@@ -157,7 +157,7 @@ function test_core() {
   module = new Binaryen.Module();
 
   // Create an event
-  var event_ = module.addEvent("a-event", 0, Binaryen.i32);
+  var event_ = module.addEvent("a-event", 0, Binaryen.i32, Binaryen.none);
 
   // Literals and consts
 
@@ -562,7 +562,7 @@ function test_core() {
   module.addFunctionImport("an-imported", "module", "base", fiF);
   module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32, false);
   module.addGlobalImport("a-mut-global-imp", "module", "base", Binaryen.i32, true);
-  module.addEventImport("a-event-imp", "module", "base", 0, Binaryen.i32);
+  module.addEventImport("a-event-imp", "module", "base", 0, Binaryen.i32, Binaryen.none);
 
   // Exports
 
@@ -828,7 +828,7 @@ function test_binaries() {
     var adder = module.addFunction("adder", iii, [], add);
     var initExpr = module.i32.const(3);
     var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
-    var event_ = module.addEvent("a-event", 0, Binaryen.createType([Binaryen.i32, Binaryen.i32]));
+    var event_ = module.addEvent("a-event", 0, Binaryen.createType([Binaryen.i32, Binaryen.i32]), Binaryen.none);
     Binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
     Binaryen.setDebugInfo(false);
@@ -905,7 +905,7 @@ function test_parsing() {
   var adder = module.addFunction("adder", iii, [], add);
   var initExpr = module.i32.const(3);
   var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
-  var event_ = module.addEvent("a-event", 0, Binaryen.i32);
+  var event_ = module.addEvent("a-event", 0, Binaryen.i32, Binaryen.none);
   text = module.emitText();
   module.dispose();
   module = null;

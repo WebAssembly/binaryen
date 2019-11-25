@@ -20,7 +20,7 @@ var module = new Binaryen.Module();
 module.setFeatures(Binaryen.Features.ExceptionHandling);
 
 var v = module.addFunctionType("v", Binaryen.none, []);
-var event_ = module.addEvent("e", 0, Binaryen.i32);
+var event_ = module.addEvent("e", 0, Binaryen.i32, Binaryen.none);
 
 // (try
 //   (throw $e (i32.const 0))

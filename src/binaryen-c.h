@@ -1118,7 +1118,8 @@ BINARYEN_API void BinaryenAddEventImport(BinaryenModuleRef module,
                                          const char* externalModuleName,
                                          const char* externalBaseName,
                                          uint32_t attribute,
-                                         BinaryenType params);
+                                         BinaryenType params,
+                                         BinaryenType results);
 
 // Exports
 
@@ -1164,7 +1165,8 @@ typedef void* BinaryenEventRef;
 BINARYEN_API BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                                const char* name,
                                                uint32_t attribute,
-                                               BinaryenType params);
+                                               BinaryenType params,
+                                               BinaryenType results);
 BINARYEN_API BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module,
                                                const char* name);
 BINARYEN_API void BinaryenRemoveEvent(BinaryenModuleRef module,
@@ -1437,8 +1439,10 @@ BinaryenGlobalGetInitExpr(BinaryenGlobalRef global);
 BINARYEN_API const char* BinaryenEventGetName(BinaryenEventRef event);
 // Gets the attribute of the specified `Event`.
 BINARYEN_API int BinaryenEventGetAttribute(BinaryenEventRef event);
-// Gets the type of the parameters of the specified `Event`.
+// Gets the parameters type of the specified `Event`.
 BINARYEN_API BinaryenType BinaryenEventGetParams(BinaryenEventRef event);
+// Gets the results type of the specified `Event`.
+BINARYEN_API BinaryenType BinaryenEventGetResults(BinaryenEventRef event);
 
 //
 // ========== Import Operations ==========

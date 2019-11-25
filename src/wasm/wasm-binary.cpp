@@ -60,7 +60,7 @@ void WasmBinaryWriter::prepare() {
         counts[sig]++;
       }
     }
-    Pass* create() { return new TypeCounter(counts, mutex); }
+    Pass* create() override { return new TypeCounter(counts, mutex); }
   };
 
   std::shared_timed_mutex mutex;
