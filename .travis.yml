@@ -30,7 +30,7 @@ jobs:
     # OSX Binary
     - env: JOB=dist-osx ARCH=x86_64-apple-darwin
       os: osx
-      stage: test
+      stage: build
       script:
         - cmake . && make
       <<: *DEPLOY_TO_GITHUB
