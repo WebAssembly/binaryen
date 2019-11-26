@@ -1,7 +1,7 @@
 (module
- (type $v (func))
+ (type "none -> none" (func))
  (memory $0 (shared 1 1))
- (func $main (; 0 ;) (type $v)
+ (func $main (; 0 ;)
   (i32.atomic.store
    (i32.const 0)
    (i32.atomic.load

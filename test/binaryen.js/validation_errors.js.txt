@@ -3,6 +3,4 @@
 0
 [wasm-validator error in function $test] unexpected false: local.get index must be small enough, on 
 [i32] (local.get $0)
-[wasm-validator error in function $test] unexpected false: local.get must have proper type, on 
-[i32] (local.get $0)
 0

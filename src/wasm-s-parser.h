@@ -111,6 +111,8 @@ private:
 class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
+  std::vector<Signature> signatures;
+  std::unordered_map<std::string, size_t> signatureIndices;
   std::vector<Name> functionNames;
   std::vector<Name> globalNames;
   std::vector<Name> eventNames;
@@ -141,8 +143,8 @@ private:
 
   UniqueNameMapper nameMapper;
 
+  Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
-  Name getFunctionTypeName(Element& s);
   Name getGlobalName(Element& s);
   Name getEventName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
@@ -234,19 +236,14 @@ private:
   Index parseMemoryLimits(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
-  Type parseResult(Element& s);
-  FunctionType* parseTypeRef(Element& s);
+  Type parseResults(Element& s);
+  Signature parseTypeRef(Element& s);
   size_t parseTypeUse(Element& s,
                       size_t startPos,
-                      FunctionType*& functionType,
-                      std::vector<NameType>& namedParams,
-                      Type& result);
-  size_t parseTypeUse(Element& s,
-                      size_t startPos,
-                      FunctionType*& functionType,
-                      std::vector<Type>& params,
-                      Type& result);
-  size_t parseTypeUse(Element& s, size_t startPos, FunctionType*& functionType);
+                      Signature& functionSignature,
+                      std::vector<NameType>& namedParams);
+  size_t
+  parseTypeUse(Element& s, size_t startPos, Signature& functionSignature);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);

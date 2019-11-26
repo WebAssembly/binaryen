@@ -1424,7 +1424,7 @@ private:
 
       // we don't actually have a function, but we need one in order to visit
       // the memory.init and data.drop instructions.
-      Function dummyFunc;
+      Function dummyFunc{};
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
       runner.visit(&init);
@@ -1439,20 +1439,21 @@ private:
 
     FunctionScope(Function* function, const LiteralList& arguments)
       : function(function) {
-      if (function->params.size() != arguments.size()) {
+      if (function->sig.params.size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
-                  << function->params.size() << " parameters, got "
+                  << function->sig.params.size() << " parameters, got "
                   << arguments.size() << " arguments." << std::endl;
         WASM_UNREACHABLE();
       }
       locals.resize(function->getNumLocals());
+      const std::vector<Type>& params = function->sig.params.expand();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
-          assert(function->isParam(i));
-          if (function->params[i] != arguments[i].type) {
+          assert(i < params.size());
+          if (params[i] != arguments[i].type) {
             std::cerr << "Function `" << function->name << "` expects type "
-                      << function->params[i] << " for parameter " << i
-                      << ", got " << arguments[i].type << "." << std::endl;
+                      << params[i] << " for parameter " << i << ", got "
+                      << arguments[i].type << "." << std::endl;
             WASM_UNREACHABLE();
           }
           locals[i] = arguments[i];
@@ -1534,7 +1535,7 @@ private:
         return target;
       }
       Index index = target.value.geti32();
-      Type type = curr->isReturn ? scope.function->result : curr->type;
+      Type type = curr->isReturn ? scope.function->sig.results : curr->type;
       Flow ret = instance.externalInterface->callTable(
         index, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
@@ -2043,9 +2044,10 @@ public:
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     Literal ret = flow.value;
-    if (function->result != ret.type) {
+    if (function->sig.results != ret.type) {
       std::cerr << "calling " << function->name << " resulted in " << ret
-                << " but the function type is " << function->result << '\n';
+                << " but the function type is " << function->sig.results
+                << '\n';
       WASM_UNREACHABLE();
     }
     // may decrease more than one, if we jumped up the stack

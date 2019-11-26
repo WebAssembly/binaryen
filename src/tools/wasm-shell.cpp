@@ -112,7 +112,7 @@ static void run_asserts(Name moduleName,
         std::cerr << "Unknown entry " << entry << std::endl;
       } else {
         LiteralList arguments;
-        for (Type param : function->params) {
+        for (Type param : function->sig.params.expand()) {
           arguments.push_back(Literal(param));
         }
         try {

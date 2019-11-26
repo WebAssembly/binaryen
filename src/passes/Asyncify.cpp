@@ -706,7 +706,7 @@ struct AsyncifyFlow : public Pass {
                          State::Rewinding), // TODO: such checks can be !normal
                        makeCallIndexPop()),
        process(func->body)});
-    if (func->result != none) {
+    if (func->sig.results != Type::none) {
       // Rewriting control flow may alter things; make sure the function ends in
       // something valid (which the optimizer can remove later).
       block->list.push_back(builder->makeUnreachable());
@@ -1045,7 +1045,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     walk(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
-    if (func->result == none) {
+    if (func->sig.results == Type::none) {
       // The function may have ended without a return; ensure one.
       barrier = builder->makeReturn();
     } else {
@@ -1063,12 +1063,12 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
                             builder->makeSequence(func->body, barrier))),
        makeCallIndexPush(unwindIndex),
        makeLocalSaving()});
-    if (func->result != none) {
+    if (func->sig.results != Type::none) {
       // If we unwind, we must still "return" a value, even if it will be
       // ignored on the outside.
       newBody->list.push_back(
-        LiteralUtils::makeZero(func->result, *getModule()));
-      newBody->finalize(func->result);
+        LiteralUtils::makeZero(func->sig.results, *getModule()));
+      newBody->finalize(func->sig.results);
     }
     func->body = newBody;
     // Making things like returns conditional may alter types.
@@ -1324,7 +1324,7 @@ private:
                        builder.makeUnreachable()));
       body->finalize();
       auto* func = builder.makeFunction(
-        name, std::move(params), none, std::vector<Type>{}, body);
+        name, Signature(Type(params), Type::none), {}, body);
       module->addFunction(func);
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };

@@ -1,8 +1,8 @@
 (module
- (type $FUNCSIG$v (func))
+ (type "none -> none" (func))
  (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
- (func $foo (; 0 ;) (type $FUNCSIG$v)
+ (func $foo (; 0 ;)
   (drop
    (global.get $g1)
   )
@@ -12,12 +12,12 @@
  )
 )
 (module
- (type $FUNCSIG$v (func))
+ (type "none -> none" (func))
  (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
  (global $g3 i32 (global.get $g2))
  (global $g4 i32 (global.get $g3))
- (func $foo (; 0 ;) (type $FUNCSIG$v)
+ (func $foo (; 0 ;)
   (drop
    (global.get $g1)
   )
@@ -37,10 +37,10 @@
  (global $g2 i32 (global.get $g1))
 )
 (module
- (type $FUNCSIG$v (func))
+ (type "none -> none" (func))
  (import "env" "global-1" (global $g1 i32))
  (global $g2 (mut i32) (global.get $g1))
- (func $foo (; 0 ;) (type $FUNCSIG$v)
+ (func $foo (; 0 ;)
   (global.set $g2
    (unreachable)
   )
@@ -52,7 +52,7 @@
  (export "global-2" (global $g2))
 )
 (module
- (type $FUNCSIG$v (func))
+ (type "none -> none" (func))
  (global $g1 i32 (i32.const 1))
  (global $g2 i32 (i32.const 1))
  (global $g3 f64 (f64.const -3.4))
@@ -65,7 +65,7 @@
  (global $ga (mut i32) (i32.const 4))
  (global $gb (mut i32) (i32.const 5))
  (global $gc i32 (i32.const 5))
- (func $foo (; 0 ;) (type $FUNCSIG$v)
+ (func $foo (; 0 ;)
   (global.set $ga
    (i32.const 6)
   )
@@ -75,10 +75,10 @@
  )
 )
 (module
- (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type "i32 -> i32" (func (param i32) (result i32)))
  (global $g1 (mut i32) (i32.const 1))
  (global $g2 (mut i32) (i32.const 1))
- (func $f (; 0 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $f (; 0 ;) (param $0 i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -115,10 +115,10 @@
  )
 )
 (module
- (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type "i32 -> i32" (func (param i32) (result i32)))
  (global $g1 (mut i32) (i32.const 1))
  (global $g2 (mut i32) (i32.const 1))
- (func $f (; 0 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $f (; 0 ;) (param $0 i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -132,10 +132,10 @@
  )
 )
 (module
- (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type "i32 -> i32" (func (param i32) (result i32)))
  (global $g1 (mut i32) (i32.const 1))
  (global $g2 (mut i32) (i32.const 1))
- (func $no (; 0 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $no (; 0 ;) (param $x i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -146,7 +146,7 @@
   )
   (global.get $g1)
  )
- (func $no2 (; 1 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $no2 (; 1 ;) (param $x i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -155,7 +155,7 @@
   )
   (global.get $g1)
  )
- (func $yes (; 2 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $yes (; 2 ;) (param $0 i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )

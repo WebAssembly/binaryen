@@ -1,7 +1,7 @@
 (module
- (type $FUNCSIG$v (func))
+ (type "none -> none" (func))
  (memory $0 1 1)
- (func $func_4 (; 0 ;) (type $FUNCSIG$v)
+ (func $func_4 (; 0 ;)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -278,7 +278,7 @@
    )
   )
  )
- (func $func_2 (; 1 ;) (type $FUNCSIG$v)
+ (func $func_2 (; 1 ;)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -415,7 +415,7 @@
    )
   )
  )
- (func $func_1 (; 2 ;) (type $FUNCSIG$v)
+ (func $func_1 (; 2 ;)
   (drop
    (i32.load8_u
     (i32.const 4)
@@ -466,7 +466,7 @@
    (unreachable)
   )
  )
- (func $func_signed (; 3 ;) (type $FUNCSIG$v)
+ (func $func_signed (; 3 ;)
   (local $0 i32)
   (local $1 i32)
   (drop

@@ -2,10 +2,10 @@
  (f32.const -33.61199951171875)
 )
 (module
- (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
- (type $fiF (func (param i32 f64) (result f32)))
- (type $v (func))
- (type $3 (func))
+ (type "(i32, i64, f32, f64) -> i32" (func (param i32 i64 f32 f64) (result i32)))
+ (type "none -> none" (func))
+ (type "i32 -> none" (func (param i32)))
+ (type "(i32, f64) -> f32" (func (param i32 f64) (result f32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
@@ -18,7 +18,7 @@
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
  (start $starter)
- (func "$kitchen()sinker" (; 1 ;) (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (; 1 ;) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (local $5 exnref)
   (block $the-body (result i32)
@@ -1536,7 +1536,7 @@
       )
       (drop
        (i32.eqz
-        (call_indirect (type $iiIfF)
+        (call_indirect (type "(i32, i64, f32, f64) -> i32")
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -1600,7 +1600,7 @@
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type $iiIfF)
+      (return_call_indirect (type "(i32, i64, f32, f64) -> i32")
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -1672,22 +1672,22 @@
    (i32.const 42)
   )
  )
- (func $starter (; 2 ;) (type $v)
+ (func $starter (; 2 ;)
   (nop)
  )
 )
 (module
- (type $v (func))
- (type $vi (func (param i32)))
- (type $i (func (result i32)))
+ (type "none -> none" (func))
+ (type "i32 -> none" (func (param i32)))
+ (type "none -> i32" (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (func $just-one-block (; 1 ;) (type $v)
+ (func $just-one-block (; 1 ;)
   (local $0 i32)
   (call $check
    (i32.const 1337)
   )
  )
- (func $two-blocks (; 2 ;) (type $v)
+ (func $two-blocks (; 2 ;)
   (local $0 i32)
   (block
    (call $check
@@ -1698,7 +1698,7 @@
    )
   )
  )
- (func $two-blocks-plus-code (; 3 ;) (type $v)
+ (func $two-blocks-plus-code (; 3 ;)
   (local $0 i32)
   (block
    (block
@@ -1714,7 +1714,7 @@
    )
   )
  )
- (func $loop (; 4 ;) (type $v)
+ (func $loop (; 4 ;)
   (local $0 i32)
   (loop $shape$0$continue
    (block
@@ -1730,7 +1730,7 @@
    )
   )
  )
- (func $loop-plus-code (; 5 ;) (type $v)
+ (func $loop-plus-code (; 5 ;)
   (local $0 i32)
   (loop $shape$0$continue
    (block
@@ -1754,7 +1754,7 @@
    )
   )
  )
- (func $split (; 6 ;) (type $v)
+ (func $split (; 6 ;)
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -1773,7 +1773,7 @@
    )
   )
  )
- (func $split-plus-code (; 7 ;) (type $v)
+ (func $split-plus-code (; 7 ;)
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -1802,7 +1802,7 @@
    )
   )
  )
- (func $if (; 8 ;) (type $v)
+ (func $if (; 8 ;)
   (local $0 i32)
   (block $block$3$break
    (call $check
@@ -1827,7 +1827,7 @@
    )
   )
  )
- (func $if-plus-code (; 9 ;) (type $v)
+ (func $if-plus-code (; 9 ;)
   (local $0 i32)
   (block $block$3$break
    (call $check
@@ -1865,7 +1865,7 @@
    )
   )
  )
- (func $if-else (; 10 ;) (type $v)
+ (func $if-else (; 10 ;)
   (local $0 i32)
   (block $block$4$break
    (call $check
@@ -1897,7 +1897,7 @@
    )
   )
  )
- (func $loop-tail (; 11 ;) (type $v)
+ (func $loop-tail (; 11 ;)
   (local $0 i32)
   (block $block$3$break
    (loop $shape$0$continue
@@ -1922,7 +1922,7 @@
    )
   )
  )
- (func $nontrivial-loop-plus-phi-to-head (; 12 ;) (type $v)
+ (func $nontrivial-loop-plus-phi-to-head (; 12 ;)
   (local $0 i32)
   (block $block$2$break
    (call $check
@@ -2009,7 +2009,7 @@
    )
   )
  )
- (func $switch (; 13 ;) (type $v)
+ (func $switch (; 13 ;)
   (local $0 i32)
   (call $check
    (i32.const 0)
@@ -2053,7 +2053,7 @@
    (br $switch$1$leave)
   )
  )
- (func $duffs-device (; 14 ;) (type $v)
+ (func $duffs-device (; 14 ;)
   (local $0 i32)
   (local $1 i32)
   (local $2 i64)
@@ -2128,7 +2128,7 @@
    )
   )
  )
- (func $return (; 15 ;) (type $i) (result i32)
+ (func $return (; 15 ;) (result i32)
   (local $0 i32)
   (block
    (call $check

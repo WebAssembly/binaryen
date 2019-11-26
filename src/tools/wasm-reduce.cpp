@@ -866,8 +866,7 @@ struct Reducer
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {
-        auto funcType = func->type;
-        auto funcResult = func->result;
+        auto funcSig = func->sig;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
           if (!(child->type.isConcrete() || child->type == none)) {
@@ -875,8 +874,7 @@ struct Reducer
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          func->type = Name();
-          func->result = child->type;
+          func->sig.results = child->type;
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!
@@ -885,8 +883,7 @@ struct Reducer
             break;
           }
           // Undo.
-          func->type = funcType;
-          func->result = funcResult;
+          func->sig = funcSig;
           func->body = funcBody;
         }
       }

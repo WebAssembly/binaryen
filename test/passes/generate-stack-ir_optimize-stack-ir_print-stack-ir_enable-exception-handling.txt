@@ -1,8 +1,8 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
+ (type "none -> none" (func))
+ (type "i32 -> none" (func (param i32)))
  (event $e0 (attr 0) (param i32))
- (func $eh (; 0 ;) (type $FUNCSIG$v)
+ (func $eh (; 0 ;)
   (local $exn exnref)
   try
    i32.const 0
@@ -19,10 +19,10 @@
  )
 )
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
+ (type "none -> none" (func))
+ (type "i32 -> none" (func (param i32)))
  (event $e0 (attr 0) (param i32))
- (func $eh (; 0 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $eh (; 0 ;) (; has Stack IR ;)
   (local $exn exnref)
   (try
    (throw $e0

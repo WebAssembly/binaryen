@@ -1,7 +1,7 @@
 (module
- (type $0 (func))
+ (type "none -> none" (func))
  (memory $0 (shared 1 1))
- (func $test (; 0 ;) (type $0)
+ (func $test (; 0 ;)
   (unreachable)
  )
 )

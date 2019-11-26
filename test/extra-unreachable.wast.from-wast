@@ -1,21 +1,21 @@
 (module
- (type $ii (func))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
+ (type "none -> none" (func))
+ (type "i32 -> none" (func (param i32)))
+ (type "i32 -> i32" (func (param i32) (result i32)))
  (memory $0 (shared 1 1))
  (table $0 0 funcref)
  (global $g (mut f32) (f32.const 0))
  (event $e (attr 0) (param i32))
- (func $foo (; 0 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $foo (; 0 ;) (param $0 i32) (result i32)
   (i32.const 0)
  )
- (func $test_function_block (; 1 ;) (type $ii)
+ (func $test_function_block (; 1 ;)
   (block $block
    (unreachable)
    (nop)
   )
  )
- (func $test (; 2 ;) (type $ii)
+ (func $test (; 2 ;)
   (block $block
    (i32.eqz
     (unreachable)
@@ -62,7 +62,7 @@
    )
   )
   (global.set $g
-   (call_indirect (type $ii)
+   (call_indirect (type "none -> none")
     (unreachable)
    )
   )

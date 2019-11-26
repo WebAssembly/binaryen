@@ -81,7 +81,6 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitPush(Push* curr) { return ReturnType(); }
   ReturnType visitPop(Pop* curr) { return ReturnType(); }
   // Module-level visitors
-  ReturnType visitFunctionType(FunctionType* curr) { return ReturnType(); }
   ReturnType visitExport(Export* curr) { return ReturnType(); }
   ReturnType visitGlobal(Global* curr) { return ReturnType(); }
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
@@ -250,7 +249,6 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Unreachable);
   UNIMPLEMENTED(Push);
   UNIMPLEMENTED(Pop);
-  UNIMPLEMENTED(FunctionType);
   UNIMPLEMENTED(Export);
   UNIMPLEMENTED(Global);
   UNIMPLEMENTED(Function);
@@ -603,9 +601,6 @@ struct Walker : public VisitorType {
   void doWalkModule(Module* module) {
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
-    for (auto& curr : module->functionTypes) {
-      self->visitFunctionType(curr.get());
-    }
     for (auto& curr : module->exports) {
       self->visitExport(curr.get());
     }
