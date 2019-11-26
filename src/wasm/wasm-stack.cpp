@@ -68,7 +68,9 @@ void BinaryInstWriter::visitCall(Call* curr) {
 void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getFunctionTypeIndex(curr->fullType))
+  auto* type = parent.getModule()->getFunctionType(curr->fullType);
+  Signature sig(Type(type->params), type->result);
+  o << op << U32LEB(parent.getTypeIndex(sig))
     << U32LEB(0); // Reserved flags field
 }
 

@@ -2058,7 +2058,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << "(event ";
     printName(curr->name, o);
     o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
-    o << ParamType(Type(curr->params));
+    o << ParamType(curr->sig.params);
     o << "))";
     o << maybeNewLine;
   }
@@ -2068,7 +2068,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printMedium(o, "event ");
     printName(curr->name, o);
     o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
-    o << ParamType(Type(curr->params));
+    o << ParamType(curr->sig.params);
     o << ")" << maybeNewLine;
   }
   void printTableHeader(Table* curr) {

@@ -13,10 +13,9 @@ function cleanInfo(info) {
 var module = new Binaryen.Module();
 module.setFeatures(Binaryen.Features.ExceptionHandling);
 
-var vi = module.addFunctionType("vi", Binaryen.none, [Binaryen.i32]);
-var vif = module.addFunctionType("vif", Binaryen.none, [Binaryen.i32, Binaryen.f32]);
+var pairType = Binaryen.createType([Binaryen.i32, Binaryen.f32]);
 
-var event_ = module.addEvent("a-event", 0, vi);
+var event_ = module.addEvent("a-event", 0, Binaryen.i32, Binaryen.none);
 
 console.log("GetEvent is equal: " + (event_ === module.getEvent("a-event")));
 
@@ -24,7 +23,7 @@ var eventInfo = Binaryen.getEventInfo(event_);
 console.log("getEventInfo=" + JSON.stringify(cleanInfo(eventInfo)));
 
 module.addEventExport("a-event", "a-event-exp");
-module.addEventImport("a-event-imp", "module", "base", 0, vif);
+module.addEventImport("a-event-imp", "module", "base", 0, pairType, Binaryen.none);
 
 assert(module.validate());
 console.log(module.emitText());

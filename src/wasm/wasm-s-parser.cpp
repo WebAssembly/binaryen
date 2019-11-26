@@ -1859,7 +1859,7 @@ Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
   assert(event && "br_on_exn's event must exist");
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  ret->eventParams = event->params;
+  ret->sent = event->sig.params;
   ret->finalize();
   return ret;
 }
@@ -2193,7 +2193,6 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       j = parseMemoryLimits(inner, j);
     }
   } else if (kind == ExternalKind::Event) {
-    FunctionType* functionType = nullptr;
     auto event = make_unique<Event>();
     if (j >= inner.size()) {
       throw ParseException("event does not have an attribute", s.line, s.col);
@@ -2203,12 +2202,14 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       throw ParseException("invalid attribute", attrElem.line, attrElem.col);
     }
     event->attribute = atoi(attrElem[1]->c_str());
-    Type fakeResult; // just to call parseTypeUse
-    j = parseTypeUse(inner, j, functionType, event->params, fakeResult);
+    std::vector<Type> paramTypes;
+    FunctionType* fakeFunctionType; // just to call parseTypeUse
+    Type results;
+    j = parseTypeUse(inner, j, fakeFunctionType, paramTypes, results);
     event->name = name;
     event->module = module;
     event->base = base;
-    event->type = functionType->name;
+    event->sig = Signature(Type(paramTypes), results);
     wasm.addEvent(event.release());
   }
   // If there are more elements, they are invalid
@@ -2514,11 +2515,11 @@ void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
   event->attribute = atoi(attrElem[1]->c_str());
 
   // Parse typeuse
-  FunctionType* functionType = nullptr;
-  Type fakeResult; // just co call parseTypeUse
-  i = parseTypeUse(s, i, functionType, event->params, fakeResult);
-  assert(functionType && "functionType should've been set by parseTypeUse");
-  event->type = functionType->name;
+  std::vector<Type> paramTypes;
+  Type results;
+  FunctionType* fakeFunctionType; // just co call parseTypeUse
+  i = parseTypeUse(s, i, fakeFunctionType, paramTypes, results);
+  event->sig = Signature(Type(paramTypes), results);
 
   // If there are more elements, they are invalid
   if (i < s.size()) {

@@ -196,7 +196,7 @@ IF(BUILD_STATIC_LIB)
 ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
-TARGET_LINK_LIBRARIES(binaryen PRIVATE passes wasm asmjs emscripten-optimizer ir cfg support)
+TARGET_LINK_LIBRARIES(binaryen passes wasm asmjs emscripten-optimizer ir cfg support)
 INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -282,7 +282,7 @@ SET(wasm_dis_SOURCES
 )
 ADD_EXECUTABLE(wasm-dis
                ${wasm_dis_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs ir cfg support)
+TARGET_LINK_LIBRARIES(wasm-dis wasm asmjs emscripten-optimizer passes ir cfg support wasm)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})

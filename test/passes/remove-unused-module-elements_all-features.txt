@@ -279,9 +279,7 @@
  )
 )
 (module
- (type $0 (func (param i32)))
  (type $FUNCSIG$v (func))
- (type $FUNCSIG$vj (func (param i64)))
  (event $e-export (attr 0) (param i64))
  (event $e-throw (attr 0) (param i32))
  (event $e-bronexn (attr 0) (param i32))

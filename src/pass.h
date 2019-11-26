@@ -268,7 +268,7 @@ public:
   // should always be safe *unless* you do something in the pass that makes it
   // not thread-safe; in other words, the Module and Function objects and
   // so forth are set up so that Functions can be processed in parallel, so
-  // if you do not ad global state that could be raced on, your pass could be
+  // if you do not add global state that could be raced on, your pass could be
   // function-parallel.
   //
   // Function-parallel passes create an instance of the Walker class per

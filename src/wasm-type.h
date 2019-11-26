@@ -74,6 +74,9 @@ public:
   bool operator!=(const Type& other) const { return id != other.id; }
   bool operator!=(const ValueType& other) const { return id != other; }
 
+  // Order types by some notion of simplicity
+  bool operator<(const Type& other) const;
+
   // Allows for using Types in switch statements
   constexpr operator uint32_t() const { return id; }
   std::string toString() const;
@@ -97,6 +100,18 @@ std::ostream& operator<<(std::ostream& os, Type t);
 std::ostream& operator<<(std::ostream& os, ParamType t);
 std::ostream& operator<<(std::ostream& os, ResultType t);
 
+struct Signature {
+  Type params;
+  Type results;
+  Signature() = default;
+  Signature(Type params, Type results) : params(params), results(results) {}
+  bool operator==(const Signature& other) const {
+    return params == other.params && results == other.results;
+  }
+  bool operator!=(const Signature& other) const { return !(*this == other); }
+  bool operator<(const Signature& other) const;
+};
+
 constexpr Type none = Type::none;
 constexpr Type i32 = Type::i32;
 constexpr Type i64 = Type::i64;
@@ -113,5 +128,10 @@ Type getType(unsigned size, bool float_);
 Type reinterpretType(Type type);
 
 } // namespace wasm
+
+template<> class std::hash<wasm::Signature> {
+public:
+  size_t operator()(const wasm::Signature& sig) const;
+};
 
 #endif // wasm_wasm_type_h

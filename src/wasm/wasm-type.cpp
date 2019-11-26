@@ -19,21 +19,27 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "wasm-type.h"
-#include "wasm-features.h"
-
 #include "compiler-support.h"
+#include "support/hash.h"
+#include "wasm-features.h"
+#include "wasm-type.h"
 
 template<> class std::hash<std::vector<wasm::Type>> {
 public:
   size_t operator()(const std::vector<wasm::Type>& types) const {
-    size_t res = 0;
+    uint32_t res = wasm::rehash(0, uint32_t(types.size()));
     for (auto vt : types) {
-      res ^= std::hash<uint32_t>{}(vt);
+      res = wasm::rehash(res, uint32_t(vt));
     }
     return res;
   }
 };
+
+size_t std::hash<wasm::Signature>::
+operator()(const wasm::Signature& sig) const {
+  return std::hash<uint64_t>{}(uint64_t(sig.params) << 32 |
+                               uint64_t(sig.results));
+}
 
 namespace wasm {
 
@@ -121,6 +127,27 @@ const std::vector<Type>& Type::expand() const {
   std::shared_lock<std::shared_timed_mutex> lock(mutex);
   assert(id < typeLists.size());
   return *typeLists[id].get();
+}
+
+bool Type::operator<(const Type& other) const {
+  const std::vector<Type>& these = expand();
+  const std::vector<Type>& others = other.expand();
+  return std::lexicographical_compare(
+    these.begin(),
+    these.end(),
+    others.begin(),
+    others.end(),
+    [](const Type& a, const Type& b) { return uint32_t(a) < uint32_t(b); });
+}
+
+bool Signature::operator<(const Signature& other) const {
+  if (results < other.results) {
+    return true;
+  } else if (other.results < results) {
+    return false;
+  } else {
+    return params < other.params;
+  }
 }
 
 namespace {
