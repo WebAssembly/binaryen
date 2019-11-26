@@ -290,24 +290,24 @@ template<typename T> struct ParallelFunctionAnalysis {
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
 
-      Mapper(Module* module, Map* map, Func work)
+      Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
 
       Mapper* create() override { return new Mapper(module, map, work); }
 
       void doWalkFunction(Function* curr) {
-        assert((*map).count(curr));
-        work(curr, (*map)[curr]);
+        assert(map.count(curr));
+        work(curr, map[curr]);
       }
 
     private:
-      Module* module;
-      Map* map;
+      Module& module;
+      Map& map;
       Func work;
     };
 
     PassRunner runner(&wasm);
-    Mapper(&wasm, &map, work).run(&runner, &wasm);
+    Mapper(wasm, map, work).run(&runner, &wasm);
   }
 };
 
