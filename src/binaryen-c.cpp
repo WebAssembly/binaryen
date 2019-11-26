@@ -4695,6 +4695,78 @@ size_t BinaryenSizeofAllocateAndWriteResult(void) {
   return sizeof(BinaryenModuleAllocateAndWriteResult);
 }
 
-#endif
+// Stores an 8-bit integer to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _i32_store8(int8_t* ptr, int8_t value) {
+  *ptr = value;
+}
+
+// Stores a 16-bit integer to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _i32_store16(int16_t* ptr, int16_t value) {
+  *ptr = value;
+}
+
+// Stores a 32-bit integer to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _i32_store(int32_t* ptr, int32_t value) {
+  *ptr = value;
+}
+
+// Stores a 32-bit float to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _f32_store(float* ptr, float value) {
+  *ptr = value;
+}
+
+// Stores a 64-bit float to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _f64_store(double* ptr, double value) {
+  *ptr = value;
+}
+
+// Loads an 8-bit signed integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+int8_t _i32_load8_s(int8_t* ptr) {
+  return *ptr;
+}
+
+// Loads an 8-bit unsigned integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+uint8_t _i32_load8_u(uint8_t* ptr) {
+  return *ptr;
+}
+
+// Loads a 16-bit signed integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+int16_t _i32_load16_s(int16_t* ptr) {
+  return *ptr;
+}
+
+// Loads a 16-bit unsigned integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+uint16_t _i32_load16_u(uint16_t* ptr) {
+  return *ptr;
+}
+
+// Loads a 32-bit integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+int32_t _i32_load(int32_t* ptr) {
+  return *ptr;
+}
+
+// Loads a 32-bit float from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+float _f32_load(float* ptr) {
+  return *ptr;
+}
+
+// Loads a 64-bit float from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+double _f64_load(double* ptr) {
+  return *ptr;
+}
+
+#endif // __EMSCRIPTEN__
 
 } // extern "C"
