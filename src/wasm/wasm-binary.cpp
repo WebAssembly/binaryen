@@ -28,24 +28,26 @@ void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
   typedef std::unordered_map<Signature, size_t> Counts;
-  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(*wasm, [&](Function* func, Counts& counts) {
-    if (func->imported()) {
-      return;
-    }
-    struct TypeCounter : PostWalker<TypeCounter> {
-      Module& wasm;
-      Counts& counts;
-
-      TypeCounter(Module& wasm, Counts& counts) : wasm(wasm), counts(counts) {}
-
-      void visitCallIndirect(CallIndirect* curr) {
-        auto* type = wasm.getFunctionType(curr->fullType);
-        Signature sig(Type(type->params), type->result);
-        counts[sig]++;
+  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
+    *wasm, [&](Function* func, Counts& counts) {
+      if (func->imported()) {
+        return;
       }
-    };
-    TypeCounter(*wasm, counts).walk(func->body);
-  });
+      struct TypeCounter : PostWalker<TypeCounter> {
+        Module& wasm;
+        Counts& counts;
+
+        TypeCounter(Module& wasm, Counts& counts)
+          : wasm(wasm), counts(counts) {}
+
+        void visitCallIndirect(CallIndirect* curr) {
+          auto* type = wasm.getFunctionType(curr->fullType);
+          Signature sig(Type(type->params), type->result);
+          counts[sig]++;
+        }
+      };
+      TypeCounter(*wasm, counts).walk(func->body);
+    });
   // Collect all the counts.
   Counts counts;
   for (auto& curr : wasm->functions) {

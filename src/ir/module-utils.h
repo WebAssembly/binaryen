@@ -348,8 +348,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
           : module(module), info(info), work(work) {}
 
         void visitCall(Call* curr) {
-          info.callsTo.insert(
-            module->getFunction(curr->target));
+          info.callsTo.insert(module->getFunction(curr->target));
         }
 
       private:
