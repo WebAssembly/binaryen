@@ -10,4 +10,4 @@ SET(wasm_SOURCES
   wasm-type.cpp
   wasm-validator.cpp
 )
-ADD_LIBRARY(wasm OBJECT ${wasm_SOURCES})
+ADD_LIBRARY(wasm STATIC ${wasm_SOURCES})

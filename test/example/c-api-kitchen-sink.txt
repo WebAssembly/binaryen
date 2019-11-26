@@ -2217,7 +2217,7 @@ module s-expr printed (in memory, caller-owned):
   )
  )
 )
-(i32.const 1234)
+1234 : i32
 (module
  (type $v (func))
  (func $func (; 0 ;) (type $v)

@@ -3,4 +3,4 @@ SET(asmjs_SOURCES
   asmangle.cpp
   shared-constants.cpp
 )
-ADD_LIBRARY(asmjs OBJECT ${asmjs_SOURCES})
+ADD_LIBRARY(asmjs STATIC ${asmjs_SOURCES})

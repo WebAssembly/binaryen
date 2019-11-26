@@ -1,8 +1,11 @@
 // beginning a Binaryen API trace
+
+#include <cassert>
 #include <stdio.h>
 #include <math.h>
 #include <map>
 #include "binaryen-c.h"
+
 int main() {
   std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
@@ -39,7 +42,7 @@ int main() {
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
   {
     BinaryenType paramTypes[] = {BinaryenTypeNone()};
-    functionTypes[0] = BinaryenAddFunctionType(the_module, "rustfn-0-3", 0, paramTypes, 0);
+    functionTypes[0] = BinaryenAddFunctionType(the_module, "rustfn-0-3", BinaryenTypeNone(), paramTypes, 0);
   }
   expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[8] =
@@ -56,7 +59,7 @@ int main() {
   BinaryenAddFunctionExport(the_module, "main", "main");
   {
     BinaryenType paramTypes[] = {BinaryenTypeNone()};
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "__wasm_start", 0, paramTypes, 0);
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "__wasm_start", BinaryenTypeNone(), paramTypes, 0);
   }
   {
     const char* segments[] = { 0 };
@@ -71,7 +74,7 @@ int main() {
     the_module, 4, 0, 0, expressions[12], expressions[11], BinaryenTypeInt32());
   {
     BinaryenExpressionRef operands[] = { 0 };
-    expressions[14] = BinaryenCall(the_module, "main", operands, 0, 0);
+    expressions[14] = BinaryenCall(the_module, "main", operands, 0, BinaryenTypeNone());
   }
   {
     BinaryenExpressionRef children[] = { expressions[13], expressions[14] };
@@ -82,7 +85,7 @@ int main() {
     BinaryenType varTypes[] = {BinaryenTypeNone()};
     functions[1] = BinaryenAddFunction(the_module, "__wasm_start", functionTypes[1], varTypes, 0, expressions[15]);
   }
-  BinaryenModuleValidate(the_module);
+  assert(BinaryenModuleValidate(the_module));
   BinaryenModulePrint(the_module);
   // check that binary read-write works
   {

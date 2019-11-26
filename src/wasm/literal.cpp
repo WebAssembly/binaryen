@@ -252,7 +252,7 @@ void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
 }
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
-  prepareMinorColor(o) << literal.type << ".const ";
+  prepareMinorColor(o);
   switch (literal.type) {
     case Type::none:
       o << "?";

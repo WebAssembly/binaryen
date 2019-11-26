@@ -447,7 +447,9 @@ struct PrintExpressionContents
     prepareColor(o);
     o << "memory.fill";
   }
-  void visitConst(Const* curr) { o << curr->value; }
+  void visitConst(Const* curr) {
+    o << curr->value.type << ".const " << curr->value;
+  }
   void visitUnary(Unary* curr) {
     prepareColor(o);
     switch (curr->op) {
