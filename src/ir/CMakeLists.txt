@@ -4,4 +4,4 @@ SET(ir_SOURCES
   LocalGraph.cpp
   ReFinalize.cpp
 )
-ADD_LIBRARY(ir OBJECT ${ir_SOURCES})
+ADD_LIBRARY(ir STATIC ${ir_SOURCES})
