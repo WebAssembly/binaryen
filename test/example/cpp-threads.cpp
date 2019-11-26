@@ -1,9 +1,10 @@
 // test multiple uses of the threadPool
 
+#include <cassert>
 #include <iostream>
 #include <thread>
 #include <vector>
- 
+
 #include <binaryen-c.h>
 
 int NUM_THREADS = 33;
@@ -27,11 +28,11 @@ void worker() {
   BinaryenFunctionRef adder = BinaryenAddFunction(module, "adder", iii, NULL, 0, ret);
 
   // validate it
-  BinaryenModuleValidate(module);
+  assert(BinaryenModuleValidate(module));
 
   // optimize it
   BinaryenModuleOptimize(module);
-  BinaryenModuleValidate(module);
+  assert(BinaryenModuleValidate(module));
 
   // Clean up the module, which owns all the objects we created above
   BinaryenModuleDispose(module);
