@@ -397,6 +397,22 @@ if not has_vanilla_emcc:
     warn('no functional emcc submodule found')
 
 
+if not options.spec_tests:
+    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+else:
+    options.spec_tests = options.spec_tests[:]
+
+SPEC_TEST_BLACKLIST = [
+    'binary.wast',   # Cannot parse binary modules
+    'linking.wast',  # No support for 'register' command
+    'nop.wast',      # Stacky code
+    'stack.wast',    # Stacky code
+    'unwind.wast'    # Stacky code
+]
+options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
+                      in SPEC_TEST_BLACKLIST]
+
+
 # check utilities
 
 
