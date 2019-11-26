@@ -96,10 +96,6 @@ struct ResultType {
   std::string toString() const;
 };
 
-std::ostream& operator<<(std::ostream& os, Type t);
-std::ostream& operator<<(std::ostream& os, ParamType t);
-std::ostream& operator<<(std::ostream& os, ResultType t);
-
 struct Signature {
   Type params;
   Type results;
@@ -111,6 +107,11 @@ struct Signature {
   bool operator!=(const Signature& other) const { return !(*this == other); }
   bool operator<(const Signature& other) const;
 };
+
+std::ostream& operator<<(std::ostream& os, Type t);
+std::ostream& operator<<(std::ostream& os, ParamType t);
+std::ostream& operator<<(std::ostream& os, ResultType t);
+std::ostream& operator<<(std::ostream& os, Signature t);
 
 constexpr Type none = Type::none;
 constexpr Type i32 = Type::i32;
