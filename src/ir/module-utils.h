@@ -265,6 +265,8 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
+// The operation performend should not modify the wasm module in any way.
+// TODO: enforce this
 template<typename T> struct ParallelFunctionAnalysis {
   Module& wasm;
 
@@ -289,6 +291,7 @@ template<typename T> struct ParallelFunctionAnalysis {
 
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
+      bool modifiesBinaryenIR() override { return false; }
 
       Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
