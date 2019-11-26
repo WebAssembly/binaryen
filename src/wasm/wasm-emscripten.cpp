@@ -871,7 +871,9 @@ void AsmConstWalker::queueImport(Name importName, std::string baseSig) {
   auto import = new Function;
   import->name = import->base = importName;
   import->module = ENV;
-  import->type = ensureFunctionType(baseSig, &wasm)->name;
+  auto* funcType = ensureFunctionType(baseSig, &wasm);
+  import->type = funcType->name;
+  FunctionTypeUtils::fillFunction(import, funcType);
   queuedImports.push_back(std::unique_ptr<Function>(import));
 }
 
