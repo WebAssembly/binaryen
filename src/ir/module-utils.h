@@ -38,51 +38,25 @@ struct BinaryIndexes {
   std::unordered_map<Name, Index> eventIndexes;
 
   BinaryIndexes(Module& wasm) {
-    auto addGlobal = [&](Global* curr) {
-      auto index = globalIndexes.size();
-      globalIndexes[curr->name] = index;
+    auto addIndexes = [&](auto& source, auto& indexes) {
+      auto addIndex = [&](auto* curr) {
+        auto index = indexes.size();
+        indexes[curr->name] = index;
+      };
+      for (auto& curr : source) {
+        if (curr->imported()) {
+          addIndex(curr.get());
+        }
+      }
+      for (auto& curr : source) {
+        if (!curr->imported()) {
+          addIndex(curr.get());
+        }
+      }
     };
-    for (auto& curr : wasm.globals) {
-      if (curr->imported()) {
-        addGlobal(curr.get());
-      }
-    }
-    for (auto& curr : wasm.globals) {
-      if (!curr->imported()) {
-        addGlobal(curr.get());
-      }
-    }
-    assert(globalIndexes.size() == wasm.globals.size());
-    auto addFunction = [&](Function* curr) {
-      auto index = functionIndexes.size();
-      functionIndexes[curr->name] = index;
-    };
-    for (auto& curr : wasm.functions) {
-      if (curr->imported()) {
-        addFunction(curr.get());
-      }
-    }
-    for (auto& curr : wasm.functions) {
-      if (!curr->imported()) {
-        addFunction(curr.get());
-      }
-    }
-    assert(functionIndexes.size() == wasm.functions.size());
-    auto addEvent = [&](Event* curr) {
-      auto index = eventIndexes.size();
-      eventIndexes[curr->name] = index;
-    };
-    for (auto& curr : wasm.events) {
-      if (curr->imported()) {
-        addEvent(curr.get());
-      }
-    }
-    for (auto& curr : wasm.events) {
-      if (!curr->imported()) {
-        addEvent(curr.get());
-      }
-    }
-    assert(eventIndexes.size() == wasm.events.size());
+    addIndexes(wasm.functions, functionIndexes);
+    addIndexes(wasm.globals, globalIndexes);
+    addIndexes(wasm.events, eventIndexes);
   }
 };
 
@@ -126,8 +100,7 @@ inline Event* copyEvent(Event* event, Module& out) {
   auto* ret = new Event();
   ret->name = event->name;
   ret->attribute = event->attribute;
-  ret->type = event->type;
-  ret->params = event->params;
+  ret->sig = event->sig;
   out.addEvent(ret);
   return ret;
 }

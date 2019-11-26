@@ -1,6 +1,5 @@
 (module
  (type $v (func))
- (type $vi (func (param i32)))
  (event $e (attr 0) (param i32))
  (func $test (; 0 ;) (type $v)
   (local $0 exnref)

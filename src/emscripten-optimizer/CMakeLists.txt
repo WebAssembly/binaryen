@@ -3,4 +3,4 @@ SET(emscripten-optimizer_SOURCES
   parser.cpp
   simple_ast.cpp
 )
-ADD_LIBRARY(emscripten-optimizer OBJECT ${emscripten-optimizer_SOURCES})
+ADD_LIBRARY(emscripten-optimizer STATIC ${emscripten-optimizer_SOURCES})

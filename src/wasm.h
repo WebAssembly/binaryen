@@ -1123,10 +1123,9 @@ public:
   Expression* exnref;
   // This is duplicate info of param types stored in Event, but this is required
   // for us to know the type of the value sent to the target block.
-  std::vector<Type> eventParams;
+  Type sent;
 
   void finalize();
-  Type getSingleSentType();
 };
 
 // Globals
@@ -1320,14 +1319,7 @@ public:
   Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
-  // Type string in the format of function type. Return type is considered as a
-  // void type. So if you have an event whose type is (i32, i32), the type
-  // string will be "vii".
-  Name type;
-  // This is duplicate info of 'Name type', but we store this anyway because
-  // we plan to remove FunctionType in future.
-  // TODO remove either this or FunctionType
-  std::vector<Type> params;
+  Signature sig;
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.

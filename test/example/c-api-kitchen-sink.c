@@ -272,10 +272,8 @@ void test_core() {
                         temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
 
   // Events
-  BinaryenType eparams[1] = {BinaryenTypeInt32()};
-  BinaryenFunctionTypeRef vi =
-    BinaryenAddFunctionType(module, "vi", BinaryenTypeNone(), eparams, 1);
-  BinaryenAddEvent(module, "a-event", 0, vi);
+  BinaryenAddEvent(
+    module, "a-event", 0, BinaryenTypeInt32(), BinaryenTypeNone());
 
   // Exception handling
 
