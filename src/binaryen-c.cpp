@@ -4695,6 +4695,12 @@ size_t BinaryenSizeofAllocateAndWriteResult(void) {
   return sizeof(BinaryenModuleAllocateAndWriteResult);
 }
 
+// Helpers for accessing Binaryen's memory from another module without the
+// need to round-trip through JS, e.g. when allocating and initializing
+// strings passed to / reading strings returned by the C-API.
+
+// TODO: Remove these once Wasm supports multiple memories.
+
 // Stores an 8-bit integer to Binaryen memory.
 EMSCRIPTEN_KEEPALIVE
 void _i32_store8(int8_t* ptr, int8_t value) { *ptr = value; }
