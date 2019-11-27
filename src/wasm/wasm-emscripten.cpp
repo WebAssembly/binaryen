@@ -653,8 +653,7 @@ const char* stringAtAddr(Module& wasm,
 
 std::string codeForConstAddr(Module& wasm,
                              std::vector<Address> const& segmentOffsets,
-                             Const* addrConst) {
-  auto address = addrConst->value.geti32();
+                             int32_t address) {
   const char* str = stringAtAddr(wasm, segmentOffsets, address);
   if (!str) {
     // If we can't find the segment corresponding with the address, then we
@@ -689,10 +688,11 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   struct AsmConst {
     std::set<std::string> sigs;
     Address id;
+    std::string code;
     Proxying proxy;
   };
 
-  std::map<std::string, AsmConst> asmConsts;
+  std::vector<AsmConst> asmConsts;
   std::set<std::pair<std::string, Proxying>> allSigs;
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
@@ -710,7 +710,8 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
 
 private:
   std::string fixupName(Name& name, std::string baseSig, Proxying proxy);
-  AsmConst& createAsmConst(std::string code, std::string sig, Name name);
+  AsmConst&
+  createAsmConst(uint32_t id, std::string code, std::string sig, Name name);
   std::string asmConstSig(std::string baseSig);
   Name nameForImportWithSig(std::string sig, Proxying proxy);
   void queueImport(Name importName, std::string baseSig);
@@ -757,29 +758,38 @@ void AsmConstWalker::visitCall(Call* curr) {
                 << ".\nThis might be caused by aggressive compiler "
                    "transformations. Consider using EM_JS instead.";
       }
-    } else if (auto* value = arg->dynCast<Binary>()) {
-      // In the dynamic linking case the address of the string constant
-      // is the result of adding its offset to __memory_base.
-      // In this case are only looking for the offset with the data segment so
-      // the RHS of the addition is just what we want.
-      assert(value->op == AddInt32);
-      arg = value->right;
-    } else {
-      if (!value) {
-        Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
-                << ") in call to: " << importName;
+      continue;
+    }
+
+    if (auto* setlocal = arg->dynCast<LocalSet>()) {
+      // The argument may be a local.tee, in which case we take first child
+      // which is the value being copied into the local.
+      if (setlocal->isTee()) {
+        arg = setlocal->value;
+        continue;
       }
     }
+
+    if (auto* bin = arg->dynCast<Binary>()) {
+      if (bin->op == AddInt32) {
+        // In the dynamic linking case the address of the string constant
+        // is the result of adding its offset to __memory_base.
+        // In this case are only looking for the offset from __memory_base
+        // the RHS of the addition is just what we want.
+        arg = bin->right;
+        continue;
+      }
+    }
+
+    Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
+            << ") in call to: " << importName;
   }
 
   auto* value = arg->cast<Const>();
-  auto code = codeForConstAddr(wasm, segmentOffsets, value);
-  auto& asmConst = createAsmConst(code, sig, importName);
+  int32_t address = value->value.geti32();
+  auto code = codeForConstAddr(wasm, segmentOffsets, address);
+  auto& asmConst = createAsmConst(address, code, sig, importName);
   fixupName(curr->target, baseSig, asmConst.proxy);
-
-  // Replace the first argument to the call with a Const index
-  Builder builder(wasm);
-  curr->operands[0] = builder.makeConst(Literal(asmConst.id));
 }
 
 Proxying AsmConstWalker::proxyType(Name name) {
@@ -826,17 +836,17 @@ AsmConstWalker::fixupName(Name& name, std::string baseSig, Proxying proxy) {
   return sig;
 }
 
-AsmConstWalker::AsmConst&
-AsmConstWalker::createAsmConst(std::string code, std::string sig, Name name) {
-  if (asmConsts.count(code) == 0) {
-    AsmConst asmConst;
-    asmConst.id = asmConsts.size();
-    asmConst.sigs.insert(sig);
-    asmConst.proxy = proxyType(name);
-
-    asmConsts[code] = asmConst;
-  }
-  return asmConsts[code];
+AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(uint32_t id,
+                                                         std::string code,
+                                                         std::string sig,
+                                                         Name name) {
+  AsmConst asmConst;
+  asmConst.id = id;
+  asmConst.code = code;
+  asmConst.sigs.insert(sig);
+  asmConst.proxy = proxyType(name);
+  asmConsts.push_back(asmConst);
+  return asmConsts.back();
 }
 
 std::string AsmConstWalker::asmConstSig(std::string baseSig) {
@@ -861,7 +871,9 @@ void AsmConstWalker::queueImport(Name importName, std::string baseSig) {
   auto import = new Function;
   import->name = import->base = importName;
   import->module = ENV;
-  import->type = ensureFunctionType(baseSig, &wasm)->name;
+  auto* funcType = ensureFunctionType(baseSig, &wasm);
+  import->type = funcType->name;
+  FunctionTypeUtils::fillFunction(import, funcType);
   queuedImports.push_back(std::unique_ptr<Function>(import));
 }
 
@@ -918,7 +930,8 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
     }
     auto* addrConst = consts.list[0];
-    auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
+    int32_t address = addrConst->value.geti32();
+    auto code = codeForConstAddr(wasm, segmentOffsets, address);
     codeByName[funcName] = code;
   }
 };
@@ -1094,11 +1107,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   if (!emAsmWalker.asmConsts.empty()) {
     meta << "  \"asmConsts\": {";
-    for (auto& pair : emAsmWalker.asmConsts) {
-      auto& code = pair.first;
-      auto& asmConst = pair.second;
+    for (auto& asmConst : emAsmWalker.asmConsts) {
       meta << nextElement();
-      meta << '"' << asmConst.id << "\": [\"" << code << "\", ";
+      meta << '"' << asmConst.id << "\": [\"" << asmConst.code << "\", ";
       printSet(meta, asmConst.sigs);
       meta << ", [\"" << proxyingSuffix(asmConst.proxy) << "\"]";
 

@@ -71,7 +71,7 @@ struct ExecutionResults {
           // this has a result
           results[exp->name] = run(func, wasm, instance);
           // ignore the result if we hit an unreachable and returned no value
-          if (isConcreteType(results[exp->name].type)) {
+          if (results[exp->name].type.isConcrete()) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => "
                       << results[exp->name] << '\n';
           }

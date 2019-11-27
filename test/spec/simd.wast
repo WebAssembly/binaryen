@@ -116,6 +116,10 @@
  (func (export "i8x16.sub_saturate_s") (param $0 v128) (param $1 v128) (result v128) (i8x16.sub_saturate_s (local.get $0) (local.get $1)))
  (func (export "i8x16.sub_saturate_u") (param $0 v128) (param $1 v128) (result v128) (i8x16.sub_saturate_u (local.get $0) (local.get $1)))
  (func (export "i8x16.mul") (param $0 v128) (param $1 v128) (result v128) (i8x16.mul (local.get $0) (local.get $1)))
+ (func (export "i8x16.min_s") (param $0 v128) (param $1 v128) (result v128) (i8x16.min_s (local.get $0) (local.get $1)))
+ (func (export "i8x16.min_u") (param $0 v128) (param $1 v128) (result v128) (i8x16.min_u (local.get $0) (local.get $1)))
+ (func (export "i8x16.max_s") (param $0 v128) (param $1 v128) (result v128) (i8x16.max_s (local.get $0) (local.get $1)))
+ (func (export "i8x16.max_u") (param $0 v128) (param $1 v128) (result v128) (i8x16.max_u (local.get $0) (local.get $1)))
  (func (export "i16x8.neg") (param $0 v128) (result v128) (i16x8.neg (local.get $0)))
  (func (export "i16x8.any_true") (param $0 v128) (result i32) (i16x8.any_true (local.get $0)))
  (func (export "i16x8.all_true") (param $0 v128) (result i32) (i16x8.all_true (local.get $0)))
@@ -129,6 +133,10 @@
  (func (export "i16x8.sub_saturate_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.sub_saturate_s (local.get $0) (local.get $1)))
  (func (export "i16x8.sub_saturate_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.sub_saturate_u (local.get $0) (local.get $1)))
  (func (export "i16x8.mul") (param $0 v128) (param $1 v128) (result v128) (i16x8.mul (local.get $0) (local.get $1)))
+ (func (export "i16x8.min_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.min_s (local.get $0) (local.get $1)))
+ (func (export "i16x8.min_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.min_u (local.get $0) (local.get $1)))
+ (func (export "i16x8.max_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_s (local.get $0) (local.get $1)))
+ (func (export "i16x8.max_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_u (local.get $0) (local.get $1)))
  (func (export "i32x4.neg") (param $0 v128) (result v128) (i32x4.neg (local.get $0)))
  (func (export "i32x4.any_true") (param $0 v128) (result i32) (i32x4.any_true (local.get $0)))
  (func (export "i32x4.all_true") (param $0 v128) (result i32) (i32x4.all_true (local.get $0)))
@@ -138,6 +146,11 @@
  (func (export "i32x4.add") (param $0 v128) (param $1 v128) (result v128) (i32x4.add (local.get $0) (local.get $1)))
  (func (export "i32x4.sub") (param $0 v128) (param $1 v128) (result v128) (i32x4.sub (local.get $0) (local.get $1)))
  (func (export "i32x4.mul") (param $0 v128) (param $1 v128) (result v128) (i32x4.mul (local.get $0) (local.get $1)))
+ (func (export "i32x4.min_s") (param $0 v128) (param $1 v128) (result v128) (i32x4.min_s (local.get $0) (local.get $1)))
+ (func (export "i32x4.min_u") (param $0 v128) (param $1 v128) (result v128) (i32x4.min_u (local.get $0) (local.get $1)))
+ (func (export "i32x4.max_s") (param $0 v128) (param $1 v128) (result v128) (i32x4.max_s (local.get $0) (local.get $1)))
+ (func (export "i32x4.max_u") (param $0 v128) (param $1 v128) (result v128) (i32x4.max_u (local.get $0) (local.get $1)))
+ (func (export "i32x4.dot_i16x8_s") (param $0 v128) (param $1 v128) (result v128) (i32x4.dot_i16x8_s (local.get $0) (local.get $1)))
  (func (export "i64x2.neg") (param $0 v128) (result v128) (i64x2.neg (local.get $0)))
  (func (export "i64x2.any_true") (param $0 v128) (result i32) (i64x2.any_true (local.get $0)))
  (func (export "i64x2.all_true") (param $0 v128) (result i32) (i64x2.all_true (local.get $0)))
@@ -553,6 +566,34 @@
   )
   (v128.const i32x4 0 230 255 0 255 6 106 237 230 52 223 76 0 6 127 126)
 )
+(assert_return
+  (invoke "i8x16.min_s"
+    (v128.const i32x4 0  42 255 128 127 129   6 29 103 196 231 142 17 250   1  73)
+    (v128.const i32x4 3 231   1 128 129 6   103 17  42  29  73  42  0 255 127 142)
+  )
+  (v128.const i8x16 0 231 255 128 129 129 6 17 42 196 231 142 0 250 1 142)
+)
+(assert_return
+  (invoke "i8x16.min_u"
+    (v128.const i32x4 0  42 255 128 127 129   6 29 103 196 231 142 17 250   1  73)
+    (v128.const i32x4 3 231   1 128 129 6   103 17  42  29  73  42  0 255 127 142)
+  )
+  (v128.const i8x16 0 42 1 128 127 6 6 17 42 29 73 42 0 250 1 73)
+)
+(assert_return
+  (invoke "i8x16.max_s"
+    (v128.const i32x4 0  42 255 128 127 129   6 29 103 196 231 142 17 250   1  73)
+    (v128.const i32x4 3 231   1 128 129 6   103 17  42  29  73  42  0 255 127 142)
+  )
+  (v128.const i8x16 3 42 1 128 127 6 103 29 103 29 73 42 17 255 127 73)
+)
+(assert_return
+  (invoke "i8x16.max_u"
+    (v128.const i32x4 0  42 255 128 127 129   6 29 103 196 231 142 17 250   1  73)
+    (v128.const i32x4 3 231   1 128 129 6   103 17  42  29  73  42  0 255 127 142)
+  )
+  (v128.const i8x16 3 231 255 128 129 129 103 29 103 196 231 142 17 255 127 142)
+)
 
 ;; i16x8 arithmetic
 (assert_return (invoke "i16x8.neg" (v128.const i32x4 0 1 42 -3 -56 32767 -32768 32766))
@@ -621,6 +662,34 @@
   )
   (v128.const i32x4 0 65280 0 0 0 0 0 65532)
 )
+(assert_return
+  (invoke "i16x8.min_s"
+    (v128.const i32x4 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32x4 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32x4 0 65280 32768 33024 33024 59136 64000 2)
+)
+(assert_return
+  (invoke "i16x8.min_u"
+    (v128.const i32x4 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32x4 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32x4 0 1 32768 32512 1536 18688 64000 2)
+)
+(assert_return
+  (invoke "i16x8.max_s"
+    (v128.const i32x4 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32x4 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32x4 768 1 32768 32512 1536 18688 65280 32766)
+)
+(assert_return
+  (invoke "i16x8.max_u"
+    (v128.const i32x4 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32x4 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32x4 768 65280 32768 33024 33024 59136 65280 32766)
+)
 
 ;; i32x4 arithmetic
 (assert_return (invoke "i32x4.neg" (v128.const i32x4 0 1 0x80000000 0x7fffffff)) (v128.const i32x4 0 -1 0x80000000 0x80000001))
@@ -641,6 +710,26 @@
 (assert_return (invoke "i32x4.add" (v128.const i32x4 0 0x80000001 42 5) (v128.const i32x4 0 0x80000001 5 42)) (v128.const i32x4 0 2 47 47))
 (assert_return (invoke "i32x4.sub" (v128.const i32x4 0 2 47 47) (v128.const i32x4 0 0x80000001 42 5)) (v128.const i32x4 0 0x80000001 5 42))
 (assert_return (invoke "i32x4.mul" (v128.const i32x4 0 0x80000001 42 5) (v128.const i32x4 0 0x80000001 42 5)) (v128.const i32x4 0 1 1764 25))
+(assert_return
+  (invoke "i32x4.min_s" (v128.const i32x4 0 0x80000001 42 0xc0000000) (v128.const i32x4 0xffffffff 42 0 0xb0000000))
+  (v128.const i32x4 0xffffffff 0x80000001 0 0xb0000000)
+)
+(assert_return
+  (invoke "i32x4.min_u" (v128.const i32x4 0 0x80000001 42 0xc0000000) (v128.const i32x4 0xffffffff 42 0 0xb0000000))
+  (v128.const i32x4 0 42 0 0xb0000000)
+)
+(assert_return
+  (invoke "i32x4.max_s" (v128.const i32x4 0 0x80000001 42 0xc0000000) (v128.const i32x4 0xffffffff 42 0 0xb0000000))
+  (v128.const i32x4 0 42 42 0xc0000000)
+)
+(assert_return
+  (invoke "i32x4.max_u" (v128.const i32x4 0 0x80000001 42 0xc0000000) (v128.const i32x4 0xffffffff 42 0 0xb0000000))
+  (v128.const i32x4 0xffffffff 0x80000001 42 0xc0000000)
+)
+(assert_return
+  (invoke "i32x4.dot_i16x8_s" (v128.const i32x4 0 1 2 3 4 5 6 7) (v128.const i32x4 -1 2 -3 4 5 6 -7 -8))
+  (v128.const i32x4 2 6 50 -98)
+)
 
 ;; i64x2 arithmetic
 (assert_return (invoke "i64x2.neg" (v128.const i64x2 0x8000000000000000 42)) (v128.const i64x2 0x8000000000000000 -42))

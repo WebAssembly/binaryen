@@ -51,16 +51,43 @@ function makeDroppedInt32(x) {
 // tests
 
 function test_types() {
-  console.log("BinaryenTypeNone: " + Binaryen.none);
-  console.log("BinaryenTypeInt32: " + Binaryen.i32);
-  console.log("BinaryenTypeInt64: " + Binaryen.i64);
-  console.log("BinaryenTypeFloat32: " + Binaryen.f32);
-  console.log("BinaryenTypeFloat64: " + Binaryen.f64);
-  console.log("BinaryenTypeVec128: " + Binaryen.v128);
-  console.log("BinaryenTypeAnyref: " + Binaryen.anyref);
-  console.log("BinaryenTypeExnref: " + Binaryen.exnref);
-  console.log("BinaryenTypeUnreachable: " + Binaryen.unreachable);
-  console.log("BinaryenTypeAuto: " + Binaryen.auto);
+  console.log("  // BinaryenTypeNone: " + Binaryen.none);
+  console.log("  //", Binaryen.expandType(Binaryen.none));
+
+  console.log("  // BinaryenTypeUnreachable: " + Binaryen.unreachable);
+  console.log("  //", Binaryen.expandType(Binaryen.unreachable));
+
+  console.log("  // BinaryenTypeInt32: " + Binaryen.i32);
+  console.log("  //", Binaryen.expandType(Binaryen.i32));
+
+  console.log("  // BinaryenTypeInt64: " + Binaryen.i64);
+  console.log("  //", Binaryen.expandType(Binaryen.i64));
+
+  console.log("  // BinaryenTypeFloat32: " + Binaryen.f32);
+  console.log("  //", Binaryen.expandType(Binaryen.f32));
+
+  console.log("  // BinaryenTypeFloat64: " + Binaryen.f64);
+  console.log("  //", Binaryen.expandType(Binaryen.f64));
+
+  console.log("  // BinaryenTypeVec128: " + Binaryen.v128);
+  console.log("  //", Binaryen.expandType(Binaryen.v128));
+
+  console.log("  // BinaryenTypeAnyref: " + Binaryen.anyref);
+  console.log("  //", Binaryen.expandType(Binaryen.anyref));
+
+  console.log("  // BinaryenTypeExnref: " + Binaryen.exnref);
+  console.log("  //", Binaryen.expandType(Binaryen.exnref));
+
+  console.log("  // BinaryenTypeAuto: " + Binaryen.auto);
+
+  var i32_pair = Binaryen.createType([Binaryen.i32, Binaryen.i32]);
+  console.log("  //", i32_pair, Binaryen.expandType(i32_pair));
+
+  var duplicate_pair = Binaryen.createType([Binaryen.i32, Binaryen.i32]);
+  console.log("  //", duplicate_pair, Binaryen.expandType(duplicate_pair));
+
+  var f32_pair = Binaryen.createType([Binaryen.f32, Binaryen.f32]);
+  console.log("  //", f32_pair, Binaryen.expandType(f32_pair));
 }
 
 function test_features() {
@@ -130,8 +157,7 @@ function test_core() {
   module = new Binaryen.Module();
 
   // Create an event
-  var vi = module.addFunctionType("vi", Binaryen.none, [Binaryen.i32]);
-  var event_ = module.addEvent("a-event", 0, vi);
+  var event_ = module.addEvent("a-event", 0, Binaryen.i32, Binaryen.none);
 
   // Literals and consts
 
@@ -325,6 +351,10 @@ function test_core() {
     module.i8x16.sub_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.sub_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.min_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.min_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.max_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.max_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.add_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.add_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -332,9 +362,18 @@ function test_core() {
     module.i16x8.sub_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.sub_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.min_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.min_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.max_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.max_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.min_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.min_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.max_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.max_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.dot_i16x8_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -523,7 +562,7 @@ function test_core() {
   module.addFunctionImport("an-imported", "module", "base", fiF);
   module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32, false);
   module.addGlobalImport("a-mut-global-imp", "module", "base", Binaryen.i32, true);
-  module.addEventImport("a-event-imp", "module", "base", 0, vi);
+  module.addEventImport("a-event-imp", "module", "base", 0, Binaryen.i32, Binaryen.none);
 
   // Exports
 
@@ -783,14 +822,13 @@ function test_binaries() {
     module = new Binaryen.Module();
     module.setFeatures(Binaryen.Features.All);
     var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
-    var vii = module.addFunctionType("vii", Binaryen.none, [ Binaryen.i32, Binaryen.i32 ]);
     var x = module.local.get(0, Binaryen.i32),
         y = module.local.get(1, Binaryen.i32);
     var add = module.i32.add(x, y);
     var adder = module.addFunction("adder", iii, [], add);
     var initExpr = module.i32.const(3);
     var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
-    var event_ = module.addEvent("a-event", 0, vii);
+    var event_ = module.addEvent("a-event", 0, Binaryen.createType([Binaryen.i32, Binaryen.i32]), Binaryen.none);
     Binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
     Binaryen.setDebugInfo(false);
@@ -849,6 +887,7 @@ function test_tracing() {
   Binaryen.setAPITracing(1);
   test_core();
   test_relooper();
+  test_types();
   Binaryen.setAPITracing(0);
 }
 
@@ -860,14 +899,13 @@ function test_parsing() {
   module.setFeatures(Binaryen.Features.All);
 
   var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
-  var vi = module.addFunctionType("vi", Binaryen.none, [ Binaryen.i32 ]);
   var x = module.local.get(0, Binaryen.i32),
       y = module.local.get(1, Binaryen.i32);
   var add = module.i32.add(x, y);
   var adder = module.addFunction("adder", iii, [], add);
   var initExpr = module.i32.const(3);
   var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
-  var event_ = module.addEvent("a-event", 0, vi);
+  var event_ = module.addEvent("a-event", 0, Binaryen.i32, Binaryen.none);
   text = module.emitText();
   module.dispose();
   module = null;

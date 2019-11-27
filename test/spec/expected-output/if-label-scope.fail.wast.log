@@ -1,1 +1,0 @@
-test/if-label-scope.fail.wast:1.26-1.28: syntax error: unknown label $l

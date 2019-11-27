@@ -1,6 +1,5 @@
 (module
  (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
  (event $b_wasm_event (attr 0) (param i32))
  (export "wasm_func_b" (func $b_wasm_func))
  (export "wasm_event_b" (event $b_wasm_event))

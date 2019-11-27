@@ -361,6 +361,10 @@ enum BinaryOp {
   SubSatSVecI8x16,
   SubSatUVecI8x16,
   MulVecI8x16,
+  MinSVecI8x16,
+  MinUVecI8x16,
+  MaxSVecI8x16,
+  MaxUVecI8x16,
   AddVecI16x8,
   AddSatSVecI16x8,
   AddSatUVecI16x8,
@@ -368,9 +372,18 @@ enum BinaryOp {
   SubSatSVecI16x8,
   SubSatUVecI16x8,
   MulVecI16x8,
+  MinSVecI16x8,
+  MinUVecI16x8,
+  MaxSVecI16x8,
+  MaxUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
+  MinSVecI32x4,
+  MinUVecI32x4,
+  MaxSVecI32x4,
+  MaxUVecI32x4,
+  DotSVecI16x8ToVecI32x4,
   AddVecI64x2,
   SubVecI64x2,
   AddVecF32x4,
@@ -1110,10 +1123,9 @@ public:
   Expression* exnref;
   // This is duplicate info of param types stored in Event, but this is required
   // for us to know the type of the value sent to the target block.
-  std::vector<Type> eventParams;
+  Type sent;
 
   void finalize();
-  Type getSingleSentType();
 };
 
 // Globals
@@ -1307,14 +1319,7 @@ public:
   Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
-  // Type string in the format of function type. Return type is considered as a
-  // void type. So if you have an event whose type is (i32, i32), the type
-  // string will be "vii".
-  Name type;
-  // This is duplicate info of 'Name type', but we store this anyway because
-  // we plan to remove FunctionType in future.
-  // TODO remove either this or FunctionType
-  std::vector<Type> params;
+  Signature sig;
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.

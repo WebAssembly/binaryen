@@ -221,7 +221,7 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     }
     // check the br_on_exn
     if (curr->name == target) {
-      noteFound(curr->getSingleSentType());
+      noteFound(curr->sent);
     }
   }
 

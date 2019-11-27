@@ -22,13 +22,15 @@
 #include "support/command-line.h"
 
 //
-// Shared optimization options for commandline tools
+// Shared options for commandline tools
 //
 
 namespace wasm {
 
 struct ToolOptions : public Options {
   PassOptions passOptions;
+
+  bool quiet = false;
 
   ToolOptions(const std::string& command, const std::string& description)
     : Options(command, description) {
@@ -60,7 +62,12 @@ struct ToolOptions : public Options {
              detectFeatures = true;
              enabledFeatures.makeMVP();
              disabledFeatures.makeMVP();
-           });
+           })
+      .add("--quiet",
+           "-q",
+           "Emit less verbose output and hide trivial warnings.",
+           Arguments::Zero,
+           [this](Options*, const std::string&) { quiet = true; });
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
       .addFeature(FeatureSet::Atomics, "atomic operations")
@@ -78,6 +85,23 @@ struct ToolOptions : public Options {
            Options::Arguments::Zero,
            [this](Options* o, const std::string& argument) {
              passOptions.validate = false;
+           })
+      .add("--pass-arg",
+           "-pa",
+           "An argument passed along to optimization passes being run. Must be "
+           "in the form KEY@VALUE",
+           Options::Arguments::N,
+           [this](Options*, const std::string& argument) {
+             std::string key, value;
+             auto colon = argument.find('@');
+             if (colon == std::string::npos) {
+               key = argument;
+               value = "1";
+             } else {
+               key = argument.substr(0, colon);
+               value = argument.substr(colon + 1);
+             }
+             passOptions.arguments[key] = value;
            });
   }
 

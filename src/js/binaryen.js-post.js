@@ -42,6 +42,26 @@ Module['exnref'] = Module['_BinaryenTypeExnref']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
+Module['createType'] = function(types) {
+  return preserveStack(function() {
+    var array = i32sToStack(types);
+    return Module['_BinaryenTypeCreate'](array, types.length);
+  });
+};
+
+Module['expandType'] = function(ty) {
+  return preserveStack(function() {
+    var numTypes = Module['_BinaryenTypeArity'](ty);
+    var array = stackAlloc(numTypes << 2);
+    Module['_BinaryenTypeExpand'](ty, array);
+    var types = [];
+    for (var i = 0; i < numTypes; i++) {
+      types.push(HEAPU32[(array >>> 2) + i]);
+    }
+    return types;
+  });
+};
+
 // Expression ids
 Module['InvalidId'] = Module['_BinaryenInvalidId']();
 Module['BlockId'] = Module['_BinaryenBlockId']();
@@ -336,6 +356,10 @@ Module['SubVecI8x16'] = Module['_BinaryenSubVecI8x16']();
 Module['SubSatSVecI8x16'] = Module['_BinaryenSubSatSVecI8x16']();
 Module['SubSatUVecI8x16'] = Module['_BinaryenSubSatUVecI8x16']();
 Module['MulVecI8x16'] = Module['_BinaryenMulVecI8x16']();
+Module['MinSVecI8x16'] = Module['_BinaryenMinSVecI8x16']();
+Module['MinUVecI8x16'] = Module['_BinaryenMinUVecI8x16']();
+Module['MaxSVecI8x16'] = Module['_BinaryenMaxSVecI8x16']();
+Module['MaxUVecI8x16'] = Module['_BinaryenMaxUVecI8x16']();
 Module['NegVecI16x8'] = Module['_BinaryenNegVecI16x8']();
 Module['AnyTrueVecI16x8'] = Module['_BinaryenAnyTrueVecI16x8']();
 Module['AllTrueVecI16x8'] = Module['_BinaryenAllTrueVecI16x8']();
@@ -349,6 +373,11 @@ Module['SubVecI16x8'] = Module['_BinaryenSubVecI16x8']();
 Module['SubSatSVecI16x8'] = Module['_BinaryenSubSatSVecI16x8']();
 Module['SubSatUVecI16x8'] = Module['_BinaryenSubSatUVecI16x8']();
 Module['MulVecI16x8'] = Module['_BinaryenMulVecI16x8']();
+Module['MinSVecI16x8'] = Module['_BinaryenMinSVecI16x8']();
+Module['MinUVecI16x8'] = Module['_BinaryenMinUVecI16x8']();
+Module['MaxSVecI16x8'] = Module['_BinaryenMaxSVecI16x8']();
+Module['MaxUVecI16x8'] = Module['_BinaryenMaxUVecI16x8']();
+Module['DotSVecI16x8ToVecI32x4'] = Module['_BinaryenDotSVecI16x8ToVecI32x4']();
 Module['NegVecI32x4'] = Module['_BinaryenNegVecI32x4']();
 Module['AnyTrueVecI32x4'] = Module['_BinaryenAnyTrueVecI32x4']();
 Module['AllTrueVecI32x4'] = Module['_BinaryenAllTrueVecI32x4']();
@@ -358,6 +387,10 @@ Module['ShrUVecI32x4'] = Module['_BinaryenShrUVecI32x4']();
 Module['AddVecI32x4'] = Module['_BinaryenAddVecI32x4']();
 Module['SubVecI32x4'] = Module['_BinaryenSubVecI32x4']();
 Module['MulVecI32x4'] = Module['_BinaryenMulVecI32x4']();
+Module['MinSVecI32x4'] = Module['_BinaryenMinSVecI32x4']();
+Module['MinUVecI32x4'] = Module['_BinaryenMinUVecI32x4']();
+Module['MaxSVecI32x4'] = Module['_BinaryenMaxSVecI32x4']();
+Module['MaxUVecI32x4'] = Module['_BinaryenMaxUVecI32x4']();
 Module['NegVecI64x2'] = Module['_BinaryenNegVecI64x2']();
 Module['AnyTrueVecI64x2'] = Module['_BinaryenAnyTrueVecI64x2']();
 Module['AllTrueVecI64x2'] = Module['_BinaryenAllTrueVecI64x2']();
@@ -1445,6 +1478,18 @@ function wrapModule(module, self) {
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI8x16'], left, right);
     },
+    'min_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinSVecI8x16'], left, right);
+    },
+    'min_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinUVecI8x16'], left, right);
+    },
+    'max_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxSVecI8x16'], left, right);
+    },
+    'max_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxUVecI8x16'], left, right);
+    },
     'narrow_i16x8_s': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI16x8ToVecI8x16'], left, right);
     },
@@ -1534,6 +1579,18 @@ function wrapModule(module, self) {
     },
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI16x8'], left, right);
+    },
+    'min_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinSVecI16x8'], left, right);
+    },
+    'min_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinUVecI16x8'], left, right);
+    },
+    'max_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxSVecI16x8'], left, right);
+    },
+    'max_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxUVecI16x8'], left, right);
     },
     'narrow_i32x4_s': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI32x4ToVecI16x8'], left, right);
@@ -1627,6 +1684,21 @@ function wrapModule(module, self) {
     },
     'mul': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI32x4'], left, right);
+    },
+    'min_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinSVecI32x4'], left, right);
+    },
+    'min_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MinUVecI32x4'], left, right);
+    },
+    'max_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxSVecI32x4'], left, right);
+    },
+    'max_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['MaxUVecI32x4'], left, right);
+    },
+    'dot_i16x8_s': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['DotSVecI16x8ToVecI32x4'], left, right);
     },
     'trunc_sat_f32x4_s': function(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF32x4ToVecI32x4'], value);
@@ -1985,9 +2057,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
     });
   }
-  self['addEvent'] = function(name, attribute, eventType) {
+  self['addEvent'] = function(name, attribute, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenAddEvent'](module, strToStack(name), attribute, eventType);
+      return Module['_BinaryenAddEvent'](module, strToStack(name), attribute, params, results);
     });
   };
   self['getEvent'] = function(name) {
@@ -2020,9 +2092,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable);
     });
   };
-  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, eventType) {
+  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, eventType);
+      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results);
     });
   };
   self['addExport'] = // deprecated
@@ -2668,7 +2740,8 @@ Module['getEventInfo'] = function(event_) {
     'module': UTF8ToString(Module['_BinaryenEventImportGetModule'](event_)),
     'base': UTF8ToString(Module['_BinaryenEventImportGetBase'](event_)),
     'attribute': Module['_BinaryenEventGetAttribute'](event_),
-    'type': UTF8ToString(Module['_BinaryenEventGetType'](event_))
+    'params': Module['_BinaryenEventGetParams'](event_),
+    'results': Module['_BinaryenEventGetResults'](event_)
   };
 };
 

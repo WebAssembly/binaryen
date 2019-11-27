@@ -1,6 +1,5 @@
 (module
  (type $v (func))
- (type $vi (func (param i32)))
  (event $e (attr 0) (param i32))
  (func $test (; 0 ;) (type $v)
   (local $0 exnref)
@@ -26,7 +25,7 @@
  )
 )
 
-getExpressionInfo(throw) = {"id":41,"type":8,"event":"e"}
-getExpressionInfo(br_on_exn) = {"id":43,"type":7,"name":"l","event":"e"}
-getExpressionInfo(rethrow) = {"id":42,"type":8}
+getExpressionInfo(throw) = {"id":41,"type":1,"event":"e"}
+getExpressionInfo(br_on_exn) = {"id":43,"type":8,"name":"l","event":"e"}
+getExpressionInfo(rethrow) = {"id":42,"type":1}
 getExpressionInfo(try) = {"id":40,"type":0}

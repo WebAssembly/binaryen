@@ -273,6 +273,42 @@ BinaryenType BinaryenTypeExnref(void) { return exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 
+BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
+  std::vector<Type> typeVec;
+  typeVec.reserve(numTypes);
+  for (size_t i = 0; i < numTypes; ++i) {
+    typeVec.push_back(Type(types[i]));
+  }
+  Type result(typeVec);
+
+  if (tracing) {
+    std::string array = getTemp();
+    std::cout << "  {\n";
+    std::cout << "    BinaryenType " << array << "[] = {";
+    for (size_t i = 0; i < numTypes; ++i) {
+      std::cout << uint32_t(types[i]);
+      if (i < numTypes - 1) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << "};\n";
+    std::cout << "    BinaryenTypeCreate(" << array << ", " << numTypes
+              << "); // " << uint32_t(result) << "\n";
+    std::cout << "  }\n";
+  }
+
+  return uint32_t(result);
+}
+
+uint32_t BinaryenTypeArity(BinaryenType t) { return Type(t).size(); }
+
+void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf) {
+  const std::vector<Type>& types = Type(t).expand();
+  for (size_t i = 0; i < types.size(); ++i) {
+    buf[i] = types[i];
+  }
+}
+
 WASM_DEPRECATED BinaryenType BinaryenNone(void) { return none; }
 WASM_DEPRECATED BinaryenType BinaryenInt32(void) { return i32; }
 WASM_DEPRECATED BinaryenType BinaryenInt64(void) { return i64; }
@@ -808,6 +844,10 @@ BinaryenOp BinaryenSubVecI8x16(void) { return SubVecI8x16; }
 BinaryenOp BinaryenSubSatSVecI8x16(void) { return SubSatSVecI8x16; }
 BinaryenOp BinaryenSubSatUVecI8x16(void) { return SubSatUVecI8x16; }
 BinaryenOp BinaryenMulVecI8x16(void) { return MulVecI8x16; }
+BinaryenOp BinaryenMinSVecI8x16(void) { return MinSVecI8x16; }
+BinaryenOp BinaryenMinUVecI8x16(void) { return MinUVecI8x16; }
+BinaryenOp BinaryenMaxSVecI8x16(void) { return MaxSVecI8x16; }
+BinaryenOp BinaryenMaxUVecI8x16(void) { return MaxUVecI8x16; }
 BinaryenOp BinaryenNegVecI16x8(void) { return NegVecI16x8; }
 BinaryenOp BinaryenAnyTrueVecI16x8(void) { return AnyTrueVecI16x8; }
 BinaryenOp BinaryenAllTrueVecI16x8(void) { return AllTrueVecI16x8; }
@@ -821,6 +861,10 @@ BinaryenOp BinaryenSubVecI16x8(void) { return SubVecI16x8; }
 BinaryenOp BinaryenSubSatSVecI16x8(void) { return SubSatSVecI16x8; }
 BinaryenOp BinaryenSubSatUVecI16x8(void) { return SubSatUVecI16x8; }
 BinaryenOp BinaryenMulVecI16x8(void) { return MulVecI16x8; }
+BinaryenOp BinaryenMinSVecI16x8(void) { return MinSVecI16x8; }
+BinaryenOp BinaryenMinUVecI16x8(void) { return MinUVecI16x8; }
+BinaryenOp BinaryenMaxSVecI16x8(void) { return MaxSVecI16x8; }
+BinaryenOp BinaryenMaxUVecI16x8(void) { return MaxUVecI16x8; }
 BinaryenOp BinaryenNegVecI32x4(void) { return NegVecI32x4; }
 BinaryenOp BinaryenAnyTrueVecI32x4(void) { return AnyTrueVecI32x4; }
 BinaryenOp BinaryenAllTrueVecI32x4(void) { return AllTrueVecI32x4; }
@@ -830,6 +874,13 @@ BinaryenOp BinaryenShrUVecI32x4(void) { return ShrUVecI32x4; }
 BinaryenOp BinaryenAddVecI32x4(void) { return AddVecI32x4; }
 BinaryenOp BinaryenSubVecI32x4(void) { return SubVecI32x4; }
 BinaryenOp BinaryenMulVecI32x4(void) { return MulVecI32x4; }
+BinaryenOp BinaryenMinSVecI32x4(void) { return MinSVecI32x4; }
+BinaryenOp BinaryenMinUVecI32x4(void) { return MinUVecI32x4; }
+BinaryenOp BinaryenMaxSVecI32x4(void) { return MaxSVecI32x4; }
+BinaryenOp BinaryenMaxUVecI32x4(void) { return MaxUVecI32x4; }
+BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void) {
+  return DotSVecI16x8ToVecI32x4;
+}
 BinaryenOp BinaryenNegVecI64x2(void) { return NegVecI64x2; }
 BinaryenOp BinaryenAnyTrueVecI64x2(void) { return AnyTrueVecI64x2; }
 BinaryenOp BinaryenAllTrueVecI64x2(void) { return AllTrueVecI64x2; }
@@ -3211,19 +3262,18 @@ void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
 BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                   const char* name,
                                   uint32_t attribute,
-                                  BinaryenFunctionTypeRef type) {
+                                  BinaryenType params,
+                                  BinaryenType results) {
   if (tracing) {
     std::cout << "  BinaryenAddEvent(the_module, \"" << name << "\", "
-              << attribute << ", functionTypes[" << functionTypes[type]
-              << "]);\n";
+              << attribute << ", " << params << ", " << results << ");\n";
   }
 
   auto* wasm = (Module*)module;
   auto* ret = new Event();
   ret->name = name;
   ret->attribute = attribute;
-  ret->type = ((FunctionType*)type)->name;
-  ret->params = ((FunctionType*)type)->params;
+  ret->sig = Signature(Type(params), Type(results));
   wasm->addEvent(ret);
   return ret;
 }
@@ -3327,22 +3377,22 @@ void BinaryenAddEventImport(BinaryenModuleRef module,
                             const char* externalModuleName,
                             const char* externalBaseName,
                             uint32_t attribute,
-                            BinaryenFunctionTypeRef eventType) {
+                            BinaryenType params,
+                            BinaryenType results) {
   auto* wasm = (Module*)module;
   auto* ret = new Event();
 
   if (tracing) {
     std::cout << "  BinaryenAddEventImport(the_module, \"" << internalName
               << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << attribute << ", functionTypes["
-              << functionTypes[eventType] << "]);\n";
+              << "\", " << attribute << ", " << params << ", " << results
+              << ");\n";
   }
 
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->type = ((FunctionType*)eventType)->name;
-  ret->params = ((FunctionType*)eventType)->params;
+  ret->sig = Signature(Type(params), Type(results));
   wasm->addEvent(ret);
 }
 
@@ -3608,8 +3658,8 @@ uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
   auto* wasm = (Module*)module;
   return wasm->memory.segments.size();
 }
-int64_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
-                                           BinaryenIndex id) {
+uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
+                                            BinaryenIndex id) {
   if (tracing) {
     std::cout << "  BinaryenGetMemorySegmentByteOffset(the_module, " << id
               << ");\n";
@@ -4038,7 +4088,7 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetName(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->name.c_str();
@@ -4046,7 +4096,7 @@ const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
 BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetNumParams(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->params.size();
@@ -4055,7 +4105,7 @@ BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
                                           BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetParam(functionsTypes["
-              << functions[ftype] << "], " << index << ");\n";
+              << functionTypes[ftype] << "], " << index << ");\n";
   }
 
   auto* ft = (FunctionType*)ftype;
@@ -4065,7 +4115,7 @@ BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
 BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetResult(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->result;
@@ -4264,31 +4314,21 @@ int BinaryenEventGetAttribute(BinaryenEventRef event) {
 
   return ((Event*)event)->attribute;
 }
-const char* BinaryenEventGetType(BinaryenEventRef event) {
+BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
   if (tracing) {
-    std::cout << "  BinaryenEventGetType(events[" << events[event] << "]);\n";
+    std::cout << "  BinaryenEventGetParams(events[" << events[event] << "]);\n";
   }
 
-  return ((Event*)event)->type.c_str();
+  return ((Event*)event)->sig.params;
 }
-BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event) {
+
+BinaryenType BinaryenEventGetResults(BinaryenEventRef event) {
   if (tracing) {
-    std::cout << "  BinaryenEventGetNumParams(events[" << events[event]
+    std::cout << "  BinaryenEventGetResults(events[" << events[event]
               << "]);\n";
   }
 
-  return ((Event*)event)->params.size();
-}
-BinaryenType BinaryenEventGetParam(BinaryenEventRef event,
-                                   BinaryenIndex index) {
-  if (tracing) {
-    std::cout << "  BinaryenEventGetParam(events[" << events[event] << "], "
-              << index << ");\n";
-  }
-
-  auto* fn = (Event*)event;
-  assert(index < fn->params.size());
-  return fn->params[index];
+  return ((Event*)event)->sig.results;
 }
 
 //
@@ -4481,7 +4521,7 @@ RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
   }
 
   R->AddBlock(ret);
-  return RelooperRef(ret);
+  return RelooperBlockRef(ret);
 }
 
 void RelooperAddBranch(RelooperBlockRef from,
@@ -4514,7 +4554,7 @@ RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper,
   }
 
   R->AddBlock(ret);
-  return RelooperRef(ret);
+  return RelooperBlockRef(ret);
 }
 
 void RelooperAddBranchForSwitch(RelooperBlockRef from,

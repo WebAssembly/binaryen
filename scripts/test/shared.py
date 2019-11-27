@@ -373,16 +373,44 @@ def fail_if_not_identical_to_file(actual, expected_file):
         fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 
-if len(requested) == 0:
-    tests = sorted(os.listdir(os.path.join(options.binaryen_test)))
-else:
-    tests = requested[:]
+def get_test_dir(name):
+    """Returns the test directory located at BINARYEN_ROOT/test/[name]."""
+    return os.path.join(options.binaryen_test, name)
+
+
+def get_tests(test_dir, extensions=[]):
+    """Returns the list of test files in a given directory. 'extensions' is a
+    list of file extensions. If 'extensions' is empty, returns all files.
+    """
+    tests = []
+    if not extensions:
+        tests += glob.glob(os.path.join(test_dir, '*'))
+    for ext in extensions:
+        tests += glob.glob(os.path.join(test_dir, '*' + ext))
+    return sorted(tests)
+
 
 if not options.interpreter:
     warn('no interpreter provided (did not test spec interpreter validation)')
 
 if not has_vanilla_emcc:
     warn('no functional emcc submodule found')
+
+
+if not options.spec_tests:
+    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+else:
+    options.spec_tests = options.spec_tests[:]
+
+SPEC_TEST_BLACKLIST = [
+    'binary.wast',   # Cannot parse binary modules
+    'linking.wast',  # No support for 'register' command
+    'nop.wast',      # Stacky code
+    'stack.wast',    # Stacky code
+    'unwind.wast'    # Stacky code
+]
+options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
+                      in SPEC_TEST_BLACKLIST]
 
 
 # check utilities
@@ -455,10 +483,6 @@ def minify_check(wast, verify_final_result=True):
         os.unlink('a.wast')
     if os.path.exists('b.wast'):
         os.unlink('b.wast')
-
-
-def files_with_pattern(*path_pattern):
-    return sorted(glob.glob(os.path.join(*path_pattern)))
 
 
 # run a check with BINARYEN_PASS_DEBUG set, to do full validation

@@ -116,6 +116,18 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       usesMemory = true;
     }
   }
+  void visitThrow(Throw* curr) {
+    if (reachable.count(ModuleElement(ModuleElementKind::Event, curr->event)) ==
+        0) {
+      queue.emplace_back(ModuleElementKind::Event, curr->event);
+    }
+  }
+  void visitBrOnExn(BrOnExn* curr) {
+    if (reachable.count(ModuleElement(ModuleElementKind::Event, curr->event)) ==
+        0) {
+      queue.emplace_back(ModuleElementKind::Event, curr->event);
+    }
+  }
 };
 
 // Finds function type usage
@@ -288,9 +300,6 @@ struct RemoveUnusedModuleElements : public Pass {
     }
     for (auto* call : analyzer.indirectCalls) {
       call->fullType = canonicalize(call->fullType);
-    }
-    for (auto* event : analyzer.events) {
-      event->type = canonicalize(event->type);
     }
     // remove no-longer used types
     module->functionTypes.erase(

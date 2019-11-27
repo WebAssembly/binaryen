@@ -797,6 +797,10 @@ enum ASTNodes {
   I8x16SubSatS = 0x5b,
   I8x16SubSatU = 0x5c,
   I8x16Mul = 0x5d,
+  I8x16MinS = 0x5e,
+  I8x16MinU = 0x5f,
+  I8x16MaxS = 0x60,
+  I8x16MaxU = 0x61,
   I16x8Neg = 0x62,
   I16x8AnyTrue = 0x63,
   I16x8AllTrue = 0x64,
@@ -810,6 +814,10 @@ enum ASTNodes {
   I16x8SubSatS = 0x6c,
   I16x8SubSatU = 0x6d,
   I16x8Mul = 0x6e,
+  I16x8MinS = 0x6f,
+  I16x8MinU = 0x70,
+  I16x8MaxS = 0x71,
+  I16x8MaxU = 0x72,
   I32x4Neg = 0x73,
   I32x4AnyTrue = 0x74,
   I32x4AllTrue = 0x75,
@@ -819,6 +827,11 @@ enum ASTNodes {
   I32x4Add = 0x79,
   I32x4Sub = 0x7c,
   I32x4Mul = 0x7f,
+  I32x4MinS = 0x80,
+  I32x4MinU = 0x81,
+  I32x4MaxS = 0x82,
+  I32x4MaxU = 0x83,
+  I32x4DotSVecI16x8 = 0xd9,
   I64x2Neg = 0x84,
   I64x2AnyTrue = 0x85,
   I64x2AllTrue = 0x86,
@@ -989,7 +1002,6 @@ public:
   void writeStart();
   void writeMemory();
   void writeTypes();
-  int32_t getFunctionTypeIndex(Name type);
   void writeImports();
 
   void writeFunctionSignatures();
@@ -1001,9 +1013,10 @@ public:
   void writeDataSegments();
   void writeEvents();
 
-  uint32_t getFunctionIndex(Name name);
-  uint32_t getGlobalIndex(Name name);
-  uint32_t getEventIndex(Name name);
+  uint32_t getFunctionIndex(Name name) const;
+  uint32_t getGlobalIndex(Name name) const;
+  uint32_t getEventIndex(Name name) const;
+  uint32_t getTypeIndex(Signature sig) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1047,6 +1060,8 @@ private:
   BufferWithRandomAccess& o;
   bool debug;
   ModuleUtils::BinaryIndexes indexes;
+  std::unordered_map<Signature, Index> typeIndexes;
+  std::vector<Signature> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;

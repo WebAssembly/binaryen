@@ -84,7 +84,7 @@ struct Flatten
         block->list.swap(newList);
         // remove a block return value
         auto type = block->type;
-        if (isConcreteType(type)) {
+        if (type.isConcrete()) {
           // if there is a temp index for breaking to the block, use that
           Index temp;
           auto iter = breakTemps.find(block->name);
@@ -94,7 +94,7 @@ struct Flatten
             temp = builder.addVar(getFunction(), type);
           }
           auto*& last = block->list.back();
-          if (isConcreteType(last->type)) {
+          if (last->type.isConcrete()) {
             last = builder.makeLocalSet(temp, last);
           }
           block->finalize(none);
@@ -114,12 +114,12 @@ struct Flatten
         auto* originalIfFalse = iff->ifFalse;
         auto type = iff->type;
         Expression* prelude = nullptr;
-        if (isConcreteType(type)) {
+        if (type.isConcrete()) {
           Index temp = builder.addVar(getFunction(), type);
-          if (isConcreteType(iff->ifTrue->type)) {
+          if (iff->ifTrue->type.isConcrete()) {
             iff->ifTrue = builder.makeLocalSet(temp, iff->ifTrue);
           }
-          if (iff->ifFalse && isConcreteType(iff->ifFalse->type)) {
+          if (iff->ifFalse && iff->ifFalse->type.isConcrete()) {
             iff->ifFalse = builder.makeLocalSet(temp, iff->ifFalse);
           }
           // the whole if (+any preludes from the condition) is now a prelude
@@ -143,7 +143,7 @@ struct Flatten
         Expression* rep = loop;
         auto* originalBody = loop->body;
         auto type = loop->type;
-        if (isConcreteType(type)) {
+        if (type.isConcrete()) {
           Index temp = builder.addVar(getFunction(), type);
           loop->body = builder.makeLocalSet(temp, loop->body);
           // and we leave just a get of the value
@@ -180,14 +180,14 @@ struct Flatten
       } else if (auto* br = curr->dynCast<Break>()) {
         if (br->value) {
           auto type = br->value->type;
-          if (isConcreteType(type)) {
+          if (type.isConcrete()) {
             // we are sending a value. use a local instead
             Index temp = getTempForBreakTarget(br->name, type);
             ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
-              if (isConcreteType(br->type)) {
+              if (br->type.isConcrete()) {
                 replaceCurrent(builder.makeLocalGet(temp, type));
               } else {
                 assert(br->type == unreachable);
@@ -205,7 +205,7 @@ struct Flatten
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
           auto type = sw->value->type;
-          if (isConcreteType(type)) {
+          if (type.isConcrete()) {
             // we are sending a value. use a local instead
             Index temp = builder.addVar(getFunction(), type);
             ourPreludes.push_back(builder.makeLocalSet(temp, sw->value));
@@ -266,7 +266,7 @@ struct Flatten
   void visitFunction(Function* curr) {
     auto* originalBody = curr->body;
     // if the body is a block with a result, turn that into a return
-    if (isConcreteType(curr->body->type)) {
+    if (curr->body->type.isConcrete()) {
       curr->body = Builder(*getModule()).makeReturn(curr->body);
     }
     // the body may have preludes

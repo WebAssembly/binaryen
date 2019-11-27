@@ -252,7 +252,7 @@ void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
 }
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
-  prepareMinorColor(o) << printType(literal.type) << ".const ";
+  prepareMinorColor(o);
   switch (literal.type) {
     case Type::none:
       o << "?";
@@ -847,6 +847,19 @@ Literal Literal::remU(const Literal& other) const {
   }
 }
 
+Literal Literal::minInt(const Literal& other) const {
+  return geti32() < other.geti32() ? *this : other;
+}
+Literal Literal::maxInt(const Literal& other) const {
+  return geti32() > other.geti32() ? *this : other;
+}
+Literal Literal::minUInt(const Literal& other) const {
+  return uint32_t(geti32()) < uint32_t(other.geti32()) ? *this : other;
+}
+Literal Literal::maxUInt(const Literal& other) const {
+  return uint32_t(geti32()) > uint32_t(other.geti32()) ? *this : other;
+}
+
 Literal Literal::and_(const Literal& other) const {
   switch (type) {
     case Type::i32:
@@ -1273,7 +1286,8 @@ Literal Literal::shuffleV8x16(const Literal& other,
   return Literal(bytes);
 }
 
-template<Type Ty, int Lanes> static Literal splat(const Literal& val) {
+template<Type::ValueType Ty, int Lanes>
+static Literal splat(const Literal& val) {
   assert(val.type == Ty);
   LaneArray<Lanes> lanes;
   lanes.fill(val);
@@ -1703,6 +1717,18 @@ Literal Literal::subSaturateUI8x16(const Literal& other) const {
 Literal Literal::mulI8x16(const Literal& other) const {
   return binary<16, &Literal::getLanesUI8x16, &Literal::mul>(*this, other);
 }
+Literal Literal::minSI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesSI8x16, &Literal::minInt>(*this, other);
+}
+Literal Literal::minUI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesUI8x16, &Literal::minInt>(*this, other);
+}
+Literal Literal::maxSI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesSI8x16, &Literal::maxInt>(*this, other);
+}
+Literal Literal::maxUI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesUI8x16, &Literal::maxInt>(*this, other);
+}
 Literal Literal::addI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::add>(*this, other);
 }
@@ -1728,6 +1754,18 @@ Literal Literal::subSaturateUI16x8(const Literal& other) const {
 Literal Literal::mulI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::mul>(*this, other);
 }
+Literal Literal::minSI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesSI16x8, &Literal::minInt>(*this, other);
+}
+Literal Literal::minUI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesUI16x8, &Literal::minInt>(*this, other);
+}
+Literal Literal::maxSI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesSI16x8, &Literal::maxInt>(*this, other);
+}
+Literal Literal::maxUI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesUI16x8, &Literal::maxInt>(*this, other);
+}
 Literal Literal::addI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);
 }
@@ -1736,6 +1774,18 @@ Literal Literal::subI32x4(const Literal& other) const {
 }
 Literal Literal::mulI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::mul>(*this, other);
+}
+Literal Literal::minSI32x4(const Literal& other) const {
+  return binary<4, &Literal::getLanesI32x4, &Literal::minInt>(*this, other);
+}
+Literal Literal::minUI32x4(const Literal& other) const {
+  return binary<4, &Literal::getLanesI32x4, &Literal::minUInt>(*this, other);
+}
+Literal Literal::maxSI32x4(const Literal& other) const {
+  return binary<4, &Literal::getLanesI32x4, &Literal::maxInt>(*this, other);
+}
+Literal Literal::maxUI32x4(const Literal& other) const {
+  return binary<4, &Literal::getLanesI32x4, &Literal::maxUInt>(*this, other);
 }
 Literal Literal::addI64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesI64x2, &Literal::add>(*this, other);
@@ -1778,6 +1828,17 @@ Literal Literal::minF64x2(const Literal& other) const {
 }
 Literal Literal::maxF64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesF64x2, &Literal::max>(*this, other);
+}
+
+Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
+  LaneArray<8> lhs = getLanesSI16x8();
+  LaneArray<8> rhs = other.getLanesSI16x8();
+  LaneArray<4> result;
+  for (size_t i = 0; i < 4; ++i) {
+    result[i] = Literal(lhs[i * 2].geti32() * rhs[i * 2].geti32() +
+                        lhs[i * 2 + 1].geti32() * rhs[i * 2 + 1].geti32());
+  }
+  return Literal(result);
 }
 
 Literal Literal::bitselectV128(const Literal& left,
