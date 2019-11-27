@@ -499,14 +499,14 @@ struct Printer {
         std::cout << "%" << indexing[node];
 
         if (getSizeOfOperand(child) != getSizeOfOperand(node)) {
-          std::cout << ':' << printType(child->getWasmType());
+          std::cout << ':' << child->getWasmType();
 
           std::cout << " = zext ";
           printInternal(child);
         } else {
           std::cout << " = add ";
           printInternal(child);
-          std::cout << ", 0:" << printType(child->getWasmType())
+          std::cout << ", 0:" << child->getWasmType()
                     << "; Replace bad zext operation";
         }
         break;
