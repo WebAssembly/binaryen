@@ -278,27 +278,11 @@ def run_wasm_reduce_tests():
 def run_spec_tests():
     print('\n[ checking wasm-shell spec testcases... ]\n')
 
-    if not shared.options.spec_tests:
-        # FIXME we support old and new memory formats, for now, until 0xc, and so can't pass this old-style test.
-        BLACKLIST = ['binary.wast']
-        # FIXME to update the spec to 0xd, we need to implement (register "name") for import.wast
-        spec_tests = shared.get_tests(shared.get_test_dir('spec'), ['.wast'])
-        spec_tests = [t for t in spec_tests if os.path.basename(t) not in BLACKLIST]
-    else:
-        spec_tests = shared.options.spec_tests[:]
-
-    for wast in spec_tests:
+    for wast in shared.options.spec_tests:
         print('..', os.path.basename(wast))
-
-        # skip checks for some tests
-        if os.path.basename(wast) in ['linking.wast', 'nop.wast', 'stack.wast', 'typecheck.wast', 'unwind.wast']:    # FIXME
-            continue
 
         def run_spec_test(wast):
             cmd = shared.WASM_SHELL + [wast]
-            # we must skip the stack machine portions of spec tests or apply other extra args
-            extra = {}
-            cmd = cmd + (extra.get(os.path.basename(wast)) or [])
             return support.run_command(cmd, stderr=subprocess.PIPE)
 
         def run_opt_test(wast):
