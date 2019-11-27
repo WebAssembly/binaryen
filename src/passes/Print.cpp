@@ -57,9 +57,7 @@ static Name printableLocal(Index index, Function* func) {
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
 // format. Print something else to make it pass.
-static Type forceConcrete(Type type) {
-  return isConcreteType(type) ? type : i32;
-}
+static Type forceConcrete(Type type) { return type.isConcrete() ? type : i32; }
 
 // Prints the internal contents of an expression: everything but
 // the children.
@@ -77,14 +75,14 @@ struct PrintExpressionContents
       o << ' ';
       printName(curr->name, o);
     }
-    if (isConcreteType(curr->type)) {
-      o << " (result " << printType(curr->type) << ')';
+    if (curr->type.isConcrete()) {
+      o << ' ' << ResultType(curr->type);
     }
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
-    if (isConcreteType(curr->type)) {
-      o << " (result " << printType(curr->type) << ')';
+    if (curr->type.isConcrete()) {
+      o << ' ' << ResultType(curr->type);
     }
   }
   void visitLoop(Loop* curr) {
@@ -92,8 +90,8 @@ struct PrintExpressionContents
     if (curr->name.is()) {
       o << ' ' << curr->name;
     }
-    if (isConcreteType(curr->type)) {
-      o << " (result " << printType(curr->type) << ')';
+    if (curr->type.isConcrete()) {
+      o << ' ' << ResultType(curr->type);
     }
   }
   void visitBreak(Break* curr) {
@@ -147,7 +145,7 @@ struct PrintExpressionContents
     printName(curr->name, o);
   }
   void visitLoad(Load* curr) {
-    prepareColor(o) << printType(forceConcrete(curr->type));
+    prepareColor(o) << forceConcrete(curr->type);
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -173,7 +171,7 @@ struct PrintExpressionContents
     }
   }
   void visitStore(Store* curr) {
-    prepareColor(o) << printType(forceConcrete(curr->valueType));
+    prepareColor(o) << forceConcrete(curr->valueType);
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -198,7 +196,7 @@ struct PrintExpressionContents
     }
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
-    prepareColor(o) << printType(forceConcrete(type)) << ".atomic.rmw";
+    prepareColor(o) << forceConcrete(type) << ".atomic.rmw";
     if (type != unreachable && bytes != getTypeSize(type)) {
       if (bytes == 1) {
         o << '8';
@@ -257,7 +255,7 @@ struct PrintExpressionContents
   }
   void visitAtomicWait(AtomicWait* curr) {
     prepareColor(o);
-    o << printType(forceConcrete(curr->expectedType)) << ".atomic.wait";
+    o << forceConcrete(curr->expectedType) << ".atomic.wait";
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -449,7 +447,9 @@ struct PrintExpressionContents
     prepareColor(o);
     o << "memory.fill";
   }
-  void visitConst(Const* curr) { o << curr->value; }
+  void visitConst(Const* curr) {
+    o << curr->value.type << ".const " << curr->value;
+  }
   void visitUnary(Unary* curr) {
     prepareColor(o);
     switch (curr->op) {
@@ -1306,8 +1306,8 @@ struct PrintExpressionContents
   }
   void visitTry(Try* curr) {
     printMedium(o, "try");
-    if (isConcreteType(curr->type)) {
-      o << " (result " << printType(curr->type) << ')';
+    if (curr->type.isConcrete()) {
+      o << ' ' << ResultType(curr->type);
     }
   }
   void visitThrow(Throw* curr) {
@@ -1325,7 +1325,7 @@ struct PrintExpressionContents
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPush(Push* curr) { prepareColor(o) << "push"; }
   void visitPop(Pop* curr) {
-    prepareColor(o) << printType(curr->type);
+    prepareColor(o) << curr->type;
     o << ".pop";
     restoreNormalColor(o);
   }
@@ -1413,7 +1413,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void printFullLine(Expression* expression) {
     !minify && doIndent(o, indent);
     if (full) {
-      o << "[" << printType(expression->type) << "] ";
+      o << "[" << expression->type << "] ";
     }
     visit(expression);
     o << maybeNewLine;
@@ -1444,7 +1444,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
       stack.push_back(curr);
       if (full) {
-        o << "[" << printType(curr->type) << "] ";
+        o << "[" << curr->type << "] ";
       }
       o << '(';
       PrintExpressionContents(currFunction, o).visit(curr);
@@ -1872,17 +1872,11 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (curr->params.size() > 0) {
       o << maybeSpace;
-      o << '(';
-      printMinor(o, "param");
-      for (auto& param : curr->params) {
-        o << ' ' << printType(param);
-      }
-      o << ')';
+      o << ParamType(Type(curr->params));
     }
     if (curr->result != none) {
       o << maybeSpace;
-      o << '(';
-      printMinor(o, "result ") << printType(curr->result) << ')';
+      o << ResultType(curr->result);
     }
     o << ")";
   }
@@ -1926,9 +1920,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
   void emitGlobalType(Global* curr) {
     if (curr->mutable_) {
-      o << "(mut " << printType(curr->type) << ')';
+      o << "(mut " << curr->type << ')';
     } else {
-      o << printType(curr->type);
+      o << curr->type;
     }
   }
   void visitImportedGlobal(Global* curr) {
@@ -2002,20 +1996,19 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << maybeSpace;
         o << '(';
         printMinor(o, "param ") << printableLocal(i, currFunction) << ' '
-                                << printType(curr->getLocalType(i)) << ')';
+                                << curr->getLocalType(i) << ')';
       }
     }
     if (curr->result != none) {
       o << maybeSpace;
-      o << '(';
-      printMinor(o, "result ") << printType(curr->result) << ')';
+      o << ResultType(curr->result);
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
       o << '(';
       printMinor(o, "local ") << printableLocal(i, currFunction) << ' '
-                              << printType(curr->getLocalType(i)) << ')';
+                              << curr->getLocalType(i) << ')';
       o << maybeNewLine;
     }
     // Print the body.
@@ -2064,12 +2057,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     emitImportHeader(curr);
     o << "(event ";
     printName(curr->name, o);
-    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace << '(';
-    printMinor(o, "param");
-    for (auto& param : curr->params) {
-      o << ' ' << printType(param);
-    }
-    o << ")))";
+    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
+    o << ParamType(curr->sig.params);
+    o << "))";
     o << maybeNewLine;
   }
   void visitDefinedEvent(Event* curr) {
@@ -2077,12 +2067,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printMedium(o, "event ");
     printName(curr->name, o);
-    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace << '(';
-    printMinor(o, "param");
-    for (auto& param : curr->params) {
-      o << ' ' << printType(param);
-    }
-    o << "))" << maybeNewLine;
+    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
+    o << ParamType(curr->sig.params);
+    o << ")" << maybeNewLine;
   }
   void printTableHeader(Table* curr) {
     o << '(';
@@ -2372,7 +2359,7 @@ std::ostream& WasmPrinter::printExpression(Expression* expression,
   print.setMinify(minify);
   if (full || isFullForced()) {
     print.setFull(true);
-    o << "[" << printType(expression->type) << "] ";
+    o << "[" << expression->type << "] ";
   }
   print.visit(expression);
   return o;
@@ -2394,7 +2381,7 @@ WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     case StackInst::BlockEnd:
     case StackInst::IfEnd:
     case StackInst::LoopEnd: {
-      o << "end (" << printType(inst->type) << ')';
+      o << "end (" << inst->type << ')';
       break;
     }
     case StackInst::IfElse: {

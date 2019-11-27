@@ -73,10 +73,10 @@ inline void verifyFlatness(Function* func) {
                         UnifiedExpressionVisitor<VerifyFlatness>> {
     void visitExpression(Expression* curr) {
       if (isControlFlowStructure(curr)) {
-        verify(!isConcreteType(curr->type),
+        verify(!curr->type.isConcrete(),
                "control flow structures must not flow values");
       } else if (curr->is<LocalSet>()) {
-        verify(!isConcreteType(curr->type), "tees are not allowed, only sets");
+        verify(!curr->type.isConcrete(), "tees are not allowed, only sets");
       } else {
         for (auto* child : ChildIterator(curr)) {
           verify(child->is<Const>() || child->is<LocalGet>() ||
@@ -98,7 +98,7 @@ inline void verifyFlatness(Function* func) {
   VerifyFlatness verifier;
   verifier.walkFunction(func);
   verifier.setFunction(func);
-  verifier.verify(!isConcreteType(func->body->type),
+  verifier.verify(!func->body->type.isConcrete(),
                   "function bodies must not flow values");
 }
 

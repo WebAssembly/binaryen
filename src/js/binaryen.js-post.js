@@ -42,6 +42,26 @@ Module['exnref'] = Module['_BinaryenTypeExnref']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
+Module['createType'] = function(types) {
+  return preserveStack(function() {
+    var array = i32sToStack(types);
+    return Module['_BinaryenTypeCreate'](array, types.length);
+  });
+};
+
+Module['expandType'] = function(ty) {
+  return preserveStack(function() {
+    var numTypes = Module['_BinaryenTypeArity'](ty);
+    var array = stackAlloc(numTypes << 2);
+    Module['_BinaryenTypeExpand'](ty, array);
+    var types = [];
+    for (var i = 0; i < numTypes; i++) {
+      types.push(HEAPU32[(array >>> 2) + i]);
+    }
+    return types;
+  });
+};
+
 // Expression ids
 Module['InvalidId'] = Module['_BinaryenInvalidId']();
 Module['BlockId'] = Module['_BinaryenBlockId']();
@@ -2037,9 +2057,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
     });
   }
-  self['addEvent'] = function(name, attribute, eventType) {
+  self['addEvent'] = function(name, attribute, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenAddEvent'](module, strToStack(name), attribute, eventType);
+      return Module['_BinaryenAddEvent'](module, strToStack(name), attribute, params, results);
     });
   };
   self['getEvent'] = function(name) {
@@ -2072,9 +2092,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable);
     });
   };
-  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, eventType) {
+  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, eventType);
+      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results);
     });
   };
   self['addExport'] = // deprecated
@@ -2720,7 +2740,8 @@ Module['getEventInfo'] = function(event_) {
     'module': UTF8ToString(Module['_BinaryenEventImportGetModule'](event_)),
     'base': UTF8ToString(Module['_BinaryenEventImportGetBase'](event_)),
     'attribute': Module['_BinaryenEventGetAttribute'](event_),
-    'type': UTF8ToString(Module['_BinaryenEventGetType'](event_))
+    'params': Module['_BinaryenEventGetParams'](event_),
+    'results': Module['_BinaryenEventGetResults'](event_)
   };
 };
 

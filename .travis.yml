@@ -28,7 +28,7 @@ DEPLOY_TO_GITHUB: &DEPLOY_TO_GITHUB
 jobs:
   include:
     # OSX Binary
-    - env: JOB=dist-osx MACOSX_DEPLOYMENT_TARGET=10.9 ARCH=x86_64-apple-darwin
+    - env: JOB=dist-osx ARCH=x86_64-apple-darwin
       os: osx
       stage: build
       script:

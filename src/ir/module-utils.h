@@ -38,51 +38,25 @@ struct BinaryIndexes {
   std::unordered_map<Name, Index> eventIndexes;
 
   BinaryIndexes(Module& wasm) {
-    auto addGlobal = [&](Global* curr) {
-      auto index = globalIndexes.size();
-      globalIndexes[curr->name] = index;
+    auto addIndexes = [&](auto& source, auto& indexes) {
+      auto addIndex = [&](auto* curr) {
+        auto index = indexes.size();
+        indexes[curr->name] = index;
+      };
+      for (auto& curr : source) {
+        if (curr->imported()) {
+          addIndex(curr.get());
+        }
+      }
+      for (auto& curr : source) {
+        if (!curr->imported()) {
+          addIndex(curr.get());
+        }
+      }
     };
-    for (auto& curr : wasm.globals) {
-      if (curr->imported()) {
-        addGlobal(curr.get());
-      }
-    }
-    for (auto& curr : wasm.globals) {
-      if (!curr->imported()) {
-        addGlobal(curr.get());
-      }
-    }
-    assert(globalIndexes.size() == wasm.globals.size());
-    auto addFunction = [&](Function* curr) {
-      auto index = functionIndexes.size();
-      functionIndexes[curr->name] = index;
-    };
-    for (auto& curr : wasm.functions) {
-      if (curr->imported()) {
-        addFunction(curr.get());
-      }
-    }
-    for (auto& curr : wasm.functions) {
-      if (!curr->imported()) {
-        addFunction(curr.get());
-      }
-    }
-    assert(functionIndexes.size() == wasm.functions.size());
-    auto addEvent = [&](Event* curr) {
-      auto index = eventIndexes.size();
-      eventIndexes[curr->name] = index;
-    };
-    for (auto& curr : wasm.events) {
-      if (curr->imported()) {
-        addEvent(curr.get());
-      }
-    }
-    for (auto& curr : wasm.events) {
-      if (!curr->imported()) {
-        addEvent(curr.get());
-      }
-    }
-    assert(eventIndexes.size() == wasm.events.size());
+    addIndexes(wasm.functions, functionIndexes);
+    addIndexes(wasm.globals, globalIndexes);
+    addIndexes(wasm.events, eventIndexes);
   }
 };
 
@@ -126,8 +100,7 @@ inline Event* copyEvent(Event* event, Module& out) {
   auto* ret = new Event();
   ret->name = event->name;
   ret->attribute = event->attribute;
-  ret->type = event->type;
-  ret->params = event->params;
+  ret->sig = event->sig;
   out.addEvent(ret);
   return ret;
 }
@@ -289,6 +262,58 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
   }
 }
 
+// Helper class for performing an operation on all the functions in the module,
+// in parallel, with an Info object for each one that can contain results of
+// some computation that the operation performs.
+// The operation performend should not modify the wasm module in any way.
+// TODO: enforce this
+template<typename T> struct ParallelFunctionAnalysis {
+  Module& wasm;
+
+  typedef std::map<Function*, T> Map;
+  Map map;
+
+  typedef std::function<void(Function*, T&)> Func;
+
+  ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
+    // Fill in map, as we operate on it in parallel (each function to its own
+    // entry).
+    for (auto& func : wasm.functions) {
+      map[func.get()];
+    }
+
+    // Run on the imports first. TODO: parallelize this too
+    for (auto& func : wasm.functions) {
+      if (func->imported()) {
+        work(func.get(), map[func.get()]);
+      }
+    }
+
+    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
+      bool isFunctionParallel() override { return true; }
+      bool modifiesBinaryenIR() override { return false; }
+
+      Mapper(Module& module, Map& map, Func work)
+        : module(module), map(map), work(work) {}
+
+      Mapper* create() override { return new Mapper(module, map, work); }
+
+      void doWalkFunction(Function* curr) {
+        assert(map.count(curr));
+        work(curr, map[curr]);
+      }
+
+    private:
+      Module& module;
+      Map& map;
+      Func work;
+    };
+
+    PassRunner runner(&wasm);
+    Mapper(wasm, map, work).run(&runner, &wasm);
+  }
+};
+
 // Helper class for analyzing the call graph.
 //
 // Provides hooks for running some initial calculation on each function (which
@@ -316,45 +341,28 @@ template<typename T> struct CallGraphPropertyAnalysis {
   typedef std::function<void(Function*, T&)> Func;
 
   CallGraphPropertyAnalysis(Module& wasm, Func work) : wasm(wasm) {
-    // Fill in map, as we operate on it in parallel (each function to its own
-    // entry).
-    for (auto& func : wasm.functions) {
-      map[func.get()];
-    }
-
-    // Run on the imports first. TODO: parallelize this too
-    for (auto& func : wasm.functions) {
+    ParallelFunctionAnalysis<T> analysis(wasm, [&](Function* func, T& info) {
+      work(func, info);
       if (func->imported()) {
-        work(func.get(), map[func.get()]);
+        return;
       }
-    }
+      struct Mapper : public PostWalker<Mapper> {
+        Mapper(Module* module, T& info, Func work)
+          : module(module), info(info), work(work) {}
 
-    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
-      bool isFunctionParallel() override { return true; }
+        void visitCall(Call* curr) {
+          info.callsTo.insert(module->getFunction(curr->target));
+        }
 
-      Mapper(Module* module, Map* map, Func work)
-        : module(module), map(map), work(work) {}
+      private:
+        Module* module;
+        T& info;
+        Func work;
+      } mapper(&wasm, info, work);
+      mapper.walk(func->body);
+    });
 
-      Mapper* create() override { return new Mapper(module, map, work); }
-
-      void visitCall(Call* curr) {
-        (*map)[this->getFunction()].callsTo.insert(
-          module->getFunction(curr->target));
-      }
-
-      void visitFunction(Function* curr) {
-        assert((*map).count(curr));
-        work(curr, (*map)[curr]);
-      }
-
-    private:
-      Module* module;
-      Map* map;
-      Func work;
-    };
-
-    PassRunner runner(&wasm);
-    Mapper(&wasm, &map, work).run(&runner, &wasm);
+    map.swap(analysis.map);
 
     // Find what is called by what.
     for (auto& pair : map) {

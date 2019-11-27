@@ -17,24 +17,24 @@
 import os
 import subprocess
 
-from .support import run_command, node_has_webassembly, node_test_glue
-from .shared import BINARYEN_JS, MOZJS, NODEJS, options, fail
+from . import shared
+from . import support
 
 
 def test_binaryen_js():
-    if not (MOZJS or NODEJS):
+    if not (shared.MOZJS or shared.NODEJS):
         print('no vm to run binaryen.js tests')
         return
 
-    node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
+    node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
 
-    if not os.path.exists(BINARYEN_JS):
+    if not os.path.exists(shared.BINARYEN_JS):
         print('no binaryen.js build to test')
         return
 
     print('\n[ checking binaryen.js testcases... ]\n')
 
-    for s in sorted(os.listdir(os.path.join(options.binaryen_test, 'binaryen.js'))):
+    for s in sorted(os.listdir(os.path.join(shared.options.binaryen_test, 'binaryen.js'))):
         if not s.endswith('.js'):
             continue
         print(s)
@@ -43,11 +43,11 @@ def test_binaryen_js():
         f.write('''
             console.warn = function(x) { console.log(x) };
         ''')
-        binaryen_js = open(BINARYEN_JS).read()
+        binaryen_js = open(shared.BINARYEN_JS).read()
         f.write(binaryen_js)
-        if NODEJS:
-            f.write(node_test_glue())
-        test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
+        if shared.NODEJS:
+            f.write(support.node_test_glue())
+        test_path = os.path.join(shared.options.binaryen_test, 'binaryen.js', s)
         test_src = open(test_path).read()
         f.write(test_src)
         f.close()
@@ -55,20 +55,20 @@ def test_binaryen_js():
         def test(engine):
             cmd = [engine, 'a.js']
             if 'fatal' not in s:
-                out = run_command(cmd, stderr=subprocess.STDOUT)
+                out = support.run_command(cmd, stderr=subprocess.STDOUT)
             else:
                 # expect an error - the specific error code will depend on the vm
-                out = run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
-            expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
+                out = support.run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
+            expected = open(os.path.join(shared.options.binaryen_test, 'binaryen.js', s + '.txt')).read()
             if expected not in out:
-                fail(out, expected)
+                shared.fail(out, expected)
 
         # run in all possible shells
-        if MOZJS:
-            test(MOZJS)
-        if NODEJS:
+        if shared.MOZJS:
+            test(shared.MOZJS)
+        if shared.NODEJS:
             if node_has_wasm or 'WebAssembly.' not in test_src:
-                test(NODEJS)
+                test(shared.NODEJS)
             else:
                 print('Skipping ' + test_path + ' because WebAssembly might not be supported')
 

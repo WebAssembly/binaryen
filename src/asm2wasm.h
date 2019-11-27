@@ -1973,7 +1973,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->op = parseAsmBinaryOp(
         ast[1]->getIString(), ast[2], ast[3], ret->left, ret->right);
       ret->finalize();
-      if (ret->op == BinaryOp::RemSInt32 && isFloatType(ret->type)) {
+      if (ret->op == BinaryOp::RemSInt32 && ret->type.isFloat()) {
         // WebAssembly does not have floating-point remainder, we have to emit a
         // call to a special import of ours
         Call* call = allocator.alloc<Call>();
@@ -2849,7 +2849,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (seeker.found == 0) {
           auto block = allocator.alloc<Block>();
           block->list.push_back(child);
-          if (isConcreteType(child->type)) {
+          if (child->type.isConcrete()) {
             // ensure a nop at the end, so the block has guaranteed none type
             // and no values fall through
             block->list.push_back(builder.makeNop());

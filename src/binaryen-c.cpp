@@ -273,6 +273,42 @@ BinaryenType BinaryenTypeExnref(void) { return exnref; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 
+BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
+  std::vector<Type> typeVec;
+  typeVec.reserve(numTypes);
+  for (size_t i = 0; i < numTypes; ++i) {
+    typeVec.push_back(Type(types[i]));
+  }
+  Type result(typeVec);
+
+  if (tracing) {
+    std::string array = getTemp();
+    std::cout << "  {\n";
+    std::cout << "    BinaryenType " << array << "[] = {";
+    for (size_t i = 0; i < numTypes; ++i) {
+      std::cout << uint32_t(types[i]);
+      if (i < numTypes - 1) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << "};\n";
+    std::cout << "    BinaryenTypeCreate(" << array << ", " << numTypes
+              << "); // " << uint32_t(result) << "\n";
+    std::cout << "  }\n";
+  }
+
+  return uint32_t(result);
+}
+
+uint32_t BinaryenTypeArity(BinaryenType t) { return Type(t).size(); }
+
+void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf) {
+  const std::vector<Type>& types = Type(t).expand();
+  for (size_t i = 0; i < types.size(); ++i) {
+    buf[i] = types[i];
+  }
+}
+
 WASM_DEPRECATED BinaryenType BinaryenNone(void) { return none; }
 WASM_DEPRECATED BinaryenType BinaryenInt32(void) { return i32; }
 WASM_DEPRECATED BinaryenType BinaryenInt64(void) { return i64; }
@@ -3226,19 +3262,18 @@ void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
 BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                   const char* name,
                                   uint32_t attribute,
-                                  BinaryenFunctionTypeRef type) {
+                                  BinaryenType params,
+                                  BinaryenType results) {
   if (tracing) {
     std::cout << "  BinaryenAddEvent(the_module, \"" << name << "\", "
-              << attribute << ", functionTypes[" << functionTypes[type]
-              << "]);\n";
+              << attribute << ", " << params << ", " << results << ");\n";
   }
 
   auto* wasm = (Module*)module;
   auto* ret = new Event();
   ret->name = name;
   ret->attribute = attribute;
-  ret->type = ((FunctionType*)type)->name;
-  ret->params = ((FunctionType*)type)->params;
+  ret->sig = Signature(Type(params), Type(results));
   wasm->addEvent(ret);
   return ret;
 }
@@ -3342,22 +3377,22 @@ void BinaryenAddEventImport(BinaryenModuleRef module,
                             const char* externalModuleName,
                             const char* externalBaseName,
                             uint32_t attribute,
-                            BinaryenFunctionTypeRef eventType) {
+                            BinaryenType params,
+                            BinaryenType results) {
   auto* wasm = (Module*)module;
   auto* ret = new Event();
 
   if (tracing) {
     std::cout << "  BinaryenAddEventImport(the_module, \"" << internalName
               << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", " << attribute << ", functionTypes["
-              << functionTypes[eventType] << "]);\n";
+              << "\", " << attribute << ", " << params << ", " << results
+              << ");\n";
   }
 
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->type = ((FunctionType*)eventType)->name;
-  ret->params = ((FunctionType*)eventType)->params;
+  ret->sig = Signature(Type(params), Type(results));
   wasm->addEvent(ret);
 }
 
@@ -4053,7 +4088,7 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetName(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->name.c_str();
@@ -4061,7 +4096,7 @@ const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
 BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetNumParams(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->params.size();
@@ -4070,7 +4105,7 @@ BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
                                           BinaryenIndex index) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetParam(functionsTypes["
-              << functions[ftype] << "], " << index << ");\n";
+              << functionTypes[ftype] << "], " << index << ");\n";
   }
 
   auto* ft = (FunctionType*)ftype;
@@ -4080,7 +4115,7 @@ BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
 BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
   if (tracing) {
     std::cout << "  BinaryenFunctionTypeGetResult(functionsTypes["
-              << functions[ftype] << "]);\n";
+              << functionTypes[ftype] << "]);\n";
   }
 
   return ((FunctionType*)ftype)->result;
@@ -4279,31 +4314,21 @@ int BinaryenEventGetAttribute(BinaryenEventRef event) {
 
   return ((Event*)event)->attribute;
 }
-const char* BinaryenEventGetType(BinaryenEventRef event) {
+BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
   if (tracing) {
-    std::cout << "  BinaryenEventGetType(events[" << events[event] << "]);\n";
+    std::cout << "  BinaryenEventGetParams(events[" << events[event] << "]);\n";
   }
 
-  return ((Event*)event)->type.c_str();
+  return ((Event*)event)->sig.params;
 }
-BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event) {
+
+BinaryenType BinaryenEventGetResults(BinaryenEventRef event) {
   if (tracing) {
-    std::cout << "  BinaryenEventGetNumParams(events[" << events[event]
+    std::cout << "  BinaryenEventGetResults(events[" << events[event]
               << "]);\n";
   }
 
-  return ((Event*)event)->params.size();
-}
-BinaryenType BinaryenEventGetParam(BinaryenEventRef event,
-                                   BinaryenIndex index) {
-  if (tracing) {
-    std::cout << "  BinaryenEventGetParam(events[" << events[event] << "], "
-              << index << ");\n";
-  }
-
-  auto* fn = (Event*)event;
-  assert(index < fn->params.size());
-  return fn->params[index];
+  return ((Event*)event)->sig.results;
 }
 
 //
@@ -4496,7 +4521,7 @@ RelooperBlockRef RelooperAddBlock(RelooperRef relooper,
   }
 
   R->AddBlock(ret);
-  return RelooperRef(ret);
+  return RelooperBlockRef(ret);
 }
 
 void RelooperAddBranch(RelooperBlockRef from,
@@ -4529,7 +4554,7 @@ RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper,
   }
 
   R->AddBlock(ret);
-  return RelooperRef(ret);
+  return RelooperBlockRef(ret);
 }
 
 void RelooperAddBranchForSwitch(RelooperBlockRef from,

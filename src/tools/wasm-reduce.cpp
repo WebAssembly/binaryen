@@ -466,7 +466,7 @@ struct Reducer
       if (tryToReduceCurrentToNop()) {
         return;
       }
-    } else if (isConcreteType(curr->type)) {
+    } else if (curr->type.isConcrete()) {
       if (tryToReduceCurrentToConst()) {
         return;
       }
@@ -556,7 +556,7 @@ struct Reducer
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
-      if (isConcreteType(child->type) && curr->type == none) {
+      if (child->type.isConcrete() && curr->type == none) {
         if (tryToReplaceCurrent(builder->makeDrop(child))) {
           return;
         }
@@ -567,13 +567,13 @@ struct Reducer
       }
     }
     // If that didn't work, try to replace with a child + a unary conversion
-    if (isConcreteType(curr->type) &&
+    if (curr->type.isConcrete() &&
         !curr->is<Unary>()) { // but not if it's already unary
       for (auto* child : ChildIterator(curr)) {
         if (child->type == curr->type) {
           continue; // already tried
         }
-        if (!isConcreteType(child->type)) {
+        if (!child->type.isConcrete()) {
           continue; // no conversion
         }
         Expression* fixed = nullptr;
@@ -870,7 +870,7 @@ struct Reducer
         auto funcResult = func->result;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
-          if (!(isConcreteType(child->type) || child->type == none)) {
+          if (!(child->type.isConcrete() || child->type == none)) {
             continue; // not something a function can return
           }
           // Try to replace the body with the child, fixing up the function

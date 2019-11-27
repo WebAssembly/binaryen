@@ -406,20 +406,14 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       // Events should have void return type and at least one param type
-      Type type = pick(i32, i64, f32, f64);
-      std::string sig = std::string("v") + getSig(type);
       std::vector<Type> params;
-      params.push_back(type);
       Index numValues = upToSquared(MAX_PARAMS - 1);
-      for (Index i = 0; i < numValues; i++) {
-        type = pick(i32, i64, f32, f64);
-        sig += getSig(type);
-        params.push_back(type);
+      for (Index i = 0; i < numValues + 1; i++) {
+        params.push_back(pick(i32, i64, f32, f64));
       }
       auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
                                       WASM_EVENT_ATTRIBUTE_EXCEPTION,
-                                      ensureFunctionType(sig, &wasm)->name,
-                                      std::move(params));
+                                      Signature(Type(params), Type::none));
       wasm.addEvent(event);
     }
   }
@@ -457,7 +451,7 @@ private:
   void addImportLoggingSupport() {
     for (auto type : getConcreteTypes()) {
       auto* func = new Function;
-      Name name = std::string("log-") + printType(type);
+      Name name = std::string("log-") + type.toString();
       func->name = name;
       func->module = "fuzzing-support";
       func->base = name;
@@ -790,7 +784,7 @@ private:
         args.push_back(makeConst(type));
       }
       Expression* invoke = builder.makeCall(func->name, args, func->result);
-      if (isConcreteType(func->result)) {
+      if (func->result.isConcrete()) {
         invoke = builder.makeDrop(invoke);
       }
       invocations.push_back(invoke);
@@ -827,7 +821,7 @@ private:
     // when we should stop, emit something small (but not necessarily trivial)
     if (finishedInput || nesting >= 5 * NESTING_LIMIT || // hard limit
         (nesting >= NESTING_LIMIT && !oneIn(3))) {
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         if (oneIn(2)) {
           return makeConst(type);
         } else {
@@ -996,7 +990,7 @@ private:
 
   // make something with no chance of infinite recursion
   Expression* makeTrivial(Type type) {
-    if (isConcreteType(type)) {
+    if (type.isConcrete()) {
       if (oneIn(2)) {
         return makeLocalGet(type);
       } else {
@@ -1007,7 +1001,7 @@ private:
     }
     assert(type == unreachable);
     Expression* ret = nullptr;
-    if (isConcreteType(func->result)) {
+    if (func->result.isConcrete()) {
       ret = makeTrivial(func->result);
     }
     return builder.makeReturn(ret);
@@ -1039,13 +1033,13 @@ private:
     }
     // give a chance to make the final element an unreachable break, instead
     // of concrete - a common pattern (branch to the top of a loop etc.)
-    if (!finishedInput && isConcreteType(type) && oneIn(2)) {
+    if (!finishedInput && type.isConcrete() && oneIn(2)) {
       ret->list.push_back(makeBreak(unreachable));
     } else {
       ret->list.push_back(make(type));
     }
     breakableStack.pop_back();
-    if (isConcreteType(type)) {
+    if (type.isConcrete()) {
       ret->finalize(type);
     } else {
       ret->finalize();
@@ -1131,7 +1125,7 @@ private:
       auto* target = pick(breakableStack);
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         // we are flowing out a value
         if (valueType != type) {
           // we need to break to a proper place
@@ -1485,7 +1479,7 @@ private:
 
   Expression* makeStore(Type type) {
     // exnref type cannot be stored in memory
-    if (!allowMemory || isReferenceType(type)) {
+    if (!allowMemory || type.isRef()) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicStore(type);
@@ -1982,7 +1976,7 @@ private:
       return makeTrivial(type);
     }
     // There's no binary ops for exnref
-    if (isReferenceType(type)) {
+    if (type.isRef()) {
       makeTrivial(type);
     }
 
@@ -2238,7 +2232,7 @@ private:
     auto default_ = names.back();
     names.pop_back();
     auto temp1 = make(i32),
-         temp2 = isConcreteType(valueType) ? make(valueType) : nullptr;
+         temp2 = valueType.isConcrete() ? make(valueType) : nullptr;
     return builder.makeSwitch(names, default_, temp1, temp2);
   }
 
@@ -2248,8 +2242,8 @@ private:
   }
 
   Expression* makeReturn(Type type) {
-    return builder.makeReturn(isConcreteType(func->result) ? make(func->result)
-                                                           : nullptr);
+    return builder.makeReturn(func->result.isConcrete() ? make(func->result)
+                                                        : nullptr);
   }
 
   Expression* makeNop(Type type) {
@@ -2607,7 +2601,7 @@ private:
   Expression* makeLogging() {
     auto type = getConcreteType();
     return builder.makeCall(
-      std::string("log-") + printType(type), {make(type)}, none);
+      std::string("log-") + type.toString(), {make(type)}, none);
   }
 
   Expression* makeMemoryHashLogging() {

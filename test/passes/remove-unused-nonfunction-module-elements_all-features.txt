@@ -331,7 +331,6 @@
 )
 (module
  (type $0 (func (param i32)))
- (type $FUNCSIG$vj (func (param i64)))
  (event $e1 (attr 0) (param i64))
  (export "e1" (event $e1))
  (func $f (; 0 ;) (type $0) (param $0 i32)

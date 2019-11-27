@@ -5,5 +5,5 @@ emmake make -j4 binaryen_js
 mkdir out
 cp bin/binaryen_js.js out/binaryen.js
 echo "travis-test test"
-python -m scripts.test.binaryenjs
+python3 -m scripts.test.binaryenjs
 echo "travis-test yay!"

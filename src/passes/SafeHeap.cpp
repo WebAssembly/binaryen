@@ -41,7 +41,7 @@ static const Name ALIGNFAULT_IMPORT("alignfault");
 
 static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
-  ret += printType(curr->type);
+  ret += curr->type.toString();
   ret += "_" + std::to_string(curr->bytes) + "_";
   if (LoadUtils::isSignRelevant(curr) && !curr->signed_) {
     ret += "U_";
@@ -56,7 +56,7 @@ static Name getLoadName(Load* curr) {
 
 static Name getStoreName(Store* curr) {
   std::string ret = "SAFE_HEAP_STORE_";
-  ret += printType(curr->valueType);
+  ret += curr->valueType.toString();
   ret += "_" + std::to_string(curr->bytes) + "_";
   if (curr->isAtomic) {
     ret += "A";
@@ -170,7 +170,7 @@ struct SafeHeap : public Pass {
 
   bool
   isPossibleAtomicOperation(Index align, Index bytes, bool shared, Type type) {
-    return align == bytes && shared && isIntegerType(type);
+    return align == bytes && shared && type.isInteger();
   }
 
   void addGlobals(Module* module, FeatureSet features) {
@@ -189,7 +189,7 @@ struct SafeHeap : public Pass {
         }
         for (auto signed_ : {true, false}) {
           load.signed_ = signed_;
-          if (isFloatType(type) && signed_) {
+          if (type.isFloat() && signed_) {
             continue;
           }
           for (Index align : {1, 2, 4, 8, 16}) {

@@ -242,7 +242,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     }
     Expression* visitBrOnExn(BrOnExn* curr) {
       return builder.makeBrOnExn(
-        curr->name, curr->event, copy(curr->exnref), curr->eventParams);
+        curr->name, curr->event, copy(curr->exnref), curr->sent);
     }
     Expression* visitNop(Nop* curr) { return builder.makeNop(); }
     Expression* visitUnreachable(Unreachable* curr) {
