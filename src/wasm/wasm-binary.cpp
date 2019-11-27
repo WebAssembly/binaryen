@@ -16,8 +16,8 @@
 
 #include <algorithm>
 #include <fstream>
-#include <shared_mutex>
 
+#include "ir/module-utils.h"
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
@@ -25,9 +25,30 @@
 namespace wasm {
 
 void WasmBinaryWriter::prepare() {
-  // Collect function types and their frequencies
-  using Counts = std::unordered_map<Signature, size_t>;
-  using AtomicCounts = std::unordered_map<Signature, std::atomic_size_t>;
+  // Collect function types and their frequencies. Collect information in each
+  // function in parallel, then merge.
+  typedef std::unordered_map<Signature, size_t> Counts;
+  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
+    *wasm, [&](Function* func, Counts& counts) {
+      if (func->imported()) {
+        return;
+      }
+      struct TypeCounter : PostWalker<TypeCounter> {
+        Module& wasm;
+        Counts& counts;
+
+        TypeCounter(Module& wasm, Counts& counts)
+          : wasm(wasm), counts(counts) {}
+
+        void visitCallIndirect(CallIndirect* curr) {
+          auto* type = wasm.getFunctionType(curr->fullType);
+          Signature sig(Type(type->params), type->result);
+          counts[sig]++;
+        }
+      };
+      TypeCounter(*wasm, counts).walk(func->body);
+    });
+  // Collect all the counts.
   Counts counts;
   for (auto& curr : wasm->functions) {
     counts[Signature(Type(curr->params), curr->result)]++;
@@ -35,49 +56,12 @@ void WasmBinaryWriter::prepare() {
   for (auto& curr : wasm->events) {
     counts[curr->sig]++;
   }
-
-  // Parallelize collection of call_indirect type counts
-  struct TypeCounter : WalkerPass<PostWalker<TypeCounter>> {
-    AtomicCounts& counts;
-    std::shared_timed_mutex& mutex;
-    TypeCounter(AtomicCounts& counts, std::shared_timed_mutex& mutex)
-      : counts(counts), mutex(mutex) {}
-    bool isFunctionParallel() override { return true; }
-    bool modifiesBinaryenIR() override { return false; }
-    void visitCallIndirect(CallIndirect* curr) {
-      auto* type = getModule()->getFunctionType(curr->fullType);
-      Signature sig(Type(type->params), type->result);
-      {
-        std::shared_lock<std::shared_timed_mutex> lock(mutex);
-        auto it = counts.find(sig);
-        if (it != counts.end()) {
-          it->second++;
-          return;
-        }
-      }
-      {
-        std::lock_guard<std::shared_timed_mutex> lock(mutex);
-        counts[sig]++;
-      }
+  for (auto& pair : analysis.map) {
+    Counts& functionCounts = pair.second;
+    for (auto& innerPair : functionCounts) {
+      counts[innerPair.first] += innerPair.second;
     }
-    Pass* create() override { return new TypeCounter(counts, mutex); }
-  };
-
-  std::shared_timed_mutex mutex;
-  AtomicCounts parallelCounts;
-  for (auto& kv : counts) {
-    parallelCounts[kv.first] = 0;
   }
-
-  TypeCounter counter(parallelCounts, mutex);
-  PassRunner runner(wasm);
-  runner.setIsNested(true);
-  counter.run(&runner, wasm);
-
-  for (auto& kv : parallelCounts) {
-    counts[kv.first] += kv.second;
-  }
-
   std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
                                                    counts.end());
   std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {

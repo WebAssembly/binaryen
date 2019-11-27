@@ -222,6 +222,10 @@ std::ostream& operator<<(std::ostream& os, ResultType param) {
   return printPrefixedTypes(os, "result", param.type);
 }
 
+std::ostream& operator<<(std::ostream& os, Signature sig) {
+  return os << "Signature(" << sig.params << " => " << sig.results << ")";
+}
+
 std::string Type::toString() const { return genericToString(*this); }
 
 std::string ParamType::toString() const { return genericToString(*this); }
