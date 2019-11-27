@@ -180,6 +180,15 @@ IF (EMSCRIPTEN)
   ADD_LINK_FLAG("-s DISABLE_EXCEPTION_CATCHING=0")
   # make the tools immediately usable on Node.js
   ADD_LINK_FLAG("-s NODERAWFS")
+  # check for fastcomp by the clang version, which is stuck in fastcomp way
+  # back in the past
+  IF (${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
+    ADD_LINK_FLAG("-s ELIMINATE_DUPLICATE_FUNCTIONS=1")
+    ADD_COMPILE_FLAG("-Wno-almost-asm")
+  ELSE()
+    # in opt builds, LTO helps so much (>20%) it's worth slow compile times
+    ADD_NONDEBUG_COMPILE_FLAG("-s WASM_OBJECT_FILES=0")
+  ENDIF()
 ENDIF()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
@@ -339,6 +348,7 @@ IF (EMSCRIPTEN)
   TARGET_LINK_LIBRARIES(binaryen_js "-s 'EXPORT_NAME=\"Binaryen\"'")
   TARGET_LINK_LIBRARIES(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   TARGET_LINK_LIBRARIES(binaryen_js optimized "--closure 1")
+  TARGET_LINK_LIBRARIES(binaryen_js optimized "--llvm-lto 1")
   TARGET_LINK_LIBRARIES(binaryen_js debug "--profiling")
   SET_PROPERTY(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
   SET_PROPERTY(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
