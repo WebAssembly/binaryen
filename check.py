@@ -386,52 +386,6 @@ def run_validator_tests():
     support.run_command(cmd, expected_status=1)
 
 
-def run_vanilla_tests():
-    if not (shared.has_vanilla_emcc and shared.has_vanilla_llvm and 0):
-        print('\n[ skipping emcc WASM_BACKEND testcases...]\n')
-        return
-
-    print('\n[ checking emcc WASM_BACKEND testcases...]\n')
-
-    try:
-        if shared.has_vanilla_llvm:
-            os.environ['LLVM'] = shared.BIN_DIR  # use the vanilla LLVM
-        else:
-            # if we did not set vanilla llvm, then we must set this env var to make emcc use the wasm backend.
-            # (if we are using vanilla llvm, things should just work)
-            print('(not using vanilla llvm, so setting env var to tell emcc to use wasm backend)')
-            os.environ['EMCC_WASM_BACKEND'] = '1'
-        VANILLA_EMCC = os.path.join(shared.options.binaryen_test, 'emscripten', 'emcc')
-        # run emcc to make sure it sets itself up properly, if it was never run before
-        command = [VANILLA_EMCC, '-v']
-        print('____' + ' '.join(command))
-        subprocess.check_call(command)
-
-        for c in shared.get_tests(shared.get_test_dir('wasm_backend'), '.cpp'):
-            print('..', os.path.basename(c))
-            base = c.replace('.cpp', '').replace('.c', '')
-            expected = open(os.path.join(base + '.txt')).read()
-            for opts in [[], ['-O1'], ['-O2']]:
-                # only my code is a hack we used early in wasm backend dev, which somehow worked, but only with -O1
-                only = [] if opts != ['-O1'] or '_only' not in base else ['-s', 'ONLY_MY_CODE=1']
-                command = [VANILLA_EMCC, '-o', 'a.wasm.js', c] + opts + only
-                print('....' + ' '.join(command))
-                if os.path.exists('a.wasm.js'):
-                    os.unlink('a.wasm.js')
-                subprocess.check_call(command)
-                if shared.NODEJS:
-                    print('  (check in node)')
-                    cmd = [shared.NODEJS, 'a.wasm.js']
-                    out = support.run_command(cmd)
-                    if out.strip() != expected.strip():
-                        shared.fail(out, expected)
-    finally:
-        if shared.has_vanilla_llvm:
-            del os.environ['LLVM']
-        else:
-            del os.environ['EMCC_WASM_BACKEND']
-
-
 def run_gcc_tests():
     print('\n[ checking native gcc testcases...]\n')
     if not shared.NATIVECC or not shared.NATIVEXX:
@@ -515,7 +469,6 @@ TEST_SUITES = OrderedDict([
     ('lld', lld.test_wasm_emscripten_finalize),
     ('wasm2js', wasm2js.test_wasm2js),
     ('validator', run_validator_tests),
-    ('vanilla', run_vanilla_tests),
     ('gcc', run_gcc_tests),
     ('unit', run_unittest),
 ])
