@@ -178,6 +178,8 @@ IF (EMSCRIPTEN)
   ADD_LINK_FLAG("-s ALLOW_MEMORY_GROWTH=1")
   ADD_COMPILE_FLAG("-s DISABLE_EXCEPTION_CATCHING=0")
   ADD_LINK_FLAG("-s DISABLE_EXCEPTION_CATCHING=0")
+  # make the tools immediately usable on Node.js
+  ADD_LINK_FLAG("-s NODERAWFS")
 ENDIF()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
@@ -226,12 +228,6 @@ INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-# if binaryen.js was built (using "./build-js.sh", currently
-# optional), install it
-IF(EXISTS "${PROJECT_SOURCE_DIR}/out/binaryen.js")
-  INSTALL(FILES out/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
-ENDIF()
-
 SET(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
 )
@@ -246,10 +242,6 @@ SET(wasm-opt_SOURCES
 )
 ADD_EXECUTABLE(wasm-opt ${wasm-opt_SOURCES} ${binaryen_objs})
 TARGET_LINK_LIBRARIES(wasm-opt ${CMAKE_THREAD_LIBS_INIT})
-IF (EMSCRIPTEN)
-  # make wasm-opt immediately usable on Node.js
-  target_link_options(wasm-opt PUBLIC -s NODERAWFS)
-ENDIF()
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 14)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -331,24 +323,26 @@ INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 # Note that we can't emit binaryen.js directly, as there is libbinaryen already
 # declared earlier, so we create binaryen_js.js, which must then be copied.
 IF (EMSCRIPTEN)
-SET(binaryen_js_SOURCES
-  src/binaryen-c.cpp
-)
-ADD_EXECUTABLE(binaryen_js
-               ${binaryen_js_SOURCES})
-TARGET_LINK_LIBRARIES(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-# note that SHELL: is needed as otherwise cmake will coalesce -s link flags
-# in an incorrect way for emscripten
-target_link_options(binaryen_js PUBLIC "SHELL:-s WASM=0")
-target_link_options(binaryen_js PUBLIC "SHELL:-s WASM_ASYNC_COMPILATION=0")
-target_link_options(binaryen_js PUBLIC "SHELL:-s MODULARIZE_INSTANCE=1")
-target_link_options(binaryen_js PUBLIC "SHELL:-s NO_FILESYSTEM=0")
-target_link_options(binaryen_js PUBLIC "SHELL:-s 'EXPORT_NAME=\"Binaryen\"'")
-target_link_options(binaryen_js PUBLIC "SHELL:--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
-target_link_options(binaryen_js PUBLIC "SHELL:--closure 1")
-SET_PROPERTY(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
-SET_PROPERTY(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
-INSTALL(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
+  SET(binaryen_js_SOURCES
+    src/binaryen-c.cpp
+  )
+  ADD_EXECUTABLE(binaryen_js
+                 ${binaryen_js_SOURCES})
+  TARGET_LINK_LIBRARIES(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+  # note that SHELL: is needed as otherwise cmake will coalesce -s link flags
+  # in an incorrect way for emscripten
+  TARGET_LINK_LIBRARIES(binaryen_js "-s WASM=0")
+  TARGET_LINK_LIBRARIES(binaryen_js "-s WASM_ASYNC_COMPILATION=0")
+  TARGET_LINK_LIBRARIES(binaryen_js "-s MODULARIZE_INSTANCE=1")
+  TARGET_LINK_LIBRARIES(binaryen_js "-s NO_FILESYSTEM=0")
+  TARGET_LINK_LIBRARIES(binaryen_js "-s NODERAWFS=0")
+  TARGET_LINK_LIBRARIES(binaryen_js "-s 'EXPORT_NAME=\"Binaryen\"'")
+  TARGET_LINK_LIBRARIES(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  TARGET_LINK_LIBRARIES(binaryen_js optimized "--closure 1")
+  TARGET_LINK_LIBRARIES(binaryen_js debug "--profiling")
+  SET_PROPERTY(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
+  SET_PROPERTY(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
+  INSTALL(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 ENDIF()
 
 # Testing
