@@ -371,6 +371,10 @@ def run_validator_tests():
 
 
 def run_vanilla_tests():
+    if not (shared.has_vanilla_emcc and shared.has_vanilla_llvm and 0):
+        print('\n[ skipping emcc WASM_BACKEND testcases...]\n')
+        return
+
     print('\n[ checking emcc WASM_BACKEND testcases...]\n')
 
     try:
