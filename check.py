@@ -314,14 +314,8 @@ def run_spec_tests():
         check_expected(actual, expected)
 
         # skip binary checks for tests that reuse previous modules by name, as that's a wast-only feature
-        if os.path.basename(wast) in ['exports.wast']:  # FIXME
+        if 'exports.wast' in os.path.basename(wast):  # FIXME
             continue
-
-        # we must ignore some binary format splits
-        splits_to_skip = {
-            'func.wast': [2],
-            'return.wast': [2]
-        }
 
         # check binary format. here we can verify execution of the final
         # result, no need for an output verification
@@ -332,11 +326,6 @@ def run_spec_tests():
             split_num = 0
             actual = ''
             for module, asserts in support.split_wast(wast):
-                skip = splits_to_skip.get(os.path.basename(wast)) or []
-                if split_num in skip:
-                    print('        skipping split module', split_num - 1)
-                    split_num += 1
-                    continue
                 print('        testing split module', split_num)
                 split_num += 1
                 support.write_wast('split.wast', module, asserts)

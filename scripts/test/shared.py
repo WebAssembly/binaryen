@@ -402,12 +402,67 @@ if not options.spec_tests:
 else:
     options.spec_tests = options.spec_tests[:]
 
+# 11/27/2019: We updated the spec test suite to upstream spec repo. For some
+# files that started failing after this update, we added the new files to this
+# blacklist and preserved old ones by renaming them to 'old_[FILENAME].wast'
+# not to lose coverage. When the cause of the error is fixed or the unsupported
+# construct gets support so the new test passes, we can delete the
+# corresponding 'old_[FILENAME].wast' file. When you fix the new file and
+# delete the old file, make sure you rename the corresponding .wast.log file in
+# expected-output/ if any.
 SPEC_TEST_BLACKLIST = [
-    'binary.wast',   # Cannot parse binary modules
-    'linking.wast',  # No support for 'register' command
-    'nop.wast',      # Stacky code
-    'stack.wast',    # Stacky code
-    'unwind.wast'    # Stacky code
+    # Stacky code / notation
+    'block.wast',
+    'call.wast',
+    'float_exprs.wast',
+    'globals.wast',
+    'loop.wast',
+    'nop.wast',
+    'select.wast',
+    'stack.wast',
+    'unwind.wast',
+
+    # Binary module
+    'binary.wast',
+    'binary-leb128.wast',
+    'custom.wast',
+
+    # Empty 'then' or 'else' in 'if'
+    'if.wast',
+    'local_set.wast',
+    'store.wast',
+
+    # No module in a file
+    'token.wast',
+    'utf8-custom-section-id.wast',
+    'utf8-import-field.wast',
+    'utf8-import-module.wast',
+    'utf8-invalid-encoding.wast',
+
+    # 'register' command
+    'imports.wast',
+    'linking.wast',
+
+    # Misc. unsupported constructs
+    'call_indirect.wast',  # Empty (param) and (result)
+    'const.wast',  # Unparenthesized expression
+    'data.wast',  # Various unsupported (data) notations
+    'elem.wast',  # Unsupported 'offset' syntax in (elem)
+    'exports.wast',  # Multiple inlined exports for a function
+    'func.wast',  # Forward named type reference
+    'skip-stack-guard-page.wast',  # Hexadecimal style (0x..) in memory offset
+
+    # Untriaged: We don't know the cause of the error yet
+    'address.wast',  # wasm2js 'assert_return' failure
+    'br_if.wast',  # Validation error
+    'float_literals.wast',  # 'assert_return' failure
+    'int_literals.wast',  # 'assert_return' failure
+    'local_tee.wast',  # Validation failure
+    'memory_grow.wast',  # 'assert_return' failure
+    'start.wast',  # Assertion failure
+    'type.wast',  # 'assertion_invalid' failure
+    'unreachable.wast',  # Validation failure
+    'unreached-invalid.wast'  # 'assert_invalid' failure
 ]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
                       in SPEC_TEST_BLACKLIST]

@@ -213,7 +213,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $24() {
-  var $0 = 0, $1_1 = 0;
+  var $0 = 0, $5_1 = 0;
   if_ : {
    $0 = 2;
    break if_;
@@ -224,15 +224,15 @@ function asmFunc(global, env, buffer) {
  function $25($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $3_1 = 0, $5_1 = 0;
+  var $3_1 = 0, $7_1 = 0;
   block : {
    if ($0) {
     $3_1 = 3;
     break block;
    } else {
-    $5_1 = $1_1
+    $7_1 = $1_1
    }
-   $3_1 = $5_1;
+   $3_1 = $7_1;
   }
   return $3_1 | 0;
  }
@@ -240,17 +240,17 @@ function asmFunc(global, env, buffer) {
  function $26($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $4_1 = 0, $5_1 = 0;
+  var $6_1 = 0, $7_1 = 0;
   block : {
    if ($0) {
-    $5_1 = $1_1
+    $7_1 = $1_1
    } else {
-    $4_1 = 4;
+    $6_1 = 4;
     break block;
    }
-   $4_1 = $5_1;
+   $6_1 = $7_1;
   }
-  return $4_1 | 0;
+  return $6_1 | 0;
  }
  
  function $27($0, $1_1) {
@@ -365,6 +365,24 @@ function asmFunc(global, env, buffer) {
  }
  
  function $39() {
+  var $1_1 = 0;
+  block : {
+   $1_1 = 1;
+   break block;
+  }
+  return $1_1 | 0;
+ }
+ 
+ function $40() {
+  var $0 = 0;
+  block : {
+   $0 = 1;
+   break block;
+  }
+  return $0 | 0;
+ }
+ 
+ function $41() {
   var $0 = Math_fround(0);
   block : {
    $0 = Math_fround(1.7000000476837158);
@@ -373,7 +391,7 @@ function asmFunc(global, env, buffer) {
   return Math_fround($0);
  }
  
- function $40() {
+ function $42() {
   var i64toi32_i32$0 = 0, $0 = 0, $0$hi = 0;
   block : {
    i64toi32_i32$0 = 0;
@@ -386,7 +404,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $41() {
+ function $43() {
   var $0 = 0;
   block : {
    $0 = 30;
@@ -395,7 +413,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $42() {
+ function $44() {
   var $0 = 0;
   block : {
    $0 = 31;
@@ -404,7 +422,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $43() {
+ function $45() {
   var $0 = 0;
   block : {
    $0 = 32;
@@ -413,7 +431,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $44() {
+ function $46() {
   var $0 = 0;
   block : {
    $0 = 33;
@@ -422,7 +440,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $45() {
+ function $47() {
   var $0 = Math_fround(0);
   block : {
    $0 = Math_fround(3.4000000953674316);
@@ -431,7 +449,7 @@ function asmFunc(global, env, buffer) {
   return Math_fround($0);
  }
  
- function $46() {
+ function $48() {
   var $0 = 0;
   block : {
    $0 = 3;
@@ -440,7 +458,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $47() {
+ function $49() {
   var $0 = 0, $0$hi = 0, i64toi32_i32$1 = 0;
   block : {
    $0 = 45;
@@ -452,7 +470,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $48() {
+ function $50() {
   var $0 = 0;
   block : {
    $0 = 44;
@@ -461,7 +479,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $49() {
+ function $51() {
   var $0 = 0;
   block : {
    $0 = 43;
@@ -470,7 +488,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $50() {
+ function $52() {
   var $0 = 0;
   block : {
    $0 = 42;
@@ -479,7 +497,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $51() {
+ function $53() {
   var $0 = 0;
   block : {
    $0 = 41;
@@ -488,7 +506,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $52() {
+ function $54() {
   var $0 = 0;
   block : {
    $0 = 40;
@@ -497,7 +515,7 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $53() {
+ function $55() {
   var $0 = 0;
   block : {
    dummy();
@@ -507,7 +525,7 @@ function asmFunc(global, env, buffer) {
   return 1 + $0 | 0 | 0;
  }
  
- function $54() {
+ function $56() {
   var $0 = 0;
   block : {
    block0 : {
@@ -518,7 +536,7 @@ function asmFunc(global, env, buffer) {
   return 1 + $0 | 0 | 0;
  }
  
- function $55() {
+ function $57() {
   var $0 = 0, $1_1 = 0;
   block : {
    $0 = 8;
@@ -527,25 +545,25 @@ function asmFunc(global, env, buffer) {
   return 1 + $0 | 0 | 0;
  }
  
- function $56() {
-  var $0 = 0;
-  block : {
-   $0 = 8;
-   break block;
-  }
-  return 1 + $0 | 0 | 0;
- }
- 
- function $57() {
-  var $0 = 0;
-  block : {
-   $0 = 8;
-   break block;
-  }
-  return 1 + $0 | 0 | 0;
- }
- 
  function $58() {
+  var $0 = 0;
+  block : {
+   $0 = 8;
+   break block;
+  }
+  return 1 + $0 | 0 | 0;
+ }
+ 
+ function $59() {
+  var $0 = 0;
+  block : {
+   $0 = 8;
+   break block;
+  }
+  return 1 + $0 | 0 | 0;
+ }
+ 
+ function $60() {
   var $0 = 0;
   block : {
    $0 = 8;
@@ -598,9 +616,9 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function legalstub$40() {
+ function legalstub$42() {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $40() | 0;
+  i64toi32_i32$0 = $42() | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $0 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
@@ -620,9 +638,9 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function legalstub$47() {
+ function legalstub$49() {
   var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $47() | 0;
+  i64toi32_i32$0 = $49() | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $0 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
@@ -681,26 +699,28 @@ function asmFunc(global, env, buffer) {
   "as_call_indirect_mid": $36, 
   "as_call_indirect_last": $37, 
   "as_local_set_value": $38, 
-  "as_load_address": $39, 
-  "as_loadN_address": legalstub$40, 
-  "as_store_address": $41, 
-  "as_store_value": $42, 
-  "as_storeN_address": $43, 
-  "as_storeN_value": $44, 
-  "as_unary_operand": $45, 
-  "as_binary_left": $46, 
-  "as_binary_right": legalstub$47, 
-  "as_test_operand": $48, 
-  "as_compare_left": $49, 
-  "as_compare_right": $50, 
-  "as_convert_operand": $51, 
-  "as_memory_grow_size": $52, 
-  "nested_block_value": $53, 
-  "nested_br_value": $54, 
-  "nested_br_if_value": $55, 
-  "nested_br_if_value_cond": $56, 
-  "nested_br_table_value": $57, 
-  "nested_br_table_value_index": $58
+  "as_local_tee_value": $39, 
+  "as_global_set_value": $40, 
+  "as_load_address": $41, 
+  "as_loadN_address": legalstub$42, 
+  "as_store_address": $43, 
+  "as_store_value": $44, 
+  "as_storeN_address": $45, 
+  "as_storeN_value": $46, 
+  "as_unary_operand": $47, 
+  "as_binary_left": $48, 
+  "as_binary_right": legalstub$49, 
+  "as_test_operand": $50, 
+  "as_compare_left": $51, 
+  "as_compare_right": $52, 
+  "as_convert_operand": $53, 
+  "as_memory_grow_size": $54, 
+  "nested_block_value": $55, 
+  "nested_br_value": $56, 
+  "nested_br_if_value": $57, 
+  "nested_br_if_value_cond": $58, 
+  "nested_br_table_value": $59, 
+  "nested_br_table_value_index": $60
  };
 }
 
@@ -743,6 +763,8 @@ export var as_call_indirect_first = retasmFunc.as_call_indirect_first;
 export var as_call_indirect_mid = retasmFunc.as_call_indirect_mid;
 export var as_call_indirect_last = retasmFunc.as_call_indirect_last;
 export var as_local_set_value = retasmFunc.as_local_set_value;
+export var as_local_tee_value = retasmFunc.as_local_tee_value;
+export var as_global_set_value = retasmFunc.as_global_set_value;
 export var as_load_address = retasmFunc.as_load_address;
 export var as_loadN_address = retasmFunc.as_loadN_address;
 export var as_store_address = retasmFunc.as_store_address;
@@ -763,33 +785,3 @@ export var nested_br_if_value = retasmFunc.nested_br_if_value;
 export var nested_br_if_value_cond = retasmFunc.nested_br_if_value_cond;
 export var nested_br_table_value = retasmFunc.nested_br_table_value;
 export var nested_br_table_value_index = retasmFunc.nested_br_table_value_index;
-
-function asmFunc(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
- var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
- var FUNCTION_TABLE = [];
- return {
-  
- };
-}
-
-var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
