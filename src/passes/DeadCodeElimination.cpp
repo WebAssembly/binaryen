@@ -30,7 +30,7 @@
 
 #include <ir/block-utils.h>
 #include <ir/branch-utils.h>
-#include <ir/type-updating.h>
+#include <ir/type-utils.h>
 #include <pass.h>
 #include <vector>
 #include <wasm-builder.h>

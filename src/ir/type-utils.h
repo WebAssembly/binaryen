@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ir_type_updating_h
-#define wasm_ir_type_updating_h
+#ifndef wasm_ir_type_utils_h
+#define wasm_ir_type_utils_h
 
 #include "wasm-traversal.h"
 
@@ -316,6 +316,66 @@ struct TypeUpdater
   }
 };
 
+// core AST type checking
+struct TypeSeeker : public PostWalker<TypeSeeker> {
+  Expression* target; // look for this one
+  Name targetName;
+  std::vector<Type> types;
+
+  TypeSeeker(Expression* target, Name targetName)
+    : target(target), targetName(targetName) {
+    Expression* temp = target;
+    walk(temp);
+  }
+
+  void visitBreak(Break* curr) {
+    if (curr->name == targetName) {
+      types.push_back(curr->value ? curr->value->type : none);
+    }
+  }
+
+  void visitSwitch(Switch* curr) {
+    for (auto name : curr->targets) {
+      if (name == targetName) {
+        types.push_back(curr->value ? curr->value->type : none);
+      }
+    }
+    if (curr->default_ == targetName) {
+      types.push_back(curr->value ? curr->value->type : none);
+    }
+  }
+
+  void visitBrOnExn(BrOnExn* curr) {
+    if (curr->name == targetName) {
+      types.push_back(curr->sent);
+    }
+  }
+
+  void visitBlock(Block* curr) {
+    if (curr == target) {
+      if (curr->list.size() > 0) {
+        types.push_back(curr->list.back()->type);
+      } else {
+        types.push_back(none);
+      }
+    } else if (curr->name == targetName) {
+      // ignore all breaks til now, they were captured by someone with the same
+      // name
+      types.clear();
+    }
+  }
+
+  void visitLoop(Loop* curr) {
+    if (curr == target) {
+      types.push_back(curr->body->type);
+    } else if (curr->name == targetName) {
+      // ignore all breaks til now, they were captured by someone with the same
+      // name
+      types.clear();
+    }
+  }
+};
+
 } // namespace wasm
 
-#endif // wasm_ir_type_updating_h
+#endif // wasm_ir_type_utils_h

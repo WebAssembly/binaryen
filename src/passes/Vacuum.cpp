@@ -21,7 +21,7 @@
 #include <ir/block-utils.h>
 #include <ir/effects.h>
 #include <ir/literal-utils.h>
-#include <ir/type-updating.h>
+#include <ir/type-utils.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
