@@ -1,6 +1,6 @@
 ---
 
-skip_branch_with_pr: true
+skip_branch_with_pr: false
 image: Visual Studio 2017
 
 init:
