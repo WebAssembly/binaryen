@@ -1157,13 +1157,13 @@ void Module::addStart(const Name& s) { start = s; }
 
 template<typename Vector, typename Map>
 void removeModuleElement(Vector& v, Map& m, Name name) {
+  m.erase(name);
   for (size_t i = 0; i < v.size(); i++) {
     if (v[i]->name == name) {
       v.erase(v.begin() + i);
       break;
     }
   }
-  m.erase(name);
 }
 
 void Module::removeFunctionType(Name name) {
@@ -1186,9 +1186,6 @@ template<typename Vector, typename Map, typename Elem>
 void removeModuleElements(Vector& v,
                           Map& m,
                           std::function<bool(Elem* elem)> pred) {
-  v.erase(
-    std::remove_if(v.begin(), v.end(), [&](auto& e) { return pred(e.get()); }),
-    v.end());
   for (auto it = m.begin(); it != m.end();) {
     if (pred(it->second)) {
       it = m.erase(it);
@@ -1196,6 +1193,9 @@ void removeModuleElements(Vector& v,
       it++;
     }
   }
+  v.erase(
+    std::remove_if(v.begin(), v.end(), [&](auto& e) { return pred(e.get()); }),
+    v.end());
 }
 
 void Module::removeFunctionTypes(std::function<bool(FunctionType*)> pred) {
