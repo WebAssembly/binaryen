@@ -385,23 +385,12 @@ struct Inlining : public Pass {
       OptUtils::optimizeAfterInlining(inlinedInto, module, runner);
     }
     // remove functions that we no longer need after inlining
-    auto& funcs = module->functions;
-    funcs.erase(std::remove_if(funcs.begin(),
-                               funcs.end(),
-                               [&](const std::unique_ptr<Function>& curr) {
-                                 auto name = curr->name;
-                                 auto& info = infos[name];
-                                 bool canRemove =
-                                   inlinedUses.count(name) &&
-                                   inlinedUses[name] == info.calls &&
-                                   !info.usedGlobally;
-#ifdef INLINING_DEBUG
-                                 if (canRemove)
-                                   std::cout << "removing " << name << '\n';
-#endif
-                                 return canRemove;
-                               }),
-                funcs.end());
+    module->removeFunctions([&](Function* func) {
+      auto name = func->name;
+      auto& info = infos[name];
+      return inlinedUses.count(name) && inlinedUses[name] == info.calls &&
+             !info.usedGlobally;
+    });
     // return whether we did any work
     return inlinedUses.size() > 0;
   }
