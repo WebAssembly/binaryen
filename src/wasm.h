@@ -1396,6 +1396,12 @@ public:
   void removeGlobal(Name name);
   void removeEvent(Name name);
 
+  void removeFunctionTypes(std::function<bool(FunctionType*)> pred);
+  void removeExports(std::function<bool(Export*)> pred);
+  void removeFunctions(std::function<bool(Function*)> pred);
+  void removeGlobals(std::function<bool(Global*)> pred);
+  void removeEvents(std::function<bool(Event*)> pred);
+
   void updateMaps();
 
   void clearDebugInfo();

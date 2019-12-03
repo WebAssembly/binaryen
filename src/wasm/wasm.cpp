@@ -1155,57 +1155,64 @@ Event* Module::addEvent(Event* curr) {
 
 void Module::addStart(const Name& s) { start = s; }
 
+template<typename Vector, typename Map>
+void removeModuleElement(Vector& v, Map& m, Name name) {
+  m.erase(name);
+  for (size_t i = 0; i < v.size(); i++) {
+    if (v[i]->name == name) {
+      v.erase(v.begin() + i);
+      break;
+    }
+  }
+}
+
 void Module::removeFunctionType(Name name) {
-  for (size_t i = 0; i < functionTypes.size(); i++) {
-    if (functionTypes[i]->name == name) {
-      functionTypes.erase(functionTypes.begin() + i);
-      break;
-    }
-  }
-  functionTypesMap.erase(name);
+  removeModuleElement(functionTypes, functionTypesMap, name);
 }
-
 void Module::removeExport(Name name) {
-  for (size_t i = 0; i < exports.size(); i++) {
-    if (exports[i]->name == name) {
-      exports.erase(exports.begin() + i);
-      break;
-    }
-  }
-  exportsMap.erase(name);
+  removeModuleElement(exports, exportsMap, name);
 }
-
 void Module::removeFunction(Name name) {
-  for (size_t i = 0; i < functions.size(); i++) {
-    if (functions[i]->name == name) {
-      functions.erase(functions.begin() + i);
-      break;
-    }
-  }
-  functionsMap.erase(name);
+  removeModuleElement(functions, functionsMap, name);
 }
-
 void Module::removeGlobal(Name name) {
-  for (size_t i = 0; i < globals.size(); i++) {
-    if (globals[i]->name == name) {
-      globals.erase(globals.begin() + i);
-      break;
-    }
-  }
-  globalsMap.erase(name);
+  removeModuleElement(globals, globalsMap, name);
 }
-
 void Module::removeEvent(Name name) {
-  for (size_t i = 0; i < events.size(); i++) {
-    if (events[i]->name == name) {
-      events.erase(events.begin() + i);
-      break;
-    }
-  }
-  eventsMap.erase(name);
+  removeModuleElement(events, eventsMap, name);
 }
 
-// TODO: remove* for other elements
+template<typename Vector, typename Map, typename Elem>
+void removeModuleElements(Vector& v,
+                          Map& m,
+                          std::function<bool(Elem* elem)> pred) {
+  for (auto it = m.begin(); it != m.end();) {
+    if (pred(it->second)) {
+      it = m.erase(it);
+    } else {
+      it++;
+    }
+  }
+  v.erase(
+    std::remove_if(v.begin(), v.end(), [&](auto& e) { return pred(e.get()); }),
+    v.end());
+}
+
+void Module::removeFunctionTypes(std::function<bool(FunctionType*)> pred) {
+  removeModuleElements(functionTypes, functionTypesMap, pred);
+}
+void Module::removeExports(std::function<bool(Export*)> pred) {
+  removeModuleElements(exports, exportsMap, pred);
+}
+void Module::removeFunctions(std::function<bool(Function*)> pred) {
+  removeModuleElements(functions, functionsMap, pred);
+}
+void Module::removeGlobals(std::function<bool(Global*)> pred) {
+  removeModuleElements(globals, globalsMap, pred);
+}
+void Module::removeEvents(std::function<bool(Event*)> pred) {
+  removeModuleElements(events, eventsMap, pred);
+}
 
 void Module::updateMaps() {
   functionsMap.clear();

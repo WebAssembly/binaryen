@@ -388,7 +388,7 @@ def run_gcc_tests():
             extra = [shared.NATIVECC, src, '-c', '-o', 'example.o',
                      '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
             if src.endswith('.cpp'):
-                extra += ['-std=c++11']
+                extra += ['-std=c++14']
             if os.environ.get('COMPILER_FLAGS'):
                 for f in os.environ.get('COMPILER_FLAGS').split(' '):
                     extra.append(f)
@@ -402,7 +402,7 @@ def run_gcc_tests():
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
                 cmd.append(f)
-        cmd = [shared.NATIVEXX, '-std=c++11'] + cmd
+        cmd = [shared.NATIVEXX, '-std=c++14'] + cmd
         print('link: ', ' '.join(cmd))
         subprocess.check_call(cmd)
         print('run...', output_file)
