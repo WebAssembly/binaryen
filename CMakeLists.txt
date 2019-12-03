@@ -185,9 +185,7 @@ IF (EMSCRIPTEN)
   ADD_COMPILE_FLAG("-Wno-almost-asm")
   # check for fastcomp by the clang version, which is stuck in fastcomp way
   # back in the past
-  IF (${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
-    ADD_LINK_FLAG("-s ELIMINATE_DUPLICATE_FUNCTIONS=1")
-  ELSE()
+  IF (NOT ${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
     # in opt builds, LTO helps so much (>20%) it's worth slow compile times
     ADD_NONDEBUG_COMPILE_FLAG("-s WASM_OBJECT_FILES=0")
   ENDIF()
@@ -343,6 +341,10 @@ IF (EMSCRIPTEN)
   # note that SHELL: is needed as otherwise cmake will coalesce -s link flags
   # in an incorrect way for emscripten
   TARGET_LINK_LIBRARIES(binaryen_js "-s WASM=0")
+  IF (${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
+    # only valid with fastcomp and WASM=0
+    TARGET_LINK_LIBRARIES(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")
+  ENDIF()
   TARGET_LINK_LIBRARIES(binaryen_js "-s WASM_ASYNC_COMPILATION=0")
   TARGET_LINK_LIBRARIES(binaryen_js "-s MODULARIZE_INSTANCE=1")
   TARGET_LINK_LIBRARIES(binaryen_js "-s NO_FILESYSTEM=0")
