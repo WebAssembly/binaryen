@@ -228,7 +228,8 @@ ensureFunctionImport(Module* module, Name name, std::string sig) {
 //
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
-Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
+wasm::Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction(bool isSideModule /*= false*/, 
+                                                                          uint32_t tableBase) {
   std::vector<Global*> gotFuncEntries;
   std::vector<Global*> gotMemEntries;
   for (auto& g : wasm.globals) {
@@ -280,14 +281,45 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
         Fatal() << "GOT.func entry with no import/export: " << g->base;
       }
     }
+    
+    if (!isSideModule) {
+      auto& table = wasm.table;
+      auto& segment = table.segments[0];
+      int32_t index = segment.data.size() + tableBase;
+      Name getter(
+        (std::string("dl$") + g->base.c_str() + std::string("$") + getSig(f))
+          .c_str());
 
-    Name getter(
-      (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
-        .c_str());
-    ensureFunctionImport(&wasm, getter, "i");
-    Expression* call = builder.makeCall(getter, {}, i32);
-    GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
-    block->list.push_back(globalSet);
+      ensureFunctionImport(&wasm, getter, getSig(f));
+
+      segment.data.push_back(getter);
+      Name gblName(std::string("g$") + std::string(g->base.c_str()));
+      auto* gbl = wasm.addGlobal(
+        builder.makeGlobal(gblName,
+                           i32,
+                           builder.makeConst(Literal(int32_t(index++))),
+                           Builder::Immutable));
+
+      if (!wasm.getExportOrNull(gbl->base)) {
+        auto* ret = new Export();
+        ret->value = gbl->name;
+        ret->name = gbl->name;
+        ret->kind = ExternalKind::Global;
+        wasm.addExport(ret);
+      }
+
+      Expression* call = builder.makeGlobalGet(gbl->name, gbl->type);
+      GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+      block->list.push_back(globalSet);
+    } else {
+      Name getter(
+        (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
+          .c_str());
+      ensureFunctionImport(&wasm, getter, "i");
+      Expression* call = builder.makeCall(getter, {}, i32);
+      GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
+      block->list.push_back(globalSet);
+    }
   }
 
   wasm.addFunction(assignFunc);
@@ -312,7 +344,7 @@ void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
     builder.makeFunction(POST_INSTANTIATE, std::vector<NameType>{}, none, {});
   wasm.addFunction(post_instantiate);
 
-  if (Function* F = generateAssignGOTEntriesFunction()) {
+  if (Function* F = generateAssignGOTEntriesFunction(true)) {
     // call __assign_got_enties from post_instantiate
     Expression* call = builder.makeCall(F->name, {}, none);
     post_instantiate->body = builder.blockify(post_instantiate->body, call);
@@ -1132,7 +1164,13 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
 
   meta << "  \"staticBump\": " << staticBump << ",\n";
-  meta << "  \"tableSize\": " << wasm.table.initial.addr << ",\n";
+  uint32_t tableSize = 0;
+  if (wasm.table.segments.size() > 0) {
+    tableSize = wasm.table.segments[0].data.size();
+  } else {
+    tableSize = wasm.table.initial.addr;
+  }
+  meta << "  \"tableSize\": " << tableSize << ",\n";
 
   if (!initializerFunctions.empty()) {
     meta << "  \"initializers\": [";
