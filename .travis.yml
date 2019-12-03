@@ -47,7 +47,7 @@ jobs:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['cmake', 'g++-5', 'python3-pip']
       before_install:
-        - export ASAN_OPTIONS="symbolize=1"
+        - export ASAN_OPTIONS="$ASAN_OPTIONS symbolize=1"
       install:
         - nvm install 12
         - nvm use 12
@@ -80,9 +80,10 @@ jobs:
         COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
     # FIXME we currently must disable LSAN entirely, see #1351
-    #- <<: *test-ubuntu
-    #  env: |
-    #    COMPILER_FLAGS="-fsanitize=address"
+    - <<: *test-ubuntu
+      env: |
+        COMPILER_FLAGS="-fsanitize=address"
+        ASAN_OPTIONS="detect_leaks=0"
 
     - <<: *test-ubuntu
       env: |
