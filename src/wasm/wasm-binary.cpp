@@ -931,7 +931,7 @@ void WasmBinaryBuilder::read() {
 
 // waka
   Debugging::DWARFInfo info(wasm);
-  info.dumpLines();
+  info.dump();
 // waka
 }
 
