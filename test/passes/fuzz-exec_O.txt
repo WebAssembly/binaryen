@@ -1,7 +1,5 @@
 [fuzz-exec] calling $func_0
-[trap final > memory: 18446744073709551615 > 65514]
 [fuzz-exec] calling $func_1
-[trap final > memory: 18446744073709551615 > 65514]
 (module
  (type $FUNCSIG$j (func (result i64)))
  (type $FUNCSIG$i (func (result i32)))
@@ -25,8 +23,6 @@
  )
 )
 [fuzz-exec] calling $func_0
-[trap final > memory: 18446744073709551615 > 65514]
 [fuzz-exec] calling $func_1
-[trap final > memory: 18446744073709551615 > 65514]
 [fuzz-exec] comparing $func_0
 [fuzz-exec] comparing $func_1

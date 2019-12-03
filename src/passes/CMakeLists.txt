@@ -40,6 +40,7 @@ SET(passes_SOURCES
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
+  PostAssemblyScript.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
@@ -72,4 +73,4 @@ SET(passes_SOURCES
   ImportsToIndirectCalls.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
-ADD_LIBRARY(passes STATIC ${passes_SOURCES})
+ADD_LIBRARY(passes OBJECT ${passes_SOURCES})

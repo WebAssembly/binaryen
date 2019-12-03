@@ -1,4 +1,4 @@
-import { print } from 'spectest';
+import { print_i32 } from 'spectest';
 
 function asmFunc(global, env, buffer) {
  var HEAP8 = new global.Int8Array(buffer);
@@ -21,7 +21,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var print = env.print;
+ var print = env.print_i32;
  function $3() {
   return 13 | 0;
  }
@@ -51,7 +51,7 @@ function asmFunc(global, env, buffer) {
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print},memasmFunc);
+var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print_i32},memasmFunc);
 export var one = retasmFunc.one;
 export var two = retasmFunc.two;
 export var three = retasmFunc.three;

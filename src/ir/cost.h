@@ -178,6 +178,14 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case ConvertUVecI32x4ToVecF32x4:
       case ConvertSVecI64x2ToVecF64x2:
       case ConvertUVecI64x2ToVecF64x2:
+      case WidenLowSVecI8x16ToVecI16x8:
+      case WidenHighSVecI8x16ToVecI16x8:
+      case WidenLowUVecI8x16ToVecI16x8:
+      case WidenHighUVecI8x16ToVecI16x8:
+      case WidenLowSVecI16x8ToVecI32x4:
+      case WidenHighSVecI16x8ToVecI32x4:
+      case WidenLowUVecI16x8ToVecI32x4:
+      case WidenHighUVecI16x8ToVecI32x4:
         return 1;
       case InvalidUnary:
         WASM_UNREACHABLE();
@@ -550,6 +558,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case XorVec128:
         ret = 1;
         break;
+      case AndNotVec128:
+        ret = 1;
+        break;
       case AddVecI8x16:
         ret = 1;
         break;
@@ -570,6 +581,18 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         break;
       case MulVecI8x16:
         ret = 2;
+        break;
+      case MinSVecI8x16:
+        ret = 1;
+        break;
+      case MinUVecI8x16:
+        ret = 1;
+        break;
+      case MaxSVecI8x16:
+        ret = 1;
+        break;
+      case MaxUVecI8x16:
+        ret = 1;
         break;
       case AddVecI16x8:
         ret = 1;
@@ -592,6 +615,18 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case MulVecI16x8:
         ret = 2;
         break;
+      case MinSVecI16x8:
+        ret = 1;
+        break;
+      case MinUVecI16x8:
+        ret = 1;
+        break;
+      case MaxSVecI16x8:
+        ret = 1;
+        break;
+      case MaxUVecI16x8:
+        ret = 1;
+        break;
       case AddVecI32x4:
         ret = 1;
         break;
@@ -600,6 +635,21 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         break;
       case MulVecI32x4:
         ret = 2;
+        break;
+      case MinSVecI32x4:
+        ret = 1;
+        break;
+      case MinUVecI32x4:
+        ret = 1;
+        break;
+      case MaxSVecI32x4:
+        ret = 1;
+        break;
+      case MaxUVecI32x4:
+        ret = 1;
+        break;
+      case DotSVecI16x8ToVecI32x4:
+        ret = 1;
         break;
       case AddVecI64x2:
         ret = 1;
@@ -641,6 +691,21 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 1;
         break;
       case MaxVecF64x2:
+        ret = 1;
+        break;
+      case NarrowSVecI16x8ToVecI8x16:
+        ret = 1;
+        break;
+      case NarrowUVecI16x8ToVecI8x16:
+        ret = 1;
+        break;
+      case NarrowSVecI32x4ToVecI16x8:
+        ret = 1;
+        break;
+      case NarrowUVecI32x4ToVecI16x8:
+        ret = 1;
+        break;
+      case SwizzleVec8x16:
         ret = 1;
         break;
       case InvalidBinary:

@@ -29,11 +29,12 @@
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/colors.h"
-#include "support/command-line.h"
 #include "support/file.h"
 #include "support/json.h"
+#include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
+#include "wasm-validator.h"
 
 using namespace wasm;
 
@@ -403,7 +404,7 @@ int main(int argc, const char* argv[]) {
   std::string graphFile;
   bool dump = false;
 
-  Options options(
+  ToolOptions options(
     "wasm-metadce",
     "This tool performs dead code elimination (DCE) on a larger space "
     "that the wasm module is just a part of. For example, if you have "
@@ -505,6 +506,15 @@ int main(int argc, const char* argv[]) {
     } catch (ParseException& p) {
       p.dump(std::cerr);
       Fatal() << "error in parsing wasm input";
+    }
+  }
+
+  options.applyFeatures(wasm);
+
+  if (options.passOptions.validate) {
+    if (!WasmValidator().validate(wasm)) {
+      WasmPrinter::printModule(&wasm);
+      Fatal() << "error in validating input";
     }
   }
 

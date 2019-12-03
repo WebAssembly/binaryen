@@ -164,7 +164,7 @@ static void run_asserts(Name moduleName,
         };
         ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
         ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
-          if (import->module == SPECTEST && import->base == PRINT) {
+          if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
             // We can handle it.
           } else {
             reportUnknownImport(import);
@@ -181,7 +181,7 @@ static void run_asserts(Name moduleName,
             // spec tests consider it illegal to use spectest.print in a table
             if (auto* import = wasm.getFunction(name)) {
               if (import->imported() && import->module == SPECTEST &&
-                  import->base == PRINT) {
+                  import->base.startsWith(PRINT)) {
                 std::cerr << "cannot put spectest.print in table\n";
                 invalid = true;
               }

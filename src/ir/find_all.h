@@ -58,9 +58,11 @@ struct PointerFinder
 template<typename T> struct FindAllPointers {
   std::vector<Expression**> list;
 
-  FindAllPointers(Expression* ast) {
+  // Note that a pointer may be to the function->body itself, so we must
+  // take \ast by reference.
+  FindAllPointers(Expression*& ast) {
     PointerFinder finder;
-    finder.id = T()._id;
+    finder.id = (Expression::Id)T::SpecificId;
     finder.list = &list;
     finder.walk(ast);
   }

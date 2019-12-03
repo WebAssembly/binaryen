@@ -43,7 +43,6 @@ def parse_args(args):
         action='store_false',
         help=('If set, the whole test suite will run to completion independent of'
               ' earlier errors.'))
-
     parser.add_argument(
         '--interpreter', dest='interpreter', default='',
         help='Specifies the wasm interpreter executable to run tests on.')
@@ -57,6 +56,11 @@ def parse_args(args):
         '--binaryen-root', dest='binaryen_root', default='',
         help=('Specifies a path to the root of the Binaryen repository tree.'
               ' Default: the directory where this file check.py resides.'))
+    parser.add_argument(
+        '--out-dir', dest='out_dir', default='',
+        help=('Specifies a path to the output directory for temp files, which '
+              'is also where the test runner changes directory into.'
+              ' Default:. out/test under the binaryen root.'))
     parser.add_argument(
         '--valgrind', dest='valgrind', default='',
         help=('Specifies a path to Valgrind tool, which will be used to validate'
@@ -124,10 +128,12 @@ if not options.binaryen_root:
 
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 
-test_out = os.path.join(options.binaryen_root, 'out', 'test')
-if not os.path.exists(test_out):
-    os.makedirs(test_out)
-os.chdir(test_out)
+if not options.out_dir:
+    options.out_dir = os.path.join(options.binaryen_root, 'out', 'test')
+
+if not os.path.exists(options.out_dir):
+    os.makedirs(options.out_dir)
+os.chdir(options.out_dir)
 
 
 # Finds the given executable 'program' in PATH.
@@ -367,16 +373,99 @@ def fail_if_not_identical_to_file(actual, expected_file):
         fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 
-if len(requested) == 0:
-    tests = sorted(os.listdir(os.path.join(options.binaryen_test)))
-else:
-    tests = requested[:]
+def get_test_dir(name):
+    """Returns the test directory located at BINARYEN_ROOT/test/[name]."""
+    return os.path.join(options.binaryen_test, name)
+
+
+def get_tests(test_dir, extensions=[]):
+    """Returns the list of test files in a given directory. 'extensions' is a
+    list of file extensions. If 'extensions' is empty, returns all files.
+    """
+    tests = []
+    if not extensions:
+        tests += glob.glob(os.path.join(test_dir, '*'))
+    for ext in extensions:
+        tests += glob.glob(os.path.join(test_dir, '*' + ext))
+    return sorted(tests)
+
 
 if not options.interpreter:
     warn('no interpreter provided (did not test spec interpreter validation)')
 
 if not has_vanilla_emcc:
     warn('no functional emcc submodule found')
+
+
+if not options.spec_tests:
+    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+else:
+    options.spec_tests = options.spec_tests[:]
+
+# 11/27/2019: We updated the spec test suite to upstream spec repo. For some
+# files that started failing after this update, we added the new files to this
+# blacklist and preserved old ones by renaming them to 'old_[FILENAME].wast'
+# not to lose coverage. When the cause of the error is fixed or the unsupported
+# construct gets support so the new test passes, we can delete the
+# corresponding 'old_[FILENAME].wast' file. When you fix the new file and
+# delete the old file, make sure you rename the corresponding .wast.log file in
+# expected-output/ if any.
+SPEC_TEST_BLACKLIST = [
+    # Stacky code / notation
+    'block.wast',
+    'call.wast',
+    'float_exprs.wast',
+    'globals.wast',
+    'loop.wast',
+    'nop.wast',
+    'select.wast',
+    'stack.wast',
+    'unwind.wast',
+
+    # Binary module
+    'binary.wast',
+    'binary-leb128.wast',
+    'custom.wast',
+
+    # Empty 'then' or 'else' in 'if'
+    'if.wast',
+    'local_set.wast',
+    'store.wast',
+
+    # No module in a file
+    'token.wast',
+    'utf8-custom-section-id.wast',
+    'utf8-import-field.wast',
+    'utf8-import-module.wast',
+    'utf8-invalid-encoding.wast',
+
+    # 'register' command
+    'imports.wast',
+    'linking.wast',
+
+    # Misc. unsupported constructs
+    'call_indirect.wast',  # Empty (param) and (result)
+    'const.wast',  # Unparenthesized expression
+    'data.wast',  # Various unsupported (data) notations
+    'elem.wast',  # Unsupported 'offset' syntax in (elem)
+    'exports.wast',  # Multiple inlined exports for a function
+    'func.wast',  # Forward named type reference
+    'skip-stack-guard-page.wast',  # Hexadecimal style (0x..) in memory offset
+
+    # Untriaged: We don't know the cause of the error yet
+    'address.wast',  # wasm2js 'assert_return' failure
+    'br_if.wast',  # Validation error
+    'float_literals.wast',  # 'assert_return' failure
+    'int_literals.wast',  # 'assert_return' failure
+    'local_tee.wast',  # Validation failure
+    'memory_grow.wast',  # 'assert_return' failure
+    'start.wast',  # Assertion failure
+    'type.wast',  # 'assertion_invalid' failure
+    'unreachable.wast',  # Validation failure
+    'unreached-invalid.wast'  # 'assert_invalid' failure
+]
+options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
+                      in SPEC_TEST_BLACKLIST]
 
 
 # check utilities
@@ -449,10 +538,6 @@ def minify_check(wast, verify_final_result=True):
         os.unlink('a.wast')
     if os.path.exists('b.wast'):
         os.unlink('b.wast')
-
-
-def files_with_pattern(*path_pattern):
-    return sorted(glob.glob(os.path.join(*path_pattern)))
 
 
 # run a check with BINARYEN_PASS_DEBUG set, to do full validation

@@ -5,6 +5,9 @@
     (local.get $0)
   )
 
+  (func $foo)
+  (func $bar)
+
   (func $eh_test (local $exn exnref)
     (try
       (throw $e0 (i32.const 0))
@@ -34,6 +37,19 @@
     (try
       (catch
         (drop (exnref.pop))
+      )
+    )
+
+    ;; Multiple instructions within try and catch bodies
+    (try
+      (block
+        (call $foo)
+        (call $bar)
+      )
+      (catch
+        (drop (exnref.pop))
+        (call $foo)
+        (call $bar)
       )
     )
   )

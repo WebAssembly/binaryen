@@ -82,7 +82,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
   const char* str = s.str;
   auto ret = allocator.alloc<Const>();
   ret->type = type;
-  if (isFloatType(type)) {
+  if (type.isFloat()) {
     if (s == _INFINITY) {
       switch (type) {
         case f32:

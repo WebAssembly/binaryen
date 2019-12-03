@@ -139,7 +139,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // elements out of it if there is a value being returned)
       Block* parent = controlFlowStack.back()->dynCast<Block>();
       if (parent && curr == parent->list.back() &&
-          !isConcreteType(parent->list.back()->type)) {
+          !parent->list.back()->type.isConcrete()) {
         breakTails[curr->name].push_back(Tail(curr, parent));
       } else {
         unoptimizables.insert(curr->name);
@@ -189,7 +189,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       return;
     }
     // we can't optimize a fallthrough value
-    if (isConcreteType(curr->list.back()->type)) {
+    if (curr->list.back()->type.isConcrete()) {
       return;
     }
     auto iter = breakTails.find(curr->name);

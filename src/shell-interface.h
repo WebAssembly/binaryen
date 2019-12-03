@@ -98,7 +98,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (import->module == SPECTEST && import->base == GLOBAL) {
+      if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
         switch (import->type) {
           case i32:
             globals[import->name] = Literal(int32_t(666));
@@ -133,9 +133,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal callImport(Function* import, LiteralList& arguments) override {
-    if (import->module == SPECTEST && import->base == PRINT) {
+    if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
-        std::cout << '(' << argument << ')' << '\n';
+        std::cout << argument << " : " << argument.type << '\n';
       }
       return Literal();
     } else if (import->module == ENV && import->base == EXIT) {
@@ -211,7 +211,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   void trap(const char* why) override {
-    std::cout << "[trap " << why << "]\n";
+    std::cerr << "[trap " << why << "]\n";
     throw TrapException();
   }
 };

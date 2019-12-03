@@ -325,7 +325,7 @@ public:
     ret->value = value;
     ret->valueType = type;
     ret->finalize();
-    assert(isConcreteType(ret->value->type) ? ret->value->type == type : true);
+    assert(ret->value->type.isConcrete() ? ret->value->type == type : true);
     return ret;
   }
   Store* makeAtomicStore(unsigned bytes,
@@ -417,6 +417,16 @@ public:
     ret->op = op;
     ret->vec = vec;
     ret->shift = shift;
+    ret->finalize();
+    return ret;
+  }
+  SIMDLoad*
+  makeSIMDLoad(SIMDLoadOp op, Address offset, Address align, Expression* ptr) {
+    auto* ret = allocator.alloc<SIMDLoad>();
+    ret->op = op;
+    ret->offset = offset;
+    ret->align = align;
+    ret->ptr = ptr;
     ret->finalize();
     return ret;
   }
@@ -531,19 +541,16 @@ public:
     return ret;
   }
   BrOnExn* makeBrOnExn(Name name, Event* event, Expression* exnref) {
-    return makeBrOnExn(name, event->name, exnref, event->params);
+    return makeBrOnExn(name, event->name, exnref, event->sig.params);
   }
-  BrOnExn* makeBrOnExn(Name name,
-                       Name event,
-                       Expression* exnref,
-                       std::vector<Type>& eventParams) {
+  BrOnExn* makeBrOnExn(Name name, Name event, Expression* exnref, Type sent) {
     auto* ret = allocator.alloc<BrOnExn>();
     ret->name = name;
     ret->event = event;
     ret->exnref = exnref;
     // Copy params info into BrOnExn, because it is necessary when BrOnExn is
     // refinalized without the module.
-    ret->eventParams = eventParams;
+    ret->sent = sent;
     ret->finalize();
     return ret;
   }
@@ -586,7 +593,7 @@ public:
 
   static Index addVar(Function* func, Name name, Type type) {
     // always ok to add a var, it does not affect other indices
-    assert(isConcreteType(type));
+    assert(type.isConcrete());
     Index index = func->getNumLocals();
     if (name.is()) {
       func->localIndices[name] = index;
@@ -691,7 +698,7 @@ public:
 
   // Drop an expression if it has a concrete type
   Expression* dropIfConcretelyTyped(Expression* curr) {
-    if (!isConcreteType(curr->type)) {
+    if (!curr->type.isConcrete()) {
       return curr;
     }
     return makeDrop(curr);
@@ -755,16 +762,11 @@ public:
     return glob;
   }
 
-  // TODO Remove 'type' parameter once we remove FunctionType
-  static Event* makeEvent(Name name,
-                          uint32_t attribute,
-                          Name type,
-                          std::vector<Type>&& params) {
+  static Event* makeEvent(Name name, uint32_t attribute, Signature sig) {
     auto* event = new Event;
     event->name = name;
     event->attribute = attribute;
-    event->type = type;
-    event->params = params;
+    event->sig = sig;
     return event;
   }
 };

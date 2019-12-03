@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <fstream>
 
+#include "ir/module-utils.h"
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
@@ -24,15 +25,58 @@
 namespace wasm {
 
 void WasmBinaryWriter::prepare() {
-  // we need function types for all our functions
-  for (auto& func : wasm->functions) {
-    if (func->type.isNull()) {
-      func->type = ensureFunctionType(getSig(func.get()), wasm)->name;
-    }
-    // TODO: depending on upstream flux
-    // https://github.com/WebAssembly/spec/pull/301 might want this:
-    // assert(!func->type.isNull());
+  // Collect function types and their frequencies. Collect information in each
+  // function in parallel, then merge.
+  typedef std::unordered_map<Signature, size_t> Counts;
+  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
+    *wasm, [&](Function* func, Counts& counts) {
+      if (func->imported()) {
+        return;
+      }
+      struct TypeCounter : PostWalker<TypeCounter> {
+        Module& wasm;
+        Counts& counts;
+
+        TypeCounter(Module& wasm, Counts& counts)
+          : wasm(wasm), counts(counts) {}
+
+        void visitCallIndirect(CallIndirect* curr) {
+          auto* type = wasm.getFunctionType(curr->fullType);
+          Signature sig(Type(type->params), type->result);
+          counts[sig]++;
+        }
+      };
+      TypeCounter(*wasm, counts).walk(func->body);
+    });
+  // Collect all the counts.
+  Counts counts;
+  for (auto& curr : wasm->functions) {
+    counts[Signature(Type(curr->params), curr->result)]++;
   }
+  for (auto& curr : wasm->events) {
+    counts[curr->sig]++;
+  }
+  for (auto& pair : analysis.map) {
+    Counts& functionCounts = pair.second;
+    for (auto& innerPair : functionCounts) {
+      counts[innerPair.first] += innerPair.second;
+    }
+  }
+  std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
+                                                   counts.end());
+  std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
+    // order by frequency then simplicity
+    if (a.second != b.second) {
+      return a.second > b.second;
+    } else {
+      return a.first < b.first;
+    }
+  });
+  for (Index i = 0; i < sorted.size(); ++i) {
+    typeIndexes[sorted[i].first] = i;
+    types.push_back(sorted[i].first);
+  }
+
   importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
@@ -173,41 +217,28 @@ void WasmBinaryWriter::writeMemory() {
 }
 
 void WasmBinaryWriter::writeTypes() {
-  if (wasm->functionTypes.size() == 0) {
+  if (types.size() == 0) {
     return;
   }
   if (debug) {
     std::cerr << "== writeTypes" << std::endl;
   }
   auto start = startSection(BinaryConsts::Section::Type);
-  o << U32LEB(wasm->functionTypes.size());
-  for (auto& type : wasm->functionTypes) {
+  o << U32LEB(types.size());
+  for (Index i = 0; i < types.size(); ++i) {
+    Signature& sig = types[i];
     if (debug) {
-      std::cerr << "write one" << std::endl;
+      std::cerr << "write " << sig.params << " -> " << sig.results << std::endl;
     }
     o << S32LEB(BinaryConsts::EncodedType::Func);
-    o << U32LEB(type->params.size());
-    for (auto param : type->params) {
-      o << binaryType(param);
-    }
-    if (type->result == none) {
-      o << U32LEB(0);
-    } else {
-      o << U32LEB(1);
-      o << binaryType(type->result);
+    for (auto& sigType : {sig.params, sig.results}) {
+      o << U32LEB(sigType.size());
+      for (auto type : sigType.expand()) {
+        o << binaryType(type);
+      }
     }
   }
   finishSection(start);
-}
-
-int32_t WasmBinaryWriter::getFunctionTypeIndex(Name type) {
-  // TODO: optimize
-  for (size_t i = 0; i < wasm->functionTypes.size(); i++) {
-    if (wasm->functionTypes[i]->name == type) {
-      return i;
-    }
-  }
-  abort();
 }
 
 void WasmBinaryWriter::writeImports() {
@@ -230,7 +261,7 @@ void WasmBinaryWriter::writeImports() {
     }
     writeImportHeader(func);
     o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getFunctionTypeIndex(func->type));
+    o << U32LEB(getTypeIndex(Signature(Type(func->params), func->result)));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     if (debug) {
@@ -248,7 +279,7 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(event);
     o << U32LEB(int32_t(ExternalKind::Event));
     o << U32LEB(event->attribute);
-    o << U32LEB(getFunctionTypeIndex(event->type));
+    o << U32LEB(getTypeIndex(event->sig));
   });
   if (wasm->memory.imported()) {
     if (debug) {
@@ -289,7 +320,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
     if (debug) {
       std::cerr << "write one" << std::endl;
     }
-    o << U32LEB(getFunctionTypeIndex(func->type));
+    o << U32LEB(getTypeIndex(Signature(Type(func->params), func->result)));
   });
   finishSection(start);
 }
@@ -451,19 +482,28 @@ void WasmBinaryWriter::writeDataSegments() {
   finishSection(start);
 }
 
-uint32_t WasmBinaryWriter::getFunctionIndex(Name name) {
-  assert(indexes.functionIndexes.count(name));
-  return indexes.functionIndexes[name];
+uint32_t WasmBinaryWriter::getFunctionIndex(Name name) const {
+  auto it = indexes.functionIndexes.find(name);
+  assert(it != indexes.functionIndexes.end());
+  return it->second;
 }
 
-uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
-  assert(indexes.globalIndexes.count(name));
-  return indexes.globalIndexes[name];
+uint32_t WasmBinaryWriter::getGlobalIndex(Name name) const {
+  auto it = indexes.globalIndexes.find(name);
+  assert(it != indexes.globalIndexes.end());
+  return it->second;
 }
 
-uint32_t WasmBinaryWriter::getEventIndex(Name name) {
-  assert(indexes.eventIndexes.count(name));
-  return indexes.eventIndexes[name];
+uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
+  auto it = indexes.eventIndexes.find(name);
+  assert(it != indexes.eventIndexes.end());
+  return it->second;
+}
+
+uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) const {
+  auto it = typeIndexes.find(sig);
+  assert(it != typeIndexes.end());
+  return it->second;
 }
 
 void WasmBinaryWriter::writeFunctionTableDeclaration() {
@@ -521,7 +561,7 @@ void WasmBinaryWriter::writeEvents() {
       std::cerr << "write one" << std::endl;
     }
     o << U32LEB(event->attribute);
-    o << U32LEB(getFunctionTypeIndex(event->type));
+    o << U32LEB(getTypeIndex(event->sig));
   });
 
   finishSection(start);
@@ -1098,7 +1138,7 @@ Type WasmBinaryBuilder::getType() {
 
 Type WasmBinaryBuilder::getConcreteType() {
   auto type = getType();
-  if (!isConcreteType(type)) {
+  if (!type.isConcrete()) {
     throw ParseException("non-concrete type when one expected");
   }
   return type;
@@ -1364,10 +1404,9 @@ void WasmBinaryBuilder::readImports() {
           throwError("invalid event index " + std::to_string(index) + " / " +
                      std::to_string(wasm.functionTypes.size()));
         }
-        Name type = wasm.functionTypes[index]->name;
-        std::vector<Type> params = wasm.functionTypes[index]->params;
+        Type params = Type(wasm.functionTypes[index]->params);
         auto* curr =
-          builder.makeEvent(name, attribute, type, std::move(params));
+          builder.makeEvent(name, attribute, Signature(params, Type::none));
         curr->module = module;
         curr->base = base;
         wasm.addEvent(curr);
@@ -1860,7 +1899,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   }
   requireFunctionContext("popping void where we need a new local");
   auto type = block->list[0]->type;
-  if (isConcreteType(type)) {
+  if (type.isConcrete()) {
     auto local = builder.addVar(currFunction, type);
     block->list[0] = builder.makeLocalSet(local, block->list[0]);
     block->list.push_back(builder.makeLocalGet(local, type));
@@ -2039,10 +2078,9 @@ void WasmBinaryBuilder::readEvents() {
       throwError("invalid event index " + std::to_string(typeIndex) + " / " +
                  std::to_string(wasm.functionTypes.size()));
     }
-    Name type = wasm.functionTypes[typeIndex]->name;
-    std::vector<Type> params = wasm.functionTypes[typeIndex]->params;
+    Type params = Type(wasm.functionTypes[typeIndex]->params);
     wasm.addEvent(Builder::makeEvent(
-      "event$" + std::to_string(i), attribute, type, std::move(params)));
+      "event$" + std::to_string(i), attribute, Signature(params, Type::none)));
   }
 }
 
@@ -2340,9 +2378,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDConst(curr, opcode)) {
         break;
       }
-      if (maybeVisitSIMDLoad(curr, opcode)) {
-        break;
-      }
       if (maybeVisitSIMDStore(curr, opcode)) {
         break;
       }
@@ -2359,6 +2394,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitSIMDShift(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitSIMDLoad(curr, opcode)) {
         break;
       }
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
@@ -2417,7 +2455,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
     if (i < end - 1) {
       // stacky&unreachable code may introduce elements that need to be dropped
       // in non-final positions
-      if (isConcreteType(item->type)) {
+      if (item->type.isConcrete()) {
         curr->list.back() = Builder(wasm).makeDrop(item);
         if (consumable == NONE) {
           // this is the first, and hence consumable value. note the location
@@ -3819,6 +3857,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = XorVec128;
       break;
+    case BinaryConsts::V128AndNot:
+      curr = allocator.alloc<Binary>();
+      curr->op = AndNotVec128;
+      break;
     case BinaryConsts::I8x16Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI8x16;
@@ -3846,6 +3888,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I8x16Mul:
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI8x16;
+      break;
+    case BinaryConsts::I8x16MinS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinSVecI8x16;
+      break;
+    case BinaryConsts::I8x16MinU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinUVecI8x16;
+      break;
+    case BinaryConsts::I8x16MaxS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxSVecI8x16;
+      break;
+    case BinaryConsts::I8x16MaxU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxUVecI8x16;
       break;
     case BinaryConsts::I16x8Add:
       curr = allocator.alloc<Binary>();
@@ -3875,6 +3933,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI16x8;
       break;
+    case BinaryConsts::I16x8MinS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinSVecI16x8;
+      break;
+    case BinaryConsts::I16x8MinU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinUVecI16x8;
+      break;
+    case BinaryConsts::I16x8MaxS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxSVecI16x8;
+      break;
+    case BinaryConsts::I16x8MaxU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxUVecI16x8;
+      break;
     case BinaryConsts::I32x4Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI32x4;
@@ -3886,6 +3960,26 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I32x4Mul:
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI32x4;
+      break;
+    case BinaryConsts::I32x4MinS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinSVecI32x4;
+      break;
+    case BinaryConsts::I32x4MinU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinUVecI32x4;
+      break;
+    case BinaryConsts::I32x4MaxS:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxSVecI32x4;
+      break;
+    case BinaryConsts::I32x4MaxU:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxUVecI32x4;
+      break;
+    case BinaryConsts::I32x4DotSVecI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = DotSVecI16x8ToVecI32x4;
       break;
     case BinaryConsts::I64x2Add:
       curr = allocator.alloc<Binary>();
@@ -3942,6 +4036,26 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2Max:
       curr = allocator.alloc<Binary>();
       curr->op = MaxVecF64x2;
+      break;
+    case BinaryConsts::I8x16NarrowSI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = NarrowSVecI16x8ToVecI8x16;
+      break;
+    case BinaryConsts::I8x16NarrowUI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = NarrowUVecI16x8ToVecI8x16;
+      break;
+    case BinaryConsts::I16x8NarrowSI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = NarrowSVecI32x4ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8NarrowUI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = NarrowUVecI32x4ToVecI16x8;
+      break;
+    case BinaryConsts::V8x16Swizzle:
+      curr = allocator.alloc<Binary>();
+      curr->op = SwizzleVec8x16;
       break;
     default:
       return false;
@@ -4090,6 +4204,38 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = ConvertUVecI64x2ToVecF64x2;
       break;
+    case BinaryConsts::I16x8WidenLowSI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowSVecI8x16ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8WidenHighSI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighSVecI8x16ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8WidenLowUI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowUVecI8x16ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8WidenHighUI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighUVecI8x16ToVecI16x8;
+      break;
+    case BinaryConsts::I32x4WidenLowSI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowSVecI16x8ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4WidenHighSI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighSVecI16x8ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4WidenLowUI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowUVecI16x8ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4WidenHighUI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighUVecI16x8ToVecI32x4;
+      break;
     default:
       return false;
   }
@@ -4105,21 +4251,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDConst(Expression*& out, uint32_t code) {
   }
   auto* curr = allocator.alloc<Const>();
   curr->value = getVec128Literal();
-  curr->finalize();
-  out = curr;
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::V128Load) {
-    return false;
-  }
-  auto* curr = allocator.alloc<Load>();
-  curr->type = v128;
-  curr->bytes = 16;
-  readMemoryAccess(curr->align, curr->offset);
-  curr->isAtomic = false;
-  curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;
@@ -4346,6 +4477,70 @@ bool WasmBinaryBuilder::maybeVisitSIMDShift(Expression*& out, uint32_t code) {
   return true;
 }
 
+bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
+  if (code == BinaryConsts::V128Load) {
+    auto* curr = allocator.alloc<Load>();
+    curr->type = v128;
+    curr->bytes = 16;
+    readMemoryAccess(curr->align, curr->offset);
+    curr->isAtomic = false;
+    curr->ptr = popNonVoidExpression();
+    curr->finalize();
+    out = curr;
+    return true;
+  }
+  SIMDLoad* curr;
+  switch (code) {
+    case BinaryConsts::V8x16LoadSplat:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadSplatVec8x16;
+      break;
+    case BinaryConsts::V16x8LoadSplat:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadSplatVec16x8;
+      break;
+    case BinaryConsts::V32x4LoadSplat:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadSplatVec32x4;
+      break;
+    case BinaryConsts::V64x2LoadSplat:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadSplatVec64x2;
+      break;
+    case BinaryConsts::I16x8LoadExtSVec8x8:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadExtSVec8x8ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8LoadExtUVec8x8:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadExtUVec8x8ToVecI16x8;
+      break;
+    case BinaryConsts::I32x4LoadExtSVec16x4:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadExtSVec16x4ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4LoadExtUVec16x4:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadExtUVec16x4ToVecI32x4;
+      break;
+    case BinaryConsts::I64x2LoadExtSVec32x2:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadExtSVec32x2ToVecI64x2;
+      break;
+    case BinaryConsts::I64x2LoadExtUVec32x2:
+      curr = allocator.alloc<SIMDLoad>();
+      curr->op = LoadExtUVec32x2ToVecI64x2;
+      break;
+    default:
+      return false;
+  }
+  readMemoryAccess(curr->align, curr->offset);
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
 void WasmBinaryBuilder::visitSelect(Select* curr) {
   if (debug) {
     std::cerr << "zz node: Select" << std::endl;
@@ -4446,7 +4641,7 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
   }
   auto* event = wasm.events[index].get();
   curr->event = event->name;
-  size_t num = event->params.size();
+  size_t num = event->sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
@@ -4480,7 +4675,7 @@ void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
 
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  curr->eventParams = event->params;
+  curr->sent = event->sig.params;
   curr->finalize();
 }
 

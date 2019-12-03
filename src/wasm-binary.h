@@ -782,6 +782,7 @@ enum ASTNodes {
   V128And = 0x4d,
   V128Or = 0x4e,
   V128Xor = 0x4f,
+  V128AndNot = 0xd8,
   V128Bitselect = 0x50,
   I8x16Neg = 0x51,
   I8x16AnyTrue = 0x52,
@@ -796,6 +797,10 @@ enum ASTNodes {
   I8x16SubSatS = 0x5b,
   I8x16SubSatU = 0x5c,
   I8x16Mul = 0x5d,
+  I8x16MinS = 0x5e,
+  I8x16MinU = 0x5f,
+  I8x16MaxS = 0x60,
+  I8x16MaxU = 0x61,
   I16x8Neg = 0x62,
   I16x8AnyTrue = 0x63,
   I16x8AllTrue = 0x64,
@@ -809,6 +814,10 @@ enum ASTNodes {
   I16x8SubSatS = 0x6c,
   I16x8SubSatU = 0x6d,
   I16x8Mul = 0x6e,
+  I16x8MinS = 0x6f,
+  I16x8MinU = 0x70,
+  I16x8MaxS = 0x71,
+  I16x8MaxU = 0x72,
   I32x4Neg = 0x73,
   I32x4AnyTrue = 0x74,
   I32x4AllTrue = 0x75,
@@ -818,6 +827,11 @@ enum ASTNodes {
   I32x4Add = 0x79,
   I32x4Sub = 0x7c,
   I32x4Mul = 0x7f,
+  I32x4MinS = 0x80,
+  I32x4MinU = 0x81,
+  I32x4MaxS = 0x82,
+  I32x4MaxU = 0x83,
+  I32x4DotSVecI16x8 = 0xd9,
   I64x2Neg = 0x84,
   I64x2AnyTrue = 0x85,
   I64x2AllTrue = 0x86,
@@ -856,6 +870,29 @@ enum ASTNodes {
   F32x4ConvertUI32x4 = 0xb0,
   F64x2ConvertSI64x2 = 0xb1,
   F64x2ConvertUI64x2 = 0xb2,
+  V8x16LoadSplat = 0xc2,
+  V16x8LoadSplat = 0xc3,
+  V32x4LoadSplat = 0xc4,
+  V64x2LoadSplat = 0xc5,
+  I8x16NarrowSI16x8 = 0xc6,
+  I8x16NarrowUI16x8 = 0xc7,
+  I16x8NarrowSI32x4 = 0xc8,
+  I16x8NarrowUI32x4 = 0xc9,
+  I16x8WidenLowSI8x16 = 0xca,
+  I16x8WidenHighSI8x16 = 0xcb,
+  I16x8WidenLowUI8x16 = 0xcc,
+  I16x8WidenHighUI8x16 = 0xcd,
+  I32x4WidenLowSI16x8 = 0xce,
+  I32x4WidenHighSI16x8 = 0xcf,
+  I32x4WidenLowUI16x8 = 0xd0,
+  I32x4WidenHighUI16x8 = 0xd1,
+  I16x8LoadExtSVec8x8 = 0xd2,
+  I16x8LoadExtUVec8x8 = 0xd3,
+  I32x4LoadExtSVec16x4 = 0xd4,
+  I32x4LoadExtUVec16x4 = 0xd5,
+  I64x2LoadExtSVec32x2 = 0xd6,
+  I64x2LoadExtUVec32x2 = 0xd7,
+  V8x16Swizzle = 0xc0,
 
   // bulk memory opcodes
 
@@ -965,7 +1002,6 @@ public:
   void writeStart();
   void writeMemory();
   void writeTypes();
-  int32_t getFunctionTypeIndex(Name type);
   void writeImports();
 
   void writeFunctionSignatures();
@@ -977,9 +1013,10 @@ public:
   void writeDataSegments();
   void writeEvents();
 
-  uint32_t getFunctionIndex(Name name);
-  uint32_t getGlobalIndex(Name name);
-  uint32_t getEventIndex(Name name);
+  uint32_t getFunctionIndex(Name name) const;
+  uint32_t getGlobalIndex(Name name) const;
+  uint32_t getEventIndex(Name name) const;
+  uint32_t getTypeIndex(Signature sig) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1023,6 +1060,8 @@ private:
   BufferWithRandomAccess& o;
   bool debug;
   ModuleUtils::BinaryIndexes indexes;
+  std::unordered_map<Signature, Index> typeIndexes;
+  std::vector<Signature> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;
@@ -1245,13 +1284,13 @@ public:
   bool maybeVisitSIMDBinary(Expression*& out, uint32_t code);
   bool maybeVisitSIMDUnary(Expression*& out, uint32_t code);
   bool maybeVisitSIMDConst(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
   bool maybeVisitSIMDStore(Expression*& out, uint32_t code);
   bool maybeVisitSIMDExtract(Expression*& out, uint32_t code);
   bool maybeVisitSIMDReplace(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShuffle(Expression*& out, uint32_t code);
   bool maybeVisitSIMDTernary(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);

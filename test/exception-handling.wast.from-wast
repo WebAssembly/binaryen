@@ -6,7 +6,13 @@
  (func $exnref_test (; 0 ;) (type $FUNCSIG$ee) (param $0 exnref) (result exnref)
   (local.get $0)
  )
- (func $eh_test (; 1 ;) (type $FUNCSIG$v)
+ (func $foo (; 1 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $bar (; 2 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $eh_test (; 3 ;) (type $FUNCSIG$v)
   (local $exn exnref)
   (try
    (throw $e0
@@ -41,6 +47,19 @@
     (drop
      (exnref.pop)
     )
+   )
+  )
+  (try
+   (block $block
+    (call $foo)
+    (call $bar)
+   )
+   (catch
+    (drop
+     (exnref.pop)
+    )
+    (call $foo)
+    (call $bar)
    )
   )
  )

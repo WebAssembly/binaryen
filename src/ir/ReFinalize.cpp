@@ -50,12 +50,12 @@ void ReFinalize::visitBlock(Block* curr) {
   curr->type = curr->list.back()->type;
   // if concrete, it doesn't matter if we have an unreachable child, and we
   // don't need to look at breaks
-  if (isConcreteType(curr->type)) {
+  if (curr->type.isConcrete()) {
     // make sure our branches make sense for us - we may have just made
     // ourselves concrete for a value flowing out, while branches did not send a
     // value. such branches could not have been actually taken before, that is,
     // there were in unreachable code, but we do still need to fix them up here.
-    if (!isConcreteType(old)) {
+    if (!old.isConcrete()) {
       auto iter = breakValues.find(curr->name);
       if (iter != breakValues.end()) {
         // there is a break to here
@@ -147,6 +147,7 @@ void ReFinalize::visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDLoad(SIMDLoad* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
 void ReFinalize::visitDataDrop(DataDrop* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
@@ -163,7 +164,7 @@ void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
 void ReFinalize::visitBrOnExn(BrOnExn* curr) {
   curr->finalize();
-  updateBreakValueType(curr->name, curr->getSingleSentType());
+  updateBreakValueType(curr->name, curr->sent);
 }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
@@ -209,7 +210,7 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
     // the value is unreachable, and necessary since the type of
     // the condition did not have an impact before (the break/switch
     // type was unreachable), and might not fit in.
-    if (isConcreteType(condition->type)) {
+    if (condition->type.isConcrete()) {
       condition = builder.makeDrop(condition);
     }
     replacement = builder.makeSequence(value, condition);

@@ -14,11 +14,8 @@
 # limitations under the License.
 
 import os
-from .support import run_command
-from .shared import (
-    fail_with_error, files_with_pattern, options,
-    WASM_EMSCRIPTEN_FINALIZE, fail_if_not_identical_to_file
-)
+from . import shared
+from . import support
 
 
 def args_for_finalize(filename):
@@ -26,6 +23,8 @@ def args_for_finalize(filename):
         return ['--check-stack-overflow', '--global-base=568']
     elif 'shared' in filename:
         return ['--side-module']
+    elif 'standalone-wasm' in filename:
+        return ['--standalone-wasm', '--global-base=568']
     else:
         return ['--global-base=568']
 
@@ -33,7 +32,7 @@ def args_for_finalize(filename):
 def test_wasm_emscripten_finalize():
     print('\n[ checking wasm-emscripten-finalize testcases... ]\n')
 
-    for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
+    for wast_path in shared.get_tests(shared.get_test_dir('lld'), ['.wast']):
         print('..', wast_path)
         is_passive = '.passive.' in wast_path
         mem_file = wast_path + '.mem'
@@ -49,25 +48,28 @@ def test_wasm_emscripten_finalize():
             if ext != '.out' and not os.path.exists(expected_file):
                 continue
 
-            cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
+            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + \
+                ext_args
             cmd += args_for_finalize(os.path.basename(wast_path))
-            actual = run_command(cmd)
+            actual = support.run_command(cmd)
 
             if not os.path.exists(expected_file):
                 print(actual)
-                fail_with_error('output ' + expected_file + ' does not exist')
-            fail_if_not_identical_to_file(actual, expected_file)
+                shared.fail_with_error('output ' + expected_file +
+                                       ' does not exist')
+            shared.fail_if_not_identical_to_file(actual, expected_file)
             if ext == '.mem.out':
                 with open(mem_file) as mf:
                     mem = mf.read()
-                    fail_if_not_identical_to_file(mem, wast_path + '.mem.mem')
+                    shared.fail_if_not_identical_to_file(mem, wast_path +
+                                                         '.mem.mem')
                 os.remove(mem_file)
 
 
 def update_lld_tests():
     print('\n[ updatring wasm-emscripten-finalize testcases... ]\n')
 
-    for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
+    for wast_path in shared.get_tests(shared.get_test_dir('lld'), ['.wast']):
         print('..', wast_path)
         is_passive = '.passive.' in wast_path
         mem_file = wast_path + '.mem'
@@ -82,9 +84,10 @@ def update_lld_tests():
             out_path = wast_path + ext
             if ext != '.out' and not os.path.exists(out_path):
                 continue
-            cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
+            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + \
+                ext_args
             cmd += args_for_finalize(os.path.basename(wast_path))
-            actual = run_command(cmd)
+            actual = support.run_command(cmd)
             with open(out_path, 'w') as o:
                 o.write(actual)
 

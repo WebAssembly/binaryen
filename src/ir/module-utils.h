@@ -20,6 +20,7 @@
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -37,51 +38,25 @@ struct BinaryIndexes {
   std::unordered_map<Name, Index> eventIndexes;
 
   BinaryIndexes(Module& wasm) {
-    auto addGlobal = [&](Global* curr) {
-      auto index = globalIndexes.size();
-      globalIndexes[curr->name] = index;
+    auto addIndexes = [&](auto& source, auto& indexes) {
+      auto addIndex = [&](auto* curr) {
+        auto index = indexes.size();
+        indexes[curr->name] = index;
+      };
+      for (auto& curr : source) {
+        if (curr->imported()) {
+          addIndex(curr.get());
+        }
+      }
+      for (auto& curr : source) {
+        if (!curr->imported()) {
+          addIndex(curr.get());
+        }
+      }
     };
-    for (auto& curr : wasm.globals) {
-      if (curr->imported()) {
-        addGlobal(curr.get());
-      }
-    }
-    for (auto& curr : wasm.globals) {
-      if (!curr->imported()) {
-        addGlobal(curr.get());
-      }
-    }
-    assert(globalIndexes.size() == wasm.globals.size());
-    auto addFunction = [&](Function* curr) {
-      auto index = functionIndexes.size();
-      functionIndexes[curr->name] = index;
-    };
-    for (auto& curr : wasm.functions) {
-      if (curr->imported()) {
-        addFunction(curr.get());
-      }
-    }
-    for (auto& curr : wasm.functions) {
-      if (!curr->imported()) {
-        addFunction(curr.get());
-      }
-    }
-    assert(functionIndexes.size() == wasm.functions.size());
-    auto addEvent = [&](Event* curr) {
-      auto index = eventIndexes.size();
-      eventIndexes[curr->name] = index;
-    };
-    for (auto& curr : wasm.events) {
-      if (curr->imported()) {
-        addEvent(curr.get());
-      }
-    }
-    for (auto& curr : wasm.events) {
-      if (!curr->imported()) {
-        addEvent(curr.get());
-      }
-    }
-    assert(eventIndexes.size() == wasm.events.size());
+    addIndexes(wasm.functions, functionIndexes);
+    addIndexes(wasm.globals, globalIndexes);
+    addIndexes(wasm.events, eventIndexes);
   }
 };
 
@@ -125,8 +100,7 @@ inline Event* copyEvent(Event* event, Module& out) {
   auto* ret = new Event();
   ret->name = event->name;
   ret->attribute = event->attribute;
-  ret->type = event->type;
-  ret->params = event->params;
+  ret->sig = event->sig;
   out.addEvent(ret);
   return ret;
 }
@@ -288,22 +262,20 @@ template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
   }
 }
 
-// Performs a parallel map on function in the module, emitting a map object
-// of function => result.
-// TODO: use in inlining and elsewhere
-template<typename T> struct ParallelFunctionMap {
+// Helper class for performing an operation on all the functions in the module,
+// in parallel, with an Info object for each one that can contain results of
+// some computation that the operation performs.
+// The operation performend should not modify the wasm module in any way.
+// TODO: enforce this
+template<typename T> struct ParallelFunctionAnalysis {
+  Module& wasm;
 
   typedef std::map<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;
 
-  struct Info {
-    Map* map;
-    Func work;
-  };
-
-  ParallelFunctionMap(Module& wasm, Func work) {
+  ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
     // Fill in map, as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
@@ -317,27 +289,113 @@ template<typename T> struct ParallelFunctionMap {
       }
     }
 
-    // Run on the implemented functions.
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
+      bool modifiesBinaryenIR() override { return false; }
 
-      Mapper(Info* info) : info(info) {}
+      Mapper(Module& module, Map& map, Func work)
+        : module(module), map(map), work(work) {}
 
-      Mapper* create() override { return new Mapper(info); }
+      Mapper* create() override { return new Mapper(module, map, work); }
 
       void doWalkFunction(Function* curr) {
-        assert((*info->map).count(curr));
-        info->work(curr, (*info->map)[curr]);
+        assert(map.count(curr));
+        work(curr, map[curr]);
       }
 
     private:
-      Info* info;
+      Module& module;
+      Map& map;
+      Func work;
     };
 
-    Info info = {&map, work};
-
     PassRunner runner(&wasm);
-    Mapper(&info).run(&runner, &wasm);
+    Mapper(wasm, map, work).run(&runner, &wasm);
+  }
+};
+
+// Helper class for analyzing the call graph.
+//
+// Provides hooks for running some initial calculation on each function (which
+// is done in parallel), writing to a FunctionInfo structure for each function.
+// Then you can call propagateBack() to propagate a property of interest to the
+// calling functions, transitively.
+//
+// For example, if some functions are known to call an import "foo", then you
+// can use this to find which functions call something that might eventually
+// reach foo, by initially marking the direct callers as "calling foo" and
+// propagating that backwards.
+template<typename T> struct CallGraphPropertyAnalysis {
+  Module& wasm;
+
+  // The basic information for each function about whom it calls and who is
+  // called by it.
+  struct FunctionInfo {
+    std::set<Function*> callsTo;
+    std::set<Function*> calledBy;
+  };
+
+  typedef std::map<Function*, T> Map;
+  Map map;
+
+  typedef std::function<void(Function*, T&)> Func;
+
+  CallGraphPropertyAnalysis(Module& wasm, Func work) : wasm(wasm) {
+    ParallelFunctionAnalysis<T> analysis(wasm, [&](Function* func, T& info) {
+      work(func, info);
+      if (func->imported()) {
+        return;
+      }
+      struct Mapper : public PostWalker<Mapper> {
+        Mapper(Module* module, T& info, Func work)
+          : module(module), info(info), work(work) {}
+
+        void visitCall(Call* curr) {
+          info.callsTo.insert(module->getFunction(curr->target));
+        }
+
+      private:
+        Module* module;
+        T& info;
+        Func work;
+      } mapper(&wasm, info, work);
+      mapper.walk(func->body);
+    });
+
+    map.swap(analysis.map);
+
+    // Find what is called by what.
+    for (auto& pair : map) {
+      auto* func = pair.first;
+      auto& info = pair.second;
+      for (auto* target : info.callsTo) {
+        map[target].calledBy.insert(func);
+      }
+    }
+  }
+
+  // Propagate a property from a function to those that call it.
+  void propagateBack(std::function<bool(const T&)> hasProperty,
+                     std::function<bool(const T&)> canHaveProperty,
+                     std::function<void(T&)> addProperty) {
+    // The work queue contains items we just learned can change the state.
+    UniqueDeferredQueue<Function*> work;
+    for (auto& func : wasm.functions) {
+      if (hasProperty(map[func.get()])) {
+        work.push(func.get());
+      }
+    }
+    while (!work.empty()) {
+      auto* func = work.pop();
+      for (auto* caller : map[func].calledBy) {
+        // If we don't already have the property, and we are not forbidden
+        // from getting it, then it propagates back to us now.
+        if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
+          addProperty(map[caller]);
+          work.push(caller);
+        }
+      }
+    }
   }
 };
 

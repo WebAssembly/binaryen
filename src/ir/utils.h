@@ -134,6 +134,7 @@ struct ReFinalize
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitSIMDLoad(SIMDLoad* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -198,6 +199,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
   void visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
   void visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
+  void visitSIMDLoad(SIMDLoad* curr) { curr->finalize(); }
   void visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
   void visitDataDrop(DataDrop* curr) { curr->finalize(); }
   void visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
@@ -249,7 +251,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
 
   bool maybeDrop(Expression*& child) {
     bool acted = false;
-    if (isConcreteType(child->type)) {
+    if (child->type.isConcrete()) {
       expressionStack.push_back(child);
       if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) &&
           !ExpressionAnalyzer::isResultDropped(expressionStack)) {
@@ -269,7 +271,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       auto* child = curr->list[i];
-      if (isConcreteType(child->type)) {
+      if (child->type.isConcrete()) {
         curr->list[i] = Builder(*getModule()).makeDrop(child);
       }
     }
@@ -298,7 +300,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
-    if (curr->result == none && isConcreteType(curr->body->type)) {
+    if (curr->result == none && curr->body->type.isConcrete()) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
     ReFinalize().walkFunctionInModule(curr, getModule());

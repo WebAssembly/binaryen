@@ -100,7 +100,7 @@ public:
     // If we don't need to replace the whole expression, see if there
     // is a value flowing through a tee.
     if (!replaceExpression) {
-      if (isConcreteType(curr->type)) {
+      if (curr->type.isConcrete()) {
         assert(curr->isTee());
         return visit(curr->value);
       }
@@ -125,6 +125,7 @@ public:
   Flow visitAtomicNotify(AtomicNotify* curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
+  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryInit(MemoryInit* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitDataDrop(DataDrop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
@@ -182,12 +183,12 @@ struct Precompute
     // Until engines implement v128.const and we have SIMD-aware optimizations
     // that can break large v128.const instructions into smaller consts and
     // splats, do not try to precompute v128 expressions.
-    if (isVectorType(curr->type)) {
+    if (curr->type.isVector()) {
       return;
     }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
-    if (isVectorType(flow.value.type)) {
+    if (flow.value.type.isVector()) {
       return;
     }
     if (flow.breaking()) {
@@ -247,7 +248,7 @@ struct Precompute
       return;
     }
     // this was precomputed
-    if (isConcreteType(flow.value.type)) {
+    if (flow.value.type.isConcrete()) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));
       worked = true;
     } else {

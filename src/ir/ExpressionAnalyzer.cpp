@@ -196,6 +196,11 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitSIMDTernary(SIMDTernary* curr) { visitor.visitInt(curr->op); }
     void visitSIMDShift(SIMDShift* curr) { visitor.visitInt(curr->op); }
+    void visitSIMDLoad(SIMDLoad* curr) {
+      visitor.visitInt(curr->op);
+      visitor.visitAddress(curr->offset);
+      visitor.visitAddress(curr->align);
+    }
     void visitMemoryInit(MemoryInit* curr) {
       visitor.visitIndex(curr->segment);
     }

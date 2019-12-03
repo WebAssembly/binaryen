@@ -388,7 +388,7 @@ private:
 
   void setupGlobals() {
     size_t index = 0;
-    for (auto type : {i32, i64, f32, f64}) {
+    for (auto type : getConcreteTypes()) {
       auto num = upTo(3);
       for (size_t i = 0; i < num; i++) {
         auto* glob =
@@ -406,20 +406,14 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       // Events should have void return type and at least one param type
-      Type type = pick(i32, i64, f32, f64);
-      std::string sig = std::string("v") + getSig(type);
       std::vector<Type> params;
-      params.push_back(type);
       Index numValues = upToSquared(MAX_PARAMS - 1);
-      for (Index i = 0; i < numValues; i++) {
-        type = pick(i32, i64, f32, f64);
-        sig += getSig(type);
-        params.push_back(type);
+      for (Index i = 0; i < numValues + 1; i++) {
+        params.push_back(pick(i32, i64, f32, f64));
       }
       auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
                                       WASM_EVENT_ATTRIBUTE_EXCEPTION,
-                                      ensureFunctionType(sig, &wasm)->name,
-                                      std::move(params));
+                                      Signature(Type(params), Type::none));
       wasm.addEvent(event);
     }
   }
@@ -455,9 +449,9 @@ private:
   }
 
   void addImportLoggingSupport() {
-    for (auto type : {i32, i64, f32, f64}) {
+    for (auto type : getConcreteTypes()) {
       auto* func = new Function;
-      Name name = std::string("log-") + printType(type);
+      Name name = std::string("log-") + type.toString();
       func->name = name;
       func->module = "fuzzing-support";
       func->base = name;
@@ -628,10 +622,10 @@ private:
       std::vector<Expression*> trimmed;
       size_t num = upToSquared(list.size());
       for (size_t i = 0; i < num; i++) {
-        trimmed.push_back(vectorPick(list));
+        trimmed.push_back(pick(list));
       }
       if (trimmed.empty()) {
-        trimmed.push_back(vectorPick(list));
+        trimmed.push_back(pick(list));
       }
       list.swap(trimmed);
     }
@@ -659,7 +653,7 @@ private:
           auto& candidates = scanner.exprsByType[curr->type];
           assert(!candidates.empty()); // this expression itself must be there
           replaceCurrent(
-            ExpressionManipulator::copy(parent.vectorPick(candidates), wasm));
+            ExpressionManipulator::copy(parent.pick(candidates), wasm));
         }
       }
     };
@@ -790,7 +784,7 @@ private:
         args.push_back(makeConst(type));
       }
       Expression* invoke = builder.makeCall(func->name, args, func->result);
-      if (isConcreteType(func->result)) {
+      if (func->result.isConcrete()) {
         invoke = builder.makeDrop(invoke);
       }
       invocations.push_back(invoke);
@@ -827,7 +821,7 @@ private:
     // when we should stop, emit something small (but not necessarily trivial)
     if (finishedInput || nesting >= 5 * NESTING_LIMIT || // hard limit
         (nesting >= NESTING_LIMIT && !oneIn(3))) {
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         if (oneIn(2)) {
           return makeConst(type);
         } else {
@@ -996,7 +990,7 @@ private:
 
   // make something with no chance of infinite recursion
   Expression* makeTrivial(Type type) {
-    if (isConcreteType(type)) {
+    if (type.isConcrete()) {
       if (oneIn(2)) {
         return makeLocalGet(type);
       } else {
@@ -1007,7 +1001,7 @@ private:
     }
     assert(type == unreachable);
     Expression* ret = nullptr;
-    if (isConcreteType(func->result)) {
+    if (func->result.isConcrete()) {
       ret = makeTrivial(func->result);
     }
     return builder.makeReturn(ret);
@@ -1039,13 +1033,13 @@ private:
     }
     // give a chance to make the final element an unreachable break, instead
     // of concrete - a common pattern (branch to the top of a loop etc.)
-    if (!finishedInput && isConcreteType(type) && oneIn(2)) {
+    if (!finishedInput && type.isConcrete() && oneIn(2)) {
       ret->list.push_back(makeBreak(unreachable));
     } else {
       ret->list.push_back(make(type));
     }
     breakableStack.pop_back();
-    if (isConcreteType(type)) {
+    if (type.isConcrete()) {
       ret->finalize(type);
     } else {
       ret->finalize();
@@ -1128,10 +1122,10 @@ private:
     // we need to find a proper target to break to; try a few times
     int tries = TRIES;
     while (tries-- > 0) {
-      auto* target = vectorPick(breakableStack);
+      auto* target = pick(breakableStack);
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         // we are flowing out a value
         if (valueType != type) {
           // we need to break to a proper place
@@ -1206,7 +1200,7 @@ private:
     while (tries-- > 0) {
       Function* target = func;
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
-        target = vectorPick(wasm.functions).get();
+        target = pick(wasm.functions).get();
       }
       isReturn = type == unreachable && wasm.features.hasTailCall() &&
                  func->result == target->result;
@@ -1272,7 +1266,7 @@ private:
     if (locals.empty()) {
       return makeConst(type);
     }
-    return builder.makeLocalGet(vectorPick(locals), type);
+    return builder.makeLocalGet(pick(locals), type);
   }
 
   Expression* makeLocalSet(Type type) {
@@ -1289,9 +1283,9 @@ private:
     }
     auto* value = make(valueType);
     if (tee) {
-      return builder.makeLocalTee(vectorPick(locals), value);
+      return builder.makeLocalTee(pick(locals), value);
     } else {
-      return builder.makeLocalSet(vectorPick(locals), value);
+      return builder.makeLocalSet(pick(locals), value);
     }
   }
 
@@ -1300,7 +1294,7 @@ private:
     if (globals.empty()) {
       return makeConst(type);
     }
-    return builder.makeGlobalGet(vectorPick(globals), type);
+    return builder.makeGlobalGet(pick(globals), type);
   }
 
   Expression* makeGlobalSet(Type type) {
@@ -1311,7 +1305,7 @@ private:
       return makeTrivial(none);
     }
     auto* value = make(type);
-    return builder.makeGlobalSet(vectorPick(globals), value);
+    return builder.makeGlobalSet(pick(globals), value);
   }
 
   Expression* makePointer() {
@@ -1485,7 +1479,7 @@ private:
 
   Expression* makeStore(Type type) {
     // exnref type cannot be stored in memory
-    if (!allowMemory || isReferenceType(type)) {
+    if (!allowMemory || type.isRef()) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicStore(type);
@@ -1946,7 +1940,15 @@ private:
                                     ConvertSVecI32x4ToVecF32x4,
                                     ConvertUVecI32x4ToVecF32x4,
                                     ConvertSVecI64x2ToVecF64x2,
-                                    ConvertUVecI64x2ToVecF64x2),
+                                    ConvertUVecI64x2ToVecF64x2,
+                                    WidenLowSVecI8x16ToVecI16x8,
+                                    WidenHighSVecI8x16ToVecI16x8,
+                                    WidenLowUVecI8x16ToVecI16x8,
+                                    WidenHighUVecI8x16ToVecI16x8,
+                                    WidenLowSVecI16x8ToVecI32x4,
+                                    WidenHighSVecI16x8ToVecI32x4,
+                                    WidenLowUVecI16x8ToVecI32x4,
+                                    WidenHighUVecI16x8ToVecI32x4),
                                make(v128)});
         }
         WASM_UNREACHABLE();
@@ -1974,7 +1976,7 @@ private:
       return makeTrivial(type);
     }
     // There's no binary ops for exnref
-    if (isReferenceType(type)) {
+    if (type.isRef()) {
       makeTrivial(type);
     }
 
@@ -2131,6 +2133,7 @@ private:
                                  AndVec128,
                                  OrVec128,
                                  XorVec128,
+                                 AndNotVec128,
                                  AddVecI8x16,
                                  AddSatSVecI8x16,
                                  AddSatUVecI8x16,
@@ -2138,6 +2141,10 @@ private:
                                  SubSatSVecI8x16,
                                  SubSatUVecI8x16,
                                  MulVecI8x16,
+                                 MinSVecI8x16,
+                                 MinUVecI8x16,
+                                 MaxSVecI8x16,
+                                 MaxUVecI8x16,
                                  AddVecI16x8,
                                  AddSatSVecI16x8,
                                  AddSatUVecI16x8,
@@ -2145,9 +2152,18 @@ private:
                                  SubSatSVecI16x8,
                                  SubSatUVecI16x8,
                                  MulVecI16x8,
+                                 MinSVecI16x8,
+                                 MinUVecI16x8,
+                                 MaxSVecI16x8,
+                                 MaxUVecI16x8,
                                  AddVecI32x4,
                                  SubVecI32x4,
                                  MulVecI32x4,
+                                 MinSVecI32x4,
+                                 MinUVecI32x4,
+                                 MaxSVecI32x4,
+                                 MaxUVecI32x4,
+                                 DotSVecI16x8ToVecI32x4,
                                  AddVecI64x2,
                                  SubVecI64x2,
                                  AddVecF32x4,
@@ -2161,7 +2177,12 @@ private:
                                  MulVecF64x2,
                                  DivVecF64x2,
                                  MinVecF64x2,
-                                 MaxVecF64x2),
+                                 MaxVecF64x2,
+                                 NarrowSVecI16x8ToVecI8x16,
+                                 NarrowUVecI16x8ToVecI8x16,
+                                 NarrowSVecI32x4ToVecI16x8,
+                                 NarrowUVecI32x4ToVecI16x8,
+                                 SwizzleVec8x16),
                             make(v128),
                             make(v128)});
       }
@@ -2192,7 +2213,7 @@ private:
     std::vector<Name> names;
     Type valueType = unreachable;
     while (tries-- > 0) {
-      auto* target = vectorPick(breakableStack);
+      auto* target = pick(breakableStack);
       auto name = getTargetName(target);
       auto currValueType = getTargetType(target);
       if (names.empty()) {
@@ -2211,7 +2232,7 @@ private:
     auto default_ = names.back();
     names.pop_back();
     auto temp1 = make(i32),
-         temp2 = isConcreteType(valueType) ? make(valueType) : nullptr;
+         temp2 = valueType.isConcrete() ? make(valueType) : nullptr;
     return builder.makeSwitch(names, default_, temp1, temp2);
   }
 
@@ -2221,8 +2242,8 @@ private:
   }
 
   Expression* makeReturn(Type type) {
-    return builder.makeReturn(isConcreteType(func->result) ? make(func->result)
-                                                           : nullptr);
+    return builder.makeReturn(func->result.isConcrete() ? make(func->result)
+                                                        : nullptr);
   }
 
   Expression* makeNop(Type type) {
@@ -2326,7 +2347,7 @@ private:
     if (type != v128) {
       return makeSIMDExtract(type);
     }
-    switch (upTo(6)) {
+    switch (upTo(7)) {
       case 0:
         return makeUnary(v128);
       case 1:
@@ -2339,6 +2360,8 @@ private:
         return makeSIMDTernary();
       case 5:
         return makeSIMDShift();
+      case 6:
+        return makeSIMDLoad();
     }
     WASM_UNREACHABLE();
   }
@@ -2476,6 +2499,43 @@ private:
     return builder.makeSIMDShift(op, vec, shift);
   }
 
+  Expression* makeSIMDLoad() {
+    SIMDLoadOp op = pick(LoadSplatVec8x16,
+                         LoadSplatVec16x8,
+                         LoadSplatVec32x4,
+                         LoadSplatVec64x2,
+                         LoadExtSVec8x8ToVecI16x8,
+                         LoadExtUVec8x8ToVecI16x8,
+                         LoadExtSVec16x4ToVecI32x4,
+                         LoadExtUVec16x4ToVecI32x4,
+                         LoadExtSVec32x2ToVecI64x2,
+                         LoadExtUVec32x2ToVecI64x2);
+    Address offset = logify(get());
+    Address align;
+    switch (op) {
+      case LoadSplatVec8x16:
+        align = 1;
+        break;
+      case LoadSplatVec16x8:
+        align = pick(1, 2);
+        break;
+      case LoadSplatVec32x4:
+        align = pick(1, 2, 4);
+        break;
+      case LoadSplatVec64x2:
+      case LoadExtSVec8x8ToVecI16x8:
+      case LoadExtUVec8x8ToVecI16x8:
+      case LoadExtSVec16x4ToVecI32x4:
+      case LoadExtUVec16x4ToVecI32x4:
+      case LoadExtSVec32x2ToVecI64x2:
+      case LoadExtUVec32x2ToVecI64x2:
+        align = pick(1, 2, 4, 8);
+        break;
+    }
+    Expression* ptr = makePointer();
+    return builder.makeSIMDLoad(op, offset, align, ptr);
+  }
+
   Expression* makeBulkMemory(Type type) {
     if (!allowMemory) {
       return makeTrivial(type);
@@ -2539,9 +2599,9 @@ private:
   // special makers
 
   Expression* makeLogging() {
-    auto type = pick(i32, i64, f32, f64);
+    auto type = getConcreteType();
     return builder.makeCall(
-      std::string("log-") + printType(type), {make(type)}, none);
+      std::string("log-") + type.toString(), {make(type)}, none);
   }
 
   Expression* makeMemoryHashLogging() {
@@ -2551,23 +2611,19 @@ private:
 
   // special getters
 
-  Type getType() {
-    return pick(FeatureOptions<Type>()
-                  .add(FeatureSet::MVP, i32, i64, f32, f64, none, unreachable)
-                  .add(FeatureSet::SIMD, v128));
-  }
-
   Type getReachableType() {
     return pick(FeatureOptions<Type>()
                   .add(FeatureSet::MVP, i32, i64, f32, f64, none)
                   .add(FeatureSet::SIMD, v128));
   }
 
-  Type getConcreteType() {
-    return pick(FeatureOptions<Type>()
-                  .add(FeatureSet::MVP, i32, i64, f32, f64)
-                  .add(FeatureSet::SIMD, v128));
+  std::vector<Type> getConcreteTypes() {
+    return items(FeatureOptions<Type>()
+                   .add(FeatureSet::MVP, i32, i64, f32, f64)
+                   .add(FeatureSet::SIMD, v128));
   }
+
+  Type getConcreteType() { return pick(getConcreteTypes()); }
 
   // statistical distributions
 
@@ -2610,7 +2666,7 @@ private:
   Index upToSquared(Index x) { return upTo(upTo(x)); }
 
   // pick from a vector
-  template<typename T> const T& vectorPick(const std::vector<T>& vec) {
+  template<typename T> const T& pick(const std::vector<T>& vec) {
     assert(!vec.empty());
     auto index = upTo(vec.size());
     return vec[index];
@@ -2661,7 +2717,7 @@ private:
     std::map<FeatureSet::Feature, std::vector<T>> options;
   };
 
-  template<typename T> const T pick(FeatureOptions<T>& picker) {
+  template<typename T> std::vector<T> items(FeatureOptions<T>& picker) {
     std::vector<T> matches;
     for (const auto& item : picker.options) {
       if (wasm.features.has(item.first)) {
@@ -2669,7 +2725,11 @@ private:
         matches.insert(matches.end(), item.second.begin(), item.second.end());
       }
     }
-    return vectorPick(matches);
+    return matches;
+  }
+
+  template<typename T> const T pick(FeatureOptions<T>& picker) {
+    return pick(items(picker));
   }
 
   // utilities

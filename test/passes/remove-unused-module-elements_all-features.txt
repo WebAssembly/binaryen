@@ -279,7 +279,32 @@
  )
 )
 (module
- (type $FUNCSIG$vj (func (param i64)))
- (event $e1 (attr 0) (param i64))
- (export "e1" (event $e1))
+ (type $FUNCSIG$v (func))
+ (event $e-export (attr 0) (param i64))
+ (event $e-throw (attr 0) (param i32))
+ (event $e-bronexn (attr 0) (param i32))
+ (export "e-export" (event $e-export))
+ (start $start)
+ (func $start (; 0 ;) (type $FUNCSIG$v)
+  (local $exn exnref)
+  (try
+   (throw $e-throw
+    (i32.const 0)
+   )
+   (catch
+    (local.set $exn
+     (exnref.pop)
+    )
+    (drop
+     (block $l0 (result i32)
+      (rethrow
+       (br_on_exn $l0 $e-bronexn
+        (local.get $exn)
+       )
+      )
+     )
+    )
+   )
+  )
+ )
 )

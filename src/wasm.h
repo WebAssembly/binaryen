@@ -174,6 +174,8 @@ enum UnaryOp {
   AbsVecF64x2,
   NegVecF64x2,
   SqrtVecF64x2,
+
+  // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,
   TruncSatUVecF32x4ToVecI32x4,
   TruncSatSVecF64x2ToVecI64x2,
@@ -182,6 +184,14 @@ enum UnaryOp {
   ConvertUVecI32x4ToVecF32x4,
   ConvertSVecI64x2ToVecF64x2,
   ConvertUVecI64x2ToVecF64x2,
+  WidenLowSVecI8x16ToVecI16x8,
+  WidenHighSVecI8x16ToVecI16x8,
+  WidenLowUVecI8x16ToVecI16x8,
+  WidenHighUVecI8x16ToVecI16x8,
+  WidenLowSVecI16x8ToVecI32x4,
+  WidenHighSVecI16x8ToVecI32x4,
+  WidenLowUVecI16x8ToVecI32x4,
+  WidenHighUVecI16x8ToVecI32x4,
 
   InvalidUnary
 };
@@ -343,6 +353,7 @@ enum BinaryOp {
   AndVec128,
   OrVec128,
   XorVec128,
+  AndNotVec128,
   AddVecI8x16,
   AddSatSVecI8x16,
   AddSatUVecI8x16,
@@ -350,6 +361,10 @@ enum BinaryOp {
   SubSatSVecI8x16,
   SubSatUVecI8x16,
   MulVecI8x16,
+  MinSVecI8x16,
+  MinUVecI8x16,
+  MaxSVecI8x16,
+  MaxUVecI8x16,
   AddVecI16x8,
   AddSatSVecI16x8,
   AddSatUVecI16x8,
@@ -357,9 +372,18 @@ enum BinaryOp {
   SubSatSVecI16x8,
   SubSatUVecI16x8,
   MulVecI16x8,
+  MinSVecI16x8,
+  MinUVecI16x8,
+  MaxSVecI16x8,
+  MaxUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
+  MinSVecI32x4,
+  MinUVecI32x4,
+  MaxSVecI32x4,
+  MaxUVecI32x4,
+  DotSVecI16x8ToVecI32x4,
   AddVecI64x2,
   SubVecI64x2,
   AddVecF32x4,
@@ -374,6 +398,15 @@ enum BinaryOp {
   DivVecF64x2,
   MinVecF64x2,
   MaxVecF64x2,
+
+  // SIMD Conversion
+  NarrowSVecI16x8ToVecI8x16,
+  NarrowUVecI16x8ToVecI8x16,
+  NarrowSVecI32x4ToVecI16x8,
+  NarrowUVecI32x4ToVecI16x8,
+
+  // SIMD Swizzle
+  SwizzleVec8x16,
 
   InvalidBinary
 };
@@ -415,6 +448,19 @@ enum SIMDShiftOp {
   ShlVecI64x2,
   ShrSVecI64x2,
   ShrUVecI64x2
+};
+
+enum SIMDLoadOp {
+  LoadSplatVec8x16,
+  LoadSplatVec16x8,
+  LoadSplatVec32x4,
+  LoadSplatVec64x2,
+  LoadExtSVec8x8ToVecI16x8,
+  LoadExtUVec8x8ToVecI16x8,
+  LoadExtSVec16x4ToVecI32x4,
+  LoadExtUVec16x4ToVecI32x4,
+  LoadExtSVec32x2ToVecI64x2,
+  LoadExtUVec32x2ToVecI64x2
 };
 
 enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
@@ -476,6 +522,7 @@ public:
     SIMDShuffleId,
     SIMDTernaryId,
     SIMDShiftId,
+    SIMDLoadId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -861,6 +908,20 @@ public:
   void finalize();
 };
 
+class SIMDLoad : public SpecificExpression<Expression::SIMDLoadId> {
+public:
+  SIMDLoad() = default;
+  SIMDLoad(MixedArena& allocator) {}
+
+  SIMDLoadOp op;
+  Address offset;
+  Address align;
+  Expression* ptr;
+
+  Index getMemBytes();
+  void finalize();
+};
+
 class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
 public:
   MemoryInit() = default;
@@ -1062,10 +1123,9 @@ public:
   Expression* exnref;
   // This is duplicate info of param types stored in Event, but this is required
   // for us to know the type of the value sent to the target block.
-  std::vector<Type> eventParams;
+  Type sent;
 
   void finalize();
-  Type getSingleSentType();
 };
 
 // Globals
@@ -1259,14 +1319,7 @@ public:
   Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
-  // Type string in the format of function type. Return type is considered as a
-  // void type. So if you have an event whose type is (i32, i32), the type
-  // string will be "vii".
-  Name type;
-  // This is duplicate info of 'Name type', but we store this anyway because
-  // we plan to remove FunctionType in future.
-  // TODO remove either this or FunctionType
-  std::vector<Type> params;
+  Signature sig;
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.
@@ -1342,6 +1395,12 @@ public:
   void removeFunction(Name name);
   void removeGlobal(Name name);
   void removeEvent(Name name);
+
+  void removeFunctionTypes(std::function<bool(FunctionType*)> pred);
+  void removeExports(std::function<bool(Export*)> pred);
+  void removeFunctions(std::function<bool(Function*)> pred);
+  void removeGlobals(std::function<bool(Global*)> pred);
+  void removeEvents(std::function<bool(Event*)> pred);
 
   void updateMaps();
 

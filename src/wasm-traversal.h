@@ -60,6 +60,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitSIMDShuffle(SIMDShuffle* curr) { return ReturnType(); }
   ReturnType visitSIMDTernary(SIMDTernary* curr) { return ReturnType(); }
   ReturnType visitSIMDShift(SIMDShift* curr) { return ReturnType(); }
+  ReturnType visitSIMDLoad(SIMDLoad* curr) { return ReturnType(); }
   ReturnType visitMemoryInit(MemoryInit* curr) { return ReturnType(); }
   ReturnType visitDataDrop(DataDrop* curr) { return ReturnType(); }
   ReturnType visitMemoryCopy(MemoryCopy* curr) { return ReturnType(); }
@@ -143,6 +144,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(SIMDTernary);
       case Expression::Id::SIMDShiftId:
         DELEGATE(SIMDShift);
+      case Expression::Id::SIMDLoadId:
+        DELEGATE(SIMDLoad);
       case Expression::Id::MemoryInitId:
         DELEGATE(MemoryInit);
       case Expression::Id::DataDropId:
@@ -227,6 +230,7 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(SIMDShuffle);
   UNIMPLEMENTED(SIMDTernary);
   UNIMPLEMENTED(SIMDShift);
+  UNIMPLEMENTED(SIMDLoad);
   UNIMPLEMENTED(MemoryInit);
   UNIMPLEMENTED(DataDrop);
   UNIMPLEMENTED(MemoryCopy);
@@ -311,6 +315,8 @@ struct OverriddenVisitor {
         DELEGATE(SIMDTernary);
       case Expression::Id::SIMDShiftId:
         DELEGATE(SIMDShift);
+      case Expression::Id::SIMDLoadId:
+        DELEGATE(SIMDLoad);
       case Expression::Id::MemoryInitId:
         DELEGATE(MemoryInit);
       case Expression::Id::DataDropId:
@@ -434,6 +440,9 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitSIMDShift(SIMDShift* curr) {
+    return static_cast<SubType*>(this)->visitExpression(curr);
+  }
+  ReturnType visitSIMDLoad(SIMDLoad* curr) {
     return static_cast<SubType*>(this)->visitExpression(curr);
   }
   ReturnType visitMemoryInit(MemoryInit* curr) {
@@ -738,6 +747,9 @@ struct Walker : public VisitorType {
   static void doVisitSIMDShift(SubType* self, Expression** currp) {
     self->visitSIMDShift((*currp)->cast<SIMDShift>());
   }
+  static void doVisitSIMDLoad(SubType* self, Expression** currp) {
+    self->visitSIMDLoad((*currp)->cast<SIMDLoad>());
+  }
   static void doVisitMemoryInit(SubType* self, Expression** currp) {
     self->visitMemoryInit((*currp)->cast<MemoryInit>());
   }
@@ -959,6 +971,11 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<SIMDShift>()->vec);
         break;
       }
+      case Expression::Id::SIMDLoadId: {
+        self->pushTask(SubType::doVisitSIMDLoad, currp);
+        self->pushTask(SubType::scan, &curr->cast<SIMDLoad>()->ptr);
+        break;
+      }
       case Expression::Id::MemoryInitId: {
         self->pushTask(SubType::doVisitMemoryInit, currp);
         self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->size);
@@ -1058,6 +1075,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::PushId: {
         self->pushTask(SubType::doVisitPush, currp);
+        self->pushTask(SubType::scan, &curr->cast<Push>()->value);
         break;
       }
       case Expression::Id::PopId: {

@@ -330,6 +330,10 @@ public:
   Literal subSaturateSI8x16(const Literal& other) const;
   Literal subSaturateUI8x16(const Literal& other) const;
   Literal mulI8x16(const Literal& other) const;
+  Literal minSI8x16(const Literal& other) const;
+  Literal minUI8x16(const Literal& other) const;
+  Literal maxSI8x16(const Literal& other) const;
+  Literal maxUI8x16(const Literal& other) const;
   Literal negI16x8() const;
   Literal anyTrueI16x8() const;
   Literal allTrueI16x8() const;
@@ -343,6 +347,10 @@ public:
   Literal subSaturateSI16x8(const Literal& other) const;
   Literal subSaturateUI16x8(const Literal& other) const;
   Literal mulI16x8(const Literal& other) const;
+  Literal minSI16x8(const Literal& other) const;
+  Literal minUI16x8(const Literal& other) const;
+  Literal maxSI16x8(const Literal& other) const;
+  Literal maxUI16x8(const Literal& other) const;
   Literal negI32x4() const;
   Literal anyTrueI32x4() const;
   Literal allTrueI32x4() const;
@@ -352,6 +360,11 @@ public:
   Literal addI32x4(const Literal& other) const;
   Literal subI32x4(const Literal& other) const;
   Literal mulI32x4(const Literal& other) const;
+  Literal minSI32x4(const Literal& other) const;
+  Literal minUI32x4(const Literal& other) const;
+  Literal maxSI32x4(const Literal& other) const;
+  Literal maxUI32x4(const Literal& other) const;
+  Literal dotSI16x8toI32x4(const Literal& other) const;
   Literal negI64x2() const;
   Literal anyTrueI64x2() const;
   Literal allTrueI64x2() const;
@@ -386,6 +399,19 @@ public:
   Literal convertUToF32x4() const;
   Literal convertSToF64x2() const;
   Literal convertUToF64x2() const;
+  Literal narrowSToVecI8x16(const Literal& other) const;
+  Literal narrowUToVecI8x16(const Literal& other) const;
+  Literal narrowSToVecI16x8(const Literal& other) const;
+  Literal narrowUToVecI16x8(const Literal& other) const;
+  Literal widenLowSToVecI16x8() const;
+  Literal widenHighSToVecI16x8() const;
+  Literal widenLowUToVecI16x8() const;
+  Literal widenHighUToVecI16x8() const;
+  Literal widenLowSToVecI32x4() const;
+  Literal widenHighSToVecI32x4() const;
+  Literal widenLowUToVecI32x4() const;
+  Literal widenHighUToVecI32x4() const;
+  Literal swizzleVec8x16(const Literal& other) const;
 
 private:
   Literal addSatSI8(const Literal& other) const;
@@ -396,6 +422,10 @@ private:
   Literal subSatUI8(const Literal& other) const;
   Literal subSatSI16(const Literal& other) const;
   Literal subSatUI16(const Literal& other) const;
+  Literal minInt(const Literal& other) const;
+  Literal maxInt(const Literal& other) const;
+  Literal minUInt(const Literal& other) const;
+  Literal maxUInt(const Literal& other) const;
 };
 
 } // namespace wasm

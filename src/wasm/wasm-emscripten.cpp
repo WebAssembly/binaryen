@@ -22,6 +22,7 @@
 #include "asmjs/shared-constants.h"
 #include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
+#include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
@@ -30,7 +31,7 @@
 
 namespace wasm {
 
-cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+cashew::IString EM_ASM_PREFIX("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
 
 static Name STACK_SAVE("stackSave");
@@ -652,8 +653,7 @@ const char* stringAtAddr(Module& wasm,
 
 std::string codeForConstAddr(Module& wasm,
                              std::vector<Address> const& segmentOffsets,
-                             Const* addrConst) {
-  auto address = addrConst->value.geti32();
+                             int32_t address) {
   const char* str = stringAtAddr(wasm, segmentOffsets, address);
   if (!str) {
     // If we can't find the segment corresponding with the address, then we
@@ -663,13 +663,37 @@ std::string codeForConstAddr(Module& wasm,
   return escape(str);
 }
 
+enum class Proxying {
+  None,
+  Sync,
+  Async,
+};
+
+std::string proxyingSuffix(Proxying proxy) {
+  switch (proxy) {
+    case Proxying::None:
+      return "";
+    case Proxying::Sync:
+      return "sync_on_main_thread_";
+    case Proxying::Async:
+      return "async_on_main_thread_";
+  }
+  WASM_UNREACHABLE();
+}
+
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
   std::vector<Address> segmentOffsets; // segment index => address offset
 
-  std::map<std::string, std::set<std::string>> sigsForCode;
-  std::map<std::string, Address> ids;
-  std::set<std::string> allSigs;
+  struct AsmConst {
+    std::set<std::string> sigs;
+    Address id;
+    std::string code;
+    Proxying proxy;
+  };
+
+  std::vector<AsmConst> asmConsts;
+  std::set<std::pair<std::string, Proxying>> allSigs;
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
 
@@ -685,12 +709,14 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   void process();
 
 private:
-  std::string fixupNameWithSig(Name& name, std::string baseSig);
-  Literal idLiteralForCode(std::string code);
+  std::string fixupName(Name& name, std::string baseSig, Proxying proxy);
+  AsmConst&
+  createAsmConst(uint32_t id, std::string code, std::string sig, Name name);
   std::string asmConstSig(std::string baseSig);
-  Name nameForImportWithSig(std::string sig);
+  Name nameForImportWithSig(std::string sig, Proxying proxy);
   void queueImport(Name importName, std::string baseSig);
   void addImports();
+  Proxying proxyType(Name name);
 
   std::vector<std::unique_ptr<Function>> queuedImports;
 };
@@ -706,57 +732,83 @@ void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
   // Find calls to emscripten_asm_const* functions whose first argument is
   // is always a string constant.
-  if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
-    auto baseSig = getSig(curr);
-    auto sig = fixupNameWithSig(curr->target, baseSig);
-    auto* arg = curr->operands[0];
-    while (!arg->dynCast<Const>()) {
-      if (auto* get = arg->dynCast<LocalGet>()) {
-        // The argument may be a local.get, in which case, the last set in this
-        // basic block has the value.
-        auto* set = sets[get->index];
-        if (set) {
-          assert(set->index == get->index);
-          arg = set->value;
-        } else {
-          Fatal() << "local.get of unknown in arg0 of call to " << import->base
-                  << " (used by EM_ASM* macros) in function "
-                  << getFunction()->name
-                  << ".\nThis might be caused by aggressive compiler "
-                     "transformations. Consider using EM_JS instead.";
-        }
-      } else if (auto* value = arg->dynCast<Binary>()) {
-        // In the dynamic linking case the address of the string constant
-        // is the result of adding its offset to __memory_base.
-        // In this case are only looking for the offset with the data segment so
-        // the RHS of the addition is just what we want.
-        assert(value->op == AddInt32);
-        arg = value->right;
+  if (!import->imported()) {
+    return;
+  }
+  auto importName = import->base;
+  if (!importName.hasSubstring(EM_ASM_PREFIX)) {
+    return;
+  }
+
+  auto baseSig = getSig(curr);
+  auto sig = asmConstSig(baseSig);
+  auto* arg = curr->operands[0];
+  while (!arg->dynCast<Const>()) {
+    if (auto* get = arg->dynCast<LocalGet>()) {
+      // The argument may be a local.get, in which case, the last set in this
+      // basic block has the value.
+      auto* set = sets[get->index];
+      if (set) {
+        assert(set->index == get->index);
+        arg = set->value;
       } else {
-        if (!value) {
-          Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
-                  << ") in call to: " << import->base;
-        }
+        Fatal() << "local.get of unknown in arg0 of call to " << importName
+                << " (used by EM_ASM* macros) in function "
+                << getFunction()->name
+                << ".\nThis might be caused by aggressive compiler "
+                   "transformations. Consider using EM_JS instead.";
+      }
+      continue;
+    }
+
+    if (auto* setlocal = arg->dynCast<LocalSet>()) {
+      // The argument may be a local.tee, in which case we take first child
+      // which is the value being copied into the local.
+      if (setlocal->isTee()) {
+        arg = setlocal->value;
+        continue;
       }
     }
 
-    auto* value = arg->cast<Const>();
-    auto code = codeForConstAddr(wasm, segmentOffsets, value);
-    sigsForCode[code].insert(sig);
+    if (auto* bin = arg->dynCast<Binary>()) {
+      if (bin->op == AddInt32) {
+        // In the dynamic linking case the address of the string constant
+        // is the result of adding its offset to __memory_base.
+        // In this case are only looking for the offset from __memory_base
+        // the RHS of the addition is just what we want.
+        arg = bin->right;
+        continue;
+      }
+    }
 
-    // Replace the first argument to the call with a Const index
-    Builder builder(wasm);
-    curr->operands[0] = builder.makeConst(idLiteralForCode(code));
+    Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
+            << ") in call to: " << importName;
   }
+
+  auto* value = arg->cast<Const>();
+  int32_t address = value->value.geti32();
+  auto code = codeForConstAddr(wasm, segmentOffsets, address);
+  auto& asmConst = createAsmConst(address, code, sig, importName);
+  fixupName(curr->target, baseSig, asmConst.proxy);
+}
+
+Proxying AsmConstWalker::proxyType(Name name) {
+  if (name.hasSubstring("_sync_on_main_thread")) {
+    return Proxying::Sync;
+  } else if (name.hasSubstring("_async_on_main_thread")) {
+    return Proxying::Async;
+  }
+  return Proxying::None;
 }
 
 void AsmConstWalker::visitTable(Table* curr) {
   for (auto& segment : curr->segments) {
     for (auto& name : segment.data) {
       auto* func = wasm.getFunction(name);
-      if (func->imported() && func->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+      if (func->imported() && func->base.hasSubstring(EM_ASM_PREFIX)) {
         std::string baseSig = getSig(func);
-        fixupNameWithSig(name, baseSig);
+        auto proxy = proxyType(func->base);
+        fixupName(name, baseSig, proxy);
       }
     }
   }
@@ -770,27 +822,31 @@ void AsmConstWalker::process() {
   addImports();
 }
 
-std::string AsmConstWalker::fixupNameWithSig(Name& name, std::string baseSig) {
+std::string
+AsmConstWalker::fixupName(Name& name, std::string baseSig, Proxying proxy) {
   auto sig = asmConstSig(baseSig);
-  auto importName = nameForImportWithSig(sig);
+  auto importName = nameForImportWithSig(sig, proxy);
   name = importName;
 
-  if (allSigs.count(sig) == 0) {
-    allSigs.insert(sig);
+  auto pair = std::make_pair(sig, proxy);
+  if (allSigs.count(pair) == 0) {
+    allSigs.insert(pair);
     queueImport(importName, baseSig);
   }
   return sig;
 }
 
-Literal AsmConstWalker::idLiteralForCode(std::string code) {
-  int32_t id;
-  if (ids.count(code) == 0) {
-    id = ids.size();
-    ids[code] = id;
-  } else {
-    id = ids[code];
-  }
-  return Literal(id);
+AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(uint32_t id,
+                                                         std::string code,
+                                                         std::string sig,
+                                                         Name name) {
+  AsmConst asmConst;
+  asmConst.id = id;
+  asmConst.code = code;
+  asmConst.sigs.insert(sig);
+  asmConst.proxy = proxyType(name);
+  asmConsts.push_back(asmConst);
+  return asmConsts.back();
 }
 
 std::string AsmConstWalker::asmConstSig(std::string baseSig) {
@@ -805,8 +861,9 @@ std::string AsmConstWalker::asmConstSig(std::string baseSig) {
   return sig;
 }
 
-Name AsmConstWalker::nameForImportWithSig(std::string sig) {
-  std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
+Name AsmConstWalker::nameForImportWithSig(std::string sig, Proxying proxy) {
+  std::string fixedTarget =
+    EM_ASM_PREFIX.str + std::string("_") + proxyingSuffix(proxy) + sig;
   return Name(fixedTarget.c_str());
 }
 
@@ -814,7 +871,9 @@ void AsmConstWalker::queueImport(Name importName, std::string baseSig) {
   auto import = new Function;
   import->name = import->base = importName;
   import->module = ENV;
-  import->type = ensureFunctionType(baseSig, &wasm)->name;
+  auto* funcType = ensureFunctionType(baseSig, &wasm);
+  import->type = funcType->name;
+  FunctionTypeUtils::fillFunction(import, funcType);
   queuedImports.push_back(std::unique_ptr<Function>(import));
 }
 
@@ -829,7 +888,7 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
   // This would find our generated functions if we ran it later
   std::vector<Name> toRemove;
   for (auto& import : wasm.functions) {
-    if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+    if (import->imported() && import->base.hasSubstring(EM_ASM_PREFIX)) {
       toRemove.push_back(import->name);
     }
   }
@@ -871,7 +930,8 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
     }
     auto* addrConst = consts.list[0];
-    auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
+    int32_t address = addrConst->value.geti32();
+    auto code = codeForConstAddr(wasm, segmentOffsets, address);
     codeByName[funcName] = code;
   }
 };
@@ -994,6 +1054,13 @@ struct FixInvokeFunctionNamesWalker
       wasm.removeFunction(importName);
     }
     ModuleUtils::renameFunctions(wasm, importRenames);
+    ImportInfo imports(wasm);
+    for (auto& pair : importRenames) {
+      // Update any associated GOT.func import.
+      if (auto g = imports.getImportedGlobal("GOT.func", pair.first)) {
+        g->base = pair.second;
+      }
+    }
   }
 };
 
@@ -1038,19 +1105,13 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
 
   // print
   commaFirst = true;
-  if (!emAsmWalker.sigsForCode.empty()) {
+  if (!emAsmWalker.asmConsts.empty()) {
     meta << "  \"asmConsts\": {";
-    for (auto& pair : emAsmWalker.sigsForCode) {
-      auto& code = pair.first;
-      auto& sigs = pair.second;
+    for (auto& asmConst : emAsmWalker.asmConsts) {
       meta << nextElement();
-      meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
-      printSet(meta, sigs);
-      meta << ", ";
-
-      // TODO: proxying to main thread. Currently this is unsupported, so proxy
-      // mode is "none", represented by an empty string.
-      meta << "[\"\"]";
+      meta << '"' << asmConst.id << "\": [\"" << asmConst.code << "\", ";
+      printSet(meta, asmConst.sigs);
+      meta << ", [\"" << proxyingSuffix(asmConst.proxy) << "\"]";
 
       meta << "]";
     }
@@ -1096,7 +1157,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (emJsWalker.codeByName.count(import->base.str) == 0 &&
-        !import->base.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
+        !import->base.startsWith(EM_ASM_PREFIX.str) &&
         !import->base.startsWith("invoke_")) {
       if (declares.insert(import->base.str).second) {
         meta << nextElement() << '"' << import->base.str << '"';
@@ -1208,6 +1269,27 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     lastEnd = offset + seg.data.size();
   }
   wasm.memory.segments.clear();
+}
+
+void EmscriptenGlueGenerator::exportWasiStart() {
+  // If main exists, export a function to call it per the wasi standard.
+  Name main = "main";
+  if (!wasm.getFunctionOrNull(main)) {
+    return;
+  }
+  Name _start = "_start";
+  if (wasm.getExportOrNull(_start)) {
+    return;
+  }
+  Builder builder(wasm);
+  auto* body = builder.makeDrop(builder.makeCall(
+    main,
+    {LiteralUtils::makeZero(i32, wasm), LiteralUtils::makeZero(i32, wasm)},
+    i32));
+  auto* func =
+    builder.makeFunction(_start, std::vector<wasm::Type>{}, none, {}, body);
+  wasm.addFunction(func);
+  wasm.addExport(builder.makeExport(_start, _start, ExternalKind::Function));
 }
 
 } // namespace wasm

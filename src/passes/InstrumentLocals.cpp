@@ -57,11 +57,15 @@ Name get_i32("get_i32");
 Name get_i64("get_i64");
 Name get_f32("get_f32");
 Name get_f64("get_f64");
+Name get_anyref("get_anyref");
+Name get_exnref("get_exnref");
 
 Name set_i32("set_i32");
 Name set_i64("set_i64");
 Name set_f32("set_f32");
 Name set_f64("set_f64");
+Name set_anyref("set_anyref");
+Name set_exnref("set_exnref");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitLocalGet(LocalGet* curr) {
@@ -82,9 +86,11 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case v128:
         assert(false && "v128 not implemented yet");
       case anyref:
-        assert(false && "anyref not implemented yet");
+        import = get_anyref;
+        break;
       case exnref:
-        assert(false && "exnref not implemented yet");
+        import = get_exnref;
+        break;
       case none:
         WASM_UNREACHABLE();
       case unreachable:
@@ -99,6 +105,13 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   }
 
   void visitLocalSet(LocalSet* curr) {
+    // We don't instrument pop instructions. They are automatically deleted when
+    // writing binary and generated when reading binary, so they don't work with
+    // local set/get instrumentation.
+    if (curr->value->is<Pop>()) {
+      return;
+    }
+
     Builder builder(*getModule());
     Name import;
     switch (curr->value->type) {
@@ -116,9 +129,11 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case v128:
         assert(false && "v128 not implemented yet");
       case anyref:
-        assert(false && "anyref not implemented yet");
+        import = set_anyref;
+        break;
       case exnref:
-        assert(false && "exnref not implemented yet");
+        import = set_exnref;
+        break;
       case unreachable:
         return; // nothing to do here
       case none:
@@ -141,6 +156,15 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     addImport(curr, set_i64, "jiij");
     addImport(curr, set_f32, "fiif");
     addImport(curr, set_f64, "diid");
+
+    if (curr->features.hasReferenceTypes()) {
+      addImport(curr, get_anyref, "aiia");
+      addImport(curr, set_anyref, "aiia");
+    }
+    if (curr->features.hasExceptionHandling()) {
+      addImport(curr, get_exnref, "eiie");
+      addImport(curr, set_exnref, "eiie");
+    }
   }
 
 private:

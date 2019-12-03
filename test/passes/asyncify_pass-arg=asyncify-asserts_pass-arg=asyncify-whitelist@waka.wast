@@ -1,0 +1,25 @@
+(module
+  (memory 1 2)
+  (type $f (func))
+  (import "env" "import" (func $import))
+  (import "env" "import2" (func $import2 (result i32)))
+  (import "env" "import3" (func $import3 (param i32)))
+  (table 1 1)
+  (func $calls-import
+    (call $import)
+  )
+  (func $calls-import2-drop
+    (drop (call $import2))
+  )
+  (func $returns (result i32)
+    (local $x i32)
+    (local.set $x (call $import2))
+    (local.get $x)
+  )
+  (func $calls-indirect (param $x i32)
+    (call_indirect (type $f)
+      (local.get $x)
+    )
+  )
+)
+

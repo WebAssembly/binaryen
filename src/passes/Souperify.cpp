@@ -254,7 +254,7 @@ struct Trace {
             (node != toInfer &&
              excludeAsChildren.find(node) != excludeAsChildren.end())) {
           auto type = node->getWasmType();
-          assert(isConcreteType(type));
+          assert(type.isConcrete());
           auto* var = Node::makeVar(type);
           replacements[node] = std::unique_ptr<Node>(var);
           node = var;
@@ -458,8 +458,7 @@ struct Printer {
     assert(node);
     switch (node->type) {
       case Node::Type::Var: {
-        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType)
-                  << " = var";
+        std::cout << "%" << indexing[node] << ":" << node->wasmType << " = var";
         break; // nothing more to add
       }
       case Node::Type::Expr: {
@@ -496,8 +495,7 @@ struct Printer {
       }
       case Node::Type::Zext: {
         auto* child = node->getValue(0);
-        std::cout << "%" << indexing[node] << ':'
-                  << printType(child->getWasmType());
+        std::cout << "%" << indexing[node] << ':' << child->getWasmType();
         std::cout << " = zext ";
         printInternal(child);
         break;
@@ -523,7 +521,7 @@ struct Printer {
   }
 
   void print(Literal value) {
-    std::cout << value.getInteger() << ':' << printType(value.type);
+    std::cout << value.getInteger() << ':' << value.type;
   }
 
   void printInternal(Node* node) {

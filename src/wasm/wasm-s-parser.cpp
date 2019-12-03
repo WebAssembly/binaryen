@@ -1251,10 +1251,10 @@ static uint8_t parseMemBytes(const char*& s, uint8_t fallback) {
 static size_t parseMemAttributes(Element& s,
                                  Address* offset,
                                  Address* align,
-                                 Address fallback) {
+                                 Address fallbackAlign) {
   size_t i = 1;
   *offset = 0;
-  *align = fallback;
+  *align = fallbackAlign;
   while (!s[i]->isList()) {
     const char* str = s[i]->c_str();
     const char* eq = strchr(str, '=');
@@ -1493,6 +1493,36 @@ Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
+  auto ret = allocator.alloc<SIMDLoad>();
+  ret->op = op;
+  Address defaultAlign;
+  switch (op) {
+    case LoadSplatVec8x16:
+      defaultAlign = 1;
+      break;
+    case LoadSplatVec16x8:
+      defaultAlign = 2;
+      break;
+    case LoadSplatVec32x4:
+      defaultAlign = 4;
+      break;
+    case LoadSplatVec64x2:
+    case LoadExtSVec8x8ToVecI16x8:
+    case LoadExtUVec8x8ToVecI16x8:
+    case LoadExtSVec16x4ToVecI32x4:
+    case LoadExtUVec16x4ToVecI32x4:
+    case LoadExtSVec32x2ToVecI64x2:
+    case LoadExtUVec32x2ToVecI64x2:
+      defaultAlign = 8;
+      break;
+  }
+  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, defaultAlign);
+  ret->ptr = parseExpression(s[i]);
+  ret->finalize();
+  return ret;
+}
+
 Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
   auto ret = allocator.alloc<MemoryInit>();
   ret->segment = atoi(s[1]->str().c_str());
@@ -1567,7 +1597,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);
-    block->finalize(ret->type);
+    block->finalize(type);
     return block;
   }
   return ret;
@@ -1762,9 +1792,9 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     ret->body = parseExpression(*s[i++]);
   }
   if (!elementStartsWith(*s[i], "catch")) {
-    throw ParseException("catch clause does not exist");
+    throw ParseException("catch clause does not exist", s[i]->line, s[i]->col);
   }
-  ret->catchBody = makeCatch(*s[i++]);
+  ret->catchBody = makeCatch(*s[i++], type);
   ret->finalize(type);
   nameMapper.popLabelName(label);
   // create a break target if we must
@@ -1772,13 +1802,13 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);
-    block->finalize(ret->type);
+    block->finalize(type);
     return block;
   }
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeCatch(Element& s) {
+Expression* SExpressionWasmBuilder::makeCatch(Element& s, Type type) {
   if (!elementStartsWith(s, "catch")) {
     throw ParseException("invalid catch clause", s.line, s.col);
   }
@@ -1786,7 +1816,10 @@ Expression* SExpressionWasmBuilder::makeCatch(Element& s) {
   for (size_t i = 1; i < s.size(); i++) {
     ret->list.push_back(parseExpression(s[i]));
   }
-  ret->finalize();
+  if (ret->list.size() == 1) {
+    return ret->list[0];
+  }
+  ret->finalize(type);
   return ret;
 }
 
@@ -1826,7 +1859,7 @@ Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
   assert(event && "br_on_exn's event must exist");
   // Copy params info into BrOnExn, because it is necessary when BrOnExn is
   // refinalized without the module.
-  ret->eventParams = event->params;
+  ret->sent = event->sig.params;
   ret->finalize();
   return ret;
 }
@@ -2160,7 +2193,6 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       j = parseMemoryLimits(inner, j);
     }
   } else if (kind == ExternalKind::Event) {
-    FunctionType* functionType = nullptr;
     auto event = make_unique<Event>();
     if (j >= inner.size()) {
       throw ParseException("event does not have an attribute", s.line, s.col);
@@ -2170,12 +2202,14 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       throw ParseException("invalid attribute", attrElem.line, attrElem.col);
     }
     event->attribute = atoi(attrElem[1]->c_str());
-    Type fakeResult; // just to call parseTypeUse
-    j = parseTypeUse(inner, j, functionType, event->params, fakeResult);
+    std::vector<Type> paramTypes;
+    FunctionType* fakeFunctionType; // just to call parseTypeUse
+    Type results;
+    j = parseTypeUse(inner, j, fakeFunctionType, paramTypes, results);
     event->name = name;
     event->module = module;
     event->base = base;
-    event->type = functionType->name;
+    event->sig = Signature(Type(paramTypes), results);
     wasm.addEvent(event.release());
   }
   // If there are more elements, they are invalid
@@ -2481,11 +2515,11 @@ void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
   event->attribute = atoi(attrElem[1]->c_str());
 
   // Parse typeuse
-  FunctionType* functionType = nullptr;
-  Type fakeResult; // just co call parseTypeUse
-  i = parseTypeUse(s, i, functionType, event->params, fakeResult);
-  assert(functionType && "functionType should've been set by parseTypeUse");
-  event->type = functionType->name;
+  std::vector<Type> paramTypes;
+  Type results;
+  FunctionType* fakeFunctionType; // just co call parseTypeUse
+  i = parseTypeUse(s, i, fakeFunctionType, paramTypes, results);
+  event->sig = Signature(Type(paramTypes), results);
 
   // If there are more elements, they are invalid
   if (i < s.size()) {

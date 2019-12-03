@@ -201,10 +201,13 @@ struct DeadCodeElimination
     }
   }
 
-  // ifs need special handling
+  // ifs and trys need special handling: only one of (if body and else body /
+  // try body and catch body) should be reachable to make the whole of (if /
+  // try) to be reachable.
 
   // stack of reachable state, for forking and joining
   std::vector<bool> ifStack;
+  std::vector<bool> tryStack;
 
   static void doAfterIfCondition(DeadCodeElimination* self,
                                  Expression** currp) {
@@ -229,6 +232,26 @@ struct DeadCodeElimination
     }
     // the if may have had a type, but can now be unreachable, which allows more
     // reduction outside
+    typeUpdater.maybeUpdateTypeToUnreachable(curr);
+  }
+
+  static void doBeforeTryBody(DeadCodeElimination* self, Expression** currp) {
+    self->tryStack.push_back(self->reachable);
+  }
+
+  static void doAfterTryBody(DeadCodeElimination* self, Expression** currp) {
+    bool reachableBefore = self->tryStack.back();
+    self->tryStack.pop_back();
+    self->tryStack.push_back(self->reachable);
+    self->reachable = reachableBefore;
+  }
+
+  void visitTry(Try* curr) {
+    // the tryStack has the branch that joins us
+    reachable = reachable || tryStack.back();
+    tryStack.pop_back();
+    // the try may have had a type, but can now be unreachable, which allows
+    // more reduction outside
     typeUpdater.maybeUpdateTypeToUnreachable(curr);
   }
 
@@ -310,6 +333,8 @@ struct DeadCodeElimination
           DELEGATE(SIMDTernary);
         case Expression::Id::SIMDShiftId:
           DELEGATE(SIMDShift);
+        case Expression::Id::SIMDLoadId:
+          DELEGATE(SIMDLoad);
         case Expression::Id::MemoryInitId:
           DELEGATE(MemoryInit);
         case Expression::Id::DataDropId:
@@ -347,6 +372,12 @@ struct DeadCodeElimination
       self->pushTask(DeadCodeElimination::scan, &curr->cast<If>()->ifTrue);
       self->pushTask(DeadCodeElimination::doAfterIfCondition, currp);
       self->pushTask(DeadCodeElimination::scan, &curr->cast<If>()->condition);
+    } else if (curr->is<Try>()) {
+      self->pushTask(DeadCodeElimination::doVisitTry, currp);
+      self->pushTask(DeadCodeElimination::scan, &curr->cast<Try>()->catchBody);
+      self->pushTask(DeadCodeElimination::doAfterTryBody, currp);
+      self->pushTask(DeadCodeElimination::scan, &curr->cast<Try>()->body);
+      self->pushTask(DeadCodeElimination::doBeforeTryBody, currp);
     } else {
       super::scan(self, currp);
     }

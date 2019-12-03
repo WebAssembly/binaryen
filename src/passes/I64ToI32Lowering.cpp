@@ -1504,7 +1504,7 @@ private:
     std::vector<Expression*> children;
     bool hasUnreachable = false;
     for (auto* child : ChildIterator(curr)) {
-      if (isConcreteType(child->type)) {
+      if (child->type.isConcrete()) {
         child = builder->makeDrop(child);
       } else if (child->type == unreachable) {
         hasUnreachable = true;

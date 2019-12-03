@@ -87,15 +87,6 @@
     (f64.const -3.4)
    )
   )
-  (if
-   (f64.gt
-    (f64.const 0)
-    (f64.const 0)
-   )
-   (return
-    (f64.const 5.6)
-   )
-  )
   (f64.const 1.2)
  )
  (func $doubleCompares (; 9 ;) (; has Stack IR ;) (param $0 f64) (param $1 f64) (result f64)
@@ -577,7 +568,7 @@
   (global.set $Int
    (i32.const 30)
   )
-  (global.get $Int)
+  (i32.const 30)
  )
  (func $usesGlobalSet2 (; 37 ;) (; has Stack IR ;) (result i32)
   (global.set $Int
@@ -1177,13 +1168,7 @@
     (global.set $Int
      (i32.const 1)
     )
-    (i32.add
-     (i32.and
-      (global.get $Int)
-      (i32.const 7)
-     )
-     (i32.const 16)
-    )
+    (i32.const 17)
    )
   )
   (call $emscripten_log)

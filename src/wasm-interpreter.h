@@ -141,11 +141,11 @@ public:
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() &&
-        (isConcreteType(curr->type) || isConcreteType(ret.value.type))) {
+        (curr->type.isConcrete() || ret.value.type.isConcrete())) {
 #if 1 // def WASM_INTERPRETER_DEBUG
       if (ret.value.type != curr->type) {
-        std::cerr << "expected " << printType(curr->type) << ", seeing "
-                  << printType(ret.value.type) << " from\n"
+        std::cerr << "expected " << curr->type << ", seeing " << ret.value.type
+                  << " from\n"
                   << curr << '\n';
       }
 #endif
@@ -448,6 +448,22 @@ public:
         return value.convertSToF64x2();
       case ConvertUVecI64x2ToVecF64x2:
         return value.convertUToF64x2();
+      case WidenLowSVecI8x16ToVecI16x8:
+        return value.widenLowSToVecI16x8();
+      case WidenHighSVecI8x16ToVecI16x8:
+        return value.widenHighSToVecI16x8();
+      case WidenLowUVecI8x16ToVecI16x8:
+        return value.widenLowUToVecI16x8();
+      case WidenHighUVecI8x16ToVecI16x8:
+        return value.widenHighUToVecI16x8();
+      case WidenLowSVecI16x8ToVecI32x4:
+        return value.widenLowSToVecI32x4();
+      case WidenHighSVecI16x8ToVecI32x4:
+        return value.widenHighSToVecI32x4();
+      case WidenLowUVecI16x8ToVecI32x4:
+        return value.widenLowUToVecI32x4();
+      case WidenHighUVecI16x8ToVecI32x4:
+        return value.widenHighUToVecI32x4();
       case InvalidUnary:
         WASM_UNREACHABLE();
     }
@@ -466,10 +482,10 @@ public:
     }
     Literal right = flow.value;
     NOTE_EVAL2(left, right);
-    assert(isConcreteType(curr->left->type) ? left.type == curr->left->type
-                                            : true);
-    assert(isConcreteType(curr->right->type) ? right.type == curr->right->type
-                                             : true);
+    assert(curr->left->type.isConcrete() ? left.type == curr->left->type
+                                         : true);
+    assert(curr->right->type.isConcrete() ? right.type == curr->right->type
+                                          : true);
     switch (curr->op) {
       case AddInt32:
       case AddInt64:
@@ -724,6 +740,8 @@ public:
         return left.orV128(right);
       case XorVec128:
         return left.xorV128(right);
+      case AndNotVec128:
+        return left.andV128(right.notV128());
 
       case AddVecI8x16:
         return left.addI8x16(right);
@@ -739,6 +757,14 @@ public:
         return left.subSaturateUI8x16(right);
       case MulVecI8x16:
         return left.mulI8x16(right);
+      case MinSVecI8x16:
+        return left.minSI8x16(right);
+      case MinUVecI8x16:
+        return left.minUI8x16(right);
+      case MaxSVecI8x16:
+        return left.maxSI8x16(right);
+      case MaxUVecI8x16:
+        return left.maxUI8x16(right);
       case AddVecI16x8:
         return left.addI16x8(right);
       case AddSatSVecI16x8:
@@ -753,12 +779,30 @@ public:
         return left.subSaturateUI16x8(right);
       case MulVecI16x8:
         return left.mulI16x8(right);
+      case MinSVecI16x8:
+        return left.minSI16x8(right);
+      case MinUVecI16x8:
+        return left.minUI16x8(right);
+      case MaxSVecI16x8:
+        return left.maxSI16x8(right);
+      case MaxUVecI16x8:
+        return left.maxUI16x8(right);
       case AddVecI32x4:
         return left.addI32x4(right);
       case SubVecI32x4:
         return left.subI32x4(right);
       case MulVecI32x4:
         return left.mulI32x4(right);
+      case MinSVecI32x4:
+        return left.minSI32x4(right);
+      case MinUVecI32x4:
+        return left.minUI32x4(right);
+      case MaxSVecI32x4:
+        return left.maxSI32x4(right);
+      case MaxUVecI32x4:
+        return left.maxUI32x4(right);
+      case DotSVecI16x8ToVecI32x4:
+        return left.dotSI16x8toI32x4(right);
       case AddVecI64x2:
         return left.addI64x2(right);
       case SubVecI64x2:
@@ -788,6 +832,18 @@ public:
         return left.minF64x2(right);
       case MaxVecF64x2:
         return left.maxF64x2(right);
+
+      case NarrowSVecI16x8ToVecI8x16:
+        return left.narrowSToVecI8x16(right);
+      case NarrowUVecI16x8ToVecI8x16:
+        return left.narrowUToVecI8x16(right);
+      case NarrowSVecI32x4ToVecI16x8:
+        return left.narrowSToVecI16x8(right);
+      case NarrowUVecI32x4ToVecI16x8:
+        return left.narrowUToVecI16x8(right);
+
+      case SwizzleVec8x16:
+        return left.swizzleVec8x16(right);
 
       case InvalidBinary:
         WASM_UNREACHABLE();
@@ -1058,6 +1114,9 @@ public:
   Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE(); }
   Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE(); }
   Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
+  Flow visitSIMDLoad(SIMDLoad*) { WASM_UNREACHABLE(); }
+  Flow visitSIMDLoadSplat(SIMDLoad*) { WASM_UNREACHABLE(); }
+  Flow visitSIMDLoadExtend(SIMDLoad*) { WASM_UNREACHABLE(); }
   Flow visitPush(Push*) { WASM_UNREACHABLE(); }
   Flow visitPop(Pop*) { WASM_UNREACHABLE(); }
   Flow visitTry(Try*) { WASM_UNREACHABLE(); }
@@ -1392,9 +1451,8 @@ private:
           assert(function->isParam(i));
           if (function->params[i] != arguments[i].type) {
             std::cerr << "Function `" << function->name << "` expects type "
-                      << printType(function->params[i]) << " for parameter "
-                      << i << ", got " << printType(arguments[i].type) << "."
-                      << std::endl;
+                      << function->params[i] << " for parameter " << i
+                      << ", got " << arguments[i].type << "." << std::endl;
             WASM_UNREACHABLE();
           }
           locals[i] = arguments[i];
@@ -1671,6 +1729,113 @@ private:
       }
       // TODO: add threads support!
       return Literal(int32_t(0)); // none woken up
+    }
+    Flow visitSIMDLoad(SIMDLoad* curr) {
+      NOTE_ENTER("SIMDLoad");
+      switch (curr->op) {
+        case LoadSplatVec8x16:
+        case LoadSplatVec16x8:
+        case LoadSplatVec32x4:
+        case LoadSplatVec64x2:
+          return visitSIMDLoadSplat(curr);
+        case LoadExtSVec8x8ToVecI16x8:
+        case LoadExtUVec8x8ToVecI16x8:
+        case LoadExtSVec16x4ToVecI32x4:
+        case LoadExtUVec16x4ToVecI32x4:
+        case LoadExtSVec32x2ToVecI64x2:
+        case LoadExtUVec32x2ToVecI64x2:
+          return visitSIMDLoadExtend(curr);
+      }
+      WASM_UNREACHABLE();
+    }
+    Flow visitSIMDLoadSplat(SIMDLoad* curr) {
+      Load load;
+      load.type = i32;
+      load.bytes = curr->getMemBytes();
+      load.signed_ = false;
+      load.offset = curr->offset;
+      load.align = curr->align;
+      load.isAtomic = false;
+      load.ptr = curr->ptr;
+      Literal (Literal::*splat)() const = nullptr;
+      switch (curr->op) {
+        case LoadSplatVec8x16:
+          splat = &Literal::splatI8x16;
+          break;
+        case LoadSplatVec16x8:
+          splat = &Literal::splatI16x8;
+          break;
+        case LoadSplatVec32x4:
+          splat = &Literal::splatI32x4;
+          break;
+        case LoadSplatVec64x2:
+          load.type = i64;
+          splat = &Literal::splatI64x2;
+          break;
+        default:
+          WASM_UNREACHABLE();
+      }
+      load.finalize();
+      Flow flow = this->visit(&load);
+      if (flow.breaking()) {
+        return flow;
+      }
+      return (flow.value.*splat)();
+    }
+    Flow visitSIMDLoadExtend(SIMDLoad* curr) {
+      Flow flow = this->visit(curr->ptr);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow);
+      Address src(uint32_t(flow.value.geti32()));
+      auto loadLane = [&](Address addr) {
+        switch (curr->op) {
+          case LoadExtSVec8x8ToVecI16x8:
+            return Literal(int32_t(instance.externalInterface->load8s(addr)));
+          case LoadExtUVec8x8ToVecI16x8:
+            return Literal(int32_t(instance.externalInterface->load8u(addr)));
+          case LoadExtSVec16x4ToVecI32x4:
+            return Literal(int32_t(instance.externalInterface->load16s(addr)));
+          case LoadExtUVec16x4ToVecI32x4:
+            return Literal(int32_t(instance.externalInterface->load16u(addr)));
+          case LoadExtSVec32x2ToVecI64x2:
+            return Literal(int64_t(instance.externalInterface->load32s(addr)));
+          case LoadExtUVec32x2ToVecI64x2:
+            return Literal(int64_t(instance.externalInterface->load32u(addr)));
+          default:
+            WASM_UNREACHABLE();
+        }
+        WASM_UNREACHABLE();
+      };
+      auto fillLanes = [&](auto lanes, size_t laneBytes) {
+        for (auto& lane : lanes) {
+          lane = loadLane(
+            instance.getFinalAddress(Literal(uint32_t(src)), laneBytes));
+          src = Address(uint32_t(src) + laneBytes);
+        }
+        return Literal(lanes);
+      };
+      switch (curr->op) {
+        case LoadExtSVec8x8ToVecI16x8:
+        case LoadExtUVec8x8ToVecI16x8: {
+          std::array<Literal, 8> lanes;
+          return fillLanes(lanes, 1);
+        }
+        case LoadExtSVec16x4ToVecI32x4:
+        case LoadExtUVec16x4ToVecI32x4: {
+          std::array<Literal, 4> lanes;
+          return fillLanes(lanes, 2);
+        }
+        case LoadExtSVec32x2ToVecI64x2:
+        case LoadExtUVec32x2ToVecI64x2: {
+          std::array<Literal, 2> lanes;
+          return fillLanes(lanes, 4);
+        }
+        default:
+          WASM_UNREACHABLE();
+      }
+      WASM_UNREACHABLE();
     }
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");

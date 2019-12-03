@@ -276,6 +276,7 @@ public:
   void visitSIMDShuffle(SIMDShuffle* curr);
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
+  void visitSIMDLoad(SIMDLoad* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -351,7 +352,7 @@ void FunctionValidator::visitBlock(Block* curr) {
     assert(iter != breakInfos.end()); // we set it ourselves
     auto& info = iter->second;
     if (info.hasBeenSet()) {
-      if (isConcreteType(curr->type)) {
+      if (curr->type.isConcrete()) {
         shouldBeTrue(info.arity != 0,
                      curr,
                      "break arities must be > 0 if block has a value");
@@ -362,15 +363,14 @@ void FunctionValidator::visitBlock(Block* curr) {
       }
       // none or unreachable means a poison value that we should ignore - if
       // consumed, it will error
-      if (isConcreteType(info.type) && isConcreteType(curr->type)) {
+      if (info.type.isConcrete() && curr->type.isConcrete()) {
         shouldBeEqual(
           curr->type,
           info.type,
           curr,
           "block+breaks must have right type if breaks return a value");
       }
-      if (isConcreteType(curr->type) && info.arity &&
-          info.type != unreachable) {
+      if (curr->type.isConcrete() && info.arity && info.type != unreachable) {
         shouldBeEqual(curr->type,
                       info.type,
                       curr,
@@ -380,7 +380,7 @@ void FunctionValidator::visitBlock(Block* curr) {
         info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
       if (curr->list.size() > 0) {
         auto last = curr->list.back()->type;
-        if (isConcreteType(last) && info.type != unreachable) {
+        if (last.isConcrete() && info.type != unreachable) {
           shouldBeEqual(last,
                         info.type,
                         curr,
@@ -400,7 +400,7 @@ void FunctionValidator::visitBlock(Block* curr) {
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       if (!shouldBeTrue(
-            !isConcreteType(curr->list[i]->type),
+            !curr->list[i]->type.isConcrete(),
             curr,
             "non-final block elements returning a value must be drop()ed "
             "(binaryen's autodrop option might help you)") &&
@@ -413,13 +413,13 @@ void FunctionValidator::visitBlock(Block* curr) {
   }
   if (curr->list.size() > 0) {
     auto backType = curr->list.back()->type;
-    if (!isConcreteType(curr->type)) {
-      shouldBeFalse(isConcreteType(backType),
+    if (!curr->type.isConcrete()) {
+      shouldBeFalse(backType.isConcrete(),
                     curr,
                     "if block is not returning a value, final element should "
                     "not flow out a value");
     } else {
-      if (isConcreteType(backType)) {
+      if (backType.isConcrete()) {
         shouldBeEqual(
           curr->type,
           backType,
@@ -434,7 +434,7 @@ void FunctionValidator::visitBlock(Block* curr) {
       }
     }
   }
-  if (isConcreteType(curr->type)) {
+  if (curr->type.isConcrete()) {
     shouldBeTrue(
       curr->list.size() > 0, curr, "block with a value must not be empty");
   }
@@ -453,7 +453,7 @@ void FunctionValidator::visitLoop(Loop* curr) {
     breakInfos.erase(iter);
   }
   if (curr->type == none) {
-    shouldBeFalse(isConcreteType(curr->body->type),
+    shouldBeFalse(curr->body->type.isConcrete(),
                   curr,
                   "bad body for a loop that has no value");
   }
@@ -465,7 +465,7 @@ void FunctionValidator::visitIf(If* curr) {
                curr,
                "if condition must be valid");
   if (!curr->ifFalse) {
-    shouldBeFalse(isConcreteType(curr->ifTrue->type),
+    shouldBeFalse(curr->ifTrue->type.isConcrete(),
                   curr,
                   "if without else must not return a value in body");
     if (curr->condition->type != unreachable) {
@@ -498,7 +498,7 @@ void FunctionValidator::visitIf(If* curr) {
                       "unreachable if-else must have unreachable false");
       }
     }
-    if (isConcreteType(curr->ifTrue->type)) {
+    if (curr->ifTrue->type.isConcrete()) {
       shouldBeEqual(curr->type,
                     curr->ifTrue->type,
                     curr,
@@ -508,7 +508,7 @@ void FunctionValidator::visitIf(If* curr) {
                                         curr,
                                         "other arm must match concrete ifTrue");
     }
-    if (isConcreteType(curr->ifFalse->type)) {
+    if (curr->ifFalse->type.isConcrete()) {
       shouldBeEqual(curr->type,
                     curr->ifFalse->type,
                     curr,
@@ -704,7 +704,7 @@ void FunctionValidator::visitLocalGet(LocalGet* curr) {
   shouldBeTrue(curr->index < getFunction()->getNumLocals(),
                curr,
                "local.get index must be small enough");
-  shouldBeTrue(isConcreteType(curr->type),
+  shouldBeTrue(curr->type.isConcrete(),
                curr,
                "local.get must have a valid type - check what you provided "
                "when you constructed the node");
@@ -1054,6 +1054,36 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
     curr->shift->type, i32, curr, "expected shift amount to have type i32");
 }
 
+void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, v128, curr, "load_splat must have type v128");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type, i32, curr, "load_splat address must have type i32");
+  Type memAlignType = none;
+  switch (curr->op) {
+    case LoadSplatVec8x16:
+    case LoadSplatVec16x8:
+    case LoadSplatVec32x4:
+      memAlignType = i32;
+      break;
+    case LoadSplatVec64x2:
+    case LoadExtSVec8x8ToVecI16x8:
+    case LoadExtUVec8x8ToVecI16x8:
+    case LoadExtSVec16x4ToVecI32x4:
+    case LoadExtUVec16x4ToVecI32x4:
+    case LoadExtSVec32x2ToVecI64x2:
+    case LoadExtUVec32x2ToVecI64x2:
+      memAlignType = i64;
+      break;
+  }
+  Index bytes = curr->getMemBytes();
+  validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
+}
+
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
@@ -1300,6 +1330,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case AndVec128:
     case OrVec128:
     case XorVec128:
+    case AndNotVec128:
     case AddVecI8x16:
     case AddSatSVecI8x16:
     case AddSatUVecI8x16:
@@ -1307,6 +1338,10 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case SubSatSVecI8x16:
     case SubSatUVecI8x16:
     case MulVecI8x16:
+    case MinSVecI8x16:
+    case MinUVecI8x16:
+    case MaxSVecI8x16:
+    case MaxUVecI8x16:
     case AddVecI16x8:
     case AddSatSVecI16x8:
     case AddSatUVecI16x8:
@@ -1314,9 +1349,18 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case SubSatSVecI16x8:
     case SubSatUVecI16x8:
     case MulVecI16x8:
+    case MinSVecI16x8:
+    case MinUVecI16x8:
+    case MaxSVecI16x8:
+    case MaxUVecI16x8:
     case AddVecI32x4:
     case SubVecI32x4:
     case MulVecI32x4:
+    case MinSVecI32x4:
+    case MinUVecI32x4:
+    case MaxSVecI32x4:
+    case MaxUVecI32x4:
+    case DotSVecI16x8ToVecI32x4:
     case AddVecI64x2:
     case SubVecI64x2:
     case AddVecF32x4:
@@ -1330,7 +1374,12 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MulVecF64x2:
     case DivVecF64x2:
     case MinVecF64x2:
-    case MaxVecF64x2: {
+    case MaxVecF64x2:
+    case NarrowSVecI16x8ToVecI8x16:
+    case NarrowUVecI16x8ToVecI8x16:
+    case NarrowSVecI32x4ToVecI16x8:
+    case NarrowUVecI32x4ToVecI16x8:
+    case SwizzleVec8x16: {
       shouldBeEqualOrFirstIsUnreachable(
         curr->left->type, v128, curr, "v128 op");
       shouldBeEqualOrFirstIsUnreachable(
@@ -1528,6 +1577,14 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case ConvertUVecI32x4ToVecF32x4:
     case ConvertSVecI64x2ToVecF64x2:
     case ConvertUVecI64x2ToVecF64x2:
+    case WidenLowSVecI8x16ToVecI16x8:
+    case WidenHighSVecI8x16ToVecI16x8:
+    case WidenLowUVecI8x16ToVecI16x8:
+    case WidenHighUVecI8x16ToVecI16x8:
+    case WidenLowSVecI16x8ToVecI32x4:
+    case WidenHighSVecI16x8ToVecI32x4:
+    case WidenLowUVecI16x8ToVecI32x4:
+    case WidenHighUVecI16x8ToVecI32x4:
       shouldBeEqual(curr->type, v128, curr, "expected v128 type");
       shouldBeEqual(curr->value->type, v128, curr, "expected v128 operand");
       break;
@@ -1568,7 +1625,7 @@ void FunctionValidator::visitSelect(Select* curr) {
 }
 
 void FunctionValidator::visitDrop(Drop* curr) {
-  shouldBeTrue(isConcreteType(curr->value->type) ||
+  shouldBeTrue(curr->value->type.isConcrete() ||
                  curr->value->type == unreachable,
                curr,
                "can only drop a valid value");
@@ -1620,14 +1677,14 @@ void FunctionValidator::visitTry(Try* curr) {
       curr->catchBody,
       "try's type does not match catch's body type");
   }
-  if (isConcreteType(curr->body->type)) {
+  if (curr->body->type.isConcrete()) {
     shouldBeEqualOrFirstIsUnreachable(
       curr->catchBody->type,
       curr->body->type,
       curr->catchBody,
       "try's body type must match catch's body type");
   }
-  if (isConcreteType(curr->catchBody->type)) {
+  if (curr->catchBody->type.isConcrete()) {
     shouldBeEqualOrFirstIsUnreachable(
       curr->body->type,
       curr->catchBody->type,
@@ -1646,14 +1703,15 @@ void FunctionValidator::visitThrow(Throw* curr) {
   if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
     return;
   }
-  if (!shouldBeTrue(curr->operands.size() == event->params.size(),
+  if (!shouldBeTrue(curr->operands.size() == event->sig.params.size(),
                     curr,
                     "event's param numbers must match")) {
     return;
   }
+  const std::vector<Type>& paramTypes = event->sig.params.expand();
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
-                                           event->params[i],
+                                           paramTypes[i],
                                            curr->operands[i],
                                            "event param types must match") &&
         !info.quiet) {
@@ -1674,10 +1732,10 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
   Event* event = getModule()->getEventOrNull(curr->event);
   shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
-  shouldBeTrue(event->params == curr->eventParams,
+  shouldBeTrue(event->sig.params == curr->sent,
                curr,
                "br_on_exn's event params and event's params are different");
-  noteBreak(curr->name, curr->getSingleSentType(), curr);
+  noteBreak(curr->name, curr->sent, curr);
   shouldBeTrue(curr->exnref->type == unreachable ||
                  curr->exnref->type == exnref,
                curr,
@@ -1699,11 +1757,11 @@ void FunctionValidator::visitFunction(Function* curr) {
   FeatureSet typeFeatures = getFeatures(curr->result);
   for (auto type : curr->params) {
     typeFeatures |= getFeatures(type);
-    shouldBeTrue(isConcreteType(type), curr, "params must be concretely typed");
+    shouldBeTrue(type.isConcrete(), curr, "params must be concretely typed");
   }
   for (auto type : curr->vars) {
     typeFeatures |= getFeatures(type);
-    shouldBeTrue(isConcreteType(type), curr, "vars must be concretely typed");
+    shouldBeTrue(type.isConcrete(), curr, "vars must be concretely typed");
   }
   shouldBeTrue(typeFeatures <= getModule()->features,
                curr,
@@ -1837,11 +1895,11 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         //
         // The block has an added type, not derived from the ast itself, so it
         // is ok for it to be either i32 or unreachable.
-        if (!(isConcreteType(oldType) && newType == unreachable)) {
+        if (!(oldType.isConcrete() && newType == unreachable)) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr
-             << "\n(marked as " << printType(oldType) << ", should be "
-             << printType(newType) << ")\n";
+             << "\n(marked as " << oldType << ", should be " << newType
+             << ")\n";
           info.fail(ss.str(), curr, getFunction());
         }
         curr->type = oldType;
@@ -2053,23 +2111,19 @@ static void validateEvents(Module& module, ValidationInfo& info) {
                       "Module has events (event-handling is disabled)");
   }
   for (auto& curr : module.events) {
-    info.shouldBeTrue(
-      curr->type.is(), curr->name, "Event should have a valid type");
-    FunctionType* ft = module.getFunctionType(curr->type);
-    info.shouldBeEqual(
-      ft->result, none, curr->name, "Event type's result type should be none");
     info.shouldBeEqual(curr->attribute,
                        (unsigned)0,
                        curr->attribute,
                        "Currently only attribute 0 is supported");
-    for (auto type : curr->params) {
-      info.shouldBeTrue(isIntegerType(type) || isFloatType(type),
+    info.shouldBeEqual(curr->sig.results,
+                       Type(Type::none),
+                       curr->name,
+                       "Event type's result type should be none");
+    for (auto type : curr->sig.params.expand()) {
+      info.shouldBeTrue(type.isInteger() || type.isFloat(),
                         curr->name,
                         "Values in an event should have integer or float type");
     }
-    info.shouldBeTrue(curr->params == ft->params,
-                      curr->name,
-                      "Event's function type and internal type should match");
   }
 }
 

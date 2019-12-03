@@ -18,6 +18,7 @@ CMakeFiles
 /.ninja_log
 /bin/
 /lib/
+config.h
 
 # files related to bulding in-tree on windows
 /.vs/
@@ -27,6 +28,9 @@ CMakeFiles
 /*.sdf
 /*.VC.opendb
 /Win32/
+
+# files commonly related to building out-of-tree
+/build/
 
 # macOS
 .DS_Store

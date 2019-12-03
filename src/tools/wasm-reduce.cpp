@@ -44,7 +44,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <Windows.h>
+#include <windows.h>
 // Create a string with last error message
 std::string GetLastErrorStdStr() {
   DWORD error = GetLastError();
@@ -466,7 +466,7 @@ struct Reducer
       if (tryToReduceCurrentToNop()) {
         return;
       }
-    } else if (isConcreteType(curr->type)) {
+    } else if (curr->type.isConcrete()) {
       if (tryToReduceCurrentToConst()) {
         return;
       }
@@ -556,7 +556,7 @@ struct Reducer
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
-      if (isConcreteType(child->type) && curr->type == none) {
+      if (child->type.isConcrete() && curr->type == none) {
         if (tryToReplaceCurrent(builder->makeDrop(child))) {
           return;
         }
@@ -567,13 +567,13 @@ struct Reducer
       }
     }
     // If that didn't work, try to replace with a child + a unary conversion
-    if (isConcreteType(curr->type) &&
+    if (curr->type.isConcrete() &&
         !curr->is<Unary>()) { // but not if it's already unary
       for (auto* child : ChildIterator(curr)) {
         if (child->type == curr->type) {
           continue; // already tried
         }
-        if (!isConcreteType(child->type)) {
+        if (!child->type.isConcrete()) {
           continue; // no conversion
         }
         Expression* fixed = nullptr;
@@ -870,7 +870,7 @@ struct Reducer
         auto funcResult = func->result;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
-          if (!(isConcreteType(child->type) || child->type == none)) {
+          if (!(child->type.isConcrete() || child->type == none)) {
             continue; // not something a function can return
           }
           // Try to replace the body with the child, fixing up the function
@@ -1033,6 +1033,8 @@ struct Reducer
 
 int main(int argc, const char* argv[]) {
   std::string input, test, working, command;
+  // By default, look for binaries alongside our own binary.
+  std::string binDir = Path::getDirName(argv[0]);
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
        force = false;
   Options options("wasm-reduce",
@@ -1066,7 +1068,7 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            // Add separator just in case
-           Path::setBinaryenBinDir(argument + Path::getPathSeparator());
+           binDir = argument + Path::getPathSeparator();
          })
     .add("--text",
          "-S",
@@ -1121,10 +1123,13 @@ int main(int argc, const char* argv[]) {
     Colors::setEnabled(false);
   }
 
+  Path::setBinaryenBinDir(binDir);
+
   std::cerr << "|wasm-reduce\n";
   std::cerr << "|input: " << input << '\n';
   std::cerr << "|test: " << test << '\n';
   std::cerr << "|working: " << working << '\n';
+  std::cerr << "|bin dir: " << binDir << '\n';
 
   // get the expected output
   copy_file(input, test);

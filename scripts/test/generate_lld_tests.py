@@ -18,8 +18,9 @@ from __future__ import print_function
 
 import os
 import sys
-from support import run_command
-import shared
+
+from . import shared
+from . import support
 
 
 def files_with_extensions(path, extensions):
@@ -50,7 +51,8 @@ def generate_wast_files(llvm_bin, emscripten_root):
 
         compile_cmd = [
             os.path.join(llvm_bin, 'clang'), src_path, '-o', obj_path,
-            '--target=wasm32-unknown-unknown-wasm',
+            '--target=wasm32-emscripten',
+            '-mllvm', '-enable-emscripten-sjlj',
             '-c',
             '-nostdinc',
             '-Xclang', '-nobuiltininc',
@@ -75,9 +77,9 @@ def generate_wast_files(llvm_bin, emscripten_root):
             link_cmd.append('--entry=main')
 
         try:
-            run_command(compile_cmd)
-            run_command(link_cmd)
-            run_command(shared.WASM_DIS + [wasm_path, '-o', wast_path])
+            support.run_command(compile_cmd)
+            support.run_command(link_cmd)
+            support.run_command(shared.WASM_DIS + [wasm_path, '-o', wast_path])
         finally:
             # Don't need the .o or .wasm files, don't leave them around
             shared.delete_from_orbit(obj_path)

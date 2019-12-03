@@ -159,6 +159,8 @@ const char* getExpressionName(Expression* curr) {
       return "simd_ternary";
     case Expression::Id::SIMDShiftId:
       return "simd_shift";
+    case Expression::Id::SIMDLoadId:
+      return "simd_load";
     case Expression::Id::MemoryInitId:
       return "memory_init";
     case Expression::Id::DataDropId:
@@ -217,7 +219,7 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitBrOnExn(BrOnExn* curr) {
     if (curr->name == targetName) {
-      types.push_back(curr->getSingleSentType());
+      types.push_back(curr->sent);
     }
   }
 
@@ -281,7 +283,7 @@ static void handleUnreachable(Block* block,
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
   // or the final child flows out a value)
-  if (isConcreteType(block->type)) {
+  if (block->type.isConcrete()) {
     return;
   }
   // look for an unreachable child
@@ -312,7 +314,7 @@ void Block::finalize() {
       //  (return)
       //  (i32.const 10)
       // )
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         return;
       }
       // if we are unreachable, we are done
@@ -365,9 +367,9 @@ void If::finalize() {
   if (ifFalse) {
     if (ifTrue->type == ifFalse->type) {
       type = ifTrue->type;
-    } else if (isConcreteType(ifTrue->type) && ifFalse->type == unreachable) {
+    } else if (ifTrue->type.isConcrete() && ifFalse->type == unreachable) {
       type = ifTrue->type;
-    } else if (isConcreteType(ifFalse->type) && ifTrue->type == unreachable) {
+    } else if (ifFalse->type.isConcrete() && ifTrue->type == unreachable) {
       type = ifFalse->type;
     } else {
       type = none;
@@ -626,6 +628,34 @@ void SIMDShift::finalize() {
   }
 }
 
+void SIMDLoad::finalize() {
+  assert(ptr);
+  type = v128;
+  if (ptr->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+Index SIMDLoad::getMemBytes() {
+  switch (op) {
+    case LoadSplatVec8x16:
+      return 1;
+    case LoadSplatVec16x8:
+      return 2;
+    case LoadSplatVec32x4:
+      return 4;
+    case LoadSplatVec64x2:
+    case LoadExtSVec8x8ToVecI16x8:
+    case LoadExtUVec8x8ToVecI16x8:
+    case LoadExtSVec16x4ToVecI32x4:
+    case LoadExtUVec16x4ToVecI32x4:
+    case LoadExtSVec32x2ToVecI64x2:
+    case LoadExtUVec32x2ToVecI64x2:
+      return 8;
+  }
+  WASM_UNREACHABLE();
+}
+
 Const* Const::set(Literal value_) {
   value = value_;
   type = value.type;
@@ -749,6 +779,14 @@ void Unary::finalize() {
     case ConvertUVecI32x4ToVecF32x4:
     case ConvertSVecI64x2ToVecF64x2:
     case ConvertUVecI64x2ToVecF64x2:
+    case WidenLowSVecI8x16ToVecI16x8:
+    case WidenHighSVecI8x16ToVecI16x8:
+    case WidenLowUVecI8x16ToVecI16x8:
+    case WidenHighUVecI8x16ToVecI16x8:
+    case WidenLowSVecI16x8ToVecI32x4:
+    case WidenHighSVecI16x8ToVecI32x4:
+    case WidenLowUVecI16x8ToVecI32x4:
+    case WidenHighUVecI16x8ToVecI32x4:
       type = v128;
       break;
     case AnyTrueVecI8x16:
@@ -761,6 +799,7 @@ void Unary::finalize() {
     case AllTrueVecI64x2:
       type = i32;
       break;
+
     case InvalidUnary:
       WASM_UNREACHABLE();
   }
@@ -856,9 +895,9 @@ void Host::finalize() {
 void Try::finalize() {
   if (body->type == catchBody->type) {
     type = body->type;
-  } else if (isConcreteType(body->type) && catchBody->type == unreachable) {
+  } else if (body->type.isConcrete() && catchBody->type == unreachable) {
     type = body->type;
-  } else if (isConcreteType(catchBody->type) && body->type == unreachable) {
+  } else if (catchBody->type.isConcrete() && body->type == unreachable) {
     type = catchBody->type;
   } else {
     type = none;
@@ -883,16 +922,6 @@ void BrOnExn::finalize() {
   } else {
     type = Type::exnref;
   }
-}
-
-// br_on_exn's type is exnref, which it pushes onto the stack when it is not
-// taken, but the type of the value it pushes onto the stack when it is taken
-// should be the event type. So this is the type we 'send' to the block end when
-// it is taken. Currently we don't support multi value return from a block, we
-// pick the type of the first param from the event.
-// TODO Remove this function and generalize event type after multi-value support
-Type BrOnExn::getSingleSentType() {
-  return eventParams.empty() ? none : eventParams.front();
 }
 
 void Push::finalize() {
@@ -1126,57 +1155,64 @@ Event* Module::addEvent(Event* curr) {
 
 void Module::addStart(const Name& s) { start = s; }
 
+template<typename Vector, typename Map>
+void removeModuleElement(Vector& v, Map& m, Name name) {
+  m.erase(name);
+  for (size_t i = 0; i < v.size(); i++) {
+    if (v[i]->name == name) {
+      v.erase(v.begin() + i);
+      break;
+    }
+  }
+}
+
 void Module::removeFunctionType(Name name) {
-  for (size_t i = 0; i < functionTypes.size(); i++) {
-    if (functionTypes[i]->name == name) {
-      functionTypes.erase(functionTypes.begin() + i);
-      break;
-    }
-  }
-  functionTypesMap.erase(name);
+  removeModuleElement(functionTypes, functionTypesMap, name);
 }
-
 void Module::removeExport(Name name) {
-  for (size_t i = 0; i < exports.size(); i++) {
-    if (exports[i]->name == name) {
-      exports.erase(exports.begin() + i);
-      break;
-    }
-  }
-  exportsMap.erase(name);
+  removeModuleElement(exports, exportsMap, name);
 }
-
 void Module::removeFunction(Name name) {
-  for (size_t i = 0; i < functions.size(); i++) {
-    if (functions[i]->name == name) {
-      functions.erase(functions.begin() + i);
-      break;
-    }
-  }
-  functionsMap.erase(name);
+  removeModuleElement(functions, functionsMap, name);
 }
-
 void Module::removeGlobal(Name name) {
-  for (size_t i = 0; i < globals.size(); i++) {
-    if (globals[i]->name == name) {
-      globals.erase(globals.begin() + i);
-      break;
-    }
-  }
-  globalsMap.erase(name);
+  removeModuleElement(globals, globalsMap, name);
 }
-
 void Module::removeEvent(Name name) {
-  for (size_t i = 0; i < events.size(); i++) {
-    if (events[i]->name == name) {
-      events.erase(events.begin() + i);
-      break;
-    }
-  }
-  eventsMap.erase(name);
+  removeModuleElement(events, eventsMap, name);
 }
 
-// TODO: remove* for other elements
+template<typename Vector, typename Map, typename Elem>
+void removeModuleElements(Vector& v,
+                          Map& m,
+                          std::function<bool(Elem* elem)> pred) {
+  for (auto it = m.begin(); it != m.end();) {
+    if (pred(it->second)) {
+      it = m.erase(it);
+    } else {
+      it++;
+    }
+  }
+  v.erase(
+    std::remove_if(v.begin(), v.end(), [&](auto& e) { return pred(e.get()); }),
+    v.end());
+}
+
+void Module::removeFunctionTypes(std::function<bool(FunctionType*)> pred) {
+  removeModuleElements(functionTypes, functionTypesMap, pred);
+}
+void Module::removeExports(std::function<bool(Export*)> pred) {
+  removeModuleElements(exports, exportsMap, pred);
+}
+void Module::removeFunctions(std::function<bool(Function*)> pred) {
+  removeModuleElements(functions, functionsMap, pred);
+}
+void Module::removeGlobals(std::function<bool(Global*)> pred) {
+  removeModuleElements(globals, globalsMap, pred);
+}
+void Module::removeEvents(std::function<bool(Event*)> pred) {
+  removeModuleElements(events, eventsMap, pred);
+}
 
 void Module::updateMaps() {
   functionsMap.clear();
