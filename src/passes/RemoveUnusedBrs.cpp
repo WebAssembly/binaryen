@@ -504,7 +504,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             //  (b) this br_if is the only branch to that block (so the block
             //      will vanish)
             if (brIf->name == block->name &&
-                BranchUtils::BranchSeeker::countNamed(block, block->name) ==
+                BranchUtils::BranchSeeker::count(block, block->name) ==
                   1) {
               // note that we could drop the last element here, it is a br we
               // know for sure is removable, but telling stealSlice to steal all
@@ -566,15 +566,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             worked = true;
           } else if (auto* iff = curr->list[0]->dynCast<If>()) {
             // The label can't be used in the condition.
-            if (BranchUtils::BranchSeeker::countNamed(iff->condition,
+            if (BranchUtils::BranchSeeker::count(iff->condition,
                                                       curr->name) == 0) {
               // We can move the block into either arm, if there are no uses in
               // the other.
               Expression** target = nullptr;
-              if (!iff->ifFalse || BranchUtils::BranchSeeker::countNamed(
+              if (!iff->ifFalse || BranchUtils::BranchSeeker::count(
                                      iff->ifFalse, curr->name) == 0) {
                 target = &iff->ifTrue;
-              } else if (BranchUtils::BranchSeeker::countNamed(
+              } else if (BranchUtils::BranchSeeker::count(
                            iff->ifTrue, curr->name) == 0) {
                 target = &iff->ifFalse;
               }
@@ -874,7 +874,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // can ignore.
           if (br && br->condition && br->name == curr->name &&
               br->type != unreachable) {
-            if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
+            if (BranchUtils::BranchSeeker::count(curr, curr->name) == 1) {
               // no other breaks to that name, so we can do this
               if (!drop) {
                 assert(!br->value);

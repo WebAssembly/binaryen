@@ -237,7 +237,7 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
-  if (!block || BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+  if (!block || BranchUtils::BranchSeeker::has(block, block->name)) {
     visit(curr);
     return;
   }

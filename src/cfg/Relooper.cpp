@@ -804,7 +804,7 @@ private:
       Outer = Builder.makeBlock(Curr);
     } else if (Outer->name.is()) {
       // Perhaps the name can be removed.
-      if (!wasm::BranchUtils::BranchSeeker::hasNamed(Outer, Outer->name)) {
+      if (!wasm::BranchUtils::BranchSeeker::has(Outer, Outer->name)) {
         Outer->name = wasm::Name();
       } else {
         Outer = Builder.makeBlock(Curr);

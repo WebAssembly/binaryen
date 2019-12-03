@@ -195,7 +195,7 @@ struct DeadCodeElimination
       reachableBreaks.erase(curr->name);
     }
     if (isUnreachable(curr->body) &&
-        !BranchUtils::BranchSeeker::hasNamed(curr->body, curr->name)) {
+        !BranchUtils::BranchSeeker::has(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }
