@@ -25,7 +25,7 @@ namespace wasm {
 namespace Debugging {
 
 void DWARFInfo::dumpLines() {
-  // TODO!
+  std::cout << "TODO\n";
 #if 0
   auto DumpLineSection = [&](DWARFDebugLine::SectionParser Parser,
                              DIDumpOptions DumpOpts,
