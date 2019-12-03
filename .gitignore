@@ -1,3 +1,5 @@
+Makefile
+*.o
 *.pyc
 *~
 *.diff

@@ -211,6 +211,7 @@ ADD_SUBDIRECTORY(src/emscripten-optimizer)
 ADD_SUBDIRECTORY(src/passes)
 ADD_SUBDIRECTORY(src/support)
 ADD_SUBDIRECTORY(src/wasm)
+ADD_SUBDIRECTORY(src/debugging)
 
 # Object files
 SET(binaryen_objs
@@ -219,6 +220,7 @@ SET(binaryen_objs
     $<TARGET_OBJECTS:asmjs>
     $<TARGET_OBJECTS:emscripten-optimizer>
     $<TARGET_OBJECTS:ir>
+    $<TARGET_OBJECTS:debugging>
     $<TARGET_OBJECTS:cfg>
     $<TARGET_OBJECTS:support>)
 

@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <fstream>
 
+#include "debugging/debugging.h"
 #include "ir/module-utils.h"
 #include "support/bits.h"
 #include "wasm-binary.h"
@@ -927,6 +928,11 @@ void WasmBinaryBuilder::read() {
 
   validateBinary();
   processFunctions();
+
+// waka
+  Debugging::DWARFInfo info(wasm);
+  info.dumpLines();
+// waka
 }
 
 void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
