@@ -19,43 +19,17 @@
 
 #include "wasm.h"
 #include "debugging/debugging.h"
+#include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 
 namespace wasm {
 
 namespace Debugging {
 
-void DWARFInfo::dumpLines() {
-  std::cout << "TODO\n";
-#if 0
-  auto DumpLineSection = [&](DWARFDebugLine::SectionParser Parser,
-                             DIDumpOptions DumpOpts,
-                             Optional<uint64_t> DumpOffset) {
-    while (!Parser.done()) {
-      if (DumpOffset && Parser.getOffset() != *DumpOffset) {
-        Parser.skip(dumpWarning);
-        continue;
-      }
-      OS << "debug_line[" << format("0x%8.8" PRIx64, Parser.getOffset())
-         << "]\n";
-      if (DumpOpts.Verbose) {
-        Parser.parseNext(dumpWarning, dumpWarning, &OS);
-      } else {
-        DWARFDebugLine::LineTable LineTable =
-            Parser.parseNext(dumpWarning, dumpWarning);
-        LineTable.dump(OS, DumpOpts);
-      }
-    }
-  };
-
-  if (const auto *Off = shouldDump(Explicit, ".debug_line", DIDT_ID_DebugLine,
-                                   DObj->getLineSection().Data)) {
-    DWARFDataExtractor LineData(*DObj, DObj->getLineSection(), isLittleEndian(),
-                                0);
-    DWARFDebugLine::SectionParser Parser(LineData, *this, compile_units(),
-                                         type_units());
-    DumpLineSection(Parser, DumpOpts, *Off);
-  }
-#endif
+void DWARFInfo::dump() {
+  StringMap<std::unique_ptr<MemoryBuffer>> sections;
+  uint8_t addrSize = 4;
+  auto context = llvm::DWARFContext::create(sections, addrSize);
+  context.dump();
 }
 
 } // Debugging

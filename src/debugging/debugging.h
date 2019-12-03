@@ -29,7 +29,7 @@ class DWARFInfo {
 public:
   DWARFInfo(Module& wasm) : wasm(wasm) {}
 
-  void dumpLines();
+  void dump();
 };
 
 } // Debugging
