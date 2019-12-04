@@ -1,4 +1,4 @@
-SET(support_SOURCES
+set(support_SOURCES
   archive.cpp
   bits.cpp
   colors.cpp
@@ -8,4 +8,4 @@ SET(support_SOURCES
   safe_integer.cpp
   threads.cpp
 )
-ADD_LIBRARY(support OBJECT ${support_SOURCES})
+add_library(support OBJECT ${support_SOURCES})
