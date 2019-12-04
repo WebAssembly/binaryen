@@ -34,6 +34,8 @@ SET(debugging_SOURCES
   DWARFUnit.cpp
   DWARFUnitIndex.cpp
   DWARFVerifier.cpp
+  Error.cpp
+  ErrorHandling.cpp
   raw_ostream.cpp
 )
 ADD_LIBRARY(debugging OBJECT ${debugging_SOURCES})
