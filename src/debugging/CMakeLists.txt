@@ -6,6 +6,7 @@ ENDIF()
 
 SET(debugging_SOURCES
   BinaryenDebugging.cpp
+  Binary.cpp
   DataExtractor.cpp
   DJB.cpp
   Dwarf.cpp

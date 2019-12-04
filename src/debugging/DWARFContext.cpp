@@ -73,6 +73,7 @@ DWARFContext::~DWARFContext() = default;
 
 /// Dump the UUID load command.
 static void dumpUUID(raw_ostream &OS, const ObjectFile &Obj) {
+#if 0 // XXX BINARYEN
   auto *MachO = dyn_cast<MachOObjectFile>(&Obj);
   if (!MachO)
     return;
@@ -91,6 +92,7 @@ static void dumpUUID(raw_ostream &OS, const ObjectFile &Obj) {
       OS << ' ' << MachO->getFileName() << '\n';
     }
   }
+#endif
 }
 
 using ContributionCollection =
@@ -1319,9 +1321,11 @@ static Expected<SymInfo> getSymbolInfo(const object::ObjectFile &Obj,
 
     RSec = *SectOrErr;
     Ret.Address = *SymAddrOrErr;
+#if 0 // XXX BINARYEN
   } else if (auto *MObj = dyn_cast<MachOObjectFile>(&Obj)) {
     RSec = MObj->getRelocationSection(Reloc.getRawDataRefImpl());
     Ret.Address = RSec->getAddress();
+#endif
   }
 
   if (RSec != Obj.section_end())
@@ -1346,13 +1350,17 @@ static Expected<SymInfo> getSymbolInfo(const object::ObjectFile &Obj,
 
 static bool isRelocScattered(const object::ObjectFile &Obj,
                              const RelocationRef &Reloc) {
+#if 0 // XXX BINARYEN
   const MachOObjectFile *MachObj = dyn_cast<MachOObjectFile>(&Obj);
   if (!MachObj)
+#endif
     return false;
+#if 0 // XXX BINARYEN
   // MachO also has relocations that point to sections and
   // scattered relocations.
   auto RelocInfo = MachObj->getRelocation(Reloc.getRawDataRefImpl());
   return MachObj->isRelocationScattered(RelocInfo);
+#endif
 }
 
 ErrorPolicy DWARFContext::defaultErrorHandler(Error E) {

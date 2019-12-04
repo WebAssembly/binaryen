@@ -13,3 +13,8 @@ Date:   Mon Nov 11 16:30:42 2019 -0800
     LegalizeVectorOps or LegalizeDAG so they don't need to be
     Expanded there.
 
+Local changes in those files are marked with
+
+  // XXX BINARYEN
+
+The only source file here that is not from LLVM is BinaryenDebugging.cpp.
