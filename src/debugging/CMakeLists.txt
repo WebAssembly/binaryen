@@ -45,6 +45,7 @@ SET(debugging_SOURCES
   ScopedPrinter.cpp
   SmallVector.cpp
   StringMap.cpp
+  StringRef.cpp
   TargetRegistry.cpp
   Triple.cpp
   Twine.cpp
