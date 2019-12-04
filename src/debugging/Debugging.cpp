@@ -26,10 +26,10 @@ namespace wasm {
 namespace Debugging {
 
 void DWARFInfo::dump() {
-  StringMap<std::unique_ptr<MemoryBuffer>> sections;
+  llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
   uint8_t addrSize = 4;
   auto context = llvm::DWARFContext::create(sections, addrSize);
-  context.dump();
+  context->dump(llvm::errs(), llvm::DIDumpOptions());
 }
 
 } // Debugging
