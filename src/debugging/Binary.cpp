@@ -15,11 +15,15 @@
 #include "llvm/BinaryFormat/Magic.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/Error.h"
+#if 0 // XXX BINARYEN
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/Minidump.h"
+#endif
 #include "llvm/Object/ObjectFile.h"
+#if 0 // XXX BINARYEN
 #include "llvm/Object/TapiUniversal.h"
 #include "llvm/Object/WindowsResource.h"
+#endif
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
@@ -48,6 +52,7 @@ Expected<std::unique_ptr<Binary>> object::createBinary(MemoryBufferRef Buffer,
   file_magic Type = identify_magic(Buffer.getBuffer());
 
   switch (Type) {
+#if 0 // XXX BINARYEN
   case file_magic::archive:
     return Archive::create(Buffer);
   case file_magic::elf:
@@ -72,8 +77,11 @@ Expected<std::unique_ptr<Binary>> object::createBinary(MemoryBufferRef Buffer,
   case file_magic::bitcode:
   case file_magic::xcoff_object_32:
   case file_magic::xcoff_object_64:
+#endif
   case file_magic::wasm_object:
     return ObjectFile::createSymbolicFile(Buffer, Type, Context);
+  default: {} // XXX BINARYEN
+#if 0 // XXX BINARYEN
   case file_magic::macho_universal_binary:
     return MachOUniversalBinary::create(Buffer);
   case file_magic::windows_resource:
@@ -89,10 +97,12 @@ Expected<std::unique_ptr<Binary>> object::createBinary(MemoryBufferRef Buffer,
     return MinidumpFile::create(Buffer);
   case file_magic::tapi_file:
     return TapiUniversal::create(Buffer);
+#endif
   }
   llvm_unreachable("Unexpected Binary File Type");
 }
 
+#if 0 // XXX BINARYEN
 Expected<OwningBinary<Binary>> object::createBinary(StringRef Path) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
       MemoryBuffer::getFileOrSTDIN(Path, /*FileSize=*/-1,
@@ -109,3 +119,4 @@ Expected<OwningBinary<Binary>> object::createBinary(StringRef Path) {
 
   return OwningBinary<Binary>(std::move(Bin), std::move(Buffer));
 }
+#endif
