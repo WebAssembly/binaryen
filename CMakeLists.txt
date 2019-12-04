@@ -103,7 +103,7 @@ if(MSVC)
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
 
-  if(NOT BYN_ENABLE_ASSERTIONS)
+  if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:
     add_nondebug_compile_flag("/UNDEBUG") # Keep asserts.
@@ -175,7 +175,7 @@ else()
   else()
     add_nondebug_compile_flag("-O2")
   endif()
-  if(NOT BYN_ENABLE_ASSERTIONS)
+  if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:
     add_nondebug_compile_flag("-UNDEBUG")
