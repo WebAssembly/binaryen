@@ -65,8 +65,7 @@ class TranslateToFuzzReader {
 public:
   TranslateToFuzzReader(Module& wasm, std::string& filename)
     : wasm(wasm), builder(wasm) {
-    auto input(
-      read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release));
+    auto input(read_file<std::vector<char>>(filename, Flags::Binary));
     readData(input);
   }
 

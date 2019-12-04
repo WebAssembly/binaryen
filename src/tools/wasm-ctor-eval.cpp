@@ -433,10 +433,7 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  auto input(
-    read_file<std::string>(options.extra["infile"],
-                           Flags::Text,
-                           options.debug ? Flags::Debug : Flags::Release));
+  auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
 
@@ -445,8 +442,6 @@ int main(int argc, const char* argv[]) {
       std::cerr << "reading...\n";
     }
     ModuleReader reader;
-    reader.setDebug(options.debug);
-
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
@@ -488,7 +483,6 @@ int main(int argc, const char* argv[]) {
       std::cerr << "writing..." << std::endl;
     }
     ModuleWriter writer;
-    writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);

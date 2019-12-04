@@ -210,7 +210,6 @@ int main(int argc, const char* argv[]) {
 
   if (!translateToFuzz) {
     ModuleReader reader;
-    reader.setDebug(options.debug);
     try {
       reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
@@ -285,7 +284,6 @@ int main(int argc, const char* argv[]) {
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
     BYN_TRACE("writing binary before opts, for extra fuzz command...\n");
     ModuleWriter writer;
-    writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
     writer.write(wasm, options.extra["output"]);
@@ -297,13 +295,13 @@ int main(int argc, const char* argv[]) {
   Module other;
 
   if (fuzzExecAfter && fuzzBinary) {
-    BufferWithRandomAccess buffer(false);
+    BufferWithRandomAccess buffer;
     // write the binary
-    WasmBinaryWriter writer(&wasm, buffer, false);
+    WasmBinaryWriter writer(&wasm, buffer);
     writer.write();
     // read the binary
     auto input = buffer.getAsChars();
-    WasmBinaryBuilder parser(other, input, false);
+    WasmBinaryBuilder parser(other, input);
     parser.read();
     options.applyFeatures(other);
     if (options.passOptions.validate) {
@@ -368,7 +366,6 @@ int main(int argc, const char* argv[]) {
 
   BYN_TRACE("writing...\n");
   ModuleWriter writer;
-  writer.setDebug(options.debug);
   writer.setBinary(emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo);
   if (outputSourceMapFilename.size()) {

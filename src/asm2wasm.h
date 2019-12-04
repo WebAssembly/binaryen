@@ -38,10 +38,13 @@
 #include "pass.h"
 #include "passes/passes.h"
 #include "shared-constants.h"
+#include "support/debug.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-module-building.h"
 #include "wasm.h"
+
+#define DEBUG_TYPE "asm2wasm"
 
 namespace wasm {
 
@@ -1780,9 +1783,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 Function* Asm2WasmBuilder::processFunction(Ref ast) {
   auto name = ast[1]->getIString();
 
-  if (debug) {
-    std::cout << "asm2wasming func: " << ast[1]->getIString().str << '\n';
-  }
+  BYN_TRACE("asm2wasming func: " << ast[1]->getIString().str << '\n');
 
   auto function = new Function;
   function->name = name;
