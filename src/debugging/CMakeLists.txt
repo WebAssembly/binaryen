@@ -5,7 +5,8 @@ ELSE()
 ENDIF()
 
 SET(debugging_SOURCES
-  Debugging.cpp
+  BinaryenDebugging.cpp
+  DataExtractor.cpp
   DWARFAbbreviationDeclaration.cpp
   DWARFAcceleratorTable.cpp
   DWARFAddressRange.cpp
