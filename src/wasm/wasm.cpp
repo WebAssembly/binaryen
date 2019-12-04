@@ -940,7 +940,9 @@ size_t Function::getNumLocals() { return params.size() + vars.size(); }
 
 bool Function::isParam(Index index) { return index < params.size(); }
 
-bool Function::isVar(Index index) { return index >= params.size(); }
+bool Function::isVar(Index index) {
+  return params.size() <= index && index < params.size() + vars.size();
+}
 
 bool Function::hasLocalName(Index index) const {
   return localNames.find(index) != localNames.end();

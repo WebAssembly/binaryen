@@ -102,15 +102,11 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
         : func(func), oldToNew(oldToNew) {}
 
       void visitLocalGet(LocalGet* curr) {
-        if (func->isVar(curr->index)) {
-          curr->index = oldToNew[curr->index];
-        }
+        curr->index = oldToNew[curr->index];
       }
 
       void visitLocalSet(LocalSet* curr) {
-        if (func->isVar(curr->index)) {
-          curr->index = oldToNew[curr->index];
-        }
+        curr->index = oldToNew[curr->index];
       }
     };
     ReIndexer reIndexer(curr, oldToNew);
