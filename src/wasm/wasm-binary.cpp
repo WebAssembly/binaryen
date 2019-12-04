@@ -911,7 +911,8 @@ uint16_t WasmBinaryBuilder::getInt16() {
   BYN_TRACE("<==\n");
   auto ret = uint16_t(getInt8());
   ret |= uint16_t(getInt8()) << 8;
-  BYN_TRACE("getInt16: " << ret << "/0x" << std::hex << ret << std::dec << " ==>\n");
+  BYN_TRACE("getInt16: " << ret << "/0x" << std::hex << ret << std::dec
+                         << " ==>\n");
   return ret;
 }
 
@@ -919,7 +920,8 @@ uint32_t WasmBinaryBuilder::getInt32() {
   BYN_TRACE("<==\n");
   auto ret = uint32_t(getInt16());
   ret |= uint32_t(getInt16()) << 16;
-  BYN_TRACE("getInt32: " << ret << "/0x" << std::hex << ret << std::dec << " ==>\n");
+  BYN_TRACE("getInt32: " << ret << "/0x" << std::hex << ret << std::dec
+                         << " ==>\n");
   return ret;
 }
 
@@ -927,7 +929,8 @@ uint64_t WasmBinaryBuilder::getInt64() {
   BYN_TRACE("<==\n");
   auto ret = uint64_t(getInt32());
   ret |= uint64_t(getInt32()) << 32;
-  BYN_TRACE("getInt64: " << ret << "/0x" << std::hex << ret << std::dec << " ==>\n");
+  BYN_TRACE("getInt64: " << ret << "/0x" << std::hex << ret << std::dec
+                         << " ==>\n");
   return ret;
 }
 
@@ -1630,7 +1633,8 @@ void WasmBinaryBuilder::processExpressions() {
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
           peek == BinaryConsts::Catch) {
-        BYN_TRACE("== processExpressions finished with unreachable" << std::endl);
+        BYN_TRACE("== processExpressions finished with unreachable"
+                  << std::endl);
         readNextDebugLocation();
         lastSeparator = BinaryConsts::ASTNodes(peek);
         pos++;
@@ -2503,7 +2507,8 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
 }
 
 void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
-  BYN_TRACE("zz node: LocalGet " << pos << std::endl);;
+  BYN_TRACE("zz node: LocalGet " << pos << std::endl);
+  ;
   requireFunctionContext("local.get");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
@@ -4327,9 +4332,7 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
   return true;
 }
 
-void WasmBinaryBuilder::visitNop(Nop* curr) {
-  BYN_TRACE("zz node: Nop\n");
-}
+void WasmBinaryBuilder::visitNop(Nop* curr) { BYN_TRACE("zz node: Nop\n"); }
 
 void WasmBinaryBuilder::visitUnreachable(Unreachable* curr) {
   BYN_TRACE("zz node: Unreachable\n");

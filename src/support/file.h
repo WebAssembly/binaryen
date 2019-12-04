@@ -35,8 +35,7 @@ enum BinaryOption { Binary, Text };
 std::vector<char> read_stdin();
 
 template<typename T>
-T read_file(const std::string& filename,
-            Flags::BinaryOption binary);
+T read_file(const std::string& filename, Flags::BinaryOption binary);
 
 // Declare the valid explicit specializations.
 extern template std::string read_file<>(const std::string&,

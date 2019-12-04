@@ -25,9 +25,9 @@
 //
 
 #include "wasm-io.h"
+#include "support/debug.h"
 #include "wasm-binary.h"
 #include "wasm-s-parser.h"
-#include "support/debug.h"
 
 namespace wasm {
 

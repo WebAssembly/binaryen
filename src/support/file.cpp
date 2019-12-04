@@ -35,8 +35,7 @@ std::vector<char> wasm::read_stdin() {
 }
 
 template<typename T>
-T wasm::read_file(const std::string& filename,
-                  Flags::BinaryOption binary) {
+T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
   BYN_TRACE("Loading '" << filename << "'...\n");
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
@@ -87,8 +86,7 @@ template std::string wasm::read_file<>(const std::string&, Flags::BinaryOption);
 template std::vector<char> wasm::read_file<>(const std::string&,
                                              Flags::BinaryOption);
 
-wasm::Output::Output(const std::string& filename,
-                     Flags::BinaryOption binary)
+wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
   : outfile(), out([this, filename, binary]() {
       if (filename == "-") {
         return std::cout.rdbuf();

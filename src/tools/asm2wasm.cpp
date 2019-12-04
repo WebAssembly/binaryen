@@ -199,8 +199,8 @@ int main(int argc, const char* argv[]) {
   // debug info is disabled if a map file is not specified with wasm binary
   pre.debugInfo =
     options.passOptions.debugInfo && (!emitBinary || sourceMapFilename.size());
-  auto input(read_file<std::vector<char>>(options.extra["infile"],
-                                          Flags::Text));
+  auto input(
+    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
   char* start = pre.process(input.data());
 
   if (options.debug) {
