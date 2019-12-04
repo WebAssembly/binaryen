@@ -7,6 +7,7 @@ ENDIF()
 SET(debugging_SOURCES
   BinaryenDebugging.cpp
   DataExtractor.cpp
+  Dwarf.cpp
   DWARFAbbreviationDeclaration.cpp
   DWARFAcceleratorTable.cpp
   DWARFAddressRange.cpp
@@ -37,5 +38,6 @@ SET(debugging_SOURCES
   Error.cpp
   ErrorHandling.cpp
   raw_ostream.cpp
+  SmallVector.cpp
 )
 ADD_LIBRARY(debugging OBJECT ${debugging_SOURCES})
