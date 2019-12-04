@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#ifndef wasm_debugging_h
-#define wasm_debugging_flat_h
-
 #include "wasm.h"
 #include "debugging/debugging.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
@@ -35,7 +32,5 @@ void DWARFInfo::dump() {
 } // Debugging
 
 } // namespace wasm
-
-#endif // wasm_debugging_h
 
 // FIXME src/llvm/Config/ is dubious
