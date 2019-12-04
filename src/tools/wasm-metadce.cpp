@@ -609,6 +609,7 @@ int main(int argc, const char* argv[]) {
   if (options.extra.count("output") > 0) {
     ModuleWriter writer;
     writer.setBinary(emitBinary);
+    writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);
   }
 
