@@ -24,10 +24,12 @@ static bool debugEnabled = false;
 static std::set<std::string> debugTypesEnabled;
 
 bool wasm::isDebugEnabled(const char* type) {
-  if (!debugEnabled)
+  if (!debugEnabled) {
     return false;
-  if (debugTypesEnabled.empty())
+  }
+  if (debugTypesEnabled.empty()) {
     return true;
+  }
   return debugTypesEnabled.count(type) > 0;
 }
 
@@ -38,8 +40,9 @@ void wasm::setDebugEnabled(const char* types) {
   size_t end = strlen(types);
   while (start < end) {
     const char* type_end = strchr(types + start, ',');
-    if (type_end == nullptr)
+    if (type_end == nullptr) {
       type_end = types + end;
+    }
     size_t type_size = type_end - types + start;
     std::string type(types + start, type_size);
     debugTypesEnabled.insert(type);
