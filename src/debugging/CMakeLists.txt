@@ -39,9 +39,13 @@ SET(debugging_SOURCES
   Error.cpp
   ErrorHandling.cpp
   FormatVariadic.cpp
+  Path.cpp
   raw_ostream.cpp
   ScopedPrinter.cpp
   SmallVector.cpp
+  TargetRegistry.cpp
+  Triple.cpp
   Twine.cpp
+  WithColor.cpp
 )
 ADD_LIBRARY(debugging OBJECT ${debugging_SOURCES})
