@@ -21,6 +21,7 @@
 #include <string>
 
 #include "compiler-support.h"
+#include "support/utilities.h"
 
 struct FeatureSet {
   enum Feature : uint32_t {
@@ -58,7 +59,7 @@ struct FeatureSet {
       case ReferenceTypes:
         return "reference-types";
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected feature");
     }
   }
 

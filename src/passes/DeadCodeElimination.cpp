@@ -356,9 +356,9 @@ struct DeadCodeElimination
         case Expression::Id::BrOnExnId:
           DELEGATE(BrOnExn);
         case Expression::Id::InvalidId:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unimp");
         case Expression::Id::NumExpressionIds:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unimp");
       }
 #undef DELEGATE
       return;

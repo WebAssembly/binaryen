@@ -547,7 +547,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
             opposite = LeUInt64;
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected op");
         }
         auto* ret =
           visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
@@ -783,7 +783,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       // variable value.
       return Builder(*module).makeCall(FAKE_CALL, {}, node->wasmType);
     } else {
-      WASM_UNREACHABLE(); // TODO
+      WASM_UNREACHABLE("unexpected node type"); // TODO
     }
   }
 

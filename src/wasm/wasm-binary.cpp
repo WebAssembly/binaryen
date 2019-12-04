@@ -398,7 +398,7 @@ void WasmBinaryWriter::writeExports() {
         o << U32LEB(getEventIndex(curr->value));
         break;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected extern kind");
     }
   }
   finishSection(start);
@@ -669,7 +669,7 @@ void WasmBinaryWriter::writeFeaturesSection() {
       case FeatureSet::ReferenceTypes:
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected feature flag");
     }
   };
 
@@ -1023,9 +1023,10 @@ Type WasmBinaryBuilder::getType() {
       return anyref;
     case BinaryConsts::EncodedType::exnref:
       return exnref;
-    default: { throwError("invalid wasm type: " + std::to_string(type)); }
+    default:
+      throwError("invalid wasm type: " + std::to_string(type));
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("unexpeced type");
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -2848,7 +2849,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
     SET_FOR_OP(Xor);
     SET_FOR_OP(Xchg);
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected opcode");
   }
 #undef SET_FOR_OP
 #undef SET
@@ -2902,7 +2903,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out,
       SET(i64, 4);
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected opcode");
   }
 
   BYN_TRACE("zz node: AtomicCmpxchg\n");
@@ -2934,7 +2935,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
       curr->expectedType = i64;
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected opcode");
   }
   curr->type = i32;
   BYN_TRACE("zz node: AtomicWait\n");

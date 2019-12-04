@@ -151,13 +151,15 @@ void ReFinalize::visitFunction(Function* curr) {
   }
 }
 
-void ReFinalize::visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE(); }
+void ReFinalize::visitFunctionType(FunctionType* curr) {
+  WASM_UNREACHABLE("unimp");
+}
+void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {
   if (type != unreachable || breakValues.count(name) == 0) {
