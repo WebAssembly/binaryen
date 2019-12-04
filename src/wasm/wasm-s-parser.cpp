@@ -342,7 +342,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
         stringToBinary(str, size, data);
       }
     }
-    WasmBinaryBuilder binaryBuilder(wasm, data, false);
+    WasmBinaryBuilder binaryBuilder(wasm, data);
     binaryBuilder.read();
     return;
   }

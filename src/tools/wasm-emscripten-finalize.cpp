@@ -277,7 +277,7 @@ int main(int argc, const char* argv[]) {
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
   if (!dataSegmentFile.empty()) {
-    Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
+    Output memInitFile(dataSegmentFile, Flags::Binary);
     if (globalBase == INVALID_BASE) {
       Fatal() << "globalBase must be set";
     }
@@ -296,10 +296,8 @@ int main(int argc, const char* argv[]) {
     passRunner.run();
   }
 
-  auto outputBinaryFlag = emitBinary ? Flags::Binary : Flags::Text;
-  Output output(outfile, outputBinaryFlag, Flags::Release);
+  Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
   ModuleWriter writer;
-  writer.setDebug(options.debug);
   writer.setDebugInfo(debugInfo);
   // writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);

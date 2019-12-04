@@ -30,21 +30,19 @@ namespace wasm {
 
 namespace Flags {
 enum BinaryOption { Binary, Text };
-enum DebugOption { Debug, Release };
 } // namespace Flags
 
-std::vector<char> read_stdin(Flags::DebugOption);
+std::vector<char> read_stdin();
 
 template<typename T>
 T read_file(const std::string& filename,
-            Flags::BinaryOption binary,
-            Flags::DebugOption debug);
+            Flags::BinaryOption binary);
 
 // Declare the valid explicit specializations.
-extern template std::string
-read_file<>(const std::string&, Flags::BinaryOption, Flags::DebugOption);
-extern template std::vector<char>
-read_file<>(const std::string&, Flags::BinaryOption, Flags::DebugOption);
+extern template std::string read_file<>(const std::string&,
+                                        Flags::BinaryOption);
+extern template std::vector<char> read_file<>(const std::string&,
+                                              Flags::BinaryOption);
 
 // Given a string which may be a response file (i.e., a filename starting
 // with "@"), if it is a response file read it and return that, or if it
@@ -54,9 +52,7 @@ std::string read_possible_response_file(const std::string&);
 class Output {
 public:
   // An empty filename will open stdout instead.
-  Output(const std::string& filename,
-         Flags::BinaryOption binary,
-         Flags::DebugOption debug);
+  Output(const std::string& filename, Flags::BinaryOption binary);
   ~Output() = default;
   template<typename T> std::ostream& operator<<(const T& v) { return out << v; }
 

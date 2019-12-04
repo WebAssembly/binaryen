@@ -276,10 +276,8 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  auto input(read_file<std::vector<char>>(options.extra["infile"],
-                                          Flags::Text,
-                                          options.debug ? Flags::Debug
-                                                        : Flags::Release));
+  auto input(
+    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
 
   bool checked = false;
 

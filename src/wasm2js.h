@@ -334,7 +334,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   }
 
   if (flags.symbolsFile.size() > 0) {
-    Output out(flags.symbolsFile, wasm::Flags::Text, wasm::Flags::Release);
+    Output out(flags.symbolsFile, wasm::Flags::Text);
     Index i = 0;
     for (auto& func : wasm->functions) {
       out.getStream() << i++ << ':' << func->name.str << '\n';
