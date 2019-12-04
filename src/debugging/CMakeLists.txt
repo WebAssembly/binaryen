@@ -1,6 +1,38 @@
+# LLVM sources have warnings
+IF(MSVC)
+ELSE()
+  ADD_COMPILE_FLAG("-Wno-maybe-uninitialized")
+ENDIF()
+
 SET(debugging_SOURCES
   Debugging.cpp
+  DWARFAbbreviationDeclaration.cpp
+  DWARFAcceleratorTable.cpp
+  DWARFAddressRange.cpp
+  DWARFCompileUnit.cpp
   DWARFContext.cpp
+  DWARFDataExtractor.cpp
+  DWARFDebugAbbrev.cpp
+  DWARFDebugAddr.cpp
+  DWARFDebugAranges.cpp
+  DWARFDebugArangeSet.cpp
+  DWARFDebugFrame.cpp
+  DWARFDebugInfoEntry.cpp
+  DWARFDebugLine.cpp
+  DWARFDebugLoc.cpp
+  DWARFDebugMacro.cpp
+  DWARFDebugPubTable.cpp
+  DWARFDebugRangeList.cpp
+  DWARFDebugRnglists.cpp
+  DWARFDie.cpp
+  DWARFExpression.cpp
+  DWARFFormValue.cpp
+  DWARFGdbIndex.cpp
+  DWARFListTable.cpp
+  DWARFTypeUnit.cpp
+  DWARFUnit.cpp
+  DWARFUnitIndex.cpp
+  DWARFVerifier.cpp
   raw_ostream.cpp
 )
 ADD_LIBRARY(debugging OBJECT ${debugging_SOURCES})
