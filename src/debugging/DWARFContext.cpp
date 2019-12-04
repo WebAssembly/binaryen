@@ -1230,6 +1230,7 @@ DWARFContext::getInliningInfoForAddress(object::SectionedAddress Address,
 
 std::shared_ptr<DWARFContext>
 DWARFContext::getDWOContext(StringRef AbsolutePath) {
+#if 0
   if (auto S = DWP.lock()) {
     DWARFContext *Ctxt = S->Context.get();
     return std::shared_ptr<DWARFContext>(std::move(S), Ctxt);
@@ -1275,6 +1276,9 @@ DWARFContext::getDWOContext(StringRef AbsolutePath) {
   *Entry = S;
   auto *Ctxt = S->Context.get();
   return std::shared_ptr<DWARFContext>(std::move(S), Ctxt);
+#else
+  llvm_unreachable("XXX BINARYEN DWO");
+#endif
 }
 
 static Error createError(const Twine &Reason, llvm::Error E) {
@@ -1348,20 +1352,18 @@ static Expected<SymInfo> getSymbolInfo(const object::ObjectFile &Obj,
   return Ret;
 }
 
+#if 0 // XXX BINARYEN
 static bool isRelocScattered(const object::ObjectFile &Obj,
                              const RelocationRef &Reloc) {
-#if 0 // XXX BINARYEN
   const MachOObjectFile *MachObj = dyn_cast<MachOObjectFile>(&Obj);
   if (!MachObj)
-#endif
     return false;
-#if 0 // XXX BINARYEN
   // MachO also has relocations that point to sections and
   // scattered relocations.
   auto RelocInfo = MachObj->getRelocation(Reloc.getRawDataRefImpl());
   return MachObj->isRelocationScattered(RelocInfo);
-#endif
 }
+#endif
 
 ErrorPolicy DWARFContext::defaultErrorHandler(Error E) {
   WithColor::error() << toString(std::move(E)) << '\n';
@@ -1658,6 +1660,9 @@ public:
       if (Section.relocation_begin() == Section.relocation_end())
         continue;
 
+#if 1 // XXX BINARYEN
+      errs() << "relocation?\n";
+#else
       // Symbol to [address, section index] cache mapping.
       std::map<SymbolRef, SymInfo> AddrCache;
       bool (*Supports)(uint64_t);
@@ -1711,6 +1716,7 @@ public:
             return;
         }
       }
+#endif
     }
 
     for (SectionName &S : SectionNames)

@@ -1,7 +1,8 @@
 # LLVM sources have warnings
 IF(MSVC)
 ELSE()
-  ADD_COMPILE_FLAG("-Wno-maybe-uninitialized")
+  add_compile_flag("-Wno-maybe-uninitialized")
+  add_compile_flag("-Wno-unused-function")
 ENDIF()
 
 SET(debugging_SOURCES
