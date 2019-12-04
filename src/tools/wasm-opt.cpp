@@ -29,6 +29,7 @@
 #include "shell-interface.h"
 #include "spec-wrapper.h"
 #include "support/command-line.h"
+#include "support/debug.h"
 #include "support/file.h"
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
@@ -36,6 +37,8 @@
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
+
+#define DEBUG_TYPE "opt"
 
 using namespace wasm;
 
@@ -203,9 +206,7 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
 
-  if (options.debug) {
-    std::cerr << "reading...\n";
-  }
+  BYN_TRACE("reading...\n");
 
   if (!translateToFuzz) {
     ModuleReader reader;
@@ -282,10 +283,7 @@ int main(int argc, const char* argv[]) {
   std::string firstOutput;
 
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
-    if (options.debug) {
-      std::cerr << "writing binary before opts, for extra fuzz command..."
-                << std::endl;
-    }
+    BYN_TRACE("writing binary before opts, for extra fuzz command...\n");
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
@@ -323,9 +321,7 @@ int main(int argc, const char* argv[]) {
       std::cerr << "warning: no passes specified, not doing any work\n";
     }
   } else {
-    if (options.debug) {
-      std::cerr << "running passes...\n";
-    }
+    BYN_TRACE("running passes...\n");
     auto runPasses = [&]() {
       options.runPasses(*curr);
       if (options.passOptions.validate) {
@@ -348,10 +344,7 @@ int main(int argc, const char* argv[]) {
       };
       auto lastSize = getSize();
       while (1) {
-        if (options.debug) {
-          std::cerr << "running iteration for convergence (" << lastSize
-                    << ")...\n";
-        }
+        BYN_TRACE("running iteration for convergence (" << lastSize << ")...\n");
         runPasses();
         auto currSize = getSize();
         if (currSize >= lastSize) {
@@ -373,9 +366,7 @@ int main(int argc, const char* argv[]) {
     return 0;
   }
 
-  if (options.debug) {
-    std::cerr << "writing..." << std::endl;
-  }
+  BYN_TRACE("writing...\n");
   ModuleWriter writer;
   writer.setDebug(options.debug);
   writer.setBinary(emitBinary);

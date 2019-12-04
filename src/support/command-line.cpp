@@ -15,6 +15,7 @@
  */
 
 #include "support/command-line.h"
+#include "support/debug.h"
 #include "config.h"
 
 using namespace wasm;
@@ -91,8 +92,11 @@ Options::Options(const std::string& command, const std::string& description)
   add("--debug",
       "-d",
       "Print debug information to stderr",
-      Arguments::Zero,
-      [&](Options* o, const std::string& arguments) { debug = true; });
+      Arguments::Optional,
+      [&](Options* o, const std::string& arguments) {
+        debug = true;
+        setDebugEnabled(arguments.c_str());
+      });
 }
 
 Options::~Options() {}
