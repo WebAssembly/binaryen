@@ -517,7 +517,7 @@ struct Reducer
       // replace a singleton
       auto& list = block->list;
       if (list.size() == 1 &&
-          !BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+          !BranchUtils::BranchSeeker::has(block, block->name)) {
         if (tryToReplaceCurrent(block->list[0])) {
           return;
         }
@@ -549,7 +549,7 @@ struct Reducer
       return; // nothing more to do
     } else if (auto* loop = curr->dynCast<Loop>()) {
       if (shouldTryToReduce() &&
-          !BranchUtils::BranchSeeker::hasNamed(loop, loop->name)) {
+          !BranchUtils::BranchSeeker::has(loop, loop->name)) {
         tryToReplaceCurrent(loop->body);
       }
       return; // nothing more to do

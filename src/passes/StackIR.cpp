@@ -238,7 +238,7 @@ private:
         continue;
       }
       if (auto* block = inst->origin->dynCast<Block>()) {
-        if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+        if (!BranchUtils::BranchSeeker::has(block, block->name)) {
           // TODO optimize, maybe run remove-unused-names
           inst = nullptr;
         }

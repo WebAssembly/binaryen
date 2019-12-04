@@ -292,7 +292,7 @@ static void handleUnreachable(Block* block,
       // there is an unreachable child, so we are unreachable, unless we have a
       // break
       if (!breakabilityKnown) {
-        hasBreak = BranchUtils::BranchSeeker::hasNamed(block, block->name);
+        hasBreak = BranchUtils::BranchSeeker::has(block, block->name);
       }
       if (!hasBreak) {
         block->type = unreachable;

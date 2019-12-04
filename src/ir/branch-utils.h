@@ -151,12 +151,8 @@ inline std::set<Name> getBranchTargets(Expression* ast) {
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
-// By default we consider all branches, so any place there is a branch that
-// names the target. You can unset 'named' to only note branches that appear
-// reachable (i.e., are not obviously unreachable).
 struct BranchSeeker : public PostWalker<BranchSeeker> {
   Name target;
-  bool named = true;
 
   Index found = 0;
   Type valueType;
@@ -176,15 +172,6 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 
   void visitBreak(Break* curr) {
-    if (!named) {
-      // ignore an unreachable break
-      if (curr->condition && curr->condition->type == unreachable) {
-        return;
-      }
-      if (curr->value && curr->value->type == unreachable) {
-        return;
-      }
-    }
     // check the break
     if (curr->name == target) {
       noteFound(curr->value);
@@ -192,15 +179,6 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 
   void visitSwitch(Switch* curr) {
-    if (!named) {
-      // ignore an unreachable switch
-      if (curr->condition->type == unreachable) {
-        return;
-      }
-      if (curr->value && curr->value->type == unreachable) {
-        return;
-      }
-    }
     // check the switch
     for (auto name : curr->targets) {
       if (name == target) {
@@ -213,39 +191,13 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   }
 
   void visitBrOnExn(BrOnExn* curr) {
-    if (!named) {
-      // ignore an unreachable br_on_exn
-      if (curr->exnref->type == unreachable) {
-        return;
-      }
-    }
     // check the br_on_exn
     if (curr->name == target) {
       noteFound(curr->sent);
     }
   }
 
-  static bool hasReachable(Expression* tree, Name target) {
-    if (!target.is()) {
-      return false;
-    }
-    BranchSeeker seeker(target);
-    seeker.named = false;
-    seeker.walk(tree);
-    return seeker.found > 0;
-  }
-
-  static Index countReachable(Expression* tree, Name target) {
-    if (!target.is()) {
-      return 0;
-    }
-    BranchSeeker seeker(target);
-    seeker.named = false;
-    seeker.walk(tree);
-    return seeker.found;
-  }
-
-  static bool hasNamed(Expression* tree, Name target) {
+  static bool has(Expression* tree, Name target) {
     if (!target.is()) {
       return false;
     }
@@ -254,7 +206,7 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     return seeker.found > 0;
   }
 
-  static Index countNamed(Expression* tree, Name target) {
+  static Index count(Expression* tree, Name target) {
     if (!target.is()) {
       return 0;
     }
