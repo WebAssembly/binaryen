@@ -3,6 +3,7 @@ SET(support_SOURCES
   bits.cpp
   colors.cpp
   command-line.cpp
+  debug.cpp
   file.cpp
   path.cpp
   safe_integer.cpp
