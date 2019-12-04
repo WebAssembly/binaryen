@@ -16,10 +16,14 @@
 
 // Implements BYN_DEBUG macro similar to llvm's include/llvm/Support/Debug.h,
 // which can include any code, and in addition and printf-file BYN_TRACE.
+//
+// To use these macros you must define DEBUG_TYPE to a C string within your
+// source code which then acts as the name of a channel which can be
+// individually enabled via --debug=<chan>.  Specifing --debug without any
+// argument enabled all channels.
 
 #ifndef wasm_support_debug_h
 #define wasm_support_debug_h
-
 
 #ifndef NDEBUG
 
