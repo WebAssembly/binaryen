@@ -139,13 +139,13 @@ Name EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
 
 // Utilities
 
-static void abort_on(std::string why, Ref element) {
+static WASM_NORETURN void abort_on(std::string why, Ref element) {
   std::cerr << why << ' ';
   element->stringify(std::cerr);
   std::cerr << '\n';
   abort();
 }
-static void abort_on(std::string why, IString element) {
+static WASM_NORETURN void abort_on(std::string why, IString element) {
   std::cerr << why << ' ' << element.str << '\n';
   abort();
 }

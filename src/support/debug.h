@@ -50,8 +50,8 @@ void setDebugEnabled(const char* types);
 #define BYN_TRACE_WITH_TYPE(...)                                               \
   do {                                                                         \
   } while (false)
-#define isDebugEnabled() (false)
-#define setDebugEnabled()
+#define isDebugEnabled(type) (false)
+#define setDebugEnabled(types)
 
 #endif
 
