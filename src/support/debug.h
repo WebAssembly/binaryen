@@ -30,7 +30,7 @@
 namespace wasm {
 bool isDebugEnabled(const char* type);
 void setDebugEnabled(const char* types);
-}
+} // namespace wasm
 
 #define BYN_DEBUG_WITH_TYPE(TYPE, X)                                           \
   do {                                                                         \
@@ -44,8 +44,12 @@ void setDebugEnabled(const char* types);
 
 #else
 
-#define BYN_DEBUG_WITH_TYPE(...) do {} while (false)
-#define BYN_TRACE_WITH_TYPE(...) do {} while (false)
+#define BYN_DEBUG_WITH_TYPE(...)                                               \
+  do {                                                                         \
+  } while (false)
+#define BYN_TRACE_WITH_TYPE(...)                                               \
+  do {                                                                         \
+  } while (false)
 #define isDebugEnabled() (false)
 #define setDebugEnabled()
 

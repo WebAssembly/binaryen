@@ -344,7 +344,7 @@ int main(int argc, const char* argv[]) {
       };
       auto lastSize = getSize();
       while (1) {
-        BYN_TRACE("running iteration for convergence (" << lastSize << ")...\n");
+        BYN_TRACE("running iteration for convergence (" << lastSize << ")..\n");
         runPasses();
         auto currSize = getSize();
         if (currSize >= lastSize) {

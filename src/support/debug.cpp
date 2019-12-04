@@ -41,7 +41,7 @@ void wasm::setDebugEnabled(const char* types) {
     if (type_end == nullptr)
       type_end = types + end;
     size_t type_size = type_end - types + start;
-    std::string type(types+start, type_size);
+    std::string type(types + start, type_size);
     debugTypesEnabled.insert(type);
     start += type_size + 1;
   }

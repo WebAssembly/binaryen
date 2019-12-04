@@ -15,8 +15,8 @@
  */
 
 #include "support/command-line.h"
-#include "support/debug.h"
 #include "config.h"
+#include "support/debug.h"
 
 using namespace wasm;
 
