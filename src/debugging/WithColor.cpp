@@ -11,12 +11,14 @@
 
 using namespace llvm;
 
+#if 0 // XXX BINARYEN
 cl::OptionCategory llvm::ColorCategory("Color Options");
 
 static cl::opt<cl::boolOrDefault>
     UseColor("color", cl::cat(ColorCategory),
              cl::desc("Use colors in output (default=autodetect)"),
              cl::init(cl::BOU_UNSET));
+#endif
 
 WithColor::WithColor(raw_ostream &OS, HighlightColor Color, bool DisableColors)
     : OS(OS), DisableColors(DisableColors) {
@@ -97,11 +99,7 @@ raw_ostream &WithColor::remark(raw_ostream &OS, StringRef Prefix,
 }
 
 bool WithColor::colorsEnabled() {
-  if (DisableColors)
-    return false;
-  if (UseColor == cl::BOU_UNSET)
-    return OS.has_colors();
-  return UseColor == cl::BOU_TRUE;
+  llvm_unreachable("colorsEnabled");
 }
 
 WithColor &WithColor::changeColor(raw_ostream::Colors Color, bool Bold,

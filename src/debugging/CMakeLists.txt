@@ -46,9 +46,11 @@ SET(debugging_SOURCES
   FoldingSet.cpp
   FormatVariadic.cpp
   Hashing.cpp
+  Magic.cpp
   ManagedStatic.cpp
   MCRegisterInfo.cpp
   MD5.cpp
+  MemoryBuffer.cpp
   NativeFormatting.cpp
   Optional.cpp
   Path.cpp
