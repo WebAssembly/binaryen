@@ -20,6 +20,8 @@
 #include <set>
 #include <string>
 
+#ifndef NDEBUG
+
 static bool debugEnabled = false;
 static std::set<std::string> debugTypesEnabled;
 
@@ -49,3 +51,5 @@ void wasm::setDebugEnabled(const char* types) {
     start += type_size + 1;
   }
 }
+
+#endif

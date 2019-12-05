@@ -29,6 +29,8 @@
 #include <thread>
 #include <vector>
 
+#include "compiler-support.h"
+
 namespace wasm {
 
 // The work state of a helper thread - is there more to do,
@@ -124,6 +126,7 @@ public:
 
   void verify() {
     auto before = created.fetch_add(1);
+    WASM_UNUSED(before);
     assert(before == 0);
   }
 };
