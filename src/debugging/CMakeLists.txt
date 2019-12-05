@@ -7,9 +7,11 @@ ENDIF()
 
 SET(debugging_SOURCES
   APInt.cpp
+  APFloat.cpp
   BinaryenDebugging.cpp
   Binary.cpp
   DataExtractor.cpp
+  Debug.cpp
   DJB.cpp
   Dwarf.cpp
   DWARFAbbreviationDeclaration.cpp
@@ -41,7 +43,9 @@ SET(debugging_SOURCES
   DWARFVerifier.cpp
   Error.cpp
   ErrorHandling.cpp
+  FoldingSet.cpp
   FormatVariadic.cpp
+  Hashing.cpp
   ManagedStatic.cpp
   MCRegisterInfo.cpp
   MD5.cpp

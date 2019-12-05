@@ -319,68 +319,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
 }
 
 static Triple::ArchType parseARMArch(StringRef ArchName) {
-  ARM::ISAKind ISA = ARM::parseArchISA(ArchName);
-  ARM::EndianKind ENDIAN = ARM::parseArchEndian(ArchName);
-
-  Triple::ArchType arch = Triple::UnknownArch;
-  switch (ENDIAN) {
-  case ARM::EndianKind::LITTLE: {
-    switch (ISA) {
-    case ARM::ISAKind::ARM:
-      arch = Triple::arm;
-      break;
-    case ARM::ISAKind::THUMB:
-      arch = Triple::thumb;
-      break;
-    case ARM::ISAKind::AARCH64:
-      arch = Triple::aarch64;
-      break;
-    case ARM::ISAKind::INVALID:
-      break;
-    }
-    break;
-  }
-  case ARM::EndianKind::BIG: {
-    switch (ISA) {
-    case ARM::ISAKind::ARM:
-      arch = Triple::armeb;
-      break;
-    case ARM::ISAKind::THUMB:
-      arch = Triple::thumbeb;
-      break;
-    case ARM::ISAKind::AARCH64:
-      arch = Triple::aarch64_be;
-      break;
-    case ARM::ISAKind::INVALID:
-      break;
-    }
-    break;
-  }
-  case ARM::EndianKind::INVALID: {
-    break;
-  }
-  }
-
-  ArchName = ARM::getCanonicalArchName(ArchName);
-  if (ArchName.empty())
-    return Triple::UnknownArch;
-
-  // Thumb only exists in v4+
-  if (ISA == ARM::ISAKind::THUMB &&
-      (ArchName.startswith("v2") || ArchName.startswith("v3")))
-    return Triple::UnknownArch;
-
-  // Thumb only for v6m
-  ARM::ProfileKind Profile = ARM::parseArchProfile(ArchName);
-  unsigned Version = ARM::parseArchVersion(ArchName);
-  if (Profile == ARM::ProfileKind::M && Version == 6) {
-    if (ENDIAN == ARM::EndianKind::BIG)
-      return Triple::thumbeb;
-    else
-      return Triple::thumb;
-  }
-
-  return arch;
+  llvm_unreachable("BINARYEN");
 }
 
 static Triple::ArchType parseArch(StringRef ArchName) {
@@ -559,79 +498,7 @@ static Triple::ObjectFormatType parseFormat(StringRef EnvironmentName) {
 }
 
 static Triple::SubArchType parseSubArch(StringRef SubArchName) {
-  if (SubArchName.startswith("mips") &&
-      (SubArchName.endswith("r6el") || SubArchName.endswith("r6")))
-    return Triple::MipsSubArch_r6;
-
-  StringRef ARMSubArch = ARM::getCanonicalArchName(SubArchName);
-
-  // For now, this is the small part. Early return.
-  if (ARMSubArch.empty())
-    return StringSwitch<Triple::SubArchType>(SubArchName)
-      .EndsWith("kalimba3", Triple::KalimbaSubArch_v3)
-      .EndsWith("kalimba4", Triple::KalimbaSubArch_v4)
-      .EndsWith("kalimba5", Triple::KalimbaSubArch_v5)
-      .Default(Triple::NoSubArch);
-
-  // ARM sub arch.
-  switch(ARM::parseArch(ARMSubArch)) {
-  case ARM::ArchKind::ARMV4:
-    return Triple::NoSubArch;
-  case ARM::ArchKind::ARMV4T:
-    return Triple::ARMSubArch_v4t;
-  case ARM::ArchKind::ARMV5T:
-    return Triple::ARMSubArch_v5;
-  case ARM::ArchKind::ARMV5TE:
-  case ARM::ArchKind::IWMMXT:
-  case ARM::ArchKind::IWMMXT2:
-  case ARM::ArchKind::XSCALE:
-  case ARM::ArchKind::ARMV5TEJ:
-    return Triple::ARMSubArch_v5te;
-  case ARM::ArchKind::ARMV6:
-    return Triple::ARMSubArch_v6;
-  case ARM::ArchKind::ARMV6K:
-  case ARM::ArchKind::ARMV6KZ:
-    return Triple::ARMSubArch_v6k;
-  case ARM::ArchKind::ARMV6T2:
-    return Triple::ARMSubArch_v6t2;
-  case ARM::ArchKind::ARMV6M:
-    return Triple::ARMSubArch_v6m;
-  case ARM::ArchKind::ARMV7A:
-  case ARM::ArchKind::ARMV7R:
-    return Triple::ARMSubArch_v7;
-  case ARM::ArchKind::ARMV7VE:
-    return Triple::ARMSubArch_v7ve;
-  case ARM::ArchKind::ARMV7K:
-    return Triple::ARMSubArch_v7k;
-  case ARM::ArchKind::ARMV7M:
-    return Triple::ARMSubArch_v7m;
-  case ARM::ArchKind::ARMV7S:
-    return Triple::ARMSubArch_v7s;
-  case ARM::ArchKind::ARMV7EM:
-    return Triple::ARMSubArch_v7em;
-  case ARM::ArchKind::ARMV8A:
-    return Triple::ARMSubArch_v8;
-  case ARM::ArchKind::ARMV8_1A:
-    return Triple::ARMSubArch_v8_1a;
-  case ARM::ArchKind::ARMV8_2A:
-    return Triple::ARMSubArch_v8_2a;
-  case ARM::ArchKind::ARMV8_3A:
-    return Triple::ARMSubArch_v8_3a;
-  case ARM::ArchKind::ARMV8_4A:
-    return Triple::ARMSubArch_v8_4a;
-  case ARM::ArchKind::ARMV8_5A:
-    return Triple::ARMSubArch_v8_5a;
-  case ARM::ArchKind::ARMV8R:
-    return Triple::ARMSubArch_v8r;
-  case ARM::ArchKind::ARMV8MBaseline:
-    return Triple::ARMSubArch_v8m_baseline;
-  case ARM::ArchKind::ARMV8MMainline:
-    return Triple::ARMSubArch_v8m_mainline;
-  case ARM::ArchKind::ARMV8_1MMainline:
-    return Triple::ARMSubArch_v8_1m_mainline;
-  default:
-    return Triple::NoSubArch;
-  }
+  llvm_unreachable("BINARYEN");
 }
 
 static StringRef getObjectFormatTypeName(Triple::ObjectFormatType Kind) {
@@ -1593,64 +1460,5 @@ std::string Triple::merge(const Triple &Other) const {
 }
 
 StringRef Triple::getARMCPUForArch(StringRef MArch) const {
-  if (MArch.empty())
-    MArch = getArchName();
-  MArch = ARM::getCanonicalArchName(MArch);
-
-  // Some defaults are forced.
-  switch (getOS()) {
-  case llvm::Triple::FreeBSD:
-  case llvm::Triple::NetBSD:
-    if (!MArch.empty() && MArch == "v6")
-      return "arm1176jzf-s";
-    break;
-  case llvm::Triple::Win32:
-    // FIXME: this is invalid for WindowsCE
-    return "cortex-a9";
-  case llvm::Triple::MacOSX:
-  case llvm::Triple::IOS:
-  case llvm::Triple::WatchOS:
-  case llvm::Triple::TvOS:
-    if (MArch == "v7k")
-      return "cortex-a7";
-    break;
-  default:
-    break;
-  }
-
-  if (MArch.empty())
-    return StringRef();
-
-  StringRef CPU = ARM::getDefaultCPU(MArch);
-  if (!CPU.empty() && !CPU.equals("invalid"))
-    return CPU;
-
-  // If no specific architecture version is requested, return the minimum CPU
-  // required by the OS and environment.
-  switch (getOS()) {
-  case llvm::Triple::NetBSD:
-    switch (getEnvironment()) {
-    case llvm::Triple::GNUEABIHF:
-    case llvm::Triple::GNUEABI:
-    case llvm::Triple::EABIHF:
-    case llvm::Triple::EABI:
-      return "arm926ej-s";
-    default:
-      return "strongarm";
-    }
-  case llvm::Triple::NaCl:
-  case llvm::Triple::OpenBSD:
-    return "cortex-a8";
-  default:
-    switch (getEnvironment()) {
-    case llvm::Triple::EABIHF:
-    case llvm::Triple::GNUEABIHF:
-    case llvm::Triple::MuslEABIHF:
-      return "arm1176jzf-s";
-    default:
-      return "arm7tdmi";
-    }
-  }
-
-  llvm_unreachable("invalid arch name");
+  llvm_unreachable("BINARYEN");
 }

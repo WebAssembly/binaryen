@@ -839,13 +839,6 @@ raw_ostream &llvm::errs() {
   return S;
 }
 
-/// XXX BINARYEN
-raw_ostream &llvm::dbgs() {
-  // Set standard error to be unbuffered by default.
-  static raw_fd_ostream S(STDERR_FILENO, false, true);
-  return S;
-}
-
 /// nulls() - This returns a reference to a raw_ostream which discards output.
 raw_ostream &llvm::nulls() {
   static raw_null_ostream S;
