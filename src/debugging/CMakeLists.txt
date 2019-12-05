@@ -15,6 +15,7 @@ SET(debugging_SOURCES
   Debug.cpp
   DJB.cpp
   Dwarf.cpp
+  dwarf2yaml.cpp
   DWARFAbbreviationDeclaration.cpp
   DWARFAcceleratorTable.cpp
   DWARFAddressRange.cpp
@@ -54,6 +55,7 @@ SET(debugging_SOURCES
   MemoryBuffer.cpp
   NativeFormatting.cpp
   ObjectFile.cpp
+  obj2yaml_Error.cpp
   Optional.cpp
   Path.cpp
   raw_ostream.cpp

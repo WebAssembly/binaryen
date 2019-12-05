@@ -45,9 +45,7 @@
 // the DWARFContext or DWARFYAML::Data; unclear which is best.
 // */
 
-namespace llvm {
-std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y);
-}
+std::error_code dwarf2yaml(llvm::DWARFContext &DCtx, llvm::DWARFYAML::Data &Y);
 
 namespace wasm {
 
@@ -55,6 +53,7 @@ namespace Debugging {
 
 void DWARFInfo::dump() {
   std::cout << "DWARFInfo::dump()\n";
+  // Get debug sections from the wasm.
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
   for (auto& section : wasm.userSections) {
     if (Name(section.name).startsWith(".debug_")) {
@@ -62,15 +61,19 @@ void DWARFInfo::dump() {
       sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
     }
   }
+  // Parse debug sections.
   uint8_t addrSize = 4;
   auto context = llvm::DWARFContext::create(sections, addrSize);
-  // Dump.
   llvm::DIDumpOptions options;
   options.Verbose = true;
   context->dump(llvm::errs(), options);
   std::cout << "DWARFInfo::dump() complete\n";
 
-
+  // Convert to Data representation, which YAML can use to write.
+  llvm::DWARFYAML::Data Data;
+  if (dwarf2yaml(*context, Data)) {
+    Fatal() << "Failed to parse DWARF to YAML";
+  }
 }
 
 } // Debugging
