@@ -352,12 +352,6 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support wasm)
   # note that SHELL: is needed as otherwise cmake will coalesce -s link flags
   # in an incorrect way for emscripten
-  target_link_libraries(binaryen_js "-s WASM=0")
-  if(${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
-    # only valid with fastcomp and WASM=0
-    target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")
-  endif()
-  target_link_libraries(binaryen_js "-s WASM_ASYNC_COMPILATION=0")
   target_link_libraries(binaryen_js "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
