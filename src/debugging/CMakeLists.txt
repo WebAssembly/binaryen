@@ -53,6 +53,7 @@ SET(debugging_SOURCES
   MD5.cpp
   MemoryBuffer.cpp
   NativeFormatting.cpp
+  ObjectFile.cpp
   Optional.cpp
   Path.cpp
   raw_ostream.cpp
