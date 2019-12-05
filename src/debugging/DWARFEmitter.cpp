@@ -376,3 +376,30 @@ DWARFYAML::EmitDebugSections(StringRef YAMLString, bool ApplyFixups,
                        DebugSections);
   return std::move(DebugSections);
 }
+
+// XXX BINARYEN <--
+namespace llvm {
+namespace DWARFYAML {
+StringMap<std::unique_ptr<MemoryBuffer>>
+EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups) {
+  if (ApplyFixups) {
+    DIEFixupVisitor DIFixer(DI);
+    DIFixer.traverseDebugInfo();
+  }
+
+  StringMap<std::unique_ptr<MemoryBuffer>> DebugSections;
+  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugInfo, "debug_info",
+                       DebugSections);
+  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugLine, "debug_line",
+                       DebugSections);
+  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugStr, "debug_str",
+                       DebugSections);
+  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugAbbrev, "debug_abbrev",
+                       DebugSections);
+  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugAranges, "debug_aranges",
+                       DebugSections);
+  return std::move(DebugSections);
+}
+} // namespace DWARFYAML
+} // namespace llvm
+// XXX BINARYEN -->

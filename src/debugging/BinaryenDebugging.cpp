@@ -43,7 +43,8 @@
 //     EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups);
 //
 // For modifying data, like line numberes, we can in theory do that either on
-// the DWARFContext or DWARFYAML::Data; unclear which is best.
+// the DWARFContext or DWARFYAML::Data; unclear which is best, but modifying
+// the DWARFContext may save us doing fixups in EmitDebugSections.
 // */
 
 std::error_code dwarf2yaml(llvm::DWARFContext &DCtx, llvm::DWARFYAML::Data &Y);
@@ -75,6 +76,9 @@ void DWARFInfo::dump() {
   if (dwarf2yaml(*context, Data)) {
     Fatal() << "Failed to parse DWARF to YAML";
   }
+
+  // Convert to binary sections.
+  auto newSections = EmitDebugSections(Data, false /* ApplyFixups, should be true if we modify Data, presumably? */);
 }
 
 } // Debugging
