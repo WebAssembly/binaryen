@@ -28,11 +28,13 @@ void wasm::handle_unreachable(const char* msg,
                               const char* file,
                               unsigned line) {
 #ifndef NDEBUG
-  if (msg)
+  if (msg) {
     std::cerr << msg << "\n";
+  }
   std::cerr << "UNREACHABLE executed";
-  if (file)
+  if (file) {
     std::cerr << " at " << file << ":" << line;
+  }
   std::cerr << "!\n";
 #if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
   __sanitizer_print_stack_trace();
