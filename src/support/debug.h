@@ -44,9 +44,11 @@ void setDebugEnabled(const char* types);
 
 #else
 
-// Comment out this line if you want to build with BYN_ASSERTIONS_ENABLED=ON.
-// But be warned that this confiration is not tested.
-#error "binaryen is currently designed to be built with assertion enabled"
+// We have an option to build with assertions disabled
+// BYN_ASSERTIONS_ENABLED=OFF, but we currently don't recommend using and we
+// don't test with it.
+#error "binaryen is currently designed to be built with assertions enabled."
+#error "remove these #errors if you want to build without them anyway."
 
 #define BYN_DEBUG_WITH_TYPE(...)                                               \
   do {                                                                         \
