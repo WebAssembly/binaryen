@@ -79,6 +79,11 @@ void DWARFInfo::dump() {
 
   // Convert to binary sections.
   auto newSections = EmitDebugSections(Data, false /* ApplyFixups, should be true if we modify Data, presumably? */);
+
+  std::cout << "new sections: " << newSections.size() << '\n';
+  for (auto& key : newSections.keys()) {
+    std::cout << "  " << key.data() << '\n';
+  }
 }
 
 } // Debugging
