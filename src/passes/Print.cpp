@@ -204,8 +204,9 @@ struct PrintExpressionContents
         o << "16";
       } else if (bytes == 4) {
         o << "32";
+      } else {
+        WASM_UNREACHABLE("invalid RMW byte length");
       }
-      WASM_UNREACHABLE("invalid RMW byte length");
     }
     o << '.';
   }
