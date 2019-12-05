@@ -10,6 +10,7 @@ SET(debugging_SOURCES
   APFloat.cpp
   BinaryenDebugging.cpp
   Binary.cpp
+  ConvertUTF.cpp
   DataExtractor.cpp
   Debug.cpp
   DJB.cpp
@@ -59,9 +60,11 @@ SET(debugging_SOURCES
   SmallVector.cpp
   StringMap.cpp
   StringRef.cpp
+  SymbolicFile.cpp
   TargetRegistry.cpp
   Triple.cpp
   Twine.cpp
+  UnicodeCaseFold.cpp
   WithColor.cpp
 )
 ADD_LIBRARY(debugging OBJECT ${debugging_SOURCES})
