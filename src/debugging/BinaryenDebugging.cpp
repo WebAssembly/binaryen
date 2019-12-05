@@ -17,6 +17,37 @@
 #include "wasm.h"
 #include "debugging/debugging.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
+#include "llvm/ObjectYAML/DWARFYAML.h"
+
+// Big picture: We use a DWARFContext to read data, then DWARFYAML support
+// code to write it. That is not the main LLVM Dwarf code used for writing
+// object files, but it avoids us create a "fake" MC layer, and provides a
+// simple way to write out the debug info. Likely the level of info represented
+// in the DWARFYAML::Data object is sufficient for Binaryen's needs, but if not,
+// we may need a different approach.
+//
+// In more detail:
+//
+// 1. Binary sections => DWARFContext:
+//
+//     llvm::DWARFContext::create(sections..)
+//
+// 2. DWARFContext => DWARFYAML::Data
+//
+//     std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
+//
+// 3. DWARFYAML::Data => binary sections
+//
+//     StringMap<std::unique_ptr<MemoryBuffer>>
+//     EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups);
+//
+// For modifying data, like line numberes, we can in theory do that either on
+// the DWARFContext or DWARFYAML::Data; unclear which is best.
+// */
+
+namespace llvm {
+std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y);
+}
 
 namespace wasm {
 
@@ -38,6 +69,8 @@ void DWARFInfo::dump() {
   options.Verbose = true;
   context->dump(llvm::errs(), options);
   std::cout << "DWARFInfo::dump() complete\n";
+
+
 }
 
 } // Debugging
