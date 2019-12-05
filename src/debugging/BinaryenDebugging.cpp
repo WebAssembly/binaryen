@@ -18,6 +18,7 @@
 #include "debugging/debugging.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
+#include "llvm/ObjectYAML/DWARFEmitter.h"
 
 // Big picture: We use a DWARFContext to read data, then DWARFYAML support
 // code to write it. That is not the main LLVM Dwarf code used for writing

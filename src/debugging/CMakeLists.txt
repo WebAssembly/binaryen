@@ -35,6 +35,7 @@ SET(debugging_SOURCES
   DWARFDebugRangeList.cpp
   DWARFDebugRnglists.cpp
   DWARFDie.cpp
+  DWARFEmitter.cpp
   DWARFExpression.cpp
   DWARFFormValue.cpp
   DWARFGdbIndex.cpp
@@ -43,11 +44,15 @@ SET(debugging_SOURCES
   DWARFUnit.cpp
   DWARFUnitIndex.cpp
   DWARFVerifier.cpp
+  DWARFVisitor.cpp
+  DWARFYAML.cpp
   Error.cpp
   ErrorHandling.cpp
   FoldingSet.cpp
   FormatVariadic.cpp
   Hashing.cpp
+  LEB128.cpp
+  LineIterator.cpp
   Magic.cpp
   ManagedStatic.cpp
   MCRegisterInfo.cpp
@@ -61,6 +66,7 @@ SET(debugging_SOURCES
   raw_ostream.cpp
   ScopedPrinter.cpp
   SmallVector.cpp
+  SourceMgr.cpp 
   StringMap.cpp
   StringRef.cpp
   SymbolicFile.cpp
@@ -69,5 +75,7 @@ SET(debugging_SOURCES
   Twine.cpp
   UnicodeCaseFold.cpp
   WithColor.cpp
+  YAMLParser.cpp # XXX needed?
+  YAMLTraits.cpp
 )
 ADD_LIBRARY(debugging OBJECT ${debugging_SOURCES})
