@@ -82,7 +82,7 @@ void DWARFInfo::dump() {
 
   std::cout << "new sections: " << newSections.size() << '\n';
   for (auto& key : newSections.keys()) {
-    std::cout << "  " << key.data() << '\n';
+    std::cout << "  " << key.data() << " : " << newSections[key]->getBuffer().size() << '\n';
   }
 }
 
