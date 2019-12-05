@@ -67,7 +67,9 @@ using FunctionNameKind = DILineInfoSpecifier::FunctionNameKind;
 
 DWARFContext::DWARFContext(std::unique_ptr<const DWARFObject> DObj,
                            std::string DWPName)
-    : DIContext(CK_DWARF), DWPName(std::move(DWPName)), DObj(std::move(DObj)) {}
+    : DIContext(CK_DWARF), DWPName(std::move(DWPName)), DObj(std::move(DObj)) {
+errs() << "maek DC\n";
+}
 
 DWARFContext::~DWARFContext() = default;
 
@@ -324,7 +326,7 @@ static void dumpLoclistsSection(raw_ostream &OS, DIDumpOptions DumpOpts,
 void DWARFContext::dump(
     raw_ostream &OS, DIDumpOptions DumpOpts,
     std::array<Optional<uint64_t>, DIDT_ID_Count> DumpOffsets) {
-
+errs() << "dump1\n";
   uint64_t DumpType = DumpOpts.DumpType;
 
   StringRef Extension = sys::path::extension(DObj->getFileName());
@@ -342,10 +344,14 @@ void DWARFContext::dump(
   bool ExplicitDWO = Explicit && IsDWO;
   auto shouldDump = [&](bool Explicit, const char *Name, unsigned ID,
                         StringRef Section) -> Optional<uint64_t> * {
+errs() << "  shoulddump1\n";
+
     unsigned Mask = 1U << ID;
+errs() << "  should? " << (DumpType & Mask) << " : " << Explicit << " : " << Section.empty() << "\n";
     bool Should = (DumpType & Mask) && (Explicit || !Section.empty());
     if (!Should)
       return nullptr;
+errs() << "  shoulddump2\n";
     OS << "\n" << Name << " contents:\n";
     return &DumpOffsets[ID];
   };
@@ -447,6 +453,7 @@ void DWARFContext::dump(
   auto DumpLineSection = [&](DWARFDebugLine::SectionParser Parser,
                              DIDumpOptions DumpOpts,
                              Optional<uint64_t> DumpOffset) {
+errs() << "dump4\n";
     while (!Parser.done()) {
       if (DumpOffset && Parser.getOffset() != *DumpOffset) {
         Parser.skip(dumpWarning);
@@ -463,15 +470,18 @@ void DWARFContext::dump(
       }
     }
   };
+errs() << "dump2\n";
 
   if (const auto *Off = shouldDump(Explicit, ".debug_line", DIDT_ID_DebugLine,
                                    DObj->getLineSection().Data)) {
+errs() << "dump3\n";
     DWARFDataExtractor LineData(*DObj, DObj->getLineSection(), isLittleEndian(),
                                 0);
     DWARFDebugLine::SectionParser Parser(LineData, *this, compile_units(),
                                          type_units());
     DumpLineSection(Parser, DumpOpts, *Off);
   }
+errs() << "dump2.5\n";
 
   if (const auto *Off =
           shouldDump(ExplicitDWO, ".debug_line.dwo", DIDT_ID_DebugLine,
@@ -1847,6 +1857,7 @@ DWARFContext::create(const object::ObjectFile &Obj, const LoadedObjectInfo *L,
 std::unique_ptr<DWARFContext>
 DWARFContext::create(const StringMap<std::unique_ptr<MemoryBuffer>> &Sections,
                      uint8_t AddrSize, bool isLittleEndian) {
+errs() << "DWARFContext::create2 " << Sections.size() << "\n";
   auto DObj =
       std::make_unique<DWARFObjInMemory>(Sections, AddrSize, isLittleEndian);
   return std::make_unique<DWARFContext>(std::move(DObj), "");

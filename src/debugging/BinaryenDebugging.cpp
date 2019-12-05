@@ -28,7 +28,7 @@ void DWARFInfo::dump() {
   for (auto& section : wasm.userSections) {
     if (Name(section.name).startsWith(".debug_")) {
       std::cout << "  debug section " << section.name << " (" << section.data.size() << " bytes)\n";
-      sections[section.name] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
+      sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
     }
   }
   uint8_t addrSize = 4;
