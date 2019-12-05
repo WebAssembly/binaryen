@@ -3,9 +3,8 @@
  (type $1 (func))
  (type $2 (func (result i32)))
  (import "env" "memory" (memory $0 0))
- (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\01\00\00\00")
- (import "env" "__indirect_function_table" (table $timport$1 2 funcref))
- (elem (global.get $gimport$3) $puts $print_message\28\29)
+ (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
+ (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (import "env" "__memory_base" (global $gimport$2 i32))
  (import "env" "__table_base" (global $gimport$3 i32))
  (import "GOT.mem" "external_var" (global $gimport$5 (mut i32)))
@@ -27,20 +26,14 @@
     (global.get $gimport$2)
     (i32.const 16)
    )
-   (i32.add
-    (global.get $gimport$3)
-    (i32.const 0)
-   )
+   (global.get $gimport$6)
   )
   (i32.store
    (i32.add
     (global.get $gimport$2)
     (i32.const 20)
    )
-   (i32.add
-    (global.get $gimport$3)
-    (i32.const 1)
-   )
+   (global.get $gimport$7)
   )
  )
  (func $print_message\28\29 (; 3 ;) (type $2) (result i32)
@@ -57,6 +50,6 @@
   )
  )
  ;; custom section "dylink", size 5
- ;; custom section "producers", size 111
+ ;; custom section "producers", size 112
 )
 
