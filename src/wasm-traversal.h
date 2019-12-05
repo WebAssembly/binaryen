@@ -186,7 +186,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
         DELEGATE(Pop);
       case Expression::Id::InvalidId:
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expression type");
     }
 
 #undef DELEGATE
@@ -204,7 +204,7 @@ struct OverriddenVisitor {
       &SubType::visit##CLASS_TO_VISIT !=                                       \
         &OverriddenVisitor<SubType, ReturnType>::visit##CLASS_TO_VISIT,        \
       "Derived class must implement visit" #CLASS_TO_VISIT);                   \
-    WASM_UNREACHABLE();                                                        \
+    WASM_UNREACHABLE("Derived class must implement visit" #CLASS_TO_VISIT);    \
   }
 
   UNIMPLEMENTED(Block);
@@ -357,7 +357,7 @@ struct OverriddenVisitor {
         DELEGATE(Pop);
       case Expression::Id::InvalidId:
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expression type");
     }
 
 #undef DELEGATE
@@ -1083,7 +1083,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::NumExpressionIds:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expression type");
     }
   }
 };
@@ -1185,7 +1185,7 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
           return curr;
         }
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expression type");
       }
       if (i == 0) {
         return nullptr;

@@ -678,7 +678,7 @@ std::string proxyingSuffix(Proxying proxy) {
     case Proxying::Async:
       return "async_on_main_thread_";
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid prozy type");
 }
 
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {

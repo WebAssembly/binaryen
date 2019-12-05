@@ -919,7 +919,7 @@ inline S32LEB binaryType(Type type) {
       ret = BinaryConsts::EncodedType::exnref;
       break;
     case unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
   return S32LEB(ret);
 }

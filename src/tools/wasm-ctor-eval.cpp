@@ -231,7 +231,8 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       } else if (segment.offset->is<GlobalGet>()) {
         start = 0;
       } else {
-        WASM_UNREACHABLE(); // wasm spec only allows const and global.get there
+        // wasm spec only allows const and global.get there
+        WASM_UNREACHABLE("invalid expr type");
       }
       auto end = start + segment.data.size();
       if (start <= index && index < end) {

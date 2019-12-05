@@ -60,7 +60,7 @@ struct Bits {
     } else if (type == i64) {
       return amount & 63;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected type");
   }
 
   static Index getEffectiveShifts(Expression* expr) {
@@ -70,7 +70,7 @@ struct Bits {
     } else if (amount->type == i64) {
       return getEffectiveShifts(amount->value.geti64(), i64);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected type");
   }
 
   static Expression* makeSignExt(Expression* value, Index bytes, Module& wasm) {

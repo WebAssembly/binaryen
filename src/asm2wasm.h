@@ -1548,7 +1548,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
                 break;
               }
               default:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("unexpected type");
             }
           } else {
             assert(old == none);
@@ -2060,7 +2060,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->op = NegFloat32;
           ret->type = Type::f32;
         } else {
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected asm type");
         }
         return ret;
       } else if (ast[1] == B_NOT) {
@@ -2195,7 +2195,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->type = value->type;
             return ret;
           } else {
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
           }
         }
         if (name == Math_floor || name == Math_sqrt || name == Math_ceil) {
@@ -2328,7 +2328,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               process(ast[2][2]),
               asmToWasmType(view.type));
           }
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected atomic op");
         }
         bool tableCall = false;
         if (wasmOnly) {

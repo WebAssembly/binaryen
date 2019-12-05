@@ -254,13 +254,15 @@ public:
   virtual void prepareToRun(PassRunner* runner, Module* module) {}
 
   // Implement this with code to run the pass on the whole module
-  virtual void run(PassRunner* runner, Module* module) { WASM_UNREACHABLE(); }
+  virtual void run(PassRunner* runner, Module* module) {
+    WASM_UNREACHABLE("unimplemented");
+  }
 
   // Implement this with code to run the pass on a single function, for
   // a function-parallel pass
   virtual void
   runOnFunction(PassRunner* runner, Module* module, Function* function) {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unimplemented");
   }
 
   // Function parallelism. By default, passes are not run in parallel, but you
@@ -285,7 +287,7 @@ public:
   // This method is used to create instances per function for a
   // function-parallel pass. You may need to override this if you subclass a
   // Walker, as otherwise this will create the parent class.
-  virtual Pass* create() { WASM_UNREACHABLE(); }
+  virtual Pass* create() { WASM_UNREACHABLE("unimplenented"); }
 
   // Whether this pass modifies the Binaryen IR in the module. This is true for
   // most passes, except for passes that have no side effects, or passes that

@@ -84,8 +84,7 @@ struct Operation {
     } else if (operation == GET) {
       return instance->getExport(name);
     } else {
-      Fatal() << "unknown operation: " << operation << '\n';
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unknown operation");
     }
   }
 };

@@ -215,7 +215,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
           break;
         }
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected dataflow node type");
       }
     }
     // No one is a user of this node after we replaced all the uses.
@@ -234,9 +234,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
         return &binary->left;
       } else if (index == 1) {
         return &binary->right;
-      } else {
-        WASM_UNREACHABLE();
       }
+      WASM_UNREACHABLE("unexpected index");
     } else if (auto* select = expr->dynCast<Select>()) {
       if (index == 0) {
         return &select->condition;
@@ -244,12 +243,10 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
         return &select->ifTrue;
       } else if (index == 2) {
         return &select->ifFalse;
-      } else {
-        WASM_UNREACHABLE();
       }
-    } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected index");
     }
+    WASM_UNREACHABLE("unexpected expression type");
   }
 };
 
