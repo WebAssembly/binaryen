@@ -99,7 +99,7 @@ raw_ostream &WithColor::remark(raw_ostream &OS, StringRef Prefix,
 }
 
 bool WithColor::colorsEnabled() {
-  llvm_unreachable("colorsEnabled");
+  return false; // XXX BINARYEN
 }
 
 WithColor &WithColor::changeColor(raw_ostream::Colors Color, bool Bold,
