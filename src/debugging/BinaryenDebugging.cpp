@@ -23,10 +23,20 @@ namespace wasm {
 namespace Debugging {
 
 void DWARFInfo::dump() {
+  std::cout << "DWARFInfo::dump()\n";
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
+  for (auto& section : wasm.userSections) {
+    if (Name(section.name).startsWith(".debug_")) {
+      std::cout << "  debug section " << section.name << " (" << section.data.size() << " bytes)\n";
+      sections[section.name] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
+    }
+  }
   uint8_t addrSize = 4;
   auto context = llvm::DWARFContext::create(sections, addrSize);
-  context->dump(llvm::errs(), llvm::DIDumpOptions());
+  llvm::DIDumpOptions options;
+  options.Verbose = true;
+  context->dump(llvm::errs(), options);
+  std::cout << "DWARFInfo::dump() complete\n";
 }
 
 } // Debugging
