@@ -33,6 +33,7 @@ void DWARFInfo::dump() {
   }
   uint8_t addrSize = 4;
   auto context = llvm::DWARFContext::create(sections, addrSize);
+  // Dump.
   llvm::DIDumpOptions options;
   options.Verbose = true;
   context->dump(llvm::errs(), options);
