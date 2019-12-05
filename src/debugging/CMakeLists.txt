@@ -6,6 +6,7 @@ ELSE()
 ENDIF()
 
 SET(debugging_SOURCES
+  APInt.cpp
   BinaryenDebugging.cpp
   Binary.cpp
   DataExtractor.cpp
@@ -41,8 +42,11 @@ SET(debugging_SOURCES
   Error.cpp
   ErrorHandling.cpp
   FormatVariadic.cpp
+  ManagedStatic.cpp
   MCRegisterInfo.cpp
   MD5.cpp
+  NativeFormatting.cpp
+  Optional.cpp
   Path.cpp
   raw_ostream.cpp
   ScopedPrinter.cpp

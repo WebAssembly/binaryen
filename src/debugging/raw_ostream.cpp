@@ -519,29 +519,7 @@ void format_object_base::home() {
 static int getFD(StringRef Filename, std::error_code &EC,
                  sys::fs::CreationDisposition Disp, sys::fs::FileAccess Access,
                  sys::fs::OpenFlags Flags) {
-  assert((Access & sys::fs::FA_Write) &&
-         "Cannot make a raw_ostream from a read-only descriptor!");
-
-  // Handle "-" as stdout. Note that when we do this, we consider ourself
-  // the owner of stdout and may set the "binary" flag globally based on Flags.
-  if (Filename == "-") {
-    EC = std::error_code();
-    // If user requested binary then put stdout into binary mode if
-    // possible.
-    if (!(Flags & sys::fs::OF_Text))
-      sys::ChangeStdoutToBinary();
-    return STDOUT_FILENO;
-  }
-
-  int FD;
-  if (Access & sys::fs::FA_Read)
-    EC = sys::fs::openFileForReadWrite(Filename, FD, Disp, Flags);
-  else
-    EC = sys::fs::openFileForWrite(Filename, FD, Disp, Flags);
-  if (EC)
-    return -1;
-
-  return FD;
+  llvm_unreachable("getFD"); // XXX BINARYEN
 }
 
 raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC)
@@ -612,8 +590,11 @@ raw_fd_ostream::~raw_fd_ostream() {
   if (FD >= 0) {
     flush();
     if (ShouldClose) {
+      llvm_unreachable("close"); // XXX BINARYEN
+#if 0
       if (auto EC = sys::Process::SafelyCloseFileDescriptor(FD))
         error_detected(EC);
+#endif
     }
   }
 
@@ -744,8 +725,11 @@ void raw_fd_ostream::close() {
   assert(ShouldClose);
   ShouldClose = false;
   flush();
+  llvm_unreachable("close"); // XXX BINARYEN
+#if 0
   if (auto EC = sys::Process::SafelyCloseFileDescriptor(FD))
     error_detected(EC);
+#endif
   FD = -1;
 }
 
@@ -806,59 +790,29 @@ raw_ostream &raw_fd_ostream::changeColor(enum Colors colors, bool bold,
   if (!ColorEnabled)
     return *this;
 
-  if (sys::Process::ColorNeedsFlush())
-    flush();
-  const char *colorcode =
-      (colors == SAVEDCOLOR)
-          ? sys::Process::OutputBold(bg)
-          : sys::Process::OutputColor(static_cast<char>(colors), bold, bg);
-  if (colorcode) {
-    size_t len = strlen(colorcode);
-    write(colorcode, len);
-    // don't account colors towards output characters
-    pos -= len;
-  }
-  return *this;
+  llvm_unreachable("color"); // XXX BINARYEN
 }
 
 raw_ostream &raw_fd_ostream::resetColor() {
   if (!ColorEnabled)
     return *this;
 
-  if (sys::Process::ColorNeedsFlush())
-    flush();
-  const char *colorcode = sys::Process::ResetColor();
-  if (colorcode) {
-    size_t len = strlen(colorcode);
-    write(colorcode, len);
-    // don't account colors towards output characters
-    pos -= len;
-  }
-  return *this;
+  llvm_unreachable("color"); // XXX BINARYEN
 }
 
 raw_ostream &raw_fd_ostream::reverseColor() {
   if (!ColorEnabled)
     return *this;
 
-  if (sys::Process::ColorNeedsFlush())
-    flush();
-  const char *colorcode = sys::Process::OutputReverse();
-  if (colorcode) {
-    size_t len = strlen(colorcode);
-    write(colorcode, len);
-    // don't account colors towards output characters
-    pos -= len;
-  }
-  return *this;
+  llvm_unreachable("color"); // XXX BINARYEN
 }
 
 bool raw_fd_ostream::is_displayed() const {
-  return sys::Process::FileDescriptorIsDisplayed(FD);
+  llvm_unreachable("is_displayed"); // XXX BINARYEN
 }
 
 bool raw_fd_ostream::has_colors() const {
-  return sys::Process::FileDescriptorHasColors(FD);
+  llvm_unreachable("is_displayed"); // XXX BINARYEN
 }
 
 void raw_fd_ostream::anchor() {}
@@ -880,6 +834,13 @@ raw_ostream &llvm::outs() {
 /// errs() - This returns a reference to a raw_ostream for standard error.
 /// Use it like: errs() << "foo" << "bar";
 raw_ostream &llvm::errs() {
+  // Set standard error to be unbuffered by default.
+  static raw_fd_ostream S(STDERR_FILENO, false, true);
+  return S;
+}
+
+/// XXX BINARYEN
+raw_ostream &llvm::dbgs() {
   // Set standard error to be unbuffered by default.
   static raw_fd_ostream S(STDERR_FILENO, false, true);
   return S;

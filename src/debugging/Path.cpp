@@ -535,10 +535,13 @@ void native(SmallVectorImpl<char> &Path, Style style) {
   if (real_style(style) == Style::windows) {
     std::replace(Path.begin(), Path.end(), '/', '\\');
     if (Path[0] == '~' && (Path.size() == 1 || is_separator(Path[1], style))) {
+      llvm_unreachable("BINARYEN native");
+#if 0
       SmallString<128> PathHome;
       home_directory(PathHome);
       PathHome.append(Path.begin() + 1, Path.end());
       Path = PathHome;
+#endif
     }
   } else {
     for (auto PI = Path.begin(), PE = Path.end(); PI < PE; ++PI) {
@@ -726,6 +729,8 @@ bool remove_dots(SmallVectorImpl<char> &path, bool remove_dot_dot,
 }
 
 } // end namespace path
+
+#if 0 // XXX BINARYEN
 
 namespace fs {
 
@@ -1105,6 +1110,9 @@ ErrorOr<perms> getPermissions(const Twine &Path) {
 }
 
 } // end namespace fs
+
+#endif // XXX BINARYEN
+
 } // end namespace sys
 } // end namespace llvm
 
@@ -1117,6 +1125,8 @@ ErrorOr<perms> getPermissions(const Twine &Path) {
 #include "Windows/Path.inc"
 #endif
 #endif
+
+#if 0 // XXX BINARYEN
 
 namespace llvm {
 namespace sys {
@@ -1248,3 +1258,5 @@ Expected<TempFile> TempFile::create(const Twine &Model, unsigned Mode) {
 
 } // end namsspace sys
 } // end namespace llvm
+
+#endif

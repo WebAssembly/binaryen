@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <mutex>
 #include <new>
+#include <iostream> // XXX BINARYEN
 
 #if defined(HAVE_UNISTD_H)
 # include <unistd.h>
@@ -120,7 +121,9 @@ void llvm::report_fatal_error(const Twine &Reason, bool GenCrashDiag) {
   // If we reached here, we are failing ungracefully. Run the interrupt handlers
   // to make sure any special cleanups get done, in particular that we remove
   // files registered with RemoveFileOnSignal.
+#if 0 // XXX BINARYEN
   sys::RunInterruptHandlers();
+#endif
 
   exit(1);
 }
@@ -200,12 +203,13 @@ void llvm::llvm_unreachable_internal(const char *msg, const char *file,
   // This code intentionally doesn't call the ErrorHandler callback, because
   // llvm_unreachable is intended to be used to indicate "impossible"
   // situations, and not legitimate runtime errors.
+  // XXX BINARYEN: use cout
   if (msg)
-    dbgs() << msg << "\n";
-  dbgs() << "UNREACHABLE executed";
+    std::cout << msg << "\n";
+  std::cout << "UNREACHABLE executed";
   if (file)
-    dbgs() << " at " << file << ":" << line;
-  dbgs() << "!\n";
+    std::cout << " at " << file << ":" << line;
+  std::cout << "!\n";
   abort();
 #ifdef LLVM_BUILTIN_UNREACHABLE
   // Windows systems and possibly others don't declare abort() to be noreturn,
