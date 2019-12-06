@@ -11,7 +11,7 @@ var wast = `
 )
 `;
 
-function test(Binaryen) {
+function test() {
   // Use defaults (should not emit debug info)
   console.log("=== default ===");
   console.log("debugInfo=" + Binaryen.getDebugInfo());
@@ -48,4 +48,4 @@ function test(Binaryen) {
   module.dispose();
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

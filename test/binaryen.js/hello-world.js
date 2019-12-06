@@ -5,7 +5,7 @@ function assert(x) {
 // "hello world" type example: create a function that adds two i32s and
 // returns the result
 
-function test(Binaryen) {
+function test() {
   // Create a module to work on
   var module = new Binaryen.Module();
 
@@ -57,4 +57,4 @@ function test(Binaryen) {
   console.log('an addition: ' + wasm.exports.adder(40, 2));
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

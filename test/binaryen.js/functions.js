@@ -12,7 +12,7 @@ function cleanInfo(info) {
   return ret;
 }
 
-function test(Binaryen) {
+function test() {
   var module = new Binaryen.Module();
 
   var signature = module.addFunctionType("i", Binaryen.i32, []);
@@ -43,4 +43,4 @@ function test(Binaryen) {
   console.log(module.emitText());
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

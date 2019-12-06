@@ -1,1 +1,2 @@
 *.sh text eol=lf
+test/binaryen.js/*.txt eol=lf

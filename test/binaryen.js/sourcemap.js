@@ -2,7 +2,7 @@ function assert(x) {
   if (!x) throw 'error!';
 }
 
-function test(Binaryen) {
+function test() {
   var module = new Binaryen.Module();
 
   var signature = module.addFunctionType("i", Binaryen.i32, []);
@@ -45,4 +45,4 @@ function test(Binaryen) {
   console.log(output.sourceMap);
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

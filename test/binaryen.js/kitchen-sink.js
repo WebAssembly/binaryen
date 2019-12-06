@@ -991,7 +991,7 @@ function test_expression_info() {
   module.dispose();
 }
 
-function test(Binaryen) {
+function test() {
   test_types();
   test_features();
   test_ids();
@@ -1007,4 +1007,4 @@ function test(Binaryen) {
   test_expression_info();
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

@@ -16,7 +16,7 @@ function stringify(expr) {
   return JSON.stringify(cleanInfo(Binaryen.getExpressionInfo(expr)));
 }
 
-function test(Binaryen) {
+function test() {
   var module = new Binaryen.Module();
   module.setFeatures(Binaryen.Features.ExceptionHandling);
 
@@ -61,4 +61,4 @@ function test(Binaryen) {
   console.log("getExpressionInfo(try) = " + stringify(try_));
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

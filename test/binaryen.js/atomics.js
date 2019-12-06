@@ -8,7 +8,7 @@ var wast = `
 )
 `;
 
-function test(Binaryen) {
+function test() {
   var module = Binaryen.parseText(wast);
 
   var signature = module.addFunctionType("v", Binaryen.none, []);
@@ -94,4 +94,4 @@ function test(Binaryen) {
   console.log(module.emitText());
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

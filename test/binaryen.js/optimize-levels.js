@@ -19,7 +19,7 @@ var wast = `
 )
 `;
 
-function test(Binaryen) {
+function test() {
   console.log("=== input wast ===" + wast);
 
   function printOptions() {
@@ -66,4 +66,4 @@ function test(Binaryen) {
   module.dispose();
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

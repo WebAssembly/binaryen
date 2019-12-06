@@ -2,7 +2,7 @@ function assert(x) {
   if (!x) throw 'error!';
 }
 
-function test(Binaryen) {
+function test() {
   Binaryen.setAPITracing(true);
   var module = new Binaryen.Module();
 
@@ -12,4 +12,4 @@ function test(Binaryen) {
   console.log(module.emitText());
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

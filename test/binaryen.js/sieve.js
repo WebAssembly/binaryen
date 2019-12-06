@@ -1,4 +1,4 @@
-function test(Binaryen) {
+function test() {
   // Create a module to work on
   var module = new Binaryen.Module();
 
@@ -79,4 +79,4 @@ function test(Binaryen) {
   console.log('optimized:\n\n' + module.emitText());
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

@@ -2,7 +2,7 @@ function assert(x) {
   if (!x) throw 'error!';
 }
 
-function test(Binaryen) {
+function test() {
   var module = new Binaryen.Module();
 
   // memory with offset
@@ -27,4 +27,4 @@ function test(Binaryen) {
   console.log(module.emitText());
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

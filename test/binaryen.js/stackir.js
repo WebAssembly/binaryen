@@ -21,7 +21,7 @@ var wast = `
 )
 `;
 
-function test(Binaryen) {
+function test() {
   console.log("=== input wast ===" + wast);
 
   var module = Binaryen.parseText(wast);
@@ -34,4 +34,4 @@ function test(Binaryen) {
   console.log(module.emitStackIR(true));
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);

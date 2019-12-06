@@ -1,4 +1,4 @@
-function test(Binaryen) {
+function test() {
   (function() {
     var mod = new Binaryen.Module();
     var funcType = mod.addFunctionType("v", Binaryen.void, []);
@@ -28,4 +28,4 @@ function test(Binaryen) {
   })();
 }
 
-(async () => test(await Binaryen.ready))();
+Binaryen.ready.then(test);
