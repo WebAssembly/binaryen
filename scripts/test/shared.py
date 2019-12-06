@@ -186,7 +186,7 @@ WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
 # Due to cmake limitations, we emit binaryen_js.js (see CMakeLists.txt
 # for why).
-BINARYEN_JS = os.path.join(options.binaryen_root, 'bin', 'binaryen_js.js')
+BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen_js.js')
 
 
 def wrap_with_valgrind(cmd):
