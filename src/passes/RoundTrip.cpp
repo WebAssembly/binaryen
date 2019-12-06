@@ -20,6 +20,10 @@
 // parameter.
 //
 
+#ifdef _WIN32
+#include <io.h>
+#endif
+
 #include <cstdlib>
 #include <vector>
 
@@ -38,8 +42,12 @@ struct RoundTrip : public Pass {
     std::string templateName = "byn_round_trip_XXXXXX";
     std::vector<char> buffer(templateName.begin(), templateName.end());
     buffer.push_back(0);
+#ifndef _WIN32
     (void)mkstemp(buffer.data());
     std::string tempName(buffer.begin(), buffer.end());
+#else
+    std::string tempName = _mktemp(templateName.data());
+#endif
     // Write
     ModuleWriter writer;
     writer.setBinary(true);
