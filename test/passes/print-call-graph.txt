@@ -11,105 +11,105 @@ digraph call {
   }
 
   node [shape=box, fontname=courier, fontsize=10];
-  "$stackAlloc" [style="filled", fillcolor="white"];
-  "$stackSave" [style="filled", fillcolor="white"];
-  "$stackRestore" [style="filled", fillcolor="white"];
-  "$establishStackSpace" [style="filled", fillcolor="white"];
-  "$setThrew" [style="filled", fillcolor="white"];
-  "$setTempRet0" [style="filled", fillcolor="white"];
-  "$getTempRet0" [style="filled", fillcolor="white"];
-  "$_malloc" [style="filled", fillcolor="white"];
-  "$_free" [style="filled", fillcolor="white"];
-  "$_main" [style="filled", fillcolor="white"];
-  "$___stdio_close" [style="filled", fillcolor="white"];
-  "$___stdio_write" [style="filled", fillcolor="white"];
-  "$___stdio_seek" [style="filled", fillcolor="white"];
-  "$___syscall_ret" [style="filled", fillcolor="white"];
-  "$___errno_location" [style="filled", fillcolor="white"];
-  "$_cleanup_387" [style="filled", fillcolor="white"];
-  "$___stdout_write" [style="filled", fillcolor="white"];
-  "$_fflush" [style="filled", fillcolor="white"];
-  "$___fflush_unlocked" [style="filled", fillcolor="white"];
-  "$__Znwj" [style="filled", fillcolor="white"];
-  "$__ZSt15get_new_handlerv" [style="filled", fillcolor="white"];
-  "$runPostSets" [style="filled", fillcolor="white"];
-  "$_memset" [style="filled", fillcolor="white"];
-  "$_memcpy" [style="filled", fillcolor="white"];
-  "$_pthread_self" [style="filled", fillcolor="white"];
-  "$dynCall_ii" [style="filled", fillcolor="white"];
-  "$dynCall_iiii" [style="filled", fillcolor="white"];
-  "$dynCall_vi" [style="filled", fillcolor="white"];
-  "$dynCall_v" [style="filled", fillcolor="white"];
-  "$b0" [style="filled", fillcolor="white"];
-  "$b1" [style="filled", fillcolor="white"];
-  "$b2" [style="filled", fillcolor="white"];
-  "$b3" [style="filled", fillcolor="white"];
-  "$abort" [style="filled", fillcolor="turquoise"];
-  "$_pthread_cleanup_pop" [style="filled", fillcolor="turquoise"];
-  "$___lock" [style="filled", fillcolor="turquoise"];
-  "$___syscall6" [style="filled", fillcolor="turquoise"];
-  "$_pthread_cleanup_push" [style="filled", fillcolor="turquoise"];
-  "$___syscall140" [style="filled", fillcolor="turquoise"];
-  "$_emscripten_memcpy_big" [style="filled", fillcolor="turquoise"];
-  "$___syscall54" [style="filled", fillcolor="turquoise"];
-  "$___unlock" [style="filled", fillcolor="turquoise"];
-  "$___syscall146" [style="filled", fillcolor="turquoise"];
-  "$_fflush" [style="filled", fillcolor="gray"];
-  "$_main" [style="filled", fillcolor="gray"];
-  "$_pthread_self" [style="filled", fillcolor="gray"];
-  "$_memset" [style="filled", fillcolor="gray"];
-  "$_malloc" [style="filled", fillcolor="gray"];
-  "$_memcpy" [style="filled", fillcolor="gray"];
-  "$_free" [style="filled", fillcolor="gray"];
-  "$___errno_location" [style="filled", fillcolor="gray"];
-  "$runPostSets" [style="filled", fillcolor="gray"];
-  "$stackAlloc" [style="filled", fillcolor="gray"];
-  "$stackSave" [style="filled", fillcolor="gray"];
-  "$stackRestore" [style="filled", fillcolor="gray"];
-  "$establishStackSpace" [style="filled", fillcolor="gray"];
-  "$setThrew" [style="filled", fillcolor="gray"];
-  "$setTempRet0" [style="filled", fillcolor="gray"];
-  "$getTempRet0" [style="filled", fillcolor="gray"];
-  "$dynCall_ii" [style="filled", fillcolor="gray"];
-  "$dynCall_iiii" [style="filled", fillcolor="gray"];
-  "$dynCall_vi" [style="filled", fillcolor="gray"];
-  "$dynCall_v" [style="filled", fillcolor="gray"];
-  "$_main" -> "$__Znwj"; // call
-  "$___stdio_close" -> "$___syscall6"; // call
-  "$___stdio_close" -> "$___syscall_ret"; // call
-  "$___stdio_write" -> "$_pthread_cleanup_push"; // call
-  "$___stdio_write" -> "$___syscall146"; // call
-  "$___stdio_write" -> "$___syscall_ret"; // call
-  "$___stdio_write" -> "$_pthread_cleanup_pop"; // call
-  "$___stdio_seek" -> "$___syscall140"; // call
-  "$___stdio_seek" -> "$___syscall_ret"; // call
-  "$___syscall_ret" -> "$___errno_location"; // call
-  "$___errno_location" -> "$_pthread_self"; // call
-  "$_cleanup_387" -> "$_free"; // call
-  "$___stdout_write" -> "$___syscall54"; // call
-  "$___stdout_write" -> "$___stdio_write"; // call
-  "$_fflush" -> "$___fflush_unlocked"; // call
-  "$_fflush" -> "$_malloc"; // call
-  "$_fflush" -> "$_free"; // call
-  "$_fflush" -> "$_fflush"; // call
-  "$_fflush" -> "$___lock"; // call
-  "$_fflush" -> "$___unlock"; // call
-  "$__Znwj" -> "$_malloc"; // call
-  "$__Znwj" -> "$__ZSt15get_new_handlerv"; // call
-  "$_memcpy" -> "$_emscripten_memcpy_big"; // call
-  "$b0" -> "$abort"; // call
-  "$b1" -> "$abort"; // call
-  "$b2" -> "$abort"; // call
-  "$b3" -> "$abort"; // call
-  "$b0" [style="filled, rounded"];
-  "$___stdio_close" [style="filled, rounded"];
-  "$b1" [style="filled, rounded"];
-  "$___stdout_write" [style="filled, rounded"];
-  "$___stdio_seek" [style="filled, rounded"];
-  "$___stdio_write" [style="filled, rounded"];
-  "$b2" [style="filled, rounded"];
-  "$_cleanup_387" [style="filled, rounded"];
-  "$b3" [style="filled, rounded"];
+  "stackAlloc" [style="filled", fillcolor="white"];
+  "stackSave" [style="filled", fillcolor="white"];
+  "stackRestore" [style="filled", fillcolor="white"];
+  "establishStackSpace" [style="filled", fillcolor="white"];
+  "setThrew" [style="filled", fillcolor="white"];
+  "setTempRet0" [style="filled", fillcolor="white"];
+  "getTempRet0" [style="filled", fillcolor="white"];
+  "_malloc" [style="filled", fillcolor="white"];
+  "_free" [style="filled", fillcolor="white"];
+  "_main" [style="filled", fillcolor="white"];
+  "___stdio_close" [style="filled", fillcolor="white"];
+  "___stdio_write" [style="filled", fillcolor="white"];
+  "___stdio_seek" [style="filled", fillcolor="white"];
+  "___syscall_ret" [style="filled", fillcolor="white"];
+  "___errno_location" [style="filled", fillcolor="white"];
+  "_cleanup_387" [style="filled", fillcolor="white"];
+  "___stdout_write" [style="filled", fillcolor="white"];
+  "_fflush" [style="filled", fillcolor="white"];
+  "___fflush_unlocked" [style="filled", fillcolor="white"];
+  "__Znwj" [style="filled", fillcolor="white"];
+  "__ZSt15get_new_handlerv" [style="filled", fillcolor="white"];
+  "runPostSets" [style="filled", fillcolor="white"];
+  "_memset" [style="filled", fillcolor="white"];
+  "_memcpy" [style="filled", fillcolor="white"];
+  "_pthread_self" [style="filled", fillcolor="white"];
+  "dynCall_ii" [style="filled", fillcolor="white"];
+  "dynCall_iiii" [style="filled", fillcolor="white"];
+  "dynCall_vi" [style="filled", fillcolor="white"];
+  "dynCall_v" [style="filled", fillcolor="white"];
+  "b0" [style="filled", fillcolor="white"];
+  "b1" [style="filled", fillcolor="white"];
+  "b2" [style="filled", fillcolor="white"];
+  "b3" [style="filled", fillcolor="white"];
+  "abort" [style="filled", fillcolor="turquoise"];
+  "_pthread_cleanup_pop" [style="filled", fillcolor="turquoise"];
+  "___lock" [style="filled", fillcolor="turquoise"];
+  "___syscall6" [style="filled", fillcolor="turquoise"];
+  "_pthread_cleanup_push" [style="filled", fillcolor="turquoise"];
+  "___syscall140" [style="filled", fillcolor="turquoise"];
+  "_emscripten_memcpy_big" [style="filled", fillcolor="turquoise"];
+  "___syscall54" [style="filled", fillcolor="turquoise"];
+  "___unlock" [style="filled", fillcolor="turquoise"];
+  "___syscall146" [style="filled", fillcolor="turquoise"];
+  "_fflush" [style="filled", fillcolor="gray"];
+  "_main" [style="filled", fillcolor="gray"];
+  "_pthread_self" [style="filled", fillcolor="gray"];
+  "_memset" [style="filled", fillcolor="gray"];
+  "_malloc" [style="filled", fillcolor="gray"];
+  "_memcpy" [style="filled", fillcolor="gray"];
+  "_free" [style="filled", fillcolor="gray"];
+  "___errno_location" [style="filled", fillcolor="gray"];
+  "runPostSets" [style="filled", fillcolor="gray"];
+  "stackAlloc" [style="filled", fillcolor="gray"];
+  "stackSave" [style="filled", fillcolor="gray"];
+  "stackRestore" [style="filled", fillcolor="gray"];
+  "establishStackSpace" [style="filled", fillcolor="gray"];
+  "setThrew" [style="filled", fillcolor="gray"];
+  "setTempRet0" [style="filled", fillcolor="gray"];
+  "getTempRet0" [style="filled", fillcolor="gray"];
+  "dynCall_ii" [style="filled", fillcolor="gray"];
+  "dynCall_iiii" [style="filled", fillcolor="gray"];
+  "dynCall_vi" [style="filled", fillcolor="gray"];
+  "dynCall_v" [style="filled", fillcolor="gray"];
+  "_main" -> "__Znwj"; // call
+  "___stdio_close" -> "___syscall6"; // call
+  "___stdio_close" -> "___syscall_ret"; // call
+  "___stdio_write" -> "_pthread_cleanup_push"; // call
+  "___stdio_write" -> "___syscall146"; // call
+  "___stdio_write" -> "___syscall_ret"; // call
+  "___stdio_write" -> "_pthread_cleanup_pop"; // call
+  "___stdio_seek" -> "___syscall140"; // call
+  "___stdio_seek" -> "___syscall_ret"; // call
+  "___syscall_ret" -> "___errno_location"; // call
+  "___errno_location" -> "_pthread_self"; // call
+  "_cleanup_387" -> "_free"; // call
+  "___stdout_write" -> "___syscall54"; // call
+  "___stdout_write" -> "___stdio_write"; // call
+  "_fflush" -> "___fflush_unlocked"; // call
+  "_fflush" -> "_malloc"; // call
+  "_fflush" -> "_free"; // call
+  "_fflush" -> "_fflush"; // call
+  "_fflush" -> "___lock"; // call
+  "_fflush" -> "___unlock"; // call
+  "__Znwj" -> "_malloc"; // call
+  "__Znwj" -> "__ZSt15get_new_handlerv"; // call
+  "_memcpy" -> "_emscripten_memcpy_big"; // call
+  "b0" -> "abort"; // call
+  "b1" -> "abort"; // call
+  "b2" -> "abort"; // call
+  "b3" -> "abort"; // call
+  "b0" [style="filled, rounded"];
+  "___stdio_close" [style="filled, rounded"];
+  "b1" [style="filled, rounded"];
+  "___stdout_write" [style="filled, rounded"];
+  "___stdio_seek" [style="filled, rounded"];
+  "___stdio_write" [style="filled, rounded"];
+  "b2" [style="filled, rounded"];
+  "_cleanup_387" [style="filled, rounded"];
+  "b3" [style="filled, rounded"];
 }
 (module
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
