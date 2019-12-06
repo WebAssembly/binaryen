@@ -5545,7 +5545,7 @@ int main() {
   expressions[736] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
   expressions[737] = BinaryenLocalSet(the_module, 0, expressions[736]);
   expressions[738] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
-  expressions[739] = BinaryenLocalTee(the_module, 0, expressions[738]);
+  expressions[739] = BinaryenLocalTee(the_module, 0, expressions[738], 2);
   expressions[740] = BinaryenDrop(the_module, expressions[739]);
   expressions[741] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[742] = BinaryenLoad(the_module, 4, 1, 0, 0, 2, expressions[741]);
