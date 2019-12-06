@@ -405,23 +405,25 @@ inline void
 collectSignatures(Module& wasm,
                   std::vector<Signature>& signatures,
                   std::unordered_map<Signature, Index>& sigIndices) {
-  typedef std::unordered_map<Signature, size_t> Counts;
-  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
-    wasm, [&](Function* func, Counts& counts) {
-      if (func->imported()) {
-        return;
-      }
-      struct TypeCounter : PostWalker<TypeCounter> {
-        Module& wasm;
-        Counts& counts;
+  using Counts = std::unordered_map<Signature, size_t>;
 
-        TypeCounter(Module& wasm, Counts& counts)
-          : wasm(wasm), counts(counts) {}
+  // Collect the signature use counts for a single function
+  auto updateCounts = [&](Function* func, Counts& counts) {
+    if (func->imported()) {
+      return;
+    }
+    struct TypeCounter : PostWalker<TypeCounter> {
+      Counts& counts;
 
-        void visitCallIndirect(CallIndirect* curr) { counts[curr->sig]++; }
-      };
-      TypeCounter(wasm, counts).walk(func->body);
-    });
+      TypeCounter(Counts& counts) : counts(counts) {}
+
+      void visitCallIndirect(CallIndirect* curr) { counts[curr->sig]++; }
+    };
+    TypeCounter(counts).walk(func->body);
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(wasm, updateCounts);
+
   // Collect all the counts.
   Counts counts;
   for (auto& curr : wasm.functions) {
