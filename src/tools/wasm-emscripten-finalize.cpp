@@ -179,7 +179,8 @@ int main(int argc, const char* argv[]) {
   options.applyFeatures(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
-  BYN_DEBUG_WITH_TYPE("emscripten-dump", WasmPrinter::printModule(&wasm, std::cerr));
+  BYN_DEBUG_WITH_TYPE("emscripten-dump",
+                      WasmPrinter::printModule(&wasm, std::cerr));
 
   uint32_t dataSize = 0;
 
@@ -290,7 +291,8 @@ int main(int argc, const char* argv[]) {
   }
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
-  BYN_DEBUG_WITH_TYPE("emscripten-dump", WasmPrinter::printModule(&wasm, std::cerr));
+  BYN_DEBUG_WITH_TYPE("emscripten-dump",
+                      WasmPrinter::printModule(&wasm, std::cerr));
 
   // Strip target features section (its information is in the metadata)
   {
