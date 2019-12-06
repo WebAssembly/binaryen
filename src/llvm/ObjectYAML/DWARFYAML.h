@@ -71,6 +71,14 @@ struct ARange {
   std::vector<ARangeDescriptor> Descriptors;
 };
 
+// XXX BINARYEN <--
+struct Range {
+  uint64_t Start;
+  uint64_t End;
+  uint64_t SectionIndex; // XXX ?
+};
+// XXX BINARYEN -->
+
 struct PubEntry {
   llvm::yaml::Hex32 DieOffset;
   llvm::yaml::Hex8 Descriptor;
@@ -145,6 +153,7 @@ struct Data {
   std::vector<Abbrev> AbbrevDecls;
   std::vector<StringRef> DebugStrings;
   std::vector<ARange> ARanges;
+  std::vector<Range> Ranges; // XXX BINARYEN
   PubSection PubNames;
   PubSection PubTypes;
 
@@ -165,6 +174,7 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::AttributeAbbrev)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Abbrev)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARangeDescriptor)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARange)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Range) // XXX BINARYEN
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::PubEntry)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Unit)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::FormValue)
@@ -194,6 +204,10 @@ template <> struct MappingTraits<DWARFYAML::ARangeDescriptor> {
 
 template <> struct MappingTraits<DWARFYAML::ARange> {
   static void mapping(IO &IO, DWARFYAML::ARange &Range);
+};
+
+template <> struct MappingTraits<DWARFYAML::Range> { // XXX BINARYEN
+  static void mapping(IO &IO, DWARFYAML::Range &Range);
 };
 
 template <> struct MappingTraits<DWARFYAML::PubEntry> {

@@ -79,6 +79,27 @@ void dumpDebugARanges(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   }
 }
 
+void dumpDebugRanges(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
+  uint8_t savedAddressByteSize = 4;
+  DWARFDataExtractor rangesData(DCtx.getDWARFObj(), DCtx.getDWARFObj().getRangesSection(),
+                                DCtx.isLittleEndian(), savedAddressByteSize);
+  uint64_t offset = 0;
+  DWARFDebugRangeList rangeList;
+  while (rangesData.isValidOffset(offset)) {
+    if (Error E = rangeList.extract(rangesData, &offset)) {
+      errs() << toString(std::move(E)) << '\n';
+      break;
+    }
+    for (auto& entry : rangeList.getEntries()) {
+      DWARFYAML::Range range;
+      range.Start = entry.StartAddress;
+      range.End = entry.EndAddress;
+      range.SectionIndex = entry.SectionIndex;
+      Y.Ranges.push_back(range);
+    }
+  }
+}
+
 void dumpPubSection(DWARFContext &DCtx, DWARFYAML::PubSection &Y,
                     DWARFSection Section) {
   DWARFDataExtractor PubSectionData(DCtx.getDWARFObj(), Section,
@@ -350,6 +371,7 @@ std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   dumpDebugAbbrev(DCtx, Y);
   dumpDebugStrings(DCtx, Y);
   dumpDebugARanges(DCtx, Y);
+  dumpDebugRanges(DCtx, Y); // XXX BINARYEN
   dumpDebugPubSections(DCtx, Y);
   dumpDebugInfo(DCtx, Y);
   dumpDebugLines(DCtx, Y);
