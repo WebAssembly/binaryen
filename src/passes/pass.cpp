@@ -276,7 +276,9 @@ void PassRegistry::registerPasses() {
                createReReloopPass);
   registerPass(
     "rse", "remove redundant local.sets", createRedundantSetEliminationPass);
-  registerPass("roundtrip", "write the module to binary, then read it", createRoundTripPass);
+  registerPass("roundtrip",
+               "write the module to binary, then read it",
+               createRoundTripPass);
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
