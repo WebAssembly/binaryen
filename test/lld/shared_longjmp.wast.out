@@ -31,7 +31,7 @@
  (export "_start" (func $_start))
  (export "__THREW__" (global $global$0))
  (export "__threwValue" (global $global$1))
- (export "dynCall_TODO: generate sig string" (func $dynCall_TODO: generate sig string))
+ (export "dynCall_v" (func $dynCall_v))
  (export "__post_instantiate" (func $__post_instantiate))
  (func $__wasm_call_ctors (; 11 ;)
   (call $__wasm_apply_relocs)
@@ -142,7 +142,7 @@
   )
   (unreachable)
  )
- (func $dynCall_TODO: generate sig string (; 14 ;) (param $fptr i32)
+ (func $dynCall_v (; 14 ;) (param $fptr i32)
   (call_indirect (type "none -> none")
    (local.get $fptr)
   )
@@ -186,12 +186,12 @@
   ],
   "implementedFunctions": [
     "__start",
-    "_dynCall_TODO: generate sig string",
+    "_dynCall_v",
     "___post_instantiate"
   ],
   "exports": [
     "_start",
-    "dynCall_TODO: generate sig string",
+    "dynCall_v",
     "__post_instantiate"
   ],
   "namedGlobals": {

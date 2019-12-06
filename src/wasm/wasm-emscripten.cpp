@@ -362,7 +362,7 @@ void EmscriptenGlueGenerator::generateDynCallThunk(Signature sig) {
   if (!sigs.insert(sig).second) {
     return; // sig is already in the set
   }
-  Name name = std::string("dynCall_") + "TODO: generate sig string";
+  Name name = std::string("dynCall_") + getSig(sig.results, sig.params);
   if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
     return; // module already contains this dyncall
   }

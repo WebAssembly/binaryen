@@ -24,7 +24,7 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (export "dynCall_TODO: generate sig string" (func $dynCall_TODO: generate sig string))
+ (export "dynCall_viii" (func $dynCall_viii))
  (func $__wasm_call_ctors (; 1 ;)
   (nop)
  )
@@ -146,7 +146,7 @@
    (local.get $newSize)
   )
  )
- (func $dynCall_TODO: generate sig string (; 9 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $dynCall_viii (; 9 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32)
   (call_indirect (type "(i32, i32, i32) -> none")
    (local.get $0)
    (local.get $1)
@@ -175,7 +175,7 @@
     "_stackAlloc",
     "_stackRestore",
     "___growWasmMemory",
-    "_dynCall_TODO: generate sig string"
+    "_dynCall_viii"
   ],
   "exports": [
     "__wasm_call_ctors",
@@ -184,7 +184,7 @@
     "stackAlloc",
     "stackRestore",
     "__growWasmMemory",
-    "dynCall_TODO: generate sig string"
+    "dynCall_viii"
   ],
   "namedGlobals": {
     "__heap_base" : "66112",
