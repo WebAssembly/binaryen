@@ -31,6 +31,7 @@
 #include "wasm-io.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
+#include "C:\git\binaryen\binaryen\src\passes/passes.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -44,6 +45,7 @@ int main(int argc, const char* argv[]) {
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
   std::string dataSegmentFile;
+  std::string libraryFile;
   bool emitBinary = true;
   bool debugInfo = false;
   bool isSideModule = false;
@@ -144,6 +146,13 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&standaloneWasm](Options* o, const std::string&) {
            standaloneWasm = true;
+         })
+    .add("--library-file",
+         "",
+         "File that contains Emscripten library functions",
+         Options::Arguments::One,
+         [&libraryFile](Options* o, const std::string& argument) {
+           libraryFile = argument;
          })
     .add_positional("INFILE",
                     Options::Arguments::One,
@@ -248,6 +257,14 @@ int main(int argc, const char* argv[]) {
         initializerFunctions.push_back(e->name);
       }
     }
+  }
+
+  // Convert the imports to indirects
+  {
+    PassRunner passRunner(&wasm);
+    passRunner.setOptions(options.passOptions);
+    passRunner.add("ImportsToIndirectCalls");
+    //passRunner.run();
   }
 
   if (standaloneWasm) {

@@ -25,6 +25,8 @@
 #include "asm_v_wasm.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
+#include "ir/import-utils.h"
+#include "ir/function-type-utils.h"
 #include "pass.h"
 #include "pretty_printing.h"
 #include "support/json.h"
@@ -32,99 +34,13 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 #include <fstream>
+#include <regex> 
 
-void json::Value::stringify(std::ostream& os, bool pretty) {
-  static int indent = 0;
-#define indentify()                                                            \
-  {                                                                            \
-    for (int i_ = 0; i_ < indent; i_++)                                        \
-      os << "  ";                                                              \
-  }
-  switch (type) {
-    case String: {
-      if (str.str) {
-        os << '"' << str.str << '"';
-      } else {
-        os << "\"(null)\"";
-      }
-      break;
-    }
-    case Number: {
-      // doubles can have 17 digits of precision
-      os << std::setprecision(17) << num;
-      break;
-    }
-    case Array: {
-      if (arr->size() == 0) {
-        os << "[]";
-        break;
-      }
-      os << '[';
-      if (pretty) {
-        os << std::endl;
-        indent++;
-      }
-      for (size_t i = 0; i < arr->size(); i++) {
-        if (i > 0) {
-          if (pretty) {
-            os << "," << std::endl;
-          } else {
-            os << ", ";
-          }
-        }
-        indentify();
-        (*arr)[i]->stringify(os, pretty);
-      }
-      if (pretty) {
-        os << std::endl;
-        indent--;
-      }
-      indentify();
-      os << ']';
-      break;
-    }
-    case Null: {
-      os << "null";
-      break;
-    }
-    case Bool: {
-      os << (boo ? "true" : "false");
-      break;
-    }
-    case Object: {
-      os << '{';
-      if (pretty) {
-        os << std::endl;
-        indent++;
-      }
-      bool first = true;
-      for (auto i : *obj) {
-        if (first) {
-          first = false;
-        } else {
-          os << ", ";
-          if (pretty) {
-            os << std::endl;
-          }
-        }
-        indentify();
-        os << '"' << i.first.c_str() << "\": ";
-        i.second->stringify(os, pretty);
-      }
-      if (pretty) {
-        os << std::endl;
-        indent--;
-      }
-      indentify();
-      os << '}';
-      break;
-    }
-    default:
-      break;
-  }
-}
+cashew::IString ENV("env");
 
 namespace wasm {
+
+static Name ASSIGN_GOT_ENTIRES("__assign_got_enties");
 
 namespace {
 
@@ -134,9 +50,10 @@ struct FunctionImportsToIndirectCalls
 
   Pass* create() override { return new FunctionImportsToIndirectCalls(); }
 
-  FunctionImportsToIndirectCalls() {
-    myfile.open("added_indirects.json", std::ios::out);
-  }
+  FunctionImportsToIndirectCalls() {}
+
+  FunctionImportsToIndirectCalls(bool isSide, std::set<std::string> libraryFns)
+    : m_isSide(isSide), m_libraryFns(libraryFns) {}
 
   ~FunctionImportsToIndirectCalls() { myfile.close(); }
 
@@ -170,155 +87,162 @@ struct FunctionImportsToIndirectCalls
     }
   }
 
+  static Function*
+  ensureFunctionImport(Module* module, Name name, std::string sig) {
+    // Then see if its already imported
+    ImportInfo info(*module);
+    if (Function* f = info.getImportedFunction(ENV, name)) {
+      return f;
+    }
+    // Failing that create a new function import.
+    auto import = new Function;
+    import->name = name;
+    import->module = ENV;
+    import->base = name;
+    auto* functionType = ensureFunctionType(sig, module);
+    import->type = functionType->name;
+    FunctionTypeUtils::fillFunction(import, functionType);
+    module->addFunction(import);
+    return import;
+  }
+
 #pragma optimize("", off)
   void visitCall(Call* curr) {
     auto name = curr->target;
 
-    if (!name.isNull()) {
-      std::string sidey("__Z5sideyi"), mainy("_mainy");
-      if (sidey.compare(name.c_str()) == 0){
-        printf("%s detected!", name.c_str());
+    if (!name.isNull() && !m_isSide) {
+      auto module = getModule();
+      auto* func = module->getFunction(name);
+      if (func) {
+        if (func->imported()) {
 
-        auto* func = getModule()->getFunction(name);
-        if (func) {
-          if (func->imported()) {
-            std::vector<Expression*> args;
-            for (int i = 0; i < curr->operands.size(); ++i) {
-              args.push_back(curr->operands[i]);
-            }
-            auto module = getModule();
-            /*auto* import = new Global;
-            Name getter(std::string("g$") + name.c_str());
-            import->name = getter;
-            import->module = "env";
-            import->base = getter;
-            import->type = i32;
-            auto global = module->addGlobal(import);
-            Expression* fptr = Builder(*module).makeGlobalGet(getter, i32);*/
-            Name thunk(std::string("thunk_") + name.c_str());
-            auto* funcThunk_check = getModule()->getFunctionOrNull(thunk);
+          bool is_in = m_libraryFns.find(name.c_str()) != m_libraryFns.end();
+          if (is_in)
+            return;
+
+          is_in = name.hasSubstring("g$") || name.hasSubstring("fp$") ||
+                  name.hasSubstring("__wasi_fd_write");
+
+          if (is_in) 
+            return;
+
+          std::cerr << "Processing: " << name.c_str() << "\n";
+          std::vector<Expression*> args;
+          for (int i = 0; i < curr->operands.size(); ++i) {
+            args.push_back(curr->operands[i]);
+          }
+          Builder builder(*module);
+          ImportInfo info(*module);
+
+          std::string getterString((std::string("fp$") + name.c_str() +
+                                    std::string("$") + getSig(func)).c_str());
+          std::replace(getterString.begin(), getterString.end(), '\\', '_');
+          Name getter(getterString.c_str());
+
+          // Ensure that the fp$ accessor is in the module, if not add it in.
+          std::string fnAddrString((std::string("gp$") + name.c_str() + std::string("$") +
+                         getSig(func)).c_str());
+          std::replace(fnAddrString.begin(), fnAddrString.end(), '\\', '_');
+          Name fnAddr(fnAddrString.c_str());
             
-            // If null, generate an empty thunk that will force the
-            // wasm module to import it from JS. The thunk in this case is
-            // defined in the JS.
-            if (!funcThunk_check) { 
-              auto* thunkFunc = Builder(*module).makeFunction(
-                thunk, std::move(func->params), func->result, 
-                  {
-                    // call hotload
-                    // call the target function directly
-                  });
-              thunkFunc->module = "env";
-              thunkFunc->base = thunkFunc->name; // copied from ExtractFunction
-                                                 // : public Pass
-              module->addFunction(thunkFunc);
+          auto f = info.getImportedFunction(ENV, getter);
+          if (!f) {
+            f = ensureFunctionImport(module, getter, "i");
 
-              ++module->table.max;
+            auto* assignFunc = getModule()->getFunction(ASSIGN_GOT_ENTIRES);
 
-              if (module->table.initial == 0) {
-                ++module->table.initial; // Validation uses module.table.initial
-                                         // * Table::kPageSize to check
-                                         // reasonable segment offset
-			  }
-              // Name thunkInternal(std::string("__Z13sideyInternali"));
-              module->table.segments[0].data.push_back(thunk);
+            Block* block = static_cast<Block*>(assignFunc->body);
 
-              json::Value add_indirects;
-              add_indirects.setObject();
-              json::Ref value =
-                json::Ref(new json::Value(module->table.max.addr));
-              add_indirects["add_indirects"] = value;
-              add_indirects.stringify(myfile);
-            }
+            if (!block)
+              return;
 
-            /*auto* export_ = new Export;
-                        export_->name = thunkFunc->name;
-                        export_->value = thunkFunc->name;
-                        export_->kind = ExternalKind::Function;
-                        module->addExport(export_);*/
-
-            auto fnType = module->getFunctionType(func->type);
-            // auto idx = Literal(int32_t(table.segments[0].data.size() - 1));
-            auto idx = Literal(int32_t(module->table.max.addr - 1));
-            std::cout << "idx:" << idx << "\n";
-            auto* fptr = Builder(*module).makeConst(idx);
-            auto indirectCall = Builder(*module).makeCallIndirect(
-              fnType, fptr, args, curr->isReturn);
-
-            replaceCurrent(indirectCall);
-          }
-        }
-      } else if (mainy.compare(name.c_str()) == 0) {
-        printf("%s detected!", name.c_str());
-
-        auto* func = getModule()->getFunction(name);
-        if (func) {
-          if (func->imported()) {
-            std::vector<Expression*> args;
-            for (int i = 0; i < curr->operands.size(); ++i) {
-              args.push_back(curr->operands[i]);
-            }
-            auto module = getModule();
             auto* import = new Global;
-            Name getter((std::string("gp$") + name.c_str() +
-                         std::string("$") + getSig(func))
-                          .c_str());
-            //Name getter(std::string("gp$") + name.c_str());
-            import->name = getter;
+            
+            import->name = fnAddr;
             import->module = "env";
             import->base = getter;
             import->type = i32;
             auto global = module->addGlobal(import);
-            Expression* fptr = Builder(*module).makeGlobalGet(getter, i32);
 
-            auto fnType = module->getFunctionType(func->type);
-            auto indirectCall = Builder(*module).makeCallIndirect(
-              fnType, fptr, args, curr->isReturn);
-
-            replaceCurrent(indirectCall);
+            Expression* call = builder.makeCall(getter, {}, i32);
+            GlobalSet* globalSet = builder.makeGlobalSet(fnAddr, call);
+            block->list.push_back(globalSet);
           }
+          
+          // Replace the call
+          Expression* fptr = builder.makeGlobalGet(fnAddr, i32);
+
+          auto fnType = module->getFunctionType(func->type);
+          auto indirectCall =
+            builder.makeCallIndirect(fnType, fptr, args, curr->isReturn);
+
+          replaceCurrent(indirectCall);
         }
-	  }
+      }
     }
     return;
   }
 
-  static std::ostream& printName(Name name, std::ostream& o) {
-    // we need to quote names if they have tricky chars
-    if (!name.str || !strpbrk(name.str, "()")) {
-      o << name;
-    } else {
-      o << '"' << name << '"';
-    }
-    return o;
-  }
-
-  void visitTable(Table* curr) {
-    for (auto& segment : curr->segments) {
-      unsigned indent = 0;
-      const char* maybeNewLine = "\n";
-      // Don't print empty segments
-      if (segment.data.empty()) {
-        continue;
-      }
-      doIndent(std::cout, indent);
-      std::cout << '(';
-      printMajor(std::cout, "elem ");
-      visit(segment.offset);
-      for (auto name : segment.data) {
-        std::cout << ' ';
-        printName(name, std::cout);
-      }
-      std::cout << ')' << maybeNewLine;
-    }
-  }
+  //void visitTable(Table* curr) {
+  //  for (auto& segment : curr->segments) {
+  //    unsigned indent = 0;
+  //    const char* maybeNewLine = "\n";
+  //    // Don't print empty segments
+  //    if (segment.data.empty()) {
+  //      continue;
+  //    }
+  //    doIndent(std::cout, indent);
+  //    std::cout << '(';
+  //    printMajor(std::cout, "elem ");
+  //    visit(segment.offset);
+  //    for (auto name : segment.data) {
+  //      std::cout << ' ';
+  //    }
+  //    std::cout << ')' << maybeNewLine;
+  //  }
+  //}
 
 private:
   std::ofstream myfile;
+  bool m_isSide;
+  std::set<std::string> m_libraryFns;
 };
+
+static Name POST_INSTANTIATE("__post_instantiate");
 
 struct ImportsToIndirectCalls : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    Name name = runner->options.getArgument(
+      "library-file",
+      "ImportsToIndirectCalls usage:  wasm-emscripten-finalize --pass-arg=library-file@FILE_NAME");
+    std::cerr << "library-file: " << name << "\n";
+
+    std::ifstream myfile;
+    myfile.open(name.c_str(), std::ios::in);
+    std::string str;
+
+    myfile.seekg(0, std::ios::end);
+    str.reserve(myfile.tellg());
+    myfile.seekg(0, std::ios::beg);
+
+    str.assign((std::istreambuf_iterator<char>(myfile)),
+               std::istreambuf_iterator<char>());
+    str.erase(remove(str.begin(), str.end(), '\''), str.end());
+    str.erase(remove(str.begin(), str.end(), '\['), str.end());
+    str.erase(remove(str.begin(), str.end(), '\]'), str.end());
+    remove_if(str.begin(), str.end(), isspace);
+
+    std::string delimiter = ",";
+    std::set<std::string> setStrings;
+    size_t pos = 0;
+    std::string token;
+    while ((pos = str.find(delimiter)) != std::string::npos) {
+      token = str.substr(0, pos);
+      token.erase(0,1); // remove underscore
+      setStrings.insert(token);
+      str.erase(0, pos + delimiter.length());
+    }
+
     if (!module->table.exists) {
       Fatal() << "Table does not exist in module!!!";
       return;
@@ -329,14 +253,16 @@ struct ImportsToIndirectCalls : public Pass {
       Table::Segment segment(
         module->allocator.alloc<Const>()->set(Literal(int32_t(0))));
 
-      module->table.initial =
-        0; 
+      module->table.initial = 0;
       module->table.max = 0;
       module->table.exists = true;
       module->table.segments.push_back(segment);
     }
-
-    FunctionImportsToIndirectCalls().run(runner, module);
+    bool isSide = false;
+    if (auto* e = module->getExportOrNull(POST_INSTANTIATE)) {
+      isSide = true;
+    }
+    FunctionImportsToIndirectCalls(isSide, setStrings).run(runner, module);
   }
 };
 
