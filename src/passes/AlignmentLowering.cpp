@@ -103,10 +103,10 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                               i32),
                              builder.makeConst(Literal(int32_t(16)))));
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid alignment");
       }
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid size");
     }
     replaceCurrent(
       builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret}));
@@ -199,10 +199,10 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                              builder.makeConst(Literal(int32_t(16)))),
           i32));
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid alignment");
       }
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid size");
     }
     block->finalize();
     replaceCurrent(block);

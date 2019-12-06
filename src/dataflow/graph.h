@@ -547,7 +547,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
             opposite = LeUInt64;
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected op");
         }
         auto* ret =
           visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
@@ -652,9 +652,11 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // Merge local state for multiple control flow paths, creating phis as needed.
   void merge(std::vector<FlowState>& states, Locals& out) {
     // We should only receive reachable states.
+#ifndef NDEBUG
     for (auto& state : states) {
       assert(!isInUnreachable(state.locals));
     }
+#endif
     Index numStates = states.size();
     if (numStates == 0) {
       // We were unreachable, and still are.
@@ -781,7 +783,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       // variable value.
       return Builder(*module).makeCall(FAKE_CALL, {}, node->wasmType);
     } else {
-      WASM_UNREACHABLE(); // TODO
+      WASM_UNREACHABLE("unexpected node type"); // TODO
     }
   }
 

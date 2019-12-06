@@ -785,9 +785,11 @@ struct Optimizer : public RelooperRecursor {
         }
       } else {
         // If the block has no switch, the branches must not as well.
+#ifndef NDEBUG
         for (auto& iter : ParentBlock->BranchesOut) {
           assert(!iter.second->SwitchValues);
         }
+#endif
       }
     }
     return Worked;
@@ -804,7 +806,7 @@ private:
       Outer = Builder.makeBlock(Curr);
     } else if (Outer->name.is()) {
       // Perhaps the name can be removed.
-      if (!wasm::BranchUtils::BranchSeeker::hasNamed(Outer, Outer->name)) {
+      if (!wasm::BranchUtils::BranchSeeker::has(Outer, Outer->name)) {
         Outer->name = wasm::Name();
       } else {
         Outer = Builder.makeBlock(Curr);

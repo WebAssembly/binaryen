@@ -74,7 +74,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
   return ret;
 }
@@ -95,9 +95,9 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 // Mutexes (global for now; in theory if multiple modules
@@ -216,7 +216,7 @@ void printArg(std::ostream& setup, std::ostream& out, BinaryenLiteral arg) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
 }
 
@@ -3796,7 +3796,7 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   Wasm2JSBuilder wasm2js(flags, globalPassOptions);
   Ref asmjs = wasm2js.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
-  Output out("", Flags::Text, Flags::Release); // stdout
+  Output out("", Flags::Text); // stdout
   Wasm2JSGlue glue(*wasm, out, flags, "asmFunc");
   glue.emitPre();
   jser.printAst();
@@ -3917,8 +3917,8 @@ static BinaryenBufferSizes writeModule(BinaryenModuleRef module,
                                        char* sourceMap,
                                        size_t sourceMapSize) {
   Module* wasm = (Module*)module;
-  BufferWithRandomAccess buffer(false);
-  WasmBinaryWriter writer(wasm, buffer, false);
+  BufferWithRandomAccess buffer;
+  WasmBinaryWriter writer(wasm, buffer);
   writer.setNamesSection(globalPassOptions.debugInfo);
   std::ostringstream os;
   if (sourceMapUrl) {
@@ -3992,8 +3992,8 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
   }
 
   Module* wasm = (Module*)module;
-  BufferWithRandomAccess buffer(false);
-  WasmBinaryWriter writer(wasm, buffer, false);
+  BufferWithRandomAccess buffer;
+  WasmBinaryWriter writer(wasm, buffer);
   writer.setNamesSection(globalPassOptions.debugInfo);
   std::ostringstream os;
   if (sourceMapUrl) {
@@ -4036,7 +4036,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   buffer.resize(inputSize);
   std::copy_n(input, inputSize, buffer.begin());
   try {
-    WasmBinaryBuilder parser(*wasm, buffer, false);
+    WasmBinaryBuilder parser(*wasm, buffer);
     parser.read();
   } catch (ParseException& p) {
     p.dump(std::cerr);

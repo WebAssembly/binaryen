@@ -25,10 +25,13 @@
 //
 
 #include "wasm-io.h"
+#include "support/debug.h"
 #include "wasm-binary.h"
 #include "wasm-s-parser.h"
 
 namespace wasm {
+
+#define DEBUG_TYPE "writer"
 
 static void readTextData(std::string& input, Module& wasm) {
   SExpressionParser parser(const_cast<char*>(input.c_str()));
@@ -37,20 +40,16 @@ static void readTextData(std::string& input, Module& wasm) {
 }
 
 void ModuleReader::readText(std::string filename, Module& wasm) {
-  if (debug) {
-    std::cerr << "reading text from " << filename << "\n";
-  }
-  auto input(read_file<std::string>(
-    filename, Flags::Text, debug ? Flags::Debug : Flags::Release));
+  BYN_TRACE("reading text from " << filename << "\n");
+  auto input(read_file<std::string>(filename, Flags::Text));
   readTextData(input, wasm);
 }
 
 static void readBinaryData(std::vector<char>& input,
                            Module& wasm,
-                           std::string sourceMapFilename,
-                           bool debug) {
+                           std::string sourceMapFilename) {
   std::unique_ptr<std::ifstream> sourceMapStream;
-  WasmBinaryBuilder parser(wasm, input, debug);
+  WasmBinaryBuilder parser(wasm, input);
   if (sourceMapFilename.size()) {
     sourceMapStream = make_unique<std::ifstream>();
     sourceMapStream->open(sourceMapFilename);
@@ -65,12 +64,9 @@ static void readBinaryData(std::vector<char>& input,
 void ModuleReader::readBinary(std::string filename,
                               Module& wasm,
                               std::string sourceMapFilename) {
-  if (debug) {
-    std::cerr << "reading binary from " << filename << "\n";
-  }
-  auto input(read_file<std::vector<char>>(
-    filename, Flags::Binary, debug ? Flags::Debug : Flags::Release));
-  readBinaryData(input, wasm, sourceMapFilename, debug);
+  BYN_TRACE("reading binary from " << filename << "\n");
+  auto input(read_file<std::vector<char>>(filename, Flags::Binary));
+  readBinaryData(input, wasm, sourceMapFilename);
 }
 
 bool ModuleReader::isBinaryFile(std::string filename) {
@@ -107,10 +103,10 @@ void ModuleReader::read(std::string filename,
 // TODO: reading into a vector<char> then copying into a string is unnecessarily
 // inefficient. It would be better to read just once into a stringstream.
 void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
-  std::vector<char> input = read_stdin(debug ? Flags::Debug : Flags::Release);
+  std::vector<char> input = read_stdin();
   if (input.size() >= 4 && input[0] == '\0' && input[1] == 'a' &&
       input[2] == 's' && input[3] == 'm') {
-    readBinaryData(input, wasm, sourceMapFilename, debug);
+    readBinaryData(input, wasm, sourceMapFilename);
   } else {
     std::ostringstream s;
     s.write(input.data(), input.size());
@@ -120,21 +116,22 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
   }
 }
 
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "writer"
+
 void ModuleWriter::writeText(Module& wasm, Output& output) {
   WasmPrinter::printModule(&wasm, output.getStream());
 }
 
 void ModuleWriter::writeText(Module& wasm, std::string filename) {
-  if (debug) {
-    std::cerr << "writing text to " << filename << "\n";
-  }
-  Output output(filename, Flags::Text, debug ? Flags::Debug : Flags::Release);
+  BYN_TRACE("writing text to " << filename << "\n");
+  Output output(filename, Flags::Text);
   writeText(wasm, output);
 }
 
 void ModuleWriter::writeBinary(Module& wasm, Output& output) {
-  BufferWithRandomAccess buffer(debug);
-  WasmBinaryWriter writer(&wasm, buffer, debug);
+  BufferWithRandomAccess buffer;
+  WasmBinaryWriter writer(&wasm, buffer);
   // if debug info is used, then we want to emit the names section
   writer.setNamesSection(debugInfo);
   std::unique_ptr<std::ofstream> sourceMapStream;
@@ -154,10 +151,8 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
 }
 
 void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
-  if (debug) {
-    std::cerr << "writing binary to " << filename << "\n";
-  }
-  Output output(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
+  BYN_TRACE("writing binary to " << filename << "\n");
+  Output output(filename, Flags::Binary);
   writeBinary(wasm, output);
 }
 

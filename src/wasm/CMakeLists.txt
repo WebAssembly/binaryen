@@ -1,4 +1,4 @@
-SET(wasm_SOURCES
+set(wasm_SOURCES
   literal.cpp
   wasm.cpp
   wasm-binary.cpp
@@ -10,4 +10,4 @@ SET(wasm_SOURCES
   wasm-type.cpp
   wasm-validator.cpp
 )
-ADD_LIBRARY(wasm OBJECT ${wasm_SOURCES})
+add_library(wasm OBJECT ${wasm_SOURCES})

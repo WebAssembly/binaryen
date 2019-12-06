@@ -74,6 +74,20 @@ public:
   }
 };
 
+WASM_NORETURN void handle_unreachable(const char* msg = nullptr,
+                                      const char* file = nullptr,
+                                      unsigned line = 0);
+
+// If control flow reaches the point of the WASM_UNREACHABLE(), the program is
+// undefined.
+#ifndef NDEBUG
+#define WASM_UNREACHABLE(msg) wasm::handle_unreachable(msg, __FILE__, __LINE__)
+#elif defined(WASM_BUILTIN_UNREACHABLE)
+#define WASM_UNREACHABLE(msg) WASM_BUILTIN_UNREACHABLE
+#else
+#define WASM_UNREACHABLE(msg) wasm::handle_unreachable()
+#endif
+
 } // namespace wasm
 
 #endif // wasm_support_utilities_h

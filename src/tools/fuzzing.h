@@ -65,8 +65,7 @@ class TranslateToFuzzReader {
 public:
   TranslateToFuzzReader(Module& wasm, std::string& filename)
     : wasm(wasm), builder(wasm) {
-    auto input(
-      read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release));
+    auto input(read_file<std::vector<char>>(filename, Flags::Binary));
     readData(input);
   }
 
@@ -172,7 +171,7 @@ public:
           options.passes.push_back("vacuum");
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected value");
       }
     }
     if (oneIn(2)) {
@@ -985,7 +984,7 @@ private:
       case 14:
         return makeUnreachable(unreachable);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected value");
   }
 
   // make something with no chance of infinite recursion
@@ -1335,7 +1334,7 @@ private:
             return builder.makeLoad(
               4, signed_, offset, pick(1, 2, 4), ptr, type);
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected value");
       }
       case i64: {
         bool signed_ = get() & 1;
@@ -1351,7 +1350,7 @@ private:
             return builder.makeLoad(
               8, signed_, offset, pick(1, 2, 4, 8), ptr, type);
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected value");
       }
       case f32: {
         return builder.makeLoad(4, false, offset, pick(1, 2, 4), ptr, type);
@@ -1370,9 +1369,9 @@ private:
       case exnref: // exnref cannot be loaded from memory
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid type");
   }
 
   Expression* makeLoad(Type type) {
@@ -1438,7 +1437,7 @@ private:
             return builder.makeStore(
               4, offset, pick(1, 2, 4), ptr, value, type);
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case i64: {
         switch (upTo(4)) {
@@ -1453,7 +1452,7 @@ private:
             return builder.makeStore(
               8, offset, pick(1, 2, 4, 8), ptr, value, type);
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case f32: {
         return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
@@ -1472,9 +1471,9 @@ private:
       case exnref: // exnref cannot be stored in memory
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid type");
   }
 
   Expression* makeStore(Type type) {
@@ -1547,7 +1546,7 @@ private:
           return Literal(
             std::array<Literal, 2>{{makeLiteral(f64), makeLiteral(f64)}});
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected value");
       }
     }
 
@@ -1568,7 +1567,7 @@ private:
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid type");
         }
         break;
       }
@@ -1595,7 +1594,7 @@ private:
             small = uint32_t(get32());
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid value");
         }
         switch (type) {
           case i32:
@@ -1611,7 +1610,7 @@ private:
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
         break;
       }
@@ -1677,7 +1676,7 @@ private:
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
         // tweak around special values
         if (oneIn(3)) { // +- 1
@@ -1709,7 +1708,7 @@ private:
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
         // maybe negative
         if (oneIn(2)) {
@@ -1718,7 +1717,7 @@ private:
         return value;
       }
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalide value");
   }
 
   Literal makeLiteral(Type type) {
@@ -1817,9 +1816,9 @@ private:
           case exnref: // there's no unary ops for exnref
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
       }
       case i64: {
         switch (upTo(4)) {
@@ -1857,7 +1856,7 @@ private:
             return buildUnary({op, make(f64)});
           }
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case f32: {
         switch (upTo(4)) {
@@ -1882,7 +1881,7 @@ private:
           case 3:
             return makeDeNanOp(buildUnary({DemoteFloat64, make(f64)}));
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case f64: {
         switch (upTo(4)) {
@@ -1907,7 +1906,7 @@ private:
           case 3:
             return makeDeNanOp(buildUnary({PromoteFloat32, make(f32)}));
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case v128: {
         assert(wasm.features.hasSIMD());
@@ -1951,15 +1950,15 @@ private:
                                     WidenHighUVecI16x8ToVecI32x4),
                                make(v128)});
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case anyref: // there's no unary ops for anyref
       case exnref: // there's no unary ops for exnref
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid type");
   }
 
   Expression* buildBinary(const BinaryArgs& args) {
@@ -2043,7 +2042,7 @@ private:
                                 make(f64),
                                 make(f64)});
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case i64: {
         return buildBinary({pick(AddInt64,
@@ -2190,9 +2189,9 @@ private:
       case exnref: // there's no binary ops for exnref
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid type");
   }
 
   Expression* buildSelect(const ThreeArgs& args) {
@@ -2293,7 +2292,7 @@ private:
             bytes = pick(1, 2, 4);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalide value");
         }
         break;
       }
@@ -2312,12 +2311,12 @@ private:
             bytes = pick(1, 2, 4, 8);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalide value");
         }
         break;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
     auto offset = logify(get());
     auto* ptr = makePointer();
@@ -2363,7 +2362,7 @@ private:
       case 6:
         return makeSIMDLoad();
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid value");
   }
 
   Expression* makeSIMDExtract(Type type) {
@@ -2390,7 +2389,7 @@ private:
       case exnref:
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
     Expression* vec = make(v128);
     uint8_t index = 0;
@@ -2451,7 +2450,7 @@ private:
         lane_t = f64;
         break;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected op");
     }
     Expression* value = make(lane_t);
     return builder.makeSIMDReplace(op, vec, index, value);
@@ -2552,7 +2551,7 @@ private:
       case 3:
         return makeMemoryFill();
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid value");
   }
 
   Expression* makeMemoryInit() {
@@ -2740,7 +2739,7 @@ private:
     } else if (auto* loop = target->dynCast<Loop>()) {
       return loop->name;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expr type");
   }
 
   Type getTargetType(Expression* target) {
@@ -2749,7 +2748,7 @@ private:
     } else if (target->is<Loop>()) {
       return none;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expr type");
   }
 };
 

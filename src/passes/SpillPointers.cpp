@@ -132,7 +132,7 @@ struct SpillPointers
               pointer, toSpill, spillLocal, pointerMap, func, getModule());
           }
         } else {
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected action");
         }
       }
     }
@@ -179,7 +179,7 @@ struct SpillPointers
       }
       handleOperand(call->cast<CallIndirect>()->target);
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected expr");
     }
     // add the spills
     for (auto index : toSpill) {

@@ -101,6 +101,7 @@ static bool isRetain(LocalSet* expr) {
   return false;
 }
 
+#ifndef NDEBUG
 // Tests if the given location is that of a full retain pattern.
 static bool isRetainLocation(Expression** expr) {
   if (expr != nullptr) {
@@ -110,6 +111,7 @@ static bool isRetainLocation(Expression** expr) {
   }
   return false;
 }
+#endif
 
 // Tests if the given call calls release. Note that this differs from what we
 // consider a full release pattern, which must also get a local.

@@ -342,7 +342,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
         stringToBinary(str, size, data);
       }
     }
-    WasmBinaryBuilder binaryBuilder(wasm, data, false);
+    WasmBinaryBuilder binaryBuilder(wasm, data);
     binaryBuilder.read();
     return;
   }
@@ -1593,7 +1593,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   ret->finalize(type);
   nameMapper.popLabelName(label);
   // create a break target if we must
-  if (BranchUtils::BranchSeeker::hasNamed(ret, label)) {
+  if (BranchUtils::BranchSeeker::has(ret, label)) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);
@@ -1798,7 +1798,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   ret->finalize(type);
   nameMapper.popLabelName(label);
   // create a break target if we must
-  if (BranchUtils::BranchSeeker::hasNamed(ret, label)) {
+  if (BranchUtils::BranchSeeker::has(ret, label)) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);

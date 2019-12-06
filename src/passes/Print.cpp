@@ -205,7 +205,7 @@ struct PrintExpressionContents
       } else if (bytes == 4) {
         o << "32";
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid RMW byte length");
       }
     }
     o << '.';
@@ -757,7 +757,7 @@ struct PrintExpressionContents
         o << "i32x4.widen_high_i16x8_u";
         break;
       case InvalidUnary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unvalid unary operator");
     }
   }
   void visitBinary(Binary* curr) {
@@ -1287,7 +1287,7 @@ struct PrintExpressionContents
         break;
 
       case InvalidBinary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unvalid binary operator");
     }
     restoreNormalColor(o);
   }
@@ -1901,7 +1901,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << "event";
         break;
       case ExternalKind::Invalid:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid ExternalKind");
     }
     o << ' ';
     printName(curr->value, o) << "))";
@@ -2389,7 +2389,7 @@ WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
       break;
     }
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpeted op");
   }
   return o;
 }
@@ -2446,7 +2446,7 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         break;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpeted op");
     }
     std::cout << '\n';
   }

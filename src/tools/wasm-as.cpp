@@ -97,10 +97,7 @@ int main(int argc, const char* argv[]) {
       removeSpecificSuffix(options.extra["infile"], ".wast") + ".wasm";
   }
 
-  auto input(
-    read_file<std::string>(options.extra["infile"],
-                           Flags::Text,
-                           options.debug ? Flags::Debug : Flags::Release));
+  auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
 

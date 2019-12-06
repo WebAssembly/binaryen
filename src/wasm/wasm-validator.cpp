@@ -1183,7 +1183,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case anyref: // anyref cannot be stored in memory
     case exnref: // exnref cannot be stored in memory
     case none:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
     case unreachable:
       break;
   }
@@ -1387,7 +1387,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
       break;
     }
     case InvalidBinary:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invliad binary op");
   }
   shouldBeTrue(Features::get(curr->op) <= getModule()->features,
                curr,
@@ -1601,7 +1601,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(curr->value->type, v128, curr, "expected v128 operand");
       break;
     case InvalidUnary:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid unary op");
   }
   shouldBeTrue(Features::get(curr->op) <= getModule()->features,
                curr,
@@ -1866,7 +1866,7 @@ void FunctionValidator::validateAlignment(
     case anyref: // anyref cannot be stored in memory
     case exnref: // exnref cannot be stored in memory
     case none:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
 }
 
@@ -1995,7 +1995,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
                         name,
                         "module event exports must be found");
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid ExternalKind");
     }
     Name exportName = exp->name;
     info.shouldBeFalse(exportNames.count(exportName) > 0,

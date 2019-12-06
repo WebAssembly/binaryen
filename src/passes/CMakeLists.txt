@@ -3,7 +3,7 @@ add_custom_command(
   COMMAND python ${PROJECT_SOURCE_DIR}/scripts/embedwast.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wast ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwast.py wasm-intrinsics.wast)
 
-SET(passes_SOURCES
+set(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
@@ -72,4 +72,4 @@ SET(passes_SOURCES
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
-ADD_LIBRARY(passes OBJECT ${passes_SOURCES})
+add_library(passes OBJECT ${passes_SOURCES})
