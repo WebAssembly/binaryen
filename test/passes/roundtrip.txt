@@ -1,0 +1,7 @@
+(module
+ (type $0 (func))
+ (export "foo" (func $0))
+ (func $0 (; 0 ;)
+  (unreachable)
+ )
+)
