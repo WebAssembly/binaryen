@@ -91,7 +91,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     }
     Expression* visitLocalSet(LocalSet* curr) {
       if (curr->isTee()) {
-        return builder.makeLocalTee(curr->index, copy(curr->value));
+        return builder.makeLocalTee(curr->index, copy(curr->value), curr->type);
       } else {
         return builder.makeLocalSet(curr->index, copy(curr->value));
       }

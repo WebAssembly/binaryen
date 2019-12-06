@@ -346,7 +346,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // a drop of a tee is a set
     if (auto* set = curr->value->dynCast<LocalSet>()) {
       assert(set->isTee());
-      set->setTee(false);
+      set->makeSet();
       replaceCurrent(set);
       return;
     }

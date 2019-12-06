@@ -720,7 +720,13 @@ void FunctionValidator::visitLocalSet(LocalSet* curr) {
   if (curr->value->type != unreachable) {
     if (curr->type != none) { // tee is ok anyhow
       shouldBeEqualOrFirstIsUnreachable(
-        curr->value->type, curr->type, curr, "local.set type must be correct");
+        curr->value->type,
+        curr->type,
+        curr,
+        "local.set's value type must be correct");
+      shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index),
+                   curr,
+                   "local.set's tpye must be correct");
     }
     shouldBeEqual(getFunction()->getLocalType(curr->index),
                   curr->value->type,

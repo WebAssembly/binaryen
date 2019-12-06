@@ -541,8 +541,8 @@ function wrapModule(module, self) {
     'set': function(index, value) {
       return Module['_BinaryenLocalSet'](module, index, value);
     },
-    'tee': function(index, value) {
-      return Module['_BinaryenLocalTee'](module, index, value);
+    'tee': function(index, value, type) {
+      return Module['_BinaryenLocalTee'](module, index, value, type);
     }
   }
 

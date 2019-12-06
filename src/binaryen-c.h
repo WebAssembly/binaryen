@@ -665,8 +665,10 @@ BINARYEN_API BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                                     BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenLocalSet(
   BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
-BINARYEN_API BinaryenExpressionRef BinaryenLocalTee(
-  BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
+                                                    BinaryenIndex index,
+                                                    BinaryenExpressionRef value,
+                                                    BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
                                                      const char* name,
                                                      BinaryenType type);

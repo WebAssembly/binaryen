@@ -1261,22 +1261,23 @@ BinaryenExpressionRef BinaryenLocalSet(BinaryenModuleRef module,
 
   ret->index = index;
   ret->value = (Expression*)value;
-  ret->setTee(false);
+  ret->makeSet();
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
                                        BinaryenIndex index,
-                                       BinaryenExpressionRef value) {
+                                       BinaryenExpressionRef value,
+                                       BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
 
   if (tracing) {
-    traceExpression(ret, "BinaryenLocalTee", index, value);
+    traceExpression(ret, "BinaryenLocalTee", index, value, type);
   }
 
   ret->index = index;
   ret->value = (Expression*)value;
-  ret->setTee(true);
+  ret->makeTee(Type(type));
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
