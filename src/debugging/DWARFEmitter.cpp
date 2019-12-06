@@ -124,8 +124,6 @@ void DWARFYAML::EmitDebugRanges(raw_ostream &OS, const DWARFYAML::Data &DI) {
     writeInteger((uint32_t)Range.Start, OS, DI.IsLittleEndian);
     writeInteger((uint32_t)Range.End, OS, DI.IsLittleEndian);
   }
-  writeInteger((uint32_t)0, OS, DI.IsLittleEndian);
-  writeInteger((uint32_t)0, OS, DI.IsLittleEndian);
 }
 
 void DWARFYAML::EmitPubSection(raw_ostream &OS,

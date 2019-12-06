@@ -97,6 +97,11 @@ void dumpDebugRanges(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
       range.SectionIndex = entry.SectionIndex;
       Y.Ranges.push_back(range);
     }
+    DWARFYAML::Range range;
+    range.Start = 0;
+    range.End = 0;
+    range.SectionIndex = -1;
+    Y.Ranges.push_back(range);
   }
 }
 
