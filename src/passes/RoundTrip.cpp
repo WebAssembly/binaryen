@@ -46,7 +46,7 @@ struct RoundTrip : public Pass {
     (void)mkstemp(buffer.data());
     std::string tempName(buffer.begin(), buffer.end());
 #else
-    std::string tempName = _mktemp(templateName.data());
+    std::string tempName = _mktemp(buffer.data());
 #endif
     // Write
     ModuleWriter writer;
