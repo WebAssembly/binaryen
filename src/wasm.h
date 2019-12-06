@@ -1133,7 +1133,6 @@ public:
   Name name;
   Signature sig;
   std::vector<Type> vars;   // params plus vars
-  Name type;                // if null, it is implicit in params and result
 
   // The body of the function
   Expression* body = nullptr;

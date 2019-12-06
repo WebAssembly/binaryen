@@ -403,8 +403,6 @@ private:
   std::unordered_map<Call*, Expression**> allDroppedCalls;
 
   void removeParameter(Function* func, Index i, std::vector<Call*>& calls) {
-    // Clear the type, which is no longer accurate.
-    func->type = Name();
     // It's cumbersome to adjust local names - TODO don't clear them?
     Builder::clearLocalNames(func);
     // Remove the parameter from the function. We must add a new local

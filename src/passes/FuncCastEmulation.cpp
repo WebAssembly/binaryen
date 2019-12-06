@@ -194,9 +194,6 @@ struct FuncCastEmulation : public Pass {
   }
 
 private:
-  // the name of a type for a call with the right params and return
-  Name ABIType;
-
   // Creates a thunk for a function, casting args and return value as needed.
   Name makeThunk(Name name, Module* module) {
     Name thunk = std::string("byn$fpcast-emu$") + name.str;
@@ -224,7 +221,6 @@ private:
                            Signature(Type(thunkParams), Type::i64),
                            {}, // no vars
                            toABI(call, module));
-    thunkFunc->type = ABIType;
     module->addFunction(thunkFunc);
     return thunk;
   }

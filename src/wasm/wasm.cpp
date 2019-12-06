@@ -911,12 +911,16 @@ size_t Function::getNumVars() { return vars.size(); }
 
 size_t Function::getNumLocals() { return sig.params.size() + vars.size(); }
 
-bool Function::isParam(Index index) { return index < sig.params.size(); }
+bool Function::isParam(Index index) {
+  size_t size = sig.params.size();
+  assert(index < size + vars.size());
+  return index < size;
+}
 
 bool Function::isVar(Index index) {
   auto base = getVarIndexBase();
-  // TODO: update me
-  return base <= index /*&& index < base + vars.size()*/;
+  assert(index < base + vars.size());
+  return index >= base;
 }
 
 bool Function::hasLocalName(Index index) const {

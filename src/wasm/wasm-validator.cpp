@@ -1794,11 +1794,6 @@ void FunctionValidator::visitFunction(Function* curr) {
     breakInfos.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
-  if (curr->imported()) {
-    shouldBeTrue(curr->type.is(),
-                 curr->name,
-                 "imported functions must have a function type");
-  }
   // validate optional local names
   std::set<Name> seen;
   for (auto& pair : curr->localNames) {

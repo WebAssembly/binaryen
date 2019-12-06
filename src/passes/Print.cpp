@@ -1880,7 +1880,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << ')';
   }
   // Module-level visitors
-  void visitSignature(Signature curr, Name* funcName = nullptr) {
+  void handleSignature(Signature curr, Name* funcName = nullptr) {
     o << "(func";
     if (funcName) {
       o << ' ' << *funcName;
@@ -1973,7 +1973,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     lastPrintedLocation = {0, 0, 0};
     o << '(';
     emitImportHeader(curr);
-    visitSignature(curr->sig, &curr->name);
+    handleSignature(curr->sig, &curr->name);
     o << ')';
     o << maybeNewLine;
   }
@@ -1997,9 +1997,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
-    }
-    if (curr->type.is()) {
-      o << maybeSpace << "(type " << curr->type << ')';
     }
     const std::vector<Type>& params = curr->sig.params.expand();
     if (params.size() > 0) {
@@ -2217,7 +2214,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMedium(o, "type") << ' ';
       o << SigName(sig) << ' ';
-      visitSignature(sig);
+      handleSignature(sig);
       o << ")" << maybeNewLine;
     }
     ModuleUtils::iterImportedMemories(

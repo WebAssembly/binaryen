@@ -65,8 +65,6 @@ inline Function* copyFunction(Function* func, Module& out) {
   ret->name = func->name;
   ret->sig = func->sig;
   ret->vars = func->vars;
-  // start with no named type; the names in the other module may differ
-  ret->type = Name();
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->debugLocations = func->debugLocations;
