@@ -79,13 +79,12 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
       return ret;
     }
     Expression* visitCallIndirect(CallIndirect* curr) {
-      auto* ret = builder.makeCallIndirect(
-        copy(curr->target), {}, curr->sig, curr->isReturn);
-      for (Index i = 0; i < curr->operands.size(); i++) {
-        ret->operands.push_back(copy(curr->operands[i]));
+      std::vector<Expression*> copiedOps;
+      for (auto op : curr->operands) {
+        copiedOps.push_back(copy(op));
       }
-      ret->type = curr->type;
-      return ret;
+      return builder.makeCallIndirect(
+        copy(curr->target), copiedOps, curr->sig, curr->isReturn);
     }
     Expression* visitLocalGet(LocalGet* curr) {
       return builder.makeLocalGet(curr->index, curr->type);
