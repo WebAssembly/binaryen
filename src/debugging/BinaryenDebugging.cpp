@@ -60,6 +60,7 @@ void DWARFInfo::dump() {
   for (auto& section : wasm.userSections) {
     if (Name(section.name).startsWith(".debug_")) {
       std::cout << "  debug section " << section.name << " (" << section.data.size() << " bytes)\n";
+      // TODO: efficiency
       sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
     }
   }
@@ -83,6 +84,19 @@ void DWARFInfo::dump() {
   std::cout << "new sections: " << newSections.size() << '\n';
   for (auto& key : newSections.keys()) {
     std::cout << "  " << key.data() << " : " << newSections[key]->getBuffer().size() << '\n';
+  }
+
+  // Update the custom sections in the wasm.
+  // TODO: efficiency
+  for (auto& section : wasm.userSections) {
+    if (Name(section.name).startsWith(".debug_")) {
+      auto llvmName = section.name.substr(1);
+      if (newSections.count(llvmName)) {
+        auto llvmData = newSections[llvmName]->getBuffer();
+        section.data.resize(llvmData.size());
+        std::copy(llvmData.begin(), llvmData.end(), section.data.data());
+      }
+    }
   }
 }
 
