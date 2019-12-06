@@ -37,6 +37,7 @@ struct RoundTrip : public Pass {
   void run(PassRunner* runner, Module* module) override {
     std::string templateName = "byn_round_trip_XXXXXX";
     std::vector<char> buffer(templateName.begin(), templateName.end());
+    buffer.push_back(0);
     (void)mkstemp(buffer.data());
     std::string tempName(buffer.begin(), buffer.end());
     // Write
