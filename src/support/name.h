@@ -41,8 +41,7 @@ struct Name : public cashew::IString {
 
   friend std::ostream& operator<<(std::ostream& o, Name name) {
     if (name.str) {
-      // reference interpreter requires we prefix all names
-      return o << '$' << name.str;
+      return o << name.str;
     } else {
       return o << "(null Name)";
     }
