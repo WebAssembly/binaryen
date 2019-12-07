@@ -43,7 +43,8 @@ struct RoundTrip : public Pass {
     std::vector<char> buffer(templateName.begin(), templateName.end());
     buffer.push_back(0);
 #ifndef _WIN32
-    (void)mkstemp(buffer.data());
+    auto fd = mkstemp(buffer.data());
+    WASM_UNUSED(fd);
     std::string tempName(buffer.begin(), buffer.end());
 #else
     std::string tempName = _mktemp(buffer.data());
