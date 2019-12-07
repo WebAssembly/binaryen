@@ -102,7 +102,7 @@ def update_wasm_opt_tests():
         passname = base
         if passname.isdigit():
             passname = open(os.path.join(shared.options.binaryen_test, 'passes', passname + '.passes')).read().strip()
-        opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
+        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
         actual = ''
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0

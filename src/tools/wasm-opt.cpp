@@ -59,7 +59,7 @@ static std::string runCommand(std::string command) {
 #endif
 }
 
-static bool removingDebugInfo(const std::vector<std::string>& passes) {
+static bool willRemoveDebugInfo(const std::vector<std::string>& passes) {
   for (auto& pass : passes) {
     if (pass == "strip" || pass == "strip-debug" || pass == "strip-dwarf") {
       return true;
@@ -221,7 +221,7 @@ int main(int argc, const char* argv[]) {
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not
     // asked to remove it.
-    reader.setDWARF(options.passOptions.debugInfo && !removingDebugInfo(options.passes));
+    reader.setDWARF(options.passOptions.debugInfo && !willRemoveDebugInfo(options.passes));
     try {
       reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {

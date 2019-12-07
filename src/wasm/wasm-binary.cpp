@@ -2274,7 +2274,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     if (currDebugLocation.size()) {
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
-    if (DWARF) {
+    if (DWARF && currFunction) {
       currFunction->binaryLocations[curr] = startPos - codeSectionLocation;
     }
   }
