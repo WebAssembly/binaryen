@@ -221,7 +221,8 @@ int main(int argc, const char* argv[]) {
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not
     // asked to remove it.
-    reader.setDWARF(options.passOptions.debugInfo && !willRemoveDebugInfo(options.passes));
+    reader.setDWARF(options.passOptions.debugInfo &&
+                    !willRemoveDebugInfo(options.passes));
     try {
       reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {

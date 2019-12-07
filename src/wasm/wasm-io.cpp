@@ -46,8 +46,8 @@ void ModuleReader::readText(std::string filename, Module& wasm) {
 }
 
 void ModuleReader::readBinaryData(std::vector<char>& input,
-                           Module& wasm,
-                           std::string sourceMapFilename) {
+                                  Module& wasm,
+                                  std::string sourceMapFilename) {
   std::unique_ptr<std::ifstream> sourceMapStream;
   WasmBinaryBuilder parser(wasm, input);
   parser.setDWARF(DWARF);

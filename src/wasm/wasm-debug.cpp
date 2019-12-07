@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-#include "wasm.h"
 #include "wasm-debug.h"
+#include "wasm.h"
 
 namespace wasm {
 
 namespace Debug {
 
-bool isDWARFSection(Name name) {
-  return name.startsWith(".debug_");
-}
+bool isDWARFSection(Name name) { return name.startsWith(".debug_"); }
 
 bool hasDWARFSections(const Module& wasm) {
   for (auto& section : wasm.userSections) {

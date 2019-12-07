@@ -1274,7 +1274,6 @@ public:
   void visitBrOnExn(BrOnExn* curr);
 
   void throwError(std::string text);
-
 };
 
 } // namespace wasm
