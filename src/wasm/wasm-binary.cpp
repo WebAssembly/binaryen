@@ -1311,6 +1311,9 @@ void WasmBinaryBuilder::readFunctionSignatures() {
 
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
+  if (debugInfo) {
+    wasm.codeSectionLocation = pos;
+  }
   size_t total = getU32LEB();
   if (total != functionTypes.size()) {
     throwError("invalid function section size, must equal types");
@@ -2037,6 +2040,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (debugLocation.size()) {
     currDebugLocation.insert(*debugLocation.begin());
   }
+  size_t startPos = pos;
   uint8_t code = getInt8();
   BYN_TRACE("readExpression seeing " << (int)code << std::endl);
   switch (code) {
@@ -2230,8 +2234,13 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
   }
-  if (curr && currDebugLocation.size()) {
-    currFunction->debugLocations[curr] = *currDebugLocation.begin();
+  if (curr) {
+    if (currDebugLocation.size()) {
+      currFunction->debugLocations[curr] = *currDebugLocation.begin();
+    }
+    if (debugInfo) {
+      currFunction->binaryLocations[curr] = startPos;
+    }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
   return BinaryConsts::ASTNodes(code);

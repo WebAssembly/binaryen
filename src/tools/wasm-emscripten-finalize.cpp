@@ -164,6 +164,7 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
   ModuleReader reader;
+  reader.setDebugInfo(debugInfo);
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
   } catch (ParseException& p) {

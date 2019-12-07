@@ -1051,6 +1051,7 @@ class WasmBinaryBuilder {
   const std::vector<char>& input;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
+  bool debugInfo = false;
 
   size_t pos = 0;
   Index startIndex = -1;
@@ -1063,6 +1064,7 @@ public:
     : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
       nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
 
+  void setDebugInfo(bool value) { debugInfo = value; }
   void read();
   void readUserSection(size_t payloadLen);
 

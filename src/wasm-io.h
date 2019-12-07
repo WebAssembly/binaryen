@@ -29,6 +29,8 @@ namespace wasm {
 
 class ModuleReader {
 public:
+  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
+
   // read text
   void readText(std::string filename, Module& wasm);
   // read binary
@@ -43,6 +45,8 @@ public:
   bool isBinaryFile(std::string filename);
 
 private:
+  bool debugInfo = false;
+
   void readStdin(Module& wasm, std::string sourceMapFilename);
 };
 

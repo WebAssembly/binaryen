@@ -1169,6 +1169,7 @@ public:
   std::map<Index, Name> localNames;
   std::map<Name, Index> localIndices;
 
+  // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
     uint32_t fileIndex, lineNumber, columnNumber;
     bool operator==(const DebugLocation& other) const {
@@ -1189,6 +1190,11 @@ public:
   std::unordered_map<Expression*, DebugLocation> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
+
+  // General debugging info: map every instruction to its original position in
+  // the binary, relative to the beginning of the code section; see
+  // codeSectionLocation.
+  std::unordered_map<Expression*, uint32_t> binaryLocations;
 
   size_t getNumParams();
   size_t getNumVars();
@@ -1345,7 +1351,13 @@ public:
   Name start;
 
   std::vector<UserSection> userSections;
+
+  // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;
+
+  // General debug info for DWARF: remember the position in the binary of the
+  // code section, as all offsets in DWARF info are relative to there.
+  uint32_t codeSectionLocation = 0;
 
   // `features` are the features allowed to be used in this module and should be
   // respected regardless of the value of`hasFeaturesSection`.
