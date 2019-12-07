@@ -48,6 +48,10 @@ private:
   bool debugInfo = false;
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
+
+  void readBinaryData(std::vector<char>& input,
+                           Module& wasm,
+                           std::string sourceMapFilename);
 };
 
 class ModuleWriter {

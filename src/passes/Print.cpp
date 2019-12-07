@@ -1409,7 +1409,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
 
   void setPrintStackIR(bool printStackIR_) { printStackIR = printStackIR_; }
 
-  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo; }
+  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
 
   void incIndent() {
     if (minify) {
@@ -2254,9 +2254,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       printName(curr->start, o) << ')';
       o << maybeNewLine;
     }
-    if (debugInfo && module->codeSectionLocation > 0) {
+    if (debugInfo && curr->codeSectionLocation > 0) {
       doIndent(o, indent);
-      o << ";; code section content start: " << std::hex << module->codeSectionLocation << '\n';
+      o << ";; code section content start: " << std::hex << curr->codeSectionLocation << '\n';
     }
     ModuleUtils::iterDefinedFunctions(
       *curr, [&](Function* func) { visitFunction(func); });
