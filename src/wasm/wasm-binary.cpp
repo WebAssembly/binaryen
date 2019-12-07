@@ -21,6 +21,7 @@
 #include "support/bits.h"
 #include "support/debug.h"
 #include "wasm-binary.h"
+#include "wasm-debug.h"
 #include "wasm-stack.h"
 
 #define DEBUG_TYPE "binary"
@@ -780,10 +781,11 @@ void WasmBinaryWriter::finishUp() {
 
 // reader
 
-bool hasDWARFSections() {
+bool WasmBinaryBuilder::hasDWARFSections() {
   assert(pos == 0);
   getInt32(); // magic
   getInt32(); // version
+  bool has = false;
   while (more()) {
     uint32_t sectionCode = getU32LEB();
     uint32_t payloadLen = getU32LEB();
@@ -794,13 +796,14 @@ bool hasDWARFSections() {
     if (sectionCode == BinaryConsts::Section::User) {
       auto sectionName = getInlineString();
       if (Debug::isDWARFSection(sectionName)) {
-        pos = 0;
-        return true;
+        has = true;
+        break;
       }
     }
     pos = oldPos + payloadLen;
   }
   pos = 0;
+  return has;
 }
 
 void WasmBinaryBuilder::read() {
@@ -810,7 +813,7 @@ void WasmBinaryBuilder::read() {
     // by default: the user must request it by setting "DWARF", and even if so
     // we scan ahead to see that there actually *are* DWARF sections, so that
     // we don't do unnecessary work.
-    if (!hasDWARFSections(input)) {
+    if (!hasDWARFSections()) {
       DWARF = false;
     }
   }

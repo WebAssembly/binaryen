@@ -25,9 +25,9 @@ bool isDWARFSection(Name name) {
   return name.startsWith(".debug_");
 }
 
-bool hasDWARFSections(const Module& wasm);
+bool hasDWARFSections(const Module& wasm) {
   for (auto& section : wasm.userSections) {
-    if (isDWARFSection) {
+    if (isDWARFSection(section.name)) {
       return true;
     }
   }
