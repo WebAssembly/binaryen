@@ -1192,8 +1192,7 @@ public:
   std::set<DebugLocation> epilogLocation;
 
   // General debugging info: map every instruction to its original position in
-  // the binary, relative to the beginning of the code section; see
-  // codeSectionLocation.
+  // the binary, relative to the beginning of the code section.
   std::unordered_map<Expression*, uint32_t> binaryLocations;
 
   size_t getNumParams();
@@ -1354,10 +1353,6 @@ public:
 
   // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;
-
-  // General debug info for DWARF: remember the position in the binary of the
-  // code section, as all offsets in DWARF info are relative to there.
-  uint32_t codeSectionLocation = 0;
 
   // `features` are the features allowed to be used in this module and should be
   // respected regardless of the value of`hasFeaturesSection`.

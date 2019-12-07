@@ -1312,7 +1312,7 @@ void WasmBinaryBuilder::readFunctionSignatures() {
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
   if (debugInfo) {
-    wasm.codeSectionLocation = pos;
+    codeSectionLocation = pos;
   }
   size_t total = getU32LEB();
   if (total != functionTypes.size()) {
@@ -2239,7 +2239,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
     if (debugInfo) {
-      currFunction->binaryLocations[curr] = startPos;
+      currFunction->binaryLocations[curr] = startPos - codeSectionLocation;
     }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);

@@ -1056,6 +1056,7 @@ class WasmBinaryBuilder {
   size_t pos = 0;
   Index startIndex = -1;
   std::set<Function::DebugLocation> debugLocation;
+  size_t codeSectionLocation;
 
   std::set<BinaryConsts::Section> seenSections;
 

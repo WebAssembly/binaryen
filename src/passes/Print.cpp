@@ -1388,7 +1388,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       if (debugInfo) {
         auto iter = currFunction->binaryLocations.find(curr);
         if (iter != currFunction->binaryLocations.end()) {
-          o << ";; binloc: " << iter->second << '\n';
+          Colors::grey(o);
+          o << ";; in binary: 0x" << iter->second << '\n';
+          restoreNormalColor(o);
+          doIndent(o, indent);
         }
       }
     }
@@ -2253,10 +2256,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       printMedium(o, "start") << ' ';
       printName(curr->start, o) << ')';
       o << maybeNewLine;
-    }
-    if (debugInfo && curr->codeSectionLocation > 0) {
-      doIndent(o, indent);
-      o << ";; code section content start: " << std::hex << curr->codeSectionLocation << '\n';
     }
     ModuleUtils::iterDefinedFunctions(
       *curr, [&](Function* func) { visitFunction(func); });
