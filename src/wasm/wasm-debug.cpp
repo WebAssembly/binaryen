@@ -21,8 +21,8 @@ namespace wasm {
 
 namespace Debug {
 
-bool isDWARFSection(const UserSection& section) {
-  return section.name.startsWith(".debug_");
+bool isDWARFSection(Name name) {
+  return name.startsWith(".debug_");
 }
 
 bool hasDWARFSections(const Module& wasm);

@@ -21,13 +21,15 @@
 #ifndef wasm_wasm_debug_h
 #define wasm_wasm_debug_h
 
+#include <string>
+
 #include "wasm.h"
 
 namespace wasm {
 
 namespace Debug {
 
-bool isDWARFSection(const UserSection& section);
+bool isDWARFSection(Name name);
 
 bool hasDWARFSections(const Module& wasm);
 

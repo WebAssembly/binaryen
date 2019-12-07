@@ -780,7 +780,40 @@ void WasmBinaryWriter::finishUp() {
 
 // reader
 
+bool hasDWARFSections() {
+  assert(pos == 0);
+  getInt32(); // magic
+  getInt32(); // version
+  while (more()) {
+    uint32_t sectionCode = getU32LEB();
+    uint32_t payloadLen = getU32LEB();
+    if (pos + payloadLen > input.size()) {
+      throwError("Section extends beyond end of input");
+    }
+    auto oldPos = pos;
+    if (sectionCode == BinaryConsts::Section::User) {
+      auto sectionName = getInlineString();
+      if (Debug::isDWARFSection(sectionName)) {
+        pos = 0;
+        return true;
+      }
+    }
+    pos = oldPos + payloadLen;
+  }
+  pos = 0;
+}
+
 void WasmBinaryBuilder::read() {
+  if (DWARF) {
+    // In order to update dwarf, we must store info about each IR node's
+    // binary position. This has noticeable memory overhead, so we don't do it
+    // by default: the user must request it by setting "DWARF", and even if so
+    // we scan ahead to see that there actually *are* DWARF sections, so that
+    // we don't do unnecessary work.
+    if (!hasDWARFSections(input)) {
+      DWARF = false;
+    }
+  }
 
   readHeader();
   readSourceMapHeader();
@@ -1311,7 +1344,7 @@ void WasmBinaryBuilder::readFunctionSignatures() {
 
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
-  if (debugInfo) {
+  if (DWARF) {
     codeSectionLocation = pos;
   }
   size_t total = getU32LEB();
@@ -2238,7 +2271,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     if (currDebugLocation.size()) {
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
-    if (debugInfo) {
+    if (DWARF) {
       currFunction->binaryLocations[curr] = startPos - codeSectionLocation;
     }
   }

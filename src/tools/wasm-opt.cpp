@@ -210,7 +210,7 @@ int main(int argc, const char* argv[]) {
 
   if (!translateToFuzz) {
     ModuleReader reader;
-    reader.setDebugInfo(options.passOptions.debugInfo);
+    reader.setDWARF(options.passOptions.debugInfo);
     try {
       reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {

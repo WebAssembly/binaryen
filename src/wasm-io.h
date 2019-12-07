@@ -29,7 +29,9 @@ namespace wasm {
 
 class ModuleReader {
 public:
-  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
+  // If DWARF support is enabled, we track the locations of all IR nodes in
+  // the binary, so that we can update DWARF sections later when writing.
+  void setDWARF(bool DWARF_) { DWARF = DWARF_; }
 
   // read text
   void readText(std::string filename, Module& wasm);
@@ -45,7 +47,7 @@ public:
   bool isBinaryFile(std::string filename);
 
 private:
-  bool debugInfo = false;
+  bool DWARF = false;
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
 
