@@ -21,6 +21,8 @@
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/ObjectYAML/DWARFEmitter.h"
+
+std::error_code dwarf2yaml(llvm::DWARFContext &DCtx, llvm::DWARFYAML::Data &Y);
 #endif
 
 namespace wasm {
@@ -69,14 +71,12 @@ bool hasDWARFSections(const Module& wasm) {
 // the DWARFContext may save us doing fixups in EmitDebugSections.
 // */
 
-std::error_code dwarf2yaml(llvm::DWARFContext &DCtx, llvm::DWARFYAML::Data &Y);
-
 static std::unique_ptr<llvm::DWARFContext> getDWARFContext(const Module& wasm) {
   // Get debug sections from the wasm.
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
   for (auto& section : wasm.userSections) {
     if (Name(section.name).startsWith(".debug_")) {
-      std::cout << "  debug section " << section.name << " (" << section.data.size() << " bytes)\n";
+      std::cout << "DWARF debug section " << section.name << " (" << section.data.size() << " bytes)\n";
       // TODO: efficiency
       sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
     }
