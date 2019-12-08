@@ -3,6 +3,7 @@ IF(MSVC)
 ELSE()
   add_compile_flag("-Wno-maybe-uninitialized")
   add_compile_flag("-Wno-unused-function")
+  add_compile_flag("-Wno-unused-private-field")
 ENDIF()
 
 SET(debugging_SOURCES
