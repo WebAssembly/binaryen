@@ -519,9 +519,7 @@ void format_object_base::home() {
 static int getFD(StringRef Filename, std::error_code &EC,
                  sys::fs::CreationDisposition Disp, sys::fs::FileAccess Access,
                  sys::fs::OpenFlags Flags) {
-  // XXX BINARYEN
-  errs() << "waka!\n";
-  errs() << Filename << '\n';
+  // XXX BINARYEN - we only ever use IO from LLVM to log to stdout
   return ::fileno(stdout);
 }
 

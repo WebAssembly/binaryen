@@ -71,34 +71,44 @@ bool hasDWARFSections(const Module& wasm) {
 // the DWARFContext may save us doing fixups in EmitDebugSections.
 // */
 
-static std::unique_ptr<llvm::DWARFContext> getDWARFContext(const Module& wasm) {
-  // Get debug sections from the wasm.
+struct BinaryenDWARFInfo {
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
+  std::unique_ptr<llvm::DWARFContext> context;
+
+  BinaryenDWARFInfo(const Module& wasm) {
+    // Get debug sections from the wasm.
+    for (auto& section : wasm.userSections) {
+      if (Name(section.name).startsWith(".debug_")) {
+        // TODO: efficiency
+        sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
+      }
+    }
+    // Parse debug sections.
+    uint8_t addrSize = 4;
+    context =  llvm::DWARFContext::create(sections, addrSize);
+  }
+};
+
+void dumpDWARF(const Module& wasm) {
+  BinaryenDWARFInfo info(wasm);
+  std::cout << "DWARF debug info\n";
+  std::cout << "================\n\n";
   for (auto& section : wasm.userSections) {
     if (Name(section.name).startsWith(".debug_")) {
       std::cout << "DWARF debug section " << section.name << " (" << section.data.size() << " bytes)\n";
-      // TODO: efficiency
-      sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
     }
   }
-  // Parse debug sections.
-  uint8_t addrSize = 4;
-  return llvm::DWARFContext::create(sections, addrSize);
-}
-
-void dumpDWARF(const Module& wasm) {
-  auto context = getDWARFContext(wasm);
   llvm::DIDumpOptions options;
   options.Verbose = true;
-  context->dump(llvm::outs(), options);
+  info.context->dump(llvm::outs(), options);
 }
 
 void updateDWARF(Module& wasm) {
-  auto context = getDWARFContext(wasm);
+  BinaryenDWARFInfo info(wasm);
 
   // Convert to Data representation, which YAML can use to write.
   llvm::DWARFYAML::Data Data;
-  if (dwarf2yaml(*context, Data)) {
+  if (dwarf2yaml(*info.context, Data)) {
     Fatal() << "Failed to parse DWARF to YAML";
   }
 
