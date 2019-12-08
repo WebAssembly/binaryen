@@ -250,7 +250,6 @@ public:
     ret->index = index;
     ret->value = value;
     ret->makeTee(type);
-    ret->finalize();
     return ret;
   }
   GlobalGet* makeGlobalGet(Name name, Type type) {
