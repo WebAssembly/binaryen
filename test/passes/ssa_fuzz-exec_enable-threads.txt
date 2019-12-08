@@ -1,5 +1,5 @@
-[fuzz-exec] calling $func_0
-[fuzz-exec] note result: $func_0 => 16384
+[fuzz-exec] calling func_0
+[fuzz-exec] note result: func_0 => 16384
 (module
  (type $0 (func (result i32)))
  (type $1 (func))
@@ -125,6 +125,6 @@
   )
  )
 )
-[fuzz-exec] calling $func_0
-[fuzz-exec] note result: $func_0 => 16384
-[fuzz-exec] comparing $func_0
+[fuzz-exec] calling func_0
+[fuzz-exec] note result: func_0 => 16384
+[fuzz-exec] comparing func_0

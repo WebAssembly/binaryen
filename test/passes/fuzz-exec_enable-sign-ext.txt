@@ -1,13 +1,13 @@
-[fuzz-exec] calling $a
-[fuzz-exec] note result: $a => -69
-[fuzz-exec] calling $b
-[fuzz-exec] note result: $b => -31768
-[fuzz-exec] calling $c
-[fuzz-exec] note result: $c => -69
-[fuzz-exec] calling $d
-[fuzz-exec] note result: $d => -31768
-[fuzz-exec] calling $e
-[fuzz-exec] note result: $e => -2146649112
+[fuzz-exec] calling a
+[fuzz-exec] note result: a => -69
+[fuzz-exec] calling b
+[fuzz-exec] note result: b => -31768
+[fuzz-exec] calling c
+[fuzz-exec] note result: c => -69
+[fuzz-exec] calling d
+[fuzz-exec] note result: d => -31768
+[fuzz-exec] calling e
+[fuzz-exec] note result: e => -2146649112
 (module
  (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$j (func (result i64)))
@@ -42,18 +42,18 @@
   )
  )
 )
-[fuzz-exec] calling $a
-[fuzz-exec] note result: $a => -69
-[fuzz-exec] calling $b
-[fuzz-exec] note result: $b => -31768
-[fuzz-exec] calling $c
-[fuzz-exec] note result: $c => -69
-[fuzz-exec] calling $d
-[fuzz-exec] note result: $d => -31768
-[fuzz-exec] calling $e
-[fuzz-exec] note result: $e => -2146649112
-[fuzz-exec] comparing $a
-[fuzz-exec] comparing $b
-[fuzz-exec] comparing $c
-[fuzz-exec] comparing $d
-[fuzz-exec] comparing $e
+[fuzz-exec] calling a
+[fuzz-exec] note result: a => -69
+[fuzz-exec] calling b
+[fuzz-exec] note result: b => -31768
+[fuzz-exec] calling c
+[fuzz-exec] note result: c => -69
+[fuzz-exec] calling d
+[fuzz-exec] note result: d => -31768
+[fuzz-exec] calling e
+[fuzz-exec] note result: e => -2146649112
+[fuzz-exec] comparing a
+[fuzz-exec] comparing b
+[fuzz-exec] comparing c
+[fuzz-exec] comparing d
+[fuzz-exec] comparing e
