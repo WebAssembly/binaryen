@@ -726,7 +726,7 @@ void FunctionValidator::visitLocalSet(LocalSet* curr) {
         "local.set's value type must be correct");
       shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index),
                    curr,
-                   "local.set's tpye must be correct");
+                   "local.set's type must be correct");
     }
     shouldBeEqual(getFunction()->getLocalType(curr->index),
                   curr->value->type,
