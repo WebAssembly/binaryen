@@ -15,10 +15,32 @@
  */
 
 #include "wasm.h"
-#include "debugging/debugging.h"
+#include "wasm-debug.h"
+
+#ifdef USE_LLVM_DWARF
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/ObjectYAML/DWARFEmitter.h"
+#endif
+
+namespace wasm {
+
+namespace Debug {
+
+bool isDWARFSection(Name name) {
+  return name.startsWith(".debug_");
+}
+
+bool hasDWARFSections(const Module& wasm) {
+  for (auto& section : wasm.userSections) {
+    if (isDWARFSection(section.name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+#ifdef USE_LLVM_DWARF
 
 // Big picture: We use a DWARFContext to read data, then DWARFYAML support
 // code to write it. That is not the main LLVM Dwarf code used for writing
@@ -49,12 +71,7 @@
 
 std::error_code dwarf2yaml(llvm::DWARFContext &DCtx, llvm::DWARFYAML::Data &Y);
 
-namespace wasm {
-
-namespace Debugging {
-
-void DWARFInfo::dump() {
-  std::cout << "DWARFInfo::dump()\n";
+static std::unique_ptr<llvm::DWARFContext> getDWARFContext(const Module& wasm) {
   // Get debug sections from the wasm.
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
   for (auto& section : wasm.userSections) {
@@ -66,11 +83,18 @@ void DWARFInfo::dump() {
   }
   // Parse debug sections.
   uint8_t addrSize = 4;
-  auto context = llvm::DWARFContext::create(sections, addrSize);
+  return llvm::DWARFContext::create(sections, addrSize);
+}
+
+void dumpDWARF(const Module& wasm) {
+  auto context = getDWARFContext(wasm);
   llvm::DIDumpOptions options;
   options.Verbose = true;
-  context->dump(llvm::errs(), options);
-  std::cout << "DWARFInfo::dump() complete\n";
+  context->dump(std::cout, options);
+}
+
+void updateDWARF(Module& wasm) {
+  auto context = getDWARFContext(wasm);
 
   // Convert to Data representation, which YAML can use to write.
   llvm::DWARFYAML::Data Data;
@@ -100,8 +124,8 @@ void DWARFInfo::dump() {
   }
 }
 
-} // Debugging
+#endif // USE_LLVM_DWARF
+
+} // namespace Debug
 
 } // namespace wasm
-
-// FIXME src/llvm/Config/ is dubious

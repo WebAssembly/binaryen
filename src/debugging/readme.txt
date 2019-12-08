@@ -17,4 +17,3 @@ Local changes in those files are marked with
 
   // XXX BINARYEN
 
-The only source file here that is not from LLVM is BinaryenDebugging.cpp.

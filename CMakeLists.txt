@@ -23,8 +23,6 @@ ELSE()
 ENDIF()
 CONFIGURE_FILE(config.h.in config.h)
 
-OPTION(BUILD_STATIC_LIB "Build as a static library" OFF)
-
 # Support functionality.
 
 FUNCTION(ADD_COMPILE_FLAG value)
@@ -63,6 +61,23 @@ FUNCTION(ADD_LINK_FLAG value)
     SET(${variable} "${${variable}} ${value}" PARENT_SCOPE)
   ENDFOREACH(variable)
 ENDFUNCTION()
+
+# Options
+
+OPTION(BUILD_STATIC_LIB "Build as a static library" OFF)
+
+# For now, don't include full DWARF support in JS builds, for size.
+IF (NOT EMSCRIPTEN)
+  OPTION(USE_LLVM_DWARF "Enable full DWARF support using bundled LLVM code" ON)
+
+  IF(USE_LLVM_DWARF)
+    IF(MSVC)
+      ADD_COMPILE_FLAG("/DUSE_LLVM_DWARF")
+    ELSE()
+      ADD_COMPILE_FLAG("-DUSE_LLVM_DWARF")
+    ENDIF()
+  ENDIF()
+ENDIF()
 
 # Compiler setup.
 
@@ -211,7 +226,9 @@ ADD_SUBDIRECTORY(src/emscripten-optimizer)
 ADD_SUBDIRECTORY(src/passes)
 ADD_SUBDIRECTORY(src/support)
 ADD_SUBDIRECTORY(src/wasm)
-ADD_SUBDIRECTORY(src/debugging)
+IF(USE_LLVM_DEBUG)
+  ADD_SUBDIRECTORY(src/debugging)
+ENDIF()
 
 # Object files
 SET(binaryen_objs
@@ -220,9 +237,12 @@ SET(binaryen_objs
     $<TARGET_OBJECTS:asmjs>
     $<TARGET_OBJECTS:emscripten-optimizer>
     $<TARGET_OBJECTS:ir>
-    $<TARGET_OBJECTS:debugging>
     $<TARGET_OBJECTS:cfg>
     $<TARGET_OBJECTS:support>)
+
+IF(USE_LLVM_DEBUG)
+  SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:debugging>)
+ENDIF()
 
 # Sources.
 

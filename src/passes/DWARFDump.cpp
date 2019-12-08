@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef wasm_debugging_h
-#define wasm_debugging_flat_h
+//
+// Dump DWARF sections. This results in something similar to llvm-dwarfdump,
+// as it uses the same code.
+//
+// Note that this dumps the DWARF data read from the binary when we loaded it.
+// It does not contain changes made since then, which will only be updated
+// when we write the binary. To see those changes, you must round-trip.
+//
 
-#include <wasm.h>
+#include "pass.h"
+#include "wasm-debugging.h"
+#include "wasm.h"
 
 namespace wasm {
 
-namespace Debugging {
-
-class DWARFInfo {
-  Module& wasm;
-
-public:
-  DWARFInfo(Module& wasm) : wasm(wasm) {}
-
-  void dump();
+struct DWARFDump : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    Debug::dumpDWARF(*module);
+  }
 };
 
-} // Debugging
+Pass* createDWARFDumpPass() { return new DWARFDump(); }
 
 } // namespace wasm
-
-#endif // wasm_debugging_h

@@ -3,6 +3,7 @@ SET(wasm_SOURCES
   wasm.cpp
   wasm-binary.cpp
   wasm-emscripten.cpp
+  wasm-debug.cpp
   wasm-interpreter.cpp
   wasm-io.cpp
   wasm-s-parser.cpp
