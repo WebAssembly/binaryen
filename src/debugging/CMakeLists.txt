@@ -1,8 +1,9 @@
 # LLVM sources have warnings, ignore them.
-IF(MSVC)
-ELSE()
-  add_compile_flag("-w")
-ENDIF()
+if(NOT MSVC)
+  foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    set(${variable} "${${variable}} -w" PARENT_SCOPE)
+  endforeach(variable)
+endif()
 
 SET(debugging_SOURCES
   APInt.cpp
