@@ -72,7 +72,7 @@ option(BUILD_STATIC_LIB "Build as a static library" OFF)
 
 # For now, don't include full DWARF support in JS builds, for size.
 if (NOT EMSCRIPTEN)
-  option(USE_LLVM_DWARF "Enable full DWARF support using bundled LLVM code" ON)
+  option(USE_LLVM_DWARF "Enable full DWARF support" ON)
 
   if(USE_LLVM_DWARF)
     if(MSVC)
