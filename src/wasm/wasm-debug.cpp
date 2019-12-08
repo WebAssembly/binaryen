@@ -90,7 +90,7 @@ void dumpDWARF(const Module& wasm) {
   auto context = getDWARFContext(wasm);
   llvm::DIDumpOptions options;
   options.Verbose = true;
-  context->dump(std::cout, options);
+  context->dump(llvm::outs(), options);
 }
 
 void updateDWARF(Module& wasm) {
@@ -102,13 +102,11 @@ void updateDWARF(Module& wasm) {
     Fatal() << "Failed to parse DWARF to YAML";
   }
 
+  // TODO: actually update the DWARF in Data! And remove sections we don't know
+  //       how to update yet.
+
   // Convert to binary sections.
   auto newSections = EmitDebugSections(Data, false /* ApplyFixups, should be true if we modify Data, presumably? */);
-
-  std::cout << "new sections: " << newSections.size() << '\n';
-  for (auto& key : newSections.keys()) {
-    std::cout << "  " << key.data() << " : " << newSections[key]->getBuffer().size() << '\n';
-  }
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
