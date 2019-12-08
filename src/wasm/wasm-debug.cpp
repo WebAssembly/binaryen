@@ -95,7 +95,7 @@ void dumpDWARF(const Module& wasm) {
   std::cout << "================\n\n";
   for (auto& section : wasm.userSections) {
     if (Name(section.name).startsWith(".debug_")) {
-      std::cout << "DWARF debug section " << section.name << " (" << section.data.size() << " bytes)\n";
+      std::cout << "Contains section " << section.name << " (" << section.data.size() << " bytes)\n";
     }
   }
   llvm::DIDumpOptions options;
@@ -130,6 +130,16 @@ void updateDWARF(Module& wasm) {
       }
     }
   }
+}
+
+#else USE_LLVM_DWARF
+
+void dumpDWARF(const Module& wasm) {
+  std::cerr << "warning: no DWARF dumping support\n";
+}
+
+void updateDWARF(Module& wasm) {
+  std::cerr << "warning: no DWARF updating support\n";
 }
 
 #endif // USE_LLVM_DWARF
