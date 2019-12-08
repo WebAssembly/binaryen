@@ -84,9 +84,9 @@ public:
       case Type::exnref: // there's no exnref literals
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected type");
   }
 
   inline static Literal makeZero(Type type) { return makeFromInt32(0, type); }
@@ -467,7 +467,7 @@ template<> struct less<wasm::Literal> {
       case wasm::Type::unreachable:
         return false;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected type");
   }
 };
 } // namespace std

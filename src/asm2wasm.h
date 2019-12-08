@@ -38,10 +38,13 @@
 #include "pass.h"
 #include "passes/passes.h"
 #include "shared-constants.h"
+#include "support/debug.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-module-building.h"
 #include "wasm.h"
+
+#define DEBUG_TYPE "asm2wasm"
 
 namespace wasm {
 
@@ -136,13 +139,13 @@ Name EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
 
 // Utilities
 
-static void abort_on(std::string why, Ref element) {
+static WASM_NORETURN void abort_on(std::string why, Ref element) {
   std::cerr << why << ' ';
   element->stringify(std::cerr);
   std::cerr << '\n';
   abort();
 }
-static void abort_on(std::string why, IString element) {
+static WASM_NORETURN void abort_on(std::string why, IString element) {
   std::cerr << why << ' ' << element.str << '\n';
   abort();
 }
@@ -1545,7 +1548,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
                 break;
               }
               default:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("unexpected type");
             }
           } else {
             assert(old == none);
@@ -1780,9 +1783,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 Function* Asm2WasmBuilder::processFunction(Ref ast) {
   auto name = ast[1]->getIString();
 
-  if (debug) {
-    std::cout << "asm2wasming func: " << ast[1]->getIString().str << '\n';
-  }
+  BYN_TRACE("asm2wasming func: " << ast[1]->getIString().str << '\n');
 
   auto function = new Function;
   function->name = name;
@@ -2059,7 +2060,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->op = NegFloat32;
           ret->type = Type::f32;
         } else {
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected asm type");
         }
         return ret;
       } else if (ast[1] == B_NOT) {
@@ -2194,7 +2195,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->type = value->type;
             return ret;
           } else {
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
           }
         }
         if (name == Math_floor || name == Math_sqrt || name == Math_ceil) {
@@ -2327,7 +2328,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               process(ast[2][2]),
               asmToWasmType(view.type));
           }
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected atomic op");
         }
         bool tableCall = false;
         if (wasmOnly) {

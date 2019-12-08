@@ -20,8 +20,11 @@
 #include "debugging/debugging.h"
 #include "ir/module-utils.h"
 #include "support/bits.h"
+#include "support/debug.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
+
+#define DEBUG_TYPE "binary"
 
 namespace wasm {
 
@@ -125,9 +128,7 @@ void WasmBinaryWriter::write() {
 }
 
 void WasmBinaryWriter::writeHeader() {
-  if (debug) {
-    std::cerr << "== writeHeader" << std::endl;
-  }
+  BYN_TRACE("== writeHeader\n");
   o << int32_t(BinaryConsts::Magic); // magic number \0asm
   o << int32_t(BinaryConsts::Version);
 }
@@ -193,9 +194,7 @@ void WasmBinaryWriter::writeStart() {
   if (!wasm->start.is()) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeStart" << std::endl;
-  }
+  BYN_TRACE("== writeStart\n");
   auto start = startSection(BinaryConsts::Section::Start);
   o << U32LEB(getFunctionIndex(wasm->start.str));
   finishSection(start);
@@ -205,9 +204,7 @@ void WasmBinaryWriter::writeMemory() {
   if (!wasm->memory.exists || wasm->memory.imported()) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeMemory" << std::endl;
-  }
+  BYN_TRACE("== writeMemory\n");
   auto start = startSection(BinaryConsts::Section::Memory);
   o << U32LEB(1); // Define 1 memory
   writeResizableLimits(wasm->memory.initial,
@@ -221,16 +218,12 @@ void WasmBinaryWriter::writeTypes() {
   if (types.size() == 0) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeTypes" << std::endl;
-  }
+  BYN_TRACE("== writeTypes\n");
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(types.size());
   for (Index i = 0; i < types.size(); ++i) {
     Signature& sig = types[i];
-    if (debug) {
-      std::cerr << "write " << sig.params << " -> " << sig.results << std::endl;
-    }
+    BYN_TRACE("write " << sig.params << " -> " << sig.results << std::endl);
     o << S32LEB(BinaryConsts::EncodedType::Func);
     for (auto& sigType : {sig.params, sig.results}) {
       o << U32LEB(sigType.size());
@@ -247,9 +240,7 @@ void WasmBinaryWriter::writeImports() {
   if (num == 0) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeImports" << std::endl;
-  }
+  BYN_TRACE("== writeImports\n");
   auto start = startSection(BinaryConsts::Section::Import);
   o << U32LEB(num);
   auto writeImportHeader = [&](Importable* import) {
@@ -257,35 +248,27 @@ void WasmBinaryWriter::writeImports() {
     writeInlineString(import->base.str);
   };
   ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
-    if (debug) {
-      std::cerr << "write one function" << std::endl;
-    }
+    BYN_TRACE("write one function\n");
     writeImportHeader(func);
     o << U32LEB(int32_t(ExternalKind::Function));
     o << U32LEB(getTypeIndex(Signature(Type(func->params), func->result)));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
-    if (debug) {
-      std::cerr << "write one global" << std::endl;
-    }
+    BYN_TRACE("write one global\n");
     writeImportHeader(global);
     o << U32LEB(int32_t(ExternalKind::Global));
     o << binaryType(global->type);
     o << U32LEB(global->mutable_);
   });
   ModuleUtils::iterImportedEvents(*wasm, [&](Event* event) {
-    if (debug) {
-      std::cerr << "write one event" << std::endl;
-    }
+    BYN_TRACE("write one event\n");
     writeImportHeader(event);
     o << U32LEB(int32_t(ExternalKind::Event));
     o << U32LEB(event->attribute);
     o << U32LEB(getTypeIndex(event->sig));
   });
   if (wasm->memory.imported()) {
-    if (debug) {
-      std::cerr << "write one memory" << std::endl;
-    }
+    BYN_TRACE("write one memory\n");
     writeImportHeader(&wasm->memory);
     o << U32LEB(int32_t(ExternalKind::Memory));
     writeResizableLimits(wasm->memory.initial,
@@ -294,9 +277,7 @@ void WasmBinaryWriter::writeImports() {
                          wasm->memory.shared);
   }
   if (wasm->table.imported()) {
-    if (debug) {
-      std::cerr << "write one table" << std::endl;
-    }
+    BYN_TRACE("write one table\n");
     writeImportHeader(&wasm->table);
     o << U32LEB(int32_t(ExternalKind::Table));
     o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
@@ -312,15 +293,11 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeFunctionSignatures" << std::endl;
-  }
+  BYN_TRACE("== writeFunctionSignatures\n");
   auto start = startSection(BinaryConsts::Section::Function);
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    if (debug) {
-      std::cerr << "write one" << std::endl;
-    }
+    BYN_TRACE("write one\n");
     o << U32LEB(getTypeIndex(Signature(Type(func->params), func->result)));
   });
   finishSection(start);
@@ -334,39 +311,27 @@ void WasmBinaryWriter::writeFunctions() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeFunctions" << std::endl;
-  }
+  BYN_TRACE("== writeFunctions\n");
   auto start = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
-    if (debug) {
-      std::cerr << "write one at" << o.size() << std::endl;
-    }
+    BYN_TRACE("write one at" << o.size() << std::endl);
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
-    if (debug) {
-      std::cerr << "writing" << func->name << std::endl;
-    }
+    BYN_TRACE("writing" << func->name << std::endl);
     // Emit Stack IR if present, and if we can
     if (func->stackIR && !sourceMap) {
-      if (debug) {
-        std::cerr << "write Stack IR" << std::endl;
-      }
+      BYN_TRACE("write Stack IR\n");
       StackIRToBinaryWriter(*this, o, func).write();
     } else {
-      if (debug) {
-        std::cerr << "write Binaryen IR" << std::endl;
-      }
+      BYN_TRACE("write Binaryen IR\n");
       BinaryenIRToBinaryWriter(*this, o, func, sourceMap).write();
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
-    if (debug) {
-      std::cerr << "body size: " << size << ", writing at " << sizePos
-                << ", next starts at " << o.size() << std::endl;
-    }
+    BYN_TRACE("body size: " << size << ", writing at " << sizePos
+                            << ", next starts at " << o.size() << "\n");
     auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
     if (sizeFieldSize != MaxLEB32Bytes) {
       // we can save some room, nice
@@ -392,16 +357,12 @@ void WasmBinaryWriter::writeGlobals() {
   if (importInfo->getNumDefinedGlobals() == 0) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeglobals" << std::endl;
-  }
+  BYN_TRACE("== writeglobals\n");
   auto start = startSection(BinaryConsts::Section::Global);
   auto num = importInfo->getNumDefinedGlobals();
   o << U32LEB(num);
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
-    if (debug) {
-      std::cerr << "write one" << std::endl;
-    }
+    BYN_TRACE("write one\n");
     o << binaryType(global->type);
     o << U32LEB(global->mutable_);
     writeExpression(global->init);
@@ -414,15 +375,11 @@ void WasmBinaryWriter::writeExports() {
   if (wasm->exports.size() == 0) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeexports" << std::endl;
-  }
+  BYN_TRACE("== writeexports\n");
   auto start = startSection(BinaryConsts::Section::Export);
   o << U32LEB(wasm->exports.size());
   for (auto& curr : wasm->exports) {
-    if (debug) {
-      std::cerr << "write one" << std::endl;
-    }
+    BYN_TRACE("write one\n");
     writeInlineString(curr->name.str);
     o << U32LEB(int32_t(curr->kind));
     switch (curr->kind) {
@@ -442,7 +399,7 @@ void WasmBinaryWriter::writeExports() {
         o << U32LEB(getEventIndex(curr->value));
         break;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected extern kind");
     }
   }
   finishSection(start);
@@ -464,7 +421,7 @@ void WasmBinaryWriter::writeDataSegments() {
   if (wasm->memory.segments.size() > WebLimitations::MaxDataSegments) {
     std::cerr << "Some VMs may not accept this binary because it has a large "
               << "number of data segments. Run the limit-segments pass to "
-              << "merge segments." << std::endl;
+              << "merge segments.\n";
   }
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(wasm->memory.segments.size());
@@ -511,9 +468,7 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   if (!wasm->table.exists || wasm->table.imported()) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeFunctionTableDeclaration" << std::endl;
-  }
+  BYN_TRACE("== writeFunctionTableDeclaration\n");
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
   o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
@@ -528,9 +483,7 @@ void WasmBinaryWriter::writeTableElements() {
   if (!wasm->table.exists || wasm->table.segments.size() == 0) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeTableElements" << std::endl;
-  }
+  BYN_TRACE("== writeTableElements\n");
   auto start = startSection(BinaryConsts::Section::Element);
 
   o << U32LEB(wasm->table.segments.size());
@@ -551,16 +504,12 @@ void WasmBinaryWriter::writeEvents() {
   if (importInfo->getNumDefinedEvents() == 0) {
     return;
   }
-  if (debug) {
-    std::cerr << "== writeEvents" << std::endl;
-  }
+  BYN_TRACE("== writeEvents\n");
   auto start = startSection(BinaryConsts::Section::Event);
   auto num = importInfo->getNumDefinedEvents();
   o << U32LEB(num);
   ModuleUtils::iterDefinedEvents(*wasm, [&](Event* event) {
-    if (debug) {
-      std::cerr << "write one" << std::endl;
-    }
+    BYN_TRACE("write one\n");
     o << U32LEB(event->attribute);
     o << U32LEB(getTypeIndex(event->sig));
   });
@@ -573,9 +522,7 @@ void WasmBinaryWriter::writeNames() {
     return;
   }
 
-  if (debug) {
-    std::cerr << "== writeNames" << std::endl;
-  }
+  BYN_TRACE("== writeNames\n");
   auto start = startSection(BinaryConsts::Section::User);
   writeInlineString(BinaryConsts::UserSections::Name);
   auto substart =
@@ -596,9 +543,7 @@ void WasmBinaryWriter::writeNames() {
 }
 
 void WasmBinaryWriter::writeSourceMapUrl() {
-  if (debug) {
-    std::cerr << "== writeSourceMapUrl" << std::endl;
-  }
+  BYN_TRACE("== writeSourceMapUrl\n");
   auto start = startSection(BinaryConsts::Section::User);
   writeInlineString(BinaryConsts::UserSections::SourceMapUrl);
   writeInlineString(sourceMapUrl.c_str());
@@ -725,7 +670,7 @@ void WasmBinaryWriter::writeFeaturesSection() {
       case FeatureSet::ReferenceTypes:
         return BinaryConsts::UserSections::ReferenceTypesFeature;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected feature flag");
     }
   };
 
@@ -815,23 +760,18 @@ void WasmBinaryWriter::emitBuffer(const char* data, size_t size) {
 }
 
 void WasmBinaryWriter::emitString(const char* str) {
-  if (debug) {
-    std::cerr << "emitString " << str << std::endl;
-  }
+  BYN_TRACE("emitString " << str << std::endl);
   emitBuffer(str, strlen(str) + 1);
 }
 
 void WasmBinaryWriter::finishUp() {
-  if (debug) {
-    std::cerr << "finishUp" << std::endl;
-  }
+  BYN_TRACE("finishUp\n");
   // finish buffers
   for (const auto& buffer : buffersToWrite) {
-    if (debug) {
-      std::cerr << "writing buffer" << (int)buffer.data[0] << ","
-                << (int)buffer.data[1] << " at " << o.size()
-                << " and pointer is at " << buffer.pointerLocation << std::endl;
-    }
+    BYN_TRACE("writing buffer"
+              << (int)buffer.data[0] << "," << (int)buffer.data[1] << " at "
+              << o.size() << " and pointer is at " << buffer.pointerLocation
+              << "\n");
     o.writeAt(buffer.pointerLocation, (uint32_t)o.size());
     for (size_t i = 0; i < buffer.size; i++) {
       o << (uint8_t)buffer.data[i];
@@ -969,151 +909,103 @@ uint8_t WasmBinaryBuilder::getInt8() {
   if (!more()) {
     throwError("unexpected end of input");
   }
-  if (debug) {
-    std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos
-              << ")" << std::endl;
-  }
+  BYN_TRACE("getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")\n");
   return input[pos++];
 }
 
 uint16_t WasmBinaryBuilder::getInt16() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   auto ret = uint16_t(getInt8());
   ret |= uint16_t(getInt8()) << 8;
-  if (debug) {
-    std::cerr << "getInt16: " << ret << "/0x" << std::hex << ret << std::dec
-              << " ==>" << std::endl;
-  }
+  BYN_TRACE("getInt16: " << ret << "/0x" << std::hex << ret << std::dec
+                         << " ==>\n");
   return ret;
 }
 
 uint32_t WasmBinaryBuilder::getInt32() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   auto ret = uint32_t(getInt16());
   ret |= uint32_t(getInt16()) << 16;
-  if (debug) {
-    std::cerr << "getInt32: " << ret << "/0x" << std::hex << ret << std::dec
-              << " ==>" << std::endl;
-  }
+  BYN_TRACE("getInt32: " << ret << "/0x" << std::hex << ret << std::dec
+                         << " ==>\n");
   return ret;
 }
 
 uint64_t WasmBinaryBuilder::getInt64() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   auto ret = uint64_t(getInt32());
   ret |= uint64_t(getInt32()) << 32;
-  if (debug) {
-    std::cerr << "getInt64: " << ret << "/0x" << std::hex << ret << std::dec
-              << " ==>" << std::endl;
-  }
+  BYN_TRACE("getInt64: " << ret << "/0x" << std::hex << ret << std::dec
+                         << " ==>\n");
   return ret;
 }
 
 uint8_t WasmBinaryBuilder::getLaneIndex(size_t lanes) {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   auto ret = getInt8();
   if (ret >= lanes) {
     throwError("Illegal lane index");
   }
-  if (debug) {
-    std::cerr << "getLaneIndex(" << lanes << "): " << ret << " ==>"
-              << std::endl;
-  }
+  BYN_TRACE("getLaneIndex(" << lanes << "): " << ret << " ==>" << std::endl);
   return ret;
 }
 
 Literal WasmBinaryBuilder::getFloat32Literal() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   auto ret = Literal(getInt32());
   ret = ret.castToF32();
-  if (debug) {
-    std::cerr << "getFloat32: " << ret << " ==>" << std::endl;
-  }
+  BYN_TRACE("getFloat32: " << ret << " ==>\n");
   return ret;
 }
 
 Literal WasmBinaryBuilder::getFloat64Literal() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   auto ret = Literal(getInt64());
   ret = ret.castToF64();
-  if (debug) {
-    std::cerr << "getFloat64: " << ret << " ==>" << std::endl;
-  }
+  BYN_TRACE("getFloat64: " << ret << " ==>\n");
   return ret;
 }
 
 Literal WasmBinaryBuilder::getVec128Literal() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   std::array<uint8_t, 16> bytes;
   for (auto i = 0; i < 16; ++i) {
     bytes[i] = getInt8();
   }
   auto ret = Literal(bytes.data());
-  if (debug) {
-    std::cerr << "getVec128: " << ret << " ==>" << std::endl;
-  }
+  BYN_TRACE("getVec128: " << ret << " ==>\n");
   return ret;
 }
 
 uint32_t WasmBinaryBuilder::getU32LEB() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   U32LEB ret;
   ret.read([&]() { return getInt8(); });
-  if (debug) {
-    std::cerr << "getU32LEB: " << ret.value << " ==>" << std::endl;
-  }
+  BYN_TRACE("getU32LEB: " << ret.value << " ==>\n");
   return ret.value;
 }
 
 uint64_t WasmBinaryBuilder::getU64LEB() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   U64LEB ret;
   ret.read([&]() { return getInt8(); });
-  if (debug) {
-    std::cerr << "getU64LEB: " << ret.value << " ==>" << std::endl;
-  }
+  BYN_TRACE("getU64LEB: " << ret.value << " ==>\n");
   return ret.value;
 }
 
 int32_t WasmBinaryBuilder::getS32LEB() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   S32LEB ret;
   ret.read([&]() { return (int8_t)getInt8(); });
-  if (debug) {
-    std::cerr << "getS32LEB: " << ret.value << " ==>" << std::endl;
-  }
+  BYN_TRACE("getS32LEB: " << ret.value << " ==>\n");
   return ret.value;
 }
 
 int64_t WasmBinaryBuilder::getS64LEB() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   S64LEB ret;
   ret.read([&]() { return (int8_t)getInt8(); });
-  if (debug) {
-    std::cerr << "getS64LEB: " << ret.value << " ==>" << std::endl;
-  }
+  BYN_TRACE("getS64LEB: " << ret.value << " ==>\n");
   return ret.value;
 }
 
@@ -1137,9 +1029,10 @@ Type WasmBinaryBuilder::getType() {
       return anyref;
     case BinaryConsts::EncodedType::exnref:
       return exnref;
-    default: { throwError("invalid wasm type: " + std::to_string(type)); }
+    default:
+      throwError("invalid wasm type: " + std::to_string(type));
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("unexpeced type");
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -1151,9 +1044,7 @@ Type WasmBinaryBuilder::getConcreteType() {
 }
 
 Name WasmBinaryBuilder::getInlineString() {
-  if (debug) {
-    std::cerr << "<==" << std::endl;
-  }
+  BYN_TRACE("<==\n");
   auto len = getU32LEB();
   std::string str;
   for (size_t i = 0; i < len; i++) {
@@ -1165,9 +1056,7 @@ Name WasmBinaryBuilder::getInlineString() {
     }
     str = str + curr;
   }
-  if (debug) {
-    std::cerr << "getInlineString: " << str << " ==>" << std::endl;
-  }
+  BYN_TRACE("getInlineString: " << str << " ==>\n");
   return Name(str);
 }
 
@@ -1201,31 +1090,23 @@ void WasmBinaryBuilder::verifyInt64(int64_t x) {
 
 void WasmBinaryBuilder::ungetInt8() {
   assert(pos > 0);
-  if (debug) {
-    std::cerr << "ungetInt8 (at " << pos << ")" << std::endl;
-  }
+  BYN_TRACE("ungetInt8 (at " << pos << ")\n");
   pos--;
 }
 
 void WasmBinaryBuilder::readHeader() {
-  if (debug) {
-    std::cerr << "== readHeader" << std::endl;
-  }
+  BYN_TRACE("== readHeader\n");
   verifyInt32(BinaryConsts::Magic);
   verifyInt32(BinaryConsts::Version);
 }
 
 void WasmBinaryBuilder::readStart() {
-  if (debug) {
-    std::cerr << "== readStart" << std::endl;
-  }
+  BYN_TRACE("== readStart\n");
   startIndex = getU32LEB();
 }
 
 void WasmBinaryBuilder::readMemory() {
-  if (debug) {
-    std::cerr << "== readMemory" << std::endl;
-  }
+  BYN_TRACE("== readMemory\n");
   auto numMemories = getU32LEB();
   if (!numMemories) {
     return;
@@ -1244,26 +1125,18 @@ void WasmBinaryBuilder::readMemory() {
 }
 
 void WasmBinaryBuilder::readSignatures() {
-  if (debug) {
-    std::cerr << "== readSignatures" << std::endl;
-  }
+  BYN_TRACE("== readSignatures\n");
   size_t numTypes = getU32LEB();
-  if (debug) {
-    std::cerr << "num: " << numTypes << std::endl;
-  }
+  BYN_TRACE("num: " << numTypes << std::endl);
   for (size_t i = 0; i < numTypes; i++) {
-    if (debug) {
-      std::cerr << "read one" << std::endl;
-    }
+    BYN_TRACE("read one\n");
     auto curr = make_unique<FunctionType>();
     auto form = getS32LEB();
     if (form != BinaryConsts::EncodedType::Func) {
       throwError("bad signature form " + std::to_string(form));
     }
     size_t numParams = getU32LEB();
-    if (debug) {
-      std::cerr << "num params: " << numParams << std::endl;
-    }
+    BYN_TRACE("num params: " << numParams << std::endl);
     for (size_t j = 0; j < numParams; j++) {
       curr->params.push_back(getConcreteType());
     }
@@ -1322,18 +1195,12 @@ void WasmBinaryBuilder::getResizableLimits(Address& initial,
 }
 
 void WasmBinaryBuilder::readImports() {
-  if (debug) {
-    std::cerr << "== readImports" << std::endl;
-  }
+  BYN_TRACE("== readImports\n");
   size_t num = getU32LEB();
-  if (debug) {
-    std::cerr << "num: " << num << std::endl;
-  }
+  BYN_TRACE("num: " << num << std::endl);
   Builder builder(wasm);
   for (size_t i = 0; i < num; i++) {
-    if (debug) {
-      std::cerr << "read one" << std::endl;
-    }
+    BYN_TRACE("read one\n");
     auto module = getInlineString();
     auto base = getInlineString();
     auto kind = (ExternalKind)getU32LEB();
@@ -1435,17 +1302,11 @@ void WasmBinaryBuilder::requireFunctionContext(const char* error) {
 }
 
 void WasmBinaryBuilder::readFunctionSignatures() {
-  if (debug) {
-    std::cerr << "== readFunctionSignatures" << std::endl;
-  }
+  BYN_TRACE("== readFunctionSignatures\n");
   size_t num = getU32LEB();
-  if (debug) {
-    std::cerr << "num: " << num << std::endl;
-  }
+  BYN_TRACE("num: " << num << std::endl);
   for (size_t i = 0; i < num; i++) {
-    if (debug) {
-      std::cerr << "read one" << std::endl;
-    }
+    BYN_TRACE("read one\n");
     auto index = getU32LEB();
     if (index >= wasm.functionTypes.size()) {
       throwError("invalid function type index for function");
@@ -1455,17 +1316,13 @@ void WasmBinaryBuilder::readFunctionSignatures() {
 }
 
 void WasmBinaryBuilder::readFunctions() {
-  if (debug) {
-    std::cerr << "== readFunctions" << std::endl;
-  }
+  BYN_TRACE("== readFunctions\n");
   size_t total = getU32LEB();
   if (total != functionTypes.size()) {
     throwError("invalid function section size, must equal types");
   }
   for (size_t i = 0; i < total; i++) {
-    if (debug) {
-      std::cerr << "read one at " << pos << std::endl;
-    }
+    BYN_TRACE("read one at " << pos << std::endl);
     size_t size = getU32LEB();
     if (size == 0) {
       throwError("empty function size");
@@ -1479,9 +1336,7 @@ void WasmBinaryBuilder::readFunctions() {
     readNextDebugLocation();
 
     auto type = functionTypes[i];
-    if (debug) {
-      std::cerr << "reading " << i << std::endl;
-    }
+    BYN_TRACE("reading " << i << std::endl);
     func->type = type->name;
     func->result = type->result;
     for (size_t j = 0; j < type->params.size(); j++) {
@@ -1499,9 +1354,7 @@ void WasmBinaryBuilder::readFunctions() {
     std::swap(func->prologLocation, debugLocation);
     {
       // process the function body
-      if (debug) {
-        std::cerr << "processing function: " << i << std::endl;
-      }
+      BYN_TRACE("processing function: " << i << std::endl);
       nextLabel = 0;
       debugLocation.clear();
       willBeIgnored = false;
@@ -1526,24 +1379,16 @@ void WasmBinaryBuilder::readFunctions() {
     debugLocation.clear();
     functions.push_back(func);
   }
-  if (debug) {
-    std::cerr << " end function bodies" << std::endl;
-  }
+  BYN_TRACE(" end function bodies\n");
 }
 
 void WasmBinaryBuilder::readExports() {
-  if (debug) {
-    std::cerr << "== readExports" << std::endl;
-  }
+  BYN_TRACE("== readExports\n");
   size_t num = getU32LEB();
-  if (debug) {
-    std::cerr << "num: " << num << std::endl;
-  }
+  BYN_TRACE("num: " << num << std::endl);
   std::set<Name> names;
   for (size_t i = 0; i < num; i++) {
-    if (debug) {
-      std::cerr << "read one" << std::endl;
-    }
+    BYN_TRACE("read one\n");
     auto curr = new Export;
     curr->name = getInlineString();
     if (names.count(curr->name) > 0) {
@@ -1749,17 +1594,11 @@ Expression* WasmBinaryBuilder::readExpression() {
 }
 
 void WasmBinaryBuilder::readGlobals() {
-  if (debug) {
-    std::cerr << "== readGlobals" << std::endl;
-  }
+  BYN_TRACE("== readGlobals\n");
   size_t num = getU32LEB();
-  if (debug) {
-    std::cerr << "num: " << num << std::endl;
-  }
+  BYN_TRACE("num: " << num << std::endl);
   for (size_t i = 0; i < num; i++) {
-    if (debug) {
-      std::cerr << "read one" << std::endl;
-    }
+    BYN_TRACE("read one\n");
     auto type = getConcreteType();
     auto mutable_ = getU32LEB();
     if (mutable_ & ~1) {
@@ -1775,18 +1614,14 @@ void WasmBinaryBuilder::readGlobals() {
 }
 
 void WasmBinaryBuilder::processExpressions() {
-  if (debug) {
-    std::cerr << "== processExpressions" << std::endl;
-  }
+  BYN_TRACE("== processExpressions\n");
   unreachableInTheWasmSense = false;
   while (1) {
     Expression* curr;
     auto ret = readExpression(curr);
     if (!curr) {
       lastSeparator = ret;
-      if (debug) {
-        std::cerr << "== processExpressions finished" << std::endl;
-      }
+      BYN_TRACE("== processExpressions finished\n");
       return;
     }
     expressionStack.push_back(curr);
@@ -1805,10 +1640,8 @@ void WasmBinaryBuilder::processExpressions() {
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
           peek == BinaryConsts::Catch) {
-        if (debug) {
-          std::cerr << "== processExpressions finished with unreachable"
-                    << std::endl;
-        }
+        BYN_TRACE("== processExpressions finished with unreachable"
+                  << std::endl);
         readNextDebugLocation();
         lastSeparator = BinaryConsts::ASTNodes(peek);
         pos++;
@@ -1822,9 +1655,7 @@ void WasmBinaryBuilder::processExpressions() {
 }
 
 void WasmBinaryBuilder::skipUnreachableCode() {
-  if (debug) {
-    std::cerr << "== skipUnreachableCode" << std::endl;
-  }
+  BYN_TRACE("== skipUnreachableCode\n");
   // preserve the stack, and restore it. it contains the instruction that made
   // us unreachable, and we can ignore anything after it. things after it may
   // pop, we want to undo that
@@ -1844,9 +1675,7 @@ void WasmBinaryBuilder::skipUnreachableCode() {
     Expression* curr;
     auto ret = readExpression(curr);
     if (!curr) {
-      if (debug) {
-        std::cerr << "== skipUnreachableCode finished" << std::endl;
-      }
+      BYN_TRACE("== skipUnreachableCode finished\n");
       lastSeparator = ret;
       unreachableInTheWasmSense = false;
       willBeIgnored = before;
@@ -1858,17 +1687,12 @@ void WasmBinaryBuilder::skipUnreachableCode() {
 }
 
 Expression* WasmBinaryBuilder::popExpression() {
-  if (debug) {
-    std::cerr << "== popExpression" << std::endl;
-  }
+  BYN_TRACE("== popExpression\n");
   if (expressionStack.empty()) {
     if (unreachableInTheWasmSense) {
       // in unreachable code, trying to pop past the polymorphic stack
       // area results in receiving unreachables
-      if (debug) {
-        std::cerr << "== popping unreachable from polymorphic stack"
-                  << std::endl;
-      }
+      BYN_TRACE("== popping unreachable from polymorphic stack" << std::endl);
       return allocator.alloc<Unreachable>();
     }
     throwError(
@@ -1981,17 +1805,13 @@ void WasmBinaryBuilder::processFunctions() {
 }
 
 void WasmBinaryBuilder::readDataCount() {
-  if (debug) {
-    std::cerr << "== readDataCount" << std::endl;
-  }
+  BYN_TRACE("== readDataCount\n");
   hasDataCount = true;
   dataCount = getU32LEB();
 }
 
 void WasmBinaryBuilder::readDataSegments() {
-  if (debug) {
-    std::cerr << "== readDataSegments" << std::endl;
-  }
+  BYN_TRACE("== readDataSegments\n");
   auto num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
     Memory::Segment curr;
@@ -2020,9 +1840,7 @@ void WasmBinaryBuilder::readDataSegments() {
 }
 
 void WasmBinaryBuilder::readFunctionTableDeclaration() {
-  if (debug) {
-    std::cerr << "== readFunctionTableDeclaration" << std::endl;
-  }
+  BYN_TRACE("== readFunctionTableDeclaration\n");
   auto numTables = getU32LEB();
   if (numTables != 1) {
     throwError("Only 1 table definition allowed in MVP");
@@ -2044,9 +1862,7 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
 }
 
 void WasmBinaryBuilder::readTableElements() {
-  if (debug) {
-    std::cerr << "== readTableElements" << std::endl;
-  }
+  BYN_TRACE("== readTableElements\n");
   auto numSegments = getU32LEB();
   if (numSegments >= Table::kMaxSize) {
     throwError("Too many segments");
@@ -2067,17 +1883,11 @@ void WasmBinaryBuilder::readTableElements() {
 }
 
 void WasmBinaryBuilder::readEvents() {
-  if (debug) {
-    std::cerr << "== readEvents" << std::endl;
-  }
+  BYN_TRACE("== readEvents\n");
   size_t numEvents = getU32LEB();
-  if (debug) {
-    std::cerr << "num: " << numEvents << std::endl;
-  }
+  BYN_TRACE("num: " << numEvents << std::endl);
   for (size_t i = 0; i < numEvents; i++) {
-    if (debug) {
-      std::cerr << "read one" << std::endl;
-    }
+    BYN_TRACE("read one\n");
     auto attribute = getU32LEB();
     auto typeIndex = getU32LEB();
     if (typeIndex >= wasm.functionTypes.size()) {
@@ -2128,9 +1938,7 @@ Name WasmBinaryBuilder::escape(Name name) {
 }
 
 void WasmBinaryBuilder::readNames(size_t payloadLen) {
-  if (debug) {
-    std::cerr << "== readNames" << std::endl;
-  }
+  BYN_TRACE("== readNames\n");
   auto sectionPos = pos;
   while (pos < sectionPos + payloadLen) {
     auto nameType = getU32LEB();
@@ -2229,18 +2037,14 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (pos == endOfFunction) {
     throwError("Reached function end without seeing End opcode");
   }
-  if (debug) {
-    std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
-  }
+  BYN_TRACE("zz recurse into " << ++depth << " at " << pos << std::endl);
   readNextDebugLocation();
   std::set<Function::DebugLocation> currDebugLocation;
   if (debugLocation.size()) {
     currDebugLocation.insert(*debugLocation.begin());
   }
   uint8_t code = getInt8();
-  if (debug) {
-    std::cerr << "readExpression seeing " << (int)code << std::endl;
-  }
+  BYN_TRACE("readExpression seeing " << (int)code << std::endl);
   switch (code) {
     case BinaryConsts::Block:
       visitBlock((curr = allocator.alloc<Block>())->cast<Block>());
@@ -2435,9 +2239,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (curr && currDebugLocation.size()) {
     currFunction->debugLocations[curr] = *currDebugLocation.begin();
   }
-  if (debug) {
-    std::cerr << "zz recurse from " << depth-- << " at " << pos << std::endl;
-  }
+  BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
   return BinaryConsts::ASTNodes(code);
 }
 
@@ -2484,9 +2286,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr,
 }
 
 void WasmBinaryBuilder::visitBlock(Block* curr) {
-  if (debug) {
-    std::cerr << "zz node: Block" << std::endl;
-  }
+  BYN_TRACE("zz node: Block\n");
 
   // special-case Block and de-recurse nested blocks in their first position, as
   // that is a common pattern that can be very highly nested.
@@ -2573,9 +2373,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type,
 }
 
 void WasmBinaryBuilder::visitIf(If* curr) {
-  if (debug) {
-    std::cerr << "zz node: If" << std::endl;
-  }
+  BYN_TRACE("zz node: If\n");
   curr->type = getType();
   curr->condition = popNonVoidExpression();
   curr->ifTrue = getBlockOrSingleton(curr->type);
@@ -2589,9 +2387,7 @@ void WasmBinaryBuilder::visitIf(If* curr) {
 }
 
 void WasmBinaryBuilder::visitLoop(Loop* curr) {
-  if (debug) {
-    std::cerr << "zz node: Loop" << std::endl;
-  }
+  BYN_TRACE("zz node: Loop\n");
   curr->type = getType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
@@ -2621,9 +2417,7 @@ void WasmBinaryBuilder::visitLoop(Loop* curr) {
 
 WasmBinaryBuilder::BreakTarget
 WasmBinaryBuilder::getBreakTarget(int32_t offset) {
-  if (debug) {
-    std::cerr << "getBreakTarget " << offset << std::endl;
-  }
+  BYN_TRACE("getBreakTarget " << offset << std::endl);
   if (breakStack.size() < 1 + size_t(offset)) {
     throwError("bad breakindex (low)");
   }
@@ -2631,10 +2425,8 @@ WasmBinaryBuilder::getBreakTarget(int32_t offset) {
   if (index >= breakStack.size()) {
     throwError("bad breakindex (high)");
   }
-  if (debug) {
-    std::cerr << "breaktarget " << breakStack[index].name << " arity "
-              << breakStack[index].arity << std::endl;
-  }
+  BYN_TRACE("breaktarget " << breakStack[index].name << " arity "
+                           << breakStack[index].arity << std::endl);
   auto& ret = breakStack[index];
   // if the break is in literally unreachable code, then we will not emit it
   // anyhow, so do not note that the target has breaks to it
@@ -2645,9 +2437,7 @@ WasmBinaryBuilder::getBreakTarget(int32_t offset) {
 }
 
 void WasmBinaryBuilder::visitBreak(Break* curr, uint8_t code) {
-  if (debug) {
-    std::cerr << "zz node: Break, code " << int32_t(code) << std::endl;
-  }
+  BYN_TRACE("zz node: Break, code " << int32_t(code) << std::endl);
   BreakTarget target = getBreakTarget(getU32LEB());
   curr->name = target.name;
   if (code == BinaryConsts::BrIf) {
@@ -2660,22 +2450,16 @@ void WasmBinaryBuilder::visitBreak(Break* curr, uint8_t code) {
 }
 
 void WasmBinaryBuilder::visitSwitch(Switch* curr) {
-  if (debug) {
-    std::cerr << "zz node: Switch" << std::endl;
-  }
+  BYN_TRACE("zz node: Switch\n");
   curr->condition = popNonVoidExpression();
   auto numTargets = getU32LEB();
-  if (debug) {
-    std::cerr << "targets: " << numTargets << std::endl;
-  }
+  BYN_TRACE("targets: " << numTargets << std::endl);
   for (size_t i = 0; i < numTargets; i++) {
     curr->targets.push_back(getBreakTarget(getU32LEB()).name);
   }
   auto defaultTarget = getBreakTarget(getU32LEB());
   curr->default_ = defaultTarget.name;
-  if (debug) {
-    std::cerr << "default: " << curr->default_ << std::endl;
-  }
+  BYN_TRACE("default: " << curr->default_ << "\n");
   if (defaultTarget.arity) {
     curr->value = popNonVoidExpression();
   }
@@ -2683,9 +2467,7 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
 }
 
 void WasmBinaryBuilder::visitCall(Call* curr) {
-  if (debug) {
-    std::cerr << "zz node: Call" << std::endl;
-  }
+  BYN_TRACE("zz node: Call\n");
   auto index = getU32LEB();
   FunctionType* type;
   if (index < functionImports.size()) {
@@ -2710,9 +2492,7 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
 }
 
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
-  if (debug) {
-    std::cerr << "zz node: CallIndirect" << std::endl;
-  }
+  BYN_TRACE("zz node: CallIndirect\n");
   auto index = getU32LEB();
   if (index >= wasm.functionTypes.size()) {
     throwError("bad call_indirect function index");
@@ -2734,9 +2514,8 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
 }
 
 void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
-  if (debug) {
-    std::cerr << "zz node: LocalGet " << pos << std::endl;
-  }
+  BYN_TRACE("zz node: LocalGet " << pos << std::endl);
+  ;
   requireFunctionContext("local.get");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
@@ -2747,9 +2526,7 @@ void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
 }
 
 void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
-  if (debug) {
-    std::cerr << "zz node: Set|LocalTee" << std::endl;
-  }
+  BYN_TRACE("zz node: Set|LocalTee\n");
   requireFunctionContext("local.set outside of function");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
@@ -2762,18 +2539,14 @@ void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
 }
 
 void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
-  if (debug) {
-    std::cerr << "zz node: GlobalGet " << pos << std::endl;
-  }
+  BYN_TRACE("zz node: GlobalGet " << pos << std::endl);
   auto index = getU32LEB();
   curr->name = getGlobalName(index);
   curr->type = wasm.getGlobal(curr->name)->type;
 }
 
 void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
-  if (debug) {
-    std::cerr << "zz node: GlobalSet" << std::endl;
-  }
+  BYN_TRACE("zz node: GlobalSet\n");
   auto index = getU32LEB();
   curr->name = getGlobalName(index);
   curr->value = popNonVoidExpression();
@@ -2878,9 +2651,7 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
       default:
         return false;
     }
-    if (debug) {
-      std::cerr << "zz node: Load" << std::endl;
-    }
+    BYN_TRACE("zz node: Load\n");
   } else {
     switch (code) {
       case BinaryConsts::I32AtomicLoad8U:
@@ -2922,9 +2693,7 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
         return false;
     }
     curr->signed_ = false;
-    if (debug) {
-      std::cerr << "zz node: AtomicLoad" << std::endl;
-    }
+    BYN_TRACE("zz node: AtomicLoad\n");
   }
 
   curr->isAtomic = isAtomic;
@@ -3032,9 +2801,7 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out,
   }
 
   curr->isAtomic = isAtomic;
-  if (debug) {
-    std::cerr << "zz node: Store" << std::endl;
-  }
+  BYN_TRACE("zz node: Store\n");
   readMemoryAccess(curr->align, curr->offset);
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
@@ -3088,14 +2855,12 @@ bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
     SET_FOR_OP(Xor);
     SET_FOR_OP(Xchg);
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected opcode");
   }
 #undef SET_FOR_OP
 #undef SET
 
-  if (debug) {
-    std::cerr << "zz node: AtomicRMW" << std::endl;
-  }
+  BYN_TRACE("zz node: AtomicRMW\n");
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
   if (readAlign != curr->bytes) {
@@ -3144,12 +2909,10 @@ bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out,
       SET(i64, 4);
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected opcode");
   }
 
-  if (debug) {
-    std::cerr << "zz node: AtomicCmpxchg" << std::endl;
-  }
+  BYN_TRACE("zz node: AtomicCmpxchg\n");
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
   if (readAlign != curr->bytes) {
@@ -3178,12 +2941,10 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
       curr->expectedType = i64;
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected opcode");
   }
   curr->type = i32;
-  if (debug) {
-    std::cerr << "zz node: AtomicWait" << std::endl;
-  }
+  BYN_TRACE("zz node: AtomicWait\n");
   curr->timeout = popNonVoidExpression();
   curr->expected = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
@@ -3202,9 +2963,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicNotify(Expression*& out, uint8_t code) {
     return false;
   }
   auto* curr = allocator.alloc<AtomicNotify>();
-  if (debug) {
-    std::cerr << "zz node: AtomicNotify" << std::endl;
-  }
+  BYN_TRACE("zz node: AtomicNotify\n");
 
   curr->type = i32;
   curr->notifyCount = popNonVoidExpression();
@@ -3224,9 +2983,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicFence(Expression*& out, uint8_t code) {
     return false;
   }
   auto* curr = allocator.alloc<AtomicFence>();
-  if (debug) {
-    std::cerr << "zz node: AtomicFence" << std::endl;
-  }
+  BYN_TRACE("zz node: AtomicFence\n");
   curr->order = getU32LEB();
   curr->finalize();
   out = curr;
@@ -3235,9 +2992,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicFence(Expression*& out, uint8_t code) {
 
 bool WasmBinaryBuilder::maybeVisitConst(Expression*& out, uint8_t code) {
   Const* curr;
-  if (debug) {
-    std::cerr << "zz node: Const, code " << code << std::endl;
-  }
+  BYN_TRACE("zz node: Const, code " << code << std::endl);
   switch (code) {
     case BinaryConsts::I32Const:
       curr = allocator.alloc<Const>();
@@ -3484,9 +3239,7 @@ bool WasmBinaryBuilder::maybeVisitUnary(Expression*& out, uint8_t code) {
     default:
       return false;
   }
-  if (debug) {
-    std::cerr << "zz node: Unary" << std::endl;
-  }
+  BYN_TRACE("zz node: Unary\n");
   curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -3531,9 +3284,7 @@ bool WasmBinaryBuilder::maybeVisitTruncSat(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  if (debug) {
-    std::cerr << "zz node: Unary (nontrapping float-to-int)" << std::endl;
-  }
+  BYN_TRACE("zz node: Unary (nontrapping float-to-int)\n");
   curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -3667,9 +3418,7 @@ bool WasmBinaryBuilder::maybeVisitBinary(Expression*& out, uint8_t code) {
     default:
       return false;
   }
-  if (debug) {
-    std::cerr << "zz node: Binary" << std::endl;
-  }
+  BYN_TRACE("zz node: Binary\n");
   curr->right = popNonVoidExpression();
   curr->left = popNonVoidExpression();
   curr->finalize();
@@ -4066,9 +3815,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  if (debug) {
-    std::cerr << "zz node: Binary" << std::endl;
-  }
+  BYN_TRACE("zz node: Binary\n");
   curr->right = popNonVoidExpression();
   curr->left = popNonVoidExpression();
   curr->finalize();
@@ -4548,9 +4295,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
 }
 
 void WasmBinaryBuilder::visitSelect(Select* curr) {
-  if (debug) {
-    std::cerr << "zz node: Select" << std::endl;
-  }
+  BYN_TRACE("zz node: Select\n");
   curr->condition = popNonVoidExpression();
   curr->ifFalse = popNonVoidExpression();
   curr->ifTrue = popNonVoidExpression();
@@ -4558,9 +4303,7 @@ void WasmBinaryBuilder::visitSelect(Select* curr) {
 }
 
 void WasmBinaryBuilder::visitReturn(Return* curr) {
-  if (debug) {
-    std::cerr << "zz node: Return" << std::endl;
-  }
+  BYN_TRACE("zz node: Return\n");
   requireFunctionContext("return");
   if (currFunction->result != none) {
     curr->value = popNonVoidExpression();
@@ -4586,9 +4329,7 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
     default:
       return false;
   }
-  if (debug) {
-    std::cerr << "zz node: Host" << std::endl;
-  }
+  BYN_TRACE("zz node: Host\n");
   auto reserved = getU32LEB();
   if (reserved != 0) {
     throwError("Invalid reserved field on memory.grow/memory.size");
@@ -4598,30 +4339,20 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
   return true;
 }
 
-void WasmBinaryBuilder::visitNop(Nop* curr) {
-  if (debug) {
-    std::cerr << "zz node: Nop" << std::endl;
-  }
-}
+void WasmBinaryBuilder::visitNop(Nop* curr) { BYN_TRACE("zz node: Nop\n"); }
 
 void WasmBinaryBuilder::visitUnreachable(Unreachable* curr) {
-  if (debug) {
-    std::cerr << "zz node: Unreachable" << std::endl;
-  }
+  BYN_TRACE("zz node: Unreachable\n");
 }
 
 void WasmBinaryBuilder::visitDrop(Drop* curr) {
-  if (debug) {
-    std::cerr << "zz node: Drop" << std::endl;
-  }
+  BYN_TRACE("zz node: Drop\n");
   curr->value = popNonVoidExpression();
   curr->finalize();
 }
 
 void WasmBinaryBuilder::visitTry(Try* curr) {
-  if (debug) {
-    std::cerr << "zz node: Try" << std::endl;
-  }
+  BYN_TRACE("zz node: Try\n");
   // For simplicity of implementation, like if scopes, we create a hidden block
   // within each try-body and catch-body, and let branches target those inner
   // blocks instead.
@@ -4638,9 +4369,7 @@ void WasmBinaryBuilder::visitTry(Try* curr) {
 }
 
 void WasmBinaryBuilder::visitThrow(Throw* curr) {
-  if (debug) {
-    std::cerr << "zz node: Throw" << std::endl;
-  }
+  BYN_TRACE("zz node: Throw\n");
   auto index = getU32LEB();
   if (index >= wasm.events.size()) {
     throwError("bad event index");
@@ -4656,17 +4385,13 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
 }
 
 void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
-  if (debug) {
-    std::cerr << "zz node: Rethrow" << std::endl;
-  }
+  BYN_TRACE("zz node: Rethrow\n");
   curr->exnref = popNonVoidExpression();
   curr->finalize();
 }
 
 void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
-  if (debug) {
-    std::cerr << "zz node: BrOnExn" << std::endl;
-  }
+  BYN_TRACE("zz node: BrOnExn\n");
   BreakTarget target = getBreakTarget(getU32LEB());
   curr->name = target.name;
   auto index = getU32LEB();

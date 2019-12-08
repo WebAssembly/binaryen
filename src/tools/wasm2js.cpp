@@ -882,13 +882,10 @@ int main(int argc, const char* argv[]) {
     // is defined.
     if (binaryInput) {
       ModuleReader reader;
-      reader.setDebug(options.debug);
       reader.read(input, wasm, "");
     } else {
-      auto input(read_file<std::vector<char>>(options.extra["infile"],
-                                              Flags::Text,
-                                              options.debug ? Flags::Debug
-                                                            : Flags::Release));
+      auto input(
+        read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
       if (options.debug) {
         std::cerr << "s-parsing..." << std::endl;
       }
@@ -918,9 +915,7 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "j-printing..." << std::endl;
   }
-  Output output(options.extra["output"],
-                Flags::Text,
-                options.debug ? Flags::Debug : Flags::Release);
+  Output output(options.extra["output"], Flags::Text);
   if (!binaryInput && options.extra["asserts"] == "1") {
     AssertionEmitter(*root, *sexprBuilder, output, flags, options).emit();
   } else {

@@ -97,9 +97,8 @@ private:
         return false;
       }
       case none:
-      case unreachable: {
-        WASM_UNREACHABLE();
-      }
+      case unreachable:
+        WASM_UNREACHABLE("unexpected type");
     }
     // compute the benefit, of replacing the uses with
     // one use + a set and then a get for each use

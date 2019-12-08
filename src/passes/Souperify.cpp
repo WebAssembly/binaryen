@@ -308,7 +308,7 @@ struct Trace {
         return nullptr;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected node type");
     }
     // Assert on no cycles
     assert(addedNodes.find(node) == addedNodes.end());
@@ -344,7 +344,7 @@ struct Trace {
       } else if (curr == iff->ifFalse) {
         index = 1;
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid expr");
       }
       auto* condition = conditions[index];
       // Add the condition itself as an instruction in the trace -
@@ -353,7 +353,7 @@ struct Trace {
       // Add it as a pc, which we will emit directly.
       pathConditions.push_back(condition);
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid expr");
     }
   }
 
@@ -501,11 +501,10 @@ struct Printer {
         break;
       }
       case Node::Type::Bad: {
-        std::cout << "!!!BAD!!!";
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("!!!BAD!!!");
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpted type");
     }
     if (node->isExpr() || node->isPhi()) {
       if (node->origin != trace.toInfer->origin &&
@@ -557,7 +556,7 @@ struct Printer {
           std::cout << "ctpop";
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid op");
       }
       std::cout << ' ';
       auto* value = node->getValue(0);
@@ -649,7 +648,7 @@ struct Printer {
           std::cout << "ule";
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid op");
       }
       std::cout << ' ';
       auto* left = node->getValue(0);
@@ -665,7 +664,7 @@ struct Printer {
       std::cout << ", ";
       printInternal(node->getValue(2));
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexecpted node type");
     }
   }
 

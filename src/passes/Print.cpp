@@ -37,22 +37,22 @@ static bool isFullForced() {
 static std::ostream& printName(Name name, std::ostream& o) {
   // we need to quote names if they have tricky chars
   if (!name.str || !strpbrk(name.str, "()")) {
-    o << name;
+    o << '$' << name.str;
   } else {
-    o << '"' << name << '"';
+    o << "\"$" << name.str << '"';
   }
   return o;
 }
 
-static Name printableLocal(Index index, Function* func) {
+static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   Name name;
   if (func) {
     name = func->getLocalNameOrDefault(index);
   }
-  if (!name.is()) {
+  if (!name) {
     name = Name::fromInt(index);
   }
-  return name;
+  return printName(name, o);
 }
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
@@ -88,7 +88,8 @@ struct PrintExpressionContents
   void visitLoop(Loop* curr) {
     printMedium(o, "loop");
     if (curr->name.is()) {
-      o << ' ' << curr->name;
+      o << ' ';
+      printName(curr->name, o);
     }
     if (curr->type.isConcrete()) {
       o << ' ' << ResultType(curr->type);
@@ -105,9 +106,11 @@ struct PrintExpressionContents
   void visitSwitch(Switch* curr) {
     printMedium(o, "br_table");
     for (auto& t : curr->targets) {
-      o << ' ' << t;
+      o << ' ';
+      printName(t, o);
     }
-    o << ' ' << curr->default_;
+    o << ' ';
+    printName(curr->default_, o);
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
@@ -123,10 +126,11 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "call_indirect (type ");
     }
-    o << curr->fullType << ')';
+    printName(curr->fullType, o) << ')';
   }
   void visitLocalGet(LocalGet* curr) {
-    printMedium(o, "local.get ") << printableLocal(curr->index, currFunction);
+    printMedium(o, "local.get ");
+    printLocal(curr->index, currFunction, o);
   }
   void visitLocalSet(LocalSet* curr) {
     if (curr->isTee()) {
@@ -134,7 +138,7 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "local.set ");
     }
-    o << printableLocal(curr->index, currFunction);
+    printLocal(curr->index, currFunction, o);
   }
   void visitGlobalGet(GlobalGet* curr) {
     printMedium(o, "global.get ");
@@ -205,7 +209,7 @@ struct PrintExpressionContents
       } else if (bytes == 4) {
         o << "32";
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid RMW byte length");
       }
     }
     o << '.';
@@ -757,7 +761,7 @@ struct PrintExpressionContents
         o << "i32x4.widen_high_i16x8_u";
         break;
       case InvalidUnary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unvalid unary operator");
     }
   }
   void visitBinary(Binary* curr) {
@@ -1287,7 +1291,7 @@ struct PrintExpressionContents
         break;
 
       case InvalidBinary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unvalid binary operator");
     }
     restoreNormalColor(o);
   }
@@ -1868,7 +1872,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitFunctionType(FunctionType* curr, Name* internalName = nullptr) {
     o << "(func";
     if (internalName) {
-      o << ' ' << *internalName;
+      o << ' ';
+      printName(*internalName, o);
     }
     if (curr->params.size() > 0) {
       o << maybeSpace;
@@ -1901,7 +1906,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << "event";
         break;
       case ExternalKind::Invalid:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid ExternalKind");
     }
     o << ' ';
     printName(curr->value, o) << "))";
@@ -1989,14 +1994,15 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << " (; has Stack IR ;)";
     }
     if (curr->type.is()) {
-      o << maybeSpace << "(type " << curr->type << ')';
+      o << maybeSpace << "(type ";
+      printName(curr->type, o) << ')';
     }
     if (curr->params.size() > 0) {
       for (size_t i = 0; i < curr->params.size(); i++) {
         o << maybeSpace;
         o << '(';
-        printMinor(o, "param ") << printableLocal(i, currFunction) << ' '
-                                << curr->getLocalType(i) << ')';
+        printMinor(o, "param ");
+        printLocal(i, currFunction, o) << ' ' << curr->getLocalType(i) << ')';
       }
     }
     if (curr->result != none) {
@@ -2007,8 +2013,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
       o << '(';
-      printMinor(o, "local ") << printableLocal(i, currFunction) << ' '
-                              << curr->getLocalType(i) << ')';
+      printMinor(o, "local ");
+      printLocal(i, currFunction, o) << ' ' << curr->getLocalType(i) << ')';
       o << maybeNewLine;
     }
     // Print the body.
@@ -2232,7 +2238,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (curr->start.is()) {
       doIndent(o, indent);
       o << '(';
-      printMedium(o, "start") << ' ' << curr->start << ')';
+      printMedium(o, "start") << ' ';
+      printName(curr->start, o) << ')';
       o << maybeNewLine;
     }
     ModuleUtils::iterDefinedFunctions(
@@ -2389,7 +2396,7 @@ WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
       break;
     }
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpeted op");
   }
   return o;
 }
@@ -2446,7 +2453,7 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         break;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpeted op");
     }
     std::cout << '\n';
   }

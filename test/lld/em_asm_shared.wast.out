@@ -2,38 +2,42 @@
  (type $0 (func (param i32 i32 i32) (result i32)))
  (type $1 (func))
  (type $2 (func (result i32)))
- (type $3 (func (param i32 i32 i32)))
- (type $4 (func (param i32 i32)))
- (type $5 (func (param i32) (result i32)))
- (type $6 (func (param i32 i32) (result i32)))
+ (type $3 (func (param i32 i32) (result i32)))
  (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$vi (func (param i32)))
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $0 0))
- (data (global.get $gimport$3) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
+ (data (global.get $gimport$3) "{ Module.print(\"Hello world\"); }\00\00{ return $0 + $1; }\00ii\00{ Module.print(\"Got \" + $0); }\00i\00")
  (import "env" "table" (table $0 0 funcref))
  (import "env" "__memory_base" (global $gimport$3 i32))
  (import "env" "__table_base" (global $gimport$4 i32))
  (import "env" "stackSave" (func $stackSave (result i32)))
  (import "env" "stackRestore" (func $stackRestore (param i32)))
+ (import "env" "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (func $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE (result i32)))
+ (import "env" "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (func $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE (result i32)))
+ (import "env" "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (func $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE (result i32)))
  (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
+ (global $gimport$6 (mut i32) (i32.const 0))
+ (global $gimport$7 (mut i32) (i32.const 0))
+ (global $gimport$8 (mut i32) (i32.const 0))
+ (global $global$0 i32 (i32.const 33))
+ (global $global$1 i32 (i32.const 54))
+ (global $global$2 i32 (i32.const 88))
  (export "__original_main" (func $__original_main))
- (export "_ZN20__em_asm_sig_builder12__em_asm_sigIJEEEKNS_5innerIJDpT_EEES3_" (func $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29))
- (export "_ZN20__em_asm_sig_builder12__em_asm_sigIJiiEEEKNS_5innerIJDpT_EEES3_" (func $__em_asm_sig_builder::inner<int\2c\20int>\20const\20__em_asm_sig_builder::__em_asm_sig<int\2c\20int>\28int\2c\20int\29))
- (export "_ZN20__em_asm_sig_builder12__em_asm_sigIJiEEEKNS_5innerIJDpT_EEES3_" (func $__em_asm_sig_builder::inner<int>\20const\20__em_asm_sig_builder::__em_asm_sig<int>\28int\29))
- (export "_ZN20__em_asm_sig_builder8sig_charEi" (func $__em_asm_sig_builder::sig_char\28int\29))
+ (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (global $global$0))
+ (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $global$1))
+ (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (global $global$2))
  (export "main" (func $main))
  (export "__post_instantiate" (func $__post_instantiate))
- (func $__wasm_call_ctors (; 3 ;) (type $1)
+ (func $__wasm_call_ctors (; 6 ;) (type $1)
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs (; 4 ;) (type $1)
+ (func $__wasm_apply_relocs (; 7 ;) (type $1)
   (nop)
  )
- (func $__original_main (; 5 ;) (type $2) (result i32)
+ (func $__original_main (; 8 ;) (type $2) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local $2 i32)
   (call $stackRestore
    (local.tee $0
     (i32.sub
@@ -41,10 +45,6 @@
      (i32.const 32)
     )
    )
-  )
-  (i32.store8 offset=24
-   (local.get $0)
-   (call $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29)
   )
   (drop
    (call $emscripten_asm_const_iii
@@ -54,61 +54,35 @@
      )
      (i32.const 0)
     )
-    (i32.add
-     (local.get $0)
-     (i32.const 24)
-    )
+    (global.get $gimport$6)
     (i32.const 0)
    )
-  )
-  (call $__em_asm_sig_builder::inner<int\2c\20int>\20const\20__em_asm_sig_builder::__em_asm_sig<int\2c\20int>\28int\2c\20int\29
-   (i32.add
-    (local.get $0)
-    (i32.const 24)
-   )
-   (i32.const 13)
-   (i32.const 27)
   )
   (i64.store offset=16
    (local.get $0)
    (i64.const 115964117005)
   )
-  (call $__em_asm_sig_builder::inner<int>\20const\20__em_asm_sig_builder::__em_asm_sig<int>\28int\29
-   (i32.add
-    (local.get $0)
-    (i32.const 24)
-   )
-   (local.tee $2
-    (call $emscripten_asm_const_iii
-     (i32.add
-      (local.get $1)
-      (i32.const 33)
-     )
-     (i32.add
-      (local.get $0)
-      (i32.const 24)
-     )
-     (i32.add
-      (local.get $0)
-      (i32.const 16)
-     )
-    )
-   )
-  )
   (i32.store
    (local.get $0)
-   (local.get $2)
+   (call $emscripten_asm_const_iii
+    (i32.add
+     (local.get $1)
+     (i32.const 34)
+    )
+    (global.get $gimport$7)
+    (i32.add
+     (local.get $0)
+     (i32.const 16)
+    )
+   )
   )
   (drop
    (call $emscripten_asm_const_iii
     (i32.add
      (local.get $1)
-     (i32.const 53)
+     (i32.const 57)
     )
-    (i32.add
-     (local.get $0)
-     (i32.const 24)
-    )
+    (global.get $gimport$8)
     (local.get $0)
    )
   )
@@ -120,98 +94,23 @@
   )
   (i32.const 0)
  )
- (func $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29 (; 6 ;) (type $2) (result i32)
-  (i32.const 0)
- )
- (func $__em_asm_sig_builder::inner<int\2c\20int>\20const\20__em_asm_sig_builder::__em_asm_sig<int\2c\20int>\28int\2c\20int\29 (; 7 ;) (type $3) (param $0 i32) (param $1 i32) (param $2 i32)
-  (local $3 i32)
-  (call $stackRestore
-   (local.tee $3
-    (i32.sub
-     (call $stackSave)
-     (i32.const 16)
-    )
-   )
-  )
-  (i32.store8 offset=13
-   (local.get $3)
-   (call $__em_asm_sig_builder::sig_char\28int\29
-    (local.get $1)
-   )
-  )
-  (local.set $2
-   (call $__em_asm_sig_builder::sig_char\28int\29
-    (local.get $2)
-   )
-  )
-  (i32.store8
-   (i32.add
-    (local.get $0)
-    (i32.const 2)
-   )
-   (i32.const 0)
-  )
-  (i32.store8 offset=14
-   (local.get $3)
-   (local.get $2)
-  )
-  (i32.store16 align=1
-   (local.get $0)
-   (i32.load16_u offset=13 align=1
-    (local.get $3)
-   )
-  )
-  (call $stackRestore
-   (i32.add
-    (local.get $3)
-    (i32.const 16)
-   )
-  )
- )
- (func $__em_asm_sig_builder::inner<int>\20const\20__em_asm_sig_builder::__em_asm_sig<int>\28int\29 (; 8 ;) (type $4) (param $0 i32) (param $1 i32)
-  (local $2 i32)
-  (call $stackRestore
-   (local.tee $2
-    (i32.sub
-     (call $stackSave)
-     (i32.const 16)
-    )
-   )
-  )
-  (local.set $1
-   (call $__em_asm_sig_builder::sig_char\28int\29
-    (local.get $1)
-   )
-  )
-  (i32.store8 offset=15
-   (local.get $2)
-   (i32.const 0)
-  )
-  (i32.store8 offset=14
-   (local.get $2)
-   (local.get $1)
-  )
-  (i32.store16 align=1
-   (local.get $0)
-   (i32.load16_u offset=14
-    (local.get $2)
-   )
-  )
-  (call $stackRestore
-   (i32.add
-    (local.get $2)
-    (i32.const 16)
-   )
-  )
- )
- (func $__em_asm_sig_builder::sig_char\28int\29 (; 9 ;) (type $5) (param $0 i32) (result i32)
-  (i32.const 105)
- )
- (func $main (; 10 ;) (type $6) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (; 9 ;) (type $3) (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__post_instantiate (; 11 ;)
+ (func $__post_instantiate (; 10 ;)
+  (call $__assign_got_enties)
   (call $__wasm_call_ctors)
+ )
+ (func $__assign_got_enties (; 11 ;)
+  (global.set $gimport$6
+   (call $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE)
+  )
+  (global.set $gimport$7
+   (call $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE)
+  )
+  (global.set $gimport$8
+   (call $g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE)
+  )
  )
 )
 (;
@@ -219,14 +118,17 @@
 {
   "asmConsts": {
     "0": ["{ Module.print(\"Hello world\"); }", ["iii"], [""]],
-    "33": ["{ return $0 + $1; }", ["iii"], [""]],
-    "53": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]]
+    "34": ["{ return $0 + $1; }", ["iii"], [""]],
+    "57": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]]
   },
   "staticBump": 0,
   "tableSize": 0,
   "declares": [
     "stackSave",
-    "stackRestore"
+    "stackRestore",
+    "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE",
+    "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE",
+    "g$_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE"
   ],
   "externs": [
     "___memory_base",
@@ -234,23 +136,18 @@
   ],
   "implementedFunctions": [
     "___original_main",
-    "__ZN20__em_asm_sig_builder12__em_asm_sigIJEEEKNS_5innerIJDpT_EEES3_",
-    "__ZN20__em_asm_sig_builder12__em_asm_sigIJiiEEEKNS_5innerIJDpT_EEES3_",
-    "__ZN20__em_asm_sig_builder12__em_asm_sigIJiEEEKNS_5innerIJDpT_EEES3_",
-    "__ZN20__em_asm_sig_builder8sig_charEi",
     "_main",
     "___post_instantiate"
   ],
   "exports": [
     "__original_main",
-    "_ZN20__em_asm_sig_builder12__em_asm_sigIJEEEKNS_5innerIJDpT_EEES3_",
-    "_ZN20__em_asm_sig_builder12__em_asm_sigIJiiEEEKNS_5innerIJDpT_EEES3_",
-    "_ZN20__em_asm_sig_builder12__em_asm_sigIJiEEEKNS_5innerIJDpT_EEES3_",
-    "_ZN20__em_asm_sig_builder8sig_charEi",
     "main",
     "__post_instantiate"
   ],
   "namedGlobals": {
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" : "33",
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" : "54",
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" : "88"
   },
   "invokeFuncs": [
   ],
