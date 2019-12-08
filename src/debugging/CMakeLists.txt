@@ -1,7 +1,7 @@
 # LLVM sources have warnings, ignore them.
 if(NOT MSVC)
   foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
-    set(${variable} "${${variable}} -w" PARENT_SCOPE)
+    set(${variable} "${${variable}} -w")
   endforeach(variable)
 endif()
 
