@@ -237,7 +237,7 @@ add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
 if(USE_LLVM_DWARF)
-  add_subdirectory(src/debugging)
+  add_subdirectory(src/llvm_dwarf)
 endif()
 
 # Object files
@@ -251,7 +251,7 @@ set(binaryen_objs
     $<TARGET_OBJECTS:support>)
 
 IF(USE_LLVM_DWARF)
-  SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:debugging>)
+  SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:llvm_dwarf>)
 ENDIF()
 
 # Sources.

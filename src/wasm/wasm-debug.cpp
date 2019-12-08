@@ -132,7 +132,7 @@ void updateDWARF(Module& wasm) {
   }
 }
 
-#else USE_LLVM_DWARF
+#else // USE_LLVM_DWARF
 
 void dumpDWARF(const Module& wasm) {
   std::cerr << "warning: no DWARF dumping support present\n";

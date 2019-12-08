@@ -5,7 +5,7 @@ if(NOT MSVC)
   endforeach(variable)
 endif()
 
-SET(debugging_SOURCES
+SET(llvm_dwarf_SOURCES
   APInt.cpp
   APFloat.cpp
   Binary.cpp
@@ -77,4 +77,4 @@ SET(debugging_SOURCES
   YAMLParser.cpp # XXX needed?
   YAMLTraits.cpp
 )
-ADD_LIBRARY(debugging OBJECT ${debugging_SOURCES})
+ADD_LIBRARY(llvm_dwarf OBJECT ${llvm_dwarf_SOURCES})
