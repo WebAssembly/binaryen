@@ -519,7 +519,10 @@ void format_object_base::home() {
 static int getFD(StringRef Filename, std::error_code &EC,
                  sys::fs::CreationDisposition Disp, sys::fs::FileAccess Access,
                  sys::fs::OpenFlags Flags) {
-  llvm_unreachable("getFD"); // XXX BINARYEN
+  // XXX BINARYEN
+  errs() << "waka!\n";
+  errs() << Filename << '\n';
+  return ::fileno(stdout);
 }
 
 raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC)
