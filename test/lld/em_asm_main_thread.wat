@@ -1,4 +1,4 @@
-(; Copied from em_asm.wast
+(; Copied from em_asm.wat
   s/emscripten_asm_const_int/emscripten_asm_const_int_sync_on_main_thread/g
 ;)
 (module
