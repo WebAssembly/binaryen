@@ -33,9 +33,7 @@ bool isDWARFSection(Name name);
 
 bool hasDWARFSections(const Module& wasm);
 
-#ifdef USE_LLVM_DWARF
 void dumpDWARF(const Module& wasm);
-#endif
 
 } // namespace Debug
 
