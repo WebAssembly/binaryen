@@ -1,9 +1,7 @@
-# LLVM sources have warnings
+# LLVM sources have warnings, ignore them.
 IF(MSVC)
 ELSE()
-  add_compile_flag("-Wno-maybe-uninitialized")
-  add_compile_flag("-Wno-unused-function")
-  add_compile_flag("-Wno-unused-private-field")
+  add_compile_flag("-w")
 ENDIF()
 
 SET(debugging_SOURCES
