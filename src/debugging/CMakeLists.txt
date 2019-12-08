@@ -8,7 +8,6 @@ ENDIF()
 SET(debugging_SOURCES
   APInt.cpp
   APFloat.cpp
-  BinaryenDebugging.cpp
   Binary.cpp
   ConvertUTF.cpp
   DataExtractor.cpp

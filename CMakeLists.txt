@@ -236,7 +236,7 @@ add_subdirectory(src/emscripten-optimizer)
 add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
-if(USE_LLVM_DEBUG)
+if(USE_LLVM_DWARF)
   add_subdirectory(src/debugging)
 endif()
 
@@ -250,7 +250,7 @@ set(binaryen_objs
     $<TARGET_OBJECTS:cfg>
     $<TARGET_OBJECTS:support>)
 
-IF(USE_LLVM_DEBUG)
+IF(USE_LLVM_DWARF)
   SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:debugging>)
 ENDIF()
 
