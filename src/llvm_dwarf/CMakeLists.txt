@@ -1,9 +1,11 @@
 # LLVM sources have warnings, ignore them.
-if(NOT MSVC)
-  foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+  if(NOT MSVC)
     set(${variable} "${${variable}} -w")
-  endforeach(variable)
-endif()
+  else()
+    set(${variable} "${${variable}} /w")
+  endif()
+endforeach(variable)
 
 SET(llvm_dwarf_SOURCES
   APInt.cpp
