@@ -92,6 +92,8 @@ void llvm::report_fatal_error(StringRef Reason, bool GenCrashDiag) {
 }
 
 void llvm::report_fatal_error(const Twine &Reason, bool GenCrashDiag) {
+  Reason.dump();
+#if 0 // XXX BINARYEN
   llvm::fatal_error_handler_t handler = nullptr;
   void* handlerData = nullptr;
   {
@@ -113,16 +115,17 @@ void llvm::report_fatal_error(const Twine &Reason, bool GenCrashDiag) {
     SmallVector<char, 64> Buffer;
     raw_svector_ostream OS(Buffer);
     OS << "LLVM ERROR: " << Reason << "\n";
-    StringRef MessageStr = OS.str();
     ssize_t written = ::write(2, MessageStr.data(), MessageStr.size());
+    StringRef MessageStr = OS.str();
     (void)written; // If something went wrong, we deliberately just give up.
   }
 
   // If we reached here, we are failing ungracefully. Run the interrupt handlers
   // to make sure any special cleanups get done, in particular that we remove
   // files registered with RemoveFileOnSignal.
-#if 0 // XXX BINARYEN
   sys::RunInterruptHandlers();
+#else
+  Reason.dump();
 #endif
 
   exit(1);

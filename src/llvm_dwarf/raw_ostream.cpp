@@ -32,6 +32,9 @@
 #include <sys/stat.h>
 #include <system_error>
 
+// XXX BINARYEn
+#include <iostream>
+
 // <fcntl.h> may provide O_BINARY.
 #if defined(HAVE_FCNTL_H)
 # include <fcntl.h>
@@ -551,69 +554,11 @@ raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC,
 /// closes the file when the stream is destroyed.
 raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
     : raw_pwrite_stream(unbuffered), FD(fd), ShouldClose(shouldClose) {
-  if (FD < 0 ) {
-    ShouldClose = false;
-    return;
-  }
-
-  // Do not attempt to close stdout or stderr. We used to try to maintain the
-  // property that tools that support writing file to stdout should not also
-  // write informational output to stdout, but in practice we were never able to
-  // maintain this invariant. Many features have been added to LLVM and clang
-  // (-fdump-record-layouts, optimization remarks, etc) that print to stdout, so
-  // users must simply be aware that mixed output and remarks is a possibility.
-  if (FD <= STDERR_FILENO)
-    ShouldClose = false;
-
-#ifdef _WIN32
-  // Check if this is a console device. This is not equivalent to isatty.
-  IsWindowsConsole =
-      ::GetFileType((HANDLE)::_get_osfhandle(fd)) == FILE_TYPE_CHAR;
-#endif
-
-  // Get the starting position.
-  off_t loc = ::lseek(FD, 0, SEEK_CUR);
-#ifdef _WIN32
-  // MSVCRT's _lseek(SEEK_CUR) doesn't return -1 for pipes.
-  sys::fs::file_status Status;
-  std::error_code EC = status(FD, Status);
-  SupportsSeeking = !EC && Status.type() == sys::fs::file_type::regular_file;
-#else
-  SupportsSeeking = loc != (off_t)-1;
-#endif
-  if (!SupportsSeeking)
-    pos = 0;
-  else
-    pos = static_cast<uint64_t>(loc);
+  // XXX BINARYEN: do nothing here
 }
 
 raw_fd_ostream::~raw_fd_ostream() {
-  if (FD >= 0) {
-    flush();
-    if (ShouldClose) {
-      llvm_unreachable("close"); // XXX BINARYEN
-#if 0
-      if (auto EC = sys::Process::SafelyCloseFileDescriptor(FD))
-        error_detected(EC);
-#endif
-    }
-  }
-
-#ifdef __MINGW32__
-  // On mingw, global dtors should not call exit().
-  // report_fatal_error() invokes exit(). We know report_fatal_error()
-  // might not write messages to stderr when any errors were detected
-  // on FD == 2.
-  if (FD == 2) return;
-#endif
-
-  // If there are any pending errors, report them now. Clients wishing
-  // to avoid report_fatal_error calls should check for errors with
-  // has_error() and clear the error flag with clear_error() before
-  // destructing raw_ostream objects which may have errors.
-  if (has_error())
-    report_fatal_error("IO failure on output stream: " + error().message(),
-                       /*gen_crash_diag=*/false);
+  // XXX BINARYEN: do nothing here
 }
 
 #if defined(_WIN32)
@@ -667,6 +612,7 @@ static bool write_console_impl(int FD, StringRef Data) {
 #endif
 
 void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
+#if 0 // BINARYEN XXX
   assert(FD >= 0 && "File already closed.");
   pos += Size;
 
@@ -720,6 +666,12 @@ void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
     Ptr += ret;
     Size -= ret;
   } while (Size > 0);
+#else
+  // XXX BINARYEN: just log it out
+  for (size_t i = 0; i < Size; i++) {
+    std::cout << Ptr[i];
+  }
+#endif
 }
 
 void raw_fd_ostream::close() {
@@ -735,18 +687,7 @@ void raw_fd_ostream::close() {
 }
 
 uint64_t raw_fd_ostream::seek(uint64_t off) {
-  assert(SupportsSeeking && "Stream does not support seeking!");
-  flush();
-#ifdef _WIN32
-  pos = ::_lseeki64(FD, off, SEEK_SET);
-#elif defined(HAVE_LSEEK64)
-  pos = ::lseek64(FD, off, SEEK_SET);
-#else
-  pos = ::lseek(FD, off, SEEK_SET);
-#endif
-  if (pos == (uint64_t)-1)
-    error_detected(std::error_code(errno, std::generic_category()));
-  return pos;
+  llvm_unreachable("seek");
 }
 
 void raw_fd_ostream::pwrite_impl(const char *Ptr, size_t Size,
@@ -758,32 +699,7 @@ void raw_fd_ostream::pwrite_impl(const char *Ptr, size_t Size,
 }
 
 size_t raw_fd_ostream::preferred_buffer_size() const {
-#if defined(_WIN32)
-  // Disable buffering for console devices. Console output is re-encoded from
-  // UTF-8 to UTF-16 on Windows, and buffering it would require us to split the
-  // buffer on a valid UTF-8 codepoint boundary. Terminal buffering is disabled
-  // below on most other OSs, so do the same thing on Windows and avoid that
-  // complexity.
-  if (IsWindowsConsole)
-    return 0;
-  return raw_ostream::preferred_buffer_size();
-#elif !defined(__minix)
-  // Minix has no st_blksize.
-  assert(FD >= 0 && "File not yet open!");
-  struct stat statbuf;
-  if (fstat(FD, &statbuf) != 0)
-    return 0;
-
-  // If this is a terminal, don't use buffering. Line buffering
-  // would be a more traditional thing to do, but it's not worth
-  // the complexity.
-  if (S_ISCHR(statbuf.st_mode) && isatty(FD))
-    return 0;
-  // Return the preferred block size.
-  return statbuf.st_blksize;
-#else
-  return raw_ostream::preferred_buffer_size();
-#endif
+  return 0; // XXX BINARYEN
 }
 
 raw_ostream &raw_fd_ostream::changeColor(enum Colors colors, bool bold,
@@ -836,6 +752,7 @@ raw_ostream &llvm::outs() {
 /// Use it like: errs() << "foo" << "bar";
 raw_ostream &llvm::errs() {
   // Set standard error to be unbuffered by default.
+  const int STDERR_FILENO = 2; // XXX BINARYEN
   static raw_fd_ostream S(STDERR_FILENO, false, true);
   return S;
 }
