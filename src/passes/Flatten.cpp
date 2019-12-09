@@ -156,7 +156,7 @@ struct Flatten
         loop->finalize();
         replaceCurrent(rep);
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected expr type");
       }
     } else {
       // for anything else, there may be existing preludes

@@ -287,7 +287,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
+          if (BranchUtils::BranchSeeker::has(item, childName)) {
             // We can't remove this from the child.
             keepStart = j;
             keepEnd = childSize;
@@ -300,7 +300,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         auto childName = loop->name;
         for (auto j = int(childSize - 1); j >= 0; j--) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
+          if (BranchUtils::BranchSeeker::has(item, childName)) {
             // We can't remove this from the child.
             keepStart = 0;
             keepEnd = std::max(Index(j + 1), keepEnd);

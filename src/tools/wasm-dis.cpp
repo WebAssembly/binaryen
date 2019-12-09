@@ -31,7 +31,7 @@ int main(int argc, const char* argv[]) {
   std::string sourceMapFilename;
   Options options("wasm-dis",
                   "Un-assemble a .wasm (WebAssembly binary format) into a "
-                  ".wast (WebAssembly text format)");
+                  ".wat (WebAssembly text format)");
   options
     .add("--output",
          "-o",
@@ -75,9 +75,7 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
   }
-  Output output(options.extra["output"],
-                Flags::Text,
-                options.debug ? Flags::Debug : Flags::Release);
+  Output output(options.extra["output"], Flags::Text);
   WasmPrinter::printModule(&wasm, output.getStream());
   output << '\n';
 

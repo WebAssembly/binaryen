@@ -56,7 +56,7 @@ std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
   };
 
   add({});
-  add({});
+  add({Type::unreachable});
   add({Type::i32});
   add({Type::i64});
   add({Type::f32});
@@ -69,7 +69,7 @@ std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
 
 std::unordered_map<std::vector<Type>, uint32_t> indices = {
   {{}, Type::none},
-  {{}, Type::unreachable},
+  {{Type::unreachable}, Type::unreachable},
   {{Type::i32}, Type::i32},
   {{Type::i64}, Type::i64},
   {{Type::f32}, Type::f32},
@@ -248,9 +248,9 @@ unsigned getTypeSize(Type type) {
     case Type::exnref: // exnref type is opaque
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 FeatureSet getFeatures(Type type) {
@@ -279,7 +279,7 @@ Type getType(unsigned size, bool float_) {
   if (size == 16) {
     return Type::v128;
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid size");
 }
 
 Type reinterpretType(Type type) {
@@ -297,9 +297,9 @@ Type reinterpretType(Type type) {
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 } // namespace wasm

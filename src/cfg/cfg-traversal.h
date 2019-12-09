@@ -365,7 +365,7 @@ private:
         return;
       }
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("not found");
   }
 };
 

@@ -92,9 +92,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         import = get_exnref;
         break;
       case none:
-        WASM_UNREACHABLE();
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
     replaceCurrent(
       builder.makeCall(import,
@@ -137,7 +136,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case unreachable:
         return; // nothing to do here
       case none:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
     curr->value =
       builder.makeCall(import,

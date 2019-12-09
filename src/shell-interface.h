@@ -120,7 +120,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             assert(false && "exnref not implemented yet");
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
       }
     });

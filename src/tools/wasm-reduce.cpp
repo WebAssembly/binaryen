@@ -517,7 +517,7 @@ struct Reducer
       // replace a singleton
       auto& list = block->list;
       if (list.size() == 1 &&
-          !BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+          !BranchUtils::BranchSeeker::has(block, block->name)) {
         if (tryToReplaceCurrent(block->list[0])) {
           return;
         }
@@ -549,7 +549,7 @@ struct Reducer
       return; // nothing more to do
     } else if (auto* loop = curr->dynCast<Loop>()) {
       if (shouldTryToReduce() &&
-          !BranchUtils::BranchSeeker::hasNamed(loop, loop->name)) {
+          !BranchUtils::BranchSeeker::has(loop, loop->name)) {
         tryToReplaceCurrent(loop->body);
       }
       return; // nothing more to do
@@ -581,7 +581,7 @@ struct Reducer
           case i32: {
             switch (child->type) {
               case i32:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("invalid type");
               case i64:
                 fixed = builder->makeUnary(WrapInt64, child);
                 break;
@@ -597,7 +597,7 @@ struct Reducer
                 continue; // not implemented yet
               case none:
               case unreachable:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
@@ -607,7 +607,7 @@ struct Reducer
                 fixed = builder->makeUnary(ExtendSInt32, child);
                 break;
               case i64:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("invalid type");
               case f32:
                 fixed = builder->makeUnary(TruncSFloat32ToInt64, child);
                 break;
@@ -620,7 +620,7 @@ struct Reducer
                 continue; // not implemented yet
               case none:
               case unreachable:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
@@ -633,7 +633,7 @@ struct Reducer
                 fixed = builder->makeUnary(ConvertSInt64ToFloat32, child);
                 break;
               case f32:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("unexpected type");
               case f64:
                 fixed = builder->makeUnary(DemoteFloat64, child);
                 break;
@@ -643,7 +643,7 @@ struct Reducer
                 continue; // not implemented yet
               case none:
               case unreachable:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
@@ -659,14 +659,14 @@ struct Reducer
                 fixed = builder->makeUnary(PromoteFloat32, child);
                 break;
               case f64:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("unexpected type");
               case v128:
               case anyref:
               case exnref:
                 continue; // not implemented yet
               case none:
               case unreachable:
-                WASM_UNREACHABLE();
+                WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
@@ -676,7 +676,7 @@ struct Reducer
             continue; // not implemented yet
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
         assert(fixed->type == curr->type);
         if (tryToReplaceCurrent(fixed)) {
