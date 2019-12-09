@@ -1798,7 +1798,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
     }
   }
-  // try-catch-end is written in the folded wast format as
+  // try-catch-end is written in the folded wat format as
   // (try
   //   ...
   //  (catch
