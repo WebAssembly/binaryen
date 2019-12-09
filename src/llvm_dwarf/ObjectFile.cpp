@@ -99,11 +99,13 @@ Triple ObjectFile::makeTriple() const {
   if (isMachO())
     TheTriple.setObjectFormat(Triple::MachO);
 
+#if 0 // XXX BINARYEN
   if (isCOFF()) {
     const auto COFFObj = cast<COFFObjectFile>(this);
     if (COFFObj->getArch() == Triple::thumb)
       TheTriple.setTriple("thumbv7-windows");
   }
+#endif
 
   return TheTriple;
 }
