@@ -33,7 +33,11 @@ bool isDWARFSection(Name name);
 
 bool hasDWARFSections(const Module& wasm);
 
+// Dump the DWARF sections to stdout.
 void dumpDWARF(const Module& wasm);
+
+// Update the DWARF sections.
+void updateDWARF(Module& wasm);
 
 } // namespace Debug
 

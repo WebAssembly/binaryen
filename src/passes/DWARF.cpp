@@ -35,6 +35,14 @@ struct DWARFDump : public Pass {
   }
 };
 
+struct DWARFUpdate : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    Debug::updateDWARF(*module);
+  }
+};
+
 Pass* createDWARFDumpPass() { return new DWARFDump(); }
+
+Pass* createDWARFUpdatePass() { return new DWARFUpdate(); }
 
 } // namespace wasm

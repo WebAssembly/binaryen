@@ -18,7 +18,7 @@ set(passes_SOURCES
   Directize.cpp
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
-  DWARFDump.cpp
+  DWARF.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
