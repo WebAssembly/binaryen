@@ -646,8 +646,8 @@ raw_ostream &llvm::outs() {
 /// Use it like: errs() << "foo" << "bar";
 raw_ostream &llvm::errs() {
   // Set standard error to be unbuffered by default.
-  const int STDERR_FILENO = 2; // XXX BINARYEN
-  static raw_fd_ostream S(STDERR_FILENO, false, true);
+  const int fd = 2; // XXX BINARYEN: stderr, but it doesn't matter anyhow
+  static raw_fd_ostream S(fd, false, true);
   return S;
 }
 
