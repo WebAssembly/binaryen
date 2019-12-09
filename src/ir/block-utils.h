@@ -34,7 +34,7 @@ inline Expression*
 simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
   auto& list = block->list;
   if (list.size() == 1 &&
-      !BranchUtils::BranchSeeker::hasNamed(list[0], block->name)) {
+      !BranchUtils::BranchSeeker::has(list[0], block->name)) {
     // just one element. try to replace the block
     auto* singleton = list[0];
     auto sideEffects =

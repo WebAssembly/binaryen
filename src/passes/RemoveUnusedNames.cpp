@@ -80,7 +80,7 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
               br->name = child->name;
             }
           } else {
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected expr type");
           }
         }
         child->finalize(child->type);

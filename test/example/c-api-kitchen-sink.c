@@ -159,9 +159,9 @@ void test_types() {
 
   BinaryenType unreachable = BinaryenTypeUnreachable();
   printf("  // BinaryenTypeUnreachable: %d\n", unreachable);
-  assert(BinaryenTypeArity(unreachable) == 0);
+  assert(BinaryenTypeArity(unreachable) == 1);
   BinaryenTypeExpand(unreachable, &valueType);
-  assert(valueType == 0xdeadbeef);
+  assert(valueType == unreachable);
 
   BinaryenType i32 = BinaryenTypeInt32();
   printf("  // BinaryenTypeInt32: %d\n", i32);

@@ -25,27 +25,10 @@
 #define __has_builtin(x) 0
 #endif
 
-// If control flow reaches the point of the WASM_UNREACHABLE(), the program is
-// undefined.
-#if __has_builtin(__builtin_unreachable) && defined(NDEBUG)
-#define WASM_UNREACHABLE() __builtin_unreachable()
+#if __has_builtin(__builtin_unreachable)
+#define WASM_BUILTIN_UNREACHABLE __builtin_unreachable()
 #elif defined(_MSC_VER)
-#define WASM_UNREACHABLE() __assume(false)
-#elif __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
-#include "sanitizer/common_interface_defs.h"
-#define WASM_UNREACHABLE()                                                     \
-  do {                                                                         \
-    __sanitizer_print_stack_trace();                                           \
-    __builtin_trap();                                                          \
-  } while (0)
-#else
-#include <assert.h>
-#include <stdlib.h>
-#define WASM_UNREACHABLE()                                                     \
-  do {                                                                         \
-    assert(false);                                                             \
-    abort();                                                                   \
-  } while (0)
+#define WASM_BUILTIN_UNREACHABLE __assume(false)
 #endif
 
 #ifdef __GNUC__

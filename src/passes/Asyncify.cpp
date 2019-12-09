@@ -841,7 +841,7 @@ private:
     // the state, so there should be nothing that can reach here - add it
     // earlier as necessary.
     // std::cout << *curr << '\n';
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expression type");
   }
 
   // Possibly skip some code, if rewinding.

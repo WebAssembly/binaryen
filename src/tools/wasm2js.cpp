@@ -809,7 +809,7 @@ void AssertionEmitter::emit() {
 int main(int argc, const char* argv[]) {
   Wasm2JSBuilder::Flags flags;
   OptimizationOptions options("wasm2js",
-                              "Transform .wasm/.wast files to asm.js");
+                              "Transform .wasm/.wat files to asm.js");
   options
     .add("--output",
          "-o",
@@ -873,7 +873,7 @@ int main(int argc, const char* argv[]) {
 
   try {
     // If the input filename ends in `.wasm`, then parse it in binary form,
-    // otherwise assume it's a `*.wast` file and go from there.
+    // otherwise assume it's a `*.wat` file and go from there.
     //
     // Note that we're not using the built-in `ModuleReader` which will also do
     // similar logic here because when testing JS files we use the
@@ -882,13 +882,10 @@ int main(int argc, const char* argv[]) {
     // is defined.
     if (binaryInput) {
       ModuleReader reader;
-      reader.setDebug(options.debug);
       reader.read(input, wasm, "");
     } else {
-      auto input(read_file<std::vector<char>>(options.extra["infile"],
-                                              Flags::Text,
-                                              options.debug ? Flags::Debug
-                                                            : Flags::Release));
+      auto input(
+        read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
       if (options.debug) {
         std::cerr << "s-parsing..." << std::endl;
       }
@@ -918,9 +915,7 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "j-printing..." << std::endl;
   }
-  Output output(options.extra["output"],
-                Flags::Text,
-                options.debug ? Flags::Debug : Flags::Release);
+  Output output(options.extra["output"], Flags::Text);
   if (!binaryInput && options.extra["asserts"] == "1") {
     AssertionEmitter(*root, *sexprBuilder, output, flags, options).emit();
   } else {

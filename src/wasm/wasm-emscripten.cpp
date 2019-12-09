@@ -25,9 +25,12 @@
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "shared-constants.h"
+#include "support/debug.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
+
+#define DEBUG_TYPE "emscripten"
 
 namespace wasm {
 
@@ -122,6 +125,7 @@ inline Expression* stackBoundsCheck(Builder& builder,
 Expression*
 EmscriptenGlueGenerator::generateStoreStackPointer(Function* func,
                                                    Expression* value) {
+  BYN_TRACE("generateStoreStackPointer\n");
   if (!useStackPointerGlobal) {
     return builder.makeStore(
       /* bytes  =*/4,
@@ -147,6 +151,7 @@ EmscriptenGlueGenerator::generateStoreStackPointer(Function* func,
 }
 
 void EmscriptenGlueGenerator::generateStackSaveFunction() {
+  BYN_TRACE("generateStackSaveFunction\n");
   std::vector<NameType> params{};
   Function* function =
     builder.makeFunction(STACK_SAVE, std::move(params), i32, {});
@@ -157,6 +162,7 @@ void EmscriptenGlueGenerator::generateStackSaveFunction() {
 }
 
 void EmscriptenGlueGenerator::generateStackAllocFunction() {
+  BYN_TRACE("generateStackAllocFunction\n");
   std::vector<NameType> params{{"0", i32}};
   Function* function =
     builder.makeFunction(STACK_ALLOC, std::move(params), i32, {{"1", i32}});
@@ -181,6 +187,7 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
 }
 
 void EmscriptenGlueGenerator::generateStackRestoreFunction() {
+  BYN_TRACE("generateStackRestoreFunction\n");
   std::vector<NameType> params{{"0", i32}};
   Function* function =
     builder.makeFunction(STACK_RESTORE, std::move(params), none, {});
@@ -193,6 +200,7 @@ void EmscriptenGlueGenerator::generateStackRestoreFunction() {
 }
 
 void EmscriptenGlueGenerator::generateRuntimeFunctions() {
+  BYN_TRACE("generateRuntimeFunctions\n");
   generateStackSaveFunction();
   generateStackAllocFunction();
   generateStackRestoreFunction();
@@ -229,6 +237,7 @@ ensureFunctionImport(Module* module, Name name, std::string sig) {
 // Here we internalize all such wasm globals and generte code that sets their
 // value based on the result of call `g$foo` and `fp$bar` functions at runtime.
 Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
+  BYN_TRACE("generateAssignGOTEntriesFunction\n");
   std::vector<Global*> gotFuncEntries;
   std::vector<Global*> gotMemEntries;
   for (auto& g : wasm.globals) {
@@ -307,6 +316,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
 // The later is the constructor function generaed by lld which performs any
 // fixups on the memory section and calls static constructors.
 void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
+  BYN_TRACE("generatePostInstantiateFunction\n");
   Builder builder(wasm);
   Function* post_instantiate =
     builder.makeFunction(POST_INSTANTIATE, std::vector<NameType>{}, none, {});
@@ -678,7 +688,7 @@ std::string proxyingSuffix(Proxying proxy) {
     case Proxying::Async:
       return "async_on_main_thread_";
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid prozy type");
 }
 
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
@@ -1039,6 +1049,7 @@ struct FixInvokeFunctionNamesWalker
     }
 
     assert(importRenames.count(curr->name) == 0);
+    BYN_TRACE("renaming: " << curr->name << " -> " << newname << "\n");
     importRenames[curr->name] = newname;
     // Either rename or remove the existing import
     if (wasm.getFunctionOrNull(newname) || !newImports.insert(newname).second) {
@@ -1065,8 +1076,10 @@ struct FixInvokeFunctionNamesWalker
 };
 
 void EmscriptenGlueGenerator::fixInvokeFunctionNames() {
+  BYN_TRACE("fixInvokeFunctionNames\n");
   FixInvokeFunctionNamesWalker walker(wasm);
   walker.walkModule(&wasm);
+  BYN_TRACE("generating dyncall thunks\n");
   for (auto sig : walker.invokeSigs) {
     generateDynCallThunk(sig);
   }
@@ -1275,12 +1288,15 @@ void EmscriptenGlueGenerator::exportWasiStart() {
   // If main exists, export a function to call it per the wasi standard.
   Name main = "main";
   if (!wasm.getFunctionOrNull(main)) {
+    BYN_TRACE("exportWasiStart: main not found\n");
     return;
   }
   Name _start = "_start";
   if (wasm.getExportOrNull(_start)) {
+    BYN_TRACE("exportWasiStart: _start already present\n");
     return;
   }
+  BYN_TRACE("exportWasiStart\n");
   Builder builder(wasm);
   auto* body = builder.makeDrop(builder.makeCall(
     main,

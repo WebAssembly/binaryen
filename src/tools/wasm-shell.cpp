@@ -84,8 +84,7 @@ struct Operation {
     } else if (operation == GET) {
       return instance->getExport(name);
     } else {
-      Fatal() << "unknown operation: " << operation << '\n';
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unknown operation");
     }
   }
 };
@@ -276,10 +275,8 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  auto input(read_file<std::vector<char>>(options.extra["infile"],
-                                          Flags::Text,
-                                          options.debug ? Flags::Debug
-                                                        : Flags::Release));
+  auto input(
+    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
 
   bool checked = false;
 

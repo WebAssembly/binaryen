@@ -281,14 +281,14 @@ passes on it, as well as print it (before and/or after the transformations). For
 example, try
 
 ````
-bin/wasm-opt test/passes/lower-if-else.wast --print
+bin/wasm-opt test/passes/lower-if-else.wat --print
 ````
 
 That will pretty-print out one of the test cases in the test suite. To run a
 transformation pass on it, try
 
 ````
-bin/wasm-opt test/passes/lower-if-else.wast --print --lower-if-else
+bin/wasm-opt test/passes/lower-if-else.wat --print --lower-if-else
 ````
 
 The `lower-if-else` pass lowers if-else into a block and a break. You can see
@@ -317,7 +317,7 @@ This will print out JavaScript to the console.
 For example, try
 
 ```
-$ bin/wasm2js test/hello_world.wast
+$ bin/wasm2js test/hello_world.wat
 ```
 
 That output contains
@@ -344,7 +344,7 @@ as a translation of
 wasm2js's output is in ES6 module format - basically, it converts a wasm
 module into an ES6 module (to run on older browsers and Node.js versions
 you can use Babel etc. to convert it to ES5). Let's look at a full example
-of calling that hello world wast; first, create the main JS file:
+of calling that hello world wat; first, create the main JS file:
 
 ```javascript
 // main.mjs
@@ -356,7 +356,7 @@ The run this (note that you need a new enough Node.js with ES6 module
 support):
 
 ```shell
-$ bin/wasm2js test/hello_world.wast -o hello_world.mjs
+$ bin/wasm2js test/hello_world.wat -o hello_world.mjs
 $ node --experimental-modules main.mjs
 the sum of 1 and 2 is: 3
 ```

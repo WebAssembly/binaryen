@@ -38,7 +38,7 @@ Type asmToWasmType(AsmType asmType) {
     case ASM_INT32X4:
       return Type::v128;
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 AsmType wasmToAsmType(Type type) {
@@ -60,9 +60,9 @@ AsmType wasmToAsmType(Type type) {
     case none:
       return ASM_NONE;
     case unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 char getSig(Type type) {
@@ -84,9 +84,9 @@ char getSig(Type type) {
     case none:
       return 'v';
     case unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 std::string getSig(const FunctionType* type) {
