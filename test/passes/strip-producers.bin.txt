@@ -1,5 +1,5 @@
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "__linear_memory" (memory $0 0))
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (func $0 (; 0 ;) (result i32)

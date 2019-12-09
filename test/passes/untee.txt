@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (func $tee (; 0 ;)
   (local $x i32)
   (local $y f64)

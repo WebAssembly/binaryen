@@ -406,8 +406,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   });
   if (generateFetchHighBits) {
     Builder builder(allocator);
-    std::vector<Type> params;
-    std::vector<Type> vars;
     asmFunc[3]->push_back(processFunction(
       wasm,
       builder.makeFunction(WASM_FETCH_HIGH_BITS,

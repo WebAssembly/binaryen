@@ -1,5 +1,5 @@
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 1 1)
  (global $global$0 (mut i32) (i32.const 10))
  (export "foo" (func $0))

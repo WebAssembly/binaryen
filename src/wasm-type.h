@@ -99,7 +99,7 @@ struct ResultType {
 struct Signature {
   Type params;
   Type results;
-  Signature() = default;
+  Signature() : params(Type::none), results(Type::none) {}
   Signature(Type params, Type results) : params(params), results(results) {}
   bool operator==(const Signature& other) const {
     return params == other.params && results == other.results;

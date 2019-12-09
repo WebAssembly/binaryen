@@ -1,5 +1,5 @@
 (module
- (type "anyref -> anyref" (func (param anyref) (result anyref)))
+ (type $anyref_=>_anyref (func (param anyref) (result anyref)))
  (import "env" "test2" (global $test2 anyref))
  (import "env" "test1" (func $test1 (param anyref) (result anyref)))
  (memory $0 1 1)

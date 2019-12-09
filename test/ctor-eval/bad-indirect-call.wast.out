@@ -1,12 +1,12 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (memory $0 256 256)
  (data (i32.const 10) "waka waka waka waka waka")
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-indirect)
  (export "test1" (func $test1))
  (func $test1 (; 0 ;)
-  (call_indirect (type "none -> none")
+  (call_indirect (type $none_=>_none)
    (i32.const 1)
   )
   (i32.store8

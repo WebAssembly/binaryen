@@ -2,7 +2,7 @@
 1:bar
 2:baz
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "foo" (func $Foo))
  (func $bar (; 1 ;)
   (nop)

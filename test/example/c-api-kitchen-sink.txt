@@ -1759,10 +1759,10 @@ int main() {
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module
- (type "(i32, i64, f32, f64) -> i32" (func (param i32 i64 f32 f64) (result i32)))
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "(i32, f64) -> f32" (func (param i32 f64) (result f32)))
+ (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
@@ -3293,7 +3293,7 @@ int main() {
       )
       (drop
        (i32.eqz
-        (call_indirect (type "(i32, i64, f32, f64) -> i32")
+        (call_indirect (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -3357,7 +3357,7 @@ int main() {
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type "(i32, i64, f32, f64) -> i32")
+      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -3885,9 +3885,9 @@ int main() {
 raw:
   BinaryenModulePrint(the_module);
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "module" "check" (func $check (param i32)))
  (func $just-one-block (; 1 ;)
   (local $0 i32)
@@ -4412,10 +4412,10 @@ BinaryenFeatureAll: 511
  (f32.const -33.61199951171875)
 )
 (module
- (type "(i32, i64, f32, f64) -> i32" (func (param i32 i64 f32 f64) (result i32)))
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "(i32, f64) -> f32" (func (param i32 f64) (result f32)))
+ (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
@@ -5946,7 +5946,7 @@ BinaryenFeatureAll: 511
       )
       (drop
        (i32.eqz
-        (call_indirect (type "(i32, i64, f32, f64) -> i32")
+        (call_indirect (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -6010,7 +6010,7 @@ BinaryenFeatureAll: 511
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type "(i32, i64, f32, f64) -> i32")
+      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -6087,19 +6087,19 @@ BinaryenFeatureAll: 511
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> i64" (func (result i64)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
  (func $unreachable-fn (; 0 ;) (result i32)
-  (call_indirect (type "none -> i64")
+  (call_indirect (type $none_=>_i64)
    (unreachable)
   )
  )
 )
 raw:
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "module" "check" (func $check (param i32)))
  (func $just-one-block (; 1 ;)
   (local $0 i32)
@@ -6565,7 +6565,7 @@ optimized:
 )
 module loaded from binary form:
 (module
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (func $adder (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -6575,7 +6575,7 @@ module loaded from binary form:
 )
 module s-expr printed (in memory):
 (module
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (func $adder (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -6586,7 +6586,7 @@ module s-expr printed (in memory):
 
 module s-expr printed (in memory, caller-owned):
 (module
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (func $adder (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -6596,8 +6596,8 @@ module s-expr printed (in memory, caller-owned):
 )
 
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (import "spectest" "print" (func $print-i32 (param i32)))
  (start $starter)
  (func $starter (; 1 ;)
@@ -6608,7 +6608,7 @@ module s-expr printed (in memory, caller-owned):
 )
 1234 : i32
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (func $func (; 0 ;)
   (local $0 i32)
   (local.set $0
@@ -6618,7 +6618,7 @@ module s-expr printed (in memory, caller-owned):
 )
 validation: 0
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")

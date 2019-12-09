@@ -1,8 +1,8 @@
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "none -> i32" (func (result i32)))
- (type "f64 -> none" (func (param f64)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $f64_=>_none (func (param f64)))
  (table $0 2 2 funcref)
  (elem (i32.const 0) $a9 $c8)
  (export "a8" (func $a8))
@@ -224,7 +224,7 @@
  )
 )
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (export "a" (func $0))
  (func $0 (; 0 ;)
   (call $b)
@@ -242,8 +242,8 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (func $foo (; 0 ;) (param $x i32) (result i32)
   (drop
    (return_call $bar)
@@ -259,8 +259,8 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> none" (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
  (table $0 1 1 funcref)
  (func $foo (; 0 ;) (result i32)
   (local $0 i32)
@@ -268,7 +268,7 @@
    (i32.const 42)
   )
   (drop
-   (return_call_indirect (type "none -> i32")
+   (return_call_indirect (type $none_=>_i32)
     (i32.const 0)
    )
   )

@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "js_func" (func $a_js_func))
  (memory $0 1 1)
  (data passive "Hello, datacount section!")

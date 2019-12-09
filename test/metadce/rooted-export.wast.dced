@@ -1,6 +1,6 @@
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (event $b_wasm_event (attr 0) (param i32))
  (export "wasm_func_b" (func $b_wasm_func))
  (export "wasm_event_b" (event $b_wasm_event))

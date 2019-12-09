@@ -32,8 +32,8 @@ func: ifs
  drop           : 6       
  if             : 4       
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
  (table $0 256 256 funcref)
@@ -130,7 +130,7 @@ export: b (func_b)
  [removable-bytes-without-it]: 18      
  [total]        : 0       
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "waka" (func $waka))
  (export "a" (func $func_a))
  (export "b" (func $func_b))
@@ -193,7 +193,7 @@ start: func_a
  [removable-bytes-without-it]: 3       
  [total]        : 0       
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "waka" (func $waka))
  (export "a" (func $func_a))
  (start $func_a)
@@ -222,7 +222,7 @@ start: func_a
  [removable-bytes-without-it]: 67      
  [total]        : 0       
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "waka" (func $waka))
  (start $func_a)
  (func $func_a (; 1 ;)
@@ -250,7 +250,7 @@ export: stackSave (0)
  [removable-bytes-without-it]: 66      
  [total]        : 0       
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "STACKTOP" (global $gimport$0 i32))
  (global $global$0 (mut i32) (global.get $gimport$0))
  (export "stackSave" (func $0))

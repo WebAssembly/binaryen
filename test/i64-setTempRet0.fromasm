@@ -1,6 +1,6 @@
 (module
- (type "none -> i32" (func (result i32)))
- (type "i32 -> none" (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_none (func (param i32)))
  (import "env" "memory" (memory $memory 256 256))
  (data (global.get $__memory_base) "i64-setTempRet0.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))

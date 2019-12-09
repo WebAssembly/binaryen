@@ -1,7 +1,7 @@
 (module
- (type "none -> i32" (func (result i32)))
- (type "i64 -> i64" (func (param i64) (result i64)))
- (type "(f32, f32) -> f32" (func (param f32 f32) (result f32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i64_=>_i64 (func (param i64) (result i64)))
+ (type $f32_f32_=>_f32 (func (param f32 f32) (result f32)))
  (func $__Z12serveroptionPc (; 0 ;) (result i32)
   (return
    (i32.const 0)

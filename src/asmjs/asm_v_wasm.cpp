@@ -103,29 +103,6 @@ std::string getSig(Type results, Type params) {
   return sig;
 }
 
-Type sigToType(char sig) {
-  switch (sig) {
-    case 'i':
-      return i32;
-    case 'j':
-      return i64;
-    case 'f':
-      return f32;
-    case 'd':
-      return f64;
-    case 'V':
-      return v128;
-    case 'a':
-      return anyref;
-    case 'e':
-      return exnref;
-    case 'v':
-      return none;
-    default:
-      abort();
-  }
-}
-
 Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
   if (expr->type == f32) {
     auto conv = allocator.alloc<Unary>();

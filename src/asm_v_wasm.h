@@ -63,8 +63,6 @@ std::string getSigFromStructs(Type result, const ListType& operands) {
   return ret;
 }
 
-Type sigToType(char sig);
-
 // converts an f32 to an f64 if necessary
 Expression* ensureDouble(Expression* expr, MixedArena& allocator);
 

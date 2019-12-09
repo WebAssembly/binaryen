@@ -1,7 +1,7 @@
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 (shared 1 1))
  (table $0 0 funcref)
  (global $global$0 (mut f32) (f32.const 0))

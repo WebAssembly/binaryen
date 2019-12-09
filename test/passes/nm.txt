@@ -2,7 +2,7 @@
     $b : 5
     $c : 13
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (memory $0 0)
  (func $a (; 0 ;)
   (nop)

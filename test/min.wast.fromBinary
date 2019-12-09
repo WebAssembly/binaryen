@@ -1,8 +1,8 @@
 (module
- (type "i32 -> i32" (func (param i32) (result i32)))
- (type "(i32, i32, i32) -> i32" (func (param i32 i32 i32) (result i32)))
- (type "(i32, i32) -> f32" (func (param i32 i32) (result f32)))
- (type "f32 -> f32" (func (param f32) (result f32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_i32_=>_f32 (func (param i32 i32) (result f32)))
+ (type $f32_=>_f32 (func (param f32) (result f32)))
  (memory $0 256 256)
  (export "floats" (func $floats))
  (func $floats (; 0 ;) (param $0 f32) (result f32)

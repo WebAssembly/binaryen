@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (func $0 (; 0 ;)
   (block $label$0
    (br $label$0)

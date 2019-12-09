@@ -1,7 +1,7 @@
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "exnref -> exnref" (func (param exnref) (result exnref)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $exnref_=>_exnref (func (param exnref) (result exnref)))
  (event $event$0 (attr 0) (param i32))
  (func $exnref_test (; 0 ;) (param $0 exnref) (result exnref)
   (local.get $0)

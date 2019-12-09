@@ -1,11 +1,11 @@
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> none" (func))
- (type "i32 -> i32" (func (param i32) (result i32)))
- (type "(i32, i32) -> none" (func (param i32 i32)))
- (type "(f32, i64) -> none" (func (param f32 i64)))
- (type "(f32, i64) -> i32" (func (param f32 i64) (result i32)))
- (type "(i64, i64) -> i64" (func (param i64 i64) (result i64)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $f32_i64_=>_none (func (param f32 i64)))
+ (type $f32_i64_=>_i32 (func (param f32 i64) (result i32)))
+ (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
  (memory $0 10)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
@@ -480,7 +480,7 @@
  )
 )
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (global $global (mut f64) (f64.const 0))
  (func $0 (; 0 ;)
   (if
@@ -491,7 +491,7 @@
  )
 )
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (func $0 (; 0 ;)
   (local $local f64)
   (if
@@ -502,7 +502,7 @@
  )
 )
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (func $foo (; 0 ;)
   (nop)
  )
@@ -533,7 +533,7 @@
  )
 )
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (func $foo (; 0 ;)
   (nop)
  )

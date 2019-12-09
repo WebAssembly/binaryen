@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "_abort" (func $_abort))
  (memory $0 256 256)

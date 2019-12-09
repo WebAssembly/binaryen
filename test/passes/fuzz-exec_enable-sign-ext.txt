@@ -9,8 +9,8 @@
 [fuzz-exec] calling $e
 [fuzz-exec] note result: $e => -2146649112
 (module
- (type "none -> i64" (func (result i64)))
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (type $none_=>_i32 (func (result i32)))
  (export "a" (func $a))
  (export "b" (func $b))
  (export "c" (func $c))

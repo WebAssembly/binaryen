@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "memory" (memory $0 256 256))
  (data (i32.const 1024) "abcd")
  (data (global.get $from_segment) "abcd")

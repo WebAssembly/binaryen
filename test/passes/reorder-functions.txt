@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (memory $0 256 256)
  (func $c (; 0 ;)
   (call $c)

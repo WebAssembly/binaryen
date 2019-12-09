@@ -1,5 +1,5 @@
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 1 1)
  (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00*\00\00\00")
  (func $internal (; 0 ;) (result i32)
@@ -11,7 +11,7 @@
  (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00*\00\00\00")
 )
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 10 10)
  (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00*\00\00\00")
  (func $internal (; 0 ;) (result i32)
@@ -19,7 +19,7 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 10 10)
  (data (i32.const 0) "1234567890123456*\00\00\00")
  (func $internal (; 0 ;) (result i32)
@@ -27,7 +27,7 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 10 10)
  (data (i32.const 0) "1234567890\00\00\00\00\00\00*\00\00\00")
  (func $internal (; 0 ;) (result i32)
@@ -35,7 +35,7 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 10 10)
  (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00123456*\00\00\001234567890")
  (func $internal (; 0 ;) (result i32)
@@ -43,7 +43,7 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 10 10)
  (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00123456*\00\00\00")
  (func $internal (; 0 ;) (result i32)
@@ -51,7 +51,7 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 10 10)
  (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00*\00\00\00\00\00\00\001234567890")
  (func $internal (; 0 ;) (result i32)

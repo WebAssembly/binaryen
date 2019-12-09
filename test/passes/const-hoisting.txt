@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (func $10-of-each (; 0 ;)
   (local $0 i32)
   (local $1 i32)

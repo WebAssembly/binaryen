@@ -1,5 +1,5 @@
 (module
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (export "stacky-help" (func $stacky-help))
  (func $stacky-help (; 0 ;) (param $0 i32) (result i32)
   i32.const 0
@@ -14,7 +14,7 @@
  )
 )
 (module
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (export "stacky-help" (func $stacky-help))
  (func $stacky-help (; 0 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (i32.add
@@ -40,10 +40,10 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> i64" (func (result i64)))
- (type "none -> f32" (func (result f32)))
- (type "none -> f64" (func (result f64)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (type $none_=>_f32 (func (result f32)))
+ (type $none_=>_f64 (func (result f64)))
  (export "ppi32" (func $0))
  (export "ppi64" (func $1))
  (export "ppf32" (func $2))
@@ -62,10 +62,10 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> i64" (func (result i64)))
- (type "none -> f32" (func (result f32)))
- (type "none -> f64" (func (result f64)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (type $none_=>_f32 (func (result f32)))
+ (type $none_=>_f64 (func (result f64)))
  (export "ppi32" (func $0))
  (export "ppi64" (func $1))
  (export "ppf32" (func $2))

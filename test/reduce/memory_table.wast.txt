@@ -1,6 +1,6 @@
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> none" (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
  (memory $0 256 256)
  (export "f1" (func $0))
  (export "f2" (func $1))

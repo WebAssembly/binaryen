@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "table" (table $0 10 10 funcref))
  (elem (i32.const 0) $imported_table_func)
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))

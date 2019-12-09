@@ -1,6 +1,6 @@
 (module
- (type "none -> none" (func))
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 1)
  (func $load-would-normally-have-side-effects (; 0 ;) (result i32)
   (i64.ge_s

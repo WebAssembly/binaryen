@@ -1,8 +1,8 @@
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> i64" (func (result i64)))
- (type "none -> f32" (func (result f32)))
- (type "none -> f64" (func (result f64)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (type $none_=>_f32 (func (result f32)))
+ (type $none_=>_f64 (func (result f64)))
  (export "ppi32" (func $0))
  (export "ppi64" (func $1))
  (export "ppf32" (func $2))

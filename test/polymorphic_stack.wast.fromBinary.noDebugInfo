@@ -1,8 +1,8 @@
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> none" (func))
- (type "i32 -> i32" (func (param i32) (result i32)))
- (type "i32 -> none" (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
  (import "env" "table" (table $timport$0 9 9 funcref))
  (func $0 (; 0 ;) (result i32)
   (block $label$1 (result i32)

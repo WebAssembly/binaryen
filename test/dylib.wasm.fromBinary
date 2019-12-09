@@ -1,7 +1,7 @@
 (module
- (type "none -> none" (func))
- (type "none -> i32" (func (result i32)))
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "memory" (memory $2 256))
  (data (global.get $gimport$0) "hello, world!")
  (import "env" "table" (table $timport$3 0 funcref))

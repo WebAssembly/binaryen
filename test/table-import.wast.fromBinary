@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "table" (table $timport$0 1 1 funcref))
  (elem (i32.const 0) $foo)
  (memory $0 0)

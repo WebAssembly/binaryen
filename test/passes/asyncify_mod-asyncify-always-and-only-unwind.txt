@@ -1,7 +1,7 @@
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "import" (func $import))
  (import "env" "import2" (func $import2 (result i32)))
  (import "env" "import3" (func $import3 (param i32)))

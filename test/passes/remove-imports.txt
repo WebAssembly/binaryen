@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (import "env" "table" (table $0 1 1 funcref))
  (elem (i32.const 0) $waka-sneaky)
  (import "env" "memBase" (global $import$global0 i32))
@@ -13,7 +13,7 @@
   (drop
    (f64.const 0)
   )
-  (call_indirect (type "none -> none")
+  (call_indirect (type $none_=>_none)
    (i32.const 0)
   )
  )

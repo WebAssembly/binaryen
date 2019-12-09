@@ -1,6 +1,6 @@
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (import "env" "waka" (func $foo))
  (import "env" "waka" (func $wrong (param i32)))
  (table $0 2 2 funcref)

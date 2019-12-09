@@ -1,5 +1,5 @@
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $0 1 1))
  (func $0 (; 0 ;) (result i32)
   (i32.load offset=13

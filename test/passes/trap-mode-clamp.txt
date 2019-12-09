@@ -1,13 +1,13 @@
 (module
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
- (type "(i64, i64) -> i64" (func (param i64 i64) (result i64)))
- (type "(i32, i64) -> none" (func (param i32 i64)))
- (type "f32 -> i32" (func (param f32) (result i32)))
- (type "f64 -> i32" (func (param f64) (result i32)))
- (type "f32 -> i64" (func (param f32) (result i64)))
- (type "f64 -> i64" (func (param f64) (result i64)))
- (type "f32 -> none" (func (param f32)))
- (type "f64 -> none" (func (param f64)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $f32_=>_i32 (func (param f32) (result i32)))
+ (type $f64_=>_i32 (func (param f64) (result i32)))
+ (type $f32_=>_i64 (func (param f32) (result i64)))
+ (type $f64_=>_i64 (func (param f64) (result i64)))
+ (type $f32_=>_none (func (param f32)))
+ (type $f64_=>_none (func (param f64)))
  (func $test_div (; 0 ;) (param $0 i32) (param $1 i64)
   (drop
    (call $i32s-div

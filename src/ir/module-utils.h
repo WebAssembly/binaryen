@@ -442,9 +442,8 @@ collectSignatures(Module& wasm,
     // order by frequency then simplicity
     if (a.second != b.second) {
       return a.second > b.second;
-    } else {
-      return a.first < b.first;
     }
+    return a.first < b.first;
   });
   for (Index i = 0; i < sorted.size(); ++i) {
     sigIndices[sorted[i].first] = i;

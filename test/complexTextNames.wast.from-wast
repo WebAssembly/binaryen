@@ -1,5 +1,5 @@
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (export "$zoo (.bar)" (func $1))
  (func $foo\20\28.bar\29 (; 0 ;)
   (nop)

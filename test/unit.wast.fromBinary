@@ -1,14 +1,14 @@
 (module
- (type "none -> i32" (func (result i32)))
- (type "none -> none" (func))
- (type "f32 -> none" (func (param f32)))
- (type "none -> f64" (func (result f64)))
- (type "(f64, f64) -> f64" (func (param f64 f64) (result f64)))
- (type "(i32, i64) -> none" (func (param i32 i64)))
- (type "i32 -> i32" (func (param i32) (result i32)))
- (type "f64 -> i32" (func (param f64) (result i32)))
- (type "none -> i64" (func (result i64)))
- (type "f64 -> f64" (func (param f64) (result f64)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $f32_=>_none (func (param f32)))
+ (type $none_=>_f64 (func (result f64)))
+ (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $f64_=>_i32 (func (param f64) (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (type $f64_=>_f64 (func (param f64) (result f64)))
  (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
  (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
@@ -360,7 +360,7 @@
     (local.get $0)
    )
   )
-  (call_indirect (type "f32 -> none")
+  (call_indirect (type $f32_=>_none)
    (local.get $0)
    (i32.add
     (i32.and
@@ -372,7 +372,7 @@
   )
  )
  (func $cneg (; 18 ;) (param $0 f32)
-  (call_indirect (type "f32 -> none")
+  (call_indirect (type $f32_=>_none)
    (local.get $0)
    (i32.add
     (i32.and

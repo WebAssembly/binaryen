@@ -1,7 +1,7 @@
 (module
- (type "none -> none" (func))
- (type "none -> f32" (func (result f32)))
- (type "f32 -> none" (func (param f32)))
+ (type $none_=>_none (func))
+ (type $none_=>_f32 (func (result f32)))
+ (type $f32_=>_none (func (param f32)))
  (memory $0 1 1)
  (table $0 282 282 funcref)
  (func $0 (; 0 ;)
@@ -10,7 +10,7 @@
     (i32.const 1)
     (block
      (block $label$3
-      (call_indirect (type "f32 -> none")
+      (call_indirect (type $f32_=>_none)
        (block $label$4
         (br $label$3)
        )
@@ -124,7 +124,7 @@
  )
 )
 (module
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 1 1))
  (export "func_2224" (func $0))
  (func $0 (; 0 ;) (result i32)
@@ -141,8 +141,8 @@
  )
 )
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (global $global$0 (mut i32) (i32.const 10))
  (func $determinism (; 0 ;)
   (block $folding-inner0

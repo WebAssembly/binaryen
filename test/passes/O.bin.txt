@@ -1,5 +1,5 @@
 (module
- (type "i64 -> i64" (func (param i64) (result i64)))
+ (type $i64_=>_i64 (func (param i64) (result i64)))
  (export "fac-rec" (func $0))
  (export "fac-rec-named" (func $1))
  (export "fac-iter" (func $2))

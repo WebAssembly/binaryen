@@ -112,14 +112,14 @@ digraph call {
   "$b3" [style="filled, rounded"];
 }
 (module
- (type "i32 -> none" (func (param i32)))
- (type "(i32, i32, i32) -> i32" (func (param i32 i32 i32) (result i32)))
- (type "i32 -> i32" (func (param i32) (result i32)))
- (type "none -> i32" (func (result i32)))
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
- (type "none -> none" (func))
- (type "(i32, i32) -> none" (func (param i32 i32)))
- (type "(i32, i32, i32, i32) -> i32" (func (param i32 i32 i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $0 256 256))
  (data (global.get $memoryBase) "\05\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\02\00\00\00\b0\04\00\00\00\04\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\n\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\04")
  (import "env" "table" (table $0 9 9 funcref))
@@ -983,7 +983,7 @@ digraph call {
      )
     )
     (drop
-     (call_indirect (type "(i32, i32, i32) -> i32")
+     (call_indirect (type $i32_i32_i32_=>_i32)
       (local.get $0)
       (i32.const 0)
       (i32.const 0)
@@ -1031,7 +1031,7 @@ digraph call {
      )
     )
     (drop
-     (call_indirect (type "(i32, i32, i32) -> i32")
+     (call_indirect (type $i32_i32_i32_=>_i32)
       (local.get $0)
       (i32.sub
        (local.get $4)
@@ -1096,7 +1096,7 @@ digraph call {
       (call $__ZSt15get_new_handlerv)
      )
      (block $block
-      (call_indirect (type "none -> none")
+      (call_indirect (type $none_=>_none)
        (i32.add
         (i32.and
          (local.get $0)
@@ -1424,7 +1424,7 @@ digraph call {
   (i32.const 0)
  )
  (func $dynCall_ii (; 35 ;) (param $0 i32) (param $1 i32) (result i32)
-  (call_indirect (type "i32 -> i32")
+  (call_indirect (type $i32_=>_i32)
    (local.get $1)
    (i32.add
     (i32.and
@@ -1436,7 +1436,7 @@ digraph call {
   )
  )
  (func $dynCall_iiii (; 36 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-  (call_indirect (type "(i32, i32, i32) -> i32")
+  (call_indirect (type $i32_i32_i32_=>_i32)
    (local.get $1)
    (local.get $2)
    (local.get $3)
@@ -1450,7 +1450,7 @@ digraph call {
   )
  )
  (func $dynCall_vi (; 37 ;) (param $0 i32) (param $1 i32)
-  (call_indirect (type "i32 -> none")
+  (call_indirect (type $i32_=>_none)
    (local.get $1)
    (i32.add
     (i32.and
@@ -1462,7 +1462,7 @@ digraph call {
   )
  )
  (func $dynCall_v (; 38 ;) (param $0 i32)
-  (call_indirect (type "none -> none")
+  (call_indirect (type $none_=>_none)
    (i32.add
     (i32.and
      (local.get $0)

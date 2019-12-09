@@ -794,25 +794,29 @@ private:
     }
   }
 
-  Signature getBuiltinSignature(Name module,
-                                Name base,
-                                ExpressionList* operands = nullptr) {
+  bool getBuiltinSignature(Signature& sig,
+                           Name module,
+                           Name base,
+                           ExpressionList* operands = nullptr) {
     if (module == GLOBAL_MATH) {
       if (base == ABS) {
         assert(operands && operands->size() == 1);
         Type type = (*operands)[0]->type;
         if (type == i32) {
-          return Signature(Type::i32, Type::i32);
+          sig = Signature(Type::i32, Type::i32);
+          return true;
         }
         if (type == f32) {
-          return Signature(Type::f32, Type::f32);
+          sig = Signature(Type::f32, Type::f32);
+          return true;
         }
         if (type == f64) {
-          return Signature(Type::f64, Type::f64);
+          sig = Signature(Type::f64, Type::f64);
+          return true;
         }
       }
     }
-    return {};
+    return false;
   }
 
   // ensure a nameless block
@@ -1384,8 +1388,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     IString name = import->name;
     if (importedSignatures.find(name) != importedSignatures.end()) {
       // special math builtins
-      Signature builtin = getBuiltinSignature(import->module, import->base);
-      if (builtin != Signature()) {
+      Signature builtin;
+      if (getBuiltinSignature(builtin, import->module, import->base)) {
         import->sig = builtin;
       } else {
         import->sig = importedSignatures[name];

@@ -1,16 +1,16 @@
 (module
- (type "(i32, i32, i32) -> i32" (func (param i32 i32 i32) (result i32)))
- (type "i32 -> i32" (func (param i32) (result i32)))
- (type "i32 -> none" (func (param i32)))
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
- (type "none -> i32" (func (result i32)))
- (type "(i32, i32, i32, i32) -> i32" (func (param i32 i32 i32 i32) (result i32)))
- (type "(i32, i32) -> none" (func (param i32 i32)))
- (type "none -> none" (func))
- (type "(i32, i32, i32, i32, i32) -> i32" (func (param i32 i32 i32 i32 i32) (result i32)))
- (type "(i32, i32, i32) -> none" (func (param i32 i32 i32)))
- (type "(i32, i32, i32, i32, i32) -> none" (func (param i32 i32 i32 i32 i32)))
- (type "(f64, i32) -> f64" (func (param f64 i32) (result f64)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $none_=>_none (func))
+ (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32)))
+ (type $f64_i32_=>_f64 (func (param f64 i32) (result f64)))
  (import "env" "memory" (memory $0 256 256))
  (data (i32.const 1024) "emcc_hello_world.asm.js")
  (import "env" "table" (table $0 18 18 funcref))
@@ -1218,7 +1218,7 @@
         (local.get $11)
         (block
          (drop
-          (call_indirect (type "(i32, i32, i32) -> i32")
+          (call_indirect (type $i32_i32_i32_=>_i32)
            (local.get $0)
            (i32.const 0)
            (i32.const 0)
@@ -1352,7 +1352,7 @@
     )
     (block $block30
      (local.set $3
-      (call_indirect (type "(i32, i32, i32) -> i32")
+      (call_indirect (type $i32_i32_i32_=>_i32)
        (local.get $2)
        (local.get $0)
        (local.get $1)
@@ -1417,7 +1417,7 @@
        )
        (br_if $label$break$L5
         (i32.lt_u
-         (call_indirect (type "(i32, i32, i32) -> i32")
+         (call_indirect (type $i32_i32_i32_=>_i32)
           (local.get $2)
           (local.get $0)
           (local.get $3)
@@ -2026,7 +2026,7 @@
       )
      )
      (drop
-      (call_indirect (type "(i32, i32, i32) -> i32")
+      (call_indirect (type $i32_i32_i32_=>_i32)
        (local.get $0)
        (i32.const 0)
        (i32.const 0)
@@ -2074,7 +2074,7 @@
       )
      )
      (drop
-      (call_indirect (type "(i32, i32, i32) -> i32")
+      (call_indirect (type $i32_i32_i32_=>_i32)
        (local.get $0)
        (i32.sub
         (local.get $4)
@@ -15415,7 +15415,7 @@
   )
  )
  (func $dynCall_ii (; 60 ;) (param $0 i32) (param $1 i32) (result i32)
-  (call_indirect (type "i32 -> i32")
+  (call_indirect (type $i32_=>_i32)
    (local.get $1)
    (i32.and
     (local.get $0)
@@ -15424,7 +15424,7 @@
   )
  )
  (func $dynCall_iiii (; 61 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-  (call_indirect (type "(i32, i32, i32) -> i32")
+  (call_indirect (type $i32_i32_i32_=>_i32)
    (local.get $1)
    (local.get $2)
    (local.get $3)
@@ -15438,7 +15438,7 @@
   )
  )
  (func $dynCall_vi (; 62 ;) (param $0 i32) (param $1 i32)
-  (call_indirect (type "i32 -> none")
+  (call_indirect (type $i32_=>_none)
    (local.get $1)
    (i32.add
     (i32.and

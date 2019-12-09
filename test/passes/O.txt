@@ -1,7 +1,7 @@
 (module
- (type "i32 -> i32" (func (param i32) (result i32)))
- (type "i64 -> none" (func (param i64)))
- (type "none -> i32" (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i64_=>_none (func (param i64)))
+ (type $none_=>_i32 (func (result i32)))
  (export "ret" (func $ret))
  (export "waka" (func $if-0-unreachable-to-none))
  (export "many-selects" (func $many-selects))

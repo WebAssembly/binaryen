@@ -64,7 +64,24 @@ struct SigName {
 };
 
 std::ostream& operator<<(std::ostream& os, SigName sigName) {
-  os << '"' << sigName.sig.params << " -> " << sigName.sig.results << '"';
+  auto printType = [&](Type type) {
+    if (type == Type::none) {
+      os << "none";
+    } else {
+      const std::vector<Type>& types = type.expand();
+      for (size_t i = 0; i < types.size(); ++i) {
+        if (i != 0) {
+          os << '_';
+        }
+        os << types[i];
+      }
+    }
+  };
+
+  os << '$';
+  printType(sigName.sig.params);
+  os << "_=>_";
+  printType(sigName.sig.results);
   return os;
 }
 

@@ -600,7 +600,7 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
     results.push_back(parseResults(*s[i++]));
   }
 
-  Signature inlineSig{Type(params), Type(results)};
+  auto inlineSig = Signature(Type(params), Type(results));
 
   // If none of type/param/result exists, this is equivalent to a type that does
   // not have parameters and returns nothing.
