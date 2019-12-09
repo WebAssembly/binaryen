@@ -6,4 +6,4 @@
 #endif
 
 // Use simple std:: based atomics, no windows specifics
-#define LLVM_THREADING_USE_STD_CALL_ONCE
+#define LLVM_THREADING_USE_STD_CALL_ONCE 1
