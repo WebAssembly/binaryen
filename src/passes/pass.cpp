@@ -282,6 +282,9 @@ void PassRegistry::registerPasses() {
                createReReloopPass);
   registerPass(
     "rse", "remove redundant local.sets", createRedundantSetEliminationPass);
+  registerPass("roundtrip",
+               "write the module to binary, then read it",
+               createRoundTripPass);
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
@@ -460,7 +463,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
 }
 
 static void dumpWast(Name name, Module* wasm) {
-  // write out the wast
+  // write out the wat
   static int counter = 0;
   std::string numstr = std::to_string(counter++);
   while (numstr.size() < 3) {

@@ -96,6 +96,7 @@ Pass* createReorderFunctionsPass();
 Pass* createReorderLocalsPass();
 Pass* createReReloopPass();
 Pass* createRedundantSetEliminationPass();
+Pass* createRoundTripPass();
 Pass* createSafeHeapPass();
 Pass* createSimplifyLocalsPass();
 Pass* createSimplifyGlobalsPass();

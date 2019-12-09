@@ -56,7 +56,7 @@ std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
   };
 
   add({});
-  add({});
+  add({Type::unreachable});
   add({Type::i32});
   add({Type::i64});
   add({Type::f32});
@@ -69,7 +69,7 @@ std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
 
 std::unordered_map<std::vector<Type>, uint32_t> indices = {
   {{}, Type::none},
-  {{}, Type::unreachable},
+  {{Type::unreachable}, Type::unreachable},
   {{Type::i32}, Type::i32},
   {{Type::i64}, Type::i64},
   {{Type::f32}, Type::f32},

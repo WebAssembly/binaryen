@@ -401,10 +401,10 @@ endif()
 enable_testing()
 
 add_test(NAME opt-unit
-         COMMAND bin/wasm-opt test/unit.wast --flatten --ssa --metrics -O4 -Os --metrics)
+         COMMAND bin/wasm-opt test/unit.wat --flatten --ssa --metrics -O4 -Os --metrics)
 add_test(NAME metrics-emcc
          COMMAND bin/wasm-opt test/emcc_hello_world.fromasm --metrics)
 add_test(NAME exec-unit
-         COMMAND bin/wasm-opt test/unit.wast --fuzz-exec)
+         COMMAND bin/wasm-opt test/unit.wat --fuzz-exec)
 add_test(NAME exec-hello
-         COMMAND bin/wasm-opt test/hello_world.wast --fuzz-exec)
+         COMMAND bin/wasm-opt test/hello_world.wat --fuzz-exec)

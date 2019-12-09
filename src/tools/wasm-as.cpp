@@ -36,7 +36,7 @@ int main(int argc, const char* argv[]) {
   std::string sourceMapFilename;
   std::string sourceMapUrl;
   ToolOptions options("wasm-as",
-                      "Assemble a .wast (WebAssembly text format) into a .wasm "
+                      "Assemble a .wat (WebAssembly text format) into a .wasm "
                       "(WebAssembly binary format)");
   options.extra["validate"] = "wasm";
   options
@@ -94,7 +94,7 @@ int main(int argc, const char* argv[]) {
   // default output is infile with changed suffix
   if (options.extra.find("output") == options.extra.end()) {
     options.extra["output"] =
-      removeSpecificSuffix(options.extra["infile"], ".wast") + ".wasm";
+      removeSpecificSuffix(options.extra["infile"], ".wat") + ".wasm";
   }
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
