@@ -320,7 +320,9 @@ public:
   virtual SubtargetFeatures getFeatures() const = 0;
   virtual void setARMSubArch(Triple &TheTriple) const { }
   virtual Expected<uint64_t> getStartAddress() const {
-    return errorCodeToError(object_error::parse_failed);
+    // XXX BINARYEN
+    llvm_unreachable("getStartAddress");
+    //return errorCodeToError(object_error::parse_failed);
   };
 
   /// Create a triple from the data in this object file.

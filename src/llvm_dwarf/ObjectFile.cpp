@@ -32,21 +32,13 @@
 using namespace llvm;
 using namespace object;
 
-#if 0 // XXX BINARYEN
-
 void ObjectFile::anchor() {}
 
 ObjectFile::ObjectFile(unsigned int Type, MemoryBufferRef Source)
     : SymbolicFile(Type, Source) {}
 
 bool SectionRef::containsSymbol(SymbolRef S) const {
-  Expected<section_iterator> SymSec = S.getSection();
-  if (!SymSec) {
-    // TODO: Actually report errors helpfully.
-    consumeError(SymSec.takeError());
-    return false;
-  }
-  return *this == **SymSec;
+  llvm_unreachable("containsSymbol"); // XXX BINARYEN
 }
 
 uint64_t ObjectFile::getSymbolValue(DataRefImpl Ref) const {
@@ -115,58 +107,10 @@ Triple ObjectFile::makeTriple() const {
 
   return TheTriple;
 }
-#endif
 
 Expected<std::unique_ptr<ObjectFile>>
 ObjectFile::createObjectFile(MemoryBufferRef Object, file_magic Type) {
-#if 0 // XXX BINARYEN
-  StringRef Data = Object.getBuffer();
-  if (Type == file_magic::unknown)
-    Type = identify_magic(Data);
-
-  switch (Type) {
-  case file_magic::unknown:
-  case file_magic::bitcode:
-  case file_magic::coff_cl_gl_object:
-  case file_magic::archive:
-  case file_magic::macho_universal_binary:
-  case file_magic::windows_resource:
-  case file_magic::pdb:
-  case file_magic::minidump:
-    return errorCodeToError(object_error::invalid_file_type);
-  case file_magic::tapi_file:
-    return errorCodeToError(object_error::invalid_file_type);
-  case file_magic::elf:
-  case file_magic::elf_relocatable:
-  case file_magic::elf_executable:
-  case file_magic::elf_shared_object:
-  case file_magic::elf_core:
-    return createELFObjectFile(Object);
-  case file_magic::macho_object:
-  case file_magic::macho_executable:
-  case file_magic::macho_fixed_virtual_memory_shared_lib:
-  case file_magic::macho_core:
-  case file_magic::macho_preload_executable:
-  case file_magic::macho_dynamically_linked_shared_lib:
-  case file_magic::macho_dynamic_linker:
-  case file_magic::macho_bundle:
-  case file_magic::macho_dynamically_linked_shared_lib_stub:
-  case file_magic::macho_dsym_companion:
-  case file_magic::macho_kext_bundle:
-    return createMachOObjectFile(Object);
-  case file_magic::coff_object:
-  case file_magic::coff_import_library:
-  case file_magic::pecoff_executable:
-    return createCOFFObjectFile(Object);
-  case file_magic::xcoff_object_32:
-    return createXCOFFObjectFile(Object, Binary::ID_XCOFF32);
-  case file_magic::xcoff_object_64:
-    return createXCOFFObjectFile(Object, Binary::ID_XCOFF64);
-  case file_magic::wasm_object:
-    return createWasmObjectFile(Object);
-  }
-#endif
-  llvm_unreachable("Unexpected Object File Type");
+  llvm_unreachable("Unexpected Object File Type"); // XXX BINARYEN
 }
 
 #if 0 // XXX BINARYEN
