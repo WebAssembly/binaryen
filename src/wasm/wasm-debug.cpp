@@ -15,10 +15,34 @@
  */
 
 #include "wasm.h"
-#include "debugging/debugging.h"
+#include "wasm-debug.h"
+
+#ifdef USE_LLVM_DWARF
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/ObjectYAML/DWARFEmitter.h"
+
+std::error_code dwarf2yaml(llvm::DWARFContext &DCtx, llvm::DWARFYAML::Data &Y);
+#endif
+
+namespace wasm {
+
+namespace Debug {
+
+bool isDWARFSection(Name name) {
+  return name.startsWith(".debug_");
+}
+
+bool hasDWARFSections(const Module& wasm) {
+  for (auto& section : wasm.userSections) {
+    if (isDWARFSection(section.name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+#ifdef USE_LLVM_DWARF
 
 // Big picture: We use a DWARFContext to read data, then DWARFYAML support
 // code to write it. That is not the main LLVM Dwarf code used for writing
@@ -47,44 +71,52 @@
 // the DWARFContext may save us doing fixups in EmitDebugSections.
 // */
 
-std::error_code dwarf2yaml(llvm::DWARFContext &DCtx, llvm::DWARFYAML::Data &Y);
-
-namespace wasm {
-
-namespace Debugging {
-
-void DWARFInfo::dump() {
-  std::cout << "DWARFInfo::dump()\n";
-  // Get debug sections from the wasm.
+struct BinaryenDWARFInfo {
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
+  std::unique_ptr<llvm::DWARFContext> context;
+
+  BinaryenDWARFInfo(const Module& wasm) {
+    // Get debug sections from the wasm.
+    for (auto& section : wasm.userSections) {
+      if (Name(section.name).startsWith(".debug_")) {
+        // TODO: efficiency
+        sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
+      }
+    }
+    // Parse debug sections.
+    uint8_t addrSize = 4;
+    context =  llvm::DWARFContext::create(sections, addrSize);
+  }
+};
+
+void dumpDWARF(const Module& wasm) {
+  BinaryenDWARFInfo info(wasm);
+  std::cout << "DWARF debug info\n";
+  std::cout << "================\n\n";
   for (auto& section : wasm.userSections) {
     if (Name(section.name).startsWith(".debug_")) {
-      std::cout << "  debug section " << section.name << " (" << section.data.size() << " bytes)\n";
-      // TODO: efficiency
-      sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
+      std::cout << "Contains section " << section.name << " (" << section.data.size() << " bytes)\n";
     }
   }
-  // Parse debug sections.
-  uint8_t addrSize = 4;
-  auto context = llvm::DWARFContext::create(sections, addrSize);
   llvm::DIDumpOptions options;
   options.Verbose = true;
-  context->dump(llvm::errs(), options);
-  std::cout << "DWARFInfo::dump() complete\n";
+  info.context->dump(llvm::outs(), options);
+}
+
+void updateDWARF(Module& wasm) {
+  BinaryenDWARFInfo info(wasm);
 
   // Convert to Data representation, which YAML can use to write.
   llvm::DWARFYAML::Data Data;
-  if (dwarf2yaml(*context, Data)) {
+  if (dwarf2yaml(*info.context, Data)) {
     Fatal() << "Failed to parse DWARF to YAML";
   }
 
+  // TODO: actually update the DWARF in Data! And remove sections we don't know
+  //       how to update yet.
+
   // Convert to binary sections.
   auto newSections = EmitDebugSections(Data, false /* ApplyFixups, should be true if we modify Data, presumably? */);
-
-  std::cout << "new sections: " << newSections.size() << '\n';
-  for (auto& key : newSections.keys()) {
-    std::cout << "  " << key.data() << " : " << newSections[key]->getBuffer().size() << '\n';
-  }
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
@@ -100,8 +132,18 @@ void DWARFInfo::dump() {
   }
 }
 
-} // Debugging
+#else // USE_LLVM_DWARF
+
+void dumpDWARF(const Module& wasm) {
+  std::cerr << "warning: no DWARF dumping support present\n";
+}
+
+void updateDWARF(Module& wasm) {
+  std::cerr << "warning: no DWARF updating support present\n";
+}
+
+#endif // USE_LLVM_DWARF
+
+} // namespace Debug
 
 } // namespace wasm
-
-// FIXME src/llvm/Config/ is dubious

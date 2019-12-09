@@ -14,26 +14,31 @@
  * limitations under the License.
  */
 
-#ifndef wasm_debugging_h
-#define wasm_debugging_flat_h
+//
+// Parses and emits WebAssembly binary code
+//
 
-#include <wasm.h>
+#ifndef wasm_wasm_debug_h
+#define wasm_wasm_debug_h
+
+#include <string>
+
+#include "wasm.h"
 
 namespace wasm {
 
-namespace Debugging {
+namespace Debug {
 
-class DWARFInfo {
-  Module& wasm;
+bool isDWARFSection(Name name);
 
-public:
-  DWARFInfo(Module& wasm) : wasm(wasm) {}
+bool hasDWARFSections(const Module& wasm);
 
-  void dump();
-};
+void dumpDWARF(const Module& wasm);
 
-} // Debugging
+} // namespace Debug
 
 } // namespace wasm
 
-#endif // wasm_debugging_h
+#undef DEBUG_TYPE
+
+#endif // wasm_wasm_debug_h

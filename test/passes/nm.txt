@@ -1,6 +1,6 @@
-    $a : 1
-    $b : 5
-    $c : 13
+    a : 1
+    b : 5
+    c : 13
 (module
  (type $0 (func))
  (memory $0 0)

@@ -1,14 +1,13 @@
-# LLVM sources have warnings
-IF(MSVC)
-ELSE()
-  add_compile_flag("-Wno-maybe-uninitialized")
-  add_compile_flag("-Wno-unused-function")
-ENDIF()
+# LLVM sources have warnings, ignore them.
+if(NOT MSVC)
+  foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    set(${variable} "${${variable}} -w")
+  endforeach(variable)
+endif()
 
-SET(debugging_SOURCES
+SET(llvm_dwarf_SOURCES
   APInt.cpp
   APFloat.cpp
-  BinaryenDebugging.cpp
   Binary.cpp
   ConvertUTF.cpp
   DataExtractor.cpp
@@ -78,4 +77,4 @@ SET(debugging_SOURCES
   YAMLParser.cpp # XXX needed?
   YAMLTraits.cpp
 )
-ADD_LIBRARY(debugging OBJECT ${debugging_SOURCES})
+ADD_LIBRARY(llvm_dwarf OBJECT ${llvm_dwarf_SOURCES})
