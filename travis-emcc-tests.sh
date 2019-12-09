@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 set -e
 echo "travis-test build"
 emconfigure cmake -DCMAKE_BUILD_TYPE=Release
