@@ -47,6 +47,7 @@ set(passes_SOURCES
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
+  RoundTrip.cpp
   StackIR.cpp
   Strip.cpp
   StripTargetFeatures.cpp
