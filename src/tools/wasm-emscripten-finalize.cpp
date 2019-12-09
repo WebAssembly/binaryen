@@ -259,12 +259,14 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  // Convert the imports to indirects
-  {
-    PassRunner passRunner(&wasm);
-    passRunner.setOptions(options.passOptions);
-    passRunner.add("ImportsToIndirectCalls");
-    //passRunner.run();
+  if (!isSideModule) {
+    // Convert the imports to indirects
+    {
+      PassRunner passRunner(&wasm);
+      passRunner.setOptions(options.passOptions);
+      passRunner.add("ImportsToIndirectCalls");
+      passRunner.run();
+    }
   }
 
   if (standaloneWasm) {

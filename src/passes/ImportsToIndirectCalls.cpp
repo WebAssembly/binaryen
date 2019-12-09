@@ -23,8 +23,9 @@
 #include <unordered_map>
 
 #include "asm_v_wasm.h"
-#include "ir/table-utils.h"
 #include "ir/utils.h"
+#include "ir/table-utils.h"
+#include "ir/literal-utils.h"
 #include "ir/import-utils.h"
 #include "ir/function-type-utils.h"
 #include "pass.h"
@@ -113,15 +114,18 @@ struct FunctionImportsToIndirectCalls
     if (!name.isNull() && !m_isSide) {
       auto module = getModule();
       auto* func = module->getFunction(name);
+      
       if (func) {
         if (func->imported()) {
+          name = func->base; // Use the original imported name instead
 
           bool is_in = m_libraryFns.find(name.c_str()) != m_libraryFns.end();
           if (is_in)
             return;
 
-          is_in = name.hasSubstring("g$") || name.hasSubstring("fp$") ||
-                  name.hasSubstring("__wasi_fd_write");
+          is_in = name.hasSubstring("g$") ||
+                  name.hasSubstring("gp$") || name.hasSubstring("fp$") ||
+                  name.hasSubstring("__wasi_");
 
           if (is_in) 
             return;
@@ -139,34 +143,56 @@ struct FunctionImportsToIndirectCalls
           std::replace(getterString.begin(), getterString.end(), '\\', '_');
           Name getter(getterString.c_str());
 
-          // Ensure that the fp$ accessor is in the module, if not add it in.
-          std::string fnAddrString((std::string("gp$") + name.c_str() + std::string("$") +
-                         getSig(func)).c_str());
-          std::replace(fnAddrString.begin(), fnAddrString.end(), '\\', '_');
-          Name fnAddr(fnAddrString.c_str());
-            
-          auto f = info.getImportedFunction(ENV, getter);
-          if (!f) {
-            f = ensureFunctionImport(module, getter, "i");
+          bool gblAddrFound = false;
+          Name fnAddr;
+          for (size_t i = 0, globals = module->globals.size(); i < globals;
+               ++i) {
+            auto* curr = module->globals[i].get();
+            if (!curr->base.isNull()) {
+              if (curr->base.equals(name.c_str())) {
+                gblAddrFound = true;
+                fnAddr = curr->name;
+                break;
+              }
+            }
+          }
 
-            auto* assignFunc = getModule()->getFunction(ASSIGN_GOT_ENTIRES);
+          if (!gblAddrFound) {
+            // Ensure that the fp$ accessor is in the module, if not add it in.
+            std::string fnAddrString((std::string("gp$") + name.c_str() +
+                                      std::string("$") + getSig(func))
+                                       .c_str());
+            std::replace(fnAddrString.begin(), fnAddrString.end(), '\\', '_');
+            fnAddr = fnAddrString.c_str();
 
-            Block* block = static_cast<Block*>(assignFunc->body);
+            auto f = info.getImportedFunction(ENV, getter);
+            if (!f) {
+              f = ensureFunctionImport(module, getter, "i");
 
-            if (!block)
-              return;
+              auto* assignFunc = getModule()->getFunction(ASSIGN_GOT_ENTIRES);
 
-            auto* import = new Global;
-            
-            import->name = fnAddr;
-            import->module = "env";
-            import->base = getter;
-            import->type = i32;
-            auto global = module->addGlobal(import);
+              Block* block = static_cast<Block*>(assignFunc->body);
 
-            Expression* call = builder.makeCall(getter, {}, i32);
-            GlobalSet* globalSet = builder.makeGlobalSet(fnAddr, call);
-            block->list.push_back(globalSet);
+              if (!block)
+                return;
+
+              auto* gblAddr = new Global;
+
+              gblAddr->name = fnAddr;
+              /*gblAddr->module = "env";
+              gblAddr->base = getter;*/
+              gblAddr->type = i32;
+              gblAddr->mutable_ = true;
+              module->addGlobal(
+                builder.makeGlobal(fnAddr,
+                                   i32,
+                                   LiteralUtils::makeZero(i32, *module),
+                                   Builder::Mutable));
+
+              Expression* call = builder.makeCall(getter, {}, i32);
+              GlobalSet* globalSet = builder.makeGlobalSet(fnAddr, call);
+              block->list.push_back(globalSet);
+            }
           }
           
           // Replace the call
