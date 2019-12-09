@@ -373,6 +373,7 @@ void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
 }
 
 std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
+  Y.IsLittleEndian = true; // XXX BINARYEN
   dumpDebugAbbrev(DCtx, Y);
   dumpDebugStrings(DCtx, Y);
   dumpDebugARanges(DCtx, Y);

@@ -42,21 +42,15 @@ namespace llvm {
 /// Exported boolean set by the -debug option.
 bool DebugFlag = false;
 
+#if 0 // XXX BINARYEN
 static ManagedStatic<std::vector<std::string>> CurrentDebugType;
+#endif
 
 /// Return true if the specified string is the debug type
 /// specified on the command line, or if none was specified on the command line
 /// with the -debug-only=X option.
 bool isCurrentDebugType(const char *DebugType) {
-  if (CurrentDebugType->empty())
-    return true;
-  // See if DebugType is in list. Note: do not use find() as that forces us to
-  // unnecessarily create an std::string instance.
-  for (auto &d : *CurrentDebugType) {
-    if (d == DebugType)
-      return true;
-  }
-  return false;
+  llvm_unreachable("debug type");
 }
 
 /// Set the current debug type, as if the -debug-only=X
@@ -70,9 +64,7 @@ void setCurrentDebugType(const char *Type) {
 }
 
 void setCurrentDebugTypes(const char **Types, unsigned Count) {
-  CurrentDebugType->clear();
-  for (size_t T = 0; T < Count; ++T)
-    CurrentDebugType->push_back(Types[T]);
+  llvm_unreachable("set debug type");
 }
 } // namespace llvm
 

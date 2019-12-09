@@ -55,7 +55,6 @@ SET(llvm_dwarf_SOURCES
   LEB128.cpp
   LineIterator.cpp
   Magic.cpp
-  ManagedStatic.cpp
   MCRegisterInfo.cpp
   MD5.cpp
   MemoryBuffer.cpp

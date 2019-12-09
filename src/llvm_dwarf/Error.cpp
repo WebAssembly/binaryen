@@ -46,7 +46,9 @@ namespace {
 
 }
 
+#if 0 // XXX BINARYEN
 static ManagedStatic<ErrorErrorCategory> ErrorErrorCat;
+#endif
 
 namespace llvm {
 
@@ -70,18 +72,15 @@ void logAllUnhandledErrors(Error E, raw_ostream &OS, Twine ErrorBanner) {
 
 
 std::error_code ErrorList::convertToErrorCode() const {
-  return std::error_code(static_cast<int>(ErrorErrorCode::MultipleErrors),
-                         *ErrorErrorCat);
+  llvm_unreachable("convert error code");
 }
 
 std::error_code inconvertibleErrorCode() {
-  return std::error_code(static_cast<int>(ErrorErrorCode::InconvertibleError),
-                         *ErrorErrorCat);
+  llvm_unreachable("inconvertible error code");
 }
 
 std::error_code FileError::convertToErrorCode() const {
-  return std::error_code(static_cast<int>(ErrorErrorCode::FileError),
-                         *ErrorErrorCat);
+  llvm_unreachable("(file) convert error code");
 }
 
 Error errorCodeToError(std::error_code EC) {

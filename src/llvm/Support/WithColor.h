@@ -11,10 +11,13 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
+#if 0 // XXX BINARYEN
 extern cl::OptionCategory ColorCategory;
+#endif
 
 class raw_ostream;
 
