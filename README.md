@@ -182,7 +182,7 @@ cmake . && make
 ```
 Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`
 
-* A C++11 compiler is required.
+* A C++14 compiler is required.
 * The JavaScript components can be built using `build-js.sh`, see notes inside. Normally this is not needed as builds are provided in this repo already.
 
 If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)), for more details see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly).
