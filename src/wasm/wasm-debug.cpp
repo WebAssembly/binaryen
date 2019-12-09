@@ -113,7 +113,7 @@ void updateDWARF(Module& wasm) {
   }
 
   // TODO: actually update the DWARF in Data! And remove sections we don't know
-  //       how to update yet.
+  //       how to update yet?
 
   // Convert to binary sections.
   auto newSections = EmitDebugSections(Data, false /* ApplyFixups, should be true if we modify Data, presumably? */);
