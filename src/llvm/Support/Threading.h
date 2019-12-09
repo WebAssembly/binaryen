@@ -40,7 +40,7 @@
 #define LLVM_THREADING_USE_STD_CALL_ONCE 0
 #endif
 
-#if LLVM_THREADING_USE_STD_CALL_ONCE
+#if 1 // XXX BINARYEN LLVM_THREADING_USE_STD_CALL_ONCE
 #include <mutex>
 #else
 #include "llvm/Support/Atomic.h"
