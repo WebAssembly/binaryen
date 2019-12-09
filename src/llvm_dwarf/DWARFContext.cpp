@@ -329,10 +329,12 @@ void DWARFContext::dump(
   StringRef Extension = sys::path::extension(DObj->getFileName());
   bool IsDWO = (Extension == ".dwo") || (Extension == ".dwp");
 
+#if 0 // XXX BINARYEN
   // Print UUID header.
   const auto *ObjFile = DObj->getFile();
   if (DumpType & DIDT_UUID)
     dumpUUID(OS, *ObjFile);
+#endif
 
   // Print a header for each explicitly-requested section.
   // Otherwise just print one for non-empty sections.
