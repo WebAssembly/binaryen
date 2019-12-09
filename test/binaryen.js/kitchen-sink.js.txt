@@ -1,7 +1,7 @@
   // BinaryenTypeNone: 0
   // []
   // BinaryenTypeUnreachable: 1
-  // []
+  // [ 1 ]
   // BinaryenTypeInt32: 2
   // [ 2 ]
   // BinaryenTypeInt64: 3
@@ -10106,7 +10106,7 @@ optimized:
   // BinaryenTypeNone: 0
   // []
   // BinaryenTypeUnreachable: 1
-  // []
+  // [ 1 ]
   // BinaryenTypeInt32: 2
   // [ 2 ]
   // BinaryenTypeInt64: 3
