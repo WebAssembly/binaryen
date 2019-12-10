@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#include "wasm.h"
 #include "wasm-debug.h"
+#include "wasm.h"
 
 #ifdef USE_LLVM_DWARF
-#include "llvm/include/llvm/DebugInfo/DWARFContext.h"
-#include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/ObjectYAML/DWARFEmitter.h"
+#include "llvm/ObjectYAML/DWARFYAML.h"
+#include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 
-std::error_code dwarf2yaml(llvm::DWARFContext &DCtx, llvm::DWARFYAML::Data &Y);
+std::error_code dwarf2yaml(llvm::DWARFContext& DCtx, llvm::DWARFYAML::Data& Y);
 #endif
 
 namespace wasm {
 
 namespace Debug {
 
-bool isDWARFSection(Name name) {
-  return name.startsWith(".debug_");
-}
+bool isDWARFSection(Name name) { return name.startsWith(".debug_"); }
 
 bool hasDWARFSections(const Module& wasm) {
   for (auto& section : wasm.userSections) {
@@ -80,12 +78,13 @@ struct BinaryenDWARFInfo {
     for (auto& section : wasm.userSections) {
       if (Name(section.name).startsWith(".debug_")) {
         // TODO: efficiency
-        sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(section.data.data(), section.data.size()));
+        sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(
+          llvm::StringRef(section.data.data(), section.data.size()));
       }
     }
     // Parse debug sections.
     uint8_t addrSize = 4;
-    context =  llvm::DWARFContext::create(sections, addrSize);
+    context = llvm::DWARFContext::create(sections, addrSize);
   }
 };
 
@@ -95,7 +94,8 @@ void dumpDWARF(const Module& wasm) {
   std::cout << "================\n\n";
   for (auto& section : wasm.userSections) {
     if (Name(section.name).startsWith(".debug_")) {
-      std::cout << "Contains section " << section.name << " (" << section.data.size() << " bytes)\n";
+      std::cout << "Contains section " << section.name << " ("
+                << section.data.size() << " bytes)\n";
     }
   }
   llvm::DIDumpOptions options;
@@ -116,7 +116,9 @@ void updateDWARF(Module& wasm) {
   //       how to update yet?
 
   // Convert to binary sections.
-  auto newSections = EmitDebugSections(Data, false /* ApplyFixups, should be true if we modify Data, presumably? */);
+  auto newSections = EmitDebugSections(
+    Data,
+    false /* ApplyFixups, should be true if we modify Data, presumably? */);
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
