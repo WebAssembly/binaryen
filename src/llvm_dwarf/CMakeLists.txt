@@ -66,7 +66,6 @@ SET(llvm_dwarf_SOURCES
   StringMap.cpp
   StringRef.cpp
   SymbolicFile.cpp
-  Triple.cpp
   Twine.cpp
   UnicodeCaseFold.cpp
   WithColor.cpp
