@@ -23,40 +23,7 @@ static cl::opt<cl::boolOrDefault>
 WithColor::WithColor(raw_ostream &OS, HighlightColor Color, bool DisableColors)
     : OS(OS), DisableColors(DisableColors) {
   // Detect color from terminal type unless the user passed the --color option.
-  if (colorsEnabled()) {
-    switch (Color) {
-    case HighlightColor::Address:
-      OS.changeColor(raw_ostream::YELLOW);
-      break;
-    case HighlightColor::String:
-      OS.changeColor(raw_ostream::GREEN);
-      break;
-    case HighlightColor::Tag:
-      OS.changeColor(raw_ostream::BLUE);
-      break;
-    case HighlightColor::Attribute:
-      OS.changeColor(raw_ostream::CYAN);
-      break;
-    case HighlightColor::Enumerator:
-      OS.changeColor(raw_ostream::MAGENTA);
-      break;
-    case HighlightColor::Macro:
-      OS.changeColor(raw_ostream::RED);
-      break;
-    case HighlightColor::Error:
-      OS.changeColor(raw_ostream::RED, true);
-      break;
-    case HighlightColor::Warning:
-      OS.changeColor(raw_ostream::MAGENTA, true);
-      break;
-    case HighlightColor::Note:
-      OS.changeColor(raw_ostream::BLACK, true);
-      break;
-    case HighlightColor::Remark:
-      OS.changeColor(raw_ostream::BLUE, true);
-      break;
-    }
-  }
+  // XXX BINARYEN - no color support
 }
 
 raw_ostream &WithColor::error() { return error(errs()); }
@@ -104,14 +71,12 @@ bool WithColor::colorsEnabled() {
 
 WithColor &WithColor::changeColor(raw_ostream::Colors Color, bool Bold,
                                   bool BG) {
-  if (colorsEnabled())
-    OS.changeColor(Color, Bold, BG);
+  // XXX BINARYEN
   return *this;
 }
 
 WithColor &WithColor::resetColor() {
-  if (colorsEnabled())
-    OS.resetColor();
+  // XXX BINARYEN
   return *this;
 }
 
