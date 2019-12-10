@@ -619,6 +619,12 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
     }
   }
 
+  // Add implicitly defined type to global list so it has an index
+  if (std::find(signatures.begin(), signatures.end(), functionSignature) ==
+      signatures.end()) {
+    signatures.push_back(functionSignature);
+  }
+
   // If only (type) is specified, populate `namedParams`
   if (!paramsOrResultsExist) {
     const std::vector<Type>& funcParams = functionSignature.params.expand();
