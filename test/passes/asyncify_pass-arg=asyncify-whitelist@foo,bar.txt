@@ -1,7 +1,7 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (import "env" "import" (func $import))
+ (import "env" "import" (func import))
  (memory $0 1 2)
  (global $__asyncify_state (mut i32) (i32.const 0))
  (global $__asyncify_data (mut i32) (i32.const 0))

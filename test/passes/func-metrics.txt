@@ -131,7 +131,7 @@ export: b (func_b)
  [total]        : 0       
 (module
  (type $none_=>_none (func))
- (import "env" "waka" (func $waka))
+ (import "env" "waka" (func waka))
  (export "a" (func $func_a))
  (export "b" (func $func_b))
  (func $func_a (; 1 ;)
@@ -194,7 +194,7 @@ start: func_a
  [total]        : 0       
 (module
  (type $none_=>_none (func))
- (import "env" "waka" (func $waka))
+ (import "env" "waka" (func waka))
  (export "a" (func $func_a))
  (start $func_a)
  (func $func_a (; 1 ;)
@@ -223,7 +223,7 @@ start: func_a
  [total]        : 0       
 (module
  (type $none_=>_none (func))
- (import "env" "waka" (func $waka))
+ (import "env" "waka" (func waka))
  (start $func_a)
  (func $func_a (; 1 ;)
   (call $waka)

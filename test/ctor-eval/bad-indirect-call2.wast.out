@@ -1,6 +1,6 @@
 (module
  (type $none_=>_none (func))
- (import "env" "_abort" (func $_abort))
+ (import "env" "_abort" (func _abort))
  (memory $0 256 256)
  (data (i32.const 10) "waka waka waka waka waka")
  (table $0 2 2 funcref)

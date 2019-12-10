@@ -365,8 +365,8 @@
 )
 (module
  (type $none_=>_none (func))
- (import "env" "i" (func $i))
- (import "env" "j" (func $j))
+ (import "env" "i" (func i))
+ (import "env" "j" (func j))
  (memory $0 0)
  (func $erase (; 2 ;)
   (call $i)
@@ -374,8 +374,8 @@
 )
 (module
  (type $none_=>_none (func))
- (import "env" "i" (func $i))
- (import "env" "j" (func $j))
+ (import "env" "i" (func i))
+ (import "env" "j" (func j))
  (memory $0 0)
  (func $keep2 (; 2 ;)
   (call $i)

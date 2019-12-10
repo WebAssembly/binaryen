@@ -729,7 +729,7 @@
 )
 (module
  (type $i32_=>_none (func (param i32)))
- (import "env" "out" (func $out (param i32)))
+ (import "env" "out" (func out (param i32)))
  (func $each-pass-must-clear (; 1 ;) (param $var$0 i32)
   (local $1 i32)
   (local $2 i32)

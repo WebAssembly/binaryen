@@ -364,7 +364,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           bool canPop = true;
           if (block->name.is()) {
             BranchUtils::BranchSeeker seeker(block->name);
-            seeker.named = true;
             Expression* temp = block;
             seeker.walk(temp);
             if (seeker.found && seeker.valueType != none) {

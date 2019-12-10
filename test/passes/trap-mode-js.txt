@@ -7,7 +7,7 @@
  (type $f32_=>_none (func (param f32)))
  (type $f64_=>_none (func (param f64)))
  (type $f64_=>_i32 (func (param f64) (result i32)))
- (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
+ (import "asm2wasm" "f64-to-int" (func f64-to-int (param f64) (result i32)))
  (func $test_div (; 1 ;) (param $0 i32) (param $1 i64)
   (drop
    (call $i32s-div

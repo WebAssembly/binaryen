@@ -7,7 +7,7 @@
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
- (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (import "env" "setTempRet0" (func setTempRet0 (param i32)))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (export "test64" (func $legalstub$test64))
  (func $test64 (; 1 ;) (result i64)

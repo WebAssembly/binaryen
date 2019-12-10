@@ -334,7 +334,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   }
 
   if (flags.symbolsFile.size() > 0) {
-    Output out(flags.symbolsFile, wasm::Flags::Text, wasm::Flags::Release);
+    Output out(flags.symbolsFile, wasm::Flags::Text);
     Index i = 0;
     for (auto& func : wasm->functions) {
       out.getStream() << i++ << ':' << func->name.str << '\n';
@@ -560,7 +560,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
             PLUS,
             ValueBuilder::makeNum(i));
         } else {
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected expr type");
         }
         ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
           ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), index),
@@ -1392,9 +1392,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             }
             case CtzInt32:
             case PopcntInt32: {
-              std::cerr << "i32 unary should have been removed: " << curr
-                        << std::endl;
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("i32 unary should have been removed");
             }
             case EqZInt32: {
               // XXX !x does change the type to bool, which is correct, but may
@@ -1521,15 +1519,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             case NearestFloat64:
             case TruncFloat32:
             case TruncFloat64:
-              std::cerr
-                << "operation should have been removed in previous passes"
-                << std::endl;
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE(
+                "operation should have been removed in previous passes");
 
             default:
-              std::cerr << "Unhandled unary float operator: " << curr
-                        << std::endl;
-              abort();
+              WASM_UNREACHABLE("unhandled unary float operator");
           }
           if (curr->type == f32) { // doubles need much less coercing
             return makeAsmCoercion(ret, ASM_FLOAT);
@@ -1665,13 +1659,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               return ValueBuilder::makeBinary(left, LT, right);
             case RotLInt32:
             case RotRInt32:
-              std::cerr << "should be removed already" << std::endl;
-              WASM_UNREACHABLE();
-            default: {
-              std::cerr << "Unhandled i32 binary operator: " << curr
-                        << std::endl;
-              abort();
-            }
+              WASM_UNREACHABLE("should be removed already");
+            default:
+              WASM_UNREACHABLE("unhandled i32 binary operator");
           }
           break;
         }
@@ -1787,7 +1777,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       } else if (curr->op == HostOp::MemorySize) {
         return ValueBuilder::makeCall(WASM_MEMORY_SIZE);
       }
-      WASM_UNREACHABLE(); // TODO
+      WASM_UNREACHABLE("unexpected expr type"); // TODO
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
@@ -1800,19 +1790,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
     Ref visitAtomicRMW(AtomicRMW* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitAtomicWait(AtomicWait* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitAtomicNotify(AtomicNotify* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitAtomicFence(AtomicFence* curr) {
       // Sequentially consistent fences can be lowered to no operation
@@ -1820,67 +1810,67 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
     Ref visitSIMDExtract(SIMDExtract* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitSIMDReplace(SIMDReplace* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitSIMDShuffle(SIMDShuffle* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitSIMDTernary(SIMDTernary* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitSIMDShift(SIMDShift* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitSIMDLoad(SIMDLoad* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryInit(MemoryInit* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitDataDrop(DataDrop* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryCopy(MemoryCopy* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitMemoryFill(MemoryFill* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitThrow(Throw* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitRethrow(Rethrow* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitBrOnExn(BrOnExn* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitPush(Push* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitPop(Pop* curr) {
       unimplemented(curr);
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
 
   private:

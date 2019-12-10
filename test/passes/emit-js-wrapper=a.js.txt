@@ -6,7 +6,7 @@
  (type $i32_f32_f64_=>_none (func (param i32 f32 f64)))
  (type $i32_f32_f64_=>_i32 (func (param i32 f32 f64) (result i32)))
  (type $i32_f32_f64_=>_i64 (func (param i32 f32 f64) (result i64)))
- (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (import "env" "setTempRet0" (func setTempRet0 (param i32)))
  (memory $0 256 256)
  (export "add" (func $add))
  (export "no_return" (func $no-return))

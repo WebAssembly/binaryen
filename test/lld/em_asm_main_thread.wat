@@ -1,13 +1,15 @@
+(; Copied from em_asm.wat
+  s/emscripten_asm_const_int/emscripten_asm_const_int_sync_on_main_thread/g
+;)
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
+ (type $0 (func (param i32 i32 i32) (result i32)))
+ (type $1 (func))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32 i32 i32)))
+ (type $4 (func (param i32 i32)))
+ (type $5 (func (param i32) (result i32)))
+ (type $6 (func (param i32 i32) (result i32)))
+ (import "env" "emscripten_asm_const_int_sync_on_main_thread" (func $emscripten_asm_const_int_sync_on_main_thread (param i32 i32 i32) (result i32)))
  (memory $0 2)
  (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
  (table $0 1 1 funcref)
@@ -19,14 +21,9 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
- (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 1 ;)
-  (nop)
+ (func $__wasm_call_ctors (; 1 ;) (type $1)
  )
- (func $__original_main (; 2 ;) (result i32)
+ (func $__original_main (; 2 ;) (type $2) (result i32)
   (local $0 i32)
   (local $1 i32)
   (global.set $global$0
@@ -42,7 +39,7 @@
    (call $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29)
   )
   (drop
-   (call $emscripten_asm_const_iii
+   (call $emscripten_asm_const_int_sync_on_main_thread
     (i32.const 568)
     (i32.add
      (local.get $0)
@@ -69,7 +66,7 @@
     (i32.const 24)
    )
    (local.tee $1
-    (call $emscripten_asm_const_iii
+    (call $emscripten_asm_const_int_sync_on_main_thread
      (i32.const 601)
      (i32.add
       (local.get $0)
@@ -87,7 +84,7 @@
    (local.get $1)
   )
   (drop
-   (call $emscripten_asm_const_iii
+   (call $emscripten_asm_const_int_sync_on_main_thread
     (i32.const 621)
     (i32.add
      (local.get $0)
@@ -104,10 +101,10 @@
   )
   (i32.const 0)
  )
- (func $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29 (; 3 ;) (result i32)
+ (func $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29 (; 3 ;) (type $2) (result i32)
   (i32.const 0)
  )
- (func $__em_asm_sig_builder::inner<int\2c\20int>\20const\20__em_asm_sig_builder::__em_asm_sig<int\2c\20int>\28int\2c\20int\29 (; 4 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $__em_asm_sig_builder::inner<int\2c\20int>\20const\20__em_asm_sig_builder::__em_asm_sig<int\2c\20int>\28int\2c\20int\29 (; 4 ;) (type $3) (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (global.set $global$0
    (local.tee $3
@@ -152,7 +149,7 @@
    )
   )
  )
- (func $__em_asm_sig_builder::inner<int>\20const\20__em_asm_sig_builder::__em_asm_sig<int>\28int\29 (; 5 ;) (param $0 i32) (param $1 i32)
+ (func $__em_asm_sig_builder::inner<int>\20const\20__em_asm_sig_builder::__em_asm_sig<int>\28int\29 (; 5 ;) (type $4) (param $0 i32) (param $1 i32)
   (local $2 i32)
   (global.set $global$0
    (local.tee $2
@@ -188,83 +185,12 @@
    )
   )
  )
- (func $__em_asm_sig_builder::sig_char\28int\29 (; 6 ;) (param $0 i32) (result i32)
+ (func $__em_asm_sig_builder::sig_char\28int\29 (; 6 ;) (type $5) (param $0 i32) (result i32)
   (i32.const 105)
  )
- (func $main (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (; 7 ;) (type $6) (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $stackSave (; 8 ;) (result i32)
-  (global.get $global$0)
- )
- (func $stackAlloc (; 9 ;) (param $0 i32) (result i32)
-  (local $1 i32)
-  (global.set $global$0
-   (local.tee $1
-    (i32.and
-     (i32.sub
-      (global.get $global$0)
-      (local.get $0)
-     )
-     (i32.const -16)
-    )
-   )
-  )
-  (local.get $1)
- )
- (func $stackRestore (; 10 ;) (param $0 i32)
-  (global.set $global$0
-   (local.get $0)
-  )
- )
- (func $__growWasmMemory (; 11 ;) (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
+ ;; custom section "producers", size 111
 )
-(;
---BEGIN METADATA --
-{
-  "asmConsts": {
-    "568": ["{ Module.print(\"Hello world\"); }", ["iii"], [""]],
-    "601": ["{ return $0 + $1; }", ["iii"], [""]],
-    "621": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]]
-  },
-  "staticBump": 84,
-  "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
-  "declares": [
-  ],
-  "externs": [
-  ],
-  "implementedFunctions": [
-    "___wasm_call_ctors",
-    "_main",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory"
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "main",
-    "stackSave",
-    "stackAlloc",
-    "stackRestore",
-    "__growWasmMemory"
-  ],
-  "namedGlobals": {
-    "__heap_base" : "66192",
-    "__data_end" : "652"
-  },
-  "invokeFuncs": [
-  ],
-  "features": [
-  ],
-  "mainReadsParams": 0
-}
--- END METADATA --
-;)
+

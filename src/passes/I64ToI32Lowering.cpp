@@ -130,7 +130,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         } else if (auto* get = curr->init->dynCast<GlobalGet>()) {
           high->init = builder->makeGlobalGet(makeHighName(get->name), i32);
         } else {
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected expression type");
         }
         curr->init->type = i32;
       }
@@ -744,8 +744,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         lower(result, ClzInt32, std::move(highBits), std::move(lowBits));
         break;
       case CtzInt64:
-        std::cerr << "i64.ctz should be removed already" << std::endl;
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("i64.ctz should be removed already");
         break;
       default:
         abort();
@@ -821,8 +820,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         lowerConvertIntToFloat(curr);
         break;
       case PopcntInt64:
-        std::cerr << "i64.popcnt should already be removed" << std::endl;
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("i64.popcnt should already be removed");
       default:
         std::cerr << "Unhandled unary operator: " << curr->op << std::endl;
         abort();
@@ -1320,9 +1318,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case RemUInt64:
       case RotLInt64:
       case RotRInt64:
-        std::cerr << "should have been removed by now " << curr->op
-                  << std::endl;
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("should have been removed by now");
 
       case AndInt64:
       case OrInt64:

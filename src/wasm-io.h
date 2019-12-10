@@ -27,15 +27,7 @@
 
 namespace wasm {
 
-class ModuleIO {
-protected:
-  bool debug = false;
-
-public:
-  void setDebug(bool debug_) { debug = debug_; }
-};
-
-class ModuleReader : public ModuleIO {
+class ModuleReader {
 public:
   // read text
   void readText(std::string filename, Module& wasm);
@@ -54,7 +46,7 @@ private:
   void readStdin(Module& wasm, std::string sourceMapFilename);
 };
 
-class ModuleWriter : public ModuleIO {
+class ModuleWriter {
   bool binary = true;
   bool debugInfo = false;
   std::string symbolMap;

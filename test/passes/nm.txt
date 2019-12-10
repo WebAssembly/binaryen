@@ -1,6 +1,6 @@
-    $a : 1
-    $b : 5
-    $c : 13
+    a : 1
+    b : 5
+    c : 13
 (module
  (type $none_=>_none (func))
  (memory $0 0)

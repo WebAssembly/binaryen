@@ -465,9 +465,9 @@ public:
       case WidenHighUVecI16x8ToVecI32x4:
         return value.widenHighUToVecI32x4();
       case InvalidUnary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid unary op");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitBinary(Binary* curr) {
     NOTE_ENTER("Binary");
@@ -846,9 +846,9 @@ public:
         return left.swizzleVec8x16(right);
 
       case InvalidBinary:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid binary op");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDExtract(SIMDExtract* curr) {
     NOTE_ENTER("SIMDExtract");
@@ -875,7 +875,7 @@ public:
       case ExtractLaneVecF64x2:
         return vec.extractLaneF64x2(curr->index);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDReplace(SIMDReplace* curr) {
     NOTE_ENTER("SIMDReplace");
@@ -903,7 +903,7 @@ public:
       case ReplaceLaneVecF64x2:
         return vec.replaceLaneF64x2(value, curr->index);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDShuffle(SIMDShuffle* curr) {
     NOTE_ENTER("SIMDShuffle");
@@ -941,7 +941,7 @@ public:
         return c.bitselectV128(a, b);
       default:
         // TODO: implement qfma/qfms
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("not implemented");
     }
   }
   Flow visitSIMDShift(SIMDShift* curr) {
@@ -982,7 +982,7 @@ public:
       case ShrUVecI64x2:
         return vec.shrUI64x2(shift);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
@@ -1029,7 +1029,7 @@ public:
   Flow visitUnreachable(Unreachable* curr) {
     NOTE_ENTER("Unreachable");
     trap("unreachable");
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unreachable");
   }
 
   Literal truncSFloat(Unary* curr, Literal value) {
@@ -1098,33 +1098,33 @@ public:
     return Flow();
   }
 
-  Flow visitCall(Call*) { WASM_UNREACHABLE(); }
-  Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE(); }
-  Flow visitLocalGet(LocalGet*) { WASM_UNREACHABLE(); }
-  Flow visitLocalSet(LocalSet*) { WASM_UNREACHABLE(); }
-  Flow visitGlobalSet(GlobalSet*) { WASM_UNREACHABLE(); }
-  Flow visitLoad(Load* curr) { WASM_UNREACHABLE(); }
-  Flow visitStore(Store* curr) { WASM_UNREACHABLE(); }
-  Flow visitHost(Host* curr) { WASM_UNREACHABLE(); }
-  Flow visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE(); }
-  Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE(); }
-  Flow visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE(); }
-  Flow visitMemoryFill(MemoryFill* curr) { WASM_UNREACHABLE(); }
-  Flow visitAtomicRMW(AtomicRMW*) { WASM_UNREACHABLE(); }
-  Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE(); }
-  Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE(); }
-  Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE(); }
-  Flow visitSIMDLoad(SIMDLoad*) { WASM_UNREACHABLE(); }
-  Flow visitSIMDLoadSplat(SIMDLoad*) { WASM_UNREACHABLE(); }
-  Flow visitSIMDLoadExtend(SIMDLoad*) { WASM_UNREACHABLE(); }
-  Flow visitPush(Push*) { WASM_UNREACHABLE(); }
-  Flow visitPop(Pop*) { WASM_UNREACHABLE(); }
-  Flow visitTry(Try*) { WASM_UNREACHABLE(); }
-  Flow visitThrow(Throw*) { WASM_UNREACHABLE(); }
-  Flow visitRethrow(Rethrow*) { WASM_UNREACHABLE(); }
-  Flow visitBrOnExn(BrOnExn*) { WASM_UNREACHABLE(); }
+  Flow visitCall(Call*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitCallIndirect(CallIndirect*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitLocalGet(LocalGet*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitLocalSet(LocalSet*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitGlobalSet(GlobalSet*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitLoad(Load* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStore(Store* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitHost(Host* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemoryFill(MemoryFill* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicRMW(AtomicRMW*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicWait(AtomicWait*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitAtomicNotify(AtomicNotify*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoad(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadSplat(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadExtend(SIMDLoad*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitPush(Push*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitPop(Pop*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTry(Try*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitThrow(Throw*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitRethrow(Rethrow*) { WASM_UNREACHABLE("unimp"); }
+  Flow visitBrOnExn(BrOnExn*) { WASM_UNREACHABLE("unimp"); }
 
-  virtual void trap(const char* why) { WASM_UNREACHABLE(); }
+  virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 };
 
 // Execute an constant expression in a global init or memory offset.
@@ -1185,7 +1185,7 @@ public:
             case 4:
               return Literal((int32_t)load32s(addr));
             default:
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("invalid size");
           }
           break;
         }
@@ -1203,7 +1203,7 @@ public:
             case 8:
               return Literal((int64_t)load64s(addr));
             default:
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("invalid size");
           }
           break;
         }
@@ -1217,9 +1217,9 @@ public:
         case exnref: // exnref cannot be loaded from memory
         case none:
         case unreachable:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected type");
       }
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
     }
     virtual void store(Store* store, Address addr, Literal value) {
       switch (store->valueType) {
@@ -1235,7 +1235,7 @@ public:
               store32(addr, value.geti32());
               break;
             default:
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("invalid store size");
           }
           break;
         }
@@ -1254,7 +1254,7 @@ public:
               store64(addr, value.geti64());
               break;
             default:
-              WASM_UNREACHABLE();
+              WASM_UNREACHABLE("invalid store size");
           }
           break;
         }
@@ -1272,31 +1272,41 @@ public:
         case exnref: // exnref cannot be stored in memory
         case none:
         case unreachable:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected type");
       }
     }
 
-    virtual int8_t load8s(Address addr) { WASM_UNREACHABLE(); }
-    virtual uint8_t load8u(Address addr) { WASM_UNREACHABLE(); }
-    virtual int16_t load16s(Address addr) { WASM_UNREACHABLE(); }
-    virtual uint16_t load16u(Address addr) { WASM_UNREACHABLE(); }
-    virtual int32_t load32s(Address addr) { WASM_UNREACHABLE(); }
-    virtual uint32_t load32u(Address addr) { WASM_UNREACHABLE(); }
-    virtual int64_t load64s(Address addr) { WASM_UNREACHABLE(); }
-    virtual uint64_t load64u(Address addr) { WASM_UNREACHABLE(); }
+    virtual int8_t load8s(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual uint8_t load8u(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual int16_t load16s(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual uint16_t load16u(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual int32_t load32s(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual uint32_t load32u(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual int64_t load64s(Address addr) { WASM_UNREACHABLE("unimp"); }
+    virtual uint64_t load64u(Address addr) { WASM_UNREACHABLE("unimp"); }
     virtual std::array<uint8_t, 16> load128(Address addr) {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
 
-    virtual void store8(Address addr, int8_t value) { WASM_UNREACHABLE(); }
-    virtual void store16(Address addr, int16_t value) { WASM_UNREACHABLE(); }
-    virtual void store32(Address addr, int32_t value) { WASM_UNREACHABLE(); }
-    virtual void store64(Address addr, int64_t value) { WASM_UNREACHABLE(); }
+    virtual void store8(Address addr, int8_t value) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual void store16(Address addr, int16_t value) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual void store32(Address addr, int32_t value) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual void store64(Address addr, int64_t value) {
+      WASM_UNREACHABLE("unimp");
+    }
     virtual void store128(Address addr, const std::array<uint8_t, 16>&) {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unimp");
     }
 
-    virtual void tableStore(Address addr, Name entry) { WASM_UNREACHABLE(); }
+    virtual void tableStore(Address addr, Name entry) {
+      WASM_UNREACHABLE("unimp");
+    }
   };
 
   SubType* self() { return static_cast<SubType*>(this); }
@@ -1443,7 +1453,7 @@ private:
         std::cerr << "Function `" << function->name << "` expects "
                   << function->sig.params.size() << " parameters, got "
                   << arguments.size() << " arguments." << std::endl;
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid param count");
       }
       locals.resize(function->getNumLocals());
       const std::vector<Type>& params = function->sig.params.expand();
@@ -1454,7 +1464,7 @@ private:
             std::cerr << "Function `" << function->name << "` expects type "
                       << params[i] << " for parameter " << i << ", got "
                       << arguments[i].type << "." << std::endl;
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid param count");
           }
           locals[i] = arguments[i];
         } else {
@@ -1747,7 +1757,7 @@ private:
         case LoadExtUVec32x2ToVecI64x2:
           return visitSIMDLoadExtend(curr);
       }
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid op");
     }
     Flow visitSIMDLoadSplat(SIMDLoad* curr) {
       Load load;
@@ -1774,7 +1784,7 @@ private:
           splat = &Literal::splatI64x2;
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid op");
       }
       load.finalize();
       Flow flow = this->visit(&load);
@@ -1805,9 +1815,9 @@ private:
           case LoadExtUVec32x2ToVecI64x2:
             return Literal(int64_t(instance.externalInterface->load32u(addr)));
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected op");
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid op");
       };
       auto fillLanes = [&](auto lanes, size_t laneBytes) {
         for (auto& lane : lanes) {
@@ -1834,9 +1844,9 @@ private:
           return fillLanes(lanes, 4);
         }
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected op");
       }
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid op");
     }
     Flow visitHost(Host* curr) {
       NOTE_ENTER("Host");
@@ -1868,7 +1878,7 @@ private:
           return Literal(int32_t(ret));
         }
       }
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid op");
     }
     Flow visitMemoryInit(MemoryInit* curr) {
       NOTE_ENTER("MemoryInit");
@@ -2048,7 +2058,7 @@ public:
       std::cerr << "calling " << function->name << " resulted in " << ret
                 << " but the function type is " << function->sig.results
                 << '\n';
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpect result type");
     }
     // may decrease more than one, if we jumped up the stack
     callDepth = previousCallDepth;

@@ -12,7 +12,7 @@
  (type $i64_i64_=>_f32 (func (param i64 i64) (result f32)))
  (type $i32_f32_f32_=>_f64 (func (param i32 f32 f32) (result f64)))
  (type $f32_f32_=>_f64 (func (param f32 f32) (result f64)))
- (import "env" "imported_func" (func $imported-func (param i32 i64 f32 f64) (result f32)))
+ (import "env" "imported_func" (func imported-func (param i32 i64 f32 f64) (result f32)))
  (table $0 10 10 funcref)
  (elem (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e $byn$fpcast-emu$e $byn$fpcast-emu$imported-func)
  (export "dynCall_vijfd" (func $dynCall_vijfd))

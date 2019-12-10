@@ -180,7 +180,7 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
       makeClampLimitLiterals<uint64_t, double>(iMin, fMin, fMax);
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected op");
   }
 
   auto func = new Function;

@@ -150,7 +150,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
       case anyref: // anyref cannot be loaded from memory
       case exnref: // exnref cannot be loaded from memory
       case none:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
@@ -167,7 +167,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
             o << int8_t(BinaryConsts::I32AtomicLoad);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid load size");
         }
         break;
       }
@@ -186,14 +186,14 @@ void BinaryInstWriter::visitLoad(Load* curr) {
             o << int8_t(BinaryConsts::I64AtomicLoad);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid load size");
         }
         break;
       }
       case unreachable:
         return;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
   }
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
@@ -251,7 +251,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
       case exnref: // exnref cannot be stored in memory
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
@@ -268,7 +268,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
             o << int8_t(BinaryConsts::I32AtomicStore);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid store size");
         }
         break;
       }
@@ -287,12 +287,12 @@ void BinaryInstWriter::visitStore(Store* curr) {
             o << int8_t(BinaryConsts::I64AtomicStore);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid store size");
         }
         break;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
   }
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
@@ -316,7 +316,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
             o << int8_t(BinaryConsts::I32AtomicRMW##Op);                       \
             break;                                                             \
           default:                                                             \
-            WASM_UNREACHABLE();                                                \
+            WASM_UNREACHABLE("invalid rmw size");                              \
         }                                                                      \
         break;                                                                 \
       case i64:                                                                \
@@ -334,11 +334,11 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
             o << int8_t(BinaryConsts::I64AtomicRMW##Op);                       \
             break;                                                             \
           default:                                                             \
-            WASM_UNREACHABLE();                                                \
+            WASM_UNREACHABLE("invalid rmw size");                              \
         }                                                                      \
         break;                                                                 \
       default:                                                                 \
-        WASM_UNREACHABLE();                                                    \
+        WASM_UNREACHABLE("unexpected type");                                   \
     }                                                                          \
     break
 
@@ -350,7 +350,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
     CASE_FOR_OP(Xor);
     CASE_FOR_OP(Xchg);
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected op");
   }
 #undef CASE_FOR_OP
 
@@ -372,7 +372,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
           o << int8_t(BinaryConsts::I32AtomicCmpxchg);
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid size");
       }
       break;
     case i64:
@@ -390,11 +390,11 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
           o << int8_t(BinaryConsts::I64AtomicCmpxchg);
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid size");
       }
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
   emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
 }
@@ -413,7 +413,7 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
       break;
     }
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
 }
 
@@ -646,7 +646,7 @@ void BinaryInstWriter::visitConst(Const* curr) {
     case exnref: // there's no exnref.const
     case none:
     case unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
 }
 
@@ -988,7 +988,7 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
         << U32LEB(BinaryConsts::I32x4WidenHighUI16x8);
       break;
     case InvalidUnary:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid unary op");
   }
 }
 
@@ -1530,7 +1530,7 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
 
     case InvalidBinary:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid binary op");
   }
 }
 
@@ -1662,7 +1662,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       mappedLocals[i] = index + currLocalsByType[exnref] - 1;
       continue;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected type");
   }
   // Emit them.
   o << U32LEB((numLocalsByType[i32] ? 1 : 0) + (numLocalsByType[i64] ? 1 : 0) +
@@ -1706,7 +1706,7 @@ int32_t BinaryInstWriter::getBreakIndex(Name name) { // -1 if not found
       return breakStack.size() - 1 - i;
     }
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("break index not found");
 }
 
 void StackIRGenerator::emit(Expression* curr) {
@@ -1736,7 +1736,7 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
   } else if (curr->is<Try>()) {
     stackInst = makeStackInst(StackInst::TryEnd, curr);
   } else {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expr type");
   }
   stackIR.push_back(stackInst);
 }
@@ -1794,7 +1794,7 @@ void StackIRToBinaryWriter::write() {
         break;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected op");
     }
   }
   writer.emitFunctionEnd();

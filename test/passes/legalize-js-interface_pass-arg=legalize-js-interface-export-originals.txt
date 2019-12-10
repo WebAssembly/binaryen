@@ -2,7 +2,7 @@
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i64 (func (result i64)))
- (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (import "env" "setTempRet0" (func setTempRet0 (param i32)))
  (export "func" (func $legalstub$func))
  (export "orig$func" (func $func))
  (func $func (; 1 ;) (result i64)

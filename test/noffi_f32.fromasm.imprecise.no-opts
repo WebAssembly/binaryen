@@ -5,7 +5,7 @@
  (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
- (import "env" "_importf" (func $importf (param f32) (result f32)))
+ (import "env" "_importf" (func importf (param f32) (result f32)))
  (export "main" (func $main))
  (export "exportf" (func $exportf))
  (func $exportf (; 1 ;) (param $a f32) (result f32)

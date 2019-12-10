@@ -5,7 +5,7 @@
  (import "env" "memory" (memory $memory 256 256))
  (data (global.get $__memory_base) "noffi_i64.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))
- (import "env" "_importll" (func $importll (param i64) (result i64)))
+ (import "env" "_importll" (func importll (param i64) (result i64)))
  (export "_add" (func $add))
  (export "_main" (func $main))
  (func $add (; 1 ;) (; has Stack IR ;) (param $0 i64) (param $1 i64) (result i64)

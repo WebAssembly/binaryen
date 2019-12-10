@@ -1763,7 +1763,7 @@ int main() {
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
- (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (import "module" "base" (func an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
@@ -3888,7 +3888,7 @@ raw:
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
- (import "module" "check" (func $check (param i32)))
+ (import "module" "check" (func check (param i32)))
  (func $just-one-block (; 1 ;)
   (local $0 i32)
   (call $check
@@ -4416,7 +4416,7 @@ BinaryenFeatureAll: 511
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
- (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (import "module" "base" (func an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
@@ -6100,7 +6100,7 @@ raw:
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
- (import "module" "check" (func $check (param i32)))
+ (import "module" "check" (func check (param i32)))
  (func $just-one-block (; 1 ;)
   (local $0 i32)
   (call $check
@@ -6598,7 +6598,7 @@ module s-expr printed (in memory, caller-owned):
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (import "spectest" "print" (func $print-i32 (param i32)))
+ (import "spectest" "print" (func print-i32 (param i32)))
  (start $starter)
  (func $starter (; 1 ;)
   (call $print-i32

@@ -2738,6 +2738,12 @@ Module['emitText'] = function(expr) {
 };
 
 // Parses a binary to a module
+
+// If building with Emscripten ASSERTIONS, there is a property added to
+// Module to guard against users mistakening using the removed readBinary()
+// API. We must defuse that carefully.
+Object.defineProperty(Module, 'readBinary', { writable: true });
+
 Module['readBinary'] = function(data) {
   var buffer = allocate(data, 'i8', ALLOC_NORMAL);
   var ptr = Module['_BinaryenModuleRead'](buffer, data.length);

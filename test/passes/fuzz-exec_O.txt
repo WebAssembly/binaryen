@@ -1,5 +1,5 @@
-[fuzz-exec] calling $func_0
-[fuzz-exec] calling $func_1
+[fuzz-exec] calling func_0
+[fuzz-exec] calling func_1
 (module
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i64 (func (result i64)))
@@ -22,7 +22,7 @@
   )
  )
 )
-[fuzz-exec] calling $func_0
-[fuzz-exec] calling $func_1
-[fuzz-exec] comparing $func_0
-[fuzz-exec] comparing $func_1
+[fuzz-exec] calling func_0
+[fuzz-exec] calling func_1
+[fuzz-exec] comparing func_0
+[fuzz-exec] comparing func_1

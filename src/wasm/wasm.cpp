@@ -94,7 +94,7 @@ Name ATTR("attr");
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
     case Expression::Id::InvalidId:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid expr id");
     case Expression::Id::BlockId:
       return "block";
     case Expression::Id::IfId:
@@ -182,9 +182,9 @@ const char* getExpressionName(Expression* curr) {
     case Expression::BrOnExnId:
       return "br_on_exn";
     case Expression::Id::NumExpressionIds:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid expr id");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid expr id");
 }
 
 // core AST type checking
@@ -292,7 +292,7 @@ static void handleUnreachable(Block* block,
       // there is an unreachable child, so we are unreachable, unless we have a
       // break
       if (!breakabilityKnown) {
-        hasBreak = BranchUtils::BranchSeeker::hasNamed(block, block->name);
+        hasBreak = BranchUtils::BranchSeeker::has(block, block->name);
       }
       if (!hasBreak) {
         block->type = unreachable;
@@ -532,7 +532,7 @@ void SIMDExtract::finalize() {
       type = f64;
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected op");
   }
   if (vec->type == unreachable) {
     type = unreachable;
@@ -626,7 +626,7 @@ Index SIMDLoad::getMemBytes() {
     case LoadExtUVec32x2ToVecI64x2:
       return 8;
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("unexpected op");
 }
 
 Const* Const::set(Literal value_) {
@@ -774,7 +774,7 @@ void Unary::finalize() {
       break;
 
     case InvalidUnary:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid unary op");
   }
 }
 
@@ -963,7 +963,7 @@ Type Function::getLocalType(Index index) {
   } else if (isVar(index)) {
     return vars[index - params.size()];
   } else {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid local index");
   }
 }
 

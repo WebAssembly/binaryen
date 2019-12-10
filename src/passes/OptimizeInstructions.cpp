@@ -59,7 +59,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case i64:
         return 64 - const_->value.countLeadingZeroes().geti64();
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
     }
   } else if (auto* binary = curr->dynCast<Binary>()) {
     switch (binary->op) {
@@ -186,7 +186,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
     case unreachable:
       return 64; // not interesting, but don't crash
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
 }
 

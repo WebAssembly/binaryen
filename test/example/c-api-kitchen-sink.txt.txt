@@ -6,7 +6,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
- (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (import "module" "base" (func an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
@@ -1680,7 +1680,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
- (import "module" "check" (func $check (param i32)))
+ (import "module" "check" (func check (param i32)))
  (func $just-one-block (; 1 ;)
   (local $0 i32)
   (call $check

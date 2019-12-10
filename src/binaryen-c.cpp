@@ -73,7 +73,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
   return ret;
 }
@@ -94,9 +94,9 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 // Mutexes (global for now; in theory if multiple modules
@@ -213,7 +213,7 @@ void printArg(std::ostream& setup, std::ostream& out, BinaryenLiteral arg) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
 }
 
@@ -3729,7 +3729,7 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   Wasm2JSBuilder wasm2js(flags, globalPassOptions);
   Ref asmjs = wasm2js.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
-  Output out("", Flags::Text, Flags::Release); // stdout
+  Output out("", Flags::Text); // stdout
   Wasm2JSGlue glue(*wasm, out, flags, "asmFunc");
   glue.emitPre();
   jser.printAst();
@@ -3850,8 +3850,8 @@ static BinaryenBufferSizes writeModule(BinaryenModuleRef module,
                                        char* sourceMap,
                                        size_t sourceMapSize) {
   Module* wasm = (Module*)module;
-  BufferWithRandomAccess buffer(false);
-  WasmBinaryWriter writer(wasm, buffer, false);
+  BufferWithRandomAccess buffer;
+  WasmBinaryWriter writer(wasm, buffer);
   writer.setNamesSection(globalPassOptions.debugInfo);
   std::ostringstream os;
   if (sourceMapUrl) {
@@ -3925,8 +3925,8 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
   }
 
   Module* wasm = (Module*)module;
-  BufferWithRandomAccess buffer(false);
-  WasmBinaryWriter writer(wasm, buffer, false);
+  BufferWithRandomAccess buffer;
+  WasmBinaryWriter writer(wasm, buffer);
   writer.setNamesSection(globalPassOptions.debugInfo);
   std::ostringstream os;
   if (sourceMapUrl) {
@@ -3969,7 +3969,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   buffer.resize(inputSize);
   std::copy_n(input, inputSize, buffer.begin());
   try {
-    WasmBinaryBuilder parser(*wasm, buffer, false);
+    WasmBinaryBuilder parser(*wasm, buffer);
     parser.read();
   } catch (ParseException& p) {
     p.dump(std::cerr);
@@ -4539,6 +4539,60 @@ size_t BinaryenSizeofAllocateAndWriteResult(void) {
   return sizeof(BinaryenModuleAllocateAndWriteResult);
 }
 
-#endif
+// Helpers for accessing Binaryen's memory from another module without the
+// need to round-trip through JS, e.g. when allocating and initializing
+// strings passed to / reading strings returned by the C-API.
+
+// TODO: Remove these once Wasm supports multiple memories.
+
+// Stores an 8-bit integer to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _i32_store8(int8_t* ptr, int8_t value) { *ptr = value; }
+
+// Stores a 16-bit integer to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _i32_store16(int16_t* ptr, int16_t value) { *ptr = value; }
+
+// Stores a 32-bit integer to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _i32_store(int32_t* ptr, int32_t value) { *ptr = value; }
+
+// Stores a 32-bit float to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _f32_store(float* ptr, float value) { *ptr = value; }
+
+// Stores a 64-bit float to Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+void _f64_store(double* ptr, double value) { *ptr = value; }
+
+// Loads an 8-bit signed integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+int8_t _i32_load8_s(int8_t* ptr) { return *ptr; }
+
+// Loads an 8-bit unsigned integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+uint8_t _i32_load8_u(uint8_t* ptr) { return *ptr; }
+
+// Loads a 16-bit signed integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+int16_t _i32_load16_s(int16_t* ptr) { return *ptr; }
+
+// Loads a 16-bit unsigned integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+uint16_t _i32_load16_u(uint16_t* ptr) { return *ptr; }
+
+// Loads a 32-bit integer from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+int32_t _i32_load(int32_t* ptr) { return *ptr; }
+
+// Loads a 32-bit float from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+float _f32_load(float* ptr) { return *ptr; }
+
+// Loads a 64-bit float from Binaryen memory.
+EMSCRIPTEN_KEEPALIVE
+double _f64_load(double* ptr) { return *ptr; }
+
+#endif // __EMSCRIPTEN__
 
 } // extern "C"

@@ -63,16 +63,13 @@ static Expression* toABI(Expression* value, Module* module) {
       break;
     }
     case v128: {
-      assert(false && "v128 not implemented yet");
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("v128 not implemented yet");
     }
     case anyref: {
-      assert(false && "anyref cannot be converted to i64");
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("anyref cannot be converted to i64");
     }
     case exnref: {
-      assert(false && "exnref cannot be converted to i64");
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("exnref cannot be converted to i64");
     }
     case none: {
       // the value is none, but we need a value here
@@ -109,16 +106,13 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
       break;
     }
     case v128: {
-      assert(false && "v128 not implemented yet");
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("v128 not implemented yet");
     }
     case anyref: {
-      assert(false && "anyref cannot be converted from i64");
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("anyref cannot be converted from i64");
     }
     case exnref: {
-      assert(false && "exnref cannot be converted from i64");
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("exnref cannot be converted from i64");
     }
     case none: {
       value = builder.makeDrop(value);

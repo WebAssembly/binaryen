@@ -102,8 +102,8 @@ inline Event* copyEvent(Event* event, Module& out) {
   return ret;
 }
 
-inline void copyModule(Module& in, Module& out) {
-  // we use names throughout, not raw points, so simple copying is fine
+inline void copyModule(const Module& in, Module& out) {
+  // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
   for (auto& curr : in.exports) {
     out.addExport(new Export(*curr));
@@ -128,6 +128,19 @@ inline void copyModule(Module& in, Module& out) {
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
+}
+
+inline void clearModule(Module& wasm) {
+  wasm.exports.clear();
+  wasm.functions.clear();
+  wasm.globals.clear();
+  wasm.events.clear();
+  wasm.table.segments.clear();
+  wasm.memory.segments.clear();
+  wasm.start = Name();
+  wasm.userSections.clear();
+  wasm.debugInfoFileNames.clear();
+  wasm.updateMaps();
 }
 
 // Renaming

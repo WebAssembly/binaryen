@@ -195,7 +195,7 @@ struct DeadCodeElimination
       reachableBreaks.erase(curr->name);
     }
     if (isUnreachable(curr->body) &&
-        !BranchUtils::BranchSeeker::hasNamed(curr->body, curr->name)) {
+        !BranchUtils::BranchSeeker::has(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }
@@ -356,9 +356,9 @@ struct DeadCodeElimination
         case Expression::Id::BrOnExnId:
           DELEGATE(BrOnExn);
         case Expression::Id::InvalidId:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unimp");
         case Expression::Id::NumExpressionIds:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unimp");
       }
 #undef DELEGATE
       return;

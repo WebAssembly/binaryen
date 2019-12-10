@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
- (import "spectest" "print" (func $print (param i32)))
+ (import "spectest" "print" (func print (param i32)))
  (memory $0 1 1)
  (export "mem" (memory $0))
  (start $main)
