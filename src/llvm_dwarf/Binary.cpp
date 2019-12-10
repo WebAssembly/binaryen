@@ -49,57 +49,7 @@ MemoryBufferRef Binary::getMemoryBufferRef() const { return Data; }
 
 Expected<std::unique_ptr<Binary>> object::createBinary(MemoryBufferRef Buffer,
                                                       LLVMContext *Context) {
-  file_magic Type = identify_magic(Buffer.getBuffer());
-
-  switch (Type) {
-#if 0 // XXX BINARYEN
-  case file_magic::archive:
-    return Archive::create(Buffer);
-  case file_magic::elf:
-  case file_magic::elf_relocatable:
-  case file_magic::elf_executable:
-  case file_magic::elf_shared_object:
-  case file_magic::elf_core:
-  case file_magic::macho_object:
-  case file_magic::macho_executable:
-  case file_magic::macho_fixed_virtual_memory_shared_lib:
-  case file_magic::macho_core:
-  case file_magic::macho_preload_executable:
-  case file_magic::macho_dynamically_linked_shared_lib:
-  case file_magic::macho_dynamic_linker:
-  case file_magic::macho_bundle:
-  case file_magic::macho_dynamically_linked_shared_lib_stub:
-  case file_magic::macho_dsym_companion:
-  case file_magic::macho_kext_bundle:
-  case file_magic::coff_object:
-  case file_magic::coff_import_library:
-  case file_magic::pecoff_executable:
-  case file_magic::bitcode:
-  case file_magic::xcoff_object_32:
-  case file_magic::xcoff_object_64:
-#endif
-  case file_magic::wasm_object:
-    return ObjectFile::createSymbolicFile(Buffer, Type, Context);
-  default: {} // XXX BINARYEN
-#if 0 // XXX BINARYEN
-  case file_magic::macho_universal_binary:
-    return MachOUniversalBinary::create(Buffer);
-  case file_magic::windows_resource:
-    return WindowsResource::createWindowsResource(Buffer);
-  case file_magic::pdb:
-    // PDB does not support the Binary interface.
-    return errorCodeToError(object_error::invalid_file_type);
-  case file_magic::unknown:
-  case file_magic::coff_cl_gl_object:
-    // Unrecognized object file format.
-    return errorCodeToError(object_error::invalid_file_type);
-  case file_magic::minidump:
-    return MinidumpFile::create(Buffer);
-  case file_magic::tapi_file:
-    return TapiUniversal::create(Buffer);
-#endif
-  }
-  llvm_unreachable("Unexpected Binary File Type");
+  llvm_unreachable("createBinary");
 }
 
 #if 0 // XXX BINARYEN
