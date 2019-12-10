@@ -2645,8 +2645,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               }
               break;
             }
-            default: {
-            }
           }
         }
         // ftCall_* and mftCall_* represent function table calls, either from
