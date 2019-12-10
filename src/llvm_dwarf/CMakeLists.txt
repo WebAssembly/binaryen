@@ -47,7 +47,6 @@ SET(llvm_dwarf_SOURCES
   DWARFYAML.cpp
   Error.cpp
   ErrorHandling.cpp
-  FoldingSet.cpp
   FormatVariadic.cpp
   Hashing.cpp
   LEB128.cpp
