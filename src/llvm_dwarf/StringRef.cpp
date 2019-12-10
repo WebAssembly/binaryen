@@ -506,78 +506,7 @@ bool llvm::getAsSignedInteger(StringRef Str, unsigned Radix,
 }
 
 bool StringRef::getAsInteger(unsigned Radix, APInt &Result) const {
-  StringRef Str = *this;
-
-  // Autosense radix if not specified.
-  if (Radix == 0)
-    Radix = GetAutoSenseRadix(Str);
-
-  assert(Radix > 1 && Radix <= 36);
-
-  // Empty strings (after the radix autosense) are invalid.
-  if (Str.empty()) return true;
-
-  // Skip leading zeroes.  This can be a significant improvement if
-  // it means we don't need > 64 bits.
-  while (!Str.empty() && Str.front() == '0')
-    Str = Str.substr(1);
-
-  // If it was nothing but zeroes....
-  if (Str.empty()) {
-    Result = APInt(64, 0);
-    return false;
-  }
-
-  // (Over-)estimate the required number of bits.
-  unsigned Log2Radix = 0;
-  while ((1U << Log2Radix) < Radix) Log2Radix++;
-  bool IsPowerOf2Radix = ((1U << Log2Radix) == Radix);
-
-  unsigned BitWidth = Log2Radix * Str.size();
-  if (BitWidth < Result.getBitWidth())
-    BitWidth = Result.getBitWidth(); // don't shrink the result
-  else if (BitWidth > Result.getBitWidth())
-    Result = Result.zext(BitWidth);
-
-  APInt RadixAP, CharAP; // unused unless !IsPowerOf2Radix
-  if (!IsPowerOf2Radix) {
-    // These must have the same bit-width as Result.
-    RadixAP = APInt(BitWidth, Radix);
-    CharAP = APInt(BitWidth, 0);
-  }
-
-  // Parse all the bytes of the string given this radix.
-  Result = 0;
-  while (!Str.empty()) {
-    unsigned CharVal;
-    if (Str[0] >= '0' && Str[0] <= '9')
-      CharVal = Str[0]-'0';
-    else if (Str[0] >= 'a' && Str[0] <= 'z')
-      CharVal = Str[0]-'a'+10;
-    else if (Str[0] >= 'A' && Str[0] <= 'Z')
-      CharVal = Str[0]-'A'+10;
-    else
-      return true;
-
-    // If the parsed value is larger than the integer radix, the string is
-    // invalid.
-    if (CharVal >= Radix)
-      return true;
-
-    // Add in this character.
-    if (IsPowerOf2Radix) {
-      Result <<= Log2Radix;
-      Result |= CharVal;
-    } else {
-      Result *= RadixAP;
-      CharAP = CharVal;
-      Result += CharAP;
-    }
-
-    Str = Str.substr(1);
-  }
-
-  return false;
+  llvm_unreachable("getAsinteger");
 }
 
 bool StringRef::getAsDouble(double &Result, bool AllowInexact) const {

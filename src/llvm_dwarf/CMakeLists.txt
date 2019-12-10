@@ -8,7 +8,6 @@ foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
 endforeach(variable)
 
 SET(llvm_dwarf_SOURCES
-  APInt.cpp
   Binary.cpp
   ConvertUTF.cpp
   DataExtractor.cpp
