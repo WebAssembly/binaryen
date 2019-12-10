@@ -1838,6 +1838,7 @@ public:
 };
 } // namespace
 
+#if 0 // XXX BINARYEN
 std::unique_ptr<DWARFContext>
 DWARFContext::create(const object::ObjectFile &Obj, const LoadedObjectInfo *L,
                      function_ref<ErrorPolicy(Error)> HandleError,
@@ -1845,6 +1846,7 @@ DWARFContext::create(const object::ObjectFile &Obj, const LoadedObjectInfo *L,
   auto DObj = std::make_unique<DWARFObjInMemory>(Obj, L, HandleError);
   return std::make_unique<DWARFContext>(std::move(DObj), std::move(DWPName));
 }
+#endif
 
 std::unique_ptr<DWARFContext>
 DWARFContext::create(const StringMap<std::unique_ptr<MemoryBuffer>> &Sections,
