@@ -42,33 +42,6 @@ bool hasDWARFSections(const Module& wasm) {
 
 #ifdef USE_LLVM_DWARF
 
-// Big picture: We use a DWARFContext to read data, then DWARFYAML support
-// code to write it. That is not the main LLVM Dwarf code used for writing
-// object files, but it avoids us create a "fake" MC layer, and provides a
-// simple way to write out the debug info. Likely the level of info represented
-// in the DWARFYAML::Data object is sufficient for Binaryen's needs, but if not,
-// we may need a different approach.
-//
-// In more detail:
-//
-// 1. Binary sections => DWARFContext:
-//
-//     llvm::DWARFContext::create(sections..)
-//
-// 2. DWARFContext => DWARFYAML::Data
-//
-//     std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
-//
-// 3. DWARFYAML::Data => binary sections
-//
-//     StringMap<std::unique_ptr<MemoryBuffer>>
-//     EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups);
-//
-// For modifying data, like line numberes, we can in theory do that either on
-// the DWARFContext or DWARFYAML::Data; unclear which is best, but modifying
-// the DWARFContext may save us doing fixups in EmitDebugSections.
-// */
-
 struct BinaryenDWARFInfo {
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
   std::unique_ptr<llvm::DWARFContext> context;
@@ -102,6 +75,34 @@ void dumpDWARF(const Module& wasm) {
   options.Verbose = true;
   info.context->dump(llvm::outs(), options);
 }
+
+//
+// Big picture: We use a DWARFContext to read data, then DWARFYAML support
+// code to write it. That is not the main LLVM Dwarf code used for writing
+// object files, but it avoids us create a "fake" MC layer, and provides a
+// simple way to write out the debug info. Likely the level of info represented
+// in the DWARFYAML::Data object is sufficient for Binaryen's needs, but if not,
+// we may need a different approach.
+//
+// In more detail:
+//
+// 1. Binary sections => DWARFContext:
+//
+//     llvm::DWARFContext::create(sections..)
+//
+// 2. DWARFContext => DWARFYAML::Data
+//
+//     std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
+//
+// 3. DWARFYAML::Data => binary sections
+//
+//     StringMap<std::unique_ptr<MemoryBuffer>>
+//     EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups);
+//
+// For modifying data, like line numberes, we can in theory do that either on
+// the DWARFContext or DWARFYAML::Data; unclear which is best, but modifying
+// the DWARFContext may save us doing fixups in EmitDebugSections.
+//
 
 void updateDWARF(Module& wasm) {
   BinaryenDWARFInfo info(wasm);

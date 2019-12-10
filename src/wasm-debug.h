@@ -15,7 +15,7 @@
  */
 
 //
-// Parses and emits WebAssembly binary code
+// Comprehensive debug info support (beyond source maps).
 //
 
 #ifndef wasm_wasm_debug_h
