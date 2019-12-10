@@ -1,8 +1,8 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (import "env" "waka" (func foo))
- (import "env" "waka" (func wrong (param i32)))
+ (import "env" "waka" (func $foo))
+ (import "env" "waka" (func $wrong (param i32)))
  (table $0 2 2 funcref)
  (elem (i32.const 0) $foo $foo)
  (export "baz" (func $0))

@@ -2,8 +2,8 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
- (import "env" "func" (func import))
- (import "env" "log_execution" (func log_execution (param i32)))
+ (import "env" "func" (func $import))
+ (import "env" "log_execution" (func $log_execution (param i32)))
  (func $nopp (; 2 ;)
   (call $log_execution
    (i32.const 0)

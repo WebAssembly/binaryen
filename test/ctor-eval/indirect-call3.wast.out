@@ -1,7 +1,7 @@
 (module
  (type $none_=>_none (func))
  (import "env" "tableBase" (global $tableBase i32))
- (import "env" "_abort" (func _abort))
+ (import "env" "_abort" (func $_abort))
  (memory $0 256 256)
  (data (i32.const 10) "waka waka xaka waka waka\00\00\00\00\00\00C")
  (func $call-indirect (; 1 ;)

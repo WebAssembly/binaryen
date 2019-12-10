@@ -4,7 +4,7 @@
  (import "env" "table" (table $table 1 1 funcref))
  (elem (global.get $__table_base) $gm)
  (import "env" "__table_base" (global $__table_base i32))
- (import "env" "_emscripten_glIsTexture" (func gm (param i32) (result i32)))
+ (import "env" "_emscripten_glIsTexture" (func $gm (param i32) (result i32)))
  (export "func" (func $func))
  (func $func (; 1 ;) (; has Stack IR ;)
   (drop

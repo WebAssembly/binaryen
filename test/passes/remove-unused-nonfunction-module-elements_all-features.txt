@@ -236,7 +236,7 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "imported" (global $imported i32))
- (import "env" "_puts" (func _puts (param i32) (result i32)))
+ (import "env" "_puts" (func $_puts (param i32) (result i32)))
  (global $int (mut i32) (global.get $imported))
  (global $set (mut i32) (i32.const 100))
  (global $exp_glob i32 (i32.const 600))

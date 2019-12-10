@@ -1904,7 +1904,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void handleSignature(Signature curr, Name* funcName = nullptr) {
     o << "(func";
     if (funcName) {
-      o << ' ' << *funcName;
+      o << " $" << *funcName;
     }
     if (curr.params.size() > 0) {
       o << maybeSpace;

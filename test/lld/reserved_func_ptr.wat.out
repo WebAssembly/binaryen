@@ -8,7 +8,7 @@
  (type $none_=>_i32 (func (result i32)))
  (type $f32_f32_i32_=>_f32 (func (param f32 f32 i32) (result f32)))
  (type $f64_i32_=>_f64 (func (param f64 i32) (result f64)))
- (import "env" "_Z4atoiPKc" (func atoi\28char\20const*\29 (param i32) (result i32)))
+ (import "env" "_Z4atoiPKc" (func $atoi\28char\20const*\29 (param i32) (result i32)))
  (memory $0 2)
  (table $0 3 3 funcref)
  (elem (i32.const 1) $address_taken_func\28int\2c\20int\2c\20int\29 $address_taken_func2\28int\2c\20int\2c\20int\29)

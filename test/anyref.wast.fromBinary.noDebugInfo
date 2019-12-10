@@ -1,7 +1,7 @@
 (module
  (type $anyref_=>_anyref (func (param anyref) (result anyref)))
  (import "env" "test2" (global $gimport$1 anyref))
- (import "env" "test1" (func fimport$0 (param anyref) (result anyref)))
+ (import "env" "test1" (func $fimport$0 (param anyref) (result anyref)))
  (memory $0 1 1)
  (export "test1" (func $fimport$0))
  (export "test2" (global $gimport$1))
