@@ -581,16 +581,7 @@ bool StringRef::getAsInteger(unsigned Radix, APInt &Result) const {
 }
 
 bool StringRef::getAsDouble(double &Result, bool AllowInexact) const {
-  APFloat F(0.0);
-  APFloat::opStatus Status =
-      F.convertFromString(*this, APFloat::rmNearestTiesToEven);
-  if (Status != APFloat::opOK) {
-    if (!AllowInexact || !(Status & APFloat::opInexact))
-      return true;
-  }
-
-  Result = F.convertToDouble();
-  return false;
+  llvm_unreachable("getAsDouble");
 }
 
 // Implementation of StringRef hashing.

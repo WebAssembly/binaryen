@@ -9,7 +9,6 @@ endforeach(variable)
 
 SET(llvm_dwarf_SOURCES
   APInt.cpp
-  APFloat.cpp
   Binary.cpp
   ConvertUTF.cpp
   DataExtractor.cpp

@@ -72,6 +72,7 @@ def update_asm_js_tests():
 
 
 def update_wasm_opt_tests():
+    '''
     print('\n[ checking wasm-opt -o notation... ]\n')
     wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
     cmd = shared.WASM_OPT + [wast, '-o', 'a.wast', '-S']
@@ -93,9 +94,10 @@ def update_wasm_opt_tests():
         actual = subprocess.check_output(cmd)
         with open(wasm + '.minified.txt', 'wb') as o:
             o.write(actual)
-
+    '''
     print('\n[ checking wasm-opt passes... ]\n')
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
+        if 'dwarf' not in t: continue
         print('..', os.path.basename(t))
         binary = t.endswith('.wasm')
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
@@ -119,7 +121,7 @@ def update_wasm_opt_tests():
             with open('a.wat') as i:
                 with open(t + '.wat', 'w') as o:
                     o.write(i.read())
-
+    '''
     print('\n[ checking wasm-opt testcases... ]\n')
     for t in shared.get_tests(shared.options.binaryen_test, ['.wast']):
         print('..', os.path.basename(t))
@@ -139,6 +141,7 @@ def update_wasm_opt_tests():
         support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
         actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
         open(f, 'w').write(actual)
+    '''
 
 
 def update_bin_fmt_tests():
