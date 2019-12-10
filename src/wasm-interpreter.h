@@ -1424,7 +1424,7 @@ private:
 
       // we don't actually have a function, but we need one in order to visit
       // the memory.init and data.drop instructions.
-      Function dummyFunc{};
+      Function dummyFunc;
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
       runner.visit(&init);

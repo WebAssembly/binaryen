@@ -244,6 +244,7 @@ struct SafeHeap : public Pass {
     }
     auto* func = new Function;
     func->name = name;
+    // pointer, offset
     func->sig = Signature({Type::i32, Type::i32}, style.type);
     func->vars.push_back(i32);   // pointer + offset
     Builder builder(*module);
