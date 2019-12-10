@@ -1857,20 +1857,7 @@ DWARFContext::create(const StringMap<std::unique_ptr<MemoryBuffer>> &Sections,
 }
 
 Error DWARFContext::loadRegisterInfo(const object::ObjectFile &Obj) {
-  // Detect the architecture from the object file. We usually don't need OS
-  // info to lookup a target and create register info.
-  Triple TT;
-  TT.setArch(Triple::ArchType(Obj.getArch()));
-  TT.setVendor(Triple::UnknownVendor);
-  TT.setOS(Triple::UnknownOS);
-  std::string TargetLookupError;
-  const Target *TheTarget =
-      TargetRegistry::lookupTarget(TT.str(), TargetLookupError);
-  if (!TargetLookupError.empty())
-    return createStringError(errc::invalid_argument,
-                             TargetLookupError.c_str());
-  RegInfo.reset(TheTarget->createMCRegInfo(TT.str()));
-  return Error::success();
+  llvm_unreachable("loadRegisterInfo"); // XXX BINARYEN
 }
 
 uint8_t DWARFContext::getCUAddrSize() {
