@@ -1,3 +1,4 @@
+atexit() called, but EXIT_RUNTIME is not set, so atexits() will not be called. set EXIT_RUNTIME to 1 (see the FAQ)
 GetFunction is equal: true
 getFunctionInfo={"module":"","base":"","params":0,"results":2,"vars":[]}
 getExpressionInfo(body)={"id":14,"value":3}

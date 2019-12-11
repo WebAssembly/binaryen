@@ -1,3 +1,4 @@
+atexit() called, but EXIT_RUNTIME is not set, so atexits() will not be called. set EXIT_RUNTIME to 1 (see the FAQ)
 === input wast ===
 (module
  (type $i (func (param i32) (result i32)))
@@ -16,7 +17,7 @@
 
 === unoptimized ===
 (module
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 0)
  (export "test" (func $test))
  (func $test (; 0 ;) (param $0 i32) (result i32)
@@ -34,7 +35,7 @@
 optimizeLevel=2
 shrinkLevel=1
 (module
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (export "test" (func $test))
  (func $test (; 0 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (select
@@ -49,7 +50,7 @@ shrinkLevel=1
 optimizeLevel=0
 shrinkLevel=0
 (module
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (export "test" (func $test))
  (func $test (; 0 ;) (param $0 i32) (result i32)
   (select
@@ -64,7 +65,7 @@ shrinkLevel=0
 optimizeLevel=2
 shrinkLevel=1
 (module
- (type "i32 -> i32" (func (param i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (export "test" (func $test))
  (func $test (; 0 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (select

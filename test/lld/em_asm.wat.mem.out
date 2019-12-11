@@ -1,20 +1,10 @@
 (module
-<<<<<<< HEAD
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
-=======
- (type $0 (func (param i32 i32 i32) (result i32)))
- (type $1 (func))
- (type $2 (func (result i32)))
- (type $3 (func (param i32 i32) (result i32)))
- (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
->>>>>>> 247884e68b30dedeb01457d6c7e50d4bba5e4abc
  (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
  (memory $0 2)
  (table $0 1 1 funcref)
@@ -59,31 +49,6 @@
     (i32.const 622)
     (i32.add
      (local.get $0)
-<<<<<<< HEAD
-     (i32.const 24)
-    )
-    (local.get $0)
-   )
-  )
-  (global.set $global$0
-   (i32.add
-    (local.get $0)
-    (i32.const 32)
-   )
-  )
-  (i32.const 0)
- )
- (func $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29 (; 3 ;) (result i32)
-  (i32.const 0)
- )
- (func $__em_asm_sig_builder::inner<int\2c\20int>\20const\20__em_asm_sig_builder::__em_asm_sig<int\2c\20int>\28int\2c\20int\29 (; 4 ;) (param $0 i32) (param $1 i32) (param $2 i32)
-  (local $3 i32)
-  (global.set $global$0
-   (local.tee $3
-    (i32.sub
-     (global.get $global$0)
-=======
->>>>>>> 247884e68b30dedeb01457d6c7e50d4bba5e4abc
      (i32.const 16)
     )
    )
@@ -97,61 +62,13 @@
   )
   (global.set $global$0
    (i32.add
-<<<<<<< HEAD
-    (local.get $3)
-    (i32.const 16)
-   )
-  )
- )
- (func $__em_asm_sig_builder::inner<int>\20const\20__em_asm_sig_builder::__em_asm_sig<int>\28int\29 (; 5 ;) (param $0 i32) (param $1 i32)
-  (local $2 i32)
-  (global.set $global$0
-   (local.tee $2
-    (i32.sub
-     (global.get $global$0)
-     (i32.const 16)
-    )
-   )
-  )
-  (local.set $1
-   (call $__em_asm_sig_builder::sig_char\28int\29
-    (local.get $1)
-   )
-  )
-  (i32.store8 offset=15
-   (local.get $2)
-   (i32.const 0)
-  )
-  (i32.store8 offset=14
-   (local.get $2)
-   (local.get $1)
-  )
-  (i32.store16 align=1
-   (local.get $0)
-   (i32.load16_u offset=14
-    (local.get $2)
-   )
-  )
-  (global.set $global$0
-   (i32.add
-    (local.get $2)
-    (i32.const 16)
-=======
     (local.get $0)
     (i32.const 32)
->>>>>>> 247884e68b30dedeb01457d6c7e50d4bba5e4abc
    )
   )
   (i32.const 0)
  )
-<<<<<<< HEAD
- (func $__em_asm_sig_builder::sig_char\28int\29 (; 6 ;) (param $0 i32) (result i32)
-  (i32.const 105)
- )
- (func $main (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
-=======
- (func $main (; 3 ;) (type $3) (param $0 i32) (param $1 i32) (result i32)
->>>>>>> 247884e68b30dedeb01457d6c7e50d4bba5e4abc
+ (func $main (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
  (func $stackSave (; 4 ;) (result i32)

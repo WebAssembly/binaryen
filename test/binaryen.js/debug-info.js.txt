@@ -1,7 +1,8 @@
+atexit() called, but EXIT_RUNTIME is not set, so atexits() will not be called. set EXIT_RUNTIME to 1 (see the FAQ)
 === default ===
 debugInfo=false
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $0))
  (func $0 (; 0 ;)
@@ -12,7 +13,7 @@ debugInfo=false
 === with debug info ===
 debugInfo=true
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $test))
  (func $test (; 0 ;)
@@ -23,7 +24,7 @@ debugInfo=true
 === without debug info ===
 debugInfo=false
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (memory $0 0)
  (export "test" (func $0))
  (func $0 (; 0 ;)

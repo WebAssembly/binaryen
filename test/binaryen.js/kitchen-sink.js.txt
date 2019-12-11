@@ -1,3 +1,4 @@
+atexit() called, but EXIT_RUNTIME is not set, so atexits() will not be called. set EXIT_RUNTIME to 1 (see the FAQ)
 // beginning a Binaryen API trace
 #include <math.h>
 #include <map>
@@ -1809,10 +1810,10 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
   BinaryenModuleGetFeatures(the_module);
   BinaryenModulePrint(the_module);
 (module
- (type "(i32, i64, f32, f64) -> i32" (func (param i32 i64 f32 f64) (result i32)))
- (type "i32 -> none" (func (param i32)))
- (type "none -> none" (func))
- (type "(i32, f64) -> f32" (func (param i32 f64) (result f32)))
+ (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
@@ -3347,7 +3348,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
       )
       (drop
        (i32.eqz
-        (call_indirect (type "(i32, i64, f32, f64) -> i32")
+        (call_indirect (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -3411,7 +3412,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type "(i32, i64, f32, f64) -> i32")
+      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -3494,10 +3495,10 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module
- (type "(i32, i64, f32, f64) -> i32" (func (param i32 i64 f32 f64) (result i32)))
- (type "i32 -> none" (func (param i32)))
- (type "none -> none" (func))
- (type "(i32, f64) -> f32" (func (param i32 f64) (result f32)))
+ (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
@@ -5032,7 +5033,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
       )
       (drop
        (i32.eqz
-        (call_indirect (type "(i32, i64, f32, f64) -> i32")
+        (call_indirect (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -5096,7 +5097,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type "(i32, i64, f32, f64) -> i32")
+      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -5628,9 +5629,9 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
 raw:
   BinaryenModulePrint(the_module);
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "module" "check" (func $check (param i32)))
  (func $just-one-block (; 1 ;)
   (local $0 i32)
@@ -6115,7 +6116,7 @@ optimized:
   // BinaryenTypeNone: 0
   // []
   // BinaryenTypeUnreachable: 1
-  // []
+  // [ 1 ]
   // BinaryenTypeInt32: 2
   // [ 2 ]
   // BinaryenTypeInt64: 3
@@ -6152,7 +6153,7 @@ optimized:
   // BinaryenTypeNone: 0
   // []
   // BinaryenTypeUnreachable: 1
-  // []
+  // [ 1 ]
   // BinaryenTypeInt32: 2
   // [ 2 ]
   // BinaryenTypeInt64: 3
@@ -6235,10 +6236,10 @@ getExpressionInfo(i64.const)={"id":14,"type":3,"value":{"low":6,"high":7}}
 getExpressionInfo(f32.const)={"id":14,"type":4,"value":8.5}
 getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
 (module
- (type "(i32, i64, f32, f64) -> i32" (func (param i32 i64 f32 f64) (result i32)))
- (type "i32 -> none" (func (param i32)))
- (type "none -> none" (func))
- (type "(i32, f64) -> f32" (func (param i32 f64) (result f32)))
+ (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
@@ -7773,7 +7774,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
       )
       (drop
        (i32.eqz
-        (call_indirect (type "(i32, i64, f32, f64) -> i32")
+        (call_indirect (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -7837,7 +7838,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type "(i32, i64, f32, f64) -> i32")
+      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -7918,10 +7919,10 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
 )
 
 (module
- (type "(i32, i64, f32, f64) -> i32" (func (param i32 i64 f32 f64) (result i32)))
- (type "i32 -> none" (func (param i32)))
- (type "none -> none" (func))
- (type "(i32, f64) -> f32" (func (param i32 f64) (result f32)))
+ (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
@@ -9456,7 +9457,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
       )
       (drop
        (i32.eqz
-        (call_indirect (type "(i32, i64, f32, f64) -> i32")
+        (call_indirect (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -9520,7 +9521,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type "(i32, i64, f32, f64) -> i32")
+      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -9602,9 +9603,9 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
 
 raw:
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
- (type "none -> i32" (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "module" "check" (func $check (param i32)))
  (func $just-one-block (; 1 ;)
   (local $0 i32)
@@ -10072,8 +10073,8 @@ optimized:
 
 module loaded from binary form:
 (module
- (type "(i32, i32) -> none" (func (param i32 i32)))
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $global$0 i32 (i32.const 3))
  (event $event$0 (attr 0) (param i32 i32))
  (func $adder (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
@@ -10085,8 +10086,8 @@ module loaded from binary form:
 )
 
 (module
- (type "none -> none" (func))
- (type "i32 -> none" (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (import "spectest" "print" (func $print-i32 (param i32)))
  (start $starter)
  (func $starter (; 1 ;)
@@ -10098,7 +10099,7 @@ module loaded from binary form:
 
 1234 : i32
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (func $func (; 0 ;)
   (local $0 i32)
   (local.set $0
@@ -10107,15 +10108,15 @@ module loaded from binary form:
  )
 )
 
-[wasm-validator error in function $func] i32 != i64: local.set type must match function, on 
+[wasm-validator error in function func] i32 != i64: local.set type must match function, on 
 [none] (local.set $0
  [i64] (i64.const 1234)
 )
 validation: 0
 test_parsing text:
 (module
- (type "i32 -> none" (func (param i32)))
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (event $a-event (attr 0) (param i32))
  (func $adder (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
@@ -10128,8 +10129,8 @@ test_parsing text:
 
 module loaded from text form:
 (module
- (type "i32 -> none" (func (param i32)))
- (type "(i32, i32) -> i32" (func (param i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (event $a-event (attr 0) (param i32))
  (func $ADD_ER (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
@@ -10142,7 +10143,7 @@ module loaded from text form:
 
 sizeof Literal: 24
 (module
- (type "none -> none" (func))
+ (type $none_=>_none (func))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")
