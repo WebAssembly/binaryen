@@ -342,16 +342,40 @@ install(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 # binaryen.js
 #
 # Note that we can't emit binaryen.js directly, as there is libbinaryen already
-# declared earlier, so we create binaryen_js.js, which must then be copied.
+# declared earlier, so we create binaryen_wasm/js.js, which must then be copied.
+# Note that SHELL: is needed as otherwise cmake will coalesce -s link flags
+# in an incorrect way for emscripten.
 if(EMSCRIPTEN)
-  set(binaryen_js_SOURCES
+  set(binaryen_emscripten_SOURCES
     src/binaryen-c.cpp
   )
+
+  # binaryen.js WebAssembly variant
+  add_executable(binaryen_wasm
+                 ${binaryen_emscripten_SOURCES})
+  target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+  target_link_libraries(binaryen_wasm "-s MODULARIZE_INSTANCE=1")
+  target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
+  target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
+  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  target_link_libraries(binaryen_wasm optimized "--closure 1")
+  target_link_libraries(binaryen_wasm optimized "--llvm-lto 1")
+  target_link_libraries(binaryen_wasm debug "--profiling")
+  set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD 14)
+  set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
+  install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  # binaryen.js JavaScript variant
   add_executable(binaryen_js
-                 ${binaryen_js_SOURCES})
+                 ${binaryen_emscripten_SOURCES})
   target_link_libraries(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support wasm)
-  # note that SHELL: is needed as otherwise cmake will coalesce -s link flags
-  # in an incorrect way for emscripten
+  target_link_libraries(binaryen_js "-s WASM=0")
+  target_link_libraries(binaryen_js "-s WASM_ASYNC_COMPILATION=0")
+  if(${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
+    # only valid with fastcomp and WASM=0
+    target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")	
+  endif()
   target_link_libraries(binaryen_js "-s MODULARIZE_INSTANCE=1")
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
@@ -363,6 +387,7 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD 14)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 endif()
 
 # Testing
