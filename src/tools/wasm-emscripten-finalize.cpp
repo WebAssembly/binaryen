@@ -255,14 +255,13 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (!isSideModule && !options.passOptions.arguments["library-file"].empty()) {
-    // Convert the imports to indirects
-    {
-      PassRunner passRunner(&wasm);
-      passRunner.setOptions(options.passOptions);
-      passRunner.add("ImportsToIndirectCalls");
-      passRunner.run();
-    }
+  // Convert the imports to indirects before the Legalization pass to 
+  // avoid unnecessary legalization
+  if (!options.passOptions.arguments["library-file"].empty()) {
+    PassRunner passRunner(&wasm);
+    passRunner.setOptions(options.passOptions);
+    passRunner.add("ImportsToIndirectCalls");
+    passRunner.run();
   }
 
   if (standaloneWasm) {

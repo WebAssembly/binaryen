@@ -15,35 +15,24 @@
  */
 
 //
-// Turn indirect calls into direct calls. This is possible if we know
-// the table cannot change, and if we see a constant argument for the
-// indirect call's index.
+// Turn indirect calls into direct calls. This will improve the runtime
+// performance as wasm to js transitions and legalizations between modules 
+// are avoided.
 //
 
-#include <unordered_map>
-
 #include "asm_v_wasm.h"
-#include "ir/utils.h"
-#include "ir/table-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/import-utils.h"
 #include "ir/function-type-utils.h"
 #include "pass.h"
-#include "pretty_printing.h"
-#include "support/json.h"
-#include "wasm-builder.h"
-#include "wasm-traversal.h"
-#include "wasm.h"
+#include "asmjs/shared-constants.h"
+#include <regex>
 #include <fstream>
-#include <regex> 
-
-cashew::IString ENV("env");
+#include <sstream>
 
 namespace wasm {
 
 static Name ASSIGN_GOT_ENTIRES("__assign_got_enties");
-
-namespace {
 
 struct FunctionImportsToIndirectCalls
   : public WalkerPass<PostWalker<FunctionImportsToIndirectCalls>> {
@@ -51,45 +40,13 @@ struct FunctionImportsToIndirectCalls
 
   Pass* create() override { return new FunctionImportsToIndirectCalls(); }
 
-  FunctionImportsToIndirectCalls() {}
+  FunctionImportsToIndirectCalls() : block(nullptr) {}
 
-  FunctionImportsToIndirectCalls(bool isSide, std::set<std::string> libraryFns)
-    : m_isSide(isSide), m_libraryFns(libraryFns) {}
-
-  ~FunctionImportsToIndirectCalls() { myfile.close(); }
-
-#pragma optimize("", off)
-  void visitCallIndirect(CallIndirect* curr) {
-    if (auto* c = curr->target->dynCast<Const>()) {
-      //  Index index = c->value.geti32();
-      //  // If the index is invalid, or the type is wrong, we can
-      //  // emit an unreachable here, since in Binaryen it is ok to
-      //  // reorder/replace traps when optimizing (but never to
-      //  // remove them, at least not by default).
-      //  if (index >= flatTable->names.size()) {
-      //    replaceWithUnreachable(curr);
-      //    return;
-      //  }
-      //  auto name = flatTable->names[index];
-      //  if (!name.is()) {
-      //    replaceWithUnreachable(curr);
-      //    return;
-      //  }
-      //  auto* func = getModule()->getFunction(name);
-      //  if (getSig(getModule()->getFunctionType(curr->fullType)) !=
-      //      getSig(func)) {
-      //    replaceWithUnreachable(curr);
-      //    return;
-      //  }
-      //  // Everything looks good!
-      //  replaceCurrent(
-      //    Builder(*getModule())
-      //      .makeCall(name, curr->operands, curr->type, curr->isReturn));
-    }
-  }
+  FunctionImportsToIndirectCalls(const std::set<std::string>& libraryFns, Block* blk)
+    : m_libraryFns(libraryFns), block(blk) {}
 
   static Function*
-  ensureFunctionImport(Module* module, Name name, std::string sig) {
+  ensureFunctionImport(Module* module, Name name, const std::string& sig) {
     // Then see if its already imported
     ImportInfo info(*module);
     if (Function* f = info.getImportedFunction(ENV, name)) {
@@ -107,11 +64,10 @@ struct FunctionImportsToIndirectCalls
     return import;
   }
 
-#pragma optimize("", off)
   void visitCall(Call* curr) {
     auto name = curr->target;
 
-    if (!name.isNull() && !m_isSide) {
+    if (!name.isNull()) {
       auto module = getModule();
       auto* func = module->getFunction(name);
       
@@ -119,18 +75,11 @@ struct FunctionImportsToIndirectCalls
         if (func->imported()) {
           name = func->base; // Use the original imported name instead
 
-          bool is_in = m_libraryFns.find(name.c_str()) != m_libraryFns.end();
-          if (is_in)
+          if (m_libraryFns.find(name.c_str()) != m_libraryFns.end() ||
+              name.hasSubstring("g$") || name.hasSubstring("fp$") || 
+              name.hasSubstring("__wasi_"))
             return;
 
-          is_in = name.hasSubstring("g$") ||
-                  name.hasSubstring("gp$") || name.hasSubstring("fp$") ||
-                  name.hasSubstring("__wasi_");
-
-          if (is_in) 
-            return;
-
-          std::cerr << "Processing: " << name.c_str() << "\n";
           std::vector<Expression*> args;
           for (int i = 0; i < curr->operands.size(); ++i) {
             args.push_back(curr->operands[i]);
@@ -138,61 +87,28 @@ struct FunctionImportsToIndirectCalls
           Builder builder(*module);
           ImportInfo info(*module);
 
-          std::string getterString((std::string("fp$") + name.c_str() +
-                                    std::string("$") + getSig(func)).c_str());
-          std::replace(getterString.begin(), getterString.end(), '\\', '_');
-          Name getter(getterString.c_str());
+          Name accessor((std::string("fp$") + name.c_str() + std::string("$") +
+                       getSig(func)).c_str());
 
-          bool gblAddrFound = false;
-          Name fnAddr;
-          for (size_t i = 0, globals = module->globals.size(); i < globals;
-               ++i) {
-            auto* curr = module->globals[i].get();
-            if (!curr->base.isNull()) {
-              if (curr->base.equals(name.c_str())) {
-                gblAddrFound = true;
-                fnAddr = curr->name;
-                break;
-              }
-            }
-          }
-
-          if (!gblAddrFound) {
+          // When a function is already address-taken in the main module, the fp$
+          // accessor function would already have been created. Retrieve the global that
+          // contains the address and use it for the indirect call.
+          Name fnAddr = getGlobalNameFromBase(module, name);
+          
+          if (fnAddr.isNull()) {
             // Ensure that the fp$ accessor is in the module, if not add it in.
-            std::string fnAddrString((std::string("gp$") + name.c_str() +
-                                      std::string("$") + getSig(func))
-                                       .c_str());
-            std::replace(fnAddrString.begin(), fnAddrString.end(), '\\', '_');
-            fnAddr = fnAddrString.c_str();
-
-            auto f = info.getImportedFunction(ENV, getter);
-            if (!f) {
-              f = ensureFunctionImport(module, getter, "i");
-
-              auto* assignFunc = getModule()->getFunction(ASSIGN_GOT_ENTIRES);
-
-              Block* block = static_cast<Block*>(assignFunc->body);
-
-              if (!block)
-                return;
-
-              auto* gblAddr = new Global;
-
-              gblAddr->name = fnAddr;
-              /*gblAddr->module = "env";
-              gblAddr->base = getter;*/
-              gblAddr->type = i32;
-              gblAddr->mutable_ = true;
-              module->addGlobal(
-                builder.makeGlobal(fnAddr,
+            auto f = ensureFunctionImport(module, accessor, "i");
+            
+            // Add the global that holds the address of the function
+            fnAddr = std::string("gp$") + name.c_str();
+            module->addGlobal(builder.makeGlobal(fnAddr,
                                    i32,
                                    LiteralUtils::makeZero(i32, *module),
                                    Builder::Mutable));
 
-              Expression* call = builder.makeCall(getter, {}, i32);
-              GlobalSet* globalSet = builder.makeGlobalSet(fnAddr, call);
-              block->list.push_back(globalSet);
-            }
+            Expression* call = builder.makeCall(accessor, {}, i32);
+            GlobalSet* globalSet = builder.makeGlobalSet(fnAddr, call);
+            block->list.push_back(globalSet);
           }
           
           // Replace the call
@@ -209,40 +125,50 @@ struct FunctionImportsToIndirectCalls
     return;
   }
 
-  //void visitTable(Table* curr) {
-  //  for (auto& segment : curr->segments) {
-  //    unsigned indent = 0;
-  //    const char* maybeNewLine = "\n";
-  //    // Don't print empty segments
-  //    if (segment.data.empty()) {
-  //      continue;
-  //    }
-  //    doIndent(std::cout, indent);
-  //    std::cout << '(';
-  //    printMajor(std::cout, "elem ");
-  //    visit(segment.offset);
-  //    for (auto name : segment.data) {
-  //      std::cout << ' ';
-  //    }
-  //    std::cout << ')' << maybeNewLine;
-  //  }
-  //}
+  Name getGlobalNameFromBase(Module* module, const Name& name) {
+    Name fnAddr;
+    for (size_t i = 0, globals = module->globals.size(); i < globals; ++i) {
+      auto* curr = module->globals[i].get();
+      if (!curr->base.isNull()) {
+        if (curr->base.equals(name.c_str())) {
+          fnAddr = curr->name;
+          break;
+        }
+      }
+    }
+    return fnAddr;
+  }
 
 private:
-  std::ofstream myfile;
-  bool m_isSide;
   std::set<std::string> m_libraryFns;
+  Block* block;
 };
-
-static Name POST_INSTANTIATE("__post_instantiate");
 
 struct ImportsToIndirectCalls : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Name name = runner->options.getArgument(
       "library-file",
       "ImportsToIndirectCalls usage:  wasm-emscripten-finalize --pass-arg=library-file@FILE_NAME");
-    std::cerr << "library-file: " << name << "\n";
 
+    std::set<std::string> libraryFunctions = getLibraryFunctions(name);
+
+    if (!module->table.exists) {
+      Fatal() << "Table does not exist in module!!!";
+      return;
+    }
+
+    auto* assignFunc = module->getFunction(ASSIGN_GOT_ENTIRES);
+    auto block = static_cast<Block*>(assignFunc->body);
+
+    if (!block) {
+      Fatal() << "__assign_got_enties does not exist in module!!!";
+      return;
+    }
+
+    FunctionImportsToIndirectCalls(libraryFunctions, block).run(runner, module);
+  }
+
+  std::set<std::string> getLibraryFunctions(Name& name) {
     std::ifstream myfile;
     myfile.open(name.c_str(), std::ios::in);
     std::string str;
@@ -253,46 +179,32 @@ struct ImportsToIndirectCalls : public Pass {
 
     str.assign((std::istreambuf_iterator<char>(myfile)),
                std::istreambuf_iterator<char>());
-    str.erase(remove(str.begin(), str.end(), '\''), str.end());
-    str.erase(remove(str.begin(), str.end(), '\['), str.end());
-    str.erase(remove(str.begin(), str.end(), '\]'), str.end());
-    remove_if(str.begin(), str.end(), isspace);
 
-    std::string delimiter = ",";
+    // index.wasm.libfile will have the following format:
+    // ['_glClearStencil', '_glUniformMatrix2fv', '_eglGetCurrentSurface']
     std::set<std::string> setStrings;
-    size_t pos = 0;
-    std::string token;
-    while ((pos = str.find(delimiter)) != std::string::npos) {
-      token = str.substr(0, pos);
-      token.erase(0,1); // remove underscore
-      setStrings.insert(token);
-      str.erase(0, pos + delimiter.length());
-    }
+    std::regex rgx(R"(\'(.*)\')");
+    std::smatch match;
+    std::string buffer;
+    std::stringstream ss(str);
+    std::vector<std::string> vecStrings;
 
-    if (!module->table.exists) {
-      Fatal() << "Table does not exist in module!!!";
-      return;
+     while (ss >> buffer)
+      vecStrings.push_back(buffer);
+    
+     for (auto& i : vecStrings) {
+      if (std::regex_search(i, match, rgx)) {
+        std::ssub_match submatch = match[1];
+        std::string temp = submatch.str();
+        // TODO: Do we check for double underscore?
+        temp.erase(0,1);
+        setStrings.insert(temp);
+      }
     }
-
-    // Create a segment if it does not already exist
-    if (module->table.segments.empty()) {
-      Table::Segment segment(
-        module->allocator.alloc<Const>()->set(Literal(int32_t(0))));
-
-      module->table.initial = 0;
-      module->table.max = 0;
-      module->table.exists = true;
-      module->table.segments.push_back(segment);
-    }
-    bool isSide = false;
-    if (auto* e = module->getExportOrNull(POST_INSTANTIATE)) {
-      isSide = true;
-    }
-    FunctionImportsToIndirectCalls(isSide, setStrings).run(runner, module);
+   
+    return setStrings;
   }
 };
-
-} // anonymous namespace
 
 Pass* createImportsToIndirectCallsPass() {
   return new ImportsToIndirectCalls();
