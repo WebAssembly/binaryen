@@ -389,6 +389,8 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+  # always emit as 'binaryen.js'
+  set_target_properties(binaryen_wasm binaryen_js PROPERTIES OUTPUT_NAME "binaryen")
 endif()
 
 # Testing
