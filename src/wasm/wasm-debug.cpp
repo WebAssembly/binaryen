@@ -113,8 +113,7 @@ void updateDWARF(Module& wasm) {
     Fatal() << "Failed to parse DWARF to YAML";
   }
 
-  // TODO: actually update the DWARF in Data! And remove sections we don't know
-  //       how to update yet?
+  // TODO: Remove sections we don't know how to update yet?
 
   // Convert to binary sections.
   auto newSections = EmitDebugSections(

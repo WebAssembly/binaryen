@@ -17,7 +17,7 @@ fi
 
 CLANG_DIR=$(dirname $(dirname $(which clang-tidy)))
 CLANG_TIDY_DIFF=$CLANG_DIR/share/clang/clang-tidy-diff.py
-TIDY_MSG=$(git diff -U0 $BRANCH... | $CLANG_TIDY_DIFF -quiet -p1 2> /dev/null)
+TIDY_MSG=$(git diff -U0 $BRANCH... | $CLANG_TIDY_DIFF -quiet -p1)
 if [ -n "$TIDY_MSG" -a "$TIDY_MSG" != "No relevant changes found." ]
 then
   echo "Fix clang-tidy errors before committing!"
