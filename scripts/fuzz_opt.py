@@ -496,6 +496,7 @@ opt_choices = [
     ["--reorder-functions"],
     ["--reorder-locals"],
     ["--flatten", "--rereloop"],
+    ["--roundtrip"],
     ["--rse"],
     ["--simplify-locals"],
     ["--simplify-locals-nonesting"],

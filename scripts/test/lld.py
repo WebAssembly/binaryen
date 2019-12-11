@@ -67,7 +67,7 @@ def test_wasm_emscripten_finalize():
 
 
 def update_lld_tests():
-    print('\n[ updatring wasm-emscripten-finalize testcases... ]\n')
+    print('\n[ updating wasm-emscripten-finalize testcases... ]\n')
 
     for wat_path in shared.get_tests(shared.get_test_dir('lld'), ['.wat']):
         print('..', wat_path)
