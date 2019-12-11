@@ -102,7 +102,7 @@ struct ReReloop final : public Pass {
   struct Task {
     ReReloop& parent;
     Task(ReReloop& parent) : parent(parent) {}
-    virtual void run() { WASM_UNREACHABLE(); }
+    virtual void run() { WASM_UNREACHABLE("unimpl"); }
   };
 
   typedef std::shared_ptr<Task> TaskPtr;
@@ -200,7 +200,7 @@ struct ReReloop final : public Pass {
         parent.addBranch(ifTrueEnd, after);
         parent.addBranch(ifFalseEnd, after);
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid phase");
       }
     }
   };

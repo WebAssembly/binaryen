@@ -1,7 +1,7 @@
   // BinaryenTypeNone: 0
   // []
   // BinaryenTypeUnreachable: 1
-  // []
+  // [ 1 ]
   // BinaryenTypeInt32: 2
   // [ 2 ]
   // BinaryenTypeInt64: 3
@@ -3956,7 +3956,7 @@ module loaded from binary form:
  )
 )
 
-[wasm-validator error in function $func] i32 != i64: local.set type must match function, on 
+[wasm-validator error in function func] i32 != i64: local.set type must match function, on 
 [none] (local.set $0
  [i64] (i64.const 1234)
 )
@@ -10106,7 +10106,7 @@ optimized:
   // BinaryenTypeNone: 0
   // []
   // BinaryenTypeUnreachable: 1
-  // []
+  // [ 1 ]
   // BinaryenTypeInt32: 2
   // [ 2 ]
   // BinaryenTypeInt64: 3

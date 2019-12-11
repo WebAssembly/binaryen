@@ -74,7 +74,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
   return ret;
 }
@@ -95,9 +95,9 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 // Mutexes (global for now; in theory if multiple modules
@@ -216,7 +216,7 @@ void printArg(std::ostream& setup, std::ostream& out, BinaryenLiteral arg) {
     case Type::exnref: // there's no exnref literals
     case Type::none:
     case Type::unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
 }
 

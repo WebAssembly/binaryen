@@ -67,8 +67,6 @@ inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
     case Node::Type::Bad:
       o << "bad";
       break;
-    default:
-      WASM_UNREACHABLE();
   }
   if (!node->values.empty()) {
     o << '\n';

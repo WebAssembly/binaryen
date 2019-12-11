@@ -49,7 +49,7 @@ inline bool isBranchReachable(Expression* expr) {
   } else if (auto* br = expr->dynCast<BrOnExn>()) {
     return isBranchReachable(br);
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("unexpected expression type");
 }
 
 inline std::set<Name> getUniqueTargets(Break* br) { return {br->name}; }
@@ -90,7 +90,7 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
       worked = true;
     }
   } else {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expression type");
   }
   return worked;
 }

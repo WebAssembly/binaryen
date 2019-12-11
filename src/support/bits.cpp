@@ -17,6 +17,7 @@
 #define wasm_support_bits_definitions
 #include "support/bits.h"
 #include "../compiler-support.h"
+#include "support/utilities.h"
 
 namespace wasm {
 
@@ -91,7 +92,7 @@ template<> int CountLeadingZeroes<uint64_t>(uint64_t v) {
 uint32_t Log2(uint32_t v) {
   switch (v) {
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid value");
     case 1:
       return 0;
     case 2:

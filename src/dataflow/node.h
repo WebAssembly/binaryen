@@ -165,7 +165,7 @@ struct Node {
       case Bad:
         return unreachable;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid node type");
     }
   }
 

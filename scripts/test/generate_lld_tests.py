@@ -19,8 +19,8 @@ from __future__ import print_function
 import os
 import sys
 
-from . import shared
-from . import support
+import shared
+import support
 
 
 def files_with_extensions(path, extensions):
@@ -67,6 +67,7 @@ def generate_wast_files(llvm_bin, emscripten_root):
             obj_path, '-o', wasm_path,
             '--allow-undefined',
             '--export', '__wasm_call_ctors',
+            '--export', '__data_end',
             '--global-base=568',
         ]
         if is_shared:
