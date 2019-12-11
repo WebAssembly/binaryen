@@ -250,10 +250,8 @@ private:
     std::vector<Type> params;
     for (size_t i = 0; i < imParams.size(); ++i) {
       if (imParams[i] == Type::i64) {
-        call->operands.push_back(
-          I64Utilities::getI64Low(builder, params.size()));
-        call->operands.push_back(
-          I64Utilities::getI64High(builder, params.size()));
+        call->operands.push_back(I64Utilities::getI64Low(builder, i));
+        call->operands.push_back(I64Utilities::getI64High(builder, i));
         params.push_back(i32);
         params.push_back(i32);
       } else {

@@ -264,7 +264,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
 
   for (Global* g : gotMemEntries) {
     Name getter(std::string("g$") + g->base.c_str());
-    ensureFunctionImport(&wasm, getter, Signature(Type::i32, Type::none));
+    ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
     Expression* call = builder.makeCall(getter, {}, i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
@@ -290,7 +290,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     Name getter(
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
         .c_str());
-    ensureFunctionImport(&wasm, getter, Signature(Type::i32, Type::none));
+    ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
     Expression* call = builder.makeCall(getter, {}, i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
@@ -474,11 +474,11 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   RemoveStackPointer walker(stackPointer);
   walker.walkModule(&wasm);
   if (walker.needStackSave) {
-    ensureFunctionImport(&wasm, STACK_SAVE, Signature(Type::i32, Type::none));
+    ensureFunctionImport(&wasm, STACK_SAVE, Signature(Type::none, Type::i32));
   }
   if (walker.needStackRestore) {
     ensureFunctionImport(
-      &wasm, STACK_RESTORE, Signature(Type::none, Type::i32));
+      &wasm, STACK_RESTORE, Signature(Type::i32, Type::none));
   }
 
   // Finally remove the stack pointer global itself. This avoids importing
@@ -1016,8 +1016,8 @@ struct FixInvokeFunctionNamesWalker
     }
 
     const std::vector<Type>& params = sig.params.expand();
-    std::vector<Type> newParams(params.begin() + 1, params.end() - 2);
-    Signature sigWoOrigFunc = Signature(sig.results, Type(newParams));
+    std::vector<Type> newParams(params.begin() + 1, params.end());
+    Signature sigWoOrigFunc = Signature(Type(newParams), sig.results);
     invokeSigs.insert(sigWoOrigFunc);
     return Name("invoke_" +
                 getSig(sigWoOrigFunc.results, sigWoOrigFunc.params));
