@@ -1,9 +1,9 @@
 (module
  (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
@@ -15,14 +15,14 @@
  (import "env" "malloc" (func $malloc (param i32) (result i32)))
  (import "env" "saveSetjmp" (func $saveSetjmp (param i32 i32 i32 i32) (result i32)))
  (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
- (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ (import "env" "invoke_v" (func $invoke_v (param i32 i32 i32)))
  (import "env" "testSetjmp" (func $testSetjmp (param i32 i32 i32) (result i32)))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (import "env" "free" (func $free (param i32)))
  (import "env" "emscripten_longjmp" (func $emscripten_longjmp (param i32 i32)))
- (import "env" "g$__THREW__" (func $g$__THREW__ (result i32)))
- (import "env" "g$__threwValue" (func $g$__threwValue (result i32)))
- (import "env" "fp$emscripten_longjmp$vii" (func $fp$emscripten_longjmp$vii (result i32)))
+ (import "env" "g$__THREW__" (func $g$__THREW__ (param i32)))
+ (import "env" "g$__threwValue" (func $g$__threwValue (param i32)))
+ (import "env" "fp$emscripten_longjmp$vii" (func $fp$emscripten_longjmp$vii (param i32)))
  (global $gimport$13 (mut i32) (i32.const 0))
  (global $gimport$14 (mut i32) (i32.const 0))
  (global $gimport$15 (mut i32) (i32.const 0))
@@ -31,7 +31,7 @@
  (export "_start" (func $_start))
  (export "__THREW__" (global $global$0))
  (export "__threwValue" (global $global$1))
- (export "dynCall_vii" (func $dynCall_vii))
+ (export "dynCall_v" (func $dynCall_v))
  (export "__post_instantiate" (func $__post_instantiate))
  (func $__wasm_call_ctors (; 11 ;)
   (call $__wasm_apply_relocs)
@@ -78,7 +78,7 @@
       )
       (i32.const 0)
      )
-     (call $invoke_vii
+     (call $invoke_v
       (global.get $gimport$14)
       (local.get $0)
       (i32.const 1)
@@ -142,10 +142,8 @@
   )
   (unreachable)
  )
- (func $dynCall_vii (; 14 ;) (param $fptr i32) (param $0 i32) (param $1 i32)
-  (call_indirect (type $i32_i32_=>_none)
-   (local.get $0)
-   (local.get $1)
+ (func $dynCall_v (; 14 ;) (param $fptr i32)
+  (call_indirect (type $none_=>_none)
    (local.get $fptr)
   )
  )
@@ -188,12 +186,12 @@
   ],
   "implementedFunctions": [
     "__start",
-    "_dynCall_vii",
+    "_dynCall_v",
     "___post_instantiate"
   ],
   "exports": [
     "_start",
-    "dynCall_vii",
+    "dynCall_v",
     "__post_instantiate"
   ],
   "namedGlobals": {
@@ -201,7 +199,7 @@
     "__threwValue" : "4"
   },
   "invokeFuncs": [
-    "invoke_vii"
+    "invoke_v"
   ],
   "features": [
   ],
