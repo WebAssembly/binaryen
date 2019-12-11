@@ -517,7 +517,7 @@
   (local $8 i32)
   (local $9 i32)
   (local $10 i32)
-  (block $block$21$break
+  (block $block$18$break
    (block
     (local.set $4
      (local.get $x)
@@ -537,11 +537,11 @@
       (br $shape$2$continue)
      )
     )
-    (br $block$21$break)
+    (br $block$18$break)
    )
   )
   (block
-   (block $block$24$break
+   (block $block$21$break
     (loop $shape$4$continue
      (block
       (call $trivial)
@@ -558,7 +558,7 @@
      (if
       (local.get $7)
       (br $shape$4$continue)
-      (br $block$24$break)
+      (br $block$21$break)
      )
     )
    )
@@ -972,7 +972,7 @@
    )
   )
   (block
-   (block $block$9$break
+   (block $block$8$break
     (block
      (call $switch
       (i32.const 1)
@@ -989,13 +989,13 @@
     )
     (block $switch$3$leave
      (block $switch$3$default
-      (block $switch$3$case$9
-       (br_table $switch$3$case$9 $switch$3$case$9 $switch$3$case$9 $switch$3$default
+      (block $switch$3$case$8
+       (br_table $switch$3$case$8 $switch$3$case$8 $switch$3$case$8 $switch$3$default
         (local.get $6)
        )
       )
       (block
-       (br $block$9$break)
+       (br $block$8$break)
       )
      )
      (block
@@ -1004,7 +1004,7 @@
         (i32.const 2)
        )
        (block
-        (br $block$9$break)
+        (br $block$8$break)
        )
       )
      )
