@@ -8,8 +8,8 @@ pc %1 1:i1
 infer %0
 
 (module
- (type $FUNCSIG$v (func))
- (func $if-loop-test (; 0 ;) (type $FUNCSIG$v)
+ (type $none_=>_none (func))
+ (func $if-loop-test (; 0 ;)
   (local $0 i32)
   (if
    (i32.const 0)
