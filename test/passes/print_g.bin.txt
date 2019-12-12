@@ -1,9 +1,9 @@
 (module
- (type $0 (func (param i32) (result i32)))
- (type $1 (func))
- (type $2 (func (param i32)))
- (type $3 (func (result i32)))
- (type $4 (func (param i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $0 256 256))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
@@ -14,11 +14,11 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 0 ;) (type $1)
+ (func $__wasm_call_ctors (; 0 ;)
   ;; code offset: 0x3
   (nop)
  )
- (func $main (; 1 ;) (type $4) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
   ;; code offset: 0x16
   (if
    ;; code offset: 0x15
@@ -83,11 +83,11 @@
   ;; code offset: 0x50
   (local.get $0)
  )
- (func $stackSave (; 2 ;) (type $3) (result i32)
+ (func $stackSave (; 2 ;) (result i32)
   ;; code offset: 0x55
   (global.get $global$0)
  )
- (func $stackAlloc (; 3 ;) (type $0) (param $0 i32) (result i32)
+ (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
   ;; code offset: 0x70
   (global.set $global$0
    ;; code offset: 0x68
@@ -109,14 +109,14 @@
   ;; code offset: 0x72
   (local.get $0)
  )
- (func $stackRestore (; 4 ;) (type $2) (param $0 i32)
+ (func $stackRestore (; 4 ;) (param $0 i32)
   ;; code offset: 0x79
   (global.set $global$0
    ;; code offset: 0x77
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 5 ;) (type $0) (param $0 i32) (result i32)
+ (func $__growWasmMemory (; 5 ;) (param $0 i32) (result i32)
   ;; code offset: 0x86
   (memory.grow
    ;; code offset: 0x84
@@ -129,11 +129,11 @@
  ;; custom section ".debug_str", size 205
 )
 (module
- (type $0 (func (param i32) (result i32)))
- (type $1 (func))
- (type $2 (func (param i32)))
- (type $3 (func (result i32)))
- (type $4 (func (param i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $0 256 256))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
@@ -144,11 +144,11 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 0 ;) (type $1)
+ (func $__wasm_call_ctors (; 0 ;)
   ;; code offset: 0x3
   (nop)
  )
- (func $main (; 1 ;) (type $4) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
   ;; code offset: 0x16
   (if
    ;; code offset: 0x15
@@ -213,11 +213,11 @@
   ;; code offset: 0x50
   (local.get $0)
  )
- (func $stackSave (; 2 ;) (type $3) (result i32)
+ (func $stackSave (; 2 ;) (result i32)
   ;; code offset: 0x55
   (global.get $global$0)
  )
- (func $stackAlloc (; 3 ;) (type $0) (param $0 i32) (result i32)
+ (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
   ;; code offset: 0x70
   (global.set $global$0
    ;; code offset: 0x68
@@ -239,14 +239,14 @@
   ;; code offset: 0x72
   (local.get $0)
  )
- (func $stackRestore (; 4 ;) (type $2) (param $0 i32)
+ (func $stackRestore (; 4 ;) (param $0 i32)
   ;; code offset: 0x79
   (global.set $global$0
    ;; code offset: 0x77
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 5 ;) (type $0) (param $0 i32) (result i32)
+ (func $__growWasmMemory (; 5 ;) (param $0 i32) (result i32)
   ;; code offset: 0x86
   (memory.grow
    ;; code offset: 0x84
