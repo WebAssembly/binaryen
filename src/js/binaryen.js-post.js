@@ -541,6 +541,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenLocalSet'](module, index, value);
     },
     'tee': function(index, value, type) {
+      if (typeof type === 'undefined') {
+        throw new Error("local.tee's type should be defined");
+      }
       return Module['_BinaryenLocalTee'](module, index, value, type);
     }
   }
