@@ -52,22 +52,20 @@ extern cashew::IString SCRATCH_STORE_F64;
 inline void
 ensureScratchMemoryHelpers(Module* wasm,
                            cashew::IString specific = cashew::IString()) {
-  auto ensureImport =
-    [&](Name name, const std::vector<Type> params, Type result) {
-      if (wasm->getFunctionOrNull(name)) {
-        return;
-      }
-      if (specific.is() && name != specific) {
-        return;
-      }
-      auto func = make_unique<Function>();
-      func->name = name;
-      func->params = params;
-      func->result = result;
-      func->module = ENV;
-      func->base = name;
-      wasm->addFunction(std::move(func));
-    };
+  auto ensureImport = [&](Name name, Type params, Type results) {
+    if (wasm->getFunctionOrNull(name)) {
+      return;
+    }
+    if (specific.is() && name != specific) {
+      return;
+    }
+    auto func = make_unique<Function>();
+    func->name = name;
+    func->sig = Signature(params, results);
+    func->module = ENV;
+    func->base = name;
+    wasm->addFunction(std::move(func));
+  };
 
   ensureImport(SCRATCH_LOAD_I32, {i32}, i32);
   ensureImport(SCRATCH_STORE_I32, {i32, i32}, none);

@@ -198,12 +198,12 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunction(curr->target)->result);
+      handleReturnCall(curr, module->getFunction(curr->target)->sig.results);
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunctionType(curr->fullType)->result);
+      handleReturnCall(curr, curr->sig.results);
     }
   }
   void visitLocalGet(LocalGet* curr) {
@@ -221,7 +221,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
   // Works for return_call, too
-  Type retType = module->getFunction(call->target)->result;
+  Type retType = module->getFunction(call->target)->sig.results;
   Builder builder(*module);
   auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.str);
@@ -244,7 +244,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     updater.localMapping[i] = builder.addVar(into, from->getLocalType(i));
   }
   // Assign the operands into the params
-  for (Index i = 0; i < from->params.size(); i++) {
+  for (Index i = 0; i < from->sig.params.size(); i++) {
     block->list.push_back(
       builder.makeLocalSet(updater.localMapping[i], call->operands[i]));
   }

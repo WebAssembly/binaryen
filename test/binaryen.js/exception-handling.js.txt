@@ -1,7 +1,8 @@
 (module
- (type $v (func))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (event $e (attr 0) (param i32))
- (func $test (; 0 ;) (type $v)
+ (func $test (; 0 ;)
   (local $0 exnref)
   (try
    (throw $e

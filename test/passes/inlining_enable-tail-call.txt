@@ -1,13 +1,10 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$d (func (result f64)))
- (type $FUNCSIG$vfj (func (param f32 i64)))
+ (type $none_=>_none (func))
  (table $0 1 1 funcref)
  (elem (i32.const 0) $tabled)
  (export "user" (func $user))
  (export "exported" (func $exported))
- (func $user (; 0 ;) (type $FUNCSIG$v)
+ (func $user (; 0 ;)
   (local $x i32)
   (local $y f64)
   (local $2 f32)
@@ -137,16 +134,16 @@
    )
   )
  )
- (func $exported (; 1 ;) (type $FUNCSIG$v)
+ (func $exported (; 1 ;)
   (nop)
  )
- (func $recursive (; 2 ;) (type $FUNCSIG$v)
+ (func $recursive (; 2 ;)
   (call $recursive)
  )
- (func $tabled (; 3 ;) (type $FUNCSIG$v)
+ (func $tabled (; 3 ;)
   (nop)
  )
- (func $cycle1 (; 4 ;) (type $FUNCSIG$v)
+ (func $cycle1 (; 4 ;)
   (block $__inlined_func$cycle2
    (block
     (call $cycle1)
@@ -155,25 +152,24 @@
  )
 )
 (module
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$i (func (result i32)))
- (func $child (; 0 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (func $child (; 0 ;) (param $0 i32) (result i32)
   (i32.const 1234)
  )
- (func $parent (; 1 ;) (type $FUNCSIG$i) (result i32)
+ (func $parent (; 1 ;) (result i32)
   (call $child
    (unreachable)
   )
  )
 )
 (module
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$ifi (func (param f32 i32) (result i32)))
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
+ (type $f32_i32_=>_i32 (func (param f32 i32) (result i32)))
  (memory $0 1 1)
  (global $hangLimit (mut i32) (i32.const 25))
  (export "hangLimitInitializer" (func $hangLimitInitializer))
- (func $func_4 (; 0 ;) (type $FUNCSIG$ifi) (param $0 f32) (param $1 i32) (result i32)
+ (func $func_4 (; 0 ;) (param $0 f32) (param $1 i32) (result i32)
   (local $2 i64)
   (local $3 f64)
   (local $4 f32)
@@ -226,19 +222,19 @@
    )
   )
  )
- (func $hangLimitInitializer (; 1 ;) (type $FUNCSIG$v)
+ (func $hangLimitInitializer (; 1 ;)
   (global.set $hangLimit
    (i32.const 25)
   )
  )
 )
 (module
- (type $T (func (param i32)))
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (table $0 10 funcref)
- (func $0 (; 0 ;) (type $FUNCSIG$v)
+ (func $0 (; 0 ;)
   (block $__inlined_func$1
-   (call_indirect (type $T)
+   (call_indirect (type $i32_=>_none)
     (if (result i32)
      (i32.const 0)
      (unreachable)
@@ -250,8 +246,8 @@
  )
 )
 (module
- (type $FUNCSIG$v (func))
- (func $1 (; 0 ;) (type $FUNCSIG$v)
+ (type $none_=>_none (func))
+ (func $1 (; 0 ;)
   (block $__inlined_func$0
    (block $label$1
     (br_table $label$1 $label$1
@@ -262,8 +258,8 @@
  )
 )
 (module
- (type $FUNCSIG$i (func (result i32)))
- (func $0 (; 0 ;) (type $FUNCSIG$i) (result i32)
+ (type $none_=>_i32 (func (result i32)))
+ (func $0 (; 0 ;) (result i32)
   (return
    (block $__inlined_func$1 (result i32)
     (i32.const 42)
@@ -272,9 +268,8 @@
  )
 )
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
- (func $0 (; 0 ;) (type $FUNCSIG$v)
+ (type $none_=>_none (func))
+ (func $0 (; 0 ;)
   (local $0 i32)
   (block
    (block $__inlined_func$1
@@ -290,9 +285,8 @@
  )
 )
 (module
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (func $0 (; 0 ;) (type $FUNCSIG$i) (result i32)
+ (type $none_=>_i32 (func (result i32)))
+ (func $0 (; 0 ;) (result i32)
   (local $0 i32)
   (return
    (block $__inlined_func$1 (result i32)
@@ -305,9 +299,8 @@
  )
 )
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$i (func (result i32)))
- (func $0 (; 0 ;) (type $FUNCSIG$v)
+ (type $none_=>_none (func))
+ (func $0 (; 0 ;)
   (drop
    (block (result i32)
     (block $__inlined_func$1 (result i32)
@@ -326,9 +319,8 @@
  )
 )
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
- (func $0 (; 0 ;) (type $FUNCSIG$v)
+ (type $none_=>_none (func))
+ (func $0 (; 0 ;)
   (local $0 i32)
   (block $__inlined_func$1
    (block
@@ -351,16 +343,15 @@
  )
 )
 (module
- (type $T (func (param i32) (result i32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$i (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (table $0 10 funcref)
- (func $0 (; 0 ;) (type $FUNCSIG$v)
+ (func $0 (; 0 ;)
   (drop
    (block (result i32)
     (block $__inlined_func$1 (result i32)
      (br $__inlined_func$1
-      (call_indirect (type $T)
+      (call_indirect (type $i32_=>_i32)
        (i32.const 42)
        (i32.const 0)
       )
@@ -371,13 +362,13 @@
  )
 )
 (module
- (type $T (func (param i32)))
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (table $0 10 funcref)
- (func $0 (; 0 ;) (type $FUNCSIG$v)
+ (func $0 (; 0 ;)
   (block $__inlined_func$1
    (block
-    (call_indirect (type $T)
+    (call_indirect (type $i32_=>_none)
      (i32.const 42)
      (i32.const 0)
     )
@@ -388,11 +379,11 @@
  )
 )
 (module
- (type $6 (func))
+ (type $none_=>_none (func))
  (memory $0 1 1)
  (global $global$0 (mut i32) (i32.const 10))
  (export "func_102_invoker" (func $19))
- (func $19 (; 0 ;) (type $6)
+ (func $19 (; 0 ;)
   (block
    (block
     (block $__inlined_func$13

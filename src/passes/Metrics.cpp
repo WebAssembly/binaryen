@@ -50,10 +50,6 @@ struct Metrics
     ImportInfo imports(*module);
 
     // global things
-
-    for (auto& curr : module->functionTypes) {
-      visitFunctionType(curr.get());
-    }
     for (auto& curr : module->exports) {
       visitExport(curr.get());
     }

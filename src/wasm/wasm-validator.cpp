@@ -593,14 +593,15 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  if (!shouldBeTrue(curr->operands.size() == target->params.size(),
+  const std::vector<Type> params = target->sig.params.expand();
+  if (!shouldBeTrue(curr->operands.size() == params.size(),
                     curr,
                     "call param number must match")) {
     return;
   }
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
-                                           target->params[i],
+                                           params[i],
                                            curr,
                                            "call param types must match") &&
         !info.quiet) {
@@ -613,8 +614,8 @@ void FunctionValidator::visitCall(Call* curr) {
                   curr,
                   "return_call should have unreachable type");
     shouldBeEqual(
-      getFunction()->result,
-      target->result,
+      getFunction()->sig.results,
+      target->sig.results,
       curr,
       "return_call callee return type must match caller return type");
   } else {
@@ -629,7 +630,7 @@ void FunctionValidator::visitCall(Call* curr) {
         "calls may only be unreachable if they have unreachable operands");
     } else {
       shouldBeEqual(curr->type,
-                    target->result,
+                    target->sig.results,
                     curr,
                     "call type must match callee return type");
     }
@@ -643,20 +644,17 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  auto* type = getModule()->getFunctionTypeOrNull(curr->fullType);
-  if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) {
-    return;
-  }
+  const std::vector<Type>& params = curr->sig.params.expand();
   shouldBeEqualOrFirstIsUnreachable(
     curr->target->type, i32, curr, "indirect call target must be an i32");
-  if (!shouldBeTrue(curr->operands.size() == type->params.size(),
+  if (!shouldBeTrue(curr->operands.size() == params.size(),
                     curr,
                     "call param number must match")) {
     return;
   }
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type,
-                                           type->params[i],
+                                           params[i],
                                            curr,
                                            "call param types must match") &&
         !info.quiet) {
@@ -669,8 +667,8 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
                   curr,
                   "return_call_indirect should have unreachable type");
     shouldBeEqual(
-      getFunction()->result,
-      type->result,
+      getFunction()->sig.results,
+      curr->sig.results,
       curr,
       "return_call_indirect callee return type must match caller return type");
   } else {
@@ -687,7 +685,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
       }
     } else {
       shouldBeEqual(curr->type,
-                    type->result,
+                    curr->sig.results,
                     curr,
                     "call_indirect type must match callee return type");
     }
@@ -701,37 +699,35 @@ void FunctionValidator::visitConst(Const* curr) {
 }
 
 void FunctionValidator::visitLocalGet(LocalGet* curr) {
-  shouldBeTrue(curr->index < getFunction()->getNumLocals(),
-               curr,
-               "local.get index must be small enough");
   shouldBeTrue(curr->type.isConcrete(),
                curr,
                "local.get must have a valid type - check what you provided "
                "when you constructed the node");
-  shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index),
-               curr,
-               "local.get must have proper type");
+  if (shouldBeTrue(curr->index < getFunction()->getNumLocals(),
+                   curr,
+                   "local.get index must be small enough")) {
+    shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index),
+                 curr,
+                 "local.get must have proper type");
+  }
 }
 
 void FunctionValidator::visitLocalSet(LocalSet* curr) {
-  shouldBeTrue(curr->index < getFunction()->getNumLocals(),
-               curr,
-               "local.set index must be small enough");
-  if (curr->value->type != unreachable) {
-    if (curr->type != none) { // tee is ok anyhow
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->value->type,
-        curr->type,
-        curr,
-        "local.set's value type must be correct");
-      shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index),
+  if (shouldBeTrue(curr->index < getFunction()->getNumLocals(),
                    curr,
-                   "local.set's type must be correct");
+                   "local.set index must be small enough")) {
+    if (curr->value->type != unreachable) {
+      if (curr->type != none) { // tee is ok anyhow
+        shouldBeEqual(getFunction()->getLocalType(curr->index),
+                      curr->type,
+                      curr,
+                      "local.set type must be correct");
+      }
+      shouldBeEqual(curr->value->type,
+                    getFunction()->getLocalType(curr->index),
+                    curr,
+                    "local.set's value type must be correct");
     }
-    shouldBeEqual(getFunction()->getLocalType(curr->index),
-                  curr->value->type,
-                  curr,
-                  "local.set type must match function");
   }
 }
 
@@ -1760,28 +1756,35 @@ void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
-  FeatureSet typeFeatures = getFeatures(curr->result);
-  for (auto type : curr->params) {
-    typeFeatures |= getFeatures(type);
+  shouldBeTrue(!curr->sig.results.isMulti(),
+               curr->body,
+               "Multivalue functions not allowed yet");
+  FeatureSet features;
+  for (auto type : curr->sig.params.expand()) {
+    features |= getFeatures(type);
     shouldBeTrue(type.isConcrete(), curr, "params must be concretely typed");
   }
+  for (auto type : curr->sig.results.expand()) {
+    features |= getFeatures(type);
+    shouldBeTrue(type.isConcrete(), curr, "results must be concretely typed");
+  }
   for (auto type : curr->vars) {
-    typeFeatures |= getFeatures(type);
+    features |= getFeatures(type);
     shouldBeTrue(type.isConcrete(), curr, "vars must be concretely typed");
   }
-  shouldBeTrue(typeFeatures <= getModule()->features,
+  shouldBeTrue(features <= getModule()->features,
                curr,
                "all used types should be allowed");
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
   if (curr->body->type != unreachable) {
-    shouldBeEqual(curr->result,
+    shouldBeEqual(curr->sig.results,
                   curr->body->type,
                   curr->body,
                   "function body type must match, if function returns");
   }
   if (returnType != unreachable) {
-    shouldBeEqual(curr->result,
+    shouldBeEqual(curr->sig.results,
                   returnType,
                   curr->body,
                   "function result must match, if function has returns");
@@ -1790,22 +1793,6 @@ void FunctionValidator::visitFunction(Function* curr) {
     breakInfos.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
-  // if function has a named type, it must match up with the function's params
-  // and result
-  if (info.validateGlobally && curr->type.is()) {
-    auto* ft = getModule()->getFunctionType(curr->type);
-    shouldBeTrue(ft->params == curr->params,
-                 curr->name,
-                 "function params must match its declared type");
-    shouldBeTrue(ft->result == curr->result,
-                 curr->name,
-                 "function result must match its declared type");
-  }
-  if (curr->imported()) {
-    shouldBeTrue(curr->type.is(),
-                 curr->name,
-                 "imported functions must have a function type");
-  }
   // validate optional local names
   std::set<Name> seen;
   for (auto& pair : curr->localNames) {
@@ -1931,16 +1918,17 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
     if (info.validateWeb) {
-      auto* functionType = module.getFunctionType(curr->type);
-      info.shouldBeUnequal(functionType->result,
-                           i64,
-                           curr->name,
-                           "Imported function must not have i64 return type");
-      for (Type param : functionType->params) {
+      for (Type param : curr->sig.params.expand()) {
         info.shouldBeUnequal(param,
                              i64,
                              curr->name,
                              "Imported function must not have i64 parameters");
+      }
+      for (Type result : curr->sig.results.expand()) {
+        info.shouldBeUnequal(result,
+                             i64,
+                             curr->name,
+                             "Imported function must not have i64 results");
       }
     }
   });
@@ -1957,16 +1945,18 @@ static void validateExports(Module& module, ValidationInfo& info) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
         Function* f = module.getFunction(curr->value);
-        info.shouldBeUnequal(f->result,
-                             i64,
-                             f->name,
-                             "Exported function must not have i64 return type");
-        for (auto param : f->params) {
+        for (auto param : f->sig.params.expand()) {
           info.shouldBeUnequal(
             param,
             i64,
             f->name,
             "Exported function must not have i64 parameters");
+        }
+        for (auto result : f->sig.results.expand()) {
+          info.shouldBeUnequal(result,
+                               i64,
+                               f->name,
+                               "Exported function must not have i64 results");
         }
       }
     } else if (curr->kind == ExternalKind::Global &&
@@ -2139,10 +2129,12 @@ static void validateModule(Module& module, ValidationInfo& info) {
     auto func = module.getFunctionOrNull(module.start);
     if (info.shouldBeTrue(
           func != nullptr, module.start, "start must be found")) {
-      info.shouldBeTrue(
-        func->params.size() == 0, module.start, "start must have 0 params");
-      info.shouldBeTrue(
-        func->result == none, module.start, "start must not return a value");
+      info.shouldBeTrue(func->sig.params == Type::none,
+                        module.start,
+                        "start must have 0 params");
+      info.shouldBeTrue(func->sig.results == Type::none,
+                        module.start,
+                        "start must not return a value");
     }
   }
 }

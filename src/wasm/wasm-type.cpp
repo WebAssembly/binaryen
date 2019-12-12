@@ -56,7 +56,7 @@ std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
   };
 
   add({});
-  add({});
+  add({Type::unreachable});
   add({Type::i32});
   add({Type::i64});
   add({Type::f32});
@@ -69,7 +69,7 @@ std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
 
 std::unordered_map<std::vector<Type>, uint32_t> indices = {
   {{}, Type::none},
-  {{}, Type::unreachable},
+  {{Type::unreachable}, Type::unreachable},
   {{Type::i32}, Type::i32},
   {{Type::i64}, Type::i64},
   {{Type::f32}, Type::f32},
@@ -254,16 +254,23 @@ unsigned getTypeSize(Type type) {
 }
 
 FeatureSet getFeatures(Type type) {
-  switch (type) {
-    case v128:
-      return FeatureSet::SIMD;
-    case anyref:
-      return FeatureSet::ReferenceTypes;
-    case exnref:
-      return FeatureSet::ExceptionHandling;
-    default:
-      return FeatureSet();
+  FeatureSet feats = FeatureSet::MVP;
+  for (Type t : type.expand()) {
+    switch (t) {
+      case v128:
+        feats |= FeatureSet::SIMD;
+        break;
+      case anyref:
+        feats |= FeatureSet::ReferenceTypes;
+        break;
+      case exnref:
+        feats |= FeatureSet::ExceptionHandling;
+        break;
+      default:
+        break;
+    }
   }
+  return feats;
 }
 
 Type getType(unsigned size, bool float_) {

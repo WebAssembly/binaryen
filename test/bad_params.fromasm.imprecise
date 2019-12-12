@@ -1,4 +1,5 @@
 (module
+ (type $none_=>_none (func))
  (export "ex" (func $ex))
  (func $ex (; 0 ;) (; has Stack IR ;)
   (nop)

@@ -1,8 +1,7 @@
-
 ;; This file contains patterns for OptimizeInstructions. Basically, we use a DSL for the patterns,
 ;; and the DSL is just wasm itself, plus some functions with special meanings
 ;;
-;; This file is converted into OptimizeInstructions.wast.processed by
+;; This file is converted into OptimizeInstructions.wat.processed by
 ;;    scripts/process_optimize_instructions.py
 ;; which makes it importable by C++. Then we just #include it there, avoiding the need to ship
 ;; a data file on the side.
@@ -24,4 +23,3 @@
     )
   )
 )
-

@@ -1,25 +1,36 @@
 (module
- (type $0 (func (param i32) (result i32)))
- (type $1 (func))
- (type $2 (func (result i32)))
- (type $3 (func (param i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "puts" (func $puts (param i32) (result i32)))
  (memory $0 2)
+ (data passive "Hello, world\00")
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66128))
- (global $global$1 i32 (i32.const 581))
+ (global $global$1 i32 (i32.const 66128))
+ (global $global$2 i32 (i32.const 581))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "__heap_base" (global $global$1))
+ (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__wasm_call_ctors (; 1 ;) (type $1)
-  (nop)
+ (func $__wasm_call_ctors (; 1 ;)
+  (call $__wasm_init_memory)
  )
- (func $__original_main (; 2 ;) (type $2) (result i32)
+ (func $__wasm_init_memory (; 2 ;)
+  (memory.init 0
+   (i32.const 568)
+   (i32.const 0)
+   (i32.const 14)
+  )
+ )
+ (func $__original_main (; 3 ;) (result i32)
   (drop
    (call $puts
     (i32.const 568)
@@ -27,13 +38,13 @@
   )
   (i32.const 0)
  )
- (func $main (; 3 ;) (type $3) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $stackSave (; 4 ;) (result i32)
+ (func $stackSave (; 5 ;) (result i32)
   (global.get $global$0)
  )
- (func $stackAlloc (; 5 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (; 6 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (global.set $global$0
    (local.tee $1
@@ -48,12 +59,12 @@
   )
   (local.get $1)
  )
- (func $stackRestore (; 6 ;) (param $0 i32)
+ (func $stackRestore (; 7 ;) (param $0 i32)
   (global.set $global$0
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 7 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (; 8 ;) (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
   )
@@ -89,6 +100,7 @@
     "__growWasmMemory"
   ],
   "namedGlobals": {
+    "__heap_base" : "66128",
     "__data_end" : "581"
   },
   "invokeFuncs": [

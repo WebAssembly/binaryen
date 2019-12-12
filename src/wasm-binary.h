@@ -1023,7 +1023,7 @@ private:
   Module* wasm;
   BufferWithRandomAccess& o;
   ModuleUtils::BinaryIndexes indexes;
-  std::unordered_map<Signature, Index> typeIndexes;
+  std::unordered_map<Signature, Index> typeIndices;
   std::vector<Signature> types;
 
   bool debugInfo = true;
@@ -1057,6 +1057,9 @@ class WasmBinaryBuilder {
   std::set<Function::DebugLocation> debugLocation;
 
   std::set<BinaryConsts::Section> seenSections;
+
+  // All signatures present in the type section
+  std::vector<Signature> signatures;
 
 public:
   WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
@@ -1106,7 +1109,8 @@ public:
                           Address defaultIfNoMax);
   void readImports();
 
-  std::vector<FunctionType*> functionTypes; // types of defined functions
+  // The signatures of each function, given in the function section
+  std::vector<Signature> functionSignatures;
 
   void readFunctionSignatures();
   size_t nextLabel;
@@ -1133,7 +1137,7 @@ public:
 
   void readFunctions();
 
-  std::map<Export*, Index> exportIndexes;
+  std::map<Export*, Index> exportIndices;
   std::vector<Export*> exportOrder;
   void readExports();
 
