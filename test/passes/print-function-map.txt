@@ -2,12 +2,12 @@
 1:bar
 2:baz
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  (import "env" "foo" (func $Foo))
- (func $bar (; 1 ;) (type $FUNCSIG$v)
+ (func $bar (; 1 ;)
   (nop)
  )
- (func $baz (; 2 ;) (type $FUNCSIG$v)
+ (func $baz (; 2 ;)
   (nop)
  )
 )

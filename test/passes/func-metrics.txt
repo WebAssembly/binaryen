@@ -32,24 +32,24 @@ func: ifs
  drop           : 6       
  if             : 4       
 (module
- (type $0 (func (param i32)))
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
  (table $0 256 256 funcref)
  (elem (i32.const 0) $ifs $ifs $ifs)
  (global $glob i32 (i32.const 1337))
- (func $empty (; 0 ;) (type $FUNCSIG$v)
+ (func $empty (; 0 ;)
   (nop)
  )
- (func $small (; 1 ;) (type $FUNCSIG$v)
+ (func $small (; 1 ;)
   (nop)
   (drop
    (i32.const 100421)
   )
   (return)
  )
- (func $ifs (; 2 ;) (type $0) (param $x i32)
+ (func $ifs (; 2 ;) (param $x i32)
   (local $y f32)
   (block $block0
    (if
@@ -130,11 +130,11 @@ export: b (func_b)
  [removable-bytes-without-it]: 18      
  [total]        : 0       
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  (import "env" "waka" (func $waka))
  (export "a" (func $func_a))
  (export "b" (func $func_b))
- (func $func_a (; 1 ;) (type $FUNCSIG$v)
+ (func $func_a (; 1 ;)
   (call $waka)
   (call $waka)
   (call $waka)
@@ -143,7 +143,7 @@ export: b (func_b)
   (call $func_b)
   (call $func_c)
  )
- (func $func_b (; 2 ;) (type $FUNCSIG$v)
+ (func $func_b (; 2 ;)
   (call $waka)
   (call $waka)
   (call $waka)
@@ -155,7 +155,7 @@ export: b (func_b)
   (call $waka)
   (call $waka)
  )
- (func $func_c (; 3 ;) (type $FUNCSIG$v)
+ (func $func_c (; 3 ;)
   (call $waka)
   (call $waka)
   (call $waka)
@@ -193,11 +193,11 @@ start: func_a
  [removable-bytes-without-it]: 3       
  [total]        : 0       
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  (import "env" "waka" (func $waka))
  (export "a" (func $func_a))
  (start $func_a)
- (func $func_a (; 1 ;) (type $FUNCSIG$v)
+ (func $func_a (; 1 ;)
   (call $waka)
   (call $waka)
   (call $waka)
@@ -222,10 +222,10 @@ start: func_a
  [removable-bytes-without-it]: 67      
  [total]        : 0       
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  (import "env" "waka" (func $waka))
  (start $func_a)
- (func $func_a (; 1 ;) (type $FUNCSIG$v)
+ (func $func_a (; 1 ;)
   (call $waka)
   (call $waka)
   (call $waka)
@@ -250,11 +250,11 @@ export: stackSave (0)
  [removable-bytes-without-it]: 66      
  [total]        : 0       
 (module
- (type $0 (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "STACKTOP" (global $gimport$0 i32))
  (global $global$0 (mut i32) (global.get $gimport$0))
  (export "stackSave" (func $0))
- (func $0 (; 0 ;) (type $0) (result i32)
+ (func $0 (; 0 ;) (result i32)
   (global.get $global$0)
  )
 )

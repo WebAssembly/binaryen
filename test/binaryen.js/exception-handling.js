@@ -19,7 +19,6 @@ function stringify(expr) {
 var module = new Binaryen.Module();
 module.setFeatures(Binaryen.Features.ExceptionHandling);
 
-var v = module.addFunctionType("v", Binaryen.none, []);
 var event_ = module.addEvent("e", 0, Binaryen.i32, Binaryen.none);
 
 // (try
@@ -49,7 +48,7 @@ var try_ = module.try(
   ]
   )
 );
-var func = module.addFunction("test", v, [Binaryen.exnref], try_);
+var func = module.addFunction("test", Binaryen.none, Binaryen.none, [Binaryen.exnref], try_);
 
 console.log(module.emitText());
 assert(module.validate());

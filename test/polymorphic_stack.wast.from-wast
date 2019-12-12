@@ -1,10 +1,10 @@
 (module
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$v (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (import "env" "table" (table $0 9 9 funcref))
- (func $break-and-binary (; 0 ;) (type $FUNCSIG$i) (result i32)
+ (func $break-and-binary (; 0 ;) (result i32)
   (block $x (result i32)
    (f32.add
     (br_if $x
@@ -19,7 +19,7 @@
    )
   )
  )
- (func $call-and-unary (; 1 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $call-and-unary (; 1 ;) (param $0 i32) (result i32)
   (drop
    (i64.eqz
     (call $call-and-unary
@@ -36,14 +36,14 @@
   )
   (drop
    (i64.eqz
-    (call_indirect (type $FUNCSIG$ii)
+    (call_indirect (type $i32_=>_i32)
      (unreachable)
      (unreachable)
     )
    )
   )
  )
- (func $tee (; 2 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $tee (; 2 ;) (param $x i32)
   (local $y f32)
   (drop
    (i64.eqz
@@ -60,7 +60,7 @@
    )
   )
  )
- (func $tee2 (; 3 ;) (type $FUNCSIG$v)
+ (func $tee2 (; 3 ;)
   (local $0 f32)
   (if
    (i32.const 259)
@@ -69,7 +69,7 @@
    )
   )
  )
- (func $select (; 4 ;) (type $FUNCSIG$v)
+ (func $select (; 4 ;)
   (drop
    (i64.eqz
     (select
@@ -80,7 +80,7 @@
    )
   )
  )
- (func $untaken-break-should-have-value (; 5 ;) (type $FUNCSIG$i) (result i32)
+ (func $untaken-break-should-have-value (; 5 ;) (result i32)
   (block $x (result i32)
    (block $block
     (br_if $x
@@ -90,7 +90,7 @@
    )
   )
  )
- (func $unreachable-in-block-but-code-before (; 6 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $unreachable-in-block-but-code-before (; 6 ;) (param $0 i32) (result i32)
   (if
    (local.get $0)
    (return
@@ -106,7 +106,7 @@
    )
   )
  )
- (func $br_table_unreachable_to_also_unreachable (; 7 ;) (type $FUNCSIG$i) (result i32)
+ (func $br_table_unreachable_to_also_unreachable (; 7 ;) (result i32)
   (block $a (result i32)
    (block $b (result i32)
     (br_table $a $b
@@ -116,7 +116,7 @@
    )
   )
  )
- (func $untaken-br_if (; 8 ;) (type $FUNCSIG$i) (result i32)
+ (func $untaken-br_if (; 8 ;) (result i32)
   (block $label$8 (result i32)
    (block $label$9
     (drop

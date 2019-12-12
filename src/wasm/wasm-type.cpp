@@ -254,16 +254,23 @@ unsigned getTypeSize(Type type) {
 }
 
 FeatureSet getFeatures(Type type) {
-  switch (type) {
-    case v128:
-      return FeatureSet::SIMD;
-    case anyref:
-      return FeatureSet::ReferenceTypes;
-    case exnref:
-      return FeatureSet::ExceptionHandling;
-    default:
-      return FeatureSet();
+  FeatureSet feats = FeatureSet::MVP;
+  for (Type t : type.expand()) {
+    switch (t) {
+      case v128:
+        feats |= FeatureSet::SIMD;
+        break;
+      case anyref:
+        feats |= FeatureSet::ReferenceTypes;
+        break;
+      case exnref:
+        feats |= FeatureSet::ExceptionHandling;
+        break;
+      default:
+        break;
+    }
   }
+  return feats;
 }
 
 Type getType(unsigned size, bool float_) {

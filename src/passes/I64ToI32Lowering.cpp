@@ -147,22 +147,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     PostWalker<I64ToI32Lowering>::doWalkModule(module);
   }
 
-  void visitFunctionType(FunctionType* curr) {
-    std::vector<Type> params;
-    for (auto t : curr->params) {
-      if (t == i64) {
-        params.push_back(i32);
-        params.push_back(i32);
-      } else {
-        params.push_back(t);
-      }
-    }
-    std::swap(params, curr->params);
-    if (curr->result == i64) {
-      curr->result = i32;
-    }
-  }
-
   void doWalkFunction(Function* func) {
     Flat::verifyFlatness(func);
     // create builder here if this is first entry to module for this object
@@ -174,7 +158,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     freeTemps.clear();
     Module temp;
     auto* oldFunc = ModuleUtils::copyFunction(func, temp);
-    func->params.clear();
+    func->sig.params = Type::none;
     func->vars.clear();
     func->localNames.clear();
     func->localIndices.clear();
@@ -190,8 +174,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
           ? Builder::addParam
           : static_cast<Index (*)(Function*, Name, Type)>(Builder::addVar);
       if (paramType == i64) {
-        builderFunc(func, lowName, i32);
-        builderFunc(func, highName, i32);
+        builderFunc(func, lowName, Type::i32);
+        builderFunc(func, highName, Type::i32);
         indexMap[i] = newIdx;
         newIdx += 2;
       } else {
@@ -207,8 +191,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (func->imported()) {
       return;
     }
-    if (func->result == i64) {
-      func->result = i32;
+    if (func->sig.results == Type::i64) {
+      func->sig.results = Type::i32;
       // body may not have out param if it ends with control flow
       if (hasOutParam(func->body)) {
         TempVar highBits = fetchOutParam(func->body);
@@ -244,14 +228,14 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         fixed = true;
       }
     }
-    if (curr->type != i64) {
+    if (curr->type != Type::i64) {
       auto* ret = callBuilder(args, curr->type);
       replaceCurrent(ret);
       return fixed ? ret : nullptr;
     }
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
-    auto* call = callBuilder(args, i32);
+    auto* call = callBuilder(args, Type::i32);
     LocalSet* doCall = builder->makeLocalSet(lowBits, call);
     LocalSet* setHigh = builder->makeLocalSet(
       highBits, builder->makeGlobalGet(INT64_TO_32_HIGH_BITS, i32));
@@ -263,13 +247,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn &&
-        getModule()->getFunction(curr->target)->result == i64) {
+        getModule()->getFunction(curr->target)->sig.results == Type::i64) {
       Fatal()
         << "i64 to i32 lowering of return_call values not yet implemented";
     }
     auto* fixedCall = visitGenericCall<Call>(
-      curr, [&](std::vector<Expression*>& args, Type ty) {
-        return builder->makeCall(curr->target, args, ty, curr->isReturn);
+      curr, [&](std::vector<Expression*>& args, Type results) {
+        return builder->makeCall(curr->target, args, results, curr->isReturn);
       });
     // If this was to an import, we need to call the legal version. This assumes
     // that legalize-js-interface has been run before.
@@ -280,15 +264,23 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    if (curr->isReturn &&
-        getModule()->getFunctionType(curr->fullType)->result == i64) {
+    if (curr->isReturn && curr->sig.results == Type::i64) {
       Fatal()
         << "i64 to i32 lowering of return_call values not yet implemented";
     }
     visitGenericCall<CallIndirect>(
-      curr, [&](std::vector<Expression*>& args, Type ty) {
+      curr, [&](std::vector<Expression*>& args, Type results) {
+        std::vector<Type> params;
+        for (auto param : curr->sig.params.expand()) {
+          if (param == Type::i64) {
+            params.push_back(Type::i32);
+            params.push_back(Type::i32);
+          } else {
+            params.push_back(param);
+          }
+        }
         return builder->makeCallIndirect(
-          curr->fullType, curr->target, args, ty, curr->isReturn);
+          curr->target, args, Signature(Type(params), results), curr->isReturn);
       });
   }
 

@@ -1,17 +1,17 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$f (func (result f32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_f32 (func (result f32)))
  (global $global$0 (mut i32) (i32.const 10))
- (func $drop-block (; 0 ;) (type $FUNCSIG$v)
+ (func $drop-block (; 0 ;)
   (block $block
    (drop
     (i32.const 0)
    )
   )
  )
- (func $drop-block-br (; 1 ;) (type $FUNCSIG$v)
+ (func $drop-block-br (; 1 ;)
   (block $block
    (drop
     (block $x (result i32)
@@ -23,7 +23,7 @@
    )
   )
  )
- (func $drop-block-br-if (; 2 ;) (type $FUNCSIG$v)
+ (func $drop-block-br-if (; 2 ;)
   (block $block
    (drop
     (i32.const 1)
@@ -38,7 +38,7 @@
    )
   )
  )
- (func $undroppable-block-br-if (; 3 ;) (type $FUNCSIG$vi) (param $0 i32)
+ (func $undroppable-block-br-if (; 3 ;) (param $0 i32)
   (block $block
    (drop
     (block $x (result i32)
@@ -53,7 +53,7 @@
    )
   )
  )
- (func $drop-block-nested-br-if (; 4 ;) (type $FUNCSIG$v)
+ (func $drop-block-nested-br-if (; 4 ;)
   (block $block
    (block $x
     (if
@@ -74,7 +74,7 @@
    )
   )
  )
- (func $drop-unreachable-br_if (; 5 ;) (type $FUNCSIG$i) (result i32)
+ (func $drop-unreachable-br_if (; 5 ;) (result i32)
   (block $label$0 (result i32)
    (block $label$2 (result i32)
     (br_if $label$2
@@ -86,7 +86,7 @@
    )
   )
  )
- (func $drop-block-squared-iloop (; 6 ;) (type $FUNCSIG$v)
+ (func $drop-block-squared-iloop (; 6 ;)
   (drop
    (block $label$0 (result i32)
     (drop
@@ -99,7 +99,7 @@
    )
   )
  )
- (func $br-goes-away-label2-becomes-unreachable (; 7 ;) (type $FUNCSIG$v)
+ (func $br-goes-away-label2-becomes-unreachable (; 7 ;)
   (block $block
    (drop
     (block $label$1 (result i32)
@@ -118,7 +118,7 @@
    )
   )
  )
- (func $loop-block-drop-block-return (; 8 ;) (type $FUNCSIG$v)
+ (func $loop-block-drop-block-return (; 8 ;)
   (loop $label$4
    (block $label$5
     (drop
@@ -129,7 +129,7 @@
    )
   )
  )
- (func $if-block (; 9 ;) (type $FUNCSIG$v)
+ (func $if-block (; 9 ;)
   (block $label
    (if
     (i32.const 1)
@@ -144,7 +144,7 @@
    )
   )
  )
- (func $if-block-bad (; 10 ;) (type $FUNCSIG$v)
+ (func $if-block-bad (; 10 ;)
   (block $label
    (if
     (br $label)
@@ -159,7 +159,7 @@
    )
   )
  )
- (func $if-block-br (; 11 ;) (type $FUNCSIG$v)
+ (func $if-block-br (; 11 ;)
   (block $label
    (if
     (i32.const 1)
@@ -167,7 +167,7 @@
    )
   )
  )
- (func $if-block-br-1 (; 12 ;) (type $FUNCSIG$v)
+ (func $if-block-br-1 (; 12 ;)
   (block $label
    (if
     (i32.const 1)
@@ -178,7 +178,7 @@
    )
   )
  )
- (func $if-block-br-2 (; 13 ;) (type $FUNCSIG$v)
+ (func $if-block-br-2 (; 13 ;)
   (block $label
    (if
     (i32.const 1)
@@ -189,7 +189,7 @@
    )
   )
  )
- (func $if-block-br-3 (; 14 ;) (type $FUNCSIG$v)
+ (func $if-block-br-3 (; 14 ;)
   (block $label
    (if
     (i32.const 1)
@@ -198,7 +198,7 @@
    )
   )
  )
- (func $if-block-br-4-eithre (; 15 ;) (type $FUNCSIG$v)
+ (func $if-block-br-4-eithre (; 15 ;)
   (block $label
    (if
     (i32.const 1)
@@ -211,7 +211,7 @@
    )
   )
  )
- (func $if-block-br-5-value (; 16 ;) (type $FUNCSIG$i) (result i32)
+ (func $if-block-br-5-value (; 16 ;) (result i32)
   (block $label (result i32)
    (if (result i32)
     (i32.const 1)
@@ -220,7 +220,7 @@
    )
   )
  )
- (func $restructure-if-outerType-change (; 17 ;) (type $FUNCSIG$v)
+ (func $restructure-if-outerType-change (; 17 ;)
   (loop $label$1
    (br_if $label$1
     (block $label$2
@@ -237,7 +237,7 @@
    )
   )
  )
- (func $if-arm-unreachable (; 18 ;) (type $FUNCSIG$v)
+ (func $if-arm-unreachable (; 18 ;)
   (block $label$1
    (if
     (unreachable)
@@ -246,7 +246,7 @@
    )
   )
  )
- (func $propagate-type-if-we-optimize (; 19 ;) (type $FUNCSIG$v)
+ (func $propagate-type-if-we-optimize (; 19 ;)
   (if
    (i32.const 1)
    (nop)
@@ -269,7 +269,7 @@
    )
   )
  )
- (func $br-value-blocktypechange (; 20 ;) (type $FUNCSIG$f) (result f32)
+ (func $br-value-blocktypechange (; 20 ;) (result f32)
   (global.set $global$0
    (i32.const 0)
   )

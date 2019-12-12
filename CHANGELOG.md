@@ -27,6 +27,9 @@ Current Trunk
 - Replace BinaryenSIMDBitselect* with BinaryenSIMDTernary* in the C API and add
   qfma/qfms instructions.
 - Added `offset` parameter to BinaryenSetFunctionTable.
+- Add the ability to create multivalue Types in the C and JS APIs.
+- Remove named function types. They are replaced by `params` and `results` types
+  local to each function.
 
 v88
 ---

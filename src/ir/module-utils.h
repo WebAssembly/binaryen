@@ -63,11 +63,8 @@ struct BinaryIndexes {
 inline Function* copyFunction(Function* func, Module& out) {
   auto* ret = new Function();
   ret->name = func->name;
-  ret->result = func->result;
-  ret->params = func->params;
+  ret->sig = func->sig;
   ret->vars = func->vars;
-  // start with no named type; the names in the other module may differ
-  ret->type = Name();
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->debugLocations = func->debugLocations;
@@ -108,9 +105,6 @@ inline Event* copyEvent(Event* event, Module& out) {
 inline void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
-  for (auto& curr : in.functionTypes) {
-    out.addFunctionType(make_unique<FunctionType>(*curr));
-  }
   for (auto& curr : in.exports) {
     out.addExport(new Export(*curr));
   }
@@ -137,7 +131,6 @@ inline void copyModule(const Module& in, Module& out) {
 }
 
 inline void clearModule(Module& wasm) {
-  wasm.functionTypes.clear();
   wasm.exports.clear();
   wasm.functions.clear();
   wasm.globals.clear();
@@ -412,6 +405,64 @@ template<typename T> struct CallGraphPropertyAnalysis {
     }
   }
 };
+
+// Helper function for collecting the type signature used in a module
+//
+// Used when emitting or printing a module to give signatures canonical
+// indices. Signatures are sorted in order of decreasing frequency to minize the
+// size of their collective encoding. Both a vector mapping indices to
+// signatures and a map mapping signatures to indices are produced.
+inline void
+collectSignatures(Module& wasm,
+                  std::vector<Signature>& signatures,
+                  std::unordered_map<Signature, Index>& sigIndices) {
+  using Counts = std::unordered_map<Signature, size_t>;
+
+  // Collect the signature use counts for a single function
+  auto updateCounts = [&](Function* func, Counts& counts) {
+    if (func->imported()) {
+      return;
+    }
+    struct TypeCounter : PostWalker<TypeCounter> {
+      Counts& counts;
+
+      TypeCounter(Counts& counts) : counts(counts) {}
+
+      void visitCallIndirect(CallIndirect* curr) { counts[curr->sig]++; }
+    };
+    TypeCounter(counts).walk(func->body);
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(wasm, updateCounts);
+
+  // Collect all the counts.
+  Counts counts;
+  for (auto& curr : wasm.functions) {
+    counts[curr->sig]++;
+  }
+  for (auto& curr : wasm.events) {
+    counts[curr->sig]++;
+  }
+  for (auto& pair : analysis.map) {
+    Counts& functionCounts = pair.second;
+    for (auto& innerPair : functionCounts) {
+      counts[innerPair.first] += innerPair.second;
+    }
+  }
+  std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
+                                                   counts.end());
+  std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
+    // order by frequency then simplicity
+    if (a.second != b.second) {
+      return a.second > b.second;
+    }
+    return a.first < b.first;
+  });
+  for (Index i = 0; i < sorted.size(); ++i) {
+    sigIndices[sorted[i].first] = i;
+    signatures.push_back(sorted[i].first);
+  }
+}
 
 } // namespace ModuleUtils
 
