@@ -1,13 +1,11 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$d (func (result f64)))
+ (type $none_=>_none (func))
  (import "env" "table" (table $0 1 1 funcref))
  (elem (i32.const 0) $waka-sneaky)
  (import "env" "memBase" (global $import$global0 i32))
  (import "somewhere" "waka-sneaky" (func $waka-sneaky))
  (memory $0 1024 1024)
- (func $nada (; 1 ;) (type $FUNCSIG$v)
+ (func $nada (; 1 ;)
   (nop)
   (drop
    (i32.const 0)
@@ -15,7 +13,7 @@
   (drop
    (f64.const 0)
   )
-  (call_indirect (type $FUNCSIG$v)
+  (call_indirect (type $none_=>_none)
    (i32.const 0)
   )
  )

@@ -1,10 +1,12 @@
 (module
- (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vii (func (param i32 i32)))
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $none_=>_none (func))
+ (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $memory 256))
  (import "env" "table" (table $table 8 8 funcref))
  (elem (global.get $__table_base) $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
@@ -9844,7 +9846,7 @@
       )
       (block
        (local.set $h
-        (call_indirect (type $FUNCSIG$iiii)
+        (call_indirect (type $i32_i32_i32_=>_i32)
          (local.get $c)
          (local.get $a)
          (local.get $b)
@@ -9933,7 +9935,7 @@
         )
         (if
          (i32.lt_u
-          (call_indirect (type $FUNCSIG$iiii)
+          (call_indirect (type $i32_i32_i32_=>_i32)
            (local.get $c)
            (local.get $a)
            (local.get $q)
@@ -10557,7 +10559,7 @@
      )
      (if
       (i32.eq
-       (call_indirect (type $FUNCSIG$iiii)
+       (call_indirect (type $i32_i32_i32_=>_i32)
         (local.get $a)
         (local.get $d)
         (i32.const 1)
@@ -10626,7 +10628,7 @@
    )
    (block
     (drop
-     (call_indirect (type $FUNCSIG$iiii)
+     (call_indirect (type $i32_i32_i32_=>_i32)
       (local.get $a)
       (i32.const 0)
       (i32.const 0)
@@ -10696,7 +10698,7 @@
       (local.get $h)
      )
      (drop
-      (call_indirect (type $FUNCSIG$iiii)
+      (call_indirect (type $i32_i32_i32_=>_i32)
        (local.get $a)
        (i32.sub
         (local.get $f)
@@ -11807,7 +11809,7 @@
  )
  (func $lb (; 34 ;) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
   (return
-   (call_indirect (type $FUNCSIG$iiii)
+   (call_indirect (type $i32_i32_i32_=>_i32)
     (local.get $b)
     (local.get $c)
     (local.get $d)
@@ -11885,7 +11887,7 @@
  )
  (func $kb (; 39 ;) (param $a i32) (param $b i32) (result i32)
   (return
-   (call_indirect (type $FUNCSIG$ii)
+   (call_indirect (type $i32_=>_i32)
     (local.get $b)
     (i32.add
      (i32.and
@@ -11914,7 +11916,7 @@
   (return)
  )
  (func $mb (; 41 ;) (param $a i32) (param $b i32)
-  (call_indirect (type $FUNCSIG$vi)
+  (call_indirect (type $i32_=>_none)
    (local.get $b)
    (i32.add
     (i32.and

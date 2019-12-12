@@ -1,5 +1,5 @@
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  (import "env" "memory" (memory $0 256 256))
  (data (i32.const 1024) "abcd")
  (data (global.get $from_segment) "abcd")
@@ -11,10 +11,10 @@
  (global $from_segment (mut i32) (i32.const 0))
  (global $from_segment_2 (mut i32) (i32.const 0))
  (export "wasm_func" (func $a_wasm_func))
- (func $table_func (; 1 ;) (type $FUNCSIG$v)
+ (func $table_func (; 1 ;)
   (nop)
  )
- (func $a_wasm_func (; 2 ;) (type $FUNCSIG$v)
+ (func $a_wasm_func (; 2 ;)
   (call $a_js_func)
   (drop
    (global.get $DYNAMICTOP_PTR$asm2wasm$import)

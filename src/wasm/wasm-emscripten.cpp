@@ -20,7 +20,6 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
@@ -214,7 +213,7 @@ void EmscriptenGlueGenerator::generateRuntimeFunctions() {
 }
 
 static Function*
-ensureFunctionImport(Module* module, Name name, std::string sig) {
+ensureFunctionImport(Module* module, Name name, Signature sig) {
   // Then see if its already imported
   ImportInfo info(*module);
   if (Function* f = info.getImportedFunction(ENV, name)) {
@@ -225,9 +224,7 @@ ensureFunctionImport(Module* module, Name name, std::string sig) {
   import->name = name;
   import->module = ENV;
   import->base = name;
-  auto* functionType = ensureFunctionType(sig, module);
-  import->type = functionType->name;
-  FunctionTypeUtils::fillFunction(import, functionType);
+  import->sig = sig;
   module->addFunction(import);
   return import;
 }
@@ -274,7 +271,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
 
   for (Global* g : gotMemEntries) {
     Name getter(std::string("g$") + g->base.c_str());
-    ensureFunctionImport(&wasm, getter, "i");
+    ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
     Expression* call = builder.makeCall(getter, {}, i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
@@ -300,7 +297,7 @@ Function* EmscriptenGlueGenerator::generateAssignGOTEntriesFunction() {
     Name getter(
       (std::string("fp$") + g->base.c_str() + std::string("$") + getSig(f))
         .c_str());
-    ensureFunctionImport(&wasm, getter, "i");
+    ensureFunctionImport(&wasm, getter, Signature(Type::none, Type::i32));
     Expression* call = builder.makeCall(getter, {}, i32);
     GlobalSet* globalSet = builder.makeGlobalSet(g->name, call);
     block->list.push_back(globalSet);
@@ -378,29 +375,28 @@ inline void exportFunction(Module& wasm, Name name, bool must_export) {
   wasm.addExport(exp);
 }
 
-void EmscriptenGlueGenerator::generateDynCallThunk(std::string sig) {
-  auto* funcType = ensureFunctionType(sig, &wasm);
+void EmscriptenGlueGenerator::generateDynCallThunk(Signature sig) {
   if (!sigs.insert(sig).second) {
     return; // sig is already in the set
   }
-  Name name = std::string("dynCall_") + sig;
+  Name name = std::string("dynCall_") + getSig(sig.results, sig.params);
   if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
     return; // module already contains this dyncall
   }
   std::vector<NameType> params;
   params.emplace_back("fptr", i32); // function pointer param
   int p = 0;
-  for (const auto& ty : funcType->params) {
+  const std::vector<Type>& paramTypes = sig.params.expand();
+  for (const auto& ty : paramTypes) {
     params.emplace_back(std::to_string(p++), ty);
   }
-  Function* f =
-    builder.makeFunction(name, std::move(params), funcType->result, {});
+  Function* f = builder.makeFunction(name, std::move(params), sig.results, {});
   Expression* fptr = builder.makeLocalGet(0, i32);
   std::vector<Expression*> args;
-  for (unsigned i = 0; i < funcType->params.size(); ++i) {
-    args.push_back(builder.makeLocalGet(i + 1, funcType->params[i]));
+  for (unsigned i = 0; i < paramTypes.size(); ++i) {
+    args.push_back(builder.makeLocalGet(i + 1, paramTypes[i]));
   }
-  Expression* call = builder.makeCallIndirect(funcType, fptr, args);
+  Expression* call = builder.makeCallIndirect(fptr, args, sig);
   f->body = call;
 
   wasm.addFunction(f);
@@ -414,8 +410,7 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     tableSegmentData = wasm.table.segments[0].data;
   }
   for (const auto& indirectFunc : tableSegmentData) {
-    std::string sig = getSig(wasm.getFunction(indirectFunc));
-    generateDynCallThunk(sig);
+    generateDynCallThunk(wasm.getFunction(indirectFunc)->sig);
   }
 }
 
@@ -486,10 +481,11 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   RemoveStackPointer walker(stackPointer);
   walker.walkModule(&wasm);
   if (walker.needStackSave) {
-    ensureFunctionImport(&wasm, STACK_SAVE, "i");
+    ensureFunctionImport(&wasm, STACK_SAVE, Signature(Type::none, Type::i32));
   }
   if (walker.needStackRestore) {
-    ensureFunctionImport(&wasm, STACK_RESTORE, "vi");
+    ensureFunctionImport(
+      &wasm, STACK_RESTORE, Signature(Type::i32, Type::none));
   }
 
   // Finally remove the stack pointer global itself. This avoids importing
@@ -551,7 +547,7 @@ void EmscriptenGlueGenerator::enforceStackLimit() {
 
 void EmscriptenGlueGenerator::generateSetStackLimitFunction() {
   Function* function =
-    builder.makeFunction(SET_STACK_LIMIT, std::vector<Type>({i32}), none, {});
+    builder.makeFunction(SET_STACK_LIMIT, Signature(Type::i32, Type::none), {});
   LocalGet* getArg = builder.makeLocalGet(0, i32);
   Expression* store = builder.makeGlobalSet(STACK_LIMIT, getArg);
   function->body = store;
@@ -574,9 +570,7 @@ Name EmscriptenGlueGenerator::importStackOverflowHandler() {
     import->name = STACK_OVERFLOW_IMPORT;
     import->module = ENV;
     import->base = STACK_OVERFLOW_IMPORT;
-    auto* functionType = ensureFunctionType("v", &wasm);
-    import->type = functionType->name;
-    FunctionTypeUtils::fillFunction(import, functionType);
+    import->sig = Signature(Type::none, Type::none);
     wasm.addFunction(import);
     return STACK_OVERFLOW_IMPORT;
   }
@@ -708,14 +702,14 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   std::vector<Address> segmentOffsets; // segment index => address offset
 
   struct AsmConst {
-    std::set<std::string> sigs;
+    std::set<Signature> sigs;
     Address id;
     std::string code;
     Proxying proxy;
   };
 
   std::vector<AsmConst> asmConsts;
-  std::set<std::pair<std::string, Proxying>> allSigs;
+  std::set<std::pair<Signature, Proxying>> allSigs;
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
 
@@ -731,12 +725,12 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   void process();
 
 private:
-  std::string fixupName(Name& name, std::string baseSig, Proxying proxy);
+  Signature fixupName(Name& name, Signature baseSig, Proxying proxy);
   AsmConst&
-  createAsmConst(uint32_t id, std::string code, std::string sig, Name name);
-  std::string asmConstSig(std::string baseSig);
-  Name nameForImportWithSig(std::string sig, Proxying proxy);
-  void queueImport(Name importName, std::string baseSig);
+  createAsmConst(uint32_t id, std::string code, Signature sig, Name name);
+  Signature asmConstSig(Signature baseSig);
+  Name nameForImportWithSig(Signature sig, Proxying proxy);
+  void queueImport(Name importName, Signature baseSig);
   void addImports();
   Proxying proxyType(Name name);
 
@@ -762,7 +756,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     return;
   }
 
-  auto baseSig = getSig(curr);
+  auto baseSig = wasm.getFunction(curr->target)->sig;
   auto sig = asmConstSig(baseSig);
   auto* arg = curr->operands[0];
   while (!arg->dynCast<Const>()) {
@@ -828,9 +822,8 @@ void AsmConstWalker::visitTable(Table* curr) {
     for (auto& name : segment.data) {
       auto* func = wasm.getFunction(name);
       if (func->imported() && func->base.hasSubstring(EM_ASM_PREFIX)) {
-        std::string baseSig = getSig(func);
         auto proxy = proxyType(func->base);
-        fixupName(name, baseSig, proxy);
+        fixupName(name, func->sig, proxy);
       }
     }
   }
@@ -844,8 +837,8 @@ void AsmConstWalker::process() {
   addImports();
 }
 
-std::string
-AsmConstWalker::fixupName(Name& name, std::string baseSig, Proxying proxy) {
+Signature
+AsmConstWalker::fixupName(Name& name, Signature baseSig, Proxying proxy) {
   auto sig = asmConstSig(baseSig);
   auto importName = nameForImportWithSig(sig, proxy);
   name = importName;
@@ -860,7 +853,7 @@ AsmConstWalker::fixupName(Name& name, std::string baseSig, Proxying proxy) {
 
 AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(uint32_t id,
                                                          std::string code,
-                                                         std::string sig,
+                                                         Signature sig,
                                                          Name name) {
   AsmConst asmConst;
   asmConst.id = id;
@@ -871,31 +864,27 @@ AsmConstWalker::AsmConst& AsmConstWalker::createAsmConst(uint32_t id,
   return asmConsts.back();
 }
 
-std::string AsmConstWalker::asmConstSig(std::string baseSig) {
-  std::string sig = "";
-  for (size_t i = 0; i < baseSig.size(); ++i) {
-    // Omit the signature of the "code" parameter, taken as a string, as the
-    // first argument
-    if (i != 1) {
-      sig += baseSig[i];
-    }
-  }
-  return sig;
+Signature AsmConstWalker::asmConstSig(Signature baseSig) {
+  std::vector<Type> params = baseSig.params.expand();
+  assert(params.size() >= 1);
+  // Omit the signature of the "code" parameter, taken as a string, as the
+  // first argument
+  params.erase(params.begin());
+  return Signature(Type(params), baseSig.results);
 }
 
-Name AsmConstWalker::nameForImportWithSig(std::string sig, Proxying proxy) {
-  std::string fixedTarget =
-    EM_ASM_PREFIX.str + std::string("_") + proxyingSuffix(proxy) + sig;
+Name AsmConstWalker::nameForImportWithSig(Signature sig, Proxying proxy) {
+  std::string fixedTarget = EM_ASM_PREFIX.str + std::string("_") +
+                            proxyingSuffix(proxy) +
+                            getSig(sig.results, sig.params);
   return Name(fixedTarget.c_str());
 }
 
-void AsmConstWalker::queueImport(Name importName, std::string baseSig) {
+void AsmConstWalker::queueImport(Name importName, Signature baseSig) {
   auto import = new Function;
   import->name = import->base = importName;
   import->module = ENV;
-  auto* funcType = ensureFunctionType(baseSig, &wasm);
-  import->type = funcType->name;
-  FunctionTypeUtils::fillFunction(import, funcType);
+  import->sig = baseSig;
   queuedImports.push_back(std::unique_ptr<Function>(import));
 }
 
@@ -1006,7 +995,7 @@ struct FixInvokeFunctionNamesWalker
   std::map<Name, Name> importRenames;
   std::vector<Name> toRemove;
   std::set<Name> newImports;
-  std::set<std::string> invokeSigs;
+  std::set<Signature> invokeSigs;
 
   FixInvokeFunctionNamesWalker(Module& _wasm) : wasm(_wasm) {}
 
@@ -1029,7 +1018,7 @@ struct FixInvokeFunctionNamesWalker
   // This function converts the names of invoke wrappers based on their lowered
   // argument types and a return type. In the example above, the resulting new
   // wrapper name becomes "invoke_vii".
-  Name fixEmExceptionInvoke(const Name& name, const std::string& sig) {
+  Name fixEmExceptionInvoke(const Name& name, Signature sig) {
     std::string nameStr = name.c_str();
     if (nameStr.front() == '"' && nameStr.back() == '"') {
       nameStr = nameStr.substr(1, nameStr.size() - 2);
@@ -1037,12 +1026,16 @@ struct FixInvokeFunctionNamesWalker
     if (nameStr.find("__invoke_") != 0) {
       return name;
     }
-    std::string sigWoOrigFunc = sig.front() + sig.substr(2, sig.size() - 2);
+
+    const std::vector<Type>& params = sig.params.expand();
+    std::vector<Type> newParams(params.begin() + 1, params.end());
+    Signature sigWoOrigFunc = Signature(Type(newParams), sig.results);
     invokeSigs.insert(sigWoOrigFunc);
-    return Name("invoke_" + sigWoOrigFunc);
+    return Name("invoke_" +
+                getSig(sigWoOrigFunc.results, sigWoOrigFunc.params));
   }
 
-  Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
+  Name fixEmEHSjLjNames(const Name& name, Signature sig) {
     if (name == "emscripten_longjmp_jmpbuf") {
       return "emscripten_longjmp";
     }
@@ -1054,8 +1047,7 @@ struct FixInvokeFunctionNamesWalker
       return;
     }
 
-    FunctionType* func = wasm.getFunctionType(curr->type);
-    Name newname = fixEmEHSjLjNames(curr->base, getSig(func));
+    Name newname = fixEmEHSjLjNames(curr->base, curr->sig);
     if (newname == curr->base) {
       return;
     }
@@ -1097,16 +1089,16 @@ void EmscriptenGlueGenerator::fixInvokeFunctionNames() {
   }
 }
 
-template<class C> void printSet(std::ostream& o, C& c) {
+void printSignatures(std::ostream& o, const std::set<Signature>& c) {
   o << "[";
   bool first = true;
-  for (auto& item : c) {
+  for (auto& sig : c) {
     if (first) {
       first = false;
     } else {
       o << ",";
     }
-    o << '"' << item << '"';
+    o << '"' << getSig(sig.results, sig.params) << '"';
   }
   o << "]";
 }
@@ -1135,7 +1127,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     for (auto& asmConst : emAsmWalker.asmConsts) {
       meta << nextElement();
       meta << '"' << asmConst.id << "\": [\"" << asmConst.code << "\", ";
-      printSet(meta, asmConst.sigs);
+      printSignatures(meta, asmConst.sigs);
       meta << ", [\"" << proxyingSuffix(asmConst.proxy) << "\"]";
 
       meta << "]";
@@ -1315,7 +1307,7 @@ void EmscriptenGlueGenerator::exportWasiStart() {
     {LiteralUtils::makeZero(i32, wasm), LiteralUtils::makeZero(i32, wasm)},
     i32));
   auto* func =
-    builder.makeFunction(_start, std::vector<wasm::Type>{}, none, {}, body);
+    builder.makeFunction(_start, Signature(Type::none, Type::none), {}, body);
   wasm.addFunction(func);
   wasm.addExport(builder.makeExport(_start, _start, ExternalKind::Function));
 }

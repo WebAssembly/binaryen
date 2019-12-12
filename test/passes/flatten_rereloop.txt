@@ -1,13 +1,13 @@
 (module
- (type $FUNCSIG$d (func (result f64)))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$fi (func (param i32) (result f32)))
- (type $FUNCSIG$f (func (result f32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_f32 (func (result f32)))
+ (type $i32_=>_f32 (func (param i32) (result f32)))
+ (type $none_=>_f64 (func (result f64)))
  (memory $0 1)
  (global $global (mut i32) (i32.const 0))
- (func $0 (; 0 ;) (type $FUNCSIG$d) (result f64)
+ (func $0 (; 0 ;) (result f64)
   (local $0 f64)
   (local $1 f64)
   (local $2 i32)
@@ -33,7 +33,7 @@
    )
   )
  )
- (func $1 (; 1 ;) (type $FUNCSIG$i) (result i32)
+ (func $1 (; 1 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -95,7 +95,7 @@
   )
   (unreachable)
  )
- (func $skip-empty (; 2 ;) (type $FUNCSIG$v)
+ (func $skip-empty (; 2 ;)
   (local $0 i32)
   (block $block$2$break
    (block
@@ -108,7 +108,7 @@
    (return)
   )
  )
- (func $skip-empty-2 (; 3 ;) (type $FUNCSIG$v)
+ (func $skip-empty-2 (; 3 ;)
   (local $0 i32)
   (block $block$5$break
    (block
@@ -137,7 +137,7 @@
    )
   )
  )
- (func $skip-empty-3 (; 4 ;) (type $FUNCSIG$v)
+ (func $skip-empty-3 (; 4 ;)
   (local $0 i32)
   (block $block$5$break
    (block
@@ -166,7 +166,7 @@
    )
   )
  )
- (func $skip-empty-4 (; 5 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $skip-empty-4 (; 5 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (block $block$2$break
@@ -181,7 +181,7 @@
    (return)
   )
  )
- (func $skipping (; 6 ;) (type $FUNCSIG$fi) (param $0 i32) (result f32)
+ (func $skipping (; 6 ;) (param $0 i32) (result f32)
   (local $1 f32)
   (local $2 f32)
   (local $3 f32)
@@ -215,7 +215,7 @@
    )
   )
  )
- (func $merging (; 7 ;) (type $FUNCSIG$v)
+ (func $merging (; 7 ;)
   (local $0 i32)
   (block
    (block
@@ -223,7 +223,7 @@
    (return)
   )
  )
- (func $unswitch (; 8 ;) (type $FUNCSIG$v)
+ (func $unswitch (; 8 ;)
   (local $0 i32)
   (block $block$2$break
    (block
@@ -236,7 +236,7 @@
    (return)
   )
  )
- (func $skip-only-empty (; 9 ;) (type $FUNCSIG$v)
+ (func $skip-only-empty (; 9 ;)
   (local $0 i32)
   (block $block$3$break
    (block
@@ -258,7 +258,7 @@
    (return)
   )
  )
- (func $skip-only-one-branch-out (; 10 ;) (type $FUNCSIG$i) (result i32)
+ (func $skip-only-one-branch-out (; 10 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -288,7 +288,7 @@
    )
   )
  )
- (func $multipass-for-skips (; 11 ;) (type $FUNCSIG$f) (result f32)
+ (func $multipass-for-skips (; 11 ;) (result f32)
   (local $0 f32)
   (local $1 f32)
   (local $2 f32)
@@ -338,7 +338,7 @@
    )
   )
  )
- (func $branch-merge-vs-replace (; 12 ;) (type $FUNCSIG$v)
+ (func $branch-merge-vs-replace (; 12 ;)
   (local $0 i32)
   (block
   )
@@ -352,7 +352,7 @@
    )
   )
  )
- (func $unswitch-amount (; 13 ;) (type $FUNCSIG$v)
+ (func $unswitch-amount (; 13 ;)
   (local $0 i32)
   (block $block$2$break
    (block
@@ -392,15 +392,15 @@
  )
 )
 (module
- (type $0 (func))
- (type $1 (func (result i32)))
- (type $2 (func (param i32) (result i32)))
- (type $3 (func (param i32)))
- (func $trivial (; 0 ;) (type $0)
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (func $trivial (; 0 ;)
   (local $0 i32)
   (return)
  )
- (func $trivial2 (; 1 ;) (type $0)
+ (func $trivial2 (; 1 ;)
   (local $0 i32)
   (block
    (block
@@ -410,11 +410,11 @@
    (return)
   )
  )
- (func $return-void (; 2 ;) (type $0)
+ (func $return-void (; 2 ;)
   (local $0 i32)
   (return)
  )
- (func $return-val (; 3 ;) (type $1) (result i32)
+ (func $return-val (; 3 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -422,7 +422,7 @@
    (i32.const 1)
   )
  )
- (func $ifs (; 4 ;) (type $2) (param $x i32) (result i32)
+ (func $ifs (; 4 ;) (param $x i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -506,7 +506,7 @@
    )
   )
  )
- (func $loops (; 5 ;) (type $3) (param $x i32)
+ (func $loops (; 5 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -590,7 +590,7 @@
    )
   )
  )
- (func $br-out (; 6 ;) (type $3) (param $x i32)
+ (func $br-out (; 6 ;) (param $x i32)
   (local $1 i32)
   (block $block$2$break
    (call $br-out
@@ -604,7 +604,7 @@
    (return)
   )
  )
- (func $unreachable (; 7 ;) (type $3) (param $x i32)
+ (func $unreachable (; 7 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -675,7 +675,7 @@
    )
   )
  )
- (func $empty-blocks (; 8 ;) (type $3) (param $x i32)
+ (func $empty-blocks (; 8 ;) (param $x i32)
   (local $1 i32)
   (block $block$2$break
    (block
@@ -688,7 +688,7 @@
    (return)
   )
  )
- (func $before-and-after (; 9 ;) (type $3) (param $x i32)
+ (func $before-and-after (; 9 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -947,7 +947,7 @@
    )
   )
  )
- (func $switch (; 10 ;) (type $3) (param $x i32)
+ (func $switch (; 10 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1020,7 +1020,7 @@
    )
   )
  )
- (func $no-return (; 11 ;) (type $0)
+ (func $no-return (; 11 ;)
   (local $0 i32)
   (block $block$6$break
    (block
@@ -1049,7 +1049,7 @@
    (return)
   )
  )
- (func $if-br-wat (; 12 ;) (type $3) (param $x i32)
+ (func $if-br-wat (; 12 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1121,7 +1121,7 @@
    )
   )
  )
- (func $switcher-to-nowhere (; 13 ;) (type $2) (param $0 i32) (result i32)
+ (func $switcher-to-nowhere (; 13 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)

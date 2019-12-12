@@ -22,7 +22,6 @@
 
 #include "binaryen-c.h"
 #include "cfg/Relooper.h"
-#include "ir/function-type-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "shell-interface.h"
@@ -105,7 +104,6 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
 // module, but likely it doesn't matter)
 
 static std::mutex BinaryenFunctionMutex;
-static std::mutex BinaryenFunctionTypeMutex;
 
 // Optimization options
 static PassOptions globalPassOptions =
@@ -123,7 +121,6 @@ void traceNameOrNULL(const char* name, std::ostream& out = std::cout) {
   }
 }
 
-std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
 std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
 std::map<BinaryenGlobalRef, size_t> globals;
@@ -479,14 +476,12 @@ BinaryenModuleRef BinaryenModuleCreate(void) {
 void BinaryenModuleDispose(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleDispose(the_module);\n";
-    std::cout << "  functionTypes.clear();\n";
     std::cout << "  expressions.clear();\n";
     std::cout << "  functions.clear();\n";
     std::cout << "  globals.clear();\n";
     std::cout << "  events.clear();\n";
     std::cout << "  exports.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
-    functionTypes.clear();
     expressions.clear();
     functions.clear();
     globals.clear();
@@ -498,70 +493,7 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
   delete (Module*)module;
 }
 
-// Function types
-
-BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module,
-                                                const char* name,
-                                                BinaryenType result,
-                                                BinaryenType* paramTypes,
-                                                BinaryenIndex numParams) {
-  auto* wasm = (Module*)module;
-  auto ret = make_unique<FunctionType>();
-  if (name) {
-    ret->name = name;
-  } else {
-    ret->name = Name::fromInt(wasm->functionTypes.size());
-  }
-  ret->result = Type(result);
-  for (BinaryenIndex i = 0; i < numParams; i++) {
-    ret->params.push_back(Type(paramTypes[i]));
-  }
-
-  if (tracing) {
-    std::cout << "  {\n";
-    std::cout << "    BinaryenType paramTypes[] = { ";
-    for (BinaryenIndex i = 0; i < numParams; i++) {
-      if (i > 0) {
-        std::cout << ", ";
-      }
-      std::cout << paramTypes[i];
-    }
-    if (numParams == 0) {
-      // ensure the array is not empty, otherwise a compiler error on VS
-      std::cout << "0";
-    }
-    std::cout << " };\n";
-    size_t id = functionTypes.size();
-    std::cout << "    functionTypes[" << id
-              << "] = BinaryenAddFunctionType(the_module, ";
-    functionTypes[ret.get()] = id;
-    traceNameOrNULL(name);
-    std::cout << ", " << result << ", paramTypes, " << numParams << ");\n";
-    std::cout << "  }\n";
-  }
-
-  // Lock. This can be called from multiple threads at once, and is a
-  // point where they all access and modify the module.
-  std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
-  return wasm->addFunctionType(std::move(ret));
-}
-void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name) {
-  if (tracing) {
-    std::cout << "  BinaryenRemoveFunctionType(the_module, ";
-    traceNameOrNULL(name);
-    std::cout << ");\n";
-  }
-
-  auto* wasm = (Module*)module;
-  assert(name != NULL);
-
-  // Lock. This can be called from multiple threads at once, and is a
-  // point where they all access and modify the module.
-  {
-    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
-    wasm->removeFunctionType(name);
-  }
-}
+// Literals
 
 BinaryenLiteral BinaryenLiteralInt32(int32_t x) {
   return toBinaryenLiteral(Literal(x));
@@ -1180,7 +1112,8 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
                          BinaryenExpressionRef target,
                          BinaryenExpressionRef* operands,
                          BinaryenIndex numOperands,
-                         const char* type,
+                         BinaryenType params,
+                         BinaryenType results,
                          bool isReturn) {
   auto* wasm = (Module*)module;
   auto* ret = wasm->allocator.alloc<CallIndirect>();
@@ -1205,7 +1138,8 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
       target,
       "operands",
       numOperands,
-      StringLit(type));
+      params,
+      results);
     std::cout << "  }\n";
   }
 
@@ -1213,8 +1147,8 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
   }
-  ret->fullType = type;
-  ret->type = wasm->getFunctionType(ret->fullType)->result;
+  ret->sig = Signature(Type(params), Type(results));
+  ret->type = Type(results);
   ret->isReturn = isReturn;
   ret->finalize();
   return static_cast<Expression*>(ret);
@@ -1223,18 +1157,20 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
                                            BinaryenExpressionRef target,
                                            BinaryenExpressionRef* operands,
                                            BinaryenIndex numOperands,
-                                           const char* type) {
+                                           BinaryenType params,
+                                           BinaryenType results) {
   return makeBinaryenCallIndirect(
-    module, target, operands, numOperands, type, false);
+    module, target, operands, numOperands, params, results, false);
 }
 BinaryenExpressionRef
 BinaryenReturnCallIndirect(BinaryenModuleRef module,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
                            BinaryenIndex numOperands,
-                           const char* type) {
+                           BinaryenType params,
+                           BinaryenType results) {
   return makeBinaryenCallIndirect(
-    module, target, operands, numOperands, type, true);
+    module, target, operands, numOperands, params, results, true);
 }
 BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                        BinaryenIndex index,
@@ -3126,7 +3062,8 @@ BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
 
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
                                         const char* name,
-                                        BinaryenFunctionTypeRef type,
+                                        BinaryenType params,
+                                        BinaryenType results,
                                         BinaryenType* varTypes,
                                         BinaryenIndex numVarTypes,
                                         BinaryenExpressionRef body) {
@@ -3150,18 +3087,14 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
     auto id = functions.size();
     functions[ret] = id;
     std::cout << "    functions[" << id
-              << "] = BinaryenAddFunction(the_module, \"" << name
-              << "\", functionTypes[" << functionTypes[type] << "], varTypes, "
-              << numVarTypes << ", expressions[" << expressions[body]
-              << "]);\n";
+              << "] = BinaryenAddFunction(the_module, \"" << name << "\", "
+              << params << ", " << results << ", varTypes, " << numVarTypes
+              << ", expressions[" << expressions[body] << "]);\n";
     std::cout << "  }\n";
   }
 
   ret->name = name;
-  ret->type = ((FunctionType*)type)->name;
-  auto* functionType = wasm->getFunctionType(ret->type);
-  ret->result = functionType->result;
-  ret->params = functionType->params;
+  ret->sig = Signature(Type(params), Type(results));
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -3301,21 +3234,21 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
                                const char* internalName,
                                const char* externalModuleName,
                                const char* externalBaseName,
-                               BinaryenFunctionTypeRef functionType) {
+                               BinaryenType params,
+                               BinaryenType results) {
   auto* wasm = (Module*)module;
   auto* ret = new Function();
 
   if (tracing) {
     std::cout << "  BinaryenAddFunctionImport(the_module, \"" << internalName
               << "\", \"" << externalModuleName << "\", \"" << externalBaseName
-              << "\", functionTypes[" << functionTypes[functionType] << "]);\n";
+              << "\", " << params << ", " << results << ");\n";
   }
 
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->type = ((FunctionType*)functionType)->name;
-  FunctionTypeUtils::fillFunction(ret, (FunctionType*)functionType);
+  ret->sig = Signature(Type(params), Type(results));
   wasm->addFunction(ret);
 }
 void BinaryenAddTableImport(BinaryenModuleRef module,
@@ -4082,46 +4015,6 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 }
 
 //
-// ======== FunctionType Operations ========
-//
-
-const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
-  if (tracing) {
-    std::cout << "  BinaryenFunctionTypeGetName(functionsTypes["
-              << functionTypes[ftype] << "]);\n";
-  }
-
-  return ((FunctionType*)ftype)->name.c_str();
-}
-BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype) {
-  if (tracing) {
-    std::cout << "  BinaryenFunctionTypeGetNumParams(functionsTypes["
-              << functionTypes[ftype] << "]);\n";
-  }
-
-  return ((FunctionType*)ftype)->params.size();
-}
-BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype,
-                                          BinaryenIndex index) {
-  if (tracing) {
-    std::cout << "  BinaryenFunctionTypeGetParam(functionsTypes["
-              << functionTypes[ftype] << "], " << index << ");\n";
-  }
-
-  auto* ft = (FunctionType*)ftype;
-  assert(index < ft->params.size());
-  return ft->params[index];
-}
-BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
-  if (tracing) {
-    std::cout << "  BinaryenFunctionTypeGetResult(functionsTypes["
-              << functionTypes[ftype] << "]);\n";
-  }
-
-  return ((FunctionType*)ftype)->result;
-}
-
-//
 // ========== Function Operations ==========
 //
 
@@ -4133,40 +4026,21 @@ const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
 
   return ((Function*)func)->name.c_str();
 }
-const char* BinaryenFunctionGetType(BinaryenFunctionRef func) {
+BinaryenType BinaryenFunctionGetParams(BinaryenFunctionRef func) {
   if (tracing) {
-    std::cout << "  BinaryenFunctionGetType(functions[" << functions[func]
+    std::cout << "  BinaryenFunctionGetParams(functions[" << functions[func]
               << "]);\n";
   }
 
-  return ((Function*)func)->type.c_str();
+  return ((Function*)func)->sig.params;
 }
-BinaryenIndex BinaryenFunctionGetNumParams(BinaryenFunctionRef func) {
+BinaryenType BinaryenFunctionGetResults(BinaryenFunctionRef func) {
   if (tracing) {
-    std::cout << "  BinaryenFunctionGetNumParams(functions[" << functions[func]
+    std::cout << "  BinaryenFunctionGetResults(functions[" << functions[func]
               << "]);\n";
   }
 
-  return ((Function*)func)->params.size();
-}
-BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func,
-                                      BinaryenIndex index) {
-  if (tracing) {
-    std::cout << "  BinaryenFunctionGetParam(functions[" << functions[func]
-              << "], " << index << ");\n";
-  }
-
-  auto* fn = (Function*)func;
-  assert(index < fn->params.size());
-  return fn->params[index];
-}
-BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func) {
-  if (tracing) {
-    std::cout << "  BinaryenFunctionGetResult(functions[" << functions[func]
-              << "]);\n";
-  }
-
-  return ((Function*)func)->result;
+  return ((Function*)func)->sig.results;
 }
 BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
   if (tracing) {
@@ -4625,7 +4499,6 @@ void BinaryenSetAPITracing(int on) {
                  "#include <map>\n"
                  "#include \"binaryen-c.h\"\n"
                  "int main() {\n"
-                 "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n"
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
                  "  std::map<size_t, BinaryenFunctionRef> functions;\n"
                  "  std::map<size_t, BinaryenGlobalRef> globals;\n"
@@ -4637,42 +4510,13 @@ void BinaryenSetAPITracing(int on) {
   } else {
     std::cout << "  return 0;\n";
     std::cout << "}\n";
+    std::cout << "// ending a Binaryen API trace\n";
   }
 }
 
 //
 // ========= Utilities =========
 //
-
-BinaryenFunctionTypeRef
-BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module,
-                                   BinaryenType result,
-                                   BinaryenType* paramTypes,
-                                   BinaryenIndex numParams) {
-  if (tracing) {
-    std::cout << "  // BinaryenGetFunctionTypeBySignature\n";
-  }
-
-  auto* wasm = (Module*)module;
-  FunctionType test;
-  test.result = Type(result);
-  for (BinaryenIndex i = 0; i < numParams; i++) {
-    test.params.push_back(Type(paramTypes[i]));
-  }
-
-  // Lock. Guard against reading the list while types are being added.
-  {
-    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
-    for (BinaryenIndex i = 0; i < wasm->functionTypes.size(); i++) {
-      FunctionType* curr = wasm->functionTypes[i].get();
-      if (curr->structuralComparison(test)) {
-        return curr;
-      }
-    }
-  }
-
-  return NULL;
-}
 
 void BinaryenSetColorsEnabled(int enabled) { Colors::setEnabled(enabled); }
 

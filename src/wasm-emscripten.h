@@ -74,12 +74,12 @@ private:
   bool standalone;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
-  std::unordered_set<std::string> sigs;
+  std::unordered_set<Signature> sigs;
 
   Global* getStackPointerGlobal();
   Expression* generateLoadStackPointer();
   Expression* generateStoreStackPointer(Function* func, Expression* value);
-  void generateDynCallThunk(std::string sig);
+  void generateDynCallThunk(Signature sig);
   void generateStackSaveFunction();
   void generateStackAllocFunction();
   void generateStackRestoreFunction();

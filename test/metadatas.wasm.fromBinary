@@ -1,7 +1,7 @@
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  (export "a" (func $0))
- (func $0 (; 0 ;) (type $0)
+ (func $0 (; 0 ;)
   (nop)
  )
  ;; custom section "emscripten_metadata", size 7

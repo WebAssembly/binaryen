@@ -370,8 +370,7 @@ private:
     contents.push_back(builder.makeLocalGet(0, i32));
     auto* body = builder.makeBlock(contents);
     auto* hasher = wasm.addFunction(builder.makeFunction(
-      "hashMemory", std::vector<Type>{}, i32, {i32}, body));
-    hasher->type = ensureFunctionType(getSig(hasher), &wasm)->name;
+      "hashMemory", Signature(Type::none, Type::i32), {i32}, body));
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
@@ -435,7 +434,7 @@ private:
 
     auto* func = new Function;
     func->name = "hangLimitInitializer";
-    func->result = none;
+    func->sig = Signature(Type::none, Type::none);
     func->body = builder.makeGlobalSet(
       glob->name, builder.makeConst(Literal(int32_t(HANG_LIMIT))));
     wasm.addFunction(func);
@@ -454,9 +453,7 @@ private:
       func->name = name;
       func->module = "fuzzing-support";
       func->base = name;
-      func->params.push_back(type);
-      func->result = none;
-      func->type = ensureFunctionType(getSig(func), &wasm)->name;
+      func->sig = Signature(type, Type::none);
       wasm.addFunction(func);
     }
   }
@@ -478,8 +475,7 @@ private:
     auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
       auto* func = new Function;
       func->name = name;
-      func->params.push_back(type);
-      func->result = type;
+      func->sig = Signature(type, type);
       func->body = builder.makeIf(
         builder.makeBinary(
           op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
@@ -521,25 +517,27 @@ private:
     Index num = wasm.functions.size();
     func = new Function;
     func->name = std::string("func_") + std::to_string(num);
-    func->result = getReachableType();
     assert(typeLocals.empty());
     Index numParams = upToSquared(MAX_PARAMS);
+    std::vector<Type> params;
+    params.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
       auto type = getConcreteType();
-      typeLocals[type].push_back(func->params.size());
-      func->params.push_back(type);
+      typeLocals[type].push_back(params.size());
+      params.push_back(type);
     }
+    func->sig = Signature(Type(params), getReachableType());
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
-      typeLocals[type].push_back(func->params.size() + func->vars.size());
+      typeLocals[type].push_back(params.size() + func->vars.size());
       func->vars.push_back(type);
     }
     labelIndex = 0;
     assert(breakableStack.empty());
     assert(hangStack.empty());
     // with small chance, make the body unreachable
-    auto bodyType = func->result;
+    auto bodyType = func->sig.results;
     if (oneIn(10)) {
       bodyType = unreachable;
     }
@@ -568,7 +566,6 @@ private:
     // export some, but not all (to allow inlining etc.). make sure to
     // export at least one, though, to keep each testcase interesting
     if (num == 0 || oneIn(2)) {
-      func->type = ensureFunctionType(getSig(func), &wasm)->name;
       auto* export_ = new Export;
       export_->name = func->name;
       export_->value = func->name;
@@ -779,11 +776,12 @@ private:
     std::vector<Expression*> invocations;
     while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
-      for (auto type : func->params) {
+      for (auto type : func->sig.params.expand()) {
         args.push_back(makeConst(type));
       }
-      Expression* invoke = builder.makeCall(func->name, args, func->result);
-      if (func->result.isConcrete()) {
+      Expression* invoke =
+        builder.makeCall(func->name, args, func->sig.results);
+      if (func->sig.results.isConcrete()) {
         invoke = builder.makeDrop(invoke);
       }
       invocations.push_back(invoke);
@@ -797,10 +795,9 @@ private:
     }
     auto* invoker = new Function;
     invoker->name = func->name.str + std::string("_invoker");
-    invoker->result = none;
+    invoker->sig = Signature(Type::none, Type::none);
     invoker->body = builder.makeBlock(invocations);
     wasm.addFunction(invoker);
-    invoker->type = ensureFunctionType(getSig(invoker), &wasm)->name;
     auto* export_ = new Export;
     export_->name = invoker->name;
     export_->value = invoker->name;
@@ -1000,8 +997,8 @@ private:
     }
     assert(type == unreachable);
     Expression* ret = nullptr;
-    if (func->result.isConcrete()) {
-      ret = makeTrivial(func->result);
+    if (func->sig.results.isConcrete()) {
+      ret = makeTrivial(func->sig.results);
     }
     return builder.makeReturn(ret);
   }
@@ -1201,14 +1198,14 @@ private:
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
         target = pick(wasm.functions).get();
       }
-      isReturn = type == unreachable && wasm.features.hasTailCall() &&
-                 func->result == target->result;
-      if (target->result != type && !isReturn) {
+      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
+                 func->sig.results == target->sig.results;
+      if (target->sig.results != type && !isReturn) {
         continue;
       }
       // we found one!
       std::vector<Expression*> args;
-      for (auto argType : target->params) {
+      for (auto argType : target->sig.params.expand()) {
         args.push_back(make(argType));
       }
       return builder.makeCall(target->name, args, type, isReturn);
@@ -1231,8 +1228,8 @@ private:
       // TODO: handle unreachable
       targetFn = wasm.getFunction(data[i]);
       isReturn = type == unreachable && wasm.features.hasTailCall() &&
-                 func->result == targetFn->result;
-      if (targetFn->result == type || isReturn) {
+                 func->sig.results == targetFn->sig.results;
+      if (targetFn->sig.results == type || isReturn) {
         break;
       }
       i++;
@@ -1252,12 +1249,10 @@ private:
       target = make(i32);
     }
     std::vector<Expression*> args;
-    for (auto type : targetFn->params) {
+    for (auto type : targetFn->sig.params.expand()) {
       args.push_back(make(type));
     }
-    targetFn->type = ensureFunctionType(getSig(targetFn), &wasm)->name;
-    return builder.makeCallIndirect(
-      targetFn->type, target, args, targetFn->result, isReturn);
+    return builder.makeCallIndirect(target, args, targetFn->sig, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
@@ -2241,8 +2236,8 @@ private:
   }
 
   Expression* makeReturn(Type type) {
-    return builder.makeReturn(func->result.isConcrete() ? make(func->result)
-                                                        : nullptr);
+    return builder.makeReturn(
+      func->sig.results.isConcrete() ? make(func->sig.results) : nullptr);
   }
 
   Expression* makeNop(Type type) {

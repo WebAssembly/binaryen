@@ -1,8 +1,8 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$i (func (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
  (memory $0 1)
- (func $push1 (; 0 ;) (type $FUNCSIG$v)
+ (func $push1 (; 0 ;)
   (local $x i32)
   (block $out
    (br_if $out
@@ -16,7 +16,7 @@
    )
   )
  )
- (func $push2 (; 1 ;) (type $FUNCSIG$v)
+ (func $push2 (; 1 ;)
   (local $x i32)
   (local $y i32)
   (block $out
@@ -37,7 +37,7 @@
    )
   )
  )
- (func $push1-twice (; 2 ;) (type $FUNCSIG$v)
+ (func $push1-twice (; 2 ;)
   (local $x i32)
   (block $out
    (br_if $out
@@ -54,7 +54,7 @@
    )
   )
  )
- (func $push1-twiceb (; 3 ;) (type $FUNCSIG$v)
+ (func $push1-twiceb (; 3 ;)
   (local $x i32)
   (block $out
    (br_if $out
@@ -72,7 +72,7 @@
    )
   )
  )
- (func $push2-twice (; 4 ;) (type $FUNCSIG$v)
+ (func $push2-twice (; 4 ;)
   (local $x i32)
   (local $y i32)
   (block $out
@@ -96,7 +96,7 @@
    )
   )
  )
- (func $ignore-last (; 5 ;) (type $FUNCSIG$v)
+ (func $ignore-last (; 5 ;)
   (local $x i32)
   (block $out
    (local.set $x
@@ -107,7 +107,7 @@
    )
   )
  )
- (func $ignore-last2 (; 6 ;) (type $FUNCSIG$v)
+ (func $ignore-last2 (; 6 ;)
   (local $x i32)
   (block $out
    (local.set $x
@@ -120,7 +120,7 @@
    )
   )
  )
- (func $push-if (; 7 ;) (type $FUNCSIG$v)
+ (func $push-if (; 7 ;)
   (local $x i32)
   (block $out
    (if
@@ -135,7 +135,7 @@
    )
   )
  )
- (func $push-dropped (; 8 ;) (type $FUNCSIG$i) (result i32)
+ (func $push-dropped (; 8 ;) (result i32)
   (local $x i32)
   (block $out (result i32)
    (drop
@@ -153,7 +153,7 @@
    (i32.const 4)
   )
  )
- (func $push-past-stuff (; 9 ;) (type $FUNCSIG$v)
+ (func $push-past-stuff (; 9 ;)
   (local $x i32)
   (block $out
    (call $push-past-stuff)
@@ -171,7 +171,7 @@
    )
   )
  )
- (func $fail-then-push (; 10 ;) (type $FUNCSIG$v)
+ (func $fail-then-push (; 10 ;)
   (local $x i32)
   (local $y i32)
   (block $out
@@ -198,7 +198,7 @@
    )
   )
  )
- (func $used (; 11 ;) (type $FUNCSIG$v)
+ (func $used (; 11 ;)
   (local $x i32)
   (block $out
    (local.set $x
@@ -212,7 +212,7 @@
    )
   )
  )
- (func $not-sfa (; 12 ;) (type $FUNCSIG$v)
+ (func $not-sfa (; 12 ;)
   (local $x i32)
   (local.set $x
    (i32.const 1)
@@ -229,7 +229,7 @@
    )
   )
  )
- (func $not-sfa2 (; 13 ;) (type $FUNCSIG$v)
+ (func $not-sfa2 (; 13 ;)
   (local $x i32)
   (drop
    (local.get $x)
@@ -246,7 +246,7 @@
    )
   )
  )
- (func $used-out (; 14 ;) (type $FUNCSIG$v)
+ (func $used-out (; 14 ;)
   (local $x i32)
   (block $out
    (local.set $x
@@ -263,7 +263,7 @@
    (local.get $x)
   )
  )
- (func $value-might-interfere (; 15 ;) (type $FUNCSIG$v)
+ (func $value-might-interfere (; 15 ;)
   (local $x i32)
   (block $out
    (br_if $out
@@ -279,7 +279,7 @@
    )
   )
  )
- (func $value-interferes (; 16 ;) (type $FUNCSIG$v)
+ (func $value-interferes (; 16 ;)
   (local $x i32)
   (block $out
    (local.set $x
@@ -299,7 +299,7 @@
    )
   )
  )
- (func $value-interferes-accumulation (; 17 ;) (type $FUNCSIG$v)
+ (func $value-interferes-accumulation (; 17 ;)
   (local $x i32)
   (block $out
    (local.set $x
@@ -321,7 +321,7 @@
    )
   )
  )
- (func $value-interferes-in-pushpoint (; 18 ;) (type $FUNCSIG$v)
+ (func $value-interferes-in-pushpoint (; 18 ;)
   (local $x i32)
   (block $out
    (local.set $x
@@ -338,7 +338,7 @@
    )
   )
  )
- (func $values-might-interfere (; 19 ;) (type $FUNCSIG$v)
+ (func $values-might-interfere (; 19 ;)
   (local $x i32)
   (local $y i32)
   (block $out
@@ -359,7 +359,7 @@
    )
   )
  )
- (func $unpushed-interferes (; 20 ;) (type $FUNCSIG$v)
+ (func $unpushed-interferes (; 20 ;)
   (local $x i32)
   (local $y i32)
   (block $out
@@ -383,7 +383,7 @@
    (local.get $y)
   )
  )
- (func $unpushed-ignorable (; 21 ;) (type $FUNCSIG$v)
+ (func $unpushed-ignorable (; 21 ;)
   (local $x i32)
   (local $y i32)
   (block $out
@@ -407,7 +407,7 @@
    (local.get $x)
   )
  )
- (func $unpushed-ignorable-side-effect (; 22 ;) (type $FUNCSIG$v)
+ (func $unpushed-ignorable-side-effect (; 22 ;)
   (local $x i32)
   (local $y i32)
   (block $out
@@ -428,7 +428,7 @@
    )
   )
  )
- (func $unpushed-side-effect-into-drop (; 23 ;) (type $FUNCSIG$v)
+ (func $unpushed-side-effect-into-drop (; 23 ;)
   (local $x i32)
   (block $out
    (local.set $x
@@ -442,7 +442,7 @@
    )
   )
  )
- (func $unpushed-side-effect-into-if (; 24 ;) (type $FUNCSIG$v)
+ (func $unpushed-side-effect-into-if (; 24 ;)
   (local $x i32)
   (block $out
    (local.set $x

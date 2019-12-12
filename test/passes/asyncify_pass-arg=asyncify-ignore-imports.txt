@@ -1,7 +1,7 @@
 (module
- (type $f (func))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "import" (func $import))
  (import "env" "import2" (func $import2 (result i32)))
  (import "env" "import3" (func $import3 (param i32)))
@@ -14,11 +14,11 @@
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
  (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
- (func $calls-import (; 3 ;) (type $f)
+ (func $calls-import (; 3 ;)
   (call $import)
   (nop)
  )
- (func $calls-import2-drop (; 4 ;) (type $f)
+ (func $calls-import2-drop (; 4 ;)
   (local $0 i32)
   (local.set $0
    (call $import2)
@@ -28,7 +28,7 @@
   )
   (nop)
  )
- (func $calls-import2-if-else (; 5 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $calls-import2-if-else (; 5 ;) (param $x i32)
   (local $1 i32)
   (block
    (local.set $1
@@ -52,7 +52,7 @@
   )
   (nop)
  )
- (func $calls-indirect (; 6 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $calls-indirect (; 6 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -141,7 +141,7 @@
          )
         )
         (block
-         (call_indirect (type $f)
+         (call_indirect (type $none_=>_none)
           (local.get $1)
          )
          (if
