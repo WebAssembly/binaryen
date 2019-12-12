@@ -1696,7 +1696,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.add("merge-blocks");
     passRunner.add("optimize-instructions");
     passRunner.add("post-emscripten");
-    passRunner.add("ImportsToIndirectCalls");
   } else {
     if (preprocessor.debugInfo) {
       // we would have run this before if optimizing, do it now otherwise. must

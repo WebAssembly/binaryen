@@ -343,7 +343,7 @@ void PassRegistry::registerPasses() {
                createUnteePass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
   registerPass("ImportsToIndirectCalls",
-               "turns imports into indirect calls",
+               "convert calls to imported functions into indirect calls for the main module",
                createImportsToIndirectCallsPass);
   // registerPass(
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);

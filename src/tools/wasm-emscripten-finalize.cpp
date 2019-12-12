@@ -32,7 +32,7 @@
 #include "wasm-io.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
-#include "C:\git\binaryen\binaryen\src\passes/passes.h"
+#include "passes/passes.h"
 
 #define DEBUG_TYPE "emscripten"
 
@@ -256,8 +256,8 @@ int main(int argc, const char* argv[]) {
   }
 
   // Convert the imports to indirects before the Legalization pass to 
-  // avoid unnecessary legalization
-  if (!options.passOptions.arguments["library-file"].empty()) {
+  // avoid unnecessary legalization as well as Wasm to JS transitions
+  if (!options.passOptions.arguments["js-symbols"].empty()) {
     PassRunner passRunner(&wasm);
     passRunner.setOptions(options.passOptions);
     passRunner.add("ImportsToIndirectCalls");

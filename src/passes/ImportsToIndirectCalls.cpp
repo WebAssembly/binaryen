@@ -15,9 +15,14 @@
  */
 
 //
-// Turn indirect calls into direct calls. This will improve the runtime
-// performance as wasm to js transitions and legalizations between modules 
-// are avoided.
+// Turn main module imports into direct calls. This will improve the runtime
+// performance as VMs typically are slower when making Wasm to JS transitions
+// as compared to an indirect call. By making the switch to indirect calls, 
+// the need for legalization between modules can also be avoided.
+//
+// This is only necessary for the main module because the side module makes
+// direct calls to exported Wasm functions from the main module which is
+// already faster.
 //
 
 #include "asm_v_wasm.h"
@@ -67,61 +72,63 @@ struct FunctionImportsToIndirectCalls
   void visitCall(Call* curr) {
     auto name = curr->target;
 
-    if (!name.isNull()) {
-      auto module = getModule();
-      auto* func = module->getFunction(name);
-      
-      if (func) {
-        if (func->imported()) {
-          name = func->base; // Use the original imported name instead
-
-          if (m_libraryFns.find(name.c_str()) != m_libraryFns.end() ||
-              name.hasSubstring("g$") || name.hasSubstring("fp$") || 
-              name.hasSubstring("__wasi_"))
-            return;
-
-          std::vector<Expression*> args;
-          for (int i = 0; i < curr->operands.size(); ++i) {
-            args.push_back(curr->operands[i]);
-          }
-          Builder builder(*module);
-          ImportInfo info(*module);
-
-          Name accessor((std::string("fp$") + name.c_str() + std::string("$") +
-                       getSig(func)).c_str());
-
-          // When a function is already address-taken in the main module, the fp$
-          // accessor function would already have been created. Retrieve the global that
-          // contains the address and use it for the indirect call.
-          Name fnAddr = getGlobalNameFromBase(module, name);
-          
-          if (fnAddr.isNull()) {
-            // Ensure that the fp$ accessor is in the module, if not add it in.
-            auto f = ensureFunctionImport(module, accessor, "i");
-            
-            // Add the global that holds the address of the function
-            fnAddr = std::string("gp$") + name.c_str();
-            module->addGlobal(builder.makeGlobal(fnAddr,
-                                   i32,
-                                   LiteralUtils::makeZero(i32, *module),
-                                   Builder::Mutable));
-
-            Expression* call = builder.makeCall(accessor, {}, i32);
-            GlobalSet* globalSet = builder.makeGlobalSet(fnAddr, call);
-            block->list.push_back(globalSet);
-          }
-          
-          // Replace the call
-          Expression* fptr = builder.makeGlobalGet(fnAddr, i32);
-
-          auto fnType = module->getFunctionType(func->type);
-          auto indirectCall =
-            builder.makeCallIndirect(fnType, fptr, args, curr->isReturn);
-
-          replaceCurrent(indirectCall);
-        }
-      }
+    if (name.isNull()) {
+      return;
     }
+
+    auto module = getModule();
+    auto* func = module->getFunction(name);
+
+    if (!func || !func->imported()) {
+      return;
+    }
+
+    name = func->base; // Use the original imported name instead
+
+    if (m_libraryFns.find(name.c_str()) != m_libraryFns.end() ||
+        name.hasSubstring("g$") || name.hasSubstring("fp$") ||
+        name.hasSubstring("__wasi_"))
+      return;
+
+    std::vector<Expression*> args;
+    for (int i = 0; i < curr->operands.size(); ++i) {
+      args.push_back(curr->operands[i]);
+    }
+    Builder builder(*module);
+    ImportInfo info(*module);
+
+    Name accessor(
+      (std::string("fp$") + name.c_str() + std::string("$") + getSig(func))
+        .c_str());
+
+    // When a function is already address-taken in the main module, the fp$
+    // accessor function would already have been created. Retrieve the
+    // global that contains the address and use it for the indirect call.
+    Name fnAddr = getGlobalNameFromBase(module, name);
+
+    if (fnAddr.isNull()) {
+      // Ensure that the fp$ accessor is in the module, if not add it in.
+      auto f = ensureFunctionImport(module, accessor, "i");
+
+      // Add the global that holds the address of the function
+      fnAddr = std::string("gp$") + name.c_str();
+      module->addGlobal(builder.makeGlobal(
+        fnAddr, i32, LiteralUtils::makeZero(i32, *module), Builder::Mutable));
+
+      Expression* call = builder.makeCall(accessor, {}, i32);
+      GlobalSet* globalSet = builder.makeGlobalSet(fnAddr, call);
+      block->list.push_back(globalSet);
+    }
+
+    // Replace the call
+    Expression* fptr = builder.makeGlobalGet(fnAddr, i32);
+
+    auto fnType = module->getFunctionType(func->type);
+    auto indirectCall =
+      builder.makeCallIndirect(fnType, fptr, args, curr->isReturn);
+
+    replaceCurrent(indirectCall);
+
     return;
   }
 
@@ -147,8 +154,8 @@ private:
 struct ImportsToIndirectCalls : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Name name = runner->options.getArgument(
-      "library-file",
-      "ImportsToIndirectCalls usage:  wasm-emscripten-finalize --pass-arg=library-file@FILE_NAME");
+      "js-symbols",
+      "ImportsToIndirectCalls usage:  wasm-emscripten-finalize --pass-arg=js-symbols@FILE_NAME");
 
     std::set<std::string> libraryFunctions = getLibraryFunctions(name);
 
