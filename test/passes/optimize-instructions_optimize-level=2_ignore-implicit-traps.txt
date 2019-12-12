@@ -1,8 +1,8 @@
 (module
- (type $0 (func (param i32 i32) (result i32)))
- (type $FUNCSIG$d (func (result f64)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_f64 (func (result f64)))
  (memory $0 0)
- (func $conditionals (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $conditionals (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -87,7 +87,7 @@
    (local.get $5)
   )
  )
- (func $side-effect (; 1 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $side-effect (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -170,7 +170,7 @@
    (local.get $5)
   )
  )
- (func $flip (; 2 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $flip (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -252,7 +252,7 @@
    (local.get $5)
   )
  )
- (func $invalidate-conditionalizeExpensiveOnBitwise (; 3 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $invalidate-conditionalizeExpensiveOnBitwise (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
   (if
    (i32.eqz
     (i32.and
@@ -288,7 +288,7 @@
    (local.get $1)
   )
  )
- (func $invalidate-conditionalizeExpensiveOnBitwise-ok (; 4 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $invalidate-conditionalizeExpensiveOnBitwise-ok (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
   (if
    (i32.eqz
     (if (result i32)
@@ -322,7 +322,7 @@
    (local.get $1)
   )
  )
- (func $conditionalize-if-type-change (; 5 ;) (type $FUNCSIG$d) (result f64)
+ (func $conditionalize-if-type-change (; 5 ;) (result f64)
   (local $0 i32)
   (drop
    (loop $label$1 (result f32)

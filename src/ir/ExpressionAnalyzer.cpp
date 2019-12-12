@@ -59,7 +59,7 @@ bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
     }
   }
   // The value might be used, so it depends on if the function returns
-  return func->result != none;
+  return func->sig.results != Type::none;
 }
 
 // Checks if a value is dropped.
@@ -137,7 +137,8 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitInt(curr->isReturn);
     }
     void visitCallIndirect(CallIndirect* curr) {
-      visitor.visitNonScopeName(curr->fullType);
+      visitor.visitInt(curr->sig.params);
+      visitor.visitInt(curr->sig.results);
       visitor.visitInt(curr->isReturn);
     }
     void visitLocalGet(LocalGet* curr) { visitor.visitIndex(curr->index); }

@@ -680,27 +680,11 @@ public:
   void finalize();
 };
 
-class FunctionType {
-public:
-  Name name;
-  Type result = none;
-  std::vector<Type> params;
-
-  FunctionType() = default;
-
-  bool structuralComparison(FunctionType& b);
-  bool structuralComparison(const std::vector<Type>& params, Type result);
-
-  bool operator==(FunctionType& b);
-  bool operator!=(FunctionType& b);
-};
-
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-
+  Signature sig;
   ExpressionList operands;
-  Name fullType;
   Expression* target;
   bool isReturn = false;
 
@@ -1147,10 +1131,8 @@ typedef std::vector<StackInst*> StackIR;
 class Function : public Importable {
 public:
   Name name;
-  Type result = none;
-  std::vector<Type> params; // function locals are
+  Signature sig;
   std::vector<Type> vars;   // params plus vars
-  Name type;                // if null, it is implicit in params and result
 
   // The body of the function
   Expression* body = nullptr;
@@ -1334,7 +1316,6 @@ class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
   // maybe for iterating; use add*() and the get() functions)
-  std::vector<std::unique_ptr<FunctionType>> functionTypes;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
@@ -1359,7 +1340,6 @@ public:
 private:
   // TODO: add a build option where Names are just indices, and then these
   // methods are not needed
-  std::map<Name, FunctionType*> functionTypesMap;
   // exports map is by the *exported* name, which is unique
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
@@ -1369,19 +1349,16 @@ private:
 public:
   Module() = default;
 
-  FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
   Event* getEvent(Name name);
 
-  FunctionType* getFunctionTypeOrNull(Name name);
   Export* getExportOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Event* getEventOrNull(Name name);
 
-  FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
   Function* addFunction(std::unique_ptr<Function> curr);
@@ -1390,13 +1367,11 @@ public:
 
   void addStart(const Name& s);
 
-  void removeFunctionType(Name name);
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeGlobal(Name name);
   void removeEvent(Name name);
 
-  void removeFunctionTypes(std::function<bool(FunctionType*)> pred);
   void removeExports(std::function<bool(Export*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);

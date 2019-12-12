@@ -1,5 +1,6 @@
 (module
- (type $FUNCSIG$ff (func (param f32) (result f32)))
+ (type $f32_=>_f32 (func (param f32) (result f32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $memory 256 256))
  (data (global.get $__memory_base) "noffi_f32.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))

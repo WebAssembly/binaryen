@@ -1,5 +1,5 @@
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  (export "foo" (func $0))
  (func $0 (; 0 ;)
   (unreachable)

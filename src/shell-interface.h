@@ -149,7 +149,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   Literal callTable(Index index,
                     LiteralList& arguments,
-                    Type result,
+                    Type results,
                     ModuleInstance& instance) override {
     if (index >= table.size()) {
       trap("callTable overflow");
@@ -158,15 +158,16 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (!func) {
       trap("uninitialized table element");
     }
-    if (func->params.size() != arguments.size()) {
+    const std::vector<Type>& params = func->sig.params.expand();
+    if (params.size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");
     }
-    for (size_t i = 0; i < func->params.size(); i++) {
-      if (func->params[i] != arguments[i].type) {
+    for (size_t i = 0; i < params.size(); i++) {
+      if (params[i] != arguments[i].type) {
         trap("callIndirect: bad argument type");
       }
     }
-    if (func->result != result) {
+    if (func->sig.results != results) {
       trap("callIndirect: bad result type");
     }
     if (func->imported()) {

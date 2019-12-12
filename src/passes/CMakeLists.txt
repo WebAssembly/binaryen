@@ -54,7 +54,6 @@ set(passes_SOURCES
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
-  ReReloop.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
@@ -63,6 +62,7 @@ set(passes_SOURCES
   RemoveUnusedModuleElements.cpp
   ReorderLocals.cpp
   ReorderFunctions.cpp
+  ReReloop.cpp
   TrapMode.cpp
   SafeHeap.cpp
   SimplifyGlobals.cpp

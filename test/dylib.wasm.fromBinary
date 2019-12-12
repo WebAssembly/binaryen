@@ -1,7 +1,7 @@
 (module
- (type $0 (func (param i32) (result i32)))
- (type $1 (func (result i32)))
- (type $2 (func))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "memory" (memory $2 256))
  (data (global.get $gimport$0) "hello, world!")
  (import "env" "table" (table $timport$3 0 funcref))
@@ -15,7 +15,7 @@
  (export "_main" (func $0))
  (export "runPostSets" (func $1))
  (export "_str" (global $global$2))
- (func $0 (; 1 ;) (type $1) (result i32)
+ (func $0 (; 1 ;) (result i32)
   (block $label$1 (result i32)
    (drop
     (call $fimport$1
@@ -25,10 +25,10 @@
    (i32.const 0)
   )
  )
- (func $1 (; 2 ;) (type $2)
+ (func $1 (; 2 ;)
   (nop)
  )
- (func $2 (; 3 ;) (type $2)
+ (func $2 (; 3 ;)
   (block $label$1
    (global.set $global$0
     (i32.add
