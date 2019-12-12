@@ -1,8 +1,7 @@
 (module
- (type $0 (func (param i32) (result i32)))
- (type $1 (func))
- (type $2 (func (result i32)))
- (type $FUNCSIG$i (func (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "memory" (memory $0 0))
  (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
  (import "env" "table" (table $0 0 funcref))
@@ -21,10 +20,10 @@
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
  (export "__post_instantiate" (func $__post_instantiate))
- (func $__wasm_call_ctors (; 4 ;) (type $1)
+ (func $__wasm_call_ctors (; 4 ;)
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs (; 5 ;) (type $1)
+ (func $__wasm_apply_relocs (; 5 ;)
   (i32.store
    (i32.add
     (global.get $gimport$2)
@@ -40,7 +39,7 @@
    (global.get $gimport$7)
   )
  )
- (func $print_message\28\29 (; 6 ;) (type $2) (result i32)
+ (func $print_message\28\29 (; 6 ;) (result i32)
   (drop
    (call $puts
     (i32.add

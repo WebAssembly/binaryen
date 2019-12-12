@@ -1,7 +1,7 @@
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  ;;@ src.cpp:1:1
- (func $0 (; 0 ;) (type $FUNCSIG$v)
+ (func $0 (; 0 ;)
   (nop)
   ;;@ src.cpp:2:1
   (block $l0

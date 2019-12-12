@@ -1,7 +1,7 @@
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  ;;@ src.cpp:1:1
- (func $0 (; 0 ;) (type $0)
+ (func $0 (; 0 ;)
   (nop)
   ;;@ src.cpp:2:1
   (block $label$1

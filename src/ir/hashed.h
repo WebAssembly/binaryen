@@ -82,18 +82,11 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
 
   static HashType hashFunction(Function* func) {
     HashType ret = 0;
-    ret = rehash(ret, (HashType)func->getNumParams());
-    for (auto type : func->params) {
-      ret = rehash(ret, (HashType)type);
-    }
-    ret = rehash(ret, (HashType)func->getNumVars());
+    ret = rehash(ret, (HashType)func->sig.params);
+    ret = rehash(ret, (HashType)func->sig.results);
     for (auto type : func->vars) {
       ret = rehash(ret, (HashType)type);
     }
-    ret = rehash(ret, (HashType)func->result);
-    ret = rehash(ret,
-                 HashType(func->type.is() ? std::hash<wasm::Name>{}(func->type)
-                                          : HashType(0)));
     ret = rehash(ret, (HashType)ExpressionAnalyzer::hash(func->body));
     return ret;
   }

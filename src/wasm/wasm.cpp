@@ -432,6 +432,7 @@ void Call::finalize() {
 }
 
 void CallIndirect::finalize() {
+  type = sig.results;
   handleUnreachableOperands(this);
   if (isReturn) {
     type = unreachable;
@@ -440,34 +441,6 @@ void CallIndirect::finalize() {
     type = unreachable;
   }
 }
-
-bool FunctionType::structuralComparison(FunctionType& b) {
-  return structuralComparison(b.params, b.result);
-}
-
-bool FunctionType::structuralComparison(const std::vector<Type>& otherParams,
-                                        Type otherResult) {
-  if (result != otherResult) {
-    return false;
-  }
-  if (params.size() != otherParams.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < params.size(); i++) {
-    if (params[i] != otherParams[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool FunctionType::operator==(FunctionType& b) {
-  if (name != b.name) {
-    return false;
-  }
-  return structuralComparison(b);
-}
-bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
 
 bool LocalSet::isTee() { return type != none; }
 
@@ -932,15 +905,23 @@ void Push::finalize() {
   }
 }
 
-size_t Function::getNumParams() { return params.size(); }
+size_t Function::getNumParams() { return sig.params.size(); }
 
 size_t Function::getNumVars() { return vars.size(); }
 
-size_t Function::getNumLocals() { return params.size() + vars.size(); }
+size_t Function::getNumLocals() { return sig.params.size() + vars.size(); }
 
-bool Function::isParam(Index index) { return index < params.size(); }
+bool Function::isParam(Index index) {
+  size_t size = sig.params.size();
+  assert(index < size + vars.size());
+  return index < size;
+}
 
-bool Function::isVar(Index index) { return index >= params.size(); }
+bool Function::isVar(Index index) {
+  auto base = getVarIndexBase();
+  assert(index < base + vars.size());
+  return index >= base;
+}
 
 bool Function::hasLocalName(Index index) const {
   return localNames.find(index) != localNames.end();
@@ -973,13 +954,14 @@ Index Function::getLocalIndex(Name name) {
   return iter->second;
 }
 
-Index Function::getVarIndexBase() { return params.size(); }
+Index Function::getVarIndexBase() { return sig.params.size(); }
 
 Type Function::getLocalType(Index index) {
-  if (isParam(index)) {
+  const std::vector<Type>& params = sig.params.expand();
+  if (index < params.size()) {
     return params[index];
   } else if (isVar(index)) {
-    return vars[index - getVarIndexBase()];
+    return vars[index - params.size()];
   } else {
     WASM_UNREACHABLE("invalid local index");
   }
@@ -992,14 +974,6 @@ void Function::clearDebugInfo() {
   debugLocations.clear();
   prologLocation.clear();
   epilogLocation.clear();
-}
-
-FunctionType* Module::getFunctionType(Name name) {
-  auto iter = functionTypesMap.find(name);
-  if (iter == functionTypesMap.end()) {
-    Fatal() << "Module::getFunctionType: " << name << " does not exist";
-  }
-  return iter->second;
 }
 
 Export* Module::getExport(Name name) {
@@ -1035,14 +1009,6 @@ Event* Module::getEvent(Name name) {
   return iter->second;
 }
 
-FunctionType* Module::getFunctionTypeOrNull(Name name) {
-  auto iter = functionTypesMap.find(name);
-  if (iter == functionTypesMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
-}
-
 Export* Module::getExportOrNull(Name name) {
   auto iter = exportsMap.find(name);
   if (iter == exportsMap.end()) {
@@ -1073,19 +1039,6 @@ Event* Module::getEventOrNull(Name name) {
     return nullptr;
   }
   return iter->second;
-}
-
-FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addFunctionType: empty name";
-  }
-  if (getFunctionTypeOrNull(curr->name)) {
-    Fatal() << "Module::addFunctionType: " << curr->name << " already exists";
-  }
-  auto* p = curr.get();
-  functionTypes.emplace_back(std::move(curr));
-  functionTypesMap[p->name] = p;
-  return p;
 }
 
 Export* Module::addExport(Export* curr) {
@@ -1166,9 +1119,6 @@ void removeModuleElement(Vector& v, Map& m, Name name) {
   }
 }
 
-void Module::removeFunctionType(Name name) {
-  removeModuleElement(functionTypes, functionTypesMap, name);
-}
 void Module::removeExport(Name name) {
   removeModuleElement(exports, exportsMap, name);
 }
@@ -1198,9 +1148,6 @@ void removeModuleElements(Vector& v,
     v.end());
 }
 
-void Module::removeFunctionTypes(std::function<bool(FunctionType*)> pred) {
-  removeModuleElements(functionTypes, functionTypesMap, pred);
-}
 void Module::removeExports(std::function<bool(Export*)> pred) {
   removeModuleElements(exports, exportsMap, pred);
 }
@@ -1218,10 +1165,6 @@ void Module::updateMaps() {
   functionsMap.clear();
   for (auto& curr : functions) {
     functionsMap[curr->name] = curr.get();
-  }
-  functionTypesMap.clear();
-  for (auto& curr : functionTypes) {
-    functionTypesMap[curr->name] = curr.get();
   }
   exportsMap.clear();
   for (auto& curr : exports) {

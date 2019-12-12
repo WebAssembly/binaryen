@@ -43,15 +43,13 @@ public:
   // make* functions, other globals
 
   Function* makeFunction(Name name,
-                         std::vector<Type>&& params,
-                         Type resultType,
+                         Signature sig,
                          std::vector<Type>&& vars,
                          Expression* body = nullptr) {
     auto* func = new Function;
     func->name = name;
-    func->result = resultType;
+    func->sig = sig;
     func->body = body;
-    func->params.swap(params);
     func->vars.swap(vars);
     return func;
   }
@@ -63,14 +61,15 @@ public:
                          Expression* body = nullptr) {
     auto* func = new Function;
     func->name = name;
-    func->result = resultType;
     func->body = body;
+    std::vector<Type> paramVec;
     for (auto& param : params) {
-      func->params.push_back(param.type);
+      paramVec.push_back(param.type);
       Index index = func->localNames.size();
       func->localIndices[param.name] = index;
       func->localNames[index] = param.name;
     }
+    func->sig = Signature(Type(paramVec), resultType);
     for (auto& var : vars) {
       func->vars.push_back(var.type);
       Index index = func->localNames.size();
@@ -210,27 +209,19 @@ public:
     call->finalize();
     return call;
   }
-  CallIndirect* makeCallIndirect(FunctionType* type,
-                                 Expression* target,
+  CallIndirect* makeCallIndirect(Expression* target,
                                  const std::vector<Expression*>& args,
-                                 bool isReturn = false) {
-    return makeCallIndirect(type->name, target, args, type->result, isReturn);
-  }
-  CallIndirect* makeCallIndirect(Name fullType,
-                                 Expression* target,
-                                 const std::vector<Expression*>& args,
-                                 Type type,
+                                 Signature sig,
                                  bool isReturn = false) {
     auto* call = allocator.alloc<CallIndirect>();
-    call->fullType = fullType;
-    call->type = type;
+    call->sig = sig;
+    call->type = sig.results;
     call->target = target;
     call->operands.set(args);
     call->isReturn = isReturn;
     call->finalize();
     return call;
   }
-  // FunctionType
   LocalGet* makeLocalGet(Index index, Type type) {
     auto* ret = allocator.alloc<LocalGet>();
     ret->index = index;
@@ -582,9 +573,11 @@ public:
 
   static Index addParam(Function* func, Name name, Type type) {
     // only ok to add a param if no vars, otherwise indices are invalidated
-    assert(func->localIndices.size() == func->params.size());
+    assert(func->localIndices.size() == func->sig.params.size());
     assert(name.is());
-    func->params.push_back(type);
+    std::vector<Type> params = func->sig.params.expand();
+    params.push_back(type);
+    func->sig.params = Type(params);
     Index index = func->localNames.size();
     func->localIndices[name] = index;
     func->localNames[index] = name;
@@ -613,7 +606,7 @@ public:
   }
 
   static void clearLocals(Function* func) {
-    func->params.clear();
+    func->sig.params = Type::none;
     func->vars.clear();
     clearLocalNames(func);
   }

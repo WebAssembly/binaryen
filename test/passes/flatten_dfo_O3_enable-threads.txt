@@ -1,9 +1,9 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (type $FUNCSIG$dji (func (param i64 i32) (result f64)))
- (type $FUNCSIG$dd (func (param f64) (result f64)))
- (type $FUNCSIG$i (func (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i64_i32_=>_f64 (func (param i64 i32) (result f64)))
+ (type $f64_=>_f64 (func (param f64) (result f64)))
  (memory $0 (shared 1 1))
  (export "one" (func $0))
  (export "two" (func $1))
@@ -11,7 +11,7 @@
  (export "bad1" (func $3))
  (export "only-dfo" (func $4))
  (export "dfo-tee-get" (func $5))
- (func $0 (; 0 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $0 (; 0 ;) (; has Stack IR ;)
   (block $label$3
    (br_if $label$3
     (i32.load
@@ -21,10 +21,10 @@
   )
   (unreachable)
  )
- (func $1 (; 1 ;) (; has Stack IR ;) (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
+ (func $1 (; 1 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $2 (; 2 ;) (; has Stack IR ;) (type $FUNCSIG$dji) (param $0 i64) (param $1 i32) (result f64)
+ (func $2 (; 2 ;) (; has Stack IR ;) (param $0 i64) (param $1 i32) (result f64)
   (loop $label$8
    (br_if $label$8
     (local.get $1)
@@ -32,19 +32,19 @@
   )
   (unreachable)
  )
- (func $3 (; 3 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $3 (; 3 ;) (; has Stack IR ;)
   (i32.store
    (i32.const 1)
    (i32.const -16384)
   )
  )
- (func $4 (; 4 ;) (; has Stack IR ;) (type $FUNCSIG$dd) (param $0 f64) (result f64)
+ (func $4 (; 4 ;) (; has Stack IR ;) (param $0 f64) (result f64)
   (local $1 i32)
   (loop $label$1
    (br $label$1)
   )
  )
- (func $5 (; 5 ;) (; has Stack IR ;) (type $FUNCSIG$i) (result i32)
+ (func $5 (; 5 ;) (; has Stack IR ;) (result i32)
   (i32.const 1)
  )
 )

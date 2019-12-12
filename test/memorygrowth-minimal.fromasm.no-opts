@@ -1,4 +1,5 @@
 (module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "memory" (memory $memory 256))
  (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))

@@ -1,8 +1,7 @@
 (module
- (type $FUNCSIG$j (func (result i64)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$i (func (result i32)))
- (type $legaltype$illegalImportResult (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (type $i32_=>_none (func (param i32)))
  (import "env" "memory" (memory $memory 256 256))
  (import "env" "table" (table $table 0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))

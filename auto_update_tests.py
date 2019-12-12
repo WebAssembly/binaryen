@@ -73,7 +73,7 @@ def update_asm_js_tests():
 
 def update_wasm_opt_tests():
     print('\n[ checking wasm-opt -o notation... ]\n')
-    wast = os.path.join(shared.options.binaryen_test, 'hello_world.wast')
+    wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
     cmd = shared.WASM_OPT + [wast, '-o', 'a.wast', '-S']
     support.run_command(cmd)
     open(wast, 'w').write(open('a.wast').read())

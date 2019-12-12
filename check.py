@@ -72,19 +72,19 @@ def run_wasm_opt_tests():
     print('\n[ checking wasm-opt -o notation... ]\n')
 
     for extra_args in [[], ['--no-validation']]:
-        wast = os.path.join(shared.options.binaryen_test, 'hello_world.wast')
-        shared.delete_from_orbit('a.wast')
-        out = 'a.wast'
+        wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
+        shared.delete_from_orbit('a.wat')
+        out = 'a.wat'
         cmd = shared.WASM_OPT + [wast, '-o', out, '-S'] + extra_args
         support.run_command(cmd)
         shared.fail_if_not_identical_to_file(open(out).read(), wast)
 
     print('\n[ checking wasm-opt binary reading/writing... ]\n')
 
-    shutil.copyfile(os.path.join(shared.options.binaryen_test, 'hello_world.wast'), 'a.wast')
+    shutil.copyfile(os.path.join(shared.options.binaryen_test, 'hello_world.wat'), 'a.wat')
     shared.delete_from_orbit('a.wasm')
     shared.delete_from_orbit('b.wast')
-    support.run_command(shared.WASM_OPT + ['a.wast', '-o', 'a.wasm'])
+    support.run_command(shared.WASM_OPT + ['a.wat', '-o', 'a.wasm'])
     assert open('a.wasm', 'rb').read()[0] == 0, 'we emit binary by default'
     support.run_command(shared.WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S'])
     assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
@@ -222,9 +222,9 @@ def run_ctor_eval_tests():
     for t in shared.get_tests(shared.get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
-        cmd = shared.WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
+        cmd = shared.WASM_CTOR_EVAL + [t, '-o', 'a.wat', '-S', '--ctors', ctors]
         support.run_command(cmd)
-        actual = open('a.wast').read()
+        actual = open('a.wat').read()
         out = t + '.out'
         shared.fail_if_not_identical_to_file(actual, out)
 
@@ -235,10 +235,10 @@ def run_wasm_metadce_tests():
     for t in shared.get_tests(shared.get_test_dir('metadce'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         graph = t + '.graph.txt'
-        cmd = shared.WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S', '-all']
+        cmd = shared.WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wat', '-S', '-all']
         stdout = support.run_command(cmd)
         expected = t + '.dced'
-        with open('a.wast') as seen:
+        with open('a.wat') as seen:
             shared.fail_if_not_identical_to_file(seen.read(), expected)
         shared.fail_if_not_identical_to_file(stdout, expected + '.stdout')
 
@@ -257,8 +257,8 @@ def run_wasm_reduce_tests():
         support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm'])
         support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
         expected = t + '.txt'
-        support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wast'])
-        with open('a.wast') as seen:
+        support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
+        with open('a.wat') as seen:
             shared.fail_if_not_identical_to_file(seen.read(), expected)
 
     # run on a nontrivial fuzz testcase, for general coverage

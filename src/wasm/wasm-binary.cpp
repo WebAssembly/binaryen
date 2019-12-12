@@ -31,56 +31,7 @@ namespace wasm {
 void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
-  typedef std::unordered_map<Signature, size_t> Counts;
-  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
-    *wasm, [&](Function* func, Counts& counts) {
-      if (func->imported()) {
-        return;
-      }
-      struct TypeCounter : PostWalker<TypeCounter> {
-        Module& wasm;
-        Counts& counts;
-
-        TypeCounter(Module& wasm, Counts& counts)
-          : wasm(wasm), counts(counts) {}
-
-        void visitCallIndirect(CallIndirect* curr) {
-          auto* type = wasm.getFunctionType(curr->fullType);
-          Signature sig(Type(type->params), type->result);
-          counts[sig]++;
-        }
-      };
-      TypeCounter(*wasm, counts).walk(func->body);
-    });
-  // Collect all the counts.
-  Counts counts;
-  for (auto& curr : wasm->functions) {
-    counts[Signature(Type(curr->params), curr->result)]++;
-  }
-  for (auto& curr : wasm->events) {
-    counts[curr->sig]++;
-  }
-  for (auto& pair : analysis.map) {
-    Counts& functionCounts = pair.second;
-    for (auto& innerPair : functionCounts) {
-      counts[innerPair.first] += innerPair.second;
-    }
-  }
-  std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
-                                                   counts.end());
-  std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    // order by frequency then simplicity
-    if (a.second != b.second) {
-      return a.second > b.second;
-    } else {
-      return a.first < b.first;
-    }
-  });
-  for (Index i = 0; i < sorted.size(); ++i) {
-    typeIndexes[sorted[i].first] = i;
-    types.push_back(sorted[i].first);
-  }
-
+  ModuleUtils::collectSignatures(*wasm, types, typeIndices);
   importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
@@ -251,7 +202,7 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one function\n");
     writeImportHeader(func);
     o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getTypeIndex(Signature(Type(func->params), func->result)));
+    o << U32LEB(getTypeIndex(func->sig));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     BYN_TRACE("write one global\n");
@@ -298,7 +249,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     BYN_TRACE("write one\n");
-    o << U32LEB(getTypeIndex(Signature(Type(func->params), func->result)));
+    o << U32LEB(getTypeIndex(func->sig));
   });
   finishSection(start);
 }
@@ -459,8 +410,8 @@ uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
 }
 
 uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) const {
-  auto it = typeIndexes.find(sig);
-  assert(it != typeIndexes.end());
+  auto it = typeIndices.find(sig);
+  assert(it != typeIndices.end());
   return it->second;
 }
 
@@ -1160,7 +1111,8 @@ void WasmBinaryBuilder::readSignatures() {
   BYN_TRACE("num: " << numTypes << std::endl);
   for (size_t i = 0; i < numTypes; i++) {
     BYN_TRACE("read one\n");
-    auto curr = make_unique<FunctionType>();
+    std::vector<Type> params;
+    std::vector<Type> results;
     auto form = getS32LEB();
     if (form != BinaryConsts::EncodedType::Func) {
       throwError("bad signature form " + std::to_string(form));
@@ -1168,19 +1120,14 @@ void WasmBinaryBuilder::readSignatures() {
     size_t numParams = getU32LEB();
     BYN_TRACE("num params: " << numParams << std::endl);
     for (size_t j = 0; j < numParams; j++) {
-      curr->params.push_back(getConcreteType());
+      params.push_back(getConcreteType());
     }
     auto numResults = getU32LEB();
-    if (numResults == 0) {
-      curr->result = none;
-    } else {
-      if (numResults != 1) {
-        throwError("signature must have 1 result");
-      }
-      curr->result = getType();
+    BYN_TRACE("num results: " << numResults << std::endl);
+    for (size_t j = 0; j < numResults; j++) {
+      results.push_back(getConcreteType());
     }
-    curr->name = Name::fromInt(wasm.functionTypes.size());
-    wasm.addFunctionType(std::move(curr));
+    signatures.emplace_back(Type(params), Type(results));
   }
 }
 
@@ -1241,17 +1188,13 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Function: {
         auto name = Name(std::string("fimport$") + std::to_string(i));
         auto index = getU32LEB();
-        if (index >= wasm.functionTypes.size()) {
+        if (index > signatures.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " +
-                     std::to_string(wasm.functionTypes.size()));
+                     std::to_string(signatures.size()));
         }
-        auto* functionType = wasm.functionTypes[index].get();
-        auto params = functionType->params;
-        auto result = functionType->result;
-        auto* curr = builder.makeFunction(name, std::move(params), result, {});
+        auto* curr = builder.makeFunction(name, signatures[index], {});
         curr->module = module;
         curr->base = base;
-        curr->type = functionType->name;
         wasm.addFunction(curr);
         functionImports.push_back(curr);
         break;
@@ -1303,13 +1246,11 @@ void WasmBinaryBuilder::readImports() {
         auto name = Name(std::string("eimport$") + std::to_string(i));
         auto attribute = getU32LEB();
         auto index = getU32LEB();
-        if (index >= wasm.functionTypes.size()) {
+        if (index >= signatures.size()) {
           throwError("invalid event index " + std::to_string(index) + " / " +
-                     std::to_string(wasm.functionTypes.size()));
+                     std::to_string(signatures.size()));
         }
-        Type params = Type(wasm.functionTypes[index]->params);
-        auto* curr =
-          builder.makeEvent(name, attribute, Signature(params, Type::none));
+        auto* curr = builder.makeEvent(name, attribute, signatures[index]);
         curr->module = module;
         curr->base = base;
         wasm.addEvent(curr);
@@ -1338,10 +1279,10 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto index = getU32LEB();
-    if (index >= wasm.functionTypes.size()) {
+    if (index >= signatures.size()) {
       throwError("invalid function type index for function");
     }
-    functionTypes.push_back(wasm.functionTypes[index].get());
+    functionSignatures.push_back(signatures[index]);
   }
 }
 
@@ -1351,7 +1292,7 @@ void WasmBinaryBuilder::readFunctions() {
     codeSectionLocation = pos;
   }
   size_t total = getU32LEB();
-  if (total != functionTypes.size()) {
+  if (total != functionSignatures.size()) {
     throwError("invalid function section size, must equal types");
   }
   for (size_t i = 0; i < total; i++) {
@@ -1364,17 +1305,12 @@ void WasmBinaryBuilder::readFunctions() {
 
     Function* func = new Function;
     func->name = Name::fromInt(i);
+    func->sig = functionSignatures[i];
     currFunction = func;
 
     readNextDebugLocation();
 
-    auto type = functionTypes[i];
     BYN_TRACE("reading " << i << std::endl);
-    func->type = type->name;
-    func->result = type->result;
-    for (size_t j = 0; j < type->params.size(); j++) {
-      func->params.emplace_back(type->params[j]);
-    }
     size_t numLocalTypes = getU32LEB();
     for (size_t t = 0; t < numLocalTypes; t++) {
       auto num = getU32LEB();
@@ -1396,7 +1332,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(depth == 0);
-      func->body = getBlockOrSingleton(func->result);
+      func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
       assert(breakStack.size() == 0);
       assert(breakTargetNames.size() == 0);
@@ -1430,7 +1366,7 @@ void WasmBinaryBuilder::readExports() {
     names.insert(curr->name);
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
-    exportIndexes[curr] = index;
+    exportIndices[curr] = index;
     exportOrder.push_back(curr);
   }
 }
@@ -1792,7 +1728,7 @@ void WasmBinaryBuilder::processFunctions() {
   }
 
   for (auto* curr : exportOrder) {
-    auto index = exportIndexes[curr];
+    auto index = exportIndices[curr];
     switch (curr->kind) {
       case ExternalKind::Function: {
         curr->value = getFunctionName(index);
@@ -1826,8 +1762,8 @@ void WasmBinaryBuilder::processFunctions() {
 
   for (auto& pair : functionTable) {
     auto i = pair.first;
-    auto& indexes = pair.second;
-    for (auto j : indexes) {
+    auto& indices = pair.second;
+    for (auto j : indices) {
       wasm.table.segments[i].data.push_back(getFunctionName(j));
     }
   }
@@ -1923,13 +1859,12 @@ void WasmBinaryBuilder::readEvents() {
     BYN_TRACE("read one\n");
     auto attribute = getU32LEB();
     auto typeIndex = getU32LEB();
-    if (typeIndex >= wasm.functionTypes.size()) {
+    if (typeIndex >= signatures.size()) {
       throwError("invalid event index " + std::to_string(typeIndex) + " / " +
-                 std::to_string(wasm.functionTypes.size()));
+                 std::to_string(signatures.size()));
     }
-    Type params = Type(wasm.functionTypes[typeIndex]->params);
     wasm.addEvent(Builder::makeEvent(
-      "event$" + std::to_string(i), attribute, Signature(params, Type::none)));
+      "event$" + std::to_string(i), attribute, signatures[typeIndex]));
   }
 }
 
@@ -2508,24 +2443,23 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
 void WasmBinaryBuilder::visitCall(Call* curr) {
   BYN_TRACE("zz node: Call\n");
   auto index = getU32LEB();
-  FunctionType* type;
+  Signature sig;
   if (index < functionImports.size()) {
     auto* import = functionImports[index];
-    type = wasm.getFunctionType(import->type);
+    sig = import->sig;
   } else {
     Index adjustedIndex = index - functionImports.size();
-    if (adjustedIndex >= functionTypes.size()) {
+    if (adjustedIndex >= functionSignatures.size()) {
       throwError("invalid call index");
     }
-    type = functionTypes[adjustedIndex];
+    sig = functionSignatures[adjustedIndex];
   }
-  assert(type);
-  auto num = type->params.size();
+  auto num = sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  curr->type = type->result;
+  curr->type = sig.results;
   functionCalls[index].push_back(curr); // we don't know function names yet
   curr->finalize();
 }
@@ -2533,22 +2467,20 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
   BYN_TRACE("zz node: CallIndirect\n");
   auto index = getU32LEB();
-  if (index >= wasm.functionTypes.size()) {
+  if (index >= signatures.size()) {
     throwError("bad call_indirect function index");
   }
-  auto* fullType = wasm.functionTypes[index].get();
+  curr->sig = signatures[index];
   auto reserved = getU32LEB();
   if (reserved != 0) {
     throwError("Invalid flags field in call_indirect");
   }
-  curr->fullType = fullType->name;
-  auto num = fullType->params.size();
+  auto num = curr->sig.params.size();
   curr->operands.resize(num);
   curr->target = popNonVoidExpression();
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  curr->type = fullType->result;
   curr->finalize();
 }
 
@@ -4344,7 +4276,7 @@ void WasmBinaryBuilder::visitSelect(Select* curr) {
 void WasmBinaryBuilder::visitReturn(Return* curr) {
   BYN_TRACE("zz node: Return\n");
   requireFunctionContext("return");
-  if (currFunction->result != none) {
+  if (currFunction->sig.results != Type::none) {
     curr->value = popNonVoidExpression();
   }
   curr->finalize();

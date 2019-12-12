@@ -1,5 +1,5 @@
 (module
- (type $v (func))
+ (type $none_=>_none (func))
  (import "env" "test2" (global $test2 i32))
  (import "env" "test1" (func $test1))
  (export "test1" (func $test1))

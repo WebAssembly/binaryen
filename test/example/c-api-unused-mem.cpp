@@ -7,7 +7,6 @@
 #include "binaryen-c.h"
 
 int main() {
-  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
@@ -40,10 +39,6 @@ int main() {
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[6]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
-  {
-    BinaryenType paramTypes[] = {BinaryenTypeNone()};
-    functionTypes[0] = BinaryenAddFunctionType(the_module, "rustfn-0-3", BinaryenTypeNone(), paramTypes, 0);
-  }
   expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[8] =
     BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[7]);
@@ -54,13 +49,15 @@ int main() {
   {
     BinaryenType varTypes[] = {
       BinaryenTypeInt32(), BinaryenTypeInt32(), BinaryenTypeInt64()};
-    functions[0] = BinaryenAddFunction(the_module, "main", functionTypes[0], varTypes, 3, expressions[10]);
+    functions[0] = BinaryenAddFunction(the_module,
+                                       "main",
+                                       BinaryenTypeNone(),
+                                       BinaryenTypeNone(),
+                                       varTypes,
+                                       3,
+                                       expressions[10]);
   }
   BinaryenAddFunctionExport(the_module, "main", "main");
-  {
-    BinaryenType paramTypes[] = {BinaryenTypeNone()};
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "__wasm_start", BinaryenTypeNone(), paramTypes, 0);
-  }
   {
     const char* segments[] = { 0 };
     int8_t segmentPassive[] = { 0 };
@@ -83,7 +80,13 @@ int main() {
   BinaryenAddFunctionExport(the_module, "__wasm_start", "rust_entry");
   {
     BinaryenType varTypes[] = {BinaryenTypeNone()};
-    functions[1] = BinaryenAddFunction(the_module, "__wasm_start", functionTypes[1], varTypes, 0, expressions[15]);
+    functions[1] = BinaryenAddFunction(the_module,
+                                       "__wasm_start",
+                                       BinaryenTypeNone(),
+                                       BinaryenTypeNone(),
+                                       varTypes,
+                                       0,
+                                       expressions[15]);
   }
   assert(BinaryenModuleValidate(the_module));
   BinaryenModulePrint(the_module);
