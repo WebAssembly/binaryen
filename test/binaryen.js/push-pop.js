@@ -18,9 +18,7 @@ function stringify(expr) {
 
 var module = new Binaryen.Module();
 
-var v = module.addFunctionType("v", Binaryen.none, []);
-
-var func = module.addFunction("func", v, [],
+var func = module.addFunction("func", Binaryen.none, Binaryen.none, [],
   module.block(null, [
     module.push(module.i32.pop()),
     module.push(module.i64.pop()),

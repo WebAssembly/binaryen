@@ -1,22 +1,22 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "func" (func $import))
  (import "env" "log_execution" (func $log_execution (param i32)))
- (func $nopp (; 2 ;) (type $FUNCSIG$v)
+ (func $nopp (; 2 ;)
   (call $log_execution
    (i32.const 0)
   )
   (nop)
  )
- (func $intt (; 3 ;) (type $FUNCSIG$i) (result i32)
+ (func $intt (; 3 ;) (result i32)
   (call $log_execution
    (i32.const 1)
   )
   (i32.const 10)
  )
- (func $workk (; 4 ;) (type $FUNCSIG$v)
+ (func $workk (; 4 ;)
   (call $log_execution
    (i32.const 3)
   )
@@ -35,7 +35,7 @@
    )
   )
  )
- (func $loops (; 5 ;) (type $FUNCSIG$v)
+ (func $loops (; 5 ;)
   (call $log_execution
    (i32.const 8)
   )
@@ -81,7 +81,7 @@
    )
   )
  )
- (func $loops-similar (; 6 ;) (type $FUNCSIG$v)
+ (func $loops-similar (; 6 ;)
   (call $log_execution
    (i32.const 10)
   )

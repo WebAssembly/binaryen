@@ -3,7 +3,6 @@
 #include <map>
 #include "binaryen-c.h"
 int main() {
-  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
   std::map<size_t, BinaryenGlobalRef> globals;

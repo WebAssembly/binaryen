@@ -5000,9 +5000,9 @@ longname4828 => zya
 longname1426 => zz
 longname4882 => zza
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$vii (func (param i32 i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (import "env" "a" (global $import$global0 i32))
  (import "env" "__memory_base" (global $import$global1 i32))
  (import "env" "__table_base" (global $import$global2 i32))
@@ -10011,10 +10011,10 @@ longname4882 => zza
  (export "foo1" (func $foo1))
  (export "foo2" (func $foo2))
  (export "event1" (event $event1))
- (func $foo1 (; 5000 ;) (type $FUNCSIG$v)
+ (func $foo1 (; 5000 ;)
   (nop)
  )
- (func $foo2 (; 5001 ;) (type $FUNCSIG$v)
+ (func $foo2 (; 5001 ;)
   (nop)
  )
 )

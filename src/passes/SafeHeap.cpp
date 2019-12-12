@@ -23,7 +23,6 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/bits.h"
-#include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "pass.h"
@@ -137,9 +136,7 @@ struct SafeHeap : public Pass {
       import->name = getSbrkPtr = GET_SBRK_PTR_IMPORT;
       import->module = ENV;
       import->base = GET_SBRK_PTR_IMPORT;
-      auto* functionType = ensureFunctionType("i", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::i32);
       module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
@@ -149,9 +146,7 @@ struct SafeHeap : public Pass {
       import->name = segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
-      auto* functionType = ensureFunctionType("v", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::none);
       module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, ALIGNFAULT_IMPORT)) {
@@ -161,9 +156,7 @@ struct SafeHeap : public Pass {
       import->name = alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
       import->base = ALIGNFAULT_IMPORT;
-      auto* functionType = ensureFunctionType("v", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::none);
       module->addFunction(import);
     }
   }
@@ -251,10 +244,9 @@ struct SafeHeap : public Pass {
     }
     auto* func = new Function;
     func->name = name;
-    func->params.push_back(i32); // pointer
-    func->params.push_back(i32); // offset
+    // pointer, offset
+    func->sig = Signature({Type::i32, Type::i32}, style.type);
     func->vars.push_back(i32);   // pointer + offset
-    func->result = style.type;
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
@@ -291,11 +283,9 @@ struct SafeHeap : public Pass {
     }
     auto* func = new Function;
     func->name = name;
-    func->params.push_back(i32);             // pointer
-    func->params.push_back(i32);             // offset
-    func->params.push_back(style.valueType); // value
+    // pointer, offset, value
+    func->sig = Signature({Type::i32, Type::i32, style.valueType}, Type::none);
     func->vars.push_back(i32);               // pointer + offset
-    func->result = none;
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
