@@ -10107,7 +10107,7 @@ module loaded from binary form:
  )
 )
 
-[wasm-validator error in function func] i32 != i64: local.set value type must be correct, on 
+[wasm-validator error in function func] i64 != i32: local.set's value type must be correct, on 
 [none] (local.set $0
  [i64] (i64.const 1234)
 )
