@@ -174,8 +174,8 @@ struct Flatten
             // use a set in a prelude + a get
             set->makeSet();
             ourPreludes.push_back(set);
-            replaceCurrent(builder.makeLocalGet(
-              set->index, getFunction()->getLocalType(set->index)));
+            Type localType = getFunction()->getLocalType(set->index);
+            replaceCurrent(builder.makeLocalGet(set->index, localType));
           }
         }
       } else if (auto* br = curr->dynCast<Break>()) {
