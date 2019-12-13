@@ -31,6 +31,8 @@ public:
     : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
+  void setStandalone(bool standalone_) { standalone = standalone_; }
+
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
   Function* generateAssignGOTEntriesFunction();
@@ -69,6 +71,7 @@ private:
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
+  bool standalone;
   // Used by generateDynCallThunk to track all the dynCall functions created
   // so far.
   std::unordered_set<Signature> sigs;
