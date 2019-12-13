@@ -47,38 +47,29 @@
         )
        )
       )
-      (block
-       (if
-        (if (result i32)
-         (i32.eq
-          (global.get $__asyncify_state)
-          (i32.const 0)
-         )
-         (i32.const 1)
-         (i32.eq
-          (local.get $1)
-          (i32.const 0)
-         )
-        )
-        (block
-         (call $import)
-         (if
-          (i32.eq
-           (global.get $__asyncify_state)
-           (i32.const 1)
-          )
-          (br $__asyncify_unwind
-           (i32.const 0)
-          )
-         )
-        )
-       )
-       (if
+      (if
+       (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
          (i32.const 0)
         )
-        (nop)
+        (i32.const 1)
+        (i32.eq
+         (local.get $1)
+         (i32.const 0)
+        )
+       )
+       (block
+        (call $import)
+        (if
+         (i32.eq
+          (global.get $__asyncify_state)
+          (i32.const 1)
+         )
+         (br $__asyncify_unwind
+          (i32.const 0)
+         )
+        )
        )
       )
      )
@@ -143,38 +134,29 @@
         )
        )
       )
-      (block
-       (if
-        (if (result i32)
-         (i32.eq
-          (global.get $__asyncify_state)
-          (i32.const 0)
-         )
-         (i32.const 1)
-         (i32.eq
-          (local.get $1)
-          (i32.const 0)
-         )
-        )
-        (block
-         (call $import)
-         (if
-          (i32.eq
-           (global.get $__asyncify_state)
-           (i32.const 1)
-          )
-          (br $__asyncify_unwind
-           (i32.const 0)
-          )
-         )
-        )
-       )
-       (if
+      (if
+       (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
          (i32.const 0)
         )
-        (nop)
+        (i32.const 1)
+        (i32.eq
+         (local.get $1)
+         (i32.const 0)
+        )
+       )
+       (block
+        (call $import)
+        (if
+         (i32.eq
+          (global.get $__asyncify_state)
+          (i32.const 1)
+         )
+         (br $__asyncify_unwind
+          (i32.const 0)
+         )
+        )
        )
       )
      )
@@ -203,15 +185,12 @@
  )
  (func $baz (; 3 ;)
   (call $import)
-  (nop)
  )
  (func $other1 (; 4 ;)
   (call $foo)
-  (nop)
  )
  (func $other2 (; 5 ;)
   (call $baz)
-  (nop)
  )
  (func $asyncify_start_unwind (; 6 ;) (param $0 i32)
   (global.set $__asyncify_state
