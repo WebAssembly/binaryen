@@ -1,34 +1,26 @@
 (module
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (memory $0 2)
- (table $0 1 1 funcref)
- (elem (i32.const 0) $foo)
  (global $global$0 (mut i32) (i32.const 66112))
  (global $global$1 i32 (i32.const 66112))
  (global $global$2 i32 (i32.const 576))
  (export "memory" (memory $0))
- (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (export "_start" (func $_start))
- (func $__original_main (; 0 ;) (type $FUNCSIG$i) (result i32)
+ (func $__original_main (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (nop)
  )
- (func $main (; 1 ;) (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
-  (call $__original_main)
- )
- (func $foo (; 2 ;) (type $FUNCSIG$i) (result i32)
-  (nop)
- )
- (func $stackSave (; 3 ;) (result i32)
+ (func $stackSave (; 1 ;) (result i32)
   (global.get $global$0)
  )
- (func $stackAlloc (; 4 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (; 2 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (global.set $global$0
    (local.tee $1
@@ -43,22 +35,14 @@
   )
   (local.get $1)
  )
- (func $stackRestore (; 5 ;) (param $0 i32)
+ (func $stackRestore (; 3 ;) (param $0 i32)
   (global.set $global$0
    (local.get $0)
   )
  )
- (func $__growWasmMemory (; 6 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (; 4 ;) (param $newSize i32) (result i32)
   (memory.grow
    (local.get $newSize)
-  )
- )
- (func $_start (; 7 ;)
-  (drop
-   (call $main
-    (i32.const 0)
-    (i32.const 0)
-   )
   )
  )
 )
@@ -66,26 +50,22 @@
 --BEGIN METADATA --
 {
   "staticBump": 8,
-  "tableSize": 1,
+  "tableSize": 0,
   "declares": [
   ],
   "externs": [
   ],
   "implementedFunctions": [
-    "_main",
     "_stackSave",
     "_stackAlloc",
     "_stackRestore",
-    "___growWasmMemory",
-    "__start"
+    "___growWasmMemory"
   ],
   "exports": [
-    "main",
     "stackSave",
     "stackAlloc",
     "stackRestore",
-    "__growWasmMemory",
-    "_start"
+    "__growWasmMemory"
   ],
   "namedGlobals": {
     "__heap_base" : "66112",

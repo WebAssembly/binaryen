@@ -809,7 +809,7 @@ void AssertionEmitter::emit() {
 int main(int argc, const char* argv[]) {
   Wasm2JSBuilder::Flags flags;
   OptimizationOptions options("wasm2js",
-                              "Transform .wasm/.wast files to asm.js");
+                              "Transform .wasm/.wat files to asm.js");
   options
     .add("--output",
          "-o",
@@ -873,7 +873,7 @@ int main(int argc, const char* argv[]) {
 
   try {
     // If the input filename ends in `.wasm`, then parse it in binary form,
-    // otherwise assume it's a `*.wast` file and go from there.
+    // otherwise assume it's a `*.wat` file and go from there.
     //
     // Note that we're not using the built-in `ModuleReader` which will also do
     // similar logic here because when testing JS files we use the

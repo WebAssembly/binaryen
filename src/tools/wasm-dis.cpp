@@ -31,7 +31,7 @@ int main(int argc, const char* argv[]) {
   std::string sourceMapFilename;
   Options options("wasm-dis",
                   "Un-assemble a .wasm (WebAssembly binary format) into a "
-                  ".wast (WebAssembly text format)");
+                  ".wat (WebAssembly text format)");
   options
     .add("--output",
          "-o",

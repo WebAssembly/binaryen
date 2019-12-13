@@ -1,6 +1,6 @@
 (module
- (type $v (func))
- (func $func (; 0 ;) (type $v)
+ (type $none_=>_none (func))
+ (func $func (; 0 ;)
   (push
    (i32.pop)
   )

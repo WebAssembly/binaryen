@@ -1,9 +1,9 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (func $ifs (; 0 ;) (type $FUNCSIG$v)
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (func $ifs (; 0 ;)
   (if
    (i32.const 0)
    (nop)
@@ -44,7 +44,7 @@
    )
   )
  )
- (func $ifs-blocks (; 1 ;) (type $FUNCSIG$v)
+ (func $ifs-blocks (; 1 ;)
   (block
    (drop
     (i32.const 0)
@@ -88,7 +88,7 @@
    )
   )
  )
- (func $ifs-blocks-big (; 2 ;) (type $FUNCSIG$v)
+ (func $ifs-blocks-big (; 2 ;)
   (block
    (drop
     (i32.const 0)
@@ -167,7 +167,7 @@
    )
   )
  )
- (func $ifs-blocks-long (; 3 ;) (type $FUNCSIG$v)
+ (func $ifs-blocks-long (; 3 ;)
   (block
    (if
     (i32.const 1)
@@ -237,7 +237,7 @@
    )
   )
  )
- (func $if-worth-it-i-dunno (; 4 ;) (type $FUNCSIG$v)
+ (func $if-worth-it-i-dunno (; 4 ;)
   (block $folding-inner0
    (block
     (if
@@ -411,7 +411,7 @@
   (unreachable)
   (unreachable)
  )
- (func $no-grandparent (; 5 ;) (type $FUNCSIG$v)
+ (func $no-grandparent (; 5 ;)
   (if
    (i32.const 9999)
    (block
@@ -436,7 +436,7 @@
    )
   )
  )
- (func $yes-grandparent (; 6 ;) (type $FUNCSIG$v)
+ (func $yes-grandparent (; 6 ;)
   (block
    (if
     (i32.const 9999)
@@ -461,7 +461,7 @@
    (unreachable)
   )
  )
- (func $ifs-named-block (; 7 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $ifs-named-block (; 7 ;) (param $x i32) (param $y i32) (result i32)
   (block $out
    (block $out2
     (block
@@ -546,7 +546,7 @@
    (i32.const 20)
   )
  )
- (func $block (; 8 ;) (type $FUNCSIG$v)
+ (func $block (; 8 ;)
   (block $x
    (if
     (i32.const 0)
@@ -565,7 +565,7 @@
    (i32.const 2)
   )
  )
- (func $block2 (; 9 ;) (type $FUNCSIG$v)
+ (func $block2 (; 9 ;)
   (block $x
    (if
     (i32.const 0)
@@ -600,7 +600,7 @@
    (br $x)
   )
  )
- (func $block3 (; 10 ;) (type $FUNCSIG$v)
+ (func $block3 (; 10 ;)
   (block $x
    (if
     (i32.const 0)
@@ -641,7 +641,7 @@
    (i32.const 2)
   )
  )
- (func $mixture (; 11 ;) (type $FUNCSIG$v)
+ (func $mixture (; 11 ;)
   (block $out
    (block
     (drop
@@ -720,7 +720,7 @@
    (nop)
   )
  )
- (func $block-corners (; 12 ;) (type $FUNCSIG$v)
+ (func $block-corners (; 12 ;)
   (block
    (block $x
     (if
@@ -879,7 +879,7 @@
    )
   )
  )
- (func $terminating (; 13 ;) (type $FUNCSIG$v)
+ (func $terminating (; 13 ;)
   (block $folding-inner0
    (block
     (if
@@ -910,7 +910,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-unreachable (; 14 ;) (type $FUNCSIG$v)
+ (func $terminating-unreachable (; 14 ;)
   (block $folding-inner0
    (block
     (if
@@ -941,7 +941,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-value (; 15 ;) (type $FUNCSIG$i) (result i32)
+ (func $terminating-value (; 15 ;) (result i32)
   (block $folding-inner0
    (return
     (block (result i32)
@@ -974,7 +974,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-just-2 (; 16 ;) (type $FUNCSIG$v)
+ (func $terminating-just-2 (; 16 ;)
   (block $folding-inner0
    (block
     (if
@@ -1021,7 +1021,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-shortness (; 17 ;) (type $FUNCSIG$v)
+ (func $terminating-shortness (; 17 ;)
   (block $folding-inner1
    (block
     (block $folding-inner0
@@ -1062,7 +1062,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-multiple-separate (; 18 ;) (type $FUNCSIG$v)
+ (func $terminating-multiple-separate (; 18 ;)
   (block $folding-inner1
    (block
     (block $folding-inner0
@@ -1119,7 +1119,7 @@
   )
   (unreachable)
  )
- (func $terminating-just-worth-it (; 19 ;) (type $FUNCSIG$v)
+ (func $terminating-just-worth-it (; 19 ;)
   (block $folding-inner0
    (block
     (if
@@ -1142,7 +1142,7 @@
   (nop)
   (unreachable)
  )
- (func $terminating-not-worth-it (; 20 ;) (type $FUNCSIG$v)
+ (func $terminating-not-worth-it (; 20 ;)
   (if
    (i32.const 1)
    (block
@@ -1168,7 +1168,7 @@
    )
   )
  )
- (func $terminating-return (; 21 ;) (type $FUNCSIG$v)
+ (func $terminating-return (; 21 ;)
   (block $folding-inner0
    (block
     (if
@@ -1199,7 +1199,7 @@
   (nop)
   (return)
  )
- (func $terminating-return-value (; 22 ;) (type $FUNCSIG$i) (result i32)
+ (func $terminating-return-value (; 22 ;) (result i32)
   (block $folding-inner0
    (block
     (if
@@ -1239,7 +1239,7 @@
    )
   )
  )
- (func $terminating-fallthrough-value (; 23 ;) (type $FUNCSIG$i) (result i32)
+ (func $terminating-fallthrough-value (; 23 ;) (result i32)
   (block $folding-inner0
    (return
     (block (result i32)
@@ -1279,7 +1279,7 @@
    )
   )
  )
- (func $big-return (; 24 ;) (type $FUNCSIG$i) (result i32)
+ (func $big-return (; 24 ;) (result i32)
   (block $folding-inner0
    (block
     (if
@@ -1316,7 +1316,7 @@
    )
   )
  )
- (func $return-mix (; 25 ;) (type $FUNCSIG$i) (result i32)
+ (func $return-mix (; 25 ;) (result i32)
   (block $folding-inner0
    (block
     (if
@@ -1354,10 +1354,10 @@
    )
   )
  )
- (func $just-unreachable (; 26 ;) (type $FUNCSIG$v)
+ (func $just-unreachable (; 26 ;)
   (unreachable)
  )
- (func $just-return (; 27 ;) (type $FUNCSIG$i) (result i32)
+ (func $just-return (; 27 ;) (result i32)
   (return
    (i32.add
     (i32.const 1)
@@ -1365,7 +1365,7 @@
    )
   )
  )
- (func $drop-if-with-value-but-unreachable (; 28 ;) (type $FUNCSIG$v)
+ (func $drop-if-with-value-but-unreachable (; 28 ;)
   (if
    (i32.const 0)
    (nop)
@@ -1411,7 +1411,7 @@
    )
   )
  )
- (func $nested-control-flow (; 29 ;) (type $FUNCSIG$v)
+ (func $nested-control-flow (; 29 ;)
   (block $out
    (block
     (block $x
@@ -1441,7 +1441,7 @@
    )
   )
  )
- (func $nested-control-flow-dangerous (; 30 ;) (type $FUNCSIG$v)
+ (func $nested-control-flow-dangerous (; 30 ;)
   (block $folding-inner0
    (block $out
     (block
@@ -1485,7 +1485,7 @@
   )
   (return)
  )
- (func $nested-control-flow-dangerous-but-ok (; 31 ;) (type $FUNCSIG$v)
+ (func $nested-control-flow-dangerous-but-ok (; 31 ;)
   (block $folding-inner0
    (block
     (block $middle
@@ -1540,7 +1540,7 @@
   )
   (return)
  )
- (func $nested-control-flow-dangerous-but-ok-b (; 32 ;) (type $FUNCSIG$v)
+ (func $nested-control-flow-dangerous-but-ok-b (; 32 ;)
   (block $out
    (block $middle
     (block
@@ -1606,7 +1606,7 @@
    (i32.const 4)
   )
  )
- (func $nested-control-flow-dangerous-but-ok-c (; 33 ;) (type $FUNCSIG$v)
+ (func $nested-control-flow-dangerous-but-ok-c (; 33 ;)
   (block $x
    (block
     (block $out
@@ -1643,7 +1643,7 @@
    (i32.const 5)
   )
  )
- (func $nested-control-flow-dangerous-but-ok-d (; 34 ;) (type $FUNCSIG$v)
+ (func $nested-control-flow-dangerous-but-ok-d (; 34 ;)
   (block
    (block $out
     (block
@@ -1678,7 +1678,7 @@
    (i32.const 3)
   )
  )
- (func $if-suffix (; 35 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $if-suffix (; 35 ;) (param $x i32) (result i32)
   (block
    (if
     (local.get $x)

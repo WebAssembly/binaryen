@@ -128,10 +128,10 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
     // no need to restore the old stack value, we're gone anyhow
   } else {
     // save the return value
-    auto temp = builder.addVar(func, func->result);
+    auto temp = builder.addVar(func, func->sig.results);
     block->list.push_back(builder.makeLocalSet(temp, func->body));
     block->list.push_back(makeStackRestore());
-    block->list.push_back(builder.makeLocalGet(temp, func->result));
+    block->list.push_back(builder.makeLocalGet(temp, func->sig.results));
   }
   block->finalize();
   func->body = block;

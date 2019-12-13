@@ -1,6 +1,6 @@
 (module
- (type $FUNCSIG$v (func))
- (func $tee (; 0 ;) (type $FUNCSIG$v)
+ (type $none_=>_none (func))
+ (func $tee (; 0 ;)
   (local $x i32)
   (local $y f64)
   (drop

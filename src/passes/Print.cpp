@@ -27,14 +27,16 @@
 
 namespace wasm {
 
-static bool isFullForced() {
+namespace {
+
+bool isFullForced() {
   if (getenv("BINARYEN_PRINT_FULL")) {
     return std::stoi(getenv("BINARYEN_PRINT_FULL")) != 0;
   }
   return false;
 }
 
-static std::ostream& printName(Name name, std::ostream& o) {
+std::ostream& printName(Name name, std::ostream& o) {
   // we need to quote names if they have tricky chars
   if (!name.str || !strpbrk(name.str, "()")) {
     o << '$' << name.str;
@@ -54,6 +56,36 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   }
   return printName(name, o);
 }
+
+// Wrapper for printing signature names
+struct SigName {
+  Signature sig;
+  SigName(Signature sig) : sig(sig) {}
+};
+
+std::ostream& operator<<(std::ostream& os, SigName sigName) {
+  auto printType = [&](Type type) {
+    if (type == Type::none) {
+      os << "none";
+    } else {
+      const std::vector<Type>& types = type.expand();
+      for (size_t i = 0; i < types.size(); ++i) {
+        if (i != 0) {
+          os << '_';
+        }
+        os << types[i];
+      }
+    }
+  };
+
+  os << '$';
+  printType(sigName.sig.params);
+  os << "_=>_";
+  printType(sigName.sig.results);
+  return os;
+}
+
+} // anonymous namespace
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
 // format. Print something else to make it pass.
@@ -126,7 +158,7 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "call_indirect (type ");
     }
-    printName(curr->fullType, o) << ')';
+    o << SigName(curr->sig) << ')';
   }
   void visitLocalGet(LocalGet* curr) {
     printMedium(o, "local.get ");
@@ -1798,7 +1830,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
     }
   }
-  // try-catch-end is written in the folded wast format as
+  // try-catch-end is written in the folded wat format as
   // (try
   //   ...
   //  (catch
@@ -1869,19 +1901,18 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << ')';
   }
   // Module-level visitors
-  void visitFunctionType(FunctionType* curr, Name* internalName = nullptr) {
+  void handleSignature(Signature curr, Name* funcName = nullptr) {
     o << "(func";
-    if (internalName) {
-      o << ' ';
-      printName(*internalName, o);
+    if (funcName) {
+      o << " $" << *funcName;
     }
-    if (curr->params.size() > 0) {
+    if (curr.params.size() > 0) {
       o << maybeSpace;
-      o << ParamType(Type(curr->params));
+      o << ParamType(curr.params);
     }
-    if (curr->result != none) {
+    if (curr.results.size() > 0) {
       o << maybeSpace;
-      o << ResultType(curr->result);
+      o << ResultType(curr.results);
     }
     o << ")";
   }
@@ -1963,12 +1994,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     lastPrintedLocation = {0, 0, 0};
     o << '(';
     emitImportHeader(curr);
-    if (curr->type.is()) {
-      visitFunctionType(currModule->getFunctionType(curr->type), &curr->name);
-    } else {
-      auto functionType = sigToFunctionType(getSig(curr));
-      visitFunctionType(&functionType, &curr->name);
-    }
+    handleSignature(curr->sig, &curr->name);
     o << ')';
     o << maybeNewLine;
   }
@@ -1993,21 +2019,19 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
-    if (curr->type.is()) {
-      o << maybeSpace << "(type ";
-      printName(curr->type, o) << ')';
-    }
-    if (curr->params.size() > 0) {
-      for (size_t i = 0; i < curr->params.size(); i++) {
+    const std::vector<Type>& params = curr->sig.params.expand();
+    if (params.size() > 0) {
+      for (size_t i = 0; i < params.size(); i++) {
         o << maybeSpace;
         o << '(';
         printMinor(o, "param ");
-        printLocal(i, currFunction, o) << ' ' << curr->getLocalType(i) << ')';
+        printLocal(i, currFunction, o);
+        o << ' ' << params[i] << ')';
       }
     }
-    if (curr->result != none) {
+    if (curr->sig.results != Type::none) {
       o << maybeSpace;
-      o << ResultType(curr->result);
+      o << ResultType(curr->sig.results);
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
@@ -2204,12 +2228,15 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "module");
     incIndent();
-    for (auto& child : curr->functionTypes) {
+    std::vector<Signature> signatures;
+    std::unordered_map<Signature, Index> indices;
+    ModuleUtils::collectSignatures(*curr, signatures, indices);
+    for (auto sig : signatures) {
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
-      printName(child->name, o) << ' ';
-      visitFunctionType(child.get());
+      o << SigName(sig) << ' ';
+      handleSignature(sig);
       o << ")" << maybeNewLine;
     }
     ModuleUtils::iterImportedMemories(

@@ -1,6 +1,7 @@
 (module
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "memoryBase" (global $memoryBase$asm2wasm$import i32))
  (import "env" "abortStackOverflow" (func $abortStackOverflow (param i32)))
  (import "env" "_puts" (func $_puts (param i32) (result i32)))
