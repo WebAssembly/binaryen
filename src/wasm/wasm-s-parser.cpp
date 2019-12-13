@@ -997,7 +997,7 @@ Expression* SExpressionWasmBuilder::makeLocalTee(Element& s) {
   auto ret = allocator.alloc<LocalSet>();
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
-  ret->setTee(true);
+  ret->makeTee(currFunction->getLocalType(ret->index));
   ret->finalize();
   return ret;
 }
@@ -1006,7 +1006,7 @@ Expression* SExpressionWasmBuilder::makeLocalSet(Element& s) {
   auto ret = allocator.alloc<LocalSet>();
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
-  ret->setTee(false);
+  ret->makeSet();
   ret->finalize();
   return ret;
 }

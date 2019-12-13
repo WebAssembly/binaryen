@@ -172,9 +172,10 @@ struct Flatten
             replaceCurrent(set->value); // trivial, no set happens
           } else {
             // use a set in a prelude + a get
-            set->setTee(false);
+            set->makeSet();
             ourPreludes.push_back(set);
-            replaceCurrent(builder.makeLocalGet(set->index, set->value->type));
+            Type localType = getFunction()->getLocalType(set->index);
+            replaceCurrent(builder.makeLocalGet(set->index, localType));
           }
         }
       } else if (auto* br = curr->dynCast<Break>()) {

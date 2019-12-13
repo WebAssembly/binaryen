@@ -112,7 +112,7 @@ inline Expression* stackBoundsCheck(Builder& builder,
   auto check =
     builder.makeIf(builder.makeBinary(
                      BinaryOp::LtUInt32,
-                     builder.makeLocalTee(newSP, value),
+                     builder.makeLocalTee(newSP, value, stackPointer->type),
                      builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
                    builder.makeCall(handler, {}, none));
   // (global.set $__stack_pointer (local.get $newSP))
@@ -172,7 +172,7 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
   const static uint32_t bitMask = bitAlignment - 1;
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub);
+  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub, i32);
   Expression* storeStack = generateStoreStackPointer(function, teeStackLocal);
 
   Block* block = builder.makeBlock();
