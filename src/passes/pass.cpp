@@ -468,11 +468,11 @@ static void dumpWast(Name name, Module* wasm) {
   // TODO: use _getpid() on windows, elsewhere?
   fullName += std::to_string(getpid()) + '-';
 #endif
-  fullName += numstr + "-" + name.str + ".wasm";
+  fullName += numstr + "-" + name.str;
   Colors::setEnabled(false);
   ModuleWriter writer;
-  writer.setBinary(false); // TODO: add an option for binary
-  writer.write(*wasm, fullName);
+  writer.writeText(*wasm, fullName + ".wast");
+  writer.writeBinary(*wasm, fullName + ".wasm");
 }
 
 void PassRunner::run() {
