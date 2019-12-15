@@ -101,9 +101,9 @@
 (invoke "copy" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 (invoke "copy" (i32.const 0) (i32.const 0x10000) (i32.const 0))
 
-;; OK copying 0 bytes outside of memory.
-(invoke "copy" (i32.const 0x10001) (i32.const 0) (i32.const 0))
-(invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0))
+;; Copying 0 bytes outside of memory limit is NOT allowed.
+(assert_trap (invoke "copy" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
+(assert_trap (invoke "copy" (i32.const 0) (i32.const 0x10001) (i32.const 0)))
 
 ;; memory.init
 (module
@@ -138,9 +138,9 @@
 (invoke "init" (i32.const 0x10000) (i32.const 0) (i32.const 0))
 (invoke "init" (i32.const 0) (i32.const 4) (i32.const 0))
 
-;; OK writing 0 bytes outside of memory or segment.
+;; Writing 0 bytes outside of memory / segment limit is NOT allowed.
 (invoke "init" (i32.const 0x10001) (i32.const 0) (i32.const 0))
-(invoke "init" (i32.const 0) (i32.const 5) (i32.const 0))
+(assert_trap (invoke "init" (i32.const 0) (i32.const 5) (i32.const 0)))
 
 ;; data.drop
 (module
@@ -157,9 +157,8 @@
     (memory.init 1 (i32.const 0) (i32.const 0) (i32.const 0)))
 )
 
+;; It is OK to drop the same segment multiple times or drop an active segment
 (invoke "init_passive")
 (invoke "drop_passive")
-(assert_trap (invoke "drop_passive") "data segment dropped")
-(assert_trap (invoke "init_passive") "data segment dropped")
-(assert_trap (invoke "drop_active") "data segment dropped")
-(assert_trap (invoke "init_active") "data segment dropped")
+(invoke "drop_passive")
+(invoke "drop_active")
