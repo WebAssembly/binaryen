@@ -1901,14 +1901,14 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      if (instance.droppedSegments.count(curr->segment)) {
-        trap("out of bounds segment access in memory.init");
-      }
-
       Address destVal(uint32_t(dest.value.geti32()));
       Address offsetVal(uint32_t(offset.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if ((offsetVal > 0 || sizeVal > 0) &&
+          instance.droppedSegments.count(curr->segment)) {
+        trap("out of bounds segment access in memory.init");
+      }
       if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
         trap("out of bounds segment access in memory.init");
       }
