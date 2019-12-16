@@ -100,8 +100,9 @@ def update_wasm_opt_tests():
         binary = t.endswith('.wasm')
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base
-        if passname.isdigit():
-            passname = open(os.path.join(shared.options.binaryen_test, 'passes', passname + '.passes')).read().strip()
+        passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
+        if os.path.exists(passes_file):
+            passname = open(passes_file).read().strip()
         opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
         actual = ''
         for module, asserts in support.split_wast(t):
