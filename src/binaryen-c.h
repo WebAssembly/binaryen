@@ -1201,6 +1201,8 @@ BINARYEN_API uint32_t
 BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                                        BinaryenIndex id);
+BINARYEN_API int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
+                                                 BinaryenIndex id);
 BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                                 BinaryenIndex id,
                                                 char* buffer);

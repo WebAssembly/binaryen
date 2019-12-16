@@ -935,16 +935,17 @@ function test_for_each() {
 
   var expected_offsets = [10, 125];
   var expected_data = ["hello, world", "segment data 2"];
+  var expected_passive = [false, false];
 
   var global = module.addGlobal("a-global", Binaryen.i32, false, module.i32.const(expected_offsets[1]))
   module.setMemory(1, 256, "mem", [
     {
-      passive: false,
+      passive: expected_passive[0],
       offset: module.i32.const(expected_offsets[0]),
       data: expected_data[0].split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
-      passive: false,
+      passive: expected_passive[1],
       offset: module.global.get("a-global"),
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
     }
@@ -955,6 +956,7 @@ function test_for_each() {
     var data8 = new Uint8Array(segment.data);
     var str = String.fromCharCode.apply(null, data8);
     assert(expected_data[i] === str);
+    assert(expected_passive[i] === segment.passive);
   }
 
   console.log(module.emitText());

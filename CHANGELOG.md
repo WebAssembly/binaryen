@@ -32,6 +32,8 @@ Current Trunk
 - Add the ability to create multivalue Types in the C and JS APIs.
 - Remove named function types. They are replaced by `params` and `results` types
   local to each function.
+- Binaryen.js: The result of `getMemorySegmentInfoByIndex` now has the same
+  structure as the respective inputs on creation (`offset` -> `byteOffset`).
 
 v88
 ---
