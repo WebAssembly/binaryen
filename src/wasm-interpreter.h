@@ -1913,7 +1913,7 @@ private:
         trap("out of bounds segment access in memory.init");
       }
       if ((uint64_t)destVal + sizeVal >
-          (uint64_t)instance.wasm.memory.max * Memory::kPageSize) {
+          (uint64_t)instance.memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.init");
       }
       for (size_t i = 0; i < sizeVal; ++i) {
@@ -1950,9 +1950,9 @@ private:
       Address sizeVal(uint32_t(size.value.geti32()));
 
       if ((uint64_t)sourceVal + sizeVal >
-            (uint64_t)instance.wasm.memory.max * Memory::kPageSize ||
+            (uint64_t)instance.memorySize * Memory::kPageSize ||
           (uint64_t)destVal + sizeVal >
-            (uint64_t)instance.wasm.memory.max * Memory::kPageSize) {
+            (uint64_t)instance.memorySize * Memory::kPageSize) {
         trap("out of bounds segment access in memory.copy");
       }
 
@@ -1994,7 +1994,7 @@ private:
       Address sizeVal(uint32_t(size.value.geti32()));
 
       if ((uint64_t)destVal + sizeVal >
-          (uint64_t)instance.wasm.memory.max * Memory::kPageSize) {
+          (uint64_t)instance.memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.fill");
       }
       uint8_t val(value.value.geti32());
