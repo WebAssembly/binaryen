@@ -3829,6 +3829,10 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module,
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
+    if (0 == std::string("default-optimization-passes").compare(passes[i])) {
+      passRunner.addDefaultOptimizationPasses();
+      continue;
+    }
     passRunner.add(passes[i]);
   }
   passRunner.run();
@@ -4106,6 +4110,10 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
   PassRunner passRunner(wasm);
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
+    if (0 == std::string("default-optimization-passes").compare(passes[i])) {
+      passRunner.addDefaultOptimizationPasses();
+      continue;
+    }
     passRunner.add(passes[i]);
   }
   passRunner.runOnFunction((Function*)func);
