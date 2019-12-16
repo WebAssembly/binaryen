@@ -142,7 +142,7 @@
 (assert_trap (invoke "init" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
 (assert_trap (invoke "init" (i32.const 0) (i32.const 5) (i32.const 0)))
 
-;; OK to access 0 bytes of offset 0 in a dropped segment.
+;; OK to access 0 bytes at offset 0 in a dropped segment.
 (invoke "init" (i32.const 0) (i32.const 0) (i32.const 0))
 
 ;; data.drop
