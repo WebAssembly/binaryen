@@ -1905,7 +1905,7 @@ private:
       Address offsetVal(uint32_t(offset.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
-      if ((offsetVal > 0 || sizeVal > 0) &&
+      if (offsetVal + sizeVal > 0 &&
           instance.droppedSegments.count(curr->segment)) {
         trap("out of bounds segment access in memory.init");
       }
