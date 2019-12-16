@@ -952,7 +952,7 @@ function test_for_each() {
   ], false);
   for (i = 0 ; i < module.getNumMemorySegments() ; i++) {
     var segment = module.getMemorySegmentInfoByIndex(i);
-    assert(expected_offsets[i] === segment.byteOffset);
+    assert(expected_offsets[i] === segment.offset);
     var data8 = new Uint8Array(segment.data);
     var str = String.fromCharCode.apply(null, data8);
     assert(expected_data[i] === str);

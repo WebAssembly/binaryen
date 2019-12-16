@@ -2166,7 +2166,7 @@ function wrapModule(module, self) {
         _free(ptr);
         return res.buffer;
       })(),
-      'passive': Module['_BinaryenGetMemorySegmentPassive'](module, id)
+      'passive': Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id))
     };
   }
   self['setStart'] = function(start) {
