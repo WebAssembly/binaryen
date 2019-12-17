@@ -33,7 +33,7 @@ Current Trunk
 - Remove named function types. They are replaced by `params` and `results` types
   local to each function.
 - Binaryen.js: The result of `getMemorySegmentInfoByIndex` now has the same
-  structure as the respective inputs on creation (`offset` -> `byteOffset`).
+  structure as the respective inputs on creation (`byteOffset` -> `offset`).
 
 v88
 ---
