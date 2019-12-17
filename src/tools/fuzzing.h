@@ -1277,7 +1277,7 @@ private:
     }
     auto* value = make(valueType);
     if (tee) {
-      return builder.makeLocalTee(pick(locals), value);
+      return builder.makeLocalTee(pick(locals), value, valueType);
     } else {
       return builder.makeLocalSet(pick(locals), value);
     }

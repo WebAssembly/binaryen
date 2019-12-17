@@ -469,7 +469,7 @@ function test_core() {
     ),
     module.drop(module.local.get(0, Binaryen.i32)),
     module.local.set(0, makeInt32(101)),
-    module.drop(module.local.tee(0, makeInt32(102))),
+    module.drop(module.local.tee(0, makeInt32(102), Binaryen.i32)),
     module.i32.load(0, 0, makeInt32(1)),
     module.i64.load16_s(2, 1, makeInt32(8)),
     module.f32.load(0, 0, makeInt32(2)),

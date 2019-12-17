@@ -50,35 +50,26 @@
         )
        )
       )
-      (block
-       (if
-        (if (result i32)
-         (i32.eq
-          (global.get $__asyncify_state)
-          (i32.const 0)
-         )
-         (i32.const 1)
-         (i32.eq
-          (local.get $1)
-          (i32.const 0)
-         )
-        )
-        (block
-         (call $import)
-         (if
-          (i32.const 0)
-          (br $__asyncify_unwind
-           (i32.const 0)
-          )
-         )
-        )
-       )
-       (if
+      (if
+       (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
          (i32.const 0)
         )
-        (nop)
+        (i32.const 1)
+        (i32.eq
+         (local.get $1)
+         (i32.const 0)
+        )
+       )
+       (block
+        (call $import)
+        (if
+         (i32.const 0)
+         (br $__asyncify_unwind
+          (i32.const 0)
+         )
+        )
        )
       )
      )
@@ -228,7 +219,6 @@
          (local.set $temp
           (local.get $1)
          )
-         (nop)
          (local.set $2
           (local.get $temp)
          )
@@ -237,7 +227,6 @@
          )
         )
        )
-       (nop)
        (nop)
        (nop)
       )
@@ -397,14 +386,10 @@
          (global.get $__asyncify_state)
          (i32.const 0)
         )
-        (block
-         (drop
-          (local.get $0)
-         )
-         (nop)
+        (drop
+         (local.get $0)
         )
        )
-       (nop)
       )
      )
      (return)
@@ -459,7 +444,6 @@
   (drop
    (local.get $0)
   )
-  (nop)
  )
  (func $asyncify_start_unwind (; 7 ;) (param $0 i32)
   (global.set $__asyncify_state

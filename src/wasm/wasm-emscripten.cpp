@@ -103,18 +103,25 @@ inline Expression* stackBoundsCheck(Builder& builder,
                                     Expression* value,
                                     Global* stackPointer,
                                     Global* stackLimit,
-                                    Name handler) {
+                                    Name handlerName) {
   // Add a local to store the value of the expression. We need the value twice:
   // once to check if it has overflowed, and again to assign to store it.
   auto newSP = Builder::addVar(func, stackPointer->type);
+  // If we imported a handler, call it. That can show a nice error in JS.
+  // Otherwise, just trap.
+  Expression* handler;
+  if (handlerName.is()) {
+    handler = builder.makeCall(handlerName, {}, none);
+  } else {
+    handler = builder.makeUnreachable();
+  }
   // (if (i32.lt_u (local.tee $newSP (...value...)) (global.get $__stack_limit))
-  //  (call $handler))
   auto check =
     builder.makeIf(builder.makeBinary(
                      BinaryOp::LtUInt32,
-                     builder.makeLocalTee(newSP, value),
+                     builder.makeLocalTee(newSP, value, stackPointer->type),
                      builder.makeGlobalGet(stackLimit->name, stackLimit->type)),
-                   builder.makeCall(handler, {}, none));
+                   handler);
   // (global.set $__stack_pointer (local.get $newSP))
   auto newSet = builder.makeGlobalSet(
     stackPointer->name, builder.makeLocalGet(newSP, stackPointer->type));
@@ -172,7 +179,7 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
   const static uint32_t bitMask = bitAlignment - 1;
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub);
+  LocalSet* teeStackLocal = builder.makeLocalTee(1, maskedSub, i32);
   Expression* storeStack = generateStoreStackPointer(function, teeStackLocal);
 
   Block* block = builder.makeBlock();
@@ -530,8 +537,7 @@ void EmscriptenGlueGenerator::enforceStackLimit() {
                                         Builder::Mutable);
   wasm.addGlobal(stackLimit);
 
-  auto handler = importStackOverflowHandler();
-
+  Name handler = importStackOverflowHandler();
   StackLimitEnforcer walker(stackPointer, stackLimit, builder, handler);
   PassRunner runner(&wasm);
   walker.run(&runner, &wasm);
@@ -549,6 +555,12 @@ void EmscriptenGlueGenerator::generateSetStackLimitFunction() {
 }
 
 Name EmscriptenGlueGenerator::importStackOverflowHandler() {
+  // We can call an import to handle stack overflows normally, but not in
+  // standalone mode, where we can't import from JS.
+  if (standalone) {
+    return Name();
+  }
+
   ImportInfo info(wasm);
 
   if (auto* existing = info.getImportedFunction(ENV, STACK_OVERFLOW_IMPORT)) {

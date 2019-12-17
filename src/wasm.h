@@ -709,8 +709,9 @@ public:
   Index index;
   Expression* value;
 
-  bool isTee();
-  void setTee(bool is);
+  bool isTee() const;
+  void makeTee(Type type);
+  void makeSet();
 };
 
 class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {

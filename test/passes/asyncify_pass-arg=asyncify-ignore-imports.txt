@@ -16,7 +16,6 @@
  (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
  (func $calls-import (; 3 ;)
   (call $import)
-  (nop)
  )
  (func $calls-import2-drop (; 4 ;)
   (local $0 i32)
@@ -26,31 +25,21 @@
   (drop
    (local.get $0)
   )
-  (nop)
  )
  (func $calls-import2-if-else (; 5 ;) (param $x i32)
   (local $1 i32)
-  (block
-   (local.set $1
-    (local.get $x)
+  (local.set $1
+   (local.get $x)
+  )
+  (if
+   (local.get $1)
+   (call $import3
+    (i32.const 1)
    )
-   (if
-    (local.get $1)
-    (block
-     (call $import3
-      (i32.const 1)
-     )
-     (nop)
-    )
-    (block
-     (call $import3
-      (i32.const 2)
-     )
-     (nop)
-    )
+   (call $import3
+    (i32.const 2)
    )
   )
-  (nop)
  )
  (func $calls-indirect (; 6 ;) (param $x i32)
   (local $1 i32)
@@ -154,13 +143,6 @@
           )
          )
         )
-       )
-       (if
-        (i32.eq
-         (global.get $__asyncify_state)
-         (i32.const 0)
-        )
-        (nop)
        )
       )
      )

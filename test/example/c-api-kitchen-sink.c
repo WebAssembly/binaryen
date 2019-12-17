@@ -648,7 +648,9 @@ void test_core() {
                                        BinaryenTypeInt32())),
     BinaryenDrop(module, BinaryenLocalGet(module, 0, BinaryenTypeInt32())),
     BinaryenLocalSet(module, 0, makeInt32(module, 101)),
-    BinaryenDrop(module, BinaryenLocalTee(module, 0, makeInt32(module, 102))),
+    BinaryenDrop(
+      module,
+      BinaryenLocalTee(module, 0, makeInt32(module, 102), BinaryenTypeInt32())),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1)),
     BinaryenLoad(module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8)),
     BinaryenLoad(

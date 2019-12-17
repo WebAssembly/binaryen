@@ -1901,18 +1901,22 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      if (instance.droppedSegments.count(curr->segment)) {
-        trap("memory.init of dropped segment");
-      }
-
       Address destVal(uint32_t(dest.value.geti32()));
       Address offsetVal(uint32_t(offset.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if (offsetVal + sizeVal > 0 &&
+          instance.droppedSegments.count(curr->segment)) {
+        trap("out of bounds segment access in memory.init");
+      }
+      if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
+        trap("out of bounds segment access in memory.init");
+      }
+      if ((uint64_t)destVal + sizeVal >
+          (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds memory access in memory.init");
+      }
       for (size_t i = 0; i < sizeVal; ++i) {
-        if (offsetVal + i >= segment.data.size()) {
-          trap("out of bounds segment access in memory.init");
-        }
         Literal addr(uint32_t(destVal + i));
         instance.externalInterface->store8(instance.getFinalAddress(addr, 1),
                                            segment.data[offsetVal + i]);
@@ -1921,9 +1925,6 @@ private:
     }
     Flow visitDataDrop(DataDrop* curr) {
       NOTE_ENTER("DataDrop");
-      if (instance.droppedSegments.count(curr->segment)) {
-        trap("data.drop of dropped segment");
-      }
       instance.droppedSegments.insert(curr->segment);
       return {};
     }
@@ -1948,6 +1949,13 @@ private:
       Address sourceVal(uint32_t(source.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if ((uint64_t)sourceVal + sizeVal >
+            (uint64_t)instance.memorySize * Memory::kPageSize ||
+          (uint64_t)destVal + sizeVal >
+            (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds segment access in memory.copy");
+      }
+
       int64_t start = 0;
       int64_t end = sizeVal;
       int step = 1;
@@ -1958,9 +1966,6 @@ private:
         step = -1;
       }
       for (int64_t i = start; i != end; i += step) {
-        if (i + destVal >= std::numeric_limits<uint32_t>::max()) {
-          trap("Out of bounds memory access");
-        }
         instance.externalInterface->store8(
           instance.getFinalAddress(Literal(uint32_t(destVal + i)), 1),
           instance.externalInterface->load8s(
@@ -1988,6 +1993,10 @@ private:
       Address destVal(uint32_t(dest.value.geti32()));
       Address sizeVal(uint32_t(size.value.geti32()));
 
+      if ((uint64_t)destVal + sizeVal >
+          (uint64_t)instance.memorySize * Memory::kPageSize) {
+        trap("out of bounds memory access in memory.fill");
+      }
       uint8_t val(value.value.geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(

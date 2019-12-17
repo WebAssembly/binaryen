@@ -20,17 +20,14 @@
    (global.get $__asyncify_state)
   )
   (block
-   (block
-    (call $import)
-    (if
-     (i32.ne
-      (global.get $__asyncify_state)
-      (local.get $0)
-     )
-     (unreachable)
+   (call $import)
+   (if
+    (i32.ne
+     (global.get $__asyncify_state)
+     (local.get $0)
     )
+    (unreachable)
    )
-   (nop)
   )
  )
  (func $calls-import2-drop (; 4 ;)
@@ -59,7 +56,6 @@
    (drop
     (local.get $0)
    )
-   (nop)
   )
  )
  (func $returns (; 5 ;) (result i32)
@@ -93,7 +89,6 @@
     (local.set $x
      (local.get $1)
     )
-    (nop)
     (local.set $2
      (local.get $x)
     )
@@ -131,7 +126,6 @@
      (unreachable)
     )
    )
-   (nop)
   )
  )
  (func $asyncify_start_unwind (; 7 ;) (param $0 i32)

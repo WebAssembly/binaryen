@@ -208,6 +208,8 @@ int main(int argc, const char* argv[]) {
   }
 
   EmscriptenGlueGenerator generator(wasm);
+  generator.setStandalone(standaloneWasm);
+
   generator.fixInvokeFunctionNames();
 
   std::vector<Name> initializerFunctions;
