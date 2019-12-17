@@ -278,6 +278,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return &bad;
   }
   Node* doVisitLoop(Loop* curr) {
+    auto* oldParent = parent;
+    expressionParentMap[curr] = oldParent;
+    parent = curr;
     // As in Souper's LLVM extractor, we avoid loop phis, as we don't want
     // our traces to represent a value that differs across loop iterations.
     // For example,

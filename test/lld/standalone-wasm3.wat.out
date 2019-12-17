@@ -1,5 +1,8 @@
 (module
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (memory $0 2)
  (global $global$0 (mut i32) (i32.const 66112))
  (global $global$1 i32 (i32.const 66112))
@@ -11,7 +14,7 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $__original_main (; 0 ;) (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
+ (func $__original_main (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (nop)
  )
  (func $stackSave (; 1 ;) (result i32)

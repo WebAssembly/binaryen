@@ -5,9 +5,6 @@ function test() {
   // Set a memory of initially one page, maximum 100 pages
   module.setMemory(1, 100);
 
-  // Create a function type for  i32 (i32)  (i.e., return i32, get an i32 param)
-  var ii = module.addFunctionType('i', Binaryen.i32, [Binaryen.i32]);
-
   var body = module.block(
     null,
     [
@@ -60,7 +57,7 @@ function test() {
 
   // Create the add function
   // Note: no additional local variables (that's the [])
-  module.addFunction('sieve', ii, [Binaryen.i32], body);
+  module.addFunction('sieve', Binaryen.i32, Binaryen.i32, [Binaryen.i32], body);
 
   // Export the function, so we can call it later (for simplicity we
   // export it as the same name as it has internally)

@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- `local.tee`'s C/Binaryen.js API now takes an additional type parameter for its
+  local type, like `local.get`. This is required to handle subtypes.
 - Added load_splat SIMD instructions
 - Binaryen.js instruction API changes:
   - `notify` -> `atomic.notify`
@@ -27,6 +29,9 @@ Current Trunk
 - Replace BinaryenSIMDBitselect* with BinaryenSIMDTernary* in the C API and add
   qfma/qfms instructions.
 - Added `offset` parameter to BinaryenSetFunctionTable.
+- Add the ability to create multivalue Types in the C and JS APIs.
+- Remove named function types. They are replaced by `params` and `results` types
+  local to each function.
 
 v88
 ---

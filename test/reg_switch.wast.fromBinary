@@ -1,7 +1,7 @@
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  (memory $0 0)
- (func $0 (; 0 ;) (type $0)
+ (func $0 (; 0 ;)
   (if
    (i32.const 0)
    (block $label$2

@@ -1,7 +1,7 @@
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  (import "env" "global-mut" (global $gimport$0 (mut i32)))
- (func $foo (; 0 ;) (type $0)
+ (func $foo (; 0 ;)
   (global.set $gimport$0
    (i32.add
     (global.get $gimport$0)

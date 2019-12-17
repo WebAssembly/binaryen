@@ -65,15 +65,16 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
         return counts[a] > counts[b];
       });
     // sorting left params in front, perhaps slightly reordered. verify and fix.
-    for (size_t i = 0; i < curr->params.size(); i++) {
-      assert(newToOld[i] < curr->params.size());
+    size_t numParams = curr->sig.params.size();
+    for (size_t i = 0; i < numParams; i++) {
+      assert(newToOld[i] < numParams);
     }
-    for (size_t i = 0; i < curr->params.size(); i++) {
+    for (size_t i = 0; i < numParams; i++) {
       newToOld[i] = i;
     }
     // sort vars, and drop unused ones
-    auto oldVars = curr->vars;
-    curr->vars.clear();
+    std::vector<Type> oldVars;
+    std::swap(oldVars, curr->vars);
     for (size_t i = curr->getVarIndexBase(); i < newToOld.size(); i++) {
       Index index = newToOld[i];
       if (counts[index] > 0) {
@@ -102,15 +103,11 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
         : func(func), oldToNew(oldToNew) {}
 
       void visitLocalGet(LocalGet* curr) {
-        if (func->isVar(curr->index)) {
-          curr->index = oldToNew[curr->index];
-        }
+        curr->index = oldToNew[curr->index];
       }
 
       void visitLocalSet(LocalSet* curr) {
-        if (func->isVar(curr->index)) {
-          curr->index = oldToNew[curr->index];
-        }
+        curr->index = oldToNew[curr->index];
       }
     };
     ReIndexer reIndexer(curr, oldToNew);

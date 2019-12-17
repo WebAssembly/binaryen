@@ -1,0 +1,26 @@
+
+; function: if-loop-test
+
+; start LHS (in if-loop-test)
+%0 = sub 0:i32, 0:i32
+%1 = ne 0:i32, 0:i32
+pc %1 1:i1
+infer %0
+
+(module
+ (type $none_=>_none (func))
+ (func $if-loop-test (; 0 ;)
+  (local $0 i32)
+  (if
+   (i32.const 0)
+   (loop $label$0
+    (local.set $0
+     (i32.sub
+      (i32.const 0)
+      (i32.const 0)
+     )
+    )
+   )
+  )
+ )
+)

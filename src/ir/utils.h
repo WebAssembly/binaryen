@@ -157,7 +157,6 @@ struct ReFinalize
 
   void visitFunction(Function* curr);
 
-  void visitFunctionType(FunctionType* curr);
   void visitExport(Export* curr);
   void visitGlobal(Global* curr);
   void visitTable(Table* curr);
@@ -220,7 +219,6 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitPush(Push* curr) { curr->finalize(); }
   void visitPop(Pop* curr) { curr->finalize(); }
 
-  void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE("unimp"); }
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
   void visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
@@ -300,7 +298,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
-    if (curr->result == none && curr->body->type.isConcrete()) {
+    if (curr->sig.results == Type::none && curr->body->type.isConcrete()) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
     ReFinalize().walkFunctionInModule(curr, getModule());

@@ -1,12 +1,12 @@
 (module
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (type $FUNCSIG$v (func))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_none (func))
  (import "env" "atexit" (func $fimport$0 (param i32 i32) (result i32)))
  (import "env" "__cxa_atexit" (func $fimport$1 (param i32 i32) (result i32)))
  (import "env" "_atexit" (func $fimport$2 (param i32 i32) (result i32)))
  (import "env" "___cxa_atexit" (func $fimport$3 (param i32 i32) (result i32)))
  (import "env" "other" (func $fimport$4 (param i32 i32) (result i32)))
- (func $caller (; 5 ;) (type $FUNCSIG$v)
+ (func $caller (; 5 ;)
   (drop
    (i32.const 0)
   )

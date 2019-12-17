@@ -88,7 +88,7 @@ struct MergeLocals
     if (auto* get = curr->value->dynCast<LocalGet>()) {
       if (get->index != curr->index) {
         Builder builder(*getModule());
-        auto* trivial = builder.makeLocalTee(get->index, get);
+        auto* trivial = builder.makeLocalTee(get->index, get, get->type);
         curr->value = trivial;
         copies.push_back(curr);
       }

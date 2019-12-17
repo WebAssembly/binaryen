@@ -346,7 +346,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // a drop of a tee is a set
     if (auto* set = curr->value->dynCast<LocalSet>()) {
       assert(set->isTee());
-      set->setTee(false);
+      set->makeSet();
       replaceCurrent(set);
       return;
     }
@@ -410,13 +410,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   void visitFunction(Function* curr) {
-    auto* optimized = optimize(curr->body, curr->result != none, true);
+    auto* optimized =
+      optimize(curr->body, curr->sig.results != Type::none, true);
     if (optimized) {
       curr->body = optimized;
     } else {
       ExpressionManipulator::nop(curr->body);
     }
-    if (curr->result == none &&
+    if (curr->sig.results == Type::none &&
         !EffectAnalyzer(getPassOptions(), curr->body).hasSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }

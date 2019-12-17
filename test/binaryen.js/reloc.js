@@ -17,8 +17,7 @@ function test() {
 
   // table with offset
 
-  var signature = module.addFunctionType("v", Binaryen.none, []);
-  var func = module.addFunction("func", signature, [], module.nop());
+  var func = module.addFunction("func", Binaryen.none, Binaryen.none, [], module.nop());
 
   module.addGlobalImport("table_base", "env", "table_base", Binaryen.i32, false);
   module.setFunctionTable(1, -1, [ "func", "func" ], module.global.get("table_base", Binaryen.i32));

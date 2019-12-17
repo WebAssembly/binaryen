@@ -168,7 +168,7 @@ function test_core() {
       constF32Bits = module.f32.const_bits(0xffff1234),
       constF64Bits = module.f64.const_bits(0x5678abcd, 0xffff1234);
 
-  var iiIfF = module.addFunctionType("iiIfF", Binaryen.i32, [ Binaryen.i32, Binaryen.i64, Binaryen.f32, Binaryen.f64 ]);
+  var iIfF = Binaryen.createType([Binaryen.i32, Binaryen.i64, Binaryen.f32, Binaryen.f64])
 
   var temp1 = makeInt32(1), temp2 = makeInt32(2), temp3 = makeInt32(3),
       temp4 = makeInt32(4), temp5 = makeInt32(5),
@@ -465,11 +465,11 @@ function test_core() {
       )
     ),
     module.i32.eqz( // check the output type of the call node
-      module.callIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF")
+      module.callIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, Binaryen.i32)
     ),
     module.drop(module.local.get(0, Binaryen.i32)),
     module.local.set(0, makeInt32(101)),
-    module.drop(module.local.tee(0, makeInt32(102))),
+    module.drop(module.local.tee(0, makeInt32(102), Binaryen.i32)),
     module.i32.load(0, 0, makeInt32(1)),
     module.i64.load16_s(2, 1, makeInt32(8)),
     module.f32.load(0, 0, makeInt32(2)),
@@ -480,7 +480,7 @@ function test_core() {
     module.return(makeInt32(1337)),
     // Tail Call
     module.returnCall("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], Binaryen.i32),
-    module.returnCallIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF"),
+    module.returnCallIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, Binaryen.i32),
 
     // Exception handling
     module.try(
@@ -550,7 +550,7 @@ function test_core() {
   var body = module.block("the-body", [ nothing, makeInt32(42) ]);
 
   // Create the function
-  var sinker = module.addFunction("kitchen()sinker", iiIfF, [ Binaryen.i32, Binaryen.exnref ], body);
+  var sinker = module.addFunction("kitchen()sinker", iIfF, Binaryen.i32, [ Binaryen.i32, Binaryen.exnref ], body);
 
   // Create a global
   var initExpr = module.i32.const(1);
@@ -558,8 +558,8 @@ function test_core() {
 
   // Imports
 
-  var fiF = module.addFunctionType("fiF", Binaryen.f32, [ Binaryen.i32, Binaryen.f64 ]);
-  module.addFunctionImport("an-imported", "module", "base", fiF);
+  var iF = Binaryen.createType([Binaryen.i32, Binaryen.f64]);
+  module.addFunctionImport("an-imported", "module", "base", iF, Binaryen.f32);
   module.addGlobalImport("a-global-imp", "module", "base", Binaryen.i32, false);
   module.addGlobalImport("a-mut-global-imp", "module", "base", Binaryen.i32, true);
   module.addEventImport("a-event-imp", "module", "base", 0, Binaryen.i32, Binaryen.none);
@@ -590,14 +590,8 @@ function test_core() {
   ], true);
 
   // Start function. One per module
-
-  var v = module.addFunctionType("v", Binaryen.None, []);
-  var starter = module.addFunction("starter", v, [], module.nop());
+  var starter = module.addFunction("starter", Binaryen.none, Binaryen.none, [], module.nop());
   module.setStart(starter);
-
-  // Unnamed function type
-
-  var noname = module.addFunctionType(null, Binaryen.None, []);
 
   // A bunch of our code needs drop, auto-add it
   module.autoDrop();
@@ -623,19 +617,15 @@ function makeCallCheck(x) {
 
 function test_relooper() {
   module = new Binaryen.Module();
-  var v = module.addFunctionType("v", Binaryen.None, []);
   var localTypes = [ Binaryen.i32 ];
 
-  {
-    var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.i32 ]);
-    module.addFunctionImport("check", "module", "check", vi);
-  }
+  module.addFunctionImport("check", "module", "check", Binaryen.i32, Binaryen.none);
 
   { // trivial: just one block
     var relooper = new Binaryen.Relooper(module);
     var block = relooper.addBlock(makeCallCheck(1337));
     var body = relooper.renderAndDispose(block, 0, module);
-    module.addFunction("just-one-block", v, localTypes, body);
+    module.addFunction("just-one-block", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // two blocks
     var relooper = new Binaryen.Relooper(module);
@@ -643,7 +633,7 @@ function test_relooper() {
     var block1 = relooper.addBlock(makeCallCheck(1));
     relooper.addBranch(block0, block1); // no condition, no code on branch
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("two-blocks", v, localTypes, body);
+    module.addFunction("two-blocks", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // two blocks with code between them
     var relooper = new Binaryen.Relooper(module);
@@ -651,7 +641,7 @@ function test_relooper() {
     var block1 = relooper.addBlock(makeCallCheck(1));
     relooper.addBranch(block0, block1, null, makeDroppedInt32(77)); // code on branch
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("two-blocks-plus-code", v, localTypes, body);
+    module.addFunction("two-blocks-plus-code", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // two blocks in a loop
     var relooper = new Binaryen.Relooper(module);
@@ -660,7 +650,7 @@ function test_relooper() {
     relooper.addBranch(block0, block1, null, null);
     relooper.addBranch(block1, block0, null, null);
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("loop", v, localTypes, body);
+    module.addFunction("loop", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // two blocks in a loop with codes
     var relooper = new Binaryen.Relooper(module);
@@ -669,7 +659,7 @@ function test_relooper() {
     relooper.addBranch(block0, block1, null, makeDroppedInt32(33));
     relooper.addBranch(block1, block0, null, makeDroppedInt32(-66));
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("loop-plus-code", v, localTypes, body);
+    module.addFunction("loop-plus-code", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // split
     var relooper = new Binaryen.Relooper(module);
@@ -679,7 +669,7 @@ function test_relooper() {
     relooper.addBranch(block0, block1, makeInt32(55), null);
     relooper.addBranch(block0, block2, null, null);
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("split", v, localTypes, body);
+    module.addFunction("split", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // split + code
     var relooper = new Binaryen.Relooper(module);
@@ -690,7 +680,7 @@ function test_relooper() {
     relooper.addBranch(block0, block1, makeInt32(55), temp);
     relooper.addBranch(block0, block2, null, makeDroppedInt32(20));
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("split-plus-code", v, localTypes, body);
+    module.addFunction("split-plus-code", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // if
     var relooper = new Binaryen.Relooper(module);
@@ -701,7 +691,7 @@ function test_relooper() {
     relooper.addBranch(block0, block2, null, null);
     relooper.addBranch(block1, block2, null, null);
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("if", v, localTypes, body);
+    module.addFunction("if", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // if + code
     var relooper = new Binaryen.Relooper(module);
@@ -713,7 +703,7 @@ function test_relooper() {
     relooper.addBranch(block0, block2, null, makeDroppedInt32(-2));
     relooper.addBranch(block1, block2, null, makeDroppedInt32(-3));
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("if-plus-code", v, localTypes, body);
+    module.addFunction("if-plus-code", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // if-else
     var relooper = new Binaryen.Relooper(module);
@@ -726,7 +716,7 @@ function test_relooper() {
     relooper.addBranch(block1, block3, null, null);
     relooper.addBranch(block2, block3, null, null);
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("if-else", v, localTypes, body);
+    module.addFunction("if-else", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // loop+tail
     var relooper = new Binaryen.Relooper(module);
@@ -737,7 +727,7 @@ function test_relooper() {
     relooper.addBranch(block1, block0, makeInt32(10), null);
     relooper.addBranch(block1, block2, null, null);
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("loop-tail", v, localTypes, body);
+    module.addFunction("loop-tail", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // nontrivial loop + phi to head
     var relooper = new Binaryen.Relooper(module);
@@ -758,7 +748,7 @@ function test_relooper() {
     relooper.addBranch(block4, block5, null, null);
     relooper.addBranch(block5, block6, null, makeDroppedInt32(40));
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("nontrivial-loop-plus-phi-to-head", v, localTypes, body);
+    module.addFunction("nontrivial-loop-plus-phi-to-head", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // switch
     var relooper = new Binaryen.Relooper(module);
@@ -771,7 +761,7 @@ function test_relooper() {
     relooper.addBranchForSwitch(block0, block2, [4], makeDroppedInt32(55));
     relooper.addBranchForSwitch(block0, block3, [], null);
     var body = relooper.renderAndDispose(block0, 0, module);
-    module.addFunction("switch", v, localTypes, body);
+    module.addFunction("switch", Binaryen.none, Binaryen.none, localTypes, body);
   }
   { // duff's device
     var relooper = new Binaryen.Relooper(module);
@@ -783,17 +773,15 @@ function test_relooper() {
     relooper.addBranch(block1, block2, null, null);
     relooper.addBranch(block2, block1, null, null);
     var body = relooper.renderAndDispose(block0, 3, module); // use $3 as the helper var
-    module.addFunction("duffs-device", v, [ Binaryen.i32, Binaryen.i32, Binaryen.i64, Binaryen.i32, Binaryen.f32, Binaryen.f64, Binaryen.i32 ], body);
+    module.addFunction("duffs-device", Binaryen.none, Binaryen.none, [ Binaryen.i32, Binaryen.i32, Binaryen.i64, Binaryen.i32, Binaryen.f32, Binaryen.f64, Binaryen.i32 ], body);
   }
-
-  var i = module.addFunctionType("i", Binaryen.i32, []);
 
   { // return in a block
     var relooper = new Binaryen.Relooper(module);
     var list = module.block("the-list", [ makeCallCheck(42), module.return(makeInt32(1337)) ]);
     var block = relooper.addBlock(list);
     var body = relooper.renderAndDispose(block, 0, module);
-    module.addFunction("return", i, localTypes, body);
+    module.addFunction("return", Binaryen.none, Binaryen.i32, localTypes, body);
   }
 
   console.log("raw:");
@@ -821,11 +809,11 @@ function test_binaries() {
   { // create a module and write it to binary
     module = new Binaryen.Module();
     module.setFeatures(Binaryen.Features.All);
-    var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
+    var ii = Binaryen.createType([Binaryen.i32, Binaryen.i32]);
     var x = module.local.get(0, Binaryen.i32),
         y = module.local.get(1, Binaryen.i32);
     var add = module.i32.add(x, y);
-    var adder = module.addFunction("adder", iii, [], add);
+    var adder = module.addFunction("adder", ii, Binaryen.i32, [], add);
     var initExpr = module.i32.const(3);
     var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
     var event_ = module.addEvent("a-event", 0, Binaryen.createType([Binaryen.i32, Binaryen.i32]), Binaryen.none);
@@ -854,12 +842,9 @@ function test_interpret() {
   // create a simple module with a start method that prints a number, and interpret it, printing that number.
   module = new Binaryen.Module();
 
-  var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.i32 ]);
-  module.addFunctionImport("print-i32", "spectest", "print", vi);
-
-  var v = module.addFunctionType("v", Binaryen.None, []);
+  module.addFunctionImport("print-i32", "spectest", "print", Binaryen.i32, Binaryen.none);
   call = module.call("print-i32", [ makeInt32(1234) ], Binaryen.None);
-  var starter = module.addFunction("starter", v, [], call);
+  var starter = module.addFunction("starter", Binaryen.none, Binaryen.none, [], call);
   module.setStart(starter);
 
   console.log(module.emitText());
@@ -872,8 +857,7 @@ function test_nonvalid() {
   // create a module that fails to validate
   module = new Binaryen.Module();
 
-  var v = module.addFunctionType("v", Binaryen.None, []);
-  var func = module.addFunction("func", v, [ Binaryen.i32 ],
+  var func = module.addFunction("func", Binaryen.none, Binaryen.none, [ Binaryen.i32 ],
     module.local.set(0, makeInt64(1234, 0)) // wrong type!
   );
 
@@ -898,11 +882,11 @@ function test_parsing() {
   module = new Binaryen.Module();
   module.setFeatures(Binaryen.Features.All);
 
-  var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
+  var ii = Binaryen.createType([Binaryen.i32, Binaryen.i32]);
   var x = module.local.get(0, Binaryen.i32),
       y = module.local.get(1, Binaryen.i32);
   var add = module.i32.add(x, y);
-  var adder = module.addFunction("adder", iii, [], add);
+  var adder = module.addFunction("adder", ii, Binaryen.i32, [], add);
   var initExpr = module.i32.const(3);
   var global = module.addGlobal("a-global", Binaryen.i32, false, initExpr)
   var event_ = module.addEvent("a-event", 0, Binaryen.i32, Binaryen.none);
@@ -928,12 +912,10 @@ function test_internals() {
 function test_for_each() {
   module = new Binaryen.Module();
 
-  var v = module.addFunctionType("v", Binaryen.None, []);
-
   var fns = [
-    module.addFunction("fn0", v, [], module.nop()),
-    module.addFunction("fn1", v, [], module.nop()),
-    module.addFunction("fn2", v, [], module.nop())
+    module.addFunction("fn0", Binaryen.none, Binaryen.none, [], module.nop()),
+    module.addFunction("fn1", Binaryen.none, Binaryen.none, [], module.nop()),
+    module.addFunction("fn2", Binaryen.none, Binaryen.none, [], module.nop())
   ];
 
   var i;
@@ -992,6 +974,8 @@ function test_expression_info() {
 }
 
 function test() {
+  // Tracing must be first so it starts with a fresh set of interned types
+  test_tracing();
   test_types();
   test_features();
   test_ids();
@@ -1000,7 +984,6 @@ function test() {
   test_binaries();
   test_interpret();
   test_nonvalid();
-  test_tracing();
   test_parsing();
   test_internals();
   test_for_each();

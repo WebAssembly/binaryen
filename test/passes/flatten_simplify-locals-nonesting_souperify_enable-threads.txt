@@ -1473,22 +1473,22 @@ blockpc %0 1 %10 1:i1
 infer %4
 
 (module
- (type $FUNCSIG$ijjj (func (param i64 i64 i64) (result i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$vii (func (param i32 i32)))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (type $FUNCSIG$d (func (result f64)))
- (type $FUNCSIG$viiii (func (param i32 i32 i32 i32)))
- (type $FUNCSIG$jjjj (func (param i64 i64 i64) (result i64)))
- (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
- (type $FUNCSIG$vjjif (func (param i64 i64 i32 f32)))
- (type $FUNCSIG$iiiiii (func (param i32 i32 i32 i32 i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $none_=>_f64 (func (result f64)))
+ (type $none_=>_none (func))
+ (type $i64_i64_i64_=>_i32 (func (param i64 i64 i64) (result i32)))
+ (type $i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32)))
+ (type $i64_i64_i32_f32_=>_none (func (param i64 i64 i32 f32)))
+ (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
+ (type $i64_i64_i64_=>_i64 (func (param i64 i64 i64) (result i64)))
  (memory $0 (shared 1 1))
  (export "replaced-print-internal" (func $56))
- (func $figure-1a (; 0 ;) (type $FUNCSIG$ijjj) (param $a i64) (param $x i64) (param $y i64) (result i32)
+ (func $figure-1a (; 0 ;) (param $a i64) (param $x i64) (param $y i64) (result i32)
   (local $i i32)
   (local $j i32)
   (local $r i32)
@@ -1513,8 +1513,6 @@ infer %4
    (nop)
    (nop)
    (nop)
-   (nop)
-   (nop)
    (local.set $12
     (i64.eq
      (local.get $a)
@@ -1527,7 +1525,6 @@ infer %4
      (local.get $y)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $15
@@ -1546,7 +1543,7 @@ infer %4
    (local.get $16)
   )
  )
- (func $figure-1b (; 1 ;) (type $FUNCSIG$ijjj) (param $a i64) (param $x i64) (param $y i64) (result i32)
+ (func $figure-1b (; 1 ;) (param $a i64) (param $x i64) (param $y i64) (result i32)
   (local $i i32)
   (local $j i32)
   (local $r i32)
@@ -1584,8 +1581,6 @@ infer %4
       (nop)
       (nop)
       (nop)
-      (nop)
-      (nop)
       (local.set $15
        (i64.eq
         (local.get $a)
@@ -1598,7 +1593,6 @@ infer %4
         (local.get $y)
        )
       )
-      (nop)
       (nop)
       (nop)
       (local.set $18
@@ -1614,15 +1608,12 @@ infer %4
      )
      (unreachable)
     )
-    (block
-     (unreachable)
-     (unreachable)
-    )
+    (unreachable)
    )
   )
   (unreachable)
  )
- (func $figure-3-if (; 2 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $figure-3-if (; 2 ;) (param $x i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1653,7 +1644,6 @@ infer %4
         (i32.const 1)
        )
       )
-      (nop)
      )
      (block
       (nop)
@@ -1664,11 +1654,9 @@ infer %4
         (i32.const 2)
        )
       )
-      (nop)
      )
     )
    )
-   (nop)
    (nop)
    (local.set $8
     (i32.and
@@ -1686,10 +1674,10 @@ infer %4
    (local.get $9)
   )
  )
- (func $send-i32 (; 3 ;) (type $FUNCSIG$vi) (param $0 i32)
+ (func $send-i32 (; 3 ;) (param $0 i32)
   (nop)
  )
- (func $flips (; 4 ;) (type $FUNCSIG$v)
+ (func $flips (; 4 ;)
   (local $x i32)
   (local $y i32)
   (local $z i64)
@@ -1718,201 +1706,174 @@ infer %4
   (local $25 i64)
   (local $26 i64)
   (local $27 i32)
-  (block
-   (nop)
-   (nop)
-   (nop)
-   (local.set $x
-    (i32.ge_s
-     (local.get $x)
-     (local.get $y)
-    )
+  (nop)
+  (nop)
+  (nop)
+  (local.set $x
+   (i32.ge_s
+    (local.get $x)
+    (local.get $y)
    )
-   (nop)
-   (nop)
-   (nop)
-   (nop)
-   (local.set $x
-    (i32.ge_u
-     (local.get $x)
-     (local.get $y)
-    )
-   )
-   (nop)
-   (nop)
-   (nop)
-   (nop)
-   (local.set $x
-    (i32.gt_s
-     (local.get $x)
-     (local.get $y)
-    )
-   )
-   (nop)
-   (nop)
-   (nop)
-   (nop)
-   (local.set $x
-    (i32.gt_u
-     (local.get $x)
-     (local.get $y)
-    )
-   )
-   (nop)
-   (nop)
-   (nop)
-   (local.set $18
-    (i64.ge_s
-     (local.get $z)
-     (local.get $w)
-    )
-   )
-   (call $send-i32
-    (local.get $18)
-   )
-   (nop)
-   (nop)
-   (nop)
-   (local.set $21
-    (i64.ge_u
-     (local.get $z)
-     (local.get $w)
-    )
-   )
-   (call $send-i32
-    (local.get $21)
-   )
-   (nop)
-   (nop)
-   (nop)
-   (local.set $24
-    (i64.gt_s
-     (local.get $z)
-     (local.get $w)
-    )
-   )
-   (call $send-i32
-    (local.get $24)
-   )
-   (nop)
-   (nop)
-   (nop)
-   (local.set $27
-    (i64.gt_u
-     (local.get $z)
-     (local.get $w)
-    )
-   )
-   (call $send-i32
-    (local.get $27)
-   )
-   (nop)
   )
   (nop)
+  (nop)
+  (nop)
+  (local.set $x
+   (i32.ge_u
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (nop)
+  (nop)
+  (nop)
+  (local.set $x
+   (i32.gt_s
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (nop)
+  (nop)
+  (nop)
+  (local.set $x
+   (i32.gt_u
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (nop)
+  (nop)
+  (local.set $18
+   (i64.ge_s
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (call $send-i32
+   (local.get $18)
+  )
+  (nop)
+  (nop)
+  (local.set $21
+   (i64.ge_u
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (call $send-i32
+   (local.get $21)
+  )
+  (nop)
+  (nop)
+  (local.set $24
+   (i64.gt_s
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (call $send-i32
+   (local.get $24)
+  )
+  (nop)
+  (nop)
+  (local.set $27
+   (i64.gt_u
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+  (call $send-i32
+   (local.get $27)
+  )
  )
- (func $various-conditions-1 (; 5 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $various-conditions-1 (; 5 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
-  (block
-   (nop)
-   (if
-    (local.get $x)
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 1)
-      )
+  (nop)
+  (if
+   (local.get $x)
+   (block
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 1)
      )
-     (nop)
     )
    )
   )
-  (nop)
  )
- (func $various-conditions-2 (; 6 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $various-conditions-2 (; 6 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (block
-   (nop)
-   (local.set $2
-    (i32.lt_s
-     (local.get $x)
-     (i32.const 0)
-    )
+  (nop)
+  (local.set $2
+   (i32.lt_s
+    (local.get $x)
+    (i32.const 0)
    )
-   (if
-    (local.get $2)
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.sub
-       (local.get $x)
-       (i32.const 2)
-      )
+  )
+  (if
+   (local.get $2)
+   (block
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.sub
+      (local.get $x)
+      (i32.const 2)
      )
-     (nop)
     )
    )
   )
-  (nop)
  )
- (func $various-conditions-3 (; 7 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $various-conditions-3 (; 7 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
-  (block
-   (local.set $1
-    (i32.reinterpret_f32
-     (f32.const 0)
-    )
+  (local.set $1
+   (i32.reinterpret_f32
+    (f32.const 0)
    )
-   (if
-    (local.get $1)
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.sub
-       (local.get $x)
-       (i32.const 4)
-      )
+  )
+  (if
+   (local.get $1)
+   (block
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.sub
+      (local.get $x)
+      (i32.const 4)
      )
-     (nop)
     )
    )
   )
-  (nop)
  )
- (func $various-conditions-4 (; 8 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $various-conditions-4 (; 8 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
-  (block
+  (if
    (unreachable)
-   (if
-    (unreachable)
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 3)
-      )
+   (block
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 3)
      )
-     (nop)
     )
    )
   )
   (unreachable)
  )
- (func $unaries (; 9 ;) (type $FUNCSIG$vii) (param $x i32) (param $y i32)
+ (func $unaries (; 9 ;) (param $x i32) (param $y i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -1923,126 +1884,114 @@ infer %4
   (local $9 i32)
   (local $10 i32)
   (local $11 i32)
-  (block
-   (nop)
-   (local.set $3
-    (i32.eqz
-     (local.get $x)
-    )
+  (nop)
+  (local.set $3
+   (i32.eqz
+    (local.get $x)
    )
-   (if
-    (local.get $3)
-    (block
-     (nop)
-     (local.set $5
-      (i32.ctz
-       (local.get $y)
-      )
+  )
+  (if
+   (local.get $3)
+   (block
+    (nop)
+    (local.set $5
+     (i32.ctz
+      (local.get $y)
      )
-     (nop)
-     (local.set $7
-      (i32.clz
-       (local.get $x)
-      )
+    )
+    (nop)
+    (local.set $7
+     (i32.clz
+      (local.get $x)
      )
-     (nop)
-     (local.set $9
-      (i32.popcnt
-       (local.get $y)
-      )
+    )
+    (nop)
+    (local.set $9
+     (i32.popcnt
+      (local.get $y)
      )
-     (local.set $10
-      (i32.sub
-       (local.get $7)
-       (local.get $9)
-      )
+    )
+    (local.set $10
+     (i32.sub
+      (local.get $7)
+      (local.get $9)
      )
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $5)
-       (local.get $10)
-      )
+    )
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $5)
+      (local.get $10)
      )
-     (nop)
     )
    )
   )
-  (nop)
  )
- (func $unary-condition (; 10 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $unary-condition (; 10 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
-  (block
-   (nop)
-   (local.set $2
-    (i32.gt_u
-     (local.get $x)
-     (i32.const 1)
-    )
+  (nop)
+  (local.set $2
+   (i32.gt_u
+    (local.get $x)
+    (i32.const 1)
    )
-   (local.set $3
-    (i32.ctz
-     (local.get $2)
-    )
+  )
+  (local.set $3
+   (i32.ctz
+    (local.get $2)
    )
-   (if
-    (local.get $3)
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 2)
-      )
+  )
+  (if
+   (local.get $3)
+   (block
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 2)
      )
-     (nop)
     )
    )
   )
-  (nop)
  )
- (func $unary-condition-2 (; 11 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $unary-condition-2 (; 11 ;) (param $x i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
-  (block
-   (nop)
-   (local.set $2
-    (i32.gt_u
-     (local.get $x)
-     (i32.const 1)
-    )
+  (nop)
+  (local.set $2
+   (i32.gt_u
+    (local.get $x)
+    (i32.const 1)
    )
-   (local.set $3
-    (i32.eqz
-     (local.get $2)
-    )
+  )
+  (local.set $3
+   (i32.eqz
+    (local.get $2)
    )
-   (if
-    (local.get $3)
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 2)
-      )
+  )
+  (if
+   (local.get $3)
+   (block
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 2)
      )
-     (nop)
     )
    )
   )
-  (nop)
  )
- (func $if-else-cond (; 12 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $if-else-cond (; 12 ;) (param $x i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -2073,7 +2022,6 @@ infer %4
         (i32.const 1)
        )
       )
-      (nop)
      )
      (block
       (nop)
@@ -2084,11 +2032,9 @@ infer %4
         (i32.const 2)
        )
       )
-      (nop)
      )
     )
    )
-   (nop)
    (nop)
    (local.set $8
     (i32.and
@@ -2106,7 +2052,7 @@ infer %4
    (local.get $9)
   )
  )
- (func $trivial-ret (; 13 ;) (type $FUNCSIG$i) (result i32)
+ (func $trivial-ret (; 13 ;) (result i32)
   (local $0 i32)
   (local.set $0
    (i32.add
@@ -2118,12 +2064,12 @@ infer %4
    (local.get $0)
   )
  )
- (func $trivial-const (; 14 ;) (type $FUNCSIG$i) (result i32)
+ (func $trivial-const (; 14 ;) (result i32)
   (return
    (i32.const 0)
   )
  )
- (func $trivial-const-block (; 15 ;) (type $FUNCSIG$i) (result i32)
+ (func $trivial-const-block (; 15 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (block
@@ -2137,7 +2083,7 @@ infer %4
    (local.get $1)
   )
  )
- (func $bad-phi-value (; 16 ;) (type $FUNCSIG$i) (result i32)
+ (func $bad-phi-value (; 16 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -2174,7 +2120,7 @@ infer %4
    (local.get $3)
   )
  )
- (func $bad-phi-value-2 (; 17 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $bad-phi-value-2 (; 17 ;) (param $x i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -2200,21 +2146,14 @@ infer %4
     (nop)
     (if
      (local.get $2)
-     (block
-      (local.set $x
-       (i32.const 1)
-      )
-      (nop)
+     (local.set $x
+      (i32.const 1)
      )
-     (block
-      (local.set $x
-       (i32.const 2)
-      )
-      (nop)
+     (local.set $x
+      (i32.const 2)
      )
     )
    )
-   (nop)
    (nop)
    (nop)
   )
@@ -2223,7 +2162,7 @@ infer %4
    (local.get $x)
   )
  )
- (func $select (; 18 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $select (; 18 ;) (param $x i32) (result i32)
   (local $1 i32)
   (local.set $1
    (select
@@ -2237,7 +2176,7 @@ infer %4
   )
   (unreachable)
  )
- (func $select-2 (; 19 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $select-2 (; 19 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -2280,7 +2219,7 @@ infer %4
   )
   (unreachable)
  )
- (func $block-phi-1 (; 20 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $block-phi-1 (; 20 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -2301,11 +2240,9 @@ infer %4
      )
     )
     (nop)
-    (nop)
     (br_if $out
      (local.get $y)
     )
-    (nop)
     (nop)
     (nop)
     (local.set $x
@@ -2314,9 +2251,7 @@ infer %4
       (i32.const 2)
      )
     )
-    (nop)
    )
-   (nop)
    (nop)
    (nop)
    (nop)
@@ -2331,7 +2266,7 @@ infer %4
    (local.get $10)
   )
  )
- (func $block-phi-2 (; 21 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $block-phi-2 (; 21 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -2343,17 +2278,13 @@ infer %4
      (i32.const 1)
     )
     (nop)
-    (nop)
     (br_if $out
      (local.get $y)
     )
-    (nop)
     (local.set $x
      (i32.const 2)
     )
-    (nop)
    )
-   (nop)
    (nop)
    (nop)
    (nop)
@@ -2368,7 +2299,7 @@ infer %4
    (local.get $6)
   )
  )
- (func $zero_init-phi-bad_type (; 22 ;) (type $FUNCSIG$d) (result f64)
+ (func $zero_init-phi-bad_type (; 22 ;) (result f64)
   (local $x f64)
   (local $1 f64)
   (local $2 f64)
@@ -2376,14 +2307,10 @@ infer %4
   (block
    (if
     (i32.const 0)
-    (block
-     (local.set $x
-      (f64.const 1)
-     )
-     (nop)
+    (local.set $x
+     (f64.const 1)
     )
    )
-   (nop)
    (nop)
    (nop)
   )
@@ -2392,7 +2319,7 @@ infer %4
    (local.get $x)
   )
  )
- (func $phi-bad-type (; 23 ;) (type $FUNCSIG$d) (result f64)
+ (func $phi-bad-type (; 23 ;) (result f64)
   (local $0 f64)
   (local $1 f64)
   (local $2 f64)
@@ -2415,7 +2342,7 @@ infer %4
    (local.get $0)
   )
  )
- (func $phi-one-side-i1 (; 24 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $phi-one-side-i1 (; 24 ;) (param $x i32) (param $y i32) (result i32)
   (local $i i32)
   (local $3 i32)
   (local $4 i32)
@@ -2451,7 +2378,6 @@ infer %4
         (local.get $y)
        )
       )
-      (nop)
      )
      (block
       (nop)
@@ -2463,11 +2389,9 @@ infer %4
         (local.get $y)
        )
       )
-      (nop)
      )
     )
    )
-   (nop)
    (nop)
    (nop)
   )
@@ -2476,7 +2400,7 @@ infer %4
    (local.get $i)
   )
  )
- (func $call (; 25 ;) (type $FUNCSIG$i) (result i32)
+ (func $call (; 25 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -2515,7 +2439,7 @@ infer %4
   )
   (unreachable)
  )
- (func $in-unreachable-1 (; 26 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $in-unreachable-1 (; 26 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -2532,7 +2456,6 @@ infer %4
         (i32.const 1)
        )
        (nop)
-       (nop)
        (return
         (local.get $x)
        )
@@ -2540,15 +2463,11 @@ infer %4
       )
       (unreachable)
      )
-     (block
-      (local.set $x
-       (i32.const 2)
-      )
-      (nop)
+     (local.set $x
+      (i32.const 2)
      )
     )
    )
-   (nop)
    (nop)
    (return
     (local.get $x)
@@ -2560,7 +2479,7 @@ infer %4
    (local.get $5)
   )
  )
- (func $in-unreachable-2 (; 27 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $in-unreachable-2 (; 27 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -2575,21 +2494,15 @@ infer %4
        (local.set $x
         (i32.const 1)
        )
-       (nop)
-       (unreachable)
        (unreachable)
       )
       (unreachable)
      )
-     (block
-      (local.set $x
-       (i32.const 2)
-      )
-      (nop)
+     (local.set $x
+      (i32.const 2)
      )
     )
    )
-   (nop)
    (nop)
    (return
     (local.get $x)
@@ -2601,7 +2514,7 @@ infer %4
    (local.get $4)
   )
  )
- (func $in-unreachable-3 (; 28 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $in-unreachable-3 (; 28 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -2618,28 +2531,22 @@ infer %4
         (local.set $x
          (i32.const 1)
         )
-        (nop)
         (br $out)
         (unreachable)
        )
        (unreachable)
       )
-      (block
-       (local.set $x
-        (i32.const 2)
-       )
-       (nop)
+      (local.set $x
+       (i32.const 2)
       )
      )
     )
-    (nop)
     (nop)
     (return
      (local.get $x)
     )
     (unreachable)
    )
-   (nop)
    (nop)
    (return
     (local.get $x)
@@ -2651,7 +2558,7 @@ infer %4
    (local.get $5)
   )
  )
- (func $in-unreachable-4 (; 29 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $in-unreachable-4 (; 29 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -2668,7 +2575,6 @@ infer %4
         (local.set $x
          (i32.const 1)
         )
-        (nop)
         (br_table $out $out $out
          (i32.const 1)
         )
@@ -2676,22 +2582,17 @@ infer %4
        )
        (unreachable)
       )
-      (block
-       (local.set $x
-        (i32.const 2)
-       )
-       (nop)
+      (local.set $x
+       (i32.const 2)
       )
      )
     )
-    (nop)
     (nop)
     (return
      (local.get $x)
     )
     (unreachable)
    )
-   (nop)
    (nop)
    (return
     (local.get $x)
@@ -2703,7 +2604,7 @@ infer %4
    (local.get $5)
   )
  )
- (func $in-unreachable-br_if (; 30 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $in-unreachable-br_if (; 30 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -2716,36 +2617,26 @@ infer %4
      (nop)
      (if
       (local.get $x)
-      (block
-       (block $block
-        (local.set $x
-         (i32.const 1)
-        )
-        (nop)
-        (nop)
-        (br_if $out
-         (local.get $x)
-        )
-        (nop)
-       )
-       (nop)
-      )
-      (block
+      (block $block
        (local.set $x
-        (i32.const 2)
+        (i32.const 1)
        )
        (nop)
+       (br_if $out
+        (local.get $x)
+       )
+      )
+      (local.set $x
+       (i32.const 2)
       )
      )
     )
-    (nop)
     (nop)
     (return
      (local.get $x)
     )
     (unreachable)
    )
-   (nop)
    (nop)
    (return
     (local.get $x)
@@ -2757,113 +2648,92 @@ infer %4
    (local.get $6)
   )
  )
- (func $in-unreachable-big (; 31 ;) (type $FUNCSIG$viiii) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
+ (func $in-unreachable-big (; 31 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
   (local $4 i32)
   (local $5 i32)
   (local $6 i32)
   (local $7 i32)
-  (block
-   (block $label$1
-    (block $label$2
-     (block $label$3
-      (block
-       (nop)
-       (if
-        (local.get $2)
+  (block $label$1
+   (block $label$2
+    (block $label$3
+     (block
+      (nop)
+      (if
+       (local.get $2)
+       (block
         (block
-         (block
-          (nop)
-          (if
-           (local.get $0)
-           (block
-            (block $block
-             (local.set $1
-              (i32.const -8531)
-             )
-             (nop)
-             (br $label$3)
-             (unreachable)
+         (nop)
+         (if
+          (local.get $0)
+          (block
+           (block $block
+            (local.set $1
+             (i32.const -8531)
             )
+            (br $label$3)
             (unreachable)
            )
-           (block
-            (block $block3
-             (local.set $1
-              (i32.const -8531)
-             )
-             (nop)
-             (br $label$1)
-             (unreachable)
+           (unreachable)
+          )
+          (block
+           (block $block3
+            (local.set $1
+             (i32.const -8531)
             )
+            (br $label$1)
             (unreachable)
            )
+           (unreachable)
           )
          )
-         (unreachable)
         )
+        (unreachable)
        )
       )
-      (nop)
-      (br $label$2)
-      (unreachable)
      )
-     (nop)
-     (local.set $6
-      (i32.load
-       (i32.const 0)
-      )
-     )
-     (drop
-      (local.get $6)
-     )
-     (nop)
-     (br $label$1)
+     (br $label$2)
      (unreachable)
     )
-    (nop)
-    (nop)
-    (i32.store16
-     (i32.const 1)
-     (local.get $1)
+    (local.set $6
+     (i32.load
+      (i32.const 0)
+     )
     )
-    (nop)
-    (unreachable)
+    (drop
+     (local.get $6)
+    )
+    (br $label$1)
     (unreachable)
    )
    (nop)
    (i32.store16
-    (i32.const 0)
-    (i32.const -8531)
+    (i32.const 1)
+    (local.get $1)
    )
-   (nop)
+   (unreachable)
   )
-  (nop)
+  (i32.store16
+   (i32.const 0)
+   (i32.const -8531)
+  )
  )
- (func $in-unreachable-operations (; 32 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $in-unreachable-operations (; 32 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (block $block
-   (unreachable)
    (unreachable)
    (block
     (nop)
     (if
      (local.get $x)
-     (block
-      (local.set $x
-       (i32.const 1)
-      )
-      (nop)
+     (local.set $x
+      (i32.const 1)
      )
-     (block
-      (local.set $x
-       (i32.const 2)
-      )
-      (nop)
+     (local.set $x
+      (i32.const 2)
      )
     )
    )
-   (nop)
    (nop)
    (return
     (local.get $x)
@@ -2872,7 +2742,7 @@ infer %4
   )
   (unreachable)
  )
- (func $merge-with-one-less (; 33 ;) (type $FUNCSIG$ii) (param $var$0 i32) (result i32)
+ (func $merge-with-one-less (; 33 ;) (param $var$0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -2895,15 +2765,11 @@ infer %4
         )
         (unreachable)
        )
-       (nop)
-       (unreachable)
        (unreachable)
       )
-      (nop)
       (br $label$1)
       (unreachable)
      )
-     (nop)
      (local.set $var$0
       (i32.const 8)
      )
@@ -2917,21 +2783,16 @@ infer %4
       (local.get $3)
       (f64.const 0)
      )
-     (nop)
      (br $label$1)
      (unreachable)
     )
-    (nop)
-    (unreachable)
     (unreachable)
    )
-   (nop)
    (nop)
    (i32.store
     (local.get $var$0)
     (i32.const 16)
    )
-   (nop)
    (nop)
   )
   (local.set $6
@@ -2941,7 +2802,7 @@ infer %4
    (local.get $6)
   )
  )
- (func $deep (; 34 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $deep (; 34 ;) (param $x i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -3008,14 +2869,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3026,14 +2885,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3044,14 +2901,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3062,14 +2917,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3080,14 +2933,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3098,14 +2949,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3116,14 +2965,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3134,14 +2981,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3152,14 +2997,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3170,14 +3013,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3188,14 +3029,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3206,14 +3045,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $x
@@ -3224,14 +3061,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $x)
      (i32.const 1234)
     )
    )
-   (nop)
    (nop)
    (nop)
   )
@@ -3240,7 +3075,7 @@ infer %4
    (local.get $x)
   )
  )
- (func $two-pcs (; 35 ;) (type $FUNCSIG$jjjj) (param $x i64) (param $y i64) (param $t i64) (result i64)
+ (func $two-pcs (; 35 ;) (param $x i64) (param $y i64) (param $t i64) (result i64)
   (local $3 i64)
   (local $4 i64)
   (local $5 i32)
@@ -3276,84 +3111,73 @@ infer %4
     (if
      (local.get $5)
      (block
-      (block
-       (nop)
-       (local.set $7
-        (i64.eqz
-         (local.get $x)
+      (nop)
+      (local.set $7
+       (i64.eqz
+        (local.get $x)
+       )
+      )
+      (if
+       (local.get $7)
+       (block
+        (nop)
+        (nop)
+        (nop)
+        (local.set $t
+         (i64.add
+          (local.get $x)
+          (local.get $y)
+         )
         )
        )
-       (if
-        (local.get $7)
-        (block
-         (nop)
-         (nop)
-         (nop)
-         (local.set $t
-          (i64.add
-           (local.get $x)
-           (local.get $y)
-          )
+       (block
+        (nop)
+        (nop)
+        (nop)
+        (local.set $t
+         (i64.sub
+          (local.get $x)
+          (local.get $y)
          )
-         (nop)
-        )
-        (block
-         (nop)
-         (nop)
-         (nop)
-         (local.set $t
-          (i64.sub
-           (local.get $x)
-           (local.get $y)
-          )
-         )
-         (nop)
         )
        )
       )
-      (nop)
      )
      (block
-      (block
-       (nop)
-       (local.set $15
-        (i64.eqz
-         (local.get $y)
+      (nop)
+      (local.set $15
+       (i64.eqz
+        (local.get $y)
+       )
+      )
+      (if
+       (local.get $15)
+       (block
+        (nop)
+        (nop)
+        (nop)
+        (local.set $t
+         (i64.mul
+          (local.get $x)
+          (local.get $y)
+         )
         )
        )
-       (if
-        (local.get $15)
-        (block
-         (nop)
-         (nop)
-         (nop)
-         (local.set $t
-          (i64.mul
-           (local.get $x)
-           (local.get $y)
-          )
+       (block
+        (nop)
+        (nop)
+        (nop)
+        (local.set $t
+         (i64.div_s
+          (local.get $x)
+          (local.get $y)
          )
-         (nop)
-        )
-        (block
-         (nop)
-         (nop)
-         (nop)
-         (local.set $t
-          (i64.div_s
-           (local.get $x)
-           (local.get $y)
-          )
-         )
-         (nop)
         )
        )
       )
-      (nop)
      )
     )
    )
-   (nop)
    (nop)
    (return
     (local.get $t)
@@ -3365,7 +3189,7 @@ infer %4
    (local.get $23)
   )
  )
- (func $loop-1 (; 36 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-1 (; 36 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -3375,15 +3199,12 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
     (nop)
    )
-   (nop)
    (nop)
    (nop)
    (local.set $4
@@ -3402,7 +3223,7 @@ infer %4
    (local.get $5)
   )
  )
- (func $loop-2 (; 37 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-2 (; 37 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -3416,35 +3237,27 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 3)
-      )
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 3)
      )
-     (nop)
-     (nop)
-     (nop)
-     (local.set $y
-      (i32.add
-       (local.get $y)
-       (i32.const 4)
-      )
-     )
-     (nop)
     )
     (nop)
+    (nop)
+    (local.set $y
+     (i32.add
+      (local.get $y)
+      (i32.const 4)
+     )
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $8
@@ -3463,7 +3276,7 @@ infer %4
    (local.get $9)
   )
  )
- (func $loop-3 (; 38 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-3 (; 38 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -3478,40 +3291,31 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 3)
-      )
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 3)
      )
-     (nop)
-     (nop)
-     (nop)
-     (local.set $y
-      (i32.add
-       (local.get $y)
-       (i32.const 4)
-      )
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $y)
-     )
-     (nop)
     )
     (nop)
+    (nop)
+    (local.set $y
+     (i32.add
+      (local.get $y)
+      (i32.const 4)
+     )
+    )
+    (nop)
+    (br_if $loopy
+     (local.get $y)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $9
@@ -3530,7 +3334,7 @@ infer %4
    (local.get $10)
   )
  )
- (func $loop-4 (; 39 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-4 (; 39 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -3543,31 +3347,23 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 3)
-      )
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 3)
      )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $y)
-     )
-     (nop)
     )
     (nop)
+    (br_if $loopy
+     (local.get $y)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $7
@@ -3586,7 +3382,7 @@ infer %4
    (local.get $8)
   )
  )
- (func $loop-5 (; 40 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-5 (; 40 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -3599,35 +3395,26 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 3)
-      )
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 3)
      )
-     (nop)
-     (local.set $y
-      (i32.const 2)
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $y)
-     )
-     (nop)
+    )
+    (local.set $y
+     (i32.const 2)
     )
     (nop)
+    (br_if $loopy
+     (local.get $y)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $7
@@ -3646,7 +3433,7 @@ infer %4
    (local.get $8)
   )
  )
- (func $loop-6 (; 41 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-6 (; 41 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -3660,34 +3447,25 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 3)
-      )
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 3)
      )
-     (nop)
-     (nop)
-     (nop)
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $y)
-     )
-     (nop)
     )
     (nop)
+    (nop)
+    (nop)
+    (br_if $loopy
+     (local.get $y)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $8
@@ -3706,7 +3484,7 @@ infer %4
    (local.get $9)
   )
  )
- (func $loop-7 (; 42 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-7 (; 42 ;) (param $x i32) (param $y i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -3719,35 +3497,26 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 3)
-      )
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 3)
      )
-     (nop)
-     (local.set $y
-      (i32.const 5)
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $y)
-     )
-     (nop)
+    )
+    (local.set $y
+     (i32.const 5)
     )
     (nop)
+    (br_if $loopy
+     (local.get $y)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $7
@@ -3766,7 +3535,7 @@ infer %4
    (local.get $8)
   )
  )
- (func $loop-8 (; 43 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-8 (; 43 ;) (param $x i32) (param $y i32) (result i32)
   (local $z i32)
   (local $w i32)
   (local $4 i32)
@@ -3785,40 +3554,29 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (local.set $z
-      (local.get $x)
-     )
-     (nop)
-     (nop)
-     (local.set $w
-      (local.get $y)
-     )
-     (nop)
-     (local.set $x
-      (i32.const 1)
-     )
-     (nop)
-     (local.set $y
-      (i32.const 4)
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $y)
-     )
-     (nop)
+    (nop)
+    (local.set $z
+     (local.get $x)
     )
     (nop)
+    (local.set $w
+     (local.get $y)
+    )
+    (local.set $x
+     (i32.const 1)
+    )
+    (local.set $y
+     (i32.const 4)
+    )
+    (nop)
+    (br_if $loopy
+     (local.get $y)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $9
@@ -3851,7 +3609,7 @@ infer %4
    (local.get $14)
   )
  )
- (func $loop-9 (; 44 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-9 (; 44 ;) (param $x i32) (param $y i32) (result i32)
   (local $t i32)
   (local $3 i32)
   (local $4 i32)
@@ -3866,37 +3624,27 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (local.set $t
-      (local.get $x)
-     )
-     (nop)
-     (nop)
-     (local.set $x
-      (local.get $y)
-     )
-     (nop)
-     (nop)
-     (local.set $y
-      (local.get $t)
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $y)
-     )
-     (nop)
+    (nop)
+    (local.set $t
+     (local.get $x)
     )
     (nop)
+    (local.set $x
+     (local.get $y)
+    )
+    (nop)
+    (local.set $y
+     (local.get $t)
+    )
+    (nop)
+    (br_if $loopy
+     (local.get $y)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $9
@@ -3915,7 +3663,7 @@ infer %4
    (local.get $10)
   )
  )
- (func $loop-10 (; 45 ;) (type $FUNCSIG$iii) (param $x i32) (param $y i32) (result i32)
+ (func $loop-10 (; 45 ;) (param $x i32) (param $y i32) (result i32)
   (local $t i32)
   (local $3 i32)
   (local $4 i32)
@@ -3930,37 +3678,27 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 1)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (local.set $t
-      (local.get $x)
-     )
-     (nop)
-     (nop)
-     (local.set $x
-      (local.get $y)
-     )
-     (nop)
-     (nop)
-     (local.set $y
-      (local.get $t)
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $y)
-     )
-     (nop)
+    (nop)
+    (local.set $t
+     (local.get $x)
     )
     (nop)
+    (local.set $x
+     (local.get $y)
+    )
+    (nop)
+    (local.set $y
+     (local.get $t)
+    )
+    (nop)
+    (br_if $loopy
+     (local.get $y)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (local.set $9
@@ -3979,7 +3717,7 @@ infer %4
    (local.get $10)
   )
  )
- (func $loop-multicond-1 (; 46 ;) (type $FUNCSIG$iiii) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ (func $loop-multicond-1 (; 46 ;) (param $x i32) (param $y i32) (param $z i32) (result i32)
   (local $t i32)
   (local $4 i32)
   (local $5 i32)
@@ -3993,43 +3731,31 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (local.set $z
     (i32.const 3)
    )
-   (nop)
    (loop $loopy
-    (block
-     (local.set $x
-      (i32.const 4)
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $t)
-     )
-     (nop)
-     (local.set $y
-      (i32.const 5)
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $t)
-     )
-     (nop)
-     (local.set $z
-      (i32.const 6)
-     )
-     (nop)
+    (local.set $x
+     (i32.const 4)
     )
     (nop)
+    (br_if $loopy
+     (local.get $t)
+    )
+    (local.set $y
+     (i32.const 5)
+    )
+    (nop)
+    (br_if $loopy
+     (local.get $t)
+    )
+    (local.set $z
+     (i32.const 6)
+    )
    )
-   (nop)
    (nop)
    (nop)
    (nop)
@@ -4050,7 +3776,7 @@ infer %4
    (local.get $10)
   )
  )
- (func $loop-multicond-2 (; 47 ;) (type $FUNCSIG$iiii) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ (func $loop-multicond-2 (; 47 ;) (param $x i32) (param $y i32) (param $z i32) (result i32)
   (local $t i32)
   (local $4 i32)
   (local $5 i32)
@@ -4070,58 +3796,46 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (local.set $z
     (i32.const 3)
    )
-   (nop)
    (loop $loopy
-    (block
-     (nop)
-     (nop)
-     (local.set $x
-      (i32.add
-       (local.get $x)
-       (i32.const 4)
-      )
+    (nop)
+    (nop)
+    (local.set $x
+     (i32.add
+      (local.get $x)
+      (i32.const 4)
      )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $t)
-     )
-     (nop)
-     (nop)
-     (nop)
-     (local.set $y
-      (i32.add
-       (local.get $y)
-       (i32.const 5)
-      )
-     )
-     (nop)
-     (nop)
-     (br_if $loopy
-      (local.get $t)
-     )
-     (nop)
-     (nop)
-     (nop)
-     (local.set $z
-      (i32.add
-       (local.get $z)
-       (i32.const 6)
-      )
-     )
-     (nop)
     )
     (nop)
+    (br_if $loopy
+     (local.get $t)
+    )
+    (nop)
+    (nop)
+    (local.set $y
+     (i32.add
+      (local.get $y)
+      (i32.const 5)
+     )
+    )
+    (nop)
+    (br_if $loopy
+     (local.get $t)
+    )
+    (nop)
+    (nop)
+    (local.set $z
+     (i32.add
+      (local.get $z)
+      (i32.const 6)
+     )
+    )
    )
-   (nop)
    (nop)
    (nop)
    (nop)
@@ -4142,7 +3856,7 @@ infer %4
    (local.get $16)
   )
  )
- (func $loop-block-1 (; 48 ;) (type $FUNCSIG$iiii) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ (func $loop-block-1 (; 48 ;) (param $x i32) (param $y i32) (param $z i32) (result i32)
   (local $t i32)
   (local $4 i32)
   (local $5 i32)
@@ -4162,15 +3876,12 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (local.set $z
     (i32.const 3)
    )
-   (nop)
    (loop $loopy
     (block $out
      (nop)
@@ -4182,11 +3893,9 @@ infer %4
       )
      )
      (nop)
-     (nop)
      (br_if $out
       (local.get $t)
      )
-     (nop)
      (nop)
      (nop)
      (local.set $y
@@ -4196,11 +3905,9 @@ infer %4
       )
      )
      (nop)
-     (nop)
      (br_if $out
       (local.get $t)
      )
-     (nop)
      (nop)
      (nop)
      (local.set $z
@@ -4209,13 +3916,10 @@ infer %4
        (i32.const 6)
       )
      )
-     (nop)
      (br $loopy)
      (unreachable)
     )
-    (nop)
    )
-   (nop)
    (nop)
    (nop)
    (nop)
@@ -4236,7 +3940,7 @@ infer %4
    (local.get $16)
   )
  )
- (func $loop-block-2 (; 49 ;) (type $FUNCSIG$iiii) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ (func $loop-block-2 (; 49 ;) (param $x i32) (param $y i32) (param $z i32) (result i32)
   (local $t i32)
   (local $4 i32)
   (local $5 i32)
@@ -4256,15 +3960,12 @@ infer %4
    (local.set $x
     (i32.const 1)
    )
-   (nop)
    (local.set $y
     (i32.const 2)
    )
-   (nop)
    (local.set $z
     (i32.const 3)
    )
-   (nop)
    (block $out
     (loop $loopy
      (block
@@ -4277,11 +3978,9 @@ infer %4
        )
       )
       (nop)
-      (nop)
       (br_if $out
        (local.get $t)
       )
-      (nop)
       (nop)
       (nop)
       (local.set $y
@@ -4291,11 +3990,9 @@ infer %4
        )
       )
       (nop)
-      (nop)
       (br_if $out
        (local.get $t)
       )
-      (nop)
       (nop)
       (nop)
       (local.set $z
@@ -4304,7 +4001,6 @@ infer %4
         (i32.const 6)
        )
       )
-      (nop)
       (br $loopy)
       (unreachable)
      )
@@ -4312,7 +4008,6 @@ infer %4
     )
     (unreachable)
    )
-   (nop)
    (nop)
    (nop)
    (nop)
@@ -4333,7 +4028,7 @@ infer %4
    (local.get $16)
   )
  )
- (func $bad-phi-type (; 50 ;) (type $FUNCSIG$vjjif) (param $var$0 i64) (param $var$1 i64) (param $var$2 i32) (param $var$3 f32)
+ (func $bad-phi-type (; 50 ;) (param $var$0 i64) (param $var$1 i64) (param $var$2 i32) (param $var$3 f32)
   (local $4 i32)
   (local $5 i32)
   (local $6 i32)
@@ -4342,61 +4037,48 @@ infer %4
   (local $9 f64)
   (local $10 f64)
   (local $11 f64)
-  (block
-   (nop)
-   (if
-    (local.get $var$2)
-    (block
-     (loop $label$2
+  (nop)
+  (if
+   (local.get $var$2)
+   (block
+    (loop $label$2
+     (block
       (block
-       (block
-        (block $label$3
-         (if
-          (i32.const 0)
-          (block
-           (unreachable)
-           (unreachable)
-          )
-         )
-         (nop)
-         (nop)
-         (nop)
-        )
-        (local.set $6
-         (i32.const 0)
-        )
+       (block $label$3
         (if
-         (local.get $6)
-         (block
-          (unreachable)
-          (unreachable)
-         )
+         (i32.const 0)
+         (unreachable)
         )
+        (nop)
+        (nop)
        )
-       (nop)
-       (nop)
-       (br_if $label$2
-        (local.get $var$2)
+       (local.set $6
+        (i32.const 0)
        )
-       (nop)
-       (nop)
+       (if
+        (local.get $6)
+        (unreachable)
+       )
       )
       (nop)
-      (local.set $10
-       (f64.const 0)
+      (br_if $label$2
+       (local.get $var$2)
       )
+      (nop)
      )
      (nop)
-     (drop
-      (local.get $10)
+     (local.set $10
+      (f64.const 0)
      )
-     (nop)
+    )
+    (nop)
+    (drop
+     (local.get $10)
     )
    )
   )
-  (nop)
  )
- (func $loop-unreachable (; 51 ;) (type $FUNCSIG$v)
+ (func $loop-unreachable (; 51 ;)
   (local $var$0 i32)
   (local $var$1 f64)
   (local $2 i32)
@@ -4418,16 +4100,11 @@ infer %4
       (block $label$4
        (if
         (i32.const 1337)
-        (block
-         (unreachable)
-         (unreachable)
-        )
+        (unreachable)
        )
        (nop)
        (nop)
-       (nop)
       )
-      (nop)
       (nop)
       (nop)
       (loop $label$6
@@ -4444,7 +4121,6 @@ infer %4
          (local.get $6)
         )
         (nop)
-        (nop)
         (local.set $6
          (local.get $var$0)
         )
@@ -4455,23 +4131,17 @@ infer %4
         (drop
          (local.get $6)
         )
-        (nop)
-        (unreachable)
         (unreachable)
        )
        (nop)
        (br_if $label$6
         (local.get $6)
        )
-       (nop)
       )
-      (nop)
      )
      (nop)
      (nop)
-     (nop)
     )
-    (nop)
     (nop)
     (nop)
     (br $label$1)
@@ -4481,7 +4151,7 @@ infer %4
   )
   (unreachable)
  )
- (func $phi-value-turns-bad (; 52 ;) (type $FUNCSIG$d) (result f64)
+ (func $phi-value-turns-bad (; 52 ;) (result f64)
   (local $var$0 i32)
   (local $var$1 i32)
   (local $var$2 f32)
@@ -4512,10 +4182,7 @@ infer %4
     (nop)
     (if
      (local.get $var$0)
-     (block
-      (unreachable)
-      (unreachable)
-     )
+     (unreachable)
      (block
       (block $block
        (block
@@ -4546,7 +4213,6 @@ infer %4
         )
        )
        (nop)
-       (nop)
       )
       (nop)
       (local.set $14
@@ -4557,8 +4223,6 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
-   (unreachable)
    (unreachable)
   )
   (nop)
@@ -4566,7 +4230,7 @@ infer %4
    (local.get $16)
   )
  )
- (func $multi-use (; 53 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $multi-use (; 53 ;) (param $x i32) (result i32)
   (local $temp i32)
   (local $2 i32)
   (local $3 i32)
@@ -4588,7 +4252,6 @@ infer %4
    (nop)
    (nop)
    (nop)
-   (nop)
   )
   (local.set $8
    (i32.add
@@ -4600,7 +4263,7 @@ infer %4
    (local.get $8)
   )
  )
- (func $multi-use-2 (; 54 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $multi-use-2 (; 54 ;) (param $x i32) (result i32)
   (local $temp i32)
   (local $2 i32)
   (local $3 i32)
@@ -4622,14 +4285,12 @@ infer %4
    )
    (nop)
    (nop)
-   (nop)
    (local.set $x
     (i32.mul
      (local.get $temp)
      (i32.const 2)
     )
    )
-   (nop)
    (nop)
    (nop)
    (nop)
@@ -4645,7 +4306,7 @@ infer %4
    (local.get $10)
   )
  )
- (func $many-single-uses-with-param (; 55 ;) (type $FUNCSIG$ii) (param $x i32) (result i32)
+ (func $many-single-uses-with-param (; 55 ;) (param $x i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -4688,7 +4349,7 @@ infer %4
   )
   (unreachable)
  )
- (func $56 (; 56 ;) (type $FUNCSIG$vi) (param $var$0 i32)
+ (func $56 (; 56 ;) (param $var$0 i32)
   (local $var$1 i32)
   (local $var$2 i32)
   (local $var$3 i32)
@@ -4702,118 +4363,96 @@ infer %4
   (local $11 i32)
   (local $12 i32)
   (local $13 i32)
-  (block
-   (nop)
-   (nop)
-   (local.set $var$0
-    (i32.add
-     (local.get $var$0)
-     (i32.const -7)
-    )
-   )
-   (nop)
-   (if
+  (nop)
+  (nop)
+  (local.set $var$0
+   (i32.add
     (local.get $var$0)
-    (block
-     (block $label$2
-      (block $label$3
-       (nop)
-       (local.set $var$1
-        (local.get $var$0)
-       )
-       (nop)
-       (nop)
-       (local.set $8
-        (i32.const 12)
-       )
-       (br_if $label$3
-        (local.get $8)
-       )
-       (nop)
-       (unreachable)
-       (unreachable)
-      )
-      (nop)
-      (nop)
-      (local.set $10
-       (i32.eqz
-        (local.get $var$1)
-       )
-      )
-      (br_if $label$2
-       (local.get $10)
-      )
-      (nop)
-      (block
-       (local.set $11
-        (i32.load
-         (i32.const 0)
-        )
-       )
-       (nop)
-       (local.set $13
-        (i32.ne
-         (local.get $11)
-         (local.get $var$0)
-        )
-       )
-       (if
-        (local.get $13)
-        (block
-         (unreachable)
-         (unreachable)
-        )
-       )
-      )
-      (nop)
-      (unreachable)
-      (unreachable)
-     )
-     (nop)
-    )
+    (i32.const -7)
    )
   )
   (nop)
+  (if
+   (local.get $var$0)
+   (block $label$2
+    (block $label$3
+     (nop)
+     (local.set $var$1
+      (local.get $var$0)
+     )
+     (nop)
+     (local.set $8
+      (i32.const 12)
+     )
+     (br_if $label$3
+      (local.get $8)
+     )
+     (unreachable)
+    )
+    (nop)
+    (local.set $10
+     (i32.eqz
+      (local.get $var$1)
+     )
+    )
+    (br_if $label$2
+     (local.get $10)
+    )
+    (block
+     (local.set $11
+      (i32.load
+       (i32.const 0)
+      )
+     )
+     (nop)
+     (local.set $13
+      (i32.ne
+       (local.get $11)
+       (local.get $var$0)
+      )
+     )
+     (if
+      (local.get $13)
+      (unreachable)
+     )
+    )
+    (unreachable)
+   )
+  )
  )
- (func $multiple-uses-to-non-expression (; 57 ;) (type $FUNCSIG$vi) (param $x i32)
+ (func $multiple-uses-to-non-expression (; 57 ;) (param $x i32)
   (local $temp i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
   (local $6 i32)
-  (block
-   (nop)
-   (nop)
-   (local.set $x
-    (i32.add
-     (local.get $x)
-     (i32.const 10)
-    )
-   )
-   (nop)
-   (nop)
-   (i32.store
-    (i32.const 1)
+  (nop)
+  (nop)
+  (local.set $x
+   (i32.add
     (local.get $x)
+    (i32.const 10)
    )
-   (nop)
-   (nop)
-   (local.set $6
-    (i32.add
-     (local.get $x)
-     (i32.const 20)
-    )
-   )
-   (i32.store
-    (i32.const 2)
-    (local.get $6)
-   )
-   (nop)
   )
   (nop)
+  (i32.store
+   (i32.const 1)
+   (local.get $x)
+  )
+  (nop)
+  (local.set $6
+   (i32.add
+    (local.get $x)
+    (i32.const 20)
+   )
+  )
+  (i32.store
+   (i32.const 2)
+   (local.get $6)
+  )
  )
- (func $nested-phi-forwarding (; 58 ;) (type $FUNCSIG$ii) (param $var$0 i32) (result i32)
+ (func $nested-phi-forwarding (; 58 ;) (param $var$0 i32) (result i32)
   (local $var$1 i32)
   (local $var$2 i32)
   (local $3 i32)
@@ -4827,51 +4466,38 @@ infer %4
    (block $label$1
     (block $label$2
      (loop $label$3
-      (block
-       (block $label$4
-        (block $label$5
-         (block $label$6
-          (block $label$7
-           (block $label$8
-            (nop)
-            (br_table $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$8 $label$2 $label$2 $label$2 $label$6 $label$2 $label$2 $label$7 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$5 $label$4
-             (local.get $var$0)
-            )
-            (unreachable)
-           )
+      (block $label$4
+       (block $label$5
+        (block $label$6
+         (block $label$7
+          (block $label$8
            (nop)
-           (local.set $var$1
-            (i32.const 1)
+           (br_table $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$8 $label$2 $label$2 $label$2 $label$6 $label$2 $label$2 $label$7 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$5 $label$4
+            (local.get $var$0)
            )
-           (nop)
+           (unreachable)
           )
-          (nop)
-          (br $label$4)
-          (unreachable)
+          (local.set $var$1
+           (i32.const 1)
+          )
          )
-         (nop)
-         (unreachable)
+         (br $label$4)
          (unreachable)
         )
-        (nop)
-        (br $label$1)
         (unreachable)
        )
-       (nop)
-       (local.set $var$2
-        (i32.const 1)
-       )
-       (nop)
-       (br_if $label$3
-        (local.get $var$2)
-       )
-       (nop)
+       (br $label$1)
+       (unreachable)
+      )
+      (local.set $var$2
+       (i32.const 1)
       )
       (nop)
+      (br_if $label$3
+       (local.get $var$2)
+      )
      )
-     (nop)
     )
-    (nop)
     (block $label$9
      (nop)
      (local.set $6
@@ -4883,19 +4509,14 @@ infer %4
      (br_if $label$9
       (local.get $6)
      )
-     (nop)
     )
-    (nop)
-    (unreachable)
     (unreachable)
    )
-   (nop)
    (nop)
    (i32.store offset=176
     (i32.const 0)
     (local.get $var$2)
    )
-   (nop)
    (nop)
   )
   (local.set $9
@@ -4905,7 +4526,7 @@ infer %4
    (local.get $9)
   )
  )
- (func $zext-numGets (; 59 ;) (type $FUNCSIG$vii) (param $var$0 i32) (param $var$1 i32)
+ (func $zext-numGets (; 59 ;) (param $var$0 i32) (param $var$1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -4913,53 +4534,46 @@ infer %4
   (local $6 i32)
   (local $7 i32)
   (local $8 i32)
-  (block
-   (block $label$1
-    (local.set $2
-     (i32.load
-      (i32.const -8)
-     )
+  (block $label$1
+   (local.set $2
+    (i32.load
+     (i32.const -8)
     )
-    (local.set $3
-     (i32.const 1)
-    )
-    (br_if $label$1
-     (local.get $2)
-    )
-    (nop)
-    (drop
-     (local.get $3)
-    )
-    (nop)
-    (local.set $5
-     (i32.load
-      (i32.const -16)
-     )
-    )
-    (nop)
-    (local.set $3
-     (i32.eqz
-      (local.get $5)
-     )
+   )
+   (local.set $3
+    (i32.const 1)
+   )
+   (br_if $label$1
+    (local.get $2)
+   )
+   (nop)
+   (drop
+    (local.get $3)
+   )
+   (local.set $5
+    (i32.load
+     (i32.const -16)
     )
    )
    (nop)
-   (local.set $8
-    (i32.ctz
-     (local.get $3)
-    )
-   )
-   (if
-    (local.get $8)
-    (block
-     (unreachable)
-     (unreachable)
+   (local.set $3
+    (i32.eqz
+     (local.get $5)
     )
    )
   )
   (nop)
+  (local.set $8
+   (i32.ctz
+    (local.get $3)
+   )
+  )
+  (if
+   (local.get $8)
+   (unreachable)
+  )
  )
- (func $zext-numGets-hasAnotherUse (; 60 ;) (type $FUNCSIG$vii) (param $var$0 i32) (param $var$1 i32)
+ (func $zext-numGets-hasAnotherUse (; 60 ;) (param $var$0 i32) (param $var$1 i32)
   (local $temp i32)
   (local $3 i32)
   (local $4 i32)
@@ -4970,63 +4584,54 @@ infer %4
   (local $9 i32)
   (local $10 i32)
   (local $11 i32)
-  (block
-   (block $label$1
-    (local.set $3
-     (i32.load
-      (i32.const -8)
-     )
+  (block $label$1
+   (local.set $3
+    (i32.load
+     (i32.const -8)
     )
-    (local.set $4
-     (i32.const 1)
-    )
-    (br_if $label$1
-     (local.get $3)
-    )
-    (nop)
-    (drop
-     (local.get $4)
-    )
-    (nop)
-    (local.set $6
-     (i32.load
-      (i32.const -16)
-     )
-    )
-    (nop)
-    (local.set $temp
-     (i32.eqz
-      (local.get $6)
-     )
-    )
-    (nop)
-    (nop)
-    (drop
-     (local.get $temp)
-    )
-    (nop)
-    (nop)
-    (local.set $4
-     (local.get $temp)
+   )
+   (local.set $4
+    (i32.const 1)
+   )
+   (br_if $label$1
+    (local.get $3)
+   )
+   (nop)
+   (drop
+    (local.get $4)
+   )
+   (local.set $6
+    (i32.load
+     (i32.const -16)
     )
    )
    (nop)
-   (local.set $11
-    (i32.ctz
-     (local.get $4)
+   (local.set $temp
+    (i32.eqz
+     (local.get $6)
     )
    )
-   (if
-    (local.get $11)
-    (block
-     (unreachable)
-     (unreachable)
-    )
+   (nop)
+   (drop
+    (local.get $temp)
+   )
+   (nop)
+   (local.set $4
+    (local.get $temp)
    )
   )
   (nop)
+  (local.set $11
+   (i32.ctz
+    (local.get $4)
+   )
+  )
+  (if
+   (local.get $11)
+   (unreachable)
+  )
  )
- (func $flipped-needs-right-origin (; 61 ;) (type $FUNCSIG$ii) (param $var$0 i32) (result i32)
+ (func $flipped-needs-right-origin (; 61 ;) (param $var$0 i32) (result i32)
   (local $var$1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -5044,13 +4649,10 @@ infer %4
     (br_if $label$1
      (local.get $2)
     )
-    (nop)
     (local.set $var$1
      (i32.const 2)
     )
-    (nop)
    )
-   (nop)
    (block
     (nop)
     (local.set $4
@@ -5067,13 +4669,9 @@ infer %4
     )
     (if
      (local.get $5)
-     (block
-      (unreachable)
-      (unreachable)
-     )
+     (unreachable)
     )
    )
-   (nop)
    (nop)
   )
   (local.set $7
@@ -5083,7 +4681,7 @@ infer %4
    (local.get $7)
   )
  )
- (func $non-expr-nodes-may-have-multiple-uses-too-its-the-ORIGIN (; 62 ;) (type $FUNCSIG$iiii) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (result i32)
+ (func $non-expr-nodes-may-have-multiple-uses-too-its-the-ORIGIN (; 62 ;) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -5106,7 +4704,6 @@ infer %4
     (i32.const 2)
    )
    (nop)
-   (nop)
    (local.set $7
     (i32.sub
      (i32.const 4)
@@ -5117,8 +4714,6 @@ infer %4
     (i32.const 3)
     (local.get $7)
    )
-   (nop)
-   (unreachable)
    (unreachable)
   )
   (nop)
@@ -5126,7 +4721,7 @@ infer %4
    (local.get $8)
   )
  )
- (func $loop-of-set-connections (; 63 ;) (type $FUNCSIG$iiiiii) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i32) (param $var$4 i32) (result i32)
+ (func $loop-of-set-connections (; 63 ;) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i32) (param $var$4 i32) (result i32)
   (local $5 i32)
   (local $6 i32)
   (local $7 i32)
@@ -5143,16 +4738,12 @@ infer %4
          (i32.const 1)
         )
        )
-       (nop)
        (br $label$1)
        (unreachable)
       )
       (unreachable)
      )
     )
-    (nop)
-    (nop)
-    (nop)
     (nop)
     (nop)
     (nop)
@@ -5164,7 +4755,7 @@ infer %4
   )
   (unreachable)
  )
- (func $conditions-in-conditions (; 64 ;) (type $FUNCSIG$iiii) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (result i32)
+ (func $conditions-in-conditions (; 64 ;) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (result i32)
   (local $var$3 i32)
   (local $var$4 i32)
   (local $var$5 i32)
@@ -5183,56 +4774,41 @@ infer %4
    (local.set $var$1
     (i32.const 1)
    )
-   (nop)
    (if
     (i32.const 0)
-    (block
-     (loop $label$2
-      (block
-       (block
-        (nop)
-        (if
-         (local.get $var$1)
-         (nop)
-        )
-       )
-       (nop)
-       (local.set $var$3
-        (i32.const 1)
-       )
-       (nop)
-       (nop)
-       (local.set $var$1
-        (i32.sub
-         (i32.const 0)
-         (local.get $var$3)
-        )
-       )
-       (nop)
-       (br_if $label$2
-        (i32.const 0)
-       )
+    (loop $label$2
+     (block
+      (nop)
+      (if
+       (local.get $var$1)
        (nop)
       )
-      (nop)
+     )
+     (local.set $var$3
+      (i32.const 1)
      )
      (nop)
+     (nop)
+     (local.set $var$1
+      (i32.sub
+       (i32.const 0)
+       (local.get $var$3)
+      )
+     )
+     (br_if $label$2
+      (i32.const 0)
+     )
     )
    )
-   (nop)
    (block
     (nop)
     (if
      (local.get $var$1)
-     (block
-      (local.set $var$3
-       (i32.const 1)
-      )
-      (nop)
+     (local.set $var$3
+      (i32.const 1)
      )
     )
    )
-   (nop)
    (nop)
    (local.set $14
     (i32.add
@@ -5244,13 +4820,10 @@ infer %4
     (i32.const 8)
     (local.get $14)
    )
-   (nop)
    (i32.store
     (i32.const 8)
     (i32.const 64)
    )
-   (nop)
-   (unreachable)
    (unreachable)
   )
   (nop)

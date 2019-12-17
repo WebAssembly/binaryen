@@ -30,11 +30,10 @@
 // ---------------
 //
 // Thread safety: You can create Expressions in parallel, as they do not
-//                refer to global state. BinaryenAddFunction and
-//                BinaryenAddFunctionType are also thread-safe, which means
-//                that you can create functions and their contents in multiple
-//                threads. This is important since functions are where the
-//                majority of the work is done.
+//                refer to global state. BinaryenAddFunction is also
+//                thread-safe, which means that you can create functions and
+//                their contents in multiple threads. This is important since
+//                functions are where the majority of the work is done.
 //                Other methods - creating imports, exports, etc. - are
 //                not currently thread-safe (as there is typically no need
 //                to parallelize them).
@@ -212,22 +211,6 @@ BINARYEN_REF(Module);
 
 BINARYEN_API BinaryenModuleRef BinaryenModuleCreate(void);
 BINARYEN_API void BinaryenModuleDispose(BinaryenModuleRef module);
-
-// Function types
-
-BINARYEN_REF(FunctionType);
-
-// Add a new function type. This is thread-safe.
-// Note: name can be NULL, in which case we auto-generate a name
-BINARYEN_API BinaryenFunctionTypeRef
-BinaryenAddFunctionType(BinaryenModuleRef module,
-                        const char* name,
-                        BinaryenType result,
-                        BinaryenType* paramTypes,
-                        BinaryenIndex numParams);
-// Removes a function type.
-BINARYEN_API void BinaryenRemoveFunctionType(BinaryenModuleRef module,
-                                             const char* name);
 
 // Literals. These are passed by value.
 
@@ -632,7 +615,8 @@ BinaryenCallIndirect(BinaryenModuleRef module,
                      BinaryenExpressionRef target,
                      BinaryenExpressionRef* operands,
                      BinaryenIndex numOperands,
-                     const char* type);
+                     BinaryenType params,
+                     BinaryenType results);
 BINARYEN_API BinaryenExpressionRef
 BinaryenReturnCall(BinaryenModuleRef module,
                    const char* target,
@@ -644,7 +628,8 @@ BinaryenReturnCallIndirect(BinaryenModuleRef module,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
                            BinaryenIndex numOperands,
-                           const char* type);
+                           BinaryenType params,
+                           BinaryenType results);
 
 // LocalGet: Note the 'type' parameter. It might seem redundant, since the
 //           local at that index must have a type. However, this API lets you
@@ -665,8 +650,10 @@ BINARYEN_API BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                                     BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenLocalSet(
   BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
-BINARYEN_API BinaryenExpressionRef BinaryenLocalTee(
-  BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
+                                                    BinaryenIndex index,
+                                                    BinaryenExpressionRef value,
+                                                    BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
                                                      const char* name,
                                                      BinaryenType type);
@@ -1083,7 +1070,8 @@ BINARYEN_REF(Function);
 BINARYEN_API BinaryenFunctionRef
 BinaryenAddFunction(BinaryenModuleRef module,
                     const char* name,
-                    BinaryenFunctionTypeRef type,
+                    BinaryenType params,
+                    BinaryenType results,
                     BinaryenType* varTypes,
                     BinaryenIndex numVarTypes,
                     BinaryenExpressionRef body);
@@ -1102,12 +1090,12 @@ BinaryenGetFunctionByIndex(BinaryenModuleRef module, BinaryenIndex id);
 
 // Imports
 
-BINARYEN_API void
-BinaryenAddFunctionImport(BinaryenModuleRef module,
-                          const char* internalName,
-                          const char* externalModuleName,
-                          const char* externalBaseName,
-                          BinaryenFunctionTypeRef functionType);
+BINARYEN_API void BinaryenAddFunctionImport(BinaryenModuleRef module,
+                                            const char* internalName,
+                                            const char* externalModuleName,
+                                            const char* externalBaseName,
+                                            BinaryenType params,
+                                            BinaryenType results);
 BINARYEN_API void BinaryenAddTableImport(BinaryenModuleRef module,
                                          const char* internalName,
                                          const char* externalModuleName,
@@ -1361,41 +1349,16 @@ BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
                                    BinaryenIndex index);
 
 //
-// ======== FunctionType Operations ========
-//
-
-// Gets the name of the specified `FunctionType`.
-BINARYEN_API const char*
-BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype);
-// Gets the number of parameters of the specified `FunctionType`.
-BINARYEN_API BinaryenIndex
-BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype);
-// Gets the type of the parameter at the specified index of the specified
-// `FunctionType`.
-BINARYEN_API BinaryenType BinaryenFunctionTypeGetParam(
-  BinaryenFunctionTypeRef ftype, BinaryenIndex index);
-// Gets the result type of the specified `FunctionType`.
-BINARYEN_API BinaryenType
-BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype);
-
-//
 // ========== Function Operations ==========
 //
 
 // Gets the name of the specified `Function`.
 BINARYEN_API const char* BinaryenFunctionGetName(BinaryenFunctionRef func);
-// Gets the name of the `FunctionType` associated with the specified `Function`.
-// May be `NULL` if the signature is implicit.
-BINARYEN_API const char* BinaryenFunctionGetType(BinaryenFunctionRef func);
-// Gets the number of parameters of the specified `Function`.
-BINARYEN_API BinaryenIndex
-BinaryenFunctionGetNumParams(BinaryenFunctionRef func);
 // Gets the type of the parameter at the specified index of the specified
 // `Function`.
-BINARYEN_API BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func,
-                                                   BinaryenIndex index);
+BINARYEN_API BinaryenType BinaryenFunctionGetParams(BinaryenFunctionRef func);
 // Gets the result type of the specified `Function`.
-BINARYEN_API BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func);
+BINARYEN_API BinaryenType BinaryenFunctionGetResults(BinaryenFunctionRef func);
 // Gets the number of additional locals within the specified `Function`.
 BINARYEN_API BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
 // Gets the type of the additional local at the specified index within the
@@ -1573,17 +1536,6 @@ BINARYEN_API void BinaryenSetAPITracing(int on);
 //
 // ========= Utilities =========
 //
-
-// Note that this function has been added because there is no better alternative
-// currently and is scheduled for removal once there is one. It takes the same
-// set of parameters as BinaryenAddFunctionType but instead of adding a new
-// function signature, it returns a pointer to the existing signature or NULL if
-// there is no such signature yet.
-BINARYEN_API BinaryenFunctionTypeRef
-BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module,
-                                   BinaryenType result,
-                                   BinaryenType* paramTypes,
-                                   BinaryenIndex numParams);
 
 // Enable or disable coloring for the WASM printer
 BINARYEN_API void BinaryenSetColorsEnabled(int enabled);

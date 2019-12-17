@@ -5,8 +5,6 @@ function assert(x) {
 function test() {
   var module = new Binaryen.Module();
 
-  var signature = module.addFunctionType("i", Binaryen.i32, []);
-
   var fileIndex = module.addDebugInfoFileName("module.c");
 
   console.log(module.getDebugInfoFileName(fileIndex));
@@ -17,7 +15,7 @@ function test() {
     expr
   ], Binaryen.i32);
 
-  var func = module.addFunction("main", signature, [], body);
+  var func = module.addFunction("main", Binaryen.none, Binaryen.i32, [], body);
 
   module.setDebugLocation(func, expr, fileIndex, 1, 2);
   module.setDebugLocation(func, body, fileIndex, 0, 3);

@@ -1,8 +1,7 @@
 function test() {
   (function() {
     var mod = new Binaryen.Module();
-    var funcType = mod.addFunctionType("v", Binaryen.void, []);
-    var func = mod.addFunction("test", funcType, [],
+    var func = mod.addFunction("test", Binaryen.none, Binaryen.none, [],
       mod.block("", [
         mod.drop(
           mod.global.get("missing", Binaryen.i32)
@@ -15,8 +14,7 @@ function test() {
 
   (function() {
     var mod = new Binaryen.Module();
-    var funcType = mod.addFunctionType("v", Binaryen.void, []);
-    var func = mod.addFunction("test", funcType, [],
+    var func = mod.addFunction("test", Binaryen.none, Binaryen.none, [],
       mod.block("", [
         mod.drop(
           mod.local.get(0, Binaryen.i32)
