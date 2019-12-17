@@ -17,7 +17,7 @@
 //
 // Turn main module imports into direct calls. This will improve the runtime
 // performance as VMs typically are slower when making Wasm to JS transitions
-// as compared to an indirect call. By making the switch to indirect calls, 
+// as compared to an indirect call. By making the switch to indirect calls,
 // the need for legalization between modules can also be avoided.
 //
 // This is only necessary for the main module because the side module makes
@@ -26,13 +26,12 @@
 //
 
 #include "asm_v_wasm.h"
-#include "ir/literal-utils.h"
-#include "ir/import-utils.h"
-#include "ir/function-type-utils.h"
-#include "pass.h"
 #include "asmjs/shared-constants.h"
-#include <regex>
+#include "ir/import-utils.h"
+#include "ir/literal-utils.h"
+#include "pass.h"
 #include <fstream>
+#include <regex>
 #include <sstream>
 
 namespace wasm {
@@ -47,11 +46,12 @@ struct FunctionImportsToIndirectCalls
 
   FunctionImportsToIndirectCalls() : block(nullptr) {}
 
-  FunctionImportsToIndirectCalls(const std::set<std::string>& libraryFns, Block* blk)
+  FunctionImportsToIndirectCalls(const std::set<std::string>& libraryFns,
+                                 Block* blk)
     : m_libraryFns(libraryFns), block(blk) {}
 
   static Function*
-  ensureFunctionImport(Module* module, Name name, const std::string& sig) {
+  ensureFunctionImport(Module* module, Name name, Signature sig) {
     // Then see if its already imported
     ImportInfo info(*module);
     if (Function* f = info.getImportedFunction(ENV, name)) {
@@ -62,9 +62,7 @@ struct FunctionImportsToIndirectCalls
     import->name = name;
     import->module = ENV;
     import->base = name;
-    auto* functionType = ensureFunctionType(sig, module);
-    import->type = functionType->name;
-    FunctionTypeUtils::fillFunction(import, functionType);
+    import->sig = sig;
     module->addFunction(import);
     return import;
   }
@@ -104,28 +102,33 @@ struct FunctionImportsToIndirectCalls
     // When a function is already address-taken in the main module, the fp$
     // accessor function would already have been created. Retrieve the
     // global that contains the address and use it for the indirect call.
-    Name fnAddr = getGlobalNameFromBase(module, name);
+    // The global will be of the form gimport$xxx if it exists
+    Name gpAddr = getGlobalNameFromBase(module, name);
 
-    if (fnAddr.isNull()) {
-      // Ensure that the fp$ accessor is in the module, if not add it in.
-      auto f = ensureFunctionImport(module, accessor, "i");
+    if (gpAddr.isNull()) {
+      // Add the global that holds the address of the function. 
+      gpAddr = std::string("gp$") + name.c_str();
+      auto* global = module->getGlobalOrNull(gpAddr);
 
-      // Add the global that holds the address of the function
-      fnAddr = std::string("gp$") + name.c_str();
-      module->addGlobal(builder.makeGlobal(
-        fnAddr, i32, LiteralUtils::makeZero(i32, *module), Builder::Mutable));
+      if (!global) {
+        // Ensure that the fp$ accessor is in the module, if not add it in.
+        auto fpAccessor = ensureFunctionImport(
+          module, accessor, Signature(Type::none, Type::i32));
 
-      Expression* call = builder.makeCall(accessor, {}, i32);
-      GlobalSet* globalSet = builder.makeGlobalSet(fnAddr, call);
-      block->list.push_back(globalSet);
+        module->addGlobal(builder.makeGlobal(
+          gpAddr, i32, LiteralUtils::makeZero(i32, *module), Builder::Mutable));
+
+        Expression* call = builder.makeCall(accessor, {}, i32);
+        GlobalSet* globalSet = builder.makeGlobalSet(gpAddr, call);
+        block->list.push_back(globalSet);
+      }
     }
 
     // Replace the call
-    Expression* fptr = builder.makeGlobalGet(fnAddr, i32);
+    Expression* fptr = builder.makeGlobalGet(gpAddr, i32);
 
-    auto fnType = module->getFunctionType(func->type);
     auto indirectCall =
-      builder.makeCallIndirect(fnType, fptr, args, curr->isReturn);
+      builder.makeCallIndirect(fptr, args, func->sig, curr->isReturn);
 
     replaceCurrent(indirectCall);
 
@@ -155,13 +158,19 @@ struct ImportsToIndirectCalls : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Name name = runner->options.getArgument(
       "js-symbols",
-      "ImportsToIndirectCalls usage:  wasm-emscripten-finalize --pass-arg=js-symbols@FILE_NAME");
+      "ImportsToIndirectCalls usage:  wasm-emscripten-finalize "
+      "--pass-arg=js-symbols@FILE_NAME");
 
-    std::set<std::string> libraryFunctions = getLibraryFunctions(name);
+    std::set<std::string> jsSymbols = getJSSymbols(name);
 
+    // Create a table if there isn't one
     if (!module->table.exists) {
-      Fatal() << "Table does not exist in module!!!";
-      return;
+      Table::Segment segment;
+
+      module->table.initial = 0;
+      module->table.max = Memory::kUnlimitedSize;
+      module->table.exists = true;
+      module->table.segments.push_back(segment);
     }
 
     auto* assignFunc = module->getFunction(ASSIGN_GOT_ENTIRES);
@@ -172,43 +181,20 @@ struct ImportsToIndirectCalls : public Pass {
       return;
     }
 
-    FunctionImportsToIndirectCalls(libraryFunctions, block).run(runner, module);
+    FunctionImportsToIndirectCalls(jsSymbols, block).run(runner, module);
   }
 
-  std::set<std::string> getLibraryFunctions(Name& name) {
-    std::ifstream myfile;
-    myfile.open(name.c_str(), std::ios::in);
-    std::string str;
+  std::set<std::string> getJSSymbols(Name& name) {
+    std::ifstream infile(name.c_str(), std::ios::in);
 
-    myfile.seekg(0, std::ios::end);
-    str.reserve(myfile.tellg());
-    myfile.seekg(0, std::ios::beg);
-
-    str.assign((std::istreambuf_iterator<char>(myfile)),
-               std::istreambuf_iterator<char>());
-
-    // index.wasm.libfile will have the following format:
-    // ['_glClearStencil', '_glUniformMatrix2fv', '_eglGetCurrentSurface']
     std::set<std::string> setStrings;
-    std::regex rgx(R"(\'(.*)\')");
-    std::smatch match;
-    std::string buffer;
-    std::stringstream ss(str);
-    std::vector<std::string> vecStrings;
 
-     while (ss >> buffer)
-      vecStrings.push_back(buffer);
-    
-     for (auto& i : vecStrings) {
-      if (std::regex_search(i, match, rgx)) {
-        std::ssub_match submatch = match[1];
-        std::string temp = submatch.str();
-        // TODO: Do we check for double underscore?
-        temp.erase(0,1);
-        setStrings.insert(temp);
-      }
+    std::string jsSymbol;
+    while (infile >> jsSymbol) {
+      jsSymbol.erase(0, 1);
+      setStrings.insert(jsSymbol);
     }
-   
+
     return setStrings;
   }
 };
