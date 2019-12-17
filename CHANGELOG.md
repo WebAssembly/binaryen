@@ -32,6 +32,10 @@ Current Trunk
 - Add the ability to create multivalue Types in the C and JS APIs.
 - Remove named function types. They are replaced by `params` and `results` types
   local to each function.
+- Binaryen.js can now be compiled to Wasm using the `binaryen_wasm` target.
+  Unlike the JS variant, the Wasm variant requires asynchronously awaiting the
+  Wasm blob's instantiation and initialization before being usable, using the
+  `binaryen.ready` promise, e.g. `binaryen.ready.then(() => ...)`.
 
 v88
 ---
