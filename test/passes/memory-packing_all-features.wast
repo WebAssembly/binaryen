@@ -27,11 +27,4 @@
    (i32.const 0)
   )
  )
- (func $bar
-  (drop
-   (loop (result i32)
-    (i32.const 42)
-   )
-  )
- )
 )

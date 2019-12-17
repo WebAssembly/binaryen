@@ -33,11 +33,4 @@
   )
   (unreachable)
  )
- (func $bar (; 1 ;)
-  (drop
-   (loop $loop-in (result i32)
-    (i32.const 42)
-   )
-  )
- )
 )
