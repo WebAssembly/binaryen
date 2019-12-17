@@ -1,7 +1,7 @@
 Changelog
 =========
 
-This document describes changes between tagged Binaryen versions. 
+This document describes changes between tagged Binaryen versions.
 
 To browse or download snapshots of old tagged versions, visit
 https://github.com/WebAssembly/binaryen/releases.
