@@ -104,7 +104,7 @@ void dumpDWARF(const Module& wasm) {
 // the DWARFContext may save us doing fixups in EmitDebugSections.
 //
 
-void updateDWARF(Module& wasm) {
+void writeDWARFSections(Module& wasm) {
   BinaryenDWARFInfo info(wasm);
 
   // Convert to Data representation, which YAML can use to write.

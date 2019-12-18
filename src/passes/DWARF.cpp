@@ -37,7 +37,7 @@ struct DWARFDump : public Pass {
 
 struct DWARFUpdate : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    Debug::updateDWARF(*module);
+    Debug::writeDWARFSections(*module);
   }
 };
 
