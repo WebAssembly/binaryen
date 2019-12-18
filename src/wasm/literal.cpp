@@ -860,6 +860,10 @@ Literal Literal::maxUInt(const Literal& other) const {
   return uint32_t(geti32()) > uint32_t(other.geti32()) ? *this : other;
 }
 
+Literal Literal::avgrUInt(const Literal& other) const {
+  return Literal((geti32() + other.geti32() + 1) / 2);
+}
+
 Literal Literal::and_(const Literal& other) const {
   switch (type) {
     case Type::i32:
@@ -1729,6 +1733,9 @@ Literal Literal::maxSI8x16(const Literal& other) const {
 Literal Literal::maxUI8x16(const Literal& other) const {
   return binary<16, &Literal::getLanesUI8x16, &Literal::maxInt>(*this, other);
 }
+Literal Literal::avgrUI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesUI8x16, &Literal::avgrUInt>(*this, other);
+}
 Literal Literal::addI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::add>(*this, other);
 }
@@ -1765,6 +1772,9 @@ Literal Literal::maxSI16x8(const Literal& other) const {
 }
 Literal Literal::maxUI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::maxInt>(*this, other);
+}
+Literal Literal::avgrUI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesUI16x8, &Literal::avgrUInt>(*this, other);
 }
 Literal Literal::addI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);

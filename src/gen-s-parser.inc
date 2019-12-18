@@ -698,6 +698,9 @@ switch (op[0]) {
               case 'n':
                 if (strcmp(op, "i16x8.any_true") == 0) { return makeUnary(s, UnaryOp::AnyTrueVecI16x8); }
                 goto parse_error;
+              case 'v':
+                if (strcmp(op, "i16x8.avgr_u") == 0) { return makeBinary(s, BinaryOp::AvgrUVecI16x8); }
+                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -2240,6 +2243,9 @@ switch (op[0]) {
                 goto parse_error;
               case 'n':
                 if (strcmp(op, "i8x16.any_true") == 0) { return makeUnary(s, UnaryOp::AnyTrueVecI8x16); }
+                goto parse_error;
+              case 'v':
+                if (strcmp(op, "i8x16.avgr_u") == 0) { return makeBinary(s, BinaryOp::AvgrUVecI8x16); }
                 goto parse_error;
               default: goto parse_error;
             }

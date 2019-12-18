@@ -765,6 +765,8 @@ public:
         return left.maxSI8x16(right);
       case MaxUVecI8x16:
         return left.maxUI8x16(right);
+      case AvgrUVecI8x16:
+        return left.avgrUI8x16(right);
       case AddVecI16x8:
         return left.addI16x8(right);
       case AddSatSVecI16x8:
@@ -787,6 +789,8 @@ public:
         return left.maxSI16x8(right);
       case MaxUVecI16x8:
         return left.maxUI16x8(right);
+      case AvgrUVecI16x8:
+        return left.avgrUI16x8(right);
       case AddVecI32x4:
         return left.addI32x4(right);
       case SubVecI32x4:

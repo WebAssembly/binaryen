@@ -961,6 +961,36 @@
        )
       )
       (drop
+       (i8x16.min_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.min_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.max_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.max_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.avgr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i16x8.add
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -1027,6 +1057,12 @@
        )
       )
       (drop
+       (i16x8.avgr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i32x4.add
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -1040,30 +1076,6 @@
       )
       (drop
        (i32x4.mul
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.min_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.min_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.max_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.max_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
