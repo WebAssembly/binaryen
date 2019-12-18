@@ -2,7 +2,7 @@
 # as possible to LLVM's defaults.
 foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   if(NOT MSVC)
-    set(${variable} "${${variable}} -w -std=c++14 -fno-rtti -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
+    set(${variable} "${${variable}} -w -std=c++14 -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
   else()
     set(${variable} "${${variable}} /w")
   endif()
