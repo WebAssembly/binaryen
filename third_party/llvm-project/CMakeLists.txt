@@ -4,7 +4,7 @@ foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   if(NOT MSVC)
     set(${variable} "${${variable}} -w -std=c++14 -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
   else()
-    set(${variable} "${${variable}} /w")
+    set(${variable} "${${variable}} /w -std:c++14 -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_SCL_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS -DUNICODE -D_UNICODE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
   endif()
 endforeach(variable)
 
