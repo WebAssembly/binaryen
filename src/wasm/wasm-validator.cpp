@@ -1920,7 +1920,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       auto oldType = curr->type;
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
-      if (!isLeftSubTypeOfRight(newType, oldType)) {
+      if (newType != oldType) {
         // We accept concrete => undefined,
         // e.g.
         //
@@ -1928,7 +1928,8 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         //
         // The block has an added type, not derived from the ast itself, so it
         // is ok for it to be either i32 or unreachable.
-        if (!(oldType.isConcrete() && newType == unreachable)) {
+        if (!isLeftSubTypeOfRight(newType, oldType) &&
+            !(oldType.isConcrete() && newType == unreachable)) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr
              << "\n(marked as " << oldType << ", should be " << newType
