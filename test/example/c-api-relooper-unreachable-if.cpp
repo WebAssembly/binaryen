@@ -242,7 +242,8 @@ int main() {
   expressions[76] = BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[75]);
   expressions[77] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
   expressions[78] = BinaryenBinary(the_module, 1, expressions[76], expressions[77]);
-  expressions[79] = BinaryenLocalTee(the_module, 3, expressions[78]);
+  expressions[79] =
+    BinaryenLocalTee(the_module, 3, expressions[78], BinaryenTypeInt32());
   expressions[80] = BinaryenStore(
     the_module, 4, 0, 0, expressions[75], expressions[79], BinaryenTypeInt32());
   expressions[81] = BinaryenLocalGet(the_module, 3, BinaryenTypeInt32());
@@ -333,7 +334,8 @@ int main() {
   expressions[123] = BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[122]);
   expressions[124] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
   expressions[125] = BinaryenBinary(the_module, 1, expressions[123], expressions[124]);
-  expressions[126] = BinaryenLocalTee(the_module, 5, expressions[125]);
+  expressions[126] =
+    BinaryenLocalTee(the_module, 5, expressions[125], BinaryenTypeInt32());
   expressions[127] = BinaryenStore(the_module,
                                    4,
                                    0,
@@ -497,7 +499,8 @@ int main() {
   expressions[186] = BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[185]);
   expressions[187] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
   expressions[188] = BinaryenBinary(the_module, 1, expressions[186], expressions[187]);
-  expressions[189] = BinaryenLocalTee(the_module, 6, expressions[188]);
+  expressions[189] =
+    BinaryenLocalTee(the_module, 6, expressions[188], BinaryenTypeInt32());
   expressions[190] = BinaryenStore(the_module,
                                    4,
                                    0,

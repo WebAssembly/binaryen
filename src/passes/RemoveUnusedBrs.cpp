@@ -287,7 +287,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Expression* z;
         replaceCurrent(
           z = builder.makeIf(
-            builder.makeLocalTee(temp, curr->condition),
+            builder.makeLocalTee(temp, curr->condition, i32),
             builder.makeIf(builder.makeBinary(EqInt32,
                                               builder.makeLocalGet(temp, i32),
                                               builder.makeConst(Literal(int32_t(
@@ -1074,7 +1074,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         iff->finalize();
         Expression* replacement = iff;
         if (tee) {
-          set->setTee(false);
+          set->makeSet();
           // We need a block too.
           replacement = builder.makeSequence(iff,
                                              get // reuse the get

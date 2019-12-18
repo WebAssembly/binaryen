@@ -184,8 +184,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         if (iter != usables.end()) {
           // already exists in the table, this is good to reuse
           auto& info = iter->second;
+          Type localType = getFunction()->getLocalType(info.index);
           set->value =
-            Builder(*getModule()).makeLocalGet(info.index, value->type);
+            Builder(*getModule()).makeLocalGet(info.index, localType);
           anotherPass = true;
         } else {
           // not in table, add this, maybe we can help others later

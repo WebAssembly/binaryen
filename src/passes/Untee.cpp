@@ -41,9 +41,10 @@ struct Untee : public WalkerPass<PostWalker<Untee>> {
       } else {
         // a normal tee. replace with set and get
         Builder builder(*getModule());
-        replaceCurrent(builder.makeSequence(
-          curr, builder.makeLocalGet(curr->index, curr->value->type)));
-        curr->setTee(false);
+        LocalGet* get = builder.makeLocalGet(
+          curr->index, getFunction()->getLocalType(curr->index));
+        replaceCurrent(builder.makeSequence(curr, get));
+        curr->makeSet();
       }
     }
   }

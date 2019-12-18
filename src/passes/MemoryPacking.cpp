@@ -142,12 +142,6 @@ struct MemoryPacking : public Pass {
           changed = true;
         }
       }
-      void visitDataDrop(DataDrop* curr) {
-        if (!getModule()->memory.segments[curr->segment].isPassive) {
-          ExpressionManipulator::unreachable(curr);
-          changed = true;
-        }
-      }
       void doWalkFunction(Function* func) {
         changed = false;
         super::doWalkFunction(func);

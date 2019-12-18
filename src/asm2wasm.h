@@ -1907,7 +1907,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         auto ret = allocator.alloc<LocalSet>();
         ret->index = function->getLocalIndex(assign->target());
         ret->value = process(assign->value());
-        ret->setTee(false);
+        ret->makeSet();
         ret->finalize();
         return ret;
       }
@@ -2158,7 +2158,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             auto set = allocator.alloc<LocalSet>();
             set->index = function->getLocalIndex(I32_TEMP);
             set->value = value;
-            set->setTee(false);
+            set->makeSet();
             set->finalize();
             auto get = [&]() {
               auto ret = allocator.alloc<LocalGet>();
@@ -2264,7 +2264,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 view.bytes,
                 0,
                 processUnshifted(ast[2][1], view.bytes),
-                builder.makeLocalTee(temp, process(ast[2][2])),
+                builder.makeLocalTee(temp, process(ast[2][2]), type),
                 type),
               builder.makeLocalGet(temp, type));
           } else if (name == Atomics_exchange) {

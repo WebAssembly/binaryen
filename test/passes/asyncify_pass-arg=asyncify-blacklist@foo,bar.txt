@@ -11,11 +11,9 @@
  (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
  (func $foo (; 1 ;)
   (call $import)
-  (nop)
  )
  (func $bar (; 2 ;)
   (call $import)
-  (nop)
  )
  (func $baz (; 3 ;)
   (local $0 i32)
@@ -55,38 +53,29 @@
         )
        )
       )
-      (block
-       (if
-        (if (result i32)
-         (i32.eq
-          (global.get $__asyncify_state)
-          (i32.const 0)
-         )
-         (i32.const 1)
-         (i32.eq
-          (local.get $1)
-          (i32.const 0)
-         )
-        )
-        (block
-         (call $import)
-         (if
-          (i32.eq
-           (global.get $__asyncify_state)
-           (i32.const 1)
-          )
-          (br $__asyncify_unwind
-           (i32.const 0)
-          )
-         )
-        )
-       )
-       (if
+      (if
+       (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
          (i32.const 0)
         )
-        (nop)
+        (i32.const 1)
+        (i32.eq
+         (local.get $1)
+         (i32.const 0)
+        )
+       )
+       (block
+        (call $import)
+        (if
+         (i32.eq
+          (global.get $__asyncify_state)
+          (i32.const 1)
+         )
+         (br $__asyncify_unwind
+          (i32.const 0)
+         )
+        )
        )
       )
      )
@@ -115,7 +104,6 @@
  )
  (func $other1 (; 4 ;)
   (call $foo)
-  (nop)
  )
  (func $other2 (; 5 ;)
   (local $0 i32)
@@ -155,38 +143,29 @@
         )
        )
       )
-      (block
-       (if
-        (if (result i32)
-         (i32.eq
-          (global.get $__asyncify_state)
-          (i32.const 0)
-         )
-         (i32.const 1)
-         (i32.eq
-          (local.get $1)
-          (i32.const 0)
-         )
-        )
-        (block
-         (call $baz)
-         (if
-          (i32.eq
-           (global.get $__asyncify_state)
-           (i32.const 1)
-          )
-          (br $__asyncify_unwind
-           (i32.const 0)
-          )
-         )
-        )
-       )
-       (if
+      (if
+       (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
          (i32.const 0)
         )
-        (nop)
+        (i32.const 1)
+        (i32.eq
+         (local.get $1)
+         (i32.const 0)
+        )
+       )
+       (block
+        (call $baz)
+        (if
+         (i32.eq
+          (global.get $__asyncify_state)
+          (i32.const 1)
+         )
+         (br $__asyncify_unwind
+          (i32.const 0)
+         )
+        )
        )
       )
      )

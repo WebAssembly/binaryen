@@ -709,8 +709,9 @@ public:
   Index index;
   Expression* value;
 
-  bool isTee();
-  void setTee(bool is);
+  bool isTee() const;
+  void makeTee(Type type);
+  void makeSet();
 };
 
 class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
@@ -1245,6 +1246,13 @@ public:
 
   Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+  }
 };
 
 class Memory : public Importable {
@@ -1288,6 +1296,14 @@ public:
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+    shared = false;
+  }
 };
 
 class Global : public Importable {
