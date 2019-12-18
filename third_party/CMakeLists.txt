@@ -1,3 +1,3 @@
 if(USE_LLVM_DWARF)
-  add_subdirectory(llvm_dwarf)
+  add_subdirectory(llvm-project)
 endif()
