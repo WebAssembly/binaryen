@@ -232,14 +232,15 @@ public:
     auto* ret = allocator.alloc<LocalSet>();
     ret->index = index;
     ret->value = value;
+    ret->makeSet();
     ret->finalize();
     return ret;
   }
-  LocalSet* makeLocalTee(Index index, Expression* value) {
+  LocalSet* makeLocalTee(Index index, Expression* value, Type type) {
     auto* ret = allocator.alloc<LocalSet>();
     ret->index = index;
     ret->value = value;
-    ret->setTee(true);
+    ret->makeTee(type);
     return ret;
   }
   GlobalGet* makeGlobalGet(Name name, Type type) {

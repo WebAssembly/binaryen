@@ -87,6 +87,7 @@ def parse_args(args):
 
 options = parse_args(sys.argv[1:])
 requested = options.positional_args
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 num_failures = 0
 warnings = []
@@ -123,8 +124,7 @@ if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
 
 # Locate Binaryen source directory if not specified.
 if not options.binaryen_root:
-    path_parts = os.path.abspath(__file__).split(os.path.sep)
-    options.binaryen_root = os.path.sep.join(path_parts[:-3])
+    options.binaryen_root = os.path.dirname(os.path.dirname(script_dir))
 
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 
@@ -207,8 +207,7 @@ if options.valgrind:
 
 
 def in_binaryen(*args):
-    __rootpath__ = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    return os.path.join(__rootpath__, *args)
+    return os.path.join(options.binaryen_root, *args)
 
 
 os.environ['BINARYEN'] = in_binaryen()

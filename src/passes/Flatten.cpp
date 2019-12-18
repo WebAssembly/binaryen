@@ -61,12 +61,17 @@ struct Flatten
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
+    if (curr->is<Const>() || curr->is<Nop>() || curr->is<Unreachable>()) {
+      return;
+    }
+
     if (Flat::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
 
       // no one should have given us preludes, they are on the children
       assert(preludes.find(curr) == preludes.end());
+
       if (auto* block = curr->dynCast<Block>()) {
         // make a new list, where each item's preludes are added before it
         ExpressionList newList(getModule()->allocator);
@@ -106,6 +111,7 @@ struct Flatten
         }
         // the block now has no return value, and may have become unreachable
         block->finalize(none);
+
       } else if (auto* iff = curr->dynCast<If>()) {
         // condition preludes go before the entire if
         auto* rep = getPreludesWithExpression(iff->condition, iff);
@@ -138,6 +144,7 @@ struct Flatten
           ourPreludes.push_back(prelude);
         }
         replaceCurrent(rep);
+
       } else if (auto* loop = curr->dynCast<Loop>()) {
         // remove a loop value
         Expression* rep = loop;
@@ -155,15 +162,18 @@ struct Flatten
         loop->body = getPreludesWithExpression(originalBody, loop->body);
         loop->finalize();
         replaceCurrent(rep);
+
       } else {
         WASM_UNREACHABLE("unexpected expr type");
       }
+
     } else {
       // for anything else, there may be existing preludes
       auto iter = preludes.find(curr);
       if (iter != preludes.end()) {
         ourPreludes.swap(iter->second);
       }
+
       // special handling
       if (auto* set = curr->dynCast<LocalSet>()) {
         if (set->isTee()) {
@@ -172,11 +182,13 @@ struct Flatten
             replaceCurrent(set->value); // trivial, no set happens
           } else {
             // use a set in a prelude + a get
-            set->setTee(false);
+            set->makeSet();
             ourPreludes.push_back(set);
-            replaceCurrent(builder.makeLocalGet(set->index, set->value->type));
+            Type localType = getFunction()->getLocalType(set->index);
+            replaceCurrent(builder.makeLocalGet(set->index, localType));
           }
         }
+
       } else if (auto* br = curr->dynCast<Break>()) {
         if (br->value) {
           auto type = br->value->type;
@@ -202,6 +214,7 @@ struct Flatten
             replaceCurrent(br->value);
           }
         }
+
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
           auto type = sw->value->type;
@@ -226,28 +239,22 @@ struct Flatten
         }
       }
     }
+
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it
     // we have changed children
     ReFinalizeNode().visit(curr);
-    // move everything to the prelude, if we need to: anything but constants
-    if (!curr->is<Const>()) {
-      if (curr->type == unreachable) {
-        ourPreludes.push_back(curr);
-        replaceCurrent(builder.makeUnreachable());
-      } else if (curr->type == none) {
-        if (!curr->is<Nop>()) {
-          ourPreludes.push_back(curr);
-          replaceCurrent(builder.makeNop());
-        }
-      } else {
-        // use a local
-        auto type = curr->type;
-        Index temp = builder.addVar(getFunction(), type);
-        ourPreludes.push_back(builder.makeLocalSet(temp, curr));
-        replaceCurrent(builder.makeLocalGet(temp, type));
-      }
+    if (curr->type == unreachable) {
+      ourPreludes.push_back(curr);
+      replaceCurrent(builder.makeUnreachable());
+    } else if (curr->type.isConcrete()) {
+      // use a local
+      auto type = curr->type;
+      Index temp = builder.addVar(getFunction(), type);
+      ourPreludes.push_back(builder.makeLocalSet(temp, curr));
+      replaceCurrent(builder.makeLocalGet(temp, type));
     }
+
     // next, finish up: migrate our preludes if we can
     if (!ourPreludes.empty()) {
       auto* parent = getParent();

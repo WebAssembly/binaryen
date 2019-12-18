@@ -2459,8 +2459,11 @@ void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
     throwError("bad local.set index");
   }
   curr->value = popNonVoidExpression();
-  curr->type = curr->value->type;
-  curr->setTee(code == BinaryConsts::LocalTee);
+  if (code == BinaryConsts::LocalTee) {
+    curr->makeTee(currFunction->getLocalType(curr->index));
+  } else {
+    curr->makeSet();
+  }
   curr->finalize();
 }
 

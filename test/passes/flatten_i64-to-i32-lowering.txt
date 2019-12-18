@@ -83,7 +83,6 @@
  )
  (func $unreachable-select-i64 (; 2 ;) (result i32)
   (local $i64toi32_i32$0 i32)
-  (unreachable)
   (block
    (drop
     (block (result i32)
@@ -102,7 +101,6 @@
  )
  (func $unreachable-select-i64-b (; 3 ;) (result i32)
   (local $i64toi32_i32$0 i32)
-  (unreachable)
   (block
    (unreachable)
    (drop
@@ -122,7 +120,6 @@
  (func $unreachable-select-i64-c (; 4 ;) (result i32)
   (local $i64toi32_i32$0 i32)
   (local $i64toi32_i32$1 i32)
-  (unreachable)
   (block
    (drop
     (block (result i32)
@@ -159,263 +156,250 @@
   (local $i64toi32_i32$1 i32)
   (local $i64toi32_i32$2 i32)
   (block
-   (block
-    (local.set $0
-     (block (result i32)
-      (local.set $i64toi32_i32$2
-       (i32.const 0)
-      )
-      (local.set $i64toi32_i32$0
-       (i32.load
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.set $i64toi32_i32$1
-       (i32.load offset=4
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.get $i64toi32_i32$0)
-     )
-    )
-    (local.set $0$hi
-     (local.get $i64toi32_i32$1)
-    )
-   )
-   (drop
+   (local.set $0
     (block (result i32)
-     (local.set $i64toi32_i32$1
-      (local.get $0$hi)
+     (local.set $i64toi32_i32$2
+      (i32.const 0)
      )
-     (local.get $0)
-    )
-   )
-   (nop)
-   (block
-    (local.set $1
-     (block (result i32)
-      (local.set $i64toi32_i32$2
-       (i32.const 0)
-      )
-      (local.set $i64toi32_i32$1
-       (i32.load
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.set $i64toi32_i32$0
-       (i32.load offset=4
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.get $i64toi32_i32$1)
-     )
-    )
-    (local.set $1$hi
-     (local.get $i64toi32_i32$0)
-    )
-   )
-   (drop
-    (block (result i32)
      (local.set $i64toi32_i32$0
-      (local.get $1$hi)
+      (i32.load
+       (local.get $i64toi32_i32$2)
+      )
      )
-     (local.get $1)
-    )
-   )
-   (nop)
-   (block
-    (local.set $2
-     (block (result i32)
-      (local.set $i64toi32_i32$2
-       (i32.const 0)
-      )
-      (local.set $i64toi32_i32$0
-       (i32.load align=2
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.set $i64toi32_i32$1
-       (i32.load offset=4 align=2
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.get $i64toi32_i32$0)
-     )
-    )
-    (local.set $2$hi
-     (local.get $i64toi32_i32$1)
-    )
-   )
-   (drop
-    (block (result i32)
      (local.set $i64toi32_i32$1
-      (local.get $2$hi)
+      (i32.load offset=4
+       (local.get $i64toi32_i32$2)
+      )
      )
-     (local.get $2)
-    )
-   )
-   (nop)
-   (block
-    (local.set $3
-     (block (result i32)
-      (local.set $i64toi32_i32$2
-       (i32.const 0)
-      )
-      (local.set $i64toi32_i32$1
-       (i32.load align=1
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.set $i64toi32_i32$0
-       (i32.load offset=4 align=1
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.get $i64toi32_i32$1)
-     )
-    )
-    (local.set $3$hi
      (local.get $i64toi32_i32$0)
     )
    )
-   (drop
-    (block (result i32)
-     (local.set $i64toi32_i32$0
-      (local.get $3$hi)
-     )
-     (local.get $3)
-    )
+   (local.set $0$hi
+    (local.get $i64toi32_i32$1)
    )
-   (nop)
-   (block
-    (local.set $4
-     (block (result i32)
-      (local.set $i64toi32_i32$2
-       (i32.const 0)
-      )
-      (local.set $i64toi32_i32$0
-       (i32.load
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.set $i64toi32_i32$1
-       (i32.load offset=4
-        (local.get $i64toi32_i32$2)
-       )
-      )
-      (local.get $i64toi32_i32$0)
-     )
-    )
-    (local.set $4$hi
-     (local.get $i64toi32_i32$1)
-    )
-   )
-   (drop
-    (block (result i32)
-     (local.set $i64toi32_i32$1
-      (local.get $4$hi)
-     )
-     (local.get $4)
-    )
-   )
-   (nop)
-   (block
-    (local.set $i64toi32_i32$0
-     (i32.const 0)
-    )
-    (i32.store
-     (local.get $i64toi32_i32$0)
-     (block (result i32)
-      (local.set $i64toi32_i32$1
-       (i32.const 0)
-      )
-      (i32.const 1)
-     )
-    )
-    (i32.store offset=4
-     (local.get $i64toi32_i32$0)
-     (local.get $i64toi32_i32$1)
-    )
-   )
-   (nop)
-   (block
-    (local.set $i64toi32_i32$0
-     (i32.const 0)
-    )
-    (i32.store
-     (local.get $i64toi32_i32$0)
-     (block (result i32)
-      (local.set $i64toi32_i32$1
-       (i32.const 0)
-      )
-      (i32.const 2)
-     )
-    )
-    (i32.store offset=4
-     (local.get $i64toi32_i32$0)
-     (local.get $i64toi32_i32$1)
-    )
-   )
-   (nop)
-   (block
-    (local.set $i64toi32_i32$0
-     (i32.const 0)
-    )
-    (i32.store align=2
-     (local.get $i64toi32_i32$0)
-     (block (result i32)
-      (local.set $i64toi32_i32$1
-       (i32.const 0)
-      )
-      (i32.const 3)
-     )
-    )
-    (i32.store offset=4 align=2
-     (local.get $i64toi32_i32$0)
-     (local.get $i64toi32_i32$1)
-    )
-   )
-   (nop)
-   (block
-    (local.set $i64toi32_i32$0
-     (i32.const 0)
-    )
-    (i32.store align=1
-     (local.get $i64toi32_i32$0)
-     (block (result i32)
-      (local.set $i64toi32_i32$1
-       (i32.const 0)
-      )
-      (i32.const 4)
-     )
-    )
-    (i32.store offset=4 align=1
-     (local.get $i64toi32_i32$0)
-     (local.get $i64toi32_i32$1)
-    )
-   )
-   (nop)
-   (block
-    (local.set $i64toi32_i32$0
-     (i32.const 0)
-    )
-    (i32.store
-     (local.get $i64toi32_i32$0)
-     (block (result i32)
-      (local.set $i64toi32_i32$1
-       (i32.const 0)
-      )
-      (i32.const 5)
-     )
-    )
-    (i32.store offset=4
-     (local.get $i64toi32_i32$0)
-     (local.get $i64toi32_i32$1)
-    )
-   )
-   (nop)
   )
-  (nop)
+  (drop
+   (block (result i32)
+    (local.set $i64toi32_i32$1
+     (local.get $0$hi)
+    )
+    (local.get $0)
+   )
+  )
+  (block
+   (local.set $1
+    (block (result i32)
+     (local.set $i64toi32_i32$2
+      (i32.const 0)
+     )
+     (local.set $i64toi32_i32$1
+      (i32.load
+       (local.get $i64toi32_i32$2)
+      )
+     )
+     (local.set $i64toi32_i32$0
+      (i32.load offset=4
+       (local.get $i64toi32_i32$2)
+      )
+     )
+     (local.get $i64toi32_i32$1)
+    )
+   )
+   (local.set $1$hi
+    (local.get $i64toi32_i32$0)
+   )
+  )
+  (drop
+   (block (result i32)
+    (local.set $i64toi32_i32$0
+     (local.get $1$hi)
+    )
+    (local.get $1)
+   )
+  )
+  (block
+   (local.set $2
+    (block (result i32)
+     (local.set $i64toi32_i32$2
+      (i32.const 0)
+     )
+     (local.set $i64toi32_i32$0
+      (i32.load align=2
+       (local.get $i64toi32_i32$2)
+      )
+     )
+     (local.set $i64toi32_i32$1
+      (i32.load offset=4 align=2
+       (local.get $i64toi32_i32$2)
+      )
+     )
+     (local.get $i64toi32_i32$0)
+    )
+   )
+   (local.set $2$hi
+    (local.get $i64toi32_i32$1)
+   )
+  )
+  (drop
+   (block (result i32)
+    (local.set $i64toi32_i32$1
+     (local.get $2$hi)
+    )
+    (local.get $2)
+   )
+  )
+  (block
+   (local.set $3
+    (block (result i32)
+     (local.set $i64toi32_i32$2
+      (i32.const 0)
+     )
+     (local.set $i64toi32_i32$1
+      (i32.load align=1
+       (local.get $i64toi32_i32$2)
+      )
+     )
+     (local.set $i64toi32_i32$0
+      (i32.load offset=4 align=1
+       (local.get $i64toi32_i32$2)
+      )
+     )
+     (local.get $i64toi32_i32$1)
+    )
+   )
+   (local.set $3$hi
+    (local.get $i64toi32_i32$0)
+   )
+  )
+  (drop
+   (block (result i32)
+    (local.set $i64toi32_i32$0
+     (local.get $3$hi)
+    )
+    (local.get $3)
+   )
+  )
+  (block
+   (local.set $4
+    (block (result i32)
+     (local.set $i64toi32_i32$2
+      (i32.const 0)
+     )
+     (local.set $i64toi32_i32$0
+      (i32.load
+       (local.get $i64toi32_i32$2)
+      )
+     )
+     (local.set $i64toi32_i32$1
+      (i32.load offset=4
+       (local.get $i64toi32_i32$2)
+      )
+     )
+     (local.get $i64toi32_i32$0)
+    )
+   )
+   (local.set $4$hi
+    (local.get $i64toi32_i32$1)
+   )
+  )
+  (drop
+   (block (result i32)
+    (local.set $i64toi32_i32$1
+     (local.get $4$hi)
+    )
+    (local.get $4)
+   )
+  )
+  (block
+   (local.set $i64toi32_i32$0
+    (i32.const 0)
+   )
+   (i32.store
+    (local.get $i64toi32_i32$0)
+    (block (result i32)
+     (local.set $i64toi32_i32$1
+      (i32.const 0)
+     )
+     (i32.const 1)
+    )
+   )
+   (i32.store offset=4
+    (local.get $i64toi32_i32$0)
+    (local.get $i64toi32_i32$1)
+   )
+  )
+  (block
+   (local.set $i64toi32_i32$0
+    (i32.const 0)
+   )
+   (i32.store
+    (local.get $i64toi32_i32$0)
+    (block (result i32)
+     (local.set $i64toi32_i32$1
+      (i32.const 0)
+     )
+     (i32.const 2)
+    )
+   )
+   (i32.store offset=4
+    (local.get $i64toi32_i32$0)
+    (local.get $i64toi32_i32$1)
+   )
+  )
+  (block
+   (local.set $i64toi32_i32$0
+    (i32.const 0)
+   )
+   (i32.store align=2
+    (local.get $i64toi32_i32$0)
+    (block (result i32)
+     (local.set $i64toi32_i32$1
+      (i32.const 0)
+     )
+     (i32.const 3)
+    )
+   )
+   (i32.store offset=4 align=2
+    (local.get $i64toi32_i32$0)
+    (local.get $i64toi32_i32$1)
+   )
+  )
+  (block
+   (local.set $i64toi32_i32$0
+    (i32.const 0)
+   )
+   (i32.store align=1
+    (local.get $i64toi32_i32$0)
+    (block (result i32)
+     (local.set $i64toi32_i32$1
+      (i32.const 0)
+     )
+     (i32.const 4)
+    )
+   )
+   (i32.store offset=4 align=1
+    (local.get $i64toi32_i32$0)
+    (local.get $i64toi32_i32$1)
+   )
+  )
+  (block
+   (local.set $i64toi32_i32$0
+    (i32.const 0)
+   )
+   (i32.store
+    (local.get $i64toi32_i32$0)
+    (block (result i32)
+     (local.set $i64toi32_i32$1
+      (i32.const 0)
+     )
+     (i32.const 5)
+    )
+   )
+   (i32.store offset=4
+    (local.get $i64toi32_i32$0)
+    (local.get $i64toi32_i32$1)
+   )
+  )
  )
 )
 (module
@@ -436,45 +420,40 @@
   (local $0$hi i32)
   (local $i64toi32_i32$0 i32)
   (block
-   (block
-    (local.set $0
-     (block (result i32)
-      (local.set $i64toi32_i32$0
-       (global.get $f$hi)
-      )
-      (global.get $f)
-     )
-    )
-    (local.set $0$hi
-     (local.get $i64toi32_i32$0)
-    )
-   )
-   (call $call
+   (local.set $0
     (block (result i32)
      (local.set $i64toi32_i32$0
-      (local.get $0$hi)
+      (global.get $f$hi)
      )
-     (local.get $0)
+     (global.get $f)
     )
+   )
+   (local.set $0$hi
     (local.get $i64toi32_i32$0)
    )
-   (nop)
-   (block
-    (global.set $f
-     (block (result i32)
-      (local.set $i64toi32_i32$0
-       (i32.const 287454020)
-      )
-      (i32.const 1432778632)
-     )
+  )
+  (call $call
+   (block (result i32)
+    (local.set $i64toi32_i32$0
+     (local.get $0$hi)
     )
-    (global.set $f$hi
-     (local.get $i64toi32_i32$0)
+    (local.get $0)
+   )
+   (local.get $i64toi32_i32$0)
+  )
+  (block
+   (global.set $f
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (i32.const 287454020)
+     )
+     (i32.const 1432778632)
     )
    )
-   (nop)
+   (global.set $f$hi
+    (local.get $i64toi32_i32$0)
+   )
   )
-  (nop)
  )
  (func $2 (; 2 ;)
   (local $0 i32)
@@ -483,7 +462,6 @@
   (local $1$hi i32)
   (local $i64toi32_i32$0 i32)
   (block $label$1
-   (unreachable)
    (unreachable)
   )
   (block
@@ -512,7 +490,6 @@
     (local.get $i64toi32_i32$0)
    )
   )
-  (nop)
  )
 )
 (module
@@ -532,44 +509,39 @@
   (local $0$hi i32)
   (local $i64toi32_i32$0 i32)
   (block
-   (block
-    (local.set $0
-     (block (result i32)
-      (local.set $i64toi32_i32$0
-       (global.get $f$hi)
-      )
-      (global.get $f)
-     )
-    )
-    (local.set $0$hi
-     (local.get $i64toi32_i32$0)
-    )
-   )
-   (call $call
+   (local.set $0
     (block (result i32)
      (local.set $i64toi32_i32$0
-      (local.get $0$hi)
+      (global.get $f$hi)
      )
-     (local.get $0)
+     (global.get $f)
     )
+   )
+   (local.set $0$hi
     (local.get $i64toi32_i32$0)
    )
-   (nop)
-   (block
-    (global.set $f
-     (block (result i32)
-      (local.set $i64toi32_i32$0
-       (i32.const 287454020)
-      )
-      (i32.const 1432778632)
-     )
+  )
+  (call $call
+   (block (result i32)
+    (local.set $i64toi32_i32$0
+     (local.get $0$hi)
     )
-    (global.set $f$hi
-     (local.get $i64toi32_i32$0)
+    (local.get $0)
+   )
+   (local.get $i64toi32_i32$0)
+  )
+  (block
+   (global.set $f
+    (block (result i32)
+     (local.set $i64toi32_i32$0
+      (i32.const 287454020)
+     )
+     (i32.const 1432778632)
     )
    )
-   (nop)
+   (global.set $f$hi
+    (local.get $i64toi32_i32$0)
+   )
   )
-  (nop)
  )
 )

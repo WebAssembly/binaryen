@@ -103,7 +103,6 @@
   (block $label$1
    (nop)
    (unreachable)
-   (unreachable)
   )
   (unreachable)
  )
@@ -142,15 +141,12 @@
    (local.set $7
     (f32.const 5.5)
    )
-   (nop)
    (local.set $5
     (i64.const 6)
    )
-   (nop)
    (local.set $8
     (f64.const 8)
    )
-   (nop)
    (local.set $9
     (local.get $0)
    )

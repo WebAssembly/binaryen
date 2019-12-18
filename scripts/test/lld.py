@@ -19,14 +19,14 @@ from . import support
 
 
 def args_for_finalize(filename):
+    ret = ['--global-base=568']
     if 'safe_stack' in filename:
-        return ['--check-stack-overflow', '--global-base=568']
-    elif 'shared' in filename:
-        return ['--side-module']
-    elif 'standalone-wasm' in filename:
-        return ['--standalone-wasm', '--global-base=568']
-    else:
-        return ['--global-base=568']
+        ret += ['--check-stack-overflow']
+    if 'shared' in filename:
+        ret += ['--side-module']
+    if 'standalone-wasm' in filename:
+        ret += ['--standalone-wasm']
+    return ret
 
 
 def test_wasm_emscripten_finalize():
