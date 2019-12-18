@@ -17,7 +17,7 @@
 #include "wasm-debug.h"
 #include "wasm.h"
 
-#ifdef USE_LLVM_DWARF
+#ifdef BUILD_LLVM_DWARF
 #include "llvm/ObjectYAML/DWARFEmitter.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
@@ -40,7 +40,7 @@ bool hasDWARFSections(const Module& wasm) {
   return false;
 }
 
-#ifdef USE_LLVM_DWARF
+#ifdef BUILD_LLVM_DWARF
 
 struct BinaryenDWARFInfo {
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
@@ -134,7 +134,7 @@ void updateDWARF(Module& wasm) {
   }
 }
 
-#else // USE_LLVM_DWARF
+#else // BUILD_LLVM_DWARF
 
 void dumpDWARF(const Module& wasm) {
   std::cerr << "warning: no DWARF dumping support present\n";
@@ -144,7 +144,7 @@ void updateDWARF(Module& wasm) {
   std::cerr << "warning: no DWARF updating support present\n";
 }
 
-#endif // USE_LLVM_DWARF
+#endif // BUILD_LLVM_DWARF
 
 } // namespace Debug
 

@@ -72,13 +72,13 @@ option(BUILD_STATIC_LIB "Build as a static library" OFF)
 
 # For now, don't include full DWARF support in JS builds, for size.
 if (NOT EMSCRIPTEN)
-  option(USE_LLVM_DWARF "Enable full DWARF support" ON)
+  option(BUILD_LLVM_DWARF "Enable full DWARF support" ON)
 
-  if(USE_LLVM_DWARF)
+  if(BUILD_LLVM_DWARF)
     if(MSVC)
-      ADD_COMPILE_FLAG("/DUSE_LLVM_DWARF")
+      ADD_COMPILE_FLAG("/DBUILD_LLVM_DWARF")
     else()
-      ADD_COMPILE_FLAG("-DUSE_LLVM_DWARF")
+      ADD_COMPILE_FLAG("-DBUILD_LLVM_DWARF")
     endif()
   endif()
 endif()
@@ -86,7 +86,7 @@ endif()
 # Compiler setup.
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-if(USE_LLVM_DWARF)
+if(BUILD_LLVM_DWARF)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
 endif()
 
@@ -251,7 +251,7 @@ set(binaryen_objs
     $<TARGET_OBJECTS:cfg>
     $<TARGET_OBJECTS:support>)
 
-IF(USE_LLVM_DWARF)
+IF(BUILD_LLVM_DWARF)
   SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:llvm_dwarf>)
 ENDIF()
 
