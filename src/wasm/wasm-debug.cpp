@@ -140,7 +140,7 @@ void dumpDWARF(const Module& wasm) {
   std::cerr << "warning: no DWARF dumping support present\n";
 }
 
-void updateDWARF(Module& wasm) {
+void writeDWARFSections(Module& wasm) {
   std::cerr << "warning: no DWARF updating support present\n";
 }
 
