@@ -120,6 +120,7 @@
  (func (export "i8x16.min_u") (param $0 v128) (param $1 v128) (result v128) (i8x16.min_u (local.get $0) (local.get $1)))
  (func (export "i8x16.max_s") (param $0 v128) (param $1 v128) (result v128) (i8x16.max_s (local.get $0) (local.get $1)))
  (func (export "i8x16.max_u") (param $0 v128) (param $1 v128) (result v128) (i8x16.max_u (local.get $0) (local.get $1)))
+ (func (export "i8x16.avgr_u") (param $0 v128) (param $1 v128) (result v128) (i8x16.avgr_u (local.get $0) (local.get $1)))
  (func (export "i16x8.neg") (param $0 v128) (result v128) (i16x8.neg (local.get $0)))
  (func (export "i16x8.any_true") (param $0 v128) (result i32) (i16x8.any_true (local.get $0)))
  (func (export "i16x8.all_true") (param $0 v128) (result i32) (i16x8.all_true (local.get $0)))
@@ -137,6 +138,7 @@
  (func (export "i16x8.min_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.min_u (local.get $0) (local.get $1)))
  (func (export "i16x8.max_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_s (local.get $0) (local.get $1)))
  (func (export "i16x8.max_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_u (local.get $0) (local.get $1)))
+ (func (export "i16x8.avgr_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.avgr_u (local.get $0) (local.get $1)))
  (func (export "i32x4.neg") (param $0 v128) (result v128) (i32x4.neg (local.get $0)))
  (func (export "i32x4.any_true") (param $0 v128) (result i32) (i32x4.any_true (local.get $0)))
  (func (export "i32x4.all_true") (param $0 v128) (result i32) (i32x4.all_true (local.get $0)))
@@ -594,6 +596,13 @@
   )
   (v128.const i8x16 3 231 255 128 129 129 103 29 103 196 231 142 17 255 127 142)
 )
+(assert_return
+  (invoke "i8x16.avgr_u"
+    (v128.const i8x16 0  42 255 128 127 129   6 29 103 196 231 142 17 250   1  73)
+    (v128.const i8x16 3 231   1 128 129 6   103 17  42  29  73  42  0 255 127 142)
+  )
+  (v128.const i8x16 2 137 128 128 128 68 55 23 73 113 152 92 9 253 64 108)
+)
 
 ;; i16x8 arithmetic
 (assert_return (invoke "i16x8.neg" (v128.const i32x4 0 1 42 -3 -56 32767 -32768 32766))
@@ -689,6 +698,13 @@
     (v128.const i32x4 768     1 32768 33024  1536 18688 65280     2)
   )
   (v128.const i32x4 768 65280 32768 33024 33024 59136 65280 32766)
+)
+(assert_return
+  (invoke "i16x8.avgr_u"
+    (v128.const i16x8 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i16x8 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i16x8 384 32641 32768 32768 17280 38912 64640 16384)
 )
 
 ;; i32x4 arithmetic
