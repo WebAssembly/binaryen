@@ -1,14 +1,12 @@
-[fuzz-exec] calling $func_0
-[trap final > memory: 18446744073709551615 > 65514]
-[fuzz-exec] calling $func_1
-[trap final > memory: 18446744073709551615 > 65514]
+[fuzz-exec] calling func_0
+[fuzz-exec] calling func_1
 (module
- (type $FUNCSIG$j (func (result i64)))
- (type $FUNCSIG$i (func (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
  (memory $0 1 1)
  (export "func_0" (func $func_0))
  (export "func_1" (func $func_1))
- (func $func_0 (; 0 ;) (; has Stack IR ;) (type $FUNCSIG$j) (result i64)
+ (func $func_0 (; 0 ;) (; has Stack IR ;) (result i64)
   (block $label$0 (result i64)
    (br_if $label$0
     (i64.const 1234)
@@ -18,15 +16,13 @@
    )
   )
  )
- (func $func_1 (; 1 ;) (; has Stack IR ;) (type $FUNCSIG$i) (result i32)
+ (func $func_1 (; 1 ;) (; has Stack IR ;) (result i32)
   (i32.load16_s offset=22 align=1
    (i32.const -1)
   )
  )
 )
-[fuzz-exec] calling $func_0
-[trap final > memory: 18446744073709551615 > 65514]
-[fuzz-exec] calling $func_1
-[trap final > memory: 18446744073709551615 > 65514]
-[fuzz-exec] comparing $func_0
-[fuzz-exec] comparing $func_1
+[fuzz-exec] calling func_0
+[fuzz-exec] calling func_1
+[fuzz-exec] comparing func_0
+[fuzz-exec] comparing func_1

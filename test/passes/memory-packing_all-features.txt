@@ -7,7 +7,7 @@
  (import "env" "memoryBase" (global $memoryBase i32))
 )
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  (import "env" "memory" (memory $0 2048 2048))
  (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
  (data (i32.const 1024) "waka this CAN be optimized")
@@ -18,7 +18,7 @@
  (data (i32.const 4035) "nice skip here")
  (data (i32.const 4066) "another\00but no")
  (import "env" "memoryBase" (global $memoryBase i32))
- (func $will-trap (; 0 ;) (type $FUNCSIG$v)
+ (func $will-trap (; 0 ;)
   (block
    (drop
     (i32.const 1)
@@ -31,9 +31,11 @@
     (unreachable)
    )
   )
-  (unreachable)
+  (block
+   (data.drop 0)
+  )
  )
- (func $will-trap-refinalized (; 1 ;) (type $FUNCSIG$v)
+ (func $will-trap-refinalized (; 1 ;)
   (drop
    (loop $loop-in (result i32)
     (block
@@ -53,12 +55,15 @@
   )
   (drop
    (loop $loop-in0 (result i32)
-    (unreachable)
+    (block
+     (data.drop 1)
+     (data.drop 2)
+    )
     (i32.const 42)
    )
   )
  )
- (func $zero-sized-nop (; 2 ;) (type $FUNCSIG$v)
+ (func $zero-sized-nop (; 2 ;)
   (block
    (drop
     (i32.const 1)
@@ -67,11 +72,13 @@
     (i32.const 2)
    )
   )
-  (unreachable)
+  (block
+   (data.drop 3)
+  )
  )
 )
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  (import "env" "memory" (memory $0 2048 2048))
  (data passive "zeroes at start")
  (data passive "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes at start")
@@ -96,7 +103,7 @@
  (data passive "")
  (data passive "")
  (data passive "nonzero")
- (func $zeroes-at-start (; 0 ;) (type $FUNCSIG$v)
+ (func $zeroes-at-start (; 0 ;)
   (block
    (memory.fill
     (i32.const 0)
@@ -113,7 +120,7 @@
    (data.drop 0)
   )
  )
- (func $zeroes-at-start-not-split (; 1 ;) (type $FUNCSIG$v)
+ (func $zeroes-at-start-not-split (; 1 ;)
   (memory.init 1
    (i32.const 0)
    (i32.const 0)
@@ -133,7 +140,7 @@
    (data.drop 1)
   )
  )
- (func $few-zeroes-at-start (; 2 ;) (type $FUNCSIG$v)
+ (func $few-zeroes-at-start (; 2 ;)
   (memory.init 2
    (i32.const 0)
    (i32.const 0)
@@ -143,7 +150,7 @@
    (data.drop 2)
   )
  )
- (func $zeroes-at-end (; 3 ;) (type $FUNCSIG$v)
+ (func $zeroes-at-end (; 3 ;)
   (block
    (memory.init 3
     (i32.const 0)
@@ -160,7 +167,7 @@
    (data.drop 3)
   )
  )
- (func $zeroes-at-end-not-split (; 4 ;) (type $FUNCSIG$v)
+ (func $zeroes-at-end-not-split (; 4 ;)
   (memory.init 4
    (i32.const 0)
    (i32.const 0)
@@ -180,7 +187,7 @@
    (data.drop 4)
   )
  )
- (func $few-zeroes-at-end (; 5 ;) (type $FUNCSIG$v)
+ (func $few-zeroes-at-end (; 5 ;)
   (memory.init 5
    (i32.const 0)
    (i32.const 0)
@@ -190,7 +197,7 @@
    (data.drop 5)
   )
  )
- (func $zeroes-in-middle (; 6 ;) (type $FUNCSIG$v)
+ (func $zeroes-in-middle (; 6 ;)
   (block
    (memory.init 6
     (i32.const 0)
@@ -213,7 +220,7 @@
    (data.drop 7)
   )
  )
- (func $zeroes-in-middle-not-split (; 7 ;) (type $FUNCSIG$v)
+ (func $zeroes-in-middle-not-split (; 7 ;)
   (memory.init 8
    (i32.const 0)
    (i32.const 0)
@@ -228,7 +235,7 @@
    (data.drop 8)
   )
  )
- (func $few-zeroes-in-middle (; 8 ;) (type $FUNCSIG$v)
+ (func $few-zeroes-in-middle (; 8 ;)
   (memory.init 9
    (i32.const 0)
    (i32.const 0)
@@ -238,7 +245,7 @@
    (data.drop 9)
   )
  )
- (func $multiple-spans-of-zeroes (; 9 ;) (type $FUNCSIG$v)
+ (func $multiple-spans-of-zeroes (; 9 ;)
   (block
    (memory.init 10
     (i32.const 0)
@@ -272,7 +279,7 @@
    (data.drop 12)
   )
  )
- (func $even-more-zeroes (; 10 ;) (type $FUNCSIG$v)
+ (func $even-more-zeroes (; 10 ;)
   (block
    (memory.fill
     (i32.const 0)
@@ -316,7 +323,7 @@
    (data.drop 15)
   )
  )
- (func $only-zeroes (; 11 ;) (type $FUNCSIG$v)
+ (func $only-zeroes (; 11 ;)
   (block
    (memory.fill
     (i32.const 0)
@@ -326,7 +333,7 @@
   )
   (data.drop 16)
  )
- (func $no-zeroes (; 12 ;) (type $FUNCSIG$v)
+ (func $no-zeroes (; 12 ;)
   (memory.init 17
    (i32.const 0)
    (i32.const 0)
@@ -336,7 +343,7 @@
    (data.drop 17)
   )
  )
- (func $empty (; 13 ;) (type $FUNCSIG$v)
+ (func $empty (; 13 ;)
   (block
    (drop
     (i32.const 0)
@@ -347,7 +354,7 @@
   )
   (data.drop 18)
  )
- (func $empty-nonzero-size (; 14 ;) (type $FUNCSIG$v)
+ (func $empty-nonzero-size (; 14 ;)
   (block
    (drop
     (i32.const 0)
@@ -362,15 +369,15 @@
   )
   (data.drop 19)
  )
- (func $multiple-drop-empty (; 15 ;) (type $FUNCSIG$v)
+ (func $multiple-drop-empty (; 15 ;)
   (data.drop 20)
   (data.drop 20)
  )
- (func $multiple-drop-zeroes (; 16 ;) (type $FUNCSIG$v)
+ (func $multiple-drop-zeroes (; 16 ;)
   (data.drop 21)
   (data.drop 21)
  )
- (func $multiple-drop-nonzero (; 17 ;) (type $FUNCSIG$v)
+ (func $multiple-drop-nonzero (; 17 ;)
   (block
    (data.drop 22)
   )
@@ -380,7 +387,7 @@
  )
 )
 (module
- (type $FUNCSIG$v (func))
+ (type $none_=>_none (func))
  (import "env" "memory" (memory $0 2048 2048))
  (data passive "even")
  (data passive "more")
@@ -415,7 +422,7 @@
  (data passive "more")
  (data passive "zeroes")
  (import "env" "param" (global $param i32))
- (func $nonconst-dest (; 0 ;) (type $FUNCSIG$v)
+ (func $nonconst-dest (; 0 ;)
   (local $0 i32)
   (block
    (local.set $0
@@ -481,7 +488,7 @@
    (data.drop 2)
   )
  )
- (func $nonconst-offset (; 1 ;) (type $FUNCSIG$v)
+ (func $nonconst-offset (; 1 ;)
   (memory.init 3
    (i32.const 0)
    (global.get $param)
@@ -491,7 +498,7 @@
    (data.drop 3)
   )
  )
- (func $nonconst-size (; 2 ;) (type $FUNCSIG$v)
+ (func $nonconst-size (; 2 ;)
   (memory.init 4
    (i32.const 0)
    (i32.const 0)
@@ -501,7 +508,7 @@
    (data.drop 4)
   )
  )
- (func $partial-skip-start (; 3 ;) (type $FUNCSIG$v)
+ (func $partial-skip-start (; 3 ;)
   (block
    (memory.fill
     (i32.const 0)
@@ -545,7 +552,7 @@
    (data.drop 7)
   )
  )
- (func $full-skip-start (; 4 ;) (type $FUNCSIG$v)
+ (func $full-skip-start (; 4 ;)
   (block
    (memory.init 8
     (i32.const 0)
@@ -584,7 +591,7 @@
    (data.drop 10)
   )
  )
- (func $partial-skip-end (; 5 ;) (type $FUNCSIG$v)
+ (func $partial-skip-end (; 5 ;)
   (block
    (memory.fill
     (i32.const 0)
@@ -628,7 +635,7 @@
    (data.drop 13)
   )
  )
- (func $full-skip-end (; 6 ;) (type $FUNCSIG$v)
+ (func $full-skip-end (; 6 ;)
   (block
    (memory.fill
     (i32.const 0)
@@ -667,7 +674,7 @@
    (data.drop 16)
   )
  )
- (func $slice-zeroes (; 7 ;) (type $FUNCSIG$v)
+ (func $slice-zeroes (; 7 ;)
   (block
    (memory.fill
     (i32.const 0)
@@ -681,7 +688,7 @@
    (data.drop 19)
   )
  )
- (func $slice-nonzeroes (; 8 ;) (type $FUNCSIG$v)
+ (func $slice-nonzeroes (; 8 ;)
   (block
    (memory.init 20
     (i32.const 0)
@@ -695,7 +702,7 @@
    (data.drop 22)
   )
  )
- (func $zero-size (; 9 ;) (type $FUNCSIG$v)
+ (func $zero-size (; 9 ;)
   (block
    (drop
     (i32.const 0)
@@ -710,7 +717,7 @@
    (data.drop 25)
   )
  )
- (func $zero-size-undropped (; 10 ;) (type $FUNCSIG$v)
+ (func $zero-size-undropped (; 10 ;)
   (drop
    (i32.const 0)
   )
@@ -718,7 +725,7 @@
    (i32.const 40)
   )
  )
- (func $out-of-bounds-offset (; 11 ;) (type $FUNCSIG$v)
+ (func $out-of-bounds-offset (; 11 ;)
   (block
    (drop
     (i32.const 0)
@@ -737,7 +744,7 @@
    (data.drop 28)
   )
  )
- (func $out-of-bounds-size (; 12 ;) (type $FUNCSIG$v)
+ (func $out-of-bounds-size (; 12 ;)
   (block
    (drop
     (i32.const 0)

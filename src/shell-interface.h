@@ -98,7 +98,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (import->module == SPECTEST && import->base == GLOBAL) {
+      if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
         switch (import->type) {
           case i32:
             globals[import->name] = Literal(int32_t(666));
@@ -120,7 +120,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             assert(false && "exnref not implemented yet");
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
       }
     });
@@ -133,9 +133,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal callImport(Function* import, LiteralList& arguments) override {
-    if (import->module == SPECTEST && import->base == PRINT) {
+    if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
-        std::cout << '(' << argument << ')' << '\n';
+        std::cout << argument << " : " << argument.type << '\n';
       }
       return Literal();
     } else if (import->module == ENV && import->base == EXIT) {
@@ -149,7 +149,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   Literal callTable(Index index,
                     LiteralList& arguments,
-                    Type result,
+                    Type results,
                     ModuleInstance& instance) override {
     if (index >= table.size()) {
       trap("callTable overflow");
@@ -158,15 +158,16 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (!func) {
       trap("uninitialized table element");
     }
-    if (func->params.size() != arguments.size()) {
+    const std::vector<Type>& params = func->sig.params.expand();
+    if (params.size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");
     }
-    for (size_t i = 0; i < func->params.size(); i++) {
-      if (func->params[i] != arguments[i].type) {
+    for (size_t i = 0; i < params.size(); i++) {
+      if (params[i] != arguments[i].type) {
         trap("callIndirect: bad argument type");
       }
     }
-    if (func->result != result) {
+    if (func->sig.results != results) {
       trap("callIndirect: bad result type");
     }
     if (func->imported()) {
@@ -211,7 +212,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   void trap(const char* why) override {
-    std::cout << "[trap " << why << "]\n";
+    std::cerr << "[trap " << why << "]\n";
     throw TrapException();
   }
 };

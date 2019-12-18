@@ -19,7 +19,7 @@ MERGE_BASE=$(git merge-base $BRANCH HEAD)
 FORMAT_MSG=$(git clang-format $MERGE_BASE -q --diff -- src/)
 if [ -n "$FORMAT_MSG" -a "$FORMAT_MSG" != "no modified files to format" ]
 then
-  echo "Run git clang-format before committing!"
+  echo "Please run git clang-format before committing, or apply this diff:"
   echo
   # Run git clang-format again, this time without capruting stdout.  This way
   # clang-format format the message nicely and add color.

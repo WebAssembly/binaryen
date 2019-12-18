@@ -23,7 +23,6 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/bits.h"
-#include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "pass.h"
@@ -41,7 +40,7 @@ static const Name ALIGNFAULT_IMPORT("alignfault");
 
 static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
-  ret += printType(curr->type);
+  ret += curr->type.toString();
   ret += "_" + std::to_string(curr->bytes) + "_";
   if (LoadUtils::isSignRelevant(curr) && !curr->signed_) {
     ret += "U_";
@@ -56,7 +55,7 @@ static Name getLoadName(Load* curr) {
 
 static Name getStoreName(Store* curr) {
   std::string ret = "SAFE_HEAP_STORE_";
-  ret += printType(curr->valueType);
+  ret += curr->valueType.toString();
   ret += "_" + std::to_string(curr->bytes) + "_";
   if (curr->isAtomic) {
     ret += "A";
@@ -137,9 +136,7 @@ struct SafeHeap : public Pass {
       import->name = getSbrkPtr = GET_SBRK_PTR_IMPORT;
       import->module = ENV;
       import->base = GET_SBRK_PTR_IMPORT;
-      auto* functionType = ensureFunctionType("i", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::i32);
       module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
@@ -149,9 +146,7 @@ struct SafeHeap : public Pass {
       import->name = segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
-      auto* functionType = ensureFunctionType("v", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::none);
       module->addFunction(import);
     }
     if (auto* existing = info.getImportedFunction(ENV, ALIGNFAULT_IMPORT)) {
@@ -161,16 +156,14 @@ struct SafeHeap : public Pass {
       import->name = alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
       import->base = ALIGNFAULT_IMPORT;
-      auto* functionType = ensureFunctionType("v", module);
-      import->type = functionType->name;
-      FunctionTypeUtils::fillFunction(import, functionType);
+      import->sig = Signature(Type::none, Type::none);
       module->addFunction(import);
     }
   }
 
   bool
   isPossibleAtomicOperation(Index align, Index bytes, bool shared, Type type) {
-    return align == bytes && shared && isIntegerType(type);
+    return align == bytes && shared && type.isInteger();
   }
 
   void addGlobals(Module* module, FeatureSet features) {
@@ -189,7 +182,7 @@ struct SafeHeap : public Pass {
         }
         for (auto signed_ : {true, false}) {
           load.signed_ = signed_;
-          if (isFloatType(type) && signed_) {
+          if (type.isFloat() && signed_) {
             continue;
           }
           for (Index align : {1, 2, 4, 8, 16}) {
@@ -251,10 +244,9 @@ struct SafeHeap : public Pass {
     }
     auto* func = new Function;
     func->name = name;
-    func->params.push_back(i32); // pointer
-    func->params.push_back(i32); // offset
+    // pointer, offset
+    func->sig = Signature({Type::i32, Type::i32}, style.type);
     func->vars.push_back(i32);   // pointer + offset
-    func->result = style.type;
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
@@ -291,11 +283,9 @@ struct SafeHeap : public Pass {
     }
     auto* func = new Function;
     func->name = name;
-    func->params.push_back(i32);             // pointer
-    func->params.push_back(i32);             // offset
-    func->params.push_back(style.valueType); // value
+    // pointer, offset, value
+    func->sig = Signature({Type::i32, Type::i32, style.valueType}, Type::none);
     func->vars.push_back(i32);               // pointer + offset
-    func->result = none;
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(

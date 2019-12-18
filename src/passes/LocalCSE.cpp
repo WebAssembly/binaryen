@@ -184,8 +184,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         if (iter != usables.end()) {
           // already exists in the table, this is good to reuse
           auto& info = iter->second;
+          Type localType = getFunction()->getLocalType(info.index);
           set->value =
-            Builder(*getModule()).makeLocalGet(info.index, value->type);
+            Builder(*getModule()).makeLocalGet(info.index, localType);
           anotherPass = true;
         } else {
           // not in table, add this, maybe we can help others later
@@ -208,7 +209,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (value->is<LocalGet>()) {
       return false; // trivial, this is what we optimize to!
     }
-    if (!isConcreteType(value->type)) {
+    if (!value->type.isConcrete()) {
       return false; // don't bother with unreachable etc.
     }
     if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {

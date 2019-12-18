@@ -254,6 +254,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   void doWalkFunction(Function* func) {
     basicBlocks.clear();
+    debugIds.clear();
 
     startBasicBlock();
     entry = currBasicBlock;
@@ -364,7 +365,7 @@ private:
         return;
       }
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("not found");
   }
 };
 

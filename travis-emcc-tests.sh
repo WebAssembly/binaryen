@@ -1,6 +1,9 @@
+#!/usr/bin/env bash
+
 set -e
 echo "travis-test build"
-./build-js.sh -g
+emconfigure cmake -DCMAKE_BUILD_TYPE=Release
+emmake make -j4 binaryen_js
 echo "travis-test test"
-python -m scripts.test.binaryenjs
+python3 -m scripts.test.binaryenjs
 echo "travis-test yay!"

@@ -44,41 +44,12 @@ void ReFinalize::visitBlock(Block* curr) {
     curr->type = none;
     return;
   }
-  auto old = curr->type;
   // do this quickly, without any validation
   // last element determines type
   curr->type = curr->list.back()->type;
   // if concrete, it doesn't matter if we have an unreachable child, and we
   // don't need to look at breaks
-  if (isConcreteType(curr->type)) {
-    // make sure our branches make sense for us - we may have just made
-    // ourselves concrete for a value flowing out, while branches did not send a
-    // value. such branches could not have been actually taken before, that is,
-    // there were in unreachable code, but we do still need to fix them up here.
-    if (!isConcreteType(old)) {
-      auto iter = breakValues.find(curr->name);
-      if (iter != breakValues.end()) {
-        // there is a break to here
-        auto type = iter->second;
-        if (type == none) {
-          // we need to fix this up. set the values to unreachables
-          // note that we don't need to handle br_on_exn here, because its value
-          // type is never none
-          for (auto* br : FindAll<Break>(curr).list) {
-            handleBranchForVisitBlock(br, curr->name, getModule());
-          }
-          for (auto* sw : FindAll<Switch>(curr).list) {
-            handleBranchForVisitBlock(sw, curr->name, getModule());
-          }
-          // and we need to propagate that type out, re-walk
-          ReFinalize fixer;
-          fixer.setModule(getModule());
-          Expression* temp = curr;
-          fixer.walk(temp);
-          assert(temp == curr);
-        }
-      }
-    }
+  if (curr->type.isConcrete()) {
     return;
   }
   // otherwise, we have no final fallthrough element to determine the type,
@@ -164,7 +135,7 @@ void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
 void ReFinalize::visitBrOnExn(BrOnExn* curr) {
   curr->finalize();
-  updateBreakValueType(curr->name, curr->getSingleSentType());
+  updateBreakValueType(curr->name, curr->sent);
 }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
@@ -174,19 +145,18 @@ void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
   // if the function has a return value
-  if (curr->result != none && curr->body->type == none) {
+  if (curr->sig.results != Type::none && curr->body->type == Type::none) {
     Builder builder(*getModule());
     curr->body = builder.blockify(curr->body, builder.makeUnreachable());
   }
 }
 
-void ReFinalize::visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE(); }
-void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE(); }
+void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {
   if (type != unreachable || breakValues.count(name) == 0) {
@@ -210,7 +180,7 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
     // the value is unreachable, and necessary since the type of
     // the condition did not have an impact before (the break/switch
     // type was unreachable), and might not fit in.
-    if (isConcreteType(condition->type)) {
+    if (condition->type.isConcrete()) {
       condition = builder.makeDrop(condition);
     }
     replacement = builder.makeSequence(value, condition);

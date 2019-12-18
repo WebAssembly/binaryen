@@ -164,7 +164,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
     // (block (drop value) (br_if)) with type none, which does not need a drop
     // likewise, unreachable does not need to be dropped, so we just leave drops
     // of concrete values
-    if (!isConcreteType(curr->value->type)) {
+    if (!curr->value->type.isConcrete()) {
       replaceCurrent(curr->value);
     }
   }
@@ -240,7 +240,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
               // we can do it!
               // reuse the drop, if we still need it
               auto* last = childBlock->list.back();
-              if (isConcreteType(last->type)) {
+              if (last->type.isConcrete()) {
                 drop->value = last;
                 drop->finalize();
                 childBlock->list.back() = drop;
@@ -281,13 +281,13 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
       if (childBlock->name.is()) {
         // If it has a concrete value, then breaks may be sending it a value,
         // and we'd need to handle that. TODO
-        if (isConcreteType(childBlock->type)) {
+        if (childBlock->type.isConcrete()) {
           continue;
         }
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
+          if (BranchUtils::BranchSeeker::has(item, childName)) {
             // We can't remove this from the child.
             keepStart = j;
             keepEnd = childSize;
@@ -300,7 +300,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         auto childName = loop->name;
         for (auto j = int(childSize - 1); j >= 0; j--) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
+          if (BranchUtils::BranchSeeker::has(item, childName)) {
             // We can't remove this from the child.
             keepStart = 0;
             keepEnd = std::max(Index(j + 1), keepEnd);
@@ -311,7 +311,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         // value, we would need special handling for that - not worth it,
         // probably TODO
         // FIXME is this not handled by the drop later down?
-        if (keepEnd < childSize && isConcreteType(childList.back()->type)) {
+        if (keepEnd < childSize && childList.back()->type.isConcrete()) {
           continue;
         }
       }
@@ -362,7 +362,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
       if (!merged.empty()) {
         auto* last = merged.back();
         for (auto*& item : merged) {
-          if (item != last && isConcreteType(item->type)) {
+          if (item != last && item->type.isConcrete()) {
             Builder builder(*module);
             item = builder.makeDrop(item);
           }

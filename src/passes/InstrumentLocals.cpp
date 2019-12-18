@@ -45,7 +45,6 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ir/function-type-utils.h"
 #include "shared-constants.h"
 #include <pass.h>
 #include <wasm-builder.h>
@@ -92,9 +91,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         import = get_exnref;
         break;
       case none:
-        WASM_UNREACHABLE();
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
     replaceCurrent(
       builder.makeCall(import,
@@ -137,7 +135,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case unreachable:
         return; // nothing to do here
       case none:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
     curr->value =
       builder.makeCall(import,
@@ -148,36 +146,38 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   }
 
   void visitModule(Module* curr) {
-    addImport(curr, get_i32, "iiii");
-    addImport(curr, get_i64, "jiij");
-    addImport(curr, get_f32, "fiif");
-    addImport(curr, get_f64, "diid");
-    addImport(curr, set_i32, "iiii");
-    addImport(curr, set_i64, "jiij");
-    addImport(curr, set_f32, "fiif");
-    addImport(curr, set_f64, "diid");
+    addImport(curr, get_i32, {Type::i32, Type::i32, Type::i32}, Type::i32);
+    addImport(curr, get_i64, {Type::i32, Type::i32, Type::i64}, Type::i64);
+    addImport(curr, get_f32, {Type::i32, Type::i32, Type::f32}, Type::f32);
+    addImport(curr, get_f64, {Type::i32, Type::i32, Type::f64}, Type::f64);
+    addImport(curr, set_i32, {Type::i32, Type::i32, Type::i32}, Type::i32);
+    addImport(curr, set_i64, {Type::i32, Type::i32, Type::i64}, Type::i64);
+    addImport(curr, set_f32, {Type::i32, Type::i32, Type::f32}, Type::f32);
+    addImport(curr, set_f64, {Type::i32, Type::i32, Type::f64}, Type::f64);
 
     if (curr->features.hasReferenceTypes()) {
-      addImport(curr, get_anyref, "aiia");
-      addImport(curr, set_anyref, "aiia");
+      addImport(
+        curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
+      addImport(
+        curr, set_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
     }
     if (curr->features.hasExceptionHandling()) {
-      addImport(curr, get_exnref, "eiie");
-      addImport(curr, set_exnref, "eiie");
+      addImport(
+        curr, get_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
+      addImport(
+        curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
     }
   }
 
 private:
   Index id = 0;
 
-  void addImport(Module* wasm, Name name, std::string sig) {
+  void addImport(Module* wasm, Name name, Type params, Type results) {
     auto import = new Function;
     import->name = name;
     import->module = ENV;
     import->base = name;
-    auto* functionType = ensureFunctionType(sig, wasm);
-    import->type = functionType->name;
-    FunctionTypeUtils::fillFunction(import, functionType);
+    import->sig = Signature(params, results);
     wasm->addFunction(import);
   }
 };

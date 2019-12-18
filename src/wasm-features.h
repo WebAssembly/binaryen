@@ -21,6 +21,7 @@
 #include <string>
 
 #include "compiler-support.h"
+#include "support/utilities.h"
 
 struct FeatureSet {
   enum Feature : uint32_t {
@@ -58,7 +59,7 @@ struct FeatureSet {
       case ReferenceTypes:
         return "reference-types";
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected feature");
     }
   }
 
@@ -67,16 +68,18 @@ struct FeatureSet {
 
   bool isMVP() const { return features == MVP; }
   bool has(Feature f) { return (features & f) == f; }
-  bool hasAtomics() const { return features & Atomics; }
-  bool hasMutableGlobals() const { return features & MutableGlobals; }
-  bool hasTruncSat() const { return features & TruncSat; }
-  bool hasSIMD() const { return features & SIMD; }
-  bool hasBulkMemory() const { return features & BulkMemory; }
-  bool hasSignExt() const { return features & SignExt; }
-  bool hasExceptionHandling() const { return features & ExceptionHandling; }
-  bool hasTailCall() const { return features & TailCall; }
-  bool hasReferenceTypes() const { return features & ReferenceTypes; }
-  bool hasAll() const { return features & All; }
+  bool hasAtomics() const { return (features & Atomics) != 0; }
+  bool hasMutableGlobals() const { return (features & MutableGlobals) != 0; }
+  bool hasTruncSat() const { return (features & TruncSat) != 0; }
+  bool hasSIMD() const { return (features & SIMD) != 0; }
+  bool hasBulkMemory() const { return (features & BulkMemory) != 0; }
+  bool hasSignExt() const { return (features & SignExt) != 0; }
+  bool hasExceptionHandling() const {
+    return (features & ExceptionHandling) != 0;
+  }
+  bool hasTailCall() const { return (features & TailCall) != 0; }
+  bool hasReferenceTypes() const { return (features & ReferenceTypes) != 0; }
+  bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
   void set(Feature f, bool v = true) {

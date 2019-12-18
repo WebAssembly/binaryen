@@ -130,24 +130,6 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   }
 };
 
-// Finds function type usage
-
-struct FunctionTypeAnalyzer : public PostWalker<FunctionTypeAnalyzer> {
-  std::vector<Function*> functions;
-  std::vector<CallIndirect*> indirectCalls;
-  std::vector<Event*> events;
-
-  void visitFunction(Function* curr) {
-    if (curr->type.is()) {
-      functions.push_back(curr);
-    }
-  }
-
-  void visitEvent(Event* curr) { events.push_back(curr); }
-
-  void visitCallIndirect(CallIndirect* curr) { indirectCalls.push_back(curr); }
-};
-
 struct RemoveUnusedModuleElements : public Pass {
   bool rootAllFunctions;
 
@@ -155,11 +137,6 @@ struct RemoveUnusedModuleElements : public Pass {
     : rootAllFunctions(rootAllFunctions) {}
 
   void run(PassRunner* runner, Module* module) override {
-    optimizeGlobalsAndFunctionsAndEvents(module);
-    optimizeFunctionTypes(module);
-  }
-
-  void optimizeGlobalsAndFunctionsAndEvents(Module* module) {
     std::vector<ModuleElement> roots;
     // Module start is a root.
     if (module->start.is()) {
@@ -211,40 +188,18 @@ struct RemoveUnusedModuleElements : public Pass {
     // Compute reachability starting from the root set.
     ReachabilityAnalyzer analyzer(module, roots);
     // Remove unreachable elements.
-    {
-      auto& v = module->functions;
-      v.erase(std::remove_if(v.begin(),
-                             v.end(),
-                             [&](const std::unique_ptr<Function>& curr) {
-                               return analyzer.reachable.count(ModuleElement(
-                                        ModuleElementKind::Function,
-                                        curr->name)) == 0;
-                             }),
-              v.end());
-    }
-    {
-      auto& v = module->globals;
-      v.erase(std::remove_if(v.begin(),
-                             v.end(),
-                             [&](const std::unique_ptr<Global>& curr) {
-                               return analyzer.reachable.count(
-                                        ModuleElement(ModuleElementKind::Global,
-                                                      curr->name)) == 0;
-                             }),
-              v.end());
-    }
-    {
-      auto& v = module->events;
-      v.erase(std::remove_if(v.begin(),
-                             v.end(),
-                             [&](const std::unique_ptr<Event>& curr) {
-                               return analyzer.reachable.count(
-                                        ModuleElement(ModuleElementKind::Event,
-                                                      curr->name)) == 0;
-                             }),
-              v.end());
-    }
-    module->updateMaps();
+    module->removeFunctions([&](Function* curr) {
+      return analyzer.reachable.count(
+               ModuleElement(ModuleElementKind::Function, curr->name)) == 0;
+    });
+    module->removeGlobals([&](Global* curr) {
+      return analyzer.reachable.count(
+               ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
+    });
+    module->removeEvents([&](Event* curr) {
+      return analyzer.reachable.count(
+               ModuleElement(ModuleElementKind::Event, curr->name)) == 0;
+    });
     // Handle the memory and table
     if (!exportsMemory && !analyzer.usesMemory) {
       if (!importsMemory) {
@@ -271,48 +226,6 @@ struct RemoveUnusedModuleElements : public Pass {
         module->table.max = 0;
       }
     }
-  }
-
-  void optimizeFunctionTypes(Module* module) {
-    FunctionTypeAnalyzer analyzer;
-    analyzer.walkModule(module);
-    // maps each string signature to a single canonical function type
-    std::unordered_map<std::string, FunctionType*> canonicals;
-    std::unordered_set<FunctionType*> needed;
-    auto canonicalize = [&](Name name) {
-      if (!name.is()) {
-        return name;
-      }
-      FunctionType* type = module->getFunctionType(name);
-      auto sig = getSig(type);
-      auto iter = canonicals.find(sig);
-      if (iter == canonicals.end()) {
-        needed.insert(type);
-        canonicals[sig] = type;
-        return type->name;
-      } else {
-        return iter->second->name;
-      }
-    };
-    // canonicalize all uses of function types
-    for (auto* func : analyzer.functions) {
-      func->type = canonicalize(func->type);
-    }
-    for (auto* call : analyzer.indirectCalls) {
-      call->fullType = canonicalize(call->fullType);
-    }
-    for (auto* event : analyzer.events) {
-      event->type = canonicalize(event->type);
-    }
-    // remove no-longer used types
-    module->functionTypes.erase(
-      std::remove_if(module->functionTypes.begin(),
-                     module->functionTypes.end(),
-                     [&needed](std::unique_ptr<FunctionType>& type) {
-                       return needed.count(type.get()) == 0;
-                     }),
-      module->functionTypes.end());
-    module->updateMaps();
   }
 };
 

@@ -1,14 +1,14 @@
 (module
- (type $0 (func (param i32)))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$d (func (result f64)))
- (type $FUNCSIG$V (func (result v128)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_f64 (func (result f64)))
+ (type $none_=>_v128 (func (result v128)))
+ (type $i32_=>_none (func (param i32)))
  (memory $0 512 512)
  (data (i32.const 0) "passive")
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
- (func $x (; 0 ;) (type $0) (param $x i32)
+ (func $x (; 0 ;) (param $x i32)
   (call $x
    (i32.const 2300)
   )
@@ -89,7 +89,7 @@
    (i32.const 0)
   )
  )
- (func $ret (; 1 ;) (type $FUNCSIG$i) (result i32)
+ (func $ret (; 1 ;) (result i32)
   (if
    (call $ret)
    (return
@@ -104,13 +104,13 @@
   )
   (i32.const 1)
  )
- (func $noret (; 2 ;) (type $FUNCSIG$v)
+ (func $noret (; 2 ;)
   (if
    (call $ret)
    (return)
   )
  )
- (func $refinalize-br-condition-unreachable (; 3 ;) (type $FUNCSIG$v)
+ (func $refinalize-br-condition-unreachable (; 3 ;)
   (block $label$1
    (drop
     (br_if $label$1
@@ -119,7 +119,7 @@
    )
   )
  )
- (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky (; 4 ;) (type $FUNCSIG$v)
+ (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky (; 4 ;)
   (drop
    (block $label$1 (result i32)
     (drop
@@ -134,7 +134,7 @@
    )
   )
  )
- (func $reuse-br-value (; 5 ;) (type $FUNCSIG$d) (result f64)
+ (func $reuse-br-value (; 5 ;) (result f64)
   (block $label$0 (result f64)
    (i32.store8
     (i32.const 1919623207)
@@ -161,7 +161,7 @@
    (f64.const 4776014875438170098655851e156)
   )
  )
- (func $refinalize-two-breaks-one-unreachable (; 6 ;) (type $FUNCSIG$v)
+ (func $refinalize-two-breaks-one-unreachable (; 6 ;)
   (drop
    (block $label$0 (result i64)
     (block
@@ -184,7 +184,7 @@
    )
   )
  )
- (func $one-break-value-and-it-is-unreachable (; 7 ;) (type $FUNCSIG$d) (result f64)
+ (func $one-break-value-and-it-is-unreachable (; 7 ;) (result f64)
   (local $var$0 i32)
   (block $label$6
    (block
@@ -195,16 +195,16 @@
    )
   )
  )
- (func $global-notprecomputable (; 8 ;) (type $FUNCSIG$i) (result i32)
+ (func $global-notprecomputable (; 8 ;) (result i32)
   (i32.add
    (i32.const 1)
    (global.get $global-mut)
   )
  )
- (func $global-precomputable (; 9 ;) (type $FUNCSIG$i) (result i32)
+ (func $global-precomputable (; 9 ;) (result i32)
   (i32.const 2)
  )
- (func $global-partiallyprecomputable (; 10 ;) (type $FUNCSIG$i) (result i32)
+ (func $global-partiallyprecomputable (; 10 ;) (result i32)
   (i32.sub
    (i32.add
     (i32.const 1)
@@ -213,36 +213,36 @@
    (i32.const 2)
   )
  )
- (func $no-simd-precompute (; 11 ;) (type $FUNCSIG$V) (result v128)
+ (func $no-simd-precompute (; 11 ;) (result v128)
   (i32x4.splat
    (i32.const 0)
   )
  )
- (func $no-simd-precompute-if (; 12 ;) (type $FUNCSIG$V) (result v128)
+ (func $no-simd-precompute-if (; 12 ;) (result v128)
   (return
    (i32x4.splat
     (i32.const 0)
    )
   )
  )
- (func $no-memory-init-precompute (; 13 ;) (type $FUNCSIG$v)
+ (func $no-memory-init-precompute (; 13 ;)
   (memory.init 0
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
- (func $no-data-drop-precompute (; 14 ;) (type $FUNCSIG$v)
+ (func $no-data-drop-precompute (; 14 ;)
   (data.drop 0)
  )
- (func $no-memory-copy-precompute (; 15 ;) (type $FUNCSIG$v)
+ (func $no-memory-copy-precompute (; 15 ;)
   (memory.copy
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
- (func $no-memory-fill-precompute (; 16 ;) (type $FUNCSIG$v)
+ (func $no-memory-fill-precompute (; 16 ;)
   (memory.fill
    (i32.const 512)
    (i32.const 0)

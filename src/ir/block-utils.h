@@ -34,12 +34,12 @@ inline Expression*
 simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
   auto& list = block->list;
   if (list.size() == 1 &&
-      !BranchUtils::BranchSeeker::hasNamed(list[0], block->name)) {
+      !BranchUtils::BranchSeeker::has(list[0], block->name)) {
     // just one element. try to replace the block
     auto* singleton = list[0];
     auto sideEffects =
       EffectAnalyzer(parent->getPassOptions(), singleton).hasSideEffects();
-    if (!sideEffects && !isConcreteType(singleton->type)) {
+    if (!sideEffects && !singleton->type.isConcrete()) {
       // no side effects, and singleton is not returning a value, so we can
       // throw away the block and its contents, basically
       return Builder(*parent->getModule()).replaceWithIdenticalType(block);
@@ -50,7 +50,7 @@ simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
       // inside is unreachable (if both concrete, must match, and since no name
       // on block, we can't be branched to, so if singleton is unreachable, so
       // is the block)
-      assert(isConcreteType(block->type) && singleton->type == unreachable);
+      assert(block->type.isConcrete() && singleton->type == unreachable);
       // we could replace with unreachable, but would need to update all
       // the parent's types
     }

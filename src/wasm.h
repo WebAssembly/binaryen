@@ -680,27 +680,11 @@ public:
   void finalize();
 };
 
-class FunctionType {
-public:
-  Name name;
-  Type result = none;
-  std::vector<Type> params;
-
-  FunctionType() = default;
-
-  bool structuralComparison(FunctionType& b);
-  bool structuralComparison(const std::vector<Type>& params, Type result);
-
-  bool operator==(FunctionType& b);
-  bool operator!=(FunctionType& b);
-};
-
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-
+  Signature sig;
   ExpressionList operands;
-  Name fullType;
   Expression* target;
   bool isReturn = false;
 
@@ -725,8 +709,9 @@ public:
   Index index;
   Expression* value;
 
-  bool isTee();
-  void setTee(bool is);
+  bool isTee() const;
+  void makeTee(Type type);
+  void makeSet();
 };
 
 class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
@@ -1123,10 +1108,9 @@ public:
   Expression* exnref;
   // This is duplicate info of param types stored in Event, but this is required
   // for us to know the type of the value sent to the target block.
-  std::vector<Type> eventParams;
+  Type sent;
 
   void finalize();
-  Type getSingleSentType();
 };
 
 // Globals
@@ -1148,10 +1132,8 @@ typedef std::vector<StackInst*> StackIR;
 class Function : public Importable {
 public:
   Name name;
-  Type result = none;
-  std::vector<Type> params; // function locals are
+  Signature sig;
   std::vector<Type> vars;   // params plus vars
-  Name type;                // if null, it is implicit in params and result
 
   // The body of the function
   Expression* body = nullptr;
@@ -1259,6 +1241,13 @@ public:
 
   Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+  }
 };
 
 class Memory : public Importable {
@@ -1302,6 +1291,14 @@ public:
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+    shared = false;
+  }
 };
 
 class Global : public Importable {
@@ -1320,14 +1317,7 @@ public:
   Name name;
   // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
   uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
-  // Type string in the format of function type. Return type is considered as a
-  // void type. So if you have an event whose type is (i32, i32), the type
-  // string will be "vii".
-  Name type;
-  // This is duplicate info of 'Name type', but we store this anyway because
-  // we plan to remove FunctionType in future.
-  // TODO remove either this or FunctionType
-  std::vector<Type> params;
+  Signature sig;
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.
@@ -1342,7 +1332,6 @@ class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except
   // maybe for iterating; use add*() and the get() functions)
-  std::vector<std::unique_ptr<FunctionType>> functionTypes;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
@@ -1367,7 +1356,6 @@ public:
 private:
   // TODO: add a build option where Names are just indices, and then these
   // methods are not needed
-  std::map<Name, FunctionType*> functionTypesMap;
   // exports map is by the *exported* name, which is unique
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
@@ -1377,19 +1365,16 @@ private:
 public:
   Module() = default;
 
-  FunctionType* getFunctionType(Name name);
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
   Event* getEvent(Name name);
 
-  FunctionType* getFunctionTypeOrNull(Name name);
   Export* getExportOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Event* getEventOrNull(Name name);
 
-  FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
   Function* addFunction(std::unique_ptr<Function> curr);
@@ -1398,11 +1383,15 @@ public:
 
   void addStart(const Name& s);
 
-  void removeFunctionType(Name name);
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeGlobal(Name name);
   void removeEvent(Name name);
+
+  void removeExports(std::function<bool(Export*)> pred);
+  void removeFunctions(std::function<bool(Function*)> pred);
+  void removeGlobals(std::function<bool(Global*)> pred);
+  void removeEvents(std::function<bool(Event*)> pred);
 
   void updateMaps();
 

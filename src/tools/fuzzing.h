@@ -65,8 +65,7 @@ class TranslateToFuzzReader {
 public:
   TranslateToFuzzReader(Module& wasm, std::string& filename)
     : wasm(wasm), builder(wasm) {
-    auto input(
-      read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release));
+    auto input(read_file<std::vector<char>>(filename, Flags::Binary));
     readData(input);
   }
 
@@ -172,7 +171,7 @@ public:
           options.passes.push_back("vacuum");
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected value");
       }
     }
     if (oneIn(2)) {
@@ -371,8 +370,7 @@ private:
     contents.push_back(builder.makeLocalGet(0, i32));
     auto* body = builder.makeBlock(contents);
     auto* hasher = wasm.addFunction(builder.makeFunction(
-      "hashMemory", std::vector<Type>{}, i32, {i32}, body));
-    hasher->type = ensureFunctionType(getSig(hasher), &wasm)->name;
+      "hashMemory", Signature(Type::none, Type::i32), {i32}, body));
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
@@ -406,20 +404,14 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       // Events should have void return type and at least one param type
-      Type type = pick(i32, i64, f32, f64);
-      std::string sig = std::string("v") + getSig(type);
       std::vector<Type> params;
-      params.push_back(type);
       Index numValues = upToSquared(MAX_PARAMS - 1);
-      for (Index i = 0; i < numValues; i++) {
-        type = pick(i32, i64, f32, f64);
-        sig += getSig(type);
-        params.push_back(type);
+      for (Index i = 0; i < numValues + 1; i++) {
+        params.push_back(pick(i32, i64, f32, f64));
       }
       auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
                                       WASM_EVENT_ATTRIBUTE_EXCEPTION,
-                                      ensureFunctionType(sig, &wasm)->name,
-                                      std::move(params));
+                                      Signature(Type(params), Type::none));
       wasm.addEvent(event);
     }
   }
@@ -442,7 +434,7 @@ private:
 
     auto* func = new Function;
     func->name = "hangLimitInitializer";
-    func->result = none;
+    func->sig = Signature(Type::none, Type::none);
     func->body = builder.makeGlobalSet(
       glob->name, builder.makeConst(Literal(int32_t(HANG_LIMIT))));
     wasm.addFunction(func);
@@ -457,13 +449,11 @@ private:
   void addImportLoggingSupport() {
     for (auto type : getConcreteTypes()) {
       auto* func = new Function;
-      Name name = std::string("log-") + printType(type);
+      Name name = std::string("log-") + type.toString();
       func->name = name;
       func->module = "fuzzing-support";
       func->base = name;
-      func->params.push_back(type);
-      func->result = none;
-      func->type = ensureFunctionType(getSig(func), &wasm)->name;
+      func->sig = Signature(type, Type::none);
       wasm.addFunction(func);
     }
   }
@@ -485,8 +475,7 @@ private:
     auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
       auto* func = new Function;
       func->name = name;
-      func->params.push_back(type);
-      func->result = type;
+      func->sig = Signature(type, type);
       func->body = builder.makeIf(
         builder.makeBinary(
           op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
@@ -528,25 +517,27 @@ private:
     Index num = wasm.functions.size();
     func = new Function;
     func->name = std::string("func_") + std::to_string(num);
-    func->result = getReachableType();
     assert(typeLocals.empty());
     Index numParams = upToSquared(MAX_PARAMS);
+    std::vector<Type> params;
+    params.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
       auto type = getConcreteType();
-      typeLocals[type].push_back(func->params.size());
-      func->params.push_back(type);
+      typeLocals[type].push_back(params.size());
+      params.push_back(type);
     }
+    func->sig = Signature(Type(params), getReachableType());
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
-      typeLocals[type].push_back(func->params.size() + func->vars.size());
+      typeLocals[type].push_back(params.size() + func->vars.size());
       func->vars.push_back(type);
     }
     labelIndex = 0;
     assert(breakableStack.empty());
     assert(hangStack.empty());
     // with small chance, make the body unreachable
-    auto bodyType = func->result;
+    auto bodyType = func->sig.results;
     if (oneIn(10)) {
       bodyType = unreachable;
     }
@@ -575,7 +566,6 @@ private:
     // export some, but not all (to allow inlining etc.). make sure to
     // export at least one, though, to keep each testcase interesting
     if (num == 0 || oneIn(2)) {
-      func->type = ensureFunctionType(getSig(func), &wasm)->name;
       auto* export_ = new Export;
       export_->name = func->name;
       export_->value = func->name;
@@ -786,11 +776,12 @@ private:
     std::vector<Expression*> invocations;
     while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
-      for (auto type : func->params) {
+      for (auto type : func->sig.params.expand()) {
         args.push_back(makeConst(type));
       }
-      Expression* invoke = builder.makeCall(func->name, args, func->result);
-      if (isConcreteType(func->result)) {
+      Expression* invoke =
+        builder.makeCall(func->name, args, func->sig.results);
+      if (func->sig.results.isConcrete()) {
         invoke = builder.makeDrop(invoke);
       }
       invocations.push_back(invoke);
@@ -804,10 +795,9 @@ private:
     }
     auto* invoker = new Function;
     invoker->name = func->name.str + std::string("_invoker");
-    invoker->result = none;
+    invoker->sig = Signature(Type::none, Type::none);
     invoker->body = builder.makeBlock(invocations);
     wasm.addFunction(invoker);
-    invoker->type = ensureFunctionType(getSig(invoker), &wasm)->name;
     auto* export_ = new Export;
     export_->name = invoker->name;
     export_->value = invoker->name;
@@ -827,7 +817,7 @@ private:
     // when we should stop, emit something small (but not necessarily trivial)
     if (finishedInput || nesting >= 5 * NESTING_LIMIT || // hard limit
         (nesting >= NESTING_LIMIT && !oneIn(3))) {
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         if (oneIn(2)) {
           return makeConst(type);
         } else {
@@ -991,12 +981,12 @@ private:
       case 14:
         return makeUnreachable(unreachable);
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected value");
   }
 
   // make something with no chance of infinite recursion
   Expression* makeTrivial(Type type) {
-    if (isConcreteType(type)) {
+    if (type.isConcrete()) {
       if (oneIn(2)) {
         return makeLocalGet(type);
       } else {
@@ -1007,8 +997,8 @@ private:
     }
     assert(type == unreachable);
     Expression* ret = nullptr;
-    if (isConcreteType(func->result)) {
-      ret = makeTrivial(func->result);
+    if (func->sig.results.isConcrete()) {
+      ret = makeTrivial(func->sig.results);
     }
     return builder.makeReturn(ret);
   }
@@ -1039,13 +1029,13 @@ private:
     }
     // give a chance to make the final element an unreachable break, instead
     // of concrete - a common pattern (branch to the top of a loop etc.)
-    if (!finishedInput && isConcreteType(type) && oneIn(2)) {
+    if (!finishedInput && type.isConcrete() && oneIn(2)) {
       ret->list.push_back(makeBreak(unreachable));
     } else {
       ret->list.push_back(make(type));
     }
     breakableStack.pop_back();
-    if (isConcreteType(type)) {
+    if (type.isConcrete()) {
       ret->finalize(type);
     } else {
       ret->finalize();
@@ -1131,7 +1121,7 @@ private:
       auto* target = pick(breakableStack);
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         // we are flowing out a value
         if (valueType != type) {
           // we need to break to a proper place
@@ -1208,14 +1198,14 @@ private:
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
         target = pick(wasm.functions).get();
       }
-      isReturn = type == unreachable && wasm.features.hasTailCall() &&
-                 func->result == target->result;
-      if (target->result != type && !isReturn) {
+      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
+                 func->sig.results == target->sig.results;
+      if (target->sig.results != type && !isReturn) {
         continue;
       }
       // we found one!
       std::vector<Expression*> args;
-      for (auto argType : target->params) {
+      for (auto argType : target->sig.params.expand()) {
         args.push_back(make(argType));
       }
       return builder.makeCall(target->name, args, type, isReturn);
@@ -1238,8 +1228,8 @@ private:
       // TODO: handle unreachable
       targetFn = wasm.getFunction(data[i]);
       isReturn = type == unreachable && wasm.features.hasTailCall() &&
-                 func->result == targetFn->result;
-      if (targetFn->result == type || isReturn) {
+                 func->sig.results == targetFn->sig.results;
+      if (targetFn->sig.results == type || isReturn) {
         break;
       }
       i++;
@@ -1259,12 +1249,10 @@ private:
       target = make(i32);
     }
     std::vector<Expression*> args;
-    for (auto type : targetFn->params) {
+    for (auto type : targetFn->sig.params.expand()) {
       args.push_back(make(type));
     }
-    targetFn->type = ensureFunctionType(getSig(targetFn), &wasm)->name;
-    return builder.makeCallIndirect(
-      targetFn->type, target, args, targetFn->result, isReturn);
+    return builder.makeCallIndirect(target, args, targetFn->sig, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
@@ -1289,7 +1277,7 @@ private:
     }
     auto* value = make(valueType);
     if (tee) {
-      return builder.makeLocalTee(pick(locals), value);
+      return builder.makeLocalTee(pick(locals), value, valueType);
     } else {
       return builder.makeLocalSet(pick(locals), value);
     }
@@ -1341,7 +1329,7 @@ private:
             return builder.makeLoad(
               4, signed_, offset, pick(1, 2, 4), ptr, type);
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected value");
       }
       case i64: {
         bool signed_ = get() & 1;
@@ -1357,7 +1345,7 @@ private:
             return builder.makeLoad(
               8, signed_, offset, pick(1, 2, 4, 8), ptr, type);
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected value");
       }
       case f32: {
         return builder.makeLoad(4, false, offset, pick(1, 2, 4), ptr, type);
@@ -1376,9 +1364,9 @@ private:
       case exnref: // exnref cannot be loaded from memory
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid type");
   }
 
   Expression* makeLoad(Type type) {
@@ -1444,7 +1432,7 @@ private:
             return builder.makeStore(
               4, offset, pick(1, 2, 4), ptr, value, type);
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case i64: {
         switch (upTo(4)) {
@@ -1459,7 +1447,7 @@ private:
             return builder.makeStore(
               8, offset, pick(1, 2, 4, 8), ptr, value, type);
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case f32: {
         return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
@@ -1478,14 +1466,14 @@ private:
       case exnref: // exnref cannot be stored in memory
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid type");
   }
 
   Expression* makeStore(Type type) {
     // exnref type cannot be stored in memory
-    if (!allowMemory || isReferenceType(type)) {
+    if (!allowMemory || type.isRef()) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicStore(type);
@@ -1553,7 +1541,7 @@ private:
           return Literal(
             std::array<Literal, 2>{{makeLiteral(f64), makeLiteral(f64)}});
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("unexpected value");
       }
     }
 
@@ -1574,7 +1562,7 @@ private:
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid type");
         }
         break;
       }
@@ -1601,7 +1589,7 @@ private:
             small = uint32_t(get32());
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalid value");
         }
         switch (type) {
           case i32:
@@ -1617,7 +1605,7 @@ private:
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
         break;
       }
@@ -1683,7 +1671,7 @@ private:
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
         // tweak around special values
         if (oneIn(3)) { // +- 1
@@ -1715,7 +1703,7 @@ private:
           case exnref: // exnref cannot have literals
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
         // maybe negative
         if (oneIn(2)) {
@@ -1724,7 +1712,7 @@ private:
         return value;
       }
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalide value");
   }
 
   Literal makeLiteral(Type type) {
@@ -1823,9 +1811,9 @@ private:
           case exnref: // there's no unary ops for exnref
           case none:
           case unreachable:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected type");
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid type");
       }
       case i64: {
         switch (upTo(4)) {
@@ -1863,7 +1851,7 @@ private:
             return buildUnary({op, make(f64)});
           }
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case f32: {
         switch (upTo(4)) {
@@ -1888,7 +1876,7 @@ private:
           case 3:
             return makeDeNanOp(buildUnary({DemoteFloat64, make(f64)}));
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case f64: {
         switch (upTo(4)) {
@@ -1913,7 +1901,7 @@ private:
           case 3:
             return makeDeNanOp(buildUnary({PromoteFloat32, make(f32)}));
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case v128: {
         assert(wasm.features.hasSIMD());
@@ -1957,15 +1945,15 @@ private:
                                     WidenHighUVecI16x8ToVecI32x4),
                                make(v128)});
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case anyref: // there's no unary ops for anyref
       case exnref: // there's no unary ops for exnref
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid type");
   }
 
   Expression* buildBinary(const BinaryArgs& args) {
@@ -1982,7 +1970,7 @@ private:
       return makeTrivial(type);
     }
     // There's no binary ops for exnref
-    if (isReferenceType(type)) {
+    if (type.isRef()) {
       makeTrivial(type);
     }
 
@@ -2049,7 +2037,7 @@ private:
                                 make(f64),
                                 make(f64)});
         }
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid value");
       }
       case i64: {
         return buildBinary({pick(AddInt64,
@@ -2196,9 +2184,9 @@ private:
       case exnref: // there's no binary ops for exnref
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid type");
   }
 
   Expression* buildSelect(const ThreeArgs& args) {
@@ -2238,7 +2226,7 @@ private:
     auto default_ = names.back();
     names.pop_back();
     auto temp1 = make(i32),
-         temp2 = isConcreteType(valueType) ? make(valueType) : nullptr;
+         temp2 = valueType.isConcrete() ? make(valueType) : nullptr;
     return builder.makeSwitch(names, default_, temp1, temp2);
   }
 
@@ -2248,8 +2236,8 @@ private:
   }
 
   Expression* makeReturn(Type type) {
-    return builder.makeReturn(isConcreteType(func->result) ? make(func->result)
-                                                           : nullptr);
+    return builder.makeReturn(
+      func->sig.results.isConcrete() ? make(func->sig.results) : nullptr);
   }
 
   Expression* makeNop(Type type) {
@@ -2299,7 +2287,7 @@ private:
             bytes = pick(1, 2, 4);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalide value");
         }
         break;
       }
@@ -2318,12 +2306,12 @@ private:
             bytes = pick(1, 2, 4, 8);
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("invalide value");
         }
         break;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
     auto offset = logify(get());
     auto* ptr = makePointer();
@@ -2369,7 +2357,7 @@ private:
       case 6:
         return makeSIMDLoad();
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid value");
   }
 
   Expression* makeSIMDExtract(Type type) {
@@ -2396,7 +2384,7 @@ private:
       case exnref:
       case none:
       case unreachable:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected type");
     }
     Expression* vec = make(v128);
     uint8_t index = 0;
@@ -2457,7 +2445,7 @@ private:
         lane_t = f64;
         break;
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected op");
     }
     Expression* value = make(lane_t);
     return builder.makeSIMDReplace(op, vec, index, value);
@@ -2558,7 +2546,7 @@ private:
       case 3:
         return makeMemoryFill();
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid value");
   }
 
   Expression* makeMemoryInit() {
@@ -2607,7 +2595,7 @@ private:
   Expression* makeLogging() {
     auto type = getConcreteType();
     return builder.makeCall(
-      std::string("log-") + printType(type), {make(type)}, none);
+      std::string("log-") + type.toString(), {make(type)}, none);
   }
 
   Expression* makeMemoryHashLogging() {
@@ -2746,7 +2734,7 @@ private:
     } else if (auto* loop = target->dynCast<Loop>()) {
       return loop->name;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expr type");
   }
 
   Type getTargetType(Expression* target) {
@@ -2755,7 +2743,7 @@ private:
     } else if (target->is<Loop>()) {
       return none;
     }
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unexpected expr type");
   }
 };
 

@@ -1,4 +1,5 @@
 (module
+ (type $none_=>_none (func))
  (import "env" "memory" (memory $memory (shared 256 256)))
  (data (global.get $__memory_base) "threads.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))

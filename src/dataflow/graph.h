@@ -169,7 +169,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     assert(!node->isBad());
     Builder builder(*module);
     auto type = node->getWasmType();
-    if (!isConcreteType(type)) {
+    if (!type.isConcrete()) {
       return &bad;
     }
     auto* zero = makeZero(type);
@@ -278,6 +278,9 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return &bad;
   }
   Node* doVisitLoop(Loop* curr) {
+    auto* oldParent = parent;
+    expressionParentMap[curr] = oldParent;
+    parent = curr;
     // As in Souper's LLVM extractor, we avoid loop phis, as we don't want
     // our traces to represent a value that differs across loop iterations.
     // For example,
@@ -397,7 +400,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &bad;
     }
-    assert(isConcreteType(curr->value->type));
+    assert(curr->value->type.isConcrete());
     sets.push_back(curr);
     expressionParentMap[curr] = parent;
     expressionParentMap[curr->value] = curr;
@@ -547,7 +550,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
             opposite = LeUInt64;
             break;
           default:
-            WASM_UNREACHABLE();
+            WASM_UNREACHABLE("unexpected op");
         }
         auto* ret =
           visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
@@ -603,7 +606,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
 
   // Helpers.
 
-  bool isRelevantType(wasm::Type type) { return isIntegerType(type); }
+  bool isRelevantType(wasm::Type type) { return type.isInteger(); }
 
   bool isRelevantLocal(Index index) {
     return isRelevantType(func->getLocalType(index));
@@ -652,9 +655,11 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // Merge local state for multiple control flow paths, creating phis as needed.
   void merge(std::vector<FlowState>& states, Locals& out) {
     // We should only receive reachable states.
+#ifndef NDEBUG
     for (auto& state : states) {
       assert(!isInUnreachable(state.locals));
     }
+#endif
     Index numStates = states.size();
     if (numStates == 0) {
       // We were unreachable, and still are.
@@ -781,7 +786,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       // variable value.
       return Builder(*module).makeCall(FAKE_CALL, {}, node->wasmType);
     } else {
-      WASM_UNREACHABLE(); // TODO
+      WASM_UNREACHABLE("unexpected node type"); // TODO
     }
   }
 

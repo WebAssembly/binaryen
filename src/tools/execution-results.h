@@ -67,11 +67,11 @@ struct ExecutionResults {
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
-        if (func->result != none) {
+        if (func->sig.results != Type::none) {
           // this has a result
           results[exp->name] = run(func, wasm, instance);
           // ignore the result if we hit an unreachable and returned no value
-          if (isConcreteType(results[exp->name].type)) {
+          if (results[exp->name].type.isConcrete()) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => "
                       << results[exp->name] << '\n';
           }
@@ -136,7 +136,7 @@ struct ExecutionResults {
         instance.callFunction(ex->value, arguments);
       }
       // call the method
-      for (Type param : func->params) {
+      for (Type param : func->sig.params.expand()) {
         // zeros in arguments TODO: more?
         arguments.push_back(Literal(param));
       }

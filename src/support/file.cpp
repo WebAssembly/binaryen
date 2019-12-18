@@ -15,16 +15,17 @@
  */
 
 #include "support/file.h"
+#include "support/debug.h"
 
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
 
-std::vector<char> wasm::read_stdin(Flags::DebugOption debug) {
-  if (debug == Flags::Debug) {
-    std::cerr << "Loading stdin..." << std::endl;
-  }
+#define DEBUG_TYPE "file"
+
+std::vector<char> wasm::read_stdin() {
+  BYN_TRACE("Loading stdin...\n");
   std::vector<char> input;
   char c;
   while (std::cin.get(c) && !std::cin.eof()) {
@@ -34,12 +35,8 @@ std::vector<char> wasm::read_stdin(Flags::DebugOption debug) {
 }
 
 template<typename T>
-T wasm::read_file(const std::string& filename,
-                  Flags::BinaryOption binary,
-                  Flags::DebugOption debug) {
-  if (debug == Flags::Debug) {
-    std::cerr << "Loading '" << filename << "'..." << std::endl;
-  }
+T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
+  BYN_TRACE("Loading '" << filename << "'...\n");
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
   if (binary == Flags::Binary) {
@@ -81,28 +78,22 @@ std::string wasm::read_possible_response_file(const std::string& input) {
   if (input.size() == 0 || input[0] != '@') {
     return input;
   }
-  return wasm::read_file<std::string>(
-    input.substr(1), Flags::Text, Flags::Release);
+  return wasm::read_file<std::string>(input.substr(1), Flags::Text);
 }
 
 // Explicit instantiations for the explicit specializations.
-template std::string
-wasm::read_file<>(const std::string&, Flags::BinaryOption, Flags::DebugOption);
-template std::vector<char>
-wasm::read_file<>(const std::string&, Flags::BinaryOption, Flags::DebugOption);
+template std::string wasm::read_file<>(const std::string&, Flags::BinaryOption);
+template std::vector<char> wasm::read_file<>(const std::string&,
+                                             Flags::BinaryOption);
 
-wasm::Output::Output(const std::string& filename,
-                     Flags::BinaryOption binary,
-                     Flags::DebugOption debug)
-  : outfile(), out([this, filename, binary, debug]() {
+wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
+  : outfile(), out([this, filename, binary]() {
       if (filename == "-") {
         return std::cout.rdbuf();
       }
       std::streambuf* buffer;
       if (filename.size()) {
-        if (debug == Flags::Debug) {
-          std::cerr << "Opening '" << filename << "'" << std::endl;
-        }
+        BYN_TRACE("Opening '" << filename << "'\n");
         auto flags = std::ofstream::out | std::ofstream::trunc;
         if (binary == Flags::Binary) {
           flags |= std::ofstream::binary;

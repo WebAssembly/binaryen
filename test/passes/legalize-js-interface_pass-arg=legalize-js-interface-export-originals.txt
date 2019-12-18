@@ -1,0 +1,28 @@
+(module
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (export "func" (func $legalstub$func))
+ (export "orig$func" (func $func))
+ (func $func (; 1 ;) (result i64)
+  (unreachable)
+ )
+ (func $legalstub$func (; 2 ;) (result i32)
+  (local $0 i64)
+  (local.set $0
+   (call $func)
+  )
+  (call $setTempRet0
+   (i32.wrap_i64
+    (i64.shr_u
+     (local.get $0)
+     (i64.const 32)
+    )
+   )
+  )
+  (i32.wrap_i64
+   (local.get $0)
+  )
+ )
+)

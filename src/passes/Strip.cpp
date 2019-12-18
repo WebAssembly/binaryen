@@ -62,6 +62,12 @@ Pass* createStripDebugPass() {
   });
 }
 
+Pass* createStripDWARFPass() {
+  return new Strip([&](const UserSection& curr) {
+    return curr.name.find(".debug") == 0 || curr.name.find("reloc..debug") == 0;
+  });
+}
+
 Pass* createStripProducersPass() {
   return new Strip([&](const UserSection& curr) {
     return curr.name == BinaryConsts::UserSections::Producers;

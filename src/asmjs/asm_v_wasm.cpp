@@ -38,7 +38,7 @@ Type asmToWasmType(AsmType asmType) {
     case ASM_INT32X4:
       return Type::v128;
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 AsmType wasmToAsmType(Type type) {
@@ -60,9 +60,9 @@ AsmType wasmToAsmType(Type type) {
     case none:
       return ASM_NONE;
     case unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid type");
 }
 
 char getSig(Type type) {
@@ -84,67 +84,23 @@ char getSig(Type type) {
     case none:
       return 'v';
     case unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid type");
   }
-  WASM_UNREACHABLE();
-}
-
-std::string getSig(const FunctionType* type) {
-  return getSig(type->params, type->result);
+  WASM_UNREACHABLE("invalid type");
 }
 
 std::string getSig(Function* func) {
-  return getSig(func->params, func->result);
+  return getSig(func->sig.results, func->sig.params);
 }
 
-Type sigToType(char sig) {
-  switch (sig) {
-    case 'i':
-      return i32;
-    case 'j':
-      return i64;
-    case 'f':
-      return f32;
-    case 'd':
-      return f64;
-    case 'V':
-      return v128;
-    case 'a':
-      return anyref;
-    case 'e':
-      return exnref;
-    case 'v':
-      return none;
-    default:
-      abort();
+std::string getSig(Type results, Type params) {
+  assert(!results.isMulti());
+  std::string sig;
+  sig += getSig(results);
+  for (Type t : params.expand()) {
+    sig += getSig(t);
   }
-}
-
-FunctionType sigToFunctionType(const std::string& sig) {
-  FunctionType ret;
-  ret.result = sigToType(sig[0]);
-  for (size_t i = 1; i < sig.size(); i++) {
-    ret.params.push_back(sigToType(sig[i]));
-  }
-  return ret;
-}
-
-FunctionType*
-ensureFunctionType(const std::string& sig, Module* wasm, Name name) {
-  if (!name.is()) {
-    name = "FUNCSIG$" + sig;
-  }
-  if (wasm->getFunctionTypeOrNull(name)) {
-    return wasm->getFunctionType(name);
-  }
-  // add new type
-  auto type = make_unique<FunctionType>();
-  type->name = name;
-  type->result = sigToType(sig[0]);
-  for (size_t i = 1; i < sig.size(); i++) {
-    type->params.push_back(sigToType(sig[i]));
-  }
-  return wasm->addFunctionType(std::move(type));
+  return sig;
 }
 
 Expression* ensureDouble(Expression* expr, MixedArena& allocator) {

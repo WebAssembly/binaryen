@@ -254,7 +254,7 @@ struct Trace {
             (node != toInfer &&
              excludeAsChildren.find(node) != excludeAsChildren.end())) {
           auto type = node->getWasmType();
-          assert(isConcreteType(type));
+          assert(type.isConcrete());
           auto* var = Node::makeVar(type);
           replacements[node] = std::unique_ptr<Node>(var);
           node = var;
@@ -308,7 +308,7 @@ struct Trace {
         return nullptr;
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpected node type");
     }
     // Assert on no cycles
     assert(addedNodes.find(node) == addedNodes.end());
@@ -344,7 +344,7 @@ struct Trace {
       } else if (curr == iff->ifFalse) {
         index = 1;
       } else {
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("invalid expr");
       }
       auto* condition = conditions[index];
       // Add the condition itself as an instruction in the trace -
@@ -353,7 +353,7 @@ struct Trace {
       // Add it as a pc, which we will emit directly.
       pathConditions.push_back(condition);
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid expr");
     }
   }
 
@@ -458,8 +458,7 @@ struct Printer {
     assert(node);
     switch (node->type) {
       case Node::Type::Var: {
-        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType)
-                  << " = var";
+        std::cout << "%" << indexing[node] << ":" << node->wasmType << " = var";
         break; // nothing more to add
       }
       case Node::Type::Expr: {
@@ -496,18 +495,16 @@ struct Printer {
       }
       case Node::Type::Zext: {
         auto* child = node->getValue(0);
-        std::cout << "%" << indexing[node] << ':'
-                  << printType(child->getWasmType());
+        std::cout << "%" << indexing[node] << ':' << child->getWasmType();
         std::cout << " = zext ";
         printInternal(child);
         break;
       }
       case Node::Type::Bad: {
-        std::cout << "!!!BAD!!!";
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("!!!BAD!!!");
       }
       default:
-        WASM_UNREACHABLE();
+        WASM_UNREACHABLE("unexpted type");
     }
     if (node->isExpr() || node->isPhi()) {
       if (node->origin != trace.toInfer->origin &&
@@ -523,7 +520,7 @@ struct Printer {
   }
 
   void print(Literal value) {
-    std::cout << value.getInteger() << ':' << printType(value.type);
+    std::cout << value.getInteger() << ':' << value.type;
   }
 
   void printInternal(Node* node) {
@@ -559,7 +556,7 @@ struct Printer {
           std::cout << "ctpop";
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid op");
       }
       std::cout << ' ';
       auto* value = node->getValue(0);
@@ -651,7 +648,7 @@ struct Printer {
           std::cout << "ule";
           break;
         default:
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("invalid op");
       }
       std::cout << ' ';
       auto* left = node->getValue(0);
@@ -667,7 +664,7 @@ struct Printer {
       std::cout << ", ";
       printInternal(node->getValue(2));
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexecpted node type");
     }
   }
 

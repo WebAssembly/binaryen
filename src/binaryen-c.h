@@ -30,11 +30,10 @@
 // ---------------
 //
 // Thread safety: You can create Expressions in parallel, as they do not
-//                refer to global state. BinaryenAddFunction and
-//                BinaryenAddFunctionType are also thread-safe, which means
-//                that you can create functions and their contents in multiple
-//                threads. This is important since functions are where the
-//                majority of the work is done.
+//                refer to global state. BinaryenAddFunction is also
+//                thread-safe, which means that you can create functions and
+//                their contents in multiple threads. This is important since
+//                functions are where the majority of the work is done.
 //                Other methods - creating imports, exports, etc. - are
 //                not currently thread-safe (as there is typically no need
 //                to parallelize them).
@@ -55,10 +54,23 @@
 #define WASM_DEPRECATED
 #endif
 
-#if defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#define BINARYEN_API EMSCRIPTEN_KEEPALIVE
+#elif defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
 #define BINARYEN_API __declspec(dllexport)
 #else
 #define BINARYEN_API
+#endif
+
+#ifdef __cplusplus
+#define BINARYEN_REF(NAME)                                                     \
+  namespace wasm {                                                             \
+  class NAME;                                                                  \
+  };                                                                           \
+  typedef class wasm::NAME* Binaryen##NAME##Ref;
+#else
+#define BINARYEN_REF(NAME) typedef struct Binaryen##NAME* Binaryen##NAME##Ref;
 #endif
 
 #ifdef __cplusplus
@@ -92,6 +104,10 @@ BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
 BINARYEN_API BinaryenType BinaryenTypeAuto(void);
+BINARYEN_API BinaryenType BinaryenTypeCreate(BinaryenType* valueTypes,
+                                             uint32_t numTypes);
+BINARYEN_API uint32_t BinaryenTypeArity(BinaryenType t);
+BINARYEN_API void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf);
 
 WASM_DEPRECATED BinaryenType BinaryenNone(void);
 WASM_DEPRECATED BinaryenType BinaryenInt32(void);
@@ -191,26 +207,10 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 // A module can also contain a function table for indirect calls, a memory,
 // and a start method.
 
-typedef void* BinaryenModuleRef;
+BINARYEN_REF(Module);
 
 BINARYEN_API BinaryenModuleRef BinaryenModuleCreate(void);
 BINARYEN_API void BinaryenModuleDispose(BinaryenModuleRef module);
-
-// Function types
-
-typedef void* BinaryenFunctionTypeRef;
-
-// Add a new function type. This is thread-safe.
-// Note: name can be NULL, in which case we auto-generate a name
-BINARYEN_API BinaryenFunctionTypeRef
-BinaryenAddFunctionType(BinaryenModuleRef module,
-                        const char* name,
-                        BinaryenType result,
-                        BinaryenType* paramTypes,
-                        BinaryenIndex numParams);
-// Removes a function type.
-BINARYEN_API void BinaryenRemoveFunctionType(BinaryenModuleRef module,
-                                             const char* name);
 
 // Literals. These are passed by value.
 
@@ -567,7 +567,7 @@ BINARYEN_API BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenSwizzleVec8x16(void);
 
-typedef void* BinaryenExpressionRef;
+BINARYEN_REF(Expression);
 
 // Block: name can be NULL. Specifying BinaryenUndefined() as the 'type'
 //        parameter indicates that the block's type shall be figured out
@@ -615,7 +615,8 @@ BinaryenCallIndirect(BinaryenModuleRef module,
                      BinaryenExpressionRef target,
                      BinaryenExpressionRef* operands,
                      BinaryenIndex numOperands,
-                     const char* type);
+                     BinaryenType params,
+                     BinaryenType results);
 BINARYEN_API BinaryenExpressionRef
 BinaryenReturnCall(BinaryenModuleRef module,
                    const char* target,
@@ -627,7 +628,8 @@ BinaryenReturnCallIndirect(BinaryenModuleRef module,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
                            BinaryenIndex numOperands,
-                           const char* type);
+                           BinaryenType params,
+                           BinaryenType results);
 
 // LocalGet: Note the 'type' parameter. It might seem redundant, since the
 //           local at that index must have a type. However, this API lets you
@@ -648,8 +650,10 @@ BINARYEN_API BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                                     BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenLocalSet(
   BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
-BINARYEN_API BinaryenExpressionRef BinaryenLocalTee(
-  BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
+                                                    BinaryenIndex index,
+                                                    BinaryenExpressionRef value,
+                                                    BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
                                                      const char* name,
                                                      BinaryenType type);
@@ -1053,7 +1057,7 @@ BinaryenPushGetValue(BinaryenExpressionRef expr);
 
 // Functions
 
-typedef void* BinaryenFunctionRef;
+BINARYEN_REF(Function);
 
 // Adds a function to the module. This is thread-safe.
 // @varTypes: the types of variables. In WebAssembly, vars share
@@ -1066,7 +1070,8 @@ typedef void* BinaryenFunctionRef;
 BINARYEN_API BinaryenFunctionRef
 BinaryenAddFunction(BinaryenModuleRef module,
                     const char* name,
-                    BinaryenFunctionTypeRef type,
+                    BinaryenType params,
+                    BinaryenType results,
                     BinaryenType* varTypes,
                     BinaryenIndex numVarTypes,
                     BinaryenExpressionRef body);
@@ -1085,12 +1090,12 @@ BinaryenGetFunctionByIndex(BinaryenModuleRef module, BinaryenIndex id);
 
 // Imports
 
-BINARYEN_API void
-BinaryenAddFunctionImport(BinaryenModuleRef module,
-                          const char* internalName,
-                          const char* externalModuleName,
-                          const char* externalBaseName,
-                          BinaryenFunctionTypeRef functionType);
+BINARYEN_API void BinaryenAddFunctionImport(BinaryenModuleRef module,
+                                            const char* internalName,
+                                            const char* externalModuleName,
+                                            const char* externalBaseName,
+                                            BinaryenType params,
+                                            BinaryenType results);
 BINARYEN_API void BinaryenAddTableImport(BinaryenModuleRef module,
                                          const char* internalName,
                                          const char* externalModuleName,
@@ -1111,11 +1116,12 @@ BINARYEN_API void BinaryenAddEventImport(BinaryenModuleRef module,
                                          const char* externalModuleName,
                                          const char* externalBaseName,
                                          uint32_t attribute,
-                                         BinaryenFunctionTypeRef eventType);
+                                         BinaryenType params,
+                                         BinaryenType results);
 
 // Exports
 
-typedef void* BinaryenExportRef;
+BINARYEN_REF(Export);
 
 WASM_DEPRECATED BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module,
                                                     const char* internalName,
@@ -1137,7 +1143,7 @@ BINARYEN_API void BinaryenRemoveExport(BinaryenModuleRef module,
 
 // Globals
 
-typedef void* BinaryenGlobalRef;
+BINARYEN_REF(Global);
 
 BINARYEN_API BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                                  const char* name,
@@ -1152,12 +1158,13 @@ BINARYEN_API void BinaryenRemoveGlobal(BinaryenModuleRef module,
 
 // Events
 
-typedef void* BinaryenEventRef;
+BINARYEN_REF(Event);
 
 BINARYEN_API BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                                const char* name,
                                                uint32_t attribute,
-                                               BinaryenFunctionTypeRef type);
+                                               BinaryenType params,
+                                               BinaryenType results);
 BINARYEN_API BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module,
                                                const char* name);
 BINARYEN_API void BinaryenRemoveEvent(BinaryenModuleRef module,
@@ -1190,7 +1197,7 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
 // Memory segments. Query utilities.
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
-BINARYEN_API int64_t
+BINARYEN_API uint32_t
 BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                                        BinaryenIndex id);
@@ -1342,41 +1349,16 @@ BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
                                    BinaryenIndex index);
 
 //
-// ======== FunctionType Operations ========
-//
-
-// Gets the name of the specified `FunctionType`.
-BINARYEN_API const char*
-BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype);
-// Gets the number of parameters of the specified `FunctionType`.
-BINARYEN_API BinaryenIndex
-BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype);
-// Gets the type of the parameter at the specified index of the specified
-// `FunctionType`.
-BINARYEN_API BinaryenType BinaryenFunctionTypeGetParam(
-  BinaryenFunctionTypeRef ftype, BinaryenIndex index);
-// Gets the result type of the specified `FunctionType`.
-BINARYEN_API BinaryenType
-BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype);
-
-//
 // ========== Function Operations ==========
 //
 
 // Gets the name of the specified `Function`.
 BINARYEN_API const char* BinaryenFunctionGetName(BinaryenFunctionRef func);
-// Gets the name of the `FunctionType` associated with the specified `Function`.
-// May be `NULL` if the signature is implicit.
-BINARYEN_API const char* BinaryenFunctionGetType(BinaryenFunctionRef func);
-// Gets the number of parameters of the specified `Function`.
-BINARYEN_API BinaryenIndex
-BinaryenFunctionGetNumParams(BinaryenFunctionRef func);
 // Gets the type of the parameter at the specified index of the specified
 // `Function`.
-BINARYEN_API BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func,
-                                                   BinaryenIndex index);
+BINARYEN_API BinaryenType BinaryenFunctionGetParams(BinaryenFunctionRef func);
 // Gets the result type of the specified `Function`.
-BINARYEN_API BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func);
+BINARYEN_API BinaryenType BinaryenFunctionGetResults(BinaryenFunctionRef func);
 // Gets the number of additional locals within the specified `Function`.
 BINARYEN_API BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
 // Gets the type of the additional local at the specified index within the
@@ -1430,14 +1412,10 @@ BinaryenGlobalGetInitExpr(BinaryenGlobalRef global);
 BINARYEN_API const char* BinaryenEventGetName(BinaryenEventRef event);
 // Gets the attribute of the specified `Event`.
 BINARYEN_API int BinaryenEventGetAttribute(BinaryenEventRef event);
-// Gets the name of the `FunctionType` associated with the specified `Event`.
-BINARYEN_API const char* BinaryenEventGetType(BinaryenEventRef event);
-// Gets the number of parameters of the specified `Event`.
-BINARYEN_API BinaryenIndex BinaryenEventGetNumParams(BinaryenEventRef event);
-// Gets the type of the parameter at the specified index of the specified
-// `Event`.
-BINARYEN_API BinaryenType BinaryenEventGetParam(BinaryenEventRef event,
-                                                BinaryenIndex index);
+// Gets the parameters type of the specified `Event`.
+BINARYEN_API BinaryenType BinaryenEventGetParams(BinaryenEventRef event);
+// Gets the results type of the specified `Event`.
+BINARYEN_API BinaryenType BinaryenEventGetResults(BinaryenEventRef event);
 
 //
 // ========== Import Operations ==========
@@ -1490,8 +1468,17 @@ BINARYEN_API void BinaryenAddCustomSection(BinaryenModuleRef module,
 // For more details, see src/cfg/Relooper.h and
 // https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api
 
-typedef void* RelooperRef;
-typedef void* RelooperBlockRef;
+#ifdef __cplusplus
+namespace CFG {
+struct Relooper;
+struct Block;
+} // namespace CFG
+typedef struct CFG::Relooper* RelooperRef;
+typedef struct CFG::Block* RelooperBlockRef;
+#else
+typedef struct Relooper* RelooperRef;
+typedef struct RelooperBlock* RelooperBlockRef;
+#endif
 
 // Create a relooper instance
 BINARYEN_API RelooperRef RelooperCreate(BinaryenModuleRef module);
@@ -1549,17 +1536,6 @@ BINARYEN_API void BinaryenSetAPITracing(int on);
 //
 // ========= Utilities =========
 //
-
-// Note that this function has been added because there is no better alternative
-// currently and is scheduled for removal once there is one. It takes the same
-// set of parameters as BinaryenAddFunctionType but instead of adding a new
-// function signature, it returns a pointer to the existing signature or NULL if
-// there is no such signature yet.
-BINARYEN_API BinaryenFunctionTypeRef
-BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module,
-                                   BinaryenType result,
-                                   BinaryenType* paramTypes,
-                                   BinaryenIndex numParams);
 
 // Enable or disable coloring for the WASM printer
 BINARYEN_API void BinaryenSetColorsEnabled(int enabled);

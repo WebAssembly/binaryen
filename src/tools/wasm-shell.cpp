@@ -84,8 +84,7 @@ struct Operation {
     } else if (operation == GET) {
       return instance->getExport(name);
     } else {
-      Fatal() << "unknown operation: " << operation << '\n';
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unknown operation");
     }
   }
 };
@@ -112,7 +111,7 @@ static void run_asserts(Name moduleName,
         std::cerr << "Unknown entry " << entry << std::endl;
       } else {
         LiteralList arguments;
-        for (Type param : function->params) {
+        for (Type param : function->sig.params.expand()) {
           arguments.push_back(Literal(param));
         }
         try {
@@ -164,7 +163,7 @@ static void run_asserts(Name moduleName,
         };
         ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
         ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
-          if (import->module == SPECTEST && import->base == PRINT) {
+          if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
             // We can handle it.
           } else {
             reportUnknownImport(import);
@@ -181,7 +180,7 @@ static void run_asserts(Name moduleName,
             // spec tests consider it illegal to use spectest.print in a table
             if (auto* import = wasm.getFunction(name)) {
               if (import->imported() && import->module == SPECTEST &&
-                  import->base == PRINT) {
+                  import->base.startsWith(PRINT)) {
                 std::cerr << "cannot put spectest.print in table\n";
                 invalid = true;
               }
@@ -276,10 +275,8 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  auto input(read_file<std::vector<char>>(options.extra["infile"],
-                                          Flags::Text,
-                                          options.debug ? Flags::Debug
-                                                        : Flags::Release));
+  auto input(
+    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
 
   bool checked = false;
 

@@ -8,10 +8,8 @@ var module = Binaryen.parseText(`
 )
 `);
 
-var signature = module.addFunctionType("v", Binaryen.none, []);
-
 // i32/i64.atomic.load/store
-module.addFunction("main", signature, [], module.block("", [
+module.addFunction("main", Binaryen.none, Binaryen.none, [], module.block("", [
   // i32
   module.i32.atomic.store(0,
     module.i32.const(0),

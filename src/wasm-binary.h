@@ -30,10 +30,13 @@
 #include "ir/import-utils.h"
 #include "ir/module-utils.h"
 #include "parsing.h"
+#include "support/debug.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm-validator.h"
 #include "wasm.h"
+
+#define DEBUG_TYPE "binary"
 
 namespace wasm {
 
@@ -156,31 +159,22 @@ typedef LEB<int64_t, int8_t> S64LEB;
 // is optimized for reading, not writing.
 //
 class BufferWithRandomAccess : public std::vector<uint8_t> {
-  bool debug;
-
 public:
-  BufferWithRandomAccess(bool debug = false) : debug(debug) {}
+  BufferWithRandomAccess() = default;
 
   BufferWithRandomAccess& operator<<(int8_t x) {
-    if (debug) {
-      std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")"
-                << std::endl;
-    }
+    BYN_TRACE("writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")\n");
     push_back(x);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int16_t x) {
-    if (debug) {
-      std::cerr << "writeInt16: " << x << " (at " << size() << ")" << std::endl;
-    }
+    BYN_TRACE("writeInt16: " << x << " (at " << size() << ")\n");
     push_back(x & 0xff);
     push_back(x >> 8);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int32_t x) {
-    if (debug) {
-      std::cerr << "writeInt32: " << x << " (at " << size() << ")" << std::endl;
-    }
+    BYN_TRACE("writeInt32: " << x << " (at " << size() << ")\n");
     push_back(x & 0xff);
     x >>= 8;
     push_back(x & 0xff);
@@ -191,9 +185,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(int64_t x) {
-    if (debug) {
-      std::cerr << "writeInt64: " << x << " (at " << size() << ")" << std::endl;
-    }
+    BYN_TRACE("writeInt64: " << x << " (at " << size() << ")\n");
     push_back(x & 0xff);
     x >>= 8;
     push_back(x & 0xff);
@@ -213,62 +205,50 @@ public:
   }
   BufferWithRandomAccess& operator<<(U32LEB x) {
     size_t before = -1;
-    if (debug) {
-      before = size();
-      std::cerr << "writeU32LEB: " << x.value << " (at " << before << ")"
-                << std::endl;
-    }
+    WASM_UNUSED(before);
+    BYN_DEBUG(before = size(); std::cerr << "writeU32LEB: " << x.value
+                                         << " (at " << before << ")"
+                                         << std::endl;);
     x.write(this);
-    if (debug) {
-      for (size_t i = before; i < size(); i++) {
-        std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
-      }
-    }
+    BYN_DEBUG(for (size_t i = before; i < size(); i++) {
+      std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
+    });
     return *this;
   }
   BufferWithRandomAccess& operator<<(U64LEB x) {
     size_t before = -1;
-    if (debug) {
-      before = size();
-      std::cerr << "writeU64LEB: " << x.value << " (at " << before << ")"
-                << std::endl;
-    }
+    WASM_UNUSED(before);
+    BYN_DEBUG(before = size(); std::cerr << "writeU64LEB: " << x.value
+                                         << " (at " << before << ")"
+                                         << std::endl;);
     x.write(this);
-    if (debug) {
-      for (size_t i = before; i < size(); i++) {
-        std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
-      }
-    }
+    BYN_DEBUG(for (size_t i = before; i < size(); i++) {
+      std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
+    });
     return *this;
   }
   BufferWithRandomAccess& operator<<(S32LEB x) {
     size_t before = -1;
-    if (debug) {
-      before = size();
-      std::cerr << "writeS32LEB: " << x.value << " (at " << before << ")"
-                << std::endl;
-    }
+    WASM_UNUSED(before);
+    BYN_DEBUG(before = size(); std::cerr << "writeS32LEB: " << x.value
+                                         << " (at " << before << ")"
+                                         << std::endl;);
     x.write(this);
-    if (debug) {
-      for (size_t i = before; i < size(); i++) {
-        std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
-      }
-    }
+    BYN_DEBUG(for (size_t i = before; i < size(); i++) {
+      std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
+    });
     return *this;
   }
   BufferWithRandomAccess& operator<<(S64LEB x) {
     size_t before = -1;
-    if (debug) {
-      before = size();
-      std::cerr << "writeS64LEB: " << x.value << " (at " << before << ")"
-                << std::endl;
-    }
+    WASM_UNUSED(before);
+    BYN_DEBUG(before = size(); std::cerr << "writeS64LEB: " << x.value
+                                         << " (at " << before << ")"
+                                         << std::endl;);
     x.write(this);
-    if (debug) {
-      for (size_t i = before; i < size(); i++) {
-        std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
-      }
-    }
+    BYN_DEBUG(for (size_t i = before; i < size(); i++) {
+      std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
+    });
     return *this;
   }
 
@@ -278,31 +258,21 @@ public:
   BufferWithRandomAccess& operator<<(uint64_t x) { return *this << (int64_t)x; }
 
   BufferWithRandomAccess& operator<<(float x) {
-    if (debug) {
-      std::cerr << "writeFloat32: " << x << " (at " << size() << ")"
-                << std::endl;
-    }
+    BYN_TRACE("writeFloat32: " << x << " (at " << size() << ")\n");
     return *this << Literal(x).reinterpreti32();
   }
   BufferWithRandomAccess& operator<<(double x) {
-    if (debug) {
-      std::cerr << "writeFloat64: " << x << " (at " << size() << ")"
-                << std::endl;
-    }
+    BYN_TRACE("writeFloat64: " << x << " (at " << size() << ")\n");
     return *this << Literal(x).reinterpreti64();
   }
 
   void writeAt(size_t i, uint16_t x) {
-    if (debug) {
-      std::cerr << "backpatchInt16: " << x << " (at " << i << ")" << std::endl;
-    }
+    BYN_TRACE("backpatchInt16: " << x << " (at " << i << ")\n");
     (*this)[i] = x & 0xff;
     (*this)[i + 1] = x >> 8;
   }
   void writeAt(size_t i, uint32_t x) {
-    if (debug) {
-      std::cerr << "backpatchInt32: " << x << " (at " << i << ")" << std::endl;
-    }
+    BYN_TRACE("backpatchInt32: " << x << " (at " << i << ")\n");
     (*this)[i] = x & 0xff;
     x >>= 8;
     (*this)[i + 1] = x & 0xff;
@@ -315,20 +285,14 @@ public:
   // writes out an LEB to an arbitrary location. this writes the LEB as a full
   // 5 bytes, the fixed amount that can easily be set aside ahead of time
   void writeAtFullFixedSize(size_t i, U32LEB x) {
-    if (debug) {
-      std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")"
-                << std::endl;
-    }
+    BYN_TRACE("backpatchU32LEB: " << x.value << " (at " << i << ")\n");
     // fill all 5 bytes, we have to do this when backpatching
     x.writeAt(this, i, MaxLEB32Bytes);
   }
   // writes out an LEB of normal size
   // returns how many bytes were written
   size_t writeAt(size_t i, U32LEB x) {
-    if (debug) {
-      std::cerr << "writeAtU32LEB: " << x.value << " (at " << i << ")"
-                << std::endl;
-    }
+    BYN_TRACE("writeAtU32LEB: " << x.value << " (at " << i << ")\n");
     return x.writeAt(this, i);
   }
 
@@ -955,7 +919,7 @@ inline S32LEB binaryType(Type type) {
       ret = BinaryConsts::EncodedType::exnref;
       break;
     case unreachable:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected type");
   }
   return S32LEB(ret);
 }
@@ -964,8 +928,8 @@ inline S32LEB binaryType(Type type) {
 
 class WasmBinaryWriter {
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false)
-    : wasm(input), o(o), debug(debug), indexes(*input) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o)
+    : wasm(input), o(o), indexes(*input) {
     prepare();
   }
 
@@ -1002,7 +966,6 @@ public:
   void writeStart();
   void writeMemory();
   void writeTypes();
-  int32_t getFunctionTypeIndex(Name type);
   void writeImports();
 
   void writeFunctionSignatures();
@@ -1014,9 +977,10 @@ public:
   void writeDataSegments();
   void writeEvents();
 
-  uint32_t getFunctionIndex(Name name);
-  uint32_t getGlobalIndex(Name name);
-  uint32_t getEventIndex(Name name);
+  uint32_t getFunctionIndex(Name name) const;
+  uint32_t getGlobalIndex(Name name) const;
+  uint32_t getEventIndex(Name name) const;
+  uint32_t getTypeIndex(Signature sig) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1058,8 +1022,9 @@ public:
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
-  bool debug;
   ModuleUtils::BinaryIndexes indexes;
+  std::unordered_map<Signature, Index> typeIndices;
+  std::vector<Signature> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;
@@ -1084,7 +1049,6 @@ class WasmBinaryBuilder {
   Module& wasm;
   MixedArena& allocator;
   const std::vector<char>& input;
-  bool debug;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
 
@@ -1094,10 +1058,13 @@ class WasmBinaryBuilder {
 
   std::set<BinaryConsts::Section> seenSections;
 
+  // All signatures present in the type section
+  std::vector<Signature> signatures;
+
 public:
-  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input, bool debug)
-    : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug),
-      sourceMap(nullptr), nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
+  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
+    : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
+      nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -1142,7 +1109,8 @@ public:
                           Address defaultIfNoMax);
   void readImports();
 
-  std::vector<FunctionType*> functionTypes; // types of defined functions
+  // The signatures of each function, given in the function section
+  std::vector<Signature> functionSignatures;
 
   void readFunctionSignatures();
   size_t nextLabel;
@@ -1169,7 +1137,7 @@ public:
 
   void readFunctions();
 
-  std::map<Export*, Index> exportIndexes;
+  std::map<Export*, Index> exportIndices;
   std::vector<Export*> exportOrder;
   void readExports();
 
@@ -1308,5 +1276,7 @@ public:
 };
 
 } // namespace wasm
+
+#undef DEBUG_TYPE
 
 #endif // wasm_wasm_binary_h

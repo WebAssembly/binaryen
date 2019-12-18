@@ -1,16 +1,15 @@
 GetEvent is equal: true
-getEventInfo={"name":"a-event","module":"","base":"","attribute":0,"type":"vi"}
+getEventInfo={"name":"a-event","module":"","base":"","attribute":0,"params":2,"results":0}
 (module
- (type $vi (func (param i32)))
- (type $vif (func (param i32 f32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_f32_=>_none (func (param i32 f32)))
  (import "module" "base" (event $a-event-imp (attr 0) (param i32 f32)))
  (event $a-event (attr 0) (param i32))
  (export "a-event-exp" (event $a-event))
 )
 
 (module
- (type $vi (func (param i32)))
- (type $vif (func (param i32 f32)))
+ (type $i32_f32_=>_none (func (param i32 f32)))
  (import "module" "base" (event $a-event-imp (attr 0) (param i32 f32)))
 )
 

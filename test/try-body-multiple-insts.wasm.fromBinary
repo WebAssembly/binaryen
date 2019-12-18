@@ -1,12 +1,12 @@
 (module
- (type $0 (func))
- (func $0 (; 0 ;) (type $0)
+ (type $none_=>_none (func))
+ (func $0 (; 0 ;)
   (nop)
  )
- (func $1 (; 1 ;) (type $0)
+ (func $1 (; 1 ;)
   (nop)
  )
- (func $2 (; 2 ;) (type $0)
+ (func $2 (; 2 ;)
   (local $0 exnref)
   (try
    (block

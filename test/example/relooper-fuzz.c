@@ -57,8 +57,13 @@ int main() {
   );
   BinaryenExpressionRef checkBodyList[] = { halter, incer, debugger, returner };
   BinaryenExpressionRef checkBody = BinaryenBlock(module, NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef), BinaryenTypeAuto());
-  BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenTypeInt32(), NULL, 0);
-  BinaryenAddFunction(module, "check", i, NULL, 0, checkBody);
+  BinaryenAddFunction(module,
+                      "check",
+                      BinaryenTypeNone(),
+                      BinaryenTypeInt32(),
+                      NULL,
+                      0,
+                      checkBody);
 
   // contents of main() begin here
 
@@ -244,16 +249,20 @@ int main() {
   full[numDecisions] = body;
   BinaryenExpressionRef all = BinaryenBlock(module, NULL, full, numDecisions + 1, BinaryenTypeAuto());
 
-  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
   BinaryenType localTypes[] = { BinaryenTypeInt32(), BinaryenTypeInt32() }; // state, free-for-label
-  BinaryenFunctionRef theMain = BinaryenAddFunction(module, "main", v, localTypes, 2, all);
+  BinaryenFunctionRef theMain = BinaryenAddFunction(
+    module, "main", BinaryenTypeNone(), BinaryenTypeNone(), localTypes, 2, all);
   BinaryenSetStart(module, theMain);
 
   // import
 
   BinaryenType iparams[] = { BinaryenTypeInt32() };
-  BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenTypeNone(), iparams, 1);
-  BinaryenAddFunctionImport(module, "print", "spectest", "print", vi);
+  BinaryenAddFunctionImport(module,
+                            "print",
+                            "spectest",
+                            "print",
+                            BinaryenTypeInt32(),
+                            BinaryenTypeNone());
 
   // memory
   BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0);

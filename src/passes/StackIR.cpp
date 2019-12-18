@@ -169,7 +169,7 @@ private:
         values.clear();
       }
       // This is something we should handle, look into it.
-      if (isConcreteType(inst->type)) {
+      if (inst->type.isConcrete()) {
         bool optimized = false;
         if (auto* get = inst->origin->dynCast<LocalGet>()) {
           // This is a potential optimization opportunity! See if we
@@ -238,7 +238,7 @@ private:
         continue;
       }
       if (auto* block = inst->origin->dynCast<Block>()) {
-        if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+        if (!BranchUtils::BranchSeeker::has(block, block->name)) {
           // TODO optimize, maybe run remove-unused-names
           inst = nullptr;
         }
@@ -255,7 +255,9 @@ private:
       case StackInst::BlockEnd:
       case StackInst::IfElse:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::Catch:
+      case StackInst::TryEnd: {
         return true;
       }
       default: { return false; }
@@ -267,7 +269,8 @@ private:
     switch (inst->op) {
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryBegin: {
         return true;
       }
       default: { return false; }
@@ -279,7 +282,8 @@ private:
     switch (inst->op) {
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryEnd: {
         return true;
       }
       default: { return false; }

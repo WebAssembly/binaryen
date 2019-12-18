@@ -1,11 +1,17 @@
 (module
- (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
- (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $FUNCSIG$vi (func (param i32)))
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$i (func (result i32)))
- (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (type $FUNCSIG$vii (func (param i32 i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $f64_=>_i32 (func (param f64) (result i32)))
+ (type $i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32)))
+ (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
+ (type $f64_i32_=>_f64 (func (param f64 i32) (result f64)))
  (import "env" "memory" (memory $memory 256 256))
  (data (i32.const 1024) "emcc_hello_world.asm.js")
  (import "env" "table" (table $table 18 18 funcref))
@@ -1133,7 +1139,7 @@
         (local.get $2)
         (block
          (drop
-          (call_indirect (type $FUNCSIG$iiii)
+          (call_indirect (type $i32_i32_i32_=>_i32)
            (local.get $0)
            (i32.const 0)
            (i32.const 0)
@@ -1241,7 +1247,7 @@
     )
     (block
      (drop
-      (call_indirect (type $FUNCSIG$iiii)
+      (call_indirect (type $i32_i32_i32_=>_i32)
        (local.get $2)
        (local.get $0)
        (local.get $1)
@@ -1305,7 +1311,7 @@
       )
       (br_if $label$break$L5
        (i32.lt_u
-        (call_indirect (type $FUNCSIG$iiii)
+        (call_indirect (type $i32_i32_i32_=>_i32)
          (local.get $2)
          (local.get $0)
          (local.get $3)
@@ -1849,7 +1855,7 @@
      )
     )
     (drop
-     (call_indirect (type $FUNCSIG$iiii)
+     (call_indirect (type $i32_i32_i32_=>_i32)
       (local.get $0)
       (i32.const 0)
       (i32.const 0)
@@ -1891,7 +1897,7 @@
       )
      )
      (drop
-      (call_indirect (type $FUNCSIG$iiii)
+      (call_indirect (type $i32_i32_i32_=>_i32)
        (local.get $0)
        (i32.sub
         (local.get $1)
@@ -14970,8 +14976,13 @@
    (local.get $x64)
   )
  )
+<<<<<<< HEAD
  (func $dynCall_ii (; 65 ;) (param $0 i32) (param $1 i32) (result i32)
   (call_indirect (type $FUNCSIG$ii)
+=======
+ (func $dynCall_ii (; 65 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  (call_indirect (type $i32_=>_i32)
+>>>>>>> origin/master
    (local.get $1)
    (i32.and
     (local.get $0)
@@ -14979,8 +14990,13 @@
    )
   )
  )
+<<<<<<< HEAD
  (func $dynCall_iiii (; 66 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (call_indirect (type $FUNCSIG$iiii)
+=======
+ (func $dynCall_iiii (; 66 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+  (call_indirect (type $i32_i32_i32_=>_i32)
+>>>>>>> origin/master
    (local.get $1)
    (local.get $2)
    (local.get $3)
@@ -14993,8 +15009,13 @@
    )
   )
  )
+<<<<<<< HEAD
  (func $dynCall_vi (; 67 ;) (param $0 i32) (param $1 i32)
   (call_indirect (type $FUNCSIG$vi)
+=======
+ (func $dynCall_vi (; 67 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
+  (call_indirect (type $i32_=>_none)
+>>>>>>> origin/master
    (local.get $1)
    (i32.add
     (i32.and

@@ -1,8 +1,6 @@
-[wasm-validator error in function $test] unexpected false: global.get name must be valid, on 
+[wasm-validator error in function test] unexpected false: global.get name must be valid, on 
 [i32] (global.get $missing)
 0
-[wasm-validator error in function $test] unexpected false: local.get index must be small enough, on 
-[i32] (local.get $0)
-[wasm-validator error in function $test] unexpected false: local.get must have proper type, on 
+[wasm-validator error in function test] unexpected false: local.get index must be small enough, on 
 [i32] (local.get $0)
 0

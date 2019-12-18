@@ -1,5 +1,4 @@
 // export friendly API methods
-
 function preserveStack(func) {
   try {
     var stack = stackSave();
@@ -41,6 +40,26 @@ Module['anyref'] = Module['_BinaryenTypeAnyref']();
 Module['exnref'] = Module['_BinaryenTypeExnref']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
+
+Module['createType'] = function(types) {
+  return preserveStack(function() {
+    var array = i32sToStack(types);
+    return Module['_BinaryenTypeCreate'](array, types.length);
+  });
+};
+
+Module['expandType'] = function(ty) {
+  return preserveStack(function() {
+    var numTypes = Module['_BinaryenTypeArity'](ty);
+    var array = stackAlloc(numTypes << 2);
+    Module['_BinaryenTypeExpand'](ty, array);
+    var types = [];
+    for (var i = 0; i < numTypes; i++) {
+      types.push(HEAPU32[(array >>> 2) + i]);
+    }
+    return types;
+  });
+};
 
 // Expression ids
 Module['InvalidId'] = Module['_BinaryenInvalidId']();
@@ -498,9 +517,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
     });
   };
-  self['callIndirect'] = self['call_indirect'] = function(target, operands, type) {
+  self['callIndirect'] = self['call_indirect'] = function(target, operands, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
+      return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results);
     });
   };
   self['returnCall'] = function(name, operands, type) {
@@ -508,9 +527,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
     });
   };
-  self['returnCallIndirect'] = function(target, operands, type) {
+  self['returnCallIndirect'] = function(target, operands, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenReturnCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
+      return Module['_BinaryenReturnCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results);
     });
   };
 
@@ -521,8 +540,11 @@ function wrapModule(module, self) {
     'set': function(index, value) {
       return Module['_BinaryenLocalSet'](module, index, value);
     },
-    'tee': function(index, value) {
-      return Module['_BinaryenLocalTee'](module, index, value);
+    'tee': function(index, value, type) {
+      if (typeof type === 'undefined') {
+        throw new Error("local.tee's type should be defined");
+      }
+      return Module['_BinaryenLocalTee'](module, index, value, type);
     }
   }
 
@@ -1988,28 +2010,9 @@ function wrapModule(module, self) {
   };
 
   // 'Module' operations
-  self['addFunctionType'] = function(name, result, paramTypes) {
-    if (!paramTypes) paramTypes = [];
+  self['addFunction'] = function(name, params, results, varTypes, body) {
     return preserveStack(function() {
-      return Module['_BinaryenAddFunctionType'](module, strToStack(name), result,
-                                                i32sToStack(paramTypes), paramTypes.length);
-    });
-  };
-  self['getFunctionTypeBySignature'] = function(result, paramTypes) {
-    if (!paramTypes) paramTypes = [];
-    return preserveStack(function() {
-      return Module['_BinaryenGetFunctionTypeBySignature'](module, result,
-                                                           i32sToStack(paramTypes), paramTypes.length);
-    });
-  };
-  self['removeFunctionType'] = function(name) {
-    return preserveStack(function() {
-      return Module['_BinaryenRemoveFunctionType'](module, strToStack(name));
-    });
-  };
-  self['addFunction'] = function(name, functionType, varTypes, body) {
-    return preserveStack(function() {
-      return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, i32sToStack(varTypes), varTypes.length, body);
+      return Module['_BinaryenAddFunction'](module, strToStack(name), params, results, i32sToStack(varTypes), varTypes.length, body);
     });
   };
   self['getFunction'] = function(name) {
@@ -2037,9 +2040,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
     });
   }
-  self['addEvent'] = function(name, attribute, eventType) {
+  self['addEvent'] = function(name, attribute, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenAddEvent'](module, strToStack(name), attribute, eventType);
+      return Module['_BinaryenAddEvent'](module, strToStack(name), attribute, params, results);
     });
   };
   self['getEvent'] = function(name) {
@@ -2052,9 +2055,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenRemoveEvent'](module, strToStack(name));
     });
   };
-  self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, functionType) {
+  self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), functionType);
+      return Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results);
     });
   };
   self['addTableImport'] = function(internalName, externalModuleName, externalBaseName) {
@@ -2072,9 +2075,9 @@ function wrapModule(module, self) {
       return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable);
     });
   };
-  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, eventType) {
+  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, params, results) {
     return preserveStack(function() {
-      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, eventType);
+      return Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results);
     });
   };
   self['addExport'] = // deprecated
@@ -2678,24 +2681,14 @@ Module['getExpressionInfo'] = function(expr) {
   }
 };
 
-// Obtains information about a 'FunctionType'
-Module['getFunctionTypeInfo'] = function(func) {
-  return {
-    'name': UTF8ToString(Module['_BinaryenFunctionTypeGetName'](func)),
-    'params': getAllNested(func, Module['_BinaryenFunctionTypeGetNumParams'], Module['_BinaryenFunctionTypeGetParam']),
-    'result': Module['_BinaryenFunctionTypeGetResult'](func)
-  };
-};
-
 // Obtains information about a 'Function'
 Module['getFunctionInfo'] = function(func) {
   return {
     'name': UTF8ToString(Module['_BinaryenFunctionGetName'](func)),
     'module': UTF8ToString(Module['_BinaryenFunctionImportGetModule'](func)),
     'base': UTF8ToString(Module['_BinaryenFunctionImportGetBase'](func)),
-    'type': UTF8ToString(Module['_BinaryenFunctionGetType'](func)),
-    'params': getAllNested(func, Module['_BinaryenFunctionGetNumParams'], Module['_BinaryenFunctionGetParam']),
-    'result': Module['_BinaryenFunctionGetResult'](func),
+    'params': Module['_BinaryenFunctionGetParams'](func),
+    'results': Module['_BinaryenFunctionGetResults'](func),
     'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
     'body': Module['_BinaryenFunctionGetBody'](func)
   };
@@ -2720,7 +2713,8 @@ Module['getEventInfo'] = function(event_) {
     'module': UTF8ToString(Module['_BinaryenEventImportGetModule'](event_)),
     'base': UTF8ToString(Module['_BinaryenEventImportGetBase'](event_)),
     'attribute': Module['_BinaryenEventGetAttribute'](event_),
-    'type': UTF8ToString(Module['_BinaryenEventGetType'](event_))
+    'params': Module['_BinaryenEventGetParams'](event_),
+    'results': Module['_BinaryenEventGetResults'](event_)
   };
 };
 
@@ -2747,6 +2741,12 @@ Module['emitText'] = function(expr) {
 };
 
 // Parses a binary to a module
+
+// If building with Emscripten ASSERTIONS, there is a property added to
+// Module to guard against users mistakening using the removed readBinary()
+// API. We must defuse that carefully.
+Object.defineProperty(Module, 'readBinary', { writable: true });
+
 Module['readBinary'] = function(data) {
   var buffer = allocate(data, 'i8', ALLOC_NORMAL);
   var ptr = Module['_BinaryenModuleRead'](buffer, data.length);

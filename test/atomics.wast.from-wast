@@ -1,7 +1,7 @@
 (module
- (type $0 (func))
+ (type $none_=>_none (func))
  (memory $0 (shared 23 256))
- (func $atomic-loadstore (; 0 ;) (type $0)
+ (func $atomic-loadstore (; 0 ;)
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -68,7 +68,7 @@
    (local.get $1)
   )
  )
- (func $atomic-rmw (; 1 ;) (type $0)
+ (func $atomic-rmw (; 1 ;)
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -102,7 +102,7 @@
    )
   )
  )
- (func $atomic-cmpxchg (; 2 ;) (type $0)
+ (func $atomic-cmpxchg (; 2 ;)
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -134,7 +134,7 @@
    )
   )
  )
- (func $atomic-wait-notify (; 3 ;) (type $0)
+ (func $atomic-wait-notify (; 3 ;)
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -158,7 +158,7 @@
    )
   )
  )
- (func $atomic-fence (; 4 ;) (type $0)
+ (func $atomic-fence (; 4 ;)
   (atomic.fence)
  )
 )

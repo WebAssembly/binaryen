@@ -1,0 +1,115 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (memory $0 2)
+ (table $0 1 1 funcref)
+ (global $global$0 (mut i32) (i32.const 66112))
+ (global $global$1 i32 (i32.const 576))
+ (export "memory" (memory $0))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "main" (func $main))
+ (export "__data_end" (global $global$1))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (func $__wasm_call_ctors (; 0 ;)
+  (call $init_x)
+  (call $init_y)
+ )
+ (func $init_x (; 1 ;)
+  (i32.store offset=568
+   (i32.const 0)
+   (i32.const 14)
+  )
+ )
+ (func $init_y (; 2 ;)
+  (i32.store offset=572
+   (i32.const 0)
+   (i32.const 144)
+  )
+ )
+ (func $__original_main (; 3 ;) (result i32)
+  (i32.add
+   (i32.load offset=568
+    (i32.const 0)
+   )
+   (i32.load offset=572
+    (i32.const 0)
+   )
+  )
+ )
+ (func $main (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
+  (call $__original_main)
+ )
+ (func $stackSave (; 5 ;) (result i32)
+  (global.get $global$0)
+ )
+ (func $stackAlloc (; 6 ;) (param $0 i32) (result i32)
+  (local $1 i32)
+  (global.set $global$0
+   (local.tee $1
+    (i32.and
+     (i32.sub
+      (global.get $global$0)
+      (local.get $0)
+     )
+     (i32.const -16)
+    )
+   )
+  )
+  (local.get $1)
+ )
+ (func $stackRestore (; 7 ;) (param $0 i32)
+  (global.set $global$0
+   (local.get $0)
+  )
+ )
+ (func $__growWasmMemory (; 8 ;) (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 8,
+  "tableSize": 1,
+  "initializers": [
+    "__wasm_call_ctors"
+  ],
+  "declares": [
+  ],
+  "externs": [
+  ],
+  "implementedFunctions": [
+    "___wasm_call_ctors",
+    "_main",
+    "_stackSave",
+    "_stackAlloc",
+    "_stackRestore",
+    "___growWasmMemory"
+  ],
+  "exports": [
+    "__wasm_call_ctors",
+    "main",
+    "stackSave",
+    "stackAlloc",
+    "stackRestore",
+    "__growWasmMemory"
+  ],
+  "namedGlobals": {
+    "__data_end" : "576"
+  },
+  "invokeFuncs": [
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 0
+}
+-- END METADATA --
+;)

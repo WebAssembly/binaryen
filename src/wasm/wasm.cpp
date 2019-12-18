@@ -94,7 +94,7 @@ Name ATTR("attr");
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
     case Expression::Id::InvalidId:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid expr id");
     case Expression::Id::BlockId:
       return "block";
     case Expression::Id::IfId:
@@ -182,9 +182,9 @@ const char* getExpressionName(Expression* curr) {
     case Expression::BrOnExnId:
       return "br_on_exn";
     case Expression::Id::NumExpressionIds:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid expr id");
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("invalid expr id");
 }
 
 // core AST type checking
@@ -219,7 +219,7 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
 
   void visitBrOnExn(BrOnExn* curr) {
     if (curr->name == targetName) {
-      types.push_back(curr->getSingleSentType());
+      types.push_back(curr->sent);
     }
   }
 
@@ -283,7 +283,7 @@ static void handleUnreachable(Block* block,
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
   // or the final child flows out a value)
-  if (isConcreteType(block->type)) {
+  if (block->type.isConcrete()) {
     return;
   }
   // look for an unreachable child
@@ -292,7 +292,7 @@ static void handleUnreachable(Block* block,
       // there is an unreachable child, so we are unreachable, unless we have a
       // break
       if (!breakabilityKnown) {
-        hasBreak = BranchUtils::BranchSeeker::hasNamed(block, block->name);
+        hasBreak = BranchUtils::BranchSeeker::has(block, block->name);
       }
       if (!hasBreak) {
         block->type = unreachable;
@@ -314,7 +314,7 @@ void Block::finalize() {
       //  (return)
       //  (i32.const 10)
       // )
-      if (isConcreteType(type)) {
+      if (type.isConcrete()) {
         return;
       }
       // if we are unreachable, we are done
@@ -367,9 +367,9 @@ void If::finalize() {
   if (ifFalse) {
     if (ifTrue->type == ifFalse->type) {
       type = ifTrue->type;
-    } else if (isConcreteType(ifTrue->type) && ifFalse->type == unreachable) {
+    } else if (ifTrue->type.isConcrete() && ifFalse->type == unreachable) {
       type = ifTrue->type;
-    } else if (isConcreteType(ifFalse->type) && ifTrue->type == unreachable) {
+    } else if (ifFalse->type.isConcrete() && ifTrue->type == unreachable) {
       type = ifFalse->type;
     } else {
       type = none;
@@ -432,6 +432,7 @@ void Call::finalize() {
 }
 
 void CallIndirect::finalize() {
+  type = sig.results;
   handleUnreachableOperands(this);
   if (isReturn) {
     type = unreachable;
@@ -441,52 +442,23 @@ void CallIndirect::finalize() {
   }
 }
 
-bool FunctionType::structuralComparison(FunctionType& b) {
-  return structuralComparison(b.params, b.result);
+bool LocalSet::isTee() const { return type != none; }
+
+// Changes to local.tee. The type of the local should be given.
+void LocalSet::makeTee(Type type_) {
+  type = type_;
+  finalize(); // type may need to be unreachable
 }
 
-bool FunctionType::structuralComparison(const std::vector<Type>& otherParams,
-                                        Type otherResult) {
-  if (result != otherResult) {
-    return false;
-  }
-  if (params.size() != otherParams.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < params.size(); i++) {
-    if (params[i] != otherParams[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool FunctionType::operator==(FunctionType& b) {
-  if (name != b.name) {
-    return false;
-  }
-  return structuralComparison(b);
-}
-bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
-
-bool LocalSet::isTee() { return type != none; }
-
-void LocalSet::setTee(bool is) {
-  if (is) {
-    type = value->type;
-  } else {
-    type = none;
-  }
+// Changes to local.set.
+void LocalSet::makeSet() {
+  type = none;
   finalize(); // type may need to be unreachable
 }
 
 void LocalSet::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
-  } else if (isTee()) {
-    type = value->type;
-  } else {
-    type = none;
   }
 }
 
@@ -559,7 +531,7 @@ void SIMDExtract::finalize() {
       type = f64;
       break;
     default:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("unexpected op");
   }
   if (vec->type == unreachable) {
     type = unreachable;
@@ -653,7 +625,7 @@ Index SIMDLoad::getMemBytes() {
     case LoadExtUVec32x2ToVecI64x2:
       return 8;
   }
-  WASM_UNREACHABLE();
+  WASM_UNREACHABLE("unexpected op");
 }
 
 Const* Const::set(Literal value_) {
@@ -801,7 +773,7 @@ void Unary::finalize() {
       break;
 
     case InvalidUnary:
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("invalid unary op");
   }
 }
 
@@ -895,9 +867,9 @@ void Host::finalize() {
 void Try::finalize() {
   if (body->type == catchBody->type) {
     type = body->type;
-  } else if (isConcreteType(body->type) && catchBody->type == unreachable) {
+  } else if (body->type.isConcrete() && catchBody->type == unreachable) {
     type = body->type;
-  } else if (isConcreteType(catchBody->type) && body->type == unreachable) {
+  } else if (catchBody->type.isConcrete() && body->type == unreachable) {
     type = catchBody->type;
   } else {
     type = none;
@@ -924,16 +896,6 @@ void BrOnExn::finalize() {
   }
 }
 
-// br_on_exn's type is exnref, which it pushes onto the stack when it is not
-// taken, but the type of the value it pushes onto the stack when it is taken
-// should be the event type. So this is the type we 'send' to the block end when
-// it is taken. Currently we don't support multi value return from a block, we
-// pick the type of the first param from the event.
-// TODO Remove this function and generalize event type after multi-value support
-Type BrOnExn::getSingleSentType() {
-  return eventParams.empty() ? none : eventParams.front();
-}
-
 void Push::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
@@ -942,15 +904,23 @@ void Push::finalize() {
   }
 }
 
-size_t Function::getNumParams() { return params.size(); }
+size_t Function::getNumParams() { return sig.params.size(); }
 
 size_t Function::getNumVars() { return vars.size(); }
 
-size_t Function::getNumLocals() { return params.size() + vars.size(); }
+size_t Function::getNumLocals() { return sig.params.size() + vars.size(); }
 
-bool Function::isParam(Index index) { return index < params.size(); }
+bool Function::isParam(Index index) {
+  size_t size = sig.params.size();
+  assert(index < size + vars.size());
+  return index < size;
+}
 
-bool Function::isVar(Index index) { return index >= params.size(); }
+bool Function::isVar(Index index) {
+  auto base = getVarIndexBase();
+  assert(index < base + vars.size());
+  return index >= base;
+}
 
 bool Function::hasLocalName(Index index) const {
   return localNames.find(index) != localNames.end();
@@ -983,15 +953,16 @@ Index Function::getLocalIndex(Name name) {
   return iter->second;
 }
 
-Index Function::getVarIndexBase() { return params.size(); }
+Index Function::getVarIndexBase() { return sig.params.size(); }
 
 Type Function::getLocalType(Index index) {
-  if (isParam(index)) {
+  const std::vector<Type>& params = sig.params.expand();
+  if (index < params.size()) {
     return params[index];
   } else if (isVar(index)) {
-    return vars[index - getVarIndexBase()];
+    return vars[index - params.size()];
   } else {
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("invalid local index");
   }
 }
 
@@ -1002,14 +973,6 @@ void Function::clearDebugInfo() {
   debugLocations.clear();
   prologLocation.clear();
   epilogLocation.clear();
-}
-
-FunctionType* Module::getFunctionType(Name name) {
-  auto iter = functionTypesMap.find(name);
-  if (iter == functionTypesMap.end()) {
-    Fatal() << "Module::getFunctionType: " << name << " does not exist";
-  }
-  return iter->second;
 }
 
 Export* Module::getExport(Name name) {
@@ -1045,14 +1008,6 @@ Event* Module::getEvent(Name name) {
   return iter->second;
 }
 
-FunctionType* Module::getFunctionTypeOrNull(Name name) {
-  auto iter = functionTypesMap.find(name);
-  if (iter == functionTypesMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
-}
-
 Export* Module::getExportOrNull(Name name) {
   auto iter = exportsMap.find(name);
   if (iter == exportsMap.end()) {
@@ -1083,19 +1038,6 @@ Event* Module::getEventOrNull(Name name) {
     return nullptr;
   }
   return iter->second;
-}
-
-FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addFunctionType: empty name";
-  }
-  if (getFunctionTypeOrNull(curr->name)) {
-    Fatal() << "Module::addFunctionType: " << curr->name << " already exists";
-  }
-  auto* p = curr.get();
-  functionTypes.emplace_back(std::move(curr));
-  functionTypesMap[p->name] = p;
-  return p;
 }
 
 Export* Module::addExport(Export* curr) {
@@ -1165,66 +1107,63 @@ Event* Module::addEvent(Event* curr) {
 
 void Module::addStart(const Name& s) { start = s; }
 
-void Module::removeFunctionType(Name name) {
-  for (size_t i = 0; i < functionTypes.size(); i++) {
-    if (functionTypes[i]->name == name) {
-      functionTypes.erase(functionTypes.begin() + i);
+template<typename Vector, typename Map>
+void removeModuleElement(Vector& v, Map& m, Name name) {
+  m.erase(name);
+  for (size_t i = 0; i < v.size(); i++) {
+    if (v[i]->name == name) {
+      v.erase(v.begin() + i);
       break;
     }
   }
-  functionTypesMap.erase(name);
 }
 
 void Module::removeExport(Name name) {
-  for (size_t i = 0; i < exports.size(); i++) {
-    if (exports[i]->name == name) {
-      exports.erase(exports.begin() + i);
-      break;
-    }
-  }
-  exportsMap.erase(name);
+  removeModuleElement(exports, exportsMap, name);
 }
-
 void Module::removeFunction(Name name) {
-  for (size_t i = 0; i < functions.size(); i++) {
-    if (functions[i]->name == name) {
-      functions.erase(functions.begin() + i);
-      break;
-    }
-  }
-  functionsMap.erase(name);
+  removeModuleElement(functions, functionsMap, name);
 }
-
 void Module::removeGlobal(Name name) {
-  for (size_t i = 0; i < globals.size(); i++) {
-    if (globals[i]->name == name) {
-      globals.erase(globals.begin() + i);
-      break;
-    }
-  }
-  globalsMap.erase(name);
+  removeModuleElement(globals, globalsMap, name);
 }
-
 void Module::removeEvent(Name name) {
-  for (size_t i = 0; i < events.size(); i++) {
-    if (events[i]->name == name) {
-      events.erase(events.begin() + i);
-      break;
-    }
-  }
-  eventsMap.erase(name);
+  removeModuleElement(events, eventsMap, name);
 }
 
-// TODO: remove* for other elements
+template<typename Vector, typename Map, typename Elem>
+void removeModuleElements(Vector& v,
+                          Map& m,
+                          std::function<bool(Elem* elem)> pred) {
+  for (auto it = m.begin(); it != m.end();) {
+    if (pred(it->second)) {
+      it = m.erase(it);
+    } else {
+      it++;
+    }
+  }
+  v.erase(
+    std::remove_if(v.begin(), v.end(), [&](auto& e) { return pred(e.get()); }),
+    v.end());
+}
+
+void Module::removeExports(std::function<bool(Export*)> pred) {
+  removeModuleElements(exports, exportsMap, pred);
+}
+void Module::removeFunctions(std::function<bool(Function*)> pred) {
+  removeModuleElements(functions, functionsMap, pred);
+}
+void Module::removeGlobals(std::function<bool(Global*)> pred) {
+  removeModuleElements(globals, globalsMap, pred);
+}
+void Module::removeEvents(std::function<bool(Event*)> pred) {
+  removeModuleElements(events, eventsMap, pred);
+}
 
 void Module::updateMaps() {
   functionsMap.clear();
   for (auto& curr : functions) {
     functionsMap[curr->name] = curr.get();
-  }
-  functionTypesMap.clear();
-  for (auto& curr : functionTypes) {
-    functionTypesMap[curr->name] = curr.get();
   }
   exportsMap.clear();
   for (auto& curr : exports) {

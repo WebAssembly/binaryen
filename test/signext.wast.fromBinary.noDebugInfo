@@ -1,6 +1,6 @@
 (module
- (type $0 (func))
- (func $0 (; 0 ;) (type $0)
+ (type $none_=>_none (func))
+ (func $0 (; 0 ;)
   (local $0 i32)
   (local $1 i64)
   (drop

@@ -1,0 +1,123 @@
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i64_=>_i32 (func (param i64) (result i32)))
+ (type $i32_f32_f64_=>_f32 (func (param i32 f32 f64) (result f32)))
+ (type $i32_f64_f64_=>_f32 (func (param i32 f64 f64) (result f32)))
+ (import "env" "puts" (func $puts1 (param i32) (result i32)))
+ (import "env" "invoke_ffd" (func $invoke_ffd (param i32 f32 f64) (result f32)))
+ (import "env" "invoke_ffd" (func $invoke_ffd2 (param i32 f64 f64) (result f32)))
+ (import "env" "puts" (func $legalimport$puts2 (param i32 i32) (result i32)))
+ (memory $0 2)
+ (data (i32.const 568) "Hello, world\00")
+ (table $0 1 1 funcref)
+ (global $global$0 (mut i32) (i32.const 66128))
+ (global $global$1 i32 (i32.const 66128))
+ (global $global$2 i32 (i32.const 581))
+ (export "memory" (memory $0))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "main" (func $main))
+ (export "__heap_base" (global $global$1))
+ (export "__data_end" (global $global$2))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (func $main (; 4 ;) (result i32)
+  (drop
+   (call $puts1
+    (i32.const 568)
+   )
+  )
+  (i32.const 0)
+ )
+ (func $__wasm_call_ctors (; 5 ;)
+  (nop)
+ )
+ (func $stackSave (; 6 ;) (result i32)
+  (global.get $global$0)
+ )
+ (func $stackAlloc (; 7 ;) (param $0 i32) (result i32)
+  (local $1 i32)
+  (global.set $global$0
+   (local.tee $1
+    (i32.and
+     (i32.sub
+      (global.get $global$0)
+      (local.get $0)
+     )
+     (i32.const -16)
+    )
+   )
+  )
+  (local.get $1)
+ )
+ (func $stackRestore (; 8 ;) (param $0 i32)
+  (global.set $global$0
+   (local.get $0)
+  )
+ )
+ (func $__growWasmMemory (; 9 ;) (param $newSize i32) (result i32)
+  (memory.grow
+   (local.get $newSize)
+  )
+ )
+ (func $legalfunc$puts2 (; 10 ;) (param $0 i64) (result i32)
+  (call $legalimport$puts2
+   (i32.wrap_i64
+    (local.get $0)
+   )
+   (i32.wrap_i64
+    (i64.shr_u
+     (local.get $0)
+     (i64.const 32)
+    )
+   )
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 13,
+  "tableSize": 1,
+  "initializers": [
+    "__wasm_call_ctors"
+  ],
+  "declares": [
+    "puts"
+  ],
+  "externs": [
+  ],
+  "implementedFunctions": [
+    "___wasm_call_ctors",
+    "_main",
+    "_stackSave",
+    "_stackAlloc",
+    "_stackRestore",
+    "___growWasmMemory"
+  ],
+  "exports": [
+    "__wasm_call_ctors",
+    "main",
+    "stackSave",
+    "stackAlloc",
+    "stackRestore",
+    "__growWasmMemory"
+  ],
+  "namedGlobals": {
+    "__heap_base" : "66128",
+    "__data_end" : "581"
+  },
+  "invokeFuncs": [
+    "invoke_ffd"
+  ],
+  "features": [
+  ],
+  "mainReadsParams": 1
+}
+-- END METADATA --
+;)

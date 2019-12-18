@@ -21,7 +21,7 @@
 // intrinsic implementation. Intrinsics don't use themselves to implement
 // themselves.
 //
-// You'll find a large wast blob in `wasm-intrinsics.wast` next to this file
+// You'll find a large wat blob in `wasm-intrinsics.wat` next to this file
 // which contains all of the injected intrinsics. We manually copy over any
 // needed intrinsics from this module into the module that we're optimizing
 // after walking the current module.
@@ -65,7 +65,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       return;
     }
 
-    // Parse the wast blob we have at the end of this file.
+    // Parse the wat blob we have at the end of this file.
     //
     // TODO: only do this once per invocation of wasm2asm
     Module intrinsicsModule;

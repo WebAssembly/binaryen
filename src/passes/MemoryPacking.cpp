@@ -267,12 +267,6 @@ struct MemoryPacking : public Pass {
             builder.makeIf(curr->size, builder.makeUnreachable())));
         }
       }
-      void visitDataDrop(DataDrop* curr) {
-        if (!getModule()->memory.segments[curr->segment].isPassive) {
-          ExpressionManipulator::unreachable(curr);
-          needsRefinalizing = true;
-        }
-      }
       void doWalkFunction(Function* func) {
         needsRefinalizing = false;
         super::doWalkFunction(func);

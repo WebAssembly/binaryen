@@ -180,23 +180,6 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.lowMemoryUnused = true;
-           })
-      .add("--pass-arg",
-           "-pa",
-           "An argument passed along to optimization passes being run. Must be "
-           "in the form KEY@VALUE",
-           Options::Arguments::N,
-           [this](Options*, const std::string& argument) {
-             std::string key, value;
-             auto colon = argument.find('@');
-             if (colon == std::string::npos) {
-               key = argument;
-               value = "1";
-             } else {
-               key = argument.substr(0, colon);
-               value = argument.substr(colon + 1);
-             }
-             passOptions.arguments[key] = value;
            });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
