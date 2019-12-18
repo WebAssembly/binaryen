@@ -18,9 +18,9 @@
 #include "wasm.h"
 
 #ifdef USE_LLVM_DWARF
-#include "thirdparty/llvm/ObjectYAML/DWARFEmitter.h"
-#include "thirdparty/llvm/ObjectYAML/DWARFYAML.h"
-#include "thirdparty/llvm/include/llvm/DebugInfo/DWARFContext.h"
+#include "llvm/ObjectYAML/DWARFEmitter.h"
+#include "llvm/ObjectYAML/DWARFYAML.h"
+#include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 
 std::error_code dwarf2yaml(llvm::DWARFContext& DCtx, llvm::DWARFYAML::Data& Y);
 #endif

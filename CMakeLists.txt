@@ -86,7 +86,7 @@ endif()
 # Compiler setup.
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/thirdparty)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party)
 
 # Add output directory to include path so config.h can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -237,7 +237,7 @@ add_subdirectory(src/emscripten-optimizer)
 add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
-add_subdirectory(src/thirdparty)
+add_subdirectory(third_party)
 
 # Object files
 set(binaryen_objs
