@@ -21,6 +21,9 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
+// TODO: Use vector swaps instead of erases
+// TODO: Solve problem of drop-observing inits becoming fills
+
 namespace wasm {
 
 // A subsection of an orginal memory segment
@@ -36,7 +39,7 @@ struct Range {
 // split segments.
 using Replacement = std::pair<Index, std::vector<Range>>;
 
-// Maps bulk memory operations to the replacement that must be applied to them.
+// Maps bulk memory operations to the replacements that must be applied to them.
 using Replacements = std::unordered_map<Expression*, Replacement>;
 
 // memory.fill: 2 byte opcode + ~2 immediate bytes + ~(3*2) byte operands
@@ -63,9 +66,22 @@ struct MemoryPacking : public Pass {
       // Remove segments that are never used
       // TODO: remove unused portions of partially used segments as well
       for (ssize_t i = segments.size() - 1; i >= 0; --i) {
-        if (segments[i].isPassive && referers[i].size() == 0) {
-          segments.erase(segments.begin() + i);
-          referers.erase(referers.begin() + i);
+        if (segments[i].isPassive) {
+          bool used = false;
+          for (auto* referer : referers[i]) {
+            if (auto* init = referer->dynCast<MemoryInit>()) {
+              used = true;
+              break;
+            }
+          }
+          if (!used) {
+            // All referers are data.drops. Make them nops.
+            for (auto* referer : referers[i]) {
+              ExpressionManipulator::nop(referer);
+            }
+            segments.erase(segments.begin() + i);
+            referers.erase(referers.begin() + i);
+          }
         }
       }
     }
@@ -76,10 +92,11 @@ struct MemoryPacking : public Pass {
 
     for (size_t origIndex = 0; origIndex < segments.size(); ++origIndex) {
       auto& segment = segments[origIndex];
+      auto& currReferers = referers[origIndex];
 
       bool canSplit = true;
       if (segment.isPassive) {
-        for (auto* referer : referers[origIndex]) {
+        for (auto* referer : currReferers) {
           if (auto* init = referer->dynCast<MemoryInit>()) {
             // Do not try to split if there is a nonconstant offset or size
             if (!init->offset->is<Const>() || !init->size->is<Const>()) {
@@ -94,7 +111,7 @@ struct MemoryPacking : public Pass {
 
       std::vector<Range> ranges;
       if (canSplit) {
-        calculateRanges(segment, referers[origIndex], ranges);
+        calculateRanges(segment, currReferers, ranges);
       } else {
         // A single range covers the entire segment
         ranges.push_back(
@@ -136,16 +153,19 @@ struct MemoryPacking : public Pass {
                             range.end - range.start);
       }
 
-      // Passive segments should not be removed entirely because data.drops need
-      // something to refer to. They cannot simply be eliminated because
-      // emulating their trapping semantics would be more work than just keeping
-      // them.
+      // If a passive segment is removed entirely (because it is all zeroes),
+      // make all its data.drops into nops.
       if (segment.isPassive && packed.size() == firstNewIndex) {
-        packed.emplace_back(true, nullptr, nullptr, 0);
+        for (size_t i = currReferers.size() - 1; i > 0; --i) {
+          if (currReferers[i]->is<DataDrop>()) {
+            ExpressionManipulator::nop(currReferers[i]);
+            currReferers.erase(currReferers.begin() + i);
+          }
+        }
       }
 
       // Update replacements to reflect final splitting scheme for this segment
-      for (Expression* referer : referers[origIndex]) {
+      for (Expression* referer : currReferers) {
         replacements[referer] = std::make_pair(firstNewIndex, ranges);
       }
     }
@@ -231,56 +251,71 @@ struct MemoryPacking : public Pass {
   }
 
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
-    struct Trapper : WalkerPass<PostWalker<Trapper>> {
+    struct Optimizer : WalkerPass<PostWalker<Optimizer>> {
       bool isFunctionParallel() override { return true; }
-      bool needsRefinalizing;
 
-      Pass* create() override { return new Trapper; }
+      Pass* create() override { return new Optimizer; }
 
       void visitMemoryInit(MemoryInit* curr) {
         Builder builder(*getModule());
-        // Zero-sized memory.inits have no effect
-        if (Const* c = curr->size->dynCast<Const>()) {
-          if (c->value.geti32() == 0) {
-            replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
-                                            builder.makeDrop(curr->offset)));
-            return;
-          }
-        }
         Memory::Segment& segment = getModule()->memory.segments[curr->segment];
-        bool outOfBounds = false;
-        if (auto* o = curr->offset->dynCast<Const>()) {
-          uint32_t offset = o->value.geti32();
-          if (offset > segment.data.size()) {
-            outOfBounds = true;
-          } else if (auto* s = curr->size->dynCast<Const>()) {
-            uint32_t size = s->value.geti32();
-            if (offset + size > segment.data.size() || offset + size < offset) {
-              outOfBounds = true;
-            }
+        size_t maxRuntimeSize = segment.isPassive ? segment.data.size() : 0;
+        bool mustNop = false;
+        bool mustTrap = false;
+        auto* offset = curr->offset->dynCast<Const>();
+        auto* size = curr->size->dynCast<Const>();
+        if (offset && uint32_t(offset->value.geti32()) > maxRuntimeSize) {
+          mustTrap = true;
+        }
+        if (size && uint32_t(size->value.geti32()) > maxRuntimeSize) {
+          mustTrap = true;
+        }
+        if (offset && size) {
+          uint64_t offsetVal(offset->value.geti32());
+          uint64_t sizeVal(size->value.geti32());
+          if (offsetVal + sizeVal > maxRuntimeSize) {
+            mustTrap = true;
+          } else if (offsetVal == 0 && sizeVal == 0) {
+            mustNop = true;
           }
         }
-        if (!segment.isPassive || segment.data.size() == 0 || outOfBounds) {
-          replaceCurrent(builder.blockify(
-            builder.makeDrop(curr->dest),
-            builder.makeDrop(curr->offset),
-            builder.makeIf(curr->size, builder.makeUnreachable())));
+        assert(!mustNop || !mustTrap);
+        if (mustNop) {
+          // Offset and size are 0, so just trap if dest > memory.size
+          replaceCurrent(builder.makeIf(
+            builder.makeBinary(
+              GtUInt32, curr->dest, builder.makeHost(MemorySize, Name(), {})),
+            builder.makeUnreachable()));
+        } else if (mustTrap) {
+          // Drop dest, offset, and size then trap
+          replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
+                                          builder.makeDrop(curr->offset),
+                                          builder.makeDrop(curr->size),
+                                          builder.makeUnreachable()));
+        } else if (!segment.isPassive) {
+          // trap if (dest > memory.size | offset | size) != 0
+          replaceCurrent(builder.makeIf(
+            builder.makeBinary(
+              OrInt32,
+              builder.makeBinary(
+                GtUInt32, curr->dest, builder.makeHost(MemorySize, Name(), {})),
+              builder.makeBinary(OrInt32, curr->offset, curr->size)),
+            builder.makeUnreachable()));
         }
       }
-      void doWalkFunction(Function* func) {
-        needsRefinalizing = false;
-        super::doWalkFunction(func);
-        if (needsRefinalizing) {
-          ReFinalize().walkFunctionInModule(func, getModule());
+      void visitDataDrop(DataDrop* curr) {
+        if (!getModule()->memory.segments[curr->segment].isPassive) {
+          ExpressionManipulator::nop(curr);
         }
       }
-    } trapper;
-    trapper.run(runner, module);
+    } optimizer;
+    optimizer.run(runner, module);
   }
 
   void getSegmentReferers(PassRunner* runner,
                           Module* module,
                           std::vector<std::vector<Expression*>>& referers) {
+    // TODO: make this a ParallelAnalysis pass
     struct Recorder : WalkerPass<PostWalker<Recorder>> {
       bool isFunctionParallel() override { return false; }
 
@@ -290,12 +325,10 @@ struct MemoryPacking : public Pass {
 
       void visitMemoryInit(MemoryInit* curr) {
         referers[curr->segment].push_back(curr);
-        curr->segment = -1;
       }
 
       void visitDataDrop(DataDrop* curr) {
         referers[curr->segment].push_back(curr);
-        curr->segment = -1;
       }
     } recorder(referers);
     recorder.run(runner, module);
@@ -305,11 +338,12 @@ struct MemoryPacking : public Pass {
                             Module* module,
                             Replacements& replacements) {
     struct Replacer : WalkerPass<PostWalker<Replacer>> {
-      bool isFunctionParallel() override { return false; }
+      bool isFunctionParallel() override { return true; }
 
       Replacements& replacements;
 
       Replacer(Replacements& replacements) : replacements(replacements){};
+      Pass* create() override { return new Replacer(replacements); }
 
       void visitMemoryInit(MemoryInit* curr) {
         auto replacement = replacements.find(curr);
@@ -397,6 +431,14 @@ struct MemoryPacking : public Pass {
         auto segmentIndex = replacement->second.first;
         auto& ranges = replacement->second.second;
 
+        // If there was no transformation, only update the index
+        if (ranges.size() == 1) {
+          // Data.drop of all-zero segments have already been removed
+          assert(!ranges.front().isZero);
+          curr->segment = segmentIndex;
+          return;
+        }
+
         Builder builder(*getModule());
 
         Expression* result = nullptr;
@@ -407,12 +449,8 @@ struct MemoryPacking : public Pass {
           }
         }
 
-        if (result) {
-          replaceCurrent(result);
-        } else {
-          // All-zero or empty segment, just update index
-          curr->segment = segmentIndex;
-        }
+        assert(result != nullptr);
+        replaceCurrent(result);
       }
     } replacer(replacements);
     replacer.run(runner, module);
