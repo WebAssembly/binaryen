@@ -31,6 +31,13 @@
   (drop
    (i32.const 0)
   )
-  (unreachable)
+ )
+ (func $bar (; 1 ;)
+  (drop
+   (loop $loop-in (result i32)
+    (nop)
+    (i32.const 42)
+   )
+  )
  )
 )

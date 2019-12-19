@@ -36,7 +36,7 @@ struct MemoryPacking : public Pass {
 
     if (module->features.hasBulkMemory()) {
       // Remove any references to active segments that might be invalidated.
-      optimizeTrappingBulkMemoryOps(runner, module);
+      optimizeBulkMemoryOps(runner, module);
       // Conservatively refuse to change segments if any are passive to avoid
       // invalidating segment indices or segment contents referenced from
       // memory.init and data.drop instructions.
@@ -125,20 +125,25 @@ struct MemoryPacking : public Pass {
     module->memory.segments.swap(packed);
   }
 
-  void optimizeTrappingBulkMemoryOps(PassRunner* runner, Module* module) {
-    struct Trapper : WalkerPass<PostWalker<Trapper>> {
+  void optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
+    struct Nullifier : WalkerPass<PostWalker<Nullifier>> {
       bool isFunctionParallel() override { return true; }
       bool changed;
 
-      Pass* create() override { return new Trapper; }
+      Pass* create() override { return new Nullifier; }
 
       void visitMemoryInit(MemoryInit* curr) {
         if (!getModule()->memory.segments[curr->segment].isPassive) {
           Builder builder(*getModule());
           replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
                                           builder.makeDrop(curr->offset),
-                                          builder.makeDrop(curr->size),
-                                          builder.makeUnreachable()));
+                                          builder.makeDrop(curr->size)));
+          changed = true;
+        }
+      }
+      void visitDataDrop(DataDrop* curr) {
+        if (!getModule()->memory.segments[curr->segment].isPassive) {
+          ExpressionManipulator::nop(curr);
           changed = true;
         }
       }
@@ -149,8 +154,8 @@ struct MemoryPacking : public Pass {
           ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
-    } trapper;
-    trapper.run(runner, module);
+    } nullifier;
+    nullifier.run(runner, module);
   }
 };
 
