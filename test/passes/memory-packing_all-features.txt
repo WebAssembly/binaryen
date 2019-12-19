@@ -22,24 +22,24 @@
  (type $none_=>_none (func))
  (memory $0 1 1)
  (func $foo (; 0 ;)
-  (block
-   (drop
-    (i32.const 0)
-   )
-   (drop
-    (i32.const 0)
-   )
-   (drop
-    (i32.const 0)
+  (if
+   (i32.or
+    (i32.gt_u
+     (i32.const 0)
+     (memory.size)
+    )
+    (i32.or
+     (i32.const 0)
+     (i32.const 0)
+    )
    )
    (unreachable)
   )
-  (unreachable)
  )
  (func $bar (; 1 ;)
   (drop
    (loop $loop-in (result i32)
-    (unreachable)
+    (nop)
     (i32.const 42)
    )
   )

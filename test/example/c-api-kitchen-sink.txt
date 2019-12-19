@@ -929,7 +929,7 @@ int main() {
     uint8_t t144[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[470] = BinaryenConst(the_module, BinaryenLiteralVec128(t144));
   }
-  expressions[471] = BinaryenBinary(the_module, 133, expressions[470], expressions[469]);
+  expressions[471] = BinaryenBinary(the_module, 129, expressions[470], expressions[469]);
   {
     uint8_t t145[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[472] = BinaryenConst(the_module, BinaryenLiteralVec128(t145));
@@ -938,7 +938,7 @@ int main() {
     uint8_t t146[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[473] = BinaryenConst(the_module, BinaryenLiteralVec128(t146));
   }
-  expressions[474] = BinaryenBinary(the_module, 134, expressions[473], expressions[472]);
+  expressions[474] = BinaryenBinary(the_module, 130, expressions[473], expressions[472]);
   {
     uint8_t t147[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[475] = BinaryenConst(the_module, BinaryenLiteralVec128(t147));
@@ -947,7 +947,7 @@ int main() {
     uint8_t t148[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[476] = BinaryenConst(the_module, BinaryenLiteralVec128(t148));
   }
-  expressions[477] = BinaryenBinary(the_module, 135, expressions[476], expressions[475]);
+  expressions[477] = BinaryenBinary(the_module, 131, expressions[476], expressions[475]);
   {
     uint8_t t149[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[478] = BinaryenConst(the_module, BinaryenLiteralVec128(t149));
@@ -956,7 +956,7 @@ int main() {
     uint8_t t150[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[479] = BinaryenConst(the_module, BinaryenLiteralVec128(t150));
   }
-  expressions[480] = BinaryenBinary(the_module, 136, expressions[479], expressions[478]);
+  expressions[480] = BinaryenBinary(the_module, 132, expressions[479], expressions[478]);
   {
     uint8_t t151[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[481] = BinaryenConst(the_module, BinaryenLiteralVec128(t151));
@@ -965,7 +965,7 @@ int main() {
     uint8_t t152[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[482] = BinaryenConst(the_module, BinaryenLiteralVec128(t152));
   }
-  expressions[483] = BinaryenBinary(the_module, 137, expressions[482], expressions[481]);
+  expressions[483] = BinaryenBinary(the_module, 133, expressions[482], expressions[481]);
   {
     uint8_t t153[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[484] = BinaryenConst(the_module, BinaryenLiteralVec128(t153));
@@ -974,7 +974,7 @@ int main() {
     uint8_t t154[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[485] = BinaryenConst(the_module, BinaryenLiteralVec128(t154));
   }
-  expressions[486] = BinaryenBinary(the_module, 138, expressions[485], expressions[484]);
+  expressions[486] = BinaryenBinary(the_module, 134, expressions[485], expressions[484]);
   {
     uint8_t t155[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[487] = BinaryenConst(the_module, BinaryenLiteralVec128(t155));
@@ -983,7 +983,7 @@ int main() {
     uint8_t t156[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[488] = BinaryenConst(the_module, BinaryenLiteralVec128(t156));
   }
-  expressions[489] = BinaryenBinary(the_module, 139, expressions[488], expressions[487]);
+  expressions[489] = BinaryenBinary(the_module, 135, expressions[488], expressions[487]);
   {
     uint8_t t157[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[490] = BinaryenConst(the_module, BinaryenLiteralVec128(t157));
@@ -992,7 +992,7 @@ int main() {
     uint8_t t158[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[491] = BinaryenConst(the_module, BinaryenLiteralVec128(t158));
   }
-  expressions[492] = BinaryenBinary(the_module, 140, expressions[491], expressions[490]);
+  expressions[492] = BinaryenBinary(the_module, 136, expressions[491], expressions[490]);
   {
     uint8_t t159[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[493] = BinaryenConst(the_module, BinaryenLiteralVec128(t159));
@@ -1001,7 +1001,7 @@ int main() {
     uint8_t t160[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[494] = BinaryenConst(the_module, BinaryenLiteralVec128(t160));
   }
-  expressions[495] = BinaryenBinary(the_module, 141, expressions[494], expressions[493]);
+  expressions[495] = BinaryenBinary(the_module, 137, expressions[494], expressions[493]);
   {
     uint8_t t161[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[496] = BinaryenConst(the_module, BinaryenLiteralVec128(t161));
@@ -1010,7 +1010,7 @@ int main() {
     uint8_t t162[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[497] = BinaryenConst(the_module, BinaryenLiteralVec128(t162));
   }
-  expressions[498] = BinaryenBinary(the_module, 142, expressions[497], expressions[496]);
+  expressions[498] = BinaryenBinary(the_module, 138, expressions[497], expressions[496]);
   {
     uint8_t t163[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[499] = BinaryenConst(the_module, BinaryenLiteralVec128(t163));
@@ -1019,7 +1019,7 @@ int main() {
     uint8_t t164[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[500] = BinaryenConst(the_module, BinaryenLiteralVec128(t164));
   }
-  expressions[501] = BinaryenBinary(the_module, 143, expressions[500], expressions[499]);
+  expressions[501] = BinaryenBinary(the_module, 139, expressions[500], expressions[499]);
   {
     uint8_t t165[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[502] = BinaryenConst(the_module, BinaryenLiteralVec128(t165));
@@ -1028,7 +1028,7 @@ int main() {
     uint8_t t166[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[503] = BinaryenConst(the_module, BinaryenLiteralVec128(t166));
   }
-  expressions[504] = BinaryenBinary(the_module, 144, expressions[503], expressions[502]);
+  expressions[504] = BinaryenBinary(the_module, 140, expressions[503], expressions[502]);
   {
     uint8_t t167[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[505] = BinaryenConst(the_module, BinaryenLiteralVec128(t167));
@@ -1037,7 +1037,7 @@ int main() {
     uint8_t t168[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[506] = BinaryenConst(the_module, BinaryenLiteralVec128(t168));
   }
-  expressions[507] = BinaryenBinary(the_module, 145, expressions[506], expressions[505]);
+  expressions[507] = BinaryenBinary(the_module, 141, expressions[506], expressions[505]);
   {
     uint8_t t169[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[508] = BinaryenConst(the_module, BinaryenLiteralVec128(t169));
@@ -1046,7 +1046,7 @@ int main() {
     uint8_t t170[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[509] = BinaryenConst(the_module, BinaryenLiteralVec128(t170));
   }
-  expressions[510] = BinaryenBinary(the_module, 146, expressions[509], expressions[508]);
+  expressions[510] = BinaryenBinary(the_module, 142, expressions[509], expressions[508]);
   {
     uint8_t t171[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[511] = BinaryenConst(the_module, BinaryenLiteralVec128(t171));
@@ -1055,7 +1055,7 @@ int main() {
     uint8_t t172[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[512] = BinaryenConst(the_module, BinaryenLiteralVec128(t172));
   }
-  expressions[513] = BinaryenBinary(the_module, 129, expressions[512], expressions[511]);
+  expressions[513] = BinaryenBinary(the_module, 143, expressions[512], expressions[511]);
   {
     uint8_t t173[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[514] = BinaryenConst(the_module, BinaryenLiteralVec128(t173));
@@ -1064,7 +1064,7 @@ int main() {
     uint8_t t174[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[515] = BinaryenConst(the_module, BinaryenLiteralVec128(t174));
   }
-  expressions[516] = BinaryenBinary(the_module, 130, expressions[515], expressions[514]);
+  expressions[516] = BinaryenBinary(the_module, 144, expressions[515], expressions[514]);
   {
     uint8_t t175[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[517] = BinaryenConst(the_module, BinaryenLiteralVec128(t175));
@@ -1073,7 +1073,7 @@ int main() {
     uint8_t t176[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[518] = BinaryenConst(the_module, BinaryenLiteralVec128(t176));
   }
-  expressions[519] = BinaryenBinary(the_module, 131, expressions[518], expressions[517]);
+  expressions[519] = BinaryenBinary(the_module, 145, expressions[518], expressions[517]);
   {
     uint8_t t177[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[520] = BinaryenConst(the_module, BinaryenLiteralVec128(t177));
@@ -1082,7 +1082,7 @@ int main() {
     uint8_t t178[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[521] = BinaryenConst(the_module, BinaryenLiteralVec128(t178));
   }
-  expressions[522] = BinaryenBinary(the_module, 132, expressions[521], expressions[520]);
+  expressions[522] = BinaryenBinary(the_module, 146, expressions[521], expressions[520]);
   {
     uint8_t t179[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[523] = BinaryenConst(the_module, BinaryenLiteralVec128(t179));
@@ -1091,7 +1091,7 @@ int main() {
     uint8_t t180[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[524] = BinaryenConst(the_module, BinaryenLiteralVec128(t180));
   }
-  expressions[525] = BinaryenBinary(the_module, 152, expressions[524], expressions[523]);
+  expressions[525] = BinaryenBinary(the_module, 147, expressions[524], expressions[523]);
   {
     uint8_t t181[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[526] = BinaryenConst(the_module, BinaryenLiteralVec128(t181));
@@ -1100,7 +1100,7 @@ int main() {
     uint8_t t182[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[527] = BinaryenConst(the_module, BinaryenLiteralVec128(t182));
   }
-  expressions[528] = BinaryenBinary(the_module, 153, expressions[527], expressions[526]);
+  expressions[528] = BinaryenBinary(the_module, 148, expressions[527], expressions[526]);
   {
     uint8_t t183[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[529] = BinaryenConst(the_module, BinaryenLiteralVec128(t183));
@@ -1136,7 +1136,7 @@ int main() {
     uint8_t t190[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[539] = BinaryenConst(the_module, BinaryenLiteralVec128(t190));
   }
-  expressions[540] = BinaryenBinary(the_module, 147, expressions[539], expressions[538]);
+  expressions[540] = BinaryenBinary(the_module, 157, expressions[539], expressions[538]);
   {
     uint8_t t191[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[541] = BinaryenConst(the_module, BinaryenLiteralVec128(t191));
@@ -1145,7 +1145,7 @@ int main() {
     uint8_t t192[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[542] = BinaryenConst(the_module, BinaryenLiteralVec128(t192));
   }
-  expressions[543] = BinaryenBinary(the_module, 148, expressions[542], expressions[541]);
+  expressions[543] = BinaryenBinary(the_module, 158, expressions[542], expressions[541]);
   {
     uint8_t t193[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[544] = BinaryenConst(the_module, BinaryenLiteralVec128(t193));
@@ -1181,7 +1181,7 @@ int main() {
     uint8_t t200[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[554] = BinaryenConst(the_module, BinaryenLiteralVec128(t200));
   }
-  expressions[555] = BinaryenBinary(the_module, 157, expressions[554], expressions[553]);
+  expressions[555] = BinaryenBinary(the_module, 152, expressions[554], expressions[553]);
   {
     uint8_t t201[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[556] = BinaryenConst(the_module, BinaryenLiteralVec128(t201));
@@ -1190,7 +1190,7 @@ int main() {
     uint8_t t202[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[557] = BinaryenConst(the_module, BinaryenLiteralVec128(t202));
   }
-  expressions[558] = BinaryenBinary(the_module, 158, expressions[557], expressions[556]);
+  expressions[558] = BinaryenBinary(the_module, 153, expressions[557], expressions[556]);
   {
     uint8_t t203[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[559] = BinaryenConst(the_module, BinaryenLiteralVec128(t203));
@@ -1303,353 +1303,371 @@ int main() {
     uint8_t t227[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[595] = BinaryenConst(the_module, BinaryenLiteralVec128(t227));
   }
-  expressions[596] = BinaryenSIMDExtract(the_module, 0, expressions[595], 0);
   {
     uint8_t t228[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[597] = BinaryenConst(the_module, BinaryenLiteralVec128(t228));
+    expressions[596] = BinaryenConst(the_module, BinaryenLiteralVec128(t228));
   }
-  expressions[598] = BinaryenSIMDExtract(the_module, 1, expressions[597], 0);
+  expressions[597] = BinaryenBinary(the_module, 171, expressions[596], expressions[595]);
   {
     uint8_t t229[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[599] = BinaryenConst(the_module, BinaryenLiteralVec128(t229));
+    expressions[598] = BinaryenConst(the_module, BinaryenLiteralVec128(t229));
   }
-  expressions[600] = BinaryenSIMDExtract(the_module, 2, expressions[599], 0);
   {
     uint8_t t230[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[601] = BinaryenConst(the_module, BinaryenLiteralVec128(t230));
+    expressions[599] = BinaryenConst(the_module, BinaryenLiteralVec128(t230));
   }
-  expressions[602] = BinaryenSIMDExtract(the_module, 3, expressions[601], 0);
+  expressions[600] = BinaryenBinary(the_module, 172, expressions[599], expressions[598]);
   {
     uint8_t t231[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[603] = BinaryenConst(the_module, BinaryenLiteralVec128(t231));
+    expressions[601] = BinaryenConst(the_module, BinaryenLiteralVec128(t231));
   }
-  expressions[604] = BinaryenSIMDExtract(the_module, 4, expressions[603], 0);
+  expressions[602] = BinaryenSIMDExtract(the_module, 0, expressions[601], 0);
   {
     uint8_t t232[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[605] = BinaryenConst(the_module, BinaryenLiteralVec128(t232));
+    expressions[603] = BinaryenConst(the_module, BinaryenLiteralVec128(t232));
   }
-  expressions[606] = BinaryenSIMDExtract(the_module, 5, expressions[605], 0);
+  expressions[604] = BinaryenSIMDExtract(the_module, 1, expressions[603], 0);
   {
     uint8_t t233[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[607] = BinaryenConst(the_module, BinaryenLiteralVec128(t233));
+    expressions[605] = BinaryenConst(the_module, BinaryenLiteralVec128(t233));
   }
-  expressions[608] = BinaryenSIMDExtract(the_module, 6, expressions[607], 0);
+  expressions[606] = BinaryenSIMDExtract(the_module, 2, expressions[605], 0);
   {
     uint8_t t234[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[609] = BinaryenConst(the_module, BinaryenLiteralVec128(t234));
+    expressions[607] = BinaryenConst(the_module, BinaryenLiteralVec128(t234));
   }
-  expressions[610] = BinaryenSIMDExtract(the_module, 7, expressions[609], 0);
-  expressions[611] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[608] = BinaryenSIMDExtract(the_module, 3, expressions[607], 0);
   {
     uint8_t t235[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[612] = BinaryenConst(the_module, BinaryenLiteralVec128(t235));
+    expressions[609] = BinaryenConst(the_module, BinaryenLiteralVec128(t235));
   }
-  expressions[613] = BinaryenSIMDReplace(the_module, 0, expressions[612], 0, expressions[611]);
-  expressions[614] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[610] = BinaryenSIMDExtract(the_module, 4, expressions[609], 0);
   {
     uint8_t t236[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[615] = BinaryenConst(the_module, BinaryenLiteralVec128(t236));
+    expressions[611] = BinaryenConst(the_module, BinaryenLiteralVec128(t236));
   }
-  expressions[616] = BinaryenSIMDReplace(the_module, 1, expressions[615], 0, expressions[614]);
-  expressions[617] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[612] = BinaryenSIMDExtract(the_module, 5, expressions[611], 0);
   {
     uint8_t t237[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[618] = BinaryenConst(the_module, BinaryenLiteralVec128(t237));
+    expressions[613] = BinaryenConst(the_module, BinaryenLiteralVec128(t237));
   }
-  expressions[619] = BinaryenSIMDReplace(the_module, 2, expressions[618], 0, expressions[617]);
-  expressions[620] = BinaryenConst(the_module, BinaryenLiteralInt64(42));
+  expressions[614] = BinaryenSIMDExtract(the_module, 6, expressions[613], 0);
   {
     uint8_t t238[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[621] = BinaryenConst(the_module, BinaryenLiteralVec128(t238));
+    expressions[615] = BinaryenConst(the_module, BinaryenLiteralVec128(t238));
   }
-  expressions[622] = BinaryenSIMDReplace(the_module, 3, expressions[621], 0, expressions[620]);
-  expressions[623] = BinaryenConst(the_module, BinaryenLiteralFloat32(42));
+  expressions[616] = BinaryenSIMDExtract(the_module, 7, expressions[615], 0);
+  expressions[617] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
     uint8_t t239[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[624] = BinaryenConst(the_module, BinaryenLiteralVec128(t239));
+    expressions[618] = BinaryenConst(the_module, BinaryenLiteralVec128(t239));
   }
-  expressions[625] = BinaryenSIMDReplace(the_module, 4, expressions[624], 0, expressions[623]);
-  expressions[626] = BinaryenConst(the_module, BinaryenLiteralFloat64(42));
+  expressions[619] = BinaryenSIMDReplace(the_module, 0, expressions[618], 0, expressions[617]);
+  expressions[620] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
     uint8_t t240[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[627] = BinaryenConst(the_module, BinaryenLiteralVec128(t240));
+    expressions[621] = BinaryenConst(the_module, BinaryenLiteralVec128(t240));
   }
-  expressions[628] = BinaryenSIMDReplace(the_module, 5, expressions[627], 0, expressions[626]);
+  expressions[622] = BinaryenSIMDReplace(the_module, 1, expressions[621], 0, expressions[620]);
+  expressions[623] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
     uint8_t t241[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[629] = BinaryenConst(the_module, BinaryenLiteralVec128(t241));
+    expressions[624] = BinaryenConst(the_module, BinaryenLiteralVec128(t241));
   }
-  expressions[630] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[631] = BinaryenSIMDShift(the_module, 0, expressions[629], expressions[630]);
+  expressions[625] = BinaryenSIMDReplace(the_module, 2, expressions[624], 0, expressions[623]);
+  expressions[626] = BinaryenConst(the_module, BinaryenLiteralInt64(42));
   {
     uint8_t t242[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[632] = BinaryenConst(the_module, BinaryenLiteralVec128(t242));
+    expressions[627] = BinaryenConst(the_module, BinaryenLiteralVec128(t242));
   }
-  expressions[633] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[634] = BinaryenSIMDShift(the_module, 1, expressions[632], expressions[633]);
+  expressions[628] = BinaryenSIMDReplace(the_module, 3, expressions[627], 0, expressions[626]);
+  expressions[629] = BinaryenConst(the_module, BinaryenLiteralFloat32(42));
   {
     uint8_t t243[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[635] = BinaryenConst(the_module, BinaryenLiteralVec128(t243));
+    expressions[630] = BinaryenConst(the_module, BinaryenLiteralVec128(t243));
   }
-  expressions[636] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[637] = BinaryenSIMDShift(the_module, 2, expressions[635], expressions[636]);
+  expressions[631] = BinaryenSIMDReplace(the_module, 4, expressions[630], 0, expressions[629]);
+  expressions[632] = BinaryenConst(the_module, BinaryenLiteralFloat64(42));
   {
     uint8_t t244[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[638] = BinaryenConst(the_module, BinaryenLiteralVec128(t244));
+    expressions[633] = BinaryenConst(the_module, BinaryenLiteralVec128(t244));
   }
-  expressions[639] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[640] = BinaryenSIMDShift(the_module, 3, expressions[638], expressions[639]);
+  expressions[634] = BinaryenSIMDReplace(the_module, 5, expressions[633], 0, expressions[632]);
   {
     uint8_t t245[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[641] = BinaryenConst(the_module, BinaryenLiteralVec128(t245));
+    expressions[635] = BinaryenConst(the_module, BinaryenLiteralVec128(t245));
   }
-  expressions[642] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[643] = BinaryenSIMDShift(the_module, 4, expressions[641], expressions[642]);
+  expressions[636] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[637] = BinaryenSIMDShift(the_module, 0, expressions[635], expressions[636]);
   {
     uint8_t t246[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[644] = BinaryenConst(the_module, BinaryenLiteralVec128(t246));
+    expressions[638] = BinaryenConst(the_module, BinaryenLiteralVec128(t246));
   }
-  expressions[645] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[646] = BinaryenSIMDShift(the_module, 5, expressions[644], expressions[645]);
+  expressions[639] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[640] = BinaryenSIMDShift(the_module, 1, expressions[638], expressions[639]);
   {
     uint8_t t247[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[647] = BinaryenConst(the_module, BinaryenLiteralVec128(t247));
+    expressions[641] = BinaryenConst(the_module, BinaryenLiteralVec128(t247));
   }
-  expressions[648] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[649] = BinaryenSIMDShift(the_module, 6, expressions[647], expressions[648]);
+  expressions[642] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[643] = BinaryenSIMDShift(the_module, 2, expressions[641], expressions[642]);
   {
     uint8_t t248[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[650] = BinaryenConst(the_module, BinaryenLiteralVec128(t248));
+    expressions[644] = BinaryenConst(the_module, BinaryenLiteralVec128(t248));
   }
-  expressions[651] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[652] = BinaryenSIMDShift(the_module, 7, expressions[650], expressions[651]);
+  expressions[645] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[646] = BinaryenSIMDShift(the_module, 3, expressions[644], expressions[645]);
   {
     uint8_t t249[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[653] = BinaryenConst(the_module, BinaryenLiteralVec128(t249));
+    expressions[647] = BinaryenConst(the_module, BinaryenLiteralVec128(t249));
   }
-  expressions[654] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[655] = BinaryenSIMDShift(the_module, 8, expressions[653], expressions[654]);
+  expressions[648] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[649] = BinaryenSIMDShift(the_module, 4, expressions[647], expressions[648]);
   {
     uint8_t t250[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[656] = BinaryenConst(the_module, BinaryenLiteralVec128(t250));
+    expressions[650] = BinaryenConst(the_module, BinaryenLiteralVec128(t250));
   }
-  expressions[657] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[658] = BinaryenSIMDShift(the_module, 9, expressions[656], expressions[657]);
+  expressions[651] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[652] = BinaryenSIMDShift(the_module, 5, expressions[650], expressions[651]);
   {
     uint8_t t251[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[659] = BinaryenConst(the_module, BinaryenLiteralVec128(t251));
+    expressions[653] = BinaryenConst(the_module, BinaryenLiteralVec128(t251));
   }
-  expressions[660] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[661] = BinaryenSIMDShift(the_module, 10, expressions[659], expressions[660]);
+  expressions[654] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[655] = BinaryenSIMDShift(the_module, 6, expressions[653], expressions[654]);
   {
     uint8_t t252[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[662] = BinaryenConst(the_module, BinaryenLiteralVec128(t252));
+    expressions[656] = BinaryenConst(the_module, BinaryenLiteralVec128(t252));
   }
-  expressions[663] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[664] = BinaryenSIMDShift(the_module, 11, expressions[662], expressions[663]);
-  expressions[665] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[666] = BinaryenSIMDLoad(the_module, 0, 0, 1, expressions[665]);
-  expressions[667] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[668] = BinaryenSIMDLoad(the_module, 1, 16, 1, expressions[667]);
-  expressions[669] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[670] = BinaryenSIMDLoad(the_module, 2, 16, 4, expressions[669]);
-  expressions[671] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[672] = BinaryenSIMDLoad(the_module, 3, 0, 4, expressions[671]);
-  expressions[673] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[674] = BinaryenSIMDLoad(the_module, 4, 0, 8, expressions[673]);
-  expressions[675] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[676] = BinaryenSIMDLoad(the_module, 5, 0, 8, expressions[675]);
-  expressions[677] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[678] = BinaryenSIMDLoad(the_module, 6, 0, 8, expressions[677]);
-  expressions[679] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[680] = BinaryenSIMDLoad(the_module, 7, 0, 8, expressions[679]);
-  expressions[681] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[682] = BinaryenSIMDLoad(the_module, 8, 0, 8, expressions[681]);
-  expressions[683] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
-  expressions[684] = BinaryenSIMDLoad(the_module, 9, 0, 8, expressions[683]);
+  expressions[657] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[658] = BinaryenSIMDShift(the_module, 7, expressions[656], expressions[657]);
   {
     uint8_t t253[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[685] = BinaryenConst(the_module, BinaryenLiteralVec128(t253));
+    expressions[659] = BinaryenConst(the_module, BinaryenLiteralVec128(t253));
   }
+  expressions[660] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[661] = BinaryenSIMDShift(the_module, 8, expressions[659], expressions[660]);
   {
     uint8_t t254[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[686] = BinaryenConst(the_module, BinaryenLiteralVec128(t254));
+    expressions[662] = BinaryenConst(the_module, BinaryenLiteralVec128(t254));
   }
-  {
-    uint8_t mask[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    expressions[687] = BinaryenSIMDShuffle(the_module, expressions[685], expressions[686], mask);
-  }
+  expressions[663] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[664] = BinaryenSIMDShift(the_module, 9, expressions[662], expressions[663]);
   {
     uint8_t t255[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[688] = BinaryenConst(the_module, BinaryenLiteralVec128(t255));
+    expressions[665] = BinaryenConst(the_module, BinaryenLiteralVec128(t255));
   }
+  expressions[666] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[667] = BinaryenSIMDShift(the_module, 10, expressions[665], expressions[666]);
   {
     uint8_t t256[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[689] = BinaryenConst(the_module, BinaryenLiteralVec128(t256));
+    expressions[668] = BinaryenConst(the_module, BinaryenLiteralVec128(t256));
   }
+  expressions[669] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[670] = BinaryenSIMDShift(the_module, 11, expressions[668], expressions[669]);
+  expressions[671] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[672] = BinaryenSIMDLoad(the_module, 0, 0, 1, expressions[671]);
+  expressions[673] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[674] = BinaryenSIMDLoad(the_module, 1, 16, 1, expressions[673]);
+  expressions[675] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[676] = BinaryenSIMDLoad(the_module, 2, 16, 4, expressions[675]);
+  expressions[677] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[678] = BinaryenSIMDLoad(the_module, 3, 0, 4, expressions[677]);
+  expressions[679] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[680] = BinaryenSIMDLoad(the_module, 4, 0, 8, expressions[679]);
+  expressions[681] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[682] = BinaryenSIMDLoad(the_module, 5, 0, 8, expressions[681]);
+  expressions[683] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[684] = BinaryenSIMDLoad(the_module, 6, 0, 8, expressions[683]);
+  expressions[685] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[686] = BinaryenSIMDLoad(the_module, 7, 0, 8, expressions[685]);
+  expressions[687] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[688] = BinaryenSIMDLoad(the_module, 8, 0, 8, expressions[687]);
+  expressions[689] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
+  expressions[690] = BinaryenSIMDLoad(the_module, 9, 0, 8, expressions[689]);
   {
     uint8_t t257[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[690] = BinaryenConst(the_module, BinaryenLiteralVec128(t257));
+    expressions[691] = BinaryenConst(the_module, BinaryenLiteralVec128(t257));
   }
-  expressions[691] = BinaryenSIMDTernary(the_module, 0, expressions[688], expressions[689], expressions[690]);
   {
     uint8_t t258[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[692] = BinaryenConst(the_module, BinaryenLiteralVec128(t258));
   }
   {
+    uint8_t mask[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    expressions[693] = BinaryenSIMDShuffle(the_module, expressions[691], expressions[692], mask);
+  }
+  {
     uint8_t t259[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[693] = BinaryenConst(the_module, BinaryenLiteralVec128(t259));
+    expressions[694] = BinaryenConst(the_module, BinaryenLiteralVec128(t259));
   }
   {
     uint8_t t260[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[694] = BinaryenConst(the_module, BinaryenLiteralVec128(t260));
+    expressions[695] = BinaryenConst(the_module, BinaryenLiteralVec128(t260));
   }
-  expressions[695] = BinaryenSIMDTernary(the_module, 1, expressions[692], expressions[693], expressions[694]);
   {
     uint8_t t261[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[696] = BinaryenConst(the_module, BinaryenLiteralVec128(t261));
   }
+  expressions[697] = BinaryenSIMDTernary(the_module, 0, expressions[694], expressions[695], expressions[696]);
   {
     uint8_t t262[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[697] = BinaryenConst(the_module, BinaryenLiteralVec128(t262));
+    expressions[698] = BinaryenConst(the_module, BinaryenLiteralVec128(t262));
   }
   {
     uint8_t t263[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[698] = BinaryenConst(the_module, BinaryenLiteralVec128(t263));
+    expressions[699] = BinaryenConst(the_module, BinaryenLiteralVec128(t263));
   }
-  expressions[699] = BinaryenSIMDTernary(the_module, 2, expressions[696], expressions[697], expressions[698]);
   {
     uint8_t t264[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[700] = BinaryenConst(the_module, BinaryenLiteralVec128(t264));
   }
+  expressions[701] = BinaryenSIMDTernary(the_module, 1, expressions[698], expressions[699], expressions[700]);
   {
     uint8_t t265[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[701] = BinaryenConst(the_module, BinaryenLiteralVec128(t265));
+    expressions[702] = BinaryenConst(the_module, BinaryenLiteralVec128(t265));
   }
   {
     uint8_t t266[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[702] = BinaryenConst(the_module, BinaryenLiteralVec128(t266));
+    expressions[703] = BinaryenConst(the_module, BinaryenLiteralVec128(t266));
   }
-  expressions[703] = BinaryenSIMDTernary(the_module, 3, expressions[700], expressions[701], expressions[702]);
   {
     uint8_t t267[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[704] = BinaryenConst(the_module, BinaryenLiteralVec128(t267));
   }
+  expressions[705] = BinaryenSIMDTernary(the_module, 2, expressions[702], expressions[703], expressions[704]);
   {
     uint8_t t268[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[705] = BinaryenConst(the_module, BinaryenLiteralVec128(t268));
+    expressions[706] = BinaryenConst(the_module, BinaryenLiteralVec128(t268));
   }
   {
     uint8_t t269[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    expressions[706] = BinaryenConst(the_module, BinaryenLiteralVec128(t269));
+    expressions[707] = BinaryenConst(the_module, BinaryenLiteralVec128(t269));
   }
-  expressions[707] = BinaryenSIMDTernary(the_module, 4, expressions[704], expressions[705], expressions[706]);
-  expressions[708] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
-  expressions[709] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[710] = BinaryenConst(the_module, BinaryenLiteralInt32(12));
-  expressions[711] = BinaryenMemoryInit(the_module, 0, expressions[708], expressions[709], expressions[710]);
-  expressions[712] = BinaryenDataDrop(the_module, 0);
-  expressions[713] = BinaryenConst(the_module, BinaryenLiteralInt32(2048));
+  {
+    uint8_t t270[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[708] = BinaryenConst(the_module, BinaryenLiteralVec128(t270));
+  }
+  expressions[709] = BinaryenSIMDTernary(the_module, 3, expressions[706], expressions[707], expressions[708]);
+  {
+    uint8_t t271[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[710] = BinaryenConst(the_module, BinaryenLiteralVec128(t271));
+  }
+  {
+    uint8_t t272[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[711] = BinaryenConst(the_module, BinaryenLiteralVec128(t272));
+  }
+  {
+    uint8_t t273[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    expressions[712] = BinaryenConst(the_module, BinaryenLiteralVec128(t273));
+  }
+  expressions[713] = BinaryenSIMDTernary(the_module, 4, expressions[710], expressions[711], expressions[712]);
   expressions[714] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
-  expressions[715] = BinaryenConst(the_module, BinaryenLiteralInt32(12));
-  expressions[716] = BinaryenMemoryCopy(the_module, expressions[713], expressions[714], expressions[715]);
-  expressions[717] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[718] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
-  expressions[719] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
-  expressions[720] = BinaryenMemoryFill(the_module, expressions[717], expressions[718], expressions[719]);
+  expressions[715] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[716] = BinaryenConst(the_module, BinaryenLiteralInt32(12));
+  expressions[717] = BinaryenMemoryInit(the_module, 0, expressions[714], expressions[715], expressions[716]);
+  expressions[718] = BinaryenDataDrop(the_module, 0);
+  expressions[719] = BinaryenConst(the_module, BinaryenLiteralInt32(2048));
+  expressions[720] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
+  expressions[721] = BinaryenConst(the_module, BinaryenLiteralInt32(12));
+  expressions[722] = BinaryenMemoryCopy(the_module, expressions[719], expressions[720], expressions[721]);
+  expressions[723] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[724] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[725] = BinaryenConst(the_module, BinaryenLiteralInt32(1024));
+  expressions[726] = BinaryenMemoryFill(the_module, expressions[723], expressions[724], expressions[725]);
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[721] = BinaryenBlock(the_module, NULL, children, 0, BinaryenTypeAuto());
+    expressions[727] = BinaryenBlock(the_module, NULL, children, 0, BinaryenTypeAuto());
   }
-  expressions[722] = BinaryenIf(the_module, expressions[18], expressions[19], expressions[20]);
-  expressions[723] = BinaryenIf(the_module, expressions[21], expressions[22], expressions[0]);
-  expressions[724] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[725] = BinaryenLoop(the_module, "in", expressions[724]);
-  expressions[726] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-  expressions[727] = BinaryenLoop(the_module, NULL, expressions[726]);
-  expressions[728] = BinaryenBreak(the_module, "the-value", expressions[23], expressions[24]);
-  expressions[729] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-  expressions[730] = BinaryenBreak(the_module, "the-nothing", expressions[729], expressions[0]);
-  expressions[731] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-  expressions[732] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[731]);
-  expressions[733] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
+  expressions[728] = BinaryenIf(the_module, expressions[18], expressions[19], expressions[20]);
+  expressions[729] = BinaryenIf(the_module, expressions[21], expressions[22], expressions[0]);
+  expressions[730] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[731] = BinaryenLoop(the_module, "in", expressions[730]);
+  expressions[732] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[733] = BinaryenLoop(the_module, NULL, expressions[732]);
+  expressions[734] = BinaryenBreak(the_module, "the-value", expressions[23], expressions[24]);
+  expressions[735] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[736] = BinaryenBreak(the_module, "the-nothing", expressions[735], expressions[0]);
+  expressions[737] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[738] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[737]);
+  expressions[739] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
   {
     const char* names[] = { "the-value" };
-    expressions[734] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[25], expressions[26]);
+    expressions[740] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[25], expressions[26]);
   }
-  expressions[735] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[741] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   {
     const char* names[] = { "the-nothing" };
-    expressions[736] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[735], expressions[0]);
+    expressions[742] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[741], expressions[0]);
   }
   {
     BinaryenExpressionRef operands[] = { expressions[10], expressions[11], expressions[12], expressions[13] };
-    expressions[737] = BinaryenCall(the_module, "kitchen()sinker", operands, 4, 2);
-  }
-  expressions[738] = BinaryenUnary(the_module, 20, expressions[737]);
-  {
-    BinaryenExpressionRef operands[] = { expressions[8], expressions[9] };
-    expressions[739] = BinaryenCall(the_module, "an-imported", operands, 2, 4);
-  }
-  expressions[740] = BinaryenUnary(the_module, 25, expressions[739]);
-  expressions[741] = BinaryenUnary(the_module, 20, expressions[740]);
-  expressions[742] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
-  {
-    BinaryenExpressionRef operands[] = { expressions[14], expressions[15], expressions[16], expressions[17] };
-    expressions[743] = BinaryenCallIndirect(the_module, expressions[742], operands, 4, 9, 2);
+    expressions[743] = BinaryenCall(the_module, "kitchen()sinker", operands, 4, 2);
   }
   expressions[744] = BinaryenUnary(the_module, 20, expressions[743]);
-  expressions[745] = BinaryenLocalGet(the_module, 0, 2);
-  expressions[746] = BinaryenDrop(the_module, expressions[745]);
-  expressions[747] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
-  expressions[748] = BinaryenLocalSet(the_module, 0, expressions[747]);
-  expressions[749] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
-  expressions[750] = BinaryenLocalTee(the_module, 0, expressions[749], 2);
-  expressions[751] = BinaryenDrop(the_module, expressions[750]);
-  expressions[752] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[753] = BinaryenLoad(the_module, 4, 0, 0, 0, 2, expressions[752]);
-  expressions[754] = BinaryenConst(the_module, BinaryenLiteralInt32(8));
-  expressions[755] = BinaryenLoad(the_module, 2, 1, 2, 1, 3, expressions[754]);
-  expressions[756] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-  expressions[757] = BinaryenLoad(the_module, 4, 0, 0, 0, 4, expressions[756]);
-  expressions[758] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
-  expressions[759] = BinaryenLoad(the_module, 8, 0, 2, 8, 5, expressions[758]);
-  expressions[760] = BinaryenStore(the_module, 4, 0, 0, expressions[30], expressions[31], 2);
-  expressions[761] = BinaryenStore(the_module, 8, 2, 4, expressions[32], expressions[33], 3);
-  expressions[762] = BinaryenSelect(the_module, expressions[27], expressions[28], expressions[29]);
-  expressions[763] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
-  expressions[764] = BinaryenReturn(the_module, expressions[763]);
   {
-    BinaryenExpressionRef operands[] = { expressions[10], expressions[11], expressions[12], expressions[13] };
-    expressions[765] = BinaryenReturnCall(the_module, "kitchen()sinker", operands, 4, 2);
+    BinaryenExpressionRef operands[] = { expressions[8], expressions[9] };
+    expressions[745] = BinaryenCall(the_module, "an-imported", operands, 2, 4);
   }
-  expressions[766] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
+  expressions[746] = BinaryenUnary(the_module, 25, expressions[745]);
+  expressions[747] = BinaryenUnary(the_module, 20, expressions[746]);
+  expressions[748] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
   {
     BinaryenExpressionRef operands[] = { expressions[14], expressions[15], expressions[16], expressions[17] };
-    expressions[767] = BinaryenReturnCallIndirect(the_module, expressions[766], operands, 4, 9, 2);
+    expressions[749] = BinaryenCallIndirect(the_module, expressions[748], operands, 4, 9, 2);
   }
-  expressions[768] = BinaryenTry(the_module, expressions[35], expressions[43]);
-  expressions[769] = BinaryenAtomicLoad(the_module, 4, 0, 2, expressions[23]);
-  expressions[770] = BinaryenAtomicStore(the_module, 4, 0, expressions[23], expressions[769], 2);
-  expressions[771] = BinaryenAtomicWait(the_module, expressions[23], expressions[23], expressions[33], 2);
-  expressions[772] = BinaryenDrop(the_module, expressions[771]);
-  expressions[773] = BinaryenAtomicNotify(the_module, expressions[23], expressions[23]);
-  expressions[774] = BinaryenDrop(the_module, expressions[773]);
-  expressions[775] = BinaryenAtomicFence(the_module);
-  expressions[776] = BinaryenPop(the_module, 2);
-  expressions[777] = BinaryenPush(the_module, expressions[776]);
-  expressions[778] = BinaryenPop(the_module, 3);
-  expressions[779] = BinaryenPush(the_module, expressions[778]);
-  expressions[780] = BinaryenPop(the_module, 4);
-  expressions[781] = BinaryenPush(the_module, expressions[780]);
-  expressions[782] = BinaryenPop(the_module, 5);
+  expressions[750] = BinaryenUnary(the_module, 20, expressions[749]);
+  expressions[751] = BinaryenLocalGet(the_module, 0, 2);
+  expressions[752] = BinaryenDrop(the_module, expressions[751]);
+  expressions[753] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
+  expressions[754] = BinaryenLocalSet(the_module, 0, expressions[753]);
+  expressions[755] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
+  expressions[756] = BinaryenLocalTee(the_module, 0, expressions[755], 2);
+  expressions[757] = BinaryenDrop(the_module, expressions[756]);
+  expressions[758] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[759] = BinaryenLoad(the_module, 4, 0, 0, 0, 2, expressions[758]);
+  expressions[760] = BinaryenConst(the_module, BinaryenLiteralInt32(8));
+  expressions[761] = BinaryenLoad(the_module, 2, 1, 2, 1, 3, expressions[760]);
+  expressions[762] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[763] = BinaryenLoad(the_module, 4, 0, 0, 0, 4, expressions[762]);
+  expressions[764] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
+  expressions[765] = BinaryenLoad(the_module, 8, 0, 2, 8, 5, expressions[764]);
+  expressions[766] = BinaryenStore(the_module, 4, 0, 0, expressions[30], expressions[31], 2);
+  expressions[767] = BinaryenStore(the_module, 8, 2, 4, expressions[32], expressions[33], 3);
+  expressions[768] = BinaryenSelect(the_module, expressions[27], expressions[28], expressions[29]);
+  expressions[769] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
+  expressions[770] = BinaryenReturn(the_module, expressions[769]);
+  {
+    BinaryenExpressionRef operands[] = { expressions[10], expressions[11], expressions[12], expressions[13] };
+    expressions[771] = BinaryenReturnCall(the_module, "kitchen()sinker", operands, 4, 2);
+  }
+  expressions[772] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
+  {
+    BinaryenExpressionRef operands[] = { expressions[14], expressions[15], expressions[16], expressions[17] };
+    expressions[773] = BinaryenReturnCallIndirect(the_module, expressions[772], operands, 4, 9, 2);
+  }
+  expressions[774] = BinaryenTry(the_module, expressions[35], expressions[43]);
+  expressions[775] = BinaryenAtomicLoad(the_module, 4, 0, 2, expressions[23]);
+  expressions[776] = BinaryenAtomicStore(the_module, 4, 0, expressions[23], expressions[775], 2);
+  expressions[777] = BinaryenAtomicWait(the_module, expressions[23], expressions[23], expressions[33], 2);
+  expressions[778] = BinaryenDrop(the_module, expressions[777]);
+  expressions[779] = BinaryenAtomicNotify(the_module, expressions[23], expressions[23]);
+  expressions[780] = BinaryenDrop(the_module, expressions[779]);
+  expressions[781] = BinaryenAtomicFence(the_module);
+  expressions[782] = BinaryenPop(the_module, 2);
   expressions[783] = BinaryenPush(the_module, expressions[782]);
-  expressions[784] = BinaryenPop(the_module, 7);
+  expressions[784] = BinaryenPop(the_module, 3);
   expressions[785] = BinaryenPush(the_module, expressions[784]);
-  expressions[786] = BinaryenPop(the_module, 8);
+  expressions[786] = BinaryenPop(the_module, 4);
   expressions[787] = BinaryenPush(the_module, expressions[786]);
-  expressions[788] = BinaryenNop(the_module);
-  expressions[789] = BinaryenUnreachable(the_module);
+  expressions[788] = BinaryenPop(the_module, 5);
+  expressions[789] = BinaryenPush(the_module, expressions[788]);
+  expressions[790] = BinaryenPop(the_module, 7);
+  expressions[791] = BinaryenPush(the_module, expressions[790]);
+  expressions[792] = BinaryenPop(the_module, 8);
+  expressions[793] = BinaryenPush(the_module, expressions[792]);
+  expressions[794] = BinaryenNop(the_module);
+  expressions[795] = BinaryenUnreachable(the_module);
   BinaryenExpressionPrint(expressions[51]);
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1690,67 +1708,68 @@ int main() {
        expressions[534], expressions[537], expressions[540], expressions[543], expressions[546], expressions[549], 
        expressions[552], expressions[555], expressions[558], expressions[561], expressions[564], expressions[567], 
        expressions[570], expressions[573], expressions[576], expressions[579], expressions[582], expressions[585], 
-       expressions[588], expressions[591], expressions[594], expressions[596], expressions[598], expressions[600], 
-       expressions[602], expressions[604], expressions[606], expressions[608], expressions[610], expressions[613], 
+       expressions[588], expressions[591], expressions[594], expressions[597], expressions[600], expressions[602], 
+       expressions[604], expressions[606], expressions[608], expressions[610], expressions[612], expressions[614], 
        expressions[616], expressions[619], expressions[622], expressions[625], expressions[628], expressions[631], 
        expressions[634], expressions[637], expressions[640], expressions[643], expressions[646], expressions[649], 
-       expressions[652], expressions[655], expressions[658], expressions[661], expressions[664], expressions[666], 
-       expressions[668], expressions[670], expressions[672], expressions[674], expressions[676], expressions[678], 
-       expressions[680], expressions[682], expressions[684], expressions[687], expressions[691], expressions[695], 
-       expressions[699], expressions[703], expressions[707], expressions[711], expressions[712], expressions[716], 
-       expressions[720], expressions[721], expressions[722], expressions[723], expressions[725], expressions[727], 
-       expressions[728], expressions[730], expressions[732], expressions[733], expressions[734], expressions[736], 
-       expressions[738], expressions[741], expressions[744], expressions[746], expressions[748], expressions[751], 
-       expressions[753], expressions[755], expressions[757], expressions[759], expressions[760], expressions[761], 
-       expressions[762], expressions[764], expressions[765], expressions[767], expressions[768], expressions[770], 
-       expressions[772], expressions[774], expressions[775], expressions[777], expressions[779], expressions[781], 
-       expressions[783], expressions[785], expressions[787], expressions[788], expressions[789] };
-    expressions[790] = BinaryenBlock(the_module, "the-value", children, 298, BinaryenTypeAuto());
+       expressions[652], expressions[655], expressions[658], expressions[661], expressions[664], expressions[667], 
+       expressions[670], expressions[672], expressions[674], expressions[676], expressions[678], expressions[680], 
+       expressions[682], expressions[684], expressions[686], expressions[688], expressions[690], expressions[693], 
+       expressions[697], expressions[701], expressions[705], expressions[709], expressions[713], expressions[717], 
+       expressions[718], expressions[722], expressions[726], expressions[727], expressions[728], expressions[729], 
+       expressions[731], expressions[733], expressions[734], expressions[736], expressions[738], expressions[739], 
+       expressions[740], expressions[742], expressions[744], expressions[747], expressions[750], expressions[752], 
+       expressions[754], expressions[757], expressions[759], expressions[761], expressions[763], expressions[765], 
+       expressions[766], expressions[767], expressions[768], expressions[770], expressions[771], expressions[773], 
+       expressions[774], expressions[776], expressions[778], expressions[780], expressions[781], expressions[783], 
+       expressions[785], expressions[787], expressions[789], expressions[791], expressions[793], expressions[794], 
+       expressions[795] };
+    expressions[796] = BinaryenBlock(the_module, "the-value", children, 300, BinaryenTypeAuto());
   }
-  expressions[791] = BinaryenDrop(the_module, expressions[790]);
+  expressions[797] = BinaryenDrop(the_module, expressions[796]);
   {
-    BinaryenExpressionRef children[] = { expressions[791] };
-    expressions[792] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
+    BinaryenExpressionRef children[] = { expressions[797] };
+    expressions[798] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
   }
-  expressions[793] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[799] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
-    BinaryenExpressionRef children[] = { expressions[792], expressions[793] };
-    expressions[794] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
+    BinaryenExpressionRef children[] = { expressions[798], expressions[799] };
+    expressions[800] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
   }
   {
     BinaryenType varTypes[] = { 2, 8 };
-    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", 9, 2, varTypes, 2, expressions[794]);
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", 9, 2, varTypes, 2, expressions[800]);
   }
-  expressions[795] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
-  globals[0] = BinaryenAddGlobal(the_module, "a-global", 2, 0, expressions[795]);
-  expressions[796] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
-  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 4, 1, expressions[796]);
+  expressions[801] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
+  globals[0] = BinaryenAddGlobal(the_module, "a-global", 2, 0, expressions[801]);
+  expressions[802] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
+  globals[1] = BinaryenAddGlobal(the_module, "a-mutable-global", 4, 1, expressions[802]);
   {
-    BinaryenType t270[] = {2, 5};
-    BinaryenTypeCreate(t270, 2); // 10
+    BinaryenType t274[] = {2, 5};
+    BinaryenTypeCreate(t274, 2); // 10
   }
   BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", 10, 4);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   BinaryenFunctionGetName(functions[0]);
-  expressions[797] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[803] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     const char* funcNames[] = { "kitchen()sinker" };
-    BinaryenSetFunctionTable(the_module, 1, 1, funcNames, 1, expressions[797]);
+    BinaryenSetFunctionTable(the_module, 1, 1, funcNames, 1, expressions[803]);
   }
-  expressions[798] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[804] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char segment1[] = { 73, 32, 97, 109, 32, 112, 97, 115, 115, 105, 118, 101 };
     const char* segments[] = { segment0, segment1 };
     int8_t segmentPassive[] = { 0, 1 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[798], expressions[0] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[804], expressions[0] };
     BinaryenIndex segmentSizes[] = { 12, 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
   }
-  expressions[799] = BinaryenNop(the_module);
+  expressions[805] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", 0, 0, varTypes, 0, expressions[799]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", 0, 0, varTypes, 0, expressions[805]);
   }
   BinaryenSetStart(the_module, functions[1]);
   BinaryenModuleAutoDrop(the_module);
@@ -2718,6 +2737,36 @@ int main() {
        )
       )
       (drop
+       (i8x16.min_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.min_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.max_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.max_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.avgr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i16x8.add
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -2784,6 +2833,12 @@ int main() {
        )
       )
       (drop
+       (i16x8.avgr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i32x4.add
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -2797,30 +2852,6 @@ int main() {
       )
       (drop
        (i32x4.mul
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.min_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.min_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.max_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.max_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -4373,16 +4404,16 @@ optimized:
   // BinaryenTypeExnref: 8
   // BinaryenTypeAuto: -1
   {
-    BinaryenType t271[] = {2, 2};
-    BinaryenTypeCreate(t271, 2); // 11
+    BinaryenType t275[] = {2, 2};
+    BinaryenTypeCreate(t275, 2); // 11
   }
   {
-    BinaryenType t272[] = {2, 2};
-    BinaryenTypeCreate(t272, 2); // 11
+    BinaryenType t276[] = {2, 2};
+    BinaryenTypeCreate(t276, 2); // 11
   }
   {
-    BinaryenType t273[] = {4, 4};
-    BinaryenTypeCreate(t273, 2); // 12
+    BinaryenType t277[] = {4, 4};
+    BinaryenTypeCreate(t277, 2); // 12
   }
   return 0;
 }
@@ -5371,6 +5402,36 @@ BinaryenFeatureAll: 511
        )
       )
       (drop
+       (i8x16.min_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.min_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.max_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.max_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.avgr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i16x8.add
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -5437,6 +5498,12 @@ BinaryenFeatureAll: 511
        )
       )
       (drop
+       (i16x8.avgr_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i32x4.add
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -5450,30 +5517,6 @@ BinaryenFeatureAll: 511
       )
       (drop
        (i32x4.mul
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.min_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.min_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.max_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.max_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )

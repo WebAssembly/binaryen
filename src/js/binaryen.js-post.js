@@ -355,6 +355,7 @@ function initializeConstants() {
     'MinUVecI8x16',
     'MaxSVecI8x16',
     'MaxUVecI8x16',
+    'AvgrUVecI8x16',
     'NegVecI16x8',
     'AnyTrueVecI16x8',
     'AllTrueVecI16x8',
@@ -372,6 +373,7 @@ function initializeConstants() {
     'MinUVecI16x8',
     'MaxSVecI16x8',
     'MaxUVecI16x8',
+    'AvgrUVecI16x8',
     'DotSVecI16x8ToVecI32x4',
     'NegVecI32x4',
     'AnyTrueVecI32x4',
@@ -1490,6 +1492,9 @@ function wrapModule(module, self) {
     'max_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxUVecI8x16'], left, right);
     },
+    'avgr_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['AvgrUVecI8x16'], left, right);
+    },
     'narrow_i16x8_s': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI16x8ToVecI8x16'], left, right);
     },
@@ -1591,6 +1596,9 @@ function wrapModule(module, self) {
     },
     'max_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxUVecI16x8'], left, right);
+    },
+    'avgr_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['AvgrUVecI16x8'], left, right);
     },
     'narrow_i32x4_s': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI32x4ToVecI16x8'], left, right);

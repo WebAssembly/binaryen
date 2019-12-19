@@ -27,8 +27,6 @@ else()
 endif()
 configure_file(config.h.in config.h)
 
-option(BUILD_STATIC_LIB "Build as a static library" OFF)
-
 # Support functionality.
 
 function(ADD_COMPILE_FLAG value)
@@ -68,12 +66,32 @@ function(ADD_LINK_FLAG value)
   ENDFOREACH(variable)
 endfunction()
 
+# Options
+
+option(BUILD_STATIC_LIB "Build as a static library" OFF)
+
+# For now, don't include full DWARF support in JS builds, for size.
+if (NOT EMSCRIPTEN)
+  option(BUILD_LLVM_DWARF "Enable full DWARF support" ON)
+
+  if(BUILD_LLVM_DWARF)
+    if(MSVC)
+      ADD_COMPILE_FLAG("/DBUILD_LLVM_DWARF")
+    else()
+      ADD_COMPILE_FLAG("-DBUILD_LLVM_DWARF")
+    endif()
+  endif()
+endif()
+
 # Compiler setup.
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+if(BUILD_LLVM_DWARF)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
+endif()
 
 # Add output directory to include path so config.h can be found
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
 FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
@@ -221,6 +239,7 @@ add_subdirectory(src/emscripten-optimizer)
 add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
+add_subdirectory(third_party)
 
 # Object files
 set(binaryen_objs
@@ -231,6 +250,10 @@ set(binaryen_objs
     $<TARGET_OBJECTS:ir>
     $<TARGET_OBJECTS:cfg>
     $<TARGET_OBJECTS:support>)
+
+IF(BUILD_LLVM_DWARF)
+  SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:llvm_dwarf>)
+ENDIF()
 
 # Sources.
 
