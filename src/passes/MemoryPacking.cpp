@@ -36,7 +36,7 @@ struct MemoryPacking : public Pass {
 
     if (module->features.hasBulkMemory()) {
       // Remove any references to active segments that might be invalidated.
-      optimizeBulkMemoryOps(runner, module);
+      optimizeTrappingBulkMemoryOps(runner, module);
       // Conservatively refuse to change segments if any are passive to avoid
       // invalidating segment indices or segment contents referenced from
       // memory.init and data.drop instructions.
@@ -125,19 +125,24 @@ struct MemoryPacking : public Pass {
     module->memory.segments.swap(packed);
   }
 
-  void optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
-    struct Nullifier : WalkerPass<PostWalker<Nullifier>> {
+  void optimizeTrappingBulkMemoryOps(PassRunner* runner, Module* module) {
+    struct Trapper : WalkerPass<PostWalker<Trapper>> {
       bool isFunctionParallel() override { return true; }
       bool changed;
 
-      Pass* create() override { return new Nullifier; }
+      Pass* create() override { return new Trapper; }
 
       void visitMemoryInit(MemoryInit* curr) {
         if (!getModule()->memory.segments[curr->segment].isPassive) {
           Builder builder(*getModule());
-          replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
-                                          builder.makeDrop(curr->offset),
-                                          builder.makeDrop(curr->size)));
+          // trap if (dest > memory.size | offset | size) != 0
+          replaceCurrent(builder.makeIf(
+            builder.makeBinary(
+              OrInt32,
+              builder.makeBinary(
+                GtUInt32, curr->dest, builder.makeHost(MemorySize, Name(), {})),
+              builder.makeBinary(OrInt32, curr->offset, curr->size)),
+            builder.makeUnreachable()));
           changed = true;
         }
       }
@@ -154,8 +159,8 @@ struct MemoryPacking : public Pass {
           ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
-    } nullifier;
-    nullifier.run(runner, module);
+    } trapper;
+    trapper.run(runner, module);
   }
 };
 
