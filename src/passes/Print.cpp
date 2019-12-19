@@ -1392,6 +1392,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
   Function::DebugLocation lastPrintedLocation;
+  bool debugInfo;
 
   std::unordered_map<Name, Index> functionIndexes;
 
@@ -1421,6 +1422,16 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       if (iter != debugLocations.end()) {
         printDebugLocation(iter->second);
       }
+      // show a binary position, if there is one
+      if (debugInfo) {
+        auto iter = currFunction->binaryLocations.find(curr);
+        if (iter != currFunction->binaryLocations.end()) {
+          Colors::grey(o);
+          o << ";; code offset: 0x" << iter->second << '\n';
+          restoreNormalColor(o);
+          doIndent(o, indent);
+        }
+      }
     }
   }
 
@@ -1436,6 +1447,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
 
   void setFull(bool full_) { full = full_; }
+
+  void setPrintStackIR(bool printStackIR_) { printStackIR = printStackIR_; }
+
+  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
 
   void incIndent() {
     if (minify) {
@@ -2321,6 +2336,7 @@ public:
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
+    print.setDebugInfo(runner->options.debugInfo);
     print.visitModule(module);
   }
 };
@@ -2337,6 +2353,7 @@ public:
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
     print.setMinify(true);
+    print.setDebugInfo(runner->options.debugInfo);
     print.visitModule(module);
   }
 };
@@ -2353,6 +2370,7 @@ public:
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
     print.setFull(true);
+    print.setDebugInfo(runner->options.debugInfo);
     print.visitModule(module);
   }
 };
@@ -2368,7 +2386,8 @@ public:
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
-    print.printStackIR = true;
+    print.setDebugInfo(runner->options.debugInfo);
+    print.setPrintStackIR(true);
     print.visitModule(module);
   }
 };

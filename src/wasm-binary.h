@@ -1053,10 +1053,12 @@ class WasmBinaryBuilder {
   const std::vector<char>& input;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
+  bool DWARF = false;
 
   size_t pos = 0;
   Index startIndex = -1;
   std::set<Function::DebugLocation> debugLocation;
+  size_t codeSectionLocation;
 
   std::set<BinaryConsts::Section> seenSections;
 
@@ -1068,6 +1070,7 @@ public:
     : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
       nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
 
+  void setDWARF(bool value) { DWARF = value; }
   void read();
   void readUserSection(size_t payloadLen);
 
@@ -1275,6 +1278,9 @@ public:
   void visitBrOnExn(BrOnExn* curr);
 
   void throwError(std::string text);
+
+private:
+  bool hasDWARFSections();
 };
 
 } // namespace wasm

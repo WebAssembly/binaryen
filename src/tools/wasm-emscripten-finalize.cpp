@@ -49,6 +49,7 @@ int main(int argc, const char* argv[]) {
   std::string dataSegmentFile;
   bool emitBinary = true;
   bool debugInfo = false;
+  bool DWARF = false;
   bool isSideModule = false;
   bool legalizeJavaScriptFFI = true;
   bool checkStackOverflow = false;
@@ -71,6 +72,11 @@ int main(int argc, const char* argv[]) {
          "Emit names section in wasm binary (or full debuginfo in wast)",
          Options::Arguments::Zero,
          [&debugInfo](Options*, const std::string&) { debugInfo = true; })
+    .add("--dwarf",
+         "",
+         "Update DWARF debug info",
+         Options::Arguments::Zero,
+         [&DWARF](Options*, const std::string&) { DWARF = true; })
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
@@ -164,6 +170,7 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
   ModuleReader reader;
+  reader.setDWARF(DWARF);
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
   } catch (ParseException& p) {

@@ -21,6 +21,7 @@
 #include "support/bits.h"
 #include "support/debug.h"
 #include "wasm-binary.h"
+#include "wasm-debug.h"
 #include "wasm-stack.h"
 
 #define DEBUG_TYPE "binary"
@@ -731,7 +732,42 @@ void WasmBinaryWriter::finishUp() {
 
 // reader
 
+bool WasmBinaryBuilder::hasDWARFSections() {
+  assert(pos == 0);
+  getInt32(); // magic
+  getInt32(); // version
+  bool has = false;
+  while (more()) {
+    uint32_t sectionCode = getU32LEB();
+    uint32_t payloadLen = getU32LEB();
+    if (uint64_t(pos) + uint64_t(payloadLen) > input.size()) {
+      throwError("Section extends beyond end of input");
+    }
+    auto oldPos = pos;
+    if (sectionCode == BinaryConsts::Section::User) {
+      auto sectionName = getInlineString();
+      if (Debug::isDWARFSection(sectionName)) {
+        has = true;
+        break;
+      }
+    }
+    pos = oldPos + payloadLen;
+  }
+  pos = 0;
+  return has;
+}
+
 void WasmBinaryBuilder::read() {
+  if (DWARF) {
+    // In order to update dwarf, we must store info about each IR node's
+    // binary position. This has noticeable memory overhead, so we don't do it
+    // by default: the user must request it by setting "DWARF", and even if so
+    // we scan ahead to see that there actually *are* DWARF sections, so that
+    // we don't do unnecessary work.
+    if (!hasDWARFSections()) {
+      DWARF = false;
+    }
+  }
 
   readHeader();
   readSourceMapHeader();
@@ -740,7 +776,7 @@ void WasmBinaryBuilder::read() {
   while (more()) {
     uint32_t sectionCode = getU32LEB();
     uint32_t payloadLen = getU32LEB();
-    if (pos + payloadLen > input.size()) {
+    if (uint64_t(pos) + uint64_t(payloadLen) > input.size()) {
       throwError("Section extends beyond end of input");
     }
 
@@ -1252,6 +1288,9 @@ void WasmBinaryBuilder::readFunctionSignatures() {
 
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
+  if (DWARF) {
+    codeSectionLocation = pos;
+  }
   size_t total = getU32LEB();
   if (total != functionSignatures.size()) {
     throwError("invalid function section size, must equal types");
@@ -1972,6 +2011,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (debugLocation.size()) {
     currDebugLocation.insert(*debugLocation.begin());
   }
+  size_t startPos = pos;
   uint8_t code = getInt8();
   BYN_TRACE("readExpression seeing " << (int)code << std::endl);
   switch (code) {
@@ -2165,8 +2205,13 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
   }
-  if (curr && currDebugLocation.size()) {
-    currFunction->debugLocations[curr] = *currDebugLocation.begin();
+  if (curr) {
+    if (currDebugLocation.size()) {
+      currFunction->debugLocations[curr] = *currDebugLocation.begin();
+    }
+    if (DWARF && currFunction) {
+      currFunction->binaryLocations[curr] = startPos - codeSectionLocation;
+    }
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
   return BinaryConsts::ASTNodes(code);
