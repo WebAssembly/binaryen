@@ -46,14 +46,12 @@ void PassRegistry::registerPass(const char* name,
   passInfos[name] = PassInfo(description, create);
 }
 
-std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
+bool PassRegistry::createPass(std::string name, PassRunner* const runner) {
   if (passInfos.find(name) == passInfos.end()) {
-    return nullptr;
+    return false;
   }
-  std::unique_ptr<Pass> ret;
-  ret.reset(passInfos[name].create());
-  ret->name = name;
-  return ret;
+  passInfos[name].create(name, runner);
+  return true;
 }
 
 std::vector<std::string> PassRegistry::getRegisteredNames() {
@@ -69,281 +67,383 @@ std::string PassRegistry::getPassDescription(std::string name) {
   return passInfos[name].description;
 }
 
+namespace {
+
+void createDefaultOptimizationPasses(PassRunner* const runner) {
+  runner->addDefaultOptimizationPasses();
+}
+
+} // namespace
+
 // PassRunner
 
 void PassRegistry::registerPasses() {
-  registerPass("alignment-lowering",
-               "lower unaligned loads and stores to smaller aligned ones",
-               createAlignmentLoweringPass);
+  registerPass(
+    "alignment-lowering",
+    "lower unaligned loads and stores to smaller aligned ones",
+    CreatorHolder<CreaType::SinglePass>::Fn<createAlignmentLoweringPass>);
   registerPass("asyncify",
                "async/await style transform, allowing pausing and resuming",
-               createAsyncifyPass);
-  registerPass("avoid-reinterprets",
-               "Tries to avoid reinterpret operations via more loads",
-               createAvoidReinterpretsPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createAsyncifyPass>);
   registerPass(
-    "dae", "removes arguments to calls in an lto-like manner", createDAEPass);
-  registerPass("dae-optimizing",
-               "removes arguments to calls in an lto-like manner, and "
-               "optimizes where we removed",
-               createDAEOptimizingPass);
-  registerPass("coalesce-locals",
-               "reduce # of locals by coalescing",
-               createCoalesceLocalsPass);
+    "avoid-reinterprets",
+    "Tries to avoid reinterpret operations via more loads",
+    CreatorHolder<CreaType::SinglePass>::Fn<createAvoidReinterpretsPass>);
+  registerPass("dae",
+               "removes arguments to calls in an lto-like manner",
+               CreatorHolder<CreaType::SinglePass>::Fn<createDAEPass>);
+  registerPass(
+    "dae-optimizing",
+    "removes arguments to calls in an lto-like manner, and "
+    "optimizes where we removed",
+    CreatorHolder<CreaType::SinglePass>::Fn<createDAEOptimizingPass>);
+  registerPass(
+    "coalesce-locals",
+    "reduce # of locals by coalescing",
+    CreatorHolder<CreaType::SinglePass>::Fn<createCoalesceLocalsPass>);
   registerPass("coalesce-locals-learning",
                "reduce # of locals by coalescing and learning",
-               createCoalesceLocalsWithLearningPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createCoalesceLocalsWithLearningPass>);
   registerPass("code-pushing",
                "push code forward, potentially making it not always execute",
-               createCodePushingPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createCodePushingPass>);
+  registerPass("code-folding",
+               "fold code, merging duplicates",
+               CreatorHolder<CreaType::SinglePass>::Fn<createCodeFoldingPass>);
   registerPass(
-    "code-folding", "fold code, merging duplicates", createCodeFoldingPass);
-  registerPass("const-hoisting",
-               "hoist repeated constants to a local",
-               createConstHoistingPass);
+    "const-hoisting",
+    "hoist repeated constants to a local",
+    CreatorHolder<CreaType::SinglePass>::Fn<createConstHoistingPass>);
   registerPass(
-    "dce", "removes unreachable code", createDeadCodeEliminationPass);
-  registerPass(
-    "directize", "turns indirect calls into direct ones", createDirectizePass);
-  registerPass(
-    "dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
+    "dce",
+    "removes unreachable code",
+    CreatorHolder<CreaType::SinglePass>::Fn<createDeadCodeEliminationPass>);
+  registerPass("directize",
+               "turns indirect calls into direct ones",
+               CreatorHolder<CreaType::SinglePass>::Fn<createDirectizePass>);
+  registerPass("dfo",
+               "optimizes using the DataFlow SSA IR",
+               CreatorHolder<CreaType::SinglePass>::Fn<createDataFlowOptsPass>);
   registerPass("duplicate-import-elimination",
                "removes duplicate imports",
-               createDuplicateImportEliminationPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createDuplicateImportEliminationPass>);
   registerPass("duplicate-function-elimination",
                "removes duplicate functions",
-               createDuplicateFunctionEliminationPass);
-  registerPass("emit-target-features",
-               "emit the target features section in the output",
-               createEmitTargetFeaturesPass);
-  registerPass("extract-function",
-               "leaves just one function (useful for debugging)",
-               createExtractFunctionPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createDuplicateFunctionEliminationPass>);
   registerPass(
-    "flatten", "flattens out code, removing nesting", createFlattenPass);
-  registerPass("fpcast-emu",
-               "emulates function pointer casts, allowing incorrect indirect "
-               "calls to (sometimes) work",
-               createFuncCastEmulationPass);
+    "emit-target-features",
+    "emit the target features section in the output",
+    CreatorHolder<CreaType::SinglePass>::Fn<createEmitTargetFeaturesPass>);
   registerPass(
-    "func-metrics", "reports function metrics", createFunctionMetricsPass);
+    "extract-function",
+    "leaves just one function (useful for debugging)",
+    CreatorHolder<CreaType::SinglePass>::Fn<createExtractFunctionPass>);
+  registerPass("flatten",
+               "flattens out code, removing nesting",
+               CreatorHolder<CreaType::SinglePass>::Fn<createFlattenPass>);
   registerPass(
-    "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
+    "fpcast-emu",
+    "emulates function pointer casts, allowing incorrect indirect "
+    "calls to (sometimes) work",
+    CreatorHolder<CreaType::SinglePass>::Fn<createFuncCastEmulationPass>);
   registerPass(
-    "inline-main", "inline __original_main into main", createInlineMainPass);
+    "func-metrics",
+    "reports function metrics",
+    CreatorHolder<CreaType::SinglePass>::Fn<createFunctionMetricsPass>);
+  registerPass(
+    "generate-stack-ir",
+    "generate Stack IR",
+    CreatorHolder<CreaType::SinglePass>::Fn<createGenerateStackIRPass>);
+  registerPass("inline-main",
+               "inline __original_main into main",
+               CreatorHolder<CreaType::SinglePass>::Fn<createInlineMainPass>);
   registerPass("inlining",
                "inline functions (you probably want inlining-optimizing)",
-               createInliningPass);
-  registerPass("inlining-optimizing",
-               "inline functions and optimizes where we inlined",
-               createInliningOptimizingPass);
-  registerPass("legalize-js-interface",
-               "legalizes i64 types on the import/export boundary",
-               createLegalizeJSInterfacePass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createInliningPass>);
+  registerPass(
+    "inlining-optimizing",
+    "inline functions and optimizes where we inlined",
+    CreatorHolder<CreaType::SinglePass>::Fn<createInliningOptimizingPass>);
+  registerPass(
+    "legalize-js-interface",
+    "legalizes i64 types on the import/export boundary",
+    CreatorHolder<CreaType::SinglePass>::Fn<createLegalizeJSInterfacePass>);
   registerPass("legalize-js-interface-minimally",
                "legalizes i64 types on the import/export boundary in a minimal "
                "manner, only on things only JS will call",
-               createLegalizeJSInterfaceMinimallyPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createLegalizeJSInterfaceMinimallyPass>);
   registerPass("local-cse",
                "common subexpression elimination inside basic blocks",
-               createLocalCSEPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createLocalCSEPass>);
   registerPass("log-execution",
                "instrument the build with logging of where execution goes",
-               createLogExecutionPass);
-  registerPass("i64-to-i32-lowering",
-               "lower all uses of i64s to use i32s instead",
-               createI64ToI32LoweringPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createLogExecutionPass>);
+  registerPass(
+    "i64-to-i32-lowering",
+    "lower all uses of i64s to use i32s instead",
+    CreatorHolder<CreaType::SinglePass>::Fn<createI64ToI32LoweringPass>);
   registerPass(
     "instrument-locals",
     "instrument the build with code to intercept all loads and stores",
-    createInstrumentLocalsPass);
+    CreatorHolder<CreaType::SinglePass>::Fn<createInstrumentLocalsPass>);
   registerPass(
     "instrument-memory",
     "instrument the build with code to intercept all loads and stores",
-    createInstrumentMemoryPass);
+    CreatorHolder<CreaType::SinglePass>::Fn<createInstrumentMemoryPass>);
   registerPass(
-    "licm", "loop invariant code motion", createLoopInvariantCodeMotionPass);
-  registerPass("limit-segments",
-               "attempt to merge segments to fit within web limits",
-               createLimitSegmentsPass);
-  registerPass("memory-packing",
-               "packs memory into separate segments, skipping zeros",
-               createMemoryPackingPass);
+    "licm",
+    "loop invariant code motion",
+    CreatorHolder<CreaType::SinglePass>::Fn<createLoopInvariantCodeMotionPass>);
   registerPass(
-    "merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
+    "limit-segments",
+    "attempt to merge segments to fit within web limits",
+    CreatorHolder<CreaType::SinglePass>::Fn<createLimitSegmentsPass>);
   registerPass(
-    "merge-locals", "merges locals when beneficial", createMergeLocalsPass);
-  registerPass("metrics", "reports metrics", createMetricsPass);
-  registerPass("minify-imports",
-               "minifies import names (only those, and not export names), and "
-               "emits a mapping to the minified ones",
-               createMinifyImportsPass);
-  registerPass("minify-imports-and-exports",
-               "minifies both import and export names, and emits a mapping to "
-               "the minified ones",
-               createMinifyImportsAndExportsPass);
+    "memory-packing",
+    "packs memory into separate segments, skipping zeros",
+    CreatorHolder<CreaType::SinglePass>::Fn<createMemoryPackingPass>);
+  registerPass("merge-blocks",
+               "merges blocks to their parents",
+               CreatorHolder<CreaType::SinglePass>::Fn<createMergeBlocksPass>);
+  registerPass("merge-locals",
+               "merges locals when beneficial",
+               CreatorHolder<CreaType::SinglePass>::Fn<createMergeLocalsPass>);
+  registerPass("metrics",
+               "reports metrics",
+               CreatorHolder<CreaType::SinglePass>::Fn<createMetricsPass>);
+  registerPass(
+    "minify-imports",
+    "minifies import names (only those, and not export names), and "
+    "emits a mapping to the minified ones",
+    CreatorHolder<CreaType::SinglePass>::Fn<createMinifyImportsPass>);
+  registerPass(
+    "minify-imports-and-exports",
+    "minifies both import and export names, and emits a mapping to "
+    "the minified ones",
+    CreatorHolder<CreaType::SinglePass>::Fn<createMinifyImportsAndExportsPass>);
   registerPass("mod-asyncify-always-and-only-unwind",
                "apply the assumption that asyncify imports always unwind, "
                "and we never rewind",
-               createModAsyncifyAlwaysOnlyUnwindPass);
-  registerPass("mod-asyncify-never-unwind",
-               "apply the assumption that asyncify never unwinds",
-               createModAsyncifyNeverUnwindPass);
-  registerPass("nm", "name list", createNameListPass);
-  registerPass("no-exit-runtime",
-               "removes calls to atexit(), which is valid if the C runtime "
-               "will never be exited",
-               createNoExitRuntimePass);
-  registerPass("optimize-added-constants",
-               "optimizes added constants into load/store offsets",
-               createOptimizeAddedConstantsPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createModAsyncifyAlwaysOnlyUnwindPass>);
+  registerPass(
+    "mod-asyncify-never-unwind",
+    "apply the assumption that asyncify never unwinds",
+    CreatorHolder<CreaType::SinglePass>::Fn<createModAsyncifyNeverUnwindPass>);
+  registerPass("nm",
+               "name list",
+               CreatorHolder<CreaType::SinglePass>::Fn<createNameListPass>);
+  registerPass(
+    "no-exit-runtime",
+    "removes calls to atexit(), which is valid if the C runtime "
+    "will never be exited",
+    CreatorHolder<CreaType::SinglePass>::Fn<createNoExitRuntimePass>);
+  registerPass(
+    "optimize-added-constants",
+    "optimizes added constants into load/store offsets",
+    CreatorHolder<CreaType::SinglePass>::Fn<createOptimizeAddedConstantsPass>);
   registerPass("optimize-added-constants-propagate",
                "optimizes added constants into load/store offsets, propagating "
                "them across locals too",
-               createOptimizeAddedConstantsPropagatePass);
-  registerPass("optimize-instructions",
-               "optimizes instruction combinations",
-               createOptimizeInstructionsPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createOptimizeAddedConstantsPropagatePass>);
   registerPass(
-    "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
-  registerPass("pick-load-signs",
-               "pick load signs based on their uses",
-               createPickLoadSignsPass);
-  registerPass("post-assemblyscript",
-               "eliminates redundant ARC patterns in AssemblyScript output",
-               createPostAssemblyScriptPass);
+    "optimize-instructions",
+    "optimizes instruction combinations",
+    CreatorHolder<CreaType::SinglePass>::Fn<createOptimizeInstructionsPass>);
+  registerPass(
+    "optimize-stack-ir",
+    "optimize Stack IR",
+    CreatorHolder<CreaType::SinglePass>::Fn<createOptimizeStackIRPass>);
+  registerPass(
+    "pick-load-signs",
+    "pick load signs based on their uses",
+    CreatorHolder<CreaType::SinglePass>::Fn<createPickLoadSignsPass>);
+  registerPass(
+    "post-assemblyscript",
+    "eliminates redundant ARC patterns in AssemblyScript output",
+    CreatorHolder<CreaType::SinglePass>::Fn<createPostAssemblyScriptPass>);
   registerPass("post-assemblyscript-finalize",
                "eliminates collapsed ARC patterns after other optimizations",
-               createPostAssemblyScriptFinalizePass);
-  registerPass("post-emscripten",
-               "miscellaneous optimizations for Emscripten-generated code",
-               createPostEmscriptenPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createPostAssemblyScriptFinalizePass>);
+  registerPass(
+    "post-emscripten",
+    "miscellaneous optimizations for Emscripten-generated code",
+    CreatorHolder<CreaType::SinglePass>::Fn<createPostEmscriptenPass>);
   registerPass("precompute",
                "computes compile-time evaluatable expressions",
-               createPrecomputePass);
-  registerPass("precompute-propagate",
-               "computes compile-time evaluatable expressions and propagates "
-               "them through locals",
-               createPrecomputePropagatePass);
-  registerPass("print", "print in s-expression format", createPrinterPass);
-  registerPass("print-minified",
-               "print in minified s-expression format",
-               createMinifiedPrinterPass);
-  registerPass("print-features",
-               "print options for enabled features",
-               createPrintFeaturesPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createPrecomputePass>);
   registerPass(
-    "print-full", "print in full s-expression format", createFullPrinterPass);
+    "precompute-propagate",
+    "computes compile-time evaluatable expressions and propagates "
+    "them through locals",
+    CreatorHolder<CreaType::SinglePass>::Fn<createPrecomputePropagatePass>);
+  registerPass("print",
+               "print in s-expression format",
+               CreatorHolder<CreaType::SinglePass>::Fn<createPrinterPass>);
   registerPass(
-    "print-call-graph", "print call graph", createPrintCallGraphPass);
-  registerPass("print-function-map",
-               "print a map of function indexes to names",
-               createPrintFunctionMapPass);
+    "print-minified",
+    "print in minified s-expression format",
+    CreatorHolder<CreaType::SinglePass>::Fn<createMinifiedPrinterPass>);
+  registerPass(
+    "print-features",
+    "print options for enabled features",
+    CreatorHolder<CreaType::SinglePass>::Fn<createPrintFeaturesPass>);
+  registerPass("print-full",
+               "print in full s-expression format",
+               CreatorHolder<CreaType::SinglePass>::Fn<createFullPrinterPass>);
+  registerPass(
+    "print-call-graph",
+    "print call graph",
+    CreatorHolder<CreaType::SinglePass>::Fn<createPrintCallGraphPass>);
+  registerPass(
+    "print-function-map",
+    "print a map of function indexes to names",
+    CreatorHolder<CreaType::SinglePass>::Fn<createPrintFunctionMapPass>);
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
-               createPrintStackIRPass);
-  registerPass("relooper-jump-threading",
-               "thread relooper jumps (fastcomp output only)",
-               createRelooperJumpThreadingPass);
-  registerPass("remove-non-js-ops",
-               "removes operations incompatible with js",
-               createRemoveNonJSOpsPass);
-  registerPass("remove-imports",
-               "removes imports and replaces them with nops",
-               createRemoveImportsPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createPrintStackIRPass>);
   registerPass(
-    "remove-memory", "removes memory segments", createRemoveMemoryPass);
-  registerPass("remove-unused-brs",
-               "removes breaks from locations that are not needed",
-               createRemoveUnusedBrsPass);
+    "relooper-jump-threading",
+    "thread relooper jumps (fastcomp output only)",
+    CreatorHolder<CreaType::SinglePass>::Fn<createRelooperJumpThreadingPass>);
+  registerPass(
+    "remove-non-js-ops",
+    "removes operations incompatible with js",
+    CreatorHolder<CreaType::SinglePass>::Fn<createRemoveNonJSOpsPass>);
+  registerPass(
+    "remove-imports",
+    "removes imports and replaces them with nops",
+    CreatorHolder<CreaType::SinglePass>::Fn<createRemoveImportsPass>);
+  registerPass("remove-memory",
+               "removes memory segments",
+               CreatorHolder<CreaType::SinglePass>::Fn<createRemoveMemoryPass>);
+  registerPass(
+    "remove-unused-brs",
+    "removes breaks from locations that are not needed",
+    CreatorHolder<CreaType::SinglePass>::Fn<createRemoveUnusedBrsPass>);
   registerPass("remove-unused-module-elements",
                "removes unused module elements",
-               createRemoveUnusedModuleElementsPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createRemoveUnusedModuleElementsPass>);
   registerPass("remove-unused-nonfunction-module-elements",
                "removes unused module elements that are not functions",
-               createRemoveUnusedNonFunctionModuleElementsPass);
-  registerPass("remove-unused-names",
-               "removes names from locations that are never branched to",
-               createRemoveUnusedNamesPass);
-  registerPass("reorder-functions",
-               "sorts functions by access frequency",
-               createReorderFunctionsPass);
-  registerPass("reorder-locals",
-               "sorts locals by access frequency",
-               createReorderLocalsPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createRemoveUnusedNonFunctionModuleElementsPass>);
+  registerPass(
+    "remove-unused-names",
+    "removes names from locations that are never branched to",
+    CreatorHolder<CreaType::SinglePass>::Fn<createRemoveUnusedNamesPass>);
+  registerPass(
+    "reorder-functions",
+    "sorts functions by access frequency",
+    CreatorHolder<CreaType::SinglePass>::Fn<createReorderFunctionsPass>);
+  registerPass(
+    "reorder-locals",
+    "sorts locals by access frequency",
+    CreatorHolder<CreaType::SinglePass>::Fn<createReorderLocalsPass>);
   registerPass("rereloop",
                "re-optimize control flow using the relooper algorithm",
-               createReReloopPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createReReloopPass>);
   registerPass(
-    "rse", "remove redundant local.sets", createRedundantSetEliminationPass);
+    "rse",
+    "remove redundant local.sets",
+    CreatorHolder<CreaType::SinglePass>::Fn<createRedundantSetEliminationPass>);
   registerPass("roundtrip",
                "write the module to binary, then read it",
-               createRoundTripPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createRoundTripPass>);
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
-               createSafeHeapPass);
-  registerPass("simplify-globals",
-               "miscellaneous globals-related optimizations",
-               createSimplifyGlobalsPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createSafeHeapPass>);
+  registerPass(
+    "simplify-globals",
+    "miscellaneous globals-related optimizations",
+    CreatorHolder<CreaType::SinglePass>::Fn<createSimplifyGlobalsPass>);
   registerPass("simplify-globals-optimizing",
                "miscellaneous globals-related optimizations, and optimizes "
                "where we replaced global.gets with constants",
-               createSimplifyGlobalsOptimizingPass);
-  registerPass("simplify-locals",
-               "miscellaneous locals-related optimizations",
-               createSimplifyLocalsPass);
-  registerPass("simplify-locals-nonesting",
-               "miscellaneous locals-related optimizations (no nesting at all; "
-               "preserves flatness)",
-               createSimplifyLocalsNoNestingPass);
-  registerPass("simplify-locals-notee",
-               "miscellaneous locals-related optimizations (no tees)",
-               createSimplifyLocalsNoTeePass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createSimplifyGlobalsOptimizingPass>);
+  registerPass(
+    "simplify-locals",
+    "miscellaneous locals-related optimizations",
+    CreatorHolder<CreaType::SinglePass>::Fn<createSimplifyLocalsPass>);
+  registerPass(
+    "simplify-locals-nonesting",
+    "miscellaneous locals-related optimizations (no nesting at all; "
+    "preserves flatness)",
+    CreatorHolder<CreaType::SinglePass>::Fn<createSimplifyLocalsNoNestingPass>);
+  registerPass(
+    "simplify-locals-notee",
+    "miscellaneous locals-related optimizations (no tees)",
+    CreatorHolder<CreaType::SinglePass>::Fn<createSimplifyLocalsNoTeePass>);
   registerPass("simplify-locals-nostructure",
                "miscellaneous locals-related optimizations (no structure)",
-               createSimplifyLocalsNoStructurePass);
+               CreatorHolder<CreaType::SinglePass>::Fn<
+                 createSimplifyLocalsNoStructurePass>);
   registerPass(
     "simplify-locals-notee-nostructure",
     "miscellaneous locals-related optimizations (no tees or structure)",
-    createSimplifyLocalsNoTeeNoStructurePass);
-  registerPass("souperify", "emit Souper IR in text form", createSouperifyPass);
-  registerPass("souperify-single-use",
-               "emit Souper IR in text form (single-use nodes only)",
-               createSouperifySingleUsePass);
-  registerPass("spill-pointers",
-               "spill pointers to the C stack (useful for Boehm-style GC)",
-               createSpillPointersPass);
+    CreatorHolder<CreaType::SinglePass>::Fn<
+      createSimplifyLocalsNoTeeNoStructurePass>);
+  registerPass("souperify",
+               "emit Souper IR in text form",
+               CreatorHolder<CreaType::SinglePass>::Fn<createSouperifyPass>);
+  registerPass(
+    "souperify-single-use",
+    "emit Souper IR in text form (single-use nodes only)",
+    CreatorHolder<CreaType::SinglePass>::Fn<createSouperifySingleUsePass>);
+  registerPass(
+    "spill-pointers",
+    "spill pointers to the C stack (useful for Boehm-style GC)",
+    CreatorHolder<CreaType::SinglePass>::Fn<createSpillPointersPass>);
   registerPass("ssa",
                "ssa-ify variables so that they have a single assignment",
-               createSSAifyPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createSSAifyPass>);
   registerPass(
     "ssa-nomerge",
     "ssa-ify variables so that they have a single assignment, ignoring merges",
-    createSSAifyNoMergePass);
-  registerPass(
-    "strip", "deprecated; same as strip-debug", createStripDebugPass);
+    CreatorHolder<CreaType::SinglePass>::Fn<createSSAifyNoMergePass>);
+  registerPass("strip",
+               "deprecated; same as strip-debug",
+               CreatorHolder<CreaType::SinglePass>::Fn<createStripDebugPass>);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
-               createStripDebugPass);
-  registerPass("strip-dwarf", "strip dwarf debug info", createStripDWARFPass);
-  registerPass("strip-producers",
-               "strip the wasm producers section",
-               createStripProducersPass);
-  registerPass("strip-target-features",
-               "strip the wasm target features section",
-               createStripTargetFeaturesPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createStripDebugPass>);
+  registerPass("strip-dwarf",
+               "strip dwarf debug info",
+               CreatorHolder<CreaType::SinglePass>::Fn<createStripDWARFPass>);
+  registerPass(
+    "strip-producers",
+    "strip the wasm producers section",
+    CreatorHolder<CreaType::SinglePass>::Fn<createStripProducersPass>);
+  registerPass(
+    "strip-target-features",
+    "strip the wasm target features section",
+    CreatorHolder<CreaType::SinglePass>::Fn<createStripTargetFeaturesPass>);
   registerPass("trap-mode-clamp",
                "replace trapping operations with clamping semantics",
-               createTrapModeClamp);
+               CreatorHolder<CreaType::SinglePass>::Fn<createTrapModeClamp>);
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
-               createTrapModeJS);
+               CreatorHolder<CreaType::SinglePass>::Fn<createTrapModeJS>);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
-               createUnteePass);
-  registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
+               CreatorHolder<CreaType::SinglePass>::Fn<createUnteePass>);
+  registerPass("vacuum",
+               "removes obviously unneeded code",
+               CreatorHolder<CreaType::SinglePass>::Fn<createVacuumPass>);
   // registerPass(
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
+  registerPass("default-optimizations",
+               "all the default optimization passes",
+               CreatorHolder<CreaType::MultiplePasses>::Fn<
+                 createDefaultOptimizationPasses>);
 }
 
 void PassRunner::addDefaultOptimizationPasses() {

@@ -28,6 +28,8 @@ namespace wasm {
 
 class Pass;
 
+struct PassRunner;
+
 //
 // Global registry of all passes in /passes/
 //
@@ -36,10 +38,23 @@ struct PassRegistry {
 
   static PassRegistry* get();
 
-  typedef std::function<Pass*()> Creator;
+  typedef std::function<void(std::string, PassRunner* const)> Creator;
+  enum class CreaType : uint8_t { None = 0x0, SinglePass, MultiplePasses };
+
+  template<CreaType, class = void> struct CreatorHolder;
+  template<class FOO> struct CreatorHolder<CreaType::SinglePass, FOO> {
+    template<Pass* func()>
+    static void Fn(std::string name, PassRunner* const runner);
+  };
+  template<class FOO> struct CreatorHolder<CreaType::MultiplePasses, FOO> {
+    // template<void func(PassRunner* const,
+    // void (PassRunner::*)(std::unique_ptr<Pass>))>
+    template<void func(PassRunner* const)>
+    static void Fn(std::string name, PassRunner* const runner);
+  };
 
   void registerPass(const char* name, const char* description, Creator create);
-  std::unique_ptr<Pass> createPass(std::string name);
+  bool createPass(std::string name, PassRunner* const runner);
   std::vector<std::string> getRegisteredNames();
   std::string getPassDescription(std::string name);
 
@@ -140,6 +155,8 @@ struct PassOptions {
 // Runs a set of passes, in order
 //
 struct PassRunner {
+  template<PassRegistry::CreaType, class>
+  friend struct PassRegistry::CreatorHolder;
   Module* wasm;
   MixedArena* allocator;
   std::vector<std::unique_ptr<Pass>> passes;
@@ -166,11 +183,10 @@ struct PassRunner {
 
   // Add a pass using its name.
   void add(std::string passName) {
-    auto pass = PassRegistry::get()->createPass(passName);
+    bool pass = PassRegistry::get()->createPass(passName, this);
     if (!pass) {
       Fatal() << "Could not find pass: " << passName << "\n";
     }
-    doAdd(std::move(pass));
   }
 
   // Add a pass given an instance.
@@ -347,6 +363,24 @@ public:
 
   void setPassRunner(PassRunner* runner_) { runner = runner_; }
 };
+
+template<class FOO>
+template<Pass* func()>
+void PassRegistry::CreatorHolder<PassRegistry::CreaType::SinglePass, FOO>::Fn(
+  std::string name, PassRunner* const runner) {
+  std::unique_ptr<Pass> p(func());
+  p->name = name;
+  runner->doAdd(std::move(p));
+}
+
+template<class FOO>
+template<void func(PassRunner* const)>
+void PassRegistry::CreatorHolder<PassRegistry::CreaType::MultiplePasses,
+                                 FOO>::Fn(std::string,
+                                          PassRunner* const runner) {
+  // func(runner, &PassRunner::doAdd);
+  func(runner);
+}
 
 } // namespace wasm
 
