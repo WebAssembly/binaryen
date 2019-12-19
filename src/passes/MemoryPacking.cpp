@@ -135,10 +135,20 @@ struct MemoryPacking : public Pass {
       void visitMemoryInit(MemoryInit* curr) {
         if (!getModule()->memory.segments[curr->segment].isPassive) {
           Builder builder(*getModule());
-          replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
-                                          builder.makeDrop(curr->offset),
-                                          builder.makeDrop(curr->size),
-                                          builder.makeUnreachable()));
+          // trap if (dest > memory.size | offset | size) != 0
+          replaceCurrent(builder.makeIf(
+            builder.makeBinary(
+              OrInt32,
+              builder.makeBinary(
+                GtUInt32, curr->dest, builder.makeHost(MemorySize, Name(), {})),
+              builder.makeBinary(OrInt32, curr->offset, curr->size)),
+            builder.makeUnreachable()));
+          changed = true;
+        }
+      }
+      void visitDataDrop(DataDrop* curr) {
+        if (!getModule()->memory.segments[curr->segment].isPassive) {
+          ExpressionManipulator::nop(curr);
           changed = true;
         }
       }
