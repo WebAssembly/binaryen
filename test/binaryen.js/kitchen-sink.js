@@ -1,5 +1,9 @@
 // kitchen sink, tests the full API
 
+function assert(x) {
+  if (!x) throw 'error!';
+}
+
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
@@ -15,10 +19,6 @@ var module;
 // helpers
 
 var v128_bytes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-
-function assert(x) {
-  if (!x) throw 'error!';
-}
 
 function makeInt32(x) {
   return module.i32.const(x);
@@ -975,7 +975,7 @@ function test_expression_info() {
   module.dispose();
 }
 
-function main() {
+function test() {
   // Tracing must be first so it starts with a fresh set of interned types
   test_tracing();
   test_types();
@@ -992,4 +992,4 @@ function main() {
   test_expression_info();
 }
 
-main();
+Binaryen.ready.then(test);

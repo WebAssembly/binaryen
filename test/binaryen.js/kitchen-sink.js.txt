@@ -743,7 +743,7 @@ int main() {
     uint8_t t109[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[398] = BinaryenConst(the_module, BinaryenLiteralVec128(t109));
   }
-  expressions[399] = BinaryenBinary(the_module, 111, expressions[397], expressions[398]);
+  expressions[399] = BinaryenBinary(the_module, 112, expressions[397], expressions[398]);
   {
     uint8_t t110[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[400] = BinaryenConst(the_module, BinaryenLiteralVec128(t110));
@@ -2689,7 +2689,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        )
       )
       (drop
-       (f32x4.ge
+       (f64x2.eq
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -4386,7 +4386,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        )
       )
       (drop
-       (f32x4.ge
+       (f64x2.eq
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -7139,7 +7139,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        )
       )
       (drop
-       (f32x4.ge
+       (f64x2.eq
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -8834,7 +8834,7 @@ getExpressionInfo(f64.const)={"id":14,"type":5,"value":9.5}
        )
       )
       (drop
-       (f32x4.ge
+       (f64x2.eq
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )

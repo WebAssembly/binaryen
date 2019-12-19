@@ -29,444 +29,435 @@ function i8sToStack(i8s) {
   return ret;
 }
 
-// Types
-Module['none'] = Module['_BinaryenTypeNone']();
-Module['i32'] = Module['_BinaryenTypeInt32']();
-Module['i64'] = Module['_BinaryenTypeInt64']();
-Module['f32'] = Module['_BinaryenTypeFloat32']();
-Module['f64'] = Module['_BinaryenTypeFloat64']();
-Module['v128'] = Module['_BinaryenTypeVec128']();
-Module['anyref'] = Module['_BinaryenTypeAnyref']();
-Module['exnref'] = Module['_BinaryenTypeExnref']();
-Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
-Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
+function initializeConstants() {
 
-Module['createType'] = function(types) {
-  return preserveStack(function() {
-    var array = i32sToStack(types);
-    return Module['_BinaryenTypeCreate'](array, types.length);
+  // Types
+  [ ['none', 'None'],
+    ['i32', 'Int32'],
+    ['i64', 'Int64'],
+    ['f32', 'Float32'],
+    ['f64', 'Float64'],
+    ['v128', 'Vec128'],
+    ['anyref', 'Anyref'],
+    ['exnref', 'Exnref'],
+    ['unreachable', 'Unreachable'],
+    ['auto', 'Auto']
+  ].forEach(function(entry) {
+    Module[entry[0]] = Module['_BinaryenType' + entry[1]]();
   });
-};
 
-Module['expandType'] = function(ty) {
-  return preserveStack(function() {
-    var numTypes = Module['_BinaryenTypeArity'](ty);
-    var array = stackAlloc(numTypes << 2);
-    Module['_BinaryenTypeExpand'](ty, array);
-    var types = [];
-    for (var i = 0; i < numTypes; i++) {
-      types.push(HEAPU32[(array >>> 2) + i]);
-    }
-    return types;
+  // Expression ids
+  Module['ExpressionIds'] = {};
+  [ 'Invalid',
+    'Block',
+    'If',
+    'Loop',
+    'Break',
+    'Switch',
+    'Call',
+    'CallIndirect',
+    'LocalGet',
+    'LocalSet',
+    'GlobalGet',
+    'GlobalSet',
+    'Load',
+    'Store',
+    'Const',
+    'Unary',
+    'Binary',
+    'Select',
+    'Drop',
+    'Return',
+    'Host',
+    'Nop',
+    'Unreachable',
+    'AtomicCmpxchg',
+    'AtomicRMW',
+    'AtomicWait',
+    'AtomicNotify',
+    'AtomicFence',
+    'SIMDExtract',
+    'SIMDReplace',
+    'SIMDShuffle',
+    'SIMDTernary',
+    'SIMDShift',
+    'SIMDLoad',
+    'MemoryInit',
+    'DataDrop',
+    'MemoryCopy',
+    'MemoryFill',
+    'Try',
+    'Throw',
+    'Rethrow',
+    'BrOnExn',
+    'Push',
+    'Pop'
+  ].forEach(function(name) {
+    Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
   });
-};
 
-// Expression ids
-Module['InvalidId'] = Module['_BinaryenInvalidId']();
-Module['BlockId'] = Module['_BinaryenBlockId']();
-Module['IfId'] = Module['_BinaryenIfId']();
-Module['LoopId'] = Module['_BinaryenLoopId']();
-Module['BreakId'] = Module['_BinaryenBreakId']();
-Module['SwitchId'] = Module['_BinaryenSwitchId']();
-Module['CallId'] = Module['_BinaryenCallId']();
-Module['CallIndirectId'] = Module['_BinaryenCallIndirectId']();
-Module['LocalGetId'] = Module['_BinaryenLocalGetId']();
-Module['LocalSetId'] = Module['_BinaryenLocalSetId']();
-Module['GlobalGetId'] = Module['_BinaryenGlobalGetId']();
-Module['GlobalSetId'] = Module['_BinaryenGlobalSetId']();
-Module['LoadId'] = Module['_BinaryenLoadId']();
-Module['StoreId'] = Module['_BinaryenStoreId']();
-Module['ConstId'] = Module['_BinaryenConstId']();
-Module['UnaryId'] = Module['_BinaryenUnaryId']();
-Module['BinaryId'] = Module['_BinaryenBinaryId']();
-Module['SelectId'] = Module['_BinaryenSelectId']();
-Module['DropId'] = Module['_BinaryenDropId']();
-Module['ReturnId'] = Module['_BinaryenReturnId']();
-Module['HostId'] = Module['_BinaryenHostId']();
-Module['NopId'] = Module['_BinaryenNopId']();
-Module['UnreachableId'] = Module['_BinaryenUnreachableId']();
-Module['AtomicCmpxchgId'] = Module['_BinaryenAtomicCmpxchgId']();
-Module['AtomicRMWId'] = Module['_BinaryenAtomicRMWId']();
-Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
-Module['AtomicNotifyId'] = Module['_BinaryenAtomicNotifyId']();
-Module['AtomicFenceId'] = Module['_BinaryenAtomicFenceId']();
-Module['SIMDExtractId'] = Module['_BinaryenSIMDExtractId']();
-Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
-Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
-Module['SIMDTernaryId'] = Module['_BinaryenSIMDTernaryId']();
-Module['SIMDShiftId'] = Module['_BinaryenSIMDShiftId']();
-Module['SIMDLoadId'] = Module['_BinaryenSIMDLoadId']();
-Module['MemoryInitId'] = Module['_BinaryenMemoryInitId']();
-Module['DataDropId'] = Module['_BinaryenDataDropId']();
-Module['MemoryCopyId'] = Module['_BinaryenMemoryCopyId']();
-Module['MemoryFillId'] = Module['_BinaryenMemoryFillId']();
-Module['TryId'] = Module['_BinaryenTryId']();
-Module['ThrowId'] = Module['_BinaryenThrowId']();
-Module['RethrowId'] = Module['_BinaryenRethrowId']();
-Module['BrOnExnId'] = Module['_BinaryenBrOnExnId']();
-Module['PushId'] = Module['_BinaryenPushId']();
-Module['PopId'] = Module['_BinaryenPopId']();
+  // External kinds
+  Module['ExternalKinds'] = {};
+  [ 'Function',
+    'Table',
+    'Memory',
+    'Global',
+    'Event'
+  ].forEach(function(name) {
+    Module['ExternalKinds'][name] = Module['External' + name] = Module['_BinaryenExternal' + name]();
+  });
 
-// External kinds
-Module['ExternalFunction'] = Module['_BinaryenExternalFunction']();
-Module['ExternalTable'] = Module['_BinaryenExternalTable']();
-Module['ExternalMemory'] = Module['_BinaryenExternalMemory']();
-Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
-Module['ExternalEvent'] = Module['_BinaryenExternalEvent']();
+  // Features
+  Module['Features'] = {};
+  [ 'MVP',
+    'Atomics',
+    'BulkMemory',
+    'MutableGlobals',
+    'NontrappingFPToInt',
+    'SignExt',
+    'SIMD128',
+    'ExceptionHandling',
+    'TailCall',
+    'ReferenceTypes',
+    'All'
+  ].forEach(function(name) {
+    Module['Features'][name] = Module['_BinaryenFeature' + name]();
+  });
 
-// Features
-Module['Features'] = {
-  'MVP': Module['_BinaryenFeatureMVP'](),
-  'Atomics': Module['_BinaryenFeatureAtomics'](),
-  'BulkMemory': Module['_BinaryenFeatureBulkMemory'](),
-  'MutableGlobals': Module['_BinaryenFeatureMutableGlobals'](),
-  'NontrappingFPToInt': Module['_BinaryenFeatureNontrappingFPToInt'](),
-  'SignExt': Module['_BinaryenFeatureSignExt'](),
-  'SIMD128': Module['_BinaryenFeatureSIMD128'](),
-  'ExceptionHandling': Module['_BinaryenFeatureExceptionHandling'](),
-  'TailCall': Module['_BinaryenFeatureTailCall'](),
-  'ReferenceTypes': Module['_BinaryenFeatureReferenceTypes'](),
-  'All': Module['_BinaryenFeatureAll']()
-};
-
-// Operations
-Module['ClzInt32'] = Module['_BinaryenClzInt32']();
-Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
-Module['PopcntInt32'] = Module['_BinaryenPopcntInt32']();
-Module['NegFloat32'] = Module['_BinaryenNegFloat32']();
-Module['AbsFloat32'] = Module['_BinaryenAbsFloat32']();
-Module['CeilFloat32'] = Module['_BinaryenCeilFloat32']();
-Module['FloorFloat32'] = Module['_BinaryenFloorFloat32']();
-Module['TruncFloat32'] = Module['_BinaryenTruncFloat32']();
-Module['NearestFloat32'] = Module['_BinaryenNearestFloat32']();
-Module['SqrtFloat32'] = Module['_BinaryenSqrtFloat32']();
-Module['EqZInt32'] = Module['_BinaryenEqZInt32']();
-Module['ClzInt64'] = Module['_BinaryenClzInt64']();
-Module['CtzInt64'] = Module['_BinaryenCtzInt64']();
-Module['PopcntInt64'] = Module['_BinaryenPopcntInt64']();
-Module['NegFloat64'] = Module['_BinaryenNegFloat64']();
-Module['AbsFloat64'] = Module['_BinaryenAbsFloat64']();
-Module['CeilFloat64'] = Module['_BinaryenCeilFloat64']();
-Module['FloorFloat64'] = Module['_BinaryenFloorFloat64']();
-Module['TruncFloat64'] = Module['_BinaryenTruncFloat64']();
-Module['NearestFloat64'] = Module['_BinaryenNearestFloat64']();
-Module['SqrtFloat64'] = Module['_BinaryenSqrtFloat64']();
-Module['EqZInt64'] = Module['_BinaryenEqZInt64']();
-Module['ExtendSInt32'] = Module['_BinaryenExtendSInt32']();
-Module['ExtendUInt32'] = Module['_BinaryenExtendUInt32']();
-Module['WrapInt64'] = Module['_BinaryenWrapInt64']();
-Module['TruncSFloat32ToInt32'] = Module['_BinaryenTruncSFloat32ToInt32']();
-Module['TruncSFloat32ToInt64'] = Module['_BinaryenTruncSFloat32ToInt64']();
-Module['TruncUFloat32ToInt32'] = Module['_BinaryenTruncUFloat32ToInt32']();
-Module['TruncUFloat32ToInt64'] = Module['_BinaryenTruncUFloat32ToInt64']();
-Module['TruncSFloat64ToInt32'] = Module['_BinaryenTruncSFloat64ToInt32']();
-Module['TruncSFloat64ToInt64'] = Module['_BinaryenTruncSFloat64ToInt64']();
-Module['TruncUFloat64ToInt32'] = Module['_BinaryenTruncUFloat64ToInt32']();
-Module['TruncUFloat64ToInt64'] = Module['_BinaryenTruncUFloat64ToInt64']();
-Module['TruncSatSFloat32ToInt32'] = Module['_BinaryenTruncSatSFloat32ToInt32']();
-Module['TruncSatSFloat32ToInt64'] = Module['_BinaryenTruncSatSFloat32ToInt64']();
-Module['TruncSatUFloat32ToInt32'] = Module['_BinaryenTruncSatUFloat32ToInt32']();
-Module['TruncSatUFloat32ToInt64'] = Module['_BinaryenTruncSatUFloat32ToInt64']();
-Module['TruncSatSFloat64ToInt32'] = Module['_BinaryenTruncSatSFloat64ToInt32']();
-Module['TruncSatSFloat64ToInt64'] = Module['_BinaryenTruncSatSFloat64ToInt64']();
-Module['TruncSatUFloat64ToInt32'] = Module['_BinaryenTruncSatUFloat64ToInt32']();
-Module['TruncSatUFloat64ToInt64'] = Module['_BinaryenTruncSatUFloat64ToInt64']();
-Module['ReinterpretFloat32'] = Module['_BinaryenReinterpretFloat32']();
-Module['ReinterpretFloat64'] = Module['_BinaryenReinterpretFloat64']();
-Module['ConvertSInt32ToFloat32'] = Module['_BinaryenConvertSInt32ToFloat32']();
-Module['ConvertSInt32ToFloat64'] = Module['_BinaryenConvertSInt32ToFloat64']();
-Module['ConvertUInt32ToFloat32'] = Module['_BinaryenConvertUInt32ToFloat32']();
-Module['ConvertUInt32ToFloat64'] = Module['_BinaryenConvertUInt32ToFloat64']();
-Module['ConvertSInt64ToFloat32'] = Module['_BinaryenConvertSInt64ToFloat32']();
-Module['ConvertSInt64ToFloat64'] = Module['_BinaryenConvertSInt64ToFloat64']();
-Module['ConvertUInt64ToFloat32'] = Module['_BinaryenConvertUInt64ToFloat32']();
-Module['ConvertUInt64ToFloat64'] = Module['_BinaryenConvertUInt64ToFloat64']();
-Module['PromoteFloat32'] = Module['_BinaryenPromoteFloat32']();
-Module['DemoteFloat64'] = Module['_BinaryenDemoteFloat64']();
-Module['ReinterpretInt32'] = Module['_BinaryenReinterpretInt32']();
-Module['ReinterpretInt64'] = Module['_BinaryenReinterpretInt64']();
-Module['ExtendS8Int32'] = Module['_BinaryenExtendS8Int32']();
-Module['ExtendS16Int32'] = Module['_BinaryenExtendS16Int32']();
-Module['ExtendS8Int64'] = Module['_BinaryenExtendS8Int64']();
-Module['ExtendS16Int64'] = Module['_BinaryenExtendS16Int64']();
-Module['ExtendS32Int64'] = Module['_BinaryenExtendS32Int64']();
-Module['AddInt32'] = Module['_BinaryenAddInt32']();
-Module['SubInt32'] = Module['_BinaryenSubInt32']();
-Module['MulInt32'] = Module['_BinaryenMulInt32']();
-Module['DivSInt32'] = Module['_BinaryenDivSInt32']();
-Module['DivUInt32'] = Module['_BinaryenDivUInt32']();
-Module['RemSInt32'] = Module['_BinaryenRemSInt32']();
-Module['RemUInt32'] = Module['_BinaryenRemUInt32']();
-Module['AndInt32'] = Module['_BinaryenAndInt32']();
-Module['OrInt32'] = Module['_BinaryenOrInt32']();
-Module['XorInt32'] = Module['_BinaryenXorInt32']();
-Module['ShlInt32'] = Module['_BinaryenShlInt32']();
-Module['ShrUInt32'] = Module['_BinaryenShrUInt32']();
-Module['ShrSInt32'] = Module['_BinaryenShrSInt32']();
-Module['RotLInt32'] = Module['_BinaryenRotLInt32']();
-Module['RotRInt32'] = Module['_BinaryenRotRInt32']();
-Module['EqInt32'] = Module['_BinaryenEqInt32']();
-Module['NeInt32'] = Module['_BinaryenNeInt32']();
-Module['LtSInt32'] = Module['_BinaryenLtSInt32']();
-Module['LtUInt32'] = Module['_BinaryenLtUInt32']();
-Module['LeSInt32'] = Module['_BinaryenLeSInt32']();
-Module['LeUInt32'] = Module['_BinaryenLeUInt32']();
-Module['GtSInt32'] = Module['_BinaryenGtSInt32']();
-Module['GtUInt32'] = Module['_BinaryenGtUInt32']();
-Module['GeSInt32'] = Module['_BinaryenGeSInt32']();
-Module['GeUInt32'] = Module['_BinaryenGeUInt32']();
-Module['AddInt64'] = Module['_BinaryenAddInt64']();
-Module['SubInt64'] = Module['_BinaryenSubInt64']();
-Module['MulInt64'] = Module['_BinaryenMulInt64']();
-Module['DivSInt64'] = Module['_BinaryenDivSInt64']();
-Module['DivUInt64'] = Module['_BinaryenDivUInt64']();
-Module['RemSInt64'] = Module['_BinaryenRemSInt64']();
-Module['RemUInt64'] = Module['_BinaryenRemUInt64']();
-Module['AndInt64'] = Module['_BinaryenAndInt64']();
-Module['OrInt64'] = Module['_BinaryenOrInt64']();
-Module['XorInt64'] = Module['_BinaryenXorInt64']();
-Module['ShlInt64'] = Module['_BinaryenShlInt64']();
-Module['ShrUInt64'] = Module['_BinaryenShrUInt64']();
-Module['ShrSInt64'] = Module['_BinaryenShrSInt64']();
-Module['RotLInt64'] = Module['_BinaryenRotLInt64']();
-Module['RotRInt64'] = Module['_BinaryenRotRInt64']();
-Module['EqInt64'] = Module['_BinaryenEqInt64']();
-Module['NeInt64'] = Module['_BinaryenNeInt64']();
-Module['LtSInt64'] = Module['_BinaryenLtSInt64']();
-Module['LtUInt64'] = Module['_BinaryenLtUInt64']();
-Module['LeSInt64'] = Module['_BinaryenLeSInt64']();
-Module['LeUInt64'] = Module['_BinaryenLeUInt64']();
-Module['GtSInt64'] = Module['_BinaryenGtSInt64']();
-Module['GtUInt64'] = Module['_BinaryenGtUInt64']();
-Module['GeSInt64'] = Module['_BinaryenGeSInt64']();
-Module['GeUInt64'] = Module['_BinaryenGeUInt64']();
-Module['AddFloat32'] = Module['_BinaryenAddFloat32']();
-Module['SubFloat32'] = Module['_BinaryenSubFloat32']();
-Module['MulFloat32'] = Module['_BinaryenMulFloat32']();
-Module['DivFloat32'] = Module['_BinaryenDivFloat32']();
-Module['CopySignFloat32'] = Module['_BinaryenCopySignFloat32']();
-Module['MinFloat32'] = Module['_BinaryenMinFloat32']();
-Module['MaxFloat32'] = Module['_BinaryenMaxFloat32']();
-Module['EqFloat32'] = Module['_BinaryenEqFloat32']();
-Module['NeFloat32'] = Module['_BinaryenNeFloat32']();
-Module['LtFloat32'] = Module['_BinaryenLtFloat32']();
-Module['LeFloat32'] = Module['_BinaryenLeFloat32']();
-Module['GtFloat32'] = Module['_BinaryenGtFloat32']();
-Module['GeFloat32'] = Module['_BinaryenGeFloat32']();
-Module['AddFloat64'] = Module['_BinaryenAddFloat64']();
-Module['SubFloat64'] = Module['_BinaryenSubFloat64']();
-Module['MulFloat64'] = Module['_BinaryenMulFloat64']();
-Module['DivFloat64'] = Module['_BinaryenDivFloat64']();
-Module['CopySignFloat64'] = Module['_BinaryenCopySignFloat64']();
-Module['MinFloat64'] = Module['_BinaryenMinFloat64']();
-Module['MaxFloat64'] = Module['_BinaryenMaxFloat64']();
-Module['EqFloat64'] = Module['_BinaryenEqFloat64']();
-Module['NeFloat64'] = Module['_BinaryenNeFloat64']();
-Module['LtFloat64'] = Module['_BinaryenLtFloat64']();
-Module['LeFloat64'] = Module['_BinaryenLeFloat64']();
-Module['GtFloat64'] = Module['_BinaryenGtFloat64']();
-Module['GeFloat64'] = Module['_BinaryenGeFloat64']();
-Module['MemorySize'] = Module['_BinaryenMemorySize']();
-Module['MemoryGrow'] = Module['_BinaryenMemoryGrow']();
-Module['AtomicRMWAdd'] = Module['_BinaryenAtomicRMWAdd']();
-Module['AtomicRMWSub'] = Module['_BinaryenAtomicRMWSub']();
-Module['AtomicRMWAnd'] = Module['_BinaryenAtomicRMWAnd']();
-Module['AtomicRMWOr'] = Module['_BinaryenAtomicRMWOr']();
-Module['AtomicRMWXor'] = Module['_BinaryenAtomicRMWXor']();
-Module['AtomicRMWXchg'] = Module['_BinaryenAtomicRMWXchg']();
-Module['SplatVecI8x16'] = Module['_BinaryenSplatVecI8x16']();
-Module['ExtractLaneSVecI8x16'] = Module['_BinaryenExtractLaneSVecI8x16']();
-Module['ExtractLaneUVecI8x16'] = Module['_BinaryenExtractLaneUVecI8x16']();
-Module['ReplaceLaneVecI8x16'] = Module['_BinaryenReplaceLaneVecI8x16']();
-Module['SplatVecI16x8'] = Module['_BinaryenSplatVecI16x8']();
-Module['ExtractLaneSVecI16x8'] = Module['_BinaryenExtractLaneSVecI16x8']();
-Module['ExtractLaneUVecI16x8'] = Module['_BinaryenExtractLaneUVecI16x8']();
-Module['ReplaceLaneVecI16x8'] = Module['_BinaryenReplaceLaneVecI16x8']();
-Module['SplatVecI32x4'] = Module['_BinaryenSplatVecI32x4']();
-Module['ExtractLaneVecI32x4'] = Module['_BinaryenExtractLaneVecI32x4']();
-Module['ReplaceLaneVecI32x4'] = Module['_BinaryenReplaceLaneVecI32x4']();
-Module['SplatVecI64x2'] = Module['_BinaryenSplatVecI64x2']();
-Module['ExtractLaneVecI64x2'] = Module['_BinaryenExtractLaneVecI64x2']();
-Module['ReplaceLaneVecI64x2'] = Module['_BinaryenReplaceLaneVecI64x2']();
-Module['SplatVecF32x4'] = Module['_BinaryenSplatVecF32x4']();
-Module['ExtractLaneVecF32x4'] = Module['_BinaryenExtractLaneVecF32x4']();
-Module['ReplaceLaneVecF32x4'] = Module['_BinaryenReplaceLaneVecF32x4']();
-Module['SplatVecF64x2'] = Module['_BinaryenSplatVecF64x2']();
-Module['ExtractLaneVecF64x2'] = Module['_BinaryenExtractLaneVecF64x2']();
-Module['ReplaceLaneVecF64x2'] = Module['_BinaryenReplaceLaneVecF64x2']();
-Module['EqVecI8x16'] = Module['_BinaryenEqVecI8x16']();
-Module['NeVecI8x16'] = Module['_BinaryenNeVecI8x16']();
-Module['LtSVecI8x16'] = Module['_BinaryenLtSVecI8x16']();
-Module['LtUVecI8x16'] = Module['_BinaryenLtUVecI8x16']();
-Module['GtSVecI8x16'] = Module['_BinaryenGtSVecI8x16']();
-Module['GtUVecI8x16'] = Module['_BinaryenGtUVecI8x16']();
-Module['LeSVecI8x16'] = Module['_BinaryenLeSVecI8x16']();
-Module['LeUVecI8x16'] = Module['_BinaryenLeUVecI8x16']();
-Module['GeSVecI8x16'] = Module['_BinaryenGeSVecI8x16']();
-Module['GeUVecI8x16'] = Module['_BinaryenGeUVecI8x16']();
-Module['EqVecI16x8'] = Module['_BinaryenEqVecI16x8']();
-Module['NeVecI16x8'] = Module['_BinaryenNeVecI16x8']();
-Module['LtSVecI16x8'] = Module['_BinaryenLtSVecI16x8']();
-Module['LtUVecI16x8'] = Module['_BinaryenLtUVecI16x8']();
-Module['GtSVecI16x8'] = Module['_BinaryenGtSVecI16x8']();
-Module['GtUVecI16x8'] = Module['_BinaryenGtUVecI16x8']();
-Module['LeSVecI16x8'] = Module['_BinaryenLeSVecI16x8']();
-Module['LeUVecI16x8'] = Module['_BinaryenLeUVecI16x8']();
-Module['GeSVecI16x8'] = Module['_BinaryenGeSVecI16x8']();
-Module['GeUVecI16x8'] = Module['_BinaryenGeUVecI16x8']();
-Module['EqVecI32x4'] = Module['_BinaryenEqVecI32x4']();
-Module['NeVecI32x4'] = Module['_BinaryenNeVecI32x4']();
-Module['LtSVecI32x4'] = Module['_BinaryenLtSVecI32x4']();
-Module['LtUVecI32x4'] = Module['_BinaryenLtUVecI32x4']();
-Module['GtSVecI32x4'] = Module['_BinaryenGtSVecI32x4']();
-Module['GtUVecI32x4'] = Module['_BinaryenGtUVecI32x4']();
-Module['LeSVecI32x4'] = Module['_BinaryenLeSVecI32x4']();
-Module['LeUVecI32x4'] = Module['_BinaryenLeUVecI32x4']();
-Module['GeSVecI32x4'] = Module['_BinaryenGeSVecI32x4']();
-Module['GeUVecI32x4'] = Module['_BinaryenGeUVecI32x4']();
-Module['EqVecF32x4'] = Module['_BinaryenEqVecF32x4']();
-Module['NeVecF32x4'] = Module['_BinaryenNeVecF32x4']();
-Module['LtVecF32x4'] = Module['_BinaryenLtVecF32x4']();
-Module['GtVecF32x4'] = Module['_BinaryenGtVecF32x4']();
-Module['LeVecF32x4'] = Module['_BinaryenLeVecF32x4']();
-Module['GeVecF32x4'] = Module['_BinaryenGeVecF32x4']();
-Module['EqVecF64x2'] = Module['_BinaryenGeVecF32x4']();
-Module['NeVecF64x2'] = Module['_BinaryenNeVecF64x2']();
-Module['LtVecF64x2'] = Module['_BinaryenLtVecF64x2']();
-Module['GtVecF64x2'] = Module['_BinaryenGtVecF64x2']();
-Module['LeVecF64x2'] = Module['_BinaryenLeVecF64x2']();
-Module['GeVecF64x2'] = Module['_BinaryenGeVecF64x2']();
-Module['NotVec128'] = Module['_BinaryenNotVec128']();
-Module['AndVec128'] = Module['_BinaryenAndVec128']();
-Module['OrVec128'] = Module['_BinaryenOrVec128']();
-Module['XorVec128'] = Module['_BinaryenXorVec128']();
-Module['AndNotVec128'] = Module['_BinaryenAndNotVec128']();
-Module['BitselectVec128'] = Module['_BinaryenBitselectVec128']();
-Module['NegVecI8x16'] = Module['_BinaryenNegVecI8x16']();
-Module['AnyTrueVecI8x16'] = Module['_BinaryenAnyTrueVecI8x16']();
-Module['AllTrueVecI8x16'] = Module['_BinaryenAllTrueVecI8x16']();
-Module['ShlVecI8x16'] = Module['_BinaryenShlVecI8x16']();
-Module['ShrSVecI8x16'] = Module['_BinaryenShrSVecI8x16']();
-Module['ShrUVecI8x16'] = Module['_BinaryenShrUVecI8x16']();
-Module['AddVecI8x16'] = Module['_BinaryenAddVecI8x16']();
-Module['AddSatSVecI8x16'] = Module['_BinaryenAddSatSVecI8x16']();
-Module['AddSatUVecI8x16'] = Module['_BinaryenAddSatUVecI8x16']();
-Module['SubVecI8x16'] = Module['_BinaryenSubVecI8x16']();
-Module['SubSatSVecI8x16'] = Module['_BinaryenSubSatSVecI8x16']();
-Module['SubSatUVecI8x16'] = Module['_BinaryenSubSatUVecI8x16']();
-Module['MulVecI8x16'] = Module['_BinaryenMulVecI8x16']();
-Module['MinSVecI8x16'] = Module['_BinaryenMinSVecI8x16']();
-Module['MinUVecI8x16'] = Module['_BinaryenMinUVecI8x16']();
-Module['MaxSVecI8x16'] = Module['_BinaryenMaxSVecI8x16']();
-Module['MaxUVecI8x16'] = Module['_BinaryenMaxUVecI8x16']();
-Module['AvgrUVecI8x16'] = Module['_BinaryenAvgrUVecI8x16']();
-Module['NegVecI16x8'] = Module['_BinaryenNegVecI16x8']();
-Module['AnyTrueVecI16x8'] = Module['_BinaryenAnyTrueVecI16x8']();
-Module['AllTrueVecI16x8'] = Module['_BinaryenAllTrueVecI16x8']();
-Module['ShlVecI16x8'] = Module['_BinaryenShlVecI16x8']();
-Module['ShrSVecI16x8'] = Module['_BinaryenShrSVecI16x8']();
-Module['ShrUVecI16x8'] = Module['_BinaryenShrUVecI16x8']();
-Module['AddVecI16x8'] = Module['_BinaryenAddVecI16x8']();
-Module['AddSatSVecI16x8'] = Module['_BinaryenAddSatSVecI16x8']();
-Module['AddSatUVecI16x8'] = Module['_BinaryenAddSatUVecI16x8']();
-Module['SubVecI16x8'] = Module['_BinaryenSubVecI16x8']();
-Module['SubSatSVecI16x8'] = Module['_BinaryenSubSatSVecI16x8']();
-Module['SubSatUVecI16x8'] = Module['_BinaryenSubSatUVecI16x8']();
-Module['MulVecI16x8'] = Module['_BinaryenMulVecI16x8']();
-Module['MinSVecI16x8'] = Module['_BinaryenMinSVecI16x8']();
-Module['MinUVecI16x8'] = Module['_BinaryenMinUVecI16x8']();
-Module['MaxSVecI16x8'] = Module['_BinaryenMaxSVecI16x8']();
-Module['MaxUVecI16x8'] = Module['_BinaryenMaxUVecI16x8']();
-Module['AvgrUVecI16x8'] = Module['_BinaryenAvgrUVecI16x8']();
-Module['DotSVecI16x8ToVecI32x4'] = Module['_BinaryenDotSVecI16x8ToVecI32x4']();
-Module['NegVecI32x4'] = Module['_BinaryenNegVecI32x4']();
-Module['AnyTrueVecI32x4'] = Module['_BinaryenAnyTrueVecI32x4']();
-Module['AllTrueVecI32x4'] = Module['_BinaryenAllTrueVecI32x4']();
-Module['ShlVecI32x4'] = Module['_BinaryenShlVecI32x4']();
-Module['ShrSVecI32x4'] = Module['_BinaryenShrSVecI32x4']();
-Module['ShrUVecI32x4'] = Module['_BinaryenShrUVecI32x4']();
-Module['AddVecI32x4'] = Module['_BinaryenAddVecI32x4']();
-Module['SubVecI32x4'] = Module['_BinaryenSubVecI32x4']();
-Module['MulVecI32x4'] = Module['_BinaryenMulVecI32x4']();
-Module['MinSVecI32x4'] = Module['_BinaryenMinSVecI32x4']();
-Module['MinUVecI32x4'] = Module['_BinaryenMinUVecI32x4']();
-Module['MaxSVecI32x4'] = Module['_BinaryenMaxSVecI32x4']();
-Module['MaxUVecI32x4'] = Module['_BinaryenMaxUVecI32x4']();
-Module['NegVecI64x2'] = Module['_BinaryenNegVecI64x2']();
-Module['AnyTrueVecI64x2'] = Module['_BinaryenAnyTrueVecI64x2']();
-Module['AllTrueVecI64x2'] = Module['_BinaryenAllTrueVecI64x2']();
-Module['ShlVecI64x2'] = Module['_BinaryenShlVecI64x2']();
-Module['ShrSVecI64x2'] = Module['_BinaryenShrSVecI64x2']();
-Module['ShrUVecI64x2'] = Module['_BinaryenShrUVecI64x2']();
-Module['AddVecI64x2'] = Module['_BinaryenAddVecI64x2']();
-Module['SubVecI64x2'] = Module['_BinaryenSubVecI64x2']();
-Module['AbsVecF32x4'] = Module['_BinaryenAbsVecF32x4']();
-Module['NegVecF32x4'] = Module['_BinaryenNegVecF32x4']();
-Module['SqrtVecF32x4'] = Module['_BinaryenSqrtVecF32x4']();
-Module['QFMAVecF32x4'] = Module['_BinaryenQFMAVecF32x4']();
-Module['QFMSVecF32x4'] = Module['_BinaryenQFMSVecF32x4']();
-Module['AddVecF32x4'] = Module['_BinaryenAddVecF32x4']();
-Module['SubVecF32x4'] = Module['_BinaryenSubVecF32x4']();
-Module['MulVecF32x4'] = Module['_BinaryenMulVecF32x4']();
-Module['DivVecF32x4'] = Module['_BinaryenDivVecF32x4']();
-Module['MinVecF32x4'] = Module['_BinaryenMinVecF32x4']();
-Module['MaxVecF32x4'] = Module['_BinaryenMaxVecF32x4']();
-Module['AbsVecF64x2'] = Module['_BinaryenAbsVecF64x2']();
-Module['NegVecF64x2'] = Module['_BinaryenNegVecF64x2']();
-Module['SqrtVecF64x2'] = Module['_BinaryenSqrtVecF64x2']();
-Module['QFMAVecF64x2'] = Module['_BinaryenQFMAVecF64x2']();
-Module['QFMSVecF64x2'] = Module['_BinaryenQFMSVecF64x2']();
-Module['AddVecF64x2'] = Module['_BinaryenAddVecF64x2']();
-Module['SubVecF64x2'] = Module['_BinaryenSubVecF64x2']();
-Module['MulVecF64x2'] = Module['_BinaryenMulVecF64x2']();
-Module['DivVecF64x2'] = Module['_BinaryenDivVecF64x2']();
-Module['MinVecF64x2'] = Module['_BinaryenMinVecF64x2']();
-Module['MaxVecF64x2'] = Module['_BinaryenMaxVecF64x2']();
-Module['TruncSatSVecF32x4ToVecI32x4'] = Module['_BinaryenTruncSatSVecF32x4ToVecI32x4']();
-Module['TruncSatUVecF32x4ToVecI32x4'] = Module['_BinaryenTruncSatUVecF32x4ToVecI32x4']();
-Module['TruncSatSVecF64x2ToVecI64x2'] = Module['_BinaryenTruncSatSVecF64x2ToVecI64x2']();
-Module['TruncSatUVecF64x2ToVecI64x2'] = Module['_BinaryenTruncSatUVecF64x2ToVecI64x2']();
-Module['ConvertSVecI32x4ToVecF32x4'] = Module['_BinaryenConvertSVecI32x4ToVecF32x4']();
-Module['ConvertUVecI32x4ToVecF32x4'] = Module['_BinaryenConvertUVecI32x4ToVecF32x4']();
-Module['ConvertSVecI64x2ToVecF64x2'] = Module['_BinaryenConvertSVecI64x2ToVecF64x2']();
-Module['ConvertUVecI64x2ToVecF64x2'] = Module['_BinaryenConvertUVecI64x2ToVecF64x2']();
-Module['LoadSplatVec8x16'] = Module['_BinaryenLoadSplatVec8x16']();
-Module['LoadSplatVec16x8'] = Module['_BinaryenLoadSplatVec16x8']();
-Module['LoadSplatVec32x4'] = Module['_BinaryenLoadSplatVec32x4']();
-Module['LoadSplatVec64x2'] = Module['_BinaryenLoadSplatVec64x2']();
-Module['LoadExtSVec8x8ToVecI16x8'] = Module['_BinaryenLoadExtSVec8x8ToVecI16x8']();
-Module['LoadExtUVec8x8ToVecI16x8'] = Module['_BinaryenLoadExtUVec8x8ToVecI16x8']();
-Module['LoadExtSVec16x4ToVecI32x4'] = Module['_BinaryenLoadExtSVec16x4ToVecI32x4']();
-Module['LoadExtUVec16x4ToVecI32x4'] = Module['_BinaryenLoadExtUVec16x4ToVecI32x4']();
-Module['LoadExtSVec32x2ToVecI64x2'] = Module['_BinaryenLoadExtSVec32x2ToVecI64x2']();
-Module['LoadExtUVec32x2ToVecI64x2'] = Module['_BinaryenLoadExtUVec32x2ToVecI64x2']();
-Module['NarrowSVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowSVecI16x8ToVecI8x16']();
-Module['NarrowUVecI16x8ToVecI8x16'] = Module['_BinaryenNarrowUVecI16x8ToVecI8x16']();
-Module['NarrowSVecI32x4ToVecI16x8'] = Module['_BinaryenNarrowSVecI32x4ToVecI16x8']();
-Module['NarrowUVecI32x4ToVecI16x8'] = Module['_BinaryenNarrowUVecI32x4ToVecI16x8']();
-Module['WidenLowSVecI8x16ToVecI16x8'] = Module['_BinaryenWidenLowSVecI8x16ToVecI16x8']();
-Module['WidenHighSVecI8x16ToVecI16x8'] = Module['_BinaryenWidenHighSVecI8x16ToVecI16x8']();
-Module['WidenLowUVecI8x16ToVecI16x8'] = Module['_BinaryenWidenLowUVecI8x16ToVecI16x8']();
-Module['WidenHighUVecI8x16ToVecI16x8'] = Module['_BinaryenWidenHighUVecI8x16ToVecI16x8']();
-Module['WidenLowSVecI16x8ToVecI32x4'] = Module['_BinaryenWidenLowSVecI16x8ToVecI32x4']();
-Module['WidenHighSVecI16x8ToVecI32x4'] = Module['_BinaryenWidenHighSVecI16x8ToVecI32x4']();
-Module['WidenLowUVecI16x8ToVecI32x4'] = Module['_BinaryenWidenLowUVecI16x8ToVecI32x4']();
-Module['WidenHighUVecI16x8ToVecI32x4'] = Module['_BinaryenWidenHighUVecI16x8ToVecI32x4']();
-Module['SwizzleVec8x16'] = Module['_BinaryenSwizzleVec8x16']();
-
-// The size of a single literal in memory as used in Const creation,
-// which is a little different: we don't want users to need to make
-// their own Literals, as the C API handles them by value, which means
-// we would leak them. Instead, Const creation is fused together with
-// an intermediate stack allocation of this size to pass the value.
-var sizeOfLiteral = _BinaryenSizeofLiteral();
+  // Operations
+  Module['Operations'] = {};
+  [ 'ClzInt32',
+    'CtzInt32',
+    'PopcntInt32',
+    'NegFloat32',
+    'AbsFloat32',
+    'CeilFloat32',
+    'FloorFloat32',
+    'TruncFloat32',
+    'NearestFloat32',
+    'SqrtFloat32',
+    'EqZInt32',
+    'ClzInt64',
+    'CtzInt64',
+    'PopcntInt64',
+    'NegFloat64',
+    'AbsFloat64',
+    'CeilFloat64',
+    'FloorFloat64',
+    'TruncFloat64',
+    'NearestFloat64',
+    'SqrtFloat64',
+    'EqZInt64',
+    'ExtendSInt32',
+    'ExtendUInt32',
+    'WrapInt64',
+    'TruncSFloat32ToInt32',
+    'TruncSFloat32ToInt64',
+    'TruncUFloat32ToInt32',
+    'TruncUFloat32ToInt64',
+    'TruncSFloat64ToInt32',
+    'TruncSFloat64ToInt64',
+    'TruncUFloat64ToInt32',
+    'TruncUFloat64ToInt64',
+    'TruncSatSFloat32ToInt32',
+    'TruncSatSFloat32ToInt64',
+    'TruncSatUFloat32ToInt32',
+    'TruncSatUFloat32ToInt64',
+    'TruncSatSFloat64ToInt32',
+    'TruncSatSFloat64ToInt64',
+    'TruncSatUFloat64ToInt32',
+    'TruncSatUFloat64ToInt64',
+    'ReinterpretFloat32',
+    'ReinterpretFloat64',
+    'ConvertSInt32ToFloat32',
+    'ConvertSInt32ToFloat64',
+    'ConvertUInt32ToFloat32',
+    'ConvertUInt32ToFloat64',
+    'ConvertSInt64ToFloat32',
+    'ConvertSInt64ToFloat64',
+    'ConvertUInt64ToFloat32',
+    'ConvertUInt64ToFloat64',
+    'PromoteFloat32',
+    'DemoteFloat64',
+    'ReinterpretInt32',
+    'ReinterpretInt64',
+    'ExtendS8Int32',
+    'ExtendS16Int32',
+    'ExtendS8Int64',
+    'ExtendS16Int64',
+    'ExtendS32Int64',
+    'AddInt32',
+    'SubInt32',
+    'MulInt32',
+    'DivSInt32',
+    'DivUInt32',
+    'RemSInt32',
+    'RemUInt32',
+    'AndInt32',
+    'OrInt32',
+    'XorInt32',
+    'ShlInt32',
+    'ShrUInt32',
+    'ShrSInt32',
+    'RotLInt32',
+    'RotRInt32',
+    'EqInt32',
+    'NeInt32',
+    'LtSInt32',
+    'LtUInt32',
+    'LeSInt32',
+    'LeUInt32',
+    'GtSInt32',
+    'GtUInt32',
+    'GeSInt32',
+    'GeUInt32',
+    'AddInt64',
+    'SubInt64',
+    'MulInt64',
+    'DivSInt64',
+    'DivUInt64',
+    'RemSInt64',
+    'RemUInt64',
+    'AndInt64',
+    'OrInt64',
+    'XorInt64',
+    'ShlInt64',
+    'ShrUInt64',
+    'ShrSInt64',
+    'RotLInt64',
+    'RotRInt64',
+    'EqInt64',
+    'NeInt64',
+    'LtSInt64',
+    'LtUInt64',
+    'LeSInt64',
+    'LeUInt64',
+    'GtSInt64',
+    'GtUInt64',
+    'GeSInt64',
+    'GeUInt64',
+    'AddFloat32',
+    'SubFloat32',
+    'MulFloat32',
+    'DivFloat32',
+    'CopySignFloat32',
+    'MinFloat32',
+    'MaxFloat32',
+    'EqFloat32',
+    'NeFloat32',
+    'LtFloat32',
+    'LeFloat32',
+    'GtFloat32',
+    'GeFloat32',
+    'AddFloat64',
+    'SubFloat64',
+    'MulFloat64',
+    'DivFloat64',
+    'CopySignFloat64',
+    'MinFloat64',
+    'MaxFloat64',
+    'EqFloat64',
+    'NeFloat64',
+    'LtFloat64',
+    'LeFloat64',
+    'GtFloat64',
+    'GeFloat64',
+    'MemorySize',
+    'MemoryGrow',
+    'AtomicRMWAdd',
+    'AtomicRMWSub',
+    'AtomicRMWAnd',
+    'AtomicRMWOr',
+    'AtomicRMWXor',
+    'AtomicRMWXchg',
+    'SplatVecI8x16',
+    'ExtractLaneSVecI8x16',
+    'ExtractLaneUVecI8x16',
+    'ReplaceLaneVecI8x16',
+    'SplatVecI16x8',
+    'ExtractLaneSVecI16x8',
+    'ExtractLaneUVecI16x8',
+    'ReplaceLaneVecI16x8',
+    'SplatVecI32x4',
+    'ExtractLaneVecI32x4',
+    'ReplaceLaneVecI32x4',
+    'SplatVecI64x2',
+    'ExtractLaneVecI64x2',
+    'ReplaceLaneVecI64x2',
+    'SplatVecF32x4',
+    'ExtractLaneVecF32x4',
+    'ReplaceLaneVecF32x4',
+    'SplatVecF64x2',
+    'ExtractLaneVecF64x2',
+    'ReplaceLaneVecF64x2',
+    'EqVecI8x16',
+    'NeVecI8x16',
+    'LtSVecI8x16',
+    'LtUVecI8x16',
+    'GtSVecI8x16',
+    'GtUVecI8x16',
+    'LeSVecI8x16',
+    'LeUVecI8x16',
+    'GeSVecI8x16',
+    'GeUVecI8x16',
+    'EqVecI16x8',
+    'NeVecI16x8',
+    'LtSVecI16x8',
+    'LtUVecI16x8',
+    'GtSVecI16x8',
+    'GtUVecI16x8',
+    'LeSVecI16x8',
+    'LeUVecI16x8',
+    'GeSVecI16x8',
+    'GeUVecI16x8',
+    'EqVecI32x4',
+    'NeVecI32x4',
+    'LtSVecI32x4',
+    'LtUVecI32x4',
+    'GtSVecI32x4',
+    'GtUVecI32x4',
+    'LeSVecI32x4',
+    'LeUVecI32x4',
+    'GeSVecI32x4',
+    'GeUVecI32x4',
+    'EqVecF32x4',
+    'NeVecF32x4',
+    'LtVecF32x4',
+    'GtVecF32x4',
+    'LeVecF32x4',
+    'GeVecF32x4',
+    'EqVecF64x2',
+    'NeVecF64x2',
+    'LtVecF64x2',
+    'GtVecF64x2',
+    'LeVecF64x2',
+    'GeVecF64x2',
+    'NotVec128',
+    'AndVec128',
+    'OrVec128',
+    'XorVec128',
+    'AndNotVec128',
+    'BitselectVec128',
+    'NegVecI8x16',
+    'AnyTrueVecI8x16',
+    'AllTrueVecI8x16',
+    'ShlVecI8x16',
+    'ShrSVecI8x16',
+    'ShrUVecI8x16',
+    'AddVecI8x16',
+    'AddSatSVecI8x16',
+    'AddSatUVecI8x16',
+    'SubVecI8x16',
+    'SubSatSVecI8x16',
+    'SubSatUVecI8x16',
+    'MulVecI8x16',
+    'MinSVecI8x16',
+    'MinUVecI8x16',
+    'MaxSVecI8x16',
+    'MaxUVecI8x16',
+    'AvgrUVecI8x16',
+    'NegVecI16x8',
+    'AnyTrueVecI16x8',
+    'AllTrueVecI16x8',
+    'ShlVecI16x8',
+    'ShrSVecI16x8',
+    'ShrUVecI16x8',
+    'AddVecI16x8',
+    'AddSatSVecI16x8',
+    'AddSatUVecI16x8',
+    'SubVecI16x8',
+    'SubSatSVecI16x8',
+    'SubSatUVecI16x8',
+    'MulVecI16x8',
+    'MinSVecI16x8',
+    'MinUVecI16x8',
+    'MaxSVecI16x8',
+    'MaxUVecI16x8',
+    'AvgrUVecI16x8',
+    'DotSVecI16x8ToVecI32x4',
+    'NegVecI32x4',
+    'AnyTrueVecI32x4',
+    'AllTrueVecI32x4',
+    'ShlVecI32x4',
+    'ShrSVecI32x4',
+    'ShrUVecI32x4',
+    'AddVecI32x4',
+    'SubVecI32x4',
+    'MulVecI32x4',
+    'MinSVecI32x4',
+    'MinUVecI32x4',
+    'MaxSVecI32x4',
+    'MaxUVecI32x4',
+    'NegVecI64x2',
+    'AnyTrueVecI64x2',
+    'AllTrueVecI64x2',
+    'ShlVecI64x2',
+    'ShrSVecI64x2',
+    'ShrUVecI64x2',
+    'AddVecI64x2',
+    'SubVecI64x2',
+    'AbsVecF32x4',
+    'NegVecF32x4',
+    'SqrtVecF32x4',
+    'QFMAVecF32x4',
+    'QFMSVecF32x4',
+    'AddVecF32x4',
+    'SubVecF32x4',
+    'MulVecF32x4',
+    'DivVecF32x4',
+    'MinVecF32x4',
+    'MaxVecF32x4',
+    'AbsVecF64x2',
+    'NegVecF64x2',
+    'SqrtVecF64x2',
+    'QFMAVecF64x2',
+    'QFMSVecF64x2',
+    'AddVecF64x2',
+    'SubVecF64x2',
+    'MulVecF64x2',
+    'DivVecF64x2',
+    'MinVecF64x2',
+    'MaxVecF64x2',
+    'TruncSatSVecF32x4ToVecI32x4',
+    'TruncSatUVecF32x4ToVecI32x4',
+    'TruncSatSVecF64x2ToVecI64x2',
+    'TruncSatUVecF64x2ToVecI64x2',
+    'ConvertSVecI32x4ToVecF32x4',
+    'ConvertUVecI32x4ToVecF32x4',
+    'ConvertSVecI64x2ToVecF64x2',
+    'ConvertUVecI64x2ToVecF64x2',
+    'LoadSplatVec8x16',
+    'LoadSplatVec16x8',
+    'LoadSplatVec32x4',
+    'LoadSplatVec64x2',
+    'LoadExtSVec8x8ToVecI16x8',
+    'LoadExtUVec8x8ToVecI16x8',
+    'LoadExtSVec16x4ToVecI32x4',
+    'LoadExtUVec16x4ToVecI32x4',
+    'LoadExtSVec32x2ToVecI64x2',
+    'LoadExtUVec32x2ToVecI64x2',
+    'NarrowSVecI16x8ToVecI8x16',
+    'NarrowUVecI16x8ToVecI8x16',
+    'NarrowSVecI32x4ToVecI16x8',
+    'NarrowUVecI32x4ToVecI16x8',
+    'WidenLowSVecI8x16ToVecI16x8',
+    'WidenHighSVecI8x16ToVecI16x8',
+    'WidenLowUVecI8x16ToVecI16x8',
+    'WidenHighUVecI8x16ToVecI16x8',
+    'WidenLowSVecI16x8ToVecI32x4',
+    'WidenHighSVecI16x8ToVecI32x4',
+    'WidenLowUVecI16x8ToVecI32x4',
+    'WidenHighUVecI16x8ToVecI32x4',
+    'SwizzleVec8x16',
+  ].forEach(function(name) {
+    Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
+  });
+}
 
 // 'Module' interface
 Module['Module'] = function(module) {
   assert(!module); // guard against incorrect old API usage
-  var module = Module['_BinaryenModuleCreate']();
-
-  wrapModule(module, this);
+  wrapModule(Module['_BinaryenModuleCreate'](), this);
 };
 
 // Receives a C pointer to a C Module and a JS object, and creates
@@ -479,6 +470,13 @@ function wrapModule(module, self) {
   if (!self) self = {};
 
   self['ptr'] = module;
+
+  // The size of a single literal in memory as used in Const creation,
+  // which is a little different: we don't want users to need to make
+  // their own Literals, as the C API handles them by value, which means
+  // we would leak them. Instead, Const creation is fused together with
+  // an intermediate stack allocation of this size to pass the value.
+  var sizeOfLiteral = _BinaryenSizeofLiteral();
 
   // 'Expression' creation
   self['block'] = function(name, children, type) {
@@ -2689,6 +2687,26 @@ Module['getExpressionInfo'] = function(expr) {
   }
 };
 
+Module['createType'] = function(types) {
+  return preserveStack(function() {
+    var array = i32sToStack(types);
+    return Module['_BinaryenTypeCreate'](array, types.length);
+  });
+};
+
+Module['expandType'] = function(ty) {
+  return preserveStack(function() {
+    var numTypes = Module['_BinaryenTypeArity'](ty);
+    var array = stackAlloc(numTypes << 2);
+    Module['_BinaryenTypeExpand'](ty, array);
+    var types = [];
+    for (var i = 0; i < numTypes; i++) {
+      types.push(HEAPU32[(array >>> 2) + i]);
+    }
+    return types;
+  });
+};
+
 // Obtains information about a 'Function'
 Module['getFunctionInfo'] = function(func) {
   return {
@@ -2813,3 +2831,55 @@ Module['exit'] = function(status) {
   // a stack trace, for debuggability.
   if (status != 0) throw new Error('exiting due to error: ' + status);
 };
+
+// Indicates if Binaryen has been loaded and is ready
+Module['isReady'] = runtimeInitialized;
+
+// Provide a mechanism to tell when the module is ready
+//
+// if (!binaryen.isReady) await binaryen.ready;
+// ...
+//
+var pendingPromises = [];
+var initializeError = null;
+Object.defineProperty(Module, 'ready', {
+  get: function() {
+    return new Promise(function(resolve, reject) {
+      if (initializeError) {
+        reject(initializeError);
+      } else if (runtimeInitialized) {
+        resolve(Module);
+      } else {
+        pendingPromises.push({
+          resolve: resolve,
+          reject: reject
+        });
+      }
+    });
+  }
+});
+
+// Intercept the onRuntimeInitialized hook if necessary
+if (runtimeInitialized) {
+  initializeConstants();
+} else {
+  Module['onRuntimeInitialized'] = (function(super_) {
+    return function() {
+      try {
+        initializeConstants();
+        if (super_) super_();
+        Module['isReady'] = true;
+        pendingPromises.forEach(function(p) {
+          p.resolve(Module);
+        });
+      } catch (e) {
+        initializeError = e;
+        pendingPromises.forEach(function(p) {
+          p.reject(e);
+        });
+      } finally {
+        pendingPromises = [];
+      }
+    };
+  })(Module['onRuntimeInitialized']);
+}
