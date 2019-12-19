@@ -72,6 +72,14 @@ void WasmBinaryWriter::write() {
     writeSourceMapEpilog();
   }
 
+#ifdef BUILD_LLVM_DWARF
+  // Update DWARF user sections after writing the data referred to by them
+  // (function bodies), and before writing the user sections themselves.
+  if (Debug::hasDWARFSections(*wasm)) {
+    Debug::writeDWARFSections(*wasm, binaryLocations);
+  }
+#endif
+
   writeLateUserSections();
   writeFeaturesSection();
 
@@ -109,6 +117,7 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
   if (sourceMap) {
     sourceMapLocationsSizeAtSectionStart = sourceMapLocations.size();
   }
+  binaryLocationsSizeAtSectionStart = binaryLocations.size();
   return writeU32LEBPlaceholder(); // section size to be filled in later
 }
 
@@ -116,13 +125,13 @@ void WasmBinaryWriter::finishSection(int32_t start) {
   // section size does not include the reserved bytes of the size field itself
   int32_t size = o.size() - start - MaxLEB32Bytes;
   auto sizeFieldSize = o.writeAt(start, U32LEB(size));
-  if (sizeFieldSize != MaxLEB32Bytes) {
+  auto adjustment = MaxLEB32Bytes - sizeFieldSize;
+  if (adjustment) {
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
     std::move(&o[start] + MaxLEB32Bytes,
               &o[start] + MaxLEB32Bytes + size,
               &o[start] + sizeFieldSize);
-    auto adjustment = MaxLEB32Bytes - sizeFieldSize;
     o.resize(o.size() - adjustment);
     if (sourceMap) {
       for (auto i = sourceMapLocationsSizeAtSectionStart;
@@ -130,6 +139,16 @@ void WasmBinaryWriter::finishSection(int32_t start) {
            ++i) {
         sourceMapLocations[i].first -= adjustment;
       }
+    }
+  }
+  if (binaryLocationsSizeAtSectionStart != binaryLocations.size()) {
+    // We added the binary locations, adjust them: they must be relative
+    // to the code section.
+    assert(binaryLocationsSizeAtSectionStart == 0);
+    for (auto& pair : binaryLocations) {
+      // Offsets are relative to the body of the code section: after the
+      // declaration and the size.
+      pair.second -= start + sizeFieldSize;
     }
   }
 }
@@ -267,6 +286,7 @@ void WasmBinaryWriter::writeFunctions() {
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
+    size_t binaryLocationsSizeAFunctionStart = binaryLocations.size();
     BYN_TRACE("write one at" << o.size() << std::endl);
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
@@ -284,17 +304,25 @@ void WasmBinaryWriter::writeFunctions() {
     BYN_TRACE("body size: " << size << ", writing at " << sizePos
                             << ", next starts at " << o.size() << "\n");
     auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
-    if (sizeFieldSize != MaxLEB32Bytes) {
+    auto adjustment = MaxLEB32Bytes - sizeFieldSize;
+    if (adjustment) {
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
-      auto adjustment = MaxLEB32Bytes - sizeFieldSize;
       o.resize(o.size() - adjustment);
       if (sourceMap) {
         for (auto i = sourceMapLocationsSizeAtFunctionStart;
              i < sourceMapLocations.size();
              ++i) {
           sourceMapLocations[i].first -= adjustment;
+        }
+      }
+      if (binaryLocationsSizeAFunctionStart != binaryLocations.size()) {
+        // We added the binary locations, adjust them: they must be relative
+        // to the code section.
+        assert(binaryLocationsSizeAtSectionStart == 0);
+        for (auto& pair : binaryLocations) {
+          pair.second -= adjustment;
         }
       }
     }
@@ -649,10 +677,18 @@ void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocation& loc) {
 }
 
 void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
-  auto& debugLocations = func->debugLocations;
-  auto iter = debugLocations.find(curr);
-  if (iter != debugLocations.end()) {
-    writeDebugLocation(iter->second);
+  if (sourceMap) {
+    auto& debugLocations = func->debugLocations;
+    auto iter = debugLocations.find(curr);
+    if (iter != debugLocations.end()) {
+      writeDebugLocation(iter->second);
+    }
+  }
+  // TODO: remove source map debugging support and refactor this method
+  // to something that directly thinks about DWARF, instead of indirectly
+  // looking at func->binaryLocations as a proxy for that etc.
+  if (func && !func->binaryLocations.empty()) {
+    binaryLocations[curr] = o.size();
   }
 }
 
@@ -809,6 +845,9 @@ void WasmBinaryBuilder::read() {
         readFunctionSignatures();
         break;
       case BinaryConsts::Section::Code:
+        if (DWARF) {
+          codeSectionLocation = pos;
+        }
         readFunctions();
         break;
       case BinaryConsts::Section::Export:
@@ -1288,9 +1327,6 @@ void WasmBinaryBuilder::readFunctionSignatures() {
 
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
-  if (DWARF) {
-    codeSectionLocation = pos;
-  }
   size_t total = getU32LEB();
   if (total != functionSignatures.size()) {
     throwError("invalid function section size, must equal types");
