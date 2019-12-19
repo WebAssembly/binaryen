@@ -1,0 +1,216 @@
+DWARF debug info
+================
+
+Contains section .debug_info (58 bytes)
+Contains section .debug_abbrev (39 bytes)
+Contains section .debug_line (56 bytes)
+Contains section .debug_str (212 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+
+[2] DW_TAG_subprogram	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_linkage_name	DW_FORM_strp
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_external	DW_FORM_flag_present
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x00000036 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x0000003a)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project f2e65447b3cb6340883957e033e77095a025ebdc)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "a.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/usr/local/google/home/azakai/Dev/emscripten")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+              DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x00000034
+         version: 4
+ prologue_length: 0x0000001d
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "a.cpp"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x00000027: 00 DW_LNE_set_address (0x0000000000000005)
+0x0000002e: 14 address += 0,  line += 2
+            0x0000000000000005      3      0      1   0             0  is_stmt
+
+0x0000002f: 05 DW_LNS_set_column (1)
+0x00000031: 0a DW_LNS_set_prologue_end
+0x00000032: 21 address += 1,  line += 1
+            0x0000000000000006      4      1      1   0             0  is_stmt prologue_end
+
+0x00000033: 02 DW_LNS_advance_pc (1)
+0x00000035: 00 DW_LNE_end_sequence
+            0x0000000000000007      4      1      1   0             0  is_stmt end_sequence
+
+
+.debug_str contents:
+0x00000000: "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project f2e65447b3cb6340883957e033e77095a025ebdc)"
+0x00000095: "a.cpp"
+0x0000009b: "/usr/local/google/home/azakai/Dev/emscripten"
+0x000000c8: "_Z3foov"
+0x000000d0: "foo"
+DWARF debug info
+================
+
+Contains section .debug_info (58 bytes)
+Contains section .debug_abbrev (39 bytes)
+Contains section .debug_line (56 bytes)
+Contains section .debug_str (212 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+
+[2] DW_TAG_subprogram	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_linkage_name	DW_FORM_strp
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_external	DW_FORM_flag_present
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x00000036 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x0000003a)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project f2e65447b3cb6340883957e033e77095a025ebdc)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "a.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/usr/local/google/home/azakai/Dev/emscripten")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+              DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x00000034
+         version: 4
+ prologue_length: 0x0000001d
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "a.cpp"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x00000027: 00 DW_LNE_set_address (0x0000000000000005)
+0x0000002e: 14 address += 0,  line += 2
+            0x0000000000000005      3      0      1   0             0  is_stmt
+
+0x0000002f: 05 DW_LNS_set_column (1)
+0x00000031: 0a DW_LNS_set_prologue_end
+0x00000032: 21 address += 1,  line += 1
+            0x0000000000000006      4      1      1   0             0  is_stmt prologue_end
+
+0x00000033: 02 DW_LNS_advance_pc (1)
+0x00000035: 00 DW_LNE_end_sequence
+            0x0000000000000007      4      1      1   0             0  is_stmt end_sequence
+
+
+.debug_str contents:
+0x00000000: "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project f2e65447b3cb6340883957e033e77095a025ebdc)"
+0x00000095: "a.cpp"
+0x0000009b: "/usr/local/google/home/azakai/Dev/emscripten"
+0x000000c8: "_Z3foov"
+0x000000d0: "foo"
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (import "env" "__wasm_call_ctors" (func $fimport$0))
+ (import "env" "dlmalloc" (func $fimport$1 (param i32) (result i32)))
+ (import "env" "dlfree" (func $fimport$2 (param i32)))
+ (import "env" "setThrew" (func $fimport$3 (param i32 i32)))
+ (import "env" "stackSave" (func $fimport$4 (result i32)))
+ (import "env" "stackAlloc" (func $fimport$5 (param i32) (result i32)))
+ (import "env" "stackRestore" (func $fimport$6 (param i32)))
+ (import "env" "__growWasmMemory" (func $fimport$7 (param i32) (result i32)))
+ (global $global$0 i32 (i32.const 1532))
+ (export "__wasm_call_ctors" (func $fimport$0))
+ (export "_Z3foov" (func $fimport$0))
+ (export "__errno_location" (func $0))
+ (export "setThrew" (func $fimport$3))
+ (export "malloc" (func $fimport$1))
+ (export "free" (func $fimport$2))
+ (export "__data_end" (global $global$0))
+ (export "stackSave" (func $fimport$4))
+ (export "stackAlloc" (func $fimport$5))
+ (export "stackRestore" (func $fimport$6))
+ (export "__growWasmMemory" (func $fimport$7))
+ (func $0 (; 8 ;) (result i32)
+  (i32.const 1024)
+ )
+ ;; custom section "sourceMappingURL", size 15
+ ;; custom section "sourceMappingURL", size 15
+ ;; custom section ".debug_info", size 58
+ ;; custom section ".debug_abbrev", size 39
+ ;; custom section ".debug_line", size 56
+ ;; custom section ".debug_str", size 212
+)

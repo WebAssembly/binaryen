@@ -1204,6 +1204,9 @@ struct PrintExpressionContents
       case MaxUVecI8x16:
         o << "i8x16.max_u";
         break;
+      case AvgrUVecI8x16:
+        o << "i8x16.avgr_u";
+        break;
       case AddVecI16x8:
         o << "i16x8.add";
         break;
@@ -1236,6 +1239,9 @@ struct PrintExpressionContents
         break;
       case MaxUVecI16x8:
         o << "i16x8.max_u";
+        break;
+      case AvgrUVecI16x8:
+        o << "i16x8.avgr_u";
         break;
       case AddVecI32x4:
         o << "i32x4.add";

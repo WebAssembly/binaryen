@@ -15,7 +15,7 @@
  */
 
 //
-// Parses and emits WebAssembly binary code
+// Comprehensive debug info support (beyond source maps).
 //
 
 #ifndef wasm_wasm_debug_h
@@ -32,6 +32,12 @@ namespace Debug {
 bool isDWARFSection(Name name);
 
 bool hasDWARFSections(const Module& wasm);
+
+// Dump the DWARF sections to stdout.
+void dumpDWARF(const Module& wasm);
+
+// Update the DWARF sections.
+void writeDWARFSections(Module& wasm);
 
 } // namespace Debug
 

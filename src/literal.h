@@ -334,6 +334,7 @@ public:
   Literal minUI8x16(const Literal& other) const;
   Literal maxSI8x16(const Literal& other) const;
   Literal maxUI8x16(const Literal& other) const;
+  Literal avgrUI8x16(const Literal& other) const;
   Literal negI16x8() const;
   Literal anyTrueI16x8() const;
   Literal allTrueI16x8() const;
@@ -351,6 +352,7 @@ public:
   Literal minUI16x8(const Literal& other) const;
   Literal maxSI16x8(const Literal& other) const;
   Literal maxUI16x8(const Literal& other) const;
+  Literal avgrUI16x8(const Literal& other) const;
   Literal negI32x4() const;
   Literal anyTrueI32x4() const;
   Literal allTrueI32x4() const;
@@ -426,6 +428,7 @@ private:
   Literal maxInt(const Literal& other) const;
   Literal minUInt(const Literal& other) const;
   Literal maxUInt(const Literal& other) const;
+  Literal avgrUInt(const Literal& other) const;
 };
 
 } // namespace wasm

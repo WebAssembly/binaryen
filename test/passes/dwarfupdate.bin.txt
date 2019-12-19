@@ -1,0 +1,36 @@
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (import "env" "__wasm_call_ctors" (func $fimport$0))
+ (import "env" "dlmalloc" (func $fimport$1 (param i32) (result i32)))
+ (import "env" "dlfree" (func $fimport$2 (param i32)))
+ (import "env" "setThrew" (func $fimport$3 (param i32 i32)))
+ (import "env" "stackSave" (func $fimport$4 (result i32)))
+ (import "env" "stackAlloc" (func $fimport$5 (param i32) (result i32)))
+ (import "env" "stackRestore" (func $fimport$6 (param i32)))
+ (import "env" "__growWasmMemory" (func $fimport$7 (param i32) (result i32)))
+ (global $global$0 i32 (i32.const 1532))
+ (export "__wasm_call_ctors" (func $fimport$0))
+ (export "_Z3foov" (func $fimport$0))
+ (export "__errno_location" (func $0))
+ (export "setThrew" (func $fimport$3))
+ (export "malloc" (func $fimport$1))
+ (export "free" (func $fimport$2))
+ (export "__data_end" (global $global$0))
+ (export "stackSave" (func $fimport$4))
+ (export "stackAlloc" (func $fimport$5))
+ (export "stackRestore" (func $fimport$6))
+ (export "__growWasmMemory" (func $fimport$7))
+ (func $0 (; 8 ;) (result i32)
+  (i32.const 1024)
+ )
+ ;; custom section "sourceMappingURL", size 15
+ ;; custom section "sourceMappingURL", size 15
+ ;; custom section ".debug_info", size 58
+ ;; custom section ".debug_abbrev", size 38
+ ;; custom section ".debug_line", size 56
+ ;; custom section ".debug_str", size 212
+)
