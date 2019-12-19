@@ -359,6 +359,7 @@ Module['MinSVecI8x16'] = Module['_BinaryenMinSVecI8x16']();
 Module['MinUVecI8x16'] = Module['_BinaryenMinUVecI8x16']();
 Module['MaxSVecI8x16'] = Module['_BinaryenMaxSVecI8x16']();
 Module['MaxUVecI8x16'] = Module['_BinaryenMaxUVecI8x16']();
+Module['AvgrUVecI8x16'] = Module['_BinaryenAvgrUVecI8x16']();
 Module['NegVecI16x8'] = Module['_BinaryenNegVecI16x8']();
 Module['AnyTrueVecI16x8'] = Module['_BinaryenAnyTrueVecI16x8']();
 Module['AllTrueVecI16x8'] = Module['_BinaryenAllTrueVecI16x8']();
@@ -376,6 +377,7 @@ Module['MinSVecI16x8'] = Module['_BinaryenMinSVecI16x8']();
 Module['MinUVecI16x8'] = Module['_BinaryenMinUVecI16x8']();
 Module['MaxSVecI16x8'] = Module['_BinaryenMaxSVecI16x8']();
 Module['MaxUVecI16x8'] = Module['_BinaryenMaxUVecI16x8']();
+Module['AvgrUVecI16x8'] = Module['_BinaryenAvgrUVecI16x8']();
 Module['DotSVecI16x8ToVecI32x4'] = Module['_BinaryenDotSVecI16x8ToVecI32x4']();
 Module['NegVecI32x4'] = Module['_BinaryenNegVecI32x4']();
 Module['AnyTrueVecI32x4'] = Module['_BinaryenAnyTrueVecI32x4']();
@@ -1492,6 +1494,9 @@ function wrapModule(module, self) {
     'max_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxUVecI8x16'], left, right);
     },
+    'avgr_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['AvgrUVecI8x16'], left, right);
+    },
     'narrow_i16x8_s': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI16x8ToVecI8x16'], left, right);
     },
@@ -1593,6 +1598,9 @@ function wrapModule(module, self) {
     },
     'max_u': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['MaxUVecI16x8'], left, right);
+    },
+    'avgr_u': function(left, right) {
+      return Module['_BinaryenBinary'](module, Module['AvgrUVecI16x8'], left, right);
     },
     'narrow_i32x4_s': function(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI32x4ToVecI16x8'], left, right);

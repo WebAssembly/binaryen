@@ -365,6 +365,7 @@ enum BinaryOp {
   MinUVecI8x16,
   MaxSVecI8x16,
   MaxUVecI8x16,
+  AvgrUVecI8x16,
   AddVecI16x8,
   AddSatSVecI16x8,
   AddSatUVecI16x8,
@@ -376,6 +377,7 @@ enum BinaryOp {
   MinUVecI16x8,
   MaxSVecI16x8,
   MaxUVecI16x8,
+  AvgrUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
@@ -1241,6 +1243,13 @@ public:
 
   Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+  }
 };
 
 class Memory : public Importable {
@@ -1284,6 +1293,14 @@ public:
 
   Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    exists = false;
+    name = "";
+    initial = 0;
+    max = kMaxSize;
+    segments.clear();
+    shared = false;
+  }
 };
 
 class Global : public Importable {

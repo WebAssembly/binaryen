@@ -780,6 +780,7 @@ BinaryenOp BinaryenMinSVecI8x16(void) { return MinSVecI8x16; }
 BinaryenOp BinaryenMinUVecI8x16(void) { return MinUVecI8x16; }
 BinaryenOp BinaryenMaxSVecI8x16(void) { return MaxSVecI8x16; }
 BinaryenOp BinaryenMaxUVecI8x16(void) { return MaxUVecI8x16; }
+BinaryenOp BinaryenAvgrUVecI8x16(void) { return AvgrUVecI8x16; }
 BinaryenOp BinaryenNegVecI16x8(void) { return NegVecI16x8; }
 BinaryenOp BinaryenAnyTrueVecI16x8(void) { return AnyTrueVecI16x8; }
 BinaryenOp BinaryenAllTrueVecI16x8(void) { return AllTrueVecI16x8; }
@@ -797,6 +798,7 @@ BinaryenOp BinaryenMinSVecI16x8(void) { return MinSVecI16x8; }
 BinaryenOp BinaryenMinUVecI16x8(void) { return MinUVecI16x8; }
 BinaryenOp BinaryenMaxSVecI16x8(void) { return MaxSVecI16x8; }
 BinaryenOp BinaryenMaxUVecI16x8(void) { return MaxUVecI16x8; }
+BinaryenOp BinaryenAvgrUVecI16x8(void) { return AvgrUVecI16x8; }
 BinaryenOp BinaryenNegVecI32x4(void) { return NegVecI32x4; }
 BinaryenOp BinaryenAnyTrueVecI32x4(void) { return AnyTrueVecI32x4; }
 BinaryenOp BinaryenAllTrueVecI32x4(void) { return AllTrueVecI32x4; }
