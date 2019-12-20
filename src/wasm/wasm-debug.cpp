@@ -234,7 +234,7 @@ struct LineState {
     }
     if (file != old.file) {
       auto item = makeItem(llvm::dwarf::DW_LNS_set_file);
-      item.Data = col;
+      item.Data = file;
       newOpcodes.push_back(item);
     }
     if (isStmt != old.isStmt) {
