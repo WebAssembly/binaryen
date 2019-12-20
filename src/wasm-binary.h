@@ -1052,6 +1052,9 @@ private:
   // locations of things.
   BinaryLocationsMap binaryLocations;
   size_t binaryLocationsSizeAtSectionStart;
+  // Track the expressions that we added for the current function being
+  // written, so that we can update those specific binary locations when
+  // the function is written out.
   std::vector<Expression*> binaryLocationTrackedExpressionsForFunc;
 
   void prepare();
