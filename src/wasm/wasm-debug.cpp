@@ -154,11 +154,12 @@ struct LineState {
         return true;
       }
       case llvm::dwarf::DW_LNS_advance_pc: {
+        assert(table.MinInstLength == 1);
         addr += opcode.Data;
         break;
       }
       case llvm::dwarf::DW_LNS_advance_line: {
-        line = opcode.SData;
+        line += opcode.SData;
         break;
       }
       case llvm::dwarf::DW_LNS_set_file: {
@@ -197,7 +198,9 @@ struct LineState {
 
   // Given an old state, emit the diff from it to this state into a new line
   // table.
-  void emitDiff(const LineState& old, std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes) {
+  void emitDiff(const LineState& old, std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes, const llvm::DWARFYAML::LineTable& table) {
+    // TODO: if any value is 0, can ignore it
+    //       https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
     bool useSpecial = false;
     if (addr != old.addr || line != old.line) {
       // Try to use a special opcode TODO
@@ -211,7 +214,7 @@ struct LineState {
     }
     if (line != old.line && !useSpecial) {
       auto item = makeItem(llvm::dwarf::DW_LNS_advance_line);
-      item.SData = line;
+      item.SData = line - old.line;
       newOpcodes.push_back(item);
     }
     if (col != old.col) {
@@ -244,6 +247,8 @@ struct LineState {
       // End the sequence manually.
       // len = 1 (subopcode)
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNE_end_sequence, 1));
+      // Reset the state.
+      *this = LineState(table);
     }
   }
 
@@ -334,6 +339,9 @@ static void updateDebugLines(const Module& wasm, llvm::DWARFYAML::Data& data, co
             updatedState.addr = newAddr;
           }
         }
+        if (opcode.Opcode == 0 && opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
+          state = LineState(table);
+        }
       }
     }
     // Sort the new addresses (which may be substantially different from the
@@ -348,7 +356,7 @@ static void updateDebugLines(const Module& wasm, llvm::DWARFYAML::Data& data, co
       for (uint32_t addr : newAddrs) {
         LineState oldState(state);
         state = newAddrInfo[addr];
-        state.emitDiff(oldState, newOpcodes);
+        state.emitDiff(oldState, newOpcodes, table);
       }
       table.Opcodes.swap(newOpcodes);
     }

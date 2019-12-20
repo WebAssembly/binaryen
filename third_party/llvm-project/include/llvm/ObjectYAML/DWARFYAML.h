@@ -139,7 +139,7 @@ struct LineTable {
   uint8_t MinInstLength;
   uint8_t MaxOpsPerInst;
   uint8_t DefaultIsStmt;
-  uint8_t LineBase;
+  int8_t LineBase; // XXX BINARYEN
   uint8_t LineRange;
   uint8_t OpcodeBase;
   std::vector<uint8_t> StandardOpcodeLengths;
