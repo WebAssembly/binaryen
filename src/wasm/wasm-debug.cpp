@@ -199,8 +199,11 @@ struct LineState {
   // Given an old state, emit the diff from it to this state into a new line
   // table.
   void emitDiff(const LineState& old, std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes, const llvm::DWARFYAML::LineTable& table) {
-    // TODO: if any value is 0, can ignore it
-    //       https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
+    // If any value is 0, can ignore it
+    // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
+    if (line == 0 || col == 0 || addr == 0) {
+      return;
+    }
     bool useSpecial = false;
     if (addr != old.addr || line != old.line) {
       // Try to use a special opcode TODO
@@ -311,6 +314,9 @@ static void updateDebugLines(const Module& wasm, llvm::DWARFYAML::Data& data, co
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
 
+  // TODO: apparently DWARF offsets may be into the middle of instructions...
+  //       we may need to track their spans too
+  // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
   AddrExprMap oldAddrMap(wasm);
   //std::cout << "old\n";
   //oldAddrMap.dump();
