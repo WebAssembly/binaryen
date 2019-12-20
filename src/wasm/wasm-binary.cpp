@@ -125,19 +125,22 @@ void WasmBinaryWriter::finishSection(int32_t start) {
   // section size does not include the reserved bytes of the size field itself
   int32_t size = o.size() - start - MaxLEB32Bytes;
   auto sizeFieldSize = o.writeAt(start, U32LEB(size));
-  auto adjustment = MaxLEB32Bytes - sizeFieldSize;
-  if (adjustment) {
+  // We can move things back if the actual LEB for the size doesn't use the
+  // maximum 5 bytes. In that case we need to adjust offsets after we move
+  // things backwards.
+  auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
+  if (adjustmentForLEBShrinking) {
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
     std::move(&o[start] + MaxLEB32Bytes,
               &o[start] + MaxLEB32Bytes + size,
               &o[start] + sizeFieldSize);
-    o.resize(o.size() - adjustment);
+    o.resize(o.size() - adjustmentForLEBShrinking);
     if (sourceMap) {
       for (auto i = sourceMapLocationsSizeAtSectionStart;
            i < sourceMapLocations.size();
            ++i) {
-        sourceMapLocations[i].first -= adjustment;
+        sourceMapLocations[i].first -= adjustmentForLEBShrinking;
       }
     }
   }
@@ -146,15 +149,16 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // We added the binary locations, adjust them: they must be relative
     // to the code section.
     assert(binaryLocationsSizeAtSectionStart == 0);
-    // The actual section start is right before the LEB for the size; we want
-    // to skip over that entire LEB, to get the section body.
+    // The section type byte is right before the LEB for the size; we want
+    // offsets that are relative to the body, which is after that section type
+    // byte and the the size LEB.
     auto body = start + sizeFieldSize;
     for (auto& pair : binaryLocations) {
       // Offsets are relative to the body of the code section: after the
-      // declaration and the size.
+      // section type byte and the size.
       // Everything was moved by the adjustment, track that. After this,
       // we are at the right absolute address.
-      pair.second -= adjustment;
+      pair.second -= adjustmentForLEBShrinking;
       // We are relative to the section start.
       pair.second -= body;
     }
@@ -312,23 +316,26 @@ void WasmBinaryWriter::writeFunctions() {
     BYN_TRACE("body size: " << size << ", writing at " << sizePos
                             << ", next starts at " << o.size() << "\n");
     auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
-    auto adjustment = MaxLEB32Bytes - sizeFieldSize;
-    if (adjustment) {
+    // We can move things back if the actual LEB for the size doesn't use the
+    // maximum 5 bytes. In that case we need to adjust offsets after we move
+    // things backwards.
+    auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
+    if (adjustmentForLEBShrinking) {
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
-      o.resize(o.size() - adjustment);
+      o.resize(o.size() - adjustmentForLEBShrinking);
       if (sourceMap) {
         for (auto i = sourceMapLocationsSizeAtFunctionStart;
              i < sourceMapLocations.size();
              ++i) {
-          sourceMapLocations[i].first -= adjustment;
+          sourceMapLocations[i].first -= adjustmentForLEBShrinking;
         }
       }
       for (auto* curr : binaryLocationTrackedExpressionsForFunc) {
         // We added the binary locations, adjust them: they must be relative
         // to the code section.
-        binaryLocations[curr] -= adjustment;
+        binaryLocations[curr] -= adjustmentForLEBShrinking;
       }
     }
     tableOfContents.functionBodies.emplace_back(
