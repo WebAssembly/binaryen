@@ -148,7 +148,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     for (auto& pair : binaryLocations) {
       // Offsets are relative to the body of the code section: after the
       // declaration and the size.
-      pair.second -= start + sizeFieldSize;
+      pair.second -= start + sizeFieldSize + adjustment;
     }
   }
 }
