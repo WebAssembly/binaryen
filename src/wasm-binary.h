@@ -1052,6 +1052,7 @@ private:
   // locations of things.
   BinaryLocationsMap binaryLocations;
   size_t binaryLocationsSizeAtSectionStart;
+  std::vector<Expression*> binaryLocationTrackedExpressionsForFunc;
 
   void prepare();
 };
