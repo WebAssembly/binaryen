@@ -328,11 +328,11 @@ static void updateDebugLines(const Module& wasm,
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
   AddrExprMap oldAddrMap(wasm);
-   std::cout << "old\n";
-   oldAddrMap.dump();
+  // std::cout << "old\n";
+  // oldAddrMap.dump();
   AddrExprMap newAddrMap(newLocations);
-   std::cout << "new\n";
-   newAddrMap.dump();
+  // std::cout << "new\n";
+  // newAddrMap.dump();
 
   for (auto& table : data.DebugLines) {
     // Parse the original opcodes and emit new ones.

@@ -141,7 +141,6 @@ void WasmBinaryWriter::finishSection(int32_t start) {
       }
     }
   }
-std::cout << "section adjustment " << adjustment << '\n';
 
   if (binaryLocationsSizeAtSectionStart != binaryLocations.size()) {
     // We added the binary locations, adjust them: they must be relative
@@ -150,19 +149,14 @@ std::cout << "section adjustment " << adjustment << '\n';
     // The actual section start is right before the LEB for the size; we want
     // to skip over that entire LEB, to get the section body.
     auto body = start + sizeFieldSize;
-std::cout << std::hex << "'start' is " << start << ", size field is " << sizeFieldSize << " and body is at " << body << std::dec << '\n';
     for (auto& pair : binaryLocations) {
       // Offsets are relative to the body of the code section: after the
       // declaration and the size.
-//auto old = pair.second;
       // Everything was moved by the adjustment, track that. After this,
       // we are at the right absolute address.
-std::cout << pair.first << " begins with " << std::hex << pair.second << std::dec << '\n';
       pair.second -= adjustment;
-std::cout << pair.first << " is at absolute " << std::hex << pair.second << std::dec << '\n';
       // We are relative to the section start.
       pair.second -= body;
-std::cout << "      and at relative " << pair.second << '\n';
     }
   }
 }
@@ -320,7 +314,6 @@ void WasmBinaryWriter::writeFunctions() {
     auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
     auto adjustment = MaxLEB32Bytes - sizeFieldSize;
     if (adjustment) {
-std::cout << "func adjustment " << adjustment << '\n';
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
@@ -335,9 +328,7 @@ std::cout << "func adjustment " << adjustment << '\n';
       for (auto* curr : binaryLocationTrackedExpressionsForFunc) {
         // We added the binary locations, adjust them: they must be relative
         // to the code section.
-std::cout << curr << " pre-func adjust at " << std::hex << binaryLocations[curr] << std::dec << '\n';
         binaryLocations[curr] -= adjustment;
-std::cout << curr << " func adjusted to   " << std::hex << binaryLocations[curr] << std::dec << '\n';
       }
     }
     tableOfContents.functionBodies.emplace_back(
@@ -703,7 +694,6 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   // to something that directly thinks about DWARF, instead of indirectly
   // looking at func->binaryLocations as a proxy for that etc.
   if (func && !func->binaryLocations.empty()) {
-std::cout << "note absolute binloc " << curr << " : " << std::hex << o.size() << std::dec << '\n';
     binaryLocations[curr] = o.size();
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
   }
