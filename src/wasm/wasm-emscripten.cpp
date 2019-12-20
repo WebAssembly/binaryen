@@ -1059,7 +1059,8 @@ struct FixInvokeFunctionNamesWalker
     // Either rename the import, or replace it with an existing one
     Function* existingFunc = imports.getImportedFunction(curr->module, newname);
     if (existingFunc) {
-      BYN_TRACE("replacing with an existing import: " << existingFunc->name << "\n");
+      BYN_TRACE("replacing with an existing import: " << existingFunc->name
+                                                      << "\n");
       functionReplace[curr->name] = existingFunc->name;
     } else {
       BYN_TRACE("renaming the import in place\n");
