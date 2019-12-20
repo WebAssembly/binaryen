@@ -121,10 +121,12 @@ struct LineState {
 
   LineState() = default;
   LineState(const LineState& other) = default;
-  LineState(const llvm::DWARFYAML::LineTable& table) : isStmt(table.DefaultIsStmt) {}
+  LineState(const llvm::DWARFYAML::LineTable& table)
+    : isStmt(table.DefaultIsStmt) {}
 
   // Updates the state, and returns whether a new row is ready to be emitted.
-  bool update(llvm::DWARFYAML::LineTableOpcode& opcode, const llvm::DWARFYAML::LineTable& table) {
+  bool update(llvm::DWARFYAML::LineTableOpcode& opcode,
+              const llvm::DWARFYAML::LineTable& table) {
     switch (opcode.Opcode) {
       case 0: {
         // Extended opcodes
@@ -137,7 +139,8 @@ struct LineState {
             return true;
           }
           default: {
-            Fatal() << "unknown debug line sub-opcode: " << std::hex << opcode.SubOpcode;
+            Fatal() << "unknown debug line sub-opcode: " << std::hex
+                    << opcode.SubOpcode;
           }
         }
         break;
@@ -173,18 +176,20 @@ struct LineState {
       case llvm::dwarf::DW_LNS_const_add_pc: {
         uint8_t AdjustOpcode = 255 - table.OpcodeBase;
         uint64_t AddrOffset =
-            (AdjustOpcode / table.LineRange) * table.MinInstLength;
+          (AdjustOpcode / table.LineRange) * table.MinInstLength;
         addr += AddrOffset;
         break;
       }
       default: {
         if (opcode.Opcode >= table.OpcodeBase) {
           // Special opcode: adjust line and addr, using some math.
-          uint8_t AdjustOpcode = opcode.Opcode - table.OpcodeBase; // 20 - 13 = 7
-          uint64_t AddrOffset =
-              (AdjustOpcode / table.LineRange) * table.MinInstLength; // (7 / 14) * 1 = 0
+          uint8_t AdjustOpcode =
+            opcode.Opcode - table.OpcodeBase; // 20 - 13 = 7
+          uint64_t AddrOffset = (AdjustOpcode / table.LineRange) *
+                                table.MinInstLength; // (7 / 14) * 1 = 0
           int32_t LineOffset =
-              table.LineBase + (AdjustOpcode % table.LineRange); // -5 + (7 % 14) = 2
+            table.LineBase +
+            (AdjustOpcode % table.LineRange); // -5 + (7 % 14) = 2
           line += LineOffset;
           addr += AddrOffset;
           return true;
@@ -198,7 +203,9 @@ struct LineState {
 
   // Given an old state, emit the diff from it to this state into a new line
   // table.
-  void emitDiff(const LineState& old, std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes, const llvm::DWARFYAML::LineTable& table) {
+  void emitDiff(const LineState& old,
+                std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes,
+                const llvm::DWARFYAML::LineTable& table) {
     // If any value is 0, can ignore it
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
     if (line == 0 || col == 0 || addr == 0) {
@@ -262,7 +269,8 @@ private:
     return item;
   }
 
-  llvm::DWARFYAML::LineTableOpcode makeItem(llvm::dwarf::LineNumberExtendedOps opcode, uint64_t len) {
+  llvm::DWARFYAML::LineTableOpcode
+  makeItem(llvm::dwarf::LineNumberExtendedOps opcode, uint64_t len) {
     auto item = makeItem(llvm::dwarf::LineNumberOps(0));
     // All the length after the len field itself, including the subopcode
     // (1 byte).
@@ -310,7 +318,9 @@ struct AddrExprMap {
   }
 };
 
-static void updateDebugLines(const Module& wasm, llvm::DWARFYAML::Data& data, const BinaryLocationsMap& newLocations) {
+static void updateDebugLines(const Module& wasm,
+                             llvm::DWARFYAML::Data& data,
+                             const BinaryLocationsMap& newLocations) {
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
 
@@ -318,11 +328,11 @@ static void updateDebugLines(const Module& wasm, llvm::DWARFYAML::Data& data, co
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
   AddrExprMap oldAddrMap(wasm);
-  //std::cout << "old\n";
-  //oldAddrMap.dump();
+  // std::cout << "old\n";
+  // oldAddrMap.dump();
   AddrExprMap newAddrMap(newLocations);
-  //std::cout << "new\n";
-  //newAddrMap.dump();
+  // std::cout << "new\n";
+  // newAddrMap.dump();
 
   for (auto& table : data.DebugLines) {
     // Parse the original opcodes and emit new ones.
@@ -345,7 +355,8 @@ static void updateDebugLines(const Module& wasm, llvm::DWARFYAML::Data& data, co
             updatedState.addr = newAddr;
           }
         }
-        if (opcode.Opcode == 0 && opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
+        if (opcode.Opcode == 0 &&
+            opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
           state = LineState(table);
         }
       }
@@ -369,11 +380,12 @@ static void updateDebugLines(const Module& wasm, llvm::DWARFYAML::Data& data, co
   }
 }
 
-static void fixEmittedSection(const std::string& name, std::vector<char>& data) {
+static void fixEmittedSection(const std::string& name,
+                              std::vector<char>& data) {
   if (name == ".debug_line") {
-    // The YAML code does not update the line section size. However, it is trivial
-    // to do so after the fact, as the wasm section's additional size is easy
-    // to compute: it is the emitted size - the 4 bytes of the size itself.
+    // The YAML code does not update the line section size. However, it is
+    // trivial to do so after the fact, as the wasm section's additional size is
+    // easy to compute: it is the emitted size - the 4 bytes of the size itself.
     uint32_t size = data.size() - 4;
     BufferWithRandomAccess buf;
     buf << size;
@@ -397,9 +409,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
   // Convert to binary sections.
-  auto newSections = EmitDebugSections(
-    data,
-    true);
+  auto newSections = EmitDebugSections(data, true);
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
