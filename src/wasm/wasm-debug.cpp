@@ -201,16 +201,17 @@ struct LineState {
     return false;
   }
 
+  bool needToEmit() {
+    // If any value is 0, can ignore it
+    // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
+    return line != 0 && col != 0 && addr != 0;
+  }
+
   // Given an old state, emit the diff from it to this state into a new line
   // table.
   void emitDiff(const LineState& old,
                 std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes,
                 const llvm::DWARFYAML::LineTable& table) {
-    // If any value is 0, can ignore it
-    // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-    if (line == 0 || col == 0 || addr == 0) {
-      return;
-    }
     bool useSpecial = false;
     if (addr != old.addr || line != old.line) {
       // Try to use a special opcode TODO
@@ -373,7 +374,11 @@ static void updateDebugLines(const Module& wasm,
       for (uint32_t addr : newAddrs) {
         LineState oldState(state);
         state = newAddrInfo[addr];
-        state.emitDiff(oldState, newOpcodes, table);
+        if (state.needToEmit()) {
+          state.emitDiff(oldState, newOpcodes, table);
+        } else {
+          state = oldState;
+        }
       }
       table.Opcodes.swap(newOpcodes);
     }
