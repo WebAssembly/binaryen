@@ -170,7 +170,7 @@ struct LineState {
         break;
       }
       case llvm::dwarf::DW_LNS_negate_stmt: {
-        isStmt = not isStmt;
+        isStmt = !isStmt;
         break;
       }
       case llvm::dwarf::DW_LNS_const_add_pc: {
