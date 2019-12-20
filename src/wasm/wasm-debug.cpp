@@ -307,11 +307,11 @@ static void updateDebugLines(const Module& wasm, llvm::DWARFYAML::Data& data, co
   //       binary to binary, without YAML IR.
 
   AddrExprMap oldAddrMap(wasm);
-  std::cout << "old\n";
-  oldAddrMap.dump();
+  //std::cout << "old\n";
+  //oldAddrMap.dump();
   AddrExprMap newAddrMap(newLocations);
-  std::cout << "new\n";
-  newAddrMap.dump();
+  //std::cout << "new\n";
+  //newAddrMap.dump();
 
   for (auto& table : data.DebugLines) {
     // Parse the original opcodes and emit new ones.
