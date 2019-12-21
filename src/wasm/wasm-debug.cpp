@@ -119,7 +119,6 @@ struct LineState {
   bool prologueEnd = false;
   bool epilogueBegin = false;
 
-  LineState() = default;
   LineState(const LineState& other) = default;
   LineState(const llvm::DWARFYAML::LineTable& table)
     : isStmt(table.DefaultIsStmt) {}
@@ -351,7 +350,8 @@ static void updateDebugLines(const Module& wasm,
           if (iter != newLocations.end()) {
             uint32_t newAddr = iter->second;
             newAddrs.push_back(newAddr);
-            auto& updatedState = newAddrInfo[newAddr] = state;
+            newAddrInfo.emplace(newAddr, state);
+            auto& updatedState = newAddrInfo.at(newAddr);
             // The only difference is the address TODO other stuff?
             updatedState.addr = newAddr;
           }
@@ -373,7 +373,7 @@ static void updateDebugLines(const Module& wasm,
       LineState state(table);
       for (uint32_t addr : newAddrs) {
         LineState oldState(state);
-        state = newAddrInfo[addr];
+        state = newAddrInfo.at(addr);
         if (state.needToEmit()) {
           state.emitDiff(oldState, newOpcodes, table);
         } else {
