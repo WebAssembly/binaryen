@@ -207,7 +207,7 @@ struct LineState {
   }
 
   // Given an old state, emit the diff from it to this state into a new line
-  // table.
+  // table entry (that will be emitted in the updated DWARF debug line section).
   void emitDiff(const LineState& old,
                 std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes,
                 const llvm::DWARFYAML::LineTable& table) {
@@ -327,12 +327,9 @@ static void updateDebugLines(const Module& wasm,
   // TODO: apparently DWARF offsets may be into the middle of instructions...
   //       we may need to track their spans too
   // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
+
   AddrExprMap oldAddrMap(wasm);
-  // std::cout << "old\n";
-  // oldAddrMap.dump();
   AddrExprMap newAddrMap(newLocations);
-  // std::cout << "new\n";
-  // newAddrMap.dump();
 
   for (auto& table : data.DebugLines) {
     // Parse the original opcodes and emit new ones.
@@ -364,9 +361,7 @@ static void updateDebugLines(const Module& wasm,
     }
     // Sort the new addresses (which may be substantially different from the
     // original layout after optimization).
-    std::sort(newAddrs.begin(), newAddrs.end(), [](uint32_t a, uint32_t b) {
-      return a < b;
-    });
+    std::sort(newAddrs.begin(), newAddrs.end());
     // Emit a new line table.
     {
       std::vector<llvm::DWARFYAML::LineTableOpcode> newOpcodes;
