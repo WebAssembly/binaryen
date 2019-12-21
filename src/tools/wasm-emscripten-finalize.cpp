@@ -310,6 +310,14 @@ int main(int argc, const char* argv[]) {
     passRunner.run();
   }
 
+  // If DWARF is unused, strip it out. This avoids us keeping it alive
+  // until wasm-opt strips it later.
+  if (!DWARF) {
+    PassRunner passRunner(&wasm);
+    passRunner.add("strip-dwarf");
+    passRunner.run();
+  }
+
   Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
   ModuleWriter writer;
   writer.setDebugInfo(debugInfo);
