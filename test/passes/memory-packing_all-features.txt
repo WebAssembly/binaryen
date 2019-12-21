@@ -26,7 +26,10 @@
    (i32.or
     (i32.gt_u
      (i32.const 0)
-     (memory.size)
+     (i32.mul
+      (i32.const 65536)
+      (memory.size)
+     )
     )
     (i32.or
      (i32.const 0)
