@@ -140,7 +140,12 @@ struct MemoryPacking : public Pass {
             builder.makeBinary(
               OrInt32,
               builder.makeBinary(
-                GtUInt32, curr->dest, builder.makeHost(MemorySize, Name(), {})),
+                GtUInt32,
+                curr->dest,
+                builder.makeBinary(
+                  MulInt32,
+                  builder.makeConst(Literal(Memory::kPageSize)),
+                  builder.makeHost(MemorySize, Name(), {}))),
               builder.makeBinary(OrInt32, curr->offset, curr->size)),
             builder.makeUnreachable()));
           changed = true;
