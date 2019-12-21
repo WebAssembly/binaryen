@@ -21,7 +21,7 @@ from . import shared
 from . import support
 
 
-def test_binaryen_js(which):
+def do_test_binaryen_js_with(which):
     if not (shared.MOZJS or shared.NODEJS):
         print('no vm to run binaryen.js tests')
         return
@@ -41,19 +41,17 @@ def test_binaryen_js(which):
         f = open('a.js', 'w')
         # avoid stdout/stderr ordering issues in some js shells - use just stdout
         f.write('''
-            console.warn = function(x) { console.log(x) };
+            console.warn = console.error = console.log;
         ''')
         binaryen_js = open(which).read()
         f.write(binaryen_js)
-        if shared.NODEJS:
-            f.write(support.node_test_glue())
-        f.write('''
-            function assert(x) { if (!x) throw Error('Test assertion failed'); }
-        ''')
         test_path = os.path.join(shared.options.binaryen_test, 'binaryen.js', s)
         test_src = open(test_path).read()
+        # wrap test code with common boilerplate
         f.write('''
             binaryen.ready.then(function() {
+                function assert(x) { if (!x) throw Error('Test assertion failed'); }
+                // Test code goes here
         ''')
         f.write(test_src)
         f.write('''
@@ -82,6 +80,10 @@ def test_binaryen_js(which):
                 print('Skipping ' + test_path + ' because WebAssembly might not be supported')
 
 
+def test_binaryen_js():
+    do_test_binaryen_js_with(shared.BINARYEN_JS)
+    do_test_binaryen_js_with(shared.BINARYEN_WASM)
+
+
 if __name__ == "__main__":
-    test_binaryen_js(shared.BINARYEN_JS)
-    test_binaryen_js(shared.BINARYEN_WASM)
+    test_binaryen_js()
