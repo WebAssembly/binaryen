@@ -165,3 +165,13 @@
 (invoke "drop_passive")
 (invoke "drop_passive")
 (invoke "drop_active")
+
+;; memory.size
+(module
+  (memory 1)
+  (func (export "size") (result i32)
+    (memory.size)
+  )
+)
+
+(assert_return (invoke "size") (i32.const 65536))

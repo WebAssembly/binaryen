@@ -1856,7 +1856,7 @@ private:
       NOTE_ENTER("Host");
       switch (curr->op) {
         case MemorySize:
-          return Literal(int32_t(instance.memorySize));
+          return Literal(int32_t(instance.memorySize * Memory::kPageSize));
         case MemoryGrow: {
           auto fail = Literal(int32_t(-1));
           Flow flow = this->visit(curr->operands[0]);
