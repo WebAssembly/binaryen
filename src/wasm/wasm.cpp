@@ -975,134 +975,120 @@ void Function::clearDebugInfo() {
   epilogLocation.clear();
 }
 
-Export* Module::getExport(Name name) {
-  auto iter = exportsMap.find(name);
-  if (iter == exportsMap.end()) {
-    Fatal() << "Module::getExport: " << name << " does not exist";
+template<typename Map>
+typename Map::mapped_type&
+getModuleElement(Map& m, Name name, std::string funcName) {
+  auto iter = m.find(name);
+  if (iter == m.end()) {
+    Fatal() << "Module::" << funcName << ": " << name << " does not exist";
   }
   return iter->second;
+}
+
+Export* Module::getExport(Name name) {
+  return getModuleElement(exportsMap, name, "getExport");
 }
 
 Function* Module::getFunction(Name name) {
-  auto iter = functionsMap.find(name);
-  if (iter == functionsMap.end()) {
-    Fatal() << "Module::getFunction: " << name << " does not exist";
-  }
-  return iter->second;
+  return getModuleElement(functionsMap, name, "getFunction");
 }
 
 Global* Module::getGlobal(Name name) {
-  auto iter = globalsMap.find(name);
-  if (iter == globalsMap.end()) {
-    assert(false);
-    Fatal() << "Module::getGlobal: " << name << " does not exist";
-  }
-  return iter->second;
+  return getModuleElement(globalsMap, name, "getGlobal");
 }
 
 Event* Module::getEvent(Name name) {
-  auto iter = eventsMap.find(name);
-  if (iter == eventsMap.end()) {
-    Fatal() << "Module::getEvent: " << name << " does not exist";
+  return getModuleElement(eventsMap, name, "getEvent");
+}
+
+template<typename Map>
+typename Map::mapped_type getModuleElementOrNull(Map& m, Name name) {
+  auto iter = m.find(name);
+  if (iter == m.end()) {
+    return nullptr;
   }
   return iter->second;
 }
 
 Export* Module::getExportOrNull(Name name) {
-  auto iter = exportsMap.find(name);
-  if (iter == exportsMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
+  return getModuleElementOrNull(exportsMap, name);
 }
 
 Function* Module::getFunctionOrNull(Name name) {
-  auto iter = functionsMap.find(name);
-  if (iter == functionsMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
+  return getModuleElementOrNull(functionsMap, name);
 }
 
 Global* Module::getGlobalOrNull(Name name) {
-  auto iter = globalsMap.find(name);
-  if (iter == globalsMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
+  return getModuleElementOrNull(globalsMap, name);
 }
 
 Event* Module::getEventOrNull(Name name) {
-  auto iter = eventsMap.find(name);
-  if (iter == eventsMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
-}
-
-Export* Module::addExport(Export* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addExport: empty name";
-  }
-  if (getExportOrNull(curr->name)) {
-    Fatal() << "Module::addExport: " << curr->name << " already exists";
-  }
-  exports.push_back(std::unique_ptr<Export>(curr));
-  exportsMap[curr->name] = curr;
-  return curr;
+  return getModuleElementOrNull(eventsMap, name);
 }
 
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
-Function* Module::addFunction(Function* curr) {
+template<typename Vector, typename Map, typename Elem>
+Elem* addModuleElement(Vector& v, Map& m, Elem* curr, std::string funcName) {
   if (!curr->name.is()) {
-    Fatal() << "Module::addFunction: empty name";
+    Fatal() << "Module::" << funcName << ": empty name";
   }
-  if (getFunctionOrNull(curr->name)) {
-    Fatal() << "Module::addFunction: " << curr->name << " already exists";
+  if (getModuleElementOrNull(m, curr->name)) {
+    Fatal() << "Module::" << funcName << ": " << curr->name
+            << " already exists";
   }
-  functions.push_back(std::unique_ptr<Function>(curr));
-  functionsMap[curr->name] = curr;
+  v.push_back(std::unique_ptr<Elem>(curr));
+  m[curr->name] = curr;
   return curr;
 }
 
-Function* Module::addFunction(std::unique_ptr<Function> curr) {
+template<typename Vector, typename Map, typename Elem>
+Elem* addModuleElement(Vector& v,
+                       Map& m,
+                       std::unique_ptr<Elem> curr,
+                       std::string funcName) {
   if (!curr->name.is()) {
-    Fatal() << "Module::addFunction: empty name";
+    Fatal() << "Module::" << funcName << ": empty name";
   }
-  if (getFunctionOrNull(curr->name)) {
-    Fatal() << "Module::addFunction: " << curr->name << " already exists";
+  if (getModuleElementOrNull(m, curr->name)) {
+    Fatal() << "Module::" << funcName << ": " << curr->name
+            << " already exists";
   }
-  auto* ret = functionsMap[curr->name] = curr.get();
-  functions.push_back(std::move(curr));
+  auto* ret = m[curr->name] = curr.get();
+  v.push_back(std::move(curr));
   return ret;
 }
 
+Export* Module::addExport(Export* curr) {
+  return addModuleElement(exports, exportsMap, curr, "addExport");
+}
+
+Function* Module::addFunction(Function* curr) {
+  return addModuleElement(functions, functionsMap, curr, "addFunction");
+}
+
 Global* Module::addGlobal(Global* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addGlobal: empty name";
-  }
-  if (getGlobalOrNull(curr->name)) {
-    Fatal() << "Module::addGlobal: " << curr->name << " already exists";
-  }
-
-  globals.emplace_back(curr);
-
-  globalsMap[curr->name] = curr;
-  return curr;
+  return addModuleElement(globals, globalsMap, curr, "addGlobal");
 }
 
 Event* Module::addEvent(Event* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addEvent: empty name";
-  }
-  if (getEventOrNull(curr->name)) {
-    Fatal() << "Module::addEvent: " << curr->name << " already exists";
-  }
+  return addModuleElement(events, eventsMap, curr, "addEvent");
+}
 
-  events.emplace_back(curr);
+Export* Module::addExport(std::unique_ptr<Export> curr) {
+  return addModuleElement(exports, exportsMap, std::move(curr), "addExport");
+}
 
-  eventsMap[curr->name] = curr;
-  return curr;
+Function* Module::addFunction(std::unique_ptr<Function> curr) {
+  return addModuleElement(
+    functions, functionsMap, std::move(curr), "addFunction");
+}
+
+Global* Module::addGlobal(std::unique_ptr<Global> curr) {
+  return addModuleElement(globals, globalsMap, std::move(curr), "addGlobal");
+}
+
+Event* Module::addEvent(std::unique_ptr<Event> curr) {
+  return addModuleElement(events, eventsMap, std::move(curr), "addEvent");
 }
 
 void Module::addStart(const Name& s) { start = s; }

@@ -1389,9 +1389,13 @@ public:
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
-  Function* addFunction(std::unique_ptr<Function> curr);
   Global* addGlobal(Global* curr);
   Event* addEvent(Event* curr);
+
+  Export* addExport(std::unique_ptr<Export> curr);
+  Function* addFunction(std::unique_ptr<Function> curr);
+  Global* addGlobal(std::unique_ptr<Global> curr);
+  Event* addEvent(std::unique_ptr<Event> curr);
 
   void addStart(const Name& s);
 
