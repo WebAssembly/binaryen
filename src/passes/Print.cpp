@@ -1427,7 +1427,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         auto iter = currFunction->binaryLocations.find(curr);
         if (iter != currFunction->binaryLocations.end()) {
           Colors::grey(o);
-          o << ";; code offset: 0x" << iter->second << '\n';
+          o << ";; code offset: 0x" << std::hex << iter->second << std::dec
+            << '\n';
           restoreNormalColor(o);
           doIndent(o, indent);
         }

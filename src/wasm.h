@@ -1129,7 +1129,10 @@ struct Importable {
 // Stack IR is a secondary IR to the main IR defined in this file (Binaryen
 // IR). See wasm-stack.h.
 class StackInst;
-typedef std::vector<StackInst*> StackIR;
+
+using StackIR = std::vector<StackInst*>;
+
+using BinaryLocationsMap = std::unordered_map<Expression*, uint32_t>;
 
 class Function : public Importable {
 public:
@@ -1178,7 +1181,7 @@ public:
 
   // General debugging info: map every instruction to its original position in
   // the binary, relative to the beginning of the code section.
-  std::unordered_map<Expression*, uint32_t> binaryLocations;
+  BinaryLocationsMap binaryLocations;
 
   size_t getNumParams();
   size_t getNumVars();
