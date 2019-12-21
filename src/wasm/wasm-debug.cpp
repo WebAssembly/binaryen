@@ -123,6 +123,8 @@ struct LineState {
   LineState(const llvm::DWARFYAML::LineTable& table)
     : isStmt(table.DefaultIsStmt) {}
 
+  LineState& operator=(const LineState& other) = default;
+
   // Updates the state, and returns whether a new row is ready to be emitted.
   bool update(llvm::DWARFYAML::LineTableOpcode& opcode,
               const llvm::DWARFYAML::LineTable& table) {
