@@ -401,3 +401,50 @@
     (data.drop 12)
   )
 )
+
+(module
+  (import "env" "memory" (memory $0 2048 2048))
+  (data passive "hi\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hi") ;; 0
+
+  (func $zero-length-init-zeroes
+    (memory.init 0
+      (i32.const 0)
+      (i32.const 10)
+      (i32.const 0)
+    )
+    (data.drop 0)
+  )
+
+  (data passive "hi\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hi") ;; 1
+
+  (func $zero-length-init-nonzeroes
+    (memory.init 1
+      (i32.const 0)
+      (i32.const 23)
+      (i32.const 0)
+    )
+    (data.drop 1)
+  )
+
+  (data passive "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hi") ;; 2
+
+  (func $zero-length-init-zeroes-todo
+    (memory.init 2
+      (i32.const 0)
+      (i32.const 10)
+      (i32.const 0)
+    )
+    (data.drop 2)
+  )
+
+  (data passive "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hi") ;; 3
+
+  (func $zero-length-init-nonzeroes-todo
+    (memory.init 3
+      (i32.const 0)
+      (i32.const 21)
+      (i32.const 0)
+    )
+    (data.drop 3)
+  )
+)

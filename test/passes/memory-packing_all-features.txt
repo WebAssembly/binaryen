@@ -79,8 +79,15 @@
  (data passive "more")
  (data passive "zeroes")
  (data passive "no zeroes")
+ (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_10 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_11 (mut i32) (i32.const 0))
  (func $zeroes-at-start (; 0 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_0)
+    (unreachable)
+   )
    (memory.fill
     (i32.const 0)
     (i32.const 0)
@@ -94,6 +101,9 @@
   )
   (block
    (data.drop 0)
+   (global.set $__mem_segment_drop_state_0
+    (i32.const 1)
+   )
   )
  )
  (func $zeroes-at-start-not-split (; 1 ;)
@@ -245,6 +255,10 @@
  )
  (func $even-more-zeroes (; 10 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_10)
+    (unreachable)
+   )
    (memory.fill
     (i32.const 0)
     (i32.const 0)
@@ -285,10 +299,17 @@
    (data.drop 13)
    (data.drop 14)
    (data.drop 15)
+   (global.set $__mem_segment_drop_state_10
+    (i32.const 1)
+   )
   )
  )
  (func $only-zeroes (; 11 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_11)
+    (unreachable)
+   )
    (memory.fill
     (i32.const 0)
     (i32.const 0)
@@ -357,11 +378,24 @@
  (data passive "more")
  (data passive "zeroes")
  (import "env" "param" (global $param i32))
+ (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_3 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_4 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_5 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_6 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_7 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_8 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_9 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_10 (mut i32) (i32.const 0))
  (func $nonconst-dest (; 0 ;)
   (local $0 i32)
   (block
    (local.set $0
     (global.get $param)
+   )
+   (if
+    (global.get $__mem_segment_drop_state_0)
+    (unreachable)
    )
    (memory.fill
     (local.get $0)
@@ -421,6 +455,9 @@
    (data.drop 0)
    (data.drop 1)
    (data.drop 2)
+   (global.set $__mem_segment_drop_state_0
+    (i32.const 1)
+   )
   )
  )
  (func $nonconst-offset (; 1 ;)
@@ -441,6 +478,10 @@
  )
  (func $partial-skip-start (; 3 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_3)
+    (unreachable)
+   )
    (memory.fill
     (i32.const 0)
     (i32.const 0)
@@ -481,10 +522,17 @@
    (data.drop 5)
    (data.drop 6)
    (data.drop 7)
+   (global.set $__mem_segment_drop_state_3
+    (i32.const 1)
+   )
   )
  )
  (func $full-skip-start (; 4 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_4)
+    (unreachable)
+   )
    (memory.init 8
     (i32.const 0)
     (i32.const 2)
@@ -520,10 +568,17 @@
    (data.drop 8)
    (data.drop 9)
    (data.drop 10)
+   (global.set $__mem_segment_drop_state_4
+    (i32.const 1)
+   )
   )
  )
  (func $partial-skip-end (; 5 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_5)
+    (unreachable)
+   )
    (memory.fill
     (i32.const 0)
     (i32.const 0)
@@ -564,10 +619,17 @@
    (data.drop 11)
    (data.drop 12)
    (data.drop 13)
+   (global.set $__mem_segment_drop_state_5
+    (i32.const 1)
+   )
   )
  )
  (func $full-skip-end (; 6 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_6)
+    (unreachable)
+   )
    (memory.fill
     (i32.const 0)
     (i32.const 0)
@@ -603,10 +665,17 @@
    (data.drop 14)
    (data.drop 15)
    (data.drop 16)
+   (global.set $__mem_segment_drop_state_6
+    (i32.const 1)
+   )
   )
  )
  (func $slice-zeroes (; 7 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_7)
+    (unreachable)
+   )
    (memory.fill
     (i32.const 0)
     (i32.const 0)
@@ -617,10 +686,17 @@
    (data.drop 17)
    (data.drop 18)
    (data.drop 19)
+   (global.set $__mem_segment_drop_state_7
+    (i32.const 1)
+   )
   )
  )
  (func $slice-nonzeroes (; 8 ;)
   (block
+   (if
+    (global.get $__mem_segment_drop_state_8)
+    (unreachable)
+   )
    (memory.init 20
     (i32.const 0)
     (i32.const 1)
@@ -631,27 +707,31 @@
    (data.drop 20)
    (data.drop 21)
    (data.drop 22)
+   (global.set $__mem_segment_drop_state_8
+    (i32.const 1)
+   )
   )
  )
  (func $zero-size (; 9 ;)
   (block
-   (memory.fill
-    (i32.const 0)
-    (i32.const 0)
-    (i32.const 0)
+   (if
+    (global.get $__mem_segment_drop_state_9)
+    (unreachable)
    )
   )
   (block
    (data.drop 23)
    (data.drop 24)
    (data.drop 25)
+   (global.set $__mem_segment_drop_state_9
+    (i32.const 1)
+   )
   )
  )
  (func $zero-size-undropped (; 10 ;)
-  (memory.fill
-   (i32.const 0)
-   (i32.const 0)
-   (i32.const 0)
+  (if
+   (global.get $__mem_segment_drop_state_10)
+   (unreachable)
   )
  )
  (func $out-of-bounds-offset (; 11 ;)
@@ -683,5 +763,79 @@
    (unreachable)
   )
   (nop)
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (import "env" "memory" (memory $0 2048 2048))
+ (data passive "hi")
+ (data passive "even")
+ (data passive "hi")
+ (data passive "hi")
+ (data passive "even")
+ (data passive "hi")
+ (data passive "even")
+ (data passive "hi")
+ (data passive "even")
+ (data passive "hi")
+ (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_3 (mut i32) (i32.const 0))
+ (func $zero-length-init-zeroes (; 0 ;)
+  (if
+   (i32.gt_u
+    (i32.const 0)
+    (memory.size)
+   )
+   (unreachable)
+  )
+  (block
+   (data.drop 0)
+   (data.drop 1)
+   (data.drop 2)
+  )
+ )
+ (func $zero-length-init-nonzeroes (; 1 ;)
+  (if
+   (i32.gt_u
+    (i32.const 0)
+    (memory.size)
+   )
+   (unreachable)
+  )
+  (block
+   (data.drop 3)
+   (data.drop 4)
+   (data.drop 5)
+  )
+ )
+ (func $zero-length-init-zeroes-todo (; 2 ;)
+  (block
+   (if
+    (global.get $__mem_segment_drop_state_2)
+    (unreachable)
+   )
+  )
+  (block
+   (data.drop 6)
+   (data.drop 7)
+   (global.set $__mem_segment_drop_state_2
+    (i32.const 1)
+   )
+  )
+ )
+ (func $zero-length-init-nonzeroes-todo (; 3 ;)
+  (block
+   (if
+    (global.get $__mem_segment_drop_state_3)
+    (unreachable)
+   )
+  )
+  (block
+   (data.drop 8)
+   (data.drop 9)
+   (global.set $__mem_segment_drop_state_3
+    (i32.const 1)
+   )
+  )
  )
 )
