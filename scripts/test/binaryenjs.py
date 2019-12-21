@@ -21,18 +21,18 @@ from . import shared
 from . import support
 
 
-def test_binaryen_js():
+def test_binaryen_js(which):
     if not (shared.MOZJS or shared.NODEJS):
         print('no vm to run binaryen.js tests')
         return
 
     node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
 
-    if not os.path.exists(shared.BINARYEN_JS):
-        print('no binaryen.js build to test')
+    if not os.path.exists(which):
+        print('no ' + which + ' build to test')
         return
 
-    print('\n[ checking binaryen.js testcases... ]\n')
+    print('\n[ checking binaryen.js testcases (' + which + ')... ]\n')
 
     for s in sorted(os.listdir(os.path.join(shared.options.binaryen_test, 'binaryen.js'))):
         if not s.endswith('.js'):
@@ -43,13 +43,22 @@ def test_binaryen_js():
         f.write('''
             console.warn = function(x) { console.log(x) };
         ''')
-        binaryen_js = open(shared.BINARYEN_JS).read()
+        binaryen_js = open(which).read()
         f.write(binaryen_js)
         if shared.NODEJS:
             f.write(support.node_test_glue())
+        f.write('''
+            function assert(x) { if (!x) throw Error('Test assertion failed'); }
+        ''')
         test_path = os.path.join(shared.options.binaryen_test, 'binaryen.js', s)
         test_src = open(test_path).read()
+        f.write('''
+            binaryen.ready.then(function() {
+        ''')
         f.write(test_src)
+        f.write('''
+            });
+        ''')
         f.close()
 
         def test(engine):
@@ -74,4 +83,5 @@ def test_binaryen_js():
 
 
 if __name__ == "__main__":
-    test_binaryen_js()
+    test_binaryen_js(shared.BINARYEN_JS)
+    test_binaryen_js(shared.BINARYEN_WASM)

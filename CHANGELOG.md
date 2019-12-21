@@ -36,6 +36,8 @@ Current Trunk
   Unlike the JS variant, the Wasm variant requires asynchronously awaiting the
   Wasm blob's instantiation and initialization before being usable, using the
   `binaryen.ready` promise, e.g. `binaryen.ready.then(() => ...)`.
+- Binaryen.js now uses `binaryen` (was `Binaryen`) as its global name to align
+  with the npm package.
 
 v88
 ---
