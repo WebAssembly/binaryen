@@ -2376,7 +2376,10 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetName']).map(UTF8ToString),
+        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetName']).map(function (p) {
+          // Do not pass the index as the second parameter to UTF8ToString as that will cut off the string.
+          return UTF8ToString(p);
+        }),
         'defaultName': UTF8ToString(Module['_BinaryenSwitchGetDefaultName'](expr)),
         'condition': Module['_BinaryenSwitchGetCondition'](expr),
         'value': Module['_BinaryenSwitchGetValue'](expr)
