@@ -20,9 +20,11 @@ void DWARFCompileUnit::dump(raw_ostream &OS, DIDumpOptions DumpOpts) {
      << " version = " << format("0x%04x", getVersion());
   if (getVersion() >= 5)
     OS << " unit_type = " << dwarf::UnitTypeString(getUnitType());
-  OS << " abbr_offset = "
-     << format("0x%04" PRIx64, getAbbreviations()->getOffset())
-     << " addr_size = " << format("0x%02x", getAddressByteSize());
+  if (auto* Abbreviations = getAbbreviations()) { // XXX BINARYEN
+    OS << " abbr_offset = "
+       << format("0x%04" PRIx64, Abbreviations->getOffset());
+  }
+  OS << " addr_size = " << format("0x%02x", getAddressByteSize());
   if (getVersion() >= 5 && getUnitType() != dwarf::DW_UT_compile)
     OS << " DWO_id = " << format("0x%016" PRIx64, *getDWOId());
   OS << " (next unit at " << format("0x%08" PRIx64, getNextUnitOffset())
