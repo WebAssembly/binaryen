@@ -16,6 +16,7 @@
 
 import os
 import subprocess
+import sys
 
 from . import shared
 from . import support
@@ -82,8 +83,21 @@ def do_test_binaryen_js_with(which):
 
 def test_binaryen_js():
     do_test_binaryen_js_with(shared.BINARYEN_JS)
+
+
+def test_binaryen_wasm():
     do_test_binaryen_js_with(shared.BINARYEN_WASM)
 
 
-if __name__ == "__main__":
+def test_binaryen_js_and_wasm():
     test_binaryen_js()
+    test_binaryen_wasm()
+
+
+if __name__ == "__main__":
+    if sys.argv[1] == "js":
+        test_binaryen_js()
+    elif sys.argv[1] == "wasm":
+        test_binaryen_wasm()
+    else:
+        test_binaryen_js_and_wasm()
