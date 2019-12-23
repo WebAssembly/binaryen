@@ -181,6 +181,10 @@ struct LineState {
         isStmt = !isStmt;
         break;
       }
+      case llvm::dwarf::DW_LNS_set_basic_block: {
+        basicBlock = true;
+        break;
+      }
       case llvm::dwarf::DW_LNS_const_add_pc: {
         uint8_t AdjustOpcode = 255 - table.OpcodeBase;
         uint64_t AddrOffset =
@@ -260,7 +264,8 @@ struct LineState {
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_negate_stmt));
     }
     if (basicBlock != old.basicBlock) {
-      Fatal() << "bb";
+      assert(basicBlock);
+      newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_basic_block));
     }
     if (prologueEnd != old.prologueEnd) {
       assert(prologueEnd);
