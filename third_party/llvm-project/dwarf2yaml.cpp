@@ -334,12 +334,7 @@ void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
             break;
           default:
             while (Offset < StartExt + NewOp.ExtLen)
-#if 1 // XXX BINARYEN: don't bother to load unknown things, it just takes
-      //               a lot of memory and we can't update it anyhow
-              LineData.getU8(&Offset);
-#else
               NewOp.UnknownOpcodeData.push_back(LineData.getU8(&Offset));
-#endif
           }
         } else if (NewOp.Opcode < DebugLines.OpcodeBase) {
           switch (NewOp.Opcode) {
