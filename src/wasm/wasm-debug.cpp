@@ -76,6 +76,8 @@ void dumpDWARF(const Module& wasm) {
     }
   }
   llvm::DIDumpOptions options;
+  options.DumpType = llvm::DIDT_All;
+  options.ShowChildren = true;
   options.Verbose = true;
   info.context->dump(llvm::outs(), options);
 }
