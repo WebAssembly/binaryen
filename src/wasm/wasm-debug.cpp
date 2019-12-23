@@ -188,6 +188,10 @@ struct LineState {
         addr += AddrOffset;
         break;
       }
+      case llvm::dwarf::DW_LNS_fixed_advance_pc: {
+        addr += opcode.Data;
+        break;
+      }
       default: {
         if (opcode.Opcode >= table.OpcodeBase) {
           // Special opcode: adjust line and addr, using some math.
