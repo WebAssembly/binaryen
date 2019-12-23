@@ -112,7 +112,7 @@ struct LineState {
   uint32_t col = 0;
   uint32_t file = 1;
   // TODO uint32_t isa = 0;
-  // TODO Discriminator = 0;
+  uint32_t discriminator = 0;
   bool isStmt;
   bool basicBlock = false;
   // XXX these two should be just prologue, epilogue?
@@ -139,9 +139,16 @@ struct LineState {
           case llvm::dwarf::DW_LNE_end_sequence: {
             return true;
           }
+          case llvm::dwarf::DW_LNE_set_discriminator: {
+            discriminator = opcode.Data;
+            break;
+          }
+          case llvm::dwarf::DW_LNE_define_file: {
+            Fatal() << "TODO: DW_LNE_define_file";
+          }
           default: {
-            Fatal() << "unknown debug line sub-opcode: " << std::hex
-                    << opcode.SubOpcode;
+            // An unknown opcode, ignore.
+            // TODO: warning?
           }
         }
         break;
@@ -237,6 +244,12 @@ struct LineState {
     if (file != old.file) {
       auto item = makeItem(llvm::dwarf::DW_LNS_set_file);
       item.Data = file;
+      newOpcodes.push_back(item);
+    }
+    if (discriminator != old.discriminator) {
+      // len = 1 (subopcode) + 4 (wasm32 address)
+      auto item = makeItem(llvm::dwarf::DW_LNE_set_discriminator, 5);
+      item.Data = discriminator;
       newOpcodes.push_back(item);
     }
     if (isStmt != old.isStmt) {
