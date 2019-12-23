@@ -146,7 +146,9 @@ void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
     NewUnit.Version = CU->getVersion();
     if(NewUnit.Version >= 5)
       NewUnit.Type = (dwarf::UnitType)CU->getUnitType();
-    NewUnit.AbbrOffset = CU->getAbbreviations()->getOffset();
+    if (auto* Abbreviations = CU->getAbbreviations()) { // XXX BINARYEN
+      NewUnit.AbbrOffset = Abbreviations->getOffset();
+    }
     NewUnit.AddrSize = CU->getAddressByteSize();
     for (auto DIE : CU->dies()) {
       DWARFYAML::Entry NewEntry;
