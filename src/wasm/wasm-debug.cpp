@@ -111,7 +111,7 @@ struct LineState {
   uint32_t line = 1;
   uint32_t col = 0;
   uint32_t file = 1;
-  // TODO uint32_t isa = 0;
+  uint32_t isa = 0;
   uint32_t discriminator = 0;
   bool isStmt;
   bool basicBlock = false;
@@ -196,6 +196,10 @@ struct LineState {
         addr += opcode.Data;
         break;
       }
+      case llvm::dwarf::DW_LNS_set_isa: {
+        isa = opcode.Data;
+        break;
+      }
       default: {
         if (opcode.Opcode >= table.OpcodeBase) {
           // Special opcode: adjust line and addr, using some math.
@@ -252,6 +256,11 @@ struct LineState {
     if (file != old.file) {
       auto item = makeItem(llvm::dwarf::DW_LNS_set_file);
       item.Data = file;
+      newOpcodes.push_back(item);
+    }
+    if (isa != old.isa) {
+      auto item = makeItem(llvm::dwarf::DW_LNS_set_isa);
+      item.Data = isa;
       newOpcodes.push_back(item);
     }
     if (discriminator != old.discriminator) {
