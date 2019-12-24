@@ -66,6 +66,62 @@ Abbrev table for offset: 0x00000000
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
               DW_AT_high_pc [DW_FORM_data4]	(0x00000035)
 
+0x00000026:   DW_TAG_subprogram [2] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000035)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c7] = "fib")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                DW_AT_decl_line [DW_FORM_data1]	(2)
+                DW_AT_prototyped [DW_FORM_flag_present]	(true)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000039:     DW_TAG_formal_parameter [3]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cf] = "n")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x00000044:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
+                     [0x00000009,  0x00000012): DW_OP_consts +0, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d1] = "a")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(3)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x00000053:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000015: 
+                     [0x00000009,  0x00000012): DW_OP_consts +1, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d3] = "b")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(3)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x00000062:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x0000002a: 
+                     [0x00000009,  0x00000012): DW_OP_consts +0, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d5] = "i")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(3)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x00000071:     DW_TAG_variable [5]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d7] = "t")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(3)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x0000007c:     NULL
+
+0x0000007d:   DW_TAG_base_type [6]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cb] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000084:   NULL
+
 .debug_loc contents:
 0x00000000: 
             [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
@@ -229,6 +285,62 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009c] = "/usr/local/google/home/azakai/Dev/binaryen")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
               DW_AT_high_pc [DW_FORM_data4]	(0x00000035)
+
+0x00000026:   DW_TAG_subprogram [2] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000002)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000035)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c7] = "fib")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                DW_AT_decl_line [DW_FORM_data1]	(2)
+                DW_AT_prototyped [DW_FORM_flag_present]	(true)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000039:     DW_TAG_formal_parameter [3]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cf] = "n")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x00000044:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
+                     [0x00000009,  0x00000012): DW_OP_consts +0, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d1] = "a")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(3)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x00000053:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000015: 
+                     [0x00000009,  0x00000012): DW_OP_consts +1, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d3] = "b")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(3)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x00000062:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x0000002a: 
+                     [0x00000009,  0x00000012): DW_OP_consts +0, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d5] = "i")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(3)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x00000071:     DW_TAG_variable [5]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d7] = "t")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(3)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x007d => {0x0000007d} "int")
+
+0x0000007c:     NULL
+
+0x0000007d:   DW_TAG_base_type [6]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000cb] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000084:   NULL
 
 .debug_loc contents:
 0x00000000: 

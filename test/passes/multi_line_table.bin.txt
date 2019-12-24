@@ -1,0 +1,431 @@
+DWARF debug info
+================
+
+Contains section .debug_info (130 bytes)
+Contains section .debug_abbrev (100 bytes)
+Contains section .debug_line (121 bytes)
+Contains section .debug_str (407 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+
+[2] DW_TAG_subprogram	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[3] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+Abbrev table for offset: 0x00000032
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+
+[2] DW_TAG_subprogram	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[3] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x0000003d version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x00000041)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "fourth.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x000000a0] = "/tmp/emscripten_test_wasm0_xkAHBX")
+              DW_AT_low_pc [DW_FORM_addr]	(0x000000000000000a)
+              DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+
+0x00000026:   DW_TAG_subprogram [2]  
+                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000000a)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c2] = "sideg")
+                DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm0_xkAHBX/fourth.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(1)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0039 => {0x00000039} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000039:   DW_TAG_base_type [3]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c8] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000040:   NULL
+0x00000041: Compile Unit: length = 0x0000003d version = 0x0004 abbr_offset = 0x0032 addr_size = 0x04 (next unit at 0x00000082)
+
+0x0000004c: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x000000cc] = "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000161] = "third.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x0000003d)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000016b] = "/tmp/emscripten_test_wasm0_xkAHBX")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000016)
+              DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+
+0x00000067:   DW_TAG_subprogram [2]  
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000016)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000018d] = "sidef")
+                DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm0_xkAHBX/third.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(1)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0039 => {0x0000007a} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x0000007a:   DW_TAG_base_type [3]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000193] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000081:   NULL
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x00000039
+         version: 4
+ prologue_length: 0x00000022
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "fourth.cpp"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x0000002c: 00 DW_LNE_set_address (0x000000000000000a)
+0x00000033: 01 DW_LNS_copy
+            0x000000000000000a      1      0      1   0             0  is_stmt
+
+
+0x00000034: 05 DW_LNS_set_column (26)
+0x00000036: 0a DW_LNS_set_prologue_end
+0x00000037: 74 address += 7,  line += 0
+            0x0000000000000011      1     26      1   0             0  is_stmt prologue_end
+
+0x00000038: 02 DW_LNS_advance_pc (4)
+0x0000003a: 00 DW_LNE_end_sequence
+            0x0000000000000015      1     26      1   0             0  is_stmt end_sequence
+
+debug_line[0x0000003d]
+Line table prologue:
+    total_length: 0x00000038
+         version: 4
+ prologue_length: 0x00000021
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "third.cpp"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x00000068: 00 DW_LNE_set_address (0x0000000000000016)
+0x0000006f: 01 DW_LNS_copy
+            0x0000000000000016      1      0      1   0             0  is_stmt
+
+
+0x00000070: 05 DW_LNS_set_column (26)
+0x00000072: 0a DW_LNS_set_prologue_end
+0x00000073: 74 address += 7,  line += 0
+            0x000000000000001d      1     26      1   0             0  is_stmt prologue_end
+
+0x00000074: 02 DW_LNS_advance_pc (4)
+0x00000076: 00 DW_LNE_end_sequence
+            0x0000000000000021      1     26      1   0             0  is_stmt end_sequence
+
+
+.debug_str contents:
+0x00000000: "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)"
+0x00000095: "fourth.cpp"
+0x000000a0: "/tmp/emscripten_test_wasm0_xkAHBX"
+0x000000c2: "sideg"
+0x000000c8: "int"
+0x000000cc: "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)"
+0x00000161: "third.cpp"
+0x0000016b: "/tmp/emscripten_test_wasm0_xkAHBX"
+0x0000018d: "sidef"
+0x00000193: "int"
+DWARF debug info
+================
+
+Contains section .debug_info (130 bytes)
+Contains section .debug_abbrev (98 bytes)
+Contains section .debug_line (113 bytes)
+Contains section .debug_str (407 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+
+[2] DW_TAG_subprogram	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[3] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+
+[2] DW_TAG_subprogram	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[3] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x0000003d version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x00000041)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "fourth.cpp")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x000000a0] = "/tmp/emscripten_test_wasm0_xkAHBX")
+              DW_AT_low_pc [DW_FORM_addr]	(0x000000000000000a)
+              DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+
+0x00000026:   DW_TAG_subprogram [2]  
+                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000000a)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c2] = "sideg")
+                DW_AT_decl_file [DW_FORM_data1]	("/tmp/emscripten_test_wasm0_xkAHBX/fourth.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(1)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x0039 => {0x00000039} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x00000039:   DW_TAG_base_type [3]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000c8] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x00000040:   NULL
+0x00000041: Compile Unit: length = 0x0000003d version = 0x0004 addr_size = 0x04 (next unit at 0x00000082)
+<compile unit can't be parsed!>
+
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x00000035
+         version: 4
+ prologue_length: 0x00000022
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "fourth.cpp"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x0000002c: 00 DW_LNE_set_address (0x0000000000000011)
+0x00000033: 05 DW_LNS_set_column (26)
+0x00000035: 0a DW_LNS_set_prologue_end
+0x00000036: 00 DW_LNE_end_sequence
+            0x0000000000000011      1     26      1   0             0  is_stmt end_sequence
+
+debug_line[0x00000039]
+Line table prologue:
+    total_length: 0x00000034
+         version: 4
+ prologue_length: 0x00000021
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "third.cpp"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x00000064: 00 DW_LNE_set_address (0x000000000000001d)
+0x0000006b: 05 DW_LNS_set_column (26)
+0x0000006d: 0a DW_LNS_set_prologue_end
+0x0000006e: 00 DW_LNE_end_sequence
+            0x000000000000001d      1     26      1   0             0  is_stmt end_sequence
+
+
+.debug_str contents:
+0x00000000: "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)"
+0x00000095: "fourth.cpp"
+0x000000a0: "/tmp/emscripten_test_wasm0_xkAHBX"
+0x000000c2: "sideg"
+0x000000c8: "int"
+0x000000cc: "clang version 10.0.0 (/b/s/w/ir/cache/git/chromium.googlesource.com-external-github.com-llvm-llvm--project 7fcd9e3f70830a9c4bf631a602c2764180b5c3a8)"
+0x00000161: "third.cpp"
+0x0000016b: "/tmp/emscripten_test_wasm0_xkAHBX"
+0x0000018d: "sidef"
+0x00000193: "int"
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (import "env" "memory" (memory $3 0))
+ (import "env" "__indirect_function_table" (table $timport$4 0 funcref))
+ (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))
+ (import "env" "__memory_base" (global $gimport$1 i32))
+ (import "env" "__table_base" (global $gimport$2 i32))
+ (global $global$0 i32 (i32.const 0))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "__wasm_apply_relocs" (func $__wasm_apply_relocs))
+ (export "sideg" (func $sideg))
+ (export "sidef" (func $sidef))
+ (export "__dso_handle" (global $global$0))
+ (func $__wasm_call_ctors (; 0 ;)
+  ;; code offset: 0x3
+  (call $__wasm_apply_relocs)
+ )
+ (func $__wasm_apply_relocs (; 1 ;)
+ )
+ (func $sideg (; 2 ;) (result i32)
+  (local $0 i32)
+  ;; code offset: 0xf
+  (local.set $0
+   ;; code offset: 0xd
+   (i32.const 17)
+  )
+  ;; code offset: 0x13
+  (return
+   ;; code offset: 0x11
+   (local.get $0)
+  )
+ )
+ (func $sidef (; 3 ;) (result i32)
+  (local $0 i32)
+  ;; code offset: 0x1b
+  (local.set $0
+   ;; code offset: 0x19
+   (i32.const 36)
+  )
+  ;; code offset: 0x1f
+  (return
+   ;; code offset: 0x1d
+   (local.get $0)
+  )
+ )
+ ;; custom section "dylink", size 5
+ ;; custom section ".debug_info", size 130
+ ;; custom section ".debug_abbrev", size 98
+ ;; custom section ".debug_line", size 113
+ ;; custom section ".debug_str", size 407
+ ;; custom section "producers", size 180
+)
