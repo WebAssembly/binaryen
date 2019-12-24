@@ -151,7 +151,7 @@ struct LineState {
           }
           default: {
             // An unknown opcode, ignore.
-            // TODO: warning?
+            std::cout << "warning: unknown subopcopde " << opcode.SubOpcode << '\n';
           }
         }
         break;
@@ -368,12 +368,14 @@ static void updateDebugLines(const Module& wasm,
   AddrExprMap newAddrMap(newLocations);
 
   for (auto& table : data.DebugLines) {
+std::cout << "table!\n";
     // Parse the original opcodes and emit new ones.
     LineState state(table);
     // All the addresses we need to write out.
     std::vector<uint32_t> newAddrs;
     std::unordered_map<uint32_t, LineState> newAddrInfo;
     for (auto& opcode : table.Opcodes) {
+std::cout << "  opcode! " << opcode.Opcode << " : " << opcode.SubOpcode << "\n";
       // Update the state, and check if we have a new row to emit.
       if (state.update(opcode, table)) {
         // An expression may not exist for this line table item, if we optimized
