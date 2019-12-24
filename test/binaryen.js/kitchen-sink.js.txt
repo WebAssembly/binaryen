@@ -10334,4 +10334,4 @@ sizeof Literal: 24
 )
 
 getExpressionInfo(memory.grow)={"id":20,"type":2,"op":1,"nameOperand":"","operands":[1]}
-getExpressionInfo(memory.grow)={"id":5,"type":1,"names":[""],"defaultName":"label","condition":0,"value":0}
+getExpressionInfo(switch)={"id":5,"type":1,"names":["label"],"defaultName":"label","condition":0,"value":0}
