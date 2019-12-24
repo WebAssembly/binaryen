@@ -1200,33 +1200,32 @@ void test_color_status() {
 }
 
 void test_for_each() {
-  uint32_t i;
+  BinaryenIndex i;
 
   BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenFunctionRef fns[3] = {};
+  fns[0] = BinaryenAddFunction(module,
+                               "fn0",
+                               BinaryenTypeNone(),
+                               BinaryenTypeNone(),
+                               NULL,
+                               0,
+                               BinaryenNop(module));
+  fns[1] = BinaryenAddFunction(module,
+                               "fn1",
+                               BinaryenTypeNone(),
+                               BinaryenTypeNone(),
+                               NULL,
+                               0,
+                               BinaryenNop(module));
+  fns[2] = BinaryenAddFunction(module,
+                               "fn2",
+                               BinaryenTypeNone(),
+                               BinaryenTypeNone(),
+                               NULL,
+                               0,
+                               BinaryenNop(module));
   {
-    BinaryenFunctionRef fns[3] = {0};
-    fns[0] = BinaryenAddFunction(module,
-                                 "fn0",
-                                 BinaryenTypeNone(),
-                                 BinaryenTypeNone(),
-                                 NULL,
-                                 0,
-                                 BinaryenNop(module));
-    fns[1] = BinaryenAddFunction(module,
-                                 "fn1",
-                                 BinaryenTypeNone(),
-                                 BinaryenTypeNone(),
-                                 NULL,
-                                 0,
-                                 BinaryenNop(module));
-    fns[2] = BinaryenAddFunction(module,
-                                 "fn2",
-                                 BinaryenTypeNone(),
-                                 BinaryenTypeNone(),
-                                 NULL,
-                                 0,
-                                 BinaryenNop(module));
-
     for (i = 0; i < BinaryenGetNumFunctions(module) ; i++) {
       assert(BinaryenGetFunctionByIndex(module, i) == fns[i]);
     }
@@ -1241,7 +1240,7 @@ void test_for_each() {
     }
 
     const char* segments[] = { "hello, world", "segment data 2" };
-    const uint32_t expected_offsets[] = { 10, 125 };
+    const uint32_t expected_offsets[] = { 48, 125 };
     int8_t segmentPassive[] = { 0, 0 };
     BinaryenIndex segmentSizes[] = { 12, 14 };
 
@@ -1258,6 +1257,23 @@ void test_for_each() {
       assert(BinaryenGetMemorySegmentByteLength(module, i) == segmentSizes[i]);
       BinaryenCopyMemorySegmentData(module, i, out);
       assert(0 == strcmp(segments[i], out));
+    }
+  }
+  {
+    const char* funcNames[] = {
+      BinaryenFunctionGetName(fns[0]),
+      BinaryenFunctionGetName(fns[1]),
+      BinaryenFunctionGetName(fns[2])
+    };
+    BinaryenExpressionRef constExprRef = BinaryenConst(module, BinaryenLiteralInt32(0));
+    BinaryenSetFunctionTable(module, 1, 1, funcNames, 3, constExprRef);
+    assert(0 == BinaryenIsFunctionTableImported(module));
+    assert(1 == BinaryenGetFunctionTableNumSegments(module));
+    assert(constExprRef == BinaryenGetFunctionTableSegmentOffset(module, 0));
+    assert(3 == BinaryenGetFunctionTableSegmentDataLength(module, 0));
+    for ( i = 0 ; i != BinaryenGetFunctionTableSegmentDataLength(module, 0) ; ++i )
+    {
+      assert(0 == strcmp(funcNames[i], *(BinaryenGetFunctionTableSegmentData(module, 0)+i)));
     }
   }
   BinaryenModulePrint(module);

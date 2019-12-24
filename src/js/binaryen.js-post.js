@@ -2126,6 +2126,25 @@ function wrapModule(module, self) {
       );
     });
   };
+  self['getFunctionTable'] = function() {
+    return {
+      'imported': Boolean(Module['_BinaryenIsFunctionTableImported'](module)),
+      'segments': (function() {
+        var arr = [];
+        for ( var i = 0, j = Module['_BinaryenGetFunctionTableNumSegments'](module) ; i !== j ; ++i )
+        {
+          var obj = {'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i), 'names': []};
+          for ( var k = 0, l = Module['_BinaryenGetFunctionTableSegmentDataLength'](module, i) ; k !== l ; ++k )
+          {
+            var ptr = HEAPU32[(Module['_BinaryenGetFunctionTableSegmentData'](module, i)+k*4)>>>2];
+            obj['names'][obj['names'].length] = UTF8ToString(ptr);
+          }
+          arr[arr.length] = obj;
+        }
+        return arr;
+      })()
+    };
+  };
   self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];

@@ -1180,6 +1180,15 @@ BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
                                            const char** funcNames,
                                            BinaryenIndex numFuncNames,
                                            BinaryenExpressionRef offset);
+BINARYEN_API int BinaryenIsFunctionTableImported(BinaryenModuleRef module);
+BINARYEN_API BinaryenIndex
+BinaryenGetFunctionTableNumSegments(BinaryenModuleRef module);
+BINARYEN_API BinaryenExpressionRef BinaryenGetFunctionTableSegmentOffset(
+  BinaryenModuleRef module, BinaryenIndex id);
+BINARYEN_API BinaryenIndex BinaryenGetFunctionTableSegmentDataLength(
+  BinaryenModuleRef module, BinaryenIndex id);
+BINARYEN_API const char**
+BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module, BinaryenIndex id);
 
 // Memory. One per module
 

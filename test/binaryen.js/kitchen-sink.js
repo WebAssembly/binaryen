@@ -914,10 +914,12 @@ function test_internals() {
 function test_for_each() {
   module = new Binaryen.Module();
 
+  var funcNames = [ "fn0", "fn1", "fn2" ];
+
   var fns = [
-    module.addFunction("fn0", Binaryen.none, Binaryen.none, [], module.nop()),
-    module.addFunction("fn1", Binaryen.none, Binaryen.none, [], module.nop()),
-    module.addFunction("fn2", Binaryen.none, Binaryen.none, [], module.nop())
+    module.addFunction(funcNames[0], Binaryen.none, Binaryen.none, [], module.nop()),
+    module.addFunction(funcNames[1], Binaryen.none, Binaryen.none, [], module.nop()),
+    module.addFunction(funcNames[2], Binaryen.none, Binaryen.none, [], module.nop())
   ];
 
   var i;
@@ -926,16 +928,16 @@ function test_for_each() {
   }
 
   var exps = [
-    module.addFunctionExport("fn0", "export0"),
-    module.addFunctionExport("fn1", "export1"),
-    module.addFunctionExport("fn2", "export2")
+    module.addFunctionExport(funcNames[0], "export0"),
+    module.addFunctionExport(funcNames[1], "export1"),
+    module.addFunctionExport(funcNames[2], "export2")
   ];
 
   for (i = 0 ; i < module.getNumExports() ; i++) {
     assert(module.getExportByIndex(i) === exps[i]);
   }
 
-  var expected_offsets = [10, 125];
+  var expected_offsets = [48, 125];
   var expected_data = ["hello, world", "segment data 2"];
 
   var global = module.addGlobal("a-global", Binaryen.i32, false, module.i32.const(expected_offsets[1]))
@@ -957,6 +959,18 @@ function test_for_each() {
     var data8 = new Uint8Array(segment.data);
     var str = String.fromCharCode.apply(null, data8);
     assert(expected_data[i] === str);
+  }
+
+  var constExprRef = module.i32.const(0);
+  module.setFunctionTable(1, 0xffffffff, funcNames, constExprRef);
+
+  var ftable = module.getFunctionTable();
+  assert(false === ftable["imported"]);
+  assert(1 === ftable["segments"].length);
+  assert(constExprRef === ftable["segments"][0]["offset"]);
+  assert(3 === ftable["segments"][0]["names"].length);
+  for (i = 0 ; i < ftable["segments"][0]["names"].length ; i++) {
+    assert(funcNames[i] === ftable["segments"][0]["names"][i]);
   }
 
   console.log(module.emitText());

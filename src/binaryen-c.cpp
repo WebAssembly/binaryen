@@ -3484,6 +3484,64 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
   wasm->table.segments.push_back(segment);
 }
 
+int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenIsFunctionTableImported(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->table.imported();
+}
+BinaryenIndex BinaryenGetFunctionTableNumSegments(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableNumSegments(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->table.segments.size();
+}
+BinaryenExpressionRef
+BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
+                                      BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentOffset(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= id) {
+    Fatal() << "invalid function table segment id.";
+  }
+  return wasm->table.segments[id].offset;
+}
+BinaryenIndex
+BinaryenGetFunctionTableSegmentDataLength(BinaryenModuleRef module,
+                                          BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentDataLength(the_module, "
+              << id << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= id) {
+    Fatal() << "invalid function table segment id.";
+  }
+  return wasm->table.segments[id].data.size();
+}
+const char** BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module,
+                                                 BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentData(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= id) {
+    Fatal() << "invalid function table segment id.";
+  }
+  return reinterpret_cast<const char**>(wasm->table.segments[id].data.data());
+}
+
 // Memory. One per module
 
 void BinaryenSetMemory(BinaryenModuleRef module,
