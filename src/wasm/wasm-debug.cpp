@@ -368,14 +368,12 @@ static void updateDebugLines(const Module& wasm,
   AddrExprMap newAddrMap(newLocations);
 
   for (auto& table : data.DebugLines) {
-std::cout << "table!\n";
     // Parse the original opcodes and emit new ones.
     LineState state(table);
     // All the addresses we need to write out.
     std::vector<uint32_t> newAddrs;
     std::unordered_map<uint32_t, LineState> newAddrInfo;
     for (auto& opcode : table.Opcodes) {
-std::cout << "  opcode! " << opcode.Opcode << " : " << opcode.SubOpcode << "\n";
       // Update the state, and check if we have a new row to emit.
       if (state.update(opcode, table)) {
         // An expression may not exist for this line table item, if we optimized
@@ -418,21 +416,6 @@ std::cout << "  opcode! " << opcode.Opcode << " : " << opcode.SubOpcode << "\n";
   }
 }
 
-static void fixEmittedSection(const std::string& name,
-                              std::vector<char>& data) {
-  if (name == ".debug_line") {
-    // The YAML code does not update the line section size. However, it is
-    // trivial to do so after the fact, as the wasm section's additional size is
-    // easy to compute: it is the emitted size - the 4 bytes of the size itself.
-    uint32_t size = data.size() - 4;
-    BufferWithRandomAccess buf;
-    buf << size;
-    for (int i = 0; i < 4; i++) {
-      data[i] = buf[i];
-    }
-  }
-}
-
 void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
@@ -447,7 +430,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
   // Convert to binary sections.
-  auto newSections = EmitDebugSections(data, true);
+  auto newSections = EmitDebugSections(data, false /* EmitFixups for debug_info */);
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
@@ -458,7 +441,6 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
         auto llvmData = newSections[llvmName]->getBuffer();
         section.data.resize(llvmData.size());
         std::copy(llvmData.begin(), llvmData.end(), section.data.data());
-        fixEmittedSection(section.name, section.data);
       }
     }
   }

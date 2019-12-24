@@ -221,9 +221,15 @@ static void EmitFileEntry(raw_ostream &OS, const DWARFYAML::File &File) {
   encodeULEB128(File.Length, OS);
 }
 
-void DWARFYAML::EmitDebugLine(raw_ostream &OS, const DWARFYAML::Data &DI) {
+void DWARFYAML::EmitDebugLine(raw_ostream &RealOS, const DWARFYAML::Data &DI) {
   for (const auto &LineTable : DI.DebugLines) {
-    writeInitialLength(LineTable.Length, OS, DI.IsLittleEndian);
+    // XXX BINARYEN We need to update each line table's length. Write to a
+    // temp stream first, then get the size from that.
+    std::string Buffer;
+    raw_string_ostream OS(Buffer);
+
+    // XXX BINARYEN writeInitialLength(LineTable.Length, OS, DI.IsLittleEndian);
+
     uint64_t SizeOfPrologueLength = LineTable.Length.isDWARF64() ? 8 : 4;
     writeInteger((uint16_t)LineTable.Version, OS, DI.IsLittleEndian);
     writeVariableSizedInteger(LineTable.PrologueLength, SizeOfPrologueLength,
@@ -301,6 +307,14 @@ void DWARFYAML::EmitDebugLine(raw_ostream &OS, const DWARFYAML::Data &DI) {
         }
       }
     }
+    // XXX BINARYEN Write to the actual stream, with the proper size.
+    // We assume for now that the length fits in 32 bits.
+    size_t Size = OS.str().size();
+    if (Size >= UINT32_MAX) {
+      llvm_unreachable("Table is too big");
+    }
+    writeInteger((uint32_t)Size, RealOS, DI.IsLittleEndian);
+    RealOS << OS.str();
   }
 }
 
