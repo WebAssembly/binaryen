@@ -80,7 +80,14 @@ inline UnaryOp getUnary(Type type, Op op) {
     case v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    default: { return InvalidUnary; }
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+    case none:
+    case unreachable: {
+      return InvalidUnary;
+    }
   }
   WASM_UNREACHABLE("invalid type");
 }
@@ -206,7 +213,14 @@ inline BinaryOp getBinary(Type type, Op op) {
     case v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    default: { return InvalidBinary; }
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+    case none:
+    case unreachable: {
+      return InvalidBinary;
+    }
   }
   WASM_UNREACHABLE("invalid type");
 }

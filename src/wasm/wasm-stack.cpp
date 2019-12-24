@@ -147,7 +147,11 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
-      default:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
+      case none:
         WASM_UNREACHABLE("unexpected type");
     }
   } else {
@@ -245,7 +249,12 @@ void BinaryInstWriter::visitStore(Store* curr) {
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
-      default:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
+      case none:
+      case unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
   } else {
@@ -637,7 +646,12 @@ void BinaryInstWriter::visitConst(Const* curr) {
       }
       break;
     }
-    default:
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+    case none:
+    case unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
 }

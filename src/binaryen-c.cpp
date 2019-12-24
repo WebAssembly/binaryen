@@ -67,12 +67,15 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::v128:
       memcpy(&ret.v128, x.getv128Ptr(), 16);
       break;
-    case Type::nullref:
-      break;
     case Type::funcref:
       ret.func = x.getFunc();
       break;
-    default:
+    case Type::nullref:
+      break;
+    case Type::anyref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
   return ret;
@@ -90,7 +93,14 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.i64).castToF64();
     case Type::v128:
       return Literal(x.v128);
-    default:
+    case Type::funcref:
+      return Literal::makeFuncref(x.func);
+    case Type::nullref:
+      return Literal::makeNullref();
+    case Type::anyref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("invalid type");
@@ -206,7 +216,16 @@ void printArg(std::ostream& setup, std::ostream& out, BinaryenLiteral arg) {
       out << "BinaryenLiteralVec128(" << array << ")";
       break;
     }
-    default:
+    case Type::funcref:
+      out << "BinaryenLiteralFuncref(" << arg.func << ")";
+      break;
+    case Type::nullref:
+      out << "BinaryenLiteralNullref()";
+      break;
+    case Type::anyref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
   }
 }

@@ -1391,7 +1391,12 @@ private:
         return builder.makeLoad(
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
-      default:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
+      case none:
+      case unreachable:
         WASM_UNREACHABLE("invalid type");
     }
     WASM_UNREACHABLE("invalid type");
@@ -1490,7 +1495,12 @@ private:
         return builder.makeStore(
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
-      default:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
+      case none:
+      case unreachable:
         WASM_UNREACHABLE("invalid type");
     }
     WASM_UNREACHABLE("invalid type");
@@ -1581,7 +1591,13 @@ private:
             return Literal(getFloat());
           case f64:
             return Literal(getDouble());
-          default:
+          case v128:
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
+          case none:
+          case unreachable:
             WASM_UNREACHABLE("invalid type");
         }
         break;
@@ -1620,7 +1636,13 @@ private:
             return Literal(float(small));
           case f64:
             return Literal(double(small));
-          default:
+          case v128:
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
+          case none:
+          case unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         break;
@@ -1682,7 +1704,13 @@ private:
                                          std::numeric_limits<uint32_t>::max(),
                                          std::numeric_limits<uint64_t>::max()));
             break;
-          default:
+          case v128:
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
+          case none:
+          case unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         // tweak around special values
@@ -1710,7 +1738,13 @@ private:
           case f64:
             value = Literal(double(int64_t(1) << upTo(64)));
             break;
-          default:
+          case v128:
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
+          case none:
+          case unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         // maybe negative
@@ -1821,9 +1855,9 @@ private:
           case anyref:
           case nullref:
           case exnref:
-            // No unary ops taking a reference type
             return makeTrivial(type);
-          default:
+          case none:
+          case unreachable:
             WASM_UNREACHABLE("unexpected type");
         }
         WASM_UNREACHABLE("invalid type");
@@ -1960,7 +1994,12 @@ private:
         }
         WASM_UNREACHABLE("invalid value");
       }
-      default:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
+      case none:
+      case unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     WASM_UNREACHABLE("invalid type");
@@ -2190,7 +2229,12 @@ private:
                             make(v128),
                             make(v128)});
       }
-      default:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
+      case none:
+      case unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     WASM_UNREACHABLE("invalid type");
@@ -2392,7 +2436,13 @@ private:
       case f64:
         op = ExtractLaneVecF64x2;
         break;
-      default:
+      case v128:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
+      case none:
+      case unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     Expression* vec = make(v128);

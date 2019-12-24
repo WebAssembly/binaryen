@@ -1237,7 +1237,12 @@ public:
           return Literal(load64u(addr)).castToF64();
         case v128:
           return Literal(load128(addr).data());
-        default:
+        case funcref:
+        case anyref:
+        case nullref:
+        case exnref:
+        case none:
+        case unreachable:
           WASM_UNREACHABLE("unexpected type");
       }
       WASM_UNREACHABLE("invalid type");
@@ -1289,7 +1294,12 @@ public:
         case v128:
           store128(addr, value.getv128());
           break;
-        default:
+        case funcref:
+        case anyref:
+        case nullref:
+        case exnref:
+        case none:
+        case unreachable:
           WASM_UNREACHABLE("unexpected type");
       }
     }

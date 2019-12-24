@@ -85,7 +85,12 @@ public:
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0)),
                                                Literal(int32_t(0))}});
-      default:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::nullref:
+      case Type::exnref:
+      case Type::none:
+      case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
     WASM_UNREACHABLE("unexpected type");
@@ -475,7 +480,12 @@ template<> struct less<wasm::Literal> {
         return a.reinterpreti64() < b.reinterpreti64();
       case wasm::Type::v128:
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
-      default:
+      case wasm::Type::funcref:
+      case wasm::Type::anyref:
+      case wasm::Type::nullref:
+      case wasm::Type::exnref:
+      case wasm::Type::none:
+      case wasm::Type::unreachable:
         return false;
     }
     WASM_UNREACHABLE("unexpected type");

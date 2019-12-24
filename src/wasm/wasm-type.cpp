@@ -254,7 +254,12 @@ unsigned getTypeSize(Type type) {
       return 8;
     case Type::v128:
       return 16;
-    default:
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
   WASM_UNREACHABLE("invalid type");
@@ -319,7 +324,13 @@ Type reinterpretType(Type type) {
       return i32;
     case Type::f64:
       return i64;
-    default:
+    case Type::v128:
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
   WASM_UNREACHABLE("invalid type");

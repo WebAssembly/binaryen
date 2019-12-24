@@ -1225,7 +1225,11 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       break;
     case unreachable:
       break;
-    default:
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+    case none:
       WASM_UNREACHABLE("unexpected type");
   }
 }
@@ -1900,7 +1904,11 @@ void FunctionValidator::validateAlignment(
     case v128:
     case unreachable:
       break;
-    default:
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
+    case none:
       WASM_UNREACHABLE("invalid type");
   }
 }
