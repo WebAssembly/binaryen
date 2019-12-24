@@ -61,7 +61,8 @@ struct BinaryenDWARFInfo {
     }
     // Parse debug sections.
     uint8_t addrSize = 4;
-    context = llvm::DWARFContext::create(sections, addrSize);
+    bool isLittleEndian = true;
+    context = llvm::DWARFContext::create(sections, addrSize, isLittleEndian);
   }
 };
 
