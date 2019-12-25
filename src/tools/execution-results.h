@@ -67,17 +67,19 @@ struct ExecutionResults {
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
-        // We cannot compare funcrefs by name because function names can change
-        // (after duplicate function elimination or roundtripping) while the
-        // function contents are still the same
-        if (func->sig.results != Type::none &&
-            func->sig.results != Type::funcref) {
+        if (func->sig.results != Type::none) {
           // this has a result
-          results[exp->name] = run(func, wasm, instance);
-          // ignore the result if we hit an unreachable and returned no value
-          if (results[exp->name].type.isConcrete()) {
-            std::cout << "[fuzz-exec] note result: " << exp->name << " => "
-                      << results[exp->name] << '\n';
+          Literal ret = run(func, wasm, instance);
+          // We cannot compare funcrefs by name because function names can
+          // change (after duplicate function elimination or roundtripping)
+          // while the function contents are still the same
+          if (ret.type != funcref) {
+            results[exp->name] = ret;
+            // ignore the result if we hit an unreachable and returned no value
+            if (results[exp->name].type.isConcrete()) {
+              std::cout << "[fuzz-exec] note result: " << exp->name << " => "
+                        << results[exp->name] << '\n';
+            }
           }
         } else {
           // no result, run it anyhow (it might modify memory etc.)
