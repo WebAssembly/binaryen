@@ -144,14 +144,117 @@ bool Type::operator<(const Type& other) const {
     [](const Type& a, const Type& b) { return uint32_t(a) < uint32_t(b); });
 }
 
-bool Signature::operator<(const Signature& other) const {
-  if (results < other.results) {
-    return true;
-  } else if (other.results < results) {
-    return false;
-  } else {
-    return params < other.params;
+unsigned Type::getByteSize() const {
+  assert(isSingle() && "getByteSize does not works with single types");
+  Type singleType = *expand().begin();
+  switch (singleType) {
+    case Type::i32:
+      return 4;
+    case Type::i64:
+      return 8;
+    case Type::f32:
+      return 4;
+    case Type::f64:
+      return 8;
+    case Type::v128:
+      return 16;
+    case Type::anyref: // anyref type is opaque
+    case Type::exnref: // exnref type is opaque
+    case Type::none:
+    case Type::unreachable:
+      WASM_UNREACHABLE("invalid type");
   }
+  WASM_UNREACHABLE("invalid type");
+}
+
+Type Type::reinterpretType() const {
+  assert(isSingle() && "reinterpretType only works with single types");
+  Type singleType = *expand().begin();
+  switch (singleType) {
+    case Type::i32:
+      return f32;
+    case Type::i64:
+      return f64;
+    case Type::f32:
+      return i32;
+    case Type::f64:
+      return i64;
+    case Type::v128:
+    case Type::anyref:
+    case Type::exnref:
+    case Type::none:
+    case Type::unreachable:
+      WASM_UNREACHABLE("invalid type");
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
+FeatureSet Type::getFeatures() const {
+  FeatureSet feats = FeatureSet::MVP;
+  for (Type t : expand()) {
+    switch (t) {
+      case v128:
+        feats |= FeatureSet::SIMD;
+        break;
+      case anyref:
+        feats |= FeatureSet::ReferenceTypes;
+        break;
+      case exnref:
+        feats |= FeatureSet::ExceptionHandling;
+        break;
+      default:
+        break;
+    }
+  }
+  return feats;
+}
+
+Type Type::getType(unsigned byteSize, bool float_) {
+  if (byteSize < 4) {
+    return Type::i32;
+  }
+  if (byteSize == 4) {
+    return float_ ? Type::f32 : Type::i32;
+  }
+  if (byteSize == 8) {
+    return float_ ? Type::f64 : Type::i64;
+  }
+  if (byteSize == 16) {
+    return Type::v128;
+  }
+  WASM_UNREACHABLE("invalid size");
+}
+
+bool Type::isLeftSubTypeOfRight(Type left, Type right) {
+  if (left == right) {
+    return true;
+  }
+  if (left.isRef() && right.isRef() && (right == anyref || left == nullref)) {
+    return true;
+  }
+  return false;
+}
+
+Type Type::getLeastUpperBound(Type a, Type b) {
+  if (a == b) {
+    return a;
+  }
+  if (a == Type::unreachable) {
+    return b;
+  }
+  if (b == Type::unreachable) {
+    return a;
+  }
+  if (!a.isRef() || !b.isRef()) {
+    return none; // a poison value that must not be consumed
+  }
+  if (a == Type::nullref) {
+    return b;
+  }
+  if (b == Type::nullref) {
+    return a;
+  }
+  return Type::anyref;
 }
 
 namespace {
@@ -173,6 +276,22 @@ template<typename T> std::string genericToString(const T& t) {
 }
 
 } // anonymous namespace
+
+std::string Type::toString() const { return genericToString(*this); }
+
+std::string ParamType::toString() const { return genericToString(*this); }
+
+std::string ResultType::toString() const { return genericToString(*this); }
+
+bool Signature::operator<(const Signature& other) const {
+  if (results < other.results) {
+    return true;
+  } else if (other.results < results) {
+    return false;
+  } else {
+    return params < other.params;
+  }
+}
 
 std::ostream& operator<<(std::ostream& os, Type type) {
   switch (type) {
@@ -234,131 +353,6 @@ std::ostream& operator<<(std::ostream& os, ResultType param) {
 
 std::ostream& operator<<(std::ostream& os, Signature sig) {
   return os << "Signature(" << sig.params << " => " << sig.results << ")";
-}
-
-std::string Type::toString() const { return genericToString(*this); }
-
-std::string ParamType::toString() const { return genericToString(*this); }
-
-std::string ResultType::toString() const { return genericToString(*this); }
-
-unsigned getTypeSize(Type type) {
-  switch (type) {
-    case Type::i32:
-      return 4;
-    case Type::i64:
-      return 8;
-    case Type::f32:
-      return 4;
-    case Type::f64:
-      return 8;
-    case Type::v128:
-      return 16;
-    case Type::funcref:
-    case Type::anyref:
-    case Type::nullref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("invalid type");
-  }
-  WASM_UNREACHABLE("invalid type");
-}
-
-FeatureSet getFeatures(Type type) {
-  FeatureSet feats = FeatureSet::MVP;
-  for (Type t : type.expand()) {
-    switch (t) {
-      case v128:
-        feats |= FeatureSet::SIMD;
-        break;
-      case funcref:
-      case anyref:
-      case nullref:
-        feats |= FeatureSet::ReferenceTypes;
-        break;
-      case exnref:
-        feats |= FeatureSet::ReferenceTypes;
-        feats |= FeatureSet::ExceptionHandling;
-        break;
-      default:
-        break;
-    }
-  }
-  return feats;
-}
-
-Type getType(unsigned size, bool float_) {
-  if (size < 4) {
-    return Type::i32;
-  }
-  if (size == 4) {
-    return float_ ? Type::f32 : Type::i32;
-  }
-  if (size == 8) {
-    return float_ ? Type::f64 : Type::i64;
-  }
-  if (size == 16) {
-    return Type::v128;
-  }
-  WASM_UNREACHABLE("invalid size");
-}
-
-bool isLeftSubTypeOfRight(Type left, Type right) {
-  if (left == right) {
-    return true;
-  }
-  if (left.isRef() && right.isRef() && (right == anyref || left == nullref)) {
-    return true;
-  }
-  return false;
-}
-
-Type reinterpretType(Type type) {
-  switch (type) {
-    case Type::i32:
-      return f32;
-    case Type::i64:
-      return f64;
-    case Type::f32:
-      return i32;
-    case Type::f64:
-      return i64;
-    case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::nullref:
-    case Type::exnref:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("invalid type");
-  }
-  WASM_UNREACHABLE("invalid type");
-}
-
-// Gets the least upper bound from the type lattice.
-// If one of the type is unreachable, the other type becomes the result.
-// If the common supertype does not exist, returns none, a poison value.
-Type getLeastUpperBound(Type a, Type b) {
-  if (a == b) {
-    return a;
-  }
-  if (a == Type::unreachable) {
-    return b;
-  }
-  if (b == Type::unreachable) {
-    return a;
-  }
-  if (!a.isRef() || !b.isRef()) {
-    return none; // a poison value that must not be consumed
-  }
-  if (a == Type::nullref) {
-    return b;
-  }
-  if (b == Type::nullref) {
-    return a;
-  }
-  return Type::anyref;
 }
 
 } // namespace wasm

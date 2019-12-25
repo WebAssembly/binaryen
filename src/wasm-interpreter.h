@@ -1744,7 +1744,7 @@ private:
       if (timeout.breaking()) {
         return timeout;
       }
-      auto bytes = getTypeSize(curr->expectedType);
+      auto bytes = curr->expectedType.getByteSize();
       auto addr = instance.getFinalAddress(ptr.value, bytes);
       auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
       NOTE_EVAL1(loaded);

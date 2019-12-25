@@ -1090,7 +1090,7 @@ private:
     Index total = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
-      auto size = getTypeSize(type);
+      auto size = type.getByteSize();
       total += size;
     }
     auto* block = builder->makeBlock();
@@ -1101,7 +1101,7 @@ private:
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
-      auto size = getTypeSize(type);
+      auto size = type.getByteSize();
       assert(size % STACK_ALIGN == 0);
       // TODO: higher alignment?
       block->list.push_back(builder->makeLocalSet(
@@ -1130,7 +1130,7 @@ private:
     Index offset = 0;
     for (Index i = 0; i < numPreservableLocals; i++) {
       auto type = func->getLocalType(i);
-      auto size = getTypeSize(type);
+      auto size = type.getByteSize();
       assert(size % STACK_ALIGN == 0);
       // TODO: higher alignment?
       block->list.push_back(

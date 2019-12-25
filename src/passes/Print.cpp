@@ -186,7 +186,7 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".load";
-    if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes < curr->type.getByteSize()) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
@@ -233,7 +233,7 @@ struct PrintExpressionContents
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
     prepareColor(o) << forceConcrete(type) << ".atomic.rmw";
-    if (type != unreachable && bytes != getTypeSize(type)) {
+    if (type != unreachable && bytes != type.getByteSize()) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
@@ -269,7 +269,7 @@ struct PrintExpressionContents
         o << "xchg";
         break;
     }
-    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes != curr->type.getByteSize()) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -281,7 +281,7 @@ struct PrintExpressionContents
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     o << "cmpxchg";
-    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes != curr->type.getByteSize()) {
       o << "_u";
     }
     restoreNormalColor(o);
