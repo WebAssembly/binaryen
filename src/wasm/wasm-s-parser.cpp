@@ -1738,7 +1738,7 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeRefIsNull(Element& s) {
   auto ret = allocator.alloc<RefIsNull>();
-  ret->anyref = parseExpression(s[1]);
+  ret->value = parseExpression(s[1]);
   ret->finalize();
   return ret;
 }

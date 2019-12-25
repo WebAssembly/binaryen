@@ -225,7 +225,7 @@ Type Type::getType(unsigned byteSize, bool float_) {
   WASM_UNREACHABLE("invalid size");
 }
 
-bool Type::isLeftSubTypeOfRight(Type left, Type right) {
+bool Type::Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
@@ -235,7 +235,7 @@ bool Type::isLeftSubTypeOfRight(Type left, Type right) {
   return false;
 }
 
-Type Type::getLeastUpperBound(Type a, Type b) {
+Type Type::Type::getLeastUpperBound(Type a, Type b) {
   if (a == b) {
     return a;
   }

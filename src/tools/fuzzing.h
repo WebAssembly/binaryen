@@ -876,7 +876,7 @@ private:
         break;
     }
     // we should create the right type of thing
-    assert(isLeftSubTypeOfRight(ret->type, type));
+    assert(Type::isSubType(ret->type, type));
     nesting--;
     return ret;
   }
@@ -1125,10 +1125,6 @@ private:
   }
 
   Expression* makeIf(Type type) {
-    // ifs cannot have nullref type
-    if (type == nullref) {
-      return makeTrivial(type);
-    }
     auto* condition = makeCondition();
     hangStack.push_back(nullptr);
     auto* ret =
@@ -2245,10 +2241,10 @@ private:
   }
 
   Expression* makeSelect(Type type) {
-    // try to have a subtype for one arm
-    Type subType = pick(getSubTypes(type));
+    Type subType1 = pick(getSubTypes(type));
+    Type subType2 = pick(getSubTypes(type));
     return makeDeNanOp(
-      buildSelect({make(i32), make(type), make(subType)}, type));
+      buildSelect({make(i32), make(subType1), make(subType2)}, type));
   }
 
   Expression* makeSwitch(Type type) {

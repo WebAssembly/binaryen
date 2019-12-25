@@ -172,7 +172,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   void handle(Expression* curr) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       // Calculate equivalences
-      Function* func = getFunction();
+      auto* func = getFunction();
       equivalences.reset(set->index);
       if (auto* get = set->value->dynCast<LocalGet>()) {
         if (func->getLocalType(set->index) == func->getLocalType(get->index)) {

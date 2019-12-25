@@ -2,7 +2,6 @@
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i64 (func (result i64)))
- (type $none_=>_f32 (func (result f32)))
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $f32_=>_none (func (param f32)))
@@ -13,18 +12,16 @@
  (type $nullref_=>_none (func (param nullref)))
  (type $exnref_=>_none (func (param exnref)))
  (type $exnref_f32_v128_i32_funcref_=>_none (func (param exnref f32 v128 i32 funcref)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i64_=>_i32 (func (param i64) (result i32)))
- (type $i32_=>_i64 (func (param i32) (result i64)))
  (type $f32_=>_i64 (func (param f32) (result i64)))
- (type $i64_nullref_=>_funcref (func (param i64 nullref) (result funcref)))
+ (type $none_=>_f32 (func (result f32)))
+ (type $none_=>_funcref (func (result funcref)))
  (type $v128_anyref_i32_i32_=>_funcref (func (param v128 anyref i32 i32) (result funcref)))
- (type $none_=>_anyref (func (result anyref)))
+ (type $f64_i32_i64_f64_f32_=>_anyref (func (param f64 i32 i64 f64 f32) (result anyref)))
  (type $nullref_=>_anyref (func (param nullref) (result anyref)))
  (type $i32_exnref_exnref_v128_v128_v128_=>_nullref (func (param i32 exnref exnref v128 v128 v128) (result nullref)))
  (type $f32_v128_v128_f32_=>_nullref (func (param f32 v128 v128 f32) (result nullref)))
  (type $v128_=>_nullref (func (param v128) (result nullref)))
- (type $funcref_i64_=>_nullref (func (param funcref i64) (result nullref)))
  (import "fuzzing-support" "log-i32" (func $log-i32 (param i32)))
  (import "fuzzing-support" "log-i64" (func $log-i64 (param i64)))
  (import "fuzzing-support" "log-f32" (func $log-f32 (param f32)))
@@ -34,8 +31,8 @@
  (import "fuzzing-support" "log-exnref" (func $log-exnref (param exnref)))
  (memory $0 1 1)
  (data (i32.const 0) "N\0fN\f5\f9\b1\ff\fa\eb\e5\fe\a7\ec\fb\fc\f4\a6\e4\ea\f0\ae\e3")
- (table $0 11 funcref)
- (elem (i32.const 0) $func_8 $func_13 $func_13 $func_13 $func_14 $func_15 $func_17 $func_23 $func_23 $func_34 $func_36)
+ (table $0 10 10 funcref)
+ (elem (i32.const 0) $func_8 $func_13 $func_13 $func_13 $func_14 $func_15 $func_17 $func_23 $func_23 $func_31)
  (global $global$0 (mut i32) (i32.const 975663930))
  (global $global$1 (mut i32) (i32.const 2066300474))
  (global $global$2 (mut i64) (i64.const 20510))
@@ -61,11 +58,10 @@
  (export "func_25_invoker" (func $func_25_invoker))
  (export "func_27_invoker" (func $func_27_invoker))
  (export "func_29_invoker" (func $func_29_invoker))
+ (export "func_31" (func $func_31))
+ (export "func_31_invoker" (func $func_31_invoker))
  (export "func_34" (func $func_34))
- (export "func_35" (func $func_35))
- (export "func_36" (func $func_36))
- (export "func_36_invoker" (func $func_36_invoker))
- (export "func_38" (func $func_38))
+ (export "func_34_invoker" (func $func_34_invoker))
  (export "hangLimitInitializer" (func $hangLimitInitializer))
  (func $hashMemory (; 7 ;) (result i32)
   (local $0 i32)
@@ -923,41 +919,11 @@
     )
    )
    (select
-    (return
-     (ref.null)
-    )
     (block $label$0
-     (call $log-v128
-      (local.get $0)
-     )
-     (return
-      (ref.null)
-     )
-    )
-    (if (result i32)
-     (i32.const 2147483647)
-     (i32.const 36)
-     (i32.const 127)
-    )
-   )
-   (block $label$2
-    (call $log-i32
-     (call $hashMemory)
-    )
-    (block $label$3
-     (call $log-i32
-      (i32.const 65534)
-     )
-     (return
-      (block $label$4
-       (call $log-i64
-        (i64x2.extract_lane 0
-         (local.tee $0
-          (local.tee $0
-           (v128.const i32x4 0x00200000 0x00000000 0xfffffffb 0xffffffff)
-          )
-         )
-        )
+     (block $label$1
+      (block $label$5
+       (call $log-i32
+        (call $hashMemory)
        )
        (return
         (ref.null)
@@ -965,19 +931,56 @@
       )
      )
     )
+    (return_call $func_31
+     (local.tee $0
+      (v128.const i32x4 0x00000000 0xc3e00000 0x00000000 0x40b70500)
+     )
+    )
+    (i32.const 0)
+   )
+   (block $label$3
+    (nop)
+    (block $label$4
+     (call $log-f32
+      (f32.const -1152921504606846976)
+     )
+     (return_call $func_31
+      (v128.const i32x4 0x08000000 0x00000000 0xffff8000 0xffffffff)
+     )
+    )
    )
   )
  )
- (func $func_32 (; 32 ;) (param $0 i32) (result i64)
-  (local $1 anyref)
+ (func $func_31_invoker (; 32 ;)
+  (drop
+   (call $func_31
+    (v128.const i32x4 0x00080000 0x00000081 0xffffffad 0x00000001)
+   )
+  )
+  (call $log-i32
+   (call $hashMemory)
+  )
+ )
+ (func $func_33 (; 33 ;)
+  (local $0 i32)
+  (local $1 f64)
+  (local $2 i64)
+  (local $3 f64)
+  (local $4 i64)
+  (local $5 anyref)
+  (local $6 i32)
+  (local $7 v128)
+  (local $8 i32)
+  (local $9 f64)
+  (local $10 f64)
+  (local $11 nullref)
+  (local $12 v128)
   (block
    (if
     (i32.eqz
      (global.get $hangLimit)
     )
-    (return
-     (i64.const 3494556023244667692)
-    )
+    (return)
    )
    (global.set $hangLimit
     (i32.sub
@@ -986,14 +989,14 @@
     )
    )
   )
-  (block $label$0
-   (nop)
-   (return
-    (i64.const -31)
-   )
+  (local.set $11
+   (ref.null)
   )
  )
- (func $func_33 (; 33 ;) (result anyref)
+ (func $func_34 (; 34 ;) (param $0 f64) (param $1 i32) (param $2 i64) (param $3 f64) (param $4 f32) (result anyref)
+  (local $5 funcref)
+  (local $6 f32)
+  (local $7 funcref)
   (block
    (if
     (i32.eqz
@@ -1012,31 +1015,31 @@
   )
   (ref.null)
  )
- (func $func_34 (; 34 ;) (result f32)
-  (block
-   (if
-    (i32.eqz
-     (global.get $hangLimit)
-    )
-    (return
-     (f32.const -2147483648)
-    )
-   )
-   (global.set $hangLimit
-    (i32.sub
-     (global.get $hangLimit)
-     (i32.const 1)
-    )
+ (func $func_34_invoker (; 35 ;)
+  (drop
+   (call $func_34
+    (f64.const -2.2250738585072014e-308)
+    (i32.const 1679427100)
+    (i64.const 5402)
+    (f64.const -1.1754943508222875e-38)
+    (f32.const 16384)
    )
   )
-  (block $label$0 (result f32)
-   (call $log-i32
-    (call $hashMemory)
+  (drop
+   (call $func_34
+    (f64.const 4294967296)
+    (i32.const 0)
+    (i64.const 19531)
+    (f64.const 1256914182047749521306957e208)
+    (f32.const 470816288)
    )
-   (f32.const -18446744073709551615)
+  )
+  (call $log-i32
+   (call $hashMemory)
   )
  )
- (func $func_35 (; 35 ;) (param $0 funcref) (param $1 i64) (result nullref)
+ (func $func_36 (; 36 ;) (result funcref)
+  (local $0 nullref)
   (block
    (if
     (i32.eqz
@@ -1053,76 +1056,25 @@
     )
    )
   )
-  (block $label$0
-   (nop)
-   (call $log-f64
-    (f64.const 1797693134862315708145274e284)
-   )
-   (return
-    (ref.null)
-   )
-  )
- )
- (func $func_36 (; 36 ;) (param $0 i64) (param $1 nullref) (result funcref)
-  (block
-   (if
-    (i32.eqz
-     (global.get $hangLimit)
-    )
-    (return
-     (ref.func $func_15_invoker)
+  (block $label$0 (result funcref)
+   (call $log-f32
+    (block $label$1
+     (call $log-i32
+      (call $hashMemory)
+     )
+     (return
+      (ref.func $func_15_invoker)
+     )
     )
    )
-   (global.set $hangLimit
-    (i32.sub
-     (global.get $hangLimit)
-     (i32.const 1)
-    )
-   )
-  )
-  (block $label$0
-   (return
-    (ref.func $func_25)
-   )
-  )
- )
- (func $func_36_invoker (; 37 ;)
-  (drop
-   (call $func_36
-    (i64.const 25703)
-    (ref.null)
-   )
-  )
-  (call $log-i32
-   (call $hashMemory)
-  )
- )
- (func $func_38 (; 38 ;) (param $0 i32) (result i32)
-  (block
-   (if
-    (i32.eqz
-     (global.get $hangLimit)
-    )
-    (return
-     (local.get $0)
-    )
-   )
-   (global.set $hangLimit
-    (i32.sub
-     (global.get $hangLimit)
-     (i32.const 1)
-    )
-   )
-  )
-  (block $label$0
-   (loop $label$1
+   (loop $label$2 (result funcref)
     (block
      (if
       (i32.eqz
        (global.get $hangLimit)
       )
       (return
-       (local.get $0)
+       (ref.func $func_27_invoker)
       )
      )
      (global.set $hangLimit
@@ -1132,386 +1084,32 @@
       )
      )
     )
-    (block
-     (block $label$2
+    (block (result funcref)
+     (block $label$3
+      (br_if $label$2
+       (i32.const 11)
+      )
       (nop)
-      (block $label$3
-       (if
-        (block $label$4
-         (if
-          (if (result i32)
-           (block $label$5 (result i32)
-            (loop $label$6
-             (block
-              (if
-               (i32.eqz
-                (global.get $hangLimit)
-               )
-               (return
-                (i32.const 32767)
-               )
-              )
-              (global.set $hangLimit
-               (i32.sub
-                (global.get $hangLimit)
-                (i32.const 1)
-               )
-              )
-             )
-             (block $label$7
-              (nop)
-              (nop)
-             )
-            )
-            (i32.const 57)
-           )
-           (i32.eqz
-            (loop $label$23 (result i32)
-             (block
-              (if
-               (i32.eqz
-                (global.get $hangLimit)
-               )
-               (return
-                (local.get $0)
-               )
-              )
-              (global.set $hangLimit
-               (i32.sub
-                (global.get $hangLimit)
-                (i32.const 1)
-               )
-              )
-             )
-             (block (result i32)
-              (block $label$24
-               (nop)
-               (nop)
-              )
-              (br_if $label$23
-               (if (result i32)
-                (i32.const 2147483647)
-                (if (result i32)
-                 (i32.eqz
-                  (if (result i32)
-                   (i32.eqz
-                    (local.get $0)
-                   )
-                   (block $label$25 (result i32)
-                    (nop)
-                    (local.tee $0
-                     (local.get $0)
-                    )
-                   )
-                   (block $label$26
-                    (nop)
-                    (return
-                     (local.get $0)
-                    )
-                   )
-                  )
-                 )
-                 (i32.const -4096)
-                 (block $label$27 (result i32)
-                  (loop $label$28
-                   (block
-                    (if
-                     (i32.eqz
-                      (global.get $hangLimit)
-                     )
-                     (return
-                      (local.get $0)
-                     )
-                    )
-                    (global.set $hangLimit
-                     (i32.sub
-                      (global.get $hangLimit)
-                      (i32.const 1)
-                     )
-                    )
-                   )
-                   (block
-                    (block $label$29
-                     (loop $label$30
-                      (block
-                       (if
-                        (i32.eqz
-                         (global.get $hangLimit)
-                        )
-                        (return
-                         (local.get $0)
-                        )
-                       )
-                       (global.set $hangLimit
-                        (i32.sub
-                         (global.get $hangLimit)
-                         (i32.const 1)
-                        )
-                       )
-                      )
-                      (nop)
-                     )
-                     (br_if $label$23
-                      (i32.eqz
-                       (i32.const 4)
-                      )
-                     )
-                    )
-                    (br_if $label$28
-                     (loop $label$31 (result i32)
-                      (block
-                       (if
-                        (i32.eqz
-                         (global.get $hangLimit)
-                        )
-                        (return
-                         (i32.const 0)
-                        )
-                       )
-                       (global.set $hangLimit
-                        (i32.sub
-                         (global.get $hangLimit)
-                         (i32.const 1)
-                        )
-                       )
-                      )
-                      (block (result i32)
-                       (nop)
-                       (br_if $label$31
-                        (i32.eqz
-                         (i32.const -131072)
-                        )
-                       )
-                       (local.get $0)
-                      )
-                     )
-                    )
-                    (block $label$32
-                     (nop)
-                     (nop)
-                    )
-                   )
-                  )
-                  (loop $label$33 (result i32)
-                   (block
-                    (if
-                     (i32.eqz
-                      (global.get $hangLimit)
-                     )
-                     (return
-                      (local.get $0)
-                     )
-                    )
-                    (global.set $hangLimit
-                     (i32.sub
-                      (global.get $hangLimit)
-                      (i32.const 1)
-                     )
-                    )
-                   )
-                   (block (result i32)
-                    (block $label$34
-                     (nop)
-                    )
-                    (br_if $label$33
-                     (i32.const 2147483647)
-                    )
-                    (i32.const 2147483647)
-                   )
-                  )
-                 )
-                )
-                (block $label$35 (result i32)
-                 (i32.const -65535)
-                )
-               )
-              )
-              (local.get $0)
-             )
-            )
-           )
-           (i32.const 1432576352)
-          )
-          (block $label$9
-           (nop)
-           (br_if $label$2
-            (local.get $0)
-           )
-          )
-          (block $label$10
-           (nop)
-           (nop)
-          )
-         )
-         (br $label$1)
-        )
-        (block $label$11
-         (loop $label$12
-          (block
-           (if
-            (i32.eqz
-             (global.get $hangLimit)
-            )
-            (return
-             (i32.const 1998263311)
-            )
-           )
-           (global.set $hangLimit
-            (i32.sub
-             (global.get $hangLimit)
-             (i32.const 1)
-            )
-           )
-          )
-          (block $label$13
-           (loop $label$14
-            (block
-             (if
-              (i32.eqz
-               (global.get $hangLimit)
-              )
-              (return
-               (i32.const 64)
-              )
-             )
-             (global.set $hangLimit
-              (i32.sub
-               (global.get $hangLimit)
-               (i32.const 1)
-              )
-             )
-            )
-            (block
-             (block $label$15
-              (loop $label$16
-               (block
-                (if
-                 (i32.eqz
-                  (global.get $hangLimit)
-                 )
-                 (return
-                  (local.get $0)
-                 )
-                )
-                (global.set $hangLimit
-                 (i32.sub
-                  (global.get $hangLimit)
-                  (i32.const 1)
-                 )
-                )
-               )
-               (block
-                (block $label$17
-                 (local.set $0
-                  (block $label$18 (result i32)
-                   (nop)
-                   (loop $label$19 (result i32)
-                    (block
-                     (if
-                      (i32.eqz
-                       (global.get $hangLimit)
-                      )
-                      (return
-                       (i32.const 16)
-                      )
-                     )
-                     (global.set $hangLimit
-                      (i32.sub
-                       (global.get $hangLimit)
-                       (i32.const 1)
-                      )
-                     )
-                    )
-                    (block (result i32)
-                     (block $label$20
-                      (if
-                       (i32.const -32767)
-                       (nop)
-                       (block $label$21
-                        (nop)
-                        (nop)
-                       )
-                      )
-                      (nop)
-                     )
-                     (br_if $label$19
-                      (i32.const 255)
-                     )
-                     (br_if $label$18
-                      (if (result i32)
-                       (local.get $0)
-                       (i32.const -16777216)
-                       (loop $label$22 (result i32)
-                        (block
-                         (if
-                          (i32.eqz
-                           (global.get $hangLimit)
-                          )
-                          (return
-                           (i32.const 6682)
-                          )
-                         )
-                         (global.set $hangLimit
-                          (i32.sub
-                           (global.get $hangLimit)
-                           (i32.const 1)
-                          )
-                         )
-                        )
-                        (local.get $0)
-                       )
-                      )
-                      (i32.eqz
-                       (local.tee $0
-                        (i32.const -2147483648)
-                       )
-                      )
-                     )
-                    )
-                   )
-                  )
-                 )
-                )
-                (br_if $label$16
-                 (i32.eqz
-                  (local.get $0)
-                 )
-                )
-                (nop)
-               )
-              )
-              (nop)
-             )
-             (br_if $label$14
-              (i32.const 32768)
-             )
-             (nop)
-            )
-           )
-           (nop)
-          )
-         )
-         (nop)
-        )
-        (block $label$36
-         (nop)
-        )
-       )
-       (nop)
+     )
+     (br_if $label$2
+      (i32.eqz
+       (i32.const -119)
       )
      )
-     (br_if $label$1
-      (local.get $0)
+     (block (result funcref)
+      (nop)
+      (br_if $label$2
+       (i32.eqz
+        (i32.const -119)
+       )
+      )
+      (ref.func $func_34_invoker)
      )
-     (nop)
     )
-   )
-   (return
-    (i32.const -2147483648)
    )
   )
  )
- (func $hangLimitInitializer (; 39 ;)
+ (func $hangLimitInitializer (; 37 ;)
   (global.set $hangLimit
    (i32.const 10)
   )

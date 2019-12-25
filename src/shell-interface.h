@@ -165,7 +165,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       trap("callIndirect: bad # of arguments");
     }
     for (size_t i = 0; i < params.size(); i++) {
-      if (!isLeftSubTypeOfRight(arguments[i].type, params[i])) {
+      if (!Type::isSubType(arguments[i].type, params[i])) {
         trap("callIndirect: bad argument type");
       }
     }

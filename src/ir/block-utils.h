@@ -43,7 +43,7 @@ simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
       // no side effects, and singleton is not returning a value, so we can
       // throw away the block and its contents, basically
       return Builder(*parent->getModule()).replaceWithIdenticalType(block);
-    } else if (isLeftSubTypeOfRight(singleton->type, block->type) ||
+    } else if (Type::isSubType(singleton->type, block->type) ||
                allowTypeChange) {
       return singleton;
     } else {

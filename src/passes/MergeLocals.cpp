@@ -100,7 +100,7 @@ struct MergeLocals
       return;
     }
     // compute all dependencies
-    Function* func = getFunction();
+    auto* func = getFunction();
     LocalGraph preGraph(func);
     preGraph.computeInfluences();
     // optimize each copy

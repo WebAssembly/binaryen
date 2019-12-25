@@ -3028,7 +3028,7 @@ BinaryenExpressionRef BinaryenRefIsNullGetAnyref(BinaryenExpressionRef expr) {
 
   auto* expression = (Expression*)expr;
   assert(expression->is<RefIsNull>());
-  return static_cast<RefIsNull*>(expression)->anyref;
+  return static_cast<RefIsNull*>(expression)->value;
 }
 // RefFunc
 const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr) {

@@ -711,7 +711,7 @@ void BinaryenIRWriter<SubType>::visitRefNull(RefNull* curr) {
 
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitRefIsNull(RefIsNull* curr) {
-  visit(curr->anyref);
+  visit(curr->value);
   if (curr->type == unreachable) {
     emitUnreachable();
     return;

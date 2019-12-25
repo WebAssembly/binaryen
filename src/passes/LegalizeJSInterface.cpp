@@ -110,11 +110,11 @@ struct LegalizeJSInterface : public Pass {
 
     if (!illegalImportsToLegal.empty()) {
       // Gather functions used in 'ref.func'. They should not be removed.
-      std::map<Name, std::atomic<bool>> usedInRefFunc;
+      std::unordered_map<Name, std::atomic<bool>> usedInRefFunc;
 
       struct RefFuncScanner : public WalkerPass<PostWalker<RefFuncScanner>> {
         Module& wasm;
-        std::map<Name, std::atomic<bool>>& usedInRefFunc;
+        std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc;
 
         bool isFunctionParallel() override { return true; }
 
@@ -122,10 +122,11 @@ struct LegalizeJSInterface : public Pass {
           return new RefFuncScanner(wasm, usedInRefFunc);
         }
 
-        RefFuncScanner(Module& wasm,
-                       std::map<Name, std::atomic<bool>>& usedInRefFunc)
+        RefFuncScanner(
+          Module& wasm,
+          std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc)
           : wasm(wasm), usedInRefFunc(usedInRefFunc) {
-          // Fill in map, as we operate on it in parallel
+          // Fill in unordered_map, as we operate on it in parallel
           for (auto& func : wasm.functions) {
             usedInRefFunc[func->name];
           }

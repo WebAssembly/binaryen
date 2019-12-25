@@ -230,7 +230,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
     }
     Expression* visitRefNull(RefNull* curr) { return builder.makeRefNull(); }
     Expression* visitRefIsNull(RefIsNull* curr) {
-      return builder.makeRefIsNull(copy(curr->anyref));
+      return builder.makeRefIsNull(copy(curr->value));
     }
     Expression* visitRefFunc(RefFunc* curr) {
       return builder.makeRefFunc(curr->func);

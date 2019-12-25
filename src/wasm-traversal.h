@@ -1078,7 +1078,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::RefIsNullId: {
         self->pushTask(SubType::doVisitRefIsNull, currp);
-        self->pushTask(SubType::scan, &curr->cast<RefIsNull>()->anyref);
+        self->pushTask(SubType::scan, &curr->cast<RefIsNull>()->value);
         break;
       }
       case Expression::Id::RefFuncId: {

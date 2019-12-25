@@ -143,13 +143,13 @@ public:
     if (!ret.breaking() &&
         (curr->type.isConcrete() || ret.value.type.isConcrete())) {
 #if 1 // def WASM_INTERPRETER_DEBUG
-      if (!isLeftSubTypeOfRight(ret.value.type, curr->type)) {
+      if (!Type::isSubType(ret.value.type, curr->type)) {
         std::cerr << "expected " << curr->type << ", seeing " << ret.value.type
                   << " from\n"
                   << curr << '\n';
       }
 #endif
-      assert(isLeftSubTypeOfRight(ret.value.type, curr->type));
+      assert(Type::isSubType(ret.value.type, curr->type));
     }
     depth--;
     return ret;
@@ -1129,7 +1129,7 @@ public:
   }
   Flow visitRefIsNull(RefIsNull* curr) {
     NOTE_ENTER("RefIsNull");
-    Flow flow = visit(curr->anyref);
+    Flow flow = visit(curr->value);
     if (flow.breaking()) {
       return flow;
     }
@@ -1488,7 +1488,7 @@ private:
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
           assert(i < params.size());
-          if (!isLeftSubTypeOfRight(arguments[i].type, params[i])) {
+          if (!Type::isSubType(arguments[i].type, params[i])) {
             std::cerr << "Function `" << function->name << "` expects type "
                       << params[i] << " for parameter " << i << ", got "
                       << arguments[i].type << "." << std::endl;
@@ -1604,7 +1604,7 @@ private:
       }
       NOTE_EVAL1(index);
       NOTE_EVAL1(flow.value);
-      assert(curr->isTee() ? isLeftSubTypeOfRight(flow.value.type, curr->type)
+      assert(curr->isTee() ? Type::isSubType(flow.value.type, curr->type)
                            : true);
       scope.locals[index] = flow.value;
       return curr->isTee() ? flow : Flow();
@@ -2092,7 +2092,7 @@ public:
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     Literal ret = flow.value;
-    if (!isLeftSubTypeOfRight(ret.type, function->sig.results)) {
+    if (!Type::isSubType(ret.type, function->sig.results)) {
       std::cerr << "calling " << function->name << " resulted in " << ret
                 << " but the function type is " << function->sig.results
                 << '\n';

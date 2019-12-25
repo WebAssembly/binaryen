@@ -532,9 +532,9 @@ public:
     ret->finalize();
     return ret;
   }
-  RefIsNull* makeRefIsNull(Expression* anyref) {
+  RefIsNull* makeRefIsNull(Expression* value) {
     auto* ret = allocator.alloc<RefIsNull>();
-    ret->anyref = anyref;
+    ret->value = value;
     ret->finalize();
     return ret;
   }

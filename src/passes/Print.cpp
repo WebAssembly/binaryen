@@ -1872,7 +1872,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
-    printFullLine(curr->anyref);
+    printFullLine(curr->value);
     decIndent();
   }
   void visitRefFunc(RefFunc* curr) {

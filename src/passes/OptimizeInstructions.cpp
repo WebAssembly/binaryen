@@ -751,7 +751,7 @@ struct OptimizeInstructions
           // condition, do that
           auto needCondition =
             EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects();
-          auto isSubType = isLeftSubTypeOfRight(iff->ifTrue->type, iff->type);
+          auto isSubType = Type::isSubType(iff->ifTrue->type, iff->type);
           if (isSubType && !needCondition) {
             return iff->ifTrue;
           } else {

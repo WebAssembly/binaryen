@@ -1812,9 +1812,10 @@ void WasmBinaryBuilder::processFunctions() {
     for (auto* ref : refs) {
       if (auto* call = ref->dynCast<Call>()) {
         call->target = getFunctionName(index);
-      }
-      if (auto* refFunc = ref->dynCast<RefFunc>()) {
+      } else if (auto* refFunc = ref->dynCast<RefFunc>()) {
         refFunc->func = getFunctionName(index);
+      } else {
+        WASM_UNREACHABLE("Invalid type in function references");
       }
     }
   }
@@ -4421,7 +4422,7 @@ void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
 
 void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {
   BYN_TRACE("zz node: RefIsNull\n");
-  curr->anyref = popNonVoidExpression();
+  curr->value = popNonVoidExpression();
   curr->finalize();
 }
 

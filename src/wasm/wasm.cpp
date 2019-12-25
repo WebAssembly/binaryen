@@ -333,7 +333,7 @@ void Block::finalize() {
   }
 
   TypeSeeker seeker(this, this->name);
-  type = mergeTypes(seeker.types);
+  type = Type::mergeTypes(seeker.types);
   handleUnreachable(this);
 }
 
@@ -361,7 +361,7 @@ void If::finalize(Type type_) {
 }
 
 void If::finalize() {
-  type = ifFalse ? getLeastUpperBound(ifTrue->type, ifFalse->type) : none;
+  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type) : none;
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
@@ -821,7 +821,7 @@ void Select::finalize() {
       condition->type == unreachable) {
     type = unreachable;
   } else {
-    type = getLeastUpperBound(ifTrue->type, ifFalse->type);
+    type = Type::getLeastUpperBound(ifTrue->type, ifFalse->type);
   }
 }
 
@@ -854,7 +854,7 @@ void Host::finalize() {
 void RefNull::finalize() { type = nullref; }
 
 void RefIsNull::finalize() {
-  if (anyref->type == unreachable) {
+  if (value->type == unreachable) {
     type = unreachable;
     return;
   }
@@ -863,7 +863,9 @@ void RefIsNull::finalize() {
 
 void RefFunc::finalize() { type = funcref; }
 
-void Try::finalize() { type = getLeastUpperBound(body->type, catchBody->type); }
+void Try::finalize() {
+  type = Type::getLeastUpperBound(body->type, catchBody->type);
+}
 
 void Try::finalize(Type type_) {
   type = type_;

@@ -1088,7 +1088,7 @@ class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
 public:
   RefIsNull(MixedArena& allocator) {}
 
-  Expression* anyref;
+  Expression* value;
 
   void finalize();
 };

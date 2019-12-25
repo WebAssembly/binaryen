@@ -207,10 +207,10 @@ struct Flatten
             // the return type of the block this branch is targetting, which may
             // not be the same with the innermost block's return type. For
             // example,
-            // (block $label0 (result anyref)
-            //   (block $label1 (result nullref)
+            // (block $any (result anyref)
+            //   (block (result nullref)
             //     (local.tee $0
-            //       (br_if $label0
+            //       (br_if $any
             //         (ref.null)
             //         (i32.const 0)
             //       )

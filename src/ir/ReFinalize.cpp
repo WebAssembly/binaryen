@@ -50,7 +50,7 @@ void ReFinalize::visitBlock(Block* curr) {
   if (curr->name.is()) {
     auto iter = breakValues.find(curr->name);
     if (iter != breakValues.end()) {
-      curr->type = getLeastUpperBound(curr->type, iter->second);
+      curr->type = Type::getLeastUpperBound(curr->type, iter->second);
       return;
     }
   }
@@ -156,7 +156,7 @@ void ReFinalize::updateBreakValueType(Name name, Type type) {
     if (breakValues.count(name) == 0) {
       breakValues[name] = type;
     } else {
-      breakValues[name] = getLeastUpperBound(breakValues[name], type);
+      breakValues[name] = Type::getLeastUpperBound(breakValues[name], type);
     }
   }
 }
