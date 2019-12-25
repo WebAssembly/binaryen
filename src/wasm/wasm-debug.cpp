@@ -151,7 +151,8 @@ struct LineState {
           }
           default: {
             // An unknown opcode, ignore.
-            std::cout << "warning: unknown subopcopde " << opcode.SubOpcode << '\n';
+            std::cout << "warning: unknown subopcopde " << opcode.SubOpcode
+                      << '\n';
           }
         }
         break;
@@ -430,7 +431,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocationsMap& newLocations) {
   // TODO: Actually update, and remove sections we don't know how to update yet?
 
   // Convert to binary sections.
-  auto newSections = EmitDebugSections(data, false /* EmitFixups for debug_info */);
+  auto newSections =
+    EmitDebugSections(data, false /* EmitFixups for debug_info */);
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
