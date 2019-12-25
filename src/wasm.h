@@ -568,29 +568,6 @@ public:
     assert(int(_id) == int(T::SpecificId));
     return (const T*)this;
   }
-
-  bool isConstExpression() const {
-    switch (_id) {
-      case ConstId:
-      case RefNullId:
-      case RefFuncId:
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  bool canInitializeGlobal() const {
-    switch (_id) {
-      case ConstId:
-      case GlobalGetId:
-      case RefNullId:
-      case RefFuncId:
-        return true;
-      default:
-        return false;
-    }
-  }
 };
 
 const char* getExpressionName(Expression* curr);

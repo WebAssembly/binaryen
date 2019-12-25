@@ -178,7 +178,7 @@ struct Precompute
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
-    if (curr->isConstExpression() || curr->is<Nop>()) {
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
     // Until engines implement v128.const and we have SIMD-aware optimizations

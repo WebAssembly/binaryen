@@ -37,6 +37,7 @@
 #include <atomic>
 
 #include "ir/effects.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -106,7 +107,7 @@ struct ConstantGlobalApplier
 
   void visitExpression(Expression* curr) {
     if (auto* set = curr->dynCast<GlobalSet>()) {
-      if (set->value->isConstExpression()) {
+      if (Properties::isConstantExpression(set->value)) {
         currConstantGlobals[set->name] =
           getLiteralFromConstExpression(set->value);
       } else {
@@ -117,7 +118,7 @@ struct ConstantGlobalApplier
       // Check if the global is known to be constant all the time.
       if (constantGlobals->count(get->name)) {
         auto* global = getModule()->getGlobal(get->name);
-        assert(global->init->isConstExpression());
+        assert(Properties::isConstantExpression(global->init));
         replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
         replaced = true;
         return;
@@ -250,7 +251,7 @@ struct SimplifyGlobals : public Pass {
     std::map<Name, Literal> constantGlobals;
     for (auto& global : module->globals) {
       if (!global->imported()) {
-        if (global->init->isConstExpression()) {
+        if (Properties::isConstantExpression(global->init)) {
           constantGlobals[global->name] =
             getLiteralFromConstExpression(global->init);
         } else if (auto* get = global->init->dynCast<GlobalGet>()) {
@@ -270,7 +271,7 @@ struct SimplifyGlobals : public Pass {
     NameSet constantGlobals;
     for (auto& global : module->globals) {
       if (!global->mutable_ && !global->imported() &&
-          global->init->isConstExpression()) {
+          Properties::isConstantExpression(global->init)) {
         constantGlobals.insert(global->name);
       }
     }

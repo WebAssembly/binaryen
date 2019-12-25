@@ -56,6 +56,7 @@
 #define wasm_ir_flat_h
 
 #include "ir/iteration.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 
@@ -80,8 +81,8 @@ inline void verifyFlatness(Function* func) {
         verify(!curr->type.isConcrete(), "tees are not allowed, only sets");
       } else {
         for (auto* child : ChildIterator(curr)) {
-          verify(child->isConstExpression() || child->is<LocalGet>() ||
-                   child->is<Unreachable>(),
+          verify(Properties::isConstantExpression(child) ||
+                   child->is<LocalGet>() || child->is<Unreachable>(),
                  "instructions must only have constant expressions, local.get, "
                  "or unreachable as children");
         }

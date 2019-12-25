@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/flat.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -62,7 +63,7 @@ struct Flatten
     Builder builder(*getModule());
 
     // Nothing to do for constants, nop, and unreachable
-    if (curr->isConstExpression() || curr->is<Nop>() ||
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
         curr->is<Unreachable>()) {
       return;
     }

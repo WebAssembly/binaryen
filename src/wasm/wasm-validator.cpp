@@ -21,6 +21,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/features.h"
+#include "ir/global-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
@@ -2060,7 +2061,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(
       curr->init != nullptr, curr->name, "global init must be non-null");
     assert(curr->init);
-    info.shouldBeTrue(curr->init->canInitializeGlobal(),
+    info.shouldBeTrue(GlobalUtils::canInitializeGlobal(curr->init),
                       curr->name,
                       "global init must be valid");
 
