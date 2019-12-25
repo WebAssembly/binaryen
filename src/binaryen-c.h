@@ -806,7 +806,7 @@ BinaryenMemoryFill(BinaryenModuleRef module,
                    BinaryenExpressionRef size);
 BINARYEN_API BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module);
 BINARYEN_API BinaryenExpressionRef
-BinaryenRefIsNull(BinaryenModuleRef module, BinaryenExpressionRef anyref);
+BinaryenRefIsNull(BinaryenModuleRef module, BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
                                                    const char* func);
 BINARYEN_API BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
@@ -1048,7 +1048,7 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryFillGetSize(BinaryenExpressionRef expr);
 
 BINARYEN_API BinaryenExpressionRef
-BinaryenRefIsNullGetAnyref(BinaryenExpressionRef expr);
+BinaryenRefIsNullGetValue(BinaryenExpressionRef expr);
 
 BINARYEN_API const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr);
 

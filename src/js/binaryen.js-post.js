@@ -1985,8 +1985,8 @@ function wrapModule(module, self) {
     'null': function() {
       return Module['_BinaryenRefNull'](module);
     },
-    'is_null': function(anyref) {
-      return Module['_BinaryenRefIsNull'](module, anyref);
+    'is_null': function(value) {
+      return Module['_BinaryenRefIsNull'](module, value);
     },
     'func': function(func) {
       return preserveStack(function() {
@@ -2692,7 +2692,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'anyref': Module['_BinaryenRefIsNullGetAnyref'](expr)
+        'value': Module['_BinaryenRefIsNullGetValue'](expr)
       };
     case Module['RefFuncId']:
       return {

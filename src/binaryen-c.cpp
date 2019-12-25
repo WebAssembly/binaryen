@@ -1733,10 +1733,10 @@ BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module) {
 }
 
 BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
-                                        BinaryenExpressionRef anyref) {
-  auto* ret = Builder(*(Module*)module).makeRefIsNull((Expression*)anyref);
+                                        BinaryenExpressionRef value) {
+  auto* ret = Builder(*(Module*)module).makeRefIsNull((Expression*)value);
   if (tracing) {
-    traceExpression(ret, "BinaryenRefIsNull", anyref);
+    traceExpression(ret, "BinaryenRefIsNull", value);
   }
   return static_cast<Expression*>(ret);
 }
@@ -3020,10 +3020,10 @@ BinaryenExpressionRef BinaryenPushGetValue(BinaryenExpressionRef expr) {
   return static_cast<Push*>(expression)->value;
 }
 // RefIsNull
-BinaryenExpressionRef BinaryenRefIsNullGetAnyref(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenRefIsNullGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenRefIsNullGetAnyref(expressions["
-              << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenRefIsNullGetValue(expressions[" << expressions[expr]
+              << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
