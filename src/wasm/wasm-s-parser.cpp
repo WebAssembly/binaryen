@@ -1268,7 +1268,7 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   auto* ret = allocator.alloc<Load>();
   ret->isAtomic = isAtomic;
   ret->type = type;
-  ret->bytes = parseMemBytes(extra, getTypeSize(type));
+  ret->bytes = parseMemBytes(extra, type.getByteSize());
   ret->signed_ = extra[0] && extra[1] == 's';
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
@@ -1282,7 +1282,7 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   auto ret = allocator.alloc<Store>();
   ret->isAtomic = isAtomic;
   ret->valueType = type;
-  ret->bytes = parseMemBytes(extra, getTypeSize(type));
+  ret->bytes = parseMemBytes(extra, type.getByteSize());
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i + 1]);
@@ -1294,7 +1294,7 @@ Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s,
                                                            Type type) {
   const char* extra = findMemExtra(
     *s[0], 11 /* after "type.atomic.rmw" */, /* isAtomic = */ false);
-  auto bytes = parseMemBytes(extra, getTypeSize(type));
+  auto bytes = parseMemBytes(extra, type.getByteSize());
   extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
   if (!extra) {
     throw ParseException("malformed atomic rmw instruction");
