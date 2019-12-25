@@ -79,6 +79,20 @@ public:
 
   // Allows for using Types in switch statements
   constexpr operator uint32_t() const { return id; }
+
+  // Returns the type size in bytes. Only single types are supported.
+  unsigned getByteSize() const;
+
+  // Reinterpret an integer type to a float type with the same size and vice
+  // versa. Only single integer and float types are supported.
+  Type reinterpretType() const;
+
+  // Returns the feature set required to use this type.
+  FeatureSet getFeatures() const;
+
+  // Returns a type based on its size in bytes and whether it is a float type.
+  static Type getType(unsigned byteSize, bool float_);
+
   std::string toString() const;
 };
 
@@ -122,11 +136,6 @@ constexpr Type v128 = Type::v128;
 constexpr Type anyref = Type::anyref;
 constexpr Type exnref = Type::exnref;
 constexpr Type unreachable = Type::unreachable;
-
-unsigned getTypeSize(Type type);
-FeatureSet getFeatures(Type type);
-Type getType(unsigned size, bool float_);
-Type reinterpretType(Type type);
 
 } // namespace wasm
 

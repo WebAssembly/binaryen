@@ -88,7 +88,7 @@ private:
       }
       case f32:
       case f64: {
-        size = getTypeSize(value.type);
+        size = value.type.getByteSize();
         break;
       }
       case v128:     // v128 not implemented yet
