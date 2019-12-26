@@ -329,6 +329,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.add("reorder-locals");
     runner.add("vacuum");
     runner.add("remove-unused-module-elements");
+    // DCE at the end to make sure all IR nodes have valid types for conversion
+    // to JS, and not unreachable.
+    runner.add("dce");
     runner.setDebug(flags.debug);
     runner.run();
   }
