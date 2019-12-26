@@ -35,7 +35,7 @@ class Literal {
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
-    const char* func; // function name for funcref
+    Name func; // function name for funcref
   };
 
 public:
@@ -59,9 +59,7 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(const char* func) : func(func), type(Type::funcref) {
-    assert(func);
-  }
+  explicit Literal(Name func) : func(func), type(Type::funcref) {}
 
   bool isConcrete() { return type != none; }
   bool isNone() { return type == none; }
@@ -128,7 +126,7 @@ public:
     return bit_cast<double>(i64);
   }
   std::array<uint8_t, 16> getv128() const;
-  const char* getFunc() const { return func; }
+  Name getFunc() const { return func; }
 
   // careful!
   int32_t* geti32Ptr() {

@@ -68,7 +68,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       memcpy(&ret.v128, x.getv128Ptr(), 16);
       break;
     case Type::funcref:
-      ret.func = x.getFunc();
+      ret.func = x.getFunc().c_str();
       break;
     case Type::nullref:
       break;

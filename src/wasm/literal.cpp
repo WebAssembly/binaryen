@@ -153,8 +153,7 @@ bool Literal::operator==(const Literal& other) const {
     if (type == nullref && other.type == nullref) {
       return true;
     }
-    if (type == funcref && other.type == funcref &&
-        strcmp(func, other.func) == 0) {
+    if (type == funcref && other.type == funcref && func == other.func) {
       return true;
     }
     return false;
