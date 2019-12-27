@@ -1,8 +1,5 @@
 ;; reftype :: anyref | funcref | exnref | nullref
 
-;; nullref is merely an internal type and is neither expressible in the binary
-;; format nor the text format.
-
 ;; t <: anyref for all reftypes t
 ;; nullref <: anyref, nullref <: funcref and nullref <: exnref
 
