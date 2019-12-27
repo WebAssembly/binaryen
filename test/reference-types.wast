@@ -238,6 +238,7 @@
       (try (result nullref)
         (ref.null)
         (catch
+          (drop (exnref.pop))
           (ref.null)
         )
       )
