@@ -197,13 +197,13 @@ FeatureSet Type::getFeatures() const {
   FeatureSet feats = FeatureSet::MVP;
   for (Type t : expand()) {
     switch (t) {
-      case v128:
+      case Type::v128:
         feats |= FeatureSet::SIMD;
         break;
-      case anyref:
+      case Type::anyref:
         feats |= FeatureSet::ReferenceTypes;
         break;
-      case exnref:
+      case Type::exnref:
         feats |= FeatureSet::ExceptionHandling;
         break;
       default:
