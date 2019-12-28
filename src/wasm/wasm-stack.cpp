@@ -1550,7 +1550,8 @@ void BinaryInstWriter::visitSelect(Select* curr) {
   if (curr->type.isRef()) {
     o << int8_t(BinaryConsts::SelectWithType) << U32LEB(curr->type.size());
     for (size_t i = 0; i < curr->type.size(); i++) {
-      o << binaryType(curr->type != unreachable ? curr->type : none);
+      o << binaryType(curr->type != Type::unreachable ? curr->type
+                                                      : Type::none);
     }
   } else {
     o << int8_t(BinaryConsts::Select);

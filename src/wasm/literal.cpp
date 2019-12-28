@@ -150,10 +150,11 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 
 bool Literal::operator==(const Literal& other) const {
   if (type.isRef() && other.type.isRef()) {
-    if (type == nullref && other.type == nullref) {
+    if (type == Type::nullref && other.type == Type::nullref) {
       return true;
     }
-    if (type == funcref && other.type == funcref && func == other.func) {
+    if (type == Type::funcref && other.type == Type::funcref &&
+        func == other.func) {
       return true;
     }
     return false;
@@ -161,7 +162,7 @@ bool Literal::operator==(const Literal& other) const {
   if (type != other.type) {
     return false;
   }
-  if (type == none) {
+  if (type == Type::none) {
     return true;
   }
   uint8_t bits[16], other_bits[16];

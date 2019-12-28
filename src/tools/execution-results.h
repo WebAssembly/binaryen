@@ -73,7 +73,7 @@ struct ExecutionResults {
           // We cannot compare funcrefs by name because function names can
           // change (after duplicate function elimination or roundtripping)
           // while the function contents are still the same
-          if (ret.type != funcref) {
+          if (ret.type != Type::funcref) {
             results[exp->name] = ret;
             // ignore the result if we hit an unreachable and returned no value
             if (results[exp->name].type.isConcrete()) {

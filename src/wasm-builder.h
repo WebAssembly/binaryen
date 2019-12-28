@@ -613,9 +613,9 @@ public:
 
   Expression* makeConstExpression(Literal value) {
     switch (value.type) {
-      case nullref:
+      case Type::nullref:
         return makeRefNull();
-      case funcref:
+      case Type::funcref:
         if (value.getFunc()[0] != 0) {
           return makeRefFunc(value.getFunc());
         }

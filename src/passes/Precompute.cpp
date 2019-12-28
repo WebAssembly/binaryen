@@ -131,7 +131,6 @@ public:
   Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitMemoryFill(MemoryFill* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitHost(Host* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  // TODO implement exception handling
   Flow visitTry(Try* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitThrow(Throw* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
   Flow visitRethrow(Rethrow* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
@@ -215,9 +214,10 @@ struct Precompute
           }
         } else {
           Builder builder(*getModule());
-          replaceCurrent(builder.makeReturn(
-            flow.value.type != none ? builder.makeConstExpression(flow.value)
-                                    : nullptr));
+          replaceCurrent(
+            builder.makeReturn(flow.value.type != Type::none
+                                 ? builder.makeConstExpression(flow.value)
+                                 : nullptr));
         }
         return;
       }

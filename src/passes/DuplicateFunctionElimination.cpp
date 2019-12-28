@@ -46,7 +46,6 @@ struct DuplicateFunctionElimination : public Pass {
     } else {
       limit = 1;
     }
-
     while (limit > 0) {
       limit--;
       // Hash all the functions

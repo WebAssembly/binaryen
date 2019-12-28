@@ -361,7 +361,8 @@ void If::finalize(Type type_) {
 }
 
 void If::finalize() {
-  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type) : none;
+  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
+                 : Type::none;
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
@@ -851,17 +852,17 @@ void Host::finalize() {
   }
 }
 
-void RefNull::finalize() { type = nullref; }
+void RefNull::finalize() { type = Type::nullref; }
 
 void RefIsNull::finalize() {
-  if (value->type == unreachable) {
-    type = unreachable;
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
     return;
   }
-  type = i32;
+  type = Type::i32;
 }
 
-void RefFunc::finalize() { type = funcref; }
+void RefFunc::finalize() { type = Type::funcref; }
 
 void Try::finalize() {
   type = Type::getLeastUpperBound(body->type, catchBody->type);

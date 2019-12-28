@@ -61,8 +61,8 @@ public:
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func) : func(func), type(Type::funcref) {}
 
-  bool isConcrete() { return type != none; }
-  bool isNone() { return type == none; }
+  bool isConcrete() { return type != Type::none; }
+  bool isNone() { return type == Type::none; }
 
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type) {
@@ -101,7 +101,7 @@ public:
     return makeFromInt32(0, type);
   }
 
-  static Literal makeNullref() { return Literal(nullref); }
+  static Literal makeNullref() { return Literal(Type::nullref); }
   static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
 
   Literal castToF32();

@@ -158,8 +158,10 @@ unsigned Type::getByteSize() const {
       return 8;
     case Type::v128:
       return 16;
-    case Type::anyref: // anyref type is opaque
-    case Type::exnref: // exnref type is opaque
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -180,7 +182,9 @@ Type Type::reinterpretType() const {
     case Type::f64:
       return i64;
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -229,7 +233,8 @@ bool Type::Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
-  if (left.isRef() && right.isRef() && (right == anyref || left == nullref)) {
+  if (left.isRef() && right.isRef() &&
+      (right == Type::anyref || left == Type::nullref)) {
     return true;
   }
   return false;

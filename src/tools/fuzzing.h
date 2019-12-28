@@ -313,13 +313,13 @@ private:
     SmallVector<Type, 2> ret;
     ret.push_back(type); // includes itself
     switch (type) {
-      case anyref:
-        ret.push_back(funcref);
-        ret.push_back(exnref);
+      case Type::anyref:
+        ret.push_back(Type::funcref);
+        ret.push_back(Type::exnref);
         // falls through
-      case funcref:
-      case exnref:
-        ret.push_back(nullref);
+      case Type::funcref:
+      case Type::exnref:
+        ret.push_back(Type::nullref);
         break;
       default:
         break;
@@ -922,10 +922,10 @@ private:
                           &Self::makeSelect,
                           &Self::makeGlobalGet)
                      .add(FeatureSet::SIMD, &Self::makeSIMD);
-    if (type == i32 || type == i64) {
+    if (type == Type::i32 || type == Type::i64) {
       options.add(FeatureSet::Atomics, &Self::makeAtomic);
     }
-    if (type == i32) {
+    if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     }
     return (this->*pick(options))(type);
@@ -1768,7 +1768,7 @@ private:
       // 'func' is the pointer to the last created function and can be null when
       // we set up globals (before we create any functions), in which case we
       // can't use ref.func.
-      if (type == funcref && func && oneIn(2)) {
+      if (type == Type::funcref && func && oneIn(2)) {
         // First set to target to the last created function, and try to select
         // among other existing function if possible
         Function* target = func;
@@ -2605,13 +2605,13 @@ private:
   }
 
   Expression* makeRefIsNull(Type type) {
-    assert(type == i32);
+    assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes());
     Type refType;
     if (wasm.features.hasExceptionHandling()) {
-      refType = pick(funcref, anyref, nullref, exnref);
+      refType = pick(Type::funcref, Type::anyref, Type::nullref, Type::exnref);
     } else {
-      refType = pick(funcref, anyref, nullref);
+      refType = pick(Type::funcref, Type::anyref, Type::nullref);
     }
     return builder.makeRefIsNull(make(refType));
   }
@@ -2674,31 +2674,44 @@ private:
 
   std::vector<Type> getReachableTypes() {
     return items(FeatureOptions<Type>()
-                   .add(FeatureSet::MVP, i32, i64, f32, f64, none)
-                   .add(FeatureSet::SIMD, v128)
-                   .add(FeatureSet::ReferenceTypes, funcref, anyref, nullref)
+                   .add(FeatureSet::MVP,
+                        Type::i32,
+                        Type::i64,
+                        Type::f32,
+                        Type::f64,
+                        Type::none)
+                   .add(FeatureSet::SIMD, Type::v128)
+                   .add(FeatureSet::ReferenceTypes,
+                        Type::funcref,
+                        Type::anyref,
+                        Type::nullref)
                    .add((FeatureSet::Feature)(FeatureSet::ReferenceTypes |
                                               FeatureSet::ExceptionHandling),
-                        exnref));
+                        Type::exnref));
   }
   Type getReachableType() { return pick(getReachableTypes()); }
 
   std::vector<Type> getConcreteTypes() {
-    return items(FeatureOptions<Type>()
-                   .add(FeatureSet::MVP, i32, i64, f32, f64)
-                   .add(FeatureSet::SIMD, v128)
-                   .add(FeatureSet::ReferenceTypes, funcref, anyref, nullref)
-                   .add((FeatureSet::Feature)(FeatureSet::ReferenceTypes |
-                                              FeatureSet::ExceptionHandling),
-                        exnref));
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+        .add(FeatureSet::SIMD, Type::v128)
+        .add(FeatureSet::ReferenceTypes,
+             Type::funcref,
+             Type::anyref,
+             Type::nullref)
+        .add((FeatureSet::Feature)(FeatureSet::ReferenceTypes |
+                                   FeatureSet::ExceptionHandling),
+             Type::exnref));
   }
   Type getConcreteType() { return pick(getConcreteTypes()); }
 
   // Get types that can be stored in memory
   std::vector<Type> getStorableTypes() {
-    return items(FeatureOptions<Type>()
-                   .add(FeatureSet::MVP, i32, i64, f32, f64)
-                   .add(FeatureSet::SIMD, v128));
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+        .add(FeatureSet::SIMD, Type::v128));
   }
   Type getStorableType() { return pick(getStorableTypes()); }
 
@@ -2706,13 +2719,14 @@ private:
   // removed during optimization
   // - there's no point in logging anyref because it is opaque
   std::vector<Type> getLoggableTypes() {
-    return items(FeatureOptions<Type>()
-                   .add(FeatureSet::MVP, i32, i64, f32, f64)
-                   .add(FeatureSet::SIMD, v128)
-                   .add(FeatureSet::ReferenceTypes, nullref)
-                   .add((FeatureSet::Feature)(FeatureSet::ReferenceTypes |
-                                              FeatureSet::ExceptionHandling),
-                        exnref));
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+        .add(FeatureSet::SIMD, Type::v128)
+        .add(FeatureSet::ReferenceTypes, Type::nullref)
+        .add((FeatureSet::Feature)(FeatureSet::ReferenceTypes |
+                                   FeatureSet::ExceptionHandling),
+             Type::exnref));
   }
   Type getLoggableType() { return pick(getLoggableTypes()); }
 

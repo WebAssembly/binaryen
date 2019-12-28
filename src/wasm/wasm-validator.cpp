@@ -202,7 +202,7 @@ struct ValidationInfo {
                                     Expression* curr,
                                     const char* text,
                                     Function* func = nullptr) {
-    if (left == unreachable) {
+    if (left == Type::unreachable) {
       return true;
     }
     return shouldBeSubType(left, right, curr, text, func);
@@ -1678,7 +1678,7 @@ void FunctionValidator::visitDrop(Drop* curr) {
 }
 
 void FunctionValidator::visitReturn(Return* curr) {
-  returnTypes.insert(curr->value ? curr->value->type : none);
+  returnTypes.insert(curr->value ? curr->value->type : Type::none);
 }
 
 void FunctionValidator::visitHost(Host* curr) {
@@ -1702,7 +1702,8 @@ void FunctionValidator::visitHost(Host* curr) {
 }
 
 void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
-  shouldBeTrue(curr->value->type == unreachable || curr->value->type.isRef(),
+  shouldBeTrue(curr->value->type == Type::unreachable ||
+                 curr->value->type.isRef(),
                curr->value,
                "ref.is_null's argument should be a reference type");
 }
@@ -1765,7 +1766,7 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
   shouldBeEqual(
     curr->type, unreachable, curr, "rethrow's type must be unreachable");
   shouldBeSubType(curr->exnref->type,
-                  exnref,
+                  Type::exnref,
                   curr->exnref,
                   "rethrow's argument must be exnref type or its subtype");
 }
@@ -1779,7 +1780,7 @@ void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
   noteBreak(curr->name, curr->sent, curr);
   shouldBeSubTypeOrUnreachable(
     curr->exnref->type,
-    exnref,
+    Type::exnref,
     curr,
     "br_on_exn's argument must be unreachable or exnref type or its subtype");
   if (curr->exnref->type == unreachable) {
@@ -1932,7 +1933,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         // The block has an added type, not derived from the ast itself, so it
         // is ok for it to be either i32 or unreachable.
         if (!Type::isSubType(newType, oldType) &&
-            !(oldType.isConcrete() && newType == unreachable)) {
+            !(oldType.isConcrete() && newType == Type::unreachable)) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr
              << "\n(marked as " << oldType << ", should be " << newType

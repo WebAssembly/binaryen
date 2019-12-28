@@ -106,7 +106,7 @@ public:
 
   // Computes the least upper bound for all types in the given list.
   template<typename T> static Type mergeTypes(const T& types) {
-    Type type = unreachable;
+    Type type = Type::unreachable;
     for (auto other : types) {
       type = Type::getLeastUpperBound(type, other);
     }
