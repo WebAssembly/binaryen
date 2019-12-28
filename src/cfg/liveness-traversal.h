@@ -181,8 +181,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
       return true;
     }
     std::cerr << "warning: too many locals (" << numLocals
-              << ") to run liveness analysis in "
-              << this->getFunction()->name << '\n';
+              << ") to run liveness analysis in " << this->getFunction()->name
+              << '\n';
     return false;
   }
 
