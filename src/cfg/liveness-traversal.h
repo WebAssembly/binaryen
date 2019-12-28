@@ -171,10 +171,26 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     return nullptr;
   }
 
+  // If there are too many locals, we cannot run currently as
+  // numLocals * numLocals might overflow. We may want to add an option for
+  // a sparse matrix at some point TODO
+  bool canRun(Function* func) {
+    Index numLocals = func->getNumLocals();
+    if (uint64_t(numLocals) * uint64_t(numLocals) <=
+        std::numeric_limits<Index>::max()) {
+      return true;
+    }
+    std::cerr << "warning: too many locals (" << numLocals
+              << ") to run liveness analysis in "
+              << this->getFunction()->name << '\n';
+    return false;
+  }
+
   // main entry point
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
+    assert(canRun(func));
     copies.resize(numLocals * numLocals);
     std::fill(copies.begin(), copies.end(), 0);
     totalCopies.resize(numLocals);
