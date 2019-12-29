@@ -101,7 +101,7 @@ public:
     return makeFromInt32(0, type);
   }
 
-  static Literal makeNullref() { return Literal(Type::nullref); }
+  static Literal makeNullref() { return Literal(Type(Type::nullref)); }
   static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
 
   Literal castToF32();
