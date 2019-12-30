@@ -169,7 +169,7 @@ unsigned Type::getByteSize() const {
   WASM_UNREACHABLE("invalid type");
 }
 
-Type Type::reinterpretType() const {
+Type Type::reinterpret() const {
   assert(isSingle() && "reinterpretType only works with single types");
   Type singleType = *expand().begin();
   switch (singleType) {
@@ -213,7 +213,7 @@ FeatureSet Type::getFeatures() const {
   return feats;
 }
 
-Type Type::getType(unsigned byteSize, bool float_) {
+Type Type::get(unsigned byteSize, bool float_) {
   if (byteSize < 4) {
     return Type::i32;
   }

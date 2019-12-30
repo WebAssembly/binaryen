@@ -2008,7 +2008,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->offset = 0;
       ret->align = view.bytes;
       ret->ptr = processUnshifted(ast[2], view.bytes);
-      ret->type = Type::getType(view.bytes, !view.integer);
+      ret->type = Type::get(view.bytes, !view.integer);
       return ret;
     } else if (what == UNARY_PREFIX) {
       if (ast[1] == PLUS) {
