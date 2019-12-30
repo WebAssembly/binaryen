@@ -112,8 +112,7 @@ struct FunctionImportsToIndirectCalls
 
       if (!global) {
         // Ensure that the fp$ accessor is in the module, if not add it in.
-        auto fpAccessor = ensureFunctionImport(
-          module, accessor, Signature(Type::none, Type::i32));
+        ensureFunctionImport(module, accessor, Signature(Type::none, Type::i32));
 
         module->addGlobal(builder.makeGlobal(
           gpAddr, i32, LiteralUtils::makeZero(i32, *module), Builder::Mutable));
