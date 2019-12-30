@@ -693,7 +693,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
 }
 
 void FunctionValidator::visitConst(Const* curr) {
-  shouldBeTrue(getFeatures(curr->type) <= getModule()->features,
+  shouldBeTrue(curr->type.getFeatures() <= getModule()->features,
                curr,
                "all used features should be allowed");
 }
@@ -1763,15 +1763,15 @@ void FunctionValidator::visitFunction(Function* curr) {
                "Multivalue functions not allowed yet");
   FeatureSet features;
   for (auto type : curr->sig.params.expand()) {
-    features |= getFeatures(type);
+    features |= type.getFeatures();
     shouldBeTrue(type.isConcrete(), curr, "params must be concretely typed");
   }
   for (auto type : curr->sig.results.expand()) {
-    features |= getFeatures(type);
+    features |= type.getFeatures();
     shouldBeTrue(type.isConcrete(), curr, "results must be concretely typed");
   }
   for (auto type : curr->vars) {
-    features |= getFeatures(type);
+    features |= type.getFeatures();
     shouldBeTrue(type.isConcrete(), curr, "vars must be concretely typed");
   }
   shouldBeTrue(features <= getModule()->features,
@@ -2005,7 +2005,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
-    info.shouldBeTrue(getFeatures(curr->type) <= module.features,
+    info.shouldBeTrue(curr->type.getFeatures() <= module.features,
                       curr->name,
                       "all used types should be allowed");
     info.shouldBeTrue(
