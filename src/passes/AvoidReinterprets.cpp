@@ -151,8 +151,8 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
                 auto& info = iter->second;
                 // A reinterpret of a get of a load - use the new local.
                 Builder builder(*module);
-                replaceCurrent(builder.makeLocalGet(
-                  info.reinterpretedLocal, load->type.reinterpret()));
+                replaceCurrent(builder.makeLocalGet(info.reinterpretedLocal,
+                                                    load->type.reinterpret()));
               }
             }
           }
