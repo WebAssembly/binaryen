@@ -85,13 +85,14 @@ public:
 
   // Reinterpret an integer type to a float type with the same size and vice
   // versa. Only single integer and float types are supported.
-  Type reinterpretType() const;
+  Type reinterpret() const;
 
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
 
-  // Returns a type based on its size in bytes and whether it is a float type.
-  static Type getType(unsigned byteSize, bool float_);
+  // Returns a number type based on its size in bytes and whether it is a float
+  // type.
+  static Type get(unsigned byteSize, bool float_);
 
   std::string toString() const;
 };

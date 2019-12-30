@@ -117,7 +117,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
         // We should use another load here, to avoid reinterprets.
         info.ptrLocal = Builder::addVar(func, i32);
         info.reinterpretedLocal =
-          Builder::addVar(func, load->type.reinterpretType());
+          Builder::addVar(func, load->type.reinterpret());
       } else {
         unoptimizables.insert(load);
       }
@@ -152,7 +152,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
                 // A reinterpret of a get of a load - use the new local.
                 Builder builder(*module);
                 replaceCurrent(builder.makeLocalGet(
-                  info.reinterpretedLocal, load->type.reinterpretType()));
+                  info.reinterpretedLocal, load->type.reinterpret()));
               }
             }
           }
@@ -186,7 +186,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
                                 load->offset,
                                 load->align,
                                 ptr,
-                                load->type.reinterpretType());
+                                load->type.reinterpret());
       }
     } finalOptimizer(infos, localGraph, getModule());
 
