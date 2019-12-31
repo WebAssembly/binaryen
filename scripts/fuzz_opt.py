@@ -34,7 +34,6 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # parameters
 
 # feature options that are always passed to the tools.
-# * multivalue: https://github.com/WebAssembly/binaryen/issues/2770
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
@@ -402,7 +401,7 @@ class CompareVMs(TestCaseHandler):
                 # large and it isn't what we are focused on testing here
                 with no_pass_debug():
                     run(compile_cmd)
-                return run_vm(['d8', 'a.out.js'])
+                return run_vm([shared.V8, 'a.out.js'])
 
             def can_run(self, wasm):
                 # prefer not to run if the wasm is very large, as it can OOM
@@ -578,9 +577,10 @@ testcase_handlers = [
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
-def test_one(random_input, opts, given_wasm):
+def test_one(random_input, given_wasm):
     randomize_pass_debug()
     randomize_feature_opts()
+    opts = randomize_opt_flags()
     randomize_fuzz_settings()
     print()
 
@@ -655,9 +655,9 @@ def write_commands(commands, filename):
 
 # main
 
-opt_choices = [
+basic_opt_choices = [
     [],
-    ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
+    ['-O1'], ['-O2'], ['-O3'], ['-Os'], ['-Oz'],
     ["--coalesce-locals"],
     # XXX slow, non-default ["--coalesce-locals-learning"],
     ["--code-pushing"],
@@ -667,13 +667,10 @@ opt_choices = [
     ["--dae-optimizing"],
     ["--dce"],
     ["--directize"],
-    ["--flatten", "--dfo"],
     ["--duplicate-function-elimination"],
-    ["--flatten"],
     # ["--fpcast-emu"], # removes indirect call failures as it makes them go through regardless of type
     ["--inlining"],
     ["--inlining-optimizing"],
-    ["--flatten", "--local-cse"],
     ["--generate-stack-ir"],
     ["--licm"],
     ["--memory-packing"],
@@ -692,7 +689,6 @@ opt_choices = [
     ["--remove-unused-names"],
     ["--reorder-functions"],
     ["--reorder-locals"],
-    ["--flatten", "--rereloop"],
     ["--roundtrip"],
     ["--rse"],
     ["--simplify-locals"],
@@ -704,10 +700,25 @@ opt_choices = [
     ["--vacuum"],
 ]
 
+# Exception handling does not run with these options. We split these from
+# basic_opt_choices to handle EH fuzzing.
+advanced_opt_choices = [
+    ['-O4'], # Contains --flatten
+    ["--flatten", "--dfo"],
+    ["--flatten"],
+    ["--flatten", "--local-cse"],
+    ["--flatten", "--rereloop"],
+]
+
 
 def randomize_opt_flags():
     flag_groups = []
     has_flatten = False
+    # Exception handling does not support some passes yet.
+    if '--disable-exception-handling' in FEATURE_OPTS:
+      opt_choices = basic_opt_choices + advanced_opt_choices
+    else:
+      opt_choices = basic_opt_choices
     # core opts
     while 1:
         choice = random.choice(opt_choices)
@@ -732,6 +743,7 @@ def randomize_opt_flags():
         if random.random() < 0.5:
             ret += ['--shrink-level=' + str(random.randint(0, 3))]
     assert ret.count('--flatten') <= 1
+    print('randomized opts:', ' '.join(ret))
     return ret
 
 
@@ -785,10 +797,8 @@ if __name__ == '__main__':
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size
-        opts = randomize_opt_flags()
-        print('randomized opts:', ' '.join(opts))
         try:
-            total_wasm_size += test_one(raw_input_data, opts, given_wasm)
+            total_wasm_size += test_one(raw_input_data, given_wasm)
         except KeyboardInterrupt:
             print('(stopping by user request)')
             break
@@ -819,6 +829,13 @@ if __name__ == '__main__':
                 # which we use internally)
                 original_wasm = os.path.abspath('original.wasm')
                 shutil.copyfile('a.wasm', original_wasm)
+                # Exception handling does not support flatten and dependent
+                # passes yet. When EH is enabled, don't use those passes in
+                # wasm-reduce.
+                if '--disable-exception-handling' in FEATURE_OPTS:
+                  disable_flatten_opt = ''
+                else:
+                  disable_flatten_opt = ' --disable-flatten'
                 # write out a useful reduce.sh
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
@@ -878,7 +895,7 @@ You can reduce the testcase by running this now:
 vvvv
 
 
-%(wasm_reduce)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
+%(wasm_reduce)s%(disable_flatten_opt)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
 
 ^^^^
@@ -899,6 +916,7 @@ After reduction, the reduced file will be in %(working_wasm)s
                        'temp_wasm': os.path.abspath('t.wasm'),
                        'working_wasm': os.path.abspath('w.wasm'),
                        'wasm_reduce': in_bin('wasm-reduce'),
+                       'disable_flatten_opt': disable_flatten_opt,
                        'reduce_sh': os.path.abspath('reduce.sh')})
                 break
         if given_seed is not None:

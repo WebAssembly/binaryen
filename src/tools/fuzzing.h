@@ -25,8 +25,6 @@ high chance for set at start of loop
     high chance of a tee in that case => loop var
 */
 
-// TODO Generate exception handling instructions
-
 #include "ir/memory-utils.h"
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
@@ -102,7 +100,10 @@ public:
           options.passes.push_back("duplicate-function-elimination");
           break;
         case 10:
-          options.passes.push_back("flatten");
+          // EH does not support flatten and flatten-requiring passes yet
+          if (!wasm.features.hasExceptionHandling()) {
+            options.passes.push_back("flatten");
+          }
           break;
         case 11:
           options.passes.push_back("inlining");
@@ -147,8 +148,11 @@ public:
           options.passes.push_back("reorder-locals");
           break;
         case 25: {
-          options.passes.push_back("flatten");
-          options.passes.push_back("rereloop");
+          // EH does not support flatten and flatten-requiring passes yet
+          if (!wasm.features.hasExceptionHandling()) {
+            options.passes.push_back("flatten");
+            options.passes.push_back("rereloop");
+          }
           break;
         }
         case 26:
@@ -601,6 +605,11 @@ private:
       std::map<Type, std::vector<Expression*>> exprsByType;
 
       void visitExpression(Expression* curr) {
+        // If this expression can possibly contain a dangling pop, don't
+        // consider this as a candidate for recombine
+        if (containsChild<Pop>(curr, 2)) {
+          return;
+        }
         exprsByType[curr->type].push_back(curr);
       }
     };
@@ -642,6 +651,11 @@ private:
         : wasm(wasm), scanner(scanner), parent(parent) {}
 
       void visitExpression(Expression* curr) {
+        // If this expression can possibly contain a dangling pop, don't
+        // consider this as a candidate for the replacement
+        if (containsChild<Pop>(curr, 2)) {
+          return;
+        }
         if (parent.oneIn(10)) {
           // Replace it!
           auto& candidates = scanner.exprsByType[curr->type];
@@ -669,6 +683,11 @@ private:
         : wasm(wasm), parent(parent) {}
 
       void visitExpression(Expression* curr) {
+        // If this expression can possibly contain a dangling pop, don't
+        // consider this as a candidate for the mutation
+        if (containsChild<Pop>(curr, 2)) {
+          return;
+        }
         if (parent.oneIn(10)) {
           // Replace it!
           // (This is not always valid due to nesting of labels, but
@@ -725,6 +744,8 @@ private:
 
       void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
 
+      void visitBrOnExn(BrOnExn* curr) { replaceIfInvalid(curr->name); }
+
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
           // There is no valid parent, replace with something trivially safe.
@@ -752,8 +773,8 @@ private:
               return true;
             }
           } else {
-            // an if, ignorable
-            assert(curr->is<If>());
+            // an if or try, ignorable
+            assert(curr->is<If>() || curr->is<Try>());
           }
           if (i == 0) {
             return false;
@@ -864,13 +885,16 @@ private:
                 WeightedOption{&Self::makeGlobalGet, Important},
                 WeightedOption{&Self::makeConst, Important});
     if (canMakeControlFlow) {
-      options.add(FeatureSet::MVP,
-                  WeightedOption{&Self::makeBlock, Important},
-                  WeightedOption{&Self::makeIf, Important},
-                  WeightedOption{&Self::makeLoop, Important},
-                  WeightedOption{&Self::makeBreak, Important},
-                  &Self::makeCall,
-                  &Self::makeCallIndirect);
+      options
+        .add(FeatureSet::MVP,
+             WeightedOption{&Self::makeBlock, Important},
+             WeightedOption{&Self::makeIf, Important},
+             WeightedOption{&Self::makeLoop, Important},
+             WeightedOption{&Self::makeBreak, Important},
+             &Self::makeCall,
+             &Self::makeCallIndirect)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             &Self::makeTry);
     }
     if (type.isSingle()) {
       options
@@ -889,6 +913,10 @@ private:
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+    }
+    if (type == Type::exnref) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+                  &Self::makeBrOnExn);
     }
     if (type.isMulti()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -922,7 +950,9 @@ private:
            &Self::makeNop,
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
-      .add(FeatureSet::Atomics, &Self::makeAtomic);
+      .add(FeatureSet::Atomics, &Self::makeAtomic)
+      .add((FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling),
+           &Self::makeTry);
     return (this->*pick(options))(Type::none);
   }
 
@@ -945,8 +975,28 @@ private:
                 &Self::makeSelect,
                 &Self::makeSwitch,
                 &Self::makeDrop,
-                &Self::makeReturn);
+                &Self::makeReturn)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             &Self::makeThrow,
+             &Self::makeRethrow);
     return (this->*pick(options))(Type::unreachable);
+  }
+
+  Index getNumBlockInstructions() {
+    Index num = upToSquared(BLOCK_FACTOR - 1); // we add another later
+    if (nesting >= NESTING_LIMIT / 2) {
+      // smaller blocks past the limit
+      num /= 2;
+      if (nesting >= NESTING_LIMIT && oneIn(2)) {
+        // smaller blocks past the limit
+        num /= 2;
+      }
+    }
+    // not likely to have a block of size 1
+    if (num == 0 && !oneIn(10)) {
+      num++;
+    }
+    return num;
   }
 
   // make something with no chance of infinite recursion
@@ -975,19 +1025,7 @@ private:
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
     breakableStack.push_back(ret);
-    Index num = upToSquared(BLOCK_FACTOR - 1); // we add another later
-    if (nesting >= NESTING_LIMIT / 2) {
-      // smaller blocks past the limit
-      num /= 2;
-      if (nesting >= NESTING_LIMIT && oneIn(2)) {
-        // smaller blocks past the limit
-        num /= 2;
-      }
-    }
-    // not likely to have a block of size 1
-    if (num == 0 && !oneIn(10)) {
-      num++;
-    }
+    Index num = getNumBlockInstructions();
     while (num > 0 && !finishedInput) {
       ret->list.push_back(make(Type::none));
       num--;
@@ -1086,29 +1124,21 @@ private:
       auto* target = pick(breakableStack);
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
+      if (valueType != type) {
+        // we need to break to a proper place
+        continue;
+      }
       if (type.isConcrete()) {
         // we are flowing out a value
-        if (valueType != type) {
-          // we need to break to a proper place
-          continue;
-        }
         auto* ret = builder.makeBreak(name, make(type), condition);
         hangStack.pop_back();
         return ret;
       } else if (type == Type::none) {
-        if (valueType != Type::none) {
-          // we need to break to a proper place
-          continue;
-        }
         auto* ret = builder.makeBreak(name, nullptr, condition);
         hangStack.pop_back();
         return ret;
       } else {
         assert(type == Type::unreachable);
-        if (valueType != Type::none) {
-          // we need to break to a proper place
-          continue;
-        }
         // we are about to make an *un*conditional break. if it is
         // to a loop, we prefer there to be a condition along the
         // way, to reduce the chance of infinite looping
@@ -2634,6 +2664,150 @@ private:
     Expression* value = makePointer();
     Expression* size = make(Type::i32);
     return builder.makeMemoryFill(dest, value, size);
+  }
+
+  Expression* makeTry(Type type) {
+    hangStack.push_back(nullptr);
+    auto* ret = builder.makeTry(makeMaybeBlock(type), makeCatch(type), type);
+    hangStack.pop_back();
+    return ret;
+  }
+
+  Expression* makeCatch(Type type) {
+    // exnref.pop is a pseudo instruction that should follow 'catch'
+    Expression* pop = builder.makePop(Type::exnref);
+
+    // With a small probability, just rethrow it and get done
+    if (oneIn(10)) {
+      return builder.makeRethrow(pop);
+    }
+
+    // Make a block. Note that we don't insert this break in breakableStack:
+    // Because 'exnref.pop' should follow 'catch' and we don't support blocks
+    // taking values yet, if there are instructions that break to this block,
+    // this block cannot be removed when writing binary, which will be a
+    // problem. We also don't make a label for this block.
+    auto* ret = builder.makeBlock();
+    ret->type = type;
+
+    // Now that we have to consume exnref.pop. We try one of these four things:
+    // 1. Drop it
+    // 2. Set to a local
+    // 3. Set to a global
+    // 4. Use it as an argument to a function
+    Expression* firstExpr = nullptr;
+    switch (upTo(4)) {
+      case 0:
+        firstExpr = builder.makeDrop(pop);
+      case 1: {
+        auto& locals = typeLocals[Type::exnref];
+        if (locals.empty()) {
+          firstExpr = builder.makeDrop(pop);
+        } else {
+          firstExpr = builder.makeLocalSet(pick(locals), pop);
+        }
+      }
+      case 2: {
+        auto& globals = globalsByType[Type::exnref];
+        if (globals.empty()) {
+          firstExpr = builder.makeDrop(pop);
+        } else {
+          firstExpr = builder.makeGlobalSet(pick(globals), pop);
+        }
+      }
+      case 3: {
+        if (wasm.functions.empty()) {
+          firstExpr = builder.makeDrop(pop);
+        } else {
+          int tries = TRIES;
+          Function* target = nullptr;
+          while (tries-- > 0) {
+            target = pick(wasm.functions).get();
+            if (target->sig.results != Type::none ||
+                target->sig.params.size() == 0 ||
+                *target->sig.params.expand().begin() != Type::exnref) {
+              continue;
+            }
+            // we found a function that satisfies all conditions!
+            std::vector<Expression*> args;
+            args.push_back(pop);
+            for (unsigned i = 1; i < target->sig.params.size(); i++) {
+              args.push_back(make(target->sig.params.expand()[i]));
+            }
+            firstExpr = builder.makeCall(target->name, args, type, false);
+          }
+          // we failed to find something
+          firstExpr = builder.makeDrop(pop);
+        }
+      }
+    }
+
+    // Populate the rest of the block.
+    ret->list.push_back(firstExpr);
+    Index num = getNumBlockInstructions();
+    while (num > 0 && !finishedInput) {
+      ret->list.push_back(make(Type::none));
+      num--;
+    }
+
+    // Give a chance to make the final element a rethrow, instead of concrete -
+    // a common pattern
+    if (!finishedInput && type.isConcrete() && oneIn(2)) {
+      ret->list.push_back(makeRethrow(Type::unreachable));
+    } else {
+      ret->list.push_back(make(type));
+    }
+    if (type.isConcrete()) {
+      ret->finalize(type);
+    } else {
+      ret->finalize();
+    }
+    assert(ret->type == type);
+    return ret;
+  }
+
+  Expression* makeThrow(Type type) {
+    assert(type == Type::unreachable);
+    if (wasm.events.empty()) {
+      return makeTrivial(Type::unreachable);
+    }
+    Event* event = pick(wasm.events).get();
+    std::vector<Expression*> args;
+    for (auto argType : event->sig.params.expand()) {
+      args.push_back(make(argType));
+    }
+    return builder.makeThrow(event, args);
+  }
+
+  Expression* makeRethrow(Type type) {
+    assert(type == Type::unreachable);
+    return builder.makeRethrow(make(Type::exnref));
+  }
+
+  Expression* makeBrOnExn(Type type) {
+    assert(type == Type::exnref);
+    if (breakableStack.empty() || wasm.events.empty()) {
+      return makeTrivial(Type::exnref);
+    }
+    hangStack.push_back(nullptr);
+
+    // we need to find a proper target to break to; try a few times
+    int tries = TRIES;
+    while (tries-- > 0) {
+      Event* event = pick(wasm.events).get();
+      Expression* target = pick(breakableStack);
+      if (getTargetType(target) != event->sig.params) {
+        // we need to break to a proper place
+        continue;
+      }
+      auto* ret =
+        builder.makeBrOnExn(getTargetName(target), event, make(Type::exnref));
+      hangStack.pop_back();
+      return ret;
+    }
+    // we failed to find something
+    hangStack.pop_back();
+    return makeTrivial(Type::exnref);
   }
 
   // special makers

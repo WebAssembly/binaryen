@@ -225,7 +225,7 @@ static std::unordered_set<Name> functionsWeTriedToRemove;
 struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
-  bool binary, deNan, verbose, debugInfo;
+  bool binary, deNan, verbose, debugInfo, disableFlatten;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
@@ -235,9 +235,11 @@ struct Reducer
           bool binary,
           bool deNan,
           bool verbose,
-          bool debugInfo)
+          bool debugInfo,
+          bool disableFlatten)
     : command(command), test(test), working(working), binary(binary),
-      deNan(deNan), verbose(verbose), debugInfo(debugInfo) {}
+      deNan(deNan), verbose(verbose), debugInfo(debugInfo),
+      disableFlatten(disableFlatten) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -249,10 +251,6 @@ struct Reducer
       "-O1",
       "-O2",
       "-O3",
-      "-O4",
-      "--flatten -Os",
-      "--flatten -O3",
-      "--flatten --local-cse -Os",
       "--coalesce-locals --vacuum",
       "--dce",
       "--duplicate-function-elimination",
@@ -273,6 +271,15 @@ struct Reducer
       "--simplify-locals --vacuum",
       "--strip",
       "--vacuum"};
+    // Exception handling does not run with these options. We enable these
+    // options only when EH is disabled.
+    if (!disableFlatten) {
+      passes.insert(passes.end(),
+                    {"-O4", // includes --flatten
+                     "--flatten -Os",
+                     "--flatten -O3",
+                     "--flatten --local-cse -Os"});
+    }
     auto oldSize = file_size(working);
     bool more = true;
     while (more) {
@@ -1053,7 +1060,7 @@ int main(int argc, const char* argv[]) {
   // By default, look for binaries alongside our own binary.
   std::string binDir = Path::getDirName(argv[0]);
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
-       force = false;
+       force = false, disableFlatten = false;
   Options options("wasm-reduce",
                   "Reduce a wasm file to a smaller one that has the same "
                   "behavior on a given command");
@@ -1123,6 +1130,14 @@ int main(int argc, const char* argv[]) {
            timeout = atoi(argument.c_str());
            std::cout << "|applying timeout: " << timeout << "\n";
          })
+    .add(
+      "--disable-flatten",
+      "",
+      "Do not use flatten and dependent passes when reducing. Can be used "
+      "when exception handling feature, which does not support flatten yet, "
+      "is enabled",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { disableFlatten = true; })
     .add_positional(
       "INFILE",
       Options::Arguments::One,
@@ -1220,7 +1235,14 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, binary, deNan, verbose, debugInfo);
+    Reducer reducer(command,
+                    test,
+                    working,
+                    binary,
+                    deNan,
+                    verbose,
+                    debugInfo,
+                    disableFlatten);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed

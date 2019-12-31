@@ -90,6 +90,8 @@ struct ExecutionResults {
       }
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)
+    } catch (const WasmException&) {
+      // should not crash. thrown exception info will be printed later
     }
   }
 
