@@ -453,37 +453,37 @@ BinaryenExternalKind BinaryenExternalEvent(void) {
 // Features
 
 BinaryenFeatures BinaryenFeatureMVP(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::MVP);
+  return static_cast<BinaryenFeatures>(FeatureSet::MVP);
 }
 BinaryenFeatures BinaryenFeatureAtomics(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::Atomics);
+  return static_cast<BinaryenFeatures>(FeatureSet::Atomics);
 }
 BinaryenFeatures BinaryenFeatureBulkMemory(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::BulkMemory);
+  return static_cast<BinaryenFeatures>(FeatureSet::BulkMemory);
 }
 BinaryenFeatures BinaryenFeatureMutableGlobals(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::MutableGlobals);
+  return static_cast<BinaryenFeatures>(FeatureSet::MutableGlobals);
 }
 BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::TruncSat);
+  return static_cast<BinaryenFeatures>(FeatureSet::TruncSat);
 }
 BinaryenFeatures BinaryenFeatureSignExt(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::SignExt);
+  return static_cast<BinaryenFeatures>(FeatureSet::SignExt);
 }
 BinaryenFeatures BinaryenFeatureSIMD128(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::SIMD);
+  return static_cast<BinaryenFeatures>(FeatureSet::SIMD);
 }
 BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::ExceptionHandling);
+  return static_cast<BinaryenFeatures>(FeatureSet::ExceptionHandling);
 }
 BinaryenFeatures BinaryenFeatureTailCall(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::TailCall);
+  return static_cast<BinaryenFeatures>(FeatureSet::TailCall);
 }
 BinaryenFeatures BinaryenFeatureReferenceTypes(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::ReferenceTypes);
+  return static_cast<BinaryenFeatures>(FeatureSet::ReferenceTypes);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::Feature::All);
+  return static_cast<BinaryenFeatures>(FeatureSet::All);
 }
 
 // Modules

@@ -2673,21 +2673,21 @@ private:
   // special getters
 
   std::vector<Type> getReachableTypes() {
-    return items(FeatureOptions<Type>()
-                   .add(FeatureSet::MVP,
-                        Type::i32,
-                        Type::i64,
-                        Type::f32,
-                        Type::f64,
-                        Type::none)
-                   .add(FeatureSet::SIMD, Type::v128)
-                   .add(FeatureSet::ReferenceTypes,
-                        Type::funcref,
-                        Type::anyref,
-                        Type::nullref)
-                   .add((FeatureSet::Feature)(FeatureSet::ReferenceTypes |
-                                              FeatureSet::ExceptionHandling),
-                        Type::exnref));
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP,
+             Type::i32,
+             Type::i64,
+             Type::f32,
+             Type::f64,
+             Type::none)
+        .add(FeatureSet::SIMD, Type::v128)
+        .add(FeatureSet::ReferenceTypes,
+             Type::funcref,
+             Type::anyref,
+             Type::nullref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             Type::exnref));
   }
   Type getReachableType() { return pick(getReachableTypes()); }
 
@@ -2700,8 +2700,7 @@ private:
              Type::funcref,
              Type::anyref,
              Type::nullref)
-        .add((FeatureSet::Feature)(FeatureSet::ReferenceTypes |
-                                   FeatureSet::ExceptionHandling),
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
   Type getConcreteType() { return pick(getConcreteTypes()); }
@@ -2724,8 +2723,7 @@ private:
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes, Type::nullref)
-        .add((FeatureSet::Feature)(FeatureSet::ReferenceTypes |
-                                   FeatureSet::ExceptionHandling),
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
              Type::exnref));
   }
   Type getLoggableType() { return pick(getLoggableTypes()); }
@@ -2812,14 +2810,14 @@ private:
 
   template<typename T> struct FeatureOptions {
     template<typename... Ts>
-    FeatureOptions<T>& add(FeatureSet::Feature feature, T option, Ts... rest) {
+    FeatureOptions<T>& add(FeatureSet feature, T option, Ts... rest) {
       options[feature].push_back(option);
       return add(feature, rest...);
     }
 
-    FeatureOptions<T>& add(FeatureSet::Feature feature) { return *this; }
+    FeatureOptions<T>& add(FeatureSet feature) { return *this; }
 
-    std::map<FeatureSet::Feature, std::vector<T>> options;
+    std::map<FeatureSet, std::vector<T>> options;
   };
 
   template<typename T> std::vector<T> items(FeatureOptions<T>& picker) {
