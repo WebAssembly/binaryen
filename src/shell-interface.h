@@ -114,10 +114,12 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             break;
           case v128:
             assert(false && "v128 not implemented yet");
+          case funcref:
           case anyref:
-            assert(false && "anyref not implemented yet");
+          case nullref:
           case exnref:
-            assert(false && "exnref not implemented yet");
+            globals[import->name] = Literal::makeNullref();
+            break;
           case none:
           case unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -163,7 +165,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       trap("callIndirect: bad # of arguments");
     }
     for (size_t i = 0; i < params.size(); i++) {
-      if (params[i] != arguments[i].type) {
+      if (!Type::isSubType(arguments[i].type, params[i])) {
         trap("callIndirect: bad argument type");
       }
     }

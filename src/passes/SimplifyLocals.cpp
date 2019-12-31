@@ -546,7 +546,6 @@ struct SimplifyLocals
     auto* blockLocalSetPointer = sinkables.at(sharedIndex).item;
     auto* value = (*blockLocalSetPointer)->template cast<LocalSet>()->value;
     block->list[block->list.size() - 1] = value;
-    block->type = value->type;
     ExpressionManipulator::nop(*blockLocalSetPointer);
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
@@ -577,6 +576,7 @@ struct SimplifyLocals
     this->replaceCurrent(newLocalSet);
     sinkables.clear();
     anotherCycle = true;
+    block->finalize();
   }
 
   // optimize local.sets from both sides of an if into a return value
@@ -915,6 +915,7 @@ struct SimplifyLocals
       void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
         auto* value = curr->value;
+        Function* func = this->getFunction();
         while (auto* subSet = value->dynCast<LocalSet>()) {
           value = subSet->value;
         }
@@ -929,7 +930,8 @@ struct SimplifyLocals
               }
               anotherCycle = true;
             }
-          } else {
+          } else if (func->getLocalType(curr->index) ==
+                     func->getLocalType(get->index)) {
             // There is a new equivalence now.
             equivalences.reset(curr->index);
             equivalences.add(curr->index, get->index);

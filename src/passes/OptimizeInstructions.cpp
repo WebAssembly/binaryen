@@ -751,12 +751,12 @@ struct OptimizeInstructions
           // condition, do that
           auto needCondition =
             EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects();
-          auto typeIsIdentical = iff->ifTrue->type == iff->type;
-          if (typeIsIdentical && !needCondition) {
+          auto isSubType = Type::isSubType(iff->ifTrue->type, iff->type);
+          if (isSubType && !needCondition) {
             return iff->ifTrue;
           } else {
             Builder builder(*getModule());
-            if (typeIsIdentical) {
+            if (isSubType) {
               return builder.makeSequence(builder.makeDrop(iff->condition),
                                           iff->ifTrue);
             } else {

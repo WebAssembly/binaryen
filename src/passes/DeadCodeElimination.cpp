@@ -347,6 +347,12 @@ struct DeadCodeElimination
           DELEGATE(Push);
         case Expression::Id::PopId:
           DELEGATE(Pop);
+        case Expression::Id::RefNullId:
+          DELEGATE(RefNull);
+        case Expression::Id::RefIsNullId:
+          DELEGATE(RefIsNull);
+        case Expression::Id::RefFuncId:
+          DELEGATE(RefFunc);
         case Expression::Id::TryId:
           DELEGATE(Try);
         case Expression::Id::ThrowId:

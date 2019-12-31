@@ -211,3 +211,22 @@
   (i32.const 100)
  )
 )
+(module
+ (type $none_=>_none (func))
+ (import "env" "global-1" (global $g1 anyref))
+ (global $g2 anyref (global.get $g1))
+ (global $g3 anyref (ref.null))
+ (func $test1 (; 0 ;)
+  (drop
+   (global.get $g1)
+  )
+  (drop
+   (global.get $g1)
+  )
+ )
+ (func $test2 (; 1 ;)
+  (drop
+   (ref.null)
+  )
+ )
+)

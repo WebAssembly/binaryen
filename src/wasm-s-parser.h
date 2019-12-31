@@ -225,6 +225,9 @@ private:
   Expression* makeBreak(Element& s);
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
+  Expression* makeRefNull(Element& s);
+  Expression* makeRefIsNull(Element& s);
+  Expression* makeRefFunc(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeCatch(Element& s, Type type);
   Expression* makeThrow(Element& s);

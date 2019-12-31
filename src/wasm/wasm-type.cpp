@@ -62,7 +62,9 @@ std::vector<std::unique_ptr<std::vector<Type>>> typeLists = [] {
   add({Type::f32});
   add({Type::f64});
   add({Type::v128});
+  add({Type::funcref});
   add({Type::anyref});
+  add({Type::nullref});
   add({Type::exnref});
   return lists;
 }();
@@ -75,7 +77,9 @@ std::unordered_map<std::vector<Type>, uint32_t> indices = {
   {{Type::f32}, Type::f32},
   {{Type::f64}, Type::f64},
   {{Type::v128}, Type::v128},
+  {{Type::funcref}, Type::funcref},
   {{Type::anyref}, Type::anyref},
+  {{Type::nullref}, Type::nullref},
   {{Type::exnref}, Type::exnref},
 };
 
@@ -154,8 +158,10 @@ unsigned Type::getByteSize() const {
       return 8;
     case Type::v128:
       return 16;
-    case Type::anyref: // anyref type is opaque
-    case Type::exnref: // exnref type is opaque
+    case Type::funcref:
+    case Type::anyref:
+    case Type::nullref:
+    case Type::exnref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -164,7 +170,7 @@ unsigned Type::getByteSize() const {
 }
 
 Type Type::reinterpret() const {
-  assert(isSingle() && "reinterpret only works with single types");
+  assert(isSingle() && "reinterpretType only works with single types");
   Type singleType = *expand().begin();
   switch (singleType) {
     case Type::i32:
@@ -176,7 +182,9 @@ Type Type::reinterpret() const {
     case Type::f64:
       return i64;
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -219,6 +227,39 @@ Type Type::get(unsigned byteSize, bool float_) {
     return Type::v128;
   }
   WASM_UNREACHABLE("invalid size");
+}
+
+bool Type::Type::isSubType(Type left, Type right) {
+  if (left == right) {
+    return true;
+  }
+  if (left.isRef() && right.isRef() &&
+      (right == Type::anyref || left == Type::nullref)) {
+    return true;
+  }
+  return false;
+}
+
+Type Type::Type::getLeastUpperBound(Type a, Type b) {
+  if (a == b) {
+    return a;
+  }
+  if (a == Type::unreachable) {
+    return b;
+  }
+  if (b == Type::unreachable) {
+    return a;
+  }
+  if (!a.isRef() || !b.isRef()) {
+    return none; // a poison value that must not be consumed
+  }
+  if (a == Type::nullref) {
+    return b;
+  }
+  if (b == Type::nullref) {
+    return a;
+  }
+  return Type::anyref;
 }
 
 namespace {
@@ -280,8 +321,14 @@ std::ostream& operator<<(std::ostream& os, Type type) {
     case Type::v128:
       os << "v128";
       break;
+    case Type::funcref:
+      os << "funcref";
+      break;
     case Type::anyref:
       os << "anyref";
+      break;
+    case Type::nullref:
+      os << "nullref";
       break;
     case Type::exnref:
       os << "exnref";

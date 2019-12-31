@@ -137,8 +137,11 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
-    case Type::anyref: // anyref type is opaque
-    case Type::exnref: // exnref type is opaque
+    case Type::funcref:
+    case Type::nullref:
+      break;
+    case Type::anyref:
+    case Type::exnref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -146,10 +149,20 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
+  if (type.isRef() && other.type.isRef()) {
+    if (type == Type::nullref && other.type == Type::nullref) {
+      return true;
+    }
+    if (type == Type::funcref && other.type == Type::funcref &&
+        func == other.func) {
+      return true;
+    }
+    return false;
+  }
   if (type != other.type) {
     return false;
   }
-  if (type == none) {
+  if (type == Type::none) {
     return true;
   }
   uint8_t bits[16], other_bits[16];
@@ -273,8 +286,14 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "i32x4 ";
       literal.printVec128(o, literal.getv128());
       break;
-    case Type::anyref: // anyref type is opaque
-    case Type::exnref: // exnref type is opaque
+    case Type::funcref:
+      o << "funcref(" << literal.getFunc() << ")";
+      break;
+    case Type::nullref:
+      o << "nullref";
+      break;
+    case Type::anyref:
+    case Type::exnref:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -477,7 +496,9 @@ Literal Literal::eqz() const {
     case Type::f64:
       return eq(Literal(double(0)));
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -497,7 +518,9 @@ Literal Literal::neg() const {
     case Type::f64:
       return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -517,7 +540,9 @@ Literal Literal::abs() const {
     case Type::f64:
       return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -620,7 +645,9 @@ Literal Literal::add(const Literal& other) const {
     case Type::f64:
       return Literal(getf64() + other.getf64());
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -640,7 +667,9 @@ Literal Literal::sub(const Literal& other) const {
     case Type::f64:
       return Literal(getf64() - other.getf64());
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -731,7 +760,9 @@ Literal Literal::mul(const Literal& other) const {
     case Type::f64:
       return Literal(getf64() * other.getf64());
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -967,7 +998,9 @@ Literal Literal::eq(const Literal& other) const {
     case Type::f64:
       return Literal(getf64() == other.getf64());
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:
@@ -987,7 +1020,9 @@ Literal Literal::ne(const Literal& other) const {
     case Type::f64:
       return Literal(getf64() != other.getf64());
     case Type::v128:
+    case Type::funcref:
     case Type::anyref:
+    case Type::nullref:
     case Type::exnref:
     case Type::none:
     case Type::unreachable:

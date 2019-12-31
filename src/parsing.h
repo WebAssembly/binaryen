@@ -263,8 +263,10 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       break;
     }
     case v128:
-    case anyref: // there's no anyref.const
-    case exnref: // there's no exnref.const
+    case funcref:
+    case anyref:
+    case nullref:
+    case exnref:
       WASM_UNREACHABLE("unexpected const type");
     case none:
     case unreachable: {

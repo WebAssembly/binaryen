@@ -54,18 +54,21 @@ inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs,
   module->updateMaps();
 }
 
-struct CallTargetReplacer : public WalkerPass<PostWalker<CallTargetReplacer>> {
+struct FunctionRefReplacer
+  : public WalkerPass<PostWalker<FunctionRefReplacer>> {
   bool isFunctionParallel() override { return true; }
 
   using MaybeReplace = std::function<void(Name&)>;
 
-  CallTargetReplacer(MaybeReplace maybeReplace) : maybeReplace(maybeReplace) {}
+  FunctionRefReplacer(MaybeReplace maybeReplace) : maybeReplace(maybeReplace) {}
 
-  CallTargetReplacer* create() override {
-    return new CallTargetReplacer(maybeReplace);
+  FunctionRefReplacer* create() override {
+    return new FunctionRefReplacer(maybeReplace);
   }
 
   void visitCall(Call* curr) { maybeReplace(curr->target); }
+
+  void visitRefFunc(RefFunc* curr) { maybeReplace(curr->func); }
 
 private:
   MaybeReplace maybeReplace;
@@ -81,7 +84,7 @@ inline void replaceFunctions(PassRunner* runner,
     }
   };
   // replace direct calls
-  CallTargetReplacer(maybeReplace).run(runner, &module);
+  FunctionRefReplacer(maybeReplace).run(runner, &module);
   // replace in table
   for (auto& segment : module.table.segments) {
     for (auto& name : segment.data) {

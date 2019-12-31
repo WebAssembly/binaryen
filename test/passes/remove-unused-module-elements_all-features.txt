@@ -310,3 +310,15 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (export "test" (func $test))
+ (func $foo (; 0 ;)
+  (nop)
+ )
+ (func $test (; 1 ;)
+  (drop
+   (ref.func $foo)
+  )
+ )
+)
