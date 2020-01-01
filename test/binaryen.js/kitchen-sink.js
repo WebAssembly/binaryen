@@ -966,6 +966,21 @@ function test_for_each() {
     assert(expected_data[i] === str);
   }
 
+  var expected_table_offsets = [0];
+  var expected_table_functions = [
+    ['fn0', 'fn1', 'fn2']
+  ];
+  module.setFunctionTable(3, 3, ['fn0', 'fn1', 'fn2'])
+  assert(expected_table_offsets.length === module.getNumFunctionTableSegments());
+  for (i = 0 ; i < module.getNumFunctionTableSegments() ; i++) {
+    var segment = module.getFunctionTableSegmentInfoByIndex(i);
+    assert(expected_table_offsets[i] === segment.offset);
+    assert(expected_table_functions[i].length === segment.functions.length);
+    for (var j = 0; j < segment.functions.length; j++) {
+      assert(expected_table_functions[i][j] === segment.functions[j]);
+    }
+  }
+
   console.log(module.emitText());
   module.dispose();
 }

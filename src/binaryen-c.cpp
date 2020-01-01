@@ -3561,6 +3561,89 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
   wasm->table.segments.push_back(segment);
 }
 
+// Function table segments. Query utilities.
+
+uint32_t BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenGetNumFunctionTableSegments(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->table.segments.size();
+}
+
+uint32_t BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
+                                               BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentOffset(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+
+  auto globalOffset = [&](const Expression* const& expr,
+                          int64_t& result) -> bool {
+    if (auto* c = expr->dynCast<Const>()) {
+      result = c->value.getInteger();
+      return true;
+    }
+    return false;
+  };
+
+  const Table::Segment& segment = wasm->table.segments[id];
+
+  int64_t ret;
+  if (globalOffset(segment.offset, ret)) {
+    return ret;
+  }
+  if (auto* get = segment.offset->dynCast<GlobalGet>()) {
+    Global* global = wasm->getGlobal(get->name);
+    if (globalOffset(global->init, ret)) {
+      return ret;
+    }
+  }
+
+  Fatal() << "non-constant offsets aren't supported yet";
+  return 0;
+}
+
+size_t BinaryenGetFunctionTableSegmentLength(BinaryenModuleRef module,
+                                             BinaryenIndex id) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentLength(the_module, " << id
+              << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->table.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+  const Table::Segment& segment = wasm->table.segments[id];
+  return segment.data.size();
+}
+
+const char* BinaryenGetFunctionTableSegmentEntry(BinaryenModuleRef module,
+                                                 BinaryenIndex id,
+                                                 size_t entry) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTableSegmentEntry(the_module, " << id
+              << ", " << entry << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.segments.size() <= id) {
+    Fatal() << "invalid segment id.";
+  }
+  const Table::Segment& segment = wasm->table.segments[id];
+  if (segment.data.size() <= entry) {
+    Fatal() << "invalid segment entry index.";
+  }
+  return segment.data[entry].c_str();
+}
+
 // Memory. One per module
 
 void BinaryenSetMemory(BinaryenModuleRef module,

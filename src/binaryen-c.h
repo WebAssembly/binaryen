@@ -1198,6 +1198,19 @@ BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
                                            BinaryenIndex numFuncNames,
                                            BinaryenExpressionRef offset);
 
+// Function table segments. Query utilities.
+
+BINARYEN_API uint32_t
+BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module);
+BINARYEN_API uint32_t BinaryenGetFunctionTableSegmentOffset(
+  BinaryenModuleRef module, BinaryenIndex id);
+BINARYEN_API size_t BinaryenGetFunctionTableSegmentLength(
+  BinaryenModuleRef module, BinaryenIndex id);
+BINARYEN_API
+const char* BinaryenGetFunctionTableSegmentEntry(BinaryenModuleRef module,
+                                                 BinaryenIndex id,
+                                                 size_t entry);
+
 // Memory. One per module
 
 // Each segment has data in segments, a start offset in segmentOffsets, and a

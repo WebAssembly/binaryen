@@ -2158,6 +2158,22 @@ function wrapModule(module, self) {
       );
     });
   };
+  self['getNumFunctionTableSegments'] = function() {
+    return Module['_BinaryenGetNumFunctionTableSegments'](module);
+  };
+  self['getFunctionTableSegmentInfoByIndex'] = function(id) {
+    return {
+      'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, id),
+      'functions': (function(){
+        var size = Module['_BinaryenGetFunctionTableSegmentLength'](module, id);
+        var res = new Array(size);
+        for (var i = 0; i < size; i++) {
+          res[i] = UTF8ToString(Module['_BinaryenGetFunctionTableSegmentEntry'](module, id, i));
+        }
+        return res;
+      })()
+    };
+  };
   self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
