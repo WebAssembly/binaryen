@@ -176,7 +176,7 @@ struct SafeHeap : public Pass {
       load.type = type;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         load.bytes = bytes;
-        if (bytes > getTypeSize(type) || (type == f32 && bytes != 4) ||
+        if (bytes > type.getByteSize() || (type == f32 && bytes != 4) ||
             (type == f64 && bytes != 8) || (type == v128 && bytes != 16)) {
           continue;
         }
@@ -212,7 +212,7 @@ struct SafeHeap : public Pass {
       store.type = none;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         store.bytes = bytes;
-        if (bytes > getTypeSize(valueType) ||
+        if (bytes > valueType.getByteSize() ||
             (valueType == f32 && bytes != 4) ||
             (valueType == f64 && bytes != 8) ||
             (valueType == v128 && bytes != 16)) {

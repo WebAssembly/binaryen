@@ -25,8 +25,7 @@ high chance for set at start of loop
     high chance of a tee in that case => loop var
 */
 
-// TODO Complete exnref type support. Its support is partialy implemented
-// and the type is currently not generated in fuzzed programs yet.
+// TODO Generate exception handling instructions
 
 #include "ir/memory-utils.h"
 #include <ir/find_all.h>
@@ -310,6 +309,24 @@ private:
 
   double getDouble() { return Literal(get64()).reinterpretf64(); }
 
+  SmallVector<Type, 2> getSubTypes(Type type) {
+    SmallVector<Type, 2> ret;
+    ret.push_back(type); // includes itself
+    switch (type) {
+      case Type::anyref:
+        ret.push_back(Type::funcref);
+        ret.push_back(Type::exnref);
+        // falls through
+      case Type::funcref:
+      case Type::exnref:
+        ret.push_back(Type::nullref);
+        break;
+      default:
+        break;
+    }
+    return ret;
+  }
+
   void setupMemory() {
     // Add memory itself
     MemoryUtils::ensureExists(wasm.memory);
@@ -404,10 +421,12 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       // Events should have void return type and at least one param type
+      Type type = getConcreteType();
       std::vector<Type> params;
+      params.push_back(type);
       Index numValues = upToSquared(MAX_PARAMS - 1);
       for (Index i = 0; i < numValues + 1; i++) {
-        params.push_back(pick(i32, i64, f32, f64));
+        params.push_back(getConcreteType());
       }
       auto* event = builder.makeEvent(std::string("event$") + std::to_string(i),
                                       WASM_EVENT_ATTRIBUTE_EXCEPTION,
@@ -447,7 +466,7 @@ private:
   }
 
   void addImportLoggingSupport() {
-    for (auto type : getConcreteTypes()) {
+    for (auto type : getLoggableTypes()) {
       auto* func = new Function;
       Name name = std::string("log-") + type.toString();
       func->name = name;
@@ -501,7 +520,7 @@ private:
 
   // function generation state
 
-  Function* func;
+  Function* func = nullptr;
   std::vector<Expression*> breakableStack; // things we can break to
   Index labelIndex;
 
@@ -585,10 +604,12 @@ private:
     // loop limit
     FindAll<Loop> loops(func->body);
     for (auto* loop : loops.list) {
-      loop->body = builder.makeSequence(makeHangLimitCheck(), loop->body);
+      loop->body =
+        builder.makeSequence(makeHangLimitCheck(), loop->body, loop->type);
     }
     // recursion limit
-    func->body = builder.makeSequence(makeHangLimitCheck(), func->body);
+    func->body =
+      builder.makeSequence(makeHangLimitCheck(), func->body, func->sig.results);
   }
 
   void recombine(Function* func) {
@@ -841,7 +862,9 @@ private:
       case f32:
       case f64:
       case v128:
+      case funcref:
       case anyref:
+      case nullref:
       case exnref:
         ret = _makeConcrete(type);
         break;
@@ -852,7 +875,8 @@ private:
         ret = _makeunreachable();
         break;
     }
-    assert(ret->type == type); // we should create the right type of thing
+    // we should create the right type of thing
+    assert(Type::isSubType(ret->type, type));
     nesting--;
     return ret;
   }
@@ -898,8 +922,11 @@ private:
                           &Self::makeSelect,
                           &Self::makeGlobalGet)
                      .add(FeatureSet::SIMD, &Self::makeSIMD);
-    if (type == i32 || type == i64) {
+    if (type == Type::i32 || type == Type::i64) {
       options.add(FeatureSet::Atomics, &Self::makeAtomic);
+    }
+    if (type == Type::i32) {
+      options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     }
     return (this->*pick(options))(type);
   }
@@ -1064,11 +1091,11 @@ private:
       // possible branch back
       list.push_back(builder.makeBreak(ret->name, nullptr, makeCondition()));
       list.push_back(make(type)); // final element, so we have the right type
-      ret->body = builder.makeBlock(list);
+      ret->body = builder.makeBlock(list, type);
     }
     breakableStack.pop_back();
     hangStack.pop_back();
-    ret->finalize();
+    ret->finalize(type);
     return ret;
   }
 
@@ -1093,15 +1120,15 @@ private:
     }
   }
 
-  Expression* buildIf(const struct ThreeArgs& args) {
-    return builder.makeIf(args.a, args.b, args.c);
+  Expression* buildIf(const struct ThreeArgs& args, Type type) {
+    return builder.makeIf(args.a, args.b, args.c, type);
   }
 
   Expression* makeIf(Type type) {
     auto* condition = makeCondition();
     hangStack.push_back(nullptr);
     auto* ret =
-      buildIf({condition, makeMaybeBlock(type), makeMaybeBlock(type)});
+      buildIf({condition, makeMaybeBlock(type), makeMaybeBlock(type)}, type);
     hangStack.pop_back();
     return ret;
   }
@@ -1360,8 +1387,10 @@ private:
         return builder.makeLoad(
           16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
       }
-      case anyref: // anyref cannot be loaded from memory
-      case exnref: // exnref cannot be loaded from memory
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
       case none:
       case unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1370,8 +1399,8 @@ private:
   }
 
   Expression* makeLoad(Type type) {
-    // exnref type cannot be stored in memory
-    if (!allowMemory || type == exnref) {
+    // reference types cannot be stored in memory
+    if (!allowMemory || type.isRef()) {
       return makeTrivial(type);
     }
     auto* ret = makeNonAtomicLoad(type);
@@ -1393,7 +1422,7 @@ private:
   Expression* makeNonAtomicStore(Type type) {
     if (type == unreachable) {
       // make a normal store, then make it unreachable
-      auto* ret = makeNonAtomicStore(getConcreteType());
+      auto* ret = makeNonAtomicStore(getStorableType());
       auto* store = ret->dynCast<Store>();
       if (!store) {
         return ret;
@@ -1416,7 +1445,7 @@ private:
     // the type is none or unreachable. we also need to pick the value
     // type.
     if (type == none) {
-      type = getConcreteType();
+      type = getStorableType();
     }
     auto offset = logify(get());
     auto ptr = makePointer();
@@ -1462,8 +1491,10 @@ private:
         return builder.makeStore(
           16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
       }
-      case anyref: // anyref cannot be stored in memory
-      case exnref: // exnref cannot be stored in memory
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
       case none:
       case unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1472,7 +1503,6 @@ private:
   }
 
   Expression* makeStore(Type type) {
-    // exnref type cannot be stored in memory
     if (!allowMemory || type.isRef()) {
       return makeTrivial(type);
     }
@@ -1558,8 +1588,10 @@ private:
           case f64:
             return Literal(getDouble());
           case v128:
-          case anyref: // anyref cannot have literals
-          case exnref: // exnref cannot have literals
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
           case none:
           case unreachable:
             WASM_UNREACHABLE("invalid type");
@@ -1601,8 +1633,10 @@ private:
           case f64:
             return Literal(double(small));
           case v128:
-          case anyref: // anyref cannot have literals
-          case exnref: // exnref cannot have literals
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
           case none:
           case unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1667,8 +1701,10 @@ private:
                                          std::numeric_limits<uint64_t>::max()));
             break;
           case v128:
-          case anyref: // anyref cannot have literals
-          case exnref: // exnref cannot have literals
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
           case none:
           case unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1699,8 +1735,10 @@ private:
             value = Literal(double(int64_t(1) << upTo(64)));
             break;
           case v128:
-          case anyref: // anyref cannot have literals
-          case exnref: // exnref cannot have literals
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
           case none:
           case unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1724,21 +1762,23 @@ private:
   }
 
   Expression* makeConst(Type type) {
-    switch (type) {
-      case anyref:
-        // There's no anyref.const.
-        // TODO We should return a nullref once we implement instructions for
-        // reference types proposal.
-        assert(false && "anyref const is not implemented yet");
-      case exnref:
-        // There's no exnref.const.
-        // TODO We should return a nullref once we implement instructions for
-        // reference types proposal.
-        assert(false && "exnref const is not implemented yet");
-      default:
-        break;
+    if (type.isRef()) {
+      assert(wasm.features.hasReferenceTypes());
+      // Check if we can use ref.func.
+      // 'func' is the pointer to the last created function and can be null when
+      // we set up globals (before we create any functions), in which case we
+      // can't use ref.func.
+      if (type == Type::funcref && func && oneIn(2)) {
+        // First set to target to the last created function, and try to select
+        // among other existing function if possible
+        Function* target = func;
+        if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
+          target = pick(wasm.functions).get();
+        }
+        return builder.makeRefFunc(target->name);
+      }
+      return builder.makeRefNull();
     }
-
     auto* ret = wasm.allocator.alloc<Const>();
     ret->value = makeLiteral(type);
     ret->type = type;
@@ -1757,9 +1797,9 @@ private:
       // give up
       return makeTrivial(type);
     }
-    // There's no binary ops for exnref
-    if (type == exnref) {
-      makeTrivial(type);
+    // There's no unary ops for reference types
+    if (type.isRef()) {
+      return makeTrivial(type);
     }
 
     switch (type) {
@@ -1807,8 +1847,11 @@ private:
                                     AllTrueVecI64x2),
                                make(v128)});
           }
-          case anyref: // there's no unary ops for anyref
-          case exnref: // there's no unary ops for exnref
+          case funcref:
+          case anyref:
+          case nullref:
+          case exnref:
+            return makeTrivial(type);
           case none:
           case unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1947,8 +1990,10 @@ private:
         }
         WASM_UNREACHABLE("invalid value");
       }
-      case anyref: // there's no unary ops for anyref
-      case exnref: // there's no unary ops for exnref
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
       case none:
       case unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -1969,9 +2014,9 @@ private:
       // give up
       return makeTrivial(type);
     }
-    // There's no binary ops for exnref
+    // There's no binary ops for reference types
     if (type.isRef()) {
-      makeTrivial(type);
+      return makeTrivial(type);
     }
 
     switch (type) {
@@ -2180,8 +2225,10 @@ private:
                             make(v128),
                             make(v128)});
       }
-      case anyref: // there's no binary ops for anyref
-      case exnref: // there's no binary ops for exnref
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref:
       case none:
       case unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2189,12 +2236,15 @@ private:
     WASM_UNREACHABLE("invalid type");
   }
 
-  Expression* buildSelect(const ThreeArgs& args) {
-    return builder.makeSelect(args.a, args.b, args.c);
+  Expression* buildSelect(const ThreeArgs& args, Type type) {
+    return builder.makeSelect(args.a, args.b, args.c, type);
   }
 
   Expression* makeSelect(Type type) {
-    return makeDeNanOp(buildSelect({make(i32), make(type), make(type)}));
+    Type subType1 = pick(getSubTypes(type));
+    Type subType2 = pick(getSubTypes(type));
+    return makeDeNanOp(
+      buildSelect({make(i32), make(subType1), make(subType2)}, type));
   }
 
   Expression* makeSwitch(Type type) {
@@ -2338,6 +2388,9 @@ private:
 
   Expression* makeSIMD(Type type) {
     assert(wasm.features.hasSIMD());
+    if (type.isRef()) {
+      return makeTrivial(type);
+    }
     if (type != v128) {
       return makeSIMDExtract(type);
     }
@@ -2380,7 +2433,9 @@ private:
         op = ExtractLaneVecF64x2;
         break;
       case v128:
+      case funcref:
       case anyref:
+      case nullref:
       case exnref:
       case none:
       case unreachable:
@@ -2549,6 +2604,18 @@ private:
     WASM_UNREACHABLE("invalid value");
   }
 
+  Expression* makeRefIsNull(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes());
+    Type refType;
+    if (wasm.features.hasExceptionHandling()) {
+      refType = pick(Type::funcref, Type::anyref, Type::nullref, Type::exnref);
+    } else {
+      refType = pick(Type::funcref, Type::anyref, Type::nullref);
+    }
+    return builder.makeRefIsNull(make(refType));
+  }
+
   Expression* makeMemoryInit() {
     if (!allowMemory) {
       return makeTrivial(none);
@@ -2593,7 +2660,7 @@ private:
   // special makers
 
   Expression* makeLogging() {
-    auto type = getConcreteType();
+    auto type = getLoggableType();
     return builder.makeCall(
       std::string("log-") + type.toString(), {make(type)}, none);
   }
@@ -2605,19 +2672,61 @@ private:
 
   // special getters
 
-  Type getReachableType() {
-    return pick(FeatureOptions<Type>()
-                  .add(FeatureSet::MVP, i32, i64, f32, f64, none)
-                  .add(FeatureSet::SIMD, v128));
+  std::vector<Type> getReachableTypes() {
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP,
+             Type::i32,
+             Type::i64,
+             Type::f32,
+             Type::f64,
+             Type::none)
+        .add(FeatureSet::SIMD, Type::v128)
+        .add(FeatureSet::ReferenceTypes,
+             Type::funcref,
+             Type::anyref,
+             Type::nullref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             Type::exnref));
   }
+  Type getReachableType() { return pick(getReachableTypes()); }
 
   std::vector<Type> getConcreteTypes() {
-    return items(FeatureOptions<Type>()
-                   .add(FeatureSet::MVP, i32, i64, f32, f64)
-                   .add(FeatureSet::SIMD, v128));
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+        .add(FeatureSet::SIMD, Type::v128)
+        .add(FeatureSet::ReferenceTypes,
+             Type::funcref,
+             Type::anyref,
+             Type::nullref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             Type::exnref));
   }
-
   Type getConcreteType() { return pick(getConcreteTypes()); }
+
+  // Get types that can be stored in memory
+  std::vector<Type> getStorableTypes() {
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+        .add(FeatureSet::SIMD, Type::v128));
+  }
+  Type getStorableType() { return pick(getStorableTypes()); }
+
+  // - funcref cannot be logged because referenced functions can be inlined or
+  // removed during optimization
+  // - there's no point in logging anyref because it is opaque
+  std::vector<Type> getLoggableTypes() {
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+        .add(FeatureSet::SIMD, Type::v128)
+        .add(FeatureSet::ReferenceTypes, Type::nullref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             Type::exnref));
+  }
+  Type getLoggableType() { return pick(getLoggableTypes()); }
 
   // statistical distributions
 
@@ -2659,8 +2768,8 @@ private:
   // low values
   Index upToSquared(Index x) { return upTo(upTo(x)); }
 
-  // pick from a vector
-  template<typename T> const T& pick(const std::vector<T>& vec) {
+  // pick from a vector-like container
+  template<typename T> const typename T::value_type& pick(const T& vec) {
     assert(!vec.empty());
     auto index = upTo(vec.size());
     return vec[index];
@@ -2701,14 +2810,14 @@ private:
 
   template<typename T> struct FeatureOptions {
     template<typename... Ts>
-    FeatureOptions<T>& add(FeatureSet::Feature feature, T option, Ts... rest) {
+    FeatureOptions<T>& add(FeatureSet feature, T option, Ts... rest) {
       options[feature].push_back(option);
       return add(feature, rest...);
     }
 
-    FeatureOptions<T>& add(FeatureSet::Feature feature) { return *this; }
+    FeatureOptions<T>& add(FeatureSet feature) { return *this; }
 
-    std::map<FeatureSet::Feature, std::vector<T>> options;
+    std::map<FeatureSet, std::vector<T>> options;
   };
 
   template<typename T> std::vector<T> items(FeatureOptions<T>& picker) {

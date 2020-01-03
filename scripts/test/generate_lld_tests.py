@@ -72,7 +72,7 @@ def generate_wat_files(llvm_bin, emscripten_root):
         ]
         # We had a regression where this test only worked if debug names
         # were included.
-        if 'shared_longjmp' in src_file:
+        if 'longjmp' in src_file:
             link_cmd.append('--strip-debug')
         if is_shared:
             compile_cmd.append('-fPIC')

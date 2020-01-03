@@ -57,7 +57,7 @@ struct RoundTrip : public Pass {
     // Read
     ModuleUtils::clearModule(*module);
     ModuleReader reader;
-    // TODO: enable debug info when relevant
+    reader.setDWARF(runner->options.debugInfo);
     reader.read(tempName, *module);
     // Clean up
     std::remove(tempName.c_str());

@@ -1,3 +1,4 @@
+Makefile
 *.pyc
 *~
 *.diff
@@ -19,6 +20,8 @@ CMakeFiles
 /bin/
 /lib/
 config.h
+*.o
+*.obj
 
 # files related to bulding in-tree on windows
 /.vs/

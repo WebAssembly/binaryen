@@ -186,7 +186,7 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".load";
-    if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes < curr->type.getByteSize()) {
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
@@ -233,7 +233,7 @@ struct PrintExpressionContents
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
     prepareColor(o) << forceConcrete(type) << ".atomic.rmw";
-    if (type != unreachable && bytes != getTypeSize(type)) {
+    if (type != unreachable && bytes != type.getByteSize()) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
@@ -269,7 +269,7 @@ struct PrintExpressionContents
         o << "xchg";
         break;
     }
-    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes != curr->type.getByteSize()) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -281,7 +281,7 @@ struct PrintExpressionContents
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     o << "cmpxchg";
-    if (curr->type != unreachable && curr->bytes != getTypeSize(curr->type)) {
+    if (curr->type != unreachable && curr->bytes != curr->type.getByteSize()) {
       o << "_u";
     }
     restoreNormalColor(o);
@@ -1204,6 +1204,9 @@ struct PrintExpressionContents
       case MaxUVecI8x16:
         o << "i8x16.max_u";
         break;
+      case AvgrUVecI8x16:
+        o << "i8x16.avgr_u";
+        break;
       case AddVecI16x8:
         o << "i16x8.add";
         break;
@@ -1236,6 +1239,9 @@ struct PrintExpressionContents
         break;
       case MaxUVecI16x8:
         o << "i16x8.max_u";
+        break;
+      case AvgrUVecI16x8:
+        o << "i16x8.avgr_u";
         break;
       case AddVecI32x4:
         o << "i32x4.add";
@@ -1327,7 +1333,12 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
   }
-  void visitSelect(Select* curr) { prepareColor(o) << "select"; }
+  void visitSelect(Select* curr) {
+    prepareColor(o) << "select";
+    if (curr->type.isRef()) {
+      o << " (result " << curr->type << ')';
+    }
+  }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
   void visitReturn(Return* curr) { printMedium(o, "return"); }
   void visitHost(Host* curr) {
@@ -1339,6 +1350,12 @@ struct PrintExpressionContents
         printMedium(o, "memory.grow");
         break;
     }
+  }
+  void visitRefNull(RefNull* curr) { printMedium(o, "ref.null"); }
+  void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
+  void visitRefFunc(RefFunc* curr) {
+    printMedium(o, "ref.func ");
+    printName(curr->func, o);
   }
   void visitTry(Try* curr) {
     printMedium(o, "try");
@@ -1386,6 +1403,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
   Function::DebugLocation lastPrintedLocation;
+  bool debugInfo;
 
   std::unordered_map<Name, Index> functionIndexes;
 
@@ -1415,6 +1433,17 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       if (iter != debugLocations.end()) {
         printDebugLocation(iter->second);
       }
+      // show a binary position, if there is one
+      if (debugInfo) {
+        auto iter = currFunction->binaryLocations.find(curr);
+        if (iter != currFunction->binaryLocations.end()) {
+          Colors::grey(o);
+          o << ";; code offset: 0x" << std::hex << iter->second << std::dec
+            << '\n';
+          restoreNormalColor(o);
+          doIndent(o, indent);
+        }
+      }
     }
   }
 
@@ -1430,6 +1459,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
 
   void setFull(bool full_) { full = full_; }
+
+  void setPrintStackIR(bool printStackIR_) { printStackIR = printStackIR_; }
+
+  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
 
   void incIndent() {
     if (minify) {
@@ -1829,6 +1862,23 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << ')';
       }
     }
+  }
+  void visitRefNull(RefNull* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitRefIsNull(RefIsNull* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitRefFunc(RefFunc* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
   }
   // try-catch-end is written in the folded wat format as
   // (try
@@ -2315,6 +2365,7 @@ public:
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
+    print.setDebugInfo(runner->options.debugInfo);
     print.visitModule(module);
   }
 };
@@ -2331,6 +2382,7 @@ public:
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
     print.setMinify(true);
+    print.setDebugInfo(runner->options.debugInfo);
     print.visitModule(module);
   }
 };
@@ -2347,6 +2399,7 @@ public:
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
     print.setFull(true);
+    print.setDebugInfo(runner->options.debugInfo);
     print.visitModule(module);
   }
 };
@@ -2362,7 +2415,8 @@ public:
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
-    print.printStackIR = true;
+    print.setDebugInfo(runner->options.debugInfo);
+    print.setPrintStackIR(true);
     print.visitModule(module);
   }
 };
@@ -2408,18 +2462,24 @@ WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     }
     case StackInst::BlockBegin:
     case StackInst::IfBegin:
-    case StackInst::LoopBegin: {
+    case StackInst::LoopBegin:
+    case StackInst::TryBegin: {
       o << getExpressionName(inst->origin);
       break;
     }
     case StackInst::BlockEnd:
     case StackInst::IfEnd:
-    case StackInst::LoopEnd: {
+    case StackInst::LoopEnd:
+    case StackInst::TryEnd: {
       o << "end (" << inst->type << ')';
       break;
     }
     case StackInst::IfElse: {
       o << "else";
+      break;
+    }
+    case StackInst::Catch: {
+      o << "catch";
       break;
     }
     default:

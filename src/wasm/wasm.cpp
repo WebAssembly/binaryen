@@ -173,18 +173,36 @@ const char* getExpressionName(Expression* curr) {
       return "push";
     case Expression::Id::PopId:
       return "pop";
-    case Expression::TryId:
+    case Expression::Id::RefNullId:
+      return "ref.null";
+    case Expression::Id::RefIsNullId:
+      return "ref.is_null";
+    case Expression::Id::RefFuncId:
+      return "ref.func";
+    case Expression::Id::TryId:
       return "try";
-    case Expression::ThrowId:
+    case Expression::Id::ThrowId:
       return "throw";
-    case Expression::RethrowId:
+    case Expression::Id::RethrowId:
       return "rethrow";
-    case Expression::BrOnExnId:
+    case Expression::Id::BrOnExnId:
       return "br_on_exn";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
   WASM_UNREACHABLE("invalid expr id");
+}
+
+Literal getLiteralFromConstExpression(Expression* curr) {
+  if (auto* c = curr->dynCast<Const>()) {
+    return c->value;
+  } else if (curr->is<RefNull>()) {
+    return Literal::makeNullref();
+  } else if (auto* r = curr->dynCast<RefFunc>()) {
+    return Literal::makeFuncref(r->func);
+  } else {
+    WASM_UNREACHABLE("Not a constant expression");
+  }
 }
 
 // core AST type checking
@@ -247,27 +265,6 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
     }
   }
 };
-
-static Type mergeTypes(std::vector<Type>& types) {
-  Type type = unreachable;
-  for (auto other : types) {
-    // once none, stop. it then indicates a poison value, that must not be
-    // consumed and ignore unreachable
-    if (type != none) {
-      if (other == none) {
-        type = none;
-      } else if (other != unreachable) {
-        if (type == unreachable) {
-          type = other;
-        } else if (type != other) {
-          // poison value, we saw multiple types; this should not be consumed
-          type = none;
-        }
-      }
-    }
-  }
-  return type;
-}
 
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
@@ -336,7 +333,7 @@ void Block::finalize() {
   }
 
   TypeSeeker seeker(this, this->name);
-  type = mergeTypes(seeker.types);
+  type = Type::mergeTypes(seeker.types);
   handleUnreachable(this);
 }
 
@@ -364,19 +361,8 @@ void If::finalize(Type type_) {
 }
 
 void If::finalize() {
-  if (ifFalse) {
-    if (ifTrue->type == ifFalse->type) {
-      type = ifTrue->type;
-    } else if (ifTrue->type.isConcrete() && ifFalse->type == unreachable) {
-      type = ifTrue->type;
-    } else if (ifFalse->type.isConcrete() && ifTrue->type == unreachable) {
-      type = ifFalse->type;
-    } else {
-      type = none;
-    }
-  } else {
-    type = none; // if without else
-  }
+  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
+                 : Type::none;
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
@@ -828,13 +814,15 @@ void Binary::finalize() {
   }
 }
 
+void Select::finalize(Type type_) { type = type_; }
+
 void Select::finalize() {
   assert(ifTrue && ifFalse);
   if (ifTrue->type == unreachable || ifFalse->type == unreachable ||
       condition->type == unreachable) {
     type = unreachable;
   } else {
-    type = ifTrue->type;
+    type = Type::getLeastUpperBound(ifTrue->type, ifFalse->type);
   }
 }
 
@@ -864,16 +852,20 @@ void Host::finalize() {
   }
 }
 
-void Try::finalize() {
-  if (body->type == catchBody->type) {
-    type = body->type;
-  } else if (body->type.isConcrete() && catchBody->type == unreachable) {
-    type = body->type;
-  } else if (catchBody->type.isConcrete() && body->type == unreachable) {
-    type = catchBody->type;
-  } else {
-    type = none;
+void RefNull::finalize() { type = Type::nullref; }
+
+void RefIsNull::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
   }
+  type = Type::i32;
+}
+
+void RefFunc::finalize() { type = Type::funcref; }
+
+void Try::finalize() {
+  type = Type::getLeastUpperBound(body->type, catchBody->type);
 }
 
 void Try::finalize(Type type_) {
@@ -975,134 +967,120 @@ void Function::clearDebugInfo() {
   epilogLocation.clear();
 }
 
-Export* Module::getExport(Name name) {
-  auto iter = exportsMap.find(name);
-  if (iter == exportsMap.end()) {
-    Fatal() << "Module::getExport: " << name << " does not exist";
+template<typename Map>
+typename Map::mapped_type&
+getModuleElement(Map& m, Name name, const std::string& funcName) {
+  auto iter = m.find(name);
+  if (iter == m.end()) {
+    Fatal() << "Module::" << funcName << ": " << name << " does not exist";
   }
   return iter->second;
+}
+
+Export* Module::getExport(Name name) {
+  return getModuleElement(exportsMap, name, "getExport");
 }
 
 Function* Module::getFunction(Name name) {
-  auto iter = functionsMap.find(name);
-  if (iter == functionsMap.end()) {
-    Fatal() << "Module::getFunction: " << name << " does not exist";
-  }
-  return iter->second;
+  return getModuleElement(functionsMap, name, "getFunction");
 }
 
 Global* Module::getGlobal(Name name) {
-  auto iter = globalsMap.find(name);
-  if (iter == globalsMap.end()) {
-    assert(false);
-    Fatal() << "Module::getGlobal: " << name << " does not exist";
-  }
-  return iter->second;
+  return getModuleElement(globalsMap, name, "getGlobal");
 }
 
 Event* Module::getEvent(Name name) {
-  auto iter = eventsMap.find(name);
-  if (iter == eventsMap.end()) {
-    Fatal() << "Module::getEvent: " << name << " does not exist";
+  return getModuleElement(eventsMap, name, "getEvent");
+}
+
+template<typename Map>
+typename Map::mapped_type getModuleElementOrNull(Map& m, Name name) {
+  auto iter = m.find(name);
+  if (iter == m.end()) {
+    return nullptr;
   }
   return iter->second;
 }
 
 Export* Module::getExportOrNull(Name name) {
-  auto iter = exportsMap.find(name);
-  if (iter == exportsMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
+  return getModuleElementOrNull(exportsMap, name);
 }
 
 Function* Module::getFunctionOrNull(Name name) {
-  auto iter = functionsMap.find(name);
-  if (iter == functionsMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
+  return getModuleElementOrNull(functionsMap, name);
 }
 
 Global* Module::getGlobalOrNull(Name name) {
-  auto iter = globalsMap.find(name);
-  if (iter == globalsMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
+  return getModuleElementOrNull(globalsMap, name);
 }
 
 Event* Module::getEventOrNull(Name name) {
-  auto iter = eventsMap.find(name);
-  if (iter == eventsMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
-}
-
-Export* Module::addExport(Export* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addExport: empty name";
-  }
-  if (getExportOrNull(curr->name)) {
-    Fatal() << "Module::addExport: " << curr->name << " already exists";
-  }
-  exports.push_back(std::unique_ptr<Export>(curr));
-  exportsMap[curr->name] = curr;
-  return curr;
+  return getModuleElementOrNull(eventsMap, name);
 }
 
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
-Function* Module::addFunction(Function* curr) {
+template<typename Vector, typename Map, typename Elem>
+Elem* addModuleElement(Vector& v, Map& m, Elem* curr, std::string funcName) {
   if (!curr->name.is()) {
-    Fatal() << "Module::addFunction: empty name";
+    Fatal() << "Module::" << funcName << ": empty name";
   }
-  if (getFunctionOrNull(curr->name)) {
-    Fatal() << "Module::addFunction: " << curr->name << " already exists";
+  if (getModuleElementOrNull(m, curr->name)) {
+    Fatal() << "Module::" << funcName << ": " << curr->name
+            << " already exists";
   }
-  functions.push_back(std::unique_ptr<Function>(curr));
-  functionsMap[curr->name] = curr;
+  v.push_back(std::unique_ptr<Elem>(curr));
+  m[curr->name] = curr;
   return curr;
 }
 
-Function* Module::addFunction(std::unique_ptr<Function> curr) {
+template<typename Vector, typename Map, typename Elem>
+Elem* addModuleElement(Vector& v,
+                       Map& m,
+                       std::unique_ptr<Elem> curr,
+                       std::string funcName) {
   if (!curr->name.is()) {
-    Fatal() << "Module::addFunction: empty name";
+    Fatal() << "Module::" << funcName << ": empty name";
   }
-  if (getFunctionOrNull(curr->name)) {
-    Fatal() << "Module::addFunction: " << curr->name << " already exists";
+  if (getModuleElementOrNull(m, curr->name)) {
+    Fatal() << "Module::" << funcName << ": " << curr->name
+            << " already exists";
   }
-  auto* ret = functionsMap[curr->name] = curr.get();
-  functions.push_back(std::move(curr));
+  auto* ret = m[curr->name] = curr.get();
+  v.push_back(std::move(curr));
   return ret;
 }
 
+Export* Module::addExport(Export* curr) {
+  return addModuleElement(exports, exportsMap, curr, "addExport");
+}
+
+Function* Module::addFunction(Function* curr) {
+  return addModuleElement(functions, functionsMap, curr, "addFunction");
+}
+
 Global* Module::addGlobal(Global* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addGlobal: empty name";
-  }
-  if (getGlobalOrNull(curr->name)) {
-    Fatal() << "Module::addGlobal: " << curr->name << " already exists";
-  }
-
-  globals.emplace_back(curr);
-
-  globalsMap[curr->name] = curr;
-  return curr;
+  return addModuleElement(globals, globalsMap, curr, "addGlobal");
 }
 
 Event* Module::addEvent(Event* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addEvent: empty name";
-  }
-  if (getEventOrNull(curr->name)) {
-    Fatal() << "Module::addEvent: " << curr->name << " already exists";
-  }
+  return addModuleElement(events, eventsMap, curr, "addEvent");
+}
 
-  events.emplace_back(curr);
+Export* Module::addExport(std::unique_ptr<Export> curr) {
+  return addModuleElement(exports, exportsMap, std::move(curr), "addExport");
+}
 
-  eventsMap[curr->name] = curr;
-  return curr;
+Function* Module::addFunction(std::unique_ptr<Function> curr) {
+  return addModuleElement(
+    functions, functionsMap, std::move(curr), "addFunction");
+}
+
+Global* Module::addGlobal(std::unique_ptr<Global> curr) {
+  return addModuleElement(globals, globalsMap, std::move(curr), "addGlobal");
+}
+
+Event* Module::addEvent(std::unique_ptr<Event> curr) {
+  return addModuleElement(events, eventsMap, std::move(curr), "addEvent");
 }
 
 void Module::addStart(const Name& s) { start = s; }

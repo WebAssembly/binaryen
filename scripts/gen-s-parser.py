@@ -49,7 +49,9 @@ instructions = [
     ("f32.pop",        "makePop(f32)"),
     ("f64.pop",        "makePop(f64)"),
     ("v128.pop",       "makePop(v128)"),
+    ("funcref.pop",    "makePop(funcref)"),
     ("anyref.pop",     "makePop(anyref)"),
+    ("nullref.pop",    "makePop(nullref)"),
     ("exnref.pop",     "makePop(exnref)"),
     ("i32.load",       "makeLoad(s, i32, /*isAtomic=*/false)"),
     ("i64.load",       "makeLoad(s, i64, /*isAtomic=*/false)"),
@@ -375,6 +377,7 @@ instructions = [
     ("i8x16.min_u",          "makeBinary(s, BinaryOp::MinUVecI8x16)"),
     ("i8x16.max_s",          "makeBinary(s, BinaryOp::MaxSVecI8x16)"),
     ("i8x16.max_u",          "makeBinary(s, BinaryOp::MaxUVecI8x16)"),
+    ("i8x16.avgr_u",         "makeBinary(s, BinaryOp::AvgrUVecI8x16)"),
     ("i16x8.neg",            "makeUnary(s, UnaryOp::NegVecI16x8)"),
     ("i16x8.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI16x8)"),
     ("i16x8.all_true",       "makeUnary(s, UnaryOp::AllTrueVecI16x8)"),
@@ -392,6 +395,7 @@ instructions = [
     ("i16x8.min_u",          "makeBinary(s, BinaryOp::MinUVecI16x8)"),
     ("i16x8.max_s",          "makeBinary(s, BinaryOp::MaxSVecI16x8)"),
     ("i16x8.max_u",          "makeBinary(s, BinaryOp::MaxUVecI16x8)"),
+    ("i16x8.avgr_u",         "makeBinary(s, BinaryOp::AvgrUVecI16x8)"),
     ("i32x4.neg",            "makeUnary(s, UnaryOp::NegVecI32x4)"),
     ("i32x4.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI32x4)"),
     ("i32x4.all_true",       "makeUnary(s, UnaryOp::AllTrueVecI32x4)"),
@@ -467,6 +471,11 @@ instructions = [
     ("i32x4.widen_low_i16x8_u",  "makeUnary(s, UnaryOp::WidenLowUVecI16x8ToVecI32x4)"),
     ("i32x4.widen_high_i16x8_u", "makeUnary(s, UnaryOp::WidenHighUVecI16x8ToVecI32x4)"),
     ("v8x16.swizzle",            "makeBinary(s, BinaryOp::SwizzleVec8x16)"),
+    # reference types instructions
+    # TODO Add table instructions
+    ("ref.null",             "makeRefNull(s)"),
+    ("ref.is_null",          "makeRefIsNull(s)"),
+    ("ref.func",             "makeRefFunc(s)"),
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),

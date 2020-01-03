@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/flat.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -61,7 +62,9 @@ struct Flatten
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
-    if (curr->is<Const>() || curr->is<Nop>() || curr->is<Unreachable>()) {
+    // Nothing to do for constants, nop, and unreachable
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
+        curr->is<Unreachable>()) {
       return;
     }
 
@@ -194,8 +197,37 @@ struct Flatten
           auto type = br->value->type;
           if (type.isConcrete()) {
             // we are sending a value. use a local instead
-            Index temp = getTempForBreakTarget(br->name, type);
+            Type blockType = findBreakTarget(br->name)->type;
+            Index temp = getTempForBreakTarget(br->name, blockType);
             ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
+
+            // br_if leaves a value on the stack if not taken, which later can
+            // be the last element of the enclosing innermost block and flow
+            // out. The local we created using 'getTempForBreakTarget' returns
+            // the return type of the block this branch is targetting, which may
+            // not be the same with the innermost block's return type. For
+            // example,
+            // (block $any (result anyref)
+            //   (block (result nullref)
+            //     (local.tee $0
+            //       (br_if $any
+            //         (ref.null)
+            //         (i32.const 0)
+            //       )
+            //     )
+            //   )
+            // )
+            // In this case we need two locals to store (ref.null); one with
+            // anyref type that's for the target block ($label0) and one more
+            // with nullref type in case for flowing out. Here we create the
+            // second 'flowing out' local in case two block's types are
+            // different.
+            if (type != blockType) {
+              temp = builder.addVar(getFunction(), type);
+              ourPreludes.push_back(builder.makeLocalSet(
+                temp, ExpressionManipulator::copy(br->value, *getModule())));
+            }
+
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
@@ -239,6 +271,7 @@ struct Flatten
         }
       }
     }
+    // TODO Handle br_on_exn
 
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it

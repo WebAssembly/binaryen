@@ -993,8 +993,7 @@ struct FixInvokeFunctionNamesWalker
   : public PostWalker<FixInvokeFunctionNamesWalker> {
   Module& wasm;
   std::map<Name, Name> importRenames;
-  std::vector<Name> toRemove;
-  std::set<Name> newImports;
+  std::map<Name, Name> functionReplace;
   std::set<Signature> invokeSigs;
   ImportInfo imports;
 
@@ -1057,24 +1056,31 @@ struct FixInvokeFunctionNamesWalker
                                   << curr->name << ") -> " << newname << "\n");
     assert(importRenames.count(curr->base) == 0);
     importRenames[curr->base] = newname;
-    // Either rename or remove the existing import
-    if (imports.getImportedFunction(curr->module, newname) ||
-        !newImports.insert(newname).second) {
-      BYN_TRACE("using existing import\n");
-      toRemove.push_back(curr->name);
+    // Either rename the import, or replace it with an existing one
+    Function* existingFunc = imports.getImportedFunction(curr->module, newname);
+    if (existingFunc) {
+      BYN_TRACE("replacing with an existing import: " << existingFunc->name
+                                                      << "\n");
+      functionReplace[curr->name] = existingFunc->name;
     } else {
-      BYN_TRACE("renaming import\n");
+      BYN_TRACE("renaming the import in place\n");
       curr->base = newname;
     }
   }
 
   void visitModule(Module* curr) {
-    for (auto importName : toRemove) {
-      wasm.removeFunction(importName);
+    // For each replaced function first remove the function itself then
+    // rename all uses to the point to the new function.
+    for (auto& pair : functionReplace) {
+      BYN_TRACE("removeFunction " << pair.first << "\n");
+      wasm.removeFunction(pair.first);
     }
-    ModuleUtils::renameFunctions(wasm, importRenames);
-    // Update any associated GOT.func imports.
+    // Rename all uses of the removed functions
+    ModuleUtils::renameFunctions(wasm, functionReplace);
+
+    // For imports that for renamed, update any associated GOT.func imports.
     for (auto& pair : importRenames) {
+      BYN_TRACE("looking for: GOT.func." << pair.first << "\n");
       if (auto g = imports.getImportedGlobal("GOT.func", pair.first)) {
         BYN_TRACE("renaming corresponding GOT entry: " << g->base << " -> "
                                                        << pair.second << "\n");

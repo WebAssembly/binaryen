@@ -32,7 +32,8 @@ static bool canReplaceWithReinterpret(Load* load) {
   // a reinterpret of the same address. A partial load would see
   // more bytes and possibly invalid data, and an unreachable
   // pointer is just not interesting to handle.
-  return load->type != unreachable && load->bytes == getTypeSize(load->type);
+  return load->type != Type::unreachable &&
+         load->bytes == load->type.getByteSize();
 }
 
 static Load* getSingleLoad(LocalGraph* localGraph, LocalGet* get) {
@@ -116,7 +117,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
         // We should use another load here, to avoid reinterprets.
         info.ptrLocal = Builder::addVar(func, i32);
         info.reinterpretedLocal =
-          Builder::addVar(func, reinterpretType(load->type));
+          Builder::addVar(func, load->type.reinterpret());
       } else {
         unoptimizables.insert(load);
       }
@@ -150,8 +151,8 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
                 auto& info = iter->second;
                 // A reinterpret of a get of a load - use the new local.
                 Builder builder(*module);
-                replaceCurrent(builder.makeLocalGet(
-                  info.reinterpretedLocal, reinterpretType(load->type)));
+                replaceCurrent(builder.makeLocalGet(info.reinterpretedLocal,
+                                                    load->type.reinterpret()));
               }
             }
           }
@@ -185,7 +186,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
                                 load->offset,
                                 load->align,
                                 ptr,
-                                reinterpretType(load->type));
+                                load->type.reinterpret());
       }
     } finalOptimizer(infos, localGraph, getModule());
 
