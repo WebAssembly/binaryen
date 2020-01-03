@@ -166,6 +166,36 @@ struct Flatten
         loop->finalize();
         replaceCurrent(rep);
 
+      } else if (auto* tryy = curr->dynCast<Try>()) {
+        // remove a try value
+        Expression* rep = tryy;
+        auto* originalBody = tryy->body;
+        auto* originalCatchBody = tryy->catchBody;
+        auto type = tryy->type;
+        Expression* prelude = nullptr;
+        if (type.isConcrete()) {
+          Index temp = builder.addVar(getFunction(), type);
+          if (tryy->body->type.isConcrete()) {
+            tryy->body = builder.makeLocalSet(temp, tryy->body);
+          }
+          if (tryy->catchBody->type.isConcrete()) {
+            tryy->catchBody = builder.makeLocalSet(temp, tryy->catchBody);
+          }
+          // the whole try is now a prelude
+          prelude = tryy;
+          // and we leave just a get of the value
+          rep = builder.makeLocalGet(temp, type);
+        }
+        tryy->body = getPreludesWithExpression(originalBody, tryy->body);
+        tryy->catchBody =
+          getPreludesWithExpression(originalCatchBody, tryy->catchBody);
+        tryy->finalize();
+        if (prelude) {
+          ReFinalizeNode().visit(prelude);
+          ourPreludes.push_back(prelude);
+        }
+        replaceCurrent(rep);
+
       } else {
         WASM_UNREACHABLE("unexpected expr type");
       }
@@ -218,10 +248,9 @@ struct Flatten
             //   )
             // )
             // In this case we need two locals to store (ref.null); one with
-            // anyref type that's for the target block ($label0) and one more
-            // with nullref type in case for flowing out. Here we create the
-            // second 'flowing out' local in case two block's types are
-            // different.
+            // anyref type that's for the target block ($any) and one more with
+            // nullref type in case for flowing out. Here we create the second
+            // 'flowing out' local in case two block's types are different.
             if (type != blockType) {
               temp = builder.addVar(getFunction(), type);
               ourPreludes.push_back(builder.makeLocalSet(
@@ -271,7 +300,6 @@ struct Flatten
         }
       }
     }
-    // TODO Handle br_on_exn
 
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it

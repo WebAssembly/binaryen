@@ -1028,10 +1028,10 @@
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
   (func $subtype (result anyref) (local $0 nullref)
-    (block $label0 (result anyref)
+    (block $any (result anyref)
       (block (result nullref)
         (local.tee $0
-          (br_if $label0
+          (br_if $any
             (ref.null)
             (i32.const 0)
           )
@@ -1039,4 +1039,28 @@
       )
     )
   )
+
+  (event $e0 (attr 0) (param i32))
+  (func $try_catch (local $exn exnref)
+    (try
+      (throw $e0 (i32.const 0))
+      (catch
+        (local.set $exn (exnref.pop))
+      )
+    )
+  )
+
+ (func $try_catch_br
+   (block $label$0
+     (try
+       (nop)
+       (catch
+         (drop
+           (exnref.pop)
+         )
+         (br $label$0)
+       )
+     )
+   )
+ )
 )

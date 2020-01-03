@@ -4,12 +4,14 @@
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_f32 (func (result f32)))
+ (type $i32_=>_none (func (param i32)))
  (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
  (type $none_=>_anyref (func (result anyref)))
  (memory $0 10)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
  (global $x (mut i32) (i32.const 0))
+ (event $e0 (attr 0) (param i32))
  (func $a1 (; 0 ;)
   (local $0 i32)
   (local.set $0
@@ -2322,7 +2324,7 @@
   (local $5 nullref)
   (local $6 nullref)
   (local $7 anyref)
-  (block $label0
+  (block $any
    (block $block
     (local.set $1
      (ref.null)
@@ -2330,7 +2332,7 @@
     (local.set $2
      (ref.null)
     )
-    (br_if $label0
+    (br_if $any
      (i32.const 0)
     )
     (local.set $3
@@ -2358,6 +2360,40 @@
   )
   (return
    (local.get $7)
+  )
+ )
+ (func $try_catch (; 44 ;)
+  (local $exn exnref)
+  (local $1 exnref)
+  (try
+   (throw $e0
+    (i32.const 0)
+   )
+   (catch
+    (local.set $1
+     (exnref.pop)
+    )
+    (local.set $exn
+     (local.get $1)
+    )
+   )
+  )
+ )
+ (func $try_catch_br (; 45 ;)
+  (local $0 exnref)
+  (block $label$0
+   (try
+    (nop)
+    (catch
+     (local.set $0
+      (exnref.pop)
+     )
+     (drop
+      (local.get $0)
+     )
+     (br $label$0)
+    )
+   )
   )
  )
 )
