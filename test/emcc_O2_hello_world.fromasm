@@ -8920,13 +8920,8 @@
   )
   (local.get $0)
  )
-<<<<<<< HEAD
  (func $dynCall_iiii (; 33 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-  (call_indirect (type $FUNCSIG$iiii)
-=======
- (func $dynCall_iiii (; 33 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (call_indirect (type $i32_i32_i32_=>_i32)
->>>>>>> origin/master
    (local.get $1)
    (local.get $2)
    (local.get $3)
@@ -8987,13 +8982,8 @@
    )
   )
  )
-<<<<<<< HEAD
  (func $dynCall_ii (; 37 ;) (param $0 i32) (param $1 i32) (result i32)
-  (call_indirect (type $FUNCSIG$ii)
-=======
- (func $dynCall_ii (; 37 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (call_indirect (type $i32_=>_i32)
->>>>>>> origin/master
    (local.get $1)
    (i32.and
     (local.get $0)
@@ -9016,13 +9006,8 @@
    (local.get $1)
   )
  )
-<<<<<<< HEAD
  (func $dynCall_vi (; 40 ;) (param $0 i32) (param $1 i32)
-  (call_indirect (type $FUNCSIG$vi)
-=======
- (func $dynCall_vi (; 40 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_=>_none)
->>>>>>> origin/master
    (local.get $1)
    (i32.add
     (i32.and

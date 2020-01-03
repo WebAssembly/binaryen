@@ -8965,13 +8965,8 @@
    (i32.const 1204)
   )
  )
-<<<<<<< HEAD
  (func $lb (; 32 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-  (call_indirect (type $FUNCSIG$iiii)
-=======
- (func $lb (; 32 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (call_indirect (type $i32_i32_i32_=>_i32)
->>>>>>> origin/master
    (local.get $1)
    (local.get $2)
    (local.get $3)
@@ -9027,13 +9022,8 @@
    )
   )
  )
-<<<<<<< HEAD
  (func $kb (; 36 ;) (param $0 i32) (param $1 i32) (result i32)
-  (call_indirect (type $FUNCSIG$ii)
-=======
- (func $kb (; 36 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (call_indirect (type $i32_=>_i32)
->>>>>>> origin/master
    (local.get $1)
    (i32.and
     (local.get $0)
@@ -9048,13 +9038,8 @@
    )
   )
  )
-<<<<<<< HEAD
  (func $mb (; 38 ;) (param $0 i32) (param $1 i32)
-  (call_indirect (type $FUNCSIG$vi)
-=======
- (func $mb (; 38 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_=>_none)
->>>>>>> origin/master
    (local.get $1)
    (i32.add
     (i32.and

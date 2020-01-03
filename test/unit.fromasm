@@ -243,24 +243,14 @@
  (func $negZero (; 19 ;) (result f64)
   (f64.const -0)
  )
-<<<<<<< HEAD
  (func $neg (; 20 ;)
-  (call_indirect (type $FUNCSIG$vf)
-=======
- (func $neg (; 20 ;) (; has Stack IR ;)
   (call_indirect (type $f32_=>_none)
->>>>>>> origin/master
    (f32.const -0)
    (i32.const 9)
   )
  )
-<<<<<<< HEAD
  (func $cneg (; 21 ;) (param $0 f32)
-  (call_indirect (type $FUNCSIG$vf)
-=======
- (func $cneg (; 21 ;) (; has Stack IR ;) (param $0 f32)
   (call_indirect (type $f32_=>_none)
->>>>>>> origin/master
    (local.get $0)
    (i32.const 9)
   )
@@ -290,13 +280,8 @@
    (local.get $0)
   )
  )
-<<<<<<< HEAD
  (func $cneg_nosemicolon (; 23 ;)
-  (call_indirect (type $FUNCSIG$vi)
-=======
- (func $cneg_nosemicolon (; 23 ;) (; has Stack IR ;)
   (call_indirect (type $i32_=>_none)
->>>>>>> origin/master
    (i32.const 1)
    (i32.const 17)
   )
@@ -1114,13 +1099,8 @@
    )
   )
  )
-<<<<<<< HEAD
  (func $relocatableAndModules (; 56 ;) (result i32)
-  (call_indirect (type $FUNCSIG$v)
-=======
- (func $relocatableAndModules (; 56 ;) (; has Stack IR ;) (result i32)
   (call_indirect (type $none_=>_none)
->>>>>>> origin/master
    (i32.const 10)
   )
   (call_indirect (type $none_=>_none)

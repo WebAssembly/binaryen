@@ -45,17 +45,10 @@ struct Range {
   size_t end;
 };
 
-// An initial segment index and a list of ranges an original segment has been
-// split into. This is enough information to replace a bulk memory operation on
-// an original segment with an equivalent sequence of operations on the new,
-// split segments.
-struct Replacement {
-  Index startIndex;
-  std::vector<Range> ranges;
-  Name dropStateGlobal;
-};
+// A function that produces the transformed bulk memory op
+using Replacement = std::function<Expression*(Function*)>;
 
-// Maps bulk memory operations to the replacements that must be applied to them.
+// Maps each bulk memory op to the replacement that must be applied to it.
 using Replacements = std::unordered_map<Expression*, Replacement>;
 
 // memory.fill: 2 byte opcode + ~2 immediate bytes + ~(3*2) byte operands
@@ -64,18 +57,41 @@ const size_t MEMORY_FILL_SIZE = 10;
 // data.drop: 2 byte opcode + ~1 byte index immediate
 const size_t DATA_DROP_SIZE = 3;
 
+namespace {
+
+Expression* makeMemorySize(Builder& builder) {
+  return builder.makeBinary(ShlInt32,
+                            builder.makeHost(MemorySize, Name(), {}),
+                            builder.makeConst(Literal(int32_t(16))));
+}
+
+} // anonymous namespace
+
 struct MemoryPacking : public Pass {
+  size_t dropStateGlobalCount = 0;
+
   void run(PassRunner* runner, Module* module) override;
-  void calculateRanges(Memory::Segment& segment,
-                       std::vector<Expression*>& referers,
-                       std::vector<Range>& ranges);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferers(PassRunner* runner,
                           Module* module,
                           std::vector<std::vector<Expression*>>& referers);
-  void createDropStateGlobals(Module* module,
-                              std::vector<std::vector<Expression*>>& referers,
-                              Replacements& replacements);
+  void dropUnusedSegments(std::vector<Memory::Segment>& segments,
+                          std::vector<std::vector<Expression*>>& referers);
+  bool canSplit(const Memory::Segment& segment,
+                const std::vector<Expression*>& referers);
+  void calculateRanges(const Memory::Segment& segment,
+                       const std::vector<Expression*>& referers,
+                       std::vector<Range>& ranges);
+  void createSplitSegments(Builder& builder,
+                           const Memory::Segment& segment,
+                           std::vector<Range>& ranges,
+                           std::vector<Memory::Segment>& packed,
+                           size_t segmentsRemaining);
+  void createReplacements(Module* module,
+                          const std::vector<Range>& ranges,
+                          const std::vector<Expression*>& referers,
+                          Replacements& replacements,
+                          const Index segmentIndex);
   void replaceBulkMemoryOps(PassRunner* runner,
                             Module* module,
                             Replacements& replacements);
@@ -97,61 +113,20 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     // segments.
     optimizeBulkMemoryOps(runner, module);
     getSegmentReferers(runner, module, referers);
-    std::vector<Memory::Segment> usedSegments;
-    std::vector<std::vector<Expression*>> usedReferers;
-    // Remove segments that are never used
-    // TODO: remove unused portions of partially used segments as well
-    for (size_t i = 0; i < segments.size(); ++i) {
-      bool used = false;
-      if (segments[i].isPassive) {
-        for (auto* referer : referers[i]) {
-          if (referer->is<MemoryInit>()) {
-            used = true;
-            break;
-          }
-        }
-      } else {
-        used = true;
-      }
-      if (used) {
-        usedSegments.push_back(segments[i]);
-        usedReferers.push_back(referers[i]);
-      } else {
-        // All referers are data.drops. Make them nops.
-        for (auto* referer : referers[i]) {
-          ExpressionManipulator::nop(referer);
-        }
-      }
-    }
-    std::swap(segments, usedSegments);
-    std::swap(referers, usedReferers);
+    dropUnusedSegments(segments, referers);
   }
 
   // The new, split memory segments
   std::vector<Memory::Segment> packed;
-  Replacements replacements;
 
+  Replacements replacements;
+  Builder builder(*module);
   for (size_t origIndex = 0; origIndex < segments.size(); ++origIndex) {
     auto& segment = segments[origIndex];
     auto& currReferers = referers[origIndex];
 
-    bool canSplit = true;
-    if (segment.isPassive) {
-      for (auto* referer : currReferers) {
-        if (auto* init = referer->dynCast<MemoryInit>()) {
-          // Do not try to split if there is a nonconstant offset or size
-          if (!init->offset->is<Const>() || !init->size->is<Const>()) {
-            canSplit = false;
-          }
-        }
-      }
-    } else {
-      // Active segments can only be split if they have constant offsets
-      canSplit = segment.offset->is<Const>();
-    }
-
     std::vector<Range> ranges;
-    if (canSplit) {
+    if (canSplit(segment, currReferers)) {
       calculateRanges(segment, currReferers, ranges);
     } else {
       // A single range covers the entire segment
@@ -159,71 +134,39 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     }
 
     Index firstNewIndex = packed.size();
-
-    // Create new segments
-    Builder builder(*module);
-    for (size_t i = 0; i < ranges.size(); ++i) {
-      Range& range = ranges[i];
-      if (range.isZero) {
-        continue;
-      }
-      Expression* offset = nullptr;
-      if (!segment.isPassive) {
-        if (auto* c = segment.offset->dynCast<Const>()) {
-          offset = builder.makeConst(
-            Literal(int32_t(c->value.geti32() + range.start)));
-        } else {
-          assert(ranges.size() == 1);
-          offset = segment.offset;
-        }
-      }
-      if (WebLimitations::MaxDataSegments <=
-          packed.size() + segments.size() - origIndex) {
-        // Give up splitting and merge all remaining ranges except end zeroes
-        auto lastNonzero = ranges.end() - 1;
-        if (lastNonzero->isZero) {
-          --lastNonzero;
-        }
-        range.end = lastNonzero->end;
-        ranges.erase(ranges.begin() + i + 1, lastNonzero + 1);
-      }
-      packed.emplace_back(segment.isPassive,
-                          offset,
-                          &segment.data[range.start],
-                          range.end - range.start);
-    }
-
-    // If a passive segment is removed entirely (because it is all zeroes),
-    // make all its data.drops into nops.
-    if (segment.isPassive && packed.size() == firstNewIndex) {
-      for (size_t i = currReferers.size() - 1; i > 0; --i) {
-        if (currReferers[i]->is<DataDrop>()) {
-          ExpressionManipulator::nop(currReferers[i]);
-          currReferers.erase(currReferers.begin() + i);
-        }
-      }
-    }
-
-    // Update replacements to reflect final splitting scheme for this segment
-    for (Expression* referer : currReferers) {
-      Replacement replacement;
-      replacement.startIndex = firstNewIndex;
-      replacement.ranges = ranges;
-      replacement.dropStateGlobal = Name();
-      replacements[referer] = replacement;
-    }
+    size_t segmentsRemaining = segments.size() - origIndex;
+    createSplitSegments(builder, segment, ranges, packed, segmentsRemaining);
+    createReplacements(
+      module, ranges, currReferers, replacements, firstNewIndex);
   }
 
   segments.swap(packed);
 
   if (module->features.hasBulkMemory()) {
-    createDropStateGlobals(module, referers, replacements);
     replaceBulkMemoryOps(runner, module, replacements);
   }
 }
 
-void MemoryPacking::calculateRanges(Memory::Segment& segment,
-                                    std::vector<Expression*>& referers,
+bool MemoryPacking::canSplit(const Memory::Segment& segment,
+                             const std::vector<Expression*>& referers) {
+  if (segment.isPassive) {
+    for (auto* referer : referers) {
+      if (auto* init = referer->dynCast<MemoryInit>()) {
+        // Do not try to split if there is a nonconstant offset or size
+        if (!init->offset->is<Const>() || !init->size->is<Const>()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  } else {
+    // Active segments can only be split if they have constant offsets
+    return segment.offset->is<Const>();
+  }
+}
+
+void MemoryPacking::calculateRanges(const Memory::Segment& segment,
+                                    const std::vector<Expression*>& referers,
                                     std::vector<Range>& ranges) {
   auto& data = segment.data;
   if (data.size() == 0) {
@@ -348,8 +291,7 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
       if (mustNop) {
         // Offset and size are 0, so just trap if dest > memory.size
         replaceCurrent(builder.makeIf(
-          builder.makeBinary(
-            GtUInt32, curr->dest, builder.makeHost(MemorySize, Name(), {})),
+          builder.makeBinary(GtUInt32, curr->dest, makeMemorySize(builder)),
           builder.makeUnreachable()));
       } else if (mustTrap) {
         // Drop dest, offset, and size then trap
@@ -363,8 +305,7 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
         replaceCurrent(builder.makeIf(
           builder.makeBinary(
             OrInt32,
-            builder.makeBinary(
-              GtUInt32, curr->dest, builder.makeHost(MemorySize, Name(), {})),
+            builder.makeBinary(GtUInt32, curr->dest, makeMemorySize(builder)),
             builder.makeBinary(OrInt32, curr->offset, curr->size)),
           builder.makeUnreachable()));
       }
@@ -408,37 +349,254 @@ void MemoryPacking::getSegmentReferers(
   recorder.run(runner, module);
 }
 
-void MemoryPacking::createDropStateGlobals(
-  Module* module,
-  std::vector<std::vector<Expression*>>& referers,
-  Replacements& replacements) {
-  // Create a global for any input segment that has a replacement that starts
-  // with a memory.fill. These are the only replacements that need to check a
-  // global, since memory.init implicitly checks the drop state already.
-  for (size_t i = 0; i < referers.size(); i++) {
-    bool needsGlobal = false;
-    for (auto referer : referers[i]) {
-      // TODO: be more precise here. Not all referers intersect the first range.
-      if (replacements[referer].ranges[0].isZero) {
-        needsGlobal = true;
-        break;
+void MemoryPacking::dropUnusedSegments(
+  std::vector<Memory::Segment>& segments,
+  std::vector<std::vector<Expression*>>& referers) {
+  std::vector<Memory::Segment> usedSegments;
+  std::vector<std::vector<Expression*>> usedReferers;
+  // Remove segments that are never used
+  // TODO: remove unused portions of partially used segments as well
+  for (size_t i = 0; i < segments.size(); ++i) {
+    bool used = false;
+    if (segments[i].isPassive) {
+      for (auto* referer : referers[i]) {
+        if (referer->is<MemoryInit>()) {
+          used = true;
+          break;
+        }
+      }
+    } else {
+      used = true;
+    }
+    if (used) {
+      usedSegments.push_back(segments[i]);
+      usedReferers.push_back(referers[i]);
+    } else {
+      // All referers are data.drops. Make them nops.
+      for (auto* referer : referers[i]) {
+        ExpressionManipulator::nop(referer);
       }
     }
-    if (!needsGlobal) {
+  }
+  std::swap(segments, usedSegments);
+  std::swap(referers, usedReferers);
+}
+
+void MemoryPacking::createSplitSegments(Builder& builder,
+                                        const Memory::Segment& segment,
+                                        std::vector<Range>& ranges,
+                                        std::vector<Memory::Segment>& packed,
+                                        size_t segmentsRemaining) {
+  for (size_t i = 0; i < ranges.size(); ++i) {
+    Range& range = ranges[i];
+    if (range.isZero) {
       continue;
     }
-    Builder builder(*module);
-    Name global(std::string("__mem_segment_drop_state_") + std::to_string(i));
-    module->addGlobal(builder.makeGlobal(global,
+    Expression* offset = nullptr;
+    if (!segment.isPassive) {
+      if (auto* c = segment.offset->dynCast<Const>()) {
+        offset =
+          builder.makeConst(Literal(int32_t(c->value.geti32() + range.start)));
+      } else {
+        assert(ranges.size() == 1);
+        offset = segment.offset;
+      }
+    }
+    if (WebLimitations::MaxDataSegments <= packed.size() + segmentsRemaining) {
+      // Give up splitting and merge all remaining ranges except end zeroes
+      auto lastNonzero = ranges.end() - 1;
+      if (lastNonzero->isZero) {
+        --lastNonzero;
+      }
+      range.end = lastNonzero->end;
+      ranges.erase(ranges.begin() + i + 1, lastNonzero + 1);
+    }
+    packed.emplace_back(segment.isPassive,
+                        offset,
+                        &segment.data[range.start],
+                        range.end - range.start);
+  }
+}
+
+void MemoryPacking::createReplacements(Module* module,
+                                       const std::vector<Range>& ranges,
+                                       const std::vector<Expression*>& referers,
+                                       Replacements& replacements,
+                                       const Index segmentIndex) {
+  // If there was no transformation, only update the indices
+  if (ranges.size() == 1 && !ranges.front().isZero) {
+    for (auto referer : referers) {
+      replacements[referer] = [referer, segmentIndex](Function*) {
+        if (auto* init = referer->dynCast<MemoryInit>()) {
+          init->segment = segmentIndex;
+        } else if (auto* drop = referer->dynCast<DataDrop>()) {
+          drop->segment = segmentIndex;
+        } else {
+          WASM_UNREACHABLE("Unexpected bulk memory operation");
+        }
+        return referer;
+      };
+    }
+    return;
+  }
+
+  Builder builder(*module);
+
+  Name dropStateGlobal;
+
+  // Return the drop state global, initializing it if it does not exist. This
+  // may change module-global state and has the important side effect of setting
+  // dropStateGlobal, so it must be evaluated eagerly, not in the replacements.
+  auto getDropStateGlobal = [&]() {
+    if (dropStateGlobal != Name()) {
+      return dropStateGlobal;
+    }
+    dropStateGlobal = Name(std::string("__mem_segment_drop_state_") +
+                           std::to_string(dropStateGlobalCount++));
+    module->addGlobal(builder.makeGlobal(dropStateGlobal,
                                          Type::i32,
                                          builder.makeConst(Literal(int32_t(0))),
                                          Builder::Mutable));
-    for (auto referer : referers[i]) {
-      Replacement& replacement = replacements[referer];
-      if (replacement.ranges[0].isZero) {
-        replacement.dropStateGlobal = global;
+    return dropStateGlobal;
+  };
+
+  // Create replacements for memory.init instructions first
+  size_t initIndex = segmentIndex;
+  for (auto referer : referers) {
+    auto* init = referer->dynCast<MemoryInit>();
+    if (init == nullptr) {
+      continue;
+    }
+
+    // Nonconstant offsets or sizes will have inhibited splitting
+    size_t start = init->offset->cast<Const>()->value.geti32();
+    size_t end = start + init->size->cast<Const>()->value.geti32();
+
+    // Index of the range from which this memory.init starts reading
+    size_t firstRangeIdx = 0;
+    while (ranges[firstRangeIdx].end <= start) {
+      ++firstRangeIdx;
+    }
+
+    // Handle zero-length memory.inits separately
+    if (start == end) {
+      // Offset is nonzero because init would otherwise have previously been
+      // optimized out, so trap if the dest is out of bounds or the segment is
+      // dropped
+      Expression* result = builder.makeIf(
+        builder.makeBinary(
+          OrInt32,
+          builder.makeBinary(GtUInt32, init->dest, makeMemorySize(builder)),
+          builder.makeGlobalGet(getDropStateGlobal(), Type::i32)),
+        builder.makeUnreachable());
+      replacements[init] = [result](Function*) { return result; };
+      continue;
+    }
+
+    // Split init into multiple memory.inits and memory.fills, storing the
+    // original base destination in a local if it is not a constant. If the
+    // first access is a memory.fill, explicitly check the drop status first to
+    // avoid writing zeroes when we should have trapped.
+    Expression* result = nullptr;
+    auto appendResult = [&](Expression* expr) {
+      result = result ? builder.blockify(result, expr) : expr;
+    };
+
+    // The local var holding the dest is not known until replacement time. Keep
+    // track of the locations where it will need to be patched in.
+    Index* setVar = nullptr;
+    std::vector<Index*> getVars;
+    if (!init->dest->is<Const>()) {
+      auto set = builder.makeLocalSet(-1, init->dest);
+      setVar = &set->index;
+      appendResult(set);
+    }
+    if (ranges[firstRangeIdx].isZero) {
+      appendResult(
+        builder.makeIf(builder.makeGlobalGet(getDropStateGlobal(), Type::i32),
+                       builder.makeUnreachable()));
+    }
+
+    size_t bytesWritten = 0;
+
+    std::cerr << "First range: " << firstRangeIdx << "\n";
+    for (size_t i = firstRangeIdx; i < ranges.size() && ranges[i].start < end;
+         ++i) {
+      auto& range = ranges[i];
+      std::cerr << "Visiting range: " << i << "\n";
+
+      // Calculate dest, either as a const or as an addition to the dest local
+      Expression* dest;
+      if (auto* c = init->dest->dynCast<Const>()) {
+        dest =
+          builder.makeConst(Literal(int32_t(c->value.geti32() + bytesWritten)));
+      } else {
+        auto* get = builder.makeLocalGet(-1, i32);
+        getVars.push_back(&get->index);
+        dest = get;
+        if (bytesWritten > 0) {
+          Const* addend = builder.makeConst(Literal(int32_t(bytesWritten)));
+          dest = builder.makeBinary(AddInt32, dest, addend);
+        }
+      }
+
+      // How many bytes are read from this range
+      size_t bytes = std::min(range.end, end) - std::max(range.start, start);
+      Expression* size = builder.makeConst(Literal(int32_t(bytes)));
+      bytesWritten += bytes;
+
+      // Create new memory.init or memory.fill
+      if (range.isZero) {
+        Expression* value = builder.makeConst(Literal::makeZero(i32));
+        appendResult(builder.makeMemoryFill(dest, value, size));
+      } else {
+        size_t offsetBytes = std::max(start, range.start) - range.start;
+        Expression* offset = builder.makeConst(Literal(int32_t(offsetBytes)));
+        appendResult(builder.makeMemoryInit(initIndex, dest, offset, size));
+        initIndex++;
       }
     }
+
+    // Non-zero length memory.inits must have intersected some range
+    assert(result);
+    replacements[init] = [module, setVar, getVars, result](Function* function) {
+      if (setVar != nullptr) {
+        Index destVar = Builder(*module).addVar(function, Type::i32);
+        *setVar = destVar;
+        for (auto* getVar : getVars) {
+          *getVar = destVar;
+        }
+      }
+      return result;
+    };
+  }
+
+  // Create replacements for data.drop instructions now that we know whether we
+  // need a drop state global
+  size_t dropIndex = segmentIndex;
+  for (auto drop : referers) {
+    if (!drop->is<DataDrop>()) {
+      continue;
+    }
+
+    Expression* result = nullptr;
+    auto appendResult = [&](Expression* expr) {
+      result = result ? builder.blockify(result, expr) : expr;
+    };
+
+    // Track drop state in a global only if some memory.init required it
+    if (dropStateGlobal != Name()) {
+      appendResult(builder.makeGlobalSet(
+        dropStateGlobal, builder.makeConst(Literal(int32_t(1)))));
+    }
+    for (auto range : ranges) {
+      if (!range.isZero) {
+        appendResult(builder.makeDataDrop(dropIndex++));
+      }
+    }
+    replacements[drop] = [result, module](Function*) {
+      return result ? result : Builder(*module).makeNop();
+    };
   }
 }
 
@@ -456,131 +614,13 @@ void MemoryPacking::replaceBulkMemoryOps(PassRunner* runner,
     void visitMemoryInit(MemoryInit* curr) {
       auto replacement = replacements.find(curr);
       assert(replacement != replacements.end());
-
-      auto segmentIndex = replacement->second.startIndex;
-      auto& ranges = replacement->second.ranges;
-      auto dropStateGlobal = replacement->second.dropStateGlobal;
-
-      assert(ranges.size() > 0);
-
-      // If there was no transformation, only update the index
-      if (ranges.size() == 1 && !ranges.front().isZero) {
-        curr->segment = segmentIndex;
-        return;
-      }
-
-      Builder builder(*getModule());
-
-      // Nonconstant offsets or sizes will have inhibited splitting
-      size_t start = curr->offset->cast<Const>()->value.geti32();
-      size_t end = start + curr->size->cast<Const>()->value.geti32();
-      size_t bytesWritten = 0;
-
-      // Split curr into multiple memory.inits and memory.fills, storing the
-      // original base destination in a local if it is not a constant
-      Expression* result = nullptr;
-      Index destVar = -1;
-      if (!curr->dest->is<Const>()) {
-        destVar = builder.addVar(getFunction(), i32);
-        result = builder.makeLocalSet(destVar, curr->dest);
-      }
-
-      // If the first item is a memory.fill, precede it with an explicit check
-      // of the drop state.
-      if (dropStateGlobal != Name()) {
-        result = builder.blockify(
-          result,
-          builder.makeIf(builder.makeGlobalGet(dropStateGlobal, Type::i32),
-                         builder.makeUnreachable()));
-      }
-
-      if (start != end) {
-        for (auto& range : ranges) {
-          // Skip ranges that do not intersect the accessed range.
-          if (range.end <= start) {
-            if (!range.isZero) {
-              segmentIndex++;
-            }
-            continue;
-          }
-          if (range.start >= end) {
-            break;
-          }
-
-          Expression* dest;
-          if (auto* c = curr->dest->dynCast<Const>()) {
-            dest = builder.makeConst(
-              Literal(int32_t(c->value.geti32() + bytesWritten)));
-          } else {
-            dest = builder.makeLocalGet(destVar, i32);
-            if (bytesWritten > 0) {
-              Const* addend = builder.makeConst(Literal(int32_t(bytesWritten)));
-              dest = builder.makeBinary(AddInt32, dest, addend);
-            }
-          }
-
-          size_t bytes =
-            std::min(range.end, end) - std::max(range.start, start);
-          bytesWritten += bytes;
-          Expression* size = builder.makeConst(Literal(int32_t(bytes)));
-
-          if (range.isZero) {
-            Expression* value = builder.makeConst(Literal::makeZero(i32));
-            result = builder.blockify(
-              result, builder.makeMemoryFill(dest, value, size));
-          } else {
-            size_t offsetBytes = std::max(start, range.start) - range.start;
-            Expression* offset =
-              builder.makeConst(Literal(int32_t(offsetBytes)));
-            result = builder.blockify(
-              result, builder.makeMemoryInit(segmentIndex, dest, offset, size));
-            segmentIndex++;
-          }
-        }
-      }
-      if (result) {
-        replaceCurrent(result);
-      } else {
-        // Zero-width fill with constant dest does not intersect any ranges, so
-        // just check that the destination is in bounds.
-        replaceCurrent(builder.makeIf(
-          builder.makeBinary(
-            GtUInt32, curr->dest, builder.makeHost(MemorySize, Name(), {})),
-          builder.makeUnreachable()));
-      }
+      replaceCurrent(replacement->second(getFunction()));
     }
 
     void visitDataDrop(DataDrop* curr) {
       auto replacement = replacements.find(curr);
       assert(replacement != replacements.end());
-
-      auto segmentIndex = replacement->second.startIndex;
-      auto& ranges = replacement->second.ranges;
-      auto dropStateGlobal = replacement->second.dropStateGlobal;
-
-      // If there was no transformation, only update the index
-      if (ranges.size() == 1 && !dropStateGlobal) {
-        // Data.drop of all-zero segments have already been removed
-        assert(!ranges.front().isZero);
-        curr->segment = segmentIndex;
-        return;
-      }
-
-      Builder builder(*getModule());
-      Expression* result = nullptr;
-      for (auto range : ranges) {
-        if (!range.isZero) {
-          result =
-            builder.blockify(result, builder.makeDataDrop(segmentIndex++));
-        }
-      }
-      if (dropStateGlobal != Name()) {
-        builder.blockify(
-          result,
-          builder.makeGlobalSet(dropStateGlobal,
-                                builder.makeConst(Literal(int32_t(1)))));
-      }
-      replaceCurrent(result);
+      replaceCurrent(replacement->second(getFunction()));
     }
   } replacer(replacements);
   replacer.run(runner, module);

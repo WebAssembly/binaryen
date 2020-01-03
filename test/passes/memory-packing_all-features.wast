@@ -229,7 +229,7 @@
 
   (func $empty
     (memory.init 14
-      (i32.const 0)
+      (i32.const 13)
       (i32.const 0)
       (i32.const 0)
     )
@@ -362,7 +362,7 @@
 
   (func $zero-size
     (memory.init 9
-      (i32.const 0)
+      (i32.const 13)
       (i32.const 40)
       (i32.const 0)
     )
@@ -373,7 +373,7 @@
 
   (func $zero-size-undropped
     (memory.init 10
-      (i32.const 0)
+      (i32.const 13)
       (i32.const 40)
       (i32.const 0)
     )
@@ -392,13 +392,24 @@
 
   (data passive "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 12
 
-  (func $out-of-bounds-size
+  (func $zero-size-out-of-bounds-offset
     (memory.init 12
+      (i32.const 0)
+      (i32.const 95)
+      (i32.const 0)
+    )
+    (data.drop 12)
+  )
+
+  (data passive "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 13
+
+  (func $out-of-bounds-size
+    (memory.init 13
       (i32.const 0)
       (i32.const 0)
       (i32.const 95)
     )
-    (data.drop 12)
+    (data.drop 13)
   )
 )
 
@@ -408,7 +419,7 @@
 
   (func $zero-length-init-zeroes
     (memory.init 0
-      (i32.const 0)
+      (i32.const 13)
       (i32.const 10)
       (i32.const 0)
     )
@@ -419,7 +430,7 @@
 
   (func $zero-length-init-nonzeroes
     (memory.init 1
-      (i32.const 0)
+      (i32.const 13)
       (i32.const 23)
       (i32.const 0)
     )
@@ -428,9 +439,9 @@
 
   (data passive "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hi") ;; 2
 
-  (func $zero-length-init-zeroes-todo
+  (func $zero-length-init-zeroes-2
     (memory.init 2
-      (i32.const 0)
+      (i32.const 13)
       (i32.const 10)
       (i32.const 0)
     )
@@ -439,9 +450,9 @@
 
   (data passive "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hi") ;; 3
 
-  (func $zero-length-init-nonzeroes-todo
+  (func $zero-length-init-nonzeroes-2
     (memory.init 3
-      (i32.const 0)
+      (i32.const 13)
       (i32.const 21)
       (i32.const 0)
     )
