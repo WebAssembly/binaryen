@@ -330,7 +330,6 @@ void MemoryPacking::getSegmentReferers(
   Module* module,
   std::vector<std::vector<Expression*>>& referers) {
   using Referers = std::vector<std::vector<Expression*>>;
-  // TODO: make this a ParallelAnalysis pass
   auto collectReferers = [&](Function* func, Referers& referers) {
     struct Collector : WalkerPass<PostWalker<Collector>> {
       Referers& referers;
