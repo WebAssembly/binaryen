@@ -206,19 +206,19 @@ void MemoryPacking::calculateRanges(const Memory::Segment& segment,
     for (auto* referer : referers) {
       if (referer->is<MemoryInit>()) {
         // Splitting adds a new memory.fill and a new memory.init
-        // TODO: multiply by 2 and update tests
-        threshold += MEMORY_FILL_SIZE;
+        threshold += MEMORY_FILL_SIZE * 2;
         edgeThreshold += MEMORY_FILL_SIZE;
       } else {
         threshold += DATA_DROP_SIZE;
       }
     }
+    std::cerr << "edge threshold: " << edgeThreshold << "\n";
 
     // Merge edge zeroes if they are not worth splitting
     if (ranges.size() >= 2) {
       auto last = ranges.end() - 1;
       auto penultimate = ranges.end() - 2;
-      if (last->isZero && last->end - last->start < edgeThreshold) {
+      if (last->isZero && last->end - last->start <= edgeThreshold) {
         penultimate->end = last->end;
         ranges.erase(last);
       }
@@ -226,7 +226,7 @@ void MemoryPacking::calculateRanges(const Memory::Segment& segment,
     if (ranges.size() >= 2) {
       auto first = ranges.begin();
       auto second = ranges.begin() + 1;
-      if (first->isZero && first->end - first->start < edgeThreshold) {
+      if (first->isZero && first->end - first->start <= edgeThreshold) {
         second->start = first->start;
         ranges.erase(first);
       }
@@ -243,7 +243,7 @@ void MemoryPacking::calculateRanges(const Memory::Segment& segment,
     auto left = mergedRanges.end() - 1;
     auto curr = ranges.begin() + i;
     auto right = ranges.begin() + i + 1;
-    if (curr->isZero && curr->end - curr->start < threshold) {
+    if (curr->isZero && curr->end - curr->start <= threshold) {
       left->end = right->end;
       ++i;
     } else {
@@ -531,11 +531,9 @@ void MemoryPacking::createReplacements(Module* module,
 
     size_t bytesWritten = 0;
 
-    std::cerr << "First range: " << firstRangeIdx << "\n";
     for (size_t i = firstRangeIdx; i < ranges.size() && ranges[i].start < end;
          ++i) {
       auto& range = ranges[i];
-      std::cerr << "Visiting range: " << i << "\n";
 
       // Calculate dest, either as a const or as an addition to the dest local
       Expression* dest;
