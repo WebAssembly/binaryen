@@ -29,6 +29,7 @@
 //
 
 #include "ir/manipulation.h"
+#include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-binary.h"
@@ -72,8 +73,7 @@ struct MemoryPacking : public Pass {
 
   void run(PassRunner* runner, Module* module) override;
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
-  void getSegmentReferers(PassRunner* runner,
-                          Module* module,
+  void getSegmentReferers(Module* module,
                           std::vector<std::vector<Expression*>>& referers);
   void dropUnusedSegments(std::vector<Memory::Segment>& segments,
                           std::vector<std::vector<Expression*>>& referers);
@@ -112,7 +112,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     // operations. This means we only need to track replacements for passive
     // segments.
     optimizeBulkMemoryOps(runner, module);
-    getSegmentReferers(runner, module, referers);
+    getSegmentReferers(module, referers);
     dropUnusedSegments(segments, referers);
   }
 
@@ -327,26 +327,38 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
 }
 
 void MemoryPacking::getSegmentReferers(
-  PassRunner* runner,
   Module* module,
   std::vector<std::vector<Expression*>>& referers) {
+  using Referers = std::vector<std::vector<Expression*>>;
   // TODO: make this a ParallelAnalysis pass
-  struct Recorder : WalkerPass<PostWalker<Recorder>> {
-    bool isFunctionParallel() override { return false; }
+  auto collectReferers = [&](Function* func, Referers& referers) {
+    struct Collector : WalkerPass<PostWalker<Collector>> {
+      Referers& referers;
+      Collector(Referers& referers) : referers(referers) {}
 
-    std::vector<std::vector<Expression*>>& referers;
-    Recorder(std::vector<std::vector<Expression*>>& referers)
-      : referers(referers) {}
-
-    void visitMemoryInit(MemoryInit* curr) {
-      referers[curr->segment].push_back(curr);
+      void visitMemoryInit(MemoryInit* curr) {
+        referers[curr->segment].push_back(curr);
+      }
+      void visitDataDrop(DataDrop* curr) {
+        referers[curr->segment].push_back(curr);
+      }
+      void doWalkFunction(Function* func) {
+        referers.resize(getModule()->memory.segments.size());
+        super::doWalkFunction(func);
+      }
+    } collector(referers);
+    collector.walkFunctionInModule(func, module);
+  };
+  ModuleUtils::ParallelFunctionAnalysis<Referers> analysis(*module,
+                                                           collectReferers);
+  referers.resize(module->memory.segments.size());
+  for (auto& pair : analysis.map) {
+    Referers& funcReferers = pair.second;
+    for (size_t i = 0; i < funcReferers.size(); ++i) {
+      referers[i].insert(
+        referers[i].end(), funcReferers[i].begin(), funcReferers[i].end());
     }
-
-    void visitDataDrop(DataDrop* curr) {
-      referers[curr->segment].push_back(curr);
-    }
-  } recorder(referers);
-  recorder.run(runner, module);
+  }
 }
 
 void MemoryPacking::dropUnusedSegments(
