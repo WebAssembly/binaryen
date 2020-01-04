@@ -158,7 +158,7 @@
    )
   )
   (drop
-   (atomic.notify
+   (atomic.notify offset=24
     (local.get $0)
     (local.get $0)
    )

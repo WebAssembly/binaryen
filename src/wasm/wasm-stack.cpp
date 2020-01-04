@@ -423,7 +423,7 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
 
 void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
-  emitMemoryAccess(4, 4, 0);
+  emitMemoryAccess(4, 4, curr->offset);
 }
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
