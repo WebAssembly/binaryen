@@ -329,6 +329,9 @@ void MemoryPacking::getSegmentReferrers(
   Module* module, std::vector<std::vector<Expression*>>& referrers) {
   using Referrers = std::vector<std::vector<Expression*>>;
   auto collectReferrers = [&](Function* func, Referrers& referrers) {
+    if (func->body == nullptr) {
+      return;
+    }
     struct Collector : WalkerPass<PostWalker<Collector>> {
       Referrers& referrers;
       Collector(Referrers& referrers) : referrers(referrers) {}
