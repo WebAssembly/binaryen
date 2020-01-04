@@ -408,12 +408,12 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   switch (curr->expectedType) {
     case i32: {
       o << int8_t(BinaryConsts::I32AtomicWait);
-      emitMemoryAccess(4, 4, 0);
+      emitMemoryAccess(4, 4, curr->offset);
       break;
     }
     case i64: {
       o << int8_t(BinaryConsts::I64AtomicWait);
-      emitMemoryAccess(8, 8, 0);
+      emitMemoryAccess(8, 8, curr->offset);
       break;
     }
     default:
@@ -423,7 +423,7 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
 
 void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
-  emitMemoryAccess(4, 4, 0);
+  emitMemoryAccess(4, 4, curr->offset);
 }
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
