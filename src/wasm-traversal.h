@@ -1185,7 +1185,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     switch (curr->_id) {
       case Expression::Id::BlockId:
       case Expression::Id::IfId:
-      case Expression::Id::LoopId: {
+      case Expression::Id::LoopId:
+      case Expression::Id::TryId: {
         self->pushTask(SubType::doPostVisitControlFlow, currp);
         break;
       }
@@ -1197,7 +1198,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     switch (curr->_id) {
       case Expression::Id::BlockId:
       case Expression::Id::IfId:
-      case Expression::Id::LoopId: {
+      case Expression::Id::LoopId:
+      case Expression::Id::TryId: {
         self->pushTask(SubType::doPreVisitControlFlow, currp);
         break;
       }

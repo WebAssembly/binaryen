@@ -1797,7 +1797,8 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;
-  if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>()) {
+  if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>() ||
+      origin->is<Try>()) {
     if (stackType == unreachable) {
       // There are no unreachable blocks, loops, or ifs. we emit extra
       // unreachables to fix that up, so that they are valid as having none

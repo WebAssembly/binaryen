@@ -50,15 +50,23 @@
  (export "ppf64" (func $3))
  (func $0 (; 0 ;) (result i32)
   i32.const 1
+  push
+  i32.pop
  )
  (func $1 (; 1 ;) (result i64)
   i64.const 1
+  push
+  i64.pop
  )
  (func $2 (; 2 ;) (result f32)
   f32.const 1
+  push
+  f32.pop
  )
  (func $3 (; 3 ;) (result f64)
   f64.const 1
+  push
+  f64.pop
  )
 )
 (module

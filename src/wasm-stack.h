@@ -779,14 +779,12 @@ void BinaryenIRWriter<SubType>::visitDrop(Drop* curr) {
 
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPush(Push* curr) {
-  // Turns into nothing in the binary format: leave the child on the stack for
-  // others to use.
   visit(curr->value);
+  emit(curr);
 }
 
 template<typename SubType> void BinaryenIRWriter<SubType>::visitPop(Pop* curr) {
-  // Turns into nothing in the binary format: just get a value that is already
-  // on the stack.
+  emit(curr);
 }
 
 // Binaryen IR to binary writer
