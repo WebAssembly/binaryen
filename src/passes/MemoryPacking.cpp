@@ -212,7 +212,6 @@ void MemoryPacking::calculateRanges(const Memory::Segment& segment,
         threshold += DATA_DROP_SIZE;
       }
     }
-    std::cerr << "edge threshold: " << edgeThreshold << "\n";
 
     // Merge edge zeroes if they are not worth splitting
     if (ranges.size() >= 2) {
