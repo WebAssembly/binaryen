@@ -69,6 +69,41 @@ inline bool isControlFlowStructure(Expression* curr) {
          curr->is<Try>();
 }
 
+// Returns true if the given control flow structure preserves all its childrens'
+// preludes within it. For example, blocks satisfy this property, because when
+// the original block is in the form of
+// (block
+//   (some expression)
+//   ...
+// )
+// And we replaced (some expression) with a local.get whose prelude is (some
+// expression), the final block will be in the form of
+// (block
+//   (some expression)
+//   (local.get ...)
+//   ...
+// )
+// So the block's children's preludes do not escape the boundary of the block.
+// 'if' does not satisfy this property, because the prelude of its condition
+// ends up preceding (= escaping) the if. For example, if the original 'if' is
+// in the form of
+// (if
+//   (some expression)
+//   ...
+// )
+// And (some expression) is replaced with a local.get whose prelude is (some
+// expression), the final 'if' will be something like
+// (some expression)
+// (if
+//   (local.get ...)
+//   ...
+// )
+// So 'if''s condition's preludes escapes the boundary of 'if'. Refer to Flatten
+// pass for detailed algorithms.
+inline bool containsChildrensPreludes(Expression* curr) {
+  return curr->is<Block>() || curr->is<Loop>() || curr->is<Try>();
+}
+
 inline void verifyFlatness(Function* func) {
   struct VerifyFlatness
     : public PostWalker<VerifyFlatness,

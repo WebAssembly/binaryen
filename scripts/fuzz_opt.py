@@ -40,7 +40,7 @@ FUZZ_OPTS = []
 
 INPUT_SIZE_LIMIT = 150 * 1024
 
-LOG_LIMIT = 125
+LOG_LIMIT = 500
 
 
 # utilities

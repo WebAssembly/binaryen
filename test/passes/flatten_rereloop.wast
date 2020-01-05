@@ -780,4 +780,15 @@
    (local.get $3)
   )
  )
+
+ ;; Tests if labels in branches in if conditions are tracked correctly
+ (func $branch-in-if-condition
+  (block $label0
+   (if
+    (br $label0)
+    (drop (i32.const 0))
+   )
+  )
+ )
 )
+

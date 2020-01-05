@@ -12566,7 +12566,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $20() {
-  var $1_1 = 0, $2_1 = 0, $4_1 = 0;
+  var $1_1 = 0, $4_1 = 0;
   fake_return_waka123 : {
    $1_1 = 3;
    switch (0 | 0) {
@@ -12578,7 +12578,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $21() {
-  var $1_1 = 0, $2_1 = 0, $4_1 = 0;
+  var $1_1 = 0, $4_1 = 0;
   fake_return_waka123 : {
    dummy();
    $1_1 = 4;

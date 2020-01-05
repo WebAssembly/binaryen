@@ -230,10 +230,12 @@ struct Flatten
 
             if (br->condition) {
               // the value must also flow out
-              ourPreludes.push_back(br);
+              Expression* parent = getParent();
               if (br->type.isConcrete()) {
+                ourPreludes.push_back(br);
                 replaceCurrent(builder.makeLocalGet(temp, type));
-              } else {
+              } else if (parent && !Flat::containsChildrensPreludes(parent)) {
+                ourPreludes.push_back(br);
                 assert(br->type == Type::unreachable);
                 replaceCurrent(builder.makeUnreachable());
               }
@@ -277,7 +279,9 @@ struct Flatten
     curr = getCurrent(); // we may have replaced it
     // we have changed children
     ReFinalizeNode().visit(curr);
-    if (curr->type == Type::unreachable) {
+    Expression* parent = getParent();
+    if (curr->type == Type::unreachable && !curr->is<Unreachable>() && parent &&
+        !Flat::containsChildrensPreludes(parent)) {
       ourPreludes.push_back(curr);
       replaceCurrent(builder.makeUnreachable());
     } else if (curr->type.isConcrete()) {

@@ -233,12 +233,10 @@
       (i32.const -1)
      )
      (br $inner)
-     (unreachable)
      (local.set $2
       (i32.const 0)
      )
      (br $outer)
-     (unreachable)
      (local.set $3
       (i32.const 1)
      )
@@ -251,7 +249,6 @@
       (i32.const 2)
      )
      (br $outer)
-     (unreachable)
      (local.set $x
       (i32.const 3)
      )
@@ -423,7 +420,6 @@
     (i32.const 8)
    )
    (br $outer)
-   (unreachable)
   )
   (local.set $10
    (local.get $1)
@@ -519,7 +515,6 @@
     (i32.const 1)
     (unreachable)
    )
-   (unreachable)
   )
   (local.set $2
    (local.get $1)
@@ -532,29 +527,26 @@
   (local $0 i32)
   (local $1 f32)
   (local $2 f32)
-  (block
-   (local.set $0
-    (i32.load16_u
-     (i32.const 53)
-    )
+  (local.set $0
+   (i32.load16_u
+    (i32.const 53)
    )
-   (if
-    (local.get $0)
-    (unreachable)
-    (block
-     (block $label$3
-      (unreachable)
-     )
-     (local.set $2
-      (local.get $1)
-     )
-     (drop
-      (local.get $2)
-     )
+  )
+  (if
+   (local.get $0)
+   (unreachable)
+   (block
+    (block $label$3
+     (unreachable)
+    )
+    (local.set $2
+     (local.get $1)
+    )
+    (drop
+     (local.get $2)
     )
    )
   )
-  (unreachable)
  )
  (func $a16 (; 15 ;) (result i32)
   (local $x i32)
@@ -657,14 +649,12 @@
    (br_if $label$1
     (unreachable)
    )
-   (unreachable)
    (drop
     (unreachable)
    )
    (i32.load
     (unreachable)
    )
-   (unreachable)
   )
   (local.set $1
    (local.get $0)
@@ -687,11 +677,8 @@
     (drop
      (unreachable)
     )
-    (unreachable)
    )
-   (unreachable)
   )
-  (unreachable)
  )
  (func $call-me (; 19 ;) (param $0 i32) (param $1 i32)
   (nop)
@@ -706,7 +693,6 @@
   (local $6 i32)
   (block $out
    (br $out)
-   (unreachable)
    (drop
     (i32.const 0)
    )
@@ -719,7 +705,6 @@
    (br_table $out $out $out $out
     (i32.const 3)
    )
-   (unreachable)
    (call $code-to-kill)
   )
   (if
@@ -739,7 +724,6 @@
    (block
     (block $out3
      (return)
-     (unreachable)
      (drop
       (i32.const 0)
      )
@@ -751,7 +735,6 @@
    (br_table $out4 $out4 $out4 $out4
     (i32.const 4)
    )
-   (unreachable)
    (drop
     (i32.const 0)
    )
@@ -789,7 +772,6 @@
        (unreachable)
       )
      )
-     (unreachable)
      (drop
       (i32.const 0)
      )
@@ -801,7 +783,6 @@
    (i32.const 0)
    (block
     (block $out11
-     (unreachable)
      (unreachable)
      (drop
       (i32.const 0)
@@ -821,7 +802,6 @@
    (block
     (block $out13
      (unreachable)
-     (unreachable)
      (drop
       (i32.const 0)
      )
@@ -839,7 +819,6 @@
    (i32.const 0)
    (block
     (block $out15
-     (unreachable)
      (unreachable)
      (drop
       (i32.const 0)
@@ -874,7 +853,6 @@
       )
       (unreachable)
      )
-     (unreachable)
      (drop
       (i32.const 10)
      )
@@ -887,7 +865,6 @@
     (br_table $out20 $in21
      (i32.const 1)
     )
-    (unreachable)
    )
    (unreachable)
   )
@@ -896,7 +873,6 @@
     (br_table $in23 $out22
      (i32.const 1)
     )
-    (unreachable)
    )
    (unreachable)
   )
@@ -909,11 +885,9 @@
        (br_table $in26 $in26
         (i32.const 1)
        )
-       (unreachable)
       )
       (unreachable)
      )
-     (unreachable)
      (drop
       (i32.const 10)
      )
@@ -936,9 +910,7 @@
       (unreachable)
      )
      (unreachable)
-     (unreachable)
      (return)
-     (unreachable)
     )
     (unreachable)
    )
@@ -954,30 +926,22 @@
   )
   (block $out29
    (loop $in30
-    (block
-     (br_if $out29
-      (i32.const 1)
-     )
-     (unreachable)
+    (br_if $out29
+     (i32.const 1)
     )
     (unreachable)
    )
-   (unreachable)
   )
   (if
    (i32.const 0)
    (block
     (block $block20
      (loop $in32
-      (block
-       (br_if $in32
-        (i32.const 1)
-       )
-       (unreachable)
+      (br_if $in32
+       (i32.const 1)
       )
       (unreachable)
      )
-     (unreachable)
      (drop
       (i32.const 10)
      )
@@ -1061,10 +1025,7 @@
   )
   (if
    (i32.const 11)
-   (block
-    (unreachable)
-    (unreachable)
-   )
+   (unreachable)
   )
   (if
    (i32.const 22)
@@ -1203,13 +1164,10 @@
   )
  )
  (func $killer (; 21 ;)
-  (block
-   (unreachable)
-   (drop
-    (i32.const 1000)
-   )
-  )
   (unreachable)
+  (drop
+   (i32.const 1000)
+  )
  )
  (func $target (; 22 ;)
   (drop
@@ -1224,14 +1182,11 @@
     (return
      (i32.const 0)
     )
-    (unreachable)
     (br $switch$0)
-    (unreachable)
    )
    (return
     (i32.const 1)
    )
-   (unreachable)
   )
   (local.set $1
    (local.get $0)
@@ -1253,7 +1208,6 @@
        (br_table $switch-case$9 $switch-case$8 $switch-default$10
         (i32.const -1)
        )
-       (unreachable)
       )
      )
      (local.set $1
@@ -1262,9 +1216,7 @@
      (return
       (local.get $1)
      )
-     (unreachable)
      (br $switch$7)
-     (unreachable)
     )
     (local.set $2
      (local.get $$$0)
@@ -1272,12 +1224,10 @@
     (return
      (local.get $2)
     )
-    (unreachable)
    )
    (return
     (i32.const 0)
    )
-   (unreachable)
   )
   (local.set $4
    (local.get $3)
@@ -1288,19 +1238,16 @@
  )
  (func $global (; 25 ;)
   (local $0 i32)
-  (block
-   (unreachable)
-   (local.set $0
-    (global.get $x)
-   )
-   (drop
-    (local.get $0)
-   )
-   (global.set $x
-    (i32.const 1)
-   )
-  )
   (unreachable)
+  (local.set $0
+   (global.get $x)
+  )
+  (drop
+   (local.get $0)
+  )
+  (global.set $x
+   (i32.const 1)
+  )
  )
  (func $ret (; 26 ;) (result i32)
   (local $0 i32)
@@ -1309,7 +1256,6 @@
    (return
     (i32.const 0)
    )
-   (unreachable)
    (nop)
    (local.set $0
     (i32.const 0)
@@ -1331,7 +1277,6 @@
    )
    (br $out)
    (unreachable)
-   (unreachable)
   )
   (local.set $1
    (local.get $0)
@@ -1343,9 +1288,7 @@
  (func $unreachable-br-loop (; 28 ;) (result i32)
   (loop $out
    (br $out)
-   (unreachable)
   )
-  (unreachable)
  )
  (func $unreachable-block-ends-switch (; 29 ;) (result i32)
   (local $0 i32)
@@ -1356,7 +1299,6 @@
     (br_table $label$3
      (unreachable)
     )
-    (unreachable)
     (unreachable)
    )
    (local.set $0
@@ -1379,7 +1321,6 @@
     (br_if $label$2
      (unreachable)
     )
-    (unreachable)
     (unreachable)
    )
    (local.set $0
@@ -1404,7 +1345,6 @@
    (memory.grow
     (unreachable)
    )
-   (unreachable)
    (unreachable)
    (local.set $0
     (i32.const 21)
@@ -1431,11 +1371,9 @@
     (br_if $label$0
      (unreachable)
     )
-    (unreachable)
     (drop
      (unreachable)
     )
-    (unreachable)
     (local.set $2
      (i32.const 4)
     )
@@ -1447,7 +1385,6 @@
     (local.get $3)
    )
    (br $label$0)
-   (unreachable)
    (local.set $1
     (i32.const 16)
    )
@@ -1546,7 +1483,6 @@
        (local.get $9)
        (unreachable)
       )
-      (unreachable)
      )
      (local.set $15
       (local.get $14)
@@ -1623,7 +1559,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (br $out)
    (i32.add
     (unreachable)
@@ -1632,7 +1567,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (br_table $out $out $out $out
     (i32.const 3)
    )
@@ -1643,7 +1577,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (block $block
     (drop
      (i32.const 2)
@@ -1681,7 +1614,6 @@
      (br_table $in $switch-in $in
       (i32.const 777)
      )
-     (unreachable)
     )
     (local.set $7
      (local.get $6)
@@ -1693,7 +1625,6 @@
      (i32.const 3)
     )
     (br $in)
-    (unreachable)
     (local.set $5
      (i32.const 4)
     )
@@ -1767,7 +1698,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (br $out)
    (select
     (i32.const 9)
@@ -1777,7 +1707,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (br $out)
    (select
     (i32.const 9)
@@ -1787,7 +1716,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (if
     (i32.const 11)
     (local.set $17
@@ -1896,7 +1824,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (i32.add
     (i32.const 1)
     (unreachable)
@@ -1904,7 +1831,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (block
     (if
      (i32.const 5)
@@ -1984,7 +1910,6 @@
    (drop
     (unreachable)
    )
-   (unreachable)
    (local.set $0
     (i32.const 3)
    )
@@ -2199,7 +2124,6 @@
    (br_table $label$3
     (unreachable)
    )
-   (unreachable)
   )
  )
  (func $br_if_order (; 40 ;) (param $x i32) (result i32)
@@ -2267,38 +2191,33 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (block
-   (local.set $x
-    (i32.const 1)
-   )
-   (local.set $2
-    (local.get $x)
-   )
-   (drop
-    (local.get $2)
-   )
-   (unreachable)
-   (drop
-    (unreachable)
-   )
-   (unreachable)
-   (local.set $x
-    (i32.const 2)
-   )
-   (local.set $3
-    (local.get $x)
-   )
-   (local.set $y
-    (local.get $3)
-   )
-   (local.set $4
-    (local.get $y)
-   )
-   (drop
-    (local.get $4)
-   )
+  (local.set $x
+   (i32.const 1)
   )
-  (unreachable)
+  (local.set $2
+   (local.get $x)
+  )
+  (drop
+   (local.get $2)
+  )
+  (drop
+   (unreachable)
+  )
+  (local.set $x
+   (i32.const 2)
+  )
+  (local.set $3
+   (local.get $x)
+  )
+  (local.set $y
+   (local.get $3)
+  )
+  (local.set $4
+   (local.get $y)
+  )
+  (drop
+   (local.get $4)
+  )
  )
  (func $return (; 42 ;) (param $x i32) (result i32)
   (local $1 i32)
@@ -2311,7 +2230,6 @@
   (return
    (local.get $1)
   )
-  (unreachable)
  )
  (func $subtype (; 43 ;) (result anyref)
   (local $0 nullref)

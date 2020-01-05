@@ -112,7 +112,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $13() {
-  var $0 = 0, $1_1 = 0, $3_1 = 0;
+  var $0 = 0, $3_1 = 0;
   block : {
    $0 = 3;
    break block;
@@ -121,7 +121,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $14() {
-  var $0 = 0, $1_1 = 0, $3_1 = 0;
+  var $0 = 0, $3_1 = 0;
   block : {
    dummy();
    $0 = 4;
@@ -531,7 +531,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $57() {
-  var $0 = 0, $1_1 = 0;
+  var $0 = 0;
   block : {
    $0 = 8;
    break block;
