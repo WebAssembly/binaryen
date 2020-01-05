@@ -374,6 +374,9 @@ struct UniqueNameMapper {
       void visitBreak(Break* curr) {
         curr->name = mapper.sourceToUnique(curr->name);
       }
+      void visitBrOnExn(BrOnExn* curr) {
+        curr->name = mapper.sourceToUnique(curr->name);
+      }
       void visitSwitch(Switch* curr) {
         for (auto& target : curr->targets) {
           target = mapper.sourceToUnique(target);
