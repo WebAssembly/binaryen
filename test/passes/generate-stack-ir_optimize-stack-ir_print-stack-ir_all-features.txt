@@ -8,7 +8,7 @@
    i32.const 0
    throw $e0
   catch
-   exnref.pop
+   
    local.set $exn
    block $l0 (result i32)
     local.get $exn

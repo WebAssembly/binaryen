@@ -2504,6 +2504,11 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
     switch (inst->op) {
       case StackInst::Basic: {
         doIndent();
+        // push and pop are pseudo instructions and should not be printed in the
+        // stack IR format to make it valid wat form.
+        if (inst->origin->is<Push>() || inst->origin->is<Pop>()) {
+          break;
+        }
         PrintExpressionContents(func, o).visit(inst->origin);
         break;
       }
