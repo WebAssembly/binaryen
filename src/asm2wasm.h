@@ -1366,6 +1366,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   if (runOptimizationPasses) {
     optimizingBuilder->finish();
+    // Now that we have a full module, do memory packing optimizations
+    {
+      PassRunner passRunner(&wasm, passOptions);
+      passRunner.options.lowMemoryUnused = true;
+      passRunner.add("memory-packing");
+      passRunner.run();
+    }
     // if we added any helper functions (like non-trapping i32-div, etc.), then
     // those have not been optimized (the optimizing builder has just been fed
     // the asm.js functions). Optimize those now. Typically there are very few,

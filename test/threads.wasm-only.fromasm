@@ -7,7 +7,7 @@
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (export "test64" (func $legalstub$test64))
- (func $test64 (; 1 ;) (result i64)
+ (func $test64 (; 1 ;) (; has Stack IR ;) (result i64)
   (local $0 i64)
   (local $1 i64)
   (i64.atomic.store
@@ -50,7 +50,7 @@
   )
   (local.get $1)
  )
- (func $legalstub$test64 (; 2 ;) (result i32)
+ (func $legalstub$test64 (; 2 ;) (; has Stack IR ;) (result i32)
   (local $0 i64)
   (local.set $0
    (call $test64)

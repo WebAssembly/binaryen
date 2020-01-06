@@ -66,7 +66,7 @@
  (export "dynCall_iiii" (func $dynCall_iiii))
  (export "dynCall_vi" (func $dynCall_vi))
  (export "___udivmoddi4" (func $___udivmoddi4))
- (func $stackAlloc (; 18 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (; 18 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local.set $1
    (global.get $STACKTOP)
@@ -95,15 +95,15 @@
   )
   (local.get $1)
  )
- (func $stackSave (; 19 ;) (result i32)
+ (func $stackSave (; 19 ;) (; has Stack IR ;) (result i32)
   (global.get $STACKTOP)
  )
- (func $stackRestore (; 20 ;) (param $0 i32)
+ (func $stackRestore (; 20 ;) (; has Stack IR ;) (param $0 i32)
   (global.set $STACKTOP
    (local.get $0)
   )
  )
- (func $establishStackSpace (; 21 ;) (param $0 i32) (param $1 i32)
+ (func $establishStackSpace (; 21 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (global.set $STACKTOP
    (local.get $0)
   )
@@ -111,7 +111,7 @@
    (local.get $1)
   )
  )
- (func $setThrew (; 22 ;) (param $0 i32) (param $1 i32)
+ (func $setThrew (; 22 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (if
    (i32.eqz
     (global.get $__THREW__)
@@ -126,15 +126,15 @@
    )
   )
  )
- (func $setTempRet0 (; 23 ;) (param $0 i32)
+ (func $setTempRet0 (; 23 ;) (; has Stack IR ;) (param $0 i32)
   (global.set $tempRet0
    (local.get $0)
   )
  )
- (func $getTempRet0 (; 24 ;) (result i32)
+ (func $getTempRet0 (; 24 ;) (; has Stack IR ;) (result i32)
   (global.get $tempRet0)
  )
- (func $_main (; 25 ;) (result i32)
+ (func $_main (; 25 ;) (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local.set $0
    (global.get $STACKTOP)
@@ -160,7 +160,7 @@
   )
   (i32.const 0)
  )
- (func $_frexp (; 26 ;) (param $0 f64) (param $1 i32) (result f64)
+ (func $_frexp (; 26 ;) (; has Stack IR ;) (param $0 f64) (param $1 i32) (result f64)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -259,7 +259,7 @@
   )
   (local.get $0)
  )
- (func $_strerror (; 27 ;) (param $0 i32) (result i32)
+ (func $_strerror (; 27 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (block $__rjto$1
@@ -337,7 +337,7 @@
   )
   (local.get $0)
  )
- (func $___errno_location (; 28 ;) (result i32)
+ (func $___errno_location (; 28 ;) (; has Stack IR ;) (result i32)
   (if (result i32)
    (i32.load
     (i32.const 16)
@@ -348,7 +348,7 @@
    (i32.const 60)
   )
  )
- (func $___stdio_close (; 29 ;) (param $0 i32) (result i32)
+ (func $___stdio_close (; 29 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local.set $1
    (global.get $STACKTOP)
@@ -385,7 +385,7 @@
   )
   (local.get $0)
  )
- (func $___stdout_write (; 30 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdout_write (; 30 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -465,7 +465,7 @@
   )
   (local.get $0)
  )
- (func $___stdio_seek (; 31 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdio_seek (; 31 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local.set $3
    (global.get $STACKTOP)
@@ -536,7 +536,7 @@
   )
   (local.get $0)
  )
- (func $_fflush (; 32 ;) (param $0 i32) (result i32)
+ (func $_fflush (; 32 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (if
    (local.get $0)
@@ -623,7 +623,7 @@
   )
   (local.get $0)
  )
- (func $_printf (; 33 ;) (param $0 i32)
+ (func $_printf (; 33 ;) (; has Stack IR ;) (param $0 i32)
   (local $1 i32)
   (local.set $1
    (global.get $STACKTOP)
@@ -655,7 +655,7 @@
    (local.get $1)
   )
  )
- (func $___stdio_write (; 34 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdio_write (; 34 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -974,7 +974,7 @@
   )
   (local.get $2)
  )
- (func $_vfprintf (; 35 ;) (param $0 i32) (param $1 i32)
+ (func $_vfprintf (; 35 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -1203,7 +1203,7 @@
    (local.get $6)
   )
  )
- (func $___fwritex (; 36 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $___fwritex (; 36 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -1368,7 +1368,7 @@
    )
   )
  )
- (func $___towrite (; 37 ;) (param $0 i32) (result i32)
+ (func $___towrite (; 37 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (i32.store8 offset=74
    (local.get $0)
@@ -1437,7 +1437,7 @@
    )
   )
  )
- (func $_wcrtomb (; 38 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $_wcrtomb (; 38 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (local.get $0)
    (block $do-once (result i32)
@@ -1609,7 +1609,7 @@
    (i32.const 1)
   )
  )
- (func $_wctomb (; 39 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $_wctomb (; 39 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (local.get $0)
    (call $_wcrtomb
@@ -1619,7 +1619,7 @@
    (i32.const 0)
   )
  )
- (func $_memchr (; 40 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $_memchr (; 40 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (block $label$break$L8
@@ -1812,7 +1812,7 @@
    (local.get $0)
   )
  )
- (func $___syscall_ret (; 41 ;) (param $0 i32) (result i32)
+ (func $___syscall_ret (; 41 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (if
    (i32.gt_u
     (local.get $0)
@@ -1833,7 +1833,7 @@
   )
   (local.get $0)
  )
- (func $___fflush_unlocked (; 42 ;) (param $0 i32) (result i32)
+ (func $___fflush_unlocked (; 42 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1938,14 +1938,14 @@
    (i32.const 0)
   )
  )
- (func $_cleanup (; 43 ;) (param $0 i32)
+ (func $_cleanup (; 43 ;) (; has Stack IR ;) (param $0 i32)
   (drop
    (i32.load offset=68
     (local.get $0)
    )
   )
  )
- (func $f64-to-int (; 44 ;) (param $0 f64) (result i32)
+ (func $f64-to-int (; 44 ;) (; has Stack IR ;) (param $0 f64) (result i32)
   (if (result i32)
    (f64.ne
     (local.get $0)
@@ -1971,7 +1971,7 @@
    )
   )
  )
- (func $f64-to-uint (; 45 ;) (param $0 f64) (result i32)
+ (func $f64-to-uint (; 45 ;) (; has Stack IR ;) (param $0 f64) (result i32)
   (if (result i32)
    (f64.ne
     (local.get $0)
@@ -1997,7 +1997,7 @@
    )
   )
  )
- (func $i32s-div (; 46 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $i32s-div (; 46 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (local.get $1)
    (if (result i32)
@@ -2020,7 +2020,7 @@
    (i32.const 0)
   )
  )
- (func $i32u-rem (; 47 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $i32u-rem (; 47 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (local.get $1)
    (i32.rem_u
@@ -2030,7 +2030,7 @@
    (i32.const 0)
   )
  )
- (func $i32u-div (; 48 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $i32u-div (; 48 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (local.get $1)
    (i32.div_u
@@ -2040,7 +2040,7 @@
    (i32.const 0)
   )
  )
- (func $_printf_core (; 49 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $_printf_core (; 49 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (local $4 i32)
   (local $5 i32)
   (local $6 i32)
@@ -6751,7 +6751,7 @@
   )
   (local.get $16)
  )
- (func $_pop_arg_336 (; 50 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $_pop_arg_336 (; 50 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local $4 f64)
   (local $5 i32)
@@ -7173,7 +7173,7 @@
    )
   )
  )
- (func $_fmt_u (; 51 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_fmt_u (; 51 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (if
@@ -7291,7 +7291,7 @@
   )
   (local.get $2)
  )
- (func $_pad (; 52 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+ (func $_pad (; 52 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
   (local $5 i32)
   (local $6 i32)
   (local $7 i32)
@@ -7433,7 +7433,7 @@
    (local.get $7)
   )
  )
- (func $_malloc (; 53 ;) (param $0 i32) (result i32)
+ (func $_malloc (; 53 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -12726,7 +12726,7 @@
    (i32.const 8)
   )
  )
- (func $_free (; 54 ;) (param $0 i32)
+ (func $_free (; 54 ;) (; has Stack IR ;) (param $0 i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -14446,10 +14446,10 @@
    (i32.const -1)
   )
  )
- (func $runPostSets (; 55 ;)
+ (func $runPostSets (; 55 ;) (; has Stack IR ;)
   (nop)
  )
- (func $_i64Subtract (; 56 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $_i64Subtract (; 56 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (global.set $tempRet0
    (i32.sub
     (i32.sub
@@ -14467,7 +14467,7 @@
    (local.get $2)
   )
  )
- (func $_i64Add (; 57 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $_i64Add (; 57 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (global.set $tempRet0
    (i32.add
     (i32.add
@@ -14487,7 +14487,7 @@
   )
   (local.get $1)
  )
- (func $_memset (; 58 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memset (; 58 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -14625,7 +14625,7 @@
    (local.get $2)
   )
  )
- (func $_bitshift64Lshr (; 59 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_bitshift64Lshr (; 59 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (if
    (i32.lt_s
     (local.get $2)
@@ -14675,7 +14675,7 @@
    )
   )
  )
- (func $_bitshift64Shl (; 60 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_bitshift64Shl (; 60 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (if
    (i32.lt_s
     (local.get $2)
@@ -14731,7 +14731,7 @@
   )
   (i32.const 0)
  )
- (func $_memcpy (; 61 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memcpy (; 61 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (if
    (i32.ge_s
@@ -14878,7 +14878,7 @@
   )
   (local.get $3)
  )
- (func $___udivdi3 (; 62 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___udivdi3 (; 62 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (call $___udivmoddi4
    (local.get $0)
    (local.get $1)
@@ -14887,7 +14887,7 @@
    (i32.const 0)
   )
  )
- (func $___uremdi3 (; 63 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___uremdi3 (; 63 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local.set $3
    (global.get $STACKTOP)
@@ -14919,7 +14919,7 @@
    (local.get $3)
   )
  )
- (func $___udivmoddi4 (; 64 ;) (param $xl i32) (param $xh i32) (param $yl i32) (param $yh i32) (param $r i32) (result i32)
+ (func $___udivmoddi4 (; 64 ;) (; has Stack IR ;) (param $xl i32) (param $xh i32) (param $yl i32) (param $yh i32) (param $r i32) (result i32)
   (local $x64 i64)
   (local $y64 i64)
   (local.set $x64
@@ -14976,7 +14976,7 @@
    (local.get $x64)
   )
  )
- (func $dynCall_ii (; 65 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $dynCall_ii (; 65 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (call_indirect (type $i32_=>_i32)
    (local.get $1)
    (i32.and
@@ -14985,7 +14985,7 @@
    )
   )
  )
- (func $dynCall_iiii (; 66 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $dynCall_iiii (; 66 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (call_indirect (type $i32_i32_i32_=>_i32)
    (local.get $1)
    (local.get $2)
@@ -14999,7 +14999,7 @@
    )
   )
  )
- (func $dynCall_vi (; 67 ;) (param $0 i32) (param $1 i32)
+ (func $dynCall_vi (; 67 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_=>_none)
    (local.get $1)
    (i32.add
@@ -15011,19 +15011,19 @@
    )
   )
  )
- (func $b0 (; 68 ;) (param $0 i32) (result i32)
+ (func $b0 (; 68 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (call $nullFunc_ii
    (i32.const 0)
   )
   (i32.const 0)
  )
- (func $b1 (; 69 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $b1 (; 69 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (call $nullFunc_iiii
    (i32.const 1)
   )
   (i32.const 0)
  )
- (func $b2 (; 70 ;) (param $0 i32)
+ (func $b2 (; 70 ;) (; has Stack IR ;) (param $0 i32)
   (call $nullFunc_vi
    (i32.const 2)
   )

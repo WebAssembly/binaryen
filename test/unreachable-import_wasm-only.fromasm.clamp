@@ -4,7 +4,7 @@
  (data (global.get $__memory_base) "unreachable-import_wasm-only.asm.js")
  (import "env" "__memory_base" (global $__memory_base i32))
  (export "__ZN10WasmAssertC2Ev__async_cb" (func $__ZN10WasmAssertC2Ev__async_cb))
- (func $__ZN10WasmAssertC2Ev__async_cb (; 0 ;) (param $0 i32)
+ (func $__ZN10WasmAssertC2Ev__async_cb (; 0 ;) (; has Stack IR ;) (param $0 i32)
   (i32.store
    (i32.const 12)
    (i32.const 26)

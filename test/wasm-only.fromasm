@@ -30,7 +30,7 @@
  (export "illegalParam" (func $legalstub$illegalParam))
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "keepAlive" (func $keepAlive))
- (func $loads (; 6 ;)
+ (func $loads (; 6 ;) (; has Stack IR ;)
   (drop
    (i32.load8_s
     (i32.const 100)
@@ -142,7 +142,7 @@
    )
   )
  )
- (func $stores (; 7 ;)
+ (func $stores (; 7 ;) (; has Stack IR ;)
   (i32.store8
    (i32.const 100)
    (i32.const 0)
@@ -232,7 +232,7 @@
    (f64.const 0)
   )
  )
- (func $i64s-div (; 8 ;) (param $0 i64) (param $1 i64) (result i64)
+ (func $i64s-div (; 8 ;) (; has Stack IR ;) (param $0 i64) (param $1 i64) (result i64)
   (if (result i64)
    (i64.eqz
     (local.get $1)
@@ -257,7 +257,7 @@
    )
   )
  )
- (func $f32-to-int64 (; 9 ;) (param $0 f32)
+ (func $f32-to-int64 (; 9 ;) (; has Stack IR ;) (param $0 f32)
   (drop
    (if (result i64)
     (f32.ne
@@ -285,7 +285,7 @@
    )
   )
  )
- (func $f64-to-int64 (; 10 ;) (param $0 f64)
+ (func $f64-to-int64 (; 10 ;) (; has Stack IR ;) (param $0 f64)
   (drop
    (if (result i64)
     (f64.ne
@@ -313,7 +313,7 @@
    )
   )
  )
- (func $f32-to-uint64 (; 11 ;) (param $0 f32)
+ (func $f32-to-uint64 (; 11 ;) (; has Stack IR ;) (param $0 f32)
   (drop
    (if (result i64)
     (f32.ne
@@ -341,7 +341,7 @@
    )
   )
  )
- (func $f64-to-uint64 (; 12 ;) (param $0 f64)
+ (func $f64-to-uint64 (; 12 ;) (; has Stack IR ;) (param $0 f64)
   (drop
    (if (result i64)
     (f64.ne
@@ -369,7 +369,7 @@
    )
   )
  )
- (func $test64 (; 13 ;)
+ (func $test64 (; 13 ;) (; has Stack IR ;)
   (local $0 i64)
   (local $1 f32)
   (local $2 f64)
@@ -456,7 +456,7 @@
    (local.get $2)
   )
  )
- (func $imports (; 14 ;)
+ (func $imports (; 14 ;) (; has Stack IR ;)
   (call $legalfunc$illegalImport
    (f64.const -3.13159)
    (i64.const 94489280523)
@@ -476,7 +476,7 @@
    )
   )
  )
- (func $arg (; 15 ;) (param $0 i64)
+ (func $arg (; 15 ;) (; has Stack IR ;) (param $0 i64)
   (i64.store
    (i32.const 100)
    (local.get $0)
@@ -485,7 +485,7 @@
    (local.get $0)
   )
  )
- (func $illegalParam (; 16 ;) (param $0 i32) (param $1 i64) (param $2 f64)
+ (func $illegalParam (; 16 ;) (; has Stack IR ;) (param $0 i32) (param $1 i64) (param $2 f64)
   (i32.store
    (i32.const 50)
    (local.get $0)
@@ -504,12 +504,12 @@
    (f64.const 12.34)
   )
  )
- (func $call1 (; 17 ;) (param $0 i64) (result i64)
+ (func $call1 (; 17 ;) (; has Stack IR ;) (param $0 i64) (result i64)
   (call $call1
    (local.get $0)
   )
  )
- (func $call2 (; 18 ;) (param $0 i64) (result i64)
+ (func $call2 (; 18 ;) (; has Stack IR ;) (param $0 i64) (result i64)
   (drop
    (call $call2
     (call $call2
@@ -519,26 +519,26 @@
   )
   (i64.const 245127260211081)
  )
- (func $ifValue64 (; 19 ;)
+ (func $ifValue64 (; 19 ;) (; has Stack IR ;)
   (drop
    (call $call2
     (i64.const 0)
    )
   )
  )
- (func $ifValue32 (; 20 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $ifValue32 (; 20 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (call $ifValue32
    (local.get $0)
    (local.get $1)
   )
  )
- (func $unreachable_leftovers (; 21 ;)
+ (func $unreachable_leftovers (; 21 ;) (; has Stack IR ;)
   (i32.store
    (i32.const 0)
    (i32.const -2)
   )
  )
- (func $keepAlive (; 22 ;)
+ (func $keepAlive (; 22 ;) (; has Stack IR ;)
   (call $loads)
   (call $loads)
   (call $stores)
@@ -588,7 +588,7 @@
   (call $unreachable_leftovers)
   (call $unreachable_leftovers)
  )
- (func $legalstub$illegalParam (; 23 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
+ (func $legalstub$illegalParam (; 23 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
   (call $illegalParam
    (local.get $0)
    (i64.or
@@ -605,13 +605,13 @@
    (local.get $3)
   )
  )
- (func $legalstub$illegalResult (; 24 ;) (result i32)
+ (func $legalstub$illegalResult (; 24 ;) (; has Stack IR ;) (result i32)
   (call $setTempRet0
    (i32.const 2)
   )
   (i32.const 1)
  )
- (func $legalfunc$illegalImport (; 25 ;) (param $0 f64) (param $1 i64) (param $2 i32)
+ (func $legalfunc$illegalImport (; 25 ;) (; has Stack IR ;) (param $0 f64) (param $1 i64) (param $2 i32)
   (call $legalimport$illegalImport
    (local.get $0)
    (i32.wrap_i64
@@ -626,7 +626,7 @@
    (local.get $2)
   )
  )
- (func $legalfunc$do_i64 (; 26 ;) (result i64)
+ (func $legalfunc$do_i64 (; 26 ;) (; has Stack IR ;) (result i64)
   (i64.or
    (i64.extend_i32_u
     (call $legalimport$do_i64)

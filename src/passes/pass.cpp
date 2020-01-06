@@ -440,6 +440,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     add("inlining-optimizing");
   }
   // optimizations show more functions as duplicate
+  add("memory-packing");
   add("duplicate-function-elimination");
   add("duplicate-import-elimination");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
@@ -448,7 +449,6 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     add("simplify-globals");
   }
   add("remove-unused-module-elements");
-  add("memory-packing");
   // may allow more inlining/dae/etc., need --converge for that
   add("directize");
   // perform Stack IR optimizations here, at the very end of the
