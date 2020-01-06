@@ -33,14 +33,24 @@ inline OutputType* convert(InputType* input) {
   return output;
 }
 
-// Convenience method for nop, which is a common conversion
+// Convenience methods for certain instructions, which are common conversions
 template<typename InputType> inline Nop* nop(InputType* target) {
-  return convert<InputType, Nop>(target);
+  auto* ret = convert<InputType, Nop>(target);
+  ret->finalize();
+  return ret;
+}
+
+template<typename InputType> inline RefNull* refNull(InputType* target) {
+  auto* ret = convert<InputType, RefNull>(target);
+  ret->finalize();
+  return ret;
 }
 
 template<typename InputType>
 inline Unreachable* unreachable(InputType* target) {
-  return convert<InputType, Unreachable>(target);
+  auto* ret = convert<InputType, Unreachable>(target);
+  ret->finalize();
+  return ret;
 }
 
 // Convert a node that allocates

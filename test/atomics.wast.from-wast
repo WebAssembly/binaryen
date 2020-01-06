@@ -145,13 +145,33 @@
    )
   )
   (drop
+   (i32.atomic.wait offset=4
+    (local.get $0)
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+  (drop
    (atomic.notify
     (local.get $0)
     (local.get $0)
    )
   )
   (drop
+   (atomic.notify offset=24
+    (local.get $0)
+    (local.get $0)
+   )
+  )
+  (drop
    (i64.atomic.wait
+    (local.get $0)
+    (local.get $1)
+    (local.get $1)
+   )
+  )
+  (drop
+   (i64.atomic.wait offset=16
     (local.get $0)
     (local.get $1)
     (local.get $1)

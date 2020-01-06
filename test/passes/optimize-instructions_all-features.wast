@@ -3783,3 +3783,13 @@
    )
   )
 )
+(module
+  ;; Tests when if arms are subtype of if's type
+  (func $test (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null)
+      (ref.null)
+    )
+  )
+)

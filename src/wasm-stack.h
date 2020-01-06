@@ -128,6 +128,9 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -207,6 +210,9 @@ public:
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -698,6 +704,30 @@ void BinaryenIRWriter<SubType>::visitHost(Host* curr) {
   emit(curr);
 }
 
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefNull(RefNull* curr) {
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefIsNull(RefIsNull* curr) {
+  visit(curr->value);
+  if (curr->type == Type::unreachable) {
+    emitUnreachable();
+    return;
+  }
+  emit(curr);
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitRefFunc(RefFunc* curr) {
+  if (curr->type == Type::unreachable) {
+    emitUnreachable();
+    return;
+  }
+  emit(curr);
+}
+
 template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   emit(curr);
   visitPossibleBlockContents(curr->body);
@@ -749,14 +779,12 @@ void BinaryenIRWriter<SubType>::visitDrop(Drop* curr) {
 
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPush(Push* curr) {
-  // Turns into nothing in the binary format: leave the child on the stack for
-  // others to use.
   visit(curr->value);
+  emit(curr);
 }
 
 template<typename SubType> void BinaryenIRWriter<SubType>::visitPop(Pop* curr) {
-  // Turns into nothing in the binary format: just get a value that is already
-  // on the stack.
+  emit(curr);
 }
 
 // Binaryen IR to binary writer

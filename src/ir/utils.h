@@ -146,6 +146,9 @@ struct ReFinalize
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
+  void visitRefNull(RefNull* curr);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -210,6 +213,9 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitDrop(Drop* curr) { curr->finalize(); }
   void visitReturn(Return* curr) { curr->finalize(); }
   void visitHost(Host* curr) { curr->finalize(); }
+  void visitRefNull(RefNull* curr) { curr->finalize(); }
+  void visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
+  void visitRefFunc(RefFunc* curr) { curr->finalize(); }
   void visitTry(Try* curr) { curr->finalize(); }
   void visitThrow(Throw* curr) { curr->finalize(); }
   void visitRethrow(Rethrow* curr) { curr->finalize(); }

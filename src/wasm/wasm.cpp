@@ -173,18 +173,36 @@ const char* getExpressionName(Expression* curr) {
       return "push";
     case Expression::Id::PopId:
       return "pop";
-    case Expression::TryId:
+    case Expression::Id::RefNullId:
+      return "ref.null";
+    case Expression::Id::RefIsNullId:
+      return "ref.is_null";
+    case Expression::Id::RefFuncId:
+      return "ref.func";
+    case Expression::Id::TryId:
       return "try";
-    case Expression::ThrowId:
+    case Expression::Id::ThrowId:
       return "throw";
-    case Expression::RethrowId:
+    case Expression::Id::RethrowId:
       return "rethrow";
-    case Expression::BrOnExnId:
+    case Expression::Id::BrOnExnId:
       return "br_on_exn";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
   WASM_UNREACHABLE("invalid expr id");
+}
+
+Literal getLiteralFromConstExpression(Expression* curr) {
+  if (auto* c = curr->dynCast<Const>()) {
+    return c->value;
+  } else if (curr->is<RefNull>()) {
+    return Literal::makeNullref();
+  } else if (auto* r = curr->dynCast<RefFunc>()) {
+    return Literal::makeFuncref(r->func);
+  } else {
+    WASM_UNREACHABLE("Not a constant expression");
+  }
 }
 
 // core AST type checking
@@ -247,27 +265,6 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
     }
   }
 };
-
-static Type mergeTypes(std::vector<Type>& types) {
-  Type type = unreachable;
-  for (auto other : types) {
-    // once none, stop. it then indicates a poison value, that must not be
-    // consumed and ignore unreachable
-    if (type != none) {
-      if (other == none) {
-        type = none;
-      } else if (other != unreachable) {
-        if (type == unreachable) {
-          type = other;
-        } else if (type != other) {
-          // poison value, we saw multiple types; this should not be consumed
-          type = none;
-        }
-      }
-    }
-  }
-  return type;
-}
 
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
@@ -336,7 +333,7 @@ void Block::finalize() {
   }
 
   TypeSeeker seeker(this, this->name);
-  type = mergeTypes(seeker.types);
+  type = Type::mergeTypes(seeker.types);
   handleUnreachable(this);
 }
 
@@ -364,19 +361,8 @@ void If::finalize(Type type_) {
 }
 
 void If::finalize() {
-  if (ifFalse) {
-    if (ifTrue->type == ifFalse->type) {
-      type = ifTrue->type;
-    } else if (ifTrue->type.isConcrete() && ifFalse->type == unreachable) {
-      type = ifTrue->type;
-    } else if (ifFalse->type.isConcrete() && ifTrue->type == unreachable) {
-      type = ifFalse->type;
-    } else {
-      type = none;
-    }
-  } else {
-    type = none; // if without else
-  }
+  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
+                 : Type::none;
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
@@ -828,13 +814,15 @@ void Binary::finalize() {
   }
 }
 
+void Select::finalize(Type type_) { type = type_; }
+
 void Select::finalize() {
   assert(ifTrue && ifFalse);
   if (ifTrue->type == unreachable || ifFalse->type == unreachable ||
       condition->type == unreachable) {
     type = unreachable;
   } else {
-    type = ifTrue->type;
+    type = Type::getLeastUpperBound(ifTrue->type, ifFalse->type);
   }
 }
 
@@ -864,16 +852,20 @@ void Host::finalize() {
   }
 }
 
-void Try::finalize() {
-  if (body->type == catchBody->type) {
-    type = body->type;
-  } else if (body->type.isConcrete() && catchBody->type == unreachable) {
-    type = body->type;
-  } else if (catchBody->type.isConcrete() && body->type == unreachable) {
-    type = catchBody->type;
-  } else {
-    type = none;
+void RefNull::finalize() { type = Type::nullref; }
+
+void RefIsNull::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
   }
+  type = Type::i32;
+}
+
+void RefFunc::finalize() { type = Type::funcref; }
+
+void Try::finalize() {
+  type = Type::getLeastUpperBound(body->type, catchBody->type);
 }
 
 void Try::finalize(Type type_) {

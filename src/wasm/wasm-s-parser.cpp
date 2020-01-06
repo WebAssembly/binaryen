@@ -850,8 +850,14 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
       return v128;
     }
   }
+  if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
+    return funcref;
+  }
   if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
     return anyref;
+  }
+  if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
+    return nullref;
   }
   if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
     return exnref;
@@ -859,7 +865,7 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (allowError) {
     return none;
   }
-  throw ParseException("invalid wasm type");
+  throw ParseException(std::string("invalid wasm type: ") + str);
 }
 
 Type SExpressionWasmBuilder::stringToLaneType(const char* str) {
@@ -936,10 +942,16 @@ Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op) {
 
 Expression* SExpressionWasmBuilder::makeSelect(Element& s) {
   auto ret = allocator.alloc<Select>();
-  ret->ifTrue = parseExpression(s[1]);
-  ret->ifFalse = parseExpression(s[2]);
-  ret->condition = parseExpression(s[3]);
-  ret->finalize();
+  Index i = 1;
+  Type type = parseOptionalResultType(s, i);
+  ret->ifTrue = parseExpression(s[i++]);
+  ret->ifFalse = parseExpression(s[i++]);
+  ret->condition = parseExpression(s[i]);
+  if (type.isConcrete()) {
+    ret->finalize(type);
+  } else {
+    ret->finalize();
+  }
   return ret;
 }
 
@@ -1206,12 +1218,12 @@ static uint8_t parseMemBytes(const char*& s, uint8_t fallback) {
 }
 
 static size_t parseMemAttributes(Element& s,
-                                 Address* offset,
-                                 Address* align,
+                                 Address& offset,
+                                 Address& align,
                                  Address fallbackAlign) {
   size_t i = 1;
-  *offset = 0;
-  *align = fallbackAlign;
+  offset = 0;
+  align = fallbackAlign;
   while (!s[i]->isList()) {
     const char* str = s[i]->c_str();
     const char* eq = strchr(str, '=');
@@ -1231,12 +1243,12 @@ static size_t parseMemAttributes(Element& s,
       if (value > std::numeric_limits<uint32_t>::max()) {
         throw ParseException("bad align", s.line, s.col);
       }
-      *align = value;
+      align = value;
     } else if (str[0] == 'o') {
       if (value > std::numeric_limits<uint32_t>::max()) {
         throw ParseException("bad offset", s.line, s.col);
       }
-      *offset = value;
+      offset = value;
     } else {
       throw ParseException("bad memory attribute");
     }
@@ -1268,9 +1280,9 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   auto* ret = allocator.alloc<Load>();
   ret->isAtomic = isAtomic;
   ret->type = type;
-  ret->bytes = parseMemBytes(extra, getTypeSize(type));
+  ret->bytes = parseMemBytes(extra, type.getByteSize());
   ret->signed_ = extra[0] && extra[1] == 's';
-  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
+  size_t i = parseMemAttributes(s, ret->offset, ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -1282,8 +1294,8 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   auto ret = allocator.alloc<Store>();
   ret->isAtomic = isAtomic;
   ret->valueType = type;
-  ret->bytes = parseMemBytes(extra, getTypeSize(type));
-  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
+  ret->bytes = parseMemBytes(extra, type.getByteSize());
+  size_t i = parseMemAttributes(s, ret->offset, ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i + 1]);
   ret->finalize();
@@ -1294,7 +1306,7 @@ Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s,
                                                            Type type) {
   const char* extra = findMemExtra(
     *s[0], 11 /* after "type.atomic.rmw" */, /* isAtomic = */ false);
-  auto bytes = parseMemBytes(extra, getTypeSize(type));
+  auto bytes = parseMemBytes(extra, type.getByteSize());
   extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
   if (!extra) {
     throw ParseException("malformed atomic rmw instruction");
@@ -1329,7 +1341,7 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
     throw ParseException("bad atomic rmw operator");
   }
   Address align;
-  size_t i = parseMemAttributes(s, &ret->offset, &align, ret->bytes);
+  size_t i = parseMemAttributes(s, ret->offset, align, ret->bytes);
   if (align != ret->bytes) {
     throw ParseException("Align of Atomic RMW must match size");
   }
@@ -1347,7 +1359,7 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
   ret->type = type;
   ret->bytes = bytes;
   Address align;
-  size_t i = parseMemAttributes(s, &ret->offset, &align, ret->bytes);
+  size_t i = parseMemAttributes(s, ret->offset, align, ret->bytes);
   if (align != ret->bytes) {
     throw ParseException("Align of Atomic Cmpxchg must match size");
   }
@@ -1360,20 +1372,38 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
 
 Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   auto ret = allocator.alloc<AtomicWait>();
-  ret->type = i32;
+  ret->type = Type::i32;
   ret->expectedType = type;
-  ret->ptr = parseExpression(s[1]);
-  ret->expected = parseExpression(s[2]);
-  ret->timeout = parseExpression(s[3]);
+  Address align;
+  Address expectedAlign;
+  if (type == Type::i32) {
+    expectedAlign = 4;
+  } else if (type == Type::i64) {
+    expectedAlign = 8;
+  } else {
+    WASM_UNREACHABLE("Invalid prefix for atomic.wait");
+  }
+  size_t i = parseMemAttributes(s, ret->offset, align, expectedAlign);
+  if (align != expectedAlign) {
+    throw ParseException("Align of atomic.wait must match size", s.line, s.col);
+  }
+  ret->ptr = parseExpression(s[i]);
+  ret->expected = parseExpression(s[i + 1]);
+  ret->timeout = parseExpression(s[i + 2]);
   ret->finalize();
   return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   auto ret = allocator.alloc<AtomicNotify>();
-  ret->type = i32;
-  ret->ptr = parseExpression(s[1]);
-  ret->notifyCount = parseExpression(s[2]);
+  ret->type = Type::i32;
+  Address align;
+  size_t i = parseMemAttributes(s, ret->offset, align, 4);
+  if (align != 4) {
+    throw ParseException("Align of atomic.notify must be 4", s.line, s.col);
+  }
+  ret->ptr = parseExpression(s[i]);
+  ret->notifyCount = parseExpression(s[i + 1]);
   ret->finalize();
   return ret;
 }
@@ -1474,7 +1504,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
       defaultAlign = 8;
       break;
   }
-  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, defaultAlign);
+  size_t i = parseMemAttributes(s, ret->offset, ret->align, defaultAlign);
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -1715,6 +1745,27 @@ Expression* SExpressionWasmBuilder::makeReturn(Element& s) {
   if (s.size() >= 2) {
     ret->value = parseExpression(s[1]);
   }
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
+  auto ret = allocator.alloc<RefNull>();
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefIsNull(Element& s) {
+  auto ret = allocator.alloc<RefIsNull>();
+  ret->value = parseExpression(s[1]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
+  auto func = getFunctionName(*s[1]);
+  auto ret = allocator.alloc<RefFunc>();
+  ret->func = func;
+  ret->finalize();
   return ret;
 }
 

@@ -151,7 +151,7 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
     }
     void visitLoad(Load* curr) {
       visitor.visitInt(curr->bytes);
-      if (curr->type != unreachable && curr->bytes < getTypeSize(curr->type)) {
+      if (curr->type != unreachable && curr->bytes < curr->type.getByteSize()) {
         visitor.visitInt(curr->signed_);
       }
       visitor.visitAddress(curr->offset);
@@ -218,6 +218,9 @@ template<typename T> void visitImmediates(Expression* curr, T& visitor) {
       visitor.visitInt(curr->op);
       visitor.visitNonScopeName(curr->nameOperand);
     }
+    void visitRefNull(RefNull* curr) {}
+    void visitRefIsNull(RefIsNull* curr) {}
+    void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }
     void visitTry(Try* curr) {}
     void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
     void visitRethrow(Rethrow* curr) {}

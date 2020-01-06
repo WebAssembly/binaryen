@@ -88,12 +88,15 @@ private:
       }
       case f32:
       case f64: {
-        size = getTypeSize(value.type);
+        size = value.type.getByteSize();
         break;
       }
-      case v128:     // v128 not implemented yet
-      case anyref:   // anyref cannot have literals
-      case exnref: { // exnref cannot have literals
+      // not implemented yet
+      case v128:
+      case funcref:
+      case anyref:
+      case nullref:
+      case exnref: {
         return false;
       }
       case none:

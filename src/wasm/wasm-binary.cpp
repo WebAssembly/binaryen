@@ -262,7 +262,7 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one table\n");
     writeImportHeader(&wasm->table);
     o << U32LEB(int32_t(ExternalKind::Table));
-    o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
+    o << S32LEB(BinaryConsts::EncodedType::funcref);
     writeResizableLimits(wasm->table.initial,
                          wasm->table.max,
                          wasm->table.hasMax(),
@@ -463,7 +463,7 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   BYN_TRACE("== writeFunctionTableDeclaration\n");
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
-  o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
+  o << S32LEB(BinaryConsts::EncodedType::funcref);
   writeResizableLimits(wasm->table.initial,
                        wasm->table.max,
                        wasm->table.hasMax(),
@@ -1059,8 +1059,12 @@ Type WasmBinaryBuilder::getType() {
       return f64;
     case BinaryConsts::EncodedType::v128:
       return v128;
+    case BinaryConsts::EncodedType::funcref:
+      return funcref;
     case BinaryConsts::EncodedType::anyref:
       return anyref;
+    case BinaryConsts::EncodedType::nullref:
+      return nullref;
     case BinaryConsts::EncodedType::exnref:
       return exnref;
     default:
@@ -1258,8 +1262,8 @@ void WasmBinaryBuilder::readImports() {
         wasm.table.name = Name(std::string("timport$") + std::to_string(i));
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
-        if (elementType != BinaryConsts::EncodedType::AnyFunc) {
-          throwError("Imported table type is not AnyFunc");
+        if (elementType != BinaryConsts::EncodedType::funcref) {
+          throwError("Imported table type is not funcref");
         }
         wasm.table.exists = true;
         bool is_shared;
@@ -1802,11 +1806,17 @@ void WasmBinaryBuilder::processFunctions() {
     wasm.addExport(curr);
   }
 
-  for (auto& iter : functionCalls) {
+  for (auto& iter : functionRefs) {
     size_t index = iter.first;
-    auto& calls = iter.second;
-    for (auto* call : calls) {
-      call->target = getFunctionName(index);
+    auto& refs = iter.second;
+    for (auto* ref : refs) {
+      if (auto* call = ref->dynCast<Call>()) {
+        call->target = getFunctionName(index);
+      } else if (auto* refFunc = ref->dynCast<RefFunc>()) {
+        refFunc->func = getFunctionName(index);
+      } else {
+        WASM_UNREACHABLE("Invalid type in function references");
+      }
     }
   }
 
@@ -1869,8 +1879,8 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
   }
   wasm.table.exists = true;
   auto elemType = getS32LEB();
-  if (elemType != BinaryConsts::EncodedType::AnyFunc) {
-    throwError("ElementType must be AnyFunc in MVP");
+  if (elemType != BinaryConsts::EncodedType::funcref) {
+    throwError("ElementType must be funcref in MVP");
   }
   bool is_shared;
   getResizableLimits(
@@ -2117,7 +2127,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitGlobalSet((curr = allocator.alloc<GlobalSet>())->cast<GlobalSet>());
       break;
     case BinaryConsts::Select:
-      visitSelect((curr = allocator.alloc<Select>())->cast<Select>());
+    case BinaryConsts::SelectWithType:
+      visitSelect((curr = allocator.alloc<Select>())->cast<Select>(), code);
       break;
     case BinaryConsts::Return:
       visitReturn((curr = allocator.alloc<Return>())->cast<Return>());
@@ -2136,6 +2147,15 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::Else:
     case BinaryConsts::Catch:
       curr = nullptr;
+      break;
+    case BinaryConsts::RefNull:
+      visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
+      break;
+    case BinaryConsts::RefIsNull:
+      visitRefIsNull((curr = allocator.alloc<RefIsNull>())->cast<RefIsNull>());
+      break;
+    case BinaryConsts::RefFunc:
+      visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
       break;
     case BinaryConsts::Try:
       visitTry((curr = allocator.alloc<Try>())->cast<Try>());
@@ -2510,7 +2530,7 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->type = sig.results;
-  functionCalls[index].push_back(curr); // we don't know function names yet
+  functionRefs[index].push_back(curr); // we don't know function names yet
   curr->finalize();
 }
 
@@ -2974,7 +2994,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != getTypeSize(curr->expectedType)) {
+  if (readAlign != curr->expectedType.getByteSize()) {
     throwError("Align of AtomicWait must match size");
   }
   curr->finalize();
@@ -2994,7 +3014,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicNotify(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != getTypeSize(curr->type)) {
+  if (readAlign != curr->type.getByteSize()) {
     throwError("Align of AtomicNotify must match size");
   }
   curr->finalize();
@@ -4326,12 +4346,24 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
   return true;
 }
 
-void WasmBinaryBuilder::visitSelect(Select* curr) {
-  BYN_TRACE("zz node: Select\n");
+void WasmBinaryBuilder::visitSelect(Select* curr, uint8_t code) {
+  BYN_TRACE("zz node: Select, code " << int32_t(code) << std::endl);
+  if (code == BinaryConsts::SelectWithType) {
+    size_t numTypes = getU32LEB();
+    std::vector<Type> types;
+    for (size_t i = 0; i < numTypes; i++) {
+      types.push_back(getType());
+    }
+    curr->type = Type(types);
+  }
   curr->condition = popNonVoidExpression();
   curr->ifFalse = popNonVoidExpression();
   curr->ifTrue = popNonVoidExpression();
-  curr->finalize();
+  if (code == BinaryConsts::SelectWithType) {
+    curr->finalize(curr->type);
+  } else {
+    curr->finalize();
+  }
 }
 
 void WasmBinaryBuilder::visitReturn(Return* curr) {
@@ -4380,6 +4412,27 @@ void WasmBinaryBuilder::visitUnreachable(Unreachable* curr) {
 void WasmBinaryBuilder::visitDrop(Drop* curr) {
   BYN_TRACE("zz node: Drop\n");
   curr->value = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
+  BYN_TRACE("zz node: RefNull\n");
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {
+  BYN_TRACE("zz node: RefIsNull\n");
+  curr->value = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
+  BYN_TRACE("zz node: RefFunc\n");
+  Index index = getU32LEB();
+  if (index >= functionImports.size() + functionSignatures.size()) {
+    throwError("ref.func: invalid call index");
+  }
+  functionRefs[index].push_back(curr); // we don't know function names yet
   curr->finalize();
 }
 

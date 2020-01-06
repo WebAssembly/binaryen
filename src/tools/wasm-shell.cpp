@@ -74,7 +74,7 @@ struct Operation {
     name = element[i++]->str();
     for (size_t j = i; j < element.size(); j++) {
       Expression* argument = builder.parseExpression(*element[j]);
-      arguments.push_back(argument->dynCast<Const>()->value);
+      arguments.push_back(getLiteralFromConstExpression(argument));
     }
   }
 
@@ -214,7 +214,7 @@ static void run_asserts(Name moduleName,
         assert(!trapped);
         if (curr.size() >= 3) {
           Literal expected =
-            builder->parseExpression(*curr[2])->dynCast<Const>()->value;
+            getLiteralFromConstExpression(builder->parseExpression(*curr[2]));
           std::cerr << "seen " << result << ", expected " << expected << '\n';
           if (expected != result) {
             std::cout << "unexpected, should be identical\n";

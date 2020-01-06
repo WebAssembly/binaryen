@@ -65,9 +65,10 @@ struct FeatureSet {
 
   FeatureSet() : features(MVP) {}
   FeatureSet(uint32_t features) : features(features) {}
+  constexpr operator uint32_t() const { return features; }
 
   bool isMVP() const { return features == MVP; }
-  bool has(Feature f) { return (features & f) == f; }
+  bool has(FeatureSet f) { return (features & f) == f; }
   bool hasAtomics() const { return (features & Atomics) != 0; }
   bool hasMutableGlobals() const { return (features & MutableGlobals) != 0; }
   bool hasTruncSat() const { return (features & TruncSat) != 0; }
@@ -82,7 +83,7 @@ struct FeatureSet {
   bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
-  void set(Feature f, bool v = true) {
+  void set(FeatureSet f, bool v = true) {
     features = v ? (features | f) : (features & ~f);
   }
   void setAtomics(bool v = true) { set(Atomics, v); }

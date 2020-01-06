@@ -287,3 +287,15 @@
   (local.set $y (global.get $glob))
  )
 )
+
+;; After --flatten, there will be a series of chain copies between multiple
+;; locals, but some of the locals will be nullref type and others funcref type.
+;; We cannot make locals of different types a common subexpression.
+(module
+ (func $subtype-test (result funcref)
+  (nop)
+  (loop $label$1 (result nullref)
+   (ref.null)
+  )
+ )
+)
