@@ -1,8 +1,10 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $anyref_=>_none (func (param anyref)))
  (type $exnref_=>_exnref (func (param exnref) (result exnref)))
  (event $e0 (attr 0) (param i32))
+ (event $e1 (attr 0) (param anyref))
  (func $exnref_test (; 0 ;) (param $0 exnref) (result exnref)
   (local.get $0)
  )
@@ -80,6 +82,9 @@
      )
     )
    )
+  )
+  (throw $e1
+   (ref.null)
   )
  )
 )
