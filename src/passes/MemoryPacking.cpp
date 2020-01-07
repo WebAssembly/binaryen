@@ -487,7 +487,8 @@ void MemoryPacking::createReplacements(
 
     // Index of the range from which this memory.init starts reading
     size_t firstRangeIdx = 0;
-    while (ranges[firstRangeIdx].end <= start) {
+    while (firstRangeIdx < ranges.size() &&
+           ranges[firstRangeIdx].end <= start) {
       ++firstRangeIdx;
     }
 
@@ -505,6 +506,8 @@ void MemoryPacking::createReplacements(
       replacements[init] = [result](Function*) { return result; };
       continue;
     }
+
+    assert(firstRangeIdx < ranges.size());
 
     // Split init into multiple memory.inits and memory.fills, storing the
     // original base destination in a local if it is not a constant. If the
